@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Disabled" xml:space="preserve">
+    <value>禁用</value>
+  </data>
+  <data name="Text.AuthenticationReason.AccountDisabled" xml:space="preserve">
+    <value>帐户已被封。</value>
+  </data>
+  <data name="Text.AuthenticationReason.AccountSuspended" xml:space="preserve">
+    <value>帐户被暂停，可能是因为验证失败次数太多。</value>
+  </data>
+  <data name="Text.AuthenticationReason.AccountUnapproved" xml:space="preserve">
+    <value>帐户尚未通过审核批准。</value>
+  </data>
+  <data name="Text.AuthenticationReason.Forbidden" xml:space="preserve">
+    <value>禁止访问，您的账号没有被授权访问当前资源。</value>
+  </data>
+  <data name="Text.AuthenticationReason.InvalidIdentity" xml:space="preserve">
+    <value>无效的身份标识。</value>
+  </data>
+  <data name="Text.AuthenticationReason.InvalidPassword" xml:space="preserve">
+    <value>无效的密码。</value>
+  </data>
+  <data name="Text.AuthenticationReason.Succeed" xml:space="preserve">
+    <value>验证成功</value>
+  </data>
+  <data name="Text.AuthenticationReason.Unknown" xml:space="preserve">
+    <value>验证失败</value>
+  </data>
+  <data name="Text.AuthorizationException.Message" xml:space="preserve">
+    <value>禁止访问，您没有访问这项资源的授权。</value>
+  </data>
+  <data name="Text.ClearCommand.Description" xml:space="preserve">
+    <value>清除当前终端的显示内容。</value>
+  </data>
+  <data name="Text.ClearCommand.Title" xml:space="preserve">
+    <value>清除命令</value>
+  </data>
+  <data name="Text.Command.ExecutionFailed.Message" xml:space="preserve">
+    <value>{0} 执行失败。</value>
+  </data>
+  <data name="Text.Command.ExecutionSucceed.Message" xml:space="preserve">
+    <value>{0} 执行成功。</value>
+  </data>
+  <data name="Text.Command.Options.Timeout" xml:space="preserve">
+    <value>超时</value>
+  </data>
+  <data name="Text.CommandError.Label" xml:space="preserve">
+    <value>命令出错：</value>
+  </data>
+  <data name="Text.CommandNotFound" xml:space="preserve">
+    <value>指定的 '{0}' 命令没有找到。</value>
+  </data>
+  <data name="Text.CredentialException.Message" xml:space="preserve">
+    <value>凭证错误：指定的凭证是无效的或已经过期。</value>
+  </data>
+  <data name="Text.DataConflictException.Message" xml:space="preserve">
+    <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
+  </data>
+  <data name="Text.ExitCommand.Confirm" xml:space="preserve">
+    <value>您确认是否要退出(输入Yes则退出)？</value>
+  </data>
+  <data name="Text.ExitCommand.Description" xml:space="preserve">
+    <value>退出当前应用程序。</value>
+  </data>
+  <data name="Text.ExitCommand.Title" xml:space="preserve">
+    <value>退出命令</value>
+  </data>
+  <data name="Text.InvalidCommandOption" xml:space="preserve">
+    <value>指定的 '{0}' 是一个无效的命令选项。</value>
+  </data>
+  <data name="Text.InvalidCommandOptionValue" xml:space="preserve">
+    <value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
+  </data>
+  <data name="Text.MessageQueueListener.Description" xml:space="preserve">
+    <value>这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。</value>
+  </data>
+  <data name="Text.MessageQueueListener.Title" xml:space="preserve">
+    <value>消息队列侦听器</value>
+  </data>
+  <data name="Text.MissingCommandOption" xml:space="preserve">
+    <value>缺少 '{0}' 命令选项，必须为该选项提供值。</value>
+  </data>
+  <data name="Text.SecretGenerateTooFrequently.Message" xml:space="preserve">
+    <value>验证码生成操作调用太频繁，请等待一会后再来。</value>
+  </data>
+  <data name="Text.ShellCommand.Description" xml:space="preserve">
+    <value>通过系统Shell来执行外部命令。</value>
+  </data>
+  <data name="Text.ShellCommand.Options.Timeout" xml:space="preserve">
+    <value>运行外部命令的超时，单位：毫秒。</value>
+  </data>
+  <data name="Text.ShellCommand.Title" xml:space="preserve">
+    <value>外部命令执行器</value>
+  </data>
+  <data name="Text.WorkerListenCommand.Prompt" xml:space="preserve">
+    <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>
+  </data>
+  <data name="Text.WorkerListenCommand.Welcome" xml:space="preserve">
+    <value>欢迎进入 {0} 的侦听模式。</value>
+  </data>
+  <data name="Text.WorkerPauseCommand.Name" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="Text.WorkerResumeCommand.Name" xml:space="preserve">
+    <value>恢复</value>
+  </data>
+  <data name="Text.WorkerStartCommand.Name" xml:space="preserve">
+    <value>启动</value>
+  </data>
+  <data name="Text.WorkerStartCommand.Options.Force" xml:space="preserve">
+    <value>强制启动，即使命令被禁用也尝试启动。</value>
+  </data>
+  <data name="Text.WorkerState.Paused" xml:space="preserve">
+    <value>已暂停</value>
+  </data>
+  <data name="Text.WorkerState.Pausing" xml:space="preserve">
+    <value>暂停中</value>
+  </data>
+  <data name="Text.WorkerState.Resuming" xml:space="preserve">
+    <value>恢复中</value>
+  </data>
+  <data name="Text.WorkerState.Running" xml:space="preserve">
+    <value>运行中</value>
+  </data>
+  <data name="Text.WorkerState.Starting" xml:space="preserve">
+    <value>启动中</value>
+  </data>
+  <data name="Text.WorkerState.Stopped" xml:space="preserve">
+    <value>已停止</value>
+  </data>
+  <data name="Text.WorkerState.Stopping" xml:space="preserve">
+    <value>停止中</value>
+  </data>
+  <data name="Text.WorkerStopCommand.Name" xml:space="preserve">
+    <value>停止</value>
+  </data>
+</root>

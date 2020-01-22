@@ -1,0 +1,176 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Core library.
+ *
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Collections.Generic;
+
+namespace Zongsoft.Services
+{
+	public sealed class ServiceProviderFactory : IServiceProviderFactory, ICollection<IServiceProvider>
+	{
+		#region 单例字段
+		public static readonly ServiceProviderFactory Instance = new ServiceProviderFactory();
+		#endregion
+
+		#region 成员字段
+		private IServiceProvider _default;
+		private readonly IDictionary<string, IServiceProvider> _providers;
+		#endregion
+
+		#region 构造函数
+		private ServiceProviderFactory()
+		{
+			_providers = new Dictionary<string, IServiceProvider>(StringComparer.OrdinalIgnoreCase);
+		}
+		#endregion
+
+		#region 公共属性
+		public int Count
+		{
+			get
+			{
+				return _providers.Count;
+			}
+		}
+
+		public IServiceProvider Default
+		{
+			get
+			{
+				return _default;
+			}
+			set
+			{
+				if(value == null)
+					throw new ArgumentNullException();
+
+				//将默认服务容器注册到容器集中
+				this.Register(value);
+
+				//更新默认服务容器
+				_default = value;
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public void Register(IServiceProvider provider)
+		{
+			if(provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			_providers[provider.Name ?? string.Empty] = provider;
+		}
+
+		public void Register(IServiceProvider provider, bool replaceOnExists)
+		{
+			if(provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			if(replaceOnExists)
+				_providers[provider.Name ?? string.Empty] = provider;
+			else
+				_providers.Add(provider.Name ?? string.Empty, provider);
+		}
+
+		/// <summary>
+		/// 注销服务供应程序。
+		/// </summary>
+		/// <param name="name">要注销服务供应程序的名称。</param>
+		/// <returns>如果注销成功则返回真(True)，否则返回假(False)。</returns>
+		public bool Unregister(string name)
+		{
+			return _providers.Remove(name ?? string.Empty);
+		}
+
+		/// <summary>
+		/// 获取指定名称的服务供应程序。具体的获取策略请参考更详细的备注说明。
+		/// </summary>
+		/// <param name="name">待获取的服务供应程序名。</param>
+		/// <returns>如果指定名称的供应程序回存在则返它，否则返回空(null)。</returns>
+		public IServiceProvider GetProvider(string name)
+		{
+			IServiceProvider result;
+
+			if(_providers.TryGetValue(name ?? string.Empty, out result))
+				return result;
+
+			return null;
+		}
+		#endregion
+
+		#region 显式实现
+		bool ICollection<IServiceProvider>.IsReadOnly
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		void ICollection<IServiceProvider>.Add(IServiceProvider item)
+		{
+			if(item == null)
+				throw new ArgumentNullException(nameof(item));
+
+			_providers.Add(item.Name ?? string.Empty, item);
+		}
+
+		void ICollection<IServiceProvider>.Clear()
+		{
+			_providers.Clear();
+		}
+
+		bool ICollection<IServiceProvider>.Contains(IServiceProvider item)
+		{
+			return _providers.ContainsKey(item.Name ?? string.Empty);
+		}
+
+		void ICollection<IServiceProvider>.CopyTo(IServiceProvider[] array, int arrayIndex)
+		{
+			_providers.Values.CopyTo(array, arrayIndex);
+		}
+
+		bool ICollection<IServiceProvider>.Remove(IServiceProvider item)
+		{
+			return _providers.Remove(item.Name ?? string.Empty);
+		}
+
+		IEnumerator<IServiceProvider> IEnumerable<IServiceProvider>.GetEnumerator()
+		{
+			return _providers.Values.GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return _providers.Values.GetEnumerator();
+		}
+		#endregion
+	}
+}
