@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Zongsoft.Tests;
 
@@ -10,10 +7,10 @@ using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
-	public class ConvertTests
+	public class ConvertTest
 	{
 		[Fact]
-		public void ConvertValueTest()
+		public void TestConvertValue()
 		{
 			Assert.Null(Zongsoft.Common.Convert.ConvertValue<int?>("", default(int?)));
 			Assert.Null(Zongsoft.Common.Convert.ConvertValue<int?>("x", () => default(int?)));
@@ -47,7 +44,7 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void ToHexStringTest()
+		public void TestToHexString()
 		{
 			var source = new byte[16];
 
@@ -71,7 +68,7 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void BitVector32Test()
+		public void TestBitVector32()
 		{
 			Zongsoft.Common.BitVector32 vector = 1;
 

@@ -26,12 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Common\" />
-    <Folder Include="Collections\" />
     <Folder Include="Expressions\" />
     <Folder Include="IO\" />
     <Folder Include="Reflection\" />
-    <Folder Include="Services\" />
     <Folder Include="Data\" />
   </ItemGroup>
 

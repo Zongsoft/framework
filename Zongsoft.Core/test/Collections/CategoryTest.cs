@@ -5,12 +5,12 @@ using Xunit;
 
 namespace Zongsoft.Collections.Tests
 {
-	public class CategoryTests
+	public class CategoryTest
 	{
 		private Category _root;
 
 		#region 构造函数
-		public CategoryTests()
+		public CategoryTest()
 		{
 			_root = new Category();
 
@@ -31,7 +31,7 @@ namespace Zongsoft.Collections.Tests
 
 		#region 测试方法
 		[Fact]
-		public void FindTest()
+		public void TestFind()
 		{
 			Assert.NotNull(_root.Find("File"));
 			Assert.NotNull(_root.Find(" Edit"));

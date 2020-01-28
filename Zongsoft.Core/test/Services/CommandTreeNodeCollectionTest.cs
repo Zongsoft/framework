@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 using Xunit;
 
 namespace Zongsoft.Services.Tests
 {
-	public class CommandTreeNodeCollectionTests
+	public class CommandTreeNodeCollectionTest
 	{
 		[Fact]
-		public void AddTest()
+		public void TestAdd()
 		{
 			var nodes = new CommandTreeNodeCollection(null);
 

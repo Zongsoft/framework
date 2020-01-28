@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
-	public class SequenceTests
+	public class SequenceTest
 	{
 		const int ENTRY_COUNT = 100;
 		const int CLICK_COUNT = 1000;

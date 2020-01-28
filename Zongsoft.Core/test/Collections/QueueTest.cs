@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Zongsoft.Collections;
-
 using Xunit;
 
 namespace Zongsoft.Collections.Tests
 {
-	public class QueueTests
+	public class QueueTest
 	{
 		[Fact]
-		public void QueueTest()
+		public void Test()
 		{
 			var queue = new Queue(32);
 
@@ -19,7 +17,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void ClearTest()
+		public void TestClear()
 		{
 			var queue = new Queue();
 
@@ -34,7 +32,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void TrimToSizeTest()
+		public void TestTrimToSize()
 		{
 			var queue = new Queue(64);
 
@@ -54,7 +52,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void ToArrayTest()
+		public void TestToArray()
 		{
 			var queue = new Queue();
 			var array = queue.ToArray();
@@ -70,7 +68,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void DequeueTest()
+		public void TestDequeue()
 		{
 			var queue = new Queue(100);
 
@@ -94,7 +92,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void EnqueueTest()
+		public void TestEnqueue()
 		{
 			var queue = new Queue();
 
@@ -118,7 +116,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void PeekTest()
+		public void TestPeek()
 		{
 			var queue = new Queue();
 
@@ -147,7 +145,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void TakeTest()
+		public void TestTake()
 		{
 			var queue = new Queue();
 
@@ -176,7 +174,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void GetEnumeratorTest()
+		public void TestGetEnumerator()
 		{
 			var queue = new Queue();
 
@@ -194,7 +192,7 @@ namespace Zongsoft.Collections.Tests
 		}
 
 		[Fact]
-		public void CopyToTest()
+		public void TestCopyTo()
 		{
 			var queue = new Queue();
 

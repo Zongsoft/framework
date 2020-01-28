@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
-	public class RandomGeneratorTests
+	public class RandomGeneratorTest
 	{
 		[Fact]
 		public void TestGenerateString()

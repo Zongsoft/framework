@@ -8,10 +8,10 @@ using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
-	public class EnumUtilityTests
+	public class EnumUtilityTest
 	{
 		[Fact]
-		public void GetEnumEntryTest()
+		public void TestGetEnumEntry()
 		{
 			var entry = EnumUtility.GetEnumEntry(Gender.Female);
 
@@ -29,7 +29,7 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void GetEnumEntriesTest()
+		public void TestGetEnumEntries()
 		{
 			var entries = EnumUtility.GetEnumEntries(typeof(Gender), true);
 

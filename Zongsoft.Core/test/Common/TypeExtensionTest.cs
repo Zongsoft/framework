@@ -8,10 +8,10 @@ using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
-	public class TypeExtensionTests
+	public class TypeExtensionTest
 	{
 		[Fact]
-		public void IsAssignableFromTest()
+		public void TestIsAssignableFrom()
 		{
 			var baseType = typeof(ICollection<Person>);
 			var instanceType = typeof(Collection<Person>);
@@ -28,7 +28,7 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void GetTypeTest()
+		public void TestGetType()
 		{
 			Assert.Same(typeof(void), Zongsoft.Common.TypeExtension.GetType("void"));
 			Assert.Same(typeof(object), Zongsoft.Common.TypeExtension.GetType("object"));
@@ -62,7 +62,7 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void GetDefaultValueTest()
+		public void TestGetDefaultValue()
 		{
 			Assert.Equal(0, TypeExtension.GetDefaultValue(typeof(int)));
 			Assert.Equal(0d, TypeExtension.GetDefaultValue(typeof(double)));
