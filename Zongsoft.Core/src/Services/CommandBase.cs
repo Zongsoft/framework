@@ -150,7 +150,7 @@ namespace Zongsoft.Services
 		protected virtual bool IsMatch(object parameter)
 		{
 			if(parameter == null)
-				return false;
+				return true;
 
 			if(parameter is string)
 				return string.Equals((string)parameter, _name, StringComparison.OrdinalIgnoreCase);

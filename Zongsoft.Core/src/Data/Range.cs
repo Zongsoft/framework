@@ -37,12 +37,8 @@ namespace Zongsoft.Data
 {
 	public static class Range
 	{
-		#region 委托定义
-		private delegate void Getter(object target, out object minimum, out object maximum);
-		#endregion
-
-		#region 委托缓存
-		private static readonly ConcurrentDictionary<Type, Getter> _methods = new ConcurrentDictionary<Type, Getter>();
+		#region 私有变量
+		private static readonly ConcurrentDictionary<Type, RangeToken> _tokens = new ConcurrentDictionary<Type, RangeToken>();
 		#endregion
 
 		#region 公共方法
@@ -68,10 +64,49 @@ namespace Zongsoft.Data
 
 		public static bool IsRange(object target)
 		{
+			return target == null ? false : IsRange(target.GetType());
+		}
+
+		public static bool IsRange(object target, out Type underlyingType)
+		{
+			if(target != null)
+				return IsRange(target.GetType(), out underlyingType);
+
+			underlyingType = null;
+			return false;
+		}
+
+		public static bool IsRange(object target, out object minimum, out object maximum)
+		{
+			minimum = null;
+			maximum = null;
+
 			if(target == null)
 				return false;
 
-			return IsRange(target.GetType());
+			var type = target.GetType();
+
+			if(!IsRange(type, out var underlyingType))
+				return false;
+
+			if(type.IsArray)
+			{
+				Array array = (Array)target;
+
+				if(array.Length >= 2)
+				{
+					minimum = array.GetValue(0);
+					maximum = array.GetValue(1);
+
+					return true;
+				}
+
+				return false;
+			}
+
+			_tokens.GetOrAdd(underlyingType, t => new RangeToken(t)).GetRange(target, out minimum, out maximum);
+
+			return minimum != null || maximum != null;
 		}
 
 		public static bool IsRange(Type type)
@@ -90,186 +125,378 @@ namespace Zongsoft.Data
 				return false;
 			}
 
+			if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
+				type = underlyingType;
+
 			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Range<>);
 		}
 
-		public static void GetRange(object target, out object minimum, out object maximum)
+		public static bool IsRange(Type type, out Type underlyingType)
 		{
-			if(target == null)
-				throw new ArgumentNullException(nameof(target));
-
-			if(!TryGetRange(target, out minimum, out maximum))
-				throw new ArgumentException("The specified target is not a range.");
-		}
-
-		public static bool TryGetRange(object target, out object minimum, out object maximum)
-		{
-			minimum = null;
-			maximum = null;
-
-			if(target == null)
-				return false;
-
-			var type = target.GetType();
-
-			if(!IsRange(type))
-				return false;
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
 
 			if(type.IsArray)
 			{
-				Array array = (Array)target;
+				underlyingType = type.GetElementType();
 
-				if(array.Length >= 2)
-				{
-					minimum = array.GetValue(0);
-					maximum = array.GetValue(1);
-
+				if(typeof(IComparable).IsAssignableFrom(underlyingType) ||
+				   typeof(IComparable<>).MakeGenericType(underlyingType).IsAssignableFrom(underlyingType))
 					return true;
-				}
 
 				return false;
 			}
 
-			var elementType = type.GetGenericArguments()[0];
-			_methods.GetOrAdd(elementType, Compile(elementType)).Invoke(target, out minimum, out maximum);
+			if(Zongsoft.Common.TypeExtension.IsNullable(type, out var nullableType))
+				type = nullableType;
 
-			return minimum != null || maximum != null;
+			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Range<>))
+			{
+				underlyingType = type.GetGenericArguments()[0];
+				return true;
+			}
+
+			underlyingType = null;
+			return false;
+		}
+
+		public static bool IsEmpty(object target)
+		{
+			if(target == null)
+				return true;
+
+			if(IsRange(target.GetType(), out var underlyingType))
+				return _tokens.GetOrAdd(underlyingType, type => new RangeToken(type)).IsEmpty(target);
+
+			throw new InvalidOperationException($"The specified '{nameof(target)}' parameter of type '{target.GetType()}' is not a Rang type and this operation is not supported.");
+		}
+
+		public static bool HasValue(object target)
+		{
+			return !IsEmpty(target);
+		}
+
+		public static bool HasValue(object target, Action<Func<string, Condition>> fallback)
+		{
+			if(target == null)
+				return false;
+
+			if(IsRange(target.GetType(), out var underlyingType))
+			{
+				var token = _tokens.GetOrAdd(underlyingType, type => new RangeToken(type));
+
+				if(!token.IsEmpty(target))
+				{
+					var proxy = new HasValueProxy(target, token);
+					fallback?.Invoke(proxy.Call);
+					return true;
+				}
+			}
+
+			return false;
 		}
 		#endregion
 
-		#region 私有方法
-		private static Getter Compile(Type type)
+		#region 嵌套子类
+		private struct HasValueProxy
 		{
-			var rangeType = typeof(Range<>).MakeGenericType(type);
-			var nullableType = typeof(Nullable<>).MakeGenericType(type);
+			private readonly object _target;
+			private readonly RangeToken _token;
 
-			var method = new DynamicMethod("GetRange_" + type.Name, null, new Type[] { typeof(object), typeof(object).MakeByRefType(), typeof(object).MakeByRefType() }, typeof(Range), true);
+			public HasValueProxy(object target, RangeToken token)
+			{
+				_target = target;
+				_token = token;
+			}
 
-			method.DefineParameter(1, ParameterAttributes.None, "target");
-			method.DefineParameter(2, ParameterAttributes.Out, "minimum");
-			method.DefineParameter(3, ParameterAttributes.Out, "maximum");
-
-			var generator = method.GetILGenerator();
-
-			//local_0 : Range<T>
-			generator.DeclareLocal(rangeType);
-			//local_1 : Nullable<T>
-			generator.DeclareLocal(nullableType);
-
-			var minimumElseLabel = generator.DefineLabel();
-			var maximumIfLabel = generator.DefineLabel();
-			var maximumElseLabel = generator.DefineLabel();
-
-			//local_0 = (Range<T>)target;
-			generator.Emit(OpCodes.Ldarg_0);
-			generator.Emit(OpCodes.Unbox_Any, rangeType);
-			generator.Emit(OpCodes.Stloc_0);
-
-			//if(!range.Minimum.HasValue)
-			generator.Emit(OpCodes.Ldloca_S, 0);
-			generator.Emit(OpCodes.Call, rangeType.GetProperty("Minimum").GetMethod);
-			generator.Emit(OpCodes.Stloc_1);
-			generator.Emit(OpCodes.Ldloca_S, 1);
-			generator.Emit(OpCodes.Call, nullableType.GetProperty("HasValue").GetMethod);
-			generator.Emit(OpCodes.Brtrue_S, minimumElseLabel);
-
-			//minimum = null;
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldnull);
-			generator.Emit(OpCodes.Stind_Ref);
-			generator.Emit(OpCodes.Br_S, maximumIfLabel);
-
-			generator.MarkLabel(minimumElseLabel);
-
-			//minimum = range.Minimum.Value
-			generator.Emit(OpCodes.Ldarg_1);
-
-			generator.Emit(OpCodes.Ldloca_S, 1);
-			generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
-			generator.Emit(OpCodes.Box, type);
-			generator.Emit(OpCodes.Stind_Ref);
-
-			generator.MarkLabel(maximumIfLabel);
-
-			//if(!range.Maximum.HasValue)
-			generator.Emit(OpCodes.Ldloca_S, 0);
-			generator.Emit(OpCodes.Call, rangeType.GetProperty("Maximum").GetMethod);
-			generator.Emit(OpCodes.Stloc_1);
-			generator.Emit(OpCodes.Ldloca_S, 1);
-			generator.Emit(OpCodes.Call, nullableType.GetProperty("HasValue").GetMethod);
-			generator.Emit(OpCodes.Brtrue_S, maximumElseLabel);
-
-			//maximum = null;
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Ldnull);
-			generator.Emit(OpCodes.Stind_Ref);
-			generator.Emit(OpCodes.Ret);
-
-			generator.MarkLabel(maximumElseLabel);
-
-			//maximum = range.Maximum.Value
-			generator.Emit(OpCodes.Ldarg_2);
-
-			generator.Emit(OpCodes.Ldloca_S, 1);
-			generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
-			generator.Emit(OpCodes.Box, type);
-			generator.Emit(OpCodes.Stind_Ref);
-			generator.Emit(OpCodes.Ret);
-
-			return (Getter)method.CreateDelegate(typeof(Getter));
+			public Condition Call(string name)
+			{
+				return _token.GetCondition(_target, name);
+			}
 		}
 
-		private static Getter CompileWithExpression(Type type)
+		private class RangeToken
 		{
-			var target = Expression.Parameter(typeof(object), "target");
-			var minimum = Expression.Parameter(typeof(object).MakeByRefType(), "minimum");
-			var maximum = Expression.Parameter(typeof(object).MakeByRefType(), "maximum");
+			#region 委托定义
+			public delegate void GetRangeDelegate(object target, out object minimum, out object maximum);
+			#endregion
 
-			var variables = new []
+			#region 成员字段
+			private readonly Type _underlyingType;
+			private GetRangeDelegate _getRange;
+			private Func<object, bool> _isEmpty;
+			private Func<object, string, Condition> _getCondition;
+			#endregion
+
+			#region 构造函数
+			public RangeToken(Type underlyingType)
 			{
-				Expression.Variable(typeof(Range<>).MakeGenericType(type), "range"),
-			};
+				_underlyingType = underlyingType ?? throw new ArgumentNullException(nameof(underlyingType));
 
-			var minimumProperty = Expression.Property(variables[0], variables[0].Type.GetProperty("Minimum"));
-			var maximumProperty = Expression.Property(variables[0], variables[0].Type.GetProperty("Maximum"));
+				if(!underlyingType.IsValueType)
+					throw new ArgumentException();
+			}
+			#endregion
 
-			var statements = new Expression[]
+			#region 公共方法
+			public bool IsEmpty(object target)
 			{
-				Expression.Assign(variables[0], Expression.Convert(target, variables[0].Type)),
+				if(_isEmpty == null)
+				{
+					lock(this)
+					{
+						if(_isEmpty == null)
+							_isEmpty = CompileIsEmpty();
+					}
+				}
 
-				Expression.IfThenElse(
-					Expression.Equal(minimumProperty, Expression.Constant(null)),
-					Expression.Assign(minimum, Expression.Constant(null)),
-					Expression.Assign(minimum, Expression.Convert(Expression.Property(minimumProperty, typeof(Nullable<>).MakeGenericType(type).GetProperty("Value")), typeof(object)))),
+				return _isEmpty.Invoke(target);
+			}
 
-				Expression.IfThenElse(
-					Expression.Equal(maximumProperty, Expression.Constant(null)),
-					Expression.Assign(maximum, Expression.Constant(null)),
-					Expression.Assign(maximum, Expression.Convert(Expression.Property(maximumProperty, typeof(Nullable<>).MakeGenericType(type).GetProperty("Value")), typeof(object))))
-			};
+			public Condition GetCondition(object target, string name)
+			{
+				if(_getCondition == null)
+				{
+					lock(this)
+					{
+						if(_getCondition == null)
+							_getCondition = CompileGetCondition();
+					}
+				}
 
-			return Expression.Lambda<Getter>(Expression.Block(variables, statements), target, minimum, maximum).Compile();
-		}
+				return _getCondition.Invoke(target, name);
+			}
 
-		/// <summary>
-		/// 示例：动态编译后的代码。
-		/// </summary>
-		/// <param name="target">指定的待解析的范围对象。</param>
-		/// <param name="minimum">返回参数，指定的范围对象的最小值。</param>
-		/// <param name="maximum">返回参数，指定的范围对象的最大值。</param>
-		private static void GetRange_XXX(object target, out object minimum, out object maximum)
-		{
-			var range = (Range<int>)target;
+			public void GetRange(object target, out object minimum, out object maximum)
+			{
+				if(_getRange == null)
+				{
+					lock(this)
+					{
+						if(_getRange == null)
+							_getRange = CompileGetRange();
+					}
+				}
 
-			if(range.Minimum == null)
-				minimum = null;
-			else
-				minimum = range.Minimum.Value;
+				_getRange.Invoke(target, out minimum, out maximum);
+			}
+			#endregion
 
-			if(range.Maximum == null)
-				maximum = null;
-			else
-				maximum = range.Maximum.Value;
+			#region 动态编译
+
+			/*
+			 * 示例：动态编译后的代码。
+			 * 
+			private static void GetRange_XXX(object target, out object minimum, out object maximum)
+			{
+				var range = (Range<XXX>)target;
+
+				if(range.Minimum == null)
+					minimum = null;
+				else
+					minimum = range.Minimum.Value;
+
+				if(range.Maximum == null)
+					maximum = null;
+				else
+					maximum = range.Maximum.Value;
+			}
+
+			private static bool HasValue_XXX(object target)
+			{
+				var range = (Range<XXX>)target;
+				return range.HasValue;
+			}
+
+			private static Condition GetCondition_XXX(object target, string name)
+			{
+				var range = (Range<XXX>)target;
+				return range.ToCondition(name);
+			}
+			*/
+
+			private GetRangeDelegate CompileGetRange()
+			{
+				var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
+				var nullableType = typeof(Nullable<>).MakeGenericType(_underlyingType);
+
+				var method = new DynamicMethod(
+								"GetRange$" + _underlyingType.FullName.Replace('.', '-'),
+								null,
+								new Type[] { typeof(object), typeof(object).MakeByRefType(), typeof(object).MakeByRefType() },
+								typeof(Range),
+								true);
+
+				method.DefineParameter(1, ParameterAttributes.None, "target");
+				method.DefineParameter(2, ParameterAttributes.Out, "minimum");
+				method.DefineParameter(3, ParameterAttributes.Out, "maximum");
+
+				var generator = method.GetILGenerator();
+
+				//local_0 : Range<T>
+				generator.DeclareLocal(rangeType);
+				//local_1 : Nullable<T>
+				generator.DeclareLocal(nullableType);
+
+				var minimumElseLabel = generator.DefineLabel();
+				var maximumIfLabel = generator.DefineLabel();
+				var maximumElseLabel = generator.DefineLabel();
+
+				//local_0 = (Range<T>)target;
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Unbox_Any, rangeType);
+				generator.Emit(OpCodes.Stloc_0);
+
+				//if(!range.Minimum.HasValue)
+				generator.Emit(OpCodes.Ldloca_S, 0);
+				generator.Emit(OpCodes.Call, rangeType.GetProperty("Minimum").GetMethod);
+				generator.Emit(OpCodes.Stloc_1);
+				generator.Emit(OpCodes.Ldloca_S, 1);
+				generator.Emit(OpCodes.Call, nullableType.GetProperty("HasValue").GetMethod);
+				generator.Emit(OpCodes.Brtrue_S, minimumElseLabel);
+
+				//minimum = null;
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Ldnull);
+				generator.Emit(OpCodes.Stind_Ref);
+				generator.Emit(OpCodes.Br_S, maximumIfLabel);
+
+				generator.MarkLabel(minimumElseLabel);
+
+				//minimum = range.Minimum.Value
+				generator.Emit(OpCodes.Ldarg_1);
+
+				generator.Emit(OpCodes.Ldloca_S, 1);
+				generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
+				generator.Emit(OpCodes.Box, _underlyingType);
+				generator.Emit(OpCodes.Stind_Ref);
+
+				generator.MarkLabel(maximumIfLabel);
+
+				//if(!range.Maximum.HasValue)
+				generator.Emit(OpCodes.Ldloca_S, 0);
+				generator.Emit(OpCodes.Call, rangeType.GetProperty("Maximum").GetMethod);
+				generator.Emit(OpCodes.Stloc_1);
+				generator.Emit(OpCodes.Ldloca_S, 1);
+				generator.Emit(OpCodes.Call, nullableType.GetProperty("HasValue").GetMethod);
+				generator.Emit(OpCodes.Brtrue_S, maximumElseLabel);
+
+				//maximum = null;
+				generator.Emit(OpCodes.Ldarg_2);
+				generator.Emit(OpCodes.Ldnull);
+				generator.Emit(OpCodes.Stind_Ref);
+				generator.Emit(OpCodes.Ret);
+
+				generator.MarkLabel(maximumElseLabel);
+
+				//maximum = range.Maximum.Value
+				generator.Emit(OpCodes.Ldarg_2);
+
+				generator.Emit(OpCodes.Ldloca_S, 1);
+				generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
+				generator.Emit(OpCodes.Box, _underlyingType);
+				generator.Emit(OpCodes.Stind_Ref);
+				generator.Emit(OpCodes.Ret);
+
+				return (GetRangeDelegate)method.CreateDelegate(typeof(GetRangeDelegate));
+			}
+
+			private GetRangeDelegate CompileGetRangeWithExpression(Type type)
+			{
+				var target = Expression.Parameter(typeof(object), "target");
+				var minimum = Expression.Parameter(typeof(object).MakeByRefType(), "minimum");
+				var maximum = Expression.Parameter(typeof(object).MakeByRefType(), "maximum");
+
+				var variables = new[]
+				{
+					Expression.Variable(typeof(Range<>).MakeGenericType(type), "range"),
+				};
+
+				var minimumProperty = Expression.Property(variables[0], variables[0].Type.GetProperty("Minimum"));
+				var maximumProperty = Expression.Property(variables[0], variables[0].Type.GetProperty("Maximum"));
+
+				var statements = new Expression[]
+				{
+					Expression.Assign(variables[0], Expression.Convert(target, variables[0].Type)),
+
+					Expression.IfThenElse(
+						Expression.Equal(minimumProperty, Expression.Constant(null)),
+						Expression.Assign(minimum, Expression.Constant(null)),
+						Expression.Assign(minimum, Expression.Convert(Expression.Property(minimumProperty, typeof(Nullable<>).MakeGenericType(type).GetProperty("Value")), typeof(object)))),
+
+					Expression.IfThenElse(
+						Expression.Equal(maximumProperty, Expression.Constant(null)),
+						Expression.Assign(maximum, Expression.Constant(null)),
+						Expression.Assign(maximum, Expression.Convert(Expression.Property(maximumProperty, typeof(Nullable<>).MakeGenericType(type).GetProperty("Value")), typeof(object))))
+				};
+
+				return Expression.Lambda<GetRangeDelegate>(Expression.Block(variables, statements), target, minimum, maximum).Compile();
+			}
+
+			private Func<object, bool> CompileIsEmpty()
+			{
+				var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
+
+				var method = new DynamicMethod(
+								"IsEmpty$" + _underlyingType.FullName.Replace('.', '-'),
+								typeof(bool),
+								new Type[] { typeof(object) },
+								typeof(Range),
+								true);
+
+				method.DefineParameter(1, ParameterAttributes.None, "target");
+
+				var generator = method.GetILGenerator();
+
+				//local_0 : Range<T>
+				generator.DeclareLocal(rangeType);
+
+				//local_0 = (Range<T>)target;
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Unbox_Any, rangeType);
+				generator.Emit(OpCodes.Stloc_0);
+
+				//return local_0.IsEmpty;
+				generator.Emit(OpCodes.Ldloca_S, 0);
+				generator.Emit(OpCodes.Call, rangeType.GetProperty("IsEmpty").GetMethod);
+				generator.Emit(OpCodes.Ret);
+
+				return (Func<object, bool>)method.CreateDelegate(typeof(Func<object, bool>));
+			}
+
+			private Func<object, string, Condition> CompileGetCondition()
+			{
+				var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
+
+				var method = new DynamicMethod(
+								"GetCondition" + _underlyingType.FullName.Replace('.', '-'),
+								typeof(Condition),
+								new Type[] { typeof(object), typeof(string) },
+								typeof(Range),
+								true);
+
+				method.DefineParameter(1, ParameterAttributes.None, "target");
+				method.DefineParameter(2, ParameterAttributes.None, "name");
+
+				var generator = method.GetILGenerator();
+
+				//local_0 : Range<T>
+				generator.DeclareLocal(rangeType);
+
+				//local_0 = (Range<T>)target;
+				generator.Emit(OpCodes.Ldarg_0);
+				generator.Emit(OpCodes.Unbox_Any, rangeType);
+				generator.Emit(OpCodes.Stloc_0);
+
+				//return local_0.ToCondition(name);
+				generator.Emit(OpCodes.Ldloca_S, 0);
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Call, rangeType.GetMethod("ToCondition"));
+				generator.Emit(OpCodes.Ret);
+
+				return (Func<object, string, Condition>)method.CreateDelegate(typeof(Func<object, string, Condition>));
+			}
+			#endregion
 		}
 		#endregion
 	}

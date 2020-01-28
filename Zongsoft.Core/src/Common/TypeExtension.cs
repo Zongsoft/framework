@@ -247,7 +247,7 @@ namespace Zongsoft.Common
 		public static bool IsInteger(this Type type)
 		{
 			if(type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			var code = Type.GetTypeCode(type);
 
@@ -260,13 +260,28 @@ namespace Zongsoft.Common
 		public static bool IsNumeric(this Type type)
 		{
 			if(type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			var code = Type.GetTypeCode(type);
 
 			return TypeExtension.IsInteger(type) ||
 				   code == TypeCode.Single || code == TypeCode.Double ||
 				   code == TypeCode.Decimal || code == TypeCode.Char;
+		}
+
+		public static bool IsNullable(this Type type, out Type underlyingType)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+			{
+				underlyingType = Nullable.GetUnderlyingType(type);
+				return true;
+			}
+
+			underlyingType = null;
+			return false;
 		}
 
 		public static Type GetListElementType(this Type type)
@@ -464,12 +479,12 @@ namespace Zongsoft.Common
 					return typeof(bool[]);
 
 				case "money":
-				case "currency":
 				case "decimal":
+				case "currency":
 					return typeof(decimal);
 				case "money?":
-				case "currency?":
 				case "decimal?":
+				case "currency?":
 					return typeof(decimal?);
 				case "money[]":
 				case "currency[]":
@@ -552,10 +567,13 @@ namespace Zongsoft.Common
 					return typeof(TimeSpan[]);
 
 				case "guid":
+				case "uuid":
 					return typeof(Guid);
 				case "guid?":
+				case "uuid?":
 					return typeof(Guid?);
 				case "guid[]":
+				case "uuid[]":
 					return typeof(Guid[]);
 
 				case "object":
