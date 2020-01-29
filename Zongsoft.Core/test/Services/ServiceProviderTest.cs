@@ -31,7 +31,7 @@ namespace Zongsoft.Services.Tests
 		}
 
 		[Fact]
-		public void ResolveTest()
+		public void Test()
 		{
 			ICommand command = null;
 

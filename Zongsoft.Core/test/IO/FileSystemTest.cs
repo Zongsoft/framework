@@ -8,7 +8,7 @@ namespace Zongsoft.IO.Tests
 	public class FileSystemTest
 	{
 		[Fact]
-		public void DirectoryCreate()
+		public void TestDirectory()
 		{
 			var text = @"zfs.local:/d/temp/sub-dir/[1]123.jpg";
 			var path = Path.Parse(text);
@@ -23,7 +23,7 @@ namespace Zongsoft.IO.Tests
 		}
 
 		[Fact]
-		public void DirectoryGetFilesTest()
+		public void TestFiles()
 		{
 			const int FILE_COUNT = 10;
 

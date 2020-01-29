@@ -7,7 +7,7 @@ namespace Zongsoft.IO.Tests
 	public class PathTest
 	{
 		[Fact]
-		public void PathParseTest()
+		public void TestParsePath()
 		{
 			var text = @"zfs.local: / data  / images /  1/ year   /   month-day / [1]123.jpg";
 			var path = Path.Parse(text);
@@ -42,7 +42,7 @@ namespace Zongsoft.IO.Tests
 		}
 
 		[Fact]
-		public void PathCombineTest()
+		public void TestCombinePath()
 		{
 			var baseDirectory = "zfs.local:/data/images/";
 			var selfDirectory = "./bin";

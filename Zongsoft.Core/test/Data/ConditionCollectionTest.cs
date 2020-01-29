@@ -8,7 +8,7 @@ namespace Zongsoft.Data.Tests
 	public class ConditionCollectionTest
 	{
 		[Fact]
-		public void OperatorTest()
+		public void TestOperator()
 		{
 			var and1 = new Condition("a", 1) & new Condition("b", 2);
 			Assert.Equal(ConditionCombination.And, and1.Combination);
