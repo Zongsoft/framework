@@ -286,7 +286,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			if(typeof(T).IsAssignableFrom(property.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(property.DeclaringType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
 
 			//如果属性不可读则返回空
@@ -304,7 +304,9 @@ namespace Zongsoft.Reflection
 			if(!property.GetMethod.IsStatic)
 			{
 				generator.Emit(OpCodes.Ldarg_0);
-				generator.Emit(OpCodes.Ldind_Ref);
+
+				if(!typeof(T).IsValueType)
+					generator.Emit(OpCodes.Ldind_Ref);
 			}
 
 			//获取属性的索引器参数
@@ -366,7 +368,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			if(typeof(T).IsAssignableFrom(property.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(property.DeclaringType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
 
 			//如果属性不可写则返回空
@@ -384,7 +386,9 @@ namespace Zongsoft.Reflection
 			if(!property.SetMethod.IsStatic)
 			{
 				generator.Emit(OpCodes.Ldarg_0);
-				generator.Emit(OpCodes.Ldind_Ref);
+
+				if(!typeof(T).IsValueType)
+					generator.Emit(OpCodes.Ldind_Ref);
 			}
 
 			//获取属性的索引器参数

@@ -182,7 +182,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			if(typeof(T).IsAssignableFrom(field.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(field.DeclaringType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
 
 			var method = new DynamicMethod("dynamic:" + typeof(T).FullName + "!Get" + field.Name + "#1",
@@ -194,7 +194,10 @@ namespace Zongsoft.Reflection
 			var generator = method.GetILGenerator();
 
 			generator.Emit(OpCodes.Ldarg_0);
-			generator.Emit(OpCodes.Ldind_Ref);
+
+			if(!typeof(T).IsValueType)
+				generator.Emit(OpCodes.Ldind_Ref);
+
 			generator.Emit(OpCodes.Ldfld, field);
 
 			if(field.FieldType.IsValueType)
@@ -210,7 +213,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			if(typeof(T).IsAssignableFrom(field.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(field.DeclaringType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
 
 			//如果字段为只读则返回空
@@ -226,7 +229,10 @@ namespace Zongsoft.Reflection
 			var generator = method.GetILGenerator();
 
 			generator.Emit(OpCodes.Ldarg_0);
-			generator.Emit(OpCodes.Ldind_Ref);
+
+			if(!typeof(T).IsValueType)
+				generator.Emit(OpCodes.Ldind_Ref);
+
 			generator.Emit(OpCodes.Ldarg_1);
 
 			if(field.FieldType.IsValueType)
