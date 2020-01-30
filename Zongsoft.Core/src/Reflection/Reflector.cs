@@ -80,7 +80,7 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			return TryGetValue(target, name, parameters, out var value) ? value :
+			return TryGetValue(ref target, name, parameters, out var value) ? value :
 			       throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
 		}
 
@@ -124,21 +124,21 @@ namespace Zongsoft.Reflection
 	       throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
 		}
 
-		public static object GetValue<T>(T target, string name, params object[] parameters)
+		public static object GetValue<T>(ref T target, string name, params object[] parameters)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			return TryGetValue<T>(target, name, parameters, out var value) ? value :
+			return TryGetValue<T>(ref target, name, parameters, out var value) ? value :
 			       throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
 		}
 
-		public static bool TryGetValue(this MemberInfo member, ref object target, out object value)
+		public static bool TryGetValue(this MemberInfo member, object target, out object value)
 		{
 			return TryGetValue(member, ref target, Array.Empty<object>(), out value);
 		}
 
-		public static bool TryGetValue(this MemberInfo member, ref object target, object[] parameters, out object value)
+		public static bool TryGetValue(this MemberInfo member, object target, object[] parameters, out object value)
 		{
 			if(member == null)
 				throw new ArgumentNullException(nameof(member));
@@ -159,7 +159,7 @@ namespace Zongsoft.Reflection
 
 		public static bool TryGetValue(object target, string name, out object value)
 		{
-			return TryGetValue(target, name, Array.Empty<object>(), out value);
+			return TryGetValue(ref target, name, Array.Empty<object>(), out value);
 		}
 
 		public static bool TryGetValue(object target, string name, object[] parameters, out object value)
@@ -205,12 +205,12 @@ namespace Zongsoft.Reflection
 			return false;
 		}
 
-		public static bool TryGetValue<T>(T target, string name, out object value)
+		public static bool TryGetValue<T>(ref T target, string name, out object value)
 		{
-			return TryGetValue<T>(target, name, Array.Empty<object>(), out value);
+			return TryGetValue<T>(ref target, name, Array.Empty<object>(), out value);
 		}
 
-		public static bool TryGetValue<T>(T target, string name, object[] parameters, out object value)
+		public static bool TryGetValue<T>(ref T target, string name, object[] parameters, out object value)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
@@ -283,12 +283,12 @@ namespace Zongsoft.Reflection
 			}
 		}
 
-		public static void SetValue(ref object target, string name, object value, params object[] parameters)
+		public static void SetValue(object target, string name, object value, params object[] parameters)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			if(!TrySetValue(ref target, name, value, parameters))
+			if(!TrySetValue(target, name, value, parameters))
 				throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
 		}
 
@@ -332,7 +332,7 @@ namespace Zongsoft.Reflection
 				throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
 		}
 
-		public static bool TrySetValue(this MemberInfo member, ref object target, object value, params object[] parameters)
+		public static bool TrySetValue(this MemberInfo member, object target, object value, params object[] parameters)
 		{
 			if(member == null)
 				throw new ArgumentNullException(nameof(member));
@@ -350,7 +350,7 @@ namespace Zongsoft.Reflection
 			return false;
 		}
 
-		public static bool TrySetValue(ref object target, string name, object value, params object[] parameters)
+		public static bool TrySetValue(object target, string name, object value, params object[] parameters)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
