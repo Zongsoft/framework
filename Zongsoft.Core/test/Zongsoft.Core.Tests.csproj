@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Zongsoft</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +29,6 @@
   <ItemGroup>
     <Folder Include="Expressions\" />
     <Folder Include="IO\" />
-    <Folder Include="Reflection\" />
     <Folder Include="Data\" />
   </ItemGroup>
 
