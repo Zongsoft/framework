@@ -35,6 +35,10 @@ namespace Zongsoft.Collections
 {
 	public static class HierarchicalExpressionParser
 	{
+		#region 常量定义
+		private const string EXCEPTION_ILLEGAL_CHARACTER_MESSAGE = "The '{0}' character at the {1} is an illegal character.";
+		#endregion
+
 		#region 公共方法
 		public static bool TryParse(string text, out HierarchicalExpression expression)
 		{
@@ -76,8 +80,7 @@ namespace Zongsoft.Collections
 
 			//创建解析上下文对象
 			var context = new StateContext(text.AsSpan(start, count));
-			var anchor = IO.PathAnchor.None;
-			Reflection.Expressions.IMemberExpression members = null;
+			Reflection.Expressions.IMemberExpression accessor = null;
 			IList<string> segments = null;
 
 			//状态迁移驱动
@@ -85,93 +88,97 @@ namespace Zongsoft.Collections
 			{
 				if(context.State == State.Exit)
 				{
-					if((members = Reflection.Expressions.MemberExpressionParser.Parse(text, i, -1, onError)) == null)
+					var index = context.Character == '@' ? i : i - 1;
+
+					if((accessor = Reflection.Expressions.MemberExpressionParser.Parse(text, index, -1, onError)) == null)
 						return null;
 					else
 						break;
 				}
 
-				context.Accept();
+				if(!context.Takein())
+					continue;
 
 				switch(context.State)
 				{
 					case State.None:
-						if(!DoNone(ref context, onError))
+						if(!DoNone(ref context, i, onError))
 							return null;
 
 						break;
 					case State.Slash:
-						if(!DoSlash(ref context, onError))
+						if(!DoSlash(ref context, i, onError))
 							return null;
-
-						if(anchor == IO.PathAnchor.None)
-							anchor = IO.PathAnchor.Root;
 
 						break;
-					case State.Anchor_Current:
-						if(!DoAnchorCurrent(ref context, onError))
+					case State.AnchorCurrent:
+						if(!DoAnchorCurrent(ref context, i, onError))
 							return null;
-
-						anchor = IO.PathAnchor.Current;
 
 						break;
-					case State.Anchor_Parent:
-						if(!DoAnchorParent(ref context, onError))
+					case State.AnchorParent:
+						if(!DoAnchorParent(ref context, i, onError))
 							return null;
-
-						anchor = IO.PathAnchor.Parent;
 
 						break;
 					case State.Segment:
-						if(!DoSegement(ref context, segment => { }, onError))
+						if(!DoSegement(ref context, i, segment =>
+						{
+							if(segments == null)
+								segments = new List<string>();
+
+							segments.Add(segment);
+						}, onError))
 							return null;
 
 						break;
 				}
 			}
 
-			//获取最终的解析结果
-			var segment = context.GetResult();
-
-			if(segment != null && segment.Length > 0)
+			if(context.State == State.Segment)
 			{
-				if(segments == null)
-					segments = new string[] { segment };
-				else
-					segments.Add(segment);
+				//获取最终的解析结果
+				var segment = context.Accept(0);
+
+				if(segment != null && segment.Length > 0)
+				{
+					if(segments == null)
+						segments = new string[] { segment };
+					else
+						segments.Add(segment);
+				}
 			}
 
-			return new HierarchicalExpression(anchor, segments.ToArray(), members);
+			return new HierarchicalExpression(context.Anchor, segments?.ToArray(), accessor);
 		}
 		#endregion
 
 		#region 状态处理
-		private static bool DoNone(ref StateContext context, Action<string> error)
+		private static bool DoNone(ref StateContext context, int position, Action<string> error)
 		{
 			switch(context.Character)
 			{
 				case '\0':
 					return false;
 				case '.':
-					context.State = State.Anchor_Current;
+					context.State = State.AnchorCurrent;
+					context.Anchor = IO.PathAnchor.Current;
 					break;
 				case '/':
 				case '\\':
 					context.State = State.Slash;
+					context.Anchor = IO.PathAnchor.Root;
 					break;
 				case '@':
 				case '[':
 					context.State = State.Exit;
 					break;
 				default:
-					if(context.IsWhitespace())
-						return true;
-
 					if(Validate(context.Character))
 						context.State = State.Segment;
 					else
 					{
-						error($"");
+						error(GetIllegalCharacterExceptionMessage(context.Character, position));
 						return false;
 					}
 
@@ -181,11 +188,8 @@ namespace Zongsoft.Collections
 			return true;
 		}
 
-		private static bool DoSlash(ref StateContext context, Action<string> error)
+		private static bool DoSlash(ref StateContext context, int position, Action<string> error)
 		{
-			if(context.IsWhitespace())
-				return true;
-
 			if(context.Character == '@' || context.Character == '[')
 			{
 				context.State = State.Exit;
@@ -198,67 +202,87 @@ namespace Zongsoft.Collections
 				return true;
 			}
 
-			error($"");
+			error(GetIllegalCharacterExceptionMessage(context.Character, position));
 			return false;
 		}
 
-		private static bool DoAnchorCurrent(ref StateContext context, Action<string> error)
+		private static bool DoAnchorCurrent(ref StateContext context, int position, Action<string> error)
 		{
 			switch(context.Character)
 			{
 				case '.':
-					context.State = State.Anchor_Parent;
+					context.State = State.AnchorParent;
+					context.Anchor = IO.PathAnchor.Parent;
 					return true;
 				case '/':
 				case '\\':
 					context.State = State.Slash;
+					context.Accept(1);
 					return true;
 				default:
-					error($"");
+					error(GetIllegalCharacterExceptionMessage(context.Character, position));
 					return false;
 			}
 		}
 
-		private static bool DoAnchorParent(ref StateContext context, Action<string> error)
+		private static bool DoAnchorParent(ref StateContext context, int position, Action<string> error)
 		{
 			if(context.Character == '/' || context.Character == '\\')
 			{
 				context.State = State.Slash;
+				context.Accept(1);
 				return true;
 			}
 
-			error($"");
+			error(GetIllegalCharacterExceptionMessage(context.Character, position));
 			return false;
 		}
 
-		private static bool DoSegement(ref StateContext context, Action<string> complete, Action<string> error)
+		private static bool DoSegement(ref StateContext context, int position, Action<string> complete, Action<string> error)
 		{
 			switch(context.Character)
 			{
 				case '@':
 				case '[':
 					context.State = State.Exit;
-					complete(context.GetResult());
+					complete(context.Accept(1));
 					return true;
 				case '/':
 				case '\\':
 					context.State = State.Slash;
-					complete(context.GetResult());
+					complete(context.Accept(1));
 					return true;
 			}
 
 			if(Validate(context.Character))
 				return true;
 
-			error($"");
+			error(GetIllegalCharacterExceptionMessage(context.Character, position));
 			return false;
 		}
 		#endregion
 
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static bool Validate(char chr)
 		{
-			return !Array.Exists(HierarchicalNode.IllegalCharacters, c => chr == c);
+			var iterator = HierarchicalNode.IllegalCharacters.AsSpan().GetEnumerator();
+
+			while(iterator.MoveNext())
+			{
+				if(iterator.Current == chr)
+					return false;
+			}
+
+			return true;
 		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetIllegalCharacterExceptionMessage(char chr, int position)
+		{
+			return string.Format(EXCEPTION_ILLEGAL_CHARACTER_MESSAGE, chr, position);
+		}
+		#endregion
 
 		#region 嵌套结构
 		private enum State
@@ -267,15 +291,15 @@ namespace Zongsoft.Collections
 			Exit,
 			Slash,
 			Segment,
-			Anchor_Current,
-			Anchor_Parent,
+			AnchorCurrent,
+			AnchorParent,
 		}
 
 		private ref struct StateContext
 		{
 			#region 私有变量
-			private int _last;
-			private int _position;
+			private int _anchorPosition;
+			private int _cursorPosition;
 			private int _whitespaces;
 			private readonly ReadOnlySpan<char> _data;
 			#endregion
@@ -283,53 +307,71 @@ namespace Zongsoft.Collections
 			#region 公共字段
 			public State State;
 			public char Character;
+			public IO.PathAnchor Anchor;
 			#endregion
 
 			#region 构造函数
 			public StateContext(ReadOnlySpan<char> data)
 			{
 				_data = data;
-				_last = -1;
-				_position = -1;
+				_anchorPosition = -1;
+				_cursorPosition = -1;
 				_whitespaces = 0;
 				this.State = State.None;
 				this.Character = '\0';
+				this.Anchor = IO.PathAnchor.None;
 			}
 			#endregion
 
 			#region 公共方法
-			public char Accept()
+			public bool Takein()
 			{
-				if(_position < _data.Length)
-				{
-					if(char.IsWhiteSpace(this.Character = _data[++_position]))
-						_whitespaces++;
+				if(_cursorPosition >= _data.Length)
+					return false;
 
-					return this.Character;
+				if(char.IsWhiteSpace(this.Character = _data[++_cursorPosition]))
+				{
+					if(_cursorPosition == _anchorPosition + 1)
+					{
+						_anchorPosition++;
+						return false;
+					}
+
+					_whitespaces++;
+				}
+				else
+				{
+					if(!IsDelimiter(this.Character))
+						_whitespaces = 0;
+					else
+					{
+						if(_cursorPosition == _anchorPosition + 1)
+							_anchorPosition = _cursorPosition;
+					}
 				}
 
-				return this.Character = '\0';
+				return true;
 			}
 
-			public bool IsWhitespace()
+			public string Accept(int backspaces)
 			{
-				if(_position < 0)
-					throw new InvalidOperationException();
-
-				return char.IsWhiteSpace(Character);
-			}
-
-			public string GetResult()
-			{
-				if(_last < _position - _whitespaces)
+				if(_anchorPosition < _cursorPosition - _whitespaces - backspaces)
 				{
-					var start = _last;
-					_last = _position;
+					var start = _anchorPosition;
+					_anchorPosition = _cursorPosition;
 
-					return _data.Slice(start + 1, _position - start - _whitespaces + 1).ToString();
+					return _data.Slice(start + 1, _cursorPosition - start - _whitespaces - backspaces).ToString();
 				}
 
 				return null;
+			}
+			#endregion
+
+			#region 私有方法
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private static bool IsDelimiter(char chr)
+			{
+				return chr == '/' || chr == '\\' || chr == '@' || chr == '[';
 			}
 			#endregion
 		}

@@ -152,8 +152,8 @@ namespace Zongsoft.Options.Configuration
 			if(element == null)
 				throw new ArgumentException($"Not found '{elementName}' configuration element in the '{this.FilePath}' file.");
 
-			if(expression.Members != null)
-				return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Members, element);
+			if(expression.Accessor != null)
+				return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, element);
 
 			return element;
 		}
@@ -181,8 +181,8 @@ namespace Zongsoft.Options.Configuration
 			if(element == null)
 				throw new ArgumentException($"Not found '{elementName}' configuration element in the '{this.FilePath}' file.");
 
-			if(expression.Members != null)
-				Reflection.Expressions.MemberExpressionEvaluator.Default.SetValue(expression.Members, element, value);
+			if(expression.Accessor != null)
+				Reflection.Expressions.MemberExpressionEvaluator.Default.SetValue(expression.Accessor, element, value);
 		}
 		#endregion
 

@@ -31,7 +31,6 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.IO;
-using Zongsoft.Reflection;
 using Zongsoft.Reflection.Expressions;
 
 namespace Zongsoft.Collections
@@ -51,33 +50,38 @@ namespace Zongsoft.Collections
 	/// </remarks>
 	public class HierarchicalExpression
 	{
-		#region 成员字段
-		private string _path;
-		private string[] _segments;
-		private PathAnchor _anchor;
-		private IMemberExpression _members;
-		#endregion
-
 		#region 构造函数
-		public HierarchicalExpression(PathAnchor anchor, string[] segments, IMemberExpression members)
+		public HierarchicalExpression(PathAnchor anchor, string[] segments, IMemberExpression accessor)
 		{
-			_anchor = anchor;
-			_segments = segments ?? Array.Empty<string>();
-			_members = members;
+			this.Anchor = anchor;
+			this.Accessor = accessor;
+			this.Segments = segments ?? Array.Empty<string>();
 
-			switch(_anchor)
+			switch(anchor)
 			{
-				case IO.PathAnchor.Root:
-					_path = HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, _segments);
+				case PathAnchor.Root:
+					if(segments == null || segments.Length == 0)
+						this.Path = HierarchicalNode.PathSeparatorChar.ToString();
+					else
+						this.Path = HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
 					break;
-				case IO.PathAnchor.Current:
-					_path = "." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, _segments);
+				case PathAnchor.Current:
+					if(segments == null || segments.Length == 0)
+						this.Path = ".";
+					else
+						this.Path = "." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
 					break;
-				case IO.PathAnchor.Parent:
-					_path = "." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, _segments);
+				case PathAnchor.Parent:
+					if(segments == null || segments.Length == 0)
+						this.Path = "..";
+					else
+						this.Path = ".." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
 					break;
 				default:
-					_path = string.Join(HierarchicalNode.PathSeparatorChar, _segments);
+					if(segments == null || segments.Length == 0)
+						this.Path = string.Empty;
+					else
+						this.Path = string.Join(HierarchicalNode.PathSeparatorChar, Segments);
 					break;
 			}
 		}
@@ -87,46 +91,22 @@ namespace Zongsoft.Collections
 		/// <summary>
 		/// 获取层次路径的锚定点。
 		/// </summary>
-		public IO.PathAnchor Anchor
-		{
-			get
-			{
-				return _anchor;
-			}
-		}
+		public PathAnchor Anchor { get; }
 
 		/// <summary>
 		/// 获取层次表达式的路径。
 		/// </summary>
-		public string Path
-		{
-			get
-			{
-				return _path;
-			}
-		}
+		public string Path { get; }
 
 		/// <summary>
 		/// 获取包含构成<see cref="Path"/>路径段的数组。
 		/// </summary>
-		public string[] Segments
-		{
-			get
-			{
-				return _segments;
-			}
-		}
+		public string[] Segments { get; }
 
 		/// <summary>
 		/// 获取层次表达式中的成员访问表达式。
 		/// </summary>
-		public IMemberExpression Members
-		{
-			get
-			{
-				return _members;
-			}
-		}
+		public IMemberExpression Accessor { get; }
 		#endregion
 
 		#region 静态方法

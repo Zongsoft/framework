@@ -156,8 +156,8 @@ namespace Zongsoft.Options
 			{
 				var target = node.Option.OptionObject;
 
-				if(target != null && expression.Members != null)
-					return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Members, target);
+				if(target != null && expression.Accessor != null)
+					return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
 
 				return target;
 			}
