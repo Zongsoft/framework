@@ -96,7 +96,7 @@ namespace Zongsoft.Collections
 						break;
 				}
 
-				if(!context.Takein())
+				if(!context.Read())
 					continue;
 
 				switch(context.State)
@@ -208,9 +208,18 @@ namespace Zongsoft.Collections
 
 		private static bool DoAnchorCurrent(ref StateContext context, int position, Action<string> error)
 		{
+			if(char.IsWhiteSpace(context.Character))
+				return true;
+
 			switch(context.Character)
 			{
 				case '.':
+					if(context.HasWhitespaces)
+					{
+						error("The path anchors cannot contain whitespace characters.");
+						return false;
+					}
+
 					context.State = State.AnchorParent;
 					context.Anchor = IO.PathAnchor.Parent;
 					return true;
@@ -227,6 +236,9 @@ namespace Zongsoft.Collections
 
 		private static bool DoAnchorParent(ref StateContext context, int position, Action<string> error)
 		{
+			if(char.IsWhiteSpace(context.Character))
+				return true;
+
 			if(context.Character == '/' || context.Character == '\\')
 			{
 				context.State = State.Slash;
@@ -323,8 +335,15 @@ namespace Zongsoft.Collections
 			}
 			#endregion
 
+			#region 公共属性
+			public bool HasWhitespaces
+			{
+				get => _whitespaces > 0;
+			}
+			#endregion
+
 			#region 公共方法
-			public bool Takein()
+			public bool Read()
 			{
 				if(_cursorPosition >= _data.Length)
 					return false;

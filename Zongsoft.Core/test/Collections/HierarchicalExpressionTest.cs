@@ -72,7 +72,7 @@ namespace Zongsoft.Collections.Tests
 			Assert.NotNull(expression);
 			Assert.Null(expression.Accessor);
 			Assert.Equal(PathAnchor.Current, expression.Anchor);
-			Assert.Equal(". / segment1 / segment2 /  segment3 ", expression.Path);
+			Assert.Equal("./segment1/segment2/segment3", expression.Path);
 
 			Assert.Equal(3, expression.Segments.Length);
 			Assert.Equal("segment1", expression.Segments[0]);

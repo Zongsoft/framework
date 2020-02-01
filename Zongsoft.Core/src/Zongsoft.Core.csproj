@@ -2,10 +2,10 @@
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Framework</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<PackageIcon>zongsoft-logo(48x48).png</PackageIcon>
 		<PackageIconUrl></PackageIconUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Zongsoft.Framework</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
 		<Authors>Popeye Zhong</Authors>
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Core Library</Product>
