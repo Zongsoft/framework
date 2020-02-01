@@ -53,7 +53,7 @@ namespace Zongsoft.Collections.Tests
 			Assert.Equal("segment2", expression.Segments[1]);
 			Assert.Equal("segment3", expression.Segments[2]);
 
-			TEXT = @"/segment1/segment2/segment3";
+			TEXT = @" / segment1 / segment2/segment3";
 			expression = HierarchicalExpressionParser.Parse(TEXT);
 
 			Assert.NotNull(expression);
@@ -66,13 +66,13 @@ namespace Zongsoft.Collections.Tests
 			Assert.Equal("segment2", expression.Segments[1]);
 			Assert.Equal("segment3", expression.Segments[2]);
 
-			TEXT = @"./segment1/segment2/segment3";
+			TEXT = @". /segment1/segment2 / segment3 ";
 			expression = HierarchicalExpressionParser.Parse(TEXT);
 
 			Assert.NotNull(expression);
 			Assert.Null(expression.Accessor);
 			Assert.Equal(PathAnchor.Current, expression.Anchor);
-			Assert.Equal("./segment1/segment2/segment3", expression.Path);
+			Assert.Equal(". / segment1 / segment2 /  segment3 ", expression.Path);
 
 			Assert.Equal(3, expression.Segments.Length);
 			Assert.Equal("segment1", expression.Segments[0]);
@@ -131,6 +131,36 @@ namespace Zongsoft.Collections.Tests
 			Assert.Equal(1, parameters.Count);
 			Assert.Equal(MemberExpressionType.Constant, parameters[0].ExpressionType);
 			Assert.Equal(100, (int)((ConstantExpression)parameters[0]).Value);
+
+			TEXT = @"   segment1  /segment2/ segment3 @property1 [100] . property2  ";
+			expression = HierarchicalExpressionParser.Parse(TEXT);
+
+			Assert.NotNull(expression);
+			Assert.Equal(PathAnchor.None, expression.Anchor);
+			Assert.Equal("segment1/segment2/segment3", expression.Path);
+
+			Assert.Equal(3, expression.Segments.Length);
+			Assert.Equal("segment1", expression.Segments[0]);
+			Assert.Equal("segment2", expression.Segments[1]);
+			Assert.Equal("segment3", expression.Segments[2]);
+
+			Assert.NotNull(expression.Accessor);
+			Assert.Equal(MemberExpressionType.Identifier, expression.Accessor.ExpressionType);
+			Assert.Equal("property1", ((IdentifierExpression)expression.Accessor).Name);
+			Assert.NotNull(expression.Accessor.Next);
+
+			var member = expression.Accessor.Next;
+			Assert.Equal(MemberExpressionType.Indexer, member.ExpressionType);
+			parameters = ((IndexerExpression)member).Arguments;
+			Assert.Equal(1, parameters.Count);
+			Assert.Equal(MemberExpressionType.Constant, parameters[0].ExpressionType);
+			Assert.Equal(100, (int)((ConstantExpression)parameters[0]).Value);
+			Assert.NotNull(member.Next);
+
+			member = member.Next;
+			Assert.Equal(MemberExpressionType.Identifier, member.ExpressionType);
+			Assert.Equal("property2", ((IdentifierExpression)member).Name);
+			Assert.Null(member.Next);
 		}
 	}
 }
