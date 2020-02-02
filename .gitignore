@@ -351,3 +351,4 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 Zongsoft.Core/src/Zongsoft.Core.xml
+Zongsoft.Data/src/Zongsoft.Data.xml

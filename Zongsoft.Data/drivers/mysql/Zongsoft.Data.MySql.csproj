@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<TargetFramework>netcoreapp3.1</TargetFramework>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<PackageIcon>zongsoft-logo(48x48).png</PackageIcon>
+		<PackageIconUrl></PackageIconUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<Authors>Popeye Zhong</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Data Driver for MySQL</Product>
+		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2020. All rights reserved.</Copyright>
+		<PackageLicenseExpression>http://www.gnu.org/licenses/gpl-3.0.html</PackageLicenseExpression>
+		<ApplicationIcon></ApplicationIcon>
+		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MySql.Data" Version="8.0.19" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Zongsoft.Data.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+</Project>

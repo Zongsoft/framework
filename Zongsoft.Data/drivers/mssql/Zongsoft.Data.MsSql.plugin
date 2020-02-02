@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Data.MsSql"
+        title="Zongsoft.Data.MsSql Plugin"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        version="1.0"
+        copyright="Copyright (C) 2015-2020 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2019-10-01 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Data.MsSql" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Data/Drivers">
+		<object name="MsSql" type="Zongsoft.Data.MsSql.MsSqlDriver, Zongsoft.Data.MsSql" />
+	</extension>
+</plugin>
