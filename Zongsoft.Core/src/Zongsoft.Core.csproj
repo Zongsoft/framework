@@ -28,7 +28,6 @@
 		<Folder Include="Data\" />
 		<Folder Include="Diagnostics\Configuration\" />
 		<Folder Include="Expressions\Tokenization\" />
-		<Folder Include="IO\Serialization\" />
 		<Folder Include="Messaging\" />
 		<Folder Include="Options\Configuration\" />
 		<Folder Include="Options\Profiles\" />
