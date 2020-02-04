@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+	<xs:element name="plugin" nillable="false">
+		<xs:annotation>
+			<xs:documentation xml:lang="zh">根节点，表示插件元素。</xs:documentation>
+		</xs:annotation>
+
+		<xs:complexType>
+			<xs:sequence minOccurs="1" maxOccurs="1">
+				<xs:element name="manifest" type="ManifestElementType" minOccurs="0" maxOccurs="1">
+					<xs:annotation>
+						<xs:documentation xml:lang="zh">有关插件定义的清单。</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+
+				<xs:group ref="FoundationGroup" />
+
+				<xs:element name="extension" type="ExtensionElementType" minOccurs="1" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation xml:lang="zh">表示构件的挂载扩展点。</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+
+			<xs:attribute name="name" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">插件名称，在依赖中需要指定该名称。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="title" type="xs:string">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">插件标题。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="author" type="xs:string">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">作者信息。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="version">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">插件版本。</xs:documentation>
+				</xs:annotation>
+
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:pattern value="\d{1,4}\.\d{1,4}(\.\d{1,5})?(\.\d{1,5})?" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="copyright" type="xs:string">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">版权信息。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="description" type="xs:string">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">插件详细描述。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+
+			<xs:anyAttribute processContents="strict" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="ManifestElementType">
+		<xs:all>
+			<xs:element name="assemblies" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">插件对应的程序集列表。</xs:documentation>
+				</xs:annotation>
+
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="assembly" minOccurs="1" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation xml:lang="zh">插件程序集名称，有关程序集名请参考System.Assembly的说明。</xs:documentation>
+							</xs:annotation>
+
+							<xs:complexType>
+								<xs:attribute name="name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation xml:lang="zh">插件程序集名称。</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+
+			<xs:element name="dependencies" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">当前插件依赖的插件列表。</xs:documentation>
+				</xs:annotation>
+
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="dependency" minOccurs="1" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation xml:lang="zh">当前插件的依赖插件名。</xs:documentation>
+							</xs:annotation>
+
+							<xs:complexType>
+								<xs:attribute name="name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation xml:lang="zh">依赖的插件名。注：此名称不是插件的文件名。</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+
+	<xs:group name="FoundationGroup">
+		<xs:sequence>
+			<xs:element name="builders" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">表示构建器的定义集。</xs:documentation>
+				</xs:annotation>
+
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="builder" type="NameTypeElement" minOccurs="1" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation xml:lang="zh">要进行注册的构建器定义。</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+
+				<xs:key name="builderKey">
+					<xs:selector xpath="./builder" />
+					<xs:field xpath="@name" />
+				</xs:key>
+			</xs:element>
+
+			<xs:element name="parsers" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">表示解析器的定义集。</xs:documentation>
+				</xs:annotation>
+
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="parser" type="NameTypeElement" minOccurs="1" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation xml:lang="zh">要进行注册的解析器定义。</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+
+				<xs:key name="parserKey">
+					<xs:selector xpath="./parser" />
+					<xs:field xpath="@name" />
+				</xs:key>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+
+	<xs:complexType name="ExtensionElementType">
+		<xs:sequence>
+			<xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax" />
+		</xs:sequence>
+
+		<xs:attribute name="path" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">表示挂载的扩展点位置。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:element name="object">
+		<xs:annotation>
+			<xs:documentation xml:lang="zh">自定义构件元素。</xs:documentation>
+		</xs:annotation>
+
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="object.constructor" minOccurs="0" maxOccurs="1">
+					<xs:annotation>
+						<xs:documentation xml:lang="zh">自定义构件的构造函数声明。</xs:documentation>
+					</xs:annotation>
+
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="parameter" minOccurs="1" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation xml:lang="zh">构造函数的参数定义项。</xs:documentation>
+								</xs:annotation>
+
+								<xs:complexType>
+									<xs:attribute name="type" type="xs:string" use="required">
+										<xs:annotation>
+											<xs:documentation xml:lang="zh">类型的完整限定名，包括其程序集的名称，具体写法参考 System.Type 类的 AssemblyQualifiedName 属性帮助。</xs:documentation>
+										</xs:annotation>
+									</xs:attribute>
+
+									<xs:attribute name="value" type="xs:string">
+										<xs:annotation>
+											<xs:documentation xml:lang="zh">参数的值，该值可以为字面量也可以是插件解析器表达式。</xs:documentation>
+										</xs:annotation>
+									</xs:attribute>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+
+					<xs:key name="ParameterKey">
+						<xs:selector xpath="./parameter" />
+						<xs:field xpath="@type" />
+					</xs:key>
+				</xs:element>
+			</xs:sequence>
+
+			<xs:attribute name="name" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">构件名称，其与&lt;extension&gt;的挂载扩展点路径(path)以及所有上级构件名称组合成完整路径，如果省略该特性则表示当前构件为匿名构件。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+
+			<xs:attribute name="type" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">构件类型的完整限定名，包括其程序集的名称，具体写法参考 System.Type 类的 AssemblyQualifiedName 属性帮助。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+
+			<xs:attribute name="value" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">构件的值，该值可以为字面量也可以是插件解析器表达式。</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+
+			<xs:anyAttribute processContents="lax" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="NameTypeElement">
+		<xs:attribute name="name" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">名称。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
+		<xs:attribute name="type" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">类型的完整限定名，包括其程序集的名称，具体写法参考 System.Type 类的 AssemblyQualifiedName 属性帮助。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+</xs:schema>

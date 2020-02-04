@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<PackageIcon>zongsoft-logo(48x48).png</PackageIcon>
+		<PackageIconUrl></PackageIconUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<Authors>Popeye Zhong</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Plugins Development Library</Product>
+		<Description>This is a framework about plugin application development.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2020. All rights reserved.</Copyright>
+		<PackageLicenseExpression>http://www.gnu.org/licenses/gpl-3.0.html</PackageLicenseExpression>
+		<ApplicationIcon></ApplicationIcon>
+		<RootNamespace>Zongsoft.Plugins</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>Zongsoft.Plugins.xml</DocumentationFile>
+		<NoWarn>1701;1702;1591</NoWarn>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+</Project>
