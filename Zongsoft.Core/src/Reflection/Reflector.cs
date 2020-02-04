@@ -80,7 +80,7 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			return TryGetValue(ref target, name, parameters, out var value) ? value :
+			return TryGetValue(target, name, parameters, out var value) ? value :
 			       throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
 		}
 
@@ -172,7 +172,7 @@ namespace Zongsoft.Reflection
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
-				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 			if(members == null || members.Length == 0)
 				return false;
@@ -220,7 +220,7 @@ namespace Zongsoft.Reflection
 			var type = typeof(T);
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
-				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 			if(members == null || members.Length == 0)
 				return false;
@@ -358,7 +358,7 @@ namespace Zongsoft.Reflection
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
-				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 			if(members == null || members.Length == 0)
 				return false;
@@ -392,7 +392,7 @@ namespace Zongsoft.Reflection
 			var type = typeof(T);
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
-				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 			if(members == null || members.Length == 0)
 				return false;

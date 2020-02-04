@@ -34,9 +34,9 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Terminals.Commands
 {
-	[DisplayName("${Text.ShellCommand.Title}")]
-	[Description("${Text.ShellCommand.Description}")]
-	[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "${Text.ShellCommand.Options.Timeout}")]
+	[DisplayName("Text.ShellCommand.Name")]
+	[Description("Text.ShellCommand.Description")]
+	[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "Text.ShellCommand.Options.Timeout")]
 	public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 	{
 		#region 构造函数

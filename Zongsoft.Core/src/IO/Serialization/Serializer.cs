@@ -29,11 +29,12 @@
 
 using System;
 using System.IO;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.Runtime.Serialization
 {
@@ -46,37 +47,34 @@ namespace Zongsoft.Runtime.Serialization
 		#region 公共属性
 		public static ITextSerializer Json
 		{
-			get => _json ?? JsonSerializerEx.Default;
+			get => _json ?? JsonSerializerInner.Default;
 			set => _json = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class JsonSerializerEx : ITextSerializer
+		private class JsonSerializerInner : ITextSerializer
 		{
 			#region 单例字段
-			public static readonly JsonSerializerEx Default = new JsonSerializerEx();
+			public static readonly JsonSerializerInner Default = new JsonSerializerInner();
 			#endregion
 
 			#region 默认配置
-			private static readonly JsonSerializerOptions DefaultOptions;
-			#endregion
-
-			#region 静态构造
-			static JsonSerializerEx()
+			private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions()
 			{
-				DefaultOptions = new JsonSerializerOptions()
+				PropertyNameCaseInsensitive = true,
+				IgnoreNullValues = false,
+				IgnoreReadOnlyProperties = true,
+				Converters =
 				{
-					PropertyNameCaseInsensitive = true,
-					IgnoreNullValues = false,
-				};
-
-				DefaultOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-			}
+					new JsonStringEnumConverter(),
+					new ModelConverterFactory()
+				},
+			};
 			#endregion
 
 			#region 构造函数
-			public JsonSerializerEx()
+			public JsonSerializerInner()
 			{
 			}
 			#endregion
@@ -200,16 +198,18 @@ namespace Zongsoft.Runtime.Serialization
 				if(settings is TextSerializationSettings text)
 					return GetOptions(text);
 
-				var options = new JsonSerializerOptions()
+				return new JsonSerializerOptions()
 				{
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = settings.MaximumDepth,
 					IgnoreNullValues = settings.IgnoreNull,
+					IgnoreReadOnlyProperties = true,
+					Converters =
+					{
+						new JsonStringEnumConverter(),
+						new ModelConverterFactory()
+					},
 				};
-
-				options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-
-				return options;
 			}
 
 			private static JsonSerializerOptions GetOptions(TextSerializationSettings settings)
@@ -229,19 +229,21 @@ namespace Zongsoft.Runtime.Serialization
 						break;
 				}
 
-				var options = new JsonSerializerOptions()
+				return new JsonSerializerOptions()
 				{
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = settings.MaximumDepth,
 					WriteIndented = settings.Indented,
 					IgnoreNullValues = settings.IgnoreNull,
+					IgnoreReadOnlyProperties = true,
 					PropertyNamingPolicy = naming,
 					DictionaryKeyPolicy = naming,
+					Converters =
+					{
+						new JsonStringEnumConverter(naming),
+						new ModelConverterFactory()
+					},
 				};
-
-				options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(naming));
-
-				return options;
 			}
 			#endregion
 		}
@@ -286,6 +288,116 @@ namespace Zongsoft.Runtime.Serialization
 					}
 
 					chars[i] = char.ToUpperInvariant(chars[i]);
+				}
+			}
+		}
+
+		private class ModelConverterFactory : JsonConverterFactory
+		{
+			public override bool CanConvert(Type type)
+			{
+				return type.IsInterface || type.IsAbstract;
+			}
+
+			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
+			{
+				JsonConverter converter = (JsonConverter)Activator.CreateInstance(
+				   typeof(ModelConverter<>).MakeGenericType(new Type[] { type }),
+				   BindingFlags.Instance | BindingFlags.Public,
+				   binder: null,
+				   args: new object[] { options },
+				   culture: null);
+
+				return converter;
+			}
+
+			private class ModelConverter<T> : JsonConverter<T> where T : class
+			{
+				private static readonly JsonEncodedText _TYPE_KEY_ = JsonEncodedText.Encode("$type");
+				private static readonly JsonEncodedText _TYPE_VALUE_ = JsonEncodedText.Encode(typeof(T).FullName);
+
+				private readonly Type _type;
+				private readonly JsonConverter<T> _converter;
+
+				public ModelConverter(JsonSerializerOptions options)
+				{
+					_type = typeof(T);
+					_converter = (JsonConverter<T>)options.GetConverter(typeof(T));
+				}
+
+				public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+				{
+					if(reader.TokenType != JsonTokenType.StartObject)
+						throw new JsonException();
+
+					var model = (Zongsoft.Data.IModel)Zongsoft.Data.Model.Build<T>();
+
+					while(reader.Read())
+					{
+						if(reader.TokenType == JsonTokenType.EndObject)
+							break;
+
+						if(reader.TokenType != JsonTokenType.PropertyName)
+							throw new JsonException();
+
+						var key = reader.GetString();
+						reader.Read();
+
+						switch(reader.TokenType)
+						{
+							case JsonTokenType.None:
+							case JsonTokenType.Null:
+								model.TrySetValue(key, null);
+								break;
+							case JsonTokenType.True:
+								model.TrySetValue(key, true);
+								break;
+							case JsonTokenType.False:
+								model.TrySetValue(key, false);
+								break;
+							case JsonTokenType.String:
+								model.TrySetValue(key, reader.GetString());
+								break;
+							case JsonTokenType.Number:
+								if(reader.TryGetInt32(out var integer))
+									model.TrySetValue(key, integer);
+								else if(reader.TryGetDouble(out var numeric))
+									model.TrySetValue(key, numeric);
+								break;
+							default:
+								var memberType = GetMemberType(key);
+
+								if(memberType != null)
+								{
+									var value = JsonSerializer.Deserialize(ref reader, memberType, options);
+									model.TrySetValue(key, value);
+								}
+
+								break;
+						}
+					}
+
+					return (T)model;
+				}
+
+				public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+				{
+					writer.WriteStartObject();
+
+					writer.WriteString(_TYPE_KEY_, _TYPE_VALUE_);
+
+					if(_converter != null)
+						_converter.Write(writer, value, options);
+					else
+						JsonSerializer.Serialize(writer, value, options);
+
+					writer.WriteEndObject();
+				}
+
+				private Type GetMemberType(string name)
+				{
+					return _type.GetProperty(name)?.PropertyType ??
+					       _type.GetField(name)?.FieldType;
 				}
 			}
 		}

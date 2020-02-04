@@ -162,9 +162,9 @@ namespace Zongsoft.Properties {
         /// <summary>
         ///   查找类似 清除命令 的本地化字符串。
         /// </summary>
-        internal static string Text_ClearCommand_Title {
+        internal static string Text_ClearCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ClearCommand.Title", resourceCulture);
+                return ResourceManager.GetString("Text.ClearCommand.Name", resourceCulture);
             }
         }
         
@@ -252,9 +252,18 @@ namespace Zongsoft.Properties {
         /// <summary>
         ///   查找类似 退出命令 的本地化字符串。
         /// </summary>
-        internal static string Text_ExitCommand_Title {
+        internal static string Text_ExitCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ExitCommand.Title", resourceCulture);
+                return ResourceManager.GetString("Text.ExitCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 直接退出，不提示确认信息。 的本地化字符串。
+        /// </summary>
+        internal static string Text_ExitCommand_Options_Confirm {
+            get {
+                return ResourceManager.GetString("Text.ExitCommand.Options.Confirm", resourceCulture);
             }
         }
         
@@ -322,20 +331,20 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 外部命令执行器 的本地化字符串。
+        /// </summary>
+        internal static string Text_ShellCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.ShellCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 运行外部命令的超时，单位：毫秒。 的本地化字符串。
         /// </summary>
         internal static string Text_ShellCommand_Options_Timeout {
             get {
                 return ResourceManager.GetString("Text.ShellCommand.Options.Timeout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 外部命令执行器 的本地化字符串。
-        /// </summary>
-        internal static string Text_ShellCommand_Title {
-            get {
-                return ResourceManager.GetString("Text.ShellCommand.Title", resourceCulture);
             }
         }
         

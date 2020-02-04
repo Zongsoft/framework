@@ -150,7 +150,7 @@
   <data name="Text.ClearCommand.Description" xml:space="preserve">
     <value>清除当前终端的显示内容。</value>
   </data>
-  <data name="Text.ClearCommand.Title" xml:space="preserve">
+  <data name="Text.ClearCommand.Name" xml:space="preserve">
     <value>清除命令</value>
   </data>
   <data name="Text.Command.ExecutionFailed.Message" xml:space="preserve">
@@ -180,8 +180,11 @@
   <data name="Text.ExitCommand.Description" xml:space="preserve">
     <value>退出当前应用程序。</value>
   </data>
-  <data name="Text.ExitCommand.Title" xml:space="preserve">
+  <data name="Text.ExitCommand.Name" xml:space="preserve">
     <value>退出命令</value>
+  </data>
+  <data name="Text.ExitCommand.Options.Confirm" xml:space="preserve">
+    <value>直接退出，不提示确认信息。</value>
   </data>
   <data name="Text.InvalidCommandOption" xml:space="preserve">
     <value>指定的 '{0}' 是一个无效的命令选项。</value>
@@ -204,11 +207,11 @@
   <data name="Text.ShellCommand.Description" xml:space="preserve">
     <value>通过系统Shell来执行外部命令。</value>
   </data>
+  <data name="Text.ShellCommand.Name" xml:space="preserve">
+    <value>外部命令执行器</value>
+  </data>
   <data name="Text.ShellCommand.Options.Timeout" xml:space="preserve">
     <value>运行外部命令的超时，单位：毫秒。</value>
-  </data>
-  <data name="Text.ShellCommand.Title" xml:space="preserve">
-    <value>外部命令执行器</value>
   </data>
   <data name="Text.WorkerListenCommand.Prompt" xml:space="preserve">
     <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>

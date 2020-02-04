@@ -32,8 +32,8 @@ using System.ComponentModel;
 
 namespace Zongsoft.Terminals.Commands
 {
-	[DisplayName("${Text.ClearCommand.Title}")]
-	[Description("${Text.ClearCommand.Description}")]
+	[DisplayName("Text.ClearCommand.Name")]
+	[Description("Text.ClearCommand.Description")]
 	public class ClearCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 	{
 		#region 构造函数

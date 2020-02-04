@@ -34,9 +34,9 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Terminals.Commands
 {
-	[DisplayName("${Text.ExitCommand.Title}")]
-	[Description("${Text.ExitCommand.Description}")]
-	[CommandOption("yes", Type = null, Description = "${Text.ExitCommand.Options.Confirm}")]
+	[DisplayName("Text.ExitCommand.Name")]
+	[Description("Text.ExitCommand.Description")]
+	[CommandOption("yes", Type = null, Description = "Text.ExitCommand.Options.Confirm")]
 	public class ExitCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 	{
 		#region 构造函数
