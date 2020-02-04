@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "src", "src\Zongsoft.Commands.csproj", "{DDF77238-6D32-4802-96DC-7F477BF2CF3C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DDF77238-6D32-4802-96DC-7F477BF2CF3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDF77238-6D32-4802-96DC-7F477BF2CF3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDF77238-6D32-4802-96DC-7F477BF2CF3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDF77238-6D32-4802-96DC-7F477BF2CF3C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A1FB8A1D-8026-4714-8D1E-742F93BD2156}
+	EndGlobalSection
+EndGlobal

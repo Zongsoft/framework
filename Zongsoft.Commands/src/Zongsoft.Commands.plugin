@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Commands"
+        title="Zongsoft Commands Plugin"
+        author="Popeye Zhong(9555843@qq.com)"
+        version="4.4.0.1611"
+        copyright="Copyright (C) 2010-2016 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2012-06-09 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Commands" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Help" type="Zongsoft.Commands.HelpCommand, Zongsoft.Commands" />
+		<object name="Echo" type="Zongsoft.Commands.EchoCommand, Zongsoft.Commands" />
+		<object name="Cast" type="Zongsoft.Commands.CastCommand, Zongsoft.Commands" />
+		<object name="Json" type="Zongsoft.Commands.JsonCommand, Zongsoft.Commands" />
+		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
+
+		<object name="Secret">
+			<secret.command>
+				<object type="Zongsoft.Security.Commands.SecretCommand, Zongsoft.Commands" />
+			</secret.command>
+
+			<object name="Generate" type="Zongsoft.Security.Commands.SecretGenerateCommand, Zongsoft.Commands" />
+			<object name="Verify" type="Zongsoft.Security.Commands.SecretVerifyCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="File">
+			<file.command>
+				<object type="Zongsoft.IO.Commands.FileCommand, Zongsoft.Commands" />
+			</file.command>
+
+			<object name="Open" type="Zongsoft.IO.Commands.FileOpenCommand, Zongsoft.Commands" />
+			<object name="Save" type="Zongsoft.IO.Commands.FileSaveCommand, Zongsoft.Commands" />
+			<object name="Copy" type="Zongsoft.IO.Commands.FileCopyCommand, Zongsoft.Commands" />
+			<object name="Move" type="Zongsoft.IO.Commands.FileMoveCommand, Zongsoft.Commands" />
+			<object name="Info" type="Zongsoft.IO.Commands.FileInfoCommand, Zongsoft.Commands" />
+			<object name="Exists" type="Zongsoft.IO.Commands.FileExistsCommand, Zongsoft.Commands" />
+			<object name="Delete" type="Zongsoft.IO.Commands.FileDeleteCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="Services">
+			<services.command>
+				<object type="Zongsoft.Services.Commands.ServicesCommand, Zongsoft.Commands" />
+			</services.command>
+
+			<object name="Get" type="Zongsoft.Services.Commands.ServicesGetCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="Options">
+			<options.command>
+				<object type="Zongsoft.Options.Commands.OptionsCommand, Zongsoft.Commands" />
+			</options.command>
+
+			<object name="Get" type="Zongsoft.Options.Commands.OptionsGetCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="Messaging">
+			<messaging.command>
+				<object type="Zongsoft.Messaging.Commands.ListenerCommand, Zongsoft.Commands" />
+			</messaging.command>
+
+			<object name="Start" type="Zongsoft.Messaging.Commands.ListenerStartCommand, Zongsoft.Commands" />
+			<object name="Stop" type="Zongsoft.Messaging.Commands.ListenerStopCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="Collections" />
+	</extension>
+
+	<extension path="/Workbench/Executor/Commands/Collections">
+		<object name="Queue">
+			<queue.command>
+				<object queue="{srv:Queue}" type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
+			</queue.command>
+
+			<object name="In" type="Zongsoft.Collections.Commands.QueueInCommand, Zongsoft.Commands" />
+			<object name="Out" type="Zongsoft.Collections.Commands.QueueOutCommand, Zongsoft.Commands" />
+			<object name="Peek" type="Zongsoft.Collections.Commands.QueuePeekCommand, Zongsoft.Commands" />
+			<object name="Clear" type="Zongsoft.Collections.Commands.QueueClearCommand, Zongsoft.Commands" />
+			<object name="Count" type="Zongsoft.Collections.Commands.QueueCountCommand, Zongsoft.Commands" />
+		</object>
+	</extension>
+</plugin>
