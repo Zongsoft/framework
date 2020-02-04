@@ -1,12 +1,12 @@
 # Zongsoft.Data ORM Framework
 
-![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Data?style=social)
+![license](https://img.shields.io/github/license/Zongsoft/Framework/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Framework/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Framework/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Zongsoft.Data/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Zongsoft.Data/blob/master/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/Framework/Zongsoft.Data/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Framework/Zongsoft.Data/blob/master/README-zh_CN.md)
 
 -----
 
-The [Zongsoft.Data](https://github.com/Zongsoft/Zongsoft.Data) is a [GraphQL](https://graphql.cn)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
+The [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) is a [GraphQL](https://graphql.cn)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
 
 Its design philosophy is to represent the data structure relationship in a declarative way and de-scripting _(i.e. data access and navigation without writing any SQL or SQL-like syntax structure)_, making access to data easier, application code cleaner, and providing the best comprehensive price/performance ratio.
 
@@ -27,12 +27,12 @@ Its design philosophy is to represent the data structure relationship in a decla
 
 | **Deriver** | **Project Path** | **State** |
 | --- | --- | :---: |
-MySQL | [/drivers/mysql](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/mysql) | **Available** |
-SQL Server | [/drivers/mssql](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/mssql) | **Available** |
-PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/postgres) | _Unimplemented_ |
-Oracle | [/drivers/oracle](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/oracle) | _Unimplemented_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/influx) | **Planning** |
-Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/elastics) | **Planning** |
+MySQL | [/drivers/mysql](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/mysql) | **Available** |
+SQL Server | [/drivers/mssql](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/mssql) | **Available** |
+PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/postgres) | _Unimplemented_ |
+Oracle | [/drivers/oracle](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/oracle) | _Unimplemented_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/influx) | **Planning** |
+Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/elastics) | **Planning** |
 
 > Tip: If you need unimplemented drivers or commercial technical support, please contact us.([zongsoft@qq.com](mailto:zongsoft@qq.com))。
 
@@ -48,14 +48,14 @@ Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Zongsoft.Data/tre
 
 ### Source code compilation
 
-It is recommended to create a **_Zongsoft_** directory in the non-system partition of the hard disk and clone the items such as [Guidelines](https://github.com/Zongsoft/Guidelines), [Zongsoft.CoreLibrary](https://github.com/Zongsoft/Zongsoft.CoreLibrary) and [Zongsoft.Data](https://github.com/Zongsoft/Zongsoft.Data), etc. into this directory.
+It is recommended to create a **_Zongsoft_** directory in the non-system partition of the hard disk and clone the items such as [Guidelines](https://github.com/Zongsoft/Guidelines), [Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core) and [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data), etc. into this directory.
 
 <a name="schema"></a>
 ## The data schema
 
 The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes the shape of the data to be query or write _(**D**elete/**I**nsert/**U**pdate/**U**psert)_, The representation is somewhat like [GraphQL](https://graphql.cn) but does not require to predefined. It is used to define the data fields to be fetched and written, scopes for cascading deletes, etc.
 
-The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/ISchema.cs) interface is the parsed schema expression.
+The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/ISchema.cs) interface is the parsed schema expression.
 
 <a name="schema-syntax"></a>
 ### Schema Syntax

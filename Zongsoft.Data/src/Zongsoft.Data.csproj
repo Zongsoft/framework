@@ -24,7 +24,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Reference Include="Zongsoft.Data">
+		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
