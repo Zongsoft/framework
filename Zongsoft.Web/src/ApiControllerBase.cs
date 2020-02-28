@@ -31,10 +31,8 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
 using System.Collections.Generic;
 
-using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -196,7 +194,7 @@ namespace Zongsoft.Web
 		public virtual IActionResult Get(string id = null, [FromQuery]Paging paging = null)
 		{
 			if(string.IsNullOrEmpty(id))
-				return this.Ok(this.GetResult(this.DataService.Select(null, this.GetSchema(), paging)));
+				return this.Paginate(this.DataService.Select(null, this.GetSchema(), paging));
 
 			var parts = this.Slice(id);
 			IPageable pageable;
@@ -204,13 +202,13 @@ namespace Zongsoft.Web
 			switch(parts.Length)
 			{
 				case 1:
-					return this.Ok(parts[0].Contains(":") && this.DataService.Searcher != null ?
-						this.GetResult(this.DataService.Searcher.Search(parts[0], this.GetSchema(), paging)) :
-						this.GetResult(this.DataService.Get<string>(parts[0], this.GetSchema(), paging, null, out pageable), pageable));
+					return parts[0].Contains(":") && this.DataService.Searcher != null ?
+						this.Paginate(this.DataService.Searcher.Search(parts[0], this.GetSchema(), paging)) :
+						this.Paginate(this.DataService.Get<string>(parts[0], this.GetSchema(), paging, null, out pageable), pageable);
 				case 2:
-					return this.Ok(this.GetResult(this.DataService.Get<string, string>(parts[0], parts[1], this.GetSchema(), paging, null, out pageable), pageable));
+					return this.Paginate(this.DataService.Get<string, string>(parts[0], parts[1], this.GetSchema(), paging, null, out pageable), pageable);
 				case 3:
-					return this.Ok(this.GetResult(this.DataService.Get<string, string, string>(parts[0], parts[1], parts[2], this.GetSchema(), paging, null, out pageable), pageable));
+					return this.Paginate(this.DataService.Get<string, string, string>(parts[0], parts[1], parts[2], this.GetSchema(), paging, null, out pageable), pageable);
 				default:
 					return this.BadRequest("Too many keys specified.");
 			}
@@ -248,7 +246,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost]
-		public virtual IActionResult Post(TModel model)
+		public virtual IActionResult Post([FromBody]TModel model)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -264,7 +262,20 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut]
-		public virtual IActionResult Put(TModel model)
+		public virtual IActionResult Put([FromBody]TModel model)
+		{
+			if(!(this.CanCreate && this.CanUpdate))
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			//确认模型是否有效
+			if(!this.TryValidateModel(model))
+				return this.UnprocessableEntity();
+
+			return this.OnUpsert(model) > 0 ? (IActionResult)this.Ok(model) : this.Conflict();
+		}
+
+		[HttpPatch]
+		public virtual IActionResult Patch(string id, [FromBody]TModel model)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -272,11 +283,6 @@ namespace Zongsoft.Web
 			//确认模型是否有效
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
-
-			var id = string.Empty;
-
-			if(this.RouteData.Values.TryGetValue("id", out var value) && value != null && value is string)
-				id = (string)value;
 
 			return this.OnUpdate(model, string.IsNullOrEmpty(id) ? Array.Empty<string>() : this.Slice(id)) > 0 ?
 				(IActionResult)this.Ok() : this.NotFound();
@@ -352,6 +358,11 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
+		protected virtual TService GetService()
+		{
+			return _serviceProvider.ResolveRequired<TService>();
+		}
+
 		protected virtual int OnDelete(params string[] keys)
 		{
 			if(keys == null || keys.Length == 0)
@@ -392,26 +403,20 @@ namespace Zongsoft.Web
 					throw new ArgumentException("Too many keys specified.");
 			}
 		}
+
+		protected virtual int OnUpsert(TModel model)
+		{
+			return this.DataService.Upsert(model, this.GetSchema());
+		}
 		#endregion
 
 		#region 保护方法
-		protected virtual TService GetService()
-		{
-			return _serviceProvider.ResolveRequired<TService>();
-		}
-
-		protected string GetSchema()
-		{
-			const string HTTP_SCHEMA_HEADER = "x-data-schema";
-			return this.Request.Headers.TryGetValue(HTTP_SCHEMA_HEADER, out var value) ? (string)value : null;
-		}
-
 		protected string[] Slice(string text)
 		{
 			return Utility.Slice(text);
 		}
 
-		protected object GetResult(object data, IPageable pageable = null)
+		protected IActionResult Paginate(object data, IPageable pageable = null)
 		{
 			if(data == null)
 				return this.NoContent();
@@ -425,7 +430,7 @@ namespace Zongsoft.Web
 
 			if(pageable != null)
 			{
-				var result = new Result(data);
+				var result = new ResultEntity(data);
 
 				pageable.Paginated += Paginator_Paginated;
 
@@ -437,10 +442,10 @@ namespace Zongsoft.Web
 					result.Paging[string.IsNullOrEmpty(e.Name) ? "$" : e.Name] = GetPaging(e.Paging);
 				}
 
-				return result;
+				return this.Ok(result);
 			}
 
-			return data;
+			return this.Ok(data);
 		}
 		#endregion
 
@@ -457,10 +462,16 @@ namespace Zongsoft.Web
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private string GetSchema()
+		{
+			return Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private string GetPaging(Paging paging)
 		{
 			if(paging == null || Paging.IsDisabled(paging))
-				return string.Empty;
+				return null;
 
 			return paging.PageIndex.ToString() + "/" +
 				   paging.PageCount.ToString() + "(" +
@@ -469,7 +480,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 嵌套子类
-		private class Result
+		private class ResultEntity
 		{
 			[System.Text.Json.Serialization.JsonPropertyName("$")]
 			[Zongsoft.Runtime.Serialization.SerializationMember("$")]
@@ -479,7 +490,7 @@ namespace Zongsoft.Web
 			[Zongsoft.Runtime.Serialization.SerializationMember("$paging")]
 			public IDictionary<string, string> Paging { get; set; }
 
-			public Result(object data)
+			public ResultEntity(object data)
 			{
 				this.Data = data;
 				this.Paging = null;
