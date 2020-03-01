@@ -191,6 +191,20 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet]
+		public virtual IActionResult Search([FromQuery]string keyword, [FromQuery]Paging paging = null)
+		{
+			var searcher = this.DataService.Searcher;
+
+			if(searcher == null)
+				return this.BadRequest("This resource does not support the search operation.");
+
+			if(string.IsNullOrWhiteSpace(keyword))
+				this.BadRequest("Missing keyword for search.");
+
+			return this.Paginate(searcher.Search(keyword, Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), paging));
+		}
+
+		[HttpGet]
 		public virtual IActionResult Get(string id = null, [FromQuery]Paging paging = null)
 		{
 			if(string.IsNullOrEmpty(id))
