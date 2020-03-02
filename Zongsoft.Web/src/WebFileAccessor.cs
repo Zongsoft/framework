@@ -32,9 +32,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-//using System.Net;
-//using System.Net.Http;
-//using System.Net.Http.Headers;
 
 using Microsoft.Net.Http;
 using Microsoft.Net.Http.Headers;
@@ -63,15 +60,18 @@ namespace Zongsoft.Web
 
 		#region 成员字段
 		private string _basePath;
+		private Http.IMimeMapper _mapping;
 		#endregion
 
 		#region 构造函数
 		public WebFileAccessor()
 		{
+			_mapping = Http.MimeMapper.Default;
 		}
 
 		public WebFileAccessor(string basePath)
 		{
+			_mapping = Http.MimeMapper.Default;
 			this.BasePath = basePath;
 		}
 		#endregion
@@ -93,6 +93,12 @@ namespace Zongsoft.Web
 					_basePath = text + (text.EndsWith("/") ? string.Empty : "/");
 				}
 			}
+		}
+
+		public Http.IMimeMapper Mapping
+		{
+			get => _mapping;
+			set => _mapping = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -287,13 +293,12 @@ namespace Zongsoft.Web
 		}
 		#endregion
 
+		#region 虚拟方法
 		protected virtual string GetContentType(string fileName)
 		{
-			if(string.IsNullOrWhiteSpace(fileName))
-				return "application/octet-stream";
-
-			return "application/octet-stream";
+			return _mapping.GetMimeType(fileName) ?? "application/octet-stream";
 		}
+		#endregion
 
 		#region 私有方法
 		private string EnsureBasePath(out string scheme)
