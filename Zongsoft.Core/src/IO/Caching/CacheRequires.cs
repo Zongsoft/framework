@@ -31,15 +31,18 @@ using System;
 
 namespace Zongsoft.Runtime.Caching
 {
-	public struct CacheEntry
+    /// <summary>
+    /// 表示缓存设置项的必须条件的枚举。
+    /// </summary>
+	public enum CacheRequires
 	{
-		public readonly TimeSpan? Expiry;
-		public readonly object Value;
+        /// <summary>无约束</summary>
+		None,
 
-		public CacheEntry(object value, TimeSpan? expiry)
-		{
-			this.Value = value;
-			this.Expiry = expiry;
-		}
+        /// <summary>存在，即只有当缓存项存在时才能被更新。</summary>
+		Exists,
+
+        /// <summary>不存在，即只有当缓存项不存在时才能被设置。</summary>
+		NotExists,
 	}
 }

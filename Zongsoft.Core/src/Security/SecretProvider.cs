@@ -122,9 +122,7 @@ namespace Zongsoft.Security
 			name = name.ToLowerInvariant().Trim();
 
 			//从缓存容器中获取对应的内容
-			var text = cache.GetValue<string>(name);
-
-			if(text != null && text.Length > 0)
+			if(cache.TryGetValue(name, out string text) && !string.IsNullOrWhiteSpace(text))
 			{
 				//尚未验证：则必须确保在最小时间间隔之后才能重新生成
 				if(_period > TimeSpan.Zero &&
@@ -167,11 +165,9 @@ namespace Zongsoft.Security
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = name.ToLowerInvariant().Trim();
 
-			//从缓存容器中获取对应的内容
-			var cacheValue = cache.GetValue<string>(name);
-
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
-			if(this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
+			if(cache.TryGetValue(name, out string cacheValue) &&
+			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
 			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
 			{
 				/*

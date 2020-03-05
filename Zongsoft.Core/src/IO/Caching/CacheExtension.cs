@@ -32,8 +32,20 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Runtime.Caching
 {
-	public interface ICacheDependency
+	public static class CacheExtension
 	{
-        void Change(object value);
-	}
+        public static bool TryGetValue<T>(this ICache cache, string key, out T value)
+        {
+            if(cache == null)
+                throw new ArgumentNullException(nameof(cache));
+
+            var cachedValue = cache.GetValue(key);
+
+            if(cachedValue != null && Zongsoft.Common.Convert.TryConvertValue<T>(cachedValue, out value))
+                return true;
+
+            value = default;
+            return false;
+        }
+    }
 }
