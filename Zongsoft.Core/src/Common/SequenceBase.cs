@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Common
@@ -93,12 +94,17 @@ namespace Zongsoft.Common
 			return false;
 		}
 
-		public virtual long Decrement(string key, int interval = 1, int seed = 0)
+		public long Decrement(string key, int interval = 1, int seed = 0)
 		{
 			return this.Increment(key, -interval, seed);
 		}
 
-		public virtual long Increment(string key, int interval = 1, int seed = 0)
+		public Task<long> DecrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
+		{
+			return this.IncrementAsync(key, -interval, seed, cancellation);
+		}
+
+		public long Increment(string key, int interval = 1, int seed = 0)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -165,7 +171,13 @@ namespace Zongsoft.Common
 			}
 		}
 
-		public virtual void Reset(string key, int value = 0)
+		public Task<long> IncrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			return Task.FromResult(this.Increment(key, interval, seed));
+		}
+
+		public void Reset(string key, int value = 0)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -207,10 +219,30 @@ namespace Zongsoft.Common
 				_locker.ExitWriteLock();
 			}
 		}
+
+		public Task ResetAsync(string key, int value = 0, CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			this.Reset(key, value);
+			return Task.CompletedTask;
+		}
 		#endregion
 
 		#region 抽象方法
+		/// <summary>
+		/// 实现重置的方法。
+		/// </summary>
+		/// <param name="key">指定要重置的序号键名。</param>
+		/// <param name="value">指定要重置的序号值。</param>
 		protected abstract void OnReset(string key, int value);
+
+		/// <summary>
+		/// 表示增加的序号器的实现方法。
+		/// </summary>
+		/// <param name="key">指定的要批量递增(减)的序号键名。</param>
+		/// <param name="count">指定的要递增(减)的序号值。</param>
+		/// <param name="seed">当指定的序号键名不存在时设定的种子数。</param>
+		/// <returns>返回递增(减)后的序号值。</returns>
 		protected abstract long OnReserve(string key, int count, int seed);
 		#endregion
 
