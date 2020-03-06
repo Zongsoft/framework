@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -105,17 +106,18 @@ namespace Zongsoft.Runtime.Caching
 		/// 设置指定键的缓存项的生存时长。
 		/// </summary>
 		/// <param name="key">指定要设置的键。</param>
-		/// <param name="duration">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
-		void SetExpiry(string key, TimeSpan duration);
+		/// <param name="expiry">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
+		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+		bool SetExpiry(string key, TimeSpan expiry);
 
 		/// <summary>
 		/// 设置指定键的缓存项的生存时长。
 		/// </summary>
 		/// <param name="key">指定要设置的键。</param>
-		/// <param name="duration">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
+		/// <param name="expiry">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task SetExpiryAsync(string key, TimeSpan duration, CancellationToken cancellation = default);
+		Task<bool> SetExpiryAsync(string key, TimeSpan expiry, CancellationToken cancellation = default);
 		#endregion
 
 		#region 删除方法
@@ -139,12 +141,27 @@ namespace Zongsoft.Runtime.Caching
 		bool Remove(string key);
 
 		/// <summary>
+		/// 从缓存字典中删除多个缓存项。
+		/// </summary>
+		/// <param name="keys">指定要删除的键名集。</param>
+		/// <returns>返回删除成功的数量。</returns>
+		int Remove(IEnumerable<string> keys);
+
+		/// <summary>
 		/// 从缓存字典中删除指定键的缓存项。
 		/// </summary>
 		/// <param name="key">指定要删除的键。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		Task<bool> RemoveAsync(string key, CancellationToken cancellation = default);
+
+		/// <summary>
+		/// 从缓存字典中删除多个缓存项。
+		/// </summary>
+		/// <param name="keys">指定要删除的键名集。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>返回表示异步操作的任务对象。</returns>
+		Task<int> RemoveAsync(IEnumerable<string> keys, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 修改指定键的缓存项的键名。
@@ -175,10 +192,26 @@ namespace Zongsoft.Runtime.Caching
 		/// <summary>
 		/// 从缓存字典中获取指定键的缓存值。
 		/// </summary>
+		/// <param name="key">指定要获取的键名。</param>
+		/// <param name="expiry">输出参数，表示指定缓存项的剩余有效期。</param>
+		/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
+		object GetValue(string key, out TimeSpan? expiry);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
 		/// <param name="key">指定要获取的键。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		Task<object> GetValueAsync(string key, CancellationToken cancellation = default);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
+		/// <param name="key">指定要获取的键。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>返回表示异步操作的任务对象。</returns>
+		Task<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default);
 		#endregion
 
 		#region 设置方法
@@ -187,58 +220,40 @@ namespace Zongsoft.Runtime.Caching
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
-		void SetValue(string key, object value, CacheRequires requires = CacheRequires.None);
+		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+		bool SetValue(string key, object value, CacheRequires requires = CacheRequires.Always);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
+		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task SetValueAsync(string key, object value, CacheRequires requires = CacheRequires.None, CancellationToken cancellation = default);
+		Task<bool> SetValueAsync(string key, object value, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="duration">指定缓存项的生存时长，如果为零则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
-		void SetValue(string key, object value, TimeSpan duration, CacheRequires requires = CacheRequires.None);
+		/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
+		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+		bool SetValue(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="duration">指定缓存项的生存时长，如果为零则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
+		/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
+		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task SetValueAsync(string key, object value, TimeSpan duration, CacheRequires requires = CacheRequires.None, CancellationToken cancellation = default);
-
-		/// <summary>
-		/// 设置指定的值保存到缓存字典中。
-		/// </summary>
-		/// <param name="key">指定要保存的键。</param>
-		/// <param name="value">指定要保存的值。</param>
-		/// <param name="expires">指定缓存项的过期时间，如果小于当前时间则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
-		void SetValue(string key, object value, DateTime expires, CacheRequires requires = CacheRequires.None);
-
-		/// <summary>
-		/// 设置指定的值保存到缓存字典中。
-		/// </summary>
-		/// <param name="key">指定要保存的键。</param>
-		/// <param name="value">指定要保存的值。</param>
-		/// <param name="expires">指定缓存项的过期时间，如果小于当前时间则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.None"/>。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task SetValueAsync(string key, object value, DateTime expires, CacheRequires requires = CacheRequires.None, CancellationToken cancellation = default);
+		Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default);
 		#endregion
 	}
 }

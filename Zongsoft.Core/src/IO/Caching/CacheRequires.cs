@@ -36,8 +36,8 @@ namespace Zongsoft.Runtime.Caching
     /// </summary>
 	public enum CacheRequires
 	{
-        /// <summary>无约束</summary>
-		None,
+        /// <summary>无约束，即无论缓存项是否存在都能被设置。</summary>
+		Always,
 
         /// <summary>存在，即只有当缓存项存在时才能被更新。</summary>
 		Exists,
