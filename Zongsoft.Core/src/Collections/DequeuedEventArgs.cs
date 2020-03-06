@@ -34,18 +34,12 @@ namespace Zongsoft.Collections
 	[Serializable]
 	public class DequeuedEventArgs : EventArgs
 	{
-		#region 成员变量
-		private object _value;
-		private bool _isMultiple;
-		private CollectionRemovedReason _reason;
-		#endregion
-
 		#region 构造函数
-		public DequeuedEventArgs(object value, bool isMultiple, CollectionRemovedReason reason)
+		public DequeuedEventArgs(object value, object settings, CollectionRemovedReason reason)
 		{
-			_value = value;
-			_isMultiple = isMultiple;
-			_reason = reason;
+			this.Value = value;
+			this.Settings = settings;
+			this.Reason = reason;
 		}
 		#endregion
 
@@ -55,21 +49,15 @@ namespace Zongsoft.Collections
 		/// </summary>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
+			get;
 		}
 
 		/// <summary>
-		/// 获取一个指示本次出队是否为批量出队操作，如果为批量出队则<see cref="Value"/>属性返回的则是多值。
+		/// 获取出队操作的设置选项。
 		/// </summary>
-		public bool IsMultiple
+		public object Settings
 		{
-			get
-			{
-				return _isMultiple;
-			}
+			get;
 		}
 
 		/// <summary>
@@ -77,10 +65,7 @@ namespace Zongsoft.Collections
 		/// </summary>
 		public CollectionRemovedReason Reason
 		{
-			get
-			{
-				return _reason;
-			}
+			get;
 		}
 		#endregion
 	}

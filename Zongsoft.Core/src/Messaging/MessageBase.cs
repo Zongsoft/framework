@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
@@ -40,7 +40,6 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 成员字段
-		private string _id;
 		private string _acknowledgementId;
 		private byte[] _data;
 		private byte[] _checksum;
@@ -55,14 +54,14 @@ namespace Zongsoft.Messaging
 		protected MessageBase(string id, byte[] data, byte[] checksum = null, DateTime? expires = null, DateTime? enqueuedTime = null, DateTime? dequeuedTime = null, int dequeuedCount = 0)
 		{
 			if(string.IsNullOrWhiteSpace(id))
-				throw new ArgumentNullException("id");
+				throw new ArgumentNullException(nameof(id));
 
-			_id = id.Trim();
+			this.Id = id;
 			_data = data;
 			_checksum = checksum;
-			_expires = (expires.HasValue ? expires.Value : DateTime.Today.AddYears(50));
-			_enqueuedTime = (enqueuedTime.HasValue ? enqueuedTime.Value : MINIMUM_DATETIME);
-			_dequeuedTime = (dequeuedTime.HasValue ? dequeuedTime.Value : MINIMUM_DATETIME);
+			_expires = expires.HasValue ? expires.Value : DateTime.Today.AddYears(100);
+			_enqueuedTime = enqueuedTime.HasValue ? enqueuedTime.Value : MINIMUM_DATETIME;
+			_dequeuedTime = dequeuedTime.HasValue ? dequeuedTime.Value : MINIMUM_DATETIME;
 			_dequeuedCount = dequeuedCount;
 		}
 		#endregion
@@ -73,10 +72,7 @@ namespace Zongsoft.Messaging
 		/// </summary>
 		public string Id
 		{
-			get
-			{
-				return _id;
-			}
+			get;
 		}
 
 		public string AcknowledgementId
@@ -179,15 +175,17 @@ namespace Zongsoft.Messaging
 		#region 公共方法
 		public abstract DateTime Delay(TimeSpan duration);
 
-		public virtual Task<DateTime> DelayAsync(TimeSpan duration)
+		public virtual Task<DateTime> DelayAsync(TimeSpan duration, CancellationToken cancellation = default)
 		{
+			cancellation.ThrowIfCancellationRequested();
 			return Task.FromResult(this.Delay(duration));
 		}
 
 		public abstract object Acknowledge(object parameter = null);
 
-		public virtual Task<object> AcknowledgeAsync(object parameter = null)
+		public virtual Task<object> AcknowledgeAsync(object parameter = null, CancellationToken cancellation = default)
 		{
+			cancellation.ThrowIfCancellationRequested();
 			return Task.FromResult(this.Acknowledge(parameter));
 		}
 		#endregion

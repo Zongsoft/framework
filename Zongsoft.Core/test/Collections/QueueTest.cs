@@ -83,7 +83,7 @@ namespace Zongsoft.Collections.Tests
 			Assert.Equal("No.2", result);
 
 			var index = 3;
-			var items = queue.Dequeue(8);
+			var items = queue.DequeueMany(8);
 
 			foreach(var item in items)
 			{
@@ -131,7 +131,7 @@ namespace Zongsoft.Collections.Tests
 			Assert.Equal("0", queue.Peek());
 			Assert.Equal(100, queue.Count);
 
-			var items = queue.Peek(10);
+			var items = queue.Take(0, 10);
 			var index = 0;
 
 			Assert.Equal(100, queue.Count);

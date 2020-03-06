@@ -39,7 +39,7 @@ namespace Zongsoft.Messaging
 	public class MessageQueueListener : Zongsoft.Communication.ListenerBase
 	{
 		#region 成员字段
-		private IMessageQueue _queue;
+		private Zongsoft.Collections.IQueue _queue;
 		#endregion
 
 		#region 构造函数
@@ -47,7 +47,7 @@ namespace Zongsoft.Messaging
 		{
 		}
 
-		public MessageQueueListener(IMessageQueue queue) : base(nameof(MessageQueueListener))
+		public MessageQueueListener(Zongsoft.Collections.IQueue queue) : base(nameof(MessageQueueListener))
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 
@@ -57,7 +57,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
-		public IMessageQueue Queue
+		public Zongsoft.Collections.IQueue Queue
 		{
 			get
 			{
@@ -107,7 +107,7 @@ namespace Zongsoft.Messaging
 			#endregion
 
 			#region 构造函数
-			public MessageQueueChannel(int channelId, IMessageQueue queue) : base(channelId, queue)
+			public MessageQueueChannel(int channelId, Zongsoft.Collections.IQueue queue) : base(channelId, queue)
 			{
 				_cancellation = new CancellationTokenSource();
 			}
@@ -137,13 +137,13 @@ namespace Zongsoft.Messaging
 
 			private void OnReceive()
 			{
-				var queue = (IMessageQueue)this.Host;
+				var queue = (Zongsoft.Collections.IQueue)this.Host;
 
 				if(queue == null)
 					return;
 
 				var cancellation = _cancellation;
-				MessageBase message = null;
+				object message = null;
 
 				while(!cancellation.IsCancellationRequested)
 				{
@@ -176,7 +176,7 @@ namespace Zongsoft.Messaging
 			#region 发送方法
 			public override void Send(Stream stream, object asyncState = null)
 			{
-				var queue = (IMessageQueue)this.Host;
+				var queue = (Zongsoft.Collections.IQueue)this.Host;
 
 				if(queue == null || _cancellation.IsCancellationRequested)
 					return;
@@ -189,7 +189,7 @@ namespace Zongsoft.Messaging
 
 			public override void Send(byte[] buffer, int offset, int count, object asyncState = null)
 			{
-				var queue = (IMessageQueue)this.Host;
+				var queue = (Zongsoft.Collections.IQueue)this.Host;
 
 				if(queue == null || _cancellation.IsCancellationRequested)
 					return;

@@ -34,16 +34,11 @@ namespace Zongsoft.Collections
 	[Serializable]
 	public class EnqueuedEventArgs : EventArgs
 	{
-		#region 成员变量
-		private object _value;
-		private bool _isMultiple;
-		#endregion
-
 		#region 构造函数
-		public EnqueuedEventArgs(object value, bool isMultiple)
+		public EnqueuedEventArgs(object value, object settings)
 		{
-			_value = value;
-			_isMultiple = isMultiple;
+			this.Value = value;
+            this.Settings = settings;
 		}
 		#endregion
 
@@ -52,23 +47,17 @@ namespace Zongsoft.Collections
 		/// 获取入队的内容值。
 		/// </summary>
 		public object Value
-		{
-			get
-			{
-				return _value;
-			}
-		}
+        {
+            get;
+        }
 
-		/// <summary>
-		/// 获取一个指示本次入队是否为批量出队操作，如果为批量入队则<see cref="Value"/>属性返回的则是多值。
-		/// </summary>
-		public bool IsMultiple
-		{
-			get
-			{
-				return _isMultiple;
-			}
-		}
+        /// <summary>
+        /// 获取入队操作的设置选项。
+        /// </summary>
+        public object Settings
+        {
+            get;
+        }
 		#endregion
 	}
 }

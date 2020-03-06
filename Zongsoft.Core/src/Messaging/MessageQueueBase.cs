@@ -30,11 +30,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageQueueBase : IMessageQueue
+	public abstract class MessageQueueBase : Zongsoft.Collections.IQueue
 	{
 		#region 事件定义
 		public event EventHandler<Zongsoft.Collections.DequeuedEventArgs> Dequeued;
@@ -42,7 +44,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 成员字段
-		private string _name;
+		private readonly string _name;
 		#endregion
 
 		#region 构造函数
@@ -70,73 +72,97 @@ namespace Zongsoft.Messaging
 		#region 保护属性
 		protected virtual int Capacity
 		{
-			get
-			{
-				return 0;
-			}
+			get => 0;
 		}
 		#endregion
 
 		#region 公共方法
 		public abstract long GetCount();
 
-		public Task<long> GetCountAsync()
+		public abstract Task<long> GetCountAsync();
+
+		public virtual void Enqueue(object item, MessageEnqueueSettings settings = null)
 		{
-			return Task.FromResult(this.GetCount());
+			this.OnEnqueue(item, settings);
+			this.OnEnqueued(item, settings);
 		}
 
-		public abstract void Enqueue(object item, MessageEnqueueSettings settings = null);
-
-		public virtual int EnqueueMany<T>(IEnumerable<T> items, MessageEnqueueSettings settings = null)
+		public virtual void EnqueueMany<T>(IEnumerable<T> items, MessageEnqueueSettings settings = null)
 		{
 			if(items == null)
 				throw new ArgumentNullException(nameof(items));
 
-			int count = 0;
-
 			foreach(var item in items)
 			{
 				this.Enqueue(item, settings);
-				count++;
 			}
-
-			return count;
 		}
 
-		public virtual Task EnqueueAsync(object item, MessageEnqueueSettings settings = null)
+		public virtual Task EnqueueAsync(object item, MessageEnqueueSettings settings = null, CancellationToken cancellation = default)
 		{
-			return Task.Run(() => this.Enqueue(item, settings));
+			return this.OnEnqueueAsync(item, settings, cancellation)
+			           .ContinueWith(task =>
+			           {
+						   if(task.IsCompletedSuccessfully)
+							   this.OnEnqueued(item, settings);
+			           }, cancellation);
 		}
 
-		public virtual Task<int> EnqueueManyAsync<TItem>(IEnumerable<TItem> items, MessageEnqueueSettings settings = null)
+		public virtual async Task EnqueueManyAsync<TItem>(IEnumerable<TItem> items, MessageEnqueueSettings settings = null, CancellationToken cancellation = default)
 		{
-			return Task.FromResult(this.EnqueueMany<TItem>(items, settings));
+			if(items == null)
+				throw new ArgumentNullException(nameof(items));
+
+			cancellation.ThrowIfCancellationRequested();
+
+			foreach(var item in items)
+			{
+				await this.EnqueueAsync(item, settings, cancellation);
+			}
 		}
 
-		public abstract MessageBase Dequeue(MessageDequeueSettings settings = null);
-
-		public virtual IEnumerable<MessageBase> Dequeue(int count, MessageDequeueSettings settings = null)
+		public virtual MessageBase Dequeue(MessageDequeueSettings settings = null)
 		{
+			var value = this.OnDequeue(settings);
+			this.OnDequeued(value, settings);
+			return value;
+		}
+
+		public virtual IEnumerable<MessageBase> DequeueMany(int count, MessageDequeueSettings settings = null)
+		{
+			if(count <= 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
 			for(int i = 0; i < count; i++)
 				yield return this.Dequeue(settings);
 		}
 
-		public virtual Task<MessageBase> DequeueAsync(MessageDequeueSettings settings = null)
+		public virtual Task<MessageBase> DequeueAsync(MessageDequeueSettings settings = null, CancellationToken cancellation = default)
 		{
-			return Task.FromResult(this.Dequeue(settings));
+			return this.OnDequeueAsync(settings, cancellation)
+			           .ContinueWith(task =>
+					   {
+						   if(task.IsCompletedSuccessfully)
+							   this.OnDequeued(task.Result, settings);
+
+						   return task.Result;
+					   }, cancellation);
 		}
 
-		public virtual Task<IEnumerable<MessageBase>> DequeueAsync(int count, MessageDequeueSettings settings = null)
+		public virtual async IAsyncEnumerable<MessageBase> DequeueManyAsync(int count, MessageDequeueSettings settings = null, [EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			return Task.FromResult(this.Dequeue(count, settings));
+			if(count <= 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			cancellation.ThrowIfCancellationRequested();
+
+			for(int i = 0; i < count; i++)
+				yield return await this.DequeueAsync(settings, cancellation);
 		}
 
 		public abstract MessageBase Peek();
 
-		public virtual Task<MessageBase> PeekAsync()
-		{
-			return Task.FromResult(this.Peek());
-		}
+		public abstract Task<MessageBase> PeekAsync(CancellationToken cancellation = default);
 		#endregion
 
 		#region 队列实现
@@ -145,54 +171,51 @@ namespace Zongsoft.Messaging
 			this.ClearQueue();
 		}
 
+		Task Zongsoft.Collections.IQueue.ClearAsync(CancellationToken cancellation)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			this.ClearQueue();
+			return Task.CompletedTask;
+		}
+
 		void Zongsoft.Collections.IQueue.Enqueue(object item, object settings)
 		{
-			this.Enqueue(item, settings as MessageEnqueueSettings);
+			this.Enqueue(item, this.GetEnqueueSettings(settings));
 		}
 
-		int Zongsoft.Collections.IQueue.EnqueueMany<T>(IEnumerable<T> items, object settings)
+		void Zongsoft.Collections.IQueue.EnqueueMany<T>(IEnumerable<T> items, object settings)
 		{
-			return this.EnqueueMany(items, settings as MessageEnqueueSettings);
+			this.EnqueueMany(items, this.GetEnqueueSettings(settings));
 		}
 
-		Task Zongsoft.Collections.IQueue<MessageBase>.EnqueueAsync(object item, object settings)
+		Task Zongsoft.Collections.IQueue.EnqueueAsync(object item, object settings, CancellationToken cancellation)
 		{
-			return this.EnqueueAsync(item, settings as MessageEnqueueSettings);
+			return this.EnqueueAsync(item, this.GetEnqueueSettings(settings), cancellation);
 		}
 
-		Task<int> Zongsoft.Collections.IQueue<MessageBase>.EnqueueManyAsync<TItem>(IEnumerable<TItem> items, object settings)
+		Task Zongsoft.Collections.IQueue.EnqueueManyAsync<T>(IEnumerable<T> items, object settings, CancellationToken cancellation)
 		{
-			return this.EnqueueManyAsync(items, settings as MessageEnqueueSettings);
+			return this.EnqueueManyAsync(items, this.GetEnqueueSettings(settings), cancellation);
 		}
 
-		object Zongsoft.Collections.IQueue.Dequeue()
+		object Zongsoft.Collections.IQueue.Dequeue(object settings)
 		{
-			return this.Dequeue(null);
+			return this.Dequeue(this.GetDequeueSettings(settings));
 		}
 
-		IEnumerable Zongsoft.Collections.IQueue.Dequeue(int count)
+		IEnumerable Zongsoft.Collections.IQueue.DequeueMany(int count, object settings)
 		{
-			return this.Dequeue(count, null);
+			return this.DequeueMany(count, this.GetDequeueSettings(settings));
 		}
 
-		MessageBase Zongsoft.Collections.IQueue<MessageBase>.Dequeue(object settings)
+		async Task<object> Zongsoft.Collections.IQueue.DequeueAsync(object settings, CancellationToken cancellation)
 		{
-			return this.Dequeue(settings as MessageDequeueSettings);
+			return await this.DequeueAsync(this.GetDequeueSettings(settings), cancellation);
 		}
 
-		IEnumerable<MessageBase> Zongsoft.Collections.IQueue<MessageBase>.Dequeue(int count, object settings)
+		IAsyncEnumerable<object> Zongsoft.Collections.IQueue.DequeueManyAsync(int count, object settings, CancellationToken cancellation)
 		{
-			return this.Dequeue(count, settings as MessageDequeueSettings);
-		}
-
-		Task<MessageBase> Zongsoft.Collections.IQueue<MessageBase>.DequeueAsync(object settings)
-		{
-			return this.DequeueAsync(settings as MessageDequeueSettings);
-		}
-
-		Task<IEnumerable<MessageBase>> Zongsoft.Collections.IQueue<MessageBase>.DequeueAsync(int count, object settings)
-		{
-			return this.DequeueAsync(count, settings as MessageDequeueSettings);
+			return this.DequeueManyAsync(count, this.GetDequeueSettings(settings), cancellation);
 		}
 
 		object Zongsoft.Collections.IQueue.Peek()
@@ -200,38 +223,23 @@ namespace Zongsoft.Messaging
 			return this.Peek();
 		}
 
-		object Zongsoft.Collections.IQueue.Take(int startOffset)
+		async Task<object> Zongsoft.Collections.IQueue.PeekAsync(CancellationToken cancellation)
 		{
-			return this.TakeQueue(startOffset);
-		}
-
-		IEnumerable Zongsoft.Collections.IQueue.Take(int startOffset, int count)
-		{
-			return this.TakeQueue(startOffset, count);
-		}
-
-		MessageBase Zongsoft.Collections.IQueue<MessageBase>.Take(int startOffset)
-		{
-			return this.TakeQueue(startOffset);
-		}
-
-		IEnumerable<MessageBase> Zongsoft.Collections.IQueue<MessageBase>.Take(int startOffset, int count)
-		{
-			return this.TakeQueue(startOffset, count);
-		}
-
-		Task<MessageBase> Zongsoft.Collections.IQueue<MessageBase>.TakeAsync(int startOffset)
-		{
-			return this.TakeQueueAsync(startOffset);
-		}
-
-		Task<IEnumerable<MessageBase>> Zongsoft.Collections.IQueue<MessageBase>.TakeAsync(int startOffset, int count)
-		{
-			return this.TakeQueueAsync(startOffset, count);
+			return await this.PeekAsync(cancellation);
 		}
 		#endregion
 
 		#region 保护方法
+		protected virtual MessageDequeueSettings GetDequeueSettings(object settings)
+		{
+			return settings as MessageDequeueSettings;
+		}
+
+		protected virtual MessageEnqueueSettings GetEnqueueSettings(object settings)
+		{
+			return settings as MessageEnqueueSettings;
+		}
+
 		protected virtual void ClearQueue()
 		{
 			throw new NotSupportedException("The message queue does not support the operation.");
@@ -242,80 +250,43 @@ namespace Zongsoft.Messaging
 			throw new NotSupportedException("The message queue does not support the operation.");
 		}
 
-		protected virtual MessageBase TakeQueue(int startOffset)
-		{
-			var result = this.TakeQueue(startOffset, 1);
-
-			if(result == null)
-				return null;
-
-			return result.GetEnumerator().Current;
-		}
-
-		protected virtual IEnumerable<MessageBase> TakeQueue(int startOffset, int count)
-		{
-			throw new NotSupportedException("The message queue does not support the operation.");
-		}
-
-		protected virtual async Task<MessageBase> TakeQueueAsync(int startOffset)
-		{
-			var result = await this.TakeQueueAsync(startOffset, 1);
-
-			if(result == null)
-				return null;
-
-			return result.GetEnumerator().Current;
-		}
-
-		protected virtual Task<IEnumerable<MessageBase>> TakeQueueAsync(int startOffset, int count)
-		{
-			throw new NotSupportedException("The message queue does not support the operation.");
-		}
+		protected abstract void OnEnqueue(object item, MessageEnqueueSettings settings);
+		protected abstract Task OnEnqueueAsync(object item, MessageEnqueueSettings settings, CancellationToken cancellation);
+		protected abstract MessageBase OnDequeue(MessageDequeueSettings settings);
+		protected abstract Task<MessageBase> OnDequeueAsync(MessageDequeueSettings settings, CancellationToken cancellation);
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnDequeued(Zongsoft.Collections.DequeuedEventArgs args)
+		protected virtual void OnDequeued(object value, object settings)
 		{
-			this.Dequeued?.Invoke(this, args);
+			this.Dequeued?.Invoke(this, new Collections.DequeuedEventArgs(value, settings, Collections.CollectionRemovedReason.Remove));
 		}
 
-		protected virtual void OnEnqueued(Zongsoft.Collections.EnqueuedEventArgs args)
+		protected virtual void OnEnqueued(object value, object settings)
 		{
-			this.Enqueued?.Invoke(this, args);
+			this.Enqueued?.Invoke(this, new Collections.EnqueuedEventArgs(value, settings));
 		}
 		#endregion
 
 		#region 显式实现
 		int Zongsoft.Collections.IQueue.Capacity
 		{
-			get
-			{
-				return this.Capacity;
-			}
+			get => this.Capacity;
 		}
 
 		int ICollection.Count
 		{
-			get
-			{
-				return (int)this.Count;
-			}
+			get => (int)this.Count;
 		}
 
 		bool ICollection.IsSynchronized
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		object ICollection.SyncRoot
 		{
-			get
-			{
-				throw new NotSupportedException("The message queue does not support the operation.");
-			}
+			get => throw new NotSupportedException("The message queue does not support the operation.");
 		}
 
 		void ICollection.CopyTo(Array array, int index)

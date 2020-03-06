@@ -23,6 +23,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Zongsoft.Core.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Folder Include="Common\" />
 		<Folder Include="ComponentModel\" />
 		<Folder Include="Data\" />
