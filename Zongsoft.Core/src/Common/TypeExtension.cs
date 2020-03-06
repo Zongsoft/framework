@@ -216,9 +216,37 @@ namespace Zongsoft.Common
 			return typeof(IList).IsAssignableFrom(type) || IsAssignableFrom(typeof(IList<>), type);
 		}
 
+		public static bool IsHashset(this Type type)
+		{
+			return IsAssignableFrom(typeof(ISet<>), type);
+		}
+
 		public static bool IsDictionary(this Type type)
 		{
 			return typeof(IDictionary).IsAssignableFrom(type) || IsAssignableFrom(typeof(IDictionary<,>), type);
+		}
+
+		public static bool IsDictionary(this object instance, out IEnumerable<DictionaryEntry> entries)
+		{
+			entries = null;
+
+			if(instance == null)
+				return false;
+
+			if(IsAssignableFrom(typeof(IDictionary<,>), instance.GetType(), out var argumentTypes))
+			{
+				var iteratorType = typeof(GenericDictionaryEnumerable<,>).MakeGenericType(argumentTypes.ToArray());
+				entries = (IEnumerable<DictionaryEntry>)Activator.CreateInstance(iteratorType, new object[] { instance });
+				return true;
+			}
+
+			if(instance is IDictionary dictionary)
+			{
+				entries = new ClassicDictionaryEnumerable(dictionary);
+				return true;
+			}
+
+			return false;
 		}
 
 		public static bool IsScalarType(this Type type)
@@ -587,5 +615,122 @@ namespace Zongsoft.Common
 
 			return Type.GetType(typeName, throwOnError, ignoreCase);
 		}
+
+		#region 嵌套子类
+		private class ClassicDictionaryEnumerable : IEnumerable<DictionaryEntry>
+		{
+			private readonly IDictionary _dictionary;
+
+			public ClassicDictionaryEnumerable(IDictionary dictionary)
+			{
+				_dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
+			}
+
+			public IEnumerator<DictionaryEntry> GetEnumerator()
+			{
+				return new DictionaryIterator(_dictionary.GetEnumerator());
+			}
+
+			IEnumerator IEnumerable.GetEnumerator()
+			{
+				return this.GetEnumerator();
+			}
+
+			public class DictionaryIterator : IEnumerator<DictionaryEntry>
+			{
+				private readonly IDictionaryEnumerator _enumerator;
+
+				public DictionaryIterator(IDictionaryEnumerator enumerator)
+				{
+					_enumerator = enumerator;
+				}
+
+				public DictionaryEntry Current
+				{
+					get => _enumerator.Entry;
+				}
+
+				object IEnumerator.Current
+				{
+					get => _enumerator.Current;
+				}
+
+				public void Dispose()
+				{
+					if(_enumerator is IDisposable disposable)
+						disposable.Dispose();
+				}
+
+				public bool MoveNext()
+				{
+					return _enumerator.MoveNext();
+				}
+
+				public void Reset()
+				{
+					_enumerator.Reset();
+				}
+			}
+		}
+
+		private class GenericDictionaryEnumerable<TKey, TValue> : IEnumerable<DictionaryEntry>
+		{
+			private readonly IDictionary<TKey, TValue> _dictionary;
+
+			public GenericDictionaryEnumerable(object dictionary)
+			{
+				_dictionary = (IDictionary<TKey, TValue>)dictionary;
+			}
+
+			public IEnumerator<DictionaryEntry> GetEnumerator()
+			{
+				return new DictionaryIterator(_dictionary.GetEnumerator());
+			}
+
+			IEnumerator IEnumerable.GetEnumerator()
+			{
+				return this.GetEnumerator();
+			}
+
+			public class DictionaryIterator : IEnumerator<DictionaryEntry>
+			{
+				private readonly IEnumerator<KeyValuePair<TKey, TValue>> _enumerator;
+
+				public DictionaryIterator(IEnumerator<KeyValuePair<TKey, TValue>> enumerator)
+				{
+					_enumerator = enumerator;
+				}
+
+				public DictionaryEntry Current
+				{
+					get
+					{
+						var current = _enumerator.Current;
+						return new DictionaryEntry(current.Key, current.Value);
+					}
+				}
+
+				object IEnumerator.Current
+				{
+					get => _enumerator.Current;
+				}
+
+				public void Dispose()
+				{
+					_enumerator.Dispose();
+				}
+
+				public bool MoveNext()
+				{
+					return _enumerator.MoveNext();
+				}
+
+				public void Reset()
+				{
+					_enumerator.Reset();
+				}
+			}
+		}
+		#endregion
 	}
 }
