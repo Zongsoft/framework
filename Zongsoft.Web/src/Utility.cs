@@ -49,24 +49,6 @@ namespace Zongsoft.Web
 		private static readonly Regex _regex = new Regex(@"\s*(?<part>(\*)|(\([^\(\)]+\))|([^-]+))\s*-?", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
 		#endregion
 
-		public static string RepairQueryString(string path, string queryString = null)
-		{
-			if(string.IsNullOrWhiteSpace(queryString))
-				return path;
-
-			queryString = queryString.Trim().TrimStart('?');
-
-			if(string.IsNullOrWhiteSpace(path))
-				return "/" + (string.IsNullOrWhiteSpace(queryString) ? string.Empty : "?" + queryString);
-
-			var index = path.IndexOf('?');
-
-			if(index > 0)
-				return path + "&" + queryString;
-			else
-				return path + "?" + queryString;
-		}
-
 		public static string[] Slice(string text)
 		{
 			if(string.IsNullOrWhiteSpace(text))
