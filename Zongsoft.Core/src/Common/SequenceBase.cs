@@ -57,9 +57,9 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 成员字段
-		private ReaderWriterLockSlim _locker;
-		private Dictionary<string, int> _map;
 		private Entry[] _entries;
+		private readonly Dictionary<string, int> _map;
+		private readonly ReaderWriterLockSlim _locker;
 		#endregion
 
 		#region 构造函数
@@ -269,7 +269,7 @@ namespace Zongsoft.Common
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private long Reserve(string key, ref Entry entry, long value, int seed)
 		{
-			int Bound(int min, int max, double number)
+			static int Bound(int min, int max, double number)
 			{
 				return (int)Math.Min(max, Math.Max(min, number));
 			}
