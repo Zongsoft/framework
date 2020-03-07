@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Redis"
+        title="Zongsoft.Externals.Redis Plugin"
+        author="Zongsoft Studio"
+        version="2.0"
+        description="Create by: Popeye Zhong at 2020-03-05" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Redis" />
+		</assemblies>
+	</manifest>
+
+	<!-- 挂载本地Redis服务对象 -->
+	<extension path="/Workspace/Externals/Redis">
+		<object name="localhost" type="Zongsoft.Externals.Redis.RedisService, Zongsoft.Externals.Redis" />
+	</extension>
+
+	<!-- 将本地Redis服务注册到默认服务容器中 -->
+	<extension path="/Workspace/Services">
+		<object name="Redis_localhost" value="{path:/Workspace/Externals/Redis/localhost}" />
+	</extension>
+
+	<!-- 定义Redis命令的根节点 -->
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Redis">
+			<redis.command>
+				<object type="Zongsoft.Externals.Redis.Commands.RedisCommand, Zongsoft.Externals.Redis"
+				        redis="{path:/Workspace/Externals/Redis/localhost}" />
+			</redis.command>
+		</object>
+	</extension>
+
+	<!-- 定义常用的Redis命令集 -->
+	<extension path="/Workbench/Executor/Commands/Redis">
+		<object name="Get" type="Zongsoft.Externals.Redis.Commands.RedisGetCommand, Zongsoft.Externals.Redis" />
+		<object name="Set" type="Zongsoft.Externals.Redis.Commands.RedisSetCommand, Zongsoft.Externals.Redis" />
+		<object name="Find" type="Zongsoft.Externals.Redis.Commands.RedisFindCommand, Zongsoft.Externals.Redis" />
+		<object name="Count" type="Zongsoft.Externals.Redis.Commands.RedisCountCommand, Zongsoft.Externals.Redis" />
+		<object name="Remove" type="Zongsoft.Externals.Redis.Commands.RedisRemoveCommand, Zongsoft.Externals.Redis" />
+		<object name="Increment" type="Zongsoft.Externals.Redis.Commands.RedisIncrementCommand, Zongsoft.Externals.Redis" />
+		<object name="Decrement" type="Zongsoft.Externals.Redis.Commands.RedisDecrementCommand, Zongsoft.Externals.Redis" />
+	</extension>
+</plugin>
