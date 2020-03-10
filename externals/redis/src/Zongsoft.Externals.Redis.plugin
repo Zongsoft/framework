@@ -36,6 +36,7 @@
 	<extension path="/Workbench/Executor/Commands/Redis">
 		<object name="Get" type="Zongsoft.Externals.Redis.Commands.RedisGetCommand, Zongsoft.Externals.Redis" />
 		<object name="Set" type="Zongsoft.Externals.Redis.Commands.RedisSetCommand, Zongsoft.Externals.Redis" />
+		<object name="Info" type="Zongsoft.Externals.Redis.Commands.RedisInfoCommand, Zongsoft.Externals.Redis" />
 		<object name="Find" type="Zongsoft.Externals.Redis.Commands.RedisFindCommand, Zongsoft.Externals.Redis" />
 		<object name="Count" type="Zongsoft.Externals.Redis.Commands.RedisCountCommand, Zongsoft.Externals.Redis" />
 		<object name="Remove" type="Zongsoft.Externals.Redis.Commands.RedisRemoveCommand, Zongsoft.Externals.Redis" />

@@ -28,11 +28,14 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
+	[DisplayName("Text.RedisGetCommand.Name")]
+	[Description("Text.RedisGetCommand.Description")]
 	public class RedisGetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 构造函数

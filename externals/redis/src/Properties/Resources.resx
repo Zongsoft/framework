@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Text.RedisCommand.Description" xml:space="preserve">
+    <value>为其他 Redis 命令提供宿主环境。</value>
+  </data>
+  <data name="Text.RedisCommand.Name" xml:space="preserve">
+    <value>Redis 命令</value>
+  </data>
+  <data name="Text.RedisCountCommand.Description" xml:space="preserve">
+    <value>获取当前数据库的记录数。</value>
+  </data>
+  <data name="Text.RedisCountCommand.Name" xml:space="preserve">
+    <value>计数命令</value>
+  </data>
+  <data name="Text.RedisDecrementCommand.Description" xml:space="preserve">
+    <value>以原子方式递减指定键的数值。</value>
+  </data>
+  <data name="Text.RedisDecrementCommand.Name" xml:space="preserve">
+    <value>递减命令</value>
+  </data>
+  <data name="Text.RedisDecrementCommand.Options.Interval" xml:space="preserve">
+    <value>递减的步长，默认为1。</value>
+  </data>
+  <data name="Text.RedisDecrementCommand.Options.Seed" xml:space="preserve">
+    <value>种子数，当指定键值不存在时设置的初始值，默认为0。</value>
+  </data>
+  <data name="Text.RedisFindCommand.Description" xml:space="preserve">
+    <value>按指定的搜索模式进行查找。</value>
+  </data>
+  <data name="Text.RedisFindCommand.Name" xml:space="preserve">
+    <value>查找命令</value>
+  </data>
+  <data name="Text.RedisFindCommand.Options.Count" xml:space="preserve">
+    <value>返回的最多记录数，默认为100。</value>
+  </data>
+  <data name="Text.RedisGetCommand.Description" xml:space="preserve">
+    <value>获取指定键名的内容。</value>
+  </data>
+  <data name="Text.RedisGetCommand.Name" xml:space="preserve">
+    <value>获取命令</value>
+  </data>
+  <data name="Text.RedisIncrementCommand.Description" xml:space="preserve">
+    <value>以原子方式递增指定键的数值。</value>
+  </data>
+  <data name="Text.RedisIncrementCommand.Name" xml:space="preserve">
+    <value>递增命令</value>
+  </data>
+  <data name="Text.RedisIncrementCommand.Options.Interval" xml:space="preserve">
+    <value>递增的步长，默认为1。</value>
+  </data>
+  <data name="Text.RedisIncrementCommand.Options.Seed" xml:space="preserve">
+    <value>种子数，当指定键值不存在时设置的初始值，默认为0。</value>
+  </data>
+  <data name="Text.RedisInfoCommand.Description" xml:space="preserve">
+    <value>查看 Redis 服务信息。</value>
+  </data>
+  <data name="Text.RedisInfoCommand.Name" xml:space="preserve">
+    <value>信息命令</value>
+  </data>
+  <data name="Text.RedisRemoveCommand.Description" xml:space="preserve">
+    <value>删除一个或多个对应键名的项目。</value>
+  </data>
+  <data name="Text.RedisRemoveCommand.Name" xml:space="preserve">
+    <value>删除命令</value>
+  </data>
+  <data name="Text.RedisSetCommand.Description" xml:space="preserve">
+    <value>设置指定的键值到 Redis 数据库中。</value>
+  </data>
+  <data name="Text.RedisSetCommand.Name" xml:space="preserve">
+    <value>设置命令</value>
+  </data>
+  <data name="Text.RedisSetCommand.Options.Expiry" xml:space="preserve">
+    <value>设置的过期时长，默认为永不过期。</value>
+  </data>
+  <data name="Text.RedisSetCommand.Options.Requires" xml:space="preserve">
+    <value>设置的必要条件。</value>
+  </data>
+</root>

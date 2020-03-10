@@ -28,12 +28,15 @@
  */
 
 using System;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-	public class RedisCommand : CommandBase<Zongsoft.Services.CommandContext>
+    [DisplayName("Text.RedisCommand.Name")]
+    [Description("Text.RedisCommand.Description")]
+    public class RedisCommand : CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 成员字段
 		private RedisService _redis;

@@ -28,14 +28,21 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-	[Zongsoft.Services.CommandOption("requires", Type = typeof(Zongsoft.Runtime.Caching.CacheRequires), Description = "${Text.SetCommand.Requires}")]
-	[Zongsoft.Services.CommandOption("expiry", Type = typeof(TimeSpan), Description = "${Text.SetCommand.Expiry}")]
+	[DisplayName("Text.RedisSetCommand.Name")]
+	[Description("Text.RedisSetCommand.Description")]
+	[Zongsoft.Services.CommandOption(REQUIRES_OPTION, Type = typeof(Runtime.Caching.CacheRequires), DefaultValue = Runtime.Caching.CacheRequires.Always, Description = "Text.RedisSetCommand.Options.Requires")]
+	[Zongsoft.Services.CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
 	public class RedisSetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
+		#region 常量定义
+		private const string REQUIRES_OPTION = "requires";
+		private const string EXPIRY_OPTION = "expiry";
+		#endregion
+
 		#region 构造函数
 		public RedisSetCommand() : base("Set")
 		{
@@ -48,11 +55,8 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length == 0)
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
-			if(!context.Expression.Options.TryGetValue<TimeSpan>("expiry", out var expiry))
-				expiry = TimeSpan.Zero;
-
-			if(!context.Expression.Options.TryGetValue<Zongsoft.Runtime.Caching.CacheRequires>("requires", out var requires))
-				requires = Runtime.Caching.CacheRequires.Always;
+			var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
+			var requires = context.Expression.Options.GetValue<Runtime.Caching.CacheRequires>(REQUIRES_OPTION);
 
 			var redis = RedisCommand.GetRedis(context.CommandNode);
 

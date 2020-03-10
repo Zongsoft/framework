@@ -28,11 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-	public class RedisRemoveCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+    [DisplayName("Text.RedisRemoveCommand.Name")]
+    [Description("Text.RedisRemoveCommand.Description")]
+    public class RedisRemoveCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
     {
 		#region 构造函数
 		public RedisRemoveCommand() : base("Remove")

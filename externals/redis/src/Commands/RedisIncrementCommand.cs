@@ -28,12 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-	[Zongsoft.Services.CommandOption("seed", Type = typeof(int), DefaultValue = 0)]
-	[Zongsoft.Services.CommandOption("interval", Type = typeof(int), DefaultValue = 1)]
+	[DisplayName("Text.RedisIncrementCommand.Name")]
+	[Description("Text.RedisIncrementCommand.Description")]
+	[Zongsoft.Services.CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisIncrementCommand.Options.Seed")]
+	[Zongsoft.Services.CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisIncrementCommand.Options.Interval")]
 	public class RedisIncrementCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 构造函数

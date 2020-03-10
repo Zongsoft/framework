@@ -28,12 +28,19 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
+	[DisplayName("Text.RedisFindCommand.Name")]
+	[Description("Text.RedisFindCommand.Description")]
+	[Zongsoft.Services.CommandOption(COUNT_OPTION, typeof(int), DefaultValue = 100, Description = "Text.RedisFindCommand.Options.Count")]
 	public class RedisFindCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
+		#region 常量定义
+		private const string COUNT_OPTION = "count";
+		#endregion
+
 		#region 构造函数
 		public RedisFindCommand() : base("Find")
 		{
@@ -46,26 +53,19 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length == 0)
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
-			var result = new IEnumerable<string>[context.Expression.Arguments.Length];
+			//查找指定模式的键名集
+			var result = RedisCommand.GetRedis(context.CommandNode)
+				.Find(
+					context.Expression.Arguments[0],
+					context.Expression.Options.GetValue<int>(COUNT_OPTION));
 
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
+			//定义遍历序号
+			var index = 1;
+
+			foreach(var key in result)
 			{
-				//查找指定模式的键名集
-				result[i] = RedisCommand.GetRedis(context.CommandNode).Find(context.Expression.Arguments[i]).Keys;
-
-				//打印模式字符串
-				context.Output.WriteLine(Services.CommandOutletColor.Magenta, context.Expression.Arguments[i]);
-
-				//定义遍历序号
-				var index = 1;
-
-				foreach(var key in result[i])
-				{
-					context.Output.Write(Services.CommandOutletColor.DarkGray, $"[{index++}] ");
-					context.Output.WriteLine(Services.CommandOutletColor.Green, key);
-				}
-
-				context.Output.WriteLine();
+				context.Output.Write(Services.CommandOutletColor.DarkGray, $"[{index++}] ");
+				context.Output.WriteLine(key);
 			}
 
 			return result;
