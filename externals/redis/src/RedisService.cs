@@ -181,13 +181,37 @@ namespace Zongsoft.Externals.Redis
 				_database = _connection.GetDatabase(databaseId);
 		}
 
-		public (int Cursor, IEnumerable<string> Keys) Find(string pattern, int cursor = 0, int count = 100)
+		public IEnumerable<string> Find(string pattern, int count = 100)
 		{
+			//确保连接成功
 			this.Connect();
 
-			_database.Execute("scan", cursor, "MATCH", pattern, "COUNT", count);
+			return _connection.GetServer(_database.IdentifyEndpoint())
+				.Keys(_database.Database, pattern, count)
+				.Select(key => (string)key);
+		}
 
-			return (0, null);
+		public async Task<IEnumerable<string>> FindAsync(string pattern, int count = 100, CancellationToken cancellation = default)
+		{
+			//确保连接成功
+			await this.ConnectAsync(cancellation);
+
+			return _connection.GetServer(_database.IdentifyEndpoint())
+				.Keys(_database.Database, pattern, count)
+				.Select(key => (string)key);
+		}
+
+		public RedisServiceInfo GetInfo()
+		{
+			this.Connect();
+			return this.GetInfoCore();
+		}
+
+		public async Task<RedisServiceInfo> GetInfoAsync(CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			await this.ConnectAsync(cancellation);
+			return this.GetInfoCore();
 		}
 
 		public RedisEntryType GetEntryType(string key)
@@ -474,22 +498,51 @@ namespace Zongsoft.Externals.Redis
 		#region 缓存实现
 		public long GetCount()
 		{
-			throw new NotImplementedException();
+			//确保连接成功
+			this.Connect();
+
+			return _connection.GetServer(_database.IdentifyEndpoint()).DatabaseSize(_database.Database);
 		}
 
-		public Task<long> GetCountAsync(CancellationToken cancellation = default)
+		public async Task<long> GetCountAsync(CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
+			cancellation.ThrowIfCancellationRequested();
+			await this.ConnectAsync(cancellation);
+			return await _connection.GetServer(_database.IdentifyEndpoint()).DatabaseSizeAsync(_database.Database);
 		}
 
 		public void Clear()
 		{
-			throw new NotImplementedException();
+			const int BATCH_SIZE = 100;
+
+			//确保连接成功
+			this.Connect();
+
+			RedisKey[] keys;
+
+			do
+			{
+				keys = _connection
+					.GetServer(_database.IdentifyEndpoint())
+					.Keys(_database.Database, GetKey("*"), BATCH_SIZE).ToArray();
+			} while(keys.Length > 0 && _database.KeyDelete(keys) > 0);
 		}
 
-		public Task ClearAsync(CancellationToken cancellation = default)
+		public async Task ClearAsync(CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
+			const int BATCH_SIZE = 100;
+
+			cancellation.ThrowIfCancellationRequested();
+			await this.ConnectAsync(cancellation);
+
+			RedisKey[] keys;
+
+			do
+			{
+				keys = _connection
+					.GetServer(_database.IdentifyEndpoint())
+					.Keys(_database.Database, GetKey("*"), BATCH_SIZE).ToArray();
+			} while(keys.Length > 0 && (await _database.KeyDeleteAsync(keys)) > 0);
 		}
 
 		public bool Exists(string key)
@@ -755,6 +808,21 @@ namespace Zongsoft.Externals.Redis
 					condition = null;
 					return false;
 			}
+		}
+
+		private RedisServiceInfo GetInfoCore()
+		{
+			var info = new RedisServiceInfo(_name, _namespace, this.DatabaseId, this.Settings);
+			var endpoints = _connection.GetEndPoints();
+
+			info.Servers = new RedisServerDescriptor[endpoints.Length];
+
+			for(int i = 0; i < endpoints.Length; i++)
+			{
+				info.Servers[i] = new RedisServerDescriptor(_connection.GetServer(endpoints[i]));
+			}
+
+			return info;
 		}
 
 		private void Connect(int databaseId = -1)
