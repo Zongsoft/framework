@@ -37,7 +37,6 @@ using Zongsoft.Runtime.Serialization;
 namespace Zongsoft.Collections.Commands
 {
 	[CommandOption("count", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Count")]
-	[CommandOption("round", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Round")]
 	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
 	public class QueueOutCommand : CommandBase<CommandContext>
 	{
@@ -54,39 +53,26 @@ namespace Zongsoft.Collections.Commands
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var count = context.Expression.Options.GetValue<int>("count");
-			int round = context.Expression.Options.GetValue<int>("round");
-			var result = new List<object>(count);
+			int count = context.Expression.Options.GetValue<int>("count");
 
 			if(count < 1)
 				throw new CommandOptionValueException("count", count);
 
-			if(round < 1)
-				throw new CommandOptionValueException("round", round);
-
 			var queues = QueueCommandHelper.GetQueues(context.CommandNode, context.Expression.Options.GetValue<string>("queues"));
+			var result = new List<object>(count * queues.Count);
 
 			foreach(var queue in queues)
 			{
-				if(queue.Count == 0)
+				for(int i = 0; i < count; i++)
 				{
-					context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_QueueIsEmpty, queue.Name));
-					continue;
-				}
+					var item = queue.Dequeue();
 
-				for(int i = 0; i < round; i++)
-				{
-					var items = queue.Dequeue(count);
+					if(item == null)
+						continue;
 
-					if(items == null)
-						break;
+					result.Add(item);
 
-					foreach(var item in items)
-					{
-						result.Add(item);
-					}
-
-					context.Output.WriteLine(Serializer.Json.Serialize(items));
+					context.Output.WriteLine(Serializer.Json.Serialize(item));
 					context.Output.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_QueueOutCommand_Message, i + 1, count, queue.Name));
 				}
 			}

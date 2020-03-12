@@ -56,16 +56,13 @@ namespace Zongsoft.Collections.Commands
 
 			foreach(var queue in queues)
 			{
-				if(queue.Count == 0)
+				var item = queue.Peek();
+
+				if(item == null)
 				{
 					context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_QueueIsEmpty, queue.Name));
 					continue;
 				}
-
-				var item = queue.Peek();
-
-				if(item == null)
-					break;
 
 				result.Add(item);
 				context.Output.WriteLine(Serializer.Json.Serialize(item));
