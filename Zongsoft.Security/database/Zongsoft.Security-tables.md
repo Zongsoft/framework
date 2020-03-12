@@ -53,11 +53,11 @@ MemberId   | int     | 4  | ✘ | 主键，用户或角色编号
 MemberType | byte    | 1  | ✘ | 主键，成员类型 _(0:用户; 1:角色)_
 SchemaId   | varchar | 50 | ✘ | 主键，授权目标的标识
 ActionId   | varchar | 50 | ✘ | 主键，授权行为的标识
-Granted    | bool    | -  | ✘ | 是否授权
+Granted    | bool    | -  | ✘ | 授权标记
 
-> 注：“`Granted`”字段表示该用户对指定的系统对象对应的权限字的保护类型，定义如下：
-> - **真**：表示用户或角色对指定的系统对象拥有该权限；
-> - **假**：表示用户或角色对指定的系统对象拒绝该权限。
+> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对操作目标(_`Schema`_)是否具有指定操作(`Action`)的授权，定义如下：
+> - **真**：表示用户或角色对指定目标拥有指定操作的授权；
+> - **假**：表示用户或角色对指定目标没有指定操作的权限。
 
 
 ## 权限过滤表 `PermissionFilter`
@@ -74,18 +74,18 @@ Filter     | varchar | 500 | ✘ | 过滤表达式
 
 ## 其它说明
 
-### 成员权限计算
+### 权限计算
 
-权限计算准则：**拒绝优先、就近优先**。以下为相关表中的记录数据：
+权限计算准则：**拒绝优先、就近优先**。以下为相关表中的范例数据：
 
 #### 用户记录 `User`
 
 UserId | Name | FullName
 :-----:|:----:|---------
 1001   | Jack | 杰克·马
-1002   | Pony | 托尼·马
+1002   | Pony | 波尼·马
 
-#### 角色数据 `Role`
+#### 角色记录 `Role`
 
 RoleId | Name | FullName
 :-----:|:----:|---------
@@ -103,7 +103,7 @@ RoleId | MemberId | MemberType
 201    | 1002     | `0`(_User_) _表示：“Pony”属于“销售人员”_
 202    | 1002     | `0`(_User_) _表示：“Pony”属于“客服人员”_
 
-#### 授权设置 `Permission`
+#### 权限记录 `Permission`
 
 MemberId | MemberType | SchemaId | ActionId | Granted
 :-------:|:----------:|:--------:|:--------:|:------:
@@ -180,18 +180,18 @@ MemberId | MemberType | SchemaId | ActionId | Granted
 ```
 
 
-### 字段权限过滤
+### 权限过滤
 
-承接上面的数据，并有如下“授权过滤”记录数据：
+权限过滤是指对具有特定操作权限的目标资源进行字段过滤。承接上面的数据，并有如下“授权过滤”数据：
 
 #### 权限过滤 `PermissionFilter`
 
 MemberId | MemberType | SchemaId | ActionId | Filter
 :-------:|:----------:|:--------:|:--------:|:------:
-201      | `1`(_Role_) | SaleOrder | Select  | !Amount,!Details.Price,!Details.Discount,!Details.Quantity
+201      | `1`(_Role_) | SaleOrder | Select  | `!Amount,!Details.Price,!Details.Discount,!Details.Quantity`
 
 
-综上所示，“销售人员(`201`)”角色虽然默认拥有对“销售订单(`SaleOrder`)”及其子资源的具有“查看(`Select`)”权限，但是却不包含对这些资源中的如下字段：
+综上所示，“销售人员(`201`)”角色虽然拥有对“销售订单(`SaleOrder`)”及其子资源的具有“查看(`Select`)”权限，但是却不包含对这些资源中的如下字段：
 
 - `SaleOrder.Amount` 销售订单总金额
 - `SaleOrderDetail.Price` 单项单价
