@@ -48,8 +48,5 @@ namespace Zongsoft.Runtime.Caching
 
 		/// <summary>因为过期被删除。</summary>
 		Expired,
-
-		/// <summary>因为依赖被删除。</summary>
-		Dependented,
 	}
 }
