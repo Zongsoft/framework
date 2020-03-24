@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Security"
+        title="Zongsoft Security Plugin"
+        author="Popeye Zhong(zongsoft@gmail.com)"
+        version="1.0.1604.0"
+        copyright="Copyright (C) 2010-2015 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2015-07-17 by Popeye Zhong, Modified Date: 2016-04 by Popeye Zhong.">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Security" />
+		</assemblies>
+	</manifest>
+
+	<!-- 挂载“Security”服务提供程序 -->
+	<extension path="/Workspace/Services/Providers">
+		<object name="Security" type="Zongsoft.Services.PluginServiceProvider, Zongsoft.Plugins" />
+	</extension>
+
+	<!-- 将“Security”服务提供程序链接到默认服务容器 -->
+	<extension path="/Workspace/Services">
+		<object name="Security" value="{path:../Providers/Security}" />
+	</extension>
+
+	<!-- 挂载新的数据访问器 -->
+	<extension path="/Workbench/Data/Accessors">
+		<object name="Security" />
+	</extension>
+
+	<!-- 挂载验证和授权集成模块 -->
+	<extension path="/Workbench/Security">
+		<object name="Authentication" value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.CoreLibrary}">
+			<expose name="Filters" value="{path:../@Filters}" />
+			<object name="Default" value="{path:/Workspace/Services/Security/Authenticator}" />
+		</object>
+
+		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.CoreLibrary}">
+			<expose name="Filters" value="{path:../@Filters}" />
+			<object name="Default" value="{path:/Workspace/Services/Security/Authorizer}" />
+		</object>
+	</extension>
+
+	<!-- 挂载“安全”相关的各种服务 -->
+	<extension path="/Workspace/Services/Security">
+		<object name="Data" value="{path:/Workbench/Data/Accessors/Security}" />
+		<object name="Configuration" value="{opt:/Security/Membership/General}" />
+
+		<object name="Attempter" option="{path:../configuration.authentication.attempter}" type="Zongsoft.Security.Membership.Attempter, Zongsoft.Security" />
+		<object name="Authenticator" option="{path:../configuration.authentication.credential}" type="Zongsoft.Security.Membership.Authenticator, Zongsoft.Security" />
+		<object name="Authorizer" type="Zongsoft.Security.Membership.Authorizer, Zongsoft.Security" />
+		<object name="Censorship" type="Zongsoft.Security.Censorship, Zongsoft.Security" />
+		<object name="CredentialProvider" type="Zongsoft.Security.CredentialProvider, Zongsoft.Security" />
+		<object name="RoleProvider" type="Zongsoft.Security.Membership.RoleProvider, Zongsoft.Security" />
+		<object name="UserProvider" option="{path:../configuration.user}" type="Zongsoft.Security.Membership.UserProvider, Zongsoft.Security" />
+		<object name="PermissionProvider" type="Zongsoft.Security.Membership.PermissionProvider, Zongsoft.Security" />
+
+		<object name="PasswordValidator" option="{path:../configuration.user}" type="Zongsoft.Security.Membership.Common.PasswordValidator, Zongsoft.Security" />
+		<object name="RoleNameValidator" type="Zongsoft.Security.Membership.Common.RoleNameValidator, Zongsoft.Security" />
+		<object name="UserNameValidator" type="Zongsoft.Security.Membership.Common.UserNameValidator, Zongsoft.Security" />
+	</extension>
+</plugin>

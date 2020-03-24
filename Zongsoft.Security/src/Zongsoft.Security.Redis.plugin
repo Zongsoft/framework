@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Security.Redis"
+        title="Zongsoft Security Redis Plugin"
+        author="Popeye Zhong(zongsoft@gmail.com)"
+        version="1.0.1604.0"
+        copyright="Copyright (C) 2010-2015 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2015-07-17 by Popeye Zhong, Modified Date: 2016-04 by Popeye Zhong.">
+
+	<manifest>
+		<dependencies>
+			<dependency name="Zongsoft.Security" />
+			<dependency name="Zongsoft.Externals.Redis" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Data/Accessors">
+		<security.sequence>{path:/Workspace/Externals/Redis}</security.sequence>
+	</extension>
+
+	<extension path="/Workspace/Services/Security">
+		<attempter.cache>{path:/Workspace/Externals/Redis}</attempter.cache>
+		<credentialProvider.cache>{path:/Workspace/Externals/Redis}</credentialProvider.cache>
+	</extension>
+</plugin>

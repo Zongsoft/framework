@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Security">
+		<entity name="Role" table="security_role">
+			<key>
+				<member name="RoleId" />
+			</key>
+
+			<property name="RoleId" type="uint" nullable="false" sequence="#" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="FullName" type="string" length="50" nullable="true" />
+			<property name="Namespace" type="string" length="50" nullable="false" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Members" role="Member" multiplicity="*" immutable="false">
+				<link name="RoleId" role="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="Users" role="Member:MemberUser" multiplicity="*">
+				<link name="RoleId" role="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="Roles" role="Member:MemberRole" multiplicity="*">
+				<link name="RoleId" role="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="Permissions" role="Permission" multiplicity="*" immutable="false">
+				<link name="RoleId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="1" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="PermissionFilters" role="PermissionFilter" multiplicity="*" immutable="false">
+				<link name="RoleId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="1" />
+				</constraints>
+			</complexProperty>
+		</entity>
+
+		<entity name="User" table="security_user">
+			<key>
+				<member name="UserId" />
+			</key>
+
+			<property name="UserId" type="uint" nullable="false" sequence="#" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="FullName" type="string" length="50" nullable="true" />
+			<property name="Namespace" type="string" length="50" nullable="true" />
+			<property name="Password" type="binary" length="64" nullable="true" />
+			<property name="PasswordSalt" type="ulong" nullable="true" />
+			<property name="Email" type="string" length="100" nullable="true" />
+			<property name="Phone" type="string" length="50" nullable="true" />
+			<property name="Status" type="byte" nullable="false" />
+			<property name="StatusTimestamp" type="datetime" nullable="true" />
+			<property name="PasswordQuestion1" type="string" length="50" nullable="true" />
+			<property name="PasswordAnswer1" type="binary" length="64" nullable="true" />
+			<property name="PasswordQuestion2" type="string" length="50" nullable="true" />
+			<property name="PasswordAnswer2" type="binary" length="64" nullable="true" />
+			<property name="PasswordQuestion3" type="string" length="50" nullable="true" />
+			<property name="PasswordAnswer3" type="binary" length="64" nullable="true" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Roles" role="Member:Role" multiplicity="*">
+				<link name="UserId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="Permissions" role="Permission" multiplicity="*" immutable="false">
+				<link name="UserId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="PermissionFilters" role="PermissionFilter" multiplicity="*" immutable="false">
+				<link name="UserId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+		</entity>
+
+		<entity name="Member" table="security_member">
+			<key>
+				<member name="RoleId" />
+				<member name="MemberId" />
+				<member name="MemberType" />
+			</key>
+
+			<property name="RoleId" type="uint" nullable="false" />
+			<property name="MemberId" type="uint" nullable="false" />
+			<property name="MemberType" type="byte" nullable="false" />
+
+			<complexProperty name="Role" role="Role" multiplicity="1">
+				<link name="RoleId" role="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="MemberRole" role="Role" multiplicity="?">
+				<link name="MemberId" role="RoleId" />
+
+				<constraints>
+					<constraint name="MemberType" actor="Principal" value="1" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="MemberUser" role="User" multiplicity="?">
+				<link name="MemberId" role="UserId" />
+
+				<constraints>
+					<constraint name="MemberType" actor="Principal" value="0" />
+				</constraints>
+			</complexProperty>
+		</entity>
+
+		<entity name="Permission" table="security_permission">
+			<key>
+				<member name="MemberId" />
+				<member name="MemberType" />
+				<member name="SchemaId" />
+				<member name="ActionId" />
+			</key>
+
+			<property name="MemberId" type="uint" nullable="false" />
+			<property name="MemberType" type="byte" nullable="false" />
+			<property name="SchemaId" type="string" length="50" nullable="false" />
+			<property name="ActionId" type="string" length="50" nullable="false" />
+			<property name="Granted" type="bool" nullable="false" />
+		</entity>
+
+		<entity name="PermissionFilter" table="security_permissionfilter">
+			<key>
+				<member name="MemberId" />
+				<member name="MemberType" />
+				<member name="SchemaId" />
+				<member name="ActionId" />
+			</key>
+
+			<property name="MemberId" type="uint" nullable="false" />
+			<property name="MemberType" type="byte" nullable="false" />
+			<property name="SchemaId" type="string" length="50" nullable="false" />
+			<property name="ActionId" type="string" length="50" nullable="false" />
+			<property name="Filter" type="string" length="4000" nullable="false" />
+		</entity>
+
+		<entity name="Censorship" table="security_censorship">
+			<key>
+				<member name="Name" />
+				<member name="Word" />
+			</key>
+
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Word" type="string" length="50" nullable="false" />
+		</entity>
+	</container>
+</schema>
