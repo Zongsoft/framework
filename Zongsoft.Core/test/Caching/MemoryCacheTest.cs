@@ -33,6 +33,7 @@ namespace Zongsoft.Runtime.Caching
 			Assert.Equal(CacheChangedReason.Expired, e.Arguments.Reason);
 			Assert.Equal("K1", e.Arguments.Key);
 			Assert.Equal("V1", e.Arguments.OldValue);
+			Assert.Empty(_cache);
 		}
 	}
 }

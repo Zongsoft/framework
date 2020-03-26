@@ -28,15 +28,15 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections;
 
 namespace Zongsoft.Runtime.Caching
 {
-	public class MemoryCache : ICache
+	public class MemoryCache : ICache, IEnumerable<KeyValuePair<string, object>>
 	{
 		#region 事件声明
 		public event EventHandler<CacheChangedEventArgs> Changed;
@@ -67,6 +67,16 @@ namespace Zongsoft.Runtime.Caching
 		public string Name
 		{
 			get;
+		}
+
+		public bool IsEmpty
+		{
+			get => _cache.IsEmpty;
+		}
+
+		public int Count
+		{
+			get => _cache.Count;
 		}
 		#endregion
 
@@ -359,7 +369,7 @@ namespace Zongsoft.Runtime.Caching
 		}
 		#endregion
 
-		#region 过期事件
+		#region 过期回调
 		private void OnExpired(string key, object value)
 		{
 			this.OnChanged(CacheChangedEventArgs.Expired(key, value));
@@ -370,6 +380,19 @@ namespace Zongsoft.Runtime.Caching
 		protected virtual void OnChanged(CacheChangedEventArgs args)
 		{
 			this.Changed?.Invoke(this, args);
+		}
+		#endregion
+
+		#region 遍历迭代
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+		{
+			foreach(var entry in _cache)
+				yield return new KeyValuePair<string, object>(entry.Key, entry.Value.Value);
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
 		}
 		#endregion
 
@@ -543,7 +566,7 @@ namespace Zongsoft.Runtime.Caching
 
 				foreach(var entry in _cache)
 				{
-					if(entry.Value.Expiry == null)
+					if(entry.Value.Expiry == null || entry.Value.Expiry == TimeSpan.Zero)
 						continue;
 
 					if(entry.Value.Expiry < minimum)
@@ -574,6 +597,5 @@ namespace Zongsoft.Runtime.Caching
 			}
 		}
 		#endregion
-
 	}
 }
