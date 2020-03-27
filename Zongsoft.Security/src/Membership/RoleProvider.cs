@@ -271,10 +271,6 @@ namespace Zongsoft.Security.Membership
 				//确保角色名是审核通过的
 				this.Censor(role.Name);
 
-				//确认角色名是否存在
-				if(this.Exists(role.Name, role.Namespace))
-					throw new DataConflictException(Zongsoft.Resources.ResourceUtility.GetString("Text.RoleConflict"));
-
 				//确保角色全称不为空
 				if(string.IsNullOrEmpty(role.FullName))
 					role.FullName = role.Name;

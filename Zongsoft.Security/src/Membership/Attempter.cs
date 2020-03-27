@@ -77,7 +77,8 @@ namespace Zongsoft.Security.Membership
 			if(cache == null)
 				return true;
 
-			return cache.GetValue<int>(GetCacheKey(identity, @namespace)) < option.Threshold;
+			return Zongsoft.Common.Convert.TryConvertValue<int>(cache.GetValue(GetCacheKey(identity, @namespace)), out var number) &&
+			       number < option.Threshold;
 		}
 
 		/// <summary>

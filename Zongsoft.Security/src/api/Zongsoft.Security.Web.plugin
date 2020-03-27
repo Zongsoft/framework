@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Security.Web"
+        title="Zongsoft.Security.Web Plugin"
+        author="Popeye Zhong(zongsoft@gmail.com)"
+        version="1.0"
+        copyright="Copyright (C) 2010-2020 Zongsoft Studio. All rights reserved."
+        description="Created Date: 2017-3-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Security.Web" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Security" />
+		</dependencies>
+	</manifest>
+
+	<!-- 挂载Web.Api路由 -->
+	<extension path="/Workbench/Web/Routes">
+		<route name="Security-Password-Has" kind="api"
+		       url="Security/{controller}/{id}/Password/Has"
+		       defaults="action=HasPassword"
+		       position="Api" />
+
+		<route name="Security-Password-Change" kind="api"
+		       url="Security/{controller}/{id}/Password/Change"
+		       defaults="action=ChangePassword"
+		       position="Api" />
+
+		<route name="Security-Password-Forget" kind="api"
+		       url="Security/{controller}/{id}/Password/Forget"
+		       defaults="action=ForgetPassword"
+		       position="Api" />
+
+		<route name="Security-Password-Reset" kind="api"
+		       url="Security/{controller}/{id}/Password/Reset"
+		       defaults="action=ResetPassword"
+		       position="Api" />
+
+		<route name="Security-Password-Questions" kind="api"
+		       url="Security/{controller}/{id}/Password/Questions"
+		       defaults="action=PasswordQuestions"
+		       position="Api" />
+
+		<route name="Security-Password-Answers" kind="api"
+		       url="Security/{controller}/{id}/Password/Answers"
+		       defaults="action=PasswordAnswers"
+		       position="Api" />
+
+		<route name="Security-Api" kind="api"
+		       url="Security/{controller}/{action}/{id}/{*args}"
+		       constraints="action=^[A-Za-z]+\w*$"
+		       defaults="action=, id="
+		       position="Api" />
+
+		<route name="Security-ApiReversed" kind="api"
+		       url="Security/{controller}/{id}/{action}/{*args}"
+		       defaults="action=, id="
+		       position="Api" />
+	</extension>
+
+	<!-- 挂载控制器 -->
+	<extension path="/Workspace/Web/Controllers/Security">
+		<object name="Authentication" type="Zongsoft.Security.Web.Controllers.AuthenticationController, Zongsoft.Security.Web" />
+		<object name="Credentials" type="Zongsoft.Security.Web.Controllers.CredentialController, Zongsoft.Security.Web" />
+		<object name="Roles" type="Zongsoft.Security.Web.Controllers.RoleController, Zongsoft.Security.Web" />
+		<object name="Users" type="Zongsoft.Security.Web.Controllers.UserController, Zongsoft.Security.Web" />
+	</extension>
+</plugin>

@@ -132,7 +132,7 @@ namespace Zongsoft.Security.Membership
 
 		public IEnumerable<AuthorizationToken> Authorizes(uint memberId, MemberType memberType)
 		{
-			string @namespace = null;
+			string @namespace;
 
 			if(memberType == MemberType.User)
 			{
@@ -158,10 +158,6 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return this.GetAuthorizedTokens(@namespace, memberId, memberType);
-
-			//将结果缓存在内存容器中，默认有效期为10分钟
-			return Zongsoft.Runtime.Caching.MemoryCache.Default.GetValue("Zongsoft.Security.Authorization:" + memberType.ToString() + ":" + memberId.ToString(),
-				key => new Zongsoft.Runtime.Caching.CacheEntry(this.GetAuthorizedTokens(@namespace, memberId, memberType), TimeSpan.FromMinutes(10))) as IEnumerable<AuthorizationToken>;
 		}
 
 		public bool InRoles(uint userId, params string[] roleNames)

@@ -42,7 +42,7 @@ namespace Zongsoft.Security
 
 		#region 成员字段
 		private Runtime.Caching.ICache _cache;
-		private Runtime.Caching.MemoryCache _memoryCache;
+		private readonly Runtime.Caching.MemoryCache _memoryCache;
 		#endregion
 
 		#region 构造函数
@@ -95,7 +95,7 @@ namespace Zongsoft.Security
 			this.Cache.SetValue(this.GetCacheKeyOfCredential(credential.CredentialId), this.SerializeCertificationToJson(credential), credential.Duration);
 
 			//将凭证对象保存到本地内存缓存中
-			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), DateTime.Now.AddSeconds(credential.Duration.TotalSeconds / 2));
+			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), TimeSpan.FromSeconds(credential.Duration.TotalSeconds * 0.6));
 
 			//激发注册完成事件
 			this.OnRegistered(credential);
@@ -152,7 +152,7 @@ namespace Zongsoft.Security
 			this.Cache.SetValue(this.GetCacheKeyOfUser(credential.User.UserId.ToString(), credential.Scene), credential.CredentialId, credential.Duration);
 
 			//将新建的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), DateTime.Now.AddSeconds(credential.Duration.TotalSeconds / 2));
+			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), TimeSpan.FromSeconds(credential.Duration.TotalSeconds * 0.5));
 
 			//将原来的凭证从物理存储层中删除
 			this.Cache.Remove(this.GetCacheKeyOfCredential(credentialId));
@@ -205,7 +205,7 @@ namespace Zongsoft.Security
 			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credential.CredentialId), credential.Duration);
 
 			//将获取到的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), DateTime.Now.AddSeconds(credential.Duration.TotalSeconds / 2));
+			_memoryCache.SetValue(credential.CredentialId, new CredentialToken(credential), TimeSpan.FromSeconds(credential.Duration.TotalSeconds * 0.5));
 
 			return credential;
 		}
@@ -288,7 +288,7 @@ namespace Zongsoft.Security
 			{
 				Indented = false,
 				Typed = true,
-				SerializationBehavior = Runtime.Serialization.SerializationBehavior.IgnoreDefaultValue,
+				IgnoreNull = true,
 			});
 		}
 
