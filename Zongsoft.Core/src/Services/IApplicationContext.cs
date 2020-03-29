@@ -74,7 +74,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的安全主体。
 		/// </summary>
-		System.Security.Principal.IPrincipal Principal
+		System.Security.Claims.ClaimsPrincipal Principal
 		{
 			get;
 		}

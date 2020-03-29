@@ -29,6 +29,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Options;
@@ -76,14 +78,8 @@ namespace Zongsoft.Services
 		/// </summary>
 		public static IApplicationContext Current
 		{
-			get
-			{
-				return _current;
-			}
-			protected set
-			{
-				_current = value ?? throw new ArgumentNullException();
-			}
+			get => _current;
+			protected set => _current = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -128,9 +124,15 @@ namespace Zongsoft.Services
 			get => ServiceProviderFactory.Instance.Default;
 		}
 
-		public virtual System.Security.Principal.IPrincipal Principal
+		public virtual ClaimsPrincipal Principal
 		{
-			get => System.Threading.Thread.CurrentPrincipal;
+			get
+			{
+				if(Thread.CurrentPrincipal is ClaimsPrincipal principal)
+					return principal;
+				else
+					return new ClaimsPrincipal(Thread.CurrentPrincipal);
+			}
 		}
 
 		public Collections.INamedCollection<IApplicationModule> Modules
@@ -145,10 +147,7 @@ namespace Zongsoft.Services
 
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas
 		{
-			get
-			{
-				return _schemas;
-			}
+			get => _schemas;
 		}
 
 		public IDictionary<string, object> States
