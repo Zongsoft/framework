@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Zongsoft.Core">
+      <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Zongsoft.Plugins">
+      <HintPath>..\..\Zongsoft.Plugins\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Plugins.dll</HintPath>
+    </Reference>
+    <Reference Include="Zongsoft.Web">
+      <HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Web.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
