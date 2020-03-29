@@ -87,12 +87,9 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取当前上下文关联的用户主体。
 		/// </summary>
-		public Zongsoft.Security.CredentialPrincipal Principal
+		public System.Security.Claims.ClaimsPrincipal Principal
 		{
-			get
-			{
-				return Services.ApplicationContext.Current.Principal as Zongsoft.Security.CredentialPrincipal;
-			}
+			get => Services.ApplicationContext.Current?.Principal;
 		}
 
 		/// <summary>
@@ -100,10 +97,7 @@ namespace Zongsoft.Data
 		/// </summary>
 		public bool HasStates
 		{
-			get
-			{
-				return _states != null && _states.Count > 0;
-			}
+			get => _states != null && _states.Count > 0;
 		}
 
 		/// <summary>

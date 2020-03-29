@@ -164,25 +164,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护属性
-		protected virtual Security.CredentialPrincipal Principal
+		protected virtual System.Security.Claims.ClaimsPrincipal Principal
 		{
-			get
-			{
-				return Services.ApplicationContext.Current?.Principal as Zongsoft.Security.CredentialPrincipal;
-			}
-		}
-
-		protected virtual Security.Credential Credential
-		{
-			get
-			{
-				var principal = this.Principal;
-
-				if(principal != null && principal.Identity.IsAuthenticated)
-					return principal.Identity.Credential;
-
-				return null;
-			}
+			get => Services.ApplicationContext.Current?.Principal;
 		}
 		#endregion
 

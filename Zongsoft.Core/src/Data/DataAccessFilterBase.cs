@@ -62,12 +62,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护属性
-		protected virtual Zongsoft.Security.CredentialPrincipal Principal
+		protected virtual System.Security.Claims.ClaimsPrincipal Principal
 		{
-			get
-			{
-				return Services.ApplicationContext.Current?.Principal as Zongsoft.Security.CredentialPrincipal;
-			}
+			get => Services.ApplicationContext.Current?.Principal;
 		}
 		#endregion
 
