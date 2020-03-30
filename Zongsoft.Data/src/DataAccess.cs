@@ -30,6 +30,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Data.Common;
@@ -301,6 +303,32 @@ namespace Zongsoft.Data
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 				_sequence.Reset(key, value == 0 ? sequence.Seed : value);
+			}
+
+			Task<long> ISequence.IncrementAsync(string key, int interval, int seed, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.IncrementAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					cancellation);
+			}
+
+			Task<long> ISequence.DecrementAsync(string key, int interval, int seed, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.DecrementAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					cancellation);
+			}
+
+			Task ISequence.ResetAsync(string key, int value, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, cancellation);
 			}
 			#endregion
 
