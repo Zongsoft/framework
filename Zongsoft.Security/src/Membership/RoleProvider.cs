@@ -28,9 +28,9 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
@@ -58,30 +58,18 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency]
+		[ServiceDependency(IsRequired = true)]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess;
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
 		[ServiceDependency]
 		public ICensorship Censorship
 		{
-			get
-			{
-				return _censorship;
-			}
-			set
-			{
-				_censorship = value;
-			}
+			get => _censorship;
+			set => _censorship = value;
 		}
 
 		public ISequence Sequence

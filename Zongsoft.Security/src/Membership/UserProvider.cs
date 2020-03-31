@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -69,14 +70,8 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency(IsRequired = true)]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess;
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
 		[ServiceDependency]
@@ -107,7 +102,7 @@ namespace Zongsoft.Security.Membership
 			get; set;
 		}
 
-		public CredentialPrincipal Principal
+		public ClaimsPrincipal Principal
 		{
 			get
 			{
