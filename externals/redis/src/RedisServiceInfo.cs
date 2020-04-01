@@ -35,40 +35,40 @@ namespace Zongsoft.Externals.Redis
 	{
 		#region 构造函数
 		public RedisServiceInfo(string name, string @namespace, int databaseId, RedisServiceSettings settings)
-        {
-            this.Name = name;
-            this.Namespace = @namespace;
-            this.DatabaseId = databaseId;
-            this.Settings = settings;
-        }
+		{
+			this.Name = name;
+			this.Namespace = @namespace;
+			this.DatabaseId = databaseId;
+			this.Settings = settings;
+		}
 		#endregion
 
 		#region 公共属性
 		public string Name
-        {
-            get;
-        }
+		{
+			get;
+		}
 
-        public string Namespace
-        {
-            get;
-        }
+		public string Namespace
+		{
+			get;
+		}
 
-        public int DatabaseId
-        {
-            get;
-        }
+		public int DatabaseId
+		{
+			get;
+		}
 
-        public RedisServiceSettings Settings
-        {
-            get;
-        }
+		public RedisServiceSettings Settings
+		{
+			get;
+		}
 
-        public RedisServerDescriptor[] Servers
-        {
-            get;
-            set;
-        }
+		public RedisServerDescriptor[] Servers
+		{
+			get;
+			set;
+		}
 		#endregion
 	}
 }

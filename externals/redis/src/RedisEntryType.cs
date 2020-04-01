@@ -39,6 +39,6 @@ namespace Zongsoft.Externals.Redis
 		Set = 3,
 		SortedSet = 4,
 		Dictionary = 5,
-        Stream = 6,
+		Stream = 6,
 	}
 }

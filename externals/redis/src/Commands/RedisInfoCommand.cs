@@ -49,8 +49,8 @@ namespace Zongsoft.Externals.Redis.Commands
 		{
 			var info = RedisCommand.GetRedis(context.CommandNode).GetInfo();
 			var content = CommandOutletContent
-                .Create(CommandOutletColor.DarkMagenta, "#" + info.DatabaseId.ToString() + " ")
-                .Append(info.Name);
+				.Create(CommandOutletColor.DarkMagenta, "#" + info.DatabaseId.ToString() + " ")
+				.Append(info.Name);
 
 			if(!string.IsNullOrEmpty(info.Namespace))
 			{
@@ -58,25 +58,25 @@ namespace Zongsoft.Externals.Redis.Commands
 				       .Append(CommandOutletColor.DarkYellow, info.Namespace);
 			}
 
-            content.AppendLine().AppendLine(CommandOutletColor.DarkGray, info.Settings.ToString());
+			content.AppendLine().AppendLine(CommandOutletColor.DarkGray, info.Settings.ToString());
 
-            if(info.Servers != null && info.Servers.Length > 0)
-            {
-                content.AppendLine();
+			if(info.Servers != null && info.Servers.Length > 0)
+			{
+				content.AppendLine();
 
-                for(int i = 0; i < info.Servers.Length; i++)
-                {
-                    content.Append(CommandOutletColor.DarkGray, "  [" + (i + 1).ToString() + "] ")
-                        .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
-                        .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
-                        .Append(CommandOutletColor.DarkGray, "(")
-                        .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
-                        .Append(CommandOutletColor.DarkGray, ") ")
-                        .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
-                        .Append(CommandOutletColor.DarkGray, "/")
-                        .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsConnected ? "Connected" : "Unconnected");
-                }
-            }
+				for(int i = 0; i < info.Servers.Length; i++)
+				{
+					content.Append(CommandOutletColor.DarkGray, "  [" + (i + 1).ToString() + "] ")
+					       .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
+					       .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
+					       .Append(CommandOutletColor.DarkGray, "(")
+					       .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
+					       .Append(CommandOutletColor.DarkGray, ") ")
+					       .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
+					       .Append(CommandOutletColor.DarkGray, "/")
+					       .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsConnected ? "Connected" : "Unconnected");
+				}
+			}
 
 			context.Output.WriteLine(content);
 			return info;

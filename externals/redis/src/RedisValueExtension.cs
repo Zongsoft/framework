@@ -35,17 +35,17 @@ namespace Zongsoft.Externals.Redis
 {
 	internal static class RedisValueExtension
 	{
-        public static object ToObject(this RedisValue value)
-        {
-            if(value.IsNullOrEmpty)
-                return null;
+		public static object ToObject(this RedisValue value)
+		{
+			if(value.IsNullOrEmpty)
+				return null;
 
-            if(value.TryParse(out int integer))
-                return integer;
-            if(value.TryParse(out double number))
-                return number;
+			if(value.TryParse(out int integer))
+				return integer;
+			if(value.TryParse(out double number))
+				return number;
 
-            return value.ToString();
-        }
+			return value.ToString();
+		}
 	}
 }

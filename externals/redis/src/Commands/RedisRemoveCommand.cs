@@ -32,10 +32,10 @@ using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-    [DisplayName("Text.RedisRemoveCommand.Name")]
-    [Description("Text.RedisRemoveCommand.Description")]
-    public class RedisRemoveCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
-    {
+	[DisplayName("Text.RedisRemoveCommand.Name")]
+	[Description("Text.RedisRemoveCommand.Description")]
+	public class RedisRemoveCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	{
 		#region 构造函数
 		public RedisRemoveCommand() : base("Remove")
 		{
@@ -48,7 +48,7 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length < 1)
 				throw new Zongsoft.Services.CommandException("Invalid arguments of command.");
 
-            var redis = RedisCommand.GetRedis(context.CommandNode);
+			var redis = RedisCommand.GetRedis(context.CommandNode);
 
 			if(context.Expression.Arguments.Length == 1)
 				redis.Remove(context.Expression.Arguments[0]);

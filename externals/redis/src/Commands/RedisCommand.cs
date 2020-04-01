@@ -34,9 +34,9 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-    [DisplayName("Text.RedisCommand.Name")]
-    [Description("Text.RedisCommand.Description")]
-    public class RedisCommand : CommandBase<Zongsoft.Services.CommandContext>
+	[DisplayName("Text.RedisCommand.Name")]
+	[Description("Text.RedisCommand.Description")]
+	public class RedisCommand : CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 成员字段
 		private RedisService _redis;
@@ -57,23 +57,23 @@ namespace Zongsoft.Externals.Redis.Commands
 		#endregion
 
 		#region 重写方法
-        protected override object OnExecute(CommandContext context)
-        {
-            return _redis;
-        }
-        #endregion
+		protected override object OnExecute(CommandContext context)
+		{
+			return _redis;
+		}
+		#endregion
 
-        #region 静态方法
-        public static RedisService GetRedis(CommandTreeNode node)
-        {
-            if(node == null)
-                return null;
+		#region 静态方法
+		public static RedisService GetRedis(CommandTreeNode node)
+		{
+			if(node == null)
+				return null;
 
-            if(node.Command is RedisCommand command)
-                return command._redis;
+			if(node.Command is RedisCommand command)
+				return command._redis;
 
-            return GetRedis(node.Parent) ?? throw new InvalidOperationException("Missing required redis service.");
-        }
+			return GetRedis(node.Parent) ?? throw new InvalidOperationException("Missing required redis service.");
+		}
 		#endregion
 	}
 }
