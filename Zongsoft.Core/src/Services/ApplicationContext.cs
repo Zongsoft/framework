@@ -101,7 +101,7 @@ namespace Zongsoft.Services
 
 		public virtual string ApplicationDirectory
 		{
-			get => AppDomain.CurrentDomain.BaseDirectory;
+			get => AppContext.BaseDirectory;
 		}
 
 		public virtual ISettingsProvider Settings

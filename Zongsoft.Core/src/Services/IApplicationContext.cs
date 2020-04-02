@@ -32,6 +32,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Options;
 using Zongsoft.Options.Configuration;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Services
 {
@@ -82,7 +83,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的模块集。
 		/// </summary>
-		Collections.INamedCollection<IApplicationModule> Modules
+		INamedCollection<IApplicationModule> Modules
 		{
 			get;
 		}
@@ -90,7 +91,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的事件处理程序集。
 		/// </summary>
-		Collections.INamedCollection<IApplicationFilter> Filters
+		INamedCollection<IApplicationFilter> Filters
 		{
 			get;
 		}

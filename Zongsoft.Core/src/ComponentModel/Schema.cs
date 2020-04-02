@@ -38,7 +38,6 @@ namespace Zongsoft.ComponentModel
 		#region 成员变量
 		private string _name;
 		private string _title;
-		private string _description;
 		private bool? _visible;
 		private SchemaActionCollection _actions;
 		#endregion
@@ -63,7 +62,7 @@ namespace Zongsoft.ComponentModel
 
 			_name = name.Replace('-', '.');
 			_title = string.IsNullOrEmpty(title) ? _name : title;
-			_description = description;
+			Description = description;
 			_visible = null;
 		}
 
@@ -74,7 +73,7 @@ namespace Zongsoft.ComponentModel
 
 			_name = name.Replace('-', '.');
 			_title = string.IsNullOrEmpty(title) ? _name : title;
-			_description = description;
+			Description = description;
 			_visible = visible;
 		}
 		#endregion
@@ -110,14 +109,7 @@ namespace Zongsoft.ComponentModel
 
 		public string Description
 		{
-			get
-			{
-				return _description;
-			}
-			set
-			{
-				_description = value;
-			}
+			get; set;
 		}
 
 		public bool Visible
