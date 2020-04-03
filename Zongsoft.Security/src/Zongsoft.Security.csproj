@@ -5,6 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="api\**" />
+    <EmbeddedResource Remove="api\**" />
+    <None Remove="api\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Zongsoft.Core">
       <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
     </Reference>
