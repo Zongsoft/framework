@@ -84,11 +84,8 @@ namespace Zongsoft.Plugins
 					{
 						if(_loader == null)
 						{
-							//创建默认加载器设置
-							PluginLoaderSetup settings = new PluginLoaderSetup(_context.Settings.ApplicationDirectory, _context.Settings.PluginsDirectoryName);
-
 							//创建插件加载器
-							_loader = new PluginLoader(_resolver, settings);
+							_loader = new PluginLoader(_resolver, _context.Options);
 
 							//侦听插件加载器的相关事件
 							_loader.Loaded += delegate(object sender, PluginLoadEventArgs args)
@@ -167,15 +164,12 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 应用指定的设置加载插件树。
 		/// </summary>
-		/// <param name="settings">指定的插件加载器配置对象。</param>
-		/// <exception cref="System.ArgumentNullException">参数<paramref name="settings"/>为空(null)。</exception>
-		public void Load(PluginLoaderSetup settings)
+		/// <param name="options">指定的插件加载器配置对象。</param>
+		/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(null)。</exception>
+		public void Load(PluginOptions options)
 		{
-			if(settings == null)
-				throw new ArgumentNullException("settings");
-
 			//应用指定的设置进行加载
-			this.Loader.Load(settings);
+			this.Loader.Load(options ?? throw new ArgumentNullException(nameof(options)));
 		}
 
 		/// <summary>

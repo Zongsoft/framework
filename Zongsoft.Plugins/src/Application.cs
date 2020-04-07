@@ -75,7 +75,7 @@ namespace Zongsoft.Plugins
 					_context = context;
 
 					//将应用上下文对象挂载到插件结构中
-					_context.PluginContext.PluginTree.Mount(_context.PluginContext.Settings.ApplicationContextPath, _context);
+					_context.PluginContext.PluginTree.Mount(_context.PluginContext.Options.Mountion.ApplicationContextPath, _context);
 
 					//将应用上下文对象注册到默认服务容器中
 					if(_context.Services != null)

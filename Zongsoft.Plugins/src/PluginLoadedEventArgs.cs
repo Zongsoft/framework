@@ -36,12 +36,9 @@ namespace Zongsoft.Plugins
 	public class PluginLoadedEventArgs : PluginLoadEventArgs
 	{
 		#region 构造函数
-		public PluginLoadedEventArgs(PluginLoaderSetup settings, Plugin plugin) : base(settings)
+		public PluginLoadedEventArgs(Plugin plugin, PluginOptions options) : base(options)
 		{
-			if(plugin == null)
-				throw new ArgumentNullException("plugin");
-
-			this.Plugin = plugin;
+            this.Plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
 		}
 		#endregion
 
@@ -49,7 +46,6 @@ namespace Zongsoft.Plugins
 		public Plugin Plugin
 		{
 			get;
-			private set;
 		}
 		#endregion
 	}

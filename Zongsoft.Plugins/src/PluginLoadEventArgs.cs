@@ -36,17 +36,14 @@ namespace Zongsoft.Plugins
 	public class PluginLoadEventArgs : EventArgs
 	{
 		#region 构造函数
-		public PluginLoadEventArgs(PluginLoaderSetup settings)
+		public PluginLoadEventArgs(PluginOptions options)
 		{
-			if(settings == null)
-				throw new ArgumentNullException("settings");
-
-			this.Settings = settings;
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
 		}
 		#endregion
 
 		#region 公共属性
-		public PluginLoaderSetup Settings
+		public PluginOptions Options
 		{
 			get;
 			private set;

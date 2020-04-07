@@ -45,7 +45,7 @@ namespace Zongsoft.Plugins
 	///		<list type="table">
 	///			<item>
 	///				<term>插件根目录</term>
-	///				<description>由<seealso cref="Zongsoft.Plugins.PluginSetupBase.PluginsDirectory"/>指定的完全限定路径，默认为当前应用程序目录下的plugins文件夹。</description>
+	///				<description>由<seealso cref="Zongsoft.Plugins.PluginOptions.PluginsPath"/>指定的完全限定路径，默认为当前应用程序目录下的plugins文件夹。</description>
 	///			</item>
 	///			<item>
 	///				<term>插件目录</term>
@@ -98,7 +98,7 @@ namespace Zongsoft.Plugins
 	///			</item>
 	///		</list>
 	/// </remarks>
-	public class PluginLoader : MarshalByRefObject
+	public class PluginLoader
 	{
 		#region 事件定义
 		/// <summary>表示所有插件加载完成。</summary>
@@ -127,21 +127,15 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 成员变量
-		private PluginCollection _plugins;
-		private PluginResolver _resolver;
-		private PluginLoaderSetup _settings;
+		private readonly PluginResolver _resolver;
 		#endregion
 
 		#region 构造函数
-		internal PluginLoader(PluginResolver resolver) : this(resolver, null)
-		{
-		}
-
-		internal PluginLoader(PluginResolver resolver, PluginLoaderSetup setup)
+		internal PluginLoader(PluginResolver resolver, PluginOptions options)
 		{
 			_resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-			_settings = setup;
-			_plugins = new PluginCollection();
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+			this.Plugins = new PluginCollection();
 		}
 		#endregion
 
@@ -150,78 +144,58 @@ namespace Zongsoft.Plugins
 		/// 获取加载的根插件对象集。
 		/// </summary>
 		/// <remarks>如果加载器尚未加载过，则返回一个空集。</remarks>
-		public PluginCollection Plugins
-		{
-			get
-			{
-				return _plugins;
-			}
-		}
+		public PluginCollection Plugins { get; }
 
 		/// <summary>
-		/// 获取加载器的当前加载配置对象。该属性值可通过带参的<seealso cref="Zongsoft.Plugins.PluginLoader.Load(PluginLoaderSetup)"/>方法注入。
+		/// 获取加载器的当前加载配置对象。该属性值可通过带参的<seealso cref="Zongsoft.Plugins.PluginLoader.Load(PluginOptions)"/>方法注入。
 		/// </summary>
-		public PluginLoaderSetup Settings
-		{
-			get
-			{
-				return _settings;
-			}
-		}
+		public PluginOptions Options { get; private set; }
 		#endregion
 
 		#region 公共方法
 		/// <summary>
 		/// 使用加载器的当前配置进行插件加载。
 		/// </summary>
-		/// <remarks>
-		///		<para>在调用该方法前，必须确保当前<seealso cref="Zongsoft.Plugins.PluginLoader.Settings"/>属性已被初始化，否则请使用带<seealso cref="Zongsoft.Plugins.PluginLoaderSetup"/>类型参数的Load方法重载版本。</para>
-		///		<para>通过<seealso cref="Zongsoft.Plugins.PluginTree.Loader"/>属性获取的加载器对象默认已经通过<seealso cref="Zongsoft.Plugins.PluginContext"/>上下文对象的Settings属性初始化过加载器的<see cref="PluginLoaderSetup"/>配置对象。</para>
-		/// </remarks>
-		/// <exception cref="System.InvalidOperationException">当前Settings属性没有设置，即其值为空(null)。</exception>
 		public void Load()
 		{
-			if(_settings == null)
-				throw new InvalidOperationException("The Settings property is not set.");
-
-			this.Load(_settings);
+			this.Load(this.Options);
 		}
 
 		/// <summary>
 		/// 应用指定的加载配置进行插件加载。
 		/// </summary>
-		/// <param name="settings">指定的加载配置对象。</param>
+		/// <param name="options">指定的加载配置对象。</param>
 		/// <remarks>
-		///		<para>使用不同的<see cref="Zongsoft.Plugins.PluginLoaderSetup"/>设置项多次加载，会导致最后一次加载覆盖上次加载的插件结构，这有可能会影响您的插件应用对构件或服务的获取路径，从而导致不可预知的结果。</para>
+		///		<para>使用不同的<see cref="Zongsoft.Plugins.PluginOptions"/>设置项多次加载，会导致最后一次加载覆盖上次加载的插件结构，这有可能会影响您的插件应用对构件或服务的获取路径，从而导致不可预知的结果。</para>
 		///		<para>如果要重用上次加载的配置，请调用无参的Load方法。</para>
 		///	</remarks>
-		/// <exception cref="System.ArgumentNullException">参数<paramref name="settings"/>为空(null)。</exception>
-		public void Load(PluginLoaderSetup settings)
+		/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(null)。</exception>
+		public void Load(PluginOptions options)
 		{
-			if(settings == null)
-				throw new ArgumentNullException("settings");
+			if(options == null)
+				throw new ArgumentNullException(nameof(options));
 
 			//激发“Loading”事件
-			this.OnLoading(new PluginLoadEventArgs(settings));
+			this.OnLoading(new PluginLoadEventArgs(options));
 
 			//如果指定的目录路径不存在则激发“Failure”事件，并退出
-			if(!Directory.Exists(_settings.PluginsDirectory))
-				throw new DirectoryNotFoundException(string.Format("The '{0}' plugins directory is not exists.", _settings.PluginsDirectory));
+			if(!Directory.Exists(options.PluginsPath))
+				throw new DirectoryNotFoundException($"The '{options.PluginsPath}' plugins directory is not exists.");
 
 			//清空插件列表
-			_plugins.Clear();
+			Plugins.Clear();
 
 			//预加载插件目录下的所有插件文件
-			this.PreloadPluginFiles(_settings.PluginsDirectory, null, settings);
+			this.PreloadPluginFiles(Options.PluginsPath, null, options);
 
 			//正式加载所有插件
-			this.LoadPlugins(_plugins, settings);
+			this.LoadPlugins(Plugins, options);
 
 			//保存加载配置对象
-			_settings = settings;
+			this.Options = options;
 
 			//激发“Loaded”事件
-			this.OnLoaded(new PluginLoadEventArgs(settings));
+			this.OnLoaded(new PluginLoadEventArgs(options));
 		}
 
 		/// <summary>
@@ -229,11 +203,11 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public void Unload()
 		{
-			if(_plugins == null || _plugins.Count < 1)
+			if(Plugins == null || Plugins.Count < 1)
 				return;
 
-			var plugins = new Plugin[_plugins.Count];
-			_plugins.CopyTo(plugins, 0);
+			var plugins = new Plugin[Plugins.Count];
+			Plugins.CopyTo(plugins, 0);
 
 			foreach(var plugin in plugins)
 			{
@@ -287,8 +261,8 @@ namespace Zongsoft.Plugins
 			this.UnloadFixedElements(plugin);
 
 			//将指定卸载的插件从当前根插件列表中删除
-			if(_plugins != null && plugin.Parent == null)
-				_plugins.Remove(plugin.Name);
+			if(Plugins != null && plugin.Parent == null)
+				Plugins.Remove(plugin.Name);
 
 			//设置插件状态
 			plugin.Status = PluginStatus.Unloaded;
@@ -311,12 +285,8 @@ namespace Zongsoft.Plugins
 
 			foreach(FixedElement<IParser> element in plugin.Parsers)
 			{
-				if(element.HasValue)
-				{
-					IDisposable disposable = element.Value as IDisposable;
-					if(disposable != null)
-						disposable.Dispose();
-				}
+				if(element.HasValue && element.Value is IDisposable disposable)
+					disposable.Dispose();
 			}
 
 			plugin.Builders.Clear();
@@ -332,7 +302,7 @@ namespace Zongsoft.Plugins
 				builderElement.Value.Dispose();
 		}
 
-		private void PreloadPluginFiles(string directoryPath, Plugin parent, PluginLoaderSetup settings)
+		private void PreloadPluginFiles(string directoryPath, Plugin parent, PluginOptions options)
 		{
 			//获取指定目录下的插件文件
 			var filePaths = Directory.GetFiles(directoryPath, "*.plugin", SearchOption.TopDirectoryOnly);
@@ -340,7 +310,7 @@ namespace Zongsoft.Plugins
 			//如果当前目录下没有插件文件则查找子目录
 			if(filePaths == null || filePaths.Length < 1)
 			{
-				this.PreloadPluginChildrenFiles(directoryPath, parent, settings);
+				this.PreloadPluginChildrenFiles(directoryPath, parent, options);
 				return;
 			}
 
@@ -351,7 +321,7 @@ namespace Zongsoft.Plugins
 			foreach(string filePath in filePaths)
 			{
 				//首先加载插件文件的清单信息(根据清单信息中的依赖插件来决定是否需要完整加载)
-				var plugin = this.LoadPluginManifest(filePath, parent, settings);
+				var plugin = this.LoadPluginManifest(filePath, parent, options);
 
 				//如果预加载失败，则跳过以进行下一个插件文件的处理
 				if(plugin == null)
@@ -373,10 +343,10 @@ namespace Zongsoft.Plugins
 				ownerPlugin = masters[0];
 
 			//预加载子插件
-			this.PreloadPluginChildrenFiles(directoryPath, ownerPlugin, settings);
+			this.PreloadPluginChildrenFiles(directoryPath, ownerPlugin, options);
 		}
 
-		private void PreloadPluginChildrenFiles(string directoryPath, Plugin parent, PluginLoaderSetup settings)
+		private void PreloadPluginChildrenFiles(string directoryPath, Plugin parent, PluginOptions options)
 		{
 			//获取当前插件目录的下级子目录
 			string[] childDirectoriePaths = Directory.GetDirectories(directoryPath);
@@ -384,14 +354,14 @@ namespace Zongsoft.Plugins
 			//依次加载子目录下的所有插件
 			foreach(string childDirectoryPath in childDirectoriePaths)
 			{
-				this.PreloadPluginFiles(childDirectoryPath, parent, settings);
+				this.PreloadPluginFiles(childDirectoryPath, parent, options);
 			}
 		}
 
-		private Plugin LoadPluginManifest(string filePath, Plugin parent, PluginLoaderSetup settings)
+		private Plugin LoadPluginManifest(string filePath, Plugin parent, PluginOptions options)
 		{
 			//激发“PluginLoading”事件
-			this.OnPluginLoading(new PluginLoadingEventArgs(settings, filePath));
+			this.OnPluginLoading(new PluginLoadingEventArgs(filePath, options));
 
 			//解析插件清单
 			Plugin plugin = _resolver.ResolvePluginOnlyManifest(filePath, parent);
@@ -404,11 +374,11 @@ namespace Zongsoft.Plugins
 
 			if(parent == null)
 			{
-				if(_plugins.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
+				if(Plugins.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
 					throw new PluginFileException(plugin.FilePath, $"The name is '{plugin.Name}' of plugin was exists. it's path is: '{plugin.FilePath}'");
 
 				//将预加载的插件对象加入到根插件的集合中
-				_plugins.Add(plugin);
+				Plugins.Add(plugin);
 			}
 			else
 			{
@@ -420,10 +390,10 @@ namespace Zongsoft.Plugins
 			return plugin;
 		}
 
-		private void LoadPluginContent(Plugin plugin, PluginLoaderSetup settings)
+		private void LoadPluginContent(Plugin plugin, PluginOptions options)
 		{
 			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+				throw new ArgumentNullException(nameof(plugin));
 
 			if(plugin.Status != PluginStatus.Loading)
 				return;
@@ -437,12 +407,12 @@ namespace Zongsoft.Plugins
 				plugin.Status = PluginStatus.Loaded;
 
 				//激发“PluginLoaded”事件
-				this.OnPluginLoaded(new PluginLoadedEventArgs(settings, plugin));
+				this.OnPluginLoaded(new PluginLoadedEventArgs(plugin, options));
 			}
 			catch(Exception ex)
 			{
 				if(plugin.Parent == null)
-					_plugins.Remove(plugin.Name);
+					Plugins.Remove(plugin.Name);
 				else
 					plugin.Parent.Children.Remove(plugin.Name);
 
@@ -450,7 +420,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		private void LoadPlugins(PluginCollection plugins, PluginLoaderSetup settings)
+		private void LoadPlugins(PluginCollection plugins, PluginOptions options)
 		{
 			if(plugins == null || plugins.Count < 1)
 				return;
@@ -472,7 +442,7 @@ namespace Zongsoft.Plugins
 					else
 					{
 						this.TryPushToStack(plugin, stack);
-						this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), settings);
+						this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), options);
 					}
 				}
 			}
@@ -481,18 +451,18 @@ namespace Zongsoft.Plugins
 			foreach(var plugin in plugins)
 			{
 				if(plugin.Status == PluginStatus.Loaded)
-					this.LoadPlugins(plugin.Children, settings);
+					this.LoadPlugins(plugin.Children, options);
 			}
 
 			//注意：③. 如果当前层级中含有隐藏式插件，则留待最后再来加载它
 			if(hidden != null)
 			{
 				this.TryPushToStack(hidden, stack);
-				this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), settings);
+				this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), options);
 			}
 		}
 
-		private void LoadPlugin(Stack<Plugin> stack, Func<string, Plugin> dependencyThunk, PluginLoaderSetup settings)
+		private void LoadPlugin(Stack<Plugin> stack, Func<string, Plugin> dependencyThunk, PluginOptions options)
 		{
 			if(stack == null || stack.Count < 1)
 				return;
@@ -501,21 +471,21 @@ namespace Zongsoft.Plugins
 
 			if(this.IsRequiredLoad(plugin, dependencyThunk))
 			{
-				this.LoadPluginContent(stack.Pop(), settings);
+				this.LoadPluginContent(stack.Pop(), options);
 			}
 			else
 			{
 				foreach(var dependency in plugin.Manifest.Dependencies)
 				{
 					if(this.IsRequiredLoad(dependency.Plugin, dependencyThunk))
-						this.LoadPluginContent(dependency.Plugin, settings);
+						this.LoadPluginContent(dependency.Plugin, options);
 					else
 						this.TryPushToStack(dependency.Plugin, stack);
 				}
 			}
 
 			if(stack.Count > 0)
-				this.LoadPlugin(stack, dependencyThunk, settings);
+				this.LoadPlugin(stack, dependencyThunk, options);
 		}
 
 		private bool IsRequiredLoad(Plugin plugin, Func<string, Plugin> dependencyThunk)
@@ -563,38 +533,32 @@ namespace Zongsoft.Plugins
 		#region 事件方法
 		private void OnLoaded(PluginLoadEventArgs args)
 		{
-			if(Loaded != null)
-				this.Loaded(this, args);
+			this.Loaded?.Invoke(this, args);
 		}
 
 		private void OnLoading(PluginLoadEventArgs args)
 		{
-			if(Loading != null)
-				this.Loading(this, args);
+			this.Loading?.Invoke(this, args);
 		}
 
 		private void OnPluginLoaded(PluginLoadedEventArgs args)
 		{
-			if(PluginLoaded != null)
-				this.PluginLoaded(this, args);
+			this.PluginLoaded?.Invoke(this, args);
 		}
 
 		private void OnPluginLoading(PluginLoadingEventArgs args)
 		{
-			if(PluginLoading != null)
-				this.PluginLoading(this, args);
+			this.PluginLoading?.Invoke(this, args);
 		}
 
 		private void OnPluginUnloaded(PluginUnloadedEventArgs args)
 		{
-			if(PluginUnloaded != null)
-				this.PluginUnloaded(this, args);
+			this.PluginUnloaded?.Invoke(this, args);
 		}
 
 		private void OnPluginUnloading(PluginUnloadingEventArgs args)
 		{
-			if(PluginUnloading != null)
-				this.PluginUnloading(this, args);
+			this.PluginUnloading?.Invoke(this, args);
 		}
 
 		private bool OnPluginUnloading(Plugin plugin)

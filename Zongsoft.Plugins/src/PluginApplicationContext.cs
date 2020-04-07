@@ -39,15 +39,14 @@ namespace Zongsoft.Plugins
 
 		#region 成员变量
 		private readonly object _syncRoot;
-		private IWorkbenchBase _workbench;
-		private readonly PluginContext _pluginContext;
 		#endregion
 
 		#region 构造函数
 		protected PluginApplicationContext(string name) : base(name)
 		{
 			_syncRoot = new object();
-			_pluginContext = new PluginContext(this.CreatePluginSetup(), this);
+
+			this.PluginContext = new PluginContext(this, this.CreateOptions());
 
 			//将选项初始化器加入到应用初始化集中
 			this.Filters.Add(new Zongsoft.Options.Plugins.OptionInitializer());
@@ -63,25 +62,16 @@ namespace Zongsoft.Plugins
 		/// </remarks>
 		public IWorkbenchBase Workbench
 		{
-			get
-			{
-				return _workbench;
-			}
+			get; private set;
 		}
 
 		/// <summary>
 		/// 获取当前应用程序的插件上下文对象。
 		/// </summary>
 		/// <remarks>
-		/// 本属性在首次创建<seealso cref="Zongsoft.Plugins.PluginContext"/>时，会调用<see cref="Zongsoft.Plugins.PluginApplicationContext.CreatePluginSetup"/>方法以获得插件启动配置参数，如果要提供不同的启动信息，必须重写该虚拟方法。
+		/// 本属性在首次创建<seealso cref="Zongsoft.Plugins.PluginContext"/>时，会调用<see cref="Zongsoft.Plugins.PluginApplicationContext.CreateOptions"/>方法以获得插件启动配置参数，如果要提供不同的启动信息，必须重写该虚拟方法。
 		/// </remarks>
-		public PluginContext PluginContext
-		{
-			get
-			{
-				return _pluginContext;
-			}
-		}
+		public PluginContext PluginContext { get; }
 		#endregion
 
 		#region 虚拟方法
@@ -103,9 +93,9 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		/// <returns>返回创建成功的插件启动配置对象。</returns>
 		/// <remarks></remarks>
-		protected virtual PluginSetup CreatePluginSetup()
+		protected virtual PluginOptions CreateOptions()
 		{
-			return new PluginSetup(this.ApplicationDirectory);
+			return new PluginOptions(this.ApplicationDirectory);
 		}
 		#endregion
 
@@ -116,39 +106,39 @@ namespace Zongsoft.Plugins
 		/// <param name="args">初始化的参数。</param>
 		/// <returns>返回新建或者已创建的工作台对象。</returns>
 		/// <remarks>
-		/// <para>如果当前工作台为空(null)则调用 <seealso cref="CreateWorkbench"/> 虚拟方法，以创建工作台对象，并将创建后的对象挂入到由 <see cref="PluginSetup.WorkbenchPath"/> 指定的插件树节点中。</para>
-		/// <para>如果当前插件树还没加载，则将在插件树加载完成事件中将该工作台对象再挂入到由 <see cref="PluginSetup.WorkbenchPath"/> 指定的插件树节点中。</para>
+		/// <para>如果当前工作台为空(null)则调用 <seealso cref="CreateWorkbench"/> 虚拟方法，以创建工作台对象，并将创建后的对象挂入到由 <see cref="PluginOptions.MountionSettings.WorkbenchPath"/> 指定的插件树节点中。</para>
+		/// <para>如果当前插件树还没加载，则将在插件树加载完成事件中将该工作台对象再挂入到由 <see cref="PluginOptions.MountionSettings.WorkbenchPath"/> 指定的插件树节点中。</para>
 		/// <para>注意：该属性是线程安全的，在多线程中对该属性的多次调用不会导致重复生成工作台对象。</para>
 		/// <para>有关子类实现 <seealso cref="CreateWorkbench"/> 虚拟方法的一般性机制请参考该方法的帮助。</para>
 		/// </remarks>
 		internal IWorkbenchBase GetWorkbench(string[] args)
 		{
-			if(_workbench == null)
+			if(Workbench == null)
 			{
 				lock(_syncRoot)
 				{
-					if(_workbench == null)
+					if(Workbench == null)
 					{
 						//创建工作台对象
-						_workbench = this.CreateWorkbench(args);
+						Workbench = this.CreateWorkbench(args);
 
 						//将当前工作台对象挂载到插件结构中
-						if(_workbench != null)
-							this.PluginContext.PluginTree.Mount(this.PluginContext.Settings.WorkbenchPath, _workbench);
+						if(Workbench != null)
+							this.PluginContext.PluginTree.Mount(this.PluginContext.Options.Mountion.WorkbenchPath, Workbench);
 
 						//确认工作台路径及其下属所有节点均已构建完成
-						this.EnsureNodes(this.PluginContext.PluginTree.Find(this.PluginContext.Settings.WorkbenchPath));
+						this.EnsureNodes(this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath));
 
 						//激发“WorkbenchCreated”事件
-						if(_workbench != null)
+						if(Workbench != null)
 							this.OnWorkbenchCreated(EventArgs.Empty);
 
-						return _workbench;
+						return Workbench;
 					}
 				}
 			}
 
-			return _workbench;
+			return Workbench;
 		}
 
 		private void EnsureNodes(PluginTreeNode node)

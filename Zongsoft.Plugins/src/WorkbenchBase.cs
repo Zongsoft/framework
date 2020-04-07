@@ -64,7 +64,7 @@ namespace Zongsoft.Plugins
 			_applicationContext = applicationContext;
 			_title = applicationContext.Title;
 			_status = WorkbenchStatus.None;
-			_startupPath = applicationContext.PluginContext.Settings.WorkbenchPath + "/Startup";
+			_startupPath = applicationContext.PluginContext.Options.Mountion.WorkbenchPath + "/Startup";
 		}
 		#endregion
 
@@ -246,11 +246,11 @@ namespace Zongsoft.Plugins
 				this.OnStart(args);
 
 				//查找当前工作台的插件节点
-				var node = _applicationContext.PluginContext.PluginTree.Find(_applicationContext.PluginContext.Settings.WorkbenchPath);
+				var node = _applicationContext.PluginContext.PluginTree.Find(_applicationContext.PluginContext.Options.Mountion.WorkbenchPath);
 
 				//如果工作台对象未挂载或不是通过插件文件挂载的话，则将当前工作台对象挂载到指定的插件路径中
 				if(node == null || node.NodeType != PluginTreeNodeType.Builtin)
-					_applicationContext.PluginContext.PluginTree.Mount(_applicationContext.PluginContext.Settings.WorkbenchPath, this);
+					_applicationContext.PluginContext.PluginTree.Mount(_applicationContext.PluginContext.Options.Mountion.WorkbenchPath, this);
 			}
 			catch
 			{

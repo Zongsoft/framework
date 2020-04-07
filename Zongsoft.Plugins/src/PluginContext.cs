@@ -37,27 +37,12 @@ namespace Zongsoft.Plugins
 	/// </summary>
 	public sealed class PluginContext : MarshalByRefObject
 	{
-		#region 成员变量
-		private PluginTree _pluginTree;
-		private PluginSetup _settings;
-		private PluginApplicationContext _applicationContext;
-		#endregion
-
 		#region 构造函数
-		internal PluginContext(PluginSetup settings, PluginApplicationContext applicationContext)
+		internal PluginContext(PluginApplicationContext applicationContext, PluginOptions options)
 		{
-			if(settings == null)
-				throw new ArgumentNullException("settings");
-
-			_settings = (PluginSetup)settings.Clone();
-			_pluginTree = new PluginTree(this);
-			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-
-			_settings.PropertyChanged += delegate
-			{
-				if(_pluginTree != null && _pluginTree.Status != PluginTreeStatus.None)
-					throw new InvalidOperationException();
-			};
+			this.ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+			this.PluginTree = new PluginTree(this);
 		}
 		#endregion
 
@@ -65,13 +50,7 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取当前插件运行时的唯一插件树对象。
 		/// </summary>
-		public PluginTree PluginTree
-		{
-			get
-			{
-				return _pluginTree;
-			}
-		}
+		public PluginTree PluginTree { get; }
 
 		/// <summary>
 		/// 获取加载的根插件集。
@@ -80,42 +59,19 @@ namespace Zongsoft.Plugins
 		{
 			get
 			{
-				return _pluginTree.Plugins;
+				return PluginTree.Plugins;
 			}
 		}
 
 		/// <summary>
 		/// 获取当前插件运行时所属的应用程序上下文对象。
 		/// </summary>
-		public PluginApplicationContext ApplicationContext
-		{
-			get
-			{
-				return _applicationContext;
-			}
-		}
+		public PluginApplicationContext ApplicationContext { get; }
 
 		/// <summary>
 		/// 获取当前插件上下文对应的设置。
 		/// </summary>
-		public PluginSetup Settings
-		{
-			get
-			{
-				return _settings;
-			}
-		}
-
-		/// <summary>
-		/// 获取插件的隔离级别。
-		/// </summary>
-		public IsolationLevel IsolationLevel
-		{
-			get
-			{
-				return _settings.IsolationLevel;
-			}
-		}
+		public PluginOptions Options { get; }
 
 		/// <summary>
 		/// 获取当前工作台(主界面)对象。
@@ -124,7 +80,7 @@ namespace Zongsoft.Plugins
 		{
 			get
 			{
-				return this.ResolvePath(this.Settings.WorkbenchPath) as IWorkbenchBase;
+				return this.ResolvePath(this.Options.Mountion.WorkbenchPath) as IWorkbenchBase;
 			}
 		}
 		#endregion

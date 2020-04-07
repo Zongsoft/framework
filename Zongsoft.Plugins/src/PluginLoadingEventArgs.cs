@@ -35,10 +35,10 @@ namespace Zongsoft.Plugins
 	[Serializable]
 	public class PluginLoadingEventArgs : PluginLoadEventArgs
 	{
-		public PluginLoadingEventArgs(PluginLoaderSetup settings, string pluginFile) : base(settings)
+		public PluginLoadingEventArgs(string pluginFile, PluginOptions options) : base(options)
 		{
 			if(string.IsNullOrEmpty(pluginFile))
-				throw new ArgumentNullException("pluginFile");
+				throw new ArgumentNullException(nameof(pluginFile));
 
 			this.PluginFile = pluginFile;
 		}
