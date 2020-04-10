@@ -70,6 +70,33 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 无法将“ {0}”处的配置值转换为“ {1}”类型。 的本地化字符串。
+        /// </summary>
+        internal static string Error_FailedBinding {
+            get {
+                return ResourceManager.GetString("Error.FailedBinding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无法创建类型为“ {0}”的实例。 的本地化字符串。
+        /// </summary>
+        internal static string Error_FailedToActivate {
+            get {
+                return ResourceManager.GetString("Error.FailedToActivate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无法创建类型为“ {0}”的实例，因为不支持多维数组。 的本地化字符串。
+        /// </summary>
+        internal static string Error_UnsupportedMultidimensionalArray {
+            get {
+                return ResourceManager.GetString("Error.UnsupportedMultidimensionalArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 帐户已被封。 的本地化字符串。
         /// </summary>
         internal static string Text_AuthenticationReason_AccountDisabled {

@@ -120,6 +120,15 @@
   <data name="Disabled" xml:space="preserve">
     <value>禁用</value>
   </data>
+  <data name="Error.FailedBinding" xml:space="preserve">
+    <value>无法将“ {0}”处的配置值转换为“ {1}”类型。</value>
+  </data>
+  <data name="Error.FailedToActivate" xml:space="preserve">
+    <value>无法创建类型为“ {0}”的实例。</value>
+  </data>
+  <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
+    <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
+  </data>
   <data name="Text.AuthenticationReason.AccountDisabled" xml:space="preserve">
     <value>帐户已被封。</value>
   </data>
