@@ -126,8 +126,26 @@
   <data name="Error.FailedToActivate" xml:space="preserve">
     <value>无法创建类型为“ {0}”的实例。</value>
   </data>
+  <data name="Error.IllegalConfigurationAttributeName" xml:space="preserve">
+    <value>非法的配置属性名“{0}”。位于：{1}</value>
+  </data>
+  <data name="Error.IllegalRootNodeName" xml:space="preserve">
+    <value>发现“{0}”是非法的根节点名称。{1}</value>
+  </data>
+  <data name="Error.InvalidOptionConfigurationFileFormat" xml:space="preserve">
+    <value>无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0}</value>
+  </data>
+  <data name="Error.KeyIsDuplicated" xml:space="preserve">
+    <value>发现重复的“{0}”键。位于：{1}</value>
+  </data>
+  <data name="Error.NamespaceIsNotSupported" xml:space="preserve">
+    <value>不支持XML名称空间。位于：{0}</value>
+  </data>
   <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
     <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
+  </data>
+  <data name="Error.UnSupportedNodeType" xml:space="preserve">
+    <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
   <data name="Text.AuthenticationReason.AccountDisabled" xml:space="preserve">
     <value>帐户已被封。</value>
@@ -200,6 +218,9 @@
   </data>
   <data name="Text.InvalidCommandOptionValue" xml:space="preserve">
     <value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
+  </data>
+  <data name="Text.LinePositionInfo" xml:space="preserve">
+    <value>第 {0} 行，第 {1} 列。</value>
   </data>
   <data name="Text.MessageQueueListener.Description" xml:space="preserve">
     <value>这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。</value>

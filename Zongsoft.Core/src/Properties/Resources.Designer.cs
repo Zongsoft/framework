@@ -88,11 +88,65 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 非法的配置属性名“{0}”。位于：{1} 的本地化字符串。
+        /// </summary>
+        internal static string Error_IllegalConfigurationAttributeName {
+            get {
+                return ResourceManager.GetString("Error.IllegalConfigurationAttributeName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发现“{0}”是非法的根节点名称。{1} 的本地化字符串。
+        /// </summary>
+        internal static string Error_IllegalRootNodeName {
+            get {
+                return ResourceManager.GetString("Error.IllegalRootNodeName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0} 的本地化字符串。
+        /// </summary>
+        internal static string Error_InvalidOptionConfigurationFileFormat {
+            get {
+                return ResourceManager.GetString("Error.InvalidOptionConfigurationFileFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发现重复的“{0}”键。位于：{1} 的本地化字符串。
+        /// </summary>
+        internal static string Error_KeyIsDuplicated {
+            get {
+                return ResourceManager.GetString("Error.KeyIsDuplicated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 不支持XML名称空间。位于：{0} 的本地化字符串。
+        /// </summary>
+        internal static string Error_NamespaceIsNotSupported {
+            get {
+                return ResourceManager.GetString("Error.NamespaceIsNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 无法创建类型为“ {0}”的实例，因为不支持多维数组。 的本地化字符串。
         /// </summary>
         internal static string Error_UnsupportedMultidimensionalArray {
             get {
                 return ResourceManager.GetString("Error.UnsupportedMultidimensionalArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发现不受支持的节点类型“{0}”。{1} 的本地化字符串。
+        /// </summary>
+        internal static string Error_UnSupportedNodeType {
+            get {
+                return ResourceManager.GetString("Error.UnSupportedNodeType", resourceCulture);
             }
         }
         
@@ -309,6 +363,15 @@ namespace Zongsoft.Properties {
         internal static string Text_InvalidCommandOptionValue {
             get {
                 return ResourceManager.GetString("Text.InvalidCommandOptionValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 第 {0} 行，第 {1} 列。 的本地化字符串。
+        /// </summary>
+        internal static string Text_LinePositionInfo {
+            get {
+                return ResourceManager.GetString("Text.LinePositionInfo", resourceCulture);
             }
         }
         
