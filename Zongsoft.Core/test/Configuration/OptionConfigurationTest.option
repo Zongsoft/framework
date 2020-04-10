@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<configuration>
+	<option path="/">
+		<general name="general.name" internal="true">
+			<certificates default="main">
+				<certificate certificate.name="main" code="C001" secret="xxxx" />
+				<certificate certificate.name="test" code="C002" secret="zzzz" />
+			</certificates>
+		</general>
+
+		<mobile region="Shenzhen" certificate="">
+			<message>
+				<template template.name="Alarm" code="SMS_01" scheme="Zongsoft" />
+			</message>
+			<voice numbers="400123456, 400666888">
+				<template template.name="Alarm" code="TTS_01" />
+				<template template.name="Password.Forget" code="TTS_02" />
+			</voice>
+			<pushing>
+				<app app.key="wechat" code="A123" secret="****" />
+			</pushing>
+		</mobile>
+	</option>
+</configuration>
