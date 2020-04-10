@@ -40,7 +40,6 @@ namespace Zongsoft.Configuration.Options
 	public class OptionStreamConfigurationProvider : StreamConfigurationProvider
 	{
 		#region 常量定义
-		private const string XML_ROOT_ELEMENT = "configuration";
 		private const string XML_OPTION_ELEMENT = "option";
 		private const string XML_OPTION_PATH_ATTRIBUTE = "path";
 
@@ -82,7 +81,8 @@ namespace Zongsoft.Configuration.Options
 
 				SkipUntilRootElement(reader);
 
-				if(reader.LocalName != XML_ROOT_ELEMENT)
+				//确认根节点的名称是否合法
+				if(reader.LocalName != "configuration" && reader.LocalName != "options")
 					throw new FormatException(string.Format(ERROR_ILLEGALROOTNODENAME, reader.LocalName, GetLineInfo(reader)));
 
 				var preNodeType = reader.NodeType;
