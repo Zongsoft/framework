@@ -129,6 +129,9 @@
   <data name="Error.IllegalConfigurationAttributeName" xml:space="preserve">
     <value>非法的配置属性名“{0}”。位于：{1}</value>
   </data>
+  <data name="Error.IllegalConfigurationKeyValue" xml:space="preserve">
+    <value>非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1}</value>
+  </data>
   <data name="Error.IllegalRootNodeName" xml:space="preserve">
     <value>发现“{0}”是非法的根节点名称。{1}</value>
   </data>

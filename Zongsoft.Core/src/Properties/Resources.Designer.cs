@@ -97,6 +97,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1} 的本地化字符串。
+        /// </summary>
+        internal static string Error_IllegalConfigurationKeyValue {
+            get {
+                return ResourceManager.GetString("Error.IllegalConfigurationKeyValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 发现“{0}”是非法的根节点名称。{1} 的本地化字符串。
         /// </summary>
         internal static string Error_IllegalRootNodeName {

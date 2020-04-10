@@ -45,6 +45,8 @@ namespace Zongsoft.Configuration.Options
 
 		private const string XML_KEY_ATTRIBUTE = "key";
 		private const string XML_NAME_ATTRIBUTE = "name";
+
+		private static readonly char[] ILLEGAL_CHARACTERS = new char[] { ':', '/', '\\', '*', '?' };
 		#endregion
 
 		#region 构造函数
@@ -123,6 +125,9 @@ namespace Zongsoft.Configuration.Options
 									   string.Equals(reader.LocalName, elementName + "." + XML_KEY_ATTRIBUTE, StringComparison.OrdinalIgnoreCase) ||
 									   string.Equals(reader.LocalName, elementName + "." + XML_NAME_ATTRIBUTE, StringComparison.OrdinalIgnoreCase))
 									{
+										if(reader.Value.IndexOfAny(ILLEGAL_CHARACTERS) >= 0)
+											throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationKeyValue, reader.Value, GetLineInfo(reader)));
+
 										var prefix = prefixStack.Pop();
 										prefixStack.Push(ConfigurationPath.Combine(prefix, reader.Value));
 										prefixStack.Push(reader.LocalName.Substring(elementName.Length + 1));
