@@ -162,8 +162,7 @@ namespace Zongsoft.Common
 		{
 			result = null;
 
-			//如果转换类型为空，则不进行类型转换处理
-			if(conversionType == null)
+			if(conversionType == null || conversionType == typeof(object))
 			{
 				result = value;
 				return true;
