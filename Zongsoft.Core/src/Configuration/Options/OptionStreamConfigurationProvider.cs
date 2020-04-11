@@ -76,7 +76,7 @@ namespace Zongsoft.Configuration.Options
 
 			using(var reader = XmlReader.Create(stream, settings))
 			{
-				var prefixStack = new Stack<string>();
+				var pathStack = new Stack<string>();
 
 				SkipUntilRootElement(reader);
 
@@ -97,7 +97,7 @@ namespace Zongsoft.Configuration.Options
 								if(reader.LocalName != XML_OPTION_ELEMENT)
 									throw new FormatException(string.Format(Properties.Resources.Error_InvalidOptionConfigurationFileFormat, GetLineInfo(reader)));
 
-								prefixStack.Clear();
+								pathStack.Clear();
 
 								var path = reader.GetAttribute(XML_OPTION_PATH_ATTRIBUTE);
 
@@ -106,13 +106,13 @@ namespace Zongsoft.Configuration.Options
 									path = path.Trim('/', ' ', '\t');
 
 									if(path.Length > 0)
-										prefixStack.Push(path.Replace("/", ConfigurationPath.KeyDelimiter));
+										pathStack.Push(path.Replace("/", ConfigurationPath.KeyDelimiter));
 								}
 							}
 							else
 							{
 								var elementName = reader.LocalName;
-								prefixStack.Push(elementName);
+								pathStack.Push(elementName);
 
 								for(int i = 0; i < reader.AttributeCount; i++)
 								{
@@ -128,51 +128,52 @@ namespace Zongsoft.Configuration.Options
 										if(reader.Value.IndexOfAny(ILLEGAL_CHARACTERS) >= 0)
 											throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationKeyValue, reader.Value, GetLineInfo(reader)));
 
-										var prefix = prefixStack.Pop();
-										prefixStack.Push(ConfigurationPath.Combine(prefix, reader.Value));
-										prefixStack.Push(reader.LocalName.Substring(elementName.Length + 1));
+										pathStack.Pop();
+										pathStack.Push(reader.Value);
+
+										pathStack.Push(reader.LocalName.Substring(elementName.Length + 1));
 									}
 									else
 									{
 										if(reader.LocalName.Contains('.'))
 											throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationAttributeName, reader.LocalName, GetLineInfo(reader)));
 
-										prefixStack.Push(reader.LocalName);
+										pathStack.Push(reader.LocalName);
 									}
 
-									var key = ConfigurationPath.Combine(prefixStack.Reverse());
+									var key = ConfigurationPath.Combine(pathStack.Reverse());
 									if(data.ContainsKey(key))
 										throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(reader)));
 
 									data[key] = reader.Value;
-									prefixStack.Pop();
+									pathStack.Pop();
 								}
 
 								reader.MoveToElement();
 
 								if(reader.IsEmptyElement)
-									prefixStack.Pop();
+									pathStack.Pop();
 							}
 
 							break;
 						case XmlNodeType.EndElement:
-							if(prefixStack.Count > 0)
+							if(pathStack.Count > 0)
 							{
 								// 如果上一个节点类型是元素则说明当前元素中没有TEXT/CDATA节点
 								if(preNodeType == XmlNodeType.Element)
 								{
-									var key = ConfigurationPath.Combine(prefixStack.Reverse());
+									var key = ConfigurationPath.Combine(pathStack.Reverse());
 									data[key] = string.Empty;
 								}
 
-								prefixStack.Pop();
+								pathStack.Pop();
 							}
 
 							break;
 						case XmlNodeType.CDATA:
 						case XmlNodeType.Text:
 							{
-								var key = ConfigurationPath.Combine(prefixStack.Reverse());
+								var key = ConfigurationPath.Combine(pathStack.Reverse());
 
 								if(data.ContainsKey(key))
 									throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(reader)));
