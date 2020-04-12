@@ -123,7 +123,7 @@ namespace Zongsoft.Configuration.Models
 			configuration.GetSection("general:intranet").Value = "false";
 			configuration.GetSection("general:certificates:default").Value = "test";
 
-			void OnPersistent(IConfigurationEntity entity)
+			static void OnPersistent(IConfigurationEntity entity)
 			{
 				switch(entity.Key)
 				{

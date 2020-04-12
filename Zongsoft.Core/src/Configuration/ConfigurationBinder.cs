@@ -77,7 +77,7 @@ namespace Zongsoft.Configuration
 			var result = configuration.GetOption(typeof(T), path, configureOptions);
 
 			if(result == null)
-				return default(T);
+				return default;
 
 			return (T)result;
 		}

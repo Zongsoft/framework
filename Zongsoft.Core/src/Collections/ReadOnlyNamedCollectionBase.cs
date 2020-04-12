@@ -122,9 +122,7 @@ namespace Zongsoft.Collections
 
 		protected virtual T GetItem(string name)
 		{
-			T value;
-
-			if(_innerDictionary.TryGetValue(name, out value))
+			if(_innerDictionary.TryGetValue(name, out var value))
 				return value;
 
 			throw new KeyNotFoundException($"The specified '{name}' key is not in the dictionary.");

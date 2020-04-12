@@ -34,7 +34,7 @@ namespace Zongsoft.Collections
 	public class NamedCollection<T> : NamedCollectionBase<T>
 	{
 		#region 成员字段
-		private Func<T, string> _getKey;
+		private readonly Func<T, string> _getKey;
 		#endregion
 
 		#region 构造函数
