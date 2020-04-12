@@ -62,7 +62,7 @@ namespace Zongsoft.Configuration
 			{
 				var options = new ConfigurationBinderOptions();
 				configureOptions?.Invoke(options);
-				BindInstance(instance.GetType(), instance, configuration, options);
+				BindInstance(instance.GetType(), instance, null, configuration, options);
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace Zongsoft.Configuration
 			if(!string.IsNullOrEmpty(path))
 				configuration = configuration.GetSection(ConvertPath(path));
 
-			return BindInstance(type, instance: null, configuration: configuration, options: options);
+			return BindInstance(type, null, null, configuration, options);
 		}
 
 		public static T GetOptionValue<T>(this IConfiguration configuration, string path)
@@ -158,14 +158,14 @@ namespace Zongsoft.Configuration
 			}
 		}
 
-		private static object BindInstance(Type type, object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+		private static object BindInstance(Type type, object instance, Func<TypeConverter> converterFactory, IConfiguration configuration, ConfigurationBinderOptions options)
 		{
 			if(type == typeof(IConfigurationSection))
 				return configuration;
 
 			if(configuration is IConfigurationSection section && section.Value != null)
 			{
-				if(Common.Convert.TryConvertValue(section.Value, type, out var convertedValue))
+				if(Common.Convert.TryConvertValue(section.Value, type, converterFactory, out var convertedValue))
 					return convertedValue;
 
 				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, type));
@@ -222,7 +222,10 @@ namespace Zongsoft.Configuration
 			if(collectionInterface != null)
 			{
 				var dictionaryType = typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1]);
-				var instance = Activator.CreateInstance(dictionaryType);
+				var instance = typeInfo.GenericTypeArguments[0] != typeof(string) ?
+					Activator.CreateInstance(dictionaryType) :
+					Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
+
 				BindDictionary(instance, dictionaryType, configuration, options);
 				return instance;
 			}
@@ -230,7 +233,10 @@ namespace Zongsoft.Configuration
 			collectionInterface = GetImplementedContract(typeof(IDictionary<,>), type);
 			if(collectionInterface != null)
 			{
-				var instance = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1]));
+				var instance = typeInfo.GenericTypeArguments[0] != typeof(string) ?
+					Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1])) :
+					Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
+
 				BindDictionary(instance, collectionInterface, configuration, options);
 				return instance;
 			}
@@ -291,7 +297,12 @@ namespace Zongsoft.Configuration
 			if(property.IsDefined(typeof(ConfigurationPropertyAttribute), true))
 				key = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true).Name;
 
-			propertyValue = BindInstance(property.PropertyType, propertyValue, configuration.GetSection(key), options);
+			propertyValue = BindInstance(
+				property.PropertyType,
+				propertyValue,
+				() => GetConverter(property),
+				configuration.GetSection(key),
+				options);
 
 			if(propertyValue != null && hasSetter)
 				property.SetValue(instance, propertyValue);
@@ -314,10 +325,11 @@ namespace Zongsoft.Configuration
 				if(child.Value == null)
 				{
 					var item = BindInstance(
-						type: valueType,
-						instance: null,
-						configuration: child,
-						options: options);
+						valueType,
+						null,
+						null,
+						child,
+						options);
 
 					if(item != null)
 					{
@@ -345,7 +357,7 @@ namespace Zongsoft.Configuration
 						.FirstOrDefault();
 
 					if(property != null && property.CanWrite)
-						property.SetValue(dictionary, BindInstance(property.PropertyType, dictionary, child, options));
+						BindProperty(property, dictionary, configuration, options);
 				}
 			}
 		}
@@ -363,10 +375,11 @@ namespace Zongsoft.Configuration
 					if(child.Value == null)
 					{
 						var item = BindInstance(
-							type: itemType,
-							instance: null,
-							configuration: child,
-							options: options);
+							itemType,
+							null,
+							null,
+							child,
+							options);
 
 						if(item != null)
 							addMethod.Invoke(collection, new[] { item });
@@ -383,7 +396,7 @@ namespace Zongsoft.Configuration
 						   .FirstOrDefault();
 
 						if(property != null && property.CanWrite)
-							property.SetValue(collection, BindInstance(property.PropertyType, collection, child, options));
+							BindProperty(property, collection, configuration, options);
 					}
 				}
 				catch
@@ -407,10 +420,11 @@ namespace Zongsoft.Configuration
 				try
 				{
 					var item = BindInstance(
-						type: elementType,
-						instance: null,
-						configuration: children[i],
-						options: options);
+						elementType,
+						null,
+						null,
+						children[i],
+						options);
 
 					if(item != null)
 						result.SetValue(item, arrayLength + i);
@@ -460,6 +474,16 @@ namespace Zongsoft.Configuration
 					string.Equals(name, member.Name, StringComparison.OrdinalIgnoreCase) ||
 					string.Equals(name, member.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name, StringComparison.OrdinalIgnoreCase)
 				);
+		}
+
+		private static TypeConverter GetConverter(MemberInfo member)
+		{
+			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
+
+			if(attribute != null)
+				return Activator.CreateInstance(Type.GetType(attribute.ConverterTypeName)) as TypeConverter;
+
+			return null;
 		}
 		#endregion
 	}

@@ -34,15 +34,15 @@ namespace Zongsoft.Configuration
 			Assert.Equal("Shenzhen", configuration.GetSection("mobile:region").Value);
 			Assert.Null(configuration.GetSection("mobile.certificate").Value);
 
-			Assert.Equal("Alarm", configuration.GetSection("mobile:message:alarm:name").Value);
-			Assert.Equal("SMS_01", configuration.GetSection("mobile:message:alarm:code").Value);
-			Assert.Equal("Zongsoft", configuration.GetSection("mobile:message:alarm:scheme").Value);
+			Assert.Equal("Alarm", configuration.GetSection("mobile:messages:alarm:name").Value);
+			Assert.Equal("SMS_01", configuration.GetSection("mobile:messages:alarm:code").Value);
+			Assert.Equal("Zongsoft", configuration.GetSection("mobile:messages:alarm:scheme").Value);
 
-			Assert.Equal("400123456, 400666888", configuration.GetSection("mobile:voice:numbers").Value);
-			Assert.Equal("Alarm", configuration.GetSection("mobile:voice:alarm:name").Value);
-			Assert.Equal("TTS_01", configuration.GetSection("mobile:voice:alarm:code").Value);
-			Assert.Equal("Password.Forget", configuration.GetSection("mobile:voice:password.forget:name").Value);
-			Assert.Equal("TTS_02", configuration.GetSection("mobile:voice:password.forget:code").Value);
+			Assert.Equal("400123456, 400666888", configuration.GetSection("mobile:voices:numbers").Value);
+			Assert.Equal("Alarm", configuration.GetSection("mobile:voices:alarm:name").Value);
+			Assert.Equal("TTS_01", configuration.GetSection("mobile:voices:alarm:code").Value);
+			Assert.Equal("Password.Forget", configuration.GetSection("mobile:voices:password.forget:name").Value);
+			Assert.Equal("TTS_02", configuration.GetSection("mobile:voices:password.forget:code").Value);
 
 			Assert.Equal("wechat", configuration.GetSection("mobile:pushing:wechat:key").Value);
 			Assert.Equal("A123", configuration.GetSection("mobile:pushing:wechat:code").Value);
@@ -87,6 +87,37 @@ namespace Zongsoft.Configuration
 			Assert.NotNull(mobile);
 			Assert.Equal("Shenzhen", mobile.Region);
 			Assert.Empty(mobile.Certificate);
+
+			Assert.NotEmpty(mobile.Messages);
+			Assert.Equal(1, mobile.Messages.Count);
+
+			var message = mobile.Messages["alarm"];
+			Assert.NotNull(message);
+			Assert.Equal("Alarm", message.Name);
+			Assert.Equal("SMS_01", message.Code);
+			Assert.Equal("Zongsoft", message.Scheme);
+
+			Assert.NotEmpty(mobile.Voices);
+			Assert.Equal(2, mobile.Voices.Count);
+			Assert.NotEmpty(mobile.Voices.Numbers);
+			Assert.Equal(2, mobile.Voices.Numbers.Length);
+
+			var voice = mobile.Voices["Alarm"];
+			Assert.NotNull(voice);
+			Assert.Equal("Alarm", voice.Name);
+			Assert.Equal("TTS_01", voice.Code);
+
+			voice = mobile.Voices["Password.forget"];
+			Assert.NotNull(voice);
+			Assert.Equal("Password.Forget", voice.Name);
+			Assert.Equal("TTS_02", voice.Code);
+
+			Assert.NotEmpty(mobile.Notifications);
+
+			var notification = mobile.Notifications["Wechat"];
+			Assert.Equal("wechat", notification.Key);
+			Assert.Equal("A123", notification.Code);
+			Assert.Equal("****", notification.Secret);
 		}
 	}
 
@@ -171,11 +202,22 @@ namespace Zongsoft.Configuration
 		{
 			get; set;
 		}
+
+		[ConfigurationProperty("Pushing")]
+		public NotificationsOptions Notifications
+		{
+			get; set;
+		}
 	}
 
 	public class VoicesOptions : Dictionary<string, Template>
 	{
-		public string Numbers
+		public VoicesOptions() : base(StringComparer.OrdinalIgnoreCase)
+		{
+		}
+
+		[TypeConverter(typeof(NumbersConverter))]
+		public string[] Numbers
 		{
 			get; set;
 		}
@@ -201,7 +243,16 @@ namespace Zongsoft.Configuration
 			public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 			{
 				if(value is string text)
-					return text.Split(',', StringSplitOptions.RemoveEmptyEntries);
+				{
+					var parts = text.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+					for(int i = 0; i < parts.Length; i++)
+					{
+						parts[i] = parts[i].Trim();
+					}
+
+					return parts;
+				}
 
 				return base.ConvertFrom(context, culture, value);
 			}
@@ -213,6 +264,14 @@ namespace Zongsoft.Configuration
 
 				return base.ConvertTo(context, culture, value, destinationType);
 			}
+		}
+	}
+
+	public class NotificationsOptions : Zongsoft.Collections.NamedCollectionBase<App>
+	{
+		protected override string GetKeyForItem(App item)
+		{
+			return item.Key;
 		}
 	}
 
