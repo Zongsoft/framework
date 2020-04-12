@@ -49,7 +49,7 @@ namespace Zongsoft.Configuration.Options
 		public OptionsConfigurationChangeTokenSource(string name, IConfiguration configuration)
 		{
 			this.Name = name ?? string.Empty;
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+			_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 		}
 		#endregion
 

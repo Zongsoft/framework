@@ -37,67 +37,67 @@ namespace Zongsoft.Configuration
 	{
 		#region 成员字段
 		private volatile string _name;
-        private IDictionary<string, string> _properties;
+		private IDictionary<string, string> _properties;
 		#endregion
 
 		#region 构造函数
 		public Setting()
-        {
-        }
+		{
+		}
 
-        public Setting(string name, string value = null)
-        {
-            if(string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
+		public Setting(string name, string value = null)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
 
-            _name = name.Trim();
-            this.Value = value;
-        }
+			_name = name.Trim();
+			this.Value = value;
+		}
 		#endregion
 
 		#region 公共属性
 		public string Name
-        {
-            get => _name;
-            set
-            {
-                if(!string.IsNullOrEmpty(_name))
-                    throw new InvalidOperationException(Zongsoft.Properties.Resources.Error_RepeatedOperation);
+		{
+			get => _name;
+			set
+			{
+				if(!string.IsNullOrEmpty(_name))
+					throw new InvalidOperationException(Zongsoft.Properties.Resources.Error_RepeatedOperation);
 
-                if(string.IsNullOrWhiteSpace(value))
-                    throw new ArgumentNullException();
+				if(string.IsNullOrWhiteSpace(value))
+					throw new ArgumentNullException();
 
-                _name = value.Trim();
-            }
-        }
+				_name = value.Trim();
+			}
+		}
 
 		public string Value
 		{
-            get; set;
+			get; set;
 		}
 
-        public bool HasProperties
-        {
-            get => _properties?.Count > 0;
-        }
+		public bool HasProperties
+		{
+			get => _properties?.Count > 0;
+		}
 
 		public IDictionary<string, string> Properties
-        {
-            get
-            {
-                if(_properties == null)
-                    Interlocked.CompareExchange(ref _properties, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null);
+		{
+			get
+			{
+				if(_properties == null)
+					Interlocked.CompareExchange(ref _properties, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null);
 
-                return _properties;
-            }
-        }
-        #endregion
+				return _properties;
+			}
+		}
+		#endregion
 
-        #region 重写方法
-        public override string ToString()
-        {
-            return $"{this.Name}={this.Value}";
-        }
-        #endregion
-    }
+		#region 重写方法
+		public override string ToString()
+		{
+			return $"{this.Name}={this.Value}";
+		}
+		#endregion
+	}
 }

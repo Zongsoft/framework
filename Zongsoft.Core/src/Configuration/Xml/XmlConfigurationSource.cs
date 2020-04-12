@@ -33,12 +33,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Xml
 {
-    public class XmlConfigurationSource : FileConfigurationSource
-    {
-        public override IConfigurationProvider Build(IConfigurationBuilder builder)
-        {
-            this.EnsureDefaults(builder);
-            return new XmlConfigurationProvider(this);
-        }
-    }
+	public class XmlConfigurationSource : FileConfigurationSource
+	{
+		public override IConfigurationProvider Build(IConfigurationBuilder builder)
+		{
+			this.EnsureDefaults(builder);
+			return new XmlConfigurationProvider(this);
+		}
+	}
 }

@@ -38,15 +38,15 @@ namespace Zongsoft.Configuration.Xml
 	{
 		#region 构造函数
 		public XmlConfigurationProvider(XmlConfigurationSource source) : base(source)
-        {
-        }
+		{
+		}
 		#endregion
 
 		#region 重写方法
 		public override void Load(Stream stream)
-        {
-            this.Data = XmlStreamConfigurationProvider.Read(stream);
-        }
+		{
+			this.Data = XmlStreamConfigurationProvider.Read(stream);
+		}
 		#endregion
 	}
 }

@@ -49,9 +49,15 @@ namespace Zongsoft.Configuration.Models
 		#endregion
 
 		#region 公共属性
-		public IEnumerable<TModel> Models { get; set; }
+		public IEnumerable<TModel> Models
+		{
+			get; set;
+		}
 
-		public ModelConfigurationMapping Mapping { get; }
+		public ModelConfigurationMapping Mapping
+		{
+			get;
+		}
 		#endregion
 
 		#region 内部属性

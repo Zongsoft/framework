@@ -35,9 +35,9 @@ namespace Zongsoft.Configuration
 	public interface ISetting
 	{
 		string Name { get; }
-        string Value { get; set; }
+		string Value { get; set; }
 
-        bool HasProperties { get; }
-        IDictionary<string, string> Properties { get; }
+		bool HasProperties { get; }
+		IDictionary<string, string> Properties { get; }
 	}
 }

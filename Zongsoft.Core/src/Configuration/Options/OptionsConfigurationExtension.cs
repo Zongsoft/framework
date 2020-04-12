@@ -43,22 +43,22 @@ namespace Zongsoft.Configuration.Options
 			return services.Configure<TOptions>(string.Empty, configuration);
 		}
 
-        public static IServiceCollection Configure<TOptions>(this IServiceCollection services, string name, IConfiguration configuration) where TOptions : class
-        {
-            return services.Configure<TOptions>(name, configuration, _ => { });
-        }
-
-        public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
-            IConfiguration configuration,
-            Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
-        {
-            return services.Configure<TOptions>(string.Empty, configuration, configureBinder);
-        }
+		public static IServiceCollection Configure<TOptions>(this IServiceCollection services, string name, IConfiguration configuration) where TOptions : class
+		{
+			return services.Configure<TOptions>(name, configuration, _ => { });
+		}
 
 		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
-            string name,
-            IConfiguration configuration,
-            Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
+			IConfiguration configuration,
+			Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
+		{
+			return services.Configure<TOptions>(string.Empty, configuration, configureBinder);
+		}
+
+		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
+			string name,
+			IConfiguration configuration,
+			Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
 		{
 			if(services == null)
 				throw new ArgumentNullException(nameof(services));
@@ -67,9 +67,9 @@ namespace Zongsoft.Configuration.Options
 				throw new ArgumentNullException(nameof(configuration));
 
 			return services.AddOptions()
-                .Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
-                .AddSingleton<IOptionsChangeTokenSource<TOptions>>(new OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
-                .AddSingleton<IConfigureOptions<TOptions>>(new OptionsConfigurator<TOptions>(name, configuration, configureBinder));
+				.Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
+				.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
+				.AddSingleton<IConfigureOptions<TOptions>>(new OptionsConfigurator<TOptions>(name, configuration, configureBinder));
 		}
 	}
 }
