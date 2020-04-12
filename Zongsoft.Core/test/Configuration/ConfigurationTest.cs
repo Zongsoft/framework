@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
 
@@ -243,16 +244,7 @@ namespace Zongsoft.Configuration
 			public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 			{
 				if(value is string text)
-				{
-					var parts = text.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-					for(int i = 0; i < parts.Length; i++)
-					{
-						parts[i] = parts[i].Trim();
-					}
-
-					return parts;
-				}
+					return Common.StringExtension.Slice(text, ',').ToArray();
 
 				return base.ConvertFrom(context, culture, value);
 			}
