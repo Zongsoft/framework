@@ -54,44 +54,29 @@ namespace Zongsoft.Collections
 		#region 公共属性
 		public T this[string name]
 		{
-			get
-			{
-				return this.GetItem(name);
-			}
+			get => this.GetItem(name);
 		}
 
 		public int Count
 		{
-			get
-			{
-				return _innerDictionary.Count;
-			}
+			get => _innerDictionary.Count;
 		}
 
 		public IEnumerable<string> Keys
 		{
-			get
-			{
-				return _innerDictionary.Keys;
-			}
+			get => _innerDictionary.Keys;
 		}
 
 		public IEnumerable<T> Values
 		{
-			get
-			{
-				return _innerDictionary.Values;
-			}
+			get => _innerDictionary.Values;
 		}
 		#endregion
 
 		#region 保护属性
 		protected Dictionary<string, T> InnerDictionary
 		{
-			get
-			{
-				return _innerDictionary;
-			}
+			get => _innerDictionary;
 		}
 		#endregion
 

@@ -48,14 +48,8 @@ namespace Zongsoft.Collections
 		#region 公共属性
 		public new T this[string name]
 		{
-			get
-			{
-				return this.GetItem(name);
-			}
-			set
-			{
-				this.SetItem(name, value);
-			}
+			get => this.GetItem(name);
+			set => this.SetItem(name, value);
 		}
 		#endregion
 
