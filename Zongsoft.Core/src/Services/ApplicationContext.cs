@@ -33,9 +33,6 @@ using System.Threading;
 using System.Security.Claims;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Modules))]
@@ -104,17 +101,7 @@ namespace Zongsoft.Services
 			get => AppContext.BaseDirectory;
 		}
 
-		public virtual ISettingsProvider Settings
-		{
-			get => OptionManager.Instance.Settings;
-		}
-
-		public virtual IOptionProvider Options
-		{
-			get => OptionManager.Instance;
-		}
-
-		public virtual OptionConfiguration Configuration
+		public virtual Microsoft.Extensions.Configuration.IConfigurationRoot Configuration
 		{
 			get => null;
 		}

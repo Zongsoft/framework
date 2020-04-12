@@ -30,9 +30,8 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.ComponentModel;
 using Zongsoft.Collections;
+using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
 {
@@ -75,11 +74,6 @@ namespace Zongsoft.Services
 		public string Description
 		{
 			get; set;
-		}
-
-		public virtual ISettingsProvider Settings
-		{
-			get => OptionManager.Instance.Settings;
 		}
 
 		public virtual IServiceProvider Services

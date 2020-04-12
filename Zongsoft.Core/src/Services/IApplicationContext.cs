@@ -30,8 +30,8 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
+using Microsoft.Extensions.Configuration;
+
 using Zongsoft.Collections;
 
 namespace Zongsoft.Services
@@ -57,17 +57,9 @@ namespace Zongsoft.Services
 		}
 
 		/// <summary>
-		/// 获取当前应用程序的选项管理。
-		/// </summary>
-		IOptionProvider Options
-		{
-			get;
-		}
-
-		/// <summary>
 		/// 获取当前应用程序的应用配置。
 		/// </summary>
-		OptionConfiguration Configuration
+		IConfigurationRoot Configuration
 		{
 			get;
 		}

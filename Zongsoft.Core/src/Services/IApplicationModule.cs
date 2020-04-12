@@ -30,7 +30,6 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
 using Zongsoft.ComponentModel;
 using Zongsoft.Collections;
 
@@ -65,14 +64,6 @@ namespace Zongsoft.Services
 		{
 			get;
 			set;
-		}
-
-		/// <summary>
-		/// 获取应用模块的自定义设置提供程序。
-		/// </summary>
-		ISettingsProvider Settings
-		{
-			get;
 		}
 
 		/// <summary>
