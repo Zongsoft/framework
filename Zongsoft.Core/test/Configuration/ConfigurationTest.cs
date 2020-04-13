@@ -3,8 +3,6 @@ using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Microsoft.Extensions.Configuration;
-
 using Xunit;
 
 namespace Zongsoft.Configuration
@@ -12,56 +10,35 @@ namespace Zongsoft.Configuration
 	public class ConfigurationTest
 	{
 		[Fact]
-		public void TestLoad()
+		public void TestBindModels()
 		{
-			var configuration = new ConfigurationBuilder()
-				.AddOptionFile("Configuration/OptionConfigurationTest.option")
-				.Build();
+			var configuration = Models.ModelConfigurationTest.GetConfiguration();
 
+			Assert.NotNull(configuration);
 			Assert.NotEmpty(configuration.Providers);
 
-			Assert.Equal("general.name", configuration.GetSection("general:name").Value);
-			Assert.Equal("true", configuration.GetSection("general:internal").Value);
-			Assert.Equal("main", configuration.GetSection("general:certificates:default").Value);
-
-			Assert.Equal("main", configuration.GetSection("general:certificates:main:name").Value);
-			Assert.Equal("C001", configuration.GetSection("general:certificates:main:code").Value);
-			Assert.Equal("xxxx", configuration.GetSection("general:certificates:main:secret").Value);
-
-			Assert.Equal("test", configuration.GetSection("general:certificates:test:name").Value);
-			Assert.Equal("C002", configuration.GetSection("general:certificates:test:code").Value);
-			Assert.Equal("zzzz", configuration.GetSection("general:certificates:test:secret").Value);
-
-			Assert.Equal("Shenzhen", configuration.GetSection("mobile:region").Value);
-			Assert.Null(configuration.GetSection("mobile.certificate").Value);
-
-			Assert.Equal("Alarm", configuration.GetSection("mobile:messages:alarm:name").Value);
-			Assert.Equal("SMS_01", configuration.GetSection("mobile:messages:alarm:code").Value);
-			Assert.Equal("Zongsoft", configuration.GetSection("mobile:messages:alarm:scheme").Value);
-
-			Assert.Equal("400123456, 400666888", configuration.GetSection("mobile:voices:numbers").Value);
-			Assert.Equal("Alarm", configuration.GetSection("mobile:voices:alarm:name").Value);
-			Assert.Equal("TTS_01", configuration.GetSection("mobile:voices:alarm:code").Value);
-			Assert.Equal("Password.Forget", configuration.GetSection("mobile:voices:password.forget:name").Value);
-			Assert.Equal("TTS_02", configuration.GetSection("mobile:voices:password.forget:code").Value);
-
-			Assert.Equal("wechat", configuration.GetSection("mobile:pushing:wechat:key").Value);
-			Assert.Equal("A123", configuration.GetSection("mobile:pushing:wechat:code").Value);
-			Assert.Equal("****", configuration.GetSection("mobile:pushing:wechat:secret").Value);
+			TestGeneral(configuration.GetOption<General>("/general"));
+			TestMobile(configuration.GetOption<Mobile>("mobile"));
 		}
 
 		[Fact]
-		public void TestBind()
+		public void TestBindOptions()
 		{
-			var configuration = new ConfigurationBuilder()
-				.AddOptionFile("Configuration/OptionConfigurationTest.option")
-				.Build();
+			var configuration = Options.OptionConfigurationTest.GetConfiguration();
 
-			var general = configuration.GetOption<GeneralOptions>("/general");
+			Assert.NotNull(configuration);
+			Assert.NotEmpty(configuration.Providers);
 
+			TestGeneral(configuration.GetOption<General>("/general"));
+			TestMobile(configuration.GetOption<Mobile>("mobile"));
+		}
+
+		#region 私有方法
+		private void TestGeneral(General general)
+		{
 			Assert.NotNull(general);
 			Assert.Equal("general.name", general.Name);
-			Assert.True(general.IsInternal);
+			Assert.True(general.IsIntranet);
 
 			Assert.NotNull(general.Certificates);
 			Assert.NotEmpty(general.Certificates);
@@ -82,12 +59,13 @@ namespace Zongsoft.Configuration
 			Assert.Equal("test", certificate.Name);
 			Assert.Equal("C002", certificate.Code);
 			Assert.Equal("zzzz", certificate.Secret);
+		}
 
-			var mobile = configuration.GetOption<MobileOptions>("mobile");
-
+		private void TestMobile(Mobile mobile)
+		{
 			Assert.NotNull(mobile);
 			Assert.Equal("Shenzhen", mobile.Region);
-			Assert.Empty(mobile.Certificate);
+			Assert.True(string.IsNullOrEmpty(mobile.Certificate));
 
 			Assert.NotEmpty(mobile.Messages);
 			Assert.Equal(1, mobile.Messages.Count);
@@ -120,17 +98,19 @@ namespace Zongsoft.Configuration
 			Assert.Equal("A123", notification.Code);
 			Assert.Equal("****", notification.Secret);
 		}
+		#endregion
 	}
 
-	public class GeneralOptions
+	#region 选项实体
+	public class General
 	{
 		public string Name
 		{
 			get; set;
 		}
 
-		[ConfigurationProperty("Internal")]
-		public bool IsInternal
+		[ConfigurationProperty("Intranet")]
+		public bool IsIntranet
 		{
 			get; set;
 		}
@@ -182,7 +162,7 @@ namespace Zongsoft.Configuration
 		}
 	}
 
-	public class MobileOptions
+	public class Mobile
 	{
 		public string Region
 		{
@@ -199,21 +179,21 @@ namespace Zongsoft.Configuration
 			get; set;
 		}
 
-		public VoicesOptions Voices
+		public Voices Voices
 		{
 			get; set;
 		}
 
 		[ConfigurationProperty("Pushing")]
-		public NotificationsOptions Notifications
+		public Notifications Notifications
 		{
 			get; set;
 		}
 	}
 
-	public class VoicesOptions : Dictionary<string, Template>
+	public class Voices : Dictionary<string, Template>
 	{
-		public VoicesOptions() : base(StringComparer.OrdinalIgnoreCase)
+		public Voices() : base(StringComparer.OrdinalIgnoreCase)
 		{
 		}
 
@@ -259,7 +239,7 @@ namespace Zongsoft.Configuration
 		}
 	}
 
-	public class NotificationsOptions : Zongsoft.Collections.NamedCollectionBase<App>
+	public class Notifications : Zongsoft.Collections.NamedCollectionBase<App>
 	{
 		protected override string GetKeyForItem(App item)
 		{
@@ -302,4 +282,5 @@ namespace Zongsoft.Configuration
 			get; set;
 		}
 	}
+	#endregion
 }

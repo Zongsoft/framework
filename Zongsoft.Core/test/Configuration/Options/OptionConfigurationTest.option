@@ -2,7 +2,7 @@
 
 <configuration>
 	<option path="/">
-		<general name="general.name" internal="true">
+		<general name="general.name" intranet="true">
 			<certificates default="main">
 				<certificate certificate.name="main" code="C001" secret="xxxx" />
 				<certificate certificate.name="test" code="C002" secret="zzzz" />

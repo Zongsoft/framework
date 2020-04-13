@@ -75,9 +75,13 @@ namespace Zongsoft.Configuration.Models
 		#region 公共方法
 		public virtual bool TryGet(string key, out string value)
 		{
-			if(this.Data.TryGetValue(key, out var model) && model.TryGetValue(_source.Mapping.Value, out var obj) && obj != null)
+			value = null;
+
+			if(this.Data.TryGetValue(key, out var model) && model.TryGetValue(_source.Mapping.Value, out var valueObject))
 			{
-				value = obj.ToString();
+				if(valueObject != null)
+					value = valueObject.ToString();
+
 				return true;
 			}
 
@@ -87,6 +91,9 @@ namespace Zongsoft.Configuration.Models
 
 		public virtual void Set(string key, string value)
 		{
+			if(string.IsNullOrEmpty(value))
+				value = null;
+
 			if(this.Data.TryGetValue(key, out var model))
 				model.TrySetValue(_source.Mapping.Value, value);
 			else
