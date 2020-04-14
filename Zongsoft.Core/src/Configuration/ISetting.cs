@@ -32,6 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
+    [ConfigurationRecognizer(nameof(Properties))]
 	public interface ISetting
 	{
 		string Name { get; }

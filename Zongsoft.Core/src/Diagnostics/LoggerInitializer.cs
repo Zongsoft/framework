@@ -78,9 +78,9 @@ namespace Zongsoft.Diagnostics
 					throw new InvalidOperationException(string.Format("Can not create instance of '{0}' type.", type));
 
 				//如果日志记录器配置节含有扩展属性，则设置日志记录器实例的扩展属性
-				if(handlerSetting.HasParameters)
+				if(handlerSetting.HasProperties)
 				{
-					foreach(var property in handlerSetting.Parameters)
+					foreach(var property in handlerSetting.Properties)
 					{
 						Reflection.Reflector.SetValue(instance, property.Key, property.Value);
 					}

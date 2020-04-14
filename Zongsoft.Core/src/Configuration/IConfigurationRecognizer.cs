@@ -28,70 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Diagnostics.Configuration
+namespace Zongsoft.Configuration
 {
-	public class LoggerOptions
+	public interface IConfigurationRecognizer
 	{
-		public LoggerHandlerSettingCollection Handlers
-		{
-			get; set;
-		}
-
-		[Zongsoft.Configuration.ConfigurationRecognizer(nameof(Properties))]
-		public class LoggerHandlerSetting
-		{
-			public string Name
-			{
-				get; set;
-			}
-
-			public string Type
-			{
-				get; set;
-			}
-
-			public LoggerHandlerPredicationSetting Predication
-			{
-				get; set;
-			}
-
-			public bool HasProperties
-			{
-				get => this.Properties?.Count > 0;
-			}
-
-			public IDictionary<string, string> Properties
-			{
-				get; set;
-			}
-		}
-
-		public class LoggerHandlerSettingCollection : Collections.NamedCollectionBase<LoggerHandlerSetting>
-		{
-			protected override string GetKeyForItem(LoggerHandlerSetting item)
-			{
-				return item.Name;
-			}
-		}
-
-		public class LoggerHandlerPredicationSetting
-		{
-			public string Source
-			{
-				get; set;
-			}
-
-			public LogLevel? MinLevel
-			{
-				get; set;
-			}
-
-			public LogLevel? MaxLevel
-			{
-				get; set;
-			}
-		}
+		void Recognize(object target, string name, string value);
+		void Unrecognize(object target, string name, string value);
 	}
 }

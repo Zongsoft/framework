@@ -28,70 +28,37 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Diagnostics.Configuration
+namespace Zongsoft.Configuration
 {
-	public class LoggerOptions
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
+	public class ConfigurationRecognizerAttribute : Attribute
 	{
-		public LoggerHandlerSettingCollection Handlers
+		#region 公共属性
+		public ConfigurationRecognizerAttribute(string propertyName)
 		{
-			get; set;
+			if(string.IsNullOrEmpty(propertyName))
+				throw new ArgumentNullException(nameof(propertyName));
+
+			this.PropertyName = propertyName;
 		}
 
-		[Zongsoft.Configuration.ConfigurationRecognizer(nameof(Properties))]
-		public class LoggerHandlerSetting
+		public ConfigurationRecognizerAttribute(Type recognizerType)
 		{
-			public string Name
-			{
-				get; set;
-			}
+			this.RecognizerType = recognizerType ?? throw new ArgumentNullException(nameof(recognizerType));
+		}
+		#endregion
 
-			public string Type
-			{
-				get; set;
-			}
-
-			public LoggerHandlerPredicationSetting Predication
-			{
-				get; set;
-			}
-
-			public bool HasProperties
-			{
-				get => this.Properties?.Count > 0;
-			}
-
-			public IDictionary<string, string> Properties
-			{
-				get; set;
-			}
+		#region 公共属性
+		public Type RecognizerType
+		{
+			get;
 		}
 
-		public class LoggerHandlerSettingCollection : Collections.NamedCollectionBase<LoggerHandlerSetting>
+		public string PropertyName
 		{
-			protected override string GetKeyForItem(LoggerHandlerSetting item)
-			{
-				return item.Name;
-			}
+			get;
 		}
-
-		public class LoggerHandlerPredicationSetting
-		{
-			public string Source
-			{
-				get; set;
-			}
-
-			public LogLevel? MinLevel
-			{
-				get; set;
-			}
-
-			public LogLevel? MaxLevel
-			{
-				get; set;
-			}
-		}
+		#endregion
 	}
 }
