@@ -146,7 +146,7 @@ namespace Zongsoft.Configuration
 			foreach(var property in properties)
 			{
 				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-				var key = attribute == null ? property.Name : attribute.Name;
+				var key = attribute == null || string.IsNullOrEmpty(attribute.Name) ? property.Name : attribute.Name;
 				var section = configuration.GetSection(ConfigurationPath.Combine(path, key));
 				var value = Reflector.GetValue(property, ref instance);
 
@@ -360,9 +360,10 @@ namespace Zongsoft.Configuration
 				return;
 
 			var key = property.Name;
+			var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
 
-			if(property.IsDefined(typeof(ConfigurationPropertyAttribute), true))
-				key = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true).Name;
+			if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
+				key = attribute.Name;
 
 			propertyValue = BindInstance(
 				property.PropertyType,
