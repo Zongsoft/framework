@@ -35,6 +35,9 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
+using Zongsoft.Common;
+using Zongsoft.Reflection;
+
 namespace Zongsoft.Configuration
 {
 	public static class ConfigurationBinder
@@ -123,6 +126,70 @@ namespace Zongsoft.Configuration
 				return result;
 
 			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, path, type));
+		}
+
+		public static void SetOption<T>(this IConfiguration configuration, T instance, string path = null)
+		{
+			configuration.SetOption(instance, typeof(T), path);
+		}
+
+		public static void SetOption(this IConfiguration configuration, object instance, Type type, string path = null)
+		{
+			if(instance == null || type == null)
+				return;
+
+			var properties = GetAllProperties(type.GetTypeInfo());
+
+			if(!string.IsNullOrEmpty(path))
+				path = ConvertPath(path);
+
+			foreach(var property in properties)
+			{
+				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
+				var key = attribute == null ? property.Name : attribute.Name;
+				var section = configuration.GetSection(ConfigurationPath.Combine(path, key));
+				var value = Reflector.GetValue(property, ref instance);
+
+				if(property.PropertyType.IsScalarType())
+					section.Value = Common.Convert.ConvertValue<string>(value);
+				else
+				{
+					var dictionaryType = GetImplementedContracts(property.PropertyType,
+						typeof(IDictionary<,>),
+						typeof(IReadOnlyDictionary<,>));
+
+					if(dictionaryType != null)
+					{
+						foreach(var entry in (System.Collections.IEnumerable)value)
+						{
+							SetOption(section, value, ConfigurationPath.Combine(key, (string)Reflector.GetValue(entry, "Key")));
+						}
+					}
+
+					dictionaryType = GetImplementedContracts(property.PropertyType,
+						typeof(Collections.INamedCollection<>),
+						typeof(Collections.IReadOnlyNamedCollection<>));
+
+					if(dictionaryType != null)
+					{
+						foreach(var entry in (System.Collections.IEnumerable)value)
+						{
+							SetOption(section, value, ConfigurationPath.Combine(key, (string)Reflector.GetValue(entry, "Key")));
+						}
+					}
+
+					var collectionType = GetImplementedContracts(property.PropertyType,
+						typeof(IList<>),
+						typeof(IReadOnlyList<>),
+						typeof(ICollection<>),
+						typeof(IReadOnlyCollection<>));
+
+					if(collectionType != null)
+						;
+
+					SetOption(section, value, property.PropertyType, key);
+				}
+			}
 		}
 		#endregion
 
@@ -447,6 +514,22 @@ namespace Zongsoft.Configuration
 			foreach(var contract in contracts)
 			{
 				if(contract.IsGenericType && contract.GetGenericTypeDefinition() == expected)
+					return contract;
+			}
+
+			return null;
+		}
+
+		private static Type GetImplementedContracts(Type actual, params Type[] expects)
+		{
+			if(actual.IsGenericType && expects.Contains(actual.GetGenericTypeDefinition()))
+				return actual;
+
+			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
+
+			foreach(var contract in contracts)
+			{
+				if(contract.IsGenericType && expects.Contains(contract.GetGenericTypeDefinition()))
 					return contract;
 			}
 
