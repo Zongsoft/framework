@@ -144,6 +144,9 @@
   <data name="Error.NamespaceIsNotSupported" xml:space="preserve">
     <value>不支持XML名称空间。位于：{0}</value>
   </data>
+  <data name="Error.RepeatedOperation" xml:space="preserve">
+    <value>不能重复操作。</value>
+  </data>
   <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
     <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
   </data>

@@ -142,6 +142,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 不能重复操作。 的本地化字符串。
+        /// </summary>
+        internal static string Error_RepeatedOperation {
+            get {
+                return ResourceManager.GetString("Error.RepeatedOperation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 无法创建类型为“ {0}”的实例，因为不支持多维数组。 的本地化字符串。
         /// </summary>
         internal static string Error_UnsupportedMultidimensionalArray {
