@@ -29,58 +29,76 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 
-namespace Zongsoft.Options.Configuration
+namespace Zongsoft.Configuration.Profiles
 {
-	public class OptionConfigurationSection
+	public class ProfileComment : ProfileItem
 	{
-		#region 成员字段
-		private string _path;
-		private IDictionary<string, OptionConfigurationElement> _children;
+		#region 私有变量
+		private readonly StringBuilder _text;
 		#endregion
 
 		#region 构造函数
-		public OptionConfigurationSection(string path)
+		public ProfileComment(string text, int lineNumber = -1) : base(lineNumber)
 		{
-			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
-
-			_path = path.Trim().Trim('/');
-			_children = new Dictionary<string, OptionConfigurationElement>(StringComparer.OrdinalIgnoreCase);
+			if(string.IsNullOrEmpty(text))
+				_text = new StringBuilder();
+			else
+				_text = new StringBuilder(text);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前选项申明节的逻辑路径，即选项路径。
-		/// </summary>
-		public string Path
+		public string Text
 		{
 			get
 			{
-				return _path;
+				return _text.ToString();
 			}
 		}
 
-		public OptionConfigurationElement this[string name]
+		public string[] Lines
 		{
 			get
 			{
-				if(string.IsNullOrWhiteSpace(name))
-					throw new ArgumentNullException("name");
-
-				return _children[name];
+				return _text.ToString().Split('\r', '\n');
 			}
 		}
 
-		public IDictionary<string, OptionConfigurationElement> Children
+		public override ProfileItemType ItemType
 		{
 			get
 			{
-				return _children;
+				return ProfileItemType.Comment;
 			}
+		}
+		#endregion
+
+		#region 公共方法
+		public void Append(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return;
+
+			_text.Append(text);
+		}
+
+		public void AppendFormat(string format, params object[] args)
+		{
+			if(string.IsNullOrEmpty(format))
+				return;
+
+			_text.AppendFormat(format, args);
+		}
+
+		public void AppendLine(string text)
+		{
+			if(text == null)
+				_text.AppendLine();
+			else
+				_text.AppendLine(text);
 		}
 		#endregion
 	}

@@ -34,7 +34,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
 	/// <summary>
 	/// 提供了对 Microsoft 的INI文件格式的各项操作。
@@ -47,7 +47,7 @@ namespace Zongsoft.Options.Profiles
 	///		<para>注意：节是支持嵌套的，如果在中括号里面以空格或制表符(Tab)分隔来表示节的嵌套关系。</para>
 	///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的。所有的注释语句不管多长都是独占一行直到结束的，在注释符和行结束符之间的所有内容都是被忽略的。</para>
 	/// </remarks>
-	public class Profile : IOptionProvider
+	public class Profile
 	{
 		#region 枚举定义
 		private enum LineType
@@ -60,8 +60,8 @@ namespace Zongsoft.Options.Profiles
 		#endregion
 
 		#region 成员字段
-		private string _filePath;
-		private ProfileItemCollection _items;
+		private readonly string _filePath;
+		private readonly ProfileItemCollection _items;
 		private ProfileCommentCollection _comments;
 		private ProfileSectionCollection _sections;
 		#endregion
@@ -79,18 +79,12 @@ namespace Zongsoft.Options.Profiles
 		#region 公共属性
 		public string FilePath
 		{
-			get
-			{
-				return _filePath;
-			}
+			get => _filePath;
 		}
 
 		public ICollection<ProfileItem> Items
 		{
-			get
-			{
-				return _items;
-			}
+			get => _items;
 		}
 
 		public ICollection<ProfileComment> Comments
@@ -120,7 +114,7 @@ namespace Zongsoft.Options.Profiles
 		public static Profile Load(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
-				throw new ArgumentNullException("filePath");
+				throw new ArgumentNullException(nameof(filePath));
 
 			using(var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
@@ -131,20 +125,20 @@ namespace Zongsoft.Options.Profiles
 		public static Profile Load(Stream stream, Encoding encoding = null)
 		{
 			if(stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			Profile profile = new Profile(stream is FileStream ? ((FileStream)stream).Name : string.Empty);
-			string text, content;
 			ProfileSection section = null;
 
 			using(var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
 			{
 				int lineNumber = 0;
+				string text;
 
 				while((text = reader.ReadLine()) != null)
 				{
 					//解析读取到的行文本
-					switch(ParseLine(text, out content))
+					switch(ParseLine(text, out var content))
 					{
 						case LineType.Section:
 							var parts = content.Split(' ', '\t');
@@ -206,7 +200,7 @@ namespace Zongsoft.Options.Profiles
 
 		public void Save(string filePath, Encoding encoding = null)
 		{
-			filePath = filePath ?? _filePath;
+			filePath ??= _filePath;
 
 			if(string.IsNullOrWhiteSpace(filePath))
 				throw new ArgumentException();
@@ -220,7 +214,7 @@ namespace Zongsoft.Options.Profiles
 		public void Save(Stream stream, Encoding encoding = null)
 		{
 			if(stream == null)
-				throw new ArgumentNullException("stream");
+				throw new ArgumentNullException(nameof(stream));
 
 			using(var writer = new StreamWriter(stream, encoding ?? Encoding.UTF8))
 			{
@@ -231,7 +225,7 @@ namespace Zongsoft.Options.Profiles
 		public void Save(TextWriter writer)
 		{
 			if(writer == null)
-				throw new ArgumentNullException("writer");
+				throw new ArgumentNullException(nameof(writer));
 
 			foreach(var item in _items)
 			{
@@ -251,7 +245,7 @@ namespace Zongsoft.Options.Profiles
 		}
 		#endregion
 
-		#region 接口实现
+		#region 操作方法
 		/// <summary>
 		/// 获取指定路径的配置数据。
 		/// </summary>
@@ -262,11 +256,7 @@ namespace Zongsoft.Options.Profiles
 		/// </remarks>
 		public object GetOptionValue(string path)
 		{
-			string name;
-			bool isSectionPath;
-			ProfileSection section;
-
-			if(!this.ParsePath(path, false, out section, out name, out isSectionPath))
+			if(!this.ParsePath(path, false, out var section, out var name, out var isSectionPath))
 				return null;
 
 			if(section == null)
@@ -293,11 +283,7 @@ namespace Zongsoft.Options.Profiles
 
 		public void SetOptionValue(string path, object optionObject)
 		{
-			string name;
-			bool isSectionPath;
-			ProfileSection section;
-
-			if(!this.ParsePath(path, true, out section, out name, out isSectionPath))
+			if(!this.ParsePath(path, true, out var section, out var name, out var isSectionPath))
 				return;
 
 			if(section == null)
@@ -332,7 +318,7 @@ namespace Zongsoft.Options.Profiles
 			isSectionPath = false;
 
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			var parts = path.Split('/');
 			int index = -1;
@@ -378,9 +364,7 @@ namespace Zongsoft.Options.Profiles
 			if(section == null || value == null)
 				return;
 
-			var entries = value as IEnumerable<ProfileEntry>;
-
-			if(entries != null)
+			if(value is IEnumerable<ProfileEntry> entries)
 			{
 				foreach(var entry in entries)
 				{
@@ -390,9 +374,7 @@ namespace Zongsoft.Options.Profiles
 				return;
 			}
 
-			var dictionary = value as IDictionary;
-
-			if(dictionary != null)
+			if(value is IDictionary dictionary)
 			{
 				foreach(DictionaryEntry entry in dictionary)
 				{

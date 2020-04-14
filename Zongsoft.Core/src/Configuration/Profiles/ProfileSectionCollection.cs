@@ -28,56 +28,36 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
-	internal class ProfileItemCollection : System.Collections.ObjectModel.ObservableCollection<ProfileItem>
+	internal class ProfileSectionCollection : ProfileItemViewBase<ProfileSection>
 	{
-		#region 成员字段
-		private object _owner;
-		#endregion
-
 		#region 构造函数
-		public ProfileItemCollection(object owner)
+		public ProfileSectionCollection(ProfileItemCollection items) : base(items)
 		{
-			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
 		}
 		#endregion
 
-		#region 内部属性
-		internal object Owner
+		#region 公共方法
+		public ProfileSection Add(string name, int lineNumber = -1)
 		{
-			get
-			{
-				return _owner;
-			}
-			set
-			{
-				if(object.ReferenceEquals(_owner, value))
-					return;
-
-				foreach(var item in this.Items)
-					item.Owner = value;
-			}
+			var item = new ProfileSection(name, lineNumber);
+			base.Add(item);
+			return item;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override void InsertItem(int index, ProfileItem item)
+		protected override string GetKeyForItem(ProfileSection item)
 		{
-			if(item != null)
-				item.Owner = _owner;
-
-			base.InsertItem(index, item);
+			return item.Name;
 		}
 
-		protected override void SetItem(int index, ProfileItem item)
+		protected override bool OnItemMatch(ProfileItem item)
 		{
-			if(item != null)
-				item.Owner = _owner;
-
-			base.SetItem(index, item);
+			return item.ItemType == ProfileItemType.Section;
 		}
 		#endregion
 	}

@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   ÖÓ·å(Popeye Zhong) <zongsoft@gmail.com>
+ *   é’Ÿå³°(Popeye Zhong) <zongsoft@gmail.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -28,26 +28,44 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Options
+namespace Zongsoft.Configuration.Profiles
 {
-	/// <summary>
-	/// Ìá¹©Ñ¡ÏîÊı¾İµÄ»ñÈ¡Óë±£´æ¡£
-	/// </summary>
-	public interface IOptionProvider
+	internal class ProfileEntryCollection : ProfileItemViewBase<ProfileEntry>
 	{
-		/// <summary>
-		/// ¸ù¾İÖ¸¶¨µÄÑ¡ÏîÂ·¾¶»ñÈ¡¶ÔÓ¦µÄÑ¡ÏîÊı¾İ¡£
-		/// </summary>
-		/// <param name="text">Òª»ñÈ¡µÄÑ¡ÏîÂ·¾¶±í´ïÊ½ÎÄ±¾£¬¸Ã±í´ïÊ½µÄ½á¹¹Çë²Î¿¼<seealso cref="Zongsoft.Collections.HierarchicalExpression"/>¡£</param>
-		/// <returns>»ñÈ¡µ½µÄÑ¡ÏîÊı¾İ¶ÔÏó¡£</returns>
-		object GetOptionValue(string text);
+		#region æ„é€ å‡½æ•°
+		public ProfileEntryCollection(ProfileItemCollection items) : base(items)
+		{
+		}
+		#endregion
 
-		/// <summary>
-		/// ½«Ö¸¶¨µÄÑ¡ÏîÊı¾İ±£´æµ½Ö¸¶¨Â·¾¶µÄ´æ´¢ÈİÆ÷ÖĞ¡£
-		/// </summary>
-		/// <param name="text">´ı±£´æµÄÑ¡ÏîÂ·¾¶±í´ïÊ½ÎÄ±¾£¬¸Ã±í´ïÊ½µÄ½á¹¹Çë²Î¿¼<seealso cref="Zongsoft.Collections.HierarchicalExpression"/>¡£</param>
-		/// <param name="value">´ı±£´æµÄÑ¡Ïî¶ÔÏó¡£</param>
-		void SetOptionValue(string text, object value);
+		#region å…¬å…±æ–¹æ³•
+		public ProfileEntry Add(string name, string value = null)
+		{
+			var item = new ProfileEntry(name, value);
+			base.Add(item);
+			return item;
+		}
+
+		public ProfileEntry Add(int lineNumber, string name, string value = null)
+		{
+			var item = new ProfileEntry(lineNumber, name, value);
+			base.Add(item);
+			return item;
+		}
+		#endregion
+
+		#region é‡å†™æ–¹æ³•
+		protected override string GetKeyForItem(ProfileEntry item)
+		{
+			return item.Name;
+		}
+
+		protected override bool OnItemMatch(ProfileItem item)
+		{
+			return item.ItemType == ProfileItemType.Entry;
+		}
+		#endregion
 	}
 }

@@ -28,13 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Options
+namespace Zongsoft.Configuration.Profiles
 {
-	public interface IOptionLoader
+	public enum ProfileItemType
 	{
-		void Load(IOptionProvider provider);
-		void Unload(IOptionProvider provider);
+		/// <summary>设置条目。</summary>
+		Entry,
+		/// <summary>设置段。</summary>
+		Section,
+		/// <summary>注释行。</summary>
+		Comment,
 	}
 }

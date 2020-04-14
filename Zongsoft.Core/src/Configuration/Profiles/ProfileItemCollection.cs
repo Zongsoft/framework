@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   ÖÓ·å(Popeye Zhong) <zongsoft@gmail.com>
+ *   é’Ÿå³°(Popeye Zhong) <zongsoft@gmail.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -28,57 +28,57 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
 
-namespace Zongsoft.Options
+namespace Zongsoft.Configuration.Profiles
 {
-	/// <summary>
-	/// ±íÊ¾Ñ¡ÏîµÄ»ù±¾¹¦ÄÜ¶¨Òå£¬ÓÉ <seealso cref="Zongsoft.Options.Option"/> ÀàÊµÏÖ¡£
-	/// </summary>
-	/// <remarks>½¨ÒéÑ¡ÏîµÄÊµÏÖÕß´Ó <see cref="Zongsoft.Options.Option"/> »ùÀà¼Ì³Ğ¡£</remarks>
-	public interface IOption
+	internal class ProfileItemCollection : System.Collections.ObjectModel.ObservableCollection<ProfileItem>
 	{
-		#region ÊÂ¼ş¶¨Òå
-		event EventHandler Changed;
-		event EventHandler Applied;
-		event EventHandler Resetted;
-		event CancelEventHandler Applying;
-		event CancelEventHandler Resetting;
+		#region æˆå‘˜å­—æ®µ
+		private readonly object _owner;
 		#endregion
 
-		#region ÊôĞÔ¶¨Òå
-		object OptionObject
+		#region æ„é€ å‡½æ•°
+		public ProfileItemCollection(object owner)
 		{
-			get;
-		}
-
-		IOptionView View
-		{
-			get;
-			set;
-		}
-
-		IOptionViewBuilder ViewBuilder
-		{
-			get;
-			set;
-		}
-
-		ICollection<IOptionProvider> Providers
-		{
-			get;
-		}
-
-		bool IsDirty
-		{
-			get;
+			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
 		}
 		#endregion
 
-		#region ·½·¨¶¨Òå
-		void Reset();
-		void Apply();
+		#region å†…éƒ¨å±æ€§
+		internal object Owner
+		{
+			get
+			{
+				return _owner;
+			}
+			set
+			{
+				if(object.ReferenceEquals(_owner, value))
+					return;
+
+				foreach(var item in this.Items)
+					item.Owner = value;
+			}
+		}
+		#endregion
+
+		#region é‡å†™æ–¹æ³•
+		protected override void InsertItem(int index, ProfileItem item)
+		{
+			if(item != null)
+				item.Owner = _owner;
+
+			base.InsertItem(index, item);
+		}
+
+		protected override void SetItem(int index, ProfileItem item)
+		{
+			if(item != null)
+				item.Owner = _owner;
+
+			base.SetItem(index, item);
+		}
 		#endregion
 	}
 }

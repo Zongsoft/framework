@@ -31,13 +31,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
 	internal abstract class ProfileItemViewBase<T> : Collections.INamedCollection<T> where T : ProfileItem
 	{
 		#region 成员字段
-		private ProfileItemCollection _items;
-		private Dictionary<string, T> _innerDictionary;
+		private readonly ProfileItemCollection _items;
+		private readonly Dictionary<string, T> _innerDictionary;
 		#endregion
 
 		#region 构造函数
@@ -57,6 +57,21 @@ namespace Zongsoft.Options.Profiles
 		#endregion
 
 		#region 公共属性
+		public int Count
+		{
+			get => _innerDictionary.Count;
+		}
+
+		public bool IsReadOnly
+		{
+			get => false;
+		}
+
+		public IEnumerable<string> Keys
+		{
+			get => _innerDictionary.Keys;
+		}
+
 		public T this[string name]
 		{
 			get
@@ -65,22 +80,6 @@ namespace Zongsoft.Options.Profiles
 					return result;
 
 				throw new KeyNotFoundException();
-			}
-		}
-
-		public int Count
-		{
-			get
-			{
-				return _innerDictionary.Count;
-			}
-		}
-
-		public bool IsReadOnly
-		{
-			get
-			{
-				return false;
 			}
 		}
 		#endregion

@@ -30,17 +30,17 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
-	public class ProfileSection : ProfileItem, ISettingsProvider
+	public class ProfileSection : ProfileItem
 	{
 		#region 静态常量
 		private static readonly char[] IllegalCharacters = new char[] { '.', '/', '\\', '*', '?', '!', '@', '#', '%', '^', '&' };
 		#endregion
 
 		#region 成员字段
-		private string _name;
-		private ProfileItemCollection _items;
+		private readonly string _name;
+		private readonly ProfileItemCollection _items;
 		private ProfileEntryCollection _entries;
 		private ProfileCommentCollection _comments;
 		private ProfileSectionCollection _sections;
@@ -63,10 +63,7 @@ namespace Zongsoft.Options.Profiles
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 		}
 
 		public string FullName
@@ -84,18 +81,12 @@ namespace Zongsoft.Options.Profiles
 
 		public ProfileSection Parent
 		{
-			get
-			{
-				return base.Owner as ProfileSection;
-			}
+			get => base.Owner as ProfileSection;
 		}
 
 		public ICollection<ProfileItem> Items
 		{
-			get
-			{
-				return _items;
-			}
+			get => _items;
 		}
 
 		public Collections.INamedCollection<ProfileEntry> Entries
@@ -133,10 +124,7 @@ namespace Zongsoft.Options.Profiles
 
 		public override ProfileItemType ItemType
 		{
-			get
-			{
-				return ProfileItemType.Section;
-			}
+			get => ProfileItemType.Section;
 		}
 		#endregion
 
@@ -162,18 +150,6 @@ namespace Zongsoft.Options.Profiles
 				entry.Value = value;
 			else
 				this.Entries.Add(name, value);
-		}
-		#endregion
-
-		#region 接口实现
-		object ISettingsProvider.GetValue(string name)
-		{
-			return this.GetEntryValue(name);
-		}
-
-		void ISettingsProvider.SetValue(string name, object value)
-		{
-			this.SetEntryValue(name, Zongsoft.Common.Convert.ConvertValue<string>(value));
 		}
 		#endregion
 	}

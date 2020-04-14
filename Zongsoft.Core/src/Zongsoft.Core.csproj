@@ -30,11 +30,9 @@
 		<Folder Include="Common\" />
 		<Folder Include="ComponentModel\" />
 		<Folder Include="Data\" />
-		<Folder Include="Diagnostics\Configuration\" />
 		<Folder Include="Expressions\Tokenization\" />
 		<Folder Include="Messaging\" />
-		<Folder Include="Options\Configuration\" />
-		<Folder Include="Options\Profiles\" />
+		<Folder Include="Configuration\Profiles\" />
 		<Folder Include="Reflection\Expressions\" />
 		<Folder Include="Security\Membership\" />
 		<Folder Include="Services\Commands\" />

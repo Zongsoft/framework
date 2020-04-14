@@ -29,31 +29,52 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Options.Configuration
+namespace Zongsoft.Configuration.Profiles
 {
-	public class OptionConfigurationDeclarationCollection : Zongsoft.Collections.NamedCollectionBase<OptionConfigurationDeclaration>
+	[Serializable]
+	public class ProfileEntry : ProfileItem
 	{
 		#region 构造函数
-		public OptionConfigurationDeclarationCollection() : base(StringComparer.OrdinalIgnoreCase)
+		public ProfileEntry(string name, string value = null) : this(-1, name, value)
 		{
+		}
+
+		public ProfileEntry(int lineNumber, string name, string value = null) : base(lineNumber)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
+
+			if(value != null)
+				this.Value = value.Trim();
 		}
 		#endregion
 
-		#region 公共方法
-		public OptionConfigurationDeclaration Add(string name, Type type)
+		#region 公共属性
+		public string Name { get; }
+
+		public string Value { get; set; }
+
+		public ProfileSection Section
 		{
-			var item = new OptionConfigurationDeclaration(name, type);
-			this.Add(item);
-			return item;
+			get => base.Owner as ProfileSection;
+		}
+
+		public override ProfileItemType ItemType
+		{
+			get => ProfileItemType.Entry;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(OptionConfigurationDeclaration item)
+		public override string ToString()
 		{
-			return item.Name;
+			if(Value == null)
+				return Name;
+
+			return string.Format("{0}={1}", Name, Value);
 		}
 		#endregion
 	}

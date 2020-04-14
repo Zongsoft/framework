@@ -29,41 +29,78 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Options
+namespace Zongsoft.Configuration.Profiles
 {
-	public class OptionNodeCollection : Zongsoft.Collections.HierarchicalNodeCollection<OptionNode>
+	public abstract class ProfileItem
 	{
+		#region 成员字段
+		private object _owner;
+		private readonly int _lineNumber;
+		#endregion
+
 		#region 构造函数
-		internal OptionNodeCollection(OptionNode owner) : base(owner)
+		protected ProfileItem()
 		{
+			_lineNumber = -1;
+		}
+
+		protected ProfileItem(int lineNumber)
+		{
+			_lineNumber = Math.Max(lineNumber, -1);
+		}
+
+		protected ProfileItem(Profile owner, int lineNumber)
+		{
+			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
+			_lineNumber = Math.Max(lineNumber, -1);
+		}
+
+		protected ProfileItem(ProfileSection owner, int lineNumber)
+		{
+			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
+			_lineNumber = Math.Max(lineNumber, -1);
 		}
 		#endregion
 
-		#region 公共方法
-		public OptionNode Add(string name, string title = null, string description = null)
+		#region 公共属性
+		public virtual Profile Profile
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
-
-			var node = new OptionNode(name, title, description);
-			this.Add(node);
-			return node;
+			get => _owner as Profile;
 		}
 
-		public OptionNode Add(string name, IOptionProvider provider, string title = null, string description = null)
+		public abstract ProfileItemType ItemType
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+			get;
+		}
 
-			OptionNode node = new OptionNode(name, title, description);
+		public int LineNumber
+		{
+			get => _lineNumber;
+		}
+		#endregion
 
-			if(provider != null)
-				node.Option = new Option(node, provider);
+		#region 保护属性
+		internal protected object Owner
+		{
+			get => _owner;
+			internal set
+			{
+				if(value == null)
+					throw new ArgumentNullException();
 
-			this.Add(node);
-			return node;
+				if(object.ReferenceEquals(_owner, value))
+					return;
+
+				_owner = value;
+				this.OnOwnerChanged(value);
+			}
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual void OnOwnerChanged(object owner)
+		{
 		}
 		#endregion
 	}

@@ -29,42 +29,27 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
-	internal class ProfileEntryCollection : ProfileItemViewBase<ProfileEntry>
+	public class ProfileException : Exception
 	{
 		#region 构造函数
-		public ProfileEntryCollection(ProfileItemCollection items) : base(items)
+		public ProfileException()
 		{
 		}
-		#endregion
 
-		#region 公共方法
-		public ProfileEntry Add(string name, string value = null)
+		public ProfileException(string message) : base(message)
 		{
-			var item = new ProfileEntry(name, value);
-			base.Add(item);
-			return item;
 		}
 
-		public ProfileEntry Add(int lineNumber, string name, string value = null)
+		public ProfileException(string message, Exception innerException) : base(message, innerException)
 		{
-			var item = new ProfileEntry(lineNumber, name, value);
-			base.Add(item);
-			return item;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(ProfileEntry item)
-		{
-			return item.Name;
 		}
 
-		protected override bool OnItemMatch(ProfileItem item)
+		protected ProfileException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
-			return item.ItemType == ProfileItemType.Entry;
 		}
 		#endregion
 	}

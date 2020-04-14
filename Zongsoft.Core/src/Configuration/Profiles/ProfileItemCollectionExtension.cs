@@ -30,62 +30,39 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Options.Configuration
+namespace Zongsoft.Configuration.Profiles
 {
-	public class FilterElement : OptionConfigurationElement
+	internal static class ProfileItemCollectionExtension
 	{
-		#region 常量定义
-		private const string XML_NAME_ATTRIBUTE = "name";
-		private const string XML_TYPE_ATTRIBUTE = "type";
-		#endregion
-
-		#region 构造函数
-		internal FilterElement()
+		public static ProfileComment Add(this ICollection<ProfileComment> comments, string comment, int lineNumber = -1)
 		{
+			if(comment == null)
+				return null;
+
+			var item = new ProfileComment(comment, lineNumber);
+			comments.Add(item);
+			return item;
 		}
 
-		internal FilterElement(string name, string type)
+		public static ProfileSection Add(this Collections.INamedCollection<ProfileSection> sections, string name, int lineNumber = -1)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
-
-			if(string.IsNullOrWhiteSpace(type))
-				throw new ArgumentNullException("type");
-
-			this.Name = name;
-			this.Type = type;
-		}
-		#endregion
-
-		#region 公共属性
-		[OptionConfigurationProperty(XML_NAME_ATTRIBUTE, OptionConfigurationPropertyBehavior.IsKey)]
-		public string Name
-		{
-			get
-			{
-				return (string)this[XML_NAME_ATTRIBUTE];
-			}
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				this[XML_NAME_ATTRIBUTE] = value.Trim();
-			}
+			var item = new ProfileSection(name, lineNumber);
+			sections.Add(item);
+			return item;
 		}
 
-		[OptionConfigurationProperty(XML_TYPE_ATTRIBUTE, OptionConfigurationPropertyBehavior.IsRequired)]
-		public string Type
+		public static ProfileEntry Add(this Collections.INamedCollection<ProfileEntry> entries, string name, string value = null)
 		{
-			get
-			{
-				return (string)this[XML_TYPE_ATTRIBUTE];
-			}
-			set
-			{
-				this[XML_TYPE_ATTRIBUTE] = value;
-			}
+			var item = new ProfileEntry(name, value);
+			entries.Add(item);
+			return item;
 		}
-		#endregion
+
+		public static ProfileEntry Add(this Collections.INamedCollection<ProfileEntry> entries, int lineNumber, string name, string value = null)
+		{
+			var item = new ProfileEntry(lineNumber, name, value);
+			entries.Add(item);
+			return item;
+		}
 	}
 }

@@ -31,21 +31,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Zongsoft.Options.Profiles
+namespace Zongsoft.Configuration.Profiles
 {
 	internal class ProfileCommentCollection : ICollection<ProfileComment>
 	{
 		#region 成员字段
-		private ProfileItemCollection _items;
+		private readonly ProfileItemCollection _items;
 		#endregion
 
 		#region 构造函数
 		public ProfileCommentCollection(ProfileItemCollection items)
 		{
-			if(items == null)
-				throw new ArgumentNullException("items");
-
-			_items = items;
+			_items = items ?? throw new ArgumentNullException(nameof(items));
 		}
 		#endregion
 
