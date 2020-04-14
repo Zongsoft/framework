@@ -110,10 +110,9 @@ namespace Zongsoft.Diagnostics
 
 				//以写模式打开日志文件
 				stream = new FileStream((string)filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-				LogEntry entry;
 
 				//从日志队列中取出一条日志信息
-				while(_queue.TryDequeue(out entry))
+				while(_queue.TryDequeue(out var entry))
 				{
 					//将当前日志信息写入日志文件流
 					this.WriteLog(entry, stream);

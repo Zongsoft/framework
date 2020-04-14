@@ -30,6 +30,8 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Configuration;
+
 namespace Zongsoft.Diagnostics
 {
 	public class LoggerInitializer : Services.IApplicationFilter, IDisposable
@@ -37,10 +39,7 @@ namespace Zongsoft.Diagnostics
 		#region 公共属性
 		public virtual string Name
 		{
-			get
-			{
-				return this.GetType().Name;
-			}
+			get => this.GetType().Name;
 		}
 		#endregion
 
@@ -51,37 +50,37 @@ namespace Zongsoft.Diagnostics
 				return;
 
 			//从当前应用的主配置文件中获取日志器的主配置节
-			var loggerElement = context.Configuration.GetOptionValue(@"/Diagnostics/Logger") as Configuration.LoggerElement;
+			var options = context.Configuration.GetOption<Configuration.LoggerOptions>(@"/Diagnostics/Logger");
 
-			if(loggerElement == null)
+			if(options == null)
 				return;
 
-			foreach(Configuration.LoggerHandlerElement handlerElement in loggerElement.Handlers)
+			foreach(var handlerSetting in options.Handlers)
 			{
-				var type = Type.GetType(handlerElement.TypeName, true, true);
+				var type = Type.GetType(handlerSetting.Type, true, true);
 
 				//如果当前处理节配置的日志处理器类型不是一个记录器则抛出异常
 				if(!typeof(ILogger).IsAssignableFrom(type))
-					throw new Options.Configuration.OptionConfigurationException(string.Format("The '{0}' type isn't a Logger.", type.FullName));
+					throw new InvalidOperationException(string.Format("The '{0}' type isn't a Logger.", type.FullName));
 
 				//获取日志记录器实现类的带参构造函数
-				var constructor = type.GetConstructor(new Type[] { typeof(Configuration.LoggerHandlerElement) });
+				var constructor = type.GetConstructor(new Type[] { typeof(Configuration.LoggerOptions.LoggerHandlerSetting) });
 				ILogger instance;
 
 				//试图创建日志记录器实例
 				if(constructor == null)
 					instance = (ILogger)Activator.CreateInstance(type);
 				else
-					instance = (ILogger)Activator.CreateInstance(type, handlerElement);
+					instance = (ILogger)Activator.CreateInstance(type, handlerSetting);
 
 				//如果日志记录器实例创建失败则抛出异常
 				if(instance == null)
-					throw new Options.Configuration.OptionConfigurationException(string.Format("Can not create instance of '{0}' type.", type));
+					throw new InvalidOperationException(string.Format("Can not create instance of '{0}' type.", type));
 
 				//如果日志记录器配置节含有扩展属性，则设置日志记录器实例的扩展属性
-				if(handlerElement.HasExtendedProperties)
+				if(handlerSetting.HasParameters)
 				{
-					foreach(var property in handlerElement.ExtendedProperties)
+					foreach(var property in handlerSetting.Parameters)
 					{
 						Reflection.Reflector.SetValue(instance, property.Key, property.Value);
 					}
@@ -89,18 +88,17 @@ namespace Zongsoft.Diagnostics
 
 				LoggerHandlerPredication predication = null;
 
-				if(handlerElement.Predication != null)
+				if(handlerSetting.Predication != null)
 				{
 					predication = new LoggerHandlerPredication()
 					{
-						Source = handlerElement.Predication.Source,
-						ExceptionType = handlerElement.Predication.ExceptionType,
-						MaxLevel = handlerElement.Predication.MaxLevel,
-						MinLevel = handlerElement.Predication.MinLevel,
+						Source = handlerSetting.Predication.Source,
+						MaxLevel = handlerSetting.Predication.MaxLevel,
+						MinLevel = handlerSetting.Predication.MinLevel,
 					};
 				}
 
-				Logger.Handlers.Add(new LoggerHandler(handlerElement.Name, instance, predication));
+				Logger.Handlers.Add(new LoggerHandler(handlerSetting.Name, instance, predication));
 			}
 		}
 		#endregion
