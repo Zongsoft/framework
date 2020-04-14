@@ -38,6 +38,9 @@ namespace Zongsoft.Collections
 	/// <typeparam name="T">集合成员的类型。</typeparam>
 	public interface INamedCollection<T> : ICollection<T>
 	{
+		/// <summary>获取集合中所有的键(名称)集。</summary>
+		IEnumerable<string> Keys { get; }
+
 		/// <summary>
 		/// 只读索引器，获取指定名称的元素。
 		/// </summary>
