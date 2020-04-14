@@ -35,7 +35,7 @@ using Microsoft.Extensions.FileProviders;
 
 namespace Zongsoft.Configuration
 {
-	public static class OptionConfigurationExtension
+	public static class XmlConfigurationExtension
 	{
 		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path)
 		{
@@ -70,7 +70,7 @@ namespace Zongsoft.Configuration
 			});
 		}
 
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, Action<Options.OptionConfigurationSource> configureSource)
+		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, Action<Xml.XmlConfigurationSource> configureSource)
 		{
 			return builder.Add(configureSource);
 		}
@@ -80,7 +80,7 @@ namespace Zongsoft.Configuration
 			if(builder == null)
 				throw new ArgumentNullException(nameof(builder));
 
-			return builder.Add<Options.OptionStreamConfigurationSource>(s => s.Stream = stream);
+			return builder.Add<Xml.XmlStreamConfigurationSource>(s => s.Stream = stream);
 		}
 	}
 }

@@ -4,14 +4,14 @@ using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
-namespace Zongsoft.Configuration.Options
+namespace Zongsoft.Configuration.Xml
 {
-	public class OptionConfigurationTest
+	public class XmlConfigurationTest
 	{
 		public static IConfigurationRoot GetConfiguration()
 		{
 			return new ConfigurationBuilder()
-				.AddOptionFile("Configuration/Options/OptionConfigurationTest.option")
+				.AddOptionFile("Configuration/Xml/OptionConfigurationTest.option")
 				.Build();
 		}
 

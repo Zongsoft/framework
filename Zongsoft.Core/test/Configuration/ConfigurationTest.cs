@@ -22,9 +22,9 @@ namespace Zongsoft.Configuration
 		}
 
 		[Fact]
-		public void TestBindOptions()
+		public void TestBindXml()
 		{
-			var configuration = Options.OptionConfigurationTest.GetConfiguration();
+			var configuration = Xml.XmlConfigurationTest.GetConfiguration();
 
 			Assert.NotNull(configuration);
 			Assert.NotEmpty(configuration.Providers);

@@ -35,9 +35,9 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Options
+namespace Zongsoft.Configuration.Xml
 {
-	public class OptionStreamConfigurationProvider : StreamConfigurationProvider
+	public class XmlStreamConfigurationProvider : StreamConfigurationProvider
 	{
 		#region 常量定义
 		private const string XML_OPTION_ELEMENT = "option";
@@ -50,7 +50,7 @@ namespace Zongsoft.Configuration.Options
 		#endregion
 
 		#region 构造函数
-		public OptionStreamConfigurationProvider(OptionStreamConfigurationSource source) : base(source)
+		public XmlStreamConfigurationProvider(XmlStreamConfigurationSource source) : base(source)
 		{
 		}
 		#endregion
