@@ -46,7 +46,8 @@ namespace Zongsoft.Configuration
 		#region 公共属性
 		public string Driver
 		{
-			get; set;
+			get => this.HasProperties && this.Properties.TryGetValue(nameof(Driver), out var value) ? value : null;
+			set => this.Properties[nameof(Driver)] = value;
 		}
 		#endregion
 
