@@ -28,11 +28,26 @@
  */
 
 using System;
+using System.Reflection;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer<in T>
+	public class ConfigurationRecognizerFactory : IConfigurationRecognizerFactory
 	{
-		void Recognize(T target, string name, string value);
+		#region 单例字段
+		public static readonly ConfigurationRecognizerFactory Default = new ConfigurationRecognizerFactory();
+		#endregion
+
+		#region 公共方法
+		public IConfigurationRecognizer<T> Create<T>()
+		{
+			var attribute = typeof(T).GetCustomAttribute<ConfigurationRecognizerAttribute>(true);
+
+			if(attribute.RecognizerType != null)
+				return (IConfigurationRecognizer<T>)Activator.CreateInstance(attribute.RecognizerType);
+
+			return new ConfigurationRecognizer<T>(attribute.UnrecognizedProperty);
+		}
+		#endregion
 	}
 }

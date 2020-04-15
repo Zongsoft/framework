@@ -142,6 +142,24 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 位于“{0}”类型的“{1}”属性不可读。 的本地化字符串。
+        /// </summary>
+        internal static string Error_PropertyCannotRead {
+            get {
+                return ResourceManager.GetString("Error.PropertyCannotRead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 在“{0}”类型中不存在名为“{1}”的属性。 的本地化字符串。
+        /// </summary>
+        internal static string Error_PropertyNotExists {
+            get {
+                return ResourceManager.GetString("Error.PropertyNotExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 不能重复操作。 的本地化字符串。
         /// </summary>
         internal static string Error_RepeatedOperation {

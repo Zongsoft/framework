@@ -144,6 +144,12 @@
   <data name="Error.NamespaceIsNotSupported" xml:space="preserve">
     <value>不支持XML名称空间。位于：{0}</value>
   </data>
+  <data name="Error.PropertyCannotRead" xml:space="preserve">
+    <value>位于“{0}”类型的“{1}”属性不可读。</value>
+  </data>
+  <data name="Error.PropertyNotExists" xml:space="preserve">
+    <value>在“{0}”类型中不存在名为“{1}”的属性。</value>
+  </data>
   <data name="Error.RepeatedOperation" xml:space="preserve">
     <value>不能重复操作。</value>
   </data>

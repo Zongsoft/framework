@@ -31,8 +31,8 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer<in T>
+	public interface IConfigurationRecognizerProvider
 	{
-		void Recognize(T target, string name, string value);
+		IConfigurationRecognizer<T> GetRecognizer<T>();
 	}
 }

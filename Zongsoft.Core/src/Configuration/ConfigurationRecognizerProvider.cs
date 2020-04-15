@@ -28,11 +28,47 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer<in T>
+	public class ConfigurationRecognizerProvider : IConfigurationRecognizerProvider
 	{
-		void Recognize(T target, string name, string value);
+		#region 单例字段
+		public static readonly ConfigurationRecognizerProvider Default = new ConfigurationRecognizerProvider();
+		#endregion
+
+		#region 私有变量
+		private readonly ConcurrentDictionary<Type, object> _cache;
+		#endregion
+
+		#region 构造函数
+		public ConfigurationRecognizerProvider()
+		{
+			_cache = new ConcurrentDictionary<Type, object>();
+		}
+		#endregion
+
+		#region 公共方法
+		public IConfigurationRecognizer<T> GetRecognizer<T>()
+		{
+			return (IConfigurationRecognizer<T>)_cache.GetOrAdd(typeof(T), type => this.CreateRecognizer<T>());
+		}
+		#endregion
+
+		#region 公共属性
+		public IConfigurationRecognizerFactory Factory
+		{
+			get; set;
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual IConfigurationRecognizer<T> CreateRecognizer<T>()
+		{
+			return (this.Factory ?? ConfigurationRecognizerFactory.Default).Create<T>() ??
+				throw new InvalidOperationException();
+		}
+		#endregion
 	}
 }
