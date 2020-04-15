@@ -93,7 +93,19 @@ namespace Zongsoft.Configuration
 			{
 				foreach(var property in type.DeclaredProperties)
 				{
-					_properties.TryAdd(property.Name, new PropertyToken(property, GetConverter(property)));
+					var name = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name;
+
+					if(string.IsNullOrEmpty(name) || string.Equals(name, property.Name))
+					{
+						_properties.TryAdd(property.Name, new PropertyToken(property, GetConverter(property)));
+					}
+					else
+					{
+						var token = new PropertyToken(name, property, GetConverter(property));
+
+						_properties.TryAdd(property.Name, token);
+						_properties.TryAdd(name, token);
+					}
 				}
 
 				type = type.BaseType.GetTypeInfo();
@@ -109,7 +121,7 @@ namespace Zongsoft.Configuration
 
 			if(_properties.TryGetValue(name, out var property))
 				property.SetValue(target, value);
-			else //处理不能识别的成员
+			else
 				this.OnUnrecognize(target, name, value);
 		}
 		#endregion
@@ -156,13 +168,23 @@ namespace Zongsoft.Configuration
 		{
 			public readonly PropertyInfo Property;
 			public readonly TypeConverter Converter;
+			public readonly string ConfigurationKey;
 
 			public PropertyToken(PropertyInfo property, TypeConverter converter)
 			{
+				this.ConfigurationKey = property.Name;
 				this.Property = property;
 				this.Converter = converter;
 			}
 
+			public PropertyToken(string key, PropertyInfo property, TypeConverter converter)
+			{
+				this.ConfigurationKey = key;
+				this.Property = property;
+				this.Converter = converter;
+			}
+
+			public string Name => this.Property.Name;
 			public bool CanRead => this.Property.CanRead;
 			public bool CanWrite => this.Property.CanWrite;
 			public Type PropertyType => this.Property.PropertyType;
@@ -174,10 +196,18 @@ namespace Zongsoft.Configuration
 
 			public void SetValue(T target, string value)
 			{
+				if(!this.CanWrite)
+					return;
+
 				var converter = this.Converter;
 
-				if(this.CanWrite && Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => converter, out var convertedValue))
+				if(Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => converter, out var convertedValue))
 					Reflection.Reflector.SetValue(this.Property, ref target, value);
+			}
+
+			public override string ToString()
+			{
+				return $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
 			}
 		}
 
