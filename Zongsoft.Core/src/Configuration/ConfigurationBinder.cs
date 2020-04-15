@@ -521,16 +521,16 @@ namespace Zongsoft.Configuration
 			return null;
 		}
 
-		private static Type GetImplementedContracts(Type actual, params Type[] expects)
+		internal static Type GetImplementedContracts(Type actual, params Type[] expectedTypes)
 		{
-			if(actual.IsGenericType && expects.Contains(actual.GetGenericTypeDefinition()))
+			if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
 				return actual;
 
 			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
 
 			foreach(var contract in contracts)
 			{
-				if(contract.IsGenericType && expects.Contains(contract.GetGenericTypeDefinition()))
+				if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
 					return contract;
 			}
 

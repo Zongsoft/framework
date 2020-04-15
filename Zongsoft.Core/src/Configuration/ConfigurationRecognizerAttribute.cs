@@ -35,12 +35,12 @@ namespace Zongsoft.Configuration
 	public class ConfigurationRecognizerAttribute : Attribute
 	{
 		#region 公共属性
-		public ConfigurationRecognizerAttribute(string propertyName)
+		public ConfigurationRecognizerAttribute(string unrecognizedProperty)
 		{
-			if(string.IsNullOrEmpty(propertyName))
-				throw new ArgumentNullException(nameof(propertyName));
+			if(string.IsNullOrEmpty(unrecognizedProperty))
+				throw new ArgumentNullException(nameof(unrecognizedProperty));
 
-			this.PropertyName = propertyName;
+			this.UnrecognizedProperty = unrecognizedProperty;
 		}
 
 		public ConfigurationRecognizerAttribute(Type recognizerType)
@@ -55,7 +55,7 @@ namespace Zongsoft.Configuration
 			get;
 		}
 
-		public string PropertyName
+		public string UnrecognizedProperty
 		{
 			get;
 		}
