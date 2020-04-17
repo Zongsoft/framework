@@ -39,20 +39,23 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 私有变量
-		private readonly ConcurrentDictionary<Type, object> _cache;
+		private readonly ConcurrentDictionary<Type, IConfigurationRecognizer> _cache;
 		#endregion
 
 		#region 构造函数
 		public ConfigurationRecognizerProvider()
 		{
-			_cache = new ConcurrentDictionary<Type, object>();
+			_cache = new ConcurrentDictionary<Type, IConfigurationRecognizer>();
 		}
 		#endregion
 
 		#region 公共方法
-		public IConfigurationRecognizer<T> GetRecognizer<T>()
+		public IConfigurationRecognizer GetRecognizer(Type type)
 		{
-			return (IConfigurationRecognizer<T>)_cache.GetOrAdd(typeof(T), type => this.CreateRecognizer<T>());
+			if(type == null)
+				return null;
+
+			return _cache.GetOrAdd(type, type => this.CreateRecognizer(type));
 		}
 		#endregion
 
@@ -64,9 +67,9 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IConfigurationRecognizer<T> CreateRecognizer<T>()
+		protected virtual IConfigurationRecognizer CreateRecognizer(Type type)
 		{
-			return (this.Factory ?? ConfigurationRecognizerFactory.Default).Create<T>() ??
+			return (this.Factory ?? ConfigurationRecognizerFactory.Default).Create(type) ??
 				throw new InvalidOperationException();
 		}
 		#endregion

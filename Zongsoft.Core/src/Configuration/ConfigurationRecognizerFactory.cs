@@ -39,14 +39,14 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共方法
-		public IConfigurationRecognizer<T> Create<T>()
+		public IConfigurationRecognizer Create(Type type)
 		{
-			var attribute = typeof(T).GetCustomAttribute<ConfigurationRecognizerAttribute>(true);
+			var attribute = type.GetCustomAttribute<ConfigurationRecognizerAttribute>(true);
 
-			if(attribute.RecognizerType != null)
-				return (IConfigurationRecognizer<T>)Activator.CreateInstance(attribute.RecognizerType);
+			if(attribute != null && attribute.RecognizerType != null)
+				return (IConfigurationRecognizer)Activator.CreateInstance(attribute.RecognizerType);
 
-			return new ConfigurationRecognizer<T>(attribute.UnrecognizedProperty);
+			return new ConfigurationRecognizer(type, attribute?.UnrecognizedProperty);
 		}
 		#endregion
 	}

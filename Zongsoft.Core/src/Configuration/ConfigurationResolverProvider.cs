@@ -28,11 +28,50 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer
+	public class ConfigurationResolverProvider : IConfigurationResolverProvider
 	{
-		void Recognize(object target, string name, string value);
+		#region 单例字段
+		public static readonly ConfigurationResolverProvider Default = new ConfigurationResolverProvider();
+		#endregion
+
+		#region 私有变量
+		private readonly ConcurrentDictionary<Type, IConfigurationResolver> _cache;
+		#endregion
+
+		#region 构造函数
+		public ConfigurationResolverProvider()
+		{
+			_cache = new ConcurrentDictionary<Type, IConfigurationResolver>();
+		}
+		#endregion
+
+		#region 公共方法
+		public IConfigurationResolver GetResolver(Type type)
+		{
+			if(type == null)
+				return null;
+
+			return _cache.GetOrAdd(type, type => this.CreateResolver(type));
+		}
+		#endregion
+
+		#region 公共属性
+		public IConfigurationResolverFactory Factory
+		{
+			get; set;
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual IConfigurationResolver CreateResolver(Type type)
+		{
+			return (this.Factory ?? ConfigurationResolverFactory.Default).Create(type) ??
+				throw new InvalidOperationException();
+		}
+		#endregion
 	}
 }

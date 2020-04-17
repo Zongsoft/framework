@@ -31,8 +31,34 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Property, Inherited = true)]
+	public class ConfigurationResolverAttribute : Attribute
 	{
-		void Recognize(object target, string name, string value);
+		#region 公共属性
+		public ConfigurationResolverAttribute(string unrecognizedProperty)
+		{
+			if(string.IsNullOrEmpty(unrecognizedProperty))
+				throw new ArgumentNullException(nameof(unrecognizedProperty));
+
+			this.UnrecognizedProperty = unrecognizedProperty;
+		}
+
+		public ConfigurationResolverAttribute(Type resolverType)
+		{
+			this.ResolverType = resolverType ?? throw new ArgumentNullException(nameof(resolverType));
+		}
+		#endregion
+
+		#region 公共属性
+		public Type ResolverType
+		{
+			get;
+		}
+
+		public string UnrecognizedProperty
+		{
+			get; set;
+		}
+		#endregion
 	}
 }

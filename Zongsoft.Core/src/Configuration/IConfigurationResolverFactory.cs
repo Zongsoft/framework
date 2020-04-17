@@ -31,8 +31,8 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer
+	public interface IConfigurationResolverFactory
 	{
-		void Recognize(object target, string name, string value);
+		IConfigurationResolver Create(Type type);
 	}
 }

@@ -33,6 +33,6 @@ namespace Zongsoft.Configuration
 {
 	public interface IConfigurationRecognizerProvider
 	{
-		IConfigurationRecognizer<T> GetRecognizer<T>();
+		IConfigurationRecognizer GetRecognizer(Type type);
 	}
 }

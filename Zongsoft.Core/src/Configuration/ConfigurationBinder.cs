@@ -93,7 +93,8 @@ namespace Zongsoft.Configuration
 			if(!string.IsNullOrEmpty(path))
 				configuration = configuration.GetSection(ConvertPath(path));
 
-			return BindInstance(type, null, null, configuration, options);
+			//return BindInstance(type, null, null, configuration, options);
+			return ConfigurationResolverProvider.Default.GetResolver(type).Resolve(type, configuration, options);
 		}
 
 		public static T GetOptionValue<T>(this IConfiguration configuration, string path)
