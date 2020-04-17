@@ -56,7 +56,7 @@ namespace Zongsoft.Configuration
 		{
 			var driver = this.Driver;
 
-			if(string.IsNullOrEmpty(driver))
+			if(!string.IsNullOrEmpty(driver))
 				return $"[{driver}]" + base.ToString();
 
 			return base.ToString();

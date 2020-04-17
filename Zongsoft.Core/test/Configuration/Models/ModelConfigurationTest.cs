@@ -113,9 +113,9 @@ namespace Zongsoft.Configuration.Models
 		}
 
 		[Fact]
-		public void TestSave()
+		public void TestChange()
 		{
-			var configuration = GetConfiguration(OnPersistent);
+			var configuration = GetConfiguration(OnChanged);
 
 			Assert.NotEmpty(configuration.Providers);
 
@@ -123,7 +123,7 @@ namespace Zongsoft.Configuration.Models
 			configuration.GetSection("general:intranet").Value = "false";
 			configuration.GetSection("general:certificates:default").Value = "test";
 
-			static void OnPersistent(IConfigurationEntity entity)
+			static void OnChanged(IConfigurationEntity entity)
 			{
 				switch(entity.Key)
 				{

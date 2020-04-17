@@ -60,17 +60,17 @@ namespace Zongsoft.Configuration.Options
 		{
 			var options = this.OnCreate();
 
-			foreach(var setup in _beforeConfigures)
+			foreach(var before in _beforeConfigures)
 			{
-				if(setup is IConfigureNamedOptions<TOptions> namedSetup)
-					namedSetup.Configure(name, options);
+				if(before is IConfigureNamedOptions<TOptions> namedConfigure)
+					namedConfigure.Configure(name, options);
 				else if(name == string.Empty)
-					setup.Configure(options);
+					before.Configure(options);
 			}
 
-			foreach(var post in _afterConfigures)
+			foreach(var after in _afterConfigures)
 			{
-				post.PostConfigure(name, options);
+				after.PostConfigure(name, options);
 			}
 
 			if(_validations != null)

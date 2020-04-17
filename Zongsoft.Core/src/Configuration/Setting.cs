@@ -36,7 +36,7 @@ namespace Zongsoft.Configuration
 	public class Setting : ISetting
 	{
 		#region 成员字段
-		private volatile string _name;
+		private string _name;
 		private IDictionary<string, string> _properties;
 		#endregion
 

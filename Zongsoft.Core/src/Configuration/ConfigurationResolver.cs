@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
+using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
@@ -39,8 +40,12 @@ namespace Zongsoft.Configuration
 {
 	public class ConfigurationResolver : IConfigurationResolver
 	{
+		#region 单例字段
+		public static readonly ConfigurationResolver Default = new ConfigurationResolver();
+		#endregion
+
 		#region 构造函数
-		public ConfigurationResolver()
+		protected ConfigurationResolver()
 		{
 		}
 		#endregion
@@ -52,7 +57,7 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
-		#region 公共方法
+		#region 解析方法
 		public object Resolve(Type type, IConfiguration configuration, ConfigurationBinderOptions options)
 		{
 			if(type == null)
@@ -112,7 +117,7 @@ namespace Zongsoft.Configuration
 					}
 					else
 					{
-						var dictionaryType = GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
+						var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
 
 						if(dictionaryType != null)
 						{
@@ -127,7 +132,7 @@ namespace Zongsoft.Configuration
 							return;
 						}
 
-						var collectionType = GetImplementedContract(instance.GetType(), typeof(ICollection<>));
+						var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
 
 						if(collectionType != null)
 						{
@@ -146,6 +151,73 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 附加方法
+		public void Attach(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+		{
+			if(instance == null)
+				throw new ArgumentNullException(nameof(instance));
+
+			if(configuration == null)
+				throw new ArgumentNullException(nameof(configuration));
+
+			var properties = this.GetProperties(instance.GetType().GetTypeInfo()).Values.Distinct().ToArray();
+
+			foreach(var property in properties)
+			{
+				if(Common.TypeExtension.IsScalarType(property.PropertyType))
+				{
+					configuration[property.ConfigurationKey] = property.GetStringValue(instance);
+					continue;
+				}
+
+				var propertyValue = property.GetValue(instance);
+
+				var dictionaryType = ConfigurationUtility.GetImplementedContract(
+					property.PropertyType,
+					typeof(IReadOnlyDictionary<,>),
+					typeof(IDictionary<,>));
+
+				if(dictionaryType != null)
+				{
+					//if(propertyValue.GetType() != dictionaryType)
+					//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
+
+					foreach(DictionaryEntry entry in (IEnumerable)propertyValue)
+					{
+						var key = ConfigurationPath.Combine(property.ConfigurationKey, entry.Key.ToString());
+						this.Attach(entry.Value, configuration.GetSection(key), options);
+					}
+
+					continue;
+				}
+
+				var collectionType = ConfigurationUtility.GetImplementedContract(
+					property.PropertyType,
+					typeof(IReadOnlyCollection<>),
+					typeof(ICollection<>),
+					typeof(IEnumerable<>));
+
+				if(collectionType != null)
+				{
+					//if(propertyValue.GetType() != collectionType)
+					//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
+
+					int index = 0;
+
+					foreach(var entry in (IEnumerable)propertyValue)
+					{
+						var key = ConfigurationPath.Combine(property.ConfigurationKey, index++.ToString());
+						this.Attach(entry, configuration.GetSection(key), options);
+					}
+
+					continue;
+				}
+
+				this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
+			}
+		}
+		#endregion
+
 		#region 虚拟方法
 		protected virtual object CreateInstance(Type type)
 		{
@@ -159,7 +231,7 @@ namespace Zongsoft.Configuration
 
 			if(type.IsInterface)
 			{
-				var contract = GetImplementedContract(type,
+				var contract = ConfigurationUtility.GetImplementedContract(type,
 					typeof(IReadOnlyDictionary<,>),
 					typeof(IDictionary<,>));
 
@@ -171,7 +243,7 @@ namespace Zongsoft.Configuration
 						Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
 				}
 
-				contract = GetImplementedContract(type,
+				contract = ConfigurationUtility.GetImplementedContract(type,
 					typeof(IReadOnlyList<>),
 					typeof(IList<>),
 					typeof(IReadOnlyCollection<>),
@@ -206,7 +278,7 @@ namespace Zongsoft.Configuration
 			{
 				foreach(var property in type.DeclaredProperties)
 				{
-					var token = new PropertyToken(property, GetConverter(property));
+					var token = new PropertyToken(property);
 
 					properties.TryAdd(property.Name, token);
 
@@ -221,51 +293,9 @@ namespace Zongsoft.Configuration
 			return properties;
 		}
 
-		protected virtual UnrecognizedPropertyToken GetUnrecognizedProperty(TypeInfo type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			var attribute = type.GetCustomAttribute<ConfigurationResolverAttribute>(true);
-
-			if(attribute == null || string.IsNullOrEmpty(attribute.UnrecognizedProperty))
-				return default;
-
-			var unrecognizedProperty = type.GetDeclaredProperty(attribute.UnrecognizedProperty) ??
-				throw new ArgumentException(string.Format(Zongsoft.Properties.Resources.Error_PropertyNotExists, type, attribute.UnrecognizedProperty));
-
-			if(!unrecognizedProperty.CanRead)
-				throw new InvalidOperationException(string.Format(Zongsoft.Properties.Resources.Error_PropertyCannotRead, type, attribute.UnrecognizedProperty));
-
-			var dictionaryType = ConfigurationBinder.GetImplementedContracts(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
-
-			if(dictionaryType != null || dictionaryType.GenericTypeArguments[0] == typeof(string))
-				return new UnrecognizedPropertyToken(unrecognizedProperty, dictionaryType);
-
-			return default;
-		}
-
 		protected virtual void OnUnrecognize(object target, string name, string value)
 		{
-			var unrecognizedProperty = this.GetUnrecognizedProperty(target.GetType().GetTypeInfo());
-
-			if(unrecognizedProperty.Property == null)
-				return;
-
-			var dictionary = Reflection.Reflector.GetValue(unrecognizedProperty.Property, ref target);
-
-			if(dictionary == null && unrecognizedProperty.CanWrite)
-			{
-				if(unrecognizedProperty.PropertyType.IsAbstract)
-					dictionary = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeof(string), unrecognizedProperty.DictionaryType.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
-				else
-					dictionary = Activator.CreateInstance(unrecognizedProperty.PropertyType);
-
-				Reflection.Reflector.SetValue(unrecognizedProperty.Property, ref target, dictionary);
-			}
-
-			if(dictionary != null)
-				unrecognizedProperty.SetDictionaryValue(dictionary, name, value);
+			(this.Recognizer ?? ConfigurationRecognizer.Default).Recognize(target, name, value);
 		}
 
 		protected void OnUnrecognize(object target, IConfiguration configuration)
@@ -280,48 +310,24 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
-		#region 私有方法
-		private static TypeConverter GetConverter(PropertyInfo property)
-		{
-			var attribute = property.GetCustomAttribute<TypeConverterAttribute>(true);
-
-			if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
-				return Activator.CreateInstance(Type.GetType(attribute.ConverterTypeName)) as TypeConverter;
-
-			return null;
-		}
-
-		private static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
-		{
-			if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
-				return actual;
-
-			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
-
-			foreach(var contract in contracts)
-			{
-				if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
-					return contract;
-			}
-
-			return null;
-		}
-		#endregion
-
 		#region 内部结构
-		protected class PropertyToken
+		protected class PropertyToken : IEquatable<PropertyToken>
 		{
+			#region 成员字段
 			private string _configurationKey;
+			private TypeConverter _converter;
 
 			public readonly PropertyInfo Property;
-			public readonly TypeConverter Converter;
+			#endregion
 
-			public PropertyToken(PropertyInfo property, TypeConverter converter)
+			#region 构造函数
+			public PropertyToken(PropertyInfo property)
 			{
 				this.Property = property;
-				this.Converter = converter;
 			}
+			#endregion
 
+			#region 公共属性
 			public string Name => this.Property.Name;
 			public bool CanRead => this.Property.CanRead;
 			public bool CanWrite => this.Property.CanWrite;
@@ -343,9 +349,29 @@ namespace Zongsoft.Configuration
 				}
 			}
 
+			public TypeConverter Converter
+			{
+				get
+				{
+					if(_converter == null)
+						_converter = ConfigurationUtility.GetConverter(this.Property);
+
+					return _converter;
+				}
+			}
+			#endregion
+
+			#region 公共方法
 			public object GetValue(object target)
 			{
 				return Reflection.Reflector.GetValue(this.Property, ref target);
+			}
+
+			public string GetStringValue(object target)
+			{
+				return Common.Convert.ConvertValue<string>(
+					Reflection.Reflector.GetValue(this.Property, ref target),
+					() => this.Converter);
 			}
 
 			public bool SetValue(object target, object value)
@@ -353,9 +379,7 @@ namespace Zongsoft.Configuration
 				if(!this.CanWrite)
 					return false;
 
-				var converter = this.Converter;
-
-				if(Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => converter, out var convertedValue))
+				if(Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => this.Converter, out var convertedValue))
 				{
 					Reflection.Reflector.SetValue(this.Property, ref target, convertedValue);
 					return true;
@@ -363,47 +387,35 @@ namespace Zongsoft.Configuration
 
 				return false;
 			}
+			#endregion
+
+			#region 重写方法
+			public bool Equals(PropertyToken other)
+			{
+				if(other == null)
+					return false;
+
+				return this.Property.Equals(other.Property);
+			}
+
+			public override bool Equals(object obj)
+			{
+				if(obj == null || obj.GetType() == this.GetType())
+					return false;
+
+				return this.Property.Equals((PropertyToken)obj);
+			}
+
+			public override int GetHashCode()
+			{
+				return this.Property.GetHashCode();
+			}
 
 			public override string ToString()
 			{
 				return $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
 			}
-		}
-
-		protected readonly struct UnrecognizedPropertyToken
-		{
-			public readonly PropertyInfo Property;
-			public readonly TypeInfo DictionaryType;
-
-			public bool CanRead => this.Property?.CanRead ?? false;
-			public bool CanWrite => this.Property?.CanWrite ?? false;
-			public Type PropertyType => this.Property?.PropertyType;
-
-			public UnrecognizedPropertyToken(PropertyInfo property, TypeInfo dictionaryType)
-			{
-				this.Property = property;
-				this.DictionaryType = dictionaryType;
-			}
-
-			public bool SetDictionaryValue(object dictionary, string key, string value)
-			{
-				if(dictionary == null)
-					throw new ArgumentNullException(nameof(dictionary));
-
-				var property = this.Property;
-				var dictionaryType = this.DictionaryType;
-
-				if(property == null || dictionaryType == null)
-					return false;
-
-				if(dictionary != null && Common.Convert.TryConvertValue(value, dictionaryType.GenericTypeArguments[1], () => GetConverter(property), out var convertedValue))
-				{
-					Reflection.Reflector.SetValue(dictionary, "Item", convertedValue, new object[] { key });
-					return true;
-				}
-
-				return false;
-			}
+			#endregion
 		}
 		#endregion
 	}

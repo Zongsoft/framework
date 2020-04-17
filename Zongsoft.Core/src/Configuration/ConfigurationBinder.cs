@@ -28,15 +28,9 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
-using System.ComponentModel;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
-
-using Zongsoft.Common;
-using Zongsoft.Reflection;
 
 namespace Zongsoft.Configuration
 {
@@ -65,7 +59,7 @@ namespace Zongsoft.Configuration
 			{
 				var options = new ConfigurationBinderOptions();
 				configureOptions?.Invoke(options);
-				BindInstance(instance.GetType(), instance, null, configuration, options);
+				GetResolver(instance.GetType()).Resolve(instance, configuration, options);
 			}
 		}
 
@@ -93,8 +87,7 @@ namespace Zongsoft.Configuration
 			if(!string.IsNullOrEmpty(path))
 				configuration = configuration.GetSection(ConvertPath(path));
 
-			//return BindInstance(type, null, null, configuration, options);
-			return ConfigurationResolverProvider.Default.GetResolver(type).Resolve(type, configuration, options);
+			return GetResolver(type).Resolve(type, configuration, options);
 		}
 
 		public static T GetOptionValue<T>(this IConfiguration configuration, string path)
@@ -129,446 +122,38 @@ namespace Zongsoft.Configuration
 			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, path, type));
 		}
 
-		public static void SetOption<T>(this IConfiguration configuration, T instance, string path = null)
+		public static void SetOption(this IConfiguration configuration, object instance, string path = null, Action<ConfigurationBinderOptions> configureOptions = null)
 		{
-			configuration.SetOption(instance, typeof(T), path);
-		}
-
-		public static void SetOption(this IConfiguration configuration, object instance, Type type, string path = null)
-		{
-			if(instance == null || type == null)
+			if(instance == null || configuration == null)
 				return;
 
-			var properties = GetAllProperties(type.GetTypeInfo());
+			var options = new ConfigurationBinderOptions();
+			configureOptions?.Invoke(options);
 
 			if(!string.IsNullOrEmpty(path))
-				path = ConvertPath(path);
+				configuration = configuration.GetSection(ConvertPath(path));
 
-			foreach(var property in properties)
-			{
-				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-				var key = attribute == null || string.IsNullOrEmpty(attribute.Name) ? property.Name : attribute.Name;
-				var section = configuration.GetSection(ConfigurationPath.Combine(path, key));
-				var value = Reflector.GetValue(property, ref instance);
-
-				if(property.PropertyType.IsScalarType())
-					section.Value = Common.Convert.ConvertValue<string>(value);
-				else
-				{
-					var dictionaryType = GetImplementedContracts(property.PropertyType,
-						typeof(IDictionary<,>),
-						typeof(IReadOnlyDictionary<,>));
-
-					if(dictionaryType != null)
-					{
-						foreach(var entry in (System.Collections.IEnumerable)value)
-						{
-							SetOption(section, value, ConfigurationPath.Combine(key, (string)Reflector.GetValue(entry, "Key")));
-						}
-					}
-
-					dictionaryType = GetImplementedContracts(property.PropertyType,
-						typeof(Collections.INamedCollection<>),
-						typeof(Collections.IReadOnlyNamedCollection<>));
-
-					if(dictionaryType != null)
-					{
-						foreach(var entry in (System.Collections.IEnumerable)value)
-						{
-							SetOption(section, value, ConfigurationPath.Combine(key, (string)Reflector.GetValue(entry, "Key")));
-						}
-					}
-
-					var collectionType = GetImplementedContracts(property.PropertyType,
-						typeof(IList<>),
-						typeof(IReadOnlyList<>),
-						typeof(ICollection<>),
-						typeof(IReadOnlyCollection<>));
-
-					if(collectionType != null)
-						;
-
-					SetOption(section, value, property.PropertyType, key);
-				}
-			}
+			GetResolver(instance.GetType()).Attach(instance, configuration, options);
 		}
 		#endregion
 
 		#region 私有方法
+		private static IConfigurationResolver GetResolver(Type type)
+		{
+			var attribute = type.GetConfigurationAttribute();
+
+			if(attribute != null && attribute.ResolverType != null)
+				return Activator.CreateInstance(attribute.ResolverType) as IConfigurationResolver ?? ConfigurationResolver.Default;
+
+			return ConfigurationResolver.Default;
+		}
+
 		private static string ConvertPath(string path)
 		{
 			if(string.IsNullOrEmpty(path))
 				return path;
 
 			return path.Trim('/').Replace('/', ':');
-		}
-
-		private static object CreateInstance(Type type)
-		{
-			if(type.IsInterface || type.IsAbstract)
-				return Zongsoft.Data.Model.Build(type);
-
-			if(type.IsArray)
-			{
-				if(type.GetArrayRank() > 1)
-					throw new InvalidOperationException(string.Format(Properties.Resources.Error_UnsupportedMultidimensionalArray, type));
-
-				return Array.CreateInstance(type.GetElementType(), 0);
-			}
-
-			try
-			{
-				return Activator.CreateInstance(type);
-			}
-			catch(Exception ex)
-			{
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate, type), ex);
-			}
-		}
-
-		private static object BindInstance(Type type, object instance, Func<TypeConverter> converterFactory, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			if(type == typeof(IConfigurationSection))
-				return configuration;
-
-			if(configuration is IConfigurationSection section && section.Value != null)
-			{
-				if(Common.Convert.TryConvertValue(section.Value, type, converterFactory, out var convertedValue))
-					return convertedValue;
-
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, type));
-			}
-
-			if(configuration != null && configuration.GetChildren().Any())
-			{
-				if(instance == null)
-				{
-					instance = AttemptBindToCollectionInterfaces(type, configuration, options);
-
-					if(instance != null)
-						return instance;
-
-					instance = CreateInstance(type);
-				}
-
-				var collectionInterface = GetImplementedContract(typeof(IDictionary<,>), type);
-
-				if(collectionInterface != null)
-				{
-					BindDictionary(instance, collectionInterface, configuration, options);
-				}
-				else if(type.IsArray)
-				{
-					instance = BindArray((Array)instance, configuration, options);
-				}
-				else
-				{
-					collectionInterface = GetImplementedContract(typeof(ICollection<>), type);
-
-					if(collectionInterface != null)
-						BindCollection(instance, collectionInterface, configuration, options);
-					else
-						BindProperties(configuration, instance, options);
-				}
-			}
-
-			return instance;
-		}
-
-		private static object AttemptBindToCollectionInterfaces(Type type, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			var typeInfo = type.GetTypeInfo();
-
-			if(!type.IsInterface)
-				return null;
-
-			var collectionInterface = GetImplementedContract(typeof(IReadOnlyList<>), type);
-			if(collectionInterface != null)
-				return GenerateList(typeInfo, configuration, options);
-
-			collectionInterface = GetImplementedContract(typeof(IReadOnlyDictionary<,>), type);
-			if(collectionInterface != null)
-			{
-				var dictionaryType = typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1]);
-				var instance = typeInfo.GenericTypeArguments[0] != typeof(string) ?
-					Activator.CreateInstance(dictionaryType) :
-					Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
-
-				BindDictionary(instance, dictionaryType, configuration, options);
-				return instance;
-			}
-
-			collectionInterface = GetImplementedContract(typeof(IDictionary<,>), type);
-			if(collectionInterface != null)
-			{
-				var instance = typeInfo.GenericTypeArguments[0] != typeof(string) ?
-					Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1])) :
-					Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeInfo.GenericTypeArguments[0], typeInfo.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
-
-				BindDictionary(instance, collectionInterface, configuration, options);
-				return instance;
-			}
-
-			collectionInterface = GetImplementedContract(typeof(IReadOnlyCollection<>), type);
-			if(collectionInterface != null)
-				return GenerateList(typeInfo, configuration, options);
-
-			collectionInterface = GetImplementedContract(typeof(ICollection<>), type);
-			if(collectionInterface != null)
-				return GenerateList(typeInfo, configuration, options);
-
-			collectionInterface = GetImplementedContract(typeof(IEnumerable<>), type);
-			if(collectionInterface != null)
-				return GenerateList(typeInfo, configuration, options);
-
-			return null;
-		}
-
-		private static object GenerateList(Type type, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			var listType = typeof(List<>).MakeGenericType(type.GenericTypeArguments[0]);
-			var instance = Activator.CreateInstance(listType);
-
-			BindCollection(instance, listType, configuration, options);
-
-			return instance;
-		}
-
-		private static void BindProperties(this IConfiguration configuration, object instance, ConfigurationBinderOptions options)
-		{
-			if(instance == null)
-				return;
-
-			foreach(var property in GetAllProperties(instance.GetType().GetTypeInfo()))
-			{
-				BindProperty(property, instance, configuration, options);
-			}
-		}
-
-		private static void BindProperty(PropertyInfo property, object instance, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			if(property.GetMethod == null ||
-				(!options.BindNonPublicProperties && !property.GetMethod.IsPublic) ||
-				property.GetMethod.GetParameters().Length > 0)
-			{
-				return;
-			}
-
-			var propertyValue = property.GetValue(instance);
-			var hasSetter = property.SetMethod != null && (property.SetMethod.IsPublic || options.BindNonPublicProperties);
-
-			if(propertyValue == null && !hasSetter)
-				return;
-
-			var key = property.Name;
-			var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-
-			if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-				key = attribute.Name;
-
-			propertyValue = BindInstance(
-				property.PropertyType,
-				propertyValue,
-				() => GetConverter(property),
-				configuration.GetSection(key),
-				options);
-
-			if(propertyValue != null && hasSetter)
-				property.SetValue(instance, propertyValue);
-		}
-
-		private static void BindDictionary(object dictionary, Type dictionaryType, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			var typeInfo = dictionaryType.GetTypeInfo();
-			var keyType = typeInfo.GenericTypeArguments[0];
-			var valueType = typeInfo.GenericTypeArguments[1];
-			var keyTypeIsEnum = keyType.GetTypeInfo().IsEnum;
-
-			if(keyType != typeof(string) && !keyTypeIsEnum)
-				return;
-
-			var setter = typeInfo.GetDeclaredProperty("Item");
-
-			foreach(var child in configuration.GetChildren())
-			{
-				if(child.Value == null)
-				{
-					var item = BindInstance(
-						valueType,
-						null,
-						null,
-						child,
-						options);
-
-					if(item != null)
-					{
-						if(keyType == typeof(string))
-						{
-							var key = child.Key;
-							setter.SetValue(dictionary, item, new object[] { key });
-						}
-						else if(keyTypeIsEnum)
-						{
-							var key = Enum.Parse(keyType, child.Key);
-							setter.SetValue(dictionary, item, new object[] { key });
-						}
-					}
-				}
-				else
-				{
-					var property = (PropertyInfo)dictionary
-						.GetType()
-						.FindMembers(
-							MemberTypes.Property,
-							BindingFlags.Public | BindingFlags.Instance,
-							MatchProperty,
-							child.Key)
-						.FirstOrDefault();
-
-					if(property != null && property.CanWrite)
-						BindProperty(property, dictionary, configuration, options);
-				}
-			}
-		}
-
-		private static void BindCollection(object collection, Type collectionType, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			var typeInfo = collectionType.GetTypeInfo();
-			var itemType = typeInfo.GenericTypeArguments[0];
-			var addMethod = typeInfo.GetDeclaredMethod("Add");
-
-			foreach(var child in configuration.GetChildren())
-			{
-				try
-				{
-					if(child.Value == null)
-					{
-						var item = BindInstance(
-							itemType,
-							null,
-							null,
-							child,
-							options);
-
-						if(item != null)
-							addMethod.Invoke(collection, new[] { item });
-					}
-					else
-					{
-						var property = (PropertyInfo)collection
-						   .GetType()
-						   .FindMembers(
-							   MemberTypes.Property,
-							   BindingFlags.Public | BindingFlags.Instance,
-							   MatchProperty,
-							   child.Key)
-						   .FirstOrDefault();
-
-						if(property != null && property.CanWrite)
-							BindProperty(property, collection, configuration, options);
-					}
-				}
-				catch
-				{
-				}
-			}
-		}
-
-		private static Array BindArray(Array array, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			var children = configuration.GetChildren().ToArray();
-			var arrayLength = array.Length;
-			var elementType = array.GetType().GetElementType();
-			var result = Array.CreateInstance(elementType, arrayLength + children.Length);
-
-			if(arrayLength > 0)
-				Array.Copy(array, result, arrayLength);
-
-			for(int i = 0; i < children.Length; i++)
-			{
-				try
-				{
-					var item = BindInstance(
-						elementType,
-						null,
-						null,
-						children[i],
-						options);
-
-					if(item != null)
-						result.SetValue(item, arrayLength + i);
-				}
-				catch
-				{
-				}
-			}
-
-			return result;
-		}
-
-		private static Type GetImplementedContract(Type expected, Type actual)
-		{
-			if(actual.IsGenericType && actual.GetGenericTypeDefinition() == expected)
-				return actual;
-
-			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
-
-			foreach(var contract in contracts)
-			{
-				if(contract.IsGenericType && contract.GetGenericTypeDefinition() == expected)
-					return contract;
-			}
-
-			return null;
-		}
-
-		internal static Type GetImplementedContracts(Type actual, params Type[] expectedTypes)
-		{
-			if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
-				return actual;
-
-			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
-
-			foreach(var contract in contracts)
-			{
-				if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
-					return contract;
-			}
-
-			return null;
-		}
-
-		private static IEnumerable<PropertyInfo> GetAllProperties(TypeInfo type)
-		{
-			var allProperties = new List<PropertyInfo>();
-
-			do
-			{
-				allProperties.AddRange(type.DeclaredProperties);
-				type = type.BaseType.GetTypeInfo();
-			}
-			while(type != typeof(object).GetTypeInfo());
-
-			return allProperties;
-		}
-
-		private static bool MatchProperty(MemberInfo member, object state)
-		{
-			return state is string name &&
-				(
-					string.Equals(name, member.Name, StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(name, member.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name, StringComparison.OrdinalIgnoreCase)
-				);
-		}
-
-		private static TypeConverter GetConverter(MemberInfo member)
-		{
-			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
-
-			if(attribute != null)
-				return Activator.CreateInstance(Type.GetType(attribute.ConverterTypeName)) as TypeConverter;
-
-			return null;
 		}
 		#endregion
 	}

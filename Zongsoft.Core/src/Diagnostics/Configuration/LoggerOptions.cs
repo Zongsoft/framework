@@ -39,7 +39,7 @@ namespace Zongsoft.Diagnostics.Configuration
 			get; set;
 		}
 
-		[Zongsoft.Configuration.ConfigurationRecognizer(nameof(Properties))]
+		[Zongsoft.Configuration.Configuration(nameof(Properties))]
 		public class LoggerHandlerSetting
 		{
 			public string Name

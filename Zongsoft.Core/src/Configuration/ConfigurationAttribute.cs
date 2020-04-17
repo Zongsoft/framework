@@ -32,32 +32,33 @@ using System;
 namespace Zongsoft.Configuration
 {
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
-	public class ConfigurationRecognizerAttribute : Attribute
+	public class ConfigurationAttribute : Attribute
 	{
 		#region 公共属性
-		public ConfigurationRecognizerAttribute(string unrecognizedProperty)
+		public ConfigurationAttribute()
 		{
-			if(string.IsNullOrEmpty(unrecognizedProperty))
-				throw new ArgumentNullException(nameof(unrecognizedProperty));
-
-			this.UnrecognizedProperty = unrecognizedProperty;
 		}
 
-		public ConfigurationRecognizerAttribute(Type recognizerType)
+		public ConfigurationAttribute(string unrecognizedProperty)
 		{
-			this.RecognizerType = recognizerType ?? throw new ArgumentNullException(nameof(recognizerType));
+			this.UnrecognizedProperty = unrecognizedProperty;
 		}
 		#endregion
 
 		#region 公共属性
+		public Type ResolverType
+		{
+			get; set;
+		}
+
 		public Type RecognizerType
 		{
-			get;
+			get; set;
 		}
 
 		public string UnrecognizedProperty
 		{
-			get;
+			get; set;
 		}
 		#endregion
 	}

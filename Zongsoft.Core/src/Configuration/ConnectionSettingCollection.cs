@@ -31,8 +31,19 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizerProvider
+	public class ConnectionSettingCollection : Collections.NamedCollectionBase<ConnectionSetting>
 	{
-		IConfigurationRecognizer GetRecognizer(Type type);
+		#region 构造函数
+		public ConnectionSettingCollection()
+		{
+		}
+		#endregion
+
+		#region 重写方法
+		protected override string GetKeyForItem(ConnectionSetting item)
+		{
+			return item.Name;
+		}
+		#endregion
 	}
 }

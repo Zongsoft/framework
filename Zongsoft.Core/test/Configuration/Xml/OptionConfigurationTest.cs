@@ -50,6 +50,14 @@ namespace Zongsoft.Configuration.Xml
 			Assert.Equal("wechat", configuration.GetSection("mobile:pushing:wechat:key").Value);
 			Assert.Equal("A123", configuration.GetSection("mobile:pushing:wechat:code").Value);
 			Assert.Equal("****", configuration.GetSection("mobile:pushing:wechat:secret").Value);
+
+			Assert.Equal("db", configuration.GetSection("data:connectionSettings:db:name").Value);
+			Assert.Equal("all", configuration.GetSection("data:connectionSettings:db:mode").Value);
+			Assert.Equal("mysql", configuration.GetSection("data:connectionSettings:db:driver").Value);
+			Assert.Equal("db.connectionString", configuration.GetSection("data:connectionSettings:db:value").Value);
+
+			Assert.Equal("redis", configuration.GetSection("externals:redis:connectionSettings:redis:name").Value);
+			Assert.Equal("redis.connectionString", configuration.GetSection("externals:redis:connectionSettings:redis:value").Value);
 		}
 	}
 }

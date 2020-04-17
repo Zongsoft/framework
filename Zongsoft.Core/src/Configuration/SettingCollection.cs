@@ -31,8 +31,19 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationResolverProvider
+	public class SettingCollection : Collections.NamedCollectionBase<Setting>
 	{
-		IConfigurationResolver GetResolver(Type type);
+		#region 构造函数
+		public SettingCollection()
+		{
+		}
+		#endregion
+
+		#region 重写方法
+		protected override string GetKeyForItem(Setting item)
+		{
+			return item.Name;
+		}
+		#endregion
 	}
 }

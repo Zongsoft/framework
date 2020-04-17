@@ -10,7 +10,7 @@ namespace Zongsoft.Configuration
 	public class ConfigurationTest
 	{
 		[Fact]
-		public void TestBindModels()
+		public void TestResolveModels()
 		{
 			var configuration = Models.ModelConfigurationTest.GetConfiguration();
 
@@ -22,7 +22,7 @@ namespace Zongsoft.Configuration
 		}
 
 		[Fact]
-		public void TestBindXml()
+		public void TestResolveXml()
 		{
 			var configuration = Xml.XmlConfigurationTest.GetConfiguration();
 
@@ -31,6 +31,72 @@ namespace Zongsoft.Configuration
 
 			TestGeneral(configuration.GetOption<General>("/general"));
 			TestMobile(configuration.GetOption<Mobile>("mobile"));
+		}
+
+		[Fact]
+		public void TestResolveConnectionSettings()
+		{
+			var configuration = Xml.XmlConfigurationTest.GetConfiguration();
+
+			Assert.NotNull(configuration);
+			Assert.NotEmpty(configuration.Providers);
+
+			var settings = configuration.GetOption<ConnectionSettingCollection>("/data/connectionSettings");
+
+			Assert.NotNull(settings);
+			Assert.NotEmpty(settings);
+
+			var setting = settings.Get("db");
+
+			Assert.NotNull(setting);
+			Assert.Equal("db", setting.Name);
+			Assert.Equal("mysql", setting.Driver);
+			Assert.Equal("db.connectionString", setting.Value);
+
+			Assert.True(setting.HasProperties);
+			Assert.Equal(2, setting.Properties.Count);
+
+			Assert.True(setting.Properties.TryGetValue("driver", out var value));
+			Assert.Equal("mysql", value);
+			Assert.True(setting.Properties.TryGetValue("mode", out value));
+			Assert.Equal("all", value);
+
+			settings = configuration.GetOption<ConnectionSettingCollection>("/externals/redis/connectionSettings");
+
+			Assert.NotNull(settings);
+			Assert.NotEmpty(settings);
+
+			setting = settings.Get("redis");
+
+			Assert.NotNull(setting);
+			Assert.Equal("redis", setting.Name);
+			Assert.Equal("redis.connectionString", setting.Value);
+
+			Assert.False(setting.HasProperties);
+			Assert.Empty(setting.Properties);
+		}
+
+		[Fact]
+		public void TestAttachXml()
+		{
+			var configuration = Xml.XmlConfigurationTest.GetConfiguration();
+
+			Assert.NotNull(configuration);
+			Assert.NotEmpty(configuration.Providers);
+
+			var general = configuration.GetOption<General>("general");
+
+			Assert.NotNull(general);
+
+			general.Name = "newname";
+			general.IsIntranet = false;
+			general.Certificates.Default = "test";
+
+			configuration.SetOption(general, "general");
+
+			Assert.Equal("newname", configuration.GetSection("general:name").Value);
+			Assert.Equal("False", configuration.GetSection("general:intranet").Value);
+			//Assert.Equal("test", configuration.GetSection("general:certificates:default").Value);
 		}
 
 		#region 私有方法

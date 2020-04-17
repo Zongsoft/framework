@@ -22,4 +22,16 @@
 			</pushing>
 		</mobile>
 	</option>
+
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="db" driver="mysql" mode="all" value="db.connectionString" />
+		</connectionSettings>
+	</option>
+
+	<option path="/Externals/Redis">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="redis" value="redis.connectionString" />
+		</connectionSettings>
+	</option>
 </configuration>

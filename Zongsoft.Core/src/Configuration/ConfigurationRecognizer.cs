@@ -29,110 +29,29 @@
 
 using System;
 using System.Reflection;
-using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	public class ConfigurationRecognizer : IConfigurationRecognizer
 	{
-		#region 成员字段
-		private TypeInfo _type;
-		private int _initialized;
-		private Dictionary<string, PropertyToken> _properties;
+		#region 单例字段
+		public static readonly ConfigurationRecognizer Default = new ConfigurationRecognizer();
 		#endregion
 
 		#region 构造函数
-		public ConfigurationRecognizer(Type type)
+		protected ConfigurationRecognizer()
 		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			_type = type.GetTypeInfo();
-		}
-
-		public ConfigurationRecognizer(Type type, string unrecognizedPropertyName)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			_type = type.GetTypeInfo();
-
-			if(!string.IsNullOrEmpty(unrecognizedPropertyName))
-			{
-				var unrecognizedProperty = _type.GetDeclaredProperty(unrecognizedPropertyName) ??
-					throw new ArgumentException(string.Format(Zongsoft.Properties.Resources.Error_PropertyNotExists, _type, unrecognizedPropertyName));
-
-				if(!unrecognizedProperty.CanRead)
-					throw new InvalidOperationException(string.Format(Zongsoft.Properties.Resources.Error_PropertyCannotRead, _type, unrecognizedPropertyName));
-
-				var dictionaryType = ConfigurationBinder.GetImplementedContracts(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
-
-				if(dictionaryType != null || dictionaryType.GenericTypeArguments[0] == typeof(string))
-					this.UnrecognizedProperty = new UnrecognizedPropertyToken(unrecognizedProperty, dictionaryType);
-			}
-		}
-		#endregion
-
-		#region 保护属性
-		protected UnrecognizedPropertyToken UnrecognizedProperty { get; }
-
-		protected IReadOnlyDictionary<string, PropertyToken> Properties
-		{
-			get
-			{
-				this.Initialize();
-				return _properties;
-			}
-		}
-		#endregion
-
-		#region 初始化器
-		private void Initialize()
-		{
-			if(_initialized != 0)
-				return;
-
-			if(System.Threading.Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
-				return;
-
-			var type = _type;
-			_properties = new Dictionary<string, PropertyToken>();
-
-			do
-			{
-				foreach(var property in type.DeclaredProperties)
-				{
-					var token = new PropertyToken(property, GetConverter(property));
-
-					_properties.TryAdd(property.Name, token);
-
-					if(!string.Equals(token.ConfigurationKey, property.Name))
-						_properties.TryAdd(token.ConfigurationKey, token);
-				}
-
-				type = type.BaseType.GetTypeInfo();
-			}
-			while(type != typeof(object).GetTypeInfo());
 		}
 		#endregion
 
 		#region 公共方法
 		public void Recognize(object target, string name, string value)
 		{
-			this.Initialize();
+			if(target == null)
+				return;
 
-			if(_properties.TryGetValue(name, out var property))
-				property.SetValue(target, value);
-			else
-				this.OnUnrecognize(target, name, value);
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnUnrecognize(object target, string name, string value)
-		{
-			var unrecognizedProperty = this.UnrecognizedProperty;
+			var unrecognizedProperty = this.GetUnrecognizedProperty(target.GetType().GetTypeInfo());
 
 			if(unrecognizedProperty.Property == null)
 				return;
@@ -154,75 +73,33 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
-		#region 私有方法
-		private static TypeConverter GetConverter(PropertyInfo property)
+		#region 虚拟方法
+		protected virtual UnrecognizedPropertyToken GetUnrecognizedProperty(TypeInfo type)
 		{
-			var attribute = property.GetCustomAttribute<TypeConverterAttribute>(true);
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
 
-			if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
-				return Activator.CreateInstance(Type.GetType(attribute.ConverterTypeName)) as TypeConverter;
+			var attribute = type.GetConfigurationAttribute();
 
-			return null;
+			if(attribute == null || string.IsNullOrEmpty(attribute.UnrecognizedProperty))
+				return default;
+
+			var unrecognizedProperty = type.GetProperty(attribute.UnrecognizedProperty) ??
+				throw new ArgumentException(string.Format(Zongsoft.Properties.Resources.Error_PropertyNotExists, type, attribute.UnrecognizedProperty));
+
+			if(!unrecognizedProperty.CanRead)
+				throw new InvalidOperationException(string.Format(Zongsoft.Properties.Resources.Error_PropertyCannotRead, type, attribute.UnrecognizedProperty));
+
+			var dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
+
+			if(dictionaryType != null || dictionaryType.GenericTypeArguments[0] == typeof(string))
+				return new UnrecognizedPropertyToken(unrecognizedProperty, dictionaryType);
+
+			return default;
 		}
 		#endregion
 
 		#region 内部结构
-		protected class PropertyToken
-		{
-			private string _configurationKey;
-
-			public readonly PropertyInfo Property;
-			public readonly TypeConverter Converter;
-
-			public PropertyToken(PropertyInfo property, TypeConverter converter)
-			{
-				this.Property = property;
-				this.Converter = converter;
-			}
-
-			public string Name => this.Property.Name;
-			public bool CanRead => this.Property.CanRead;
-			public bool CanWrite => this.Property.CanWrite;
-			public Type PropertyType => this.Property.PropertyType;
-
-			public string ConfigurationKey
-			{
-				get
-				{
-					if(string.IsNullOrEmpty(_configurationKey))
-					{
-						_configurationKey = this.Property.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name;
-
-						if(string.IsNullOrEmpty(_configurationKey))
-							_configurationKey = this.Property.Name;
-					}
-
-					return _configurationKey;
-				}
-			}
-
-			public object GetValue(object target)
-			{
-				return Reflection.Reflector.GetValue(this.Property, ref target);
-			}
-
-			public void SetValue(object target, string value)
-			{
-				if(!this.CanWrite)
-					return;
-
-				var converter = this.Converter;
-
-				if(Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => converter, out var convertedValue))
-					Reflection.Reflector.SetValue(this.Property, ref target, value);
-			}
-
-			public override string ToString()
-			{
-				return $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
-			}
-		}
-
 		protected readonly struct UnrecognizedPropertyToken
 		{
 			public readonly PropertyInfo Property;
@@ -249,7 +126,7 @@ namespace Zongsoft.Configuration
 				if(property == null || dictionaryType == null)
 					return;
 
-				if(dictionary != null && Common.Convert.TryConvertValue(value, dictionaryType.GenericTypeArguments[1], () => GetConverter(property), out var convertedValue))
+				if(dictionary != null && Common.Convert.TryConvertValue(value, dictionaryType.GenericTypeArguments[1], () => ConfigurationUtility.GetConverter(property), out var convertedValue))
 					Reflection.Reflector.SetValue(dictionary, "Item", convertedValue, new object[] { key });
 			}
 		}
