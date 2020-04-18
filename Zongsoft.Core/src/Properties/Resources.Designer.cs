@@ -124,6 +124,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。 的本地化字符串。
+        /// </summary>
+        internal static string Error_InvalidUnrecognizedProperty {
+            get {
+                return ResourceManager.GetString("Error.InvalidUnrecognizedProperty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 发现重复的“{0}”键。位于：{1} 的本地化字符串。
         /// </summary>
         internal static string Error_KeyIsDuplicated {

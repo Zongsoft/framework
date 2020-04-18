@@ -138,6 +138,9 @@
   <data name="Error.InvalidOptionConfigurationFileFormat" xml:space="preserve">
     <value>无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0}</value>
   </data>
+  <data name="Error.InvalidUnrecognizedProperty" xml:space="preserve">
+    <value>指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。</value>
+  </data>
   <data name="Error.KeyIsDuplicated" xml:space="preserve">
     <value>发现重复的“{0}”键。位于：{1}</value>
   </data>

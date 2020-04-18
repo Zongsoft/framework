@@ -92,10 +92,10 @@ namespace Zongsoft.Configuration
 
 			var dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
 
-			if(dictionaryType != null || dictionaryType.GenericTypeArguments[0] == typeof(string))
-				return new UnrecognizedPropertyToken(unrecognizedProperty, dictionaryType);
+			if(dictionaryType == null || dictionaryType.GenericTypeArguments[0] != typeof(string))
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
 
-			return default;
+			return new UnrecognizedPropertyToken(unrecognizedProperty, dictionaryType);
 		}
 		#endregion
 
