@@ -37,16 +37,11 @@ namespace Zongsoft.Plugins
 	/// </summary>
 	public class PluginOptions
 	{
-		#region 常量定义
-		private const string APPLICATIONCONTEXT_DEFAULT_PATH = "/Workspace/Environment/ApplicationContext";
-		private const string WORKBENCH_DEFAULT_PATH = "/Workbench";
-		#endregion
-
 		#region 构造函数
 		/// <summary>
 		/// 构造插件设置对象。
 		/// </summary>
-		public PluginOptions() : this(null, null)
+		public PluginOptions() : this(null, null, null)
 		{
 		}
 
@@ -54,7 +49,7 @@ namespace Zongsoft.Plugins
 		/// 构造插件设置对象。
 		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
-		public PluginOptions(string applicationDirectory) : this(applicationDirectory, null)
+		public PluginOptions(string applicationDirectory) : this(applicationDirectory, null, null)
 		{
 		}
 
@@ -63,8 +58,9 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="pluginsDirectoryName">插件目录名，非完整路径。默认为“plugins”。</param>
+		/// <param name="settings">插件挂载点的设置。</param>
 		/// <exception cref="System.ArgumentException">当<paramref name="applicationDirectory"/>参数值不为路径完全限定格式。</exception>
-		public PluginOptions(string applicationDirectory, string pluginsDirectoryName)
+		public PluginOptions(string applicationDirectory, string pluginsDirectoryName, MountionSettings settings = null)
 		{
 			if(string.IsNullOrWhiteSpace(applicationDirectory))
 			{
@@ -79,7 +75,7 @@ namespace Zongsoft.Plugins
 			}
 
 			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
-			this.Mountion = new MountionSettings(APPLICATIONCONTEXT_DEFAULT_PATH, WORKBENCH_DEFAULT_PATH);
+			this.Mountion = settings ?? new MountionSettings();
 		}
 		#endregion
 
@@ -117,19 +113,40 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 嵌套结构
-		public struct MountionSettings
+		public class MountionSettings
 		{
-			/// <summary>获取应用程序上下文对象(<see cref="Zongsoft.Services.IApplicationContext"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
-			public readonly string ApplicationContextPath;
+			#region 常量定义
+			private const string APPLICATIONCONTEXT_DEFAULT_PATH = "/Workspace/Environment/ApplicationContext";
+			private const string WORKBENCH_DEFAULT_PATH = "/Workbench";
+			#endregion
 
-			/// <summary>获取工作台对象(<see cref="IWorkbench"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
-			public readonly string WorkbenchPath;
+			#region 构造函数
+			public MountionSettings()
+			{
+				this.ApplicationContextPath = APPLICATIONCONTEXT_DEFAULT_PATH;
+				this.WorkbenchPath = WORKBENCH_DEFAULT_PATH;
+			}
 
 			public MountionSettings(string applicationContextPath, string workbenchPath)
 			{
 				this.ApplicationContextPath = string.IsNullOrEmpty(applicationContextPath) ? APPLICATIONCONTEXT_DEFAULT_PATH : applicationContextPath;
 				this.WorkbenchPath = string.IsNullOrEmpty(workbenchPath) ? WORKBENCH_DEFAULT_PATH : workbenchPath;
 			}
+			#endregion
+
+			#region 公告属性
+			/// <summary>获取应用程序上下文对象(<see cref="Zongsoft.Services.IApplicationContext"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
+			public string ApplicationContextPath
+			{
+				get;
+			}
+
+			/// <summary>获取工作台对象(<see cref="IWorkbench"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
+			public string WorkbenchPath
+			{
+				get;
+			}
+			#endregion
 		}
 		#endregion
 	}
