@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 using Microsoft.Extensions.Configuration;
 
@@ -85,6 +86,9 @@ namespace Zongsoft.Configuration
 
 			if(!string.IsNullOrEmpty(path))
 				configuration = configuration.GetSection(ConvertPath(path));
+
+			if(configuration is IConfigurationSection section && section.Value != null)
+				return Common.Convert.ConvertValue(section.Value, type);
 
 			return GetResolver(type).Resolve(type, configuration, options);
 		}
