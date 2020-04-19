@@ -30,19 +30,24 @@
 using System;
 using System.Linq;
 
-using Zongsoft.Plugins;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Options.Plugins
+using Zongsoft.Plugins;
+using Zongsoft.Services;
+
+namespace Zongsoft.Configuration.Plugins
 {
-	public class OptionInitializer : Zongsoft.Services.IApplicationFilter
+	public class OptionInitializer : Zongsoft.Services.IApplicationFilter, BackgroundService
 	{
+		public OptionInitializer()
+		{
+		}
+
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return nameof(OptionInitializer);
-			}
+			get => nameof(OptionInitializer);
 		}
 		#endregion
 
@@ -51,6 +56,12 @@ namespace Zongsoft.Options.Plugins
 		{
 			if(context == null)
 				return;
+
+			var builder = new ConfigurationBuilder()
+				.AddConfiguration(context.Configuration, true)
+				.AddOptionFile("");
+
+			ApplicationContext.Current.Configuration = builder.Build();
 
 			//将当前应用的主配置文件加入到选项管理器中
 			if(context.Configuration != null)

@@ -28,35 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-using Zongsoft.Plugins;
-using Zongsoft.Plugins.Parsers;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Options.Plugins
+namespace Zongsoft.Plugins.Hosting
 {
-	public class OptionParser : Parser
+	public interface IPluginsHostBuilder
 	{
-		#region 解析方法
-		public override object Parse(ParserContext context)
-		{
-			if(string.IsNullOrWhiteSpace(context.Text))
-				return null;
+		PluginOptions Options { get; }
 
-            var expression = Collections.HierarchicalExpression.Parse(context.Text);
+		IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilder, IConfigurationBuilder> configure);
+		IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilder, IServiceCollection> configureServices);
+		IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices);
 
-			if(expression != null)
-			{
-				object target = OptionManager.Instance.GetOptionValue(expression.Path);
-
-                if(target != null && expression.Accessor != null)
-                    return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
-                else
-                    return target;
-			}
-
-			return null;
-		}
-		#endregion
+		string GetSetting(string key);
+		IPluginsHostBuilder UseSetting(string key, string value);
 	}
 }

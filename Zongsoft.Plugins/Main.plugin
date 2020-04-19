@@ -26,7 +26,7 @@
 		<parser name="object" type="Zongsoft.Plugins.Parsers.ObjectParser, Zongsoft.Plugins" />
 		<parser name="static" type="Zongsoft.Plugins.Parsers.StaticParser, Zongsoft.Plugins" />
 		<parser name="res" type="Zongsoft.Resources.Plugins.ResourceParser, Zongsoft.Plugins" />
-		<parser name="opt" type="Zongsoft.Options.Plugins.OptionParser, Zongsoft.Plugins" />
+		<parser name="opt" type="Zongsoft.Configuration.Plugins.OptionParser, Zongsoft.Plugins" />
 		<parser name="cmd" type="Zongsoft.Services.Plugins.CommandParser, Zongsoft.Plugins" />
 		<parser name="srv" type="Zongsoft.Services.Plugins.ServicesParser, Zongsoft.Plugins" />
 		<parser name="predicate" type="Zongsoft.Services.Plugins.PredicateParser, Zongsoft.Plugins" />

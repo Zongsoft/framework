@@ -28,30 +28,53 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting
 {
-    public class PluginsHostStarter : BackgroundService
-    {
-        //public Task StartAsync(CancellationToken cancellationToken)
-        //{
-        //    throw new NotImplementedException();
-        //}
+	public class PluginsHostBuilder : IPluginsHostBuilder
+	{
+		#region 构造函数
+		public PluginsHostBuilder(IHostBuilder builder, PluginOptions options)
+		{
+			this.Builder = builder ?? throw new ArgumentNullException(nameof(builder));
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+		}
+		#endregion
 
-        //public Task StopAsync(CancellationToken cancellationToken)
-        //{
-        //    Application.Exit();
-        //    return Task.CompletedTask;
-        //}
+		#region 公共属性
+		public IHostBuilder Builder { get; }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            throw new NotImplementedException();
-        }
-    }
+		public PluginOptions Options { get; }
+		#endregion
+
+		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilder, IConfigurationBuilder> configure)
+		{
+			throw new NotImplementedException();
+		}
+
+		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilder, IServiceCollection> configureServices)
+		{
+			throw new NotImplementedException();
+		}
+
+		public IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices)
+		{
+			throw new NotImplementedException();
+		}
+
+		public string GetSetting(string key)
+		{
+			throw new NotImplementedException();
+		}
+
+		public IPluginsHostBuilder UseSetting(string key, string value)
+		{
+			throw new NotImplementedException();
+		}
+
+	}
 }

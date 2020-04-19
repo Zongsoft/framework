@@ -30,39 +30,32 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
+using Zongsoft.Services;
+using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Options.Plugins
+namespace Zongsoft.Configuration.Plugins
 {
-	internal static class PluginSettingsProviderFactory
+	public class OptionParser : Parser
 	{
-		#region 私有变量
-		private static readonly Zongsoft.Collections.ObjectCache<PluginSettingsProvider> _cache;
-		#endregion
-
-		#region 静态构造
-		static PluginSettingsProviderFactory()
+		#region 解析方法
+		public override object Parse(ParserContext context)
 		{
-			_cache = new Collections.ObjectCache<PluginSettingsProvider>(0);
-		}
-		#endregion
-
-		#region 公共方法
-		public static PluginSettingsProvider GetProvider(Zongsoft.Plugins.Plugin plugin)
-		{
-			if(plugin == null)
-				throw new ArgumentNullException("plugin");
-
-			var configuration = OptionUtility.GetConfiguration(plugin);
-
-			if(configuration == null)
+			if(string.IsNullOrWhiteSpace(context.Text))
 				return null;
 
-			return _cache.Get(plugin.FilePath, key =>
+            var expression = Collections.HierarchicalExpression.Parse(context.Text);
+
+			if(expression != null)
 			{
-				return new PluginSettingsProvider(plugin, configuration);
-			});
+				object target = ApplicationContext.Current.Configuration.GetOption(context.MemberType, expression.Path);
+
+                if(target != null && expression.Accessor != null)
+                    return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
+                else
+                    return target;
+			}
+
+			return null;
 		}
 		#endregion
 	}

@@ -37,16 +37,14 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public static class PluginsHostBuilderExtension
 	{
-        public static IHostBuilder ConfigurePlugins(this IHostBuilder builder, Action<PluginOptions> configureOptions = null)
+        public static IHostBuilder ConfigurePlugins(this IHostBuilder builder, Action<IPluginsHostBuilder> configure = null)
         {
             if(builder == null)
                 throw new ArgumentNullException(nameof(builder));
 
-            builder.ConfigureServices((ctx, services) =>
-            {
-                services.AddSingleton<Zongsoft.Services.IApplicationContext, PluginApplicationContext>();
-                services.AddTransient(null);
-            });
+            var pluginsBuilder = new PluginsHostBuilder(builder, new PluginOptions());
+            configure(pluginsBuilder);
+            builder.ConfigureServices((ctx, services) => services.AddHostedService<PluginsHostStarter>());
 
             return builder;
         }

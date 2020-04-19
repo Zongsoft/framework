@@ -31,11 +31,10 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Profiles;
-using Zongsoft.Options.Configuration;
+using Zongsoft.Configuration.Profiles;
+using Zongsoft.Configuration.Configuration;
 
-namespace Zongsoft.Options.Plugins
+namespace Zongsoft.Configuration.Plugins
 {
 	internal static class OptionUtility
 	{
