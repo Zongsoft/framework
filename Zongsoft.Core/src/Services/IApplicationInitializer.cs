@@ -28,66 +28,19 @@
  */
 
 using System;
-using System.Collections.Generic;
-
-using Zongsoft.ComponentModel;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Services
 {
 	/// <summary>
-	/// 表示应用模块（应用子系统）的接口。
+	/// 向实现类提供应用事件处理机制的接口。
 	/// </summary>
-	public interface IApplicationModule
+	public interface IApplicationInitializer
 	{
 		/// <summary>
-		/// 获取应用模块名称。
+		/// 初始化应用扩展模块，并使其为处理请求做好准备。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置应用模块的标题。
-		/// </summary>
-		string Title
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置应用模块的描述文本。
-		/// </summary>
-		string Description
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取应用模块的服务容器。
-		/// </summary>
-		IServiceProvider Services
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取应用模块的授权目标集。
-		/// </summary>
-		INamedCollection<Schema> Schemas
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取应用模块的自定义属性集。
-		/// </summary>
-		IDictionary<string, object> Properties
-		{
-			get;
-		}
+		/// <param name="context">一个上下文对象，它提供对模块处理应用程序内所有应用程序对象的公用的方法、属性和事件的访问。</param>
+		/// <remarks>使用 <c>Initialize</c> 将事件处理方法向具体事件进行注册等初始化操作。</remarks>
+		void Initialize(IApplicationContext context);
 	}
 }

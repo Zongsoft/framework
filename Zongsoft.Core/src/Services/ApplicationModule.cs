@@ -46,6 +46,7 @@ namespace Zongsoft.Services
 
 			this.Name = this.Title = name.Trim();
 			this.Schemas = new SchemaCollection();
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		public ApplicationModule(string name, string title, string description = null)
@@ -57,13 +58,14 @@ namespace Zongsoft.Services
 			this.Title = title ?? this.Name;
 			this.Description = description;
 			this.Schemas = new SchemaCollection();
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name
 		{
-			get;
+			get; protected set;
 		}
 
 		public string Title
@@ -82,6 +84,11 @@ namespace Zongsoft.Services
 		}
 
 		public INamedCollection<Schema> Schemas
+		{
+			get;
+		}
+
+		public IDictionary<string, object> Properties
 		{
 			get;
 		}

@@ -34,15 +34,8 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Diagnostics
 {
-	public class LoggerInitializer : Services.IApplicationFilter, IDisposable
+	public class LoggerInitializer : Services.IApplicationInitializer, IDisposable
 	{
-		#region 公共属性
-		public virtual string Name
-		{
-			get => this.GetType().Name;
-		}
-		#endregion
-
 		#region 公共方法
 		public virtual void Initialize(Services.IApplicationContext context)
 		{

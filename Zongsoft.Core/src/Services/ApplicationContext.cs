@@ -49,23 +49,25 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 成员字段
-		private readonly Collections.INamedCollection<IApplicationModule> _modules;
-		private readonly Collections.INamedCollection<IApplicationFilter> _filters;
-		private readonly Collections.INamedCollection<ComponentModel.Schema> _schemas;
-		private readonly IDictionary<string, object> _states;
+		private string _name;
 		#endregion
 
 		#region 构造函数
+		protected ApplicationContext() : this(string.Empty)
+		{
+		}
+
 		protected ApplicationContext(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+				_name = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
+			else
+				_name = this.Title = name.Trim();
 
-			this.Name = this.Title = name.Trim();
-			_modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
-			_filters = new Collections.NamedCollection<IApplicationFilter>(p => p.Name);
-			_schemas = new ComponentModel.SchemaCollection();
-			_states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
+			this.Initializers = new List<IApplicationInitializer>();
+			this.Schemas = new ComponentModel.SchemaCollection();
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -81,20 +83,24 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public string Name
+		public virtual string Name
 		{
-			get;
+			get
+			{
+				return string.IsNullOrEmpty(_name) ? this.Configuration?.GetSection("ApplicationName").Value : null;
+			}
+			protected set
+			{
+				if(string.IsNullOrWhiteSpace(value))
+					throw new ArgumentNullException();
+
+				_name = value.Trim();
+			}
 		}
 
-		public string Title
-		{
-			get; set;
-		}
+		public string Title { get; set; }
 
-		public string Description
-		{
-			get; set;
-		}
+		public string Description { get; set; }
 
 		public virtual string ApplicationDirectory
 		{
@@ -102,6 +108,11 @@ namespace Zongsoft.Services
 		}
 
 		public virtual Microsoft.Extensions.Configuration.IConfigurationRoot Configuration
+		{
+			get => null;
+		}
+
+		public virtual IApplicationEnvironment Environment
 		{
 			get => null;
 		}
@@ -122,25 +133,13 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public Collections.INamedCollection<IApplicationModule> Modules
-		{
-			get => _modules;
-		}
+		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 
-		public Collections.INamedCollection<IApplicationFilter> Filters
-		{
-			get => _filters;
-		}
+		public ICollection<IApplicationInitializer> Initializers { get; }
 
-		public Collections.INamedCollection<ComponentModel.Schema> Schemas
-		{
-			get => _schemas;
-		}
+		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
 
-		public IDictionary<string, object> States
-		{
-			get => _states;
-		}
+		public IDictionary<string, object> Properties { get; }
 		#endregion
 
 		#region 公共方法

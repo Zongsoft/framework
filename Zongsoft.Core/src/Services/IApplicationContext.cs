@@ -65,6 +65,14 @@ namespace Zongsoft.Services
 		}
 
 		/// <summary>
+		/// 获取当前应用程序的环境信息。
+		/// </summary>
+		IApplicationEnvironment Environment
+		{
+			get;
+		}
+
+		/// <summary>
 		/// 获取当前应用程序的安全主体。
 		/// </summary>
 		System.Security.Claims.ClaimsPrincipal Principal
@@ -81,17 +89,9 @@ namespace Zongsoft.Services
 		}
 
 		/// <summary>
-		/// 获取当前应用程序的事件处理程序集。
+		/// 获取当前应用程序的初始化器集。
 		/// </summary>
-		INamedCollection<IApplicationFilter> Filters
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取当前应用的状态字典。
-		/// </summary>
-		IDictionary<string, object> States
+		ICollection<IApplicationInitializer> Initializers
 		{
 			get;
 		}
