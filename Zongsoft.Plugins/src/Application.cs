@@ -82,8 +82,11 @@ namespace Zongsoft.Plugins
 						_context.Services.Register("ApplicationContext", _context);
 				};
 
-				//初始化全局模块
-				InitializeGlobals(context);
+				//初始化
+				foreach(var initializer in context.Initializers)
+				{
+					initializer.Initialize(context);
+				}
 
 				//加载插件树
 				context.PluginContext.PluginTree.Load();
@@ -142,8 +145,14 @@ namespace Zongsoft.Plugins
 			if(context.Workbench != null)
 				context.Workbench.Close();
 
-			//卸载全局模块
-			DisposeGlobals(context);
+			//处置初始化器
+			foreach(var initializer in context.Initializers)
+			{
+				if(initializer is IAsyncDisposable asyncDisposable)
+					asyncDisposable.DisposeAsync().GetAwaiter().GetResult();
+				else if(initializer is IDisposable disposable)
+					disposable.Dispose();
+			}
 
 			//重置标记
 			_flags = 0;
@@ -182,63 +191,6 @@ namespace Zongsoft.Plugins
 				//激发当前上下文的“Started”事件
 				_context.RaiseStarted(args);
 			}
-		}
-		#endregion
-
-		#region 调用模块
-		private static void InitializeGlobals(PluginApplicationContext context)
-		{
-			if(context == null)
-				return;
-
-			var configuration = context.Configuration;
-
-			if(configuration != null)
-			{
-				var filters = configuration.GetOptionValue("/filters") as Zongsoft.Options.Configuration.FilterElementCollection;
-
-				if(filters != null && filters.Count > 0)
-				{
-					foreach(var filter in filters)
-					{
-						context.Filters.Add(CreateInitializer((Options.Configuration.FilterElement)filter));
-					}
-				}
-			}
-
-			foreach(var filter in context.Filters)
-			{
-				if(filter != null)
-					filter.Initialize(context);
-			}
-		}
-
-		private static void DisposeGlobals(PluginApplicationContext context)
-		{
-			if(context == null)
-				return;
-
-			foreach(var filter in context.Filters)
-			{
-				if(filter != null && filter is IDisposable)
-					((IDisposable)filter).Dispose();
-			}
-		}
-
-		private static Zongsoft.Services.IApplicationFilter CreateInitializer(Options.Configuration.FilterElement element)
-		{
-			if(string.IsNullOrWhiteSpace(element.Type))
-				throw new Options.Configuration.OptionConfigurationException("The application-filter type is empty or unspecified.");
-
-			var type = System.Type.GetType(element.Type, false);
-
-			if(type == null)
-				throw new Options.Configuration.OptionConfigurationException($"Invalid '{element.Type}' type of application-filter, becase cann't load it.");
-
-			if(!typeof(Zongsoft.Services.IApplicationFilter).IsAssignableFrom(type))
-				throw new Options.Configuration.OptionConfigurationException($"Invalid '{element.Type}' type of application-filter, it doesn't implemented {nameof(Services.IApplicationFilter)} interface.");
-
-			return Activator.CreateInstance(type) as Zongsoft.Services.IApplicationFilter;
 		}
 		#endregion
 	}

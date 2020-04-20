@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Linq;
+using System.IO;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -38,12 +38,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Configuration.Plugins
 {
-	public class OptionInitializer : Zongsoft.Services.IApplicationFilter, BackgroundService
+	public class OptionInitializer : Zongsoft.Services.IApplicationInitializer
 	{
-		public OptionInitializer()
-		{
-		}
-
 		#region 公共属性
 		public string Name
 		{
@@ -54,140 +50,33 @@ namespace Zongsoft.Configuration.Plugins
 		#region 初始化器
 		public void Initialize(PluginApplicationContext context)
 		{
-			if(context == null)
-				return;
-
-			var builder = new ConfigurationBuilder()
-				.AddConfiguration(context.Configuration, true)
-				.AddOptionFile("");
-
-			ApplicationContext.Current.Configuration = builder.Build();
-
-			//将当前应用的主配置文件加入到选项管理器中
-			if(context.Configuration != null)
-				OptionManager.Instance.Providers.Add(context.Configuration);
-
 			context.PluginContext.PluginTree.Loader.PluginLoaded += Loader_PluginLoaded;
 			context.PluginContext.PluginTree.Loader.PluginUnloaded += Loader_PluginUnloaded;
 		}
 
-		void Zongsoft.Services.IApplicationFilter.Initialize(Zongsoft.Services.IApplicationContext context)
+		void IApplicationInitializer.Initialize(IApplicationContext context)
 		{
-			this.Initialize(context as PluginApplicationContext);
+			if(context is PluginApplicationContext ctx)
+				this.Initialize(ctx);
 		}
 		#endregion
 
 		#region 事件处理
 		private void Loader_PluginLoaded(object sender, PluginLoadedEventArgs e)
 		{
-			if(OptionUtility.HasConfigurationFile(e.Plugin))
-			{
-				var proxy = new ConfigurationProxy(() => OptionUtility.GetConfiguration(e.Plugin));
-				OptionManager.Instance.Providers.Add(proxy);
-			}
+			var filePath = Path.GetDirectoryName(e.Plugin.FilePath);
+			var fileName = Path.GetFileNameWithoutExtension(e.Plugin.FilePath);
+
+			var configurator = new ConfigurationBuilder()
+				.AddOptionFile(Path.Combine(filePath, $"{fileName}.option"), true)
+				.AddOptionFile(Path.Combine(filePath, $"{fileName}.{e.Plugin.Context.ApplicationContext.Environment.Name}.option"), true)
+				.AddConfiguration(e.Plugin.Context.ApplicationContext.Configuration);
+
+			configurator.Build();
 		}
 
 		private void Loader_PluginUnloaded(object sender, PluginUnloadedEventArgs e)
 		{
-			var providers = OptionManager.Instance.Providers;
-
-			var found = providers.FirstOrDefault(provider =>
-			{
-				var proxy = provider as ConfigurationProxy;
-
-				return (proxy != null && proxy.IsValueCreated &&
-				        string.Equals(proxy.Value.FilePath, OptionUtility.GetConfigurationFilePath(e.Plugin)));
-			});
-
-			if(found != null)
-				providers.Remove(found);
-		}
-		#endregion
-
-		#region 嵌套子类
-		private class ConfigurationProxyLoader : Configuration.OptionConfigurationLoader
-		{
-			#region 构造函数
-			public ConfigurationProxyLoader(OptionNode root) : base(root)
-			{
-			}
-			#endregion
-
-			public override void Load(IOptionProvider provider)
-			{
-				var proxy = provider as ConfigurationProxy;
-
-				if(proxy != null)
-					base.LoadConfiguration(proxy.Value);
-				else
-					base.Load(provider);
-			}
-
-			public override void Unload(IOptionProvider provider)
-			{
-				var proxy = provider as ConfigurationProxy;
-
-				if(proxy != null)
-					base.UnloadConfiguration(proxy.Value);
-				else
-					base.Unload(provider);
-			}
-		}
-
-		[OptionLoader(LoaderType = typeof(ConfigurationProxyLoader))]
-		private class ConfigurationProxy : IOptionProvider
-		{
-			#region 成员字段
-			private readonly Lazy<Configuration.OptionConfiguration> _proxy;
-			#endregion
-
-			#region 构造函数
-			public ConfigurationProxy(Func<Configuration.OptionConfiguration> valueFactory)
-			{
-				if(valueFactory == null)
-					throw new ArgumentNullException("valueFactory");
-
-				_proxy = new Lazy<Configuration.OptionConfiguration>(valueFactory, true);
-			}
-			#endregion
-
-			#region 公共属性
-			public Configuration.OptionConfiguration Value
-			{
-				get
-				{
-					return _proxy.Value;
-				}
-			}
-
-			public bool IsValueCreated
-			{
-				get
-				{
-					return _proxy.IsValueCreated;
-				}
-			}
-			#endregion
-
-			#region 公共方法
-			public object GetOptionValue(string text)
-			{
-				var configuration = _proxy.Value;
-
-				if(configuration != null)
-					return configuration.GetOptionValue(text);
-
-				return null;
-			}
-
-			public void SetOptionValue(string text, object value)
-			{
-				var configuration = _proxy.Value;
-
-				if(configuration != null)
-					configuration.SetOptionValue(text, value);
-			}
-			#endregion
 		}
 		#endregion
 	}

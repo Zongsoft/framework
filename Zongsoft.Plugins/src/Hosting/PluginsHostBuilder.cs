@@ -37,44 +37,74 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public class PluginsHostBuilder : IPluginsHostBuilder
 	{
+		#region 成员字段
+		private readonly IHostBuilder _builder;
+		#endregion
+
 		#region 构造函数
-		public PluginsHostBuilder(IHostBuilder builder, PluginOptions options)
+		public PluginsHostBuilder(IHostBuilder builder)
 		{
-			this.Builder = builder ?? throw new ArgumentNullException(nameof(builder));
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 		}
 		#endregion
 
-		#region 公共属性
-		public IHostBuilder Builder { get; }
-
-		public PluginOptions Options { get; }
-		#endregion
-
-		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilder, IConfigurationBuilder> configure)
+		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure)
 		{
-			throw new NotImplementedException();
-		}
+			_builder.ConfigureAppConfiguration((context, configurator) =>
+            {
+                var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
+                configure(pluginsHostBuilderContext, configurator);
+            });
 
-		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilder, IServiceCollection> configureServices)
-		{
-			throw new NotImplementedException();
+			return this;
 		}
 
 		public IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices)
 		{
-			throw new NotImplementedException();
+			return ConfigureServices((context, services) => configureServices(services));
 		}
 
-		public string GetSetting(string key)
+		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configureServices)
 		{
-			throw new NotImplementedException();
+            _builder.ConfigureServices((context, services) =>
+			{
+				var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
+				configureServices(pluginsHostBuilderContext, services);
+			});
+
+			return this;
 		}
 
-		public IPluginsHostBuilder UseSetting(string key, string value)
+        public IPluginsHostBuilder Configure(Action<PluginsHostBuilderContext, IPluginsApplicationBuilder> configure)
+        {
+            _builder.ConfigureServices((ctx, services) =>
+            {
+                var context = GetPluginsBuilderContext(ctx);
+            });
+            return this;
+        }
+
+		private PluginsHostBuilderContext GetPluginsBuilderContext(HostBuilderContext context)
 		{
-			throw new NotImplementedException();
-		}
+            if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
+            {
+                var options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
 
+                var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
+                {
+                    Configuration = context.Configuration,
+                    HostingEnvironment = context.HostingEnvironment,
+                };
+
+                context.Properties[typeof(PluginsHostBuilderContext)] = pluginsHostBuilderContext;
+                context.Properties[typeof(PluginOptions)] = options;
+
+                return pluginsHostBuilderContext;
+            }
+
+            var pluginsHostContext = (PluginsHostBuilderContext)contextValue;
+            pluginsHostContext.Configuration = context.Configuration;
+            return pluginsHostContext;
+        }
 	}
 }

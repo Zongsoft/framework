@@ -28,25 +28,34 @@
  */
 
 using System;
-using System.IO;
-using System.Reflection;
+using System.Collections.Generic;
 
-using Zongsoft.Plugins;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Terminals.Plugins
+namespace Zongsoft.Plugins.Hosting
 {
-	public class ApplicationContext : Zongsoft.Plugins.PluginApplicationContext
-	{
-		#region 重写方法
-		protected override IWorkbenchBase CreateWorkbench(string[] args)
-		{
-			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath);
+	public interface IPluginsApplicationBuilder
+    {
+        IServiceCollection Services
+        {
+            get;
+        }
 
-			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
-				return base.CreateWorkbench(args);
+        IConfigurationBuilder Configurator
+        {
+            get;
+        }
 
-			return new Workbench(this);
-		}
-		#endregion
+        PluginTree Tree
+        {
+            get;
+        }
+
+        IEnumerable<Plugin> Plugins
+        {
+            get;
+        }
 	}
 }

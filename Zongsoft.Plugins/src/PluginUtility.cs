@@ -542,30 +542,6 @@ namespace Zongsoft.Plugins
 				return true;
 			}
 
-			if(typeof(Zongsoft.Options.Profiles.Profile).IsAssignableFrom(parameterType))
-			{
-				parameterValue = Zongsoft.Options.Plugins.OptionUtility.GetProfile(plugin);
-				return true;
-			}
-
-			if(typeof(Zongsoft.Options.Configuration.OptionConfiguration).IsAssignableFrom(parameterType))
-			{
-				parameterValue = Zongsoft.Options.Plugins.OptionUtility.GetConfiguration(plugin);
-				return true;
-			}
-
-			if(typeof(Zongsoft.Options.IOptionProvider).IsAssignableFrom(parameterType))
-			{
-				parameterValue = plugin.Context.ApplicationContext.Options;
-				return true;
-			}
-
-			if(typeof(Zongsoft.Options.ISettingsProvider).IsAssignableFrom(parameterType))
-			{
-				parameterValue = Zongsoft.Options.Plugins.PluginSettingsProviderFactory.GetProvider(plugin);
-				return true;
-			}
-
 			parameterValue = null;
 			return false;
 		}

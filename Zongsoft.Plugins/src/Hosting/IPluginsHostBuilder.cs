@@ -37,13 +37,8 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public interface IPluginsHostBuilder
 	{
-		PluginOptions Options { get; }
-
-		IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilder, IConfigurationBuilder> configure);
-		IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilder, IServiceCollection> configureServices);
+		IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure);
 		IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices);
-
-		string GetSetting(string key);
-		IPluginsHostBuilder UseSetting(string key, string value);
+		IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configureServices);
 	}
 }

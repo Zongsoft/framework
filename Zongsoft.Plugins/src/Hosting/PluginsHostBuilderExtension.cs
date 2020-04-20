@@ -42,7 +42,7 @@ namespace Zongsoft.Plugins.Hosting
             if(builder == null)
                 throw new ArgumentNullException(nameof(builder));
 
-            var pluginsBuilder = new PluginsHostBuilder(builder, new PluginOptions());
+            var pluginsBuilder = new PluginsHostBuilder(builder);
             configure(pluginsBuilder);
             builder.ConfigureServices((ctx, services) => services.AddHostedService<PluginsHostStarter>());
 

@@ -35,7 +35,7 @@ namespace Zongsoft.Plugins.Web
 	public class Workbench : WorkbenchBase
 	{
 		#region 构造函数
-		internal Workbench(ApplicationContext applicationContext) : base(applicationContext)
+		internal Workbench(WebApplicationContext applicationContext) : base(applicationContext)
 		{
 		}
         #endregion

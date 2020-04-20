@@ -28,25 +28,23 @@
  */
 
 using System;
-using System.IO;
 using System.Security.Claims;
+
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Http;
 
 namespace Zongsoft.Plugins.Web
 {
-	public class ApplicationContext : PluginApplicationContext
+	public class WebApplicationContext : PluginApplicationContext
 	{
-		#region 单例字段
-		public new static readonly ApplicationContext Current = new ApplicationContext();
-		#endregion
-
 		#region 成员字段
-		private string _applicationDirectory;
-		private Zongsoft.Options.Configuration.OptionConfiguration _configuration;
+		private IHttpContextAccessor _http;
 		#endregion
 
 		#region 构造函数
-		private ApplicationContext() : base("Zongsoft.Plugins.Web")
+		public WebApplicationContext(IHttpContextAccessor http) : base("Zongsoft.Plugins.Web")
 		{
+			_http = http;
 		}
 		#endregion
 
@@ -56,48 +54,19 @@ namespace Zongsoft.Plugins.Web
 		/// </summary>
 		public HttpContext HttpContext
 		{
-			get => HttpContext.Current;
+			get => _http?.HttpContext;
 		}
 		#endregion
 
 		#region 重写方法
-		public override string ApplicationDirectory
-		{
-			get
-			{
-				if(string.IsNullOrEmpty(_applicationDirectory))
-					_applicationDirectory = HttpContext.Current.Server.MapPath("~");
-
-				return _applicationDirectory;
-			}
-		}
-
-		public override Zongsoft.Options.Configuration.OptionConfiguration Configuration
-		{
-			get
-			{
-				if(_configuration == null)
-				{
-					string filePaht = Path.Combine(this.ApplicationDirectory, "Web.option");
-
-					if(File.Exists(filePaht))
-						_configuration = Zongsoft.Options.Configuration.OptionConfiguration.Load(filePaht);
-					else
-						_configuration = new Options.Configuration.OptionConfiguration(filePaht);
-				}
-
-				return _configuration;
-			}
-		}
-
 		public override ClaimsPrincipal Principal
 		{
-			get => HttpContext.Current.User;
+			get => _http?.HttpContext.User;
 		}
 
 		protected override IWorkbenchBase CreateWorkbench(string[] args)
 		{
-			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Settings.WorkbenchPath);
+			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath);
 
 			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
 				return base.CreateWorkbench(args);

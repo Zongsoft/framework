@@ -28,25 +28,23 @@
  */
 
 using System;
-using System.IO;
-using System.Reflection;
+using System.Collections.Generic;
 
-using Zongsoft.Plugins;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Terminals.Plugins
+namespace Zongsoft.Plugins.Hosting
 {
-	public class ApplicationContext : Zongsoft.Plugins.PluginApplicationContext
+	public class PluginsHostBuilderContext : HostBuilderContext
 	{
-		#region 重写方法
-		protected override IWorkbenchBase CreateWorkbench(string[] args)
-		{
-			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath);
+        public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
+        {
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+        }
 
-			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
-				return base.CreateWorkbench(args);
-
-			return new Workbench(this);
-		}
-		#endregion
+        public PluginOptions Options
+        {
+            get;
+        }
 	}
 }

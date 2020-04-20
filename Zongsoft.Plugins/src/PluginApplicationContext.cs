@@ -37,19 +37,21 @@ namespace Zongsoft.Plugins
 		public event EventHandler WorkbenchCreated;
 		#endregion
 
-		#region 成员变量
+		#region 私有变量
 		private readonly object _syncRoot;
 		#endregion
 
 		#region 构造函数
+		protected PluginApplicationContext()
+		{
+			_syncRoot = new object();
+			this.PluginContext = new PluginContext(this, this.CreateOptions());
+		}
+
 		protected PluginApplicationContext(string name) : base(name)
 		{
 			_syncRoot = new object();
-
 			this.PluginContext = new PluginContext(this, this.CreateOptions());
-
-			//将选项初始化器加入到应用初始化集中
-			this.Filters.Add(new Zongsoft.Options.Plugins.OptionInitializer());
 		}
 		#endregion
 
