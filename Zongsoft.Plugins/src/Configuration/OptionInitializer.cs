@@ -38,26 +38,38 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Configuration.Plugins
 {
-	public class OptionInitializer : Zongsoft.Services.IApplicationInitializer
+	public class OptionInitializer : Zongsoft.Services.IApplicationInitializer, IDisposable
 	{
-		#region 公共属性
-		public string Name
-		{
-			get => nameof(OptionInitializer);
-		}
+		#region 私有变量
+		private PluginLoader _loader;
 		#endregion
 
 		#region 初始化器
 		public void Initialize(PluginApplicationContext context)
 		{
-			context.PluginContext.PluginTree.Loader.PluginLoaded += Loader_PluginLoaded;
-			context.PluginContext.PluginTree.Loader.PluginUnloaded += Loader_PluginUnloaded;
+			_loader = context.PluginContext.PluginTree.Loader;
+
+			_loader.PluginLoaded += Loader_PluginLoaded;
+			_loader.PluginUnloaded += Loader_PluginUnloaded;
 		}
 
 		void IApplicationInitializer.Initialize(IApplicationContext context)
 		{
 			if(context is PluginApplicationContext ctx)
 				this.Initialize(ctx);
+		}
+		#endregion
+
+		#region 释放处置
+		public void Dispose()
+		{
+			var loader = System.Threading.Interlocked.Exchange(ref _loader, null);
+
+			if(loader != null)
+			{
+				loader.PluginLoaded -= Loader_PluginLoaded;
+				loader.PluginUnloaded -= Loader_PluginUnloaded;
+			}
 		}
 		#endregion
 
