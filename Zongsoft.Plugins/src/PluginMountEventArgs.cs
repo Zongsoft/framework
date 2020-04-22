@@ -28,45 +28,26 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginMountEventArgs : EventArgs
 	{
-		#region 成员变量
-		private string _path;
-		private object _value;
-		#endregion
-
-		#region 构造函数
-		public PluginMountEventArgs(string path, object value)
+        #region 构造函数
+        public PluginMountEventArgs(string path, object value)
 		{
 			if(string.IsNullOrEmpty(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
-			_path = path;
-			_value = value;
+			this.Path = path;
+			this.Value = value;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Path
-		{
-			get
-			{
-				return _path;
-			}
-		}
+		public string Path { get; }
 
-		public object Value
-		{
-			get
-			{
-				return _value;
-			}
-		}
-		#endregion
-	}
+        public object Value { get; }
+        #endregion
+    }
 }

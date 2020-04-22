@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	public class PluginTree : MarshalByRefObject
+	public class PluginTree
 	{
 		#region 私有变量
 		private readonly object _syncRoot;
@@ -54,16 +54,11 @@ namespace Zongsoft.Plugins
 		#region 构造函数
 		internal PluginTree(PluginContext context)
 		{
-			if(context == null)
-				throw new ArgumentNullException("context");
-
-			_syncRoot = new object();
-
-			_loader = null;
-			_context = context;
+			_context = context ?? throw new ArgumentNullException(nameof(context));
 			_status = PluginTreeStatus.None;
 			_resolver = new PluginResolver(this);
 			_rootNode = new PluginTreeNode(this);
+			_syncRoot = new object();
 		}
 		#endregion
 
@@ -149,36 +144,6 @@ namespace Zongsoft.Plugins
 			{
 				return _status;
 			}
-		}
-		#endregion
-
-		#region 加载方法
-		/// <summary>
-		/// 使用默认加载配置加载插件树。
-		/// </summary>
-		public void Load()
-		{
-			this.Loader.Load();
-		}
-
-		/// <summary>
-		/// 应用指定的设置加载插件树。
-		/// </summary>
-		/// <param name="options">指定的插件加载器配置对象。</param>
-		/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(null)。</exception>
-		public void Load(PluginOptions options)
-		{
-			//应用指定的设置进行加载
-			this.Loader.Load(options ?? throw new ArgumentNullException(nameof(options)));
-		}
-
-		/// <summary>
-		/// 卸载当前插件树中的所有插件。
-		/// </summary>
-		public void Unload()
-		{
-			if(_loader != null)
-				_loader.Unload();
 		}
 		#endregion
 

@@ -31,7 +31,6 @@ using System;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class ViewEventArgs : EventArgs
 	{
 		#region 构造函数

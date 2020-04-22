@@ -43,8 +43,7 @@ namespace Zongsoft.Plugins.Hosting
         public PluginsHostStarter(PluginApplicationContext applicationContext)
         {
             _applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-            //_applicationContext.Initializers.Add(new Configuration.Plugins.OptionInitializer());
-
+            Zongsoft.Configuration.Plugins.PluginConfigurationSource.Instance.SetLoader(_applicationContext.PluginContext.PluginTree.Loader);
         }
 
         //public Task StartAsync(CancellationToken cancellationToken)

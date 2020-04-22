@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	public class AppenderContext : MarshalByRefObject
+	public class AppenderContext
 	{
 		#region 同步变量
 		private readonly object _syncRoot;

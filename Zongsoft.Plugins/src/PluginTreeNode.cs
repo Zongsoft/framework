@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Zongsoft.Plugins
 {
@@ -319,6 +317,30 @@ namespace Zongsoft.Plugins
 
 			if(parent != null)
 				parent.Children.Remove(this);
+		}
+
+		internal object Resolve(string pathText = null, ObtainMode obtainMode = ObtainMode.Auto, Type targetType = null)
+		{
+			var node = this;
+			Reflection.Expressions.IMemberExpression accessor = null;
+
+			if(!string.IsNullOrWhiteSpace(pathText))
+			{
+				var expression = Collections.HierarchicalExpression.Parse(pathText);
+
+				node = this.Find(expression.Path) ??
+					throw new PluginException($"Not found the PluginTreeNode with '{expression.Path}' path.");
+
+				accessor = expression.Accessor;
+			}
+
+			//获取指定路径的目标对象
+			object target = node.UnwrapValue(obtainMode, targetType == null ? null : new Builders.BuilderSettings(targetType));
+
+			if(target != null && accessor != null)
+				return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(accessor, target);
+
+			return target;
 		}
 		#endregion
 

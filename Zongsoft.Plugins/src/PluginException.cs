@@ -32,7 +32,6 @@ using System.Runtime.Serialization;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginException : Exception
 	{
 		#region 构造函数

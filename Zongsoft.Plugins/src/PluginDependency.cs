@@ -28,18 +28,16 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
-	public class PluginDependency : MarshalByRefObject
+	public class PluginDependency
 	{
 		#region 构造函数
 		public PluginDependency(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
 			this.Plugin = null;

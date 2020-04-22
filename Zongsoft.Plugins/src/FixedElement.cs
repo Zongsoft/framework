@@ -28,12 +28,9 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public abstract class FixedElement : PluginElement
 	{
 		#region 私有变量

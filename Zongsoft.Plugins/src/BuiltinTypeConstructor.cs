@@ -37,9 +37,8 @@ namespace Zongsoft.Plugins
 	public class BuiltinTypeConstructor : IEnumerable<BuiltinTypeConstructor.Parameter>
 	{
 		#region 成员变量
-		private BuiltinType _builtinType;
-		private IList<Parameter> _parameters;
-		private Parameter[] _parameterArray;
+		private readonly BuiltinType _builtinType;
+		private readonly IList<Parameter> _parameters;
 		#endregion
 
 		#region 构造函数
@@ -53,18 +52,12 @@ namespace Zongsoft.Plugins
 		#region 公共属性
 		public Builtin Builtin
 		{
-			get
-			{
-				return _builtinType.Builtin;
-			}
+			get => _builtinType.Builtin;
 		}
 
 		public BuiltinType BuiltinType
 		{
-			get
-			{
-				return _builtinType;
-			}
+			get => _builtinType;
 		}
 
 		/// <summary>
@@ -72,24 +65,12 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public int Count
 		{
-			get
-			{
-				return _parameterArray == null ? _parameters.Count : _parameterArray.Length;
-			}
+			get => _parameters.Count;
 		}
 
 		public Parameter[] Parameters
 		{
-			get
-			{
-				if(_parameterArray != null)
-					return _parameterArray;
-
-				if(_parameters.Count == 0)
-					return Array.Empty<Parameter>();
-				else
-					return _parameters.ToArray();
-			}
+			get => _parameters.ToArray();
 		}
 		#endregion
 
@@ -98,7 +79,6 @@ namespace Zongsoft.Plugins
 		{
 			var parameter = new Parameter(this, parameterType, rawValue);
 			_parameters.Add(parameter);
-			_parameterArray = null;
 			return parameter;
 		}
 		#endregion
@@ -106,15 +86,7 @@ namespace Zongsoft.Plugins
 		#region 枚举遍历
 		public IEnumerator<Parameter> GetEnumerator()
 		{
-			Parameter[] values = _parameterArray;
-
-			if(values == null)
-				_parameterArray = values = new Parameter[_parameters.Count];
-
-			foreach(var value in values)
-			{
-				yield return value;
-			}
+			return _parameters.GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -123,7 +95,6 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
-		[Serializable]
 		public class Parameter
 		{
 			#region 成员变量
@@ -141,10 +112,7 @@ namespace Zongsoft.Plugins
 			#region 构造函数
 			internal Parameter(BuiltinTypeConstructor constructor, string typeName, string rawValue)
 			{
-				if(constructor == null)
-					throw new ArgumentNullException("constructor");
-
-				_constructor = constructor;
+				_constructor = constructor ?? throw new ArgumentNullException(nameof(constructor));
 				_parameterTypeName = typeName;
 				_rawValue = rawValue;
 				_evaluateValueRequired = 0;
@@ -154,18 +122,12 @@ namespace Zongsoft.Plugins
 			#region 公共属性
 			public Builtin Builtin
 			{
-				get
-				{
-					return _constructor._builtinType.Builtin;
-				}
+				get => _constructor._builtinType.Builtin;
 			}
 
 			public BuiltinTypeConstructor Constructor
 			{
-				get
-				{
-					return _constructor;
-				}
+				get => _constructor;
 			}
 
 			public Type ParameterType
@@ -181,10 +143,7 @@ namespace Zongsoft.Plugins
 
 			public string ParameterTypeName
 			{
-				get
-				{
-					return _parameterTypeName;
-				}
+				get => _parameterTypeName;
 			}
 
 			public string RawValue
@@ -207,18 +166,12 @@ namespace Zongsoft.Plugins
 
 			public bool HasValue
 			{
-				get
-				{
-					return _value != null;
-				}
+				get => _value != null;
 			}
 
 			public object Value
 			{
-				get
-				{
-					return this.GetValue(this.ParameterType);
-				}
+				get => this.GetValue(this.ParameterType);
 			}
 			#endregion
 

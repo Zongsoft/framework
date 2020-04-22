@@ -36,25 +36,26 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Plugins.Configuration
+namespace Zongsoft.Configuration.Plugins
 {
 	public class PluginConfigurationProvider : IConfigurationProvider, IDisposable
 	{
 		#region 成员字段
 		private readonly PluginConfigurationSource _source;
-		private ConfigurationReloadToken _reloadToken;
-		private readonly ConcurrentDictionary<Plugin, Zongsoft.Configuration.CompositeConfigurationProvider> _providers;
+		private readonly ConfigurationReloadToken _reloadToken;
+		private readonly ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider> _providers;
 		#endregion
 
 		#region 构造函数
-		public PluginConfigurationProvider(PluginConfigurationSource source)
+		public PluginConfigurationProvider(PluginConfigurationSource source, ConfigurationReloadToken reloadToken)
 		{
 			_source = source ?? throw new ArgumentNullException(nameof(source));
-			_reloadToken = new ConfigurationReloadToken();
-			_providers = new ConcurrentDictionary<Plugin, Zongsoft.Configuration.CompositeConfigurationProvider>();
+			_reloadToken = reloadToken ?? throw new ArgumentNullException(nameof(reloadToken));
+			_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
 
-			_source.Loader.PluginLoaded += Loader_PluginLoaded;
-			_source.Loader.PluginUnloaded += Loader_PluginUnloaded;
+			source.Loader.Loaded += PluginLoader_Loaded;
+			source.Loader.PluginLoaded += PluginLoader_PluginLoaded;
+			source.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
 		}
 		#endregion
 
@@ -80,17 +81,21 @@ namespace Zongsoft.Plugins.Configuration
 			}
 		}
 
-		public virtual void Load()
+		public void Load()
 		{
-			_providers.Clear();
+			foreach(var plugin in _providers.Keys)
+			{
+				if(_providers.TryRemove(plugin, out var provider))
+					provider.Dispose();
+			}
 
-			foreach(var plugin in _source.GetPlugins())
+			foreach(var plugin in _source.Plugins)
 			{
 				this.LoadOptionFile(plugin);
 			}
 		}
 
-		public virtual IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
+		public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
 		{
 			return _providers.Values
 				.SelectMany(p => p.GetChildKeys(null, parentPath))
@@ -107,31 +112,40 @@ namespace Zongsoft.Plugins.Configuration
 		#region 释放处置
 		public void Dispose()
 		{
-			var loader = _source.Loader;
-
-			if(loader != null)
+			foreach(var plugin in _providers.Keys)
 			{
-				loader.PluginLoaded -= Loader_PluginLoaded;
-				loader.PluginUnloaded -= Loader_PluginUnloaded;
+				if(_providers.TryRemove(plugin, out var provider))
+					provider.Dispose();
 			}
+
+			_source.Dispose();
 		}
 		#endregion
 
 		#region 事件处理
-		private void Loader_PluginLoaded(object sender, PluginLoadedEventArgs e)
+		private void PluginLoader_Loaded(object sender, Zongsoft.Plugins.PluginLoadEventArgs e)
+		{
+			_reloadToken.OnReload();
+		}
+
+		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
 		{
 			this.LoadOptionFile(e.Plugin);
 		}
 
-		private void Loader_PluginUnloaded(object sender, PluginUnloadedEventArgs e)
+		private void PluginLoader_PluginUnloaded(object sender, Zongsoft.Plugins.PluginUnloadedEventArgs e)
 		{
-			this.UnloadOptionFile(e.Plugin);
+			if(_providers.TryRemove(e.Plugin, out var provider))
+				provider.Dispose();
 		}
 		#endregion
 
 		#region 私有方法
-		private void LoadOptionFile(Plugin plugin)
+		private bool LoadOptionFile(Zongsoft.Plugins.Plugin plugin)
 		{
+			if(_providers.ContainsKey(plugin))
+				return false;
+
 			var filePath = Path.GetDirectoryName(plugin.FilePath);
 			var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
 
@@ -151,13 +165,7 @@ namespace Zongsoft.Plugins.Configuration
 					})
 			};
 
-			_providers.TryAdd(plugin, new Zongsoft.Configuration.CompositeConfigurationProvider(providers));
-		}
-
-		private void UnloadOptionFile(Plugin plugin)
-		{
-			if(_providers.TryRemove(plugin, out var provider))
-				provider.Dispose();
+			return _providers.TryAdd(plugin, new Zongsoft.Configuration.CompositeConfigurationProvider(providers));
 		}
 		#endregion
 	}

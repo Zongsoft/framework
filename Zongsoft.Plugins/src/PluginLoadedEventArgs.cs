@@ -28,11 +28,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginLoadedEventArgs : PluginLoadEventArgs
 	{
 		#region 构造函数

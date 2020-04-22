@@ -64,13 +64,12 @@ namespace Zongsoft.Plugins.Parsers
 			else if(context.Text == "~/")
 				return System.IO.Path.GetDirectoryName(context.Plugin.FilePath);
 
-			var mode = ObtainMode.Auto;
-			var text = PluginPath.PreparePathText(context.Text, out mode);
+			var text = PluginPath.PreparePathText(context.Text, out var mode);
 
 			if(string.IsNullOrWhiteSpace(text))
 				throw new PluginException($"Missing argument of the path parser.");
 
-			return context.PluginContext.ResolvePath(text, context.Node, mode, context.MemberType);
+			return context.Node.Resolve(text, mode, context.MemberType);
 		}
 		#endregion
 	}

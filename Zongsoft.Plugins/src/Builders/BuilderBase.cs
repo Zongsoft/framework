@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins.Builders
 {
-	public abstract class BuilderBase : MarshalByRefObject, IBuilder
+	public abstract class BuilderBase : IBuilder
 	{
 		#region 成员变量
 		private IEnumerable<string> _ignoredProperties;

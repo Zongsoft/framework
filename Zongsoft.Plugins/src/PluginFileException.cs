@@ -32,7 +32,6 @@ using System.Runtime.Serialization;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginFileException : PluginException
 	{
 		#region 构造函数
@@ -52,23 +51,19 @@ namespace Zongsoft.Plugins
 
 		protected PluginFileException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
-			this.FileName = info.GetString("FileName");
+			this.FileName = info.GetString(nameof(FileName));
 		}
 		#endregion
 
 		#region 公共属性
-		public string FileName
-		{
-			get;
-			private set;
-		}
+		public string FileName { get; }
 		#endregion
 
 		#region 重写方法
 		public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
 		{
 			base.GetObjectData(info, context);
-			info.AddValue("FileName", this.FileName);
+			info.AddValue(nameof(FileName), this.FileName);
 		}
 		#endregion
 	}

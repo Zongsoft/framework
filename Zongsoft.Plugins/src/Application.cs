@@ -84,7 +84,7 @@ namespace Zongsoft.Plugins
 				}
 
 				//加载插件树
-				context.PluginContext.PluginTree.Load();
+				context.PluginContext.PluginTree.Loader.Load();
 
 				//如果工作台对象不为空则运行工作台
 				if(context.GetWorkbench(args) != null)

@@ -28,12 +28,9 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class FixedElement<T> : FixedElement
 	{
 		#region 构造函数

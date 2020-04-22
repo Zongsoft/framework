@@ -32,8 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
-	public abstract class PluginElement : MarshalByRefObject, INotifyPropertyChanged
+	public abstract class PluginElement : INotifyPropertyChanged
 	{
 		#region 事件定义
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -132,8 +131,7 @@ namespace Zongsoft.Plugins
 
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
-			if(this.PropertyChanged != null)
-				this.PropertyChanged(this, e);
+			this.PropertyChanged?.Invoke(this, e);
 		}
 		#endregion
 

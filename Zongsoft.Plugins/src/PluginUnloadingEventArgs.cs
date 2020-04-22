@@ -29,11 +29,9 @@
 
 using System;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginUnloadingEventArgs : CancelEventArgs
 	{
 		#region 构造函数

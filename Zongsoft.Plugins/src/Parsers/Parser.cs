@@ -33,7 +33,7 @@ using System.Text.RegularExpressions;
 
 namespace Zongsoft.Plugins.Parsers
 {
-	public abstract class Parser : MarshalByRefObject, IParser
+	public abstract class Parser : IParser
 	{
 		#region 静态成员
 		private static readonly Regex _regex = new Regex(@"(?<prefix>[^\{]*)?{\s*(?<scheme>\w+)\s*:\s*(?<value>[^\}]+)\s*}(?<suffix>.*)?", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);

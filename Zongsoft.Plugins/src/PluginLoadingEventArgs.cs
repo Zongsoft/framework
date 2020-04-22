@@ -28,11 +28,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
-	[Serializable]
 	public class PluginLoadingEventArgs : PluginLoadEventArgs
 	{
 		public PluginLoadingEventArgs(string pluginFile, PluginOptions options) : base(options)

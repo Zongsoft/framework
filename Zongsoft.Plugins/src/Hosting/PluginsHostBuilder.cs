@@ -45,6 +45,11 @@ namespace Zongsoft.Plugins.Hosting
 		public PluginsHostBuilder(IHostBuilder builder)
 		{
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
+
+            _builder.ConfigureAppConfiguration(configurator =>
+            {
+                configurator.Add(Zongsoft.Configuration.Plugins.PluginConfigurationSource.Instance);
+            });
 		}
 		#endregion
 

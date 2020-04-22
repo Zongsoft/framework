@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins.Parsers
 {
-	public class ParserContext : MarshalByRefObject
+	public class ParserContext
 	{
 		#region 构造函数
 		internal ParserContext(string scheme, string text, PluginTreeNode node, string memberName, Type memberType, object parameter = null)

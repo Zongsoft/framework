@@ -29,7 +29,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
 
@@ -38,7 +37,7 @@ namespace Zongsoft.Plugins
 	/// <summary>
 	/// 提供工作台的基本封装，建议自定义工作台从此类继承。
 	/// </summary>
-	public abstract class WorkbenchBase : MarshalByRefObject, IWorkbenchBase
+	public abstract class WorkbenchBase : IWorkbenchBase
 	{
 		#region 事件声明
 		public event EventHandler Opened;

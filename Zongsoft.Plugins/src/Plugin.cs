@@ -29,18 +29,16 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
-using System.Linq;
-
-using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Plugins
 {
 	/// <summary>
 	/// 关于插件的描述信息。
 	/// </summary>
-	public class Plugin : MarshalByRefObject
+	public class Plugin
 	{
 		#region 成员字段
 		private PluginTree _pluginTree;
@@ -95,10 +93,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginTree PluginTree
 		{
-			get
-			{
-				return _pluginTree;
-			}
+			get => _pluginTree;
 		}
 
 		/// <summary>
@@ -106,10 +101,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 		}
 
 		/// <summary>
@@ -117,10 +109,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public string FilePath
 		{
-			get
-			{
-				return _filePath;
-			}
+			get => _filePath;
 		}
 
 		/// <summary>
@@ -128,10 +117,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginManifest Manifest
 		{
-			get
-			{
-				return _manifest;
-			}
+			get => _manifest;
 		}
 
 		/// <summary>
@@ -143,10 +129,7 @@ namespace Zongsoft.Plugins
 		/// </remarks>
 		public bool IsHidden
 		{
-			get
-			{
-				return _isHidden;
-			}
+			get => _isHidden;
 		}
 
 		/// <summary>
@@ -154,10 +137,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public bool IsMaster
 		{
-			get
-			{
-				return (!_isHidden) && (this.Manifest.Dependencies == null || this.Manifest.Dependencies.Count < 1);
-			}
+			get => (!_isHidden) && (this.Manifest.Dependencies == null || this.Manifest.Dependencies.Count < 1);
 		}
 
 		/// <summary>
@@ -165,10 +145,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public bool IsSlave
 		{
-			get
-			{
-				return _isHidden || (this.Manifest.Dependencies != null && this.Manifest.Dependencies.Count > 0);
-			}
+			get => _isHidden || (this.Manifest.Dependencies != null && this.Manifest.Dependencies.Count > 0);
 		}
 
 		/// <summary>
@@ -176,14 +153,8 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginStatus Status
 		{
-			get
-			{
-				return _status;
-			}
-			internal set
-			{
-				_status = value;
-			}
+			get => _status;
+			internal set => _status = value;
 		}
 
 		/// <summary>
@@ -191,10 +162,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginContext Context
 		{
-			get
-			{
-				return _pluginTree.Context;
-			}
+			get => _pluginTree.Context;
 		}
 
 		/// <summary>
@@ -203,10 +171,7 @@ namespace Zongsoft.Plugins
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
 		public Plugin Parent
 		{
-			get
-			{
-				return _parent;
-			}
+			get => _parent;
 		}
 
 		/// <summary>
@@ -215,10 +180,7 @@ namespace Zongsoft.Plugins
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
 		public PluginCollection Children
 		{
-			get
-			{
-				return _children;
-			}
+			get => _children;
 		}
 
 		/// <summary>
@@ -226,10 +188,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public Builtin[] Builtins
 		{
-			get
-			{
-				return _builtins.ToArray();
-			}
+			get => _builtins.ToArray();
 		}
 
 		/// <summary>
@@ -237,10 +196,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public BuilderElementCollection Builders
 		{
-			get
-			{
-				return _builders;
-			}
+			get => _builders;
 		}
 
 		/// <summary>
@@ -248,20 +204,14 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public FixedElementCollection<IParser> Parsers
 		{
-			get
-			{
-				return _parsers;
-			}
+			get => _parsers;
 		}
 		#endregion
 
 		#region 内部属性
 		internal IList<Builtin> InnerBuiltins
 		{
-			get
-			{
-				return _builtins;
-			}
+			get => _builtins;
 		}
 		#endregion
 
@@ -589,12 +539,11 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 嵌套子类
-		[Serializable]
-		public sealed class PluginManifest : MarshalByRefObject
+		public sealed class PluginManifest
 		{
 			#region 成员变量
-			private Plugin _plugin;
-			private List<Assembly> _assemblies;
+			private readonly Plugin _plugin;
+			private readonly List<Assembly> _assemblies;
 			private PluginDependencyCollection _dependencies;
 			#endregion
 
@@ -657,18 +606,12 @@ namespace Zongsoft.Plugins
 			/// </summary>
 			public Assembly[] Assemblies
 			{
-				get
-				{
-					return _assemblies.ToArray();
-				}
+				get => _assemblies.ToArray();
 			}
 
 			public bool HasDependencies
 			{
-				get
-				{
-					return _dependencies != null && _dependencies.Count > 0;
-				}
+				get => _dependencies != null && _dependencies.Count > 0;
 			}
 
 			/// <summary>

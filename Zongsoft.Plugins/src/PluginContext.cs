@@ -35,7 +35,7 @@ namespace Zongsoft.Plugins
 	/// <summary>
 	/// 封装了有关插件特定的信息。
 	/// </summary>
-	public sealed class PluginContext : MarshalByRefObject
+	public sealed class PluginContext
 	{
 		#region 构造函数
 		internal PluginContext(PluginApplicationContext applicationContext, PluginOptions options)
@@ -57,10 +57,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public IEnumerable<Plugin> Plugins
 		{
-			get
-			{
-				return PluginTree.Plugins;
-			}
+			get => PluginTree.Plugins;
 		}
 
 		/// <summary>
@@ -78,48 +75,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public IWorkbenchBase Workbench
 		{
-			get
-			{
-				return this.ResolvePath(this.Options.Mountion.WorkbenchPath) as IWorkbenchBase;
-			}
-		}
-		#endregion
-
-		#region 解析路径
-		/// <summary>
-		/// 根据指定的路径文本获取其对应的缓存对象或该对象的成员值。
-		/// </summary>
-		/// <param name="pathText">要获取的路径文本，该文本可以用过句点符号(.)表示缓存对象的成员名。</param>
-		/// <returns>返回获取的缓存对象或其成员值。</returns>
-		/// <exception cref="System.ArgumentNullException"><paramref name="pathText"/>参数为空或全空字符串。</exception>
-		/// <remarks>
-		/// 注意：成员名只能是公共的实例属性或字段。
-		/// <example>/Workspace/Environment/ApplicationContext.ApplicationId</example>
-		/// </remarks>
-		public object ResolvePath(string pathText)
-		{
-			ObtainMode mode;
-			return this.ResolvePath(PluginPath.PreparePathText(pathText, out mode), this.PluginTree.RootNode, mode, null);
-		}
-
-		internal object ResolvePath(string pathText, PluginTreeNode origin, ObtainMode obtainMode, Type targetType)
-		{
-			if(string.IsNullOrWhiteSpace(pathText))
-				throw new ArgumentNullException(nameof(pathText));
-
-			var expression = Collections.HierarchicalExpression.Parse(pathText);
-			var node = origin.Find(expression.Path);
-
-			if(node == null)
-				throw new PluginException($"Not found the PluginTreeNode with '{expression.Path}' path.");
-
-			//获取指定路径的目标对象
-			object target = node.UnwrapValue(obtainMode, targetType == null ? null : new Builders.BuilderSettings(targetType));
-
-			if(target != null && expression.Accessor != null)
-				return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
-
-			return target;
+			get => this.PluginTree.RootNode.Resolve(this.Options.Mountion.WorkbenchPath) as IWorkbenchBase;
 		}
 		#endregion
 	}
