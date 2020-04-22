@@ -42,28 +42,15 @@ namespace Zongsoft.Plugins
 		private static readonly Regex ExtendElementRegex = new Regex(@"\w+(\.\w+)+", RegexOptions.Singleline | RegexOptions.Compiled);
 		#endregion
 
-		#region 成员变量
-		private PluginTree _pluginTree;
-		#endregion
-
 		#region 构造函数
 		public PluginResolver(PluginTree pluginTree)
 		{
-			if(pluginTree == null)
-				throw new ArgumentNullException("pluginTree");
-
-			_pluginTree = pluginTree;
+			this.PluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
 		}
 		#endregion
 
 		#region 公共属性
-		public PluginTree PluginTree
-		{
-			get
-			{
-				return _pluginTree;
-			}
-		}
+		public PluginTree PluginTree { get; }
 		#endregion
 
 		#region 插件解析
@@ -139,7 +126,7 @@ namespace Zongsoft.Plugins
 					throw new PluginException(string.Format("This '{0}' plugin file format is invalid.", filePath));
 
 				//创建Plugin类实例
-				Plugin plugin = new Plugin(_pluginTree, reader.GetAttribute("name"), filePath, parent);
+				Plugin plugin = new Plugin(PluginTree, reader.GetAttribute("name"), filePath, parent);
 
 				plugin.Manifest.Author = reader.GetAttribute("author");
 				plugin.Manifest.Title = reader.GetAttribute("title");
@@ -205,7 +192,7 @@ namespace Zongsoft.Plugins
 				throw new PluginException(string.Format("This '{0}' plugin file format is invalid.", filePath));
 
 			//创建Plugin类实例
-			Plugin plugin = new Plugin(_pluginTree, reader.GetAttribute("name"), filePath, parent);
+			Plugin plugin = new Plugin(PluginTree, reader.GetAttribute("name"), filePath, parent);
 
 			plugin.Manifest.Author = reader.GetAttribute("author");
 			plugin.Manifest.Title = reader.GetAttribute("title");
@@ -366,7 +353,7 @@ namespace Zongsoft.Plugins
 		private void ResolveExtendedElement(XmlReader reader, Plugin plugin, string path)
 		{
 			var parts = reader.Name.Split('.');
-			var node = _pluginTree.EnsurePath(PluginPath.Combine(path, parts[0]));
+			var node = PluginTree.EnsurePath(PluginPath.Combine(path, parts[0]));
 
 			if(node == null)
 				throw new PluginException(string.Format("Invalid '{0}' ExtendedElement is not exists in '{1}' plugin.", path + "/" + parts[0], plugin.FilePath));

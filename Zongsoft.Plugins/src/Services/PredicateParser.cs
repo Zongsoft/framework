@@ -58,7 +58,7 @@ namespace Zongsoft.Services.Plugins
 			IPredication predication = null;
 
 			if(parts.Length == 1)
-				predication = context.PluginContext.ApplicationContext.Services.Resolve(parts[0]) as IPredication;
+				predication = context.PluginTree.ApplicationContext.Services.Resolve(parts[0]) as IPredication;
 			else
 			{
 				var serviceProvider = Services.ServiceProviderFactory.Instance.GetProvider(parts[0]);

@@ -126,20 +126,6 @@ namespace Zongsoft.Services.Plugins
 				return _plugin;
 			}
 		}
-
-		/// <summary>
-		/// 获取插件应用上下文对象，注意：该属性值可能会为空值(null)。
-		/// </summary>
-		/// <remarks>
-		///		<para>如果当前解析器上下文关联到一个空节点或者自定义节点，则该属性返回空。</para>
-		/// </remarks>
-		public PluginContext PluginContext
-		{
-			get
-			{
-				return _plugin == null ? null : _plugin.Context;
-			}
-		}
 		#endregion
 	}
 }

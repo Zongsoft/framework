@@ -70,29 +70,11 @@ namespace Zongsoft.Plugins.Builders
 
 		#region 公共属性
 		/// <summary>
-		/// 获取当前的插件上下文对象。
-		/// </summary>
-		public PluginContext PluginContext
-		{
-			get
-			{
-				return _builtin.Context;
-			}
-		}
-
-		/// <summary>
 		/// 获取当前插件上下文中的插件树。
 		/// </summary>
-		/// <remarks>
-		///		该属性返回值完全等同于<see cref="PluginContext"/>属性返回的<seealso cref="Zongsoft.Plugins.PluginTree"/>对象。
-		/// </remarks>
 		public PluginTree PluginTree
 		{
-			get
-			{
-				var pluginContext = this.PluginContext;
-				return pluginContext == null ? null : pluginContext.PluginTree;
-			}
+			get => _builtin.Tree;
 		}
 
 		/// <summary>

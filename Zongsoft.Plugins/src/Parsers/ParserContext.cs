@@ -110,12 +110,9 @@ namespace Zongsoft.Plugins.Parsers
 			get => this.Node.Plugin;
 		}
 
-		/// <summary>
-		/// 获取插件应用上下文对象。
-		/// </summary>
-		public PluginContext PluginContext
+		public PluginTree PluginTree
 		{
-			get => Node.Tree.Context;
+			get => this.Node.Tree;
 		}
 		#endregion
 	}

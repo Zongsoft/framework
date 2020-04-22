@@ -158,7 +158,7 @@ namespace Zongsoft.Plugins.Builders
 			if(builtin.IsBuilded)
 			{
 				if(owner != null && builder is IAppender appender)
-					appender.Append(new AppenderContext(builtin.Context, builtin.Value, builtin.Node, owner, ownerNode, AppenderBehavior.Appending));
+					appender.Append(new AppenderContext(builtin.Value, builtin.Node, owner, ownerNode, AppenderBehavior.Appending));
 			}
 			else
 			{

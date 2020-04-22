@@ -44,20 +44,20 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 成员变量
-		private PluginLoader _loader;
-		private PluginResolver _resolver;
-		private PluginTreeNode _rootNode;
-		private PluginContext _context;
 		private PluginTreeStatus _status;
+		private PluginLoader _loader;
+		private readonly PluginResolver _resolver;
+		private readonly PluginTreeNode _root;
+		private readonly PluginApplicationContext _context;
 		#endregion
 
 		#region 构造函数
-		internal PluginTree(PluginContext context)
+		internal PluginTree(PluginApplicationContext context)
 		{
 			_context = context ?? throw new ArgumentNullException(nameof(context));
 			_status = PluginTreeStatus.None;
 			_resolver = new PluginResolver(this);
-			_rootNode = new PluginTreeNode(this);
+			_root = new PluginTreeNode(this);
 			_syncRoot = new object();
 		}
 		#endregion
@@ -95,7 +95,7 @@ namespace Zongsoft.Plugins
 								_status = PluginTreeStatus.Loading;
 
 								//清空所有子节点
-								_rootNode.Children.Clear();
+								_root.Children.Clear();
 							};
 						}
 					}
@@ -108,12 +108,9 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取插件树中的根节点。
 		/// </summary>
-		public PluginTreeNode RootNode
+		public PluginTreeNode Root
 		{
-			get
-			{
-				return _rootNode;
-			}
+			get => _root;
 		}
 
 		/// <summary>
@@ -130,12 +127,9 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		public PluginContext Context
+		public PluginApplicationContext ApplicationContext
 		{
-			get
-			{
-				return _context;
-			}
+			get => _context;
 		}
 
 		public PluginTreeStatus Status
@@ -156,12 +150,12 @@ namespace Zongsoft.Plugins
 		/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空格字符串。</exception>
 		public PluginTreeNode Find(string path)
 		{
-			return _rootNode.Find(path);
+			return _root.Find(path);
 		}
 
 		public PluginTreeNode Find(params string[] paths)
 		{
-			return _rootNode.Find(paths);
+			return _root.Find(paths);
 		}
 		#endregion
 
@@ -213,7 +207,7 @@ namespace Zongsoft.Plugins
 				throw new ArgumentNullException("path");
 
 			existed = true;
-			PluginTreeNode node = _rootNode;
+			PluginTreeNode node = _root;
 			string[] parts = path.Split('/');
 
 			lock(_syncRoot)
@@ -224,7 +218,7 @@ namespace Zongsoft.Plugins
 
 					if(string.IsNullOrEmpty(part))
 					{
-						if(node == _rootNode)
+						if(node == _root)
 							continue;
 						else
 							throw new PluginException("Invlaid '" + path + "' path.");

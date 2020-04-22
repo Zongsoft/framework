@@ -166,7 +166,7 @@ namespace Zongsoft.Plugins.Builders
 
 			//注意：如果追加器为空表示忽略后续的追加操作
 			if(appender != null && (context.Settings == null || !context.Settings.HasFlags(BuilderSettingsFlags.IgnoreAppending)))
-				appender.Append(new AppenderContext(context.PluginContext, context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
+				appender.Append(new AppenderContext(context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
 		}
 
 		protected virtual void Dispose(bool disposing)

@@ -280,12 +280,12 @@ namespace Zongsoft.Plugins
 					switch(part)
 					{
 						case "":
-							node = _tree.RootNode;
+							node = _tree.Root;
 							break;
 						case ".":
 							break;
 						case "..":
-							node = _parent ?? _tree.RootNode;
+							node = _parent ?? _tree.Root;
 							break;
 						default:
 							node = node._children[part];

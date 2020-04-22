@@ -158,14 +158,6 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>
-		/// 获取插件上下文对象。
-		/// </summary>
-		public PluginContext Context
-		{
-			get => _pluginTree.Context;
-		}
-
-		/// <summary>
 		/// 获取当前插件的父插件对象。
 		/// </summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>

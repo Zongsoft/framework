@@ -39,7 +39,6 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 成员字段
-		private PluginContext _pluginContext;
 		private AppenderBehavior _behaviour;
 		private object _value;
 		private object _container;
@@ -48,17 +47,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		internal AppenderContext(PluginContext pluginContext, object value, PluginTreeNode node, object container, PluginTreeNode containerNode, AppenderBehavior behaviour)
+		internal AppenderContext(object value, PluginTreeNode node, object container, PluginTreeNode containerNode, AppenderBehavior behaviour)
 		{
-			if(pluginContext == null)
-				throw new ArgumentNullException("pluginContext");
-
-			if(node == null)
-				throw new ArgumentNullException("node");
-
 			_syncRoot = new object();
-			_pluginContext = pluginContext;
-			_node = node;
+			_node = node ?? throw new ArgumentNullException(nameof(node));
 			_value = value;
 			_container = container;
 			_containerNode = containerNode;
@@ -75,31 +67,6 @@ namespace Zongsoft.Plugins
 			get
 			{
 				return _behaviour;
-			}
-		}
-
-		/// <summary>
-		/// 获取当前的插件上下文对象。
-		/// </summary>
-		public PluginContext PluginContext
-		{
-			get
-			{
-				return _pluginContext;
-			}
-		}
-
-		/// <summary>
-		/// 获取当前插件上下文中的插件树。
-		/// </summary>
-		/// <remarks>
-		///		该属性返回值完全等同于<see cref="PluginContext"/>属性返回的<seealso cref="Zongsoft.Plugins.PluginTree"/>对象。
-		/// </remarks>
-		public PluginTree PluginTree
-		{
-			get
-			{
-				return _pluginContext.PluginTree;
 			}
 		}
 
@@ -138,7 +105,7 @@ namespace Zongsoft.Plugins
 					lock(_syncRoot)
 					{
 						if(_containerNode == null)
-							_containerNode = this.PluginTree.GetOwnerNode(_node);
+							_containerNode = _node.Tree.GetOwnerNode(_node);
 					}
 				}
 

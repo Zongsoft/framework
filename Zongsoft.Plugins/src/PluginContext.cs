@@ -35,17 +35,9 @@ namespace Zongsoft.Plugins
 	/// <summary>
 	/// 封装了有关插件特定的信息。
 	/// </summary>
+	[Obsolete]
 	public sealed class PluginContext
 	{
-		#region 构造函数
-		internal PluginContext(PluginApplicationContext applicationContext, PluginOptions options)
-		{
-			this.ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-			this.PluginTree = new PluginTree(this);
-		}
-		#endregion
-
 		#region 公共属性
 		/// <summary>
 		/// 获取当前插件运行时的唯一插件树对象。
@@ -64,19 +56,6 @@ namespace Zongsoft.Plugins
 		/// 获取当前插件运行时所属的应用程序上下文对象。
 		/// </summary>
 		public PluginApplicationContext ApplicationContext { get; }
-
-		/// <summary>
-		/// 获取当前插件上下文对应的设置。
-		/// </summary>
-		public PluginOptions Options { get; }
-
-		/// <summary>
-		/// 获取当前工作台(主界面)对象。
-		/// </summary>
-		public IWorkbenchBase Workbench
-		{
-			get => this.PluginTree.RootNode.Resolve(this.Options.Mountion.WorkbenchPath) as IWorkbenchBase;
-		}
 		#endregion
 	}
 }

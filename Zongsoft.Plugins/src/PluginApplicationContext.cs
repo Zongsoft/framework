@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
@@ -45,17 +46,33 @@ namespace Zongsoft.Plugins
 		protected PluginApplicationContext()
 		{
 			_syncRoot = new object();
-			this.PluginContext = new PluginContext(this, this.CreateOptions());
+			this.PluginTree = new PluginTree(this);
 		}
 
 		protected PluginApplicationContext(IServiceProvider services) : base(services)
 		{
 			_syncRoot = new object();
-			this.PluginContext = new PluginContext(this, this.CreateOptions());
+			this.PluginTree = new PluginTree(this);
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>
+		/// 获取当前插件运行时的插件树。
+		/// </summary>
+		public PluginTree PluginTree
+		{
+			get;
+		}
+
+		/// <summary>
+		/// 获取加载的根插件集。
+		/// </summary>
+		public IEnumerable<Plugin> Plugins
+		{
+			get => this.PluginTree.Plugins;
+		}
+
 		/// <summary>
 		/// 获取当前应用程序的工作台(主界面)。
 		/// </summary>
@@ -68,12 +85,12 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>
-		/// 获取当前应用程序的插件上下文对象。
+		/// 获取当前插件上下文对应的设置。
 		/// </summary>
-		/// <remarks>
-		/// 本属性在首次创建<seealso cref="Zongsoft.Plugins.PluginContext"/>时，会调用<see cref="Zongsoft.Plugins.PluginApplicationContext.CreateOptions"/>方法以获得插件启动配置参数，如果要提供不同的启动信息，必须重写该虚拟方法。
-		/// </remarks>
-		public PluginContext PluginContext { get; }
+		public PluginOptions Options
+		{
+			get;
+		}
 		#endregion
 
 		#region 虚拟方法
@@ -87,7 +104,7 @@ namespace Zongsoft.Plugins
 		/// </remarks>
 		protected virtual IWorkbenchBase CreateWorkbench(string[] args)
 		{
-			return this.PluginContext.Workbench;
+			return this.PluginTree.Root.Resolve(this.Options.Mountion.WorkbenchPath) as IWorkbenchBase;
 		}
 
 		/// <summary>
@@ -126,10 +143,10 @@ namespace Zongsoft.Plugins
 
 						//将当前工作台对象挂载到插件结构中
 						if(Workbench != null)
-							this.PluginContext.PluginTree.Mount(this.PluginContext.Options.Mountion.WorkbenchPath, Workbench);
+							this.PluginTree.Mount(this.Options.Mountion.WorkbenchPath, Workbench);
 
 						//确认工作台路径及其下属所有节点均已构建完成
-						this.EnsureNodes(this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath));
+						this.EnsureNodes(this.PluginTree.Find(this.Options.Mountion.WorkbenchPath));
 
 						//激发“WorkbenchCreated”事件
 						if(Workbench != null)

@@ -58,12 +58,12 @@ namespace Zongsoft.Plugins
 		protected WorkbenchBase(PluginApplicationContext applicationContext)
 		{
 			if(applicationContext == null)
-				throw new ArgumentNullException("applicationContext");
+				throw new ArgumentNullException(nameof(applicationContext));
 
 			_applicationContext = applicationContext;
 			_title = applicationContext.Title;
 			_status = WorkbenchStatus.None;
-			_startupPath = applicationContext.PluginContext.Options.Mountion.WorkbenchPath + "/Startup";
+			_startupPath = applicationContext.Options.Mountion.WorkbenchPath + "/Startup";
 		}
 		#endregion
 
@@ -73,10 +73,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginApplicationContext ApplicationContext
 		{
-			get
-			{
-				return _applicationContext;
-			}
+			get => _applicationContext;
 		}
 
 		/// <summary>
@@ -84,10 +81,7 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public WorkbenchStatus Status
 		{
-			get
-			{
-				return _status;
-			}
+			get => _status;
 		}
 
 		/// <summary>
@@ -108,17 +102,6 @@ namespace Zongsoft.Plugins
 
 				//激发“TitleChanged”事件
 				this.OnTitleChanged(EventArgs.Empty);
-			}
-		}
-
-		/// <summary>
-		/// 获取当前插件运行时的上下文对象。
-		/// </summary>
-		public PluginContext PluginContext
-		{
-			get
-			{
-				return _applicationContext.PluginContext;
 			}
 		}
 
@@ -245,11 +228,11 @@ namespace Zongsoft.Plugins
 				this.OnStart(args);
 
 				//查找当前工作台的插件节点
-				var node = _applicationContext.PluginContext.PluginTree.Find(_applicationContext.PluginContext.Options.Mountion.WorkbenchPath);
+				var node = _applicationContext.PluginTree.Find(_applicationContext.Options.Mountion.WorkbenchPath);
 
 				//如果工作台对象未挂载或不是通过插件文件挂载的话，则将当前工作台对象挂载到指定的插件路径中
 				if(node == null || node.NodeType != PluginTreeNodeType.Builtin)
-					_applicationContext.PluginContext.PluginTree.Mount(_applicationContext.PluginContext.Options.Mountion.WorkbenchPath, this);
+					_applicationContext.PluginTree.Mount(_applicationContext.Options.Mountion.WorkbenchPath, this);
 			}
 			catch
 			{
@@ -274,7 +257,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = _applicationContext.PluginContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = _applicationContext.PluginTree.Find(_startupPath);
 
 			//运行启动路径下的所有工作者
 			if(startupNode != null)
@@ -287,7 +270,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = _applicationContext.PluginContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = _applicationContext.PluginTree.Find(_startupPath);
 
 			//停止启动路径下的所有工作者
 			if(startupNode != null)

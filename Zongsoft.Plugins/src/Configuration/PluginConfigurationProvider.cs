@@ -160,7 +160,7 @@ namespace Zongsoft.Configuration.Plugins
 				new Zongsoft.Configuration.Xml.XmlConfigurationProvider(
 					new Zongsoft.Configuration.Xml.XmlConfigurationSource()
 					{
-						Path = Path.Combine(filePath, $"{fileName}.{plugin.Context.ApplicationContext.Environment.Name}.option"),
+						Path = Path.Combine(filePath, $"{fileName}.{plugin.PluginTree.ApplicationContext.Environment.Name}.option"),
 						Optional = true,
 					})
 			};

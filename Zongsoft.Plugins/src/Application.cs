@@ -64,13 +64,13 @@ namespace Zongsoft.Plugins
 			try
 			#endif
 			{
-				context.PluginContext.PluginTree.Loader.Loaded += delegate
+				context.PluginTree.Loader.Loaded += delegate
 				{
 					//插件树加载完成即保存当前应用上下文
 					_context = context;
 
 					//将应用上下文对象挂载到插件结构中
-					_context.PluginContext.PluginTree.Mount(_context.PluginContext.Options.Mountion.ApplicationContextPath, _context);
+					_context.PluginTree.Mount(_context.Options.Mountion.ApplicationContextPath, _context);
 
 					//将应用上下文对象注册到默认服务容器中
 					if(_context.Services != null)
@@ -84,7 +84,7 @@ namespace Zongsoft.Plugins
 				}
 
 				//加载插件树
-				context.PluginContext.PluginTree.Loader.Load();
+				context.PluginTree.Loader.Load();
 
 				//如果工作台对象不为空则运行工作台
 				if(context.GetWorkbench(args) != null)

@@ -86,18 +86,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前的插件上下文对象。
-		/// </summary>
-		public PluginContext Context
+		public PluginTree Tree
 		{
-			get
-			{
-				if(this.Plugin == null)
-					return null;
-
-				return this.Plugin.Context;
-			}
+			get => _node?.Tree;
 		}
 
 		/// <summary>
@@ -105,14 +96,8 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		public PluginTreeNode Node
 		{
-			get
-			{
-				return _node;
-			}
-			internal set
-			{
-				_node = value;
-			}
+			get => _node;
+			internal set => _node = value;
 		}
 
 		/// <summary>

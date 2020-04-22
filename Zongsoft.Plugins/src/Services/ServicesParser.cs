@@ -190,7 +190,7 @@ namespace Zongsoft.Services.Plugins
 
 		private IServiceProvider FindServiceProvider(ParserContext context, Match match)
 		{
-			if(context == null || context.PluginContext.ApplicationContext.Services == null)
+			if(context == null || context.PluginTree.ApplicationContext.Services == null)
 				return null;
 
 			if(match == null || (!match.Success))

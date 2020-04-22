@@ -47,7 +47,7 @@ namespace Zongsoft.Configuration.Plugins
 		#region 初始化器
 		public void Initialize(PluginApplicationContext context)
 		{
-			_loader = context.PluginContext.PluginTree.Loader;
+			_loader = context.PluginTree.Loader;
 
 			_loader.PluginLoaded += Loader_PluginLoaded;
 			_loader.PluginUnloaded += Loader_PluginUnloaded;
@@ -81,8 +81,8 @@ namespace Zongsoft.Configuration.Plugins
 
 			var configurator = new ConfigurationBuilder()
 				.AddOptionFile(Path.Combine(filePath, $"{fileName}.option"), true)
-				.AddOptionFile(Path.Combine(filePath, $"{fileName}.{e.Plugin.Context.ApplicationContext.Environment.Name}.option"), true)
-				.AddConfiguration(e.Plugin.Context.ApplicationContext.Configuration);
+				.AddOptionFile(Path.Combine(filePath, $"{fileName}.{e.Plugin.PluginTree.ApplicationContext.Environment.Name}.option"), true)
+				.AddConfiguration(e.Plugin.PluginTree.ApplicationContext.Configuration);
 
 			configurator.Build();
 		}

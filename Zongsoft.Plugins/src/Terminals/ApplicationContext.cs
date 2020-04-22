@@ -38,7 +38,7 @@ namespace Zongsoft.Terminals.Plugins
 		#region 重写方法
 		protected override IWorkbenchBase CreateWorkbench(string[] args)
 		{
-			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath);
+			PluginTreeNode node = this.PluginTree.Find(this.Options.Mountion.WorkbenchPath);
 
 			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
 				return base.CreateWorkbench(args);

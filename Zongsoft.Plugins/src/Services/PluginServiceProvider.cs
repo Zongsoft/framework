@@ -44,7 +44,7 @@ namespace Zongsoft.Services
 		#region 成员变量
 		private string _path;
 		private PluginTreeNode _node;
-		private PluginContext _context;
+		private PluginTree _tree;
 		#endregion
 
 		#region 构造函数
@@ -62,7 +62,7 @@ namespace Zongsoft.Services
 			else
 				_path = path == "." ? builtin.FullPath : path;
 
-			_context = builtin.Context;
+			_tree = builtin.Tree;
 			this.Storage = new PluginServiceStorage(this);
 		}
 		#endregion
@@ -97,20 +97,9 @@ namespace Zongsoft.Services
 			get
 			{
 				if(_node == null)
-					_node = _context.PluginTree.Find(_path);
+					_node = _tree.Find(_path);
 
 				return _node;
-			}
-		}
-
-		/// <summary>
-		/// 获取插件上下文对象。
-		/// </summary>
-		public PluginContext Context
-		{
-			get
-			{
-				return _context;
 			}
 		}
 		#endregion
