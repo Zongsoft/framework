@@ -376,7 +376,7 @@ namespace Zongsoft.Plugins
 			if(parts.Length != 2)
 				throw new PluginException(string.Format("Invalid '{0}' ExtendElement in '{1}'.", reader.Name, builtin.ToString()));
 
-			if(string.Equals(parts[0], builtin.BuilderName, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(parts[0], builtin.Scheme, StringComparison.OrdinalIgnoreCase))
 			{
 				switch(parts[1].ToLowerInvariant())
 				{

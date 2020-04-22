@@ -62,7 +62,7 @@ namespace Zongsoft.Plugins.Builders
 			_ownerNode = ownerNode;
 
 			if(builtin.HasBehaviors)
-				_cancel = builtin.Behaviors.GetBehaviorValue<bool>(builtin.BuilderName + ".break");
+				_cancel = builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
 
 			_syncRoot = new object();
 		}

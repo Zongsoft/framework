@@ -195,8 +195,7 @@ namespace Zongsoft.Plugins
 		#region 保护方法
 		protected virtual void OnWorkbenchCreated(EventArgs e)
 		{
-			if(this.WorkbenchCreated != null)
-				this.WorkbenchCreated(this, e);
+			this.WorkbenchCreated?.Invoke(this, e);
 		}
 		#endregion
 	}

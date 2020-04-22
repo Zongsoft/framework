@@ -79,10 +79,8 @@ namespace Zongsoft.Plugins.Builders
 		#region 私有方法
 		private object BuildCore(BuilderContext context)
 		{
-			object value;
-
 			//判断当前待创建的构件是否正在当前构建序列中，如果是则立即返回其目标值
-			if(this.TryGetBuilding(context.Builtin, out value))
+			if(this.TryGetBuilding(context.Builtin, out var value))
 				return value;
 
 			try
@@ -111,8 +109,7 @@ namespace Zongsoft.Plugins.Builders
 			}
 			finally
 			{
-				BuildToken token;
-				_stack.TryPop(out token);
+				_stack.TryPop(out _);
 			}
 
 			//回调构建完成通知方法
@@ -172,10 +169,10 @@ namespace Zongsoft.Plugins.Builders
 				throw new ArgumentNullException("builtin");
 
 			//获取当前构件的构建器对象
-			IBuilder builder = builtin.Plugin.GetBuilder(builtin.BuilderName);
+			IBuilder builder = builtin.Plugin.GetBuilder(builtin.Scheme);
 
 			if(builder == null)
-				throw new PluginException(string.Format(@"The name is '{0}' of Builder not found in '{1}' plugin." + Environment.NewLine + "{2}", builtin.BuilderName, builtin.Plugin.Name, builtin.Plugin.FilePath));
+				throw new PluginException(string.Format(@"The name is '{0}' of Builder not found in '{1}' plugin." + Environment.NewLine + "{2}", builtin.Scheme, builtin.Plugin.Name, builtin.Plugin.FilePath));
 
 			return builder;
 		}
@@ -208,10 +205,7 @@ namespace Zongsoft.Plugins.Builders
 			#region 构造函数
 			internal BuildToken(Builtin builtin, object target)
 			{
-				if(builtin == null)
-					throw new ArgumentNullException(nameof(builtin));
-
-				this.Builtin = builtin;
+				this.Builtin = builtin ?? throw new ArgumentNullException(nameof(builtin));
 				this.Target = target;
 			}
 			#endregion
@@ -227,7 +221,7 @@ namespace Zongsoft.Plugins.Builders
 
 			public override int GetHashCode()
 			{
-				return this.Builtin.GetHashCode();
+				return HashCode.Combine(Builtin);
 			}
 
 			public override string ToString()

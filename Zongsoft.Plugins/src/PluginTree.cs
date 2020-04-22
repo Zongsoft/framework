@@ -167,8 +167,7 @@ namespace Zongsoft.Plugins
 		/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
 		public PluginTreeNode EnsurePath(string path)
 		{
-			bool existed;
-			return this.EnsurePath(path, null, out existed);
+			return this.EnsurePath(path, null, out _);
 		}
 
 		/// <summary>
@@ -179,8 +178,7 @@ namespace Zongsoft.Plugins
 		/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
 		public PluginTreeNode EnsurePath(string path, string position)
 		{
-			bool existed;
-			return this.EnsurePath(path, position, out existed);
+			return this.EnsurePath(path, position, out _);
 		}
 
 		/// <summary>
@@ -286,7 +284,7 @@ namespace Zongsoft.Plugins
 			if(node == null)
 				throw new ArgumentNullException(nameof(node));
 
-			if(value is Builtin || value is PluginElement || value is PluginTree || value is PluginContext)
+			if(value is Builtin || value is PluginElement || value is PluginTree)
 				return false;
 
 			//激发“Mounting”事件
@@ -434,7 +432,7 @@ namespace Zongsoft.Plugins
 
 				if(string.ReferenceEquals(builtin.Plugin, plugin))
 				{
-					IBuilder builder = node.Plugin.GetBuilder(builtin.BuilderName);
+					IBuilder builder = node.Plugin.GetBuilder(builtin.Scheme);
 					if(builder != null)
 						builder.Destroy(Builders.BuilderContext.CreateContext(builder, builtin));
 

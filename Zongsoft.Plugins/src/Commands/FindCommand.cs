@@ -41,17 +41,17 @@ namespace Zongsoft.Plugins.Commands
 	public class FindCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
-		private PluginContext _pluginContext;
+		private readonly PluginTree _pluginTree;
 		#endregion
 
 		#region 构造函数
-		public FindCommand(PluginContext pluginContext) : this("Find", pluginContext)
+		public FindCommand(PluginTree pluginTree) : this("Find", pluginTree)
 		{
 		}
 
-		public FindCommand(string name, PluginContext pluginContext) : base(name)
+		public FindCommand(string name, PluginTree pluginTree) : base(name)
 		{
-			_pluginContext = pluginContext ?? throw new ArgumentNullException(nameof(pluginContext));
+			_pluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
 		}
 		#endregion
 
@@ -65,7 +65,7 @@ namespace Zongsoft.Plugins.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				result[i] = _pluginContext.PluginTree.Find(context.Expression.Arguments[i]);
+				result[i] = _pluginTree.Find(context.Expression.Arguments[i]);
 
 				if(result[i] == null)
 					context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Expression.Arguments[i]));

@@ -142,9 +142,7 @@ namespace Zongsoft.Plugins.Builders
 		#region 虚拟方法
 		protected virtual void ApplyBehaviors(BuilderContext context)
 		{
-			BuiltinBehavior behavior = null;
-
-			if(context.Builtin.HasBehaviors && context.Builtin.Behaviors.TryGet("property", out behavior))
+			if(context.Builtin.HasBehaviors && context.Builtin.Behaviors.TryGet("property", out var behavior))
 			{
 				//var path = behavior.GetPropertyValue<string>("name");
 				//var target = behavior.GetPropertyValue<object>("target");

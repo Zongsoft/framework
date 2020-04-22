@@ -41,26 +41,24 @@ namespace Zongsoft.Plugins.Commands
 	public class TreeCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
-		private PluginContext _pluginContext;
+		private readonly PluginTree _pluginTree;
 		#endregion
 
 		#region 构造函数
-		public TreeCommand(PluginContext pluginContext) : this("Tree", pluginContext)
+		public TreeCommand(PluginTree pluginTree) : this("Tree", pluginTree)
 		{
 		}
 
-		public TreeCommand(string name, PluginContext pluginContext) : base(name)
+		public TreeCommand(string name, PluginTree pluginTree) : base(name)
 		{
-			_pluginContext = pluginContext ?? throw new ArgumentNullException(nameof(pluginContext));
+			_pluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
 		}
 		#endregion
 
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var node = context.Parameter as PluginTreeNode;
-
-			if(node == null)
+			if(!(context.Parameter is PluginTreeNode node))
 			{
 				if(context.Parameter != null)
 					throw new CommandException(string.Format(Properties.Resources.Text_Message_InvalidCommandParameter, context.CommandNode.FullPath));
@@ -71,7 +69,7 @@ namespace Zongsoft.Plugins.Commands
 				if(context.Expression.Arguments.Length > 1)
 					throw new CommandException(Properties.Resources.Text_Message_CommandArgumentsTooMany);
 
-				node = _pluginContext.PluginTree.Find(context.Expression.Arguments[0]);
+				node = _pluginTree.Find(context.Expression.Arguments[0]);
 
 				if(node == null)
 				{

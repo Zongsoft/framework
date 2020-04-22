@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
@@ -40,7 +38,7 @@ namespace Zongsoft.Plugins
 	///		<para>构件是组成插件的基本组成单位。</para>
 	///		<para>构件一旦被创建就属于某个插件，其位于所属插件的<seealso cref="Zongsoft.Plugins.Plugin.Builtins"/>集合内，但该构件是否处于插件树中，则取决于其所属的插件是否已经被成功加载，即插件的<seealso cref="Zongsoft.Plugins.Plugin.Status"/>属性应为<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>。</para>
 	/// </remarks>
-	public sealed class Builtin : PluginElement
+	public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	{
 		#region 事件定义
 		public event EventHandler<ValueChangedEventArgs> ValueChanged;
@@ -52,7 +50,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 成员变量
-		private string _builderName;
+		private readonly string _scheme;
 		private string _position;
 		private BuiltinType _builtinType;
 		private bool _isBuilded;
@@ -63,22 +61,22 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		internal Builtin(string builderName, string name, Plugin plugin) : base(name, plugin)
+		internal Builtin(string scheme, string name, Plugin plugin) : base(name, plugin)
 		{
-			if(string.IsNullOrWhiteSpace(builderName))
-				throw new ArgumentNullException("builderName");
+			if(string.IsNullOrWhiteSpace(scheme))
+				throw new ArgumentNullException(nameof(scheme));
 
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+				throw new ArgumentNullException(nameof(plugin));
 
 			_builtinType = null;
 			_value = null;
 			_isBuilded = false;
 			_position = string.Empty;
-			_builderName = builderName.Trim();
+			_scheme = scheme.Trim();
 
 			//将当前构件加入到所属插件的构件集中
 			plugin.RegisterBuiltin(this);
@@ -127,12 +125,9 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取构件的构建器名称，即构件在插件文件中的元素名。
 		/// </summary>
-		public string BuilderName
+		public string Scheme
 		{
-			get
-			{
-				return _builderName;
-			}
+			get => _scheme;
 		}
 
 		/// <summary>
@@ -302,10 +297,10 @@ namespace Zongsoft.Plugins
 			if(_builtinType != null)
 				return _builtinType.Type;
 
-			var builder = this.Plugin.GetBuilder(_builderName);
+			var builder = this.Plugin.GetBuilder(_scheme);
 
 			if(builder == null)
-				throw new PluginException($"Not found the builder for the '{_builderName}'({this.FullPath}) builtin.");
+				throw new PluginException($"Not found the builder for the '{_scheme}'({this.FullPath}) builtin.");
 
 			return builder.GetValueType(this);
 		}
@@ -348,42 +343,40 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
+		public bool Equals(Builtin other)
 		{
-			return string.Format("[{0}]{1}@{2}", this.BuilderName, this.FullPath, this.Plugin.Name);
+			return string.Equals(this.Scheme, other.Scheme, StringComparison.OrdinalIgnoreCase) &&
+				   string.Equals(this.FullPath, other.FullPath, StringComparison.OrdinalIgnoreCase);
 		}
 
 		public override bool Equals(object obj)
 		{
-			if(obj == null)
+			if(obj == null || obj.GetType() != this.GetType())
 				return false;
 
-			Builtin target = obj as Builtin;
-
-			if(target == null)
-				return false;
-
-			return string.Equals(_builderName, target.BuilderName, StringComparison.OrdinalIgnoreCase) &&
-				   string.Equals(this.FullPath, target.FullPath, StringComparison.OrdinalIgnoreCase);
+			return this.Equals((Builtin)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return string.Format("{0}@{1}", this.FullPath.ToLowerInvariant(), this.BuilderName.ToLowerInvariant()).GetHashCode();
+			return HashCode.Combine(this.Scheme, this.FullPath);
+		}
+
+		public override string ToString()
+		{
+			return string.Format("[{0}]{1}@{2}", this.Scheme, this.FullPath, this.Plugin.Name);
 		}
 		#endregion
 
 		#region 私有方法
 		private void OnValueChanged(object value)
 		{
-			if(this.ValueChanged != null)
-				this.ValueChanged(this, new ValueChangedEventArgs(value));
+			this.ValueChanged?.Invoke(this, new ValueChangedEventArgs(value));
 		}
 
 		private void OnValueChanging(object oldValue, object newValue)
 		{
-			if(this.ValueChanging != null)
-				this.ValueChanging(this, new ValueChangingEventArgs(oldValue, newValue));
+			this.ValueChanging?.Invoke(this, new ValueChangingEventArgs(oldValue, newValue));
 		}
 		#endregion
 	}

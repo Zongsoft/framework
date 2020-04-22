@@ -32,7 +32,6 @@ using System;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Zongsoft.Plugins.Hosting
 {
@@ -47,7 +46,7 @@ namespace Zongsoft.Plugins.Hosting
 		{
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 
-            _builder.ConfigureAppConfiguration(configurator =>
+            _builder.ConfigureAppConfiguration((ctx, configurator) =>
             {
                 configurator.Add(Zongsoft.Configuration.Plugins.PluginConfigurationSource.Instance);
             });
@@ -103,9 +102,14 @@ namespace Zongsoft.Plugins.Hosting
 		{
             if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
             {
-                var pluginsHostBuilderContext = new PluginsHostBuilderContext(
-                    new PluginOptions(context.HostingEnvironment.ContentRootPath),
-                    context.Properties)
+                PluginOptions options;
+
+                if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
+                    options = (PluginOptions)optionsValue;
+                else
+                    options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
+
+                var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
                 {
                     Configuration = context.Configuration,
                     HostingEnvironment = context.HostingEnvironment,

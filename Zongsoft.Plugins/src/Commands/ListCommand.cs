@@ -40,17 +40,17 @@ namespace Zongsoft.Plugins.Commands
 	public class ListCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
-		private PluginContext _pluginContext;
+		private readonly PluginTree _pluginTree;
 		#endregion
 
 		#region 构造函数
-		public ListCommand(PluginContext pluginContext) : this("List", pluginContext)
+		public ListCommand(PluginTree pluginTree) : this("List", pluginTree)
 		{
 		}
 
-		public ListCommand(string name, PluginContext pluginContext) : base(name)
+		public ListCommand(string name, PluginTree pluginTree) : base(name)
 		{
-			_pluginContext = pluginContext ?? throw new ArgumentNullException(nameof(pluginContext));
+			_pluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
 		}
 		#endregion
 
@@ -59,12 +59,12 @@ namespace Zongsoft.Plugins.Commands
 		{
 			int index = 0;
 
-			foreach(var plugin in _pluginContext.Plugins)
+			foreach(var plugin in _pluginTree.Plugins)
 			{
 				this.WritePlugin(context.Output, plugin, 0, index++);
 			}
 
-			return _pluginContext.Plugins;
+			return _pluginTree.Plugins;
 		}
 		#endregion
 

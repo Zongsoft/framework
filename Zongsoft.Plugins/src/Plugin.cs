@@ -211,9 +211,9 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取指定构件的构建器。
 		/// </summary>
-		/// <param name="builderName">指定的构建器名称。</param>
+		/// <param name="scheme">指定的构建器名称。</param>
 		/// <returns>如果找到对应的构建器则返回构建器对象，否则返回空(null)。</returns>
-		/// <exception cref="System.ArgumentNullException">当<paramref name="builderName"/>参数为空(null)或空白字符。</exception>
+		/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(null)或空白字符。</exception>
 		/// <remarks>
 		/// <para>查找构建器的流程如下：</para>
 		/// <list type="number">
@@ -225,9 +225,9 @@ namespace Zongsoft.Plugins
 		///		</item>
 		/// </list>
 		/// </remarks>
-		public IBuilder GetBuilder(string builderName)
+		public IBuilder GetBuilder(string scheme)
 		{
-			var element = this.GetFixedElement(builderName, this, (plugin) => plugin._builders);
+			var element = this.GetFixedElement(scheme, this, (plugin) => plugin._builders);
 
 			if(element != null)
 				return (IBuilder)element.GetValue();
@@ -238,9 +238,9 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取指定构件的解析器。
 		/// </summary>
-		/// <param name="parserName">指定的解析器名称。</param>
+		/// <param name="scheme">指定的解析器名称。</param>
 		/// <returns>如果找到对应的解析器则返回解析器对象，否则返回空(null)。</returns>
-		/// <exception cref="System.ArgumentNullException">当<paramref name="parserName"/>参数为空(null)或空白字符。</exception>
+		/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(null)或空白字符。</exception>
 		/// <remarks>
 		/// <para>查找解析器的流程如下：</para>
 		/// <list type="number">
@@ -252,9 +252,9 @@ namespace Zongsoft.Plugins
 		///		</item>
 		/// </list>
 		/// </remarks>
-		public IParser GetParser(string parserName)
+		public IParser GetParser(string scheme)
 		{
-			var element = this.GetFixedElement(parserName, this, (plugin) => plugin._parsers);
+			var element = this.GetFixedElement(scheme, this, (plugin) => plugin._parsers);
 
 			if(element != null)
 				return (IParser)element.GetValue();
@@ -472,12 +472,12 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 创建构件
-		internal Builtin CreateBuiltin(string builderName, string name)
+		internal Builtin CreateBuiltin(string scheme, string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				name = "$" + builderName + "-" + PluginUtility.GetAnonymousId().ToString();
+				name = "$" + scheme + "-" + PluginUtility.GetAnonymousId().ToString();
 
-			return new Builtin(builderName, name, this);
+			return new Builtin(scheme, name, this);
 		}
 		#endregion
 
