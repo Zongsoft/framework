@@ -28,29 +28,38 @@
  */
 
 using System;
-using System.Threading;
+using System.Collections.Generic;
 
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Plugins.Hosting
+namespace Zongsoft.Plugins.Configuration
 {
-	public static class PluginsHostBuilderExtension
+	public class PluginConfigurationSource : IConfigurationSource
 	{
-        public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, Action<IPluginsHostBuilder> configure = null) where TApplicationContext : class, Services.IApplicationContext
+		#region 构造函数
+		public PluginConfigurationSource(PluginLoader loader)
+		{
+			this.Loader = loader ?? throw new ArgumentNullException(nameof(loader));
+		}
+		#endregion
+
+		#region 公共属性
+		public PluginLoader Loader
+		{
+			get;
+		}
+		#endregion
+
+		#region 公共方法
+		public IConfigurationProvider Build(IConfigurationBuilder builder)
+		{
+			return new PluginConfigurationProvider(this);
+		}
+        #endregion
+
+        internal IEnumerable<Plugin> GetPlugins()
         {
-            if(builder == null)
-                throw new ArgumentNullException(nameof(builder));
-
-            if(typeof(TApplicationContext).IsAbstract)
-                throw new ArgumentException();
-
-            var pluginsBuilder = new PluginsHostBuilder(builder);
-            configure(pluginsBuilder);
-            builder.ConfigureServices(services => services.AddSingleton<Services.IApplicationContext, TApplicationContext>());
-            builder.ConfigureServices((ctx, services) => services.AddHostedService<PluginsHostStarter>());
-
-            return builder;
+            throw new NotImplementedException();
         }
-    }
+	}
 }

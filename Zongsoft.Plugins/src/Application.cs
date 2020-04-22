@@ -36,12 +36,10 @@ namespace Zongsoft.Plugins
 	{
 		#region 事件声明
 		public static event EventHandler Exiting;
-		public static event EventHandler Starting;
 		public static event EventHandler Started;
 		#endregion
 
 		#region 成员变量
-		private static int _flags;
 		private static PluginApplicationContext _context;
 		#endregion
 
@@ -61,9 +59,6 @@ namespace Zongsoft.Plugins
 		{
 			//保存当前上下文对象
 			_context = context ?? throw new ArgumentNullException(nameof(context));
-
-			//激发“Starting”事件
-			OnStarting(args);
 
 			#if !DEBUG
 			try
@@ -153,12 +148,6 @@ namespace Zongsoft.Plugins
 				else if(initializer is IDisposable disposable)
 					disposable.Dispose();
 			}
-
-			//重置标记
-			_flags = 0;
-
-			//将当前应用上下文对象从列表中删除
-			_context = null;
 		}
 		#endregion
 
@@ -174,23 +163,12 @@ namespace Zongsoft.Plugins
 			context.RaiseExiting();
 		}
 
-		private static void OnStarting(string[] args)
-		{
-			Starting?.Invoke(null, EventArgs.Empty);
-
-			//激发当前上下文的“Starting”事件
-			_context.RaiseStarting(args);
-		}
-
 		private static void OnStarted(string[] args)
 		{
-			if(Interlocked.CompareExchange(ref _flags, 1, 0) == 0)
-			{
-				Started?.Invoke(null, EventArgs.Empty);
+			Started?.Invoke(null, EventArgs.Empty);
 
-				//激发当前上下文的“Started”事件
-				_context.RaiseStarted(args);
-			}
+			//激发当前上下文的“Started”事件
+			_context.RaiseStarted(args);
 		}
 		#endregion
 	}

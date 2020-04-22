@@ -48,7 +48,7 @@ namespace Zongsoft.Plugins
 			this.PluginContext = new PluginContext(this, this.CreateOptions());
 		}
 
-		protected PluginApplicationContext(string name) : base(name)
+		protected PluginApplicationContext(IServiceProvider services) : base(services)
 		{
 			_syncRoot = new object();
 			this.PluginContext = new PluginContext(this, this.CreateOptions());
@@ -164,15 +164,6 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 激发事件
-		internal void RaiseStarting(string[] args)
-		{
-			//更新当前应用的上下文
-			Current = this;
-
-			//激发“Starting”事件
-			this.OnStarting(EventArgs.Empty);
-		}
-
 		internal void RaiseStarted(string[] args)
 		{
 			this.OnStarted(EventArgs.Empty);
