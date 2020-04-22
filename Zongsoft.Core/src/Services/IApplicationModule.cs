@@ -30,8 +30,8 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.ComponentModel;
 using Zongsoft.Collections;
+using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
 {
@@ -43,51 +43,31 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取应用模块名称。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
+		string Name { get; }
 
 		/// <summary>
-		/// 获取或设置应用模块的标题。
+		/// 获取应用模块的标题。
 		/// </summary>
-		string Title
-		{
-			get;
-			set;
-		}
+		string Title { get; }
 
 		/// <summary>
-		/// 获取或设置应用模块的描述文本。
+		/// 获取应用模块的描述文本。
 		/// </summary>
-		string Description
-		{
-			get;
-			set;
-		}
+		string Description { get; }
 
 		/// <summary>
 		/// 获取应用模块的服务容器。
 		/// </summary>
-		IServiceProvider Services
-		{
-			get;
-		}
+		System.IServiceProvider Services { get; }
 
 		/// <summary>
 		/// 获取应用模块的授权目标集。
 		/// </summary>
-		INamedCollection<Schema> Schemas
-		{
-			get;
-		}
+		INamedCollection<Schema> Schemas { get; }
 
 		/// <summary>
 		/// 获取应用模块的自定义属性集。
 		/// </summary>
-		IDictionary<string, object> Properties
-		{
-			get;
-		}
+		IDictionary<string, object> Properties { get; }
 	}
 }

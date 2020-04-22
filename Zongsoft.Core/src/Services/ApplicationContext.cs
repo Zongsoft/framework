@@ -33,6 +33,10 @@ using System.Threading;
 using System.Security.Claims;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Modules))]
@@ -44,30 +48,35 @@ namespace Zongsoft.Services
 
 		#region 事件声明
 		public event EventHandler Exiting;
-		public event EventHandler Starting;
 		public event EventHandler Started;
 		#endregion
 
 		#region 成员字段
-		private string _name;
+		private System.IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		protected ApplicationContext() : this(string.Empty)
+		protected ApplicationContext()
 		{
-		}
-
-		protected ApplicationContext(string name)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				_name = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
-			else
-				_name = this.Title = name.Trim();
+			_current = this;
 
 			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
 			this.Initializers = new List<IApplicationInitializer>();
 			this.Schemas = new ComponentModel.SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		}
+
+		protected ApplicationContext(System.IServiceProvider services) : this()
+		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
+
+			var lifetime = _services.GetService<IHostApplicationLifetime>();
+
+			if(lifetime != null)
+			{
+				lifetime.ApplicationStarted.Register(() => this.OnStarted(EventArgs.Empty));
+				lifetime.ApplicationStopping.Register(() => this.OnExiting(EventArgs.Empty));
+			}
 		}
 		#endregion
 
@@ -78,59 +87,69 @@ namespace Zongsoft.Services
 		public static IApplicationContext Current
 		{
 			get => _current;
-			protected set => _current = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 公共属性
 		public virtual string Name
 		{
-			get
-			{
-				return string.IsNullOrEmpty(_name) ? this.Configuration?.GetSection("ApplicationName").Value : null;
-			}
-			protected set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value.Trim();
-			}
+			get => this.Services.GetService<IHostEnvironment>()?.ApplicationName;
 		}
 
-		public string Title { get; set; }
+		public string Title
+		{
+			get => this.Configuration?.GetSection("ApplicationTitle").Value;
+		}
 
-		public string Description { get; set; }
+		public string Description
+		{
+			get => this.Configuration?.GetSection("ApplicationDescription").Value;
+		}
 
 		public virtual string ApplicationDirectory
 		{
-			get => AppContext.BaseDirectory;
+			get => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
 		}
 
-		public virtual Microsoft.Extensions.Configuration.IConfigurationRoot Configuration
+		public virtual IConfiguration Configuration
 		{
-			get => null;
+			get => this.Services?.GetService<HostBuilderContext>()?.Configuration;
 		}
 
 		public virtual IApplicationEnvironment Environment
 		{
-			get => null;
+			get
+			{
+				if(this.Properties.TryGetValue(nameof(this.Environment), out var value) && value is IApplicationEnvironment environment)
+					return environment;
+
+				environment = this.Services?.GetService<IApplicationEnvironment>();
+
+				if(environment == null)
+				{
+					var hosting = this.Services?.GetService<IHostEnvironment>();
+
+					if(hosting == null)
+						return null;
+
+					environment = new ApplicationEnvironment(hosting);
+				}
+
+				if(this.Properties.TryAdd(nameof(this.Environment), environment))
+					return environment;
+
+				return this.Properties[nameof(this.Environment)] as IApplicationEnvironment;
+			}
 		}
 
-		public virtual IServiceProvider Services
+		public virtual System.IServiceProvider Services
 		{
-			get => ServiceProviderFactory.Instance.Default;
+			get => _services;
 		}
 
 		public virtual ClaimsPrincipal Principal
 		{
-			get
-			{
-				if(Thread.CurrentPrincipal is ClaimsPrincipal principal)
-					return principal;
-				else
-					return new ClaimsPrincipal(Thread.CurrentPrincipal);
-			}
+			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : ClaimsPrincipal.Current;
 		}
 
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
@@ -173,11 +192,6 @@ namespace Zongsoft.Services
 			this.Exiting?.Invoke(this, args);
 		}
 
-		protected virtual void OnStarting(EventArgs args)
-		{
-			this.Starting?.Invoke(this, args);
-		}
-
 		protected virtual void OnStarted(EventArgs args)
 		{
 			this.Started?.Invoke(this, args);
@@ -191,6 +205,40 @@ namespace Zongsoft.Services
 				return this.Name;
 			else
 				return string.Format("[{0}] {1}", this.Name, this.Title);
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class ApplicationEnvironment : IApplicationEnvironment
+		{
+			private IDictionary<string, object> _properties;
+			private readonly IHostEnvironment _environment;
+
+			public ApplicationEnvironment(IHostEnvironment environment)
+			{
+				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
+			}
+
+			public string Name
+			{
+				get => _environment.EnvironmentName;
+			}
+
+			public bool HasProperties
+			{
+				get => _properties != null && _properties.Count > 0;
+			}
+
+			public IDictionary<string, object> Properties
+			{
+				get
+				{
+					if(_properties == null)
+						Interlocked.CompareExchange(ref _properties, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+					return _properties;
+				}
+			}
 		}
 		#endregion
 	}

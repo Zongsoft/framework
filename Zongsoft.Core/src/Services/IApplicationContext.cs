@@ -43,7 +43,6 @@ namespace Zongsoft.Services
 	{
 		#region 事件定义
 		event EventHandler Exiting;
-		event EventHandler Starting;
 		event EventHandler Started;
 		#endregion
 
@@ -59,7 +58,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的应用配置。
 		/// </summary>
-		IConfigurationRoot Configuration
+		IConfiguration Configuration
 		{
 			get;
 		}
