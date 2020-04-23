@@ -51,12 +51,12 @@
 			<object name="Get" type="Zongsoft.Services.Commands.ServicesGetCommand, Zongsoft.Commands" />
 		</object>
 
-		<object name="Options">
+		<object name="Configuration">
 			<options.command>
-				<object type="Zongsoft.Options.Commands.OptionsCommand, Zongsoft.Commands" />
+				<object type="Zongsoft.Configuration.Commands.ConfigurationCommand, Zongsoft.Commands" />
 			</options.command>
 
-			<object name="Get" type="Zongsoft.Options.Commands.OptionsGetCommand, Zongsoft.Commands" />
+			<object name="Get" type="Zongsoft.Configuration.Commands.ConfigurationGetCommand, Zongsoft.Commands" />
 		</object>
 
 		<object name="Messaging">

@@ -31,27 +31,28 @@ using System;
 using System.ComponentModel;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Options.Commands
+namespace Zongsoft.Configuration.Commands
 {
 	/// <summary>
 	/// 该命令名为“get”，本命令获取当前选项提供程序中的指定选项路径的配置信息。
 	/// </summary>
 	/// <remarks>
 	///		<para>该命令的用法如下：</para>
-	///		<code>[options.]get path1 path2 ... path#n</code>
+	///		<code>[configuration.]get path1 path2 path3...</code>
 	///		<para>通过 arguments 来指定要查找的选项路径。</para>
 	/// </remarks>
 	[DisplayName("Text.OptionsGetCommand.Name")]
 	[Description("Text.OptionsGetCommand.Description")]
-	public class OptionsGetCommand : CommandBase<CommandContext>
+	public class ConfigurationGetCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public OptionsGetCommand() : base("Get")
+		public ConfigurationGetCommand() : base("Get")
 		{
 		}
 
-		public OptionsGetCommand(string name) : base(name)
+		public ConfigurationGetCommand(string name) : base(name)
 		{
 		}
 		#endregion
@@ -59,30 +60,30 @@ namespace Zongsoft.Options.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var optionProvider = OptionsCommand.GetOptionProvider(context.CommandNode);
+			var configuration = ConfigurationCommand.GetConfiguration(context.CommandNode);
 
-			if(optionProvider == null)
-				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "OptionProvider"));
-
-			object result = null;
+			if(configuration == null)
+				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
 
 			if(context.Expression.Arguments.Length == 0)
 				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 			if(context.Expression.Arguments.Length == 1)
-				result = optionProvider.GetOptionValue(context.Expression.Arguments[0]);
-			else
 			{
-				result = new object[context.Expression.Arguments.Length];
-
-				for(int i = 0; i < context.Expression.Arguments.Length; i++)
-					((object[])result)[i] = optionProvider.GetOptionValue(context.Expression.Arguments[i]);
+				var section = configuration.GetSection(context.Expression.Arguments[0]);
+				ConfigurationCommand.Print(section, context.Output, 0);
+				return section;
 			}
 
-			//打印获取的结果信息
-			context.Output.WriteLine(Zongsoft.Runtime.Serialization.Serializer.Json.Serialize(result));
+			var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Length];
 
-			return result;
+			for(int i = 0; i < context.Expression.Arguments.Length; i++)
+			{
+				sections[i] = configuration.GetSection(context.Expression.Arguments[i]);
+				ConfigurationCommand.Print(sections[i], context.Output, 0);
+			}
+
+			return sections;
 		}
 		#endregion
 	}
