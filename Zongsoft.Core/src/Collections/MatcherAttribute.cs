@@ -35,55 +35,34 @@ namespace Zongsoft.Collections
 	[AttributeUsage(AttributeTargets.Class)]
 	public class MatcherAttribute : Attribute
 	{
-		#region 成员字段
-		private Type _type;
-		#endregion
-
 		#region 构造函数
 		public MatcherAttribute(Type type)
 		{
 			if(type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			if(!typeof(IMatcher).IsAssignableFrom(type))
 				throw new ArgumentException("The type is not a IMatcher.");
 
-			_type = type;
+			this.MatcherType = type;
 		}
 
 		public MatcherAttribute(string typeName)
 		{
 			if(string.IsNullOrWhiteSpace(typeName))
-				throw new ArgumentNullException("typeName");
+				throw new ArgumentNullException(nameof(typeName));
 
 			var type = Type.GetType(typeName, false);
 
 			if(type == null || !typeof(IMatcher).IsAssignableFrom(type))
 				throw new ArgumentException("The type is not a IMatcher.");
 
-			_type = type;
+			this.MatcherType = type;
 		}
 		#endregion
 
 		#region 公共属性
-		public Type Type
-		{
-			get
-			{
-				return _type;
-			}
-		}
-
-		public IMatcher Matcher
-		{
-			get
-			{
-				if(_type == null)
-					return null;
-
-				return Activator.CreateInstance(_type) as IMatcher;
-			}
-		}
+		public Type MatcherType { get; }
 		#endregion
 	}
 }

@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Reflection;
 
 namespace Zongsoft.Collections
 {
@@ -44,19 +44,54 @@ namespace Zongsoft.Collections
 			if(target == null)
 				return false;
 
-			var matchable = target as IMatchable;
+            if(target is IMatchable matchable)
+                return matchable.Match(parameter);
 
-			if(matchable != null)
-				return matchable.IsMatch(parameter);
+            var matcher = GetMatcher(target.GetType());
 
-			var attribute = (MatcherAttribute)Attribute.GetCustomAttribute(target.GetType(), typeof(MatcherAttribute), true);
-
-			if(attribute != null && attribute.Matcher != null)
-				return attribute.Matcher.Match(target, parameter);
+            if(matcher != null)
+                return matcher.Match(target, parameter);
 
 			//注意：默认返回必须是真
 			return true;
 		}
+        #endregion
+
+        #region 静态方法
+        public static IMatcher GetMatcher(MemberInfo member)
+        {
+            if(member == null)
+                return null;
+
+            var attribute = member.GetCustomAttribute<MatcherAttribute>(true);
+
+            if(attribute != null && attribute.MatcherType != null)
+            {
+                var members = attribute.MatcherType.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Static | BindingFlags.Public, FindMember, null);
+
+                if(members != null && members.Length > 0)
+                {
+                    if(members[0] is FieldInfo field)
+                        return (IMatcher)field.GetValue(null);
+                    if(members[0] is PropertyInfo property)
+                        return (IMatcher)property.GetValue(null);
+                }
+
+                return (IMatcher)Activator.CreateInstance(attribute.MatcherType);
+            }
+
+            return null;
+        }
+
+        private static bool FindMember(MemberInfo member, object state)
+        {
+            if(member.MemberType == MemberTypes.Property)
+                return typeof(IMatcher).IsAssignableFrom(((PropertyInfo)member).PropertyType);
+            if(member.MemberType == MemberTypes.Field)
+                return typeof(IMatcher).IsAssignableFrom(((FieldInfo)member).FieldType);
+
+            return false;
+        }
 		#endregion
 	}
 }

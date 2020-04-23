@@ -330,7 +330,7 @@ namespace Zongsoft.Services
 		/// <param name="parameter">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
 		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
 		/// <remarks>该显式实现为调用<see cref="IsMatch"/>虚拟方法。</remarks>
-		bool Collections.IMatchable.IsMatch(object parameter)
+		bool Collections.IMatchable.Match(object parameter)
 		{
 			return this.IsMatch(parameter);
 		}

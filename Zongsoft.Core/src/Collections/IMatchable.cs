@@ -41,6 +41,6 @@ namespace Zongsoft.Collections
 		/// </summary>
 		/// <param name="parameter">指定是否匹配逻辑的参数。</param>
 		/// <returns>如果当前对象符合<paramref name="parameter"/>参数的匹配规则，则为真(true)；否则为假(false)。</returns>
-		bool IsMatch(object parameter);
+		bool Match(object parameter);
 	}
 }

@@ -41,7 +41,7 @@ namespace Zongsoft.Services
 		protected PredicationBase(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
 		}
@@ -74,14 +74,14 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 服务匹配
-		public virtual bool IsMatch(string parameter)
+		public virtual bool Match(string parameter)
 		{
 			return string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
 		}
 
-		bool Collections.IMatchable.IsMatch(object parameter)
+		bool Collections.IMatchable.Match(object parameter)
 		{
-			return this.IsMatch(parameter as string);
+			return this.Match(parameter as string);
 		}
 		#endregion
 

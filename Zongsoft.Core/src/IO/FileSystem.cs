@@ -112,7 +112,7 @@ namespace Zongsoft.IO
 				return virtualPath;
 
 			//如果传入的虚拟路径参数是一个URI格式，则直接返回它作为结果
-			if(Zongsoft.Text.TextRegular.Uri.Url.IsMatch(virtualPath))
+			if(Zongsoft.Text.TextRegular.Uri.Url.Match(virtualPath))
 				return virtualPath;
 
 			Path path;

@@ -33,6 +33,6 @@ namespace Zongsoft.Collections
 {
 	public interface IMatchable<T> : IMatchable
 	{
-		bool IsMatch(T parameter);
+		bool Match(T parameter);
 	}
 }

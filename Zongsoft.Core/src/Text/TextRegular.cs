@@ -50,7 +50,7 @@ namespace Zongsoft.Text
 		#endregion
 
 		#region 公共方法
-		public bool IsMatch(string text)
+		public bool Match(string text)
 		{
 			if(text == null || text.Length == 0)
 				return false;
@@ -105,12 +105,12 @@ namespace Zongsoft.Text
 		#endregion
 
 		#region 显式实现
-		bool Zongsoft.Collections.IMatchable.IsMatch(object parameter)
+		bool Zongsoft.Collections.IMatchable.Match(object parameter)
 		{
 			if(parameter == null)
 				return false;
 
-			return this.IsMatch(parameter as string);
+			return this.Match(parameter as string);
 		}
 		#endregion
 
