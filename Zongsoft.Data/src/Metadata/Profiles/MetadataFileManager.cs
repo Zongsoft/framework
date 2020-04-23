@@ -297,6 +297,11 @@ namespace Zongsoft.Data.Metadata.Profiles
 				}
 			}
 
+			public IEnumerable<string> Keys
+			{
+				get => _metadatas.Select(p => p.Name);
+			}
+
 			public IDataEntity this[string name]
 			{
 				get
@@ -372,6 +377,11 @@ namespace Zongsoft.Data.Metadata.Profiles
 				{
 					return _metadatas.Sum(p => p.Commands.Count);
 				}
+			}
+
+			public IEnumerable<string> Keys
+			{
+				get => _metadatas.Select(p => p.Name);
 			}
 
 			public IDataCommand this[string name]
