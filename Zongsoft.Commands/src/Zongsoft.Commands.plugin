@@ -52,9 +52,9 @@
 		</object>
 
 		<object name="Configuration">
-			<options.command>
+			<configuration.command>
 				<object type="Zongsoft.Configuration.Commands.ConfigurationCommand, Zongsoft.Commands" />
-			</options.command>
+			</configuration.command>
 
 			<object name="Get" type="Zongsoft.Configuration.Commands.ConfigurationGetCommand, Zongsoft.Commands" />
 		</object>
