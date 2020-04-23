@@ -47,19 +47,19 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 构造函数
-		public DataSource(Options.Configuration.ConnectionStringElement connectionString)
+		public DataSource(Configuration.IConnectionSetting connectionSetting)
 		{
-			if(connectionString == null)
-				throw new ArgumentNullException(nameof(connectionString));
+			if(connectionSetting == null)
+				throw new ArgumentNullException(nameof(connectionSetting));
 
-			_name = connectionString.Name;
-			_connectionString = connectionString.Value;
-			_driverName = connectionString.Provider;
+			_name = connectionSetting.Name;
+			_connectionString = connectionSetting.Value;
+			_driverName = connectionSetting.Driver;
 			this.Mode = DataAccessMode.All;
 
-			if(connectionString.HasExtendedProperties)
+			if(connectionSetting.HasProperties)
 			{
-				if(connectionString.ExtendedProperties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
+				if(connectionSetting.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
 				{
 					switch(mode.Trim().ToLowerInvariant())
 					{
@@ -82,7 +82,7 @@ namespace Zongsoft.Data.Common
 							this.Mode = DataAccessMode.All;
 							break;
 						default:
-							throw new Options.Configuration.OptionConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration.");
+							throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration.");
 					}
 				}
 			}

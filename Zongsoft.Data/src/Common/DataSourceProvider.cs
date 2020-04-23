@@ -30,8 +30,8 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Data.Common
 {
@@ -50,15 +50,15 @@ namespace Zongsoft.Data.Common
 		#region 公共方法
 		public IEnumerable<IDataSource> GetSources(string name)
 		{
-			var connectionStrings = OptionManager.Instance.GetOptionValue("/Data/ConnectionStrings") as IEnumerable<ConnectionStringElement>;
+			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionStrings");
 
-			if(connectionStrings != null)
+			if(connectionSettings != null)
 			{
-				foreach(ConnectionStringElement connectionString in connectionStrings)
+				foreach(var connectionSetting in connectionSettings)
 				{
-					if(string.Equals(connectionString.Name, name, StringComparison.OrdinalIgnoreCase) ||
-					   connectionString.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
-						yield return new DataSource(connectionString);
+					if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+					   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
+						yield return new DataSource(connectionSetting);
 				}
 			}
 		}
