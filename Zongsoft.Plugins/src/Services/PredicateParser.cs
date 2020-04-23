@@ -52,13 +52,13 @@ namespace Zongsoft.Services.Plugins
 
 			var parts = matches[0].Value.Split('.');
 
-			if(parts.Length != 2)
+			if(parts.Length > 2)
 				throw new PluginException("Can not parse for the predication because of a syntax error.");
 
-			IPredication predication = null;
+			IPredication predication;
 
 			if(parts.Length == 1)
-				predication = context.PluginTree.ApplicationContext.Services.Resolve(parts[0]) as IPredication;
+				predication = context.PluginTree.ApplicationContext.Services.Match<IPredication>(parts[0]);
 			else
 			{
 				var serviceProvider = Services.ServiceProviderFactory.Instance.GetProvider(parts[0]);
@@ -66,7 +66,7 @@ namespace Zongsoft.Services.Plugins
 				if(serviceProvider == null)
 					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
 
-				predication = serviceProvider.Resolve(parts[1]) as IPredication;
+				predication = serviceProvider.Match<IPredication>(parts[1]);
 			}
 
 			if(predication != null)

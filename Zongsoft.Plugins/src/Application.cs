@@ -71,10 +71,6 @@ namespace Zongsoft.Plugins
 
 					//将应用上下文对象挂载到插件结构中
 					_context.PluginTree.Mount(_context.Options.Mountion.ApplicationContextPath, _context);
-
-					//将应用上下文对象注册到默认服务容器中
-					if(_context.Services != null)
-						_context.Services.Register("ApplicationContext", _context);
 				};
 
 				//初始化
@@ -87,7 +83,7 @@ namespace Zongsoft.Plugins
 				context.PluginTree.Loader.Load();
 
 				//如果工作台对象不为空则运行工作台
-				if(context.GetWorkbench(args) != null)
+				if(context.Workbench != null)
 				{
 					//注意：因为工作台很可能会阻塞当前主线程，所以需要利用其Opened事件进行注册
 					context.Workbench.Opened += delegate

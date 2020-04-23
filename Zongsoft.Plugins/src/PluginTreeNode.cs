@@ -365,9 +365,18 @@ namespace Zongsoft.Plugins
 				return;
 			}
 
-			if(typeof(Builtin).IsAssignableFrom(value.GetType()))
+			if(value is Builtin builtin)
 			{
-				this.SetBuiltin((Builtin)value);
+				if(builtin.Node != null)
+					throw new InvalidOperationException();
+
+				//将构建的所属节点指向本节点
+				builtin.Node = this;
+
+				//更新当前节点的属性值
+				_value = builtin;
+				_nodeType = PluginTreeNodeType.Builtin;
+				this.Plugin = builtin.Plugin;
 			}
 			else
 			{
@@ -388,23 +397,6 @@ namespace Zongsoft.Plugins
 					}
 				}
 			}
-		}
-
-		private void SetBuiltin(Builtin builtin)
-		{
-			if(builtin == null)
-				throw new ArgumentNullException("builtin");
-
-			if(builtin.Node != null)
-				throw new InvalidOperationException();
-
-			//将构建的所属节点指向本节点
-			builtin.Node = this;
-
-			//更新当前节点的属性值
-			_value = builtin;
-			_nodeType = PluginTreeNodeType.Builtin;
-			this.Plugin = builtin.Plugin;
 		}
 		#endregion
 	}

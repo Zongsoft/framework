@@ -42,7 +42,7 @@ namespace Zongsoft.Plugins.Web
 		#endregion
 
 		#region 构造函数
-		public WebApplicationContext(IHttpContextAccessor http) : base("Zongsoft.Plugins.Web")
+		public WebApplicationContext(IHttpContextAccessor http)
 		{
 			_http = http;
 		}
@@ -64,14 +64,9 @@ namespace Zongsoft.Plugins.Web
 			get => _http?.HttpContext.User;
 		}
 
-		protected override IWorkbenchBase CreateWorkbench(string[] args)
+		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{
-			PluginTreeNode node = this.PluginContext.PluginTree.Find(this.PluginContext.Options.Mountion.WorkbenchPath);
-
-			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
-				return base.CreateWorkbench(args);
-
-			return new Workbench(this);
+			return base.CreateWorkbench(out node) ?? new Workbench(this);
 		}
 		#endregion
 	}

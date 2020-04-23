@@ -49,14 +49,8 @@ namespace Zongsoft.Terminals.Plugins
 		#region 公共属性
 		public TerminalCommandExecutor Executor
 		{
-			get
-			{
-				return _executor ?? CommandExecutor.Default as TerminalCommandExecutor;
-			}
-			set
-			{
-				_executor = value;
-			}
+			get => _executor ?? CommandExecutor.Default as TerminalCommandExecutor;
+			set => _executor = value;
 		}
 		#endregion
 
@@ -66,7 +60,7 @@ namespace Zongsoft.Terminals.Plugins
 			var executor = this.Executor;
 
 			if(executor == null)
-				throw new InvalidOperationException("The command executor is null.");
+				throw new InvalidOperationException("Missing the required command executor.");
 
 			//调用基类同名方法
 			base.OnStart(args);

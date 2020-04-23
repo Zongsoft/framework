@@ -57,10 +57,7 @@ namespace Zongsoft.Plugins
 		#region 构造函数
 		protected WorkbenchBase(PluginApplicationContext applicationContext)
 		{
-			if(applicationContext == null)
-				throw new ArgumentNullException(nameof(applicationContext));
-
-			_applicationContext = applicationContext;
+			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 			_title = applicationContext.Title;
 			_status = WorkbenchStatus.None;
 			_startupPath = applicationContext.Options.Mountion.WorkbenchPath + "/Startup";
@@ -244,9 +241,10 @@ namespace Zongsoft.Plugins
 				throw;
 			}
 
-			//如果没有激发过“Opened”事件则激发该事件
-			if(_status == WorkbenchStatus.Opening)
-				this.OnOpened(EventArgs.Empty);
+			_status = WorkbenchStatus.Running;
+
+			//激发“Opened”事件
+			this.OnOpened(EventArgs.Empty);
 		}
 		#endregion
 
@@ -281,40 +279,30 @@ namespace Zongsoft.Plugins
 		#region 事件激发
 		protected virtual void OnOpened(EventArgs args)
 		{
-			_status = WorkbenchStatus.Running;
+			if(_status == WorkbenchStatus.Opening)
+				_status = WorkbenchStatus.Running;
 
-			if(this.Opened != null)
-				this.Opened(this, args);
+			this.Opened?.Invoke(this, args);
 		}
 
 		public virtual void OnOpening(EventArgs args)
 		{
-			_status = WorkbenchStatus.Opening;
-
-			if(this.Opening != null)
-				this.Opening(this, args);
+			this.Opening?.Invoke(this, args);
 		}
 
 		protected virtual void OnClosed(EventArgs args)
 		{
-			_status = WorkbenchStatus.None;
-
-			if(this.Closed != null)
-				this.Closed(this, args);
+			this.Closed?.Invoke(this, args);
 		}
 
 		protected virtual void OnClosing(CancelEventArgs args)
 		{
-			_status = WorkbenchStatus.Closing;
-
-			if(this.Closing != null)
-				this.Closing(this, args);
+			this.Closing?.Invoke(this, args);
 		}
 
 		protected virtual void OnTitleChanged(EventArgs args)
 		{
-			if(this.TitleChanged != null)
-				this.TitleChanged(this, args);
+			this.TitleChanged?.Invoke(this, args);
 		}
 		#endregion
 

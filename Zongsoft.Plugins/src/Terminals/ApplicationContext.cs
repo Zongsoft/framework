@@ -33,17 +33,12 @@ using Zongsoft.Plugins;
 
 namespace Zongsoft.Terminals.Plugins
 {
-	public class ApplicationContext : Zongsoft.Plugins.PluginApplicationContext
+	public class ApplicationContext : PluginApplicationContext
 	{
 		#region 重写方法
-		protected override IWorkbenchBase CreateWorkbench(string[] args)
+		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{
-			PluginTreeNode node = this.PluginTree.Find(this.Options.Mountion.WorkbenchPath);
-
-			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
-				return base.CreateWorkbench(args);
-
-			return new Workbench(this);
+            return base.CreateWorkbench(out node) ?? new Workbench(this);
 		}
 		#endregion
 	}

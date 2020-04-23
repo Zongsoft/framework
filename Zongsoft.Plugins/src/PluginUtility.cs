@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Zongsoft.Services;
 using Zongsoft.Reflection;
 using Zongsoft.Reflection.Expressions;
 
@@ -250,7 +251,7 @@ namespace Zongsoft.Plugins
 			if(builtin == null)
 				throw new ArgumentNullException(nameof(builtin));
 
-			object result = null;
+			object result;
 
 			if(builtin.BuiltinType != null)
 			{
@@ -324,7 +325,7 @@ namespace Zongsoft.Plugins
 					}
 
 					//将构件中当前属性值更新目标对象的对应属性中
-					Reflection.Reflector.TrySetValue(target, property.Name, property.Value);
+					Reflector.TrySetValue(target, property.Name, property.Value);
 				}
 				catch(Exception ex)
 				{
@@ -428,19 +429,19 @@ namespace Zongsoft.Plugins
 						return true;
 					}
 
-					if(typeof(Zongsoft.Services.IServiceProvider).IsAssignableFrom(parameterType))
+					if(typeof(System.IServiceProvider).IsAssignableFrom(parameterType))
 					{
 						parameterValue = FindServiceProvider(builtin);
 						return true;
 					}
 
-					if(typeof(Zongsoft.Services.IApplicationContext).IsAssignableFrom(parameterType))
+					if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
 					{
 						parameterValue = builtin.Tree.ApplicationContext;
 						return true;
 					}
 
-					if(typeof(Zongsoft.Services.IApplicationModule).IsAssignableFrom(parameterType))
+					if(typeof(IApplicationModule).IsAssignableFrom(parameterType))
 					{
 						parameterValue = FindApplicationModule(builtin);
 						return true;
@@ -524,19 +525,19 @@ namespace Zongsoft.Plugins
 				return true;
 			}
 
-			if(typeof(Zongsoft.Services.IApplicationContext).IsAssignableFrom(parameterType))
+			if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
 			{
 				parameterValue = plugin.PluginTree.ApplicationContext;
 				return true;
 			}
 
-			if(typeof(Zongsoft.Services.IServiceProviderFactory).IsAssignableFrom(parameterType))
+			if(typeof(IServiceProviderFactory).IsAssignableFrom(parameterType))
 			{
 				parameterValue = Services.ServiceProviderFactory.Instance;
 				return true;
 			}
 
-			if(typeof(Zongsoft.Services.IServiceProvider).IsAssignableFrom(parameterType))
+			if(typeof(System.IServiceProvider).IsAssignableFrom(parameterType))
 			{
 				parameterValue = plugin.PluginTree.ApplicationContext.Services;
 				return true;
@@ -547,7 +548,7 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
-		internal static Zongsoft.Services.IApplicationModule FindApplicationModule(Builtin builtin)
+		internal static IApplicationModule FindApplicationModule(Builtin builtin)
 		{
 			if(builtin == null || builtin.Node == null || builtin.Node.Parent == null)
 				return null;
@@ -558,11 +559,11 @@ namespace Zongsoft.Plugins
 			{
 				var valueType = node.ValueType;
 
-				if(valueType == null || typeof(Services.IApplicationModule).IsAssignableFrom(valueType))
+				if(valueType == null || typeof(IApplicationModule).IsAssignableFrom(valueType))
 				{
 					var value = node.UnwrapValue(ObtainMode.Auto, Builders.BuilderSettings.Create(Builders.BuilderSettingsFlags.IgnoreChildren));
 
-					if(value != null && value is Zongsoft.Services.IApplicationModule module)
+					if(value != null && value is IApplicationModule module)
 						return module;
 				}
 
@@ -572,7 +573,7 @@ namespace Zongsoft.Plugins
 			return null;
 		}
 
-		internal static Zongsoft.Services.IServiceProvider FindServiceProvider(Builtin builtin)
+		internal static System.IServiceProvider FindServiceProvider(Builtin builtin)
 		{
 			if(builtin == null)
 				return null;
@@ -583,7 +584,7 @@ namespace Zongsoft.Plugins
 				return module.Services;
 
 			if(builtin.Node != null && builtin.Node.Parent != null)
-				return Services.ServiceProviderFactory.Instance.GetProvider(builtin.Node.Parent.Name) ?? builtin.Tree.ApplicationContext.Services;
+				return ServiceProviderFactory.Instance.GetProvider(builtin.Node.Parent.Name) ?? builtin.Tree.ApplicationContext.Services;
 
 			return builtin.Tree.ApplicationContext.Services;
 		}
@@ -634,12 +635,12 @@ namespace Zongsoft.Plugins
 			if(assemblyName == null)
 				return null;
 
-			byte[] token = assemblyName.GetPublicKeyToken();
-			IList<Assembly> assemblies = new List<Assembly>();
+			var token = assemblyName.GetPublicKeyToken();
+			var assemblies = new List<Assembly>();
 
 			foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
 			{
-				bool matched = string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
+				var matched = string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
 
 				if(token != null && token.Length > 0)
 					matched &= CompareBytes(token, assembly.GetName().GetPublicKeyToken());
@@ -659,7 +660,7 @@ namespace Zongsoft.Plugins
 			if(assemblies.Count == 1)
 				return assemblies[0];
 
-			Assembly maxAssembly = assemblies[0];
+			var maxAssembly = assemblies[0];
 
 			foreach(Assembly assembly in assemblies)
 			{
@@ -730,10 +731,10 @@ namespace Zongsoft.Plugins
 			object memberValue;
 
 			//获取当前构件所属的服务容器（后备服务容器）
-			var reserveProvider = FindServiceProvider(builtin);
+			var reservedProvider = FindServiceProvider(builtin);
 
 			//定义成员对应的服务容器（默认为后备服务容器）
-			var serviceProvider = reserveProvider;
+			var serviceProvider = reservedProvider;
 
 			foreach(var member in members)
 			{
@@ -742,20 +743,20 @@ namespace Zongsoft.Plugins
 					continue;
 
 				//获取需注入成员的注入标记
-				var attribute = (Zongsoft.Services.ServiceDependencyAttribute)member.GetCustomAttribute(typeof(Zongsoft.Services.ServiceDependencyAttribute), true);
+				var attribute = member.GetCustomAttribute<ServiceDependencyAttribute>(true);
 
 				if(attribute == null || string.IsNullOrWhiteSpace(attribute.Provider))
-					serviceProvider = reserveProvider;
+					serviceProvider = reservedProvider;
 				else
-					serviceProvider = Services.ServiceProviderFactory.Instance.GetProvider(attribute.Provider) ?? reserveProvider;
+					serviceProvider = ServiceProviderFactory.Instance.GetProvider(attribute.Provider) ?? reservedProvider;
 
 				switch(member.MemberType)
 				{
 					case MemberTypes.Field:
-						if(!string.IsNullOrWhiteSpace(attribute.Name))
-							memberValue = serviceProvider.Resolve(attribute.Name);
+						if(attribute.Parameter == null)
+							memberValue = serviceProvider.GetService(attribute.ServiceType ?? ((FieldInfo)member).FieldType);
 						else
-							memberValue = serviceProvider.Resolve(attribute.Contract ?? ((FieldInfo)member).FieldType);
+							memberValue = serviceProvider.Match(attribute.ServiceType ?? ((FieldInfo)member).FieldType, attribute.Parameter);
 
 						if(memberValue == null && attribute != null && attribute.IsRequired)
 							throw new InvalidOperationException($"The injected {((PropertyInfo)member).Name} field value is null when building the '{builtin}' plugin builtin.");
@@ -765,10 +766,10 @@ namespace Zongsoft.Plugins
 					case MemberTypes.Property:
 						if(((PropertyInfo)member).CanWrite)
 						{
-							if(!string.IsNullOrWhiteSpace(attribute.Name))
-								memberValue = serviceProvider.Resolve(attribute.Name);
+							if(attribute.Parameter == null)
+								memberValue = serviceProvider.GetService(attribute.ServiceType ?? ((PropertyInfo)member).PropertyType);
 							else
-								memberValue = serviceProvider.Resolve(attribute.Contract ?? ((PropertyInfo)member).PropertyType);
+								memberValue = serviceProvider.Match(attribute.ServiceType ?? ((PropertyInfo)member).PropertyType, attribute.Parameter);
 
 							if(memberValue == null && attribute != null && attribute.IsRequired)
 								throw new InvalidOperationException($"The injected {((PropertyInfo)member).Name} property value is null when building the '{builtin}' plugin builtin.");

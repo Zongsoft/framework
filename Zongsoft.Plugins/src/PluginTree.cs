@@ -271,7 +271,7 @@ namespace Zongsoft.Plugins
 		public bool Mount(string path, object value, string position)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			//确认要挂载的路径对应的节点
 			PluginTreeNode node = this.EnsurePath(path, position);

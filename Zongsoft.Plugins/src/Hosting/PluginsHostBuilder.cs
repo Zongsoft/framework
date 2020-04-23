@@ -74,7 +74,7 @@ namespace Zongsoft.Plugins.Hosting
 
 		public IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices)
 		{
-			return ConfigureServices((context, services) => configureServices(services));
+			return this.ConfigureServices((context, services) => configureServices(services));
 		}
 
 		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configureServices)
