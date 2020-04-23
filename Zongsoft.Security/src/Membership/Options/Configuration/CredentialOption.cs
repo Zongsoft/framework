@@ -30,33 +30,19 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
 namespace Zongsoft.Security.Membership.Options.Configuration
 {
-	public class CredentialOption : OptionConfigurationElement, ICredentialOption
+	public class CredentialOption : ICredentialOption
 	{
-		#region 常量定义
-		private const string XML_PERIOD_ATTRIBUTE = "period";
-		private const string XML_POLICIES_COLLECTION = "policies";
-		#endregion
-
 		#region 公共属性
-		[OptionConfigurationProperty(XML_PERIOD_ATTRIBUTE, OptionConfigurationPropertyBehavior.IsRequired)]
 		public TimeSpan Period
 		{
-			get => (TimeSpan)this[XML_PERIOD_ATTRIBUTE];
-			set => this[XML_PERIOD_ATTRIBUTE] = value;
+            get; set;
 		}
 
-		[OptionConfigurationProperty(XML_POLICIES_COLLECTION, typeof(CredentialPolicyCollection))]
 		public Collections.INamedCollection<ICredentialPolicy> Policies
 		{
-			get
-			{
-				return (Collections.INamedCollection<ICredentialPolicy>)this[XML_POLICIES_COLLECTION];
-			}
+            get; set;
 		}
 		#endregion
 	}

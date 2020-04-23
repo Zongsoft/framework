@@ -30,55 +30,19 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
 namespace Zongsoft.Security.Membership.Options.Configuration
 {
-	public class AuthenticationOption : OptionConfigurationElement, IAuthenticationOption
+	public class AuthenticationOption : IAuthenticationOption
 	{
-		#region 常量定义
-		private const string XML_ATTEMPTER_ELEMENT = "attempter";
-		private const string XML_CREDENTIAL_ELEMENT = "credential";
-		#endregion
-
 		#region 公共属性
-		[OptionConfigurationProperty(XML_ATTEMPTER_ELEMENT, typeof(AttempterOption))]
 		public IAttempterOption Attempter
 		{
-			get => (AttempterOption)this[XML_ATTEMPTER_ELEMENT];
+			get; set;
 		}
 
-		[OptionConfigurationProperty(XML_CREDENTIAL_ELEMENT, typeof(CredentialOption))]
 		public ICredentialOption Credential
 		{
-			get => (ICredentialOption)this[XML_CREDENTIAL_ELEMENT];
-		}
-		#endregion
-
-		#region 嵌套子类
-		public class AttempterOption : OptionConfigurationElement, IAttempterOption
-		{
-			#region 常量定义
-			private const string XML_THRESHOLD_ATTRIBUTE = "threshold";
-			private const string XML_WINDOW_ATTRIBUTE = "window";
-			#endregion
-
-			#region 公共属性
-			[OptionConfigurationProperty(XML_THRESHOLD_ATTRIBUTE, DefaultValue = 3)]
-			public int Threshold
-			{
-				get => (int)this[XML_THRESHOLD_ATTRIBUTE];
-				set => this[XML_THRESHOLD_ATTRIBUTE] = value;
-			}
-
-			[OptionConfigurationProperty(XML_WINDOW_ATTRIBUTE, DefaultValue = "1:0:0")]
-			public TimeSpan Window
-			{
-				get => (TimeSpan)this[XML_WINDOW_ATTRIBUTE];
-				set => this[XML_WINDOW_ATTRIBUTE] = value;
-			}
-			#endregion
+			get; set;
 		}
 		#endregion
 	}

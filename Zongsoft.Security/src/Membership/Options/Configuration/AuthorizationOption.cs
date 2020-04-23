@@ -33,26 +33,15 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
 namespace Zongsoft.Security.Membership.Options.Configuration
 {
-	public class AuthorizationOption : OptionConfigurationElement, IAuthorizationOption
+	public class AuthorizationOption : IAuthorizationOption
 	{
-		#region 常量定义
-		private const string XML_ROLES_ATTRIBUTE = "roles";
-		#endregion
-
 		#region 公共属性
 		[TypeConverter(typeof(SetConverter))]
-		[OptionConfigurationProperty(XML_ROLES_ATTRIBUTE)]
 		public ISet<string> Roles
 		{
-			get
-			{
-				return (ISet<string>)this[XML_ROLES_ATTRIBUTE];
-			}
+			get; set;
 		}
 		#endregion
 

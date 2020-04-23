@@ -30,39 +30,24 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
 namespace Zongsoft.Security.Membership.Options.Configuration
 {
-	public class GeneralConfiguration : OptionConfigurationElement, IConfiguration
+	public class GeneralConfiguration : IConfiguration
 	{
-		#region 常量定义
-		private const string XML_USER_ELEMENT = "user";
-		private const string XML_AUTHORIZATION_ELEMENT = "authorization";
-		private const string XML_AUTHENTICATION_ELEMENT = "authentication";
-		#endregion
-
 		#region 公共属性
-		[OptionConfigurationProperty(XML_USER_ELEMENT, typeof(UserOption))]
 		public IUserOption User
 		{
-			get => (IUserOption)this[XML_USER_ELEMENT];
-			set => this[XML_USER_ELEMENT] = value;
+			get; set;
 		}
 
-		[OptionConfigurationProperty(XML_AUTHORIZATION_ELEMENT, typeof(AuthorizationOption))]
 		public IAuthorizationOption Authorization
 		{
-			get => (IAuthorizationOption)this[XML_AUTHORIZATION_ELEMENT];
-			set => this[XML_AUTHORIZATION_ELEMENT] = value;
+            get; set;
 		}
 
-		[OptionConfigurationProperty(XML_AUTHENTICATION_ELEMENT, typeof(AuthenticationOption))]
 		public IAuthenticationOption Authentication
 		{
-			get => (IAuthenticationOption)this[XML_AUTHENTICATION_ELEMENT];
-			set => this[XML_AUTHENTICATION_ELEMENT] = value;
+            get; set;
 		}
 		#endregion
 	}
