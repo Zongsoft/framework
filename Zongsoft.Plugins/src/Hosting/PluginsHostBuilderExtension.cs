@@ -28,30 +28,36 @@
  */
 
 using System;
-using System.Threading;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins.Hosting
+namespace Zongsoft.Plugins
 {
 	public static class PluginsHostBuilderExtension
 	{
-        public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, Action<IPluginsHostBuilder> configure = null) where TApplicationContext : class, Services.IApplicationContext
-        {
-            if(builder == null)
-                throw new ArgumentNullException(nameof(builder));
+		public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, Action<Hosting.IPluginsHostBuilder> configure = null) where TApplicationContext : PluginApplicationContext
+		{
+			if(builder == null)
+				throw new ArgumentNullException(nameof(builder));
 
-            if(typeof(TApplicationContext).IsAbstract)
-                throw new ArgumentException();
+			if(typeof(TApplicationContext).IsAbstract)
+				throw new ArgumentException();
 
-            var pluginsBuilder = new PluginsHostBuilder(builder);
-            configure(pluginsBuilder);
+			var pluginsBuilder = new Hosting.PluginsHostBuilder(builder);
+			configure?.Invoke(pluginsBuilder);
 
-            builder.ConfigureServices(services => services.AddSingleton<Services.IApplicationContext, TApplicationContext>());
-            builder.ConfigureServices((ctx, services) => services.AddHostedService<PluginsHostStarter>());
+			builder.ConfigureServices(services =>
+			{
+				services.AddSingleton<TApplicationContext>();
+				services.AddSingleton<PluginApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
+				services.AddSingleton<Services.IApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
 
-            return builder;
-        }
-    }
+				//添加插件宿主启动器
+				services.AddHostedService<Hosting.PluginsHostStarter>();
+			});
+
+			return builder;
+		}
+	}
 }

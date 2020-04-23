@@ -68,6 +68,7 @@ namespace Zongsoft.Plugins.Hosting
 		}
 		#endregion
 
+		#region 配置方法
 		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure)
 		{
 			_builder.ConfigureAppConfiguration((context, configurator) =>
@@ -94,7 +95,9 @@ namespace Zongsoft.Plugins.Hosting
 
 			return this;
 		}
+		#endregion
 
+		#region 私有方法
 		private PluginsHostBuilderContext GetPluginsBuilderContext(HostBuilderContext context)
 		{
 			if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
@@ -122,5 +125,6 @@ namespace Zongsoft.Plugins.Hosting
 			pluginsHostContext.Configuration = context.Configuration;
 			return pluginsHostContext;
 		}
+		#endregion
 	}
 }

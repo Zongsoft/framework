@@ -36,31 +36,31 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting
 {
-    public class PluginsHostStarter : BackgroundService
-    {
-        private readonly PluginApplicationContext _applicationContext;
+	public class PluginsHostStarter : BackgroundService
+	{
+		private readonly PluginApplicationContext _applicationContext;
 
-        public PluginsHostStarter(PluginApplicationContext applicationContext)
-        {
-            _applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-        }
+		public PluginsHostStarter(PluginApplicationContext applicationContext)
+		{
+			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
+		}
 
-        //public Task StartAsync(CancellationToken cancellationToken)
-        //{
-        //    throw new NotImplementedException();
-        //}
+		//public Task StartAsync(CancellationToken cancellationToken)
+		//{
+		//    throw new NotImplementedException();
+		//}
 
-        //public Task StopAsync(CancellationToken cancellationToken)
-        //{
-        //    Application.Exit();
-        //    return Task.CompletedTask;
-        //}
+		//public Task StopAsync(CancellationToken cancellationToken)
+		//{
+		//    Application.Exit();
+		//    return Task.CompletedTask;
+		//}
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            stoppingToken.ThrowIfCancellationRequested();
-            Application.Start(_applicationContext);
-            return Task.CompletedTask;
-        }
-    }
+		protected override Task ExecuteAsync(CancellationToken stoppingToken)
+		{
+			stoppingToken.ThrowIfCancellationRequested();
+			Application.Start(_applicationContext);
+			return Task.CompletedTask;
+		}
+	}
 }

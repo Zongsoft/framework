@@ -55,7 +55,6 @@ namespace Zongsoft.Configuration.Plugins
 			_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
 
 			_pluginTree = Zongsoft.Plugins.PluginTree.Get(source.Options);
-			_pluginTree.Loader.Loaded += PluginLoader_Loaded;
 			_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
 			_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
 		}
@@ -120,18 +119,12 @@ namespace Zongsoft.Configuration.Plugins
 					provider.Dispose();
 			}
 
-			_pluginTree.Loader.Loaded -= PluginLoader_Loaded;
 			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
 			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
 		}
 		#endregion
 
 		#region 事件处理
-		private void PluginLoader_Loaded(object sender, Zongsoft.Plugins.PluginLoadEventArgs e)
-		{
-			this.Load();
-		}
-
 		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
 		{
 			this.LoadOptionFile(e.Plugin);
@@ -160,16 +153,18 @@ namespace Zongsoft.Configuration.Plugins
 					{
 						Path = Path.Combine(filePath, $"{fileName}.option"),
 						Optional = true,
+						ReloadOnChange = true,
 					}),
 				new Zongsoft.Configuration.Xml.XmlConfigurationProvider(
 					new Zongsoft.Configuration.Xml.XmlConfigurationSource()
 					{
-						Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name}.option"),
+						Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name.ToLowerInvariant()}.option"),
 						Optional = true,
+						ReloadOnChange = true,
 					})
 			};
 
-			return _providers.TryAdd(plugin, new Zongsoft.Configuration.CompositeConfigurationProvider(providers));
+			return _providers.TryAdd(plugin, new CompositeConfigurationProvider(providers));
 		}
 		#endregion
 	}
