@@ -243,6 +243,14 @@ namespace Zongsoft.Configuration
 						Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
 				}
 
+				contract = ConfigurationUtility.GetImplementedContract(type, typeof(ISet<>));
+
+				if(contract != null)
+				{
+					var setType = typeof(HashSet<>).MakeGenericType(contract.GenericTypeArguments[0]);
+					return Activator.CreateInstance(setType);
+				}
+
 				contract = ConfigurationUtility.GetImplementedContract(type,
 					typeof(IReadOnlyList<>),
 					typeof(IList<>),
