@@ -32,6 +32,7 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Web
 {
@@ -42,9 +43,9 @@ namespace Zongsoft.Plugins.Web
 		#endregion
 
 		#region 构造函数
-		public WebApplicationContext(IHttpContextAccessor http)
+		public WebApplicationContext(IServiceProvider services) : base(services)
 		{
-			_http = http;
+			_http = this.Services.GetRequiredService<IHttpContextAccessor>();
 		}
 		#endregion
 

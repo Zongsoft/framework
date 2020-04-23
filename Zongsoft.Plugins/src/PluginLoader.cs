@@ -126,14 +126,14 @@ namespace Zongsoft.Plugins
 
 		#region 成员变量
 		private readonly PluginResolver _resolver;
+		private readonly PluginCollection _plugins;
 		#endregion
 
 		#region 构造函数
-		internal PluginLoader(PluginResolver resolver, PluginOptions options)
+		internal PluginLoader(PluginResolver resolver)
 		{
 			_resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-			this.Plugins = new PluginCollection();
+			_plugins = new PluginCollection();
 		}
 		#endregion
 
@@ -141,24 +141,10 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取加载的根插件对象集。
 		/// </summary>
-		/// <remarks>如果加载器尚未加载过，则返回一个空集。</remarks>
-		public PluginCollection Plugins { get; }
-
-		/// <summary>
-		/// 获取加载器的当前加载配置对象。该属性值可通过带参的<seealso cref="Zongsoft.Plugins.PluginLoader.Load(PluginOptions)"/>方法注入。
-		/// </summary>
-		public PluginOptions Options { get; private set; }
+		public PluginCollection Plugins { get => _plugins; }
 		#endregion
 
-		#region 公共方法
-		/// <summary>
-		/// 使用加载器的当前配置进行插件加载。
-		/// </summary>
-		public void Load()
-		{
-			this.Load(this.Options);
-		}
-
+		#region 加载方法
 		/// <summary>
 		/// 应用指定的加载配置进行插件加载。
 		/// </summary>
@@ -168,7 +154,7 @@ namespace Zongsoft.Plugins
 		///		<para>如果要重用上次加载的配置，请调用无参的Load方法。</para>
 		///	</remarks>
 		/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(null)。</exception>
-		public void Load(PluginOptions options)
+		internal void Load(PluginOptions options)
 		{
 			if(options == null)
 				throw new ArgumentNullException(nameof(options));
@@ -181,16 +167,13 @@ namespace Zongsoft.Plugins
 				throw new DirectoryNotFoundException($"The '{options.PluginsPath}' plugins directory is not exists.");
 
 			//清空插件列表
-			Plugins.Clear();
+			_plugins.Clear();
 
 			//预加载插件目录下的所有插件文件
-			this.PreloadPluginFiles(Options.PluginsPath, null, options);
+			this.PreloadPluginFiles(options.PluginsPath, null, options);
 
 			//正式加载所有插件
-			this.LoadPlugins(Plugins, options);
-
-			//保存加载配置对象
-			this.Options = options;
+			this.LoadPlugins(_plugins, options);
 
 			//激发“Loaded”事件
 			this.OnLoaded(new PluginLoadEventArgs(options));
@@ -199,13 +182,13 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 卸载所有插件。
 		/// </summary>
-		public void Unload()
+		internal void Unload()
 		{
-			if(Plugins == null || Plugins.Count < 1)
+			if(_plugins == null || _plugins.Count < 1)
 				return;
 
-			var plugins = new Plugin[Plugins.Count];
-			Plugins.CopyTo(plugins, 0);
+			var plugins = new Plugin[_plugins.Count];
+			_plugins.CopyTo(plugins, 0);
 
 			foreach(var plugin in plugins)
 			{
@@ -221,7 +204,7 @@ namespace Zongsoft.Plugins
 		///		<para>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</para>
 		/// </remarks>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(null)。</exception>
-		public void Unload(Plugin plugin)
+		internal void Unload(Plugin plugin)
 		{
 			if(plugin == null || plugin.Status != PluginStatus.Loaded)
 				return;
@@ -259,8 +242,8 @@ namespace Zongsoft.Plugins
 			this.UnloadFixedElements(plugin);
 
 			//将指定卸载的插件从当前根插件列表中删除
-			if(Plugins != null && plugin.Parent == null)
-				Plugins.Remove(plugin.Name);
+			if(_plugins != null && plugin.Parent == null)
+				_plugins.Remove(plugin.Name);
 
 			//设置插件状态
 			plugin.Status = PluginStatus.Unloaded;
@@ -372,11 +355,11 @@ namespace Zongsoft.Plugins
 
 			if(parent == null)
 			{
-				if(Plugins.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
+				if(_plugins.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
 					throw new PluginFileException(plugin.FilePath, $"The name is '{plugin.Name}' of plugin was exists. it's path is: '{plugin.FilePath}'");
 
 				//将预加载的插件对象加入到根插件的集合中
-				Plugins.Add(plugin);
+				_plugins.Add(plugin);
 			}
 			else
 			{
@@ -410,7 +393,7 @@ namespace Zongsoft.Plugins
 			catch(Exception ex)
 			{
 				if(plugin.Parent == null)
-					Plugins.Remove(plugin.Name);
+					_plugins.Remove(plugin.Name);
 				else
 					plugin.Parent.Children.Remove(plugin.Name);
 

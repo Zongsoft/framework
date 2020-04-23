@@ -35,6 +35,12 @@ namespace Zongsoft.Terminals.Plugins
 {
 	public class ApplicationContext : PluginApplicationContext
 	{
+        #region 构造函数
+        public ApplicationContext(IServiceProvider services) : base(services)
+        {
+        }
+		#endregion
+
 		#region 重写方法
 		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{

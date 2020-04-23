@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -46,28 +47,34 @@ namespace Zongsoft.Plugins.Hosting
 		{
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 
-            _builder.ConfigureAppConfiguration((ctx, configurator) =>
-            {
-                configurator.Add(Zongsoft.Configuration.Plugins.PluginConfigurationSource.Instance);
-            });
+			builder.ConfigureHostConfiguration(configurator =>
+			{
+				configurator.AddCommandLine(new string[]
+				{
+					"/plugins:directory", "plugins",
+				});
+			});
 
-            _builder.ConfigureServices((ctx, services) =>
-            {
-                var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
-                services.Configure<PluginOptions>(options =>
-                {
-                });
-            });
+			builder.ConfigureAppConfiguration((ctx, configurator) =>
+			{
+				if(string.IsNullOrEmpty(ctx.Configuration.GetValue<string>("plugins:applicationPath", null)))
+				{
+					configurator.AddCommandLine(new string[] { "/plugins:applicationPath ", ctx.HostingEnvironment.ContentRootPath });
+				}
+
+				var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
+				configurator.Add(new Zongsoft.Configuration.Plugins.PluginConfigurationSource(pluginsHostBuilderContext.Options));
+			});
 		}
 		#endregion
 
 		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure)
 		{
 			_builder.ConfigureAppConfiguration((context, configurator) =>
-            {
-                var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
-                configure(pluginsHostBuilderContext, configurator);
-            });
+			{
+				var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
+				configure(pluginsHostBuilderContext, configurator);
+			});
 
 			return this;
 		}
@@ -79,7 +86,7 @@ namespace Zongsoft.Plugins.Hosting
 
 		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configureServices)
 		{
-            _builder.ConfigureServices((context, services) =>
+			_builder.ConfigureServices((context, services) =>
 			{
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
 				configureServices(pluginsHostBuilderContext, services);
@@ -88,40 +95,32 @@ namespace Zongsoft.Plugins.Hosting
 			return this;
 		}
 
-        public IPluginsHostBuilder Configure(Action<PluginsHostBuilderContext, IPluginsApplicationBuilder> configure)
-        {
-            _builder.ConfigureServices((ctx, services) =>
-            {
-                var context = GetPluginsBuilderContext(ctx);
-            });
-
-            return this;
-        }
-
 		private PluginsHostBuilderContext GetPluginsBuilderContext(HostBuilderContext context)
 		{
-            if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
-            {
-                PluginOptions options;
+			if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
+			{
+				//PluginOptions options;
 
-                if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
-                    options = (PluginOptions)optionsValue;
-                else
-                    options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
+				//if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
+				//    options = (PluginOptions)optionsValue;
+				//else
+				//    options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
 
-                var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
-                {
-                    Configuration = context.Configuration,
-                    HostingEnvironment = context.HostingEnvironment,
-                };
+				var options = Zongsoft.Configuration.ConfigurationBinder.GetOption<PluginOptions>(context.Configuration, "plugins");
 
-                context.Properties[typeof(PluginsHostBuilderContext)] = pluginsHostBuilderContext;
-                return pluginsHostBuilderContext;
-            }
+				var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
+				{
+					Configuration = context.Configuration,
+					HostingEnvironment = context.HostingEnvironment,
+				};
 
-            var pluginsHostContext = (PluginsHostBuilderContext)contextValue;
-            pluginsHostContext.Configuration = context.Configuration;
-            return pluginsHostContext;
-        }
+				context.Properties[typeof(PluginsHostBuilderContext)] = pluginsHostBuilderContext;
+				return pluginsHostBuilderContext;
+			}
+
+			var pluginsHostContext = (PluginsHostBuilderContext)contextValue;
+			pluginsHostContext.Configuration = context.Configuration;
+			return pluginsHostContext;
+		}
 	}
 }

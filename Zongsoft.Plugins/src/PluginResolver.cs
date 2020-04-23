@@ -29,9 +29,7 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Xml;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.Plugins
@@ -54,10 +52,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 插件解析
-		internal void ResolvePluginWithoutManifest(Plugin plugin)
+		public void ResolvePluginWithoutManifest(Plugin plugin)
 		{
 			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+				throw new ArgumentNullException(nameof(plugin));
 
 			using(XmlReader reader = this.GetReader(plugin.FilePath))
 			{
@@ -107,7 +105,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		internal Plugin ResolvePluginOnlyManifest(string filePath, Plugin parent)
+		public Plugin ResolvePluginOnlyManifest(string filePath, Plugin parent)
 		{
 			using(XmlReader reader = this.GetReader(filePath))
 			{
@@ -165,67 +163,6 @@ namespace Zongsoft.Plugins
 
 				return plugin;
 			}
-		}
-
-		private Plugin Resolve(string filePath, Plugin parent)
-		{
-			using(XmlReader reader = this.GetReader(filePath))
-			{
-				if(reader == null)
-					return null;
-
-				return Resolve(reader, parent, filePath);
-			}
-		}
-
-		private Plugin Resolve(XmlReader reader, Plugin parent, string filePath)
-		{
-			//如果读取插件文件失败则退出
-			if(!reader.Read())
-				throw new PluginException(string.Format("The '{0}' plugin file cann't read.", filePath));
-
-			//跳转到根节点
-			reader.MoveToContent();
-
-			//判断插件文件的跟节点名称是否为“plugin”
-			if(!string.Equals(reader.Name, "plugin"))
-				throw new PluginException(string.Format("This '{0}' plugin file format is invalid.", filePath));
-
-			//创建Plugin类实例
-			Plugin plugin = new Plugin(PluginTree, reader.GetAttribute("name"), filePath, parent);
-
-			plugin.Manifest.Author = reader.GetAttribute("author");
-			plugin.Manifest.Title = reader.GetAttribute("title");
-			plugin.Manifest.Version = this.ParseVersion(reader.GetAttribute("version"));
-			plugin.Manifest.Copyright = reader.GetAttribute("copyright");
-			plugin.Manifest.Description = reader.GetAttribute("description");
-
-			while(reader.Read())
-			{
-				if(reader.NodeType != XmlNodeType.Element)
-					continue;
-
-				switch(reader.Name)
-				{
-					case "manifest":
-						this.ResolveManifest(reader, plugin);
-						break;
-					case "parsers":
-						this.ResolveParsers(reader, plugin);
-						break;
-					case "builders":
-						this.ResolveBuilders(reader, plugin);
-						break;
-					case "extension":
-						this.ResolveExtension(reader, plugin);
-						break;
-					default:
-						//设置跟踪信息，原因为插件文件中出现无法识别的元素
-						throw new PluginException(string.Format("Undefined element '{0}' in this plugin file.", reader.Name));
-				}
-			}
-
-			return plugin;
 		}
 		#endregion
 

@@ -47,6 +47,7 @@ namespace Zongsoft.Plugins.Hosting
 
             var pluginsBuilder = new PluginsHostBuilder(builder);
             configure(pluginsBuilder);
+
             builder.ConfigureServices(services => services.AddSingleton<Services.IApplicationContext, TApplicationContext>());
             builder.ConfigureServices((ctx, services) => services.AddHostedService<PluginsHostStarter>());
 

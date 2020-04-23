@@ -28,100 +28,31 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Plugins
 {
-	public class PluginConfigurationSource : IConfigurationSource, IDisposable
+	public class PluginConfigurationSource : IConfigurationSource
 	{
-		#region 单例字段
-		public static readonly PluginConfigurationSource Instance = new PluginConfigurationSource();
-		#endregion
-
-		#region 成员字段
-		private Zongsoft.Plugins.PluginLoader _loader;
-		private readonly ConfigurationReloadToken _reloadToken;
-		#endregion
-
 		#region 构造函数
-		private PluginConfigurationSource()
+		public PluginConfigurationSource(Zongsoft.Plugins.PluginOptions options)
 		{
-			_reloadToken = new ConfigurationReloadToken();
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
 		}
 		#endregion
 
 		#region 公共属性
-		public IEnumerable<Zongsoft.Plugins.Plugin> Plugins
+		public Zongsoft.Plugins.PluginOptions Options
 		{
-			get => (IEnumerable<Zongsoft.Plugins.Plugin>)_loader?.Plugins ?? Array.Empty<Zongsoft.Plugins.Plugin>();
-		}
-
-		public Zongsoft.Plugins.PluginLoader Loader
-		{
-			get => _loader;
+			get;
 		}
 		#endregion
 
 		#region 公共方法
 		public IConfigurationProvider Build(IConfigurationBuilder builder)
 		{
-			return new PluginConfigurationProvider(this, _reloadToken);
-		}
-
-		public void SetLoader(Zongsoft.Plugins.PluginLoader loader)
-		{
-			if(loader == null)
-				throw new ArgumentNullException(nameof(loader));
-
-			if(object.ReferenceEquals(loader, _loader))
-				return;
-
-			_loader.Loaded -= PluginLoader_Loaded;
-			_loader.PluginLoaded -= PluginLoader_PluginLoaded;
-			_loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
-
-			_loader = loader;
-
-			_loader.Loaded += PluginLoader_Loaded;
-			_loader.PluginLoaded += PluginLoader_PluginLoaded;
-			_loader.PluginUnloaded += PluginLoader_PluginUnloaded;
-
-			if(_loader.Plugins.Count > 0)
-				_reloadToken.OnReload();
-		}
-		#endregion
-
-		#region 处置方法
-		public void Dispose()
-		{
-			var loader = System.Threading.Interlocked.Exchange(ref _loader, null);
-
-			if(loader != null)
-			{
-				loader.Loaded -= PluginLoader_Loaded;
-				loader.PluginLoaded -= PluginLoader_PluginLoaded;
-				loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
-			}
-		}
-		#endregion
-
-		#region 事件处理
-		private void PluginLoader_Loaded(object sender, Zongsoft.Plugins.PluginLoadEventArgs e)
-		{
-			_reloadToken.OnReload();
-		}
-
-		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
-		{
-			throw new NotImplementedException();
-		}
-
-		private void PluginLoader_PluginUnloaded(object sender, Zongsoft.Plugins.PluginUnloadedEventArgs e)
-		{
-			throw new NotImplementedException();
+			return new PluginConfigurationProvider(this);
 		}
 		#endregion
 	}

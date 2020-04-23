@@ -29,13 +29,14 @@
 
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Zongsoft.Plugins
 {
 	/// <summary>
 	/// 有关插件运行环境的设置信息。
 	/// </summary>
-	public class PluginOptions
+	public class PluginOptions : IEquatable<PluginOptions>
 	{
 		#region 构造函数
 		/// <summary>
@@ -106,6 +107,35 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
+		public bool Equals(PluginOptions other)
+		{
+			if(other == null)
+				return false;
+
+			var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD) ?
+				StringComparison.Ordinal :
+				StringComparison.OrdinalIgnoreCase;
+
+			return string.Equals(this.PluginsPath, other.PluginsPath, comparison) &&
+			       object.Equals(this.Mountion, other.Mountion);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if(obj == null || obj.GetType() != this.GetType())
+				return false;
+
+			return this.Equals((PluginOptions)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+				return HashCode.Combine(this.PluginsPath, this.Mountion);
+			else
+				return HashCode.Combine(this.PluginsPath.ToLowerInvariant(), this.Mountion);
+		}
+
 		public override string ToString()
 		{
 			return this.PluginsPath;
@@ -113,7 +143,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 嵌套结构
-		public class MountionSettings
+		public class MountionSettings : IEquatable<MountionSettings>
 		{
 			#region 常量定义
 			private const string APPLICATIONCONTEXT_DEFAULT_PATH = "/Workspace/Environment/ApplicationContext";
@@ -145,6 +175,30 @@ namespace Zongsoft.Plugins
 			public string WorkbenchPath
 			{
 				get;
+			}
+			#endregion
+
+			#region 重写方法
+			public bool Equals(MountionSettings other)
+			{
+				if(other == null)
+					return false;
+
+				return string.Equals(this.ApplicationContextPath, other.ApplicationContextPath, StringComparison.OrdinalIgnoreCase) &&
+				       string.Equals(this.WorkbenchPath, other.WorkbenchPath, StringComparison.OrdinalIgnoreCase);
+			}
+
+			public override bool Equals(object obj)
+			{
+				if(obj == null || obj.GetType() != this.GetType())
+					return false;
+
+				return this.Equals((MountionSettings)obj);
+			}
+
+			public override int GetHashCode()
+			{
+				return HashCode.Combine(this.ApplicationContextPath.ToLowerInvariant(), this.WorkbenchPath.ToLowerInvariant());
 			}
 			#endregion
 		}

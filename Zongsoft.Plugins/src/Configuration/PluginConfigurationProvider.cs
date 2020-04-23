@@ -42,20 +42,22 @@ namespace Zongsoft.Configuration.Plugins
 	{
 		#region 成员字段
 		private readonly PluginConfigurationSource _source;
+		private readonly Zongsoft.Plugins.PluginTree _pluginTree;
 		private readonly ConfigurationReloadToken _reloadToken;
 		private readonly ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider> _providers;
 		#endregion
 
 		#region 构造函数
-		public PluginConfigurationProvider(PluginConfigurationSource source, ConfigurationReloadToken reloadToken)
+		public PluginConfigurationProvider(PluginConfigurationSource source)
 		{
 			_source = source ?? throw new ArgumentNullException(nameof(source));
-			_reloadToken = reloadToken ?? throw new ArgumentNullException(nameof(reloadToken));
+			_reloadToken = new ConfigurationReloadToken();
 			_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
 
-			source.Loader.Loaded += PluginLoader_Loaded;
-			source.Loader.PluginLoaded += PluginLoader_PluginLoaded;
-			source.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
+			_pluginTree = Zongsoft.Plugins.PluginTree.Get(source.Options);
+			_pluginTree.Loader.Loaded += PluginLoader_Loaded;
+			_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
+			_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
 		}
 		#endregion
 
@@ -89,7 +91,7 @@ namespace Zongsoft.Configuration.Plugins
 					provider.Dispose();
 			}
 
-			foreach(var plugin in _source.Plugins)
+			foreach(var plugin in _pluginTree.Plugins)
 			{
 				this.LoadOptionFile(plugin);
 			}
@@ -118,14 +120,16 @@ namespace Zongsoft.Configuration.Plugins
 					provider.Dispose();
 			}
 
-			_source.Dispose();
+			_pluginTree.Loader.Loaded -= PluginLoader_Loaded;
+			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
+			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
 		}
 		#endregion
 
 		#region 事件处理
 		private void PluginLoader_Loaded(object sender, Zongsoft.Plugins.PluginLoadEventArgs e)
 		{
-			_reloadToken.OnReload();
+			this.Load();
 		}
 
 		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
@@ -160,7 +164,7 @@ namespace Zongsoft.Configuration.Plugins
 				new Zongsoft.Configuration.Xml.XmlConfigurationProvider(
 					new Zongsoft.Configuration.Xml.XmlConfigurationSource()
 					{
-						Path = Path.Combine(filePath, $"{fileName}.{plugin.PluginTree.ApplicationContext.Environment.Name}.option"),
+						Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name}.option"),
 						Optional = true,
 					})
 			};

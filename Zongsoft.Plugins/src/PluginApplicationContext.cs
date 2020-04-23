@@ -44,42 +44,34 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		protected PluginApplicationContext()
-		{
-			_syncRoot = new object();
-			this.PluginTree = new PluginTree(this);
-		}
-
 		protected PluginApplicationContext(IServiceProvider services) : base(services)
 		{
 			_syncRoot = new object();
-			this.PluginTree = new PluginTree(this);
+
+			this.Options = Zongsoft.Configuration.ConfigurationBinder.GetOption<PluginOptions>(this.Configuration, "plugins");
+			this.PluginTree = PluginTree.Get(this.Options);
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
+		/// 获取当前插件上下文对应的设置。
+		/// </summary>
+		public PluginOptions Options { get; }
+
+		/// <summary>
 		/// 获取当前插件运行时的插件树。
 		/// </summary>
-		public PluginTree PluginTree
-		{
-			get;
-		}
+		public PluginTree PluginTree { get; }
 
 		/// <summary>
 		/// 获取加载的根插件集。
 		/// </summary>
-		public IEnumerable<Plugin> Plugins
-		{
-			get => this.PluginTree.Plugins;
-		}
+		public IEnumerable<Plugin> Plugins { get => this.PluginTree.Plugins; }
 
 		/// <summary>
-		/// 获取当前应用程序的工作台(主界面)。
+		/// 获取当前应用程序的主控台(工作台)。
 		/// </summary>
-		/// <remarks>
-		///		<para>必须使用<seealso cref="Zongsoft.Plugins.Application"/>类的Start方法，启动应用程序后才能使用该属性获取到创建成功的工作台对象。</para>
-		/// </remarks>
 		public IWorkbenchBase Workbench
 		{
 			get
@@ -100,21 +92,13 @@ namespace Zongsoft.Plugins
 							this.EnsureNodes(node);
 
 							//激发“WorkbenchCreated”事件
-							this.OnWorkbenchCreated(EventArgs.Empty);
+							this.OnWorkbenchCreated();
 						}
 					}
 				}
 
 				return _workbench;
 			}
-		}
-
-		/// <summary>
-		/// 获取当前插件上下文对应的设置。
-		/// </summary>
-		public PluginOptions Options
-		{
-			get;
 		}
 		#endregion
 
@@ -145,9 +129,9 @@ namespace Zongsoft.Plugins
 			this.OnExiting(EventArgs.Empty);
 		}
 
-		protected virtual void OnWorkbenchCreated(EventArgs e)
+		protected virtual void OnWorkbenchCreated(EventArgs args = null)
 		{
-			this.WorkbenchCreated?.Invoke(this, e);
+			this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
 		}
 		#endregion
 

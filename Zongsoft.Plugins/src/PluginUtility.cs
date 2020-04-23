@@ -437,7 +437,7 @@ namespace Zongsoft.Plugins
 
 					if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
 					{
-						parameterValue = builtin.Tree.ApplicationContext;
+						parameterValue = ApplicationContext.Current;
 						return true;
 					}
 
@@ -527,7 +527,7 @@ namespace Zongsoft.Plugins
 
 			if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
 			{
-				parameterValue = plugin.PluginTree.ApplicationContext;
+				parameterValue = ApplicationContext.Current;
 				return true;
 			}
 
@@ -539,7 +539,7 @@ namespace Zongsoft.Plugins
 
 			if(typeof(System.IServiceProvider).IsAssignableFrom(parameterType))
 			{
-				parameterValue = plugin.PluginTree.ApplicationContext.Services;
+				parameterValue = ApplicationContext.Current.Services;
 				return true;
 			}
 
@@ -584,9 +584,9 @@ namespace Zongsoft.Plugins
 				return module.Services;
 
 			if(builtin.Node != null && builtin.Node.Parent != null)
-				return ServiceProviderFactory.Instance.GetProvider(builtin.Node.Parent.Name) ?? builtin.Tree.ApplicationContext.Services;
+				return ServiceProviderFactory.Instance.GetProvider(builtin.Node.Parent.Name) ?? ApplicationContext.Current.Services;
 
-			return builtin.Tree.ApplicationContext.Services;
+			return ApplicationContext.Current.Services;
 		}
 
 		internal static int GetAnonymousId()

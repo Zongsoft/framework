@@ -28,116 +28,87 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Plugins
 {
 	public class PluginTree
 	{
-		#region 私有变量
-		private readonly object _syncRoot;
-		#endregion
-
 		#region 事件定义
 		public event EventHandler<PluginMountEventArgs> Mounted;
 		public event EventHandler<PluginMountEventArgs> Mounting;
 		#endregion
 
-		#region 成员变量
-		private PluginTreeStatus _status;
-		private PluginLoader _loader;
-		private readonly PluginResolver _resolver;
-		private readonly PluginTreeNode _root;
-		private readonly PluginApplicationContext _context;
+		#region 私有函数
+		private PluginTree(PluginOptions options)
+		{
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+			this.Root = new PluginTreeNode(this);
+
+			//创建插件加载器
+			this.Loader = new PluginLoader(new PluginResolver(this));
+
+			//侦听插件加载器的相关事件
+			this.Loader.Loaded += delegate (object sender, PluginLoadEventArgs args)
+			{
+				//设置插件树当前状态为“已初始化”
+				this.Status = PluginTreeStatus.Loaded;
+			};
+
+			this.Loader.Loading += delegate (object sender, PluginLoadEventArgs args)
+			{
+				//设置插件树当前状态为“已初始化”
+				this.Status = PluginTreeStatus.Loading;
+
+				//清空所有子节点
+				this.Root.Children.Clear();
+			};
+		}
 		#endregion
 
-		#region 构造函数
-		internal PluginTree(PluginApplicationContext context)
+		#region 静态构建
+		private static readonly ConcurrentDictionary<PluginOptions, PluginTree> _instances = new ConcurrentDictionary<PluginOptions, PluginTree>();
+
+		public static PluginTree Get(PluginOptions options)
 		{
-			_context = context ?? throw new ArgumentNullException(nameof(context));
-			_status = PluginTreeStatus.None;
-			_resolver = new PluginResolver(this);
-			_root = new PluginTreeNode(this);
-			_syncRoot = new object();
+			if(options == null)
+				throw new ArgumentNullException(nameof(options));
+
+			return _instances.GetOrAdd(options, key => new PluginTree(key));
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
+		/// 获取当前插件树的选项。
+		/// </summary>
+		public PluginOptions Options { get; }
+
+		/// <summary>
 		/// 获取当前插件加载器对象。
 		/// </summary>
-		/// <remarks>
-		///	如果插件加载器没有创建，则在本属性获取器中即时创建它。
-		/// </remarks>
-		public PluginLoader Loader
-		{
-			get
-			{
-				if(_loader == null)
-				{
-					lock(_syncRoot)
-					{
-						if(_loader == null)
-						{
-							//创建插件加载器
-							_loader = new PluginLoader(_resolver, _context.Options);
-
-							//侦听插件加载器的相关事件
-							_loader.Loaded += delegate(object sender, PluginLoadEventArgs args)
-							{
-								//设置插件树当前状态为“已初始化”
-								_status = PluginTreeStatus.Loaded;
-							};
-
-							_loader.Loading += delegate(object sender, PluginLoadEventArgs args)
-							{
-								//设置插件树当前状态为“已初始化”
-								_status = PluginTreeStatus.Loading;
-
-								//清空所有子节点
-								_root.Children.Clear();
-							};
-						}
-					}
-				}
-
-				return _loader;
-			}
-		}
+		public PluginLoader Loader { get; }
 
 		/// <summary>
 		/// 获取插件树中的根节点。
 		/// </summary>
-		public PluginTreeNode Root
-		{
-			get => _root;
-		}
+		public PluginTreeNode Root { get; }
 
 		/// <summary>
 		/// 获取加载的根插件集，如果插件树还没加载则返回空。
 		/// </summary>
-		public PluginCollection Plugins
-		{
-			get
-			{
-				if(_loader == null)
-					return null;
-				else
-					return _loader.Plugins;
-			}
-		}
+		public PluginCollection Plugins { get => this.Loader.Plugins; }
 
-		public PluginApplicationContext ApplicationContext
-		{
-			get => _context;
-		}
+		/// <summary>
+		/// 获取插件树的状态。
+		/// </summary>
+		public PluginTreeStatus Status { get; private set; }
+		#endregion
 
-		public PluginTreeStatus Status
+		#region 加载方法
+		public void Load()
 		{
-			get
-			{
-				return _status;
-			}
+			this.Loader.Load(this.Options);
 		}
 		#endregion
 
@@ -150,12 +121,12 @@ namespace Zongsoft.Plugins
 		/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空格字符串。</exception>
 		public PluginTreeNode Find(string path)
 		{
-			return _root.Find(path);
+			return Root.Find(path);
 		}
 
 		public PluginTreeNode Find(params string[] paths)
 		{
-			return _root.Find(paths);
+			return Root.Find(paths);
 		}
 		#endregion
 
@@ -205,34 +176,31 @@ namespace Zongsoft.Plugins
 				throw new ArgumentNullException("path");
 
 			existed = true;
-			PluginTreeNode node = _root;
+			PluginTreeNode node = Root;
 			string[] parts = path.Split('/');
 
-			lock(_syncRoot)
+			for(int i = 0; i < parts.Length; i++)
 			{
-				for(int i = 0; i < parts.Length; i++)
+				string part = parts[i];
+
+				if(string.IsNullOrEmpty(part))
 				{
-					string part = parts[i];
-
-					if(string.IsNullOrEmpty(part))
-					{
-						if(node == _root)
-							continue;
-						else
-							throw new PluginException("Invlaid '" + path + "' path.");
-					}
-
-					PluginTreeNode child = node.Children[part];
-
-					if(child == null)
-					{
-						child = new PluginTreeNode(this, part);
-						node.Children.Insert(child, position);
-						existed = false;
-					}
-
-					node = child;
+					if(node == Root)
+						continue;
+					else
+						throw new PluginException("Invlaid '" + path + "' path.");
 				}
+
+				PluginTreeNode child = node.Children[part];
+
+				if(child == null)
+				{
+					child = new PluginTreeNode(this, part);
+					node.Children.Insert(child, position);
+					existed = false;
+				}
+
+				node = child;
 			}
 
 			return node;
