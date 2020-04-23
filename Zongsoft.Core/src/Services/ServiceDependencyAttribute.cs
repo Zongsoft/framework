@@ -28,90 +28,50 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Services
 {
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true)]
 	public class ServiceDependencyAttribute : Attribute
 	{
-		#region 成员字段
-		private string _name;
-		private string _provider;
-		private Type _contract;
-		#endregion
-
 		#region 构造函数
 		public ServiceDependencyAttribute()
 		{
 		}
 
-		public ServiceDependencyAttribute(string name, string provider = null)
+		public ServiceDependencyAttribute(object parameter, string provider = null)
 		{
-			this.Name = name;
+			this.Parameter = parameter;
 			this.Provider = provider;
 		}
 
-		public ServiceDependencyAttribute(Type contract, string provider = null)
+		public ServiceDependencyAttribute(Type serviceType, string provider = null)
 		{
-			this.Contract = contract;
+			this.ServiceType = serviceType;
 			this.Provider = provider;
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
-		/// 获取或设置服务的名称。
+		/// 获取或设置服务的匹配参数。
 		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-			set
-			{
-				_name = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-			}
-		}
+		public object Parameter { get; set; }
 
 		/// <summary>
 		/// 获取或设置服务提供程序的名称。
 		/// </summary>
-		public string Provider
-		{
-			get
-			{
-				return _provider;
-			}
-			set
-			{
-				_provider = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-			}
-		}
+		public string Provider { get; set; }
 
 		/// <summary>
-		/// 获取或设置服务的契约类型。
+		/// 获取或设置依赖的服务类型。
 		/// </summary>
-		public Type Contract
-		{
-			get
-			{
-				return _contract;
-			}
-			set
-			{
-				_contract = value;
-			}
-		}
+		public Type ServiceType { get; set; }
 
 		/// <summary>
 		/// 获取或设置注入的对象是否不能为空。
 		/// </summary>
-		public bool IsRequired
-		{
-			get; set;
-		}
+		public bool IsRequired { get; set; }
 		#endregion
 	}
 }
