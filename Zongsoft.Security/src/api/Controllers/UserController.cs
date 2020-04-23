@@ -162,7 +162,7 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.Ok(this.UserProvider.GetUsers(id, paging));
 
 			//解析用户标识参数
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
+			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
 
 			//如果ID参数是数字则以编号方式返回唯一的用户信息
 			if(userId > 0)
@@ -289,13 +289,10 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(id))
 				return this.BadRequest();
 
-			var existed = false;
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
-
-			if(userId > 0)
-				existed = this.UserProvider.Exists(userId);
-			else
-				existed = this.UserProvider.Exists(identity, @namespace);
+			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
+			var existed = userId > 0 ?
+				this.UserProvider.Exists(userId) :
+				this.UserProvider.Exists(identity, @namespace);
 
 			return existed ? (IActionResult)this.Ok() : this.NotFound();
 		}
@@ -317,7 +314,7 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.BadRequest();
 
 			bool existed;
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
+			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
 
 			if(userId > 0)
 				existed = this.UserProvider.HasPassword(userId);
@@ -342,12 +339,9 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.BadRequest();
 
 			var parts = id.Split(':');
-			var userId = 0u;
-
-			if(parts.Length > 1)
-				userId = this.UserProvider.ForgetPassword(parts[1], parts[0]);
-			else
-				userId = this.UserProvider.ForgetPassword(parts[0], null);
+			var userId = parts.Length > 1 ?
+				this.UserProvider.ForgetPassword(parts[1], parts[0]) :
+				this.UserProvider.ForgetPassword(parts[0], null);
 
 			return userId == 0 ? (IActionResult)this.NotFound() : this.Ok(userId);
 		}
@@ -366,7 +360,7 @@ namespace Zongsoft.Security.Web.Controllers
 			}
 			else if(content.PasswordAnswers != null && content.PasswordAnswers.Length > 0)
 			{
-				var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
+				var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
 
 				//注意：该方法会将传入的纯数字的标识当做手机号处理
 				if(userId > 0)
@@ -391,7 +385,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(id))
 				return this.BadRequest();
 
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
+			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
 			string[] result;
 
 			if(userId > 0)

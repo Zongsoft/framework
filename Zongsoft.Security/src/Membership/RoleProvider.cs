@@ -47,7 +47,7 @@ namespace Zongsoft.Security.Membership
 		#region 成员字段
 		private IDataAccess _dataAccess;
 		private ICensorship _censorship;
-		private Services.IServiceProvider _services;
+		private readonly Services.IServiceProvider _services;
 		#endregion
 
 		#region 构造函数

@@ -30,20 +30,27 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options.Configuration
+namespace Zongsoft.Security.Membership.Configuration
 {
-	public class AuthenticationOption : IAuthenticationOption
+	/// <summary>
+	/// 表示凭证提供程序的配置接口。
+	/// </summary>
+	public interface ICredentialOption
 	{
-		#region 公共属性
-		public IAttempterOption Attempter
+		/// <summary>
+		/// 获取或设置凭证的默认有效期时长。
+		/// </summary>
+		TimeSpan Period
 		{
 			get; set;
 		}
 
-		public ICredentialOption Credential
+		/// <summary>
+		/// 获取策略配置集。
+		/// </summary>
+		Collections.INamedCollection<ICredentialPolicy> Policies
 		{
-			get; set;
+			get;
 		}
-		#endregion
 	}
 }

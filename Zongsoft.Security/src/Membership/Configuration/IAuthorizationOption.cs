@@ -28,37 +28,19 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options
+namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示用户管理配置的接口。
+	/// 表示授权配置的接口。
 	/// </summary>
-	public interface IUserOption
+	public interface IAuthorizationOption
 	{
-		/// <summary>
-		/// 获取或设置密码的最小长度，零表示不限制。
-		/// </summary>
-		int PasswordLength
-		{
-			get; set;
-		}
-
-		/// <summary>
-		/// 获取或设置密码的强度。
-		/// </summary>
-		PasswordStrength PasswordStrength
-		{
-			get; set;
-		}
-
-		/// <summary>
-		/// 获取或设置用户信息的有效性校验项。
-		/// </summary>
-		UserVerification Verification
-		{
-			get; set;
-		}
+        /// <summary>
+        /// 获取一个可以进行授权管理的角色集。
+        /// </summary>
+		ISet<string> Roles { get; }
 	}
 }

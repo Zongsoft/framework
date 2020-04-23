@@ -64,7 +64,7 @@ namespace Zongsoft.Security.Membership
 			get => "Normal";
 		}
 
-		public Options.ICredentialOption Option
+		public Configuration.ICredentialOption Option
 		{
 			get; set;
 		}
@@ -127,7 +127,7 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//获取当前用户的密码及密码向量
-			var userId = this.GetPassword(identity, @namespace, out var storedPassword, out var storedPasswordSalt, out var status, out var statusTimestamp);
+			var userId = this.GetPassword(identity, @namespace, out var storedPassword, out var storedPasswordSalt, out var status, out _);
 
 			//如果帐户不存在，则抛出异常
 			if(userId == 0)
@@ -242,7 +242,7 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//获取指定标识的用户对象
-			var user = this.DataAccess.Select<IUser>(MembershipHelper.GetUserIdentity(identity, out var identityType) & this.GetNamespace(@namespace)).FirstOrDefault();
+			var user = this.DataAccess.Select<IUser>(MembershipHelper.GetUserIdentity(identity, out _) & this.GetNamespace(@namespace)).FirstOrDefault();
 
 			//如果帐户不存在，则抛出异常
 			if(user == null)

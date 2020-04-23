@@ -92,7 +92,7 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.Ok(this.RoleProvider.GetRoles(id, paging));
 
 			//确认角色编号及标识
-			var roleId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
+			var roleId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
 
 			//如果ID参数是数字则以编号方式返回唯一的角色信息
 			if(roleId > 0)
@@ -185,13 +185,10 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(id))
 				return this.BadRequest();
 
-			var existed = false;
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out var suffix);
-
-			if(userId > 0)
-				existed = this.RoleProvider.Exists(userId);
-			else
-				existed = this.RoleProvider.Exists(identity, @namespace);
+			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
+			var existed = userId > 0 ?
+				this.RoleProvider.Exists(userId) :
+				this.RoleProvider.Exists(identity, @namespace);
 
 			return existed ? (IActionResult)this.Ok() : this.NotFound();
 		}

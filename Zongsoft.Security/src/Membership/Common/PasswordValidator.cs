@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Membership.Common
 		#endregion
 
 		#region 公共属性
-		public Options.IUserOption Option
+		public Configuration.IUserOption Option
 		{
 			get;
 			set;
@@ -71,7 +71,7 @@ namespace Zongsoft.Security.Membership.Common
 			//如果如果密码长度小于配置要求的长度，则返回验证失败
 			if(string.IsNullOrEmpty(data) || data.Length < option.PasswordLength)
 			{
-				failure?.Invoke($"The password length must be no less than {option.PasswordLength.ToString()} characters.");
+				failure?.Invoke($"The password length must be no less than {option.PasswordLength} characters.");
 				return false;
 			}
 

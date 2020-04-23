@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Membership
 			set => _cache = value ?? throw new ArgumentNullException();
 		}
 
-		public Options.IAttempterOption Option
+		public Configuration.IAttempterOption Option
 		{
 			get; set;
 		}
@@ -102,9 +102,7 @@ namespace Zongsoft.Security.Membership
 		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
 		public bool Fail(string identity, string @namespace)
 		{
-			var sequence = this.Cache as ISequence;
-
-			if(sequence == null)
+			if(!(this.Cache is ISequence sequence))
 				throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
 			//获取验证失败的阈值和锁定时长

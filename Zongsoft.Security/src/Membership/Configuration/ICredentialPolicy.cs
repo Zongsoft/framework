@@ -28,37 +28,28 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options
+namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示成员安全管理配置的接口。
+	/// 表示以凭证场景为依据的有效期配置项接口。
 	/// </summary>
-	public interface IConfiguration
+	public interface ICredentialPolicy
 	{
 		/// <summary>
-		/// 获取用户提供程序的配置信息。
+		/// 获取凭证场景。
 		/// </summary>
-		IUserOption User
+		string Scene
 		{
 			get;
 		}
 
 		/// <summary>
-		/// 获取授权配置信息。
+		/// 获取或设置凭证的有效期时长。
 		/// </summary>
-		IAuthorizationOption Authorization
+		TimeSpan Period
 		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取验证配置信息。
-		/// </summary>
-		IAuthenticationOption Authentication
-		{
-			get;
+			get; set;
 		}
 	}
 }

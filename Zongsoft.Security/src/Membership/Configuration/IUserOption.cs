@@ -28,22 +28,37 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Security.Membership.Options.Configuration
+namespace Zongsoft.Security.Membership.Configuration
 {
-	public class CredentialOption : ICredentialOption
+	/// <summary>
+	/// 表示用户管理配置的接口。
+	/// </summary>
+	public interface IUserOption
 	{
-		#region 公共属性
-		public TimeSpan Period
+		/// <summary>
+		/// 获取或设置密码的最小长度，零表示不限制。
+		/// </summary>
+		int PasswordLength
 		{
-            get; set;
+			get; set;
 		}
 
-		public Collections.INamedCollection<ICredentialPolicy> Policies
+		/// <summary>
+		/// 获取或设置密码的强度。
+		/// </summary>
+		PasswordStrength PasswordStrength
 		{
-            get; set;
+			get; set;
 		}
-		#endregion
+
+		/// <summary>
+		/// 获取或设置用户信息的有效性校验项。
+		/// </summary>
+		IdentityVerification Verification
+		{
+			get; set;
+		}
 	}
 }

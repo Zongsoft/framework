@@ -30,27 +30,35 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options
+namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示恶意检测器的配置接口。
+	/// 表示成员安全管理配置的接口。
 	/// </summary>
-	public interface IAttempterOption
+	public interface IConfiguration
 	{
 		/// <summary>
-		/// 获取或设置验证失败的阈值，零表示不限制。
+		/// 获取用户提供程序的配置信息。
 		/// </summary>
-		int Threshold
+		IUserOption User
 		{
-			get; set;
+			get;
 		}
 
 		/// <summary>
-		/// 获取或设置验证失败超过指定的阈值后的锁定时长，默认为60分钟。
+		/// 获取授权配置信息。
 		/// </summary>
-		TimeSpan Window
+		IAuthorizationOption Authorization
 		{
-			get; set;
+			get;
+		}
+
+		/// <summary>
+		/// 获取验证配置信息。
+		/// </summary>
+		IAuthenticationOption Authentication
+		{
+			get;
 		}
 	}
 }

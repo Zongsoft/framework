@@ -56,7 +56,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 成员字段
 		private IDataAccess _dataAccess;
-		private Services.IServiceProvider _services;
+		private readonly Services.IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
@@ -97,7 +97,7 @@ namespace Zongsoft.Security.Membership
 			get => _dataAccess?.Sequence;
 		}
 
-		public Options.IUserOption Option
+		public Configuration.IUserOption Option
 		{
 			get; set;
 		}
@@ -106,7 +106,7 @@ namespace Zongsoft.Security.Membership
 		{
 			get
 			{
-				if(ApplicationContext.Current == null || ApplicationContext.Current.Principal.Identity.IsAuthenticated == false)
+				if(ApplicationContext.Current == null || !ApplicationContext.Current.Principal.Identity.IsAuthenticated)
 					throw new AuthorizationException("No authorization or access to current user credentials.");
 
 				return ApplicationContext.Current.Principal as CredentialPrincipal ??
@@ -118,7 +118,7 @@ namespace Zongsoft.Security.Membership
 		{
 			get
 			{
-				if(ApplicationContext.Current == null || ApplicationContext.Current.Principal.Identity.IsAuthenticated == false)
+				if(ApplicationContext.Current == null || !ApplicationContext.Current.Principal.Identity.IsAuthenticated)
 					throw new AuthorizationException("No authorization or access to current user credentials.");
 
 				var principal = ApplicationContext.Current.Principal as CredentialPrincipal ??
@@ -606,8 +606,6 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				return 0;
 
-			string secret = null;
-
 			switch(identityType)
 			{
 				case UserIdentityType.Email:
@@ -616,7 +614,7 @@ namespace Zongsoft.Security.Membership
 						throw new InvalidOperationException("The user's email is unset.");
 
 					//生成校验密文
-					secret = secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
+					var secret = secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
 
 					//发送忘记密码的邮件通知
 					CommandExecutor.Default.Execute($"email.send -template:{KEY_AUTHENTICATION_TEMPLATE} {user.Email}", new
@@ -839,12 +837,12 @@ namespace Zongsoft.Security.Membership
 		#region 虚拟方法
 		protected virtual bool IsVerifyEmailRequired()
 		{
-			return (this.Option.Verification & Options.UserVerification.Email) == Options.UserVerification.Email && this.SecretProvider != null;
+			return (this.Option.Verification & Configuration.IdentityVerification.Email) == Configuration.IdentityVerification.Email && this.SecretProvider != null;
 		}
 
 		protected virtual bool IsVerifyPhoneRequired()
 		{
-			return (this.Option.Verification & Options.UserVerification.Phone) == Options.UserVerification.Phone && this.SecretProvider != null;
+			return (this.Option.Verification & Configuration.IdentityVerification.Phone) == Configuration.IdentityVerification.Phone && this.SecretProvider != null;
 		}
 
 		protected virtual void OnChangeEmail(IUser user, string email)

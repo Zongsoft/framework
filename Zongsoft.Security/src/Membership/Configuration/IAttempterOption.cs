@@ -28,26 +28,29 @@
  */
 
 using System;
+using System.ComponentModel;
 
-namespace Zongsoft.Security.Membership.Options
+namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示以凭证场景为依据的有效期配置项接口。
+	/// 表示恶意检测器的配置接口。
 	/// </summary>
-	public interface ICredentialPolicy
+	public interface IAttempterOption
 	{
 		/// <summary>
-		/// 获取凭证场景。
+		/// 获取或设置验证失败的阈值，零表示不限制。
 		/// </summary>
-		string Scene
+        [DefaultValue(3)]
+		int Threshold
 		{
-			get;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置凭证的有效期时长。
+		/// 获取或设置验证失败超过指定的阈值后的锁定时长，默认为60分钟。
 		/// </summary>
-		TimeSpan Period
+        [DefaultValue("1:0:0")]
+		TimeSpan Window
 		{
 			get; set;
 		}

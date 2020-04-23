@@ -30,25 +30,25 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options
+namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示凭证提供程序的配置接口。
+	/// 表示验证配置的接口。
 	/// </summary>
-	public interface ICredentialOption
+	public interface IAuthenticationOption
 	{
 		/// <summary>
-		/// 获取或设置凭证的默认有效期时长。
+		/// 获取恶意检测器的配置项。
 		/// </summary>
-		TimeSpan Period
+		IAttempterOption Attempter
 		{
-			get; set;
+			get;
 		}
 
 		/// <summary>
-		/// 获取策略配置集。
+		/// 获取凭证配置项。
 		/// </summary>
-		Collections.INamedCollection<ICredentialPolicy> Policies
+		ICredentialOption Credential
 		{
 			get;
 		}

@@ -28,22 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Options.Configuration
+namespace Zongsoft.Security.Membership.Configuration
 {
-	public class CredentialPolicy : ICredentialPolicy
+	/// <summary>
+	/// 表示身份验证方式的枚举。
+	/// </summary>
+	[Flags]
+	public enum IdentityVerification
 	{
-		#region 公共属性
-		public string Scene
-		{
-            get; set;
-		}
+		/// <summary>无验证。</summary>
+		None,
 
-		public TimeSpan Period
-		{
-            get; set;
-		}
-		#endregion
+		/// <summary>验证电子邮箱的有效性。</summary>
+		Email,
+
+		/// <summary>验证手机号码的有效性。</summary>
+		Phone,
 	}
 }
