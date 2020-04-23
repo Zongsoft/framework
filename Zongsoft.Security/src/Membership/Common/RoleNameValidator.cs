@@ -84,16 +84,16 @@ namespace Zongsoft.Security.Membership.Common
 		#endregion
 
 		#region 匹配方法
-		public bool IsMatch(string parameter)
+		public bool Match(string parameter)
 		{
 			return string.Equals(parameter, "Name", StringComparison.OrdinalIgnoreCase) |
 			       string.Equals(parameter, "RoleName", StringComparison.OrdinalIgnoreCase) |
 			       string.Equals(parameter, "Role.Name", StringComparison.OrdinalIgnoreCase);
 		}
 
-		bool IMatchable.IsMatch(object parameter)
+		bool IMatchable.Match(object parameter)
 		{
-			return this.IsMatch(parameter as string);
+			return this.Match(parameter as string);
 		}
 		#endregion
 	}
