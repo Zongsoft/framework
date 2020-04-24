@@ -118,15 +118,45 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
+		#region 初始方法
+		public override void Initialize()
+		{
+			//首先调用基类的初始化
+			base.Initialize();
+
+			//加载插件树
+			this.PluginTree.Load();
+
+			//挂载当前应用上下文
+			this.PluginTree.Mount(this.Options.Mountion.ApplicationContextPath, this);
+		}
+		#endregion
+
+		#region 处置方法
+		protected override void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				var workbench = _workbench;
+
+				if(workbench != null)
+					workbench.Close();
+			}
+
+			//执行基类的处置操作
+			base.Dispose(disposing);
+		}
+		#endregion
+
 		#region 激发事件
 		internal void RaiseStarted()
 		{
 			this.OnStarted(EventArgs.Empty);
 		}
 
-		internal void RaiseExiting()
+		internal void RaiseStopped()
 		{
-			this.OnExiting(EventArgs.Empty);
+			this.OnStopped(EventArgs.Empty);
 		}
 
 		protected virtual void OnWorkbenchCreated(EventArgs args = null)

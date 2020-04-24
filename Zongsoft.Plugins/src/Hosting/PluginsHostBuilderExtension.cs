@@ -31,19 +31,23 @@ using System;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Zongsoft.Plugins.Hosting;
 
 namespace Zongsoft.Plugins
 {
 	public static class PluginsHostBuilderExtension
 	{
+		public static IHostBuilder UsePluginsLifetime(this IHostBuilder builder)
+		{
+			return builder.ConfigureServices(services => services.AddSingleton<IHostLifetime, Hosting.PluginsHostLifetime>());
+		}
+
 		public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, Action<Hosting.IPluginsHostBuilder> configure = null) where TApplicationContext : PluginApplicationContext
 		{
 			if(builder == null)
 				throw new ArgumentNullException(nameof(builder));
 
 			if(typeof(TApplicationContext).IsAbstract)
-				throw new ArgumentException();
+				throw new ArgumentException($"The specified '{typeof(TApplicationContext).FullName}' application context type cannot be abstract.");
 
 			var pluginsBuilder = new Hosting.PluginsHostBuilder(builder);
 			configure?.Invoke(pluginsBuilder);
@@ -54,11 +58,8 @@ namespace Zongsoft.Plugins
 				services.AddSingleton<PluginApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
 				services.AddSingleton<Services.IApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
 
-                //挂载插件宿主生命期
-                services.AddSingleton<IHostLifetime, PluginsHostLifetime>();
-
-				//添加插件宿主启动器
-				//services.AddHostedService<Hosting.PluginsHostStarter>();
+				//挂载插件宿主生命期
+				services.AddSingleton<IHostLifetime, Hosting.PluginsHostLifetime>();
 			});
 
 			return builder;

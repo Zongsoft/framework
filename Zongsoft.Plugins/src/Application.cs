@@ -32,6 +32,7 @@ using System.Threading;
 
 namespace Zongsoft.Plugins
 {
+	[Obsolete]
 	public static class Application
 	{
 		#region 事件声明
@@ -98,7 +99,7 @@ namespace Zongsoft.Plugins
 					};
 
 					//启动工作台
-					context.Workbench.Open(args);
+					context.Workbench.Open();
 				}
 
 				//激发应用启动完成事件
@@ -156,7 +157,7 @@ namespace Zongsoft.Plugins
 			Exiting?.Invoke(context, EventArgs.Empty);
 
 			//激发当前上下文的“Exiting”事件
-			context.RaiseExiting();
+			context.RaiseStopped();
 		}
 
 		private static void OnStarted()

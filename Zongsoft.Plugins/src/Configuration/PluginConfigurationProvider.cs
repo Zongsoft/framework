@@ -113,14 +113,14 @@ namespace Zongsoft.Configuration
 		#region 释放处置
 		public void Dispose()
 		{
+			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
+			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
+
 			foreach(var plugin in _providers.Keys)
 			{
 				if(_providers.TryRemove(plugin, out var provider))
 					provider.Dispose();
 			}
-
-			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
-			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
 		}
 		#endregion
 
