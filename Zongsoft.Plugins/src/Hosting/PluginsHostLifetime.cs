@@ -66,16 +66,8 @@ namespace Zongsoft.Plugins.Hosting
 		#region 公共方法
 		public Task StopAsync(CancellationToken cancellationToken)
 		{
-			if(_applicationContext.Workbench != null)
-				_applicationContext.Workbench.Close();
-
-			foreach(var initializer in _applicationContext.Initializers)
-			{
-				if(initializer is IAsyncDisposable asyncDisposable)
-					asyncDisposable.DisposeAsync().GetAwaiter().GetResult();
-				else if(initializer is IDisposable disposable)
-					disposable.Dispose();
-			}
+			if(!cancellationToken.IsCancellationRequested)
+				_applicationContext.Dispose();
 
 			return Task.CompletedTask;
 		}
@@ -88,13 +80,7 @@ namespace Zongsoft.Plugins.Hosting
 			try
 			#endif
 			{
-				foreach(var initializer in _applicationContext.Initializers)
-				{
-					initializer.Initialize(_applicationContext);
-				}
-
-				//加载插件树
-				_applicationContext.PluginTree.Load();
+				_applicationContext.Initialize();
 
 				return Task.CompletedTask;
 			}
@@ -102,7 +88,7 @@ namespace Zongsoft.Plugins.Hosting
 			catch(Exception ex)
 			{
 				//应用无法启动，写入日志
-				_logger.LogError(ex, $"The {_applicationContext.Name} application start failed.")
+				_logger.LogError(ex, $"The {_applicationContext.Name} application start failed.");
 
 				//重抛异常
 				throw;
@@ -117,7 +103,7 @@ namespace Zongsoft.Plugins.Hosting
 				((PluginsHostLifetime)state).OnApplicationStarted();
 			}, this);
 
-			AppDomain.CurrentDomain.ProcessExit += OnExit;
+			AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
 			return this.StartAsync(cancellationToken);
 		}
@@ -126,22 +112,11 @@ namespace Zongsoft.Plugins.Hosting
 		#region 事件响应
 		private void OnApplicationStarted()
 		{
-			var workbench = _applicationContext.Workbench ??
-				throw new InvalidOperationException("");
-
-			_applicationContext.Workbench.Closed += delegate
-			{
-				_applicationLifetime.StopApplication();
-			};
-
-			//启动工作台
+			_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
 			_applicationContext.Workbench.Open();
-
-			//激发应用上下文的“Started”事件
-			_applicationContext.RaiseStarted();
 		}
 
-		private void OnExit(object sender, EventArgs e)
+		private void OnProcessExit(object sender, EventArgs e)
 		{
 			_applicationLifetime.StopApplication();
 
@@ -149,7 +124,6 @@ namespace Zongsoft.Plugins.Hosting
 				_logger.LogInformation("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
 
 			_shutdownBlock.WaitOne();
-
 			System.Environment.ExitCode = 0;
 		}
 		#endregion
@@ -159,8 +133,7 @@ namespace Zongsoft.Plugins.Hosting
 		{
 			_shutdownBlock.Set();
 
-			AppDomain.CurrentDomain.ProcessExit -= OnExit;
-
+			AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
 			_applicationStartedRegistration.Dispose();
 		}
 		#endregion
