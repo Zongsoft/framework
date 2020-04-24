@@ -1363,17 +1363,17 @@ namespace Zongsoft.Data
 			if(keys == null || keys.Length == 0)
 				throw new DataException($"The specified '{this.Name}' data entity does not define a primary key and does not support update operation.");
 
-			var requires = new ICondition[keys.Length];
+			var requisite = new ICondition[keys.Length];
 
 			for(int i = 0; i < keys.Length; i++)
 			{
 				if(dictionary.TryGetValue(keys[i].Name, out var value) && value != null)
-					requires[i] = Condition.Equal(keys[i].Name, value);
+					requisite[i] = Condition.Equal(keys[i].Name, value);
 				else
 					throw new DataException($"No required primary key field value is specified for the update '{this.Name}' entity data.");
 			}
 
-			return requires.Length > 1 ? ConditionCollection.And(requires) : requires[0];
+			return requisite.Length > 1 ? ConditionCollection.And(requisite) : requisite[0];
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
