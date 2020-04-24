@@ -40,43 +40,48 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Modules))]
-	public class ApplicationContext : IApplicationContext, IApplicationModule
+	public class ApplicationContext : IApplicationContext, IApplicationModule, IDisposable
 	{
 		#region 单例字段
 		private volatile static IApplicationContext _current;
 		#endregion
 
 		#region 事件声明
-		public event EventHandler Exiting;
 		public event EventHandler Started;
+		public event EventHandler Stopped;
 		#endregion
 
 		#region 成员字段
+		private volatile int _started;
+		private volatile int _stopped;
+		private volatile int _disposed;
+
 		private System.IServiceProvider _services;
+		private ICollection<IApplicationInitializer> _initializers;
+
+		private readonly CancellationTokenRegistration _applicationStarted;
+		private readonly CancellationTokenRegistration _applicationStopped;
 		#endregion
 
 		#region 构造函数
-		protected ApplicationContext()
-		{
-			_current = this;
-
-			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
-			this.Initializers = new List<IApplicationInitializer>();
-			this.Schemas = new ComponentModel.SchemaCollection();
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-		}
-
-		protected ApplicationContext(System.IServiceProvider services) : this()
+		protected ApplicationContext(System.IServiceProvider services)
 		{
 			_services = services ?? throw new ArgumentNullException(nameof(services));
+			_initializers = new List<IApplicationInitializer>();
+
+			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
+			this.Schemas = new ComponentModel.SchemaCollection();
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 			var lifetime = _services.GetService<IHostApplicationLifetime>();
 
 			if(lifetime != null)
 			{
-				lifetime.ApplicationStarted.Register(() => this.OnStarted(EventArgs.Empty));
-				lifetime.ApplicationStopping.Register(() => this.OnExiting(EventArgs.Empty));
+				_applicationStarted = lifetime.ApplicationStarted.Register(() => this.OnStarted(EventArgs.Empty));
+				_applicationStopped = lifetime.ApplicationStopped.Register(() => this.OnStopped(EventArgs.Empty));
 			}
+
+			_current = this;
 		}
 		#endregion
 
@@ -147,14 +152,17 @@ namespace Zongsoft.Services
 			get => _services;
 		}
 
+		public ICollection<IApplicationInitializer> Initializers
+		{
+			get => _initializers;
+		}
+
 		public virtual ClaimsPrincipal Principal
 		{
 			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : ClaimsPrincipal.Current;
 		}
 
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
-
-		public ICollection<IApplicationInitializer> Initializers { get; }
 
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
 
@@ -186,15 +194,66 @@ namespace Zongsoft.Services
 		}
 		#endregion
 
-		#region 激发事件
-		protected virtual void OnExiting(EventArgs args)
+		#region 初始方法
+		public virtual void Initialize()
 		{
-			this.Exiting?.Invoke(this, args);
+			if(_disposed != 0)
+				throw new ObjectDisposedException(this.GetType().FullName);
+
+			if(_started != 0 || _stopped != 0)
+				throw new InvalidOperationException();
+
+			foreach(var initializer in _initializers)
+			{
+				initializer?.Initialize(this);
+			}
+		}
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 
+		protected virtual void Dispose(bool disposing)
+		{
+			if(Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			if(disposing)
+			{
+				_applicationStarted.Dispose();
+				_applicationStopped.Dispose();
+
+				var initializers = Interlocked.Exchange(ref _initializers, Array.Empty<IApplicationInitializer>());
+
+				foreach(var initializer in initializers)
+				{
+					if(initializer is IDisposable disposable)
+						disposable.Dispose();
+				}
+
+				if(_services is IDisposable services)
+					services.Dispose();
+			}
+		}
+		#endregion
+
+		#region 激发事件
 		protected virtual void OnStarted(EventArgs args)
 		{
-			this.Started?.Invoke(this, args);
+			//确保“Started”事件只会被触发一次
+			if(Interlocked.CompareExchange(ref _started, 1, 0) == 0)
+				this.Started?.Invoke(this, args);
+		}
+
+		protected virtual void OnStopped(EventArgs args)
+		{
+			//确保“Stopped”事件只会被触发一次
+			if(Interlocked.CompareExchange(ref _stopped, 1, 0) == 0)
+				this.Stopped?.Invoke(this, args);
 		}
 		#endregion
 

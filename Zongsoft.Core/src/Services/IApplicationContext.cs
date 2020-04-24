@@ -42,8 +42,8 @@ namespace Zongsoft.Services
 	public interface IApplicationContext : IApplicationModule
 	{
 		#region 事件定义
-		event EventHandler Exiting;
 		event EventHandler Started;
+		event EventHandler Stopped;
 		#endregion
 
 		#region 属性定义
