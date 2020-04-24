@@ -295,21 +295,21 @@ namespace Zongsoft.Runtime.Caching
 			return Task.FromResult(this.SetExpiry(key, expiry));
 		}
 
-		public bool SetValue(string key, object value, CacheRequires requires = CacheRequires.Always)
+		public bool SetValue(string key, object value, CacheRequisite requisite = CacheRequisite.Always)
 		{
-			return this.SetValue(key, value, TimeSpan.Zero, requires);
+			return this.SetValue(key, value, TimeSpan.Zero, requisite);
 		}
 
-		public bool SetValue(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always)
+		public bool SetValue(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always)
 		{
 			if(key == null)
 				throw new ArgumentNullException(nameof(key));
 
 			CacheEntry entry = null;
 
-			switch(requires)
+			switch(requisite)
 			{
-				case CacheRequires.Exists:
+				case CacheRequisite.Exists:
 					while(_cache.TryGetValue(key, out var original))
 					{
 						if(entry == null)
@@ -324,7 +324,7 @@ namespace Zongsoft.Runtime.Caching
 					}
 
 					return false;
-				case CacheRequires.NotExists:
+				case CacheRequisite.NotExists:
 					if(_cache.TryAdd(key, new CacheEntry(value, expiry)))
 					{
 						_expirator.Expire(key, expiry);
@@ -350,22 +350,22 @@ namespace Zongsoft.Runtime.Caching
 			return true;
 		}
 
-		public Task<bool> SetValueAsync(string key, object value, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default)
+		public Task<bool> SetValueAsync(string key, object value, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
 		{
 			if(key == null)
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
-			return Task.FromResult(this.SetValue(key, value, TimeSpan.Zero, requires));
+			return Task.FromResult(this.SetValue(key, value, TimeSpan.Zero, requisite));
 		}
 
-		public Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default)
+		public Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
 		{
 			if(key == null)
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
-			return Task.FromResult(this.SetValue(key, value, expiry, requires));
+			return Task.FromResult(this.SetValue(key, value, expiry, requisite));
 		}
 		#endregion
 

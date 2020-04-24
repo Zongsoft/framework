@@ -16,9 +16,9 @@ namespace Zongsoft.Runtime.Caching
 			string KEY = Guid.NewGuid().ToString();
 
 			Assert.True(_cache.SetValue(KEY, "Value#0"));
-			Assert.True(_cache.SetValue(KEY, "Value#1", CacheRequires.Always));
-			Assert.True(_cache.SetValue(KEY, "Value#2", CacheRequires.Exists));
-			Assert.False(_cache.SetValue(KEY, "Value#3", CacheRequires.NotExists));
+			Assert.True(_cache.SetValue(KEY, "Value#1", CacheRequisite.Always));
+			Assert.True(_cache.SetValue(KEY, "Value#2", CacheRequisite.Exists));
+			Assert.False(_cache.SetValue(KEY, "Value#3", CacheRequisite.NotExists));
 		}
 
 		[Fact]

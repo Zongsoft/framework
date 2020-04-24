@@ -220,19 +220,19 @@ namespace Zongsoft.Runtime.Caching
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
 		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
-		bool SetValue(string key, object value, CacheRequires requires = CacheRequires.Always);
+		bool SetValue(string key, object value, CacheRequisite requisite = CacheRequisite.Always);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
 		/// </summary>
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task<bool> SetValueAsync(string key, object value, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default);
+		Task<bool> SetValueAsync(string key, object value, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
@@ -240,9 +240,9 @@ namespace Zongsoft.Runtime.Caching
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
 		/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
 		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
-		bool SetValue(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always);
+		bool SetValue(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always);
 
 		/// <summary>
 		/// 设置指定的值保存到缓存字典中。
@@ -250,10 +250,10 @@ namespace Zongsoft.Runtime.Caching
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
 		/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
-		/// <param name="requires">指定设置的必须条件，默认为<see cref="CacheRequires.Always"/>。</param>
+		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default);
+		Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default);
 		#endregion
 	}
 }
