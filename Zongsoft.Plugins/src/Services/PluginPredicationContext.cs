@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Plugins;
 
-namespace Zongsoft.Services.Plugins
+namespace Zongsoft.Services
 {
 	public class PluginPredicationContext
 	{

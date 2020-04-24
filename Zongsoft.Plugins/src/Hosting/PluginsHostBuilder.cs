@@ -63,7 +63,7 @@ namespace Zongsoft.Plugins.Hosting
 				}
 
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
-				configurator.Add(new Zongsoft.Configuration.Plugins.PluginConfigurationSource(pluginsHostBuilderContext.Options));
+				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(pluginsHostBuilderContext.Options));
 			});
 		}
 		#endregion

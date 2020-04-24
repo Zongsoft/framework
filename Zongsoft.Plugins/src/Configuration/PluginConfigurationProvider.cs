@@ -36,7 +36,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Plugins
+namespace Zongsoft.Configuration
 {
 	public class PluginConfigurationProvider : IConfigurationProvider, IDisposable
 	{

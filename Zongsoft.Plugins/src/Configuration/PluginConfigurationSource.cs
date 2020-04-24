@@ -31,7 +31,7 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Plugins
+namespace Zongsoft.Configuration
 {
 	public class PluginConfigurationSource : IConfigurationSource
 	{

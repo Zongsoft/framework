@@ -34,7 +34,7 @@ using System.Text.RegularExpressions;
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Services.Plugins
+namespace Zongsoft.Services
 {
 	/// <summary>
 	/// 服务解析器类。

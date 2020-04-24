@@ -35,7 +35,7 @@ using System.Text.RegularExpressions;
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Resources.Plugins
+namespace Zongsoft.Resources
 {
 	public class ResourceParser : Parser
 	{

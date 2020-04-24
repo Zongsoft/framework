@@ -33,7 +33,7 @@ using System.Collections.Generic;
 using Zongsoft.Services;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Services.Plugins
+namespace Zongsoft.Services
 {
 	public class CommandParser : Parser
 	{

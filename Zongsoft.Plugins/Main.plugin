@@ -17,7 +17,6 @@
 		<builder name="lazy" type="Zongsoft.Plugins.Builders.LazyBuilder, Zongsoft.Plugins"/>
 		<builder name="expose" type="Zongsoft.Plugins.Builders.ExposeBuilder, Zongsoft.Plugins"/>
 		<builder name="object" type="Zongsoft.Plugins.Builders.ObjectBuilder, Zongsoft.Plugins"/>
-		<builder name="component" type="Zongsoft.ComponentModel.Plugins.ComponentBuilder, Zongsoft.Plugins" />
 	</builders>
 
 	<parsers>
@@ -25,11 +24,11 @@
 		<parser name="type" type="Zongsoft.Plugins.Parsers.TypeParser, Zongsoft.Plugins" />
 		<parser name="object" type="Zongsoft.Plugins.Parsers.ObjectParser, Zongsoft.Plugins" />
 		<parser name="static" type="Zongsoft.Plugins.Parsers.StaticParser, Zongsoft.Plugins" />
-		<parser name="res" type="Zongsoft.Resources.Plugins.ResourceParser, Zongsoft.Plugins" />
-		<parser name="opt" type="Zongsoft.Configuration.Plugins.OptionParser, Zongsoft.Plugins" />
-		<parser name="cmd" type="Zongsoft.Services.Plugins.CommandParser, Zongsoft.Plugins" />
-		<parser name="srv" type="Zongsoft.Services.Plugins.ServicesParser, Zongsoft.Plugins" />
-		<parser name="predicate" type="Zongsoft.Services.Plugins.PredicateParser, Zongsoft.Plugins" />
+		<parser name="res" type="Zongsoft.Resources.ResourceParser, Zongsoft.Plugins" />
+		<parser name="opt" type="Zongsoft.Configuration.OptionParser, Zongsoft.Plugins" />
+		<parser name="cmd" type="Zongsoft.Services.CommandParser, Zongsoft.Plugins" />
+		<parser name="srv" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
+		<parser name="predicate" type="Zongsoft.Services.PredicateParser, Zongsoft.Plugins" />
 	</parsers>
 
 	<!-- 挂载服务工厂和默认服务容器 -->

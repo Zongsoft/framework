@@ -33,7 +33,7 @@ using System.Collections.Generic;
 using Zongsoft.Services;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Configuration.Plugins
+namespace Zongsoft.Configuration
 {
 	public class OptionParser : Parser
 	{

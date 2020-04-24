@@ -34,7 +34,7 @@ using System.Text.RegularExpressions;
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Services.Plugins
+namespace Zongsoft.Services
 {
 	public class PredicateParser : Zongsoft.Plugins.Parsers.Parser
 	{
