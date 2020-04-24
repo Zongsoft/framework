@@ -2,9 +2,9 @@
 
 <options>
 	<option path="/Externals/Redis">
-		<connectionStrings>
-			<connectionString name="localhost" provider="redis"
-			                  value="127.0.0.1:6379" />
-		</connectionStrings>
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="localhost" driver="redis"
+			                   value="127.0.0.1:6379" />
+		</connectionSettings>
 	</option>
 </options>

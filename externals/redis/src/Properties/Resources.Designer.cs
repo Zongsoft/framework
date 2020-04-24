@@ -279,9 +279,9 @@ namespace Zongsoft.Externals.Redis.Properties {
         /// <summary>
         ///   查找类似 设置的必要条件。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisSetCommand_Options_Requires {
+        internal static string Text_RedisSetCommand_Options_Requisite {
             get {
-                return ResourceManager.GetString("Text.RedisSetCommand.Options.Requires", resourceCulture);
+                return ResourceManager.GetString("Text.RedisSetCommand.Options.Requisite", resourceCulture);
             }
         }
     }

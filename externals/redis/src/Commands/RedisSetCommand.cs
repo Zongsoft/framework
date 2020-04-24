@@ -34,12 +34,12 @@ namespace Zongsoft.Externals.Redis.Commands
 {
 	[DisplayName("Text.RedisSetCommand.Name")]
 	[Description("Text.RedisSetCommand.Description")]
-	[Zongsoft.Services.CommandOption(REQUIRES_OPTION, Type = typeof(Runtime.Caching.CacheRequires), DefaultValue = Runtime.Caching.CacheRequires.Always, Description = "Text.RedisSetCommand.Options.Requires")]
+	[Zongsoft.Services.CommandOption(REQUISITE_OPTION, Type = typeof(Runtime.Caching.CacheRequisite), DefaultValue = Runtime.Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
 	[Zongsoft.Services.CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
 	public class RedisSetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 常量定义
-		private const string REQUIRES_OPTION = "requires";
+		private const string REQUISITE_OPTION = "requisite";
 		private const string EXPIRY_OPTION = "expiry";
 		#endregion
 
@@ -56,19 +56,19 @@ namespace Zongsoft.Externals.Redis.Commands
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
 			var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
-			var requires = context.Expression.Options.GetValue<Runtime.Caching.CacheRequires>(REQUIRES_OPTION);
+			var requisite = context.Expression.Options.GetValue<Runtime.Caching.CacheRequisite>(REQUISITE_OPTION);
 
 			var redis = RedisCommand.GetRedis(context.CommandNode);
 
 			if(context.Expression.Arguments.Length == 1)
 			{
 				if(context.Parameter != null)
-					return redis.SetValue(context.Expression.Arguments[0], context.Parameter, expiry, requires);
+					return redis.SetValue(context.Expression.Arguments[0], context.Parameter, expiry, requisite);
 
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 			}
 
-			return redis.SetValue(context.Expression.Arguments[0], context.Expression.Arguments[1], expiry, requires);
+			return redis.SetValue(context.Expression.Arguments[0], context.Expression.Arguments[1], expiry, requisite);
 		}
 		#endregion
 	}

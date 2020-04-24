@@ -189,7 +189,7 @@
   <data name="Text.RedisSetCommand.Options.Expiry" xml:space="preserve">
     <value>设置的过期时长，默认为永不过期。</value>
   </data>
-  <data name="Text.RedisSetCommand.Options.Requires" xml:space="preserve">
+  <data name="Text.RedisSetCommand.Options.Requisite" xml:space="preserve">
     <value>设置的必要条件。</value>
   </data>
 </root>

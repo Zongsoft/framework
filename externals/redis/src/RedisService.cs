@@ -35,8 +35,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
+using Zongsoft.Configuration;
 using Zongsoft.Services;
 using Zongsoft.Runtime.Caching;
 
@@ -143,10 +142,10 @@ namespace Zongsoft.Externals.Redis
 			{
 				if(_settings == null)
 				{
-					var connectionStrings = ApplicationContext.Current?.Options.GetOptionValue("/Externals/Redis/ConnectionStrings") as ConnectionStringElementCollection;
+					var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Externals/Redis/ConnectionSettings");
 
-					if(connectionStrings != null && connectionStrings.Contains(_name))
-						_settings = RedisServiceSettings.Parse(connectionStrings[_name].Value);
+					if(connectionSettings != null && connectionSettings.Contains(_name))
+						_settings = RedisServiceSettings.Parse(connectionSettings[_name].Value);
 				}
 
 				return _settings;
@@ -254,7 +253,7 @@ namespace Zongsoft.Externals.Redis
 			};
 		}
 
-		public bool SetEntry(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always)
+		public bool SetEntry(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -270,7 +269,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				transaction.HashSetAsync(key, fields.Select(p => new HashEntry(RedisValue.Unbox(p.Key), RedisValue.Unbox(p.Value))).ToArray());
@@ -285,7 +284,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				var values = new List<RedisValue>();
@@ -305,7 +304,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				var values = new List<RedisValue>();
@@ -321,10 +320,10 @@ namespace Zongsoft.Externals.Redis
 				return transaction.Execute();
 			}
 
-			return _database.StringSet(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requires));
+			return _database.StringSet(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
 		}
 
-		public async Task<bool> SetEntryAsync(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default)
+		public async Task<bool> SetEntryAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -341,7 +340,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				await transaction.HashSetAsync(key, fields.Select(p => new HashEntry(RedisValue.Unbox(p.Key), RedisValue.Unbox(p.Value))).ToArray());
@@ -356,7 +355,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				var values = new List<RedisValue>();
@@ -376,7 +375,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				var transaction = _database.CreateTransaction();
 
-				if(TryGetCondition(key, requires, out var condition))
+				if(TryGetCondition(key, requisite, out var condition))
 					transaction.AddCondition(condition);
 
 				var values = new List<RedisValue>();
@@ -392,7 +391,7 @@ namespace Zongsoft.Externals.Redis
 				return await transaction.ExecuteAsync();
 			}
 
-			return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requires));
+			return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
 		}
 		#endregion
 
@@ -724,7 +723,7 @@ namespace Zongsoft.Externals.Redis
 			return await _database.KeyExpireAsync(GetKey(key), expiry);
 		}
 
-		public bool SetValue(string key, object value, CacheRequires requires = CacheRequires.Always)
+		public bool SetValue(string key, object value, CacheRequisite requisite = CacheRequisite.Always)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -732,10 +731,10 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			return this.SetEntry(key, value, TimeSpan.Zero, requires);
+			return this.SetEntry(key, value, TimeSpan.Zero, requisite);
 		}
 
-		public bool SetValue(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always)
+		public bool SetValue(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -743,27 +742,27 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			return this.SetEntry(key, value, expiry, requires);
+			return this.SetEntry(key, value, expiry, requisite);
 		}
 
-		public async Task<bool> SetValueAsync(string key, object value, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default)
+		public async Task<bool> SetValueAsync(string key, object value, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
-			return await this.SetEntryAsync(key, value, TimeSpan.Zero, requires, cancellation);
+			return await this.SetEntryAsync(key, value, TimeSpan.Zero, requisite, cancellation);
 		}
 
-		public async Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequires requires = CacheRequires.Always, CancellationToken cancellation = default)
+		public async Task<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
-			return await this.SetEntryAsync(key, value, expiry, requires, cancellation);
+			return await this.SetEntryAsync(key, value, expiry, requisite, cancellation);
 		}
 		#endregion
 
@@ -783,25 +782,25 @@ namespace Zongsoft.Externals.Redis
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static When GetWhen(CacheRequires requires)
+		private static When GetWhen(CacheRequisite requisite)
 		{
-			return requires switch
+			return requisite switch
 			{
-				CacheRequires.Exists => When.Exists,
-				CacheRequires.NotExists => When.NotExists,
+				CacheRequisite.Exists => When.Exists,
+				CacheRequisite.NotExists => When.NotExists,
 				_ => When.Always,
 			};
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static bool TryGetCondition(string key, CacheRequires requires, out Condition condition)
+		private static bool TryGetCondition(string key, CacheRequisite requisite, out Condition condition)
 		{
-			switch(requires)
+			switch(requisite)
 			{
-				case CacheRequires.Exists:
+				case CacheRequisite.Exists:
 					condition = Condition.KeyExists(key);
 					return true;
-				case CacheRequires.NotExists:
+				case CacheRequisite.NotExists:
 					condition = Condition.KeyNotExists(key);
 					return true;
 				default:
