@@ -34,9 +34,9 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins.Web
+namespace Zongsoft.Web
 {
-	public class WebApplicationContext : PluginApplicationContext
+	public class WebApplicationContext : Zongsoft.Plugins.PluginApplicationContext
 	{
 		#region 成员字段
 		private IHttpContextAccessor _http;
@@ -65,7 +65,7 @@ namespace Zongsoft.Plugins.Web
 			get => _http?.HttpContext.User;
 		}
 
-		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
+		protected override Zongsoft.Plugins.IWorkbenchBase CreateWorkbench(out Zongsoft.Plugins.PluginTreeNode node)
 		{
 			return base.CreateWorkbench(out node) ?? new Workbench(this);
 		}

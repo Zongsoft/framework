@@ -30,9 +30,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Plugins.Web
+namespace Zongsoft.Web
 {
-	public class Workbench : WorkbenchBase
+	public class Workbench : Zongsoft.Plugins.WorkbenchBase
 	{
 		#region 构造函数
 		internal Workbench(WebApplicationContext applicationContext) : base(applicationContext)

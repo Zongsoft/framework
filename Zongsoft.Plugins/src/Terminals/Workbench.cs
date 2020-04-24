@@ -32,9 +32,9 @@ using System;
 using Zongsoft.Plugins;
 using Zongsoft.Services;
 
-namespace Zongsoft.Terminals.Plugins
+namespace Zongsoft.Terminals
 {
-	public class Workbench : Zongsoft.Plugins.WorkbenchBase
+	public class Workbench : WorkbenchBase
 	{
 		#region 成员字段
 		private TerminalCommandExecutor _executor;

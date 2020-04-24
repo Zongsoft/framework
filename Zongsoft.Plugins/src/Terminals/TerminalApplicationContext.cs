@@ -31,12 +31,12 @@ using System;
 
 using Zongsoft.Plugins;
 
-namespace Zongsoft.Terminals.Plugins
+namespace Zongsoft.Terminals
 {
-	public class ApplicationContext : PluginApplicationContext
+	public class TerminalApplicationContext : PluginApplicationContext
 	{
         #region 构造函数
-        public ApplicationContext(IServiceProvider services) : base(services)
+        public TerminalApplicationContext(IServiceProvider services) : base(services)
         {
         }
 		#endregion
