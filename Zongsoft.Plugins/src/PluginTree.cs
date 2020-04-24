@@ -109,6 +109,10 @@ namespace Zongsoft.Plugins
 		public void Load()
 		{
 			this.Loader.Load(this.Options);
+
+			//挂载当前应用上下文
+			if(Zongsoft.Services.ApplicationContext.Current != null)
+				this.Mount(this.Options.Mountion.ApplicationContextPath, Zongsoft.Services.ApplicationContext.Current);
 		}
 		#endregion
 

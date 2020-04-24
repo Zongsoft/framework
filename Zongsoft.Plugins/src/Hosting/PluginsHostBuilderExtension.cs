@@ -31,6 +31,7 @@ using System;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Zongsoft.Plugins.Hosting;
 
 namespace Zongsoft.Plugins
 {
@@ -53,8 +54,11 @@ namespace Zongsoft.Plugins
 				services.AddSingleton<PluginApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
 				services.AddSingleton<Services.IApplicationContext>(srvs => srvs.GetRequiredService<TApplicationContext>());
 
+                //挂载插件宿主生命期
+                services.AddSingleton<IHostLifetime, PluginsHostLifetime>();
+
 				//添加插件宿主启动器
-				services.AddHostedService<Hosting.PluginsHostStarter>();
+				//services.AddHostedService<Hosting.PluginsHostStarter>();
 			});
 
 			return builder;

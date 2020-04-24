@@ -73,6 +73,6 @@ namespace Zongsoft.Plugins
 		/// 启动工作台。
 		/// </summary>
 		/// <param name="args">传入的启动参数。</param>
-		void Open(string[] args);
+		void Open(params string[] args);
 	}
 }

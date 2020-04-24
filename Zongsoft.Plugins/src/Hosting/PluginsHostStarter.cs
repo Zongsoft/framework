@@ -45,22 +45,19 @@ namespace Zongsoft.Plugins.Hosting
 			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 		}
 
-		//public Task StartAsync(CancellationToken cancellationToken)
-		//{
-		//    throw new NotImplementedException();
-		//}
-
-		//public Task StopAsync(CancellationToken cancellationToken)
-		//{
-		//    Application.Exit();
-		//    return Task.CompletedTask;
-		//}
-
 		protected override Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			stoppingToken.ThrowIfCancellationRequested();
 			Application.Start(_applicationContext);
 			return Task.CompletedTask;
 		}
-	}
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await base.StopAsync(cancellationToken);
+
+            if(!cancellationToken.IsCancellationRequested)
+                Application.Exit();
+        }
+    }
 }

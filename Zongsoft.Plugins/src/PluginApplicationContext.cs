@@ -119,7 +119,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 激发事件
-		internal void RaiseStarted(string[] args)
+		internal void RaiseStarted()
 		{
 			this.OnStarted(EventArgs.Empty);
 		}

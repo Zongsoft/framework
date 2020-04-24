@@ -1,12 +1,20 @@
 ﻿using System;
 
+using Microsoft.Extensions.Hosting;
+
+using Zongsoft.Plugins;
+using Zongsoft.Terminals;
+
 namespace Zongsoft.Hosting.Terminal
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			Zongsoft.Plugins.Application.Start(Zongsoft.Terminals.Plugins.ApplicationContext.Current, args);
+			Host.CreateDefaultBuilder(args)
+				.ConfigurePlugins<TerminalApplicationContext>()
+				.Build()
+				.Run();
 		}
 	}
 }

@@ -171,7 +171,7 @@ namespace Zongsoft.Plugins
 			try
 			{
 				//调用虚拟方法以进行实际的关闭操作
-				this.OnStop();
+				this.OnClose();
 			}
 			catch
 			{
@@ -183,9 +183,6 @@ namespace Zongsoft.Plugins
 				throw;
 			}
 
-			//设置工作台状态为“None”
-			_status = WorkbenchStatus.None;
-
 			//如果没有激发过“Closed”事件则激发该事件
 			if(_status != WorkbenchStatus.None)
 				this.OnClosed(EventArgs.Empty);
@@ -194,7 +191,7 @@ namespace Zongsoft.Plugins
 			return true;
 		}
 
-		public void Open(string[] args)
+		public void Open(params string[] args)
 		{
 			if(_status == WorkbenchStatus.Running || _status == WorkbenchStatus.Opening)
 				return;
@@ -222,7 +219,7 @@ namespace Zongsoft.Plugins
 			try
 			{
 				//调用虚拟方法以执行实际启动的操作
-				this.OnStart(args);
+				this.OnOpen(args);
 
 				//查找当前工作台的插件节点
 				var node = _applicationContext.PluginTree.Find(_applicationContext.Options.Mountion.WorkbenchPath);
@@ -249,7 +246,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnStart(string[] args)
+		protected virtual void OnOpen(string[] args)
 		{
 			if(string.IsNullOrEmpty(_startupPath))
 				return;
@@ -262,7 +259,7 @@ namespace Zongsoft.Plugins
 				this.StartWorkers(startupNode, args);
 		}
 
-		protected virtual void OnStop()
+		protected virtual void OnClose()
 		{
 			if(string.IsNullOrEmpty(_startupPath))
 				return;

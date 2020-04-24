@@ -89,7 +89,7 @@ namespace Zongsoft.Plugins
 					context.Workbench.Opened += delegate
 					{
 						//激发应用启动完成事件
-						OnStarted(args);
+						OnStarted();
 					};
 
 					context.Workbench.Closed += delegate
@@ -102,7 +102,7 @@ namespace Zongsoft.Plugins
 				}
 
 				//激发应用启动完成事件
-				OnStarted(args);
+				OnStarted();
 			}
 			#if !DEBUG
 			catch(Exception ex)
@@ -159,12 +159,12 @@ namespace Zongsoft.Plugins
 			context.RaiseExiting();
 		}
 
-		private static void OnStarted(string[] args)
+		private static void OnStarted()
 		{
 			Started?.Invoke(null, EventArgs.Empty);
 
 			//激发当前上下文的“Started”事件
-			_context.RaiseStarted(args);
+			_context.RaiseStarted();
 		}
 		#endregion
 	}
