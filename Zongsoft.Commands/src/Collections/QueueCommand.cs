@@ -41,16 +41,16 @@ namespace Zongsoft.Collections.Commands
 		private IQueue _queue;
 		private IQueueProvider _queueProvider;
 
-		private Zongsoft.Services.IServiceProvider _serviceProvider;
+		private System.IServiceProvider _serviceProvider;
 		#endregion
 
 		#region 构造函数
-		public QueueCommand(Zongsoft.Services.IServiceProvider serviceProvider) : base("Queue")
+		public QueueCommand(System.IServiceProvider serviceProvider) : base("Queue")
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
 
-		public QueueCommand(Zongsoft.Services.IServiceProvider serviceProvider, string name) : base(name)
+		public QueueCommand(System.IServiceProvider serviceProvider, string name) : base(name)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
@@ -59,26 +59,14 @@ namespace Zongsoft.Collections.Commands
 		#region 公共属性
 		public IQueue Queue
 		{
-			get
-			{
-				return _queue;
-			}
-			set
-			{
-				_queue = value ?? throw new ArgumentNullException();
-			}
+			get => _queue;
+			set => _queue = value ?? throw new ArgumentNullException();
 		}
 
 		public IQueueProvider QueueProvider
 		{
-			get
-			{
-				return _queueProvider;
-			}
-			set
-			{
-				_queueProvider = value ?? throw new ArgumentNullException();
-			}
+			get => _queueProvider;
+			set => _queueProvider = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -90,9 +78,9 @@ namespace Zongsoft.Collections.Commands
 				var parts = name.Split('@');
 
 				if(parts.Length == 2)
-					_queueProvider = _serviceProvider.ResolveRequired<IQueueProvider>(parts[1]);
+					_queueProvider = _serviceProvider.Match<IQueueProvider>(parts[1]);
 				else
-					_queueProvider = _serviceProvider.ResolveRequired<IQueueProvider>();
+					_queueProvider = (IQueueProvider)_serviceProvider.GetService(typeof(IQueueProvider));
 
 				if(_queueProvider == null)
 					throw new CommandException(Properties.Resources.Text_QueueCommand_MissingQueueProvider);
