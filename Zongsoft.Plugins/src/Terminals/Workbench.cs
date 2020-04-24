@@ -55,7 +55,7 @@ namespace Zongsoft.Terminals
 		#endregion
 
 		#region 打开方法
-		protected override void OnOpen(string[] args)
+		protected override void OnOpen()
 		{
 			var executor = this.Executor;
 
@@ -63,10 +63,10 @@ namespace Zongsoft.Terminals
 				throw new InvalidOperationException("Missing the required command executor.");
 
 			//调用基类同名方法
-			base.OnOpen(args);
+			base.OnOpen();
 
 			//激发“Opened”事件
-			this.OnOpened(EventArgs.Empty);
+			this.RaiseOpened();
 
 			//启动命令运行器
 			executor.Run();

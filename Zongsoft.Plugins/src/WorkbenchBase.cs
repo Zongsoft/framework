@@ -126,17 +126,65 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 关闭工作台。
-		/// </summary>
-		/// <returns>如果关闭成功返回真(true)，否则返回假(false)。如果取消关闭操作，亦返回假(false)。</returns>
-		public bool Close()
+		public void Open()
 		{
-			if(_status == WorkbenchStatus.None || _status == WorkbenchStatus.Closing)
-				return false;
+			if(_status != WorkbenchStatus.None)
+				return;
 
-			if(_status == WorkbenchStatus.Opening)
-				throw new InvalidOperationException();
+			//设置工作台状态为“Opening”
+			_status = WorkbenchStatus.Opening;
+
+			try
+			{
+				//激发“Opening”事件
+				this.OnOpening(EventArgs.Empty);
+			}
+			catch
+			{
+				//注意：可能因为预打开事件处理程序或工作台构建过程出错，都必须重置工作台状态为“None”
+				_status = WorkbenchStatus.None;
+
+				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
+				throw;
+			}
+
+			//查找当前工作台的插件节点
+			var node = _applicationContext.PluginTree.Find(_applicationContext.Options.Mountion.WorkbenchPath);
+
+			//确定当前工作台是否能挂载
+			var mountable = node == null || node.NodeType != PluginTreeNodeType.Builtin;
+
+			//如果能挂载则将当前工作台挂载到插件树
+			if(mountable)
+				_applicationContext.PluginTree.Mount(node, this);
+
+			try
+			{
+				//调用虚拟方法以执行实际启动的操作
+				this.OnOpen();
+			}
+			catch
+			{
+				//注意：如果在实际启动操作中，子类已经通过OnOpened方法设置了工作台状态为运行，则无需再重置工作台状态；否则必须重置工作台状态为“None”
+				if(_status == WorkbenchStatus.Opening)
+					_status = WorkbenchStatus.None;
+
+				//如果状态被重置为了已关闭并且当前工作台已经被挂载过，则必须将其卸载
+				if(_status == WorkbenchStatus.None && mountable)
+					_applicationContext.PluginTree.Unmount(node);
+
+				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
+				throw;
+			}
+
+			//尝试激发“Opened”事件
+			this.RaiseOpened();
+		}
+
+		public void Close()
+		{
+			if(_status != WorkbenchStatus.Running)
+				return;
 
 			//设置工作台状态为“Closing”
 			_status = WorkbenchStatus.Closing;
@@ -165,7 +213,7 @@ namespace Zongsoft.Plugins
 				_status = WorkbenchStatus.Running;
 
 				//因为取消关闭，所以退出后续关闭操作
-				return false;
+				return;
 			}
 
 			try
@@ -183,70 +231,13 @@ namespace Zongsoft.Plugins
 				throw;
 			}
 
-			//如果没有激发过“Closed”事件则激发该事件
-			if(_status != WorkbenchStatus.None)
-				this.OnClosed(EventArgs.Empty);
-
-			//返回成功
-			return true;
-		}
-
-		public void Open(params string[] args)
-		{
-			if(_status == WorkbenchStatus.Running || _status == WorkbenchStatus.Opening)
-				return;
-
-			if(_status == WorkbenchStatus.Closing)
-				throw new InvalidOperationException();
-
-			//设置工作台状态为“Opening”
-			_status = WorkbenchStatus.Opening;
-
-			try
-			{
-				//激发“Opening”事件
-				this.OnOpening(EventArgs.Empty);
-			}
-			catch
-			{
-				//注意：可能因为预打开事件处理程序或工作台构建过程出错，都必须重置工作台状态为“None”
-				_status = WorkbenchStatus.None;
-
-				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
-				throw;
-			}
-
-			try
-			{
-				//调用虚拟方法以执行实际启动的操作
-				this.OnOpen(args);
-
-				//查找当前工作台的插件节点
-				var node = _applicationContext.PluginTree.Find(_applicationContext.Options.Mountion.WorkbenchPath);
-
-				//如果工作台对象未挂载或不是通过插件文件挂载的话，则将当前工作台对象挂载到指定的插件路径中
-				if(node == null || node.NodeType != PluginTreeNodeType.Builtin)
-					_applicationContext.PluginTree.Mount(_applicationContext.Options.Mountion.WorkbenchPath, this);
-			}
-			catch
-			{
-				//注意：如果在实际启动操作中，子类已经通过OnOpened方法设置了工作台状态为运行，则无需再重置工作台状态；否则必须重置工作台状态为“None”
-				if(_status == WorkbenchStatus.Opening)
-					_status = WorkbenchStatus.None;
-
-				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
-				throw;
-			}
-
-			_status = WorkbenchStatus.Running;
-
-			//激发“Opened”事件
-			this.OnOpened(EventArgs.Empty);
+			//尝试激发“Closed”事件
+			this.RaiseClosed();
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnOpen(string[] args)
+		protected virtual void OnOpen()
 		{
 			if(string.IsNullOrEmpty(_startupPath))
 				return;
@@ -256,7 +247,7 @@ namespace Zongsoft.Plugins
 
 			//运行启动路径下的所有工作者
 			if(startupNode != null)
-				this.StartWorkers(startupNode, args);
+				this.StartWorkers(startupNode);
 		}
 
 		protected virtual void OnClose()
@@ -274,11 +265,28 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 事件激发
-		protected virtual void OnOpened(EventArgs args)
+		protected void RaiseOpened()
 		{
 			if(_status == WorkbenchStatus.Opening)
+			{
 				_status = WorkbenchStatus.Running;
+				this.OnOpened(EventArgs.Empty);
+				_applicationContext.RaiseStarted();
+			}
+		}
 
+		protected void RaiseClosed()
+		{
+			if(_status == WorkbenchStatus.Closing)
+			{
+				_status = WorkbenchStatus.None;
+				this.OnClosed(EventArgs.Empty);
+				_applicationContext.RaiseStopped();
+			}
+		}
+
+		protected virtual void OnOpened(EventArgs args)
+		{
 			this.Opened?.Invoke(this, args);
 		}
 
@@ -304,7 +312,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 私有方法
-		private void StartWorkers(PluginTreeNode node, string[] args)
+		private void StartWorkers(PluginTreeNode node)
 		{
 			if(node == null)
 				return;
@@ -312,10 +320,10 @@ namespace Zongsoft.Plugins
 			object target = node.UnwrapValue(ObtainMode.Auto);
 
 			if(target is IWorker worker && worker.Enabled)
-				worker.Start(args);
+				worker.Start();
 
 			foreach(PluginTreeNode child in node.Children)
-				this.StartWorkers(child, args);
+				this.StartWorkers(child);
 		}
 
 		private void StopWorkers(PluginTreeNode node)

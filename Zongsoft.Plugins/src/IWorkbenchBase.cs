@@ -66,13 +66,11 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 关闭工作台。
 		/// </summary>
-		/// <returns>如果关闭成功返回真(true)，否则返回假(false)。如果取消关闭操作，亦返回假(false)。</returns>
-		bool Close();
+		void Close();
 
 		/// <summary>
 		/// 启动工作台。
 		/// </summary>
-		/// <param name="args">传入的启动参数。</param>
-		void Open(params string[] args);
+		void Open();
 	}
 }
