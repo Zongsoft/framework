@@ -41,10 +41,10 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args)
+		protected override void OnOpen(string[] args)
 		{
 			//调用基类同名方法，以启动工作台下Startup下的所有工作者
-			base.OnStart(args);
+			base.OnOpen(args);
 		}
 		#endregion
     }
