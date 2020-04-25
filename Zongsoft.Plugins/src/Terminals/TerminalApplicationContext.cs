@@ -35,16 +35,16 @@ namespace Zongsoft.Terminals
 {
 	public class TerminalApplicationContext : PluginApplicationContext
 	{
-        #region 构造函数
-        public TerminalApplicationContext(IServiceProvider services) : base(services)
-        {
-        }
+		#region 构造函数
+		public TerminalApplicationContext(IServiceProvider services) : base(services)
+		{
+		}
 		#endregion
 
 		#region 重写方法
 		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{
-            return base.CreateWorkbench(out node) ?? new Workbench(this);
+			return base.CreateWorkbench(out node) ?? new Workbench(this);
 		}
 		#endregion
 	}

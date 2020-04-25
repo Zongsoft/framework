@@ -137,10 +137,10 @@ namespace Zongsoft.Plugins
 		{
 			if(disposing)
 			{
-				var workbench = _workbench;
-
-				if(workbench != null)
-					workbench.Close();
+				if(_workbench is IDisposable disposable)
+					disposable.Dispose();
+				else
+					_workbench?.Close();
 			}
 
 			//执行基类的处置操作

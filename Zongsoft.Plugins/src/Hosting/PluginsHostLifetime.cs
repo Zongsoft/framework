@@ -72,32 +72,10 @@ namespace Zongsoft.Plugins.Hosting
 			return Task.CompletedTask;
 		}
 
-		public Task StartAsync(CancellationToken cancellationToken)
+		public Task WaitForStartAsync(CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			#if !DEBUG
-			try
-			#endif
-			{
-				_applicationContext.Initialize();
-
-				return Task.CompletedTask;
-			}
-			#if !DEBUG
-			catch(Exception ex)
-			{
-				//应用无法启动，写入日志
-				_logger.LogError(ex, $"The {_applicationContext.Name} application start failed.");
-
-				//重抛异常
-				throw;
-			}
-			#endif
-		}
-
-		public Task WaitForStartAsync(CancellationToken cancellationToken)
-		{
 			_applicationStartedRegistration = _applicationLifetime.ApplicationStarted.Register(state =>
 			{
 				((PluginsHostLifetime)state).OnApplicationStarted();
@@ -105,15 +83,40 @@ namespace Zongsoft.Plugins.Hosting
 
 			AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
-			return this.StartAsync(cancellationToken);
+#if !DEBUG
+			try
+#endif
+			{
+				_applicationContext.Initialize();
+				return Task.CompletedTask;
+			}
+#if !DEBUG
+			catch(Exception ex)
+			{
+				_logger.LogError(ex, $"The {_applicationContext.Name} application failed to initialize.");
+				throw;
+			}
+#endif
 		}
 		#endregion
 
 		#region 事件响应
 		private void OnApplicationStarted()
 		{
-			_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
-			_applicationContext.Workbench.Open();
+#if !DEBUG
+			try
+#endif
+			{
+				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
+				_applicationContext.Workbench.Open();
+			}
+#if !DEBUG
+			catcch(Exception ex)
+			{
+				_logger.LogError(ex, $"The {_applicationContext.Name} application failed to start.");
+				throw;
+			}
+#endif
 		}
 
 		private void OnProcessExit(object sender, EventArgs e)
