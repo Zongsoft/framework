@@ -155,7 +155,7 @@ namespace Zongsoft.Diagnostics
 
 			if(filePath[0] == '/' || filePath[0] == '\\')
 			{
-				filePath = Path.Combine(Path.GetPathRoot(Services.ApplicationContext.Current.ApplicationDirectory), filePath.Substring(1));
+				filePath = Path.Combine(Path.GetPathRoot(Services.ApplicationContext.Current.ApplicationPath), filePath.Substring(1));
 
 				if(!Directory.Exists(Path.GetDirectoryName(filePath)))
 					Directory.CreateDirectory(Path.GetDirectoryName(filePath));

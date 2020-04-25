@@ -111,7 +111,7 @@ namespace Zongsoft.Services
 			get => this.Configuration?.GetSection("ApplicationDescription").Value;
 		}
 
-		public virtual string ApplicationDirectory
+		public virtual string ApplicationPath
 		{
 			get => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
 		}
@@ -137,13 +137,10 @@ namespace Zongsoft.Services
 					if(hosting == null)
 						return null;
 
-					environment = new ApplicationEnvironment(hosting);
+					this.Properties[nameof(this.Environment)] = environment = new ApplicationEnvironment(hosting);
 				}
 
-				if(this.Properties.TryAdd(nameof(this.Environment), environment))
-					return environment;
-
-				return this.Properties[nameof(this.Environment)] as IApplicationEnvironment;
+				return environment;
 			}
 		}
 
@@ -172,16 +169,16 @@ namespace Zongsoft.Services
 		#region 公共方法
 		public string EnsureDirectory(string relativePath)
 		{
-			string fullPath = this.ApplicationDirectory;
+			string fullPath = this.ApplicationPath;
 
 			if(string.IsNullOrWhiteSpace(relativePath))
 				return fullPath;
 
-			var parts = relativePath.Split('/', '\\', Path.DirectorySeparatorChar);
+			var parts = Common.StringExtension.Slice(relativePath, '/', '\\');
 
 			foreach(var part in parts)
 			{
-				if(string.IsNullOrWhiteSpace(part))
+				if(part == "..")
 					continue;
 
 				fullPath = Path.Combine(fullPath, part);
