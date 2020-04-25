@@ -42,7 +42,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 构造函数
 		public MetadataFileLoader()
 		{
-			_path = Zongsoft.Services.ApplicationContext.Current?.ApplicationDirectory;
+			_path = Zongsoft.Services.ApplicationContext.Current?.ApplicationPath;
 		}
 
 		public MetadataFileLoader(string path)
