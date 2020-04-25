@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.ComponentModel;
 
 using Zongsoft.Services;
@@ -37,7 +38,7 @@ namespace Zongsoft.Plugins
 	/// <summary>
 	/// 提供工作台的基本封装，建议自定义工作台从此类继承。
 	/// </summary>
-	public abstract class WorkbenchBase : IWorkbenchBase
+	public abstract class WorkbenchBase : IWorkbenchBase, IDisposable
 	{
 		#region 事件声明
 		public event EventHandler Opened;
@@ -50,17 +51,19 @@ namespace Zongsoft.Plugins
 		#region 成员变量
 		private string _title;
 		private WorkbenchStatus _status;
-		private PluginApplicationContext _applicationContext;
-		private string _startupPath;
+		private readonly string _startupPath;
+		private AutoResetEvent _semaphore;
+		private int _disposed;
 		#endregion
 
 		#region 构造函数
 		protected WorkbenchBase(PluginApplicationContext applicationContext)
 		{
-			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-			_title = applicationContext.Title;
+			this.ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 			_status = WorkbenchStatus.None;
-			_startupPath = applicationContext.Options.Mountion.WorkbenchPath + "/Startup";
+			_title = applicationContext.Title;
+			_startupPath = PluginPath.Combine(applicationContext.Options.Mountion.WorkbenchPath, "Startup");
+			_semaphore = new AutoResetEvent(true);
 		}
 		#endregion
 
@@ -68,18 +71,12 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取工作台所属的应用程序上下文。
 		/// </summary>
-		public PluginApplicationContext ApplicationContext
-		{
-			get => _applicationContext;
-		}
+		public PluginApplicationContext ApplicationContext { get; }
 
 		/// <summary>
 		/// 获取工作台的运行状态。
 		/// </summary>
-		public WorkbenchStatus Status
-		{
-			get => _status;
-		}
+		public WorkbenchStatus Status { get => _status; }
 
 		/// <summary>
 		/// 获取或设置工作台的标题。
@@ -101,138 +98,110 @@ namespace Zongsoft.Plugins
 				this.OnTitleChanged(EventArgs.Empty);
 			}
 		}
-
-		/// <summary>
-		/// 获取或设置启动的工作者所挂载的插件路径，默认值为当前工作台路径下名为 Startup 的子路径。
-		/// </summary>
-		/// <remarks>
-		/// 该属性只能在工作台未启动时进行设置。
-		/// </remarks>
-		/// <exception cref="System.InvalidOperationException">当工作台未处于<seealso cref="WorkbenchStatus.None"/>状态时设置该属性。</exception>
-		public string StartupPath
-		{
-			get
-			{
-				return _startupPath;
-			}
-			protected set
-			{
-				if(_status != WorkbenchStatus.None)
-					throw new InvalidOperationException();
-
-				_startupPath = (value ?? string.Empty).Trim().TrimEnd('/');
-			}
-		}
 		#endregion
 
 		#region 公共方法
 		public void Open()
 		{
+			//等待信号
+			_semaphore.WaitOne();
+
 			if(_status != WorkbenchStatus.None)
 				return;
 
 			//设置工作台状态为“Opening”
 			_status = WorkbenchStatus.Opening;
 
+			var mountable = false;
+			PluginTreeNode node = null;
+
 			try
 			{
 				//激发“Opening”事件
 				this.OnOpening(EventArgs.Empty);
-			}
-			catch
-			{
-				//注意：可能因为预打开事件处理程序或工作台构建过程出错，都必须重置工作台状态为“None”
-				_status = WorkbenchStatus.None;
 
-				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
-				throw;
-			}
+				//查找当前工作台的插件节点
+				node = ApplicationContext.PluginTree.Find(ApplicationContext.Options.Mountion.WorkbenchPath);
 
-			//查找当前工作台的插件节点
-			var node = _applicationContext.PluginTree.Find(_applicationContext.Options.Mountion.WorkbenchPath);
+				//确定当前工作台是否能挂载
+				mountable = node == null || node.NodeType != PluginTreeNodeType.Builtin;
 
-			//确定当前工作台是否能挂载
-			var mountable = node == null || node.NodeType != PluginTreeNodeType.Builtin;
+				//如果能挂载则将当前工作台挂载到插件树
+				if(mountable)
+					ApplicationContext.PluginTree.Mount(node, this);
 
-			//如果能挂载则将当前工作台挂载到插件树
-			if(mountable)
-				_applicationContext.PluginTree.Mount(node, this);
-
-			try
-			{
 				//调用虚拟方法以执行实际启动的操作
 				this.OnOpen();
+
+				//尝试激发“Opened”事件
+				this.RaiseOpened();
 			}
 			catch
 			{
-				//注意：如果在实际启动操作中，子类已经通过OnOpened方法设置了工作台状态为运行，则无需再重置工作台状态；否则必须重置工作台状态为“None”
+				//注意：在实际启动操作中子类可能已经重新设置了状态为运行，因此无需再重置状态；否则必须还原状态
 				if(_status == WorkbenchStatus.Opening)
 					_status = WorkbenchStatus.None;
 
 				//如果状态被重置为了已关闭并且当前工作台已经被挂载过，则必须将其卸载
 				if(_status == WorkbenchStatus.None && mountable)
-					_applicationContext.PluginTree.Unmount(node);
+					ApplicationContext.PluginTree.Unmount(node);
 
 				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
 				throw;
 			}
-
-			//尝试激发“Opened”事件
-			this.RaiseOpened();
+			finally
+			{
+				_semaphore.Set();
+			}
 		}
 
 		public void Close()
 		{
+			//等待信号
+			_semaphore.WaitOne();
+
 			if(_status != WorkbenchStatus.Running)
 				return;
 
 			//设置工作台状态为“Closing”
 			_status = WorkbenchStatus.Closing;
 
-			//创建“Closing”事件的参数对象
-			CancelEventArgs args = new CancelEventArgs();
-
 			try
 			{
+				//创建“Closing”事件的参数对象
+				var args = new CancelEventArgs();
+
 				//激发“Closing”事件
 				this.OnClosing(args);
-			}
-			catch
-			{
-				//注意：由于事件处理程序出错，必须重置工作台状态为“Running”
-				_status = WorkbenchStatus.Running;
 
-				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
-				throw;
-			}
+				if(args.Cancel)
+				{
+					//重置工作台状态为“Running”
+					_status = WorkbenchStatus.Running;
 
-			//如果事件处理程序要取消后续的关闭操作，则重置工作台状态
-			if(args.Cancel)
-			{
-				//重置工作台状态为“Running”
-				_status = WorkbenchStatus.Running;
+					//因为取消关闭，所以退出后续操作
+					return;
+				}
 
-				//因为取消关闭，所以退出后续关闭操作
-				return;
-			}
-
-			try
-			{
 				//调用虚拟方法以进行实际的关闭操作
 				this.OnClose();
+
+				//尝试激发“Closed”事件
+				this.RaiseClosed();
 			}
 			catch
 			{
-				//注意：如果在实际关闭操作中，子类已经通过OnClosed方法设置了工作台状态为关闭，则无需再重置工作台状态；否则必须重置工作台状态为“Running”
+				//注意：在实际关闭操作中子类可能已经重新设置了状态为关闭，因此无需再重置状态；否则必须还原状态
 				if(_status == WorkbenchStatus.Closing)
 					_status = WorkbenchStatus.Running;
 
 				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
 				throw;
 			}
-
-			//尝试激发“Closed”事件
-			this.RaiseClosed();
+			finally
+			{
+				_semaphore.Set();
+			}
 		}
 		#endregion
 
@@ -243,7 +212,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = _applicationContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = ApplicationContext.PluginTree.Find(_startupPath);
 
 			//运行启动路径下的所有工作者
 			if(startupNode != null)
@@ -256,7 +225,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = _applicationContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = ApplicationContext.PluginTree.Find(_startupPath);
 
 			//停止启动路径下的所有工作者
 			if(startupNode != null)
@@ -264,24 +233,37 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
+		#region 处置方法
+		public void Dispose()
+		{
+			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+
+			if(disposed == 0)
+			{
+				this.Close();
+				_semaphore.Dispose();
+			}
+		}
+		#endregion
+
 		#region 事件激发
 		protected void RaiseOpened()
 		{
-			if(_status == WorkbenchStatus.Opening)
+			if(Status == WorkbenchStatus.Opening)
 			{
 				_status = WorkbenchStatus.Running;
 				this.OnOpened(EventArgs.Empty);
-				_applicationContext.RaiseStarted();
+				ApplicationContext.RaiseStarted();
 			}
 		}
 
 		protected void RaiseClosed()
 		{
-			if(_status == WorkbenchStatus.Closing)
+			if(Status == WorkbenchStatus.Closing)
 			{
 				_status = WorkbenchStatus.None;
 				this.OnClosed(EventArgs.Empty);
-				_applicationContext.RaiseStopped();
+				ApplicationContext.RaiseStopped();
 			}
 		}
 
