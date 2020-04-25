@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 using Zongsoft.Plugins;
 using Zongsoft.Services;
@@ -57,10 +58,7 @@ namespace Zongsoft.Terminals
 		#region 打开方法
 		protected override void OnOpen()
 		{
-			var executor = this.Executor;
-
-			if(executor == null)
-				throw new InvalidOperationException("Missing the required command executor.");
+			var executor = this.Executor ?? throw new InvalidOperationException("Missing the required command executor of the terminal.");
 
 			//调用基类同名方法
 			base.OnOpen();
@@ -72,7 +70,8 @@ namespace Zongsoft.Terminals
 			executor.Run();
 
 			//关闭命令执行器
-			this.Close();
+			//注意：因为基类中的线程同步锁独占机制，因此不能由“开启临界区”直接跳入“关闭临界区”
+			Task.Delay(100).ContinueWith(task => this.Close());
 		}
 		#endregion
 	}
