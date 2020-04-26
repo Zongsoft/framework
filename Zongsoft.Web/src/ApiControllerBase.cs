@@ -49,11 +49,11 @@ namespace Zongsoft.Web
 
 		#region 成员字段
 		private TService _dataService;
-		private Zongsoft.Services.IServiceProvider _serviceProvider;
+		private IServiceProvider _serviceProvider;
 		#endregion
 
 		#region 构造函数
-		protected ApiControllerBase(Zongsoft.Services.IServiceProvider serviceProvider)
+		protected ApiControllerBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
@@ -67,12 +67,12 @@ namespace Zongsoft.Web
 
 		protected virtual bool CanCreate
 		{
-			get => this.DataService.CanInsert | this.DataService.CanUpsert;
+			get => this.DataService.CanInsert;
 		}
 
 		protected virtual bool CanUpdate
 		{
-			get => this.DataService.CanUpdate | this.DataService.CanUpsert;
+			get => this.DataService.CanUpdate;
 		}
 
 		protected virtual Zongsoft.Security.Credential Credential
@@ -97,7 +97,7 @@ namespace Zongsoft.Web
 			}
 		}
 
-		protected Zongsoft.Services.IServiceProvider ServiceProvider
+		protected IServiceProvider ServiceProvider
 		{
 			get => _serviceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
@@ -374,7 +374,8 @@ namespace Zongsoft.Web
 		#region 虚拟方法
 		protected virtual TService GetService()
 		{
-			return _serviceProvider.ResolveRequired<TService>();
+			return (TService)_serviceProvider.GetService(typeof(TService)) ??
+				throw new InvalidOperationException("Missing the required service.");
 		}
 
 		protected virtual int OnDelete(params string[] keys)

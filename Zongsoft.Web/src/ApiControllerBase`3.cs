@@ -29,12 +29,7 @@
 
 using System;
 
-using Microsoft.Net.Http;
-using Microsoft.Net.Http.Headers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
 
 using Zongsoft.Data;
 
@@ -46,7 +41,7 @@ namespace Zongsoft.Web
 	                                                                  where TService : class, IDataService<TModel>
 	{
 		#region 构造函数
-		protected ApiControllerBase(Zongsoft.Services.IServiceProvider serviceProvider) : base(serviceProvider)
+		protected ApiControllerBase(IServiceProvider serviceProvider) : base(serviceProvider)
 		{
 		}
 		#endregion
