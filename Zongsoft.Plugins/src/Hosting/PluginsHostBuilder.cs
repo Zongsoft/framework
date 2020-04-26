@@ -66,10 +66,7 @@ namespace Zongsoft.Plugins.Hosting
 				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(pluginsHostBuilderContext.Options));
 			});
 
-			builder.UseServiceProviderFactory(context =>
-			{
-				return new Zongsoft.Services.ServiceProviderFactory();
-			});
+			builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());
 		}
 		#endregion
 
