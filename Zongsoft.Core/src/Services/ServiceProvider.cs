@@ -30,18 +30,56 @@
 using System;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Services
 {
-	public class ServiceProvider : ServiceProviderBase
+	public class ServiceProvider : IServiceProvider
 	{
-		#region 构造函数
-		public ServiceProvider(string name) : base(name)
-		{
-			this.Storage = new ServiceStorage(this);
-		}
+		#region 成员字段
+		private readonly ServiceProviderOptions _options;
+		private readonly IServiceCollection _descriptors;
+		private readonly IList<IServiceProvider> _providers;
+		#endregion
 
-		public ServiceProvider(string name, IServiceStorage storage, IServiceBuilder builder = null) : base(name, storage, builder)
+		#region 构造函数
+		public ServiceProvider(IServiceCollection descriptors, ServiceProviderOptions options = null)
 		{
+			_options = options;
+			_descriptors = descriptors ?? throw new ArgumentNullException(nameof(descriptors));
+			_providers = new List<IServiceProvider>();
+		}
+		#endregion
+
+		#region 公共属性
+		public IServiceCollection Services
+		{
+			get => _descriptors;
+		}
+		#endregion
+
+		#region 公共方法
+		public object GetService(Type serviceType)
+		{
+			if(_descriptors.Count > 0)
+			{
+				_providers.Add(
+					_options == null ?
+					_descriptors.BuildServiceProvider() :
+					_descriptors.BuildServiceProvider(_options));
+
+				_descriptors.Clear();
+			}
+
+			for(int i = _providers.Count - 1; i >= 0; i--)
+			{
+				var service = _providers[i].GetService(serviceType);
+
+				if(service != null)
+					return service;
+			}
+
+			return null;
 		}
 		#endregion
 	}

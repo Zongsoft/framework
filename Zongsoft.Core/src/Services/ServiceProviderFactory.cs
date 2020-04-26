@@ -30,146 +30,34 @@
 using System;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Services
 {
-	public sealed class ServiceProviderFactory : IServiceProviderFactory, ICollection<IServiceProvider>
+	public sealed class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 	{
-		#region 单例字段
-		public static readonly ServiceProviderFactory Instance = new ServiceProviderFactory();
-		#endregion
-
-		#region 成员字段
-		private IServiceProvider _default;
-		private readonly IDictionary<string, IServiceProvider> _providers;
+		#region 私有变量
+		private readonly ServiceProviderOptions _options;
 		#endregion
 
 		#region 构造函数
-		private ServiceProviderFactory()
+		public ServiceProviderFactory(ServiceProviderOptions options = null)
 		{
-			_providers = new Dictionary<string, IServiceProvider>(StringComparer.OrdinalIgnoreCase);
-		}
-		#endregion
-
-		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _providers.Count;
-			}
-		}
-
-		public IServiceProvider Default
-		{
-			get
-			{
-				return _default;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				//将默认服务容器注册到容器集中
-				this.Register(value);
-
-				//更新默认服务容器
-				_default = value;
-			}
+			_options = options;
 		}
 		#endregion
 
 		#region 公共方法
-		public void Register(IServiceProvider provider)
+		/// <inheritdoc />
+		public IServiceCollection CreateBuilder(IServiceCollection services)
 		{
-			if(provider == null)
-				throw new ArgumentNullException(nameof(provider));
-
-			_providers[provider.Name ?? string.Empty] = provider;
+			return services;
 		}
 
-		public void Register(IServiceProvider provider, bool replaceOnExists)
+		/// <inheritdoc />
+		public System.IServiceProvider CreateServiceProvider(IServiceCollection services)
 		{
-			if(provider == null)
-				throw new ArgumentNullException(nameof(provider));
-
-			if(replaceOnExists)
-				_providers[provider.Name ?? string.Empty] = provider;
-			else
-				_providers.Add(provider.Name ?? string.Empty, provider);
-		}
-
-		/// <summary>
-		/// 注销服务供应程序。
-		/// </summary>
-		/// <param name="name">要注销服务供应程序的名称。</param>
-		/// <returns>如果注销成功则返回真(True)，否则返回假(False)。</returns>
-		public bool Unregister(string name)
-		{
-			return _providers.Remove(name ?? string.Empty);
-		}
-
-		/// <summary>
-		/// 获取指定名称的服务供应程序。具体的获取策略请参考更详细的备注说明。
-		/// </summary>
-		/// <param name="name">待获取的服务供应程序名。</param>
-		/// <returns>如果指定名称的供应程序回存在则返它，否则返回空(null)。</returns>
-		public IServiceProvider GetProvider(string name)
-		{
-			IServiceProvider result;
-
-			if(_providers.TryGetValue(name ?? string.Empty, out result))
-				return result;
-
-			return null;
-		}
-		#endregion
-
-		#region 显式实现
-		bool ICollection<IServiceProvider>.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		void ICollection<IServiceProvider>.Add(IServiceProvider item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			_providers.Add(item.Name ?? string.Empty, item);
-		}
-
-		void ICollection<IServiceProvider>.Clear()
-		{
-			_providers.Clear();
-		}
-
-		bool ICollection<IServiceProvider>.Contains(IServiceProvider item)
-		{
-			return _providers.ContainsKey(item.Name ?? string.Empty);
-		}
-
-		void ICollection<IServiceProvider>.CopyTo(IServiceProvider[] array, int arrayIndex)
-		{
-			_providers.Values.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<IServiceProvider>.Remove(IServiceProvider item)
-		{
-			return _providers.Remove(item.Name ?? string.Empty);
-		}
-
-		IEnumerator<IServiceProvider> IEnumerable<IServiceProvider>.GetEnumerator()
-		{
-			return _providers.Values.GetEnumerator();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return _providers.Values.GetEnumerator();
+			return new ServiceProvider(services, _options);
 		}
 		#endregion
 	}
