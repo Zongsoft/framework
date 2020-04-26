@@ -56,7 +56,7 @@ namespace Zongsoft.Services
 		private volatile int _stopped;
 		private volatile int _disposed;
 
-		private System.IServiceProvider _services;
+		private readonly IServiceProvider _services;
 		private ICollection<IApplicationInitializer> _initializers;
 
 		private readonly CancellationTokenRegistration _applicationStarted;
@@ -64,7 +64,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		protected ApplicationContext(System.IServiceProvider services)
+		protected ApplicationContext(IServiceProvider services)
 		{
 			_services = services ?? throw new ArgumentNullException(nameof(services));
 			_initializers = new List<IApplicationInitializer>();
@@ -144,7 +144,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual System.IServiceProvider Services
+		public virtual IServiceProvider Services
 		{
 			get => _services;
 		}

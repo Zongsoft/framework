@@ -78,9 +78,9 @@ namespace Zongsoft.Services
 			get; set;
 		}
 
-		public virtual System.IServiceProvider Services
+		public virtual IServiceProvider Services
 		{
-			get => ServiceProviderFactory.Instance.GetProvider(this.Name);
+			get => null;
 		}
 
 		public INamedCollection<Schema> Schemas
