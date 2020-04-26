@@ -43,14 +43,6 @@
 			<object name="Delete" type="Zongsoft.IO.Commands.FileDeleteCommand, Zongsoft.Commands" />
 		</object>
 
-		<object name="Services">
-			<services.command>
-				<object type="Zongsoft.Services.Commands.ServicesCommand, Zongsoft.Commands" />
-			</services.command>
-
-			<object name="Get" type="Zongsoft.Services.Commands.ServicesGetCommand, Zongsoft.Commands" />
-		</object>
-
 		<object name="Configuration">
 			<configuration.command>
 				<object type="Zongsoft.Configuration.Commands.ConfigurationCommand, Zongsoft.Commands" />
@@ -74,7 +66,7 @@
 	<extension path="/Workbench/Executor/Commands/Collections">
 		<object name="Queue">
 			<queue.command>
-				<object queue="{srv:Queue}" type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
+				<object type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
 			</queue.command>
 
 			<object name="In" type="Zongsoft.Collections.Commands.QueueInCommand, Zongsoft.Commands" />

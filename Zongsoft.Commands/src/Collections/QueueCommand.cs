@@ -45,14 +45,20 @@ namespace Zongsoft.Collections.Commands
 		#endregion
 
 		#region 构造函数
-		public QueueCommand(System.IServiceProvider serviceProvider) : base("Queue")
+		public QueueCommand(IServiceProvider serviceProvider) : base("Queue")
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+			_queue = (IQueue)serviceProvider.GetService(typeof(IQueue));
+			_queueProvider = (IQueueProvider)serviceProvider.GetService(typeof(IQueueProvider));
 		}
 
-		public QueueCommand(System.IServiceProvider serviceProvider, string name) : base(name)
+		public QueueCommand(IServiceProvider serviceProvider, string name) : base(name)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+			_queue = (IQueue)serviceProvider.GetService(typeof(IQueue));
+			_queueProvider = (IQueueProvider)serviceProvider.GetService(typeof(IQueueProvider));
 		}
 		#endregion
 
