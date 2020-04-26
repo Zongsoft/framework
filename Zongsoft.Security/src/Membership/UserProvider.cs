@@ -56,11 +56,11 @@ namespace Zongsoft.Security.Membership
 
 		#region 成员字段
 		private IDataAccess _dataAccess;
-		private readonly Services.IServiceProvider _services;
+		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public UserProvider(Services.IServiceProvider serviceProvider)
+		public UserProvider(IServiceProvider serviceProvider)
 		{
 			_services = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
@@ -877,7 +877,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = _services?.Resolve<IValidator<string>>("user.name");
+			var validator = _services?.Match<IValidator<string>>("user.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("username.illegality", message));
@@ -885,7 +885,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidatePassword(string password)
 		{
-			var validator = _services?.Resolve<IValidator<string>>("password");
+			var validator = _services?.Match<IValidator<string>>("password");
 
 			if(validator != null)
 				validator.Validate(password, message => throw new SecurityException("password.illegality", message));

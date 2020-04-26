@@ -47,11 +47,11 @@ namespace Zongsoft.Security.Membership
 		#region 成员字段
 		private IDataAccess _dataAccess;
 		private ICensorship _censorship;
-		private readonly Services.IServiceProvider _services;
+		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public RoleProvider(Services.IServiceProvider serviceProvider)
+		public RoleProvider(IServiceProvider serviceProvider)
 		{
 			_services = serviceProvider;
 		}
@@ -332,7 +332,7 @@ namespace Zongsoft.Security.Membership
 		#region 虚拟方法
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = _services?.Resolve<IValidator<string>>("role.name");
+			var validator = _services?.Match<IValidator<string>>("role.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("rolename.illegality", message));
