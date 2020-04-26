@@ -360,7 +360,7 @@ namespace Zongsoft.Security.Membership
 		private Condition GetNamespace(string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IRole.Namespace), this.Credential.User.Namespace);
+				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.Principal.Identity.AsUser().Namespace);
 			else if(@namespace != "*")
 				return Condition.Equal(nameof(IRole.Namespace), @namespace);
 
