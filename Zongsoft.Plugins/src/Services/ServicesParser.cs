@@ -31,6 +31,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
 
@@ -117,9 +119,6 @@ namespace Zongsoft.Services
 				if(mode == null)
 					return provider.GetType();
 
-				if(mode.GetType() == typeof(string))
-					return provider.GetServiceType((string)mode);
-
 				if(mode is Type)
 					return isMultiple ? typeof(IEnumerable<>).MakeGenericType((Type)mode) : (Type)mode;
 
@@ -135,10 +134,10 @@ namespace Zongsoft.Services
 					return provider;
 
 				if(mode.GetType() == typeof(string))
-					return provider.Resolve((string)mode);
+					return provider.Match(context.MemberType, (string)mode);
 
 				if(mode is Type)
-					return isMultiple ? provider.ResolveAll((Type)mode) : provider.Resolve((Type)mode);
+					return isMultiple ? provider.GetServices((Type)mode) : provider.GetService((Type)mode);
 
 				return null;
 			});
@@ -177,7 +176,7 @@ namespace Zongsoft.Services
 					return null;
 
 				//如果当前目标成员类型为服务容器则返回上面解析到的服务容器对象
-				if(typeof(Zongsoft.Services.IServiceProvider).IsAssignableFrom(context.MemberType) || typeof(System.IServiceProvider).IsAssignableFrom(context.MemberType))
+				if(typeof(IServiceProvider).IsAssignableFrom(context.MemberType))
 					return thunk(provider, null, false);
 
 				//从特定服务容器中获取匹配目标成员类型的服务
@@ -196,22 +195,29 @@ namespace Zongsoft.Services
 			if(match == null || (!match.Success))
 				return null;
 
-			var serviceFactory = Services.ServiceProviderFactory.Instance;
+			IApplicationModule module;
 
 			//如果指定的服务容器名则返回其指定名称的服务容器
 			if(match.Groups[PROVIDER_GROUP].Success)
-				return serviceFactory.GetProvider(match.Groups[PROVIDER_GROUP].Value);
+			{
+				if(ApplicationContext.Current.Modules.TryGet(match.Groups[PROVIDER_GROUP].Value, out module))
+					return module.Services;
+
+				return null;
+			}
 
 			//如果指定了分隔符(服务容器名空)则返回默认服务容器
 			if(match.Groups[DELIMITER_GROUP].Success)
-				return serviceFactory.Default;
+				return ApplicationContext.Current.Services;
 
 			//获取当前构件的父节点，如果父节点空则返回默认服务容器
 			if(context.Node == null || context.Node.Parent == null)
-				return serviceFactory.Default;
+				return ApplicationContext.Current.Services;
 
 			//返回以当前构件的父节点名称为服务容器名的那个服务容器，如果该服务容器不存在则返回默认服务容器
-			return serviceFactory.GetProvider(context.Node.Parent.Name) ?? serviceFactory.Default;
+			return ApplicationContext.Current.Modules.TryGet(context.Node.Parent.Name, out module) ?
+				module.Services :
+				ApplicationContext.Current.Services;
 		}
 		#endregion
 	}

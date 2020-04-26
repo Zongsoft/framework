@@ -36,7 +36,7 @@ using Zongsoft.Plugins.Parsers;
 
 namespace Zongsoft.Services
 {
-	public class PredicateParser : Zongsoft.Plugins.Parsers.Parser
+	public class PredicateParser : Parser
 	{
 		private readonly Regex _regex = new Regex(@"[^\s]+", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 
@@ -61,12 +61,10 @@ namespace Zongsoft.Services
 				predication = ApplicationContext.Current.Services.Match<IPredication>(parts[0]);
 			else
 			{
-				var serviceProvider = Services.ServiceProviderFactory.Instance.GetProvider(parts[0]);
-
-				if(serviceProvider == null)
+				if(!ApplicationContext.Current.Modules.TryGet(parts[0], out var module))
 					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
 
-				predication = serviceProvider.Match<IPredication>(parts[1]);
+				predication = module.Services.Match<IPredication>(parts[1]);
 			}
 
 			if(predication != null)

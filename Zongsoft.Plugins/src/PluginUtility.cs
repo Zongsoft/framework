@@ -263,7 +263,7 @@ namespace Zongsoft.Plugins
 				var type = GetOwnerElementType(builtin.Node) ?? settings?.TargetType;
 
 				if(type == null)
-					throw new PluginException($"Unable to determine the target type of the '{builtin.ToString()}' builtin.");
+					throw new PluginException($"Unable to determine the target type of the '{builtin}' builtin.");
 
 				result = BuildType(type, builtin);
 			}
@@ -531,13 +531,7 @@ namespace Zongsoft.Plugins
 				return true;
 			}
 
-			if(typeof(IServiceProviderFactory).IsAssignableFrom(parameterType))
-			{
-				parameterValue = Services.ServiceProviderFactory.Instance;
-				return true;
-			}
-
-			if(typeof(System.IServiceProvider).IsAssignableFrom(parameterType))
+			if(typeof(IServiceProvider).IsAssignableFrom(parameterType))
 			{
 				parameterValue = ApplicationContext.Current.Services;
 				return true;
@@ -573,7 +567,7 @@ namespace Zongsoft.Plugins
 			return null;
 		}
 
-		internal static System.IServiceProvider FindServiceProvider(Builtin builtin)
+		internal static IServiceProvider FindServiceProvider(Builtin builtin)
 		{
 			if(builtin == null)
 				return null;
@@ -583,8 +577,11 @@ namespace Zongsoft.Plugins
 			if(module != null && module.Services != null)
 				return module.Services;
 
-			if(builtin.Node != null && builtin.Node.Parent != null)
-				return ServiceProviderFactory.Instance.GetProvider(builtin.Node.Parent.Name) ?? ApplicationContext.Current.Services;
+			if(builtin.Node != null && builtin.Node.Parent != null &&
+				ApplicationContext.Current.Modules.TryGet(builtin.Node.Parent.Name, out module))
+			{
+				return module.Services;
+			}
 
 			return ApplicationContext.Current.Services;
 		}
@@ -748,7 +745,12 @@ namespace Zongsoft.Plugins
 				if(attribute == null || string.IsNullOrWhiteSpace(attribute.Provider))
 					serviceProvider = reservedProvider;
 				else
-					serviceProvider = ServiceProviderFactory.Instance.GetProvider(attribute.Provider) ?? reservedProvider;
+				{
+					if(ApplicationContext.Current.Modules.TryGet(attribute.Provider, out var module))
+						serviceProvider = module.Services;
+					else
+						serviceProvider = reservedProvider;
+				}
 
 				switch(member.MemberType)
 				{
