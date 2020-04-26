@@ -416,7 +416,7 @@ namespace Zongsoft.Configuration
 
 			public override int GetHashCode()
 			{
-				return this.Property.GetHashCode();
+				return HashCode.Combine(Property);
 			}
 
 			public override string ToString()
