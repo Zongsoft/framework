@@ -28,51 +28,37 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
-	public static class ClaimsPrincipalExtension
+	public static class ClaimsIdentityExtension
 	{
-		public static bool IsAdministrator(this ClaimsPrincipal principal, string module = null)
+		public static Membership.IUserIdentity AsUser(this System.Security.Principal.IIdentity identity)
 		{
-			const string ADMINISTRATOR_USER = "Administrator";
-			const string ADMINISTRATORS_ROLE = "Administrators";
-
-			if(principal == null)
-				throw new ArgumentNullException(nameof(principal));
-
-			if(string.IsNullOrEmpty(module))
-			{
-				return principal.Identity != null &&
-					principal.Identity.IsAuthenticated &&
-					(
-						string.Equals(principal.Identity.Name, ADMINISTRATOR_USER, StringComparison.OrdinalIgnoreCase) ||
-						principal.IsInRole(ADMINISTRATORS_ROLE)
-					);
-			}
-
-			foreach(var identity in principal.Identities)
-			{
-				if(identity.IsAuthenticated &&
-				   identity.HasClaim(ClaimTypes.System, module) &&
-				   string.Equals(identity.Name, ADMINISTRATOR_USER, StringComparison.OrdinalIgnoreCase))
-					return true;
-			}
-
-			return false;
+			return AsUser(identity as ClaimsIdentity);
 		}
 
-		public static IEnumerable<Membership.IUserIdentity> GetUsers(this ClaimsPrincipal principal)
+		public static Membership.IUserIdentity AsUser(this ClaimsIdentity identity)
 		{
-			if(principal == null)
-				throw new ArgumentNullException(nameof(principal));
+			if(identity == null)
+				return null;
 
-			foreach(var identity in principal.Identities)
+			return Zongsoft.Data.Model.Build<Membership.IUserIdentity>(user =>
 			{
-				yield return identity.AsUser();
-			}
+				user.UserId = GetUserId(identity.Claims);
+				user.Name = identity.Name;
+				user.FullName = identity.Label;
+				user.Namespace = "";
+				user.Description = "";
+			});
+		}
+
+		private static uint GetUserId(IEnumerable<Claim> claims)
+		{
+			return uint.Parse(claims.First(p => p.Type == ClaimTypes.NameIdentifier).Value);
 		}
 	}
 }
