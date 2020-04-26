@@ -64,27 +64,27 @@ namespace Zongsoft.Data
 		private string _name;
 		private IDataAccess _dataAccess;
 		private IDataSearcher<TEntity> _searcher;
-		private Services.IServiceProvider _serviceProvider;
+		private IServiceProvider _serviceProvider;
 		#endregion
 
 		#region 构造函数
-		protected DataServiceBase(Services.IServiceProvider serviceProvider)
+		protected DataServiceBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = serviceProvider.ResolveRequired<IDataAccess>();
+			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? throw new InvalidOperationException("Missing the required data access.");
 
 			//创建数据搜索器
 			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
 		}
 
-		protected DataServiceBase(string name, Services.IServiceProvider serviceProvider)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = serviceProvider.ResolveRequired<IDataAccess>();
+			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? throw new InvalidOperationException("Missing the required data access.");
 
 			//创建数据搜索器
 			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
@@ -130,17 +130,12 @@ namespace Zongsoft.Data
 			get => true;
 		}
 
-		public virtual bool CanUpsert
-		{
-			get => true;
-		}
-
 		public IDataAccess DataAccess
 		{
 			get
 			{
 				if(_dataAccess == null)
-					_dataAccess = _serviceProvider.Resolve<IDataAccess>();
+					_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess));
 
 				return _dataAccess;
 			}
@@ -156,7 +151,7 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
-		public Zongsoft.Services.IServiceProvider ServiceProvider
+		public IServiceProvider ServiceProvider
 		{
 			get => _serviceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
@@ -523,7 +518,7 @@ namespace Zongsoft.Data
 		public int Upsert(object data, string schema, IDictionary<string, object> states)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureUpsert();
 
 			//进行授权验证
 			this.Authorize(Method.Upsert(), ref states);
@@ -567,7 +562,7 @@ namespace Zongsoft.Data
 		public int UpsertMany(IEnumerable items, string schema, IDictionary<string, object> states)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureUpsert();
 
 			//进行授权验证
 			this.Authorize(Method.UpsertMany(), ref states);
@@ -1400,7 +1395,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private void EnsureUpsert()
 		{
-			if(!this.CanUpsert)
+			if(!(this.CanInsert && this.CanUpdate))
 				throw new InvalidOperationException("The upsert operation is not allowed.");
 		}
 		#endregion
@@ -1551,7 +1546,7 @@ namespace Zongsoft.Data
 
 			public override int GetHashCode()
 			{
-				return this.Name.GetHashCode();
+				return HashCode.Combine(Name);
 			}
 
 			public override string ToString()
