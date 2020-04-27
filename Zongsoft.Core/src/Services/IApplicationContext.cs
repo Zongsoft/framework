@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 using Microsoft.Extensions.Configuration;
 
@@ -50,50 +51,37 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序根目录的完整路径。
 		/// </summary>
-		string ApplicationPath
-		{
-			get;
-		}
+		string ApplicationPath { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的应用配置。
 		/// </summary>
-		IConfiguration Configuration
-		{
-			get;
-		}
+		IConfiguration Configuration { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的环境信息。
 		/// </summary>
-		IApplicationEnvironment Environment
-		{
-			get;
-		}
+		IApplicationEnvironment Environment { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的安全主体。
 		/// </summary>
-		System.Security.Claims.ClaimsPrincipal Principal
-		{
-			get;
-		}
+		ClaimsPrincipal Principal { get; }
+
+		/// <summary>
+		/// 获取当前应用程序的用户信息。
+		/// </summary>
+		Security.Membership.IUserIdentity User { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的模块集。
 		/// </summary>
-		INamedCollection<IApplicationModule> Modules
-		{
-			get;
-		}
+		INamedCollection<IApplicationModule> Modules { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的初始化器集。
 		/// </summary>
-		ICollection<IApplicationInitializer> Initializers
-		{
-			get;
-		}
+		ICollection<IApplicationInitializer> Initializers { get; }
 		#endregion
 
 		#region 方法定义

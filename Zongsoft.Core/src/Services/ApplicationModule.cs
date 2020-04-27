@@ -30,14 +30,21 @@
 using System;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Schemas))]
-	public class ApplicationModule : IApplicationModule
+	public class ApplicationModule : IApplicationModule, IMatchable<string>, IDisposable
 	{
+		#region 成员字段
+		private readonly object _syncRoot = new object();
+		private ServiceProvider _services;
+		#endregion
+
 		#region 构造函数
 		public ApplicationModule(string name)
 		{
@@ -78,9 +85,21 @@ namespace Zongsoft.Services
 			get; set;
 		}
 
-		public virtual IServiceProvider Services
+		public virtual ServiceProvider Services
 		{
-			get => null;
+			get
+			{
+				if(_services == null)
+				{
+					lock(_syncRoot)
+					{
+						if(_services == null)
+							_services = new ServiceProvider(ApplicationContext.Current.Services.CreateScope().ServiceProvider);
+					}
+				}
+
+				return _services;
+			}
 		}
 
 		public INamedCollection<Schema> Schemas
@@ -91,6 +110,35 @@ namespace Zongsoft.Services
 		public IDictionary<string, object> Properties
 		{
 			get;
+		}
+		#endregion
+
+		#region 匹配方法
+		bool IMatchable.Match(object parameter)
+		{
+			return parameter switch
+			{
+				string text => this.Name.Equals(text, StringComparison.OrdinalIgnoreCase),
+				_ => false,
+			};
+		}
+
+		bool IMatchable<string>.Match(string parameter)
+		{
+			return this.Name.Equals(parameter, StringComparison.OrdinalIgnoreCase);
+		}
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			_services?.Dispose();
 		}
 		#endregion
 

@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Reflection;
 using System.Security.Claims;
 using System.Collections.Generic;
 
@@ -56,7 +57,7 @@ namespace Zongsoft.Services
 		private volatile int _stopped;
 		private volatile int _disposed;
 
-		private readonly IServiceProvider _services;
+		private readonly ServiceProvider _services;
 		private ICollection<IApplicationInitializer> _initializers;
 
 		private readonly CancellationTokenRegistration _applicationStarted;
@@ -66,7 +67,10 @@ namespace Zongsoft.Services
 		#region 构造函数
 		protected ApplicationContext(IServiceProvider services)
 		{
-			_services = services ?? throw new ArgumentNullException(nameof(services));
+			if(services == null)
+				throw new ArgumentNullException(nameof(services));
+
+			_services = services as ServiceProvider ?? services.GetRequiredService<ServiceProvider>();
 			_initializers = new List<IApplicationInitializer>();
 
 			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
@@ -91,7 +95,7 @@ namespace Zongsoft.Services
 		/// </summary>
 		public static IApplicationContext Current
 		{
-			get => _current;
+			get => _current ?? throw new InvalidOperationException("The current application is not initialized.");
 		}
 		#endregion
 
@@ -144,7 +148,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual IServiceProvider Services
+		public virtual ServiceProvider Services
 		{
 			get => _services;
 		}
@@ -159,6 +163,11 @@ namespace Zongsoft.Services
 			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : ClaimsPrincipal.Current;
 		}
 
+		public Security.Membership.IUserIdentity User
+		{
+			get => Security.ClaimsIdentityExtension.AsUser(this.Principal?.Identity);
+		}
+
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
@@ -167,6 +176,33 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
+		public void Register(Assembly assembly)
+		{
+			if(assembly == null)
+				throw new ArgumentNullException(nameof(assembly));
+
+			foreach(var type in assembly.GetExportedTypes())
+			{
+				if(type.IsAbstract || !type.IsClass)
+					continue;
+
+				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
+
+				if(attribute == null)
+					continue;
+
+				if(string.IsNullOrEmpty(attribute.Provider))
+					this.Services.Register(type, attribute.Contracts);
+				else
+				{
+					if(!this.Modules.TryGet(attribute.Provider, out var module))
+						throw new InvalidOperationException($"The '{attribute.Provider}' service provider annotated by the '{type.FullName}' type does not exist.");
+
+					module.Services.Register(type, attribute.Contracts);
+				}
+			}
+		}
+
 		public string EnsureDirectory(string relativePath)
 		{
 			string fullPath = this.ApplicationPath;
@@ -231,6 +267,15 @@ namespace Zongsoft.Services
 					if(initializer is IDisposable disposable)
 						disposable.Dispose();
 				}
+
+				foreach(var module in this.Modules)
+				{
+					if(module is IDisposable disposable)
+						disposable.Dispose();
+				}
+
+				//清空模块集
+				this.Modules.Clear();
 
 				if(_services is IDisposable services)
 					services.Dispose();
