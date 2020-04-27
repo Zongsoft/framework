@@ -47,10 +47,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据搜索器对象。
 		/// </summary>
-		IDataSearcher<TEntity> Searcher
-		{
-			get;
-		}
+		IDataSearcher<TEntity> Searcher { get; }
 		#endregion
 
 		#region 查询方法

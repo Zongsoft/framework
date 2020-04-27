@@ -87,7 +87,7 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		/// <summary>
-		/// 获取数据访问的应用名。
+		/// 获取数据访问的应用（子系统/业务模块）名。
 		/// </summary>
 		public string Name
 		{

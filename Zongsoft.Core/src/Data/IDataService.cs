@@ -63,42 +63,27 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据服务的名称，该名称亦为数据访问接口的调用名。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
+		string Name { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否支持删除操作。
 		/// </summary>
-		bool CanDelete
-		{
-			get;
-		}
+		bool CanDelete { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否支持新增操作。
 		/// </summary>
-		bool CanInsert
-		{
-			get;
-		}
+		bool CanInsert { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否支持修改操作。
 		/// </summary>
-		bool CanUpdate
-		{
-			get;
-		}
+		bool CanUpdate { get; }
 
 		/// <summary>
 		/// 获取数据访问接口。
 		/// </summary>
-		IDataAccess DataAccess
-		{
-			get;
-		}
+		IDataAccess DataAccess { get; }
 		#endregion
 
 		#region 执行方法

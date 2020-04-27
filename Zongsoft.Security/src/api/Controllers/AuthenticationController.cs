@@ -66,10 +66,10 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 公共方法
 		[HttpPost]
 		[ActionName("Signin")]
-		public async Task<IActionResult> SigninAsync(string id, AuthenticationRequest request)
+		public Task<IActionResult> SigninAsync(string id, AuthenticationRequest request)
 		{
 			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			var scene = id.Trim();
 			var parameters = request.Parameters;
@@ -118,7 +118,7 @@ namespace Zongsoft.Security.Web.Controllers
 			_credentialProvider.Register(credential);
 
 			//返回注册的凭证
-			return this.Ok(credential);
+			return Task.FromResult((IActionResult)this.Ok(credential));
 		}
 
 		[HttpGet]
