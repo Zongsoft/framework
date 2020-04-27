@@ -37,14 +37,14 @@ namespace Zongsoft.Services
 {
 	public static class ServiceProviderExtension
 	{
-		public static T Match<T>(this System.IServiceProvider services, object parameter)
+		public static T GetMatchedService<T>(this IServiceProvider services, object parameter)
 		{
-			return (T)Match(services, typeof(T), parameter);
+			return (T)GetMatchedService(services, typeof(T), parameter);
 		}
 
-		public static IEnumerable<T> Matches<T>(this System.IServiceProvider services, object parameter)
+		public static IEnumerable<T> GetMatchedServices<T>(this IServiceProvider services, object parameter)
 		{
-			var result = Matches(services, typeof(T), parameter);
+			var result = GetMatchedServices(services, typeof(T), parameter);
 
 			if(result == null)
 				yield break;
@@ -55,7 +55,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public static object Match(this System.IServiceProvider services, Type type, object parameter)
+		public static object GetMatchedService(this IServiceProvider services, Type type, object parameter)
 		{
 			if(services == null)
 				throw new ArgumentNullException(nameof(services));
@@ -78,7 +78,7 @@ namespace Zongsoft.Services
 			return null;
 		}
 
-		public static IEnumerable Matches(this System.IServiceProvider services, Type type, object parameter)
+		public static IEnumerable GetMatchedServices(this IServiceProvider services, Type type, object parameter)
 		{
 			if(services == null)
 				throw new ArgumentNullException(nameof(services));

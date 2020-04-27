@@ -758,7 +758,7 @@ namespace Zongsoft.Plugins
 						if(attribute.Parameter == null)
 							memberValue = serviceProvider.GetService(attribute.ServiceType ?? ((FieldInfo)member).FieldType);
 						else
-							memberValue = serviceProvider.Match(attribute.ServiceType ?? ((FieldInfo)member).FieldType, attribute.Parameter);
+							memberValue = serviceProvider.GetMatchedService(attribute.ServiceType ?? ((FieldInfo)member).FieldType, attribute.Parameter);
 
 						if(memberValue == null && attribute != null && attribute.IsRequired)
 							throw new InvalidOperationException($"The injected {((PropertyInfo)member).Name} field value is null when building the '{builtin}' plugin builtin.");
@@ -771,7 +771,7 @@ namespace Zongsoft.Plugins
 							if(attribute.Parameter == null)
 								memberValue = serviceProvider.GetService(attribute.ServiceType ?? ((PropertyInfo)member).PropertyType);
 							else
-								memberValue = serviceProvider.Match(attribute.ServiceType ?? ((PropertyInfo)member).PropertyType, attribute.Parameter);
+								memberValue = serviceProvider.GetMatchedService(attribute.ServiceType ?? ((PropertyInfo)member).PropertyType, attribute.Parameter);
 
 							if(memberValue == null && attribute != null && attribute.IsRequired)
 								throw new InvalidOperationException($"The injected {((PropertyInfo)member).Name} property value is null when building the '{builtin}' plugin builtin.");

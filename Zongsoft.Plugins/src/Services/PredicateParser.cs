@@ -58,13 +58,13 @@ namespace Zongsoft.Services
 			IPredication predication;
 
 			if(parts.Length == 1)
-				predication = ApplicationContext.Current.Services.Match<IPredication>(parts[0]);
+				predication = ApplicationContext.Current.Services.GetMatchedService<IPredication>(parts[0]);
 			else
 			{
 				if(!ApplicationContext.Current.Modules.TryGet(parts[0], out var module))
 					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
 
-				predication = module.Services.Match<IPredication>(parts[1]);
+				predication = module.Services.GetMatchedService<IPredication>(parts[1]);
 			}
 
 			if(predication != null)

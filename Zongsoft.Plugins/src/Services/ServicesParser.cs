@@ -134,7 +134,7 @@ namespace Zongsoft.Services
 					return provider;
 
 				if(mode.GetType() == typeof(string))
-					return provider.Match(context.MemberType, (string)mode);
+					return provider.GetMatchedService(context.MemberType, (string)mode);
 
 				if(mode is Type)
 					return isMultiple ? provider.GetServices((Type)mode) : provider.GetService((Type)mode);

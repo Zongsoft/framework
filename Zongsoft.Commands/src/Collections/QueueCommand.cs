@@ -84,7 +84,7 @@ namespace Zongsoft.Collections.Commands
 				var parts = name.Split('@');
 
 				if(parts.Length == 2)
-					_queueProvider = _serviceProvider.Match<IQueueProvider>(parts[1]);
+					_queueProvider = _serviceProvider.GetMatchedService<IQueueProvider>(parts[1]);
 				else
 					_queueProvider = (IQueueProvider)_serviceProvider.GetService(typeof(IQueueProvider));
 
