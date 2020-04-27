@@ -28,31 +28,40 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	public class ServiceProvider : IServiceProvider
+	public class ServiceProvider : IServiceProvider, IDisposable
 	{
 		#region 成员字段
 		private readonly ServiceProviderOptions _options;
-		private readonly IServiceCollection _descriptors;
 		private readonly IList<IServiceProvider> _providers;
+		private readonly IServiceCollection _descriptors;
+		private ServiceScopeFactoryProxy _scopeFactory;
 		#endregion
 
 		#region 构造函数
 		public ServiceProvider(IServiceCollection descriptors, ServiceProviderOptions options = null)
 		{
 			_options = options;
-			_descriptors = descriptors ?? throw new ArgumentNullException(nameof(descriptors));
 			_providers = new List<IServiceProvider>();
+			_descriptors = descriptors ?? new ServiceCollection();
+		}
+
+		public ServiceProvider(IServiceProvider provider, ServiceProviderOptions options = null)
+		{
+			_options = options;
+			_providers = new List<IServiceProvider>() { provider ?? throw new ArgumentNullException(nameof(provider)) };
+			_descriptors = new ServiceCollection();
 		}
 		#endregion
 
 		#region 公共属性
-		public IServiceCollection Services
+		public IServiceCollection Descriptors
 		{
 			get => _descriptors;
 		}
@@ -68,7 +77,22 @@ namespace Zongsoft.Services
 					_descriptors.BuildServiceProvider() :
 					_descriptors.BuildServiceProvider(_options));
 
+				_scopeFactory = null;
 				_descriptors.Clear();
+			}
+
+			if(serviceType == typeof(IServiceScopeFactory) && _providers.Count > 1)
+			{
+				if(_scopeFactory == null)
+				{
+					lock(this)
+					{
+						if(_scopeFactory == null)
+							_scopeFactory = new ServiceScopeFactoryProxy(_providers.Select(p => p.GetRequiredService<IServiceScopeFactory>()));
+					}
+				}
+
+				return _scopeFactory;
 			}
 
 			for(int i = _providers.Count - 1; i >= 0; i--)
@@ -81,6 +105,101 @@ namespace Zongsoft.Services
 
 			return null;
 		}
+
+		public void Register(Type type, params Type[] contracts)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			_descriptors.AddSingleton(type);
+
+			if(contracts != null)
+			{
+				for(var i = 0; i < contracts.Length; i++)
+				{
+					_descriptors.AddSingleton(contracts[i], services => services.GetRequiredService(type));
+				}
+			}
+		}
 		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			while(_providers.Count > 0)
+			{
+				if(_providers[0] is IDisposable disposable)
+				{
+					disposable.Dispose();
+					_providers.Remove((IServiceProvider)disposable);
+				}
+			}
+		}
+		#endregion
+
+		private class ServiceScopeFactoryProxy : IServiceScopeFactory
+		{
+			private readonly IEnumerable<IServiceScopeFactory> _factories;
+
+			public ServiceScopeFactoryProxy(IEnumerable<IServiceScopeFactory> factories)
+			{
+				_factories = factories;
+			}
+
+			public IServiceScope CreateScope()
+			{
+				return new ServiceScopeProxy(_factories.Select(p => p.CreateScope()));
+			}
+		}
+
+		private class ServiceScopeProxy : IServiceScope
+		{
+			private readonly IEnumerable<IServiceScope> _scopes;
+
+			public ServiceScopeProxy(IEnumerable<IServiceScope> scopes)
+			{
+				_scopes = scopes;
+			}
+
+			public IServiceProvider ServiceProvider => new ServiceProviderProxy(_scopes.Select(p => p.ServiceProvider));
+
+			public void Dispose()
+			{
+				foreach(var scope in _scopes)
+					scope.Dispose();
+			}
+		}
+
+		private class ServiceProviderProxy : IServiceProvider, IDisposable
+		{
+			private readonly IEnumerable<IServiceProvider> _providers;
+
+			public ServiceProviderProxy(IEnumerable<IServiceProvider> providers)
+			{
+				_providers = providers;
+			}
+
+			public object GetService(Type serviceType)
+			{
+				foreach(var provider in _providers)
+				{
+					var instance = provider.GetService(serviceType);
+
+					if(instance != null)
+						return instance;
+				}
+
+				return null;
+			}
+
+			public void Dispose()
+			{
+				foreach(var provider in _providers)
+				{
+					if(provider is IDisposable disposable)
+						disposable.Dispose();
+				}
+			}
+		}
 	}
 }

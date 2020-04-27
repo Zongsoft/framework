@@ -57,7 +57,9 @@ namespace Zongsoft.Services
 		/// <inheritdoc />
 		public System.IServiceProvider CreateServiceProvider(IServiceCollection services)
 		{
-			return new ServiceProvider(services, _options);
+			var provider = new ServiceProvider(services, _options);
+            services.AddSingleton(provider);
+            return provider;
 		}
 		#endregion
 	}
