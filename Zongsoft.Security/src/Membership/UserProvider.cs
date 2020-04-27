@@ -30,7 +30,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -39,6 +38,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
+	[Service(typeof(IUserProvider))]
 	public class UserProvider : IUserProvider
 	{
 		#region 常量定义
@@ -100,32 +100,6 @@ namespace Zongsoft.Security.Membership
 		public Configuration.IUserOption Option
 		{
 			get; set;
-		}
-
-		public ClaimsPrincipal Principal
-		{
-			get
-			{
-				if(ApplicationContext.Current == null || !ApplicationContext.Current.Principal.Identity.IsAuthenticated)
-					throw new AuthorizationException("No authorization or access to current user credentials.");
-
-				return ApplicationContext.Current.Principal as CredentialPrincipal ??
-				       throw new InvalidOperationException($"The '{ApplicationContext.Current.Principal.GetType().FullName}' is an invalid or unsupported type of security principal.");
-			}
-		}
-
-		public Credential Credential
-		{
-			get
-			{
-				if(ApplicationContext.Current == null || !ApplicationContext.Current.Principal.Identity.IsAuthenticated)
-					throw new AuthorizationException("No authorization or access to current user credentials.");
-
-				var principal = ApplicationContext.Current.Principal as CredentialPrincipal ??
-					throw new InvalidOperationException($"The '{ApplicationContext.Current.Principal.GetType().FullName}' is an invalid or unsupported type of security principal.");
-
-				return principal.Identity.Credential;
-			}
 		}
 		#endregion
 
@@ -415,10 +389,10 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//如果当前用户的命名空间不为空，则新增用户的命名空间必须与当前用户一致
-			if(string.IsNullOrEmpty(this.Credential.User.Namespace))
+			if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
 				user.Namespace = string.IsNullOrWhiteSpace(user.Namespace) ? null : user.Namespace.Trim();
 			else
-				user.Namespace = this.Credential.User.Namespace;
+				user.Namespace = ApplicationContext.Current.User.Namespace;
 
 			//验证指定的名称是否合法
 			this.OnValidateName(user.Name);
@@ -503,10 +477,10 @@ namespace Zongsoft.Security.Membership
 				}
 
 				//如果当前用户的命名空间不为空，则新增用户的命名空间必须与当前用户一致
-				if(string.IsNullOrEmpty(this.Credential.User.Namespace))
+				if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
 					user.Namespace = string.IsNullOrWhiteSpace(user.Namespace) ? null : user.Namespace.Trim();
 				else
-					user.Namespace = this.Credential.User.Namespace;
+					user.Namespace = ApplicationContext.Current.User.Namespace;
 
 				//验证指定的名称是否合法
 				this.OnValidateName(user.Name);
@@ -877,7 +851,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = _services?.Match<IValidator<string>>("user.name");
+			var validator = _services?.GetMatchedService<IValidator<string>>("user.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("username.illegality", message));
@@ -885,7 +859,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidatePassword(string password)
 		{
-			var validator = _services?.Match<IValidator<string>>("password");
+			var validator = _services?.GetMatchedService<IValidator<string>>("password");
 
 			if(validator != null)
 				validator.Validate(password, message => throw new SecurityException("password.illegality", message));
@@ -913,7 +887,7 @@ namespace Zongsoft.Security.Membership
 		private Condition GetNamespace(string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IUser.Namespace), this.Credential.User.Namespace);
+				return Condition.Equal(nameof(IUser.Namespace), ApplicationContext.Current.User.Namespace);
 			else if(@namespace != "*")
 				return Condition.Equal(nameof(IUser.Namespace), @namespace);
 
@@ -924,14 +898,14 @@ namespace Zongsoft.Security.Membership
 		private uint GetUserId(uint userId)
 		{
 			if(userId == 0)
-				return this.Credential.User.UserId;
+				return ApplicationContext.Current.User.UserId;
 
 			/*
 			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
 			 *   1) 指定的用户就是当前用户自己；
 			 *   2) 当前用户是系统管理员角色(Administrators)成员。
 			 */
-			if(this.Credential.User.UserId == userId || MembershipHelper.InRoles(this.DataAccess, this.Credential.User, MembershipHelper.Administrators))
+			if(ApplicationContext.Current.User.UserId == userId || MembershipHelper.InRoles(this.DataAccess, ApplicationContext.Current.User, MembershipHelper.Administrators))
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");

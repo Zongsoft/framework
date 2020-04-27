@@ -29,7 +29,6 @@
 
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -38,6 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
+	[Service(typeof(IRoleProvider), typeof(IMemberProvider))]
 	public class RoleProvider : IRoleProvider, IMemberProvider
 	{
 		#region 事件定义
@@ -75,20 +75,6 @@ namespace Zongsoft.Security.Membership
 		public ISequence Sequence
 		{
 			get => _dataAccess?.Sequence;
-		}
-
-		public Credential Credential
-		{
-			get
-			{
-				if(ApplicationContext.Current == null || ApplicationContext.Current.Principal.Identity.IsAuthenticated == false)
-					throw new AuthorizationException("No authorization or access to current user credentials.");
-
-				var principal = ApplicationContext.Current.Principal as CredentialPrincipal ??
-					throw new InvalidOperationException($"The '{ApplicationContext.Current.Principal.GetType().FullName}' is an invalid or unsupported type of security principal.");
-
-				return principal.Identity.Credential;
-			}
 		}
 		#endregion
 
@@ -248,10 +234,10 @@ namespace Zongsoft.Security.Membership
 					role.Name = "R" + Randomizer.GenerateString();
 
 				//如果当前用户的命名空间不为空，则新增角色的命名空间必须与当前用户一致
-				if(string.IsNullOrEmpty(this.Credential.User.Namespace))
+				if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
 					role.Namespace = string.IsNullOrWhiteSpace(role.Namespace) ? null : role.Namespace.Trim();
 				else
-					role.Namespace = this.Credential.User.Namespace;
+					role.Namespace = ApplicationContext.Current.User.Namespace;
 
 				//验证指定的名称是否合法
 				this.OnValidateName(role.Name);
@@ -332,7 +318,7 @@ namespace Zongsoft.Security.Membership
 		#region 虚拟方法
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = _services?.Match<IValidator<string>>("role.name");
+			var validator = _services?.GetMatchedService<IValidator<string>>("role.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("rolename.illegality", message));
@@ -360,7 +346,7 @@ namespace Zongsoft.Security.Membership
 		private Condition GetNamespace(string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.Principal.Identity.AsUser().Namespace);
+				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.User.Namespace);
 			else if(@namespace != "*")
 				return Condition.Equal(nameof(IRole.Namespace), @namespace);
 
