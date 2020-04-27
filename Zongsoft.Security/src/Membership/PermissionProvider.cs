@@ -36,6 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
+	[Service(typeof(IPermissionProvider))]
 	public class PermissionProvider : IPermissionProvider
 	{
 		#region 成员字段

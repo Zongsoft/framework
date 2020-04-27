@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
+using Zongsoft.Services;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Membership.Common
@@ -39,6 +40,7 @@ namespace Zongsoft.Security.Membership.Common
 	/// <summary>
 	/// 提供密码有效性验证的验证器类。
 	/// </summary>
+	[Service(typeof(IValidator<string>))]
 	public class PasswordValidator : IValidator<string>, IMatchable<string>
 	{
 		#region 常量定义

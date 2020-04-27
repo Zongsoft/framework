@@ -31,6 +31,7 @@ using System;
 
 namespace Zongsoft.Security
 {
+	[Zongsoft.Services.Service(typeof(ICredentialProvider))]
 	public class CredentialProvider : ICredentialProvider
 	{
 		#region 事件定义

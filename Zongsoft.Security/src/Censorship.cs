@@ -36,6 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security
 {
+	[Service(typeof(ICensorship))]
 	public class Censorship : ICensorship
 	{
 		#region 常量定义

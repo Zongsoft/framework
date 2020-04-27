@@ -28,10 +28,9 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using Zongsoft.Common;
+using Zongsoft.Services;
 using Zongsoft.Runtime.Caching;
 
 namespace Zongsoft.Security.Membership
@@ -39,6 +38,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 表示用户验证失败的处理器。
 	/// </summary>
+	[Service]
 	public class Attempter
 	{
 		#region 成员字段
