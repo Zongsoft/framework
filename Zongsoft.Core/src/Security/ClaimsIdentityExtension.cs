@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -36,6 +35,9 @@ namespace Zongsoft.Security
 {
 	public static class ClaimsIdentityExtension
 	{
+		private const string Namespace_ClaimType = "http://schemas.zongsoft.com/security/claims/namespace";
+		private const string Description_ClaimType = "http://schemas.zongsoft.com/security/claims/description";
+
 		public static Membership.IUserIdentity AsUser(this System.Security.Principal.IIdentity identity)
 		{
 			return AsUser(identity as ClaimsIdentity);
@@ -48,17 +50,45 @@ namespace Zongsoft.Security
 
 			return Zongsoft.Data.Model.Build<Membership.IUserIdentity>(user =>
 			{
-				user.UserId = GetUserId(identity.Claims);
+				GetUserInfo(identity.Claims, out var userId, out var @namespace, out var description);
+
+				user.UserId = userId;
 				user.Name = identity.Name;
 				user.FullName = identity.Label;
-				user.Namespace = "";
-				user.Description = "";
+				user.Namespace = @namespace;
+				user.Description = description;
 			});
 		}
 
-		private static uint GetUserId(IEnumerable<Claim> claims)
+		private static void GetUserInfo(IEnumerable<Claim> claims, out uint userId, out string @namespace, out string description)
 		{
-			return uint.Parse(claims.First(p => p.Type == ClaimTypes.NameIdentifier).Value);
+			int count = 0;
+
+			userId = 0;
+			@namespace = null;
+			description = null;
+
+			foreach(var claim in claims)
+			{
+				if(string.Equals(claim.Type, ClaimTypes.NameIdentifier, StringComparison.OrdinalIgnoreCase))
+				{
+					uint.TryParse(claim.Value, out userId);
+					count++;
+				}
+				else if(string.Equals(claim.Type, Namespace_ClaimType, StringComparison.OrdinalIgnoreCase))
+				{
+					count++;
+					@namespace = claim.Value;
+				}
+				else if(string.Equals(claim.Type, Description_ClaimType, StringComparison.OrdinalIgnoreCase))
+				{
+					count++;
+					description = claim.Value;
+				}
+
+				if(count >= 3)
+					return;
+			}
 		}
 	}
 }
