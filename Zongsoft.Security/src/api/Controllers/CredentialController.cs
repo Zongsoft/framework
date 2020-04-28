@@ -29,14 +29,16 @@
 
 using System;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[Area(Modules.Security)]
+	[Authorize]
 	[Authorization]
 	public class CredentialController : ControllerBase
 	{

@@ -32,14 +32,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[Area(Modules.Security)]
 	public class AuthenticationController : ControllerBase
 	{
 		#region 成员字段
@@ -86,7 +87,7 @@ namespace Zongsoft.Security.Web.Controllers
 			var duration = TimeSpan.FromHours(2);
 
 			//尝试通过验证上下文的参数集获取其他程序指定的凭证配置项
-			if(parameters != null && parameters.TryGetValue("Credential:Option", out var value) && value is Membership.Options.ICredentialOption option)
+			if(parameters != null && parameters.TryGetValue("Credential:Option", out var value) && value is Membership.Configuration.ICredentialOption option)
 			{
 				if(option.Policies.TryGet(scene, out var period))
 					duration = period.Period;
@@ -122,6 +123,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpGet]
+		[Authorize]
 		[Authorization]
 		public void Signout(string id)
 		{

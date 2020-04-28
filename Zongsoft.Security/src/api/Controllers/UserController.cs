@@ -32,8 +32,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -41,6 +41,8 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[Area(Modules.Security)]
+	[Authorize]
 	[Authorization]
 	public class UserController : ControllerBase
 	{
@@ -283,6 +285,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpGet]
+		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
 		public virtual IActionResult Exists(string id)
 		{
@@ -298,6 +301,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpGet]
+		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
 		public IActionResult Verify(uint id, [FromRoute("args")]string type, [FromQuery]string secret)
 		{
@@ -332,6 +336,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPost]
+		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
 		public IActionResult ForgetPassword(string id)
 		{
@@ -347,6 +352,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPost]
+		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
 		public IActionResult ResetPassword(string id, [FromBody]PasswordResetEntity content)
 		{
@@ -378,6 +384,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpGet]
+		[AllowAnonymous]
 		[ActionName("PasswordQuestions")]
 		[Authorization(Suppressed = true)]
 		public IActionResult GetPasswordQuestions(string id)
@@ -427,12 +434,12 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet]
 		[ActionName("In")]
-		public IActionResult InRole([FromRoute("id")]uint userId, [FromRoute("args")]string roles)
+		public IActionResult InRole(uint id, [FromRoute("args")]string roles)
 		{
 			if(string.IsNullOrEmpty(roles))
 				return this.BadRequest();
 
-			return this.Authorizer.InRoles(userId, Common.StringExtension.Slice(roles, ',', ';', '|').ToArray()) ?
+			return this.Authorizer.InRoles(id, Common.StringExtension.Slice(roles, ',', ';', '|').ToArray()) ?
 			       (IActionResult)this.Ok() :
 			       (IActionResult)this.NotFound();
 		}
@@ -440,8 +447,8 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 授权方法
 		[HttpGet]
-		[Route("[userId]/[schemaId]:[actionId]")]
-		public IActionResult Authorize([FromRoute("id")]uint userId, [FromRoute("args")]string schemaId, [FromRoute("args")]string actionId)
+		[Route("[id]/[schemaId]:[actionId]")]
+		public IActionResult Authorize(uint id, [FromRoute("args")]string schemaId, [FromRoute("args")]string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))
 				return this.BadRequest("Missing schema for the authorize operation.");
@@ -449,7 +456,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(actionId))
 				return this.BadRequest("Missing action for the authorize operation.");
 
-			return this.Authorizer.Authorize(userId, schemaId, actionId) ?
+			return this.Authorizer.Authorize(id, schemaId, actionId) ?
 				(IActionResult)this.Ok() : this.Forbid();
 		}
 

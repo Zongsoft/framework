@@ -32,8 +32,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -41,6 +41,9 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[Area(Modules.Security)]
+	[Zongsoft.Web.Controller("Roles")]
+	[Authorize(Roles = "Administrators, Security, Securities")]
 	[Authorization(Roles = "Security, Securities")]
 	public class RoleController : ControllerBase
 	{
@@ -179,6 +182,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpGet]
+		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
 		public virtual IActionResult Exists(string id)
 		{
@@ -275,7 +279,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 权限方法
 		[HttpGet]
 		[ActionName("Permissions")]
-		[Route("")]
+		[Route("{id}/{schemaId}")]
 		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute("args")]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId);
