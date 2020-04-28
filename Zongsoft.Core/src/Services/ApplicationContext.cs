@@ -181,9 +181,9 @@ namespace Zongsoft.Services
 			if(assembly == null)
 				throw new ArgumentNullException(nameof(assembly));
 
-			foreach(var type in assembly.GetExportedTypes())
+			foreach(var type in assembly.ExportedTypes)
 			{
-				if(type.IsAbstract || !type.IsClass)
+				if(type.IsNotPublic || type.IsAbstract || !type.IsClass)
 					continue;
 
 				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
