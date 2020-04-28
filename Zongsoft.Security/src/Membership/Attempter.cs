@@ -38,7 +38,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 表示用户验证失败的处理器。
 	/// </summary>
-	[Service]
+	[Service(Modules.Security)]
 	public class Attempter
 	{
 		#region 成员字段

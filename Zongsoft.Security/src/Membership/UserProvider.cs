@@ -38,7 +38,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IUserProvider))]
+	[Service(Modules.Security, typeof(IUserProvider))]
 	public class UserProvider : IUserProvider
 	{
 		#region 常量定义

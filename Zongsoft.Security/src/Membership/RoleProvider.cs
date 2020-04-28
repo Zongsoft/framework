@@ -37,7 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IRoleProvider), typeof(IMemberProvider))]
+	[Service(Modules.Security, typeof(IRoleProvider), typeof(IMemberProvider))]
 	public class RoleProvider : IRoleProvider, IMemberProvider
 	{
 		#region 事件定义

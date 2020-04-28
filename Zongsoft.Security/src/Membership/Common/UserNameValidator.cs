@@ -37,7 +37,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Membership.Common
 {
-	[Service(typeof(IValidator<string>))]
+	[Service(Modules.Security, typeof(IValidator<string>))]
 	public class UserNameValidator : IValidator<string>, IMatchable<string>
 	{
 		#region 验证方法
