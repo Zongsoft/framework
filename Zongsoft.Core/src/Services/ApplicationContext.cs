@@ -40,7 +40,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	[System.Reflection.DefaultMember(nameof(Modules))]
+	[DefaultMember(nameof(Modules))]
 	public class ApplicationContext : IApplicationContext, IApplicationModule, IDisposable
 	{
 		#region 单例字段
@@ -160,7 +160,7 @@ namespace Zongsoft.Services
 
 		public virtual ClaimsPrincipal Principal
 		{
-			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : ClaimsPrincipal.Current;
+			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		}
 
 		public Security.Membership.IUserIdentity User

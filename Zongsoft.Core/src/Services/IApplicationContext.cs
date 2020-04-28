@@ -66,6 +66,9 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的安全主体。
 		/// </summary>
+		/// <remarks>
+		///		<para>该属性始终不会返回空(null)。</para>
+		/// </remarks>
 		ClaimsPrincipal Principal { get; }
 
 		/// <summary>
