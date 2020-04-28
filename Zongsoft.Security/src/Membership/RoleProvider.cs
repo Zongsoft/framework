@@ -234,10 +234,12 @@ namespace Zongsoft.Security.Membership
 					role.Name = "R" + Randomizer.GenerateString();
 
 				//如果当前用户的命名空间不为空，则新增角色的命名空间必须与当前用户一致
-				if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
+				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
+
+				if(string.IsNullOrEmpty(@namespace))
 					role.Namespace = string.IsNullOrWhiteSpace(role.Namespace) ? null : role.Namespace.Trim();
 				else
-					role.Namespace = ApplicationContext.Current.User.Namespace;
+					role.Namespace = @namespace;
 
 				//验证指定的名称是否合法
 				this.OnValidateName(role.Name);
@@ -346,7 +348,7 @@ namespace Zongsoft.Security.Membership
 		private Condition GetNamespace(string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.User.Namespace);
+				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.Principal.Identity.GetNamespace());
 			else if(@namespace != "*")
 				return Condition.Equal(nameof(IRole.Namespace), @namespace);
 

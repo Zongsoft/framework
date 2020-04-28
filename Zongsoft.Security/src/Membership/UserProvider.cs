@@ -389,10 +389,12 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//如果当前用户的命名空间不为空，则新增用户的命名空间必须与当前用户一致
-			if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
+			var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
+
+			if(string.IsNullOrEmpty(@namespace))
 				user.Namespace = string.IsNullOrWhiteSpace(user.Namespace) ? null : user.Namespace.Trim();
 			else
-				user.Namespace = ApplicationContext.Current.User.Namespace;
+				user.Namespace = @namespace;
 
 			//验证指定的名称是否合法
 			this.OnValidateName(user.Name);
@@ -477,10 +479,12 @@ namespace Zongsoft.Security.Membership
 				}
 
 				//如果当前用户的命名空间不为空，则新增用户的命名空间必须与当前用户一致
-				if(string.IsNullOrEmpty(ApplicationContext.Current.User.Namespace))
+				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
+
+				if(string.IsNullOrEmpty(@namespace))
 					user.Namespace = string.IsNullOrWhiteSpace(user.Namespace) ? null : user.Namespace.Trim();
 				else
-					user.Namespace = ApplicationContext.Current.User.Namespace;
+					user.Namespace = @namespace;
 
 				//验证指定的名称是否合法
 				this.OnValidateName(user.Name);
@@ -887,7 +891,7 @@ namespace Zongsoft.Security.Membership
 		private Condition GetNamespace(string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IUser.Namespace), ApplicationContext.Current.User.Namespace);
+				return Condition.Equal(nameof(IUser.Namespace), ApplicationContext.Current.Principal.Identity.GetNamespace());
 			else if(@namespace != "*")
 				return Condition.Equal(nameof(IUser.Namespace), @namespace);
 
@@ -898,14 +902,17 @@ namespace Zongsoft.Security.Membership
 		private uint GetUserId(uint userId)
 		{
 			if(userId == 0)
-				return ApplicationContext.Current.User.UserId;
+				return ApplicationContext.Current.Principal.Identity.GetUserId();
 
 			/*
 			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
 			 *   1) 指定的用户就是当前用户自己；
 			 *   2) 当前用户是系统管理员角色(Administrators)成员。
 			 */
-			if(ApplicationContext.Current.User.UserId == userId || MembershipHelper.InRoles(this.DataAccess, ApplicationContext.Current.User, MembershipHelper.Administrators))
+
+			var user = ApplicationContext.Current.User;
+
+			if(user.UserId == userId || MembershipHelper.InRoles(this.DataAccess, user, MembershipHelper.Administrators))
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");
