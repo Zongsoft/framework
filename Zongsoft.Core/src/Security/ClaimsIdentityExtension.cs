@@ -28,66 +28,145 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Security.Claims;
+using System.Security.Principal;
 
 namespace Zongsoft.Security
 {
 	public static class ClaimsIdentityExtension
 	{
-		private const string Namespace_ClaimType = "http://schemas.zongsoft.com/security/claims/namespace";
-		private const string Description_ClaimType = "http://schemas.zongsoft.com/security/claims/description";
+		public static uint GetUserId(this IIdentity identity)
+		{
+			return GetUserId(identity as ClaimsIdentity);
+		}
 
-		public static Membership.IUserIdentity AsUser(this System.Security.Principal.IIdentity identity)
+		public static uint GetUserId(this ClaimsIdentity identity)
+		{
+			var value = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+			if(value != null && value.Length > 0 && uint.TryParse(value, out var userId))
+				return userId;
+
+			return 0;
+		}
+
+		public static string GetEmail(this IIdentity identity)
+		{
+			return GetEmail(identity as ClaimsIdentity);
+		}
+
+		public static string GetEmail(this ClaimsIdentity identity)
+		{
+			return identity?.FindFirst(ClaimTypes.Email)?.Value;
+		}
+
+		public static string GetPhone(this IIdentity identity)
+		{
+			return GetPhone(identity as ClaimsIdentity);
+		}
+
+		public static string GetPhone(this ClaimsIdentity identity)
+		{
+			return identity?.FindFirst(ClaimTypes.MobilePhone)?.Value;
+		}
+
+		public static string GetNamespace(this IIdentity identity)
+		{
+			return GetNamespace(identity as ClaimsIdentity);
+		}
+
+		public static string GetNamespace(this ClaimsIdentity identity)
+		{
+			return identity?.FindFirst(ClaimNames.Namespace)?.Value;
+		}
+
+		public static Membership.UserStatus GetStatus(this ClaimsIdentity identity)
+		{
+			var status = identity?.FindFirst(ClaimNames.UserStatus)?.Value;
+
+			if(status != null && status.Length > 0)
+			{
+				if(byte.TryParse(status, out var value))
+					return (Membership.UserStatus)value;
+			}
+
+			return 0;
+		}
+
+		public static Membership.UserStatus GetStatus(this ClaimsIdentity identity, out DateTime? timestamp)
+		{
+			timestamp = null;
+			var statusValue = identity?.FindFirst(ClaimNames.UserStatus)?.Value;
+
+			if(statusValue != null && statusValue.Length > 0)
+			{
+				var timestampValue = identity.FindFirst(ClaimNames.UserStatusTimestamp)?.Value;
+				if(timestampValue != null && timestampValue.Length > 0 && DateTime.TryParse(timestampValue, out var datetime))
+					timestamp = datetime;
+
+				if(byte.TryParse(statusValue, out var status))
+					return (Membership.UserStatus)status;
+			}
+
+			return 0;
+		}
+
+		public static Membership.IUserIdentity AsUser(this IIdentity identity)
 		{
 			return AsUser(identity as ClaimsIdentity);
 		}
 
 		public static Membership.IUserIdentity AsUser(this ClaimsIdentity identity)
 		{
-			if(identity == null)
-				return null;
-
-			return Zongsoft.Data.Model.Build<Membership.IUserIdentity>(user =>
-			{
-				GetUserInfo(identity.Claims, out var userId, out var @namespace, out var description);
-
-				user.UserId = userId;
-				user.Name = identity.Name;
-				user.FullName = identity.Label;
-				user.Namespace = @namespace;
-				user.Description = description;
-			});
+			var model = AsModel<Membership.IUserIdentity>(identity, (user, claim) => FillUser(user, claim));
+			model.FullName = identity.Label;
+			return model;
 		}
 
-		private static void GetUserInfo(IEnumerable<Claim> claims, out uint userId, out string @namespace, out string description)
+		public static T AsModel<T>(this IIdentity identity, Action<T, Claim> configure) where T : class
 		{
-			int count = 0;
+			return AsModel(identity as ClaimsIdentity, configure);
+		}
 
-			userId = 0;
-			@namespace = null;
-			description = null;
+		public static T AsModel<T>(this ClaimsIdentity identity, Action<T, Claim> configure) where T : class
+		{
+			if(identity == null || identity.IsAnonymous())
+				return null;
 
-			foreach(var claim in claims)
+			T model;
+
+			if(typeof(T).IsAbstract)
+				model = Zongsoft.Data.Model.Build<T>();
+			else
+				model = Activator.CreateInstance<T>();
+
+			if(configure != null)
 			{
-				if(string.Equals(claim.Type, ClaimTypes.NameIdentifier, StringComparison.OrdinalIgnoreCase))
-				{
-					uint.TryParse(claim.Value, out userId);
-					count++;
-				}
-				else if(string.Equals(claim.Type, Namespace_ClaimType, StringComparison.OrdinalIgnoreCase))
-				{
-					count++;
-					@namespace = claim.Value;
-				}
-				else if(string.Equals(claim.Type, Description_ClaimType, StringComparison.OrdinalIgnoreCase))
-				{
-					count++;
-					description = claim.Value;
-				}
+				foreach(var claim in identity.Claims)
+					configure(model, claim);
+			}
 
-				if(count >= 3)
-					return;
+			return model;
+		}
+
+		private static void FillUser(Membership.IUserIdentity user, Claim claim)
+		{
+			if(string.Equals(claim.Type, ClaimTypes.Name, StringComparison.OrdinalIgnoreCase))
+			{
+				user.Name = claim.Value;
+			}
+			else if(string.Equals(claim.Type, ClaimTypes.NameIdentifier, StringComparison.OrdinalIgnoreCase))
+			{
+				if(uint.TryParse(claim.Value, out var userId))
+					user.UserId = userId;
+			}
+			else if(string.Equals(claim.Type, ClaimNames.Namespace, StringComparison.OrdinalIgnoreCase))
+			{
+				user.Namespace = claim.Value;
+			}
+			else if(string.Equals(claim.Type, ClaimNames.Description, StringComparison.OrdinalIgnoreCase))
+			{
+				user.Description = claim.Value;
 			}
 		}
 	}
