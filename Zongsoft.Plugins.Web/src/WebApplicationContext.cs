@@ -45,7 +45,6 @@ namespace Zongsoft.Web
 		#region 构造函数
 		public WebApplicationContext(IServiceProvider services) : base(services)
 		{
-			_http = this.Services.GetRequiredService<IHttpContextAccessor>();
 		}
 		#endregion
 
@@ -55,14 +54,20 @@ namespace Zongsoft.Web
 		/// </summary>
 		public HttpContext HttpContext
 		{
-			get => _http?.HttpContext;
+			get
+			{
+				if(_http == null)
+					_http = this.Services.GetRequiredService<IHttpContextAccessor>();
+
+				return _http.HttpContext;
+			}
 		}
 		#endregion
 
 		#region 重写方法
 		public override ClaimsPrincipal Principal
 		{
-			get => _http?.HttpContext.User;
+			get => this.HttpContext.User;
 		}
 
 		protected override Zongsoft.Plugins.IWorkbenchBase CreateWorkbench(out Zongsoft.Plugins.PluginTreeNode node)
