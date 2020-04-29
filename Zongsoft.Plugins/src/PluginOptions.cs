@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Zongsoft.Plugins
@@ -42,15 +43,8 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 构造插件设置对象。
 		/// </summary>
-		public PluginOptions() : this(null, null, null)
-		{
-		}
-
-		/// <summary>
-		/// 构造插件设置对象。
-		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
-		public PluginOptions(string applicationDirectory) : this(applicationDirectory, null, null)
+		public PluginOptions(string applicationDirectory) : this(applicationDirectory, null)
 		{
 		}
 
@@ -59,9 +53,8 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="pluginsDirectoryName">插件目录名，非完整路径。默认为“plugins”。</param>
-		/// <param name="settings">插件挂载点的设置。</param>
 		/// <exception cref="System.ArgumentException">当<paramref name="applicationDirectory"/>参数值不为路径完全限定格式。</exception>
-		public PluginOptions(string applicationDirectory, string pluginsDirectoryName, MountionSettings settings = null)
+		public PluginOptions(string applicationDirectory, string pluginsDirectoryName)
 		{
 			if(string.IsNullOrWhiteSpace(applicationDirectory))
 			{
@@ -75,8 +68,11 @@ namespace Zongsoft.Plugins
 					throw new ArgumentException("This value of 'applicationDirectory' parameter is invalid.");
 			}
 
+			if(!Directory.Exists(this.ApplicationDirectory))
+				throw new DirectoryNotFoundException(this.ApplicationDirectory);
+
 			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
-			this.Mountion = settings ?? new MountionSettings();
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -84,25 +80,34 @@ namespace Zongsoft.Plugins
 		/// <summary>
 		/// 获取应用程序目录的完全限定路径，该属性值由构造函数注入。
 		/// </summary>
-		public string ApplicationDirectory
-		{
-			get;
-		}
+		public string ApplicationDirectory { get; }
 
 		/// <summary>
 		/// 获取插件目录的完全限定路径。
 		/// </summary>
-		public string PluginsPath
-		{
-			get;
-		}
+		public string PluginsPath { get; }
 
 		/// <summary>
-		/// 获取系统内置对象的插件挂载点设置。
+		/// 获取扩展属性集。
 		/// </summary>
-		public MountionSettings Mountion
+		public IDictionary<string, object> Properties { get; }
+		#endregion
+
+		#region 内部方法
+		internal string GetApplicationContextMountion()
 		{
-			get;
+			if(this.Properties.TryGetValue("Mountion:ApplicationContext", out var value) && value is string text && !string.IsNullOrWhiteSpace(text))
+				return text;
+
+			return "/Workspace/Environment/ApplicationContext";
+		}
+
+		internal string GetWorkbenchMountion()
+		{
+			if(this.Properties.TryGetValue("Mountion:Workbench", out var value) && value is string text && !string.IsNullOrWhiteSpace(text))
+				return text;
+
+			return "/Workbench";
 		}
 		#endregion
 
@@ -116,8 +121,7 @@ namespace Zongsoft.Plugins
 				StringComparison.Ordinal :
 				StringComparison.OrdinalIgnoreCase;
 
-			return string.Equals(this.PluginsPath, other.PluginsPath, comparison) &&
-			       object.Equals(this.Mountion, other.Mountion);
+			return string.Equals(this.PluginsPath, other.PluginsPath, comparison);
 		}
 
 		public override bool Equals(object obj)
@@ -131,76 +135,14 @@ namespace Zongsoft.Plugins
 		public override int GetHashCode()
 		{
 			if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-				return HashCode.Combine(this.PluginsPath, this.Mountion);
+				return HashCode.Combine(this.PluginsPath);
 			else
-				return HashCode.Combine(this.PluginsPath.ToLowerInvariant(), this.Mountion);
+				return HashCode.Combine(this.PluginsPath.ToLowerInvariant());
 		}
 
 		public override string ToString()
 		{
 			return this.PluginsPath;
-		}
-		#endregion
-
-		#region 嵌套结构
-		public class MountionSettings : IEquatable<MountionSettings>
-		{
-			#region 常量定义
-			private const string APPLICATIONCONTEXT_DEFAULT_PATH = "/Workspace/Environment/ApplicationContext";
-			private const string WORKBENCH_DEFAULT_PATH = "/Workbench";
-			#endregion
-
-			#region 构造函数
-			public MountionSettings()
-			{
-				this.ApplicationContextPath = APPLICATIONCONTEXT_DEFAULT_PATH;
-				this.WorkbenchPath = WORKBENCH_DEFAULT_PATH;
-			}
-
-			public MountionSettings(string applicationContextPath, string workbenchPath)
-			{
-				this.ApplicationContextPath = string.IsNullOrEmpty(applicationContextPath) ? APPLICATIONCONTEXT_DEFAULT_PATH : applicationContextPath;
-				this.WorkbenchPath = string.IsNullOrEmpty(workbenchPath) ? WORKBENCH_DEFAULT_PATH : workbenchPath;
-			}
-			#endregion
-
-			#region 公告属性
-			/// <summary>获取应用程序上下文对象(<see cref="Zongsoft.Services.IApplicationContext"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
-			public string ApplicationContextPath
-			{
-				get;
-			}
-
-			/// <summary>获取工作台对象(<see cref="IWorkbench"/>)的插件挂载点位置。默认值为：/Workspace/Environment/ApplicationContext</summary>
-			public string WorkbenchPath
-			{
-				get;
-			}
-			#endregion
-
-			#region 重写方法
-			public bool Equals(MountionSettings other)
-			{
-				if(other == null)
-					return false;
-
-				return string.Equals(this.ApplicationContextPath, other.ApplicationContextPath, StringComparison.OrdinalIgnoreCase) &&
-				       string.Equals(this.WorkbenchPath, other.WorkbenchPath, StringComparison.OrdinalIgnoreCase);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != this.GetType())
-					return false;
-
-				return this.Equals((MountionSettings)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return HashCode.Combine(this.ApplicationContextPath.ToLowerInvariant(), this.WorkbenchPath.ToLowerInvariant());
-			}
-			#endregion
 		}
 		#endregion
 	}

@@ -30,6 +30,9 @@
 using System;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Plugins
 {
 	public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
@@ -48,7 +51,9 @@ namespace Zongsoft.Plugins
 		{
 			_syncRoot = new object();
 
-			this.Options = Zongsoft.Configuration.ConfigurationBinder.GetOption<PluginOptions>(this.Configuration, "plugins");
+			this.Options = services.GetService<PluginOptions>() ??
+			               new PluginOptions(services.GetRequiredService<IHostEnvironment>().ContentRootPath);
+
 			this.PluginTree = PluginTree.Get(this.Options);
 		}
 		#endregion
@@ -109,7 +114,7 @@ namespace Zongsoft.Plugins
 		/// <returns>返回的主控台对象。</returns>
 		protected virtual IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{
-			node = this.PluginTree.Find(this.Options.Mountion.WorkbenchPath);
+			node = this.PluginTree.EnsurePath(this.Options.GetWorkbenchMountion());
 
 			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
 				return node.UnwrapValue(ObtainMode.Auto) as IWorkbenchBase;
@@ -128,7 +133,7 @@ namespace Zongsoft.Plugins
 			this.PluginTree.Load();
 
 			//挂载当前应用上下文
-			this.PluginTree.Mount(this.Options.Mountion.ApplicationContextPath, this);
+			this.PluginTree.Mount(this.Options.GetApplicationContextMountion(), this);
 		}
 		#endregion
 

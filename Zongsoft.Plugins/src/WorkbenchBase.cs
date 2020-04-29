@@ -62,7 +62,7 @@ namespace Zongsoft.Plugins
 			this.ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 			_status = WorkbenchStatus.None;
 			_title = applicationContext.Title;
-			_startupPath = PluginPath.Combine(applicationContext.Options.Mountion.WorkbenchPath, "Startup");
+			_startupPath = PluginPath.Combine(applicationContext.Options.GetWorkbenchMountion(), "Startup");
 			_semaphore = new AutoResetEvent(true);
 		}
 		#endregion
@@ -121,7 +121,7 @@ namespace Zongsoft.Plugins
 				this.OnOpening(EventArgs.Empty);
 
 				//查找当前工作台的插件节点
-				node = ApplicationContext.PluginTree.Find(ApplicationContext.Options.Mountion.WorkbenchPath);
+				node = ApplicationContext.PluginTree.Find(ApplicationContext.Options.GetWorkbenchMountion());
 
 				//确定当前工作台是否能挂载
 				mountable = node == null || node.NodeType != PluginTreeNodeType.Builtin;
