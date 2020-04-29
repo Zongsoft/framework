@@ -38,16 +38,6 @@ namespace Zongsoft.Security
 		public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
 		public static readonly IIdentity Identity = new AnonymousIdentity();
 
-		public static bool IsAnonymous(this IPrincipal principal)
-		{
-			return principal == null || principal is AnonymousPrincipal;
-		}
-
-		public static bool IsAnonymous(this IIdentity identity)
-		{
-			return identity == null || identity is AnonymousIdentity;
-		}
-
 		private class AnonymousPrincipal : ClaimsPrincipal
 		{
 			public AnonymousPrincipal() : base(Anonymous.Identity)

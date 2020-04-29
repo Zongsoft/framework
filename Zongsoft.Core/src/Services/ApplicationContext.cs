@@ -207,15 +207,16 @@ namespace Zongsoft.Services
 		{
 			string fullPath = this.ApplicationPath;
 
-			if(string.IsNullOrWhiteSpace(relativePath))
+			if(string.IsNullOrEmpty(relativePath))
 				return fullPath;
 
 			var parts = Common.StringExtension.Slice(relativePath, '/', '\\');
+			var illegals = Path.GetInvalidPathChars();
 
 			foreach(var part in parts)
 			{
-				if(part == "..")
-					continue;
+				if(part == ".." || part.IndexOfAny(illegals) >= 0)
+					throw new ArgumentException($"The specified '{relativePath}' relative path contains illegal path character(s).");
 
 				fullPath = Path.Combine(fullPath, part);
 
