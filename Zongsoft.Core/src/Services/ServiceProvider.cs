@@ -35,6 +35,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
+	[System.Reflection.DefaultMember(nameof(Descriptors))]
 	public class ServiceProvider : IServiceProvider, IDisposable
 	{
 		#region 成员字段
