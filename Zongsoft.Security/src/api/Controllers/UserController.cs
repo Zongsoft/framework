@@ -279,7 +279,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPatch]
 		[ActionName("Status")]
-		public virtual IActionResult SetStatus(uint id, [FromRoute("args")]UserStatus status)
+		public virtual IActionResult SetStatus(uint id, [FromRoute()]UserStatus status)
 		{
 			return this.UserProvider.SetStatus(id, status) ? (IActionResult)this.Ok() : this.NotFound();
 		}
@@ -303,7 +303,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet]
 		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
-		public IActionResult Verify(uint id, [FromRoute("args")]string type, [FromQuery]string secret)
+		public IActionResult Verify(uint id, [FromRoute()]string type, [FromQuery]string secret)
 		{
 			return this.UserProvider.Verify(id, type, secret) ?
 			       (IActionResult)this.Ok() : this.BadRequest();
@@ -434,7 +434,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet]
 		[ActionName("In")]
-		public IActionResult InRole(uint id, [FromRoute("args")]string roles)
+		public IActionResult InRole(uint id, [FromRoute()]string roles)
 		{
 			if(string.IsNullOrEmpty(roles))
 				return this.BadRequest();
@@ -448,7 +448,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 授权方法
 		[HttpGet]
 		[Route("[id]/[schemaId]:[actionId]")]
-		public IActionResult Authorize(uint id, [FromRoute("args")]string schemaId, [FromRoute("args")]string actionId)
+		public IActionResult Authorize(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))
 				return this.BadRequest("Missing schema for the authorize operation.");
@@ -470,14 +470,14 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 权限方法
 		[HttpGet]
 		[ActionName("Permissions")]
-		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute("args")]string schemaId = null)
+		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute()]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.User, schemaId);
 		}
 
 		[HttpPost]
 		[ActionName("Permissions")]
-		public IActionResult SetPermissions(uint id, [FromRoute("args")]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		public IActionResult SetPermissions(uint id, [FromRoute()]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
 			var count = this.PermissionProvider.SetPermissions(id, MemberType.User, schemaId, permissions, reset);
 			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissions), id) : this.NoContent();
@@ -485,7 +485,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpDelete]
 		[ActionName("Permission")]
-		public IActionResult RemovePermission(uint id, [FromRoute("args")]string schemaId, [FromRoute("args")]string actionId)
+		public IActionResult RemovePermission(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
 				return this.BadRequest();
@@ -496,7 +496,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpDelete]
 		[ActionName("Permissions")]
-		public IActionResult RemovePermissions(uint id, [FromRoute("args")]string schemaId = null)
+		public IActionResult RemovePermissions(uint id, [FromRoute()]string schemaId = null)
 		{
 			var count = this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId);
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
@@ -504,14 +504,14 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet]
 		[ActionName("PermissionFilters")]
-		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute("args")]string schemaId = null)
+		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute()]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissionFilters(id, MemberType.User, schemaId);
 		}
 
 		[HttpPost]
 		[ActionName("PermissionFilters")]
-		public IActionResult SetPermissionFilters(uint id, [FromRoute("args")]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		public IActionResult SetPermissionFilters(uint id, [FromRoute()]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
 			var count = this.PermissionProvider.SetPermissionFilters(id, MemberType.User, schemaId, permissions, reset);
 			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), id) : this.NoContent();
@@ -519,7 +519,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpDelete]
 		[ActionName("PermissionFilter")]
-		public IActionResult RemovePermissionFilter(uint id, [FromRoute("args")]string schemaId, [FromRoute("args")]string actionId)
+		public IActionResult RemovePermissionFilter(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
 				return this.BadRequest();
@@ -530,7 +530,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpDelete]
 		[ActionName("PermissionFilters")]
-		public IActionResult RemovePermissionFilters(uint id, [FromRoute("args")]string schemaId = null)
+		public IActionResult RemovePermissionFilters(uint id, [FromRoute()]string schemaId = null)
 		{
 			var count = this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId);
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
