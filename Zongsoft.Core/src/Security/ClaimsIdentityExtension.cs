@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 
@@ -35,6 +36,51 @@ namespace Zongsoft.Security
 {
 	public static class ClaimsIdentityExtension
 	{
+		public static bool IsAnonymous(this IIdentity identity)
+		{
+			return identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.Name);
+		}
+
+		public static bool IsAdministrator(this ClaimsIdentity identity)
+		{
+			const string USER_ADMINISTRATOR = "Administrator";
+			const string ROLE_ADMINISTRATORS = "Administrators";
+
+			return
+				identity != null &&
+				identity.IsAuthenticated &&
+				(
+					string.Equals(identity.Name, USER_ADMINISTRATOR, StringComparison.OrdinalIgnoreCase) ||
+					identity.HasClaim(identity.RoleClaimType, ROLE_ADMINISTRATORS)
+				);
+		}
+
+		public static bool InRole(this ClaimsIdentity identity, string role)
+		{
+			if(identity == null || string.IsNullOrEmpty(role))
+				return false;
+
+			return identity.HasClaim(identity.RoleClaimType, role);
+		}
+
+		public static bool InRoles(this ClaimsIdentity identity, params string[] roles)
+		{
+			if(identity == null || roles == null || roles.Length == 0)
+				return false;
+
+			var name = identity.RoleClaimType;
+
+			foreach(var claim in identity.Claims)
+			{
+				if(claim != null &&
+				   string.Equals(name, claim.Type, StringComparison.OrdinalIgnoreCase) &&
+				   roles.Contains(claim.Value, StringComparer.OrdinalIgnoreCase))
+					return true;
+			}
+
+			return false;
+		}
+
 		public static uint GetUserId(this IIdentity identity)
 		{
 			return GetUserId(identity as ClaimsIdentity);
