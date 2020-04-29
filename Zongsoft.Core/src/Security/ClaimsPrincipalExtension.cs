@@ -30,35 +30,64 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Security.Principal;
 
 namespace Zongsoft.Security
 {
 	public static class ClaimsPrincipalExtension
 	{
-		public static bool IsAdministrator(this ClaimsPrincipal principal, string module = null)
+		public static bool IsAnonymous(this IPrincipal principal)
 		{
-			const string ADMINISTRATOR_USER = "Administrator";
-			const string ADMINISTRATORS_ROLE = "Administrators";
+			return principal == null || principal.Identity.IsAnonymous();
+		}
 
-			if(principal == null)
-				throw new ArgumentNullException(nameof(principal));
+		public static bool InRole(this ClaimsPrincipal principal, string role, string module = null)
+		{
+			if(principal == null || string.IsNullOrEmpty(role))
+				return false;
 
 			if(string.IsNullOrEmpty(module))
-			{
-				return principal.Identity != null &&
-					principal.Identity.IsAuthenticated &&
-					(
-						string.Equals(principal.Identity.Name, ADMINISTRATOR_USER, StringComparison.OrdinalIgnoreCase) ||
-						principal.IsInRole(ADMINISTRATORS_ROLE)
-					);
-			}
+				return (principal.Identity is ClaimsIdentity identity) && identity.InRole(role);
 
 			foreach(var identity in principal.Identities)
 			{
-				if(identity.IsAuthenticated &&
-				   identity.HasClaim(ClaimTypes.System, module) &&
-				   string.Equals(identity.Name, ADMINISTRATOR_USER, StringComparison.OrdinalIgnoreCase))
-					return true;
+				if(identity != null && identity.HasClaim(ClaimTypes.System, module))
+					return identity.InRole(role);
+			}
+
+			return false;
+		}
+
+		public static bool InRoles(this ClaimsPrincipal principal, string[] roles, string module = null)
+		{
+			if(principal == null || roles == null || roles.Length == 0)
+				return false;
+
+			if(string.IsNullOrEmpty(module))
+				return (principal.Identity is ClaimsIdentity identity) && identity.InRoles(roles);
+
+			foreach(var identity in principal.Identities)
+			{
+				if(identity != null && identity.HasClaim(ClaimTypes.System, module))
+					return identity.InRoles(roles);
+			}
+
+			return false;
+		}
+
+		public static bool IsAdministrator(this ClaimsPrincipal principal, string module = null)
+		{
+			if(principal == null)
+				return false;
+
+			if(string.IsNullOrEmpty(module))
+				return principal.Identity is ClaimsIdentity identity && identity.IsAdministrator();
+
+			foreach(var identity in principal.Identities)
+			{
+				if(identity != null && identity.IsAuthenticated &&
+				   identity.HasClaim(ClaimTypes.System, module))
+					return identity.IsAdministrator();
 			}
 
 			return false;
