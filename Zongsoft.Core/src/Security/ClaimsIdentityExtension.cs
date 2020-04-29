@@ -81,6 +81,29 @@ namespace Zongsoft.Security
 			return false;
 		}
 
+		public static void AddRoles(this ClaimsIdentity identity, string[] roles)
+		{
+			AddRoles(identity, null, roles);
+		}
+
+		public static void AddRoles(this ClaimsIdentity identity, string issuer, string[] roles)
+		{
+			if(identity == null)
+				throw new ArgumentNullException(nameof(identity));
+
+			if(roles == null || roles.Length == 0)
+				return;
+
+			if(string.IsNullOrEmpty(issuer))
+				issuer = ClaimsIdentity.DefaultIssuer;
+
+			identity.AddClaims
+			(
+				roles.Where(role => role != null && role.Length > 0)
+				     .Select(role => new Claim(identity.RoleClaimType, role, ClaimValueTypes.String, issuer, issuer, identity))
+			);
+		}
+
 		public static uint GetUserId(this IIdentity identity)
 		{
 			return GetUserId(identity as ClaimsIdentity);
