@@ -3,9 +3,9 @@
 <plugin name="Main"
         title="Main Plugin"
         author="Popeye Zhong(zongsoft@qq.com)"
-        version="4.5.0.2002"
+        version="5.0.0"
         copyright="Copyright (C) 2012-2020 Zongsoft Corporation. All rights reserved."
-        description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2018-12-25 by Popeye Zhong.">
+        description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2020-04-25 by Popeye Zhong.">
 
 	<manifest>
 		<assemblies>
@@ -31,29 +31,6 @@
 		<parser name="predicate" type="Zongsoft.Services.PredicateParser, Zongsoft.Plugins" />
 	</parsers>
 
-	<!-- 挂载服务工厂和默认服务容器 -->
-	<extension path="/Workspace/Services">
-		<object name="Providers" value="{static:Zongsoft.Services.ServiceProviderFactory.Instance, Zongsoft.Core}">
-			<providers.default>
-				<object name="Default" path="/Workspace/Services" type="Zongsoft.Services.PluginServiceProvider, Zongsoft.Plugins" />
-			</providers.default>
-		</object>
-	</extension>
-
-	<!-- 挂载默认服务容器下的常用服务 -->
-	<extension path="/Workspace/Services">
-		<!-- 内存队列（范例服务） -->
-		<object name="Queue" minimumGrow="256" type="Zongsoft.Collections.Queue, Zongsoft.Core">
-			<object.constructor>
-				<parameter name="capacity" type="int" value="512" />
-			</object.constructor>
-
-			<queue.maximumLimit>1024</queue.maximumLimit>
-		</object>
-
-		<object name="Secretor" type="Zongsoft.Security.SecretProvider, Zongsoft.Core" />
-	</extension>
-
 	<!-- 挂载工作台下的必须的组件 -->
 	<extension path="/Workbench">
 		<!-- 挂载当前应用的模块集 -->
@@ -62,8 +39,8 @@
 		<!-- 挂载当前应用的模式集 -->
 		<object name="Schemas" value="{path:/Workspace/Environment/ApplicationContext@Schemas}" />
 
-		<!-- 驱动构建服务容器集 -->
-		<object value="{path:/Workspace/Services/Providers}" />
+		<!-- 挂载当前应用的服务容器 -->
+		<object name="Services" value="{path:/Workspace/Environment/ApplicationContext@Services}" />
 
 		<!-- 挂载文件目录系统 -->
 		<object name="FileSystem" value="{static:Zongsoft.IO.FileSystem.Providers, Zongsoft.Core}" />
@@ -79,6 +56,18 @@
 					<object name="Tree" type="Zongsoft.Plugins.Commands.TreeCommand, Zongsoft.Plugins" />
 				</object>
 			</object>
+		</object>
+	</extension>
+
+	<!-- 挂载默认服务容器下的常用服务 -->
+	<extension path="/Workbench/Services">
+		<!-- 内存队列（范例服务） -->
+		<object name="Queue" minimumGrow="256" type="Zongsoft.Collections.Queue, Zongsoft.Core">
+			<object.constructor>
+				<parameter name="capacity" type="int" value="512" />
+			</object.constructor>
+
+			<queue.maximumLimit>1024</queue.maximumLimit>
 		</object>
 	</extension>
 </plugin>
