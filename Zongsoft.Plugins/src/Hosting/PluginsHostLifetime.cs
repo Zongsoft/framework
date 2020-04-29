@@ -110,6 +110,12 @@ namespace Zongsoft.Plugins.Hosting
 				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
 				_applicationContext.Workbench.Open();
 
+				foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+				{
+					if(assembly.FullName.StartsWith("Zongsoft."))
+						_applicationContext.Register(assembly);
+				}
+
 				foreach(var plugin in _applicationContext.Plugins)
 				{
 					if(plugin.Status != PluginStatus.Loaded)
