@@ -30,9 +30,11 @@
 using System;
 
 using Zongsoft.Runtime.Caching;
+using Zongsoft.Services;
 
 namespace Zongsoft.Security
 {
+	[Service(typeof(ISecretProvider))]
 	public class SecretProvider : ISecretProvider
 	{
 		#region 常量定义
