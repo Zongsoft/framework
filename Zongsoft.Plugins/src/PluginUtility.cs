@@ -429,7 +429,7 @@ namespace Zongsoft.Plugins
 						return true;
 					}
 
-					if(typeof(System.IServiceProvider).IsAssignableFrom(parameterType))
+					if(typeof(IServiceProvider).IsAssignableFrom(parameterType))
 					{
 						parameterValue = FindServiceProvider(builtin);
 						return true;
