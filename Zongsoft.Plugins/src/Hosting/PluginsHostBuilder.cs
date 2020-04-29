@@ -40,6 +40,7 @@ namespace Zongsoft.Plugins.Hosting
 	{
 		#region 成员字段
 		private readonly IHostBuilder _builder;
+		private Func<HostBuilderContext, PluginOptions> _initialize;
 		#endregion
 
 		#region 构造函数
@@ -57,13 +58,18 @@ namespace Zongsoft.Plugins.Hosting
 
 			builder.ConfigureAppConfiguration((ctx, configurator) =>
 			{
-				if(string.IsNullOrEmpty(ctx.Configuration.GetValue<string>("plugins:applicationPath", null)))
-				{
-					configurator.AddCommandLine(new string[] { "/plugins:applicationPath ", ctx.HostingEnvironment.ContentRootPath });
-				}
+				var options = _initialize?.Invoke(ctx);
+				if(options != null)
+					ctx.Properties[typeof(PluginOptions)] = options;
 
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
 				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(pluginsHostBuilderContext.Options));
+			});
+
+			builder.ConfigureServices((ctx, services) =>
+			{
+				if(ctx.Properties.TryGetValue(typeof(PluginOptions), out var options))
+					services.AddSingleton((PluginOptions)options);
 			});
 
 			builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());
@@ -71,6 +77,12 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 配置方法
+		public IPluginsHostBuilder UseOptions(Func<HostBuilderContext, PluginOptions> initialize)
+		{
+			_initialize = initialize;
+			return this;
+		}
+
 		public IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure)
 		{
 			_builder.ConfigureAppConfiguration((context, configurator) =>
@@ -82,17 +94,17 @@ namespace Zongsoft.Plugins.Hosting
 			return this;
 		}
 
-		public IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configureServices)
+		public IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configure)
 		{
-			return this.ConfigureServices((context, services) => configureServices(services));
+			return this.ConfigureServices((context, services) => configure(services));
 		}
 
-		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configureServices)
+		public IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configure)
 		{
 			_builder.ConfigureServices((context, services) =>
 			{
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(context);
-				configureServices(pluginsHostBuilderContext, services);
+				configure(pluginsHostBuilderContext, services);
 			});
 
 			return this;
@@ -104,14 +116,12 @@ namespace Zongsoft.Plugins.Hosting
 		{
 			if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
 			{
-				//PluginOptions options;
+				PluginOptions options;
 
-				//if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
-				//    options = (PluginOptions)optionsValue;
-				//else
-				//    options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
-
-				var options = Zongsoft.Configuration.ConfigurationBinder.GetOption<PluginOptions>(context.Configuration, "plugins");
+				if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
+					options = (PluginOptions)optionsValue;
+				else
+					context.Properties[typeof(PluginOptions)] = options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
 
 				var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
 				{
