@@ -102,7 +102,7 @@ namespace Zongsoft.Services
 				var service = _providers[i].GetService(serviceType);
 
 				if(service != null)
-					return service;
+					return ServiceInjector.Inject(service, this);
 			}
 
 			return null;
