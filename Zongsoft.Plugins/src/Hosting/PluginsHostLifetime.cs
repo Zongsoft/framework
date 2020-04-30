@@ -113,7 +113,7 @@ namespace Zongsoft.Plugins.Hosting
 				foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
 				{
 					if(assembly.FullName.StartsWith("Zongsoft."))
-						_applicationContext.Register(assembly);
+						_applicationContext.Services.Register(assembly);
 				}
 
 				foreach(var plugin in _applicationContext.Plugins)
@@ -122,7 +122,7 @@ namespace Zongsoft.Plugins.Hosting
 						continue;
 
 					foreach(var assembly in plugin.Manifest.Assemblies)
-						_applicationContext.Register(assembly);
+						_applicationContext.Services.Register(assembly);
 				}
 			}
 #if !DEBUG

@@ -29,13 +29,14 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	[System.Reflection.DefaultMember(nameof(Descriptors))]
+	[DefaultMember(nameof(Descriptors))]
 	public class ServiceProvider : IServiceProvider, IDisposable
 	{
 		#region 成员字段
@@ -119,6 +120,33 @@ namespace Zongsoft.Services
 				for(var i = 0; i < contracts.Length; i++)
 				{
 					_descriptors.AddSingleton(contracts[i], services => services.GetRequiredService(type));
+				}
+			}
+		}
+
+		public void Register(Assembly assembly)
+		{
+			if(assembly == null)
+				throw new ArgumentNullException(nameof(assembly));
+
+			foreach(var type in assembly.ExportedTypes)
+			{
+				if(type.IsNotPublic || type.IsAbstract || !type.IsClass)
+					continue;
+
+				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
+
+				if(attribute == null)
+					continue;
+
+				if(string.IsNullOrEmpty(attribute.Provider))
+					this.Register(type, attribute.Contracts);
+				else
+				{
+					if(!ApplicationContext.Current.Modules.TryGet(attribute.Provider, out var module))
+						throw new InvalidOperationException($"The '{attribute.Provider}' service provider annotated by the '{type.FullName}' type does not exist.");
+
+					module.Services.Register(type, attribute.Contracts);
 				}
 			}
 		}

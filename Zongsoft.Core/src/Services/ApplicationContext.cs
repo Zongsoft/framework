@@ -176,33 +176,6 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		public void Register(Assembly assembly)
-		{
-			if(assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
-
-			foreach(var type in assembly.ExportedTypes)
-			{
-				if(type.IsNotPublic || type.IsAbstract || !type.IsClass)
-					continue;
-
-				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
-
-				if(attribute == null)
-					continue;
-
-				if(string.IsNullOrEmpty(attribute.Provider))
-					this.Services.Register(type, attribute.Contracts);
-				else
-				{
-					if(!this.Modules.TryGet(attribute.Provider, out var module))
-						throw new InvalidOperationException($"The '{attribute.Provider}' service provider annotated by the '{type.FullName}' type does not exist.");
-
-					module.Services.Register(type, attribute.Contracts);
-				}
-			}
-		}
-
 		public string EnsureDirectory(string relativePath)
 		{
 			string fullPath = this.ApplicationPath;
