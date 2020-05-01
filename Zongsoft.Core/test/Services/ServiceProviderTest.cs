@@ -16,6 +16,7 @@ namespace Zongsoft.Services.Tests
 
 		private interface IBar
 		{
+			IFoo Foo { get; }
 		}
 
 		private class Foo : IFoo
@@ -24,14 +25,20 @@ namespace Zongsoft.Services.Tests
 
 		private class Bar : IBar
 		{
+			public Bar(IFoo foo) => this.Foo = foo;
+
+			public IFoo Foo { get; }
 		}
 
 		private interface IBaz
 		{
+			IFoo Foo { get; set; }
 		}
 
 		private class Baz : IBaz
 		{
+			[ServiceDependency]
+			public IFoo Foo { get; set; }
 		}
 
 		[Fact]
@@ -47,11 +54,24 @@ namespace Zongsoft.Services.Tests
 
 			provider.Descriptors.AddSingleton<IBar, Bar>();
 
-			Assert.NotNull(provider.GetService<IFoo>());
-			Assert.NotNull(provider.GetService<IBar>());
+			var foo = provider.GetService<IFoo>();
+			var bar = provider.GetService<IBar>();
+
+			Assert.NotNull(foo);
+			Assert.NotNull(bar);
+			Assert.NotNull(bar.Foo);
+			Assert.Same(bar.Foo, foo);
+
+			provider.Descriptors.AddSingleton<IBaz, Baz>();
+
+			var baz = provider.GetService<IBaz>();
+			Assert.NotNull(baz);
+			Assert.NotNull(baz.Foo);
+			Assert.Same(baz.Foo, foo);
 
 			Assert.Null(provider.GetService<Foo>());
 			Assert.Null(provider.GetService<Bar>());
+			Assert.Null(provider.GetService<Baz>());
 		}
 
 		[Fact]

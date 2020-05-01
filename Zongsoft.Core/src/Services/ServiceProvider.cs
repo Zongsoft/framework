@@ -39,6 +39,10 @@ namespace Zongsoft.Services
 	[DefaultMember(nameof(Descriptors))]
 	public class ServiceProvider : IServiceProvider, IDisposable
 	{
+		#region 静态字段
+		private static readonly MethodInfo GetFacotryMethod = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, new[] { typeof(ServiceProvider) }, null);
+		#endregion
+
 		#region 成员字段
 		private readonly ServiceProviderOptions _options;
 		private readonly IList<IServiceProvider> _providers;
@@ -74,13 +78,27 @@ namespace Zongsoft.Services
 		{
 			if(_descriptors.Count > 0)
 			{
-				_providers.Add(
-					_options == null ?
-					_descriptors.BuildServiceProvider() :
-					_descriptors.BuildServiceProvider(_options));
+				lock(_providers)
+				{
+					if(_descriptors.Count > 0)
+					{
+						for(int i = 0; i < _descriptors.Count; i++)
+						{
+							var descriptor = _descriptors[i];
 
-				_scopeFactory = null;
-				_descriptors.Clear();
+							if(descriptor.ImplementationType != null)
+								_descriptors[i] = Adaptive(descriptor.ServiceType, descriptor.ImplementationType, descriptor.Lifetime);
+						}
+
+						_providers.Add(
+							_options == null ?
+							_descriptors.BuildServiceProvider() :
+							_descriptors.BuildServiceProvider(_options));
+
+						_scopeFactory = null;
+						_descriptors.Clear();
+					}
+				}
 			}
 
 			if(serviceType == typeof(IServiceScopeFactory) && _providers.Count > 1)
@@ -163,6 +181,20 @@ namespace Zongsoft.Services
 					_providers.Remove((IServiceProvider)disposable);
 				}
 			}
+		}
+		#endregion
+
+		#region 私有方法
+		private ServiceDescriptor Adaptive(Type serviceType, Type implementationType, ServiceLifetime lifetime)
+		{
+			var method = GetFacotryMethod.MakeGenericMethod(implementationType);
+			var factory = (Func<IServiceProvider, object>)method.Invoke(null, new object[] { this });
+			return new ServiceDescriptor(serviceType, factory, lifetime);
+		}
+
+		private static Func<IServiceProvider, T> GetFactory<T>(ServiceProvider provider)
+		{
+			return new Func<IServiceProvider, T>(_ => ActivatorUtilities.CreateInstance<T>(provider));
 		}
 		#endregion
 
