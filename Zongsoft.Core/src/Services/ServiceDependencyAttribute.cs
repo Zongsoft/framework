@@ -39,25 +39,19 @@ namespace Zongsoft.Services
 		{
 		}
 
-		public ServiceDependencyAttribute(object parameter, string provider = null)
+		public ServiceDependencyAttribute(string provider, Type serviceType = null)
 		{
-			this.Parameter = parameter;
 			this.Provider = provider;
+			this.ServiceType = serviceType;
 		}
 
-		public ServiceDependencyAttribute(Type serviceType, string provider = null)
+		public ServiceDependencyAttribute(Type serviceType)
 		{
 			this.ServiceType = serviceType;
-			this.Provider = provider;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置服务的匹配参数。
-		/// </summary>
-		public object Parameter { get; set; }
-
 		/// <summary>
 		/// 获取或设置服务提供程序的名称。
 		/// </summary>
