@@ -31,6 +31,7 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
@@ -38,7 +39,7 @@ namespace Zongsoft.Services
 	internal static class ServiceInjector
 	{
 		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
-		private static readonly ConcurrentDictionary<Type, PropertyInjectionDescriptor[]> _descriptors = new ConcurrentDictionary<Type, PropertyInjectionDescriptor[]>();
+		private static readonly ConcurrentDictionary<Type, MemberInjectionDescriptor[]> _descriptors = new ConcurrentDictionary<Type, MemberInjectionDescriptor[]>();
 
 		public static object Inject(object target, IServiceProvider provider)
 		{
@@ -47,8 +48,8 @@ namespace Zongsoft.Services
 
 			var descriptors = _descriptors.GetOrAdd(target.GetType(), (t, p) =>
 			{
-				var type = t.GetType().GetTypeInfo();
-				var list = new List<PropertyInjectionDescriptor>();
+				var type = t.GetTypeInfo();
+				var list = new List<MemberInjectionDescriptor>();
 
 				do
 				{
@@ -60,7 +61,7 @@ namespace Zongsoft.Services
 						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new PropertyInjectionDescriptor(property, attribute, p));
+							list.Add(new MemberInjectionDescriptor(property, attribute, p));
 					}
 
 					foreach(var field in type.DeclaredFields)
@@ -71,7 +72,7 @@ namespace Zongsoft.Services
 						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new PropertyInjectionDescriptor(field, attribute, p));
+							list.Add(new MemberInjectionDescriptor(field, attribute, p));
 					}
 
 					type = type.BaseType.GetTypeInfo();
@@ -91,14 +92,14 @@ namespace Zongsoft.Services
 			return target;
 		}
 
-		private class PropertyInjectionDescriptor
+		private class MemberInjectionDescriptor
 		{
-			public MemberInfo Member;
-			public Type ServiceType;
-			public bool IsRequired;
-			public IServiceProvider Provider;
+			public readonly MemberInfo Member;
+			public readonly Type ServiceType;
+			public readonly bool IsRequired;
+			public readonly IServiceProvider Provider;
 
-			public PropertyInjectionDescriptor(MemberInfo member, ServiceDependencyAttribute attribute, IServiceProvider provider)
+			public MemberInjectionDescriptor(MemberInfo member, ServiceDependencyAttribute attribute, IServiceProvider provider)
 			{
 				this.Member = member;
 				this.IsRequired = attribute.IsRequired;
