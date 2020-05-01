@@ -36,17 +36,38 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	internal static class ServiceInjector
+	public static class ServiceInjector
 	{
+		#region 私有变量
 		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
 		private static readonly ConcurrentDictionary<Type, MemberInjectionDescriptor[]> _descriptors = new ConcurrentDictionary<Type, MemberInjectionDescriptor[]>();
+		#endregion
 
-		public static object Inject(object target, IServiceProvider provider)
+		#region 公共方法
+		public static object Inject(this IServiceProvider provider, object target)
 		{
 			if(target == null || provider == null)
 				return target;
 
-			var descriptors = _descriptors.GetOrAdd(target.GetType(), (t, p) =>
+			if(IsInjectable(provider, target.GetType(), out var descriptors))
+			{
+				for(int i = 0; i < descriptors.Length; i++)
+					descriptors[i].SetValue(ref target);
+			}
+
+			return target;
+		}
+
+		public static bool IsInjectable(this IServiceProvider provider, Type type)
+		{
+			return IsInjectable(provider, type, out _);
+		}
+		#endregion
+
+		#region 私有方法
+		private static bool IsInjectable(this IServiceProvider provider, Type type, out MemberInjectionDescriptor[] descriptors)
+		{
+			descriptors = _descriptors.GetOrAdd(type, (t, p) =>
 			{
 				var type = t.GetTypeInfo();
 				var list = new List<MemberInjectionDescriptor>();
@@ -81,17 +102,11 @@ namespace Zongsoft.Services
 				return list.Count > 0 ? list.ToArray() : null;
 			}, provider);
 
-			if(descriptors == null || descriptors.Length == 0)
-				return target;
-
-			for(int i = 0; i < descriptors.Length; i++)
-			{
-				descriptors[i].SetValue(ref target);
-			}
-
-			return target;
+			return descriptors != null && descriptors.Length > 0;
 		}
+		#endregion
 
+		#region 嵌套子类
 		private class MemberInjectionDescriptor
 		{
 			public readonly MemberInfo Member;
@@ -130,5 +145,6 @@ namespace Zongsoft.Services
 				);
 			}
 		}
+		#endregion
 	}
 }

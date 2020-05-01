@@ -120,7 +120,7 @@ namespace Zongsoft.Services
 				var service = _providers[i].GetService(serviceType);
 
 				if(service != null)
-					return ServiceInjector.Inject(service, this);
+					return service;
 			}
 
 			return null;
@@ -194,7 +194,10 @@ namespace Zongsoft.Services
 
 		private static Func<IServiceProvider, T> GetFactory<T>(ServiceProvider provider)
 		{
-			return new Func<IServiceProvider, T>(_ => ActivatorUtilities.CreateInstance<T>(provider));
+			if(provider.IsInjectable(typeof(T)))
+				return new Func<IServiceProvider, T>(_ => (T)provider.Inject(ActivatorUtilities.CreateInstance<T>(provider)));
+			else
+				return new Func<IServiceProvider, T>(_ => ActivatorUtilities.CreateInstance<T>(provider));
 		}
 		#endregion
 
