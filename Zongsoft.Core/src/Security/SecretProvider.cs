@@ -77,15 +77,8 @@ namespace Zongsoft.Security
 		/// </summary>
 		public TimeSpan Expiry
 		{
-			get
-			{
-				return _expiry;
-			}
-			set
-			{
-				if(value > TimeSpan.Zero)
-					_expiry = value;
-			}
+			get => _expiry;
+			set => _expiry = value > TimeSpan.Zero ? value : _expiry;
 		}
 
 		/// <summary>
@@ -93,14 +86,8 @@ namespace Zongsoft.Security
 		/// </summary>
 		public TimeSpan Period
 		{
-			get
-			{
-				return _period;
-			}
-			set
-			{
-				_period = value;
-			}
+			get => _period;
+			set => _period = value;
 		}
 		#endregion
 
