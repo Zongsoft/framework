@@ -63,7 +63,7 @@ namespace Zongsoft.Configuration
 		public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
 		{
 			return _providers
-				.SelectMany(p => p.GetChildKeys(null, parentPath))
+				.SelectMany(p => p.GetChildKeys(Enumerable.Empty<string>(), parentPath))
 				.Concat(earlierKeys)
 				.OrderBy(k => k, ConfigurationKeyComparer.Instance);
 		}
