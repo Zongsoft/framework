@@ -99,7 +99,7 @@ namespace Zongsoft.Configuration
 		public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
 		{
 			return _providers.Values
-				.SelectMany(p => p.GetChildKeys(null, parentPath))
+				.SelectMany(p => p.GetChildKeys(Enumerable.Empty<string>(), parentPath))
 				.Concat(earlierKeys)
 				.OrderBy(k => k, ConfigurationKeyComparer.Instance);
 		}
@@ -146,25 +146,26 @@ namespace Zongsoft.Configuration
 			var filePath = Path.GetDirectoryName(plugin.FilePath);
 			var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
 
-			var providers = new []
+			var composite = new CompositeConfigurationProvider(new[]
 			{
-				new Zongsoft.Configuration.Xml.XmlConfigurationProvider(
-					new Zongsoft.Configuration.Xml.XmlConfigurationSource()
-					{
-						Path = Path.Combine(filePath, $"{fileName}.option"),
-						Optional = true,
-						ReloadOnChange = true,
-					}),
-				new Zongsoft.Configuration.Xml.XmlConfigurationProvider(
-					new Zongsoft.Configuration.Xml.XmlConfigurationSource()
-					{
-						Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name.ToLowerInvariant()}.option"),
-						Optional = true,
-						ReloadOnChange = true,
-					})
-			};
+				new Zongsoft.Configuration.Xml.XmlConfigurationSource()
+				{
+					Path = Path.Combine(filePath, $"{fileName}.option"),
+					Optional = true,
+					ReloadOnChange = true,
+				}.Build(null),
+				new Zongsoft.Configuration.Xml.XmlConfigurationSource()
+				{
+					Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name.ToLowerInvariant()}.option"),
+					Optional = true,
+					ReloadOnChange = true,
+				}.Build(null),
+			});
 
-			return _providers.TryAdd(plugin, new CompositeConfigurationProvider(providers));
+			//加载配置文件
+			composite.Load();
+
+			return _providers.TryAdd(plugin, composite);
 		}
 		#endregion
 	}
