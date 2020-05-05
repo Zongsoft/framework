@@ -58,16 +58,4 @@
 			</object>
 		</object>
 	</extension>
-
-	<!-- 挂载默认服务容器下的常用服务 -->
-	<extension path="/Workbench/Services">
-		<!-- 内存队列（范例服务） -->
-		<object name="Queue" minimumGrow="256" type="Zongsoft.Collections.Queue, Zongsoft.Core">
-			<object.constructor>
-				<parameter name="capacity" type="int" value="512" />
-			</object.constructor>
-
-			<queue.maximumLimit>1024</queue.maximumLimit>
-		</object>
-	</extension>
 </plugin>
