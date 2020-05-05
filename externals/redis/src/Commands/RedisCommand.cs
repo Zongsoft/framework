@@ -36,15 +36,18 @@ namespace Zongsoft.Externals.Redis.Commands
 {
 	[DisplayName("Text.RedisCommand.Name")]
 	[Description("Text.RedisCommand.Description")]
-	public class RedisCommand : CommandBase<Zongsoft.Services.CommandContext>
+	[CommandOption("name")]
+	public class RedisCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
 		private RedisService _redis;
+		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public RedisCommand() : base("Redis")
+		public RedisCommand(IServiceProvider services) : base("Redis")
 		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
 		}
 		#endregion
 
@@ -59,6 +62,14 @@ namespace Zongsoft.Externals.Redis.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
+			var name = context.Expression.Options.GetValue<string>("name");
+
+			if(!string.IsNullOrEmpty(name))
+			{
+				var provider = (RedisServiceProvider)_services.GetService(typeof(RedisServiceProvider)) ?? throw new InvalidOperationException("Missing the required RedisProvider.");
+				_redis = provider.GetRedis(name);
+			}
+
 			return _redis;
 		}
 		#endregion

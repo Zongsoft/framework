@@ -12,22 +12,16 @@
 		</assemblies>
 	</manifest>
 
-	<!-- 挂载本地Redis服务对象 -->
+	<!-- 挂载服务提供程序 -->
 	<extension path="/Workspace/Externals/Redis">
-		<object name="localhost" type="Zongsoft.Externals.Redis.RedisService, Zongsoft.Externals.Redis" />
-	</extension>
-
-	<!-- 将本地Redis服务注册到默认服务容器中 -->
-	<extension path="/Workspace/Services">
-		<object name="Redis_localhost" value="{path:/Workspace/Externals/Redis/localhost}" />
+		<object name="RedisProvider" type="Zongsoft.Externals.Redis.RedisServiceProvider, Zongsoft.Externals.Redis" />
 	</extension>
 
 	<!-- 定义Redis命令的根节点 -->
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Redis">
 			<redis.command>
-				<object type="Zongsoft.Externals.Redis.Commands.RedisCommand, Zongsoft.Externals.Redis"
-				        redis="{path:/Workspace/Externals/Redis/localhost}" />
+				<object type="Zongsoft.Externals.Redis.Commands.RedisCommand, Zongsoft.Externals.Redis" />
 			</redis.command>
 		</object>
 	</extension>
