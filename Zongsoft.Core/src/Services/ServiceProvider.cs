@@ -40,7 +40,7 @@ namespace Zongsoft.Services
 	public class ServiceProvider : IServiceProvider, IDisposable
 	{
 		#region 静态字段
-		private static readonly MethodInfo GetFacotryMethod = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, new[] { typeof(ServiceProvider) }, null);
+		private static readonly MethodInfo GetFacotryMethod = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, new[] { typeof(IServiceProvider) }, null);
 		#endregion
 
 		#region 成员字段
@@ -87,7 +87,12 @@ namespace Zongsoft.Services
 							var descriptor = _descriptors[i];
 
 							if(descriptor.ImplementationType != null)
-								_descriptors[i] = Adaptive(descriptor.ServiceType, descriptor.ImplementationType, descriptor.Lifetime);
+							{
+								descriptor = Adaptive(descriptor.ServiceType, descriptor.ImplementationType, descriptor.Lifetime);
+
+								if(descriptor != null)
+									_descriptors[i] = descriptor;
+							}
 						}
 
 						_providers.Add(
@@ -187,12 +192,15 @@ namespace Zongsoft.Services
 		#region 私有方法
 		private ServiceDescriptor Adaptive(Type serviceType, Type implementationType, ServiceLifetime lifetime)
 		{
+			if(implementationType.ContainsGenericParameters)
+				return null;
+
 			var method = GetFacotryMethod.MakeGenericMethod(implementationType);
 			var factory = (Func<IServiceProvider, object>)method.Invoke(null, new object[] { this });
 			return new ServiceDescriptor(serviceType, factory, lifetime);
 		}
 
-		private static Func<IServiceProvider, T> GetFactory<T>(ServiceProvider provider)
+		private static Func<IServiceProvider, T> GetFactory<T>(IServiceProvider provider)
 		{
 			if(provider.IsInjectable(typeof(T)))
 				return new Func<IServiceProvider, T>(_ => (T)provider.Inject(ActivatorUtilities.CreateInstance<T>(provider)));
