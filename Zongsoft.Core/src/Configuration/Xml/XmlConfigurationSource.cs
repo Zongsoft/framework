@@ -37,7 +37,11 @@ namespace Zongsoft.Configuration.Xml
 	{
 		public override IConfigurationProvider Build(IConfigurationBuilder builder)
 		{
-			this.EnsureDefaults(builder);
+			if(builder == null)
+				this.ResolveFileProvider();
+			else
+				this.EnsureDefaults(builder);
+
 			return new XmlConfigurationProvider(this);
 		}
 	}
