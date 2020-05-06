@@ -58,8 +58,8 @@ namespace Zongsoft.Services
 		public System.IServiceProvider CreateServiceProvider(IServiceCollection services)
 		{
 			var provider = new ServiceProvider(services, _options);
-            services.AddSingleton(provider);
-            return provider;
+			services.AddSingleton(provider);
+			return provider;
 		}
 		#endregion
 	}
