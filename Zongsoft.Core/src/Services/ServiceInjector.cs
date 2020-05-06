@@ -96,8 +96,8 @@ namespace Zongsoft.Services
 							list.Add(new MemberInjectionDescriptor(field, attribute, p));
 					}
 
-					type = type.BaseType.GetTypeInfo();
-				} while(type != ObjectType);
+					type = type.BaseType?.GetTypeInfo();
+				} while(type != null && type != ObjectType);
 
 				return list.Count > 0 ? list.ToArray() : null;
 			}, provider);
