@@ -48,14 +48,6 @@ namespace Zongsoft.Plugins.Hosting
 		{
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 
-			builder.ConfigureHostConfiguration(configurator =>
-			{
-				configurator.AddCommandLine(new string[]
-				{
-					"/plugins:directory", "plugins",
-				});
-			});
-
 			builder.ConfigureAppConfiguration((ctx, configurator) =>
 			{
 				var options = _initialize?.Invoke(ctx);
@@ -69,7 +61,26 @@ namespace Zongsoft.Plugins.Hosting
 			builder.ConfigureServices((ctx, services) =>
 			{
 				if(ctx.Properties.TryGetValue(typeof(PluginOptions), out var options))
+				{
 					services.AddSingleton((PluginOptions)options);
+					PluginTree.Get((PluginOptions)options).Load();
+
+					foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+					{
+						if(assembly.FullName.StartsWith("Zongsoft."))
+							_applicationContext.Services.Register(assembly);
+					}
+
+					foreach(var plugin in _applicationContext.Plugins)
+					{
+						if(plugin.Status != PluginStatus.Loaded)
+							continue;
+
+						foreach(var assembly in plugin.Manifest.Assemblies)
+							_applicationContext.Services.Register(assembly);
+					}
+
+				}
 			});
 
 			builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());

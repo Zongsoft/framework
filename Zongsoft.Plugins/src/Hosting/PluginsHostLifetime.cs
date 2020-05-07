@@ -107,21 +107,6 @@ namespace Zongsoft.Plugins.Hosting
 			try
 #endif
 			{
-				foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
-				{
-					if(assembly.FullName.StartsWith("Zongsoft."))
-						_applicationContext.Services.Register(assembly);
-				}
-
-				foreach(var plugin in _applicationContext.Plugins)
-				{
-					if(plugin.Status != PluginStatus.Loaded)
-						continue;
-
-					foreach(var assembly in plugin.Manifest.Assemblies)
-						_applicationContext.Services.Register(assembly);
-				}
-
 				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
 				_applicationContext.Workbench.Open();
 			}
