@@ -122,7 +122,7 @@ namespace Zongsoft.Services
 
 		public virtual IConfiguration Configuration
 		{
-			get => this.Services?.GetService<HostBuilderContext>()?.Configuration;
+			get => this.Services?.GetService<IConfiguration>();
 		}
 
 		public virtual IApplicationEnvironment Environment
