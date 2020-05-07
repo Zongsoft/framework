@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +45,8 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 成员字段
+		private readonly string _name;
+		private readonly IServiceProvider _provider;
 		private readonly ServiceProviderOptions _options;
 		private readonly IList<IServiceProvider> _providers;
 		private readonly IServiceCollection _descriptors;
@@ -106,6 +109,18 @@ namespace Zongsoft.Services
 				}
 			}
 
+			if(string.IsNullOrEmpty(_name))
+				return _provider.GetService(serviceType);
+
+			if(ServiceModular.TryGet(_name, serviceType, out var type))
+				return _provider.GetService(type);
+
+			if(serviceType == typeof(IServiceProvider))
+				return this;
+
+			if(serviceType == typeof(IServiceScopeFactory))
+				Debug.WriteLine("ServiceScopeFactory");
+
 			if(serviceType == typeof(IServiceScopeFactory) && _providers.Count > 1)
 			{
 				if(_scopeFactory == null)
@@ -129,49 +144,6 @@ namespace Zongsoft.Services
 			}
 
 			return null;
-		}
-
-		public void Register(Type type, params Type[] contracts)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			_descriptors.AddSingleton(type);
-
-			if(contracts != null)
-			{
-				for(var i = 0; i < contracts.Length; i++)
-				{
-					_descriptors.AddSingleton(contracts[i], services => services.GetRequiredService(type));
-				}
-			}
-		}
-
-		public void Register(Assembly assembly)
-		{
-			if(assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
-
-			foreach(var type in assembly.ExportedTypes)
-			{
-				if(type.IsNotPublic || type.IsAbstract || !type.IsClass)
-					continue;
-
-				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
-
-				if(attribute == null)
-					continue;
-
-				if(string.IsNullOrEmpty(attribute.Provider))
-					this.Register(type, attribute.Contracts);
-				else
-				{
-					if(!ApplicationContext.Current.Modules.TryGet(attribute.Provider, out var module))
-						throw new InvalidOperationException($"The '{attribute.Provider}' service provider annotated by the '{type.FullName}' type does not exist.");
-
-					module.Services.Register(type, attribute.Contracts);
-				}
-			}
 		}
 		#endregion
 
