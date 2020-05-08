@@ -28,72 +28,46 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	public static class ServiceModular
+	internal static class ServiceModular
 	{
+		#region 常量定义
+		private const string ASSEMBLY_NAME = "Zongsoft.Dynamics.Services";
+		#endregion
+
+		#region 私有变量
+		private static readonly AssemblyBuilder _assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndCollect);
+		private static readonly ModuleBuilder _module = _assembly.DefineDynamicModule(ASSEMBLY_NAME);
+
 		private static readonly ConcurrentDictionary<ModularServiceKey, Type> _cache = new ConcurrentDictionary<ModularServiceKey, Type>();
+		#endregion
 
-		public static IEnumerable<ServiceDescriptor> Build(string module, Type type, Type[] contracts)
+		#region 公共方法
+		public static bool TryGetContract(string module, Type type, out Type contract)
 		{
-			if(contracts == null || contracts.Length == 0)
-				yield break;
+			return _cache.TryGetValue(new ModularServiceKey(module, type), out contract);
+		}
 
-			for(int i = 0; i < contracts.Length; i++)
+		public static Type GenerateContract(string module, Type type)
+		{
+			static string GetContractName(string name)
 			{
-				yield return Build(module, type, contracts[i]);
+				return "IModularService_$" + name.Replace('.', '_');
 			}
-		}
 
-		public static ServiceDescriptor Build(string module, Type type, Type contract)
-		{
-			if(string.IsNullOrEmpty(module))
-				throw new ArgumentNullException(nameof(module));
-
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			if(contract == null)
-				contract = type;
-
-			return null;
-		}
-
-		public static bool TryGet(string module, Type serviceType, out Type resolvedType)
-		{
-			resolvedType = null;
-
-			if(string.IsNullOrEmpty(module) || serviceType == null)
-				return false;
-
-			return true;
-		}
-
-		private static Type GenerateContract(Type type)
-		{
-			throw new NotImplementedException();
-		}
-
-		private static Type GenerateImplementation(Type type, Type[] contracts)
-		{
-			throw new NotImplementedException();
-		}
-
-		private static Func<IServiceProvider, object> GetServiceFactory(Type type, Type[] contracts)
-		{
-			return services =>
+			return _cache.GetOrAdd(new ModularServiceKey(module, type), key =>
 			{
-				return ActivatorUtilities.CreateInstance(services, type);
-			};
+				var builder = _module.DefineType(GetContractName(key.Module), TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract);
+				builder.DefineGenericParameters("T")[0].SetGenericParameterAttributes(GenericParameterAttributes.Covariant | GenericParameterAttributes.ReferenceTypeConstraint);
+				return builder.CreateType().MakeGenericType(key.ServiceType);
+			});
 		}
+		#endregion
 
 		private readonly struct ModularServiceKey : IEquatable<ModularServiceKey>
 		{
@@ -130,22 +104,5 @@ namespace Zongsoft.Services
 				return this.Module + ":" + this.ServiceType.FullName;
 			}
 		}
-	}
-
-	internal interface IModularService<out T> where T : class
-	{
-		T Service { get; }
-	}
-
-	internal class ModularService<T> : IModularService<T> where T : class
-	{
-		private readonly IServiceProvider _provider;
-
-		public ModularService(IServiceProvider provider)
-		{
-			_provider = provider;
-		}
-
-		public T Service => (T)_provider.GetService(typeof(T));
 	}
 }

@@ -28,9 +28,7 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -38,22 +36,6 @@ namespace Zongsoft.Services
 {
 	public static class ServiceCollectionExtension
 	{
-		public static void Register(this IServiceCollection services, Type type, params Type[] contracts)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			services.AddSingleton(type);
-
-			if(contracts != null)
-			{
-				for(var i = 0; i < contracts.Length; i++)
-				{
-					services.AddSingleton(contracts[i], services => services.GetService(type));
-				}
-			}
-		}
-
 		public static void Register(this IServiceCollection services, Assembly assembly)
 		{
 			if(assembly == null)
@@ -69,14 +51,27 @@ namespace Zongsoft.Services
 				if(attribute == null)
 					continue;
 
-				if(string.IsNullOrEmpty(attribute.Provider))
-					services.Register(type, attribute.Contracts);
-				else
-				{
-					var descriptors = ServiceModular.Build(attribute.Provider, type, attribute.Contracts);
+				services.AddSingleton(type);
 
-					foreach(var descriptor in descriptors)
-						services.Add(descriptor);
+				if(attribute.Contracts != null)
+				{
+					var contracts = attribute.Contracts;
+
+					if(string.IsNullOrEmpty(attribute.Provider))
+					{
+						for(var i = 0; i < contracts.Length; i++)
+						{
+							services.AddSingleton(contracts[i], services => services.GetService(type));
+						}
+					}
+					else
+					{
+						for(var i = 0; i < contracts.Length; i++)
+						{
+							var contract = ServiceModular.GenerateContract(attribute.Provider, contracts[i]);
+							services.AddSingleton(contract, svcs => svcs.GetService(type));
+						}
+					}
 				}
 			}
 		}

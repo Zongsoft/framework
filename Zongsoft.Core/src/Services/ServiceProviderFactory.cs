@@ -43,23 +43,19 @@ namespace Zongsoft.Services
 		#region 构造函数
 		public ServiceProviderFactory(ServiceProviderOptions options = null)
 		{
-			_options = options;
+			_options = options ?? new ServiceProviderOptions();
 		}
 		#endregion
 
 		#region 公共方法
-		/// <inheritdoc />
 		public IServiceCollection CreateBuilder(IServiceCollection services)
 		{
 			return services;
 		}
 
-		/// <inheritdoc />
 		public System.IServiceProvider CreateServiceProvider(IServiceCollection services)
 		{
-			var provider = new ServiceProvider(services, _options);
-			services.AddSingleton(provider);
-			return provider;
+			return new ServiceProvider(services, _options);
 		}
 		#endregion
 	}
