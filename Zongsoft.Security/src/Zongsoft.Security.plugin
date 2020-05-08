@@ -11,6 +11,10 @@
 		<assemblies>
 			<assembly name="Zongsoft.Security" />
 		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
 	</manifest>
 
 	<extension path="/Workbench/Modules">
