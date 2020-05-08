@@ -32,6 +32,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
@@ -41,6 +42,7 @@ namespace Zongsoft.Services
 		#region 私有变量
 		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
 		private static readonly ConcurrentDictionary<Type, MemberInjectionDescriptor[]> _descriptors = new ConcurrentDictionary<Type, MemberInjectionDescriptor[]>();
+		private static readonly ConcurrentDictionary<Type, PropertyInfo> _options = new ConcurrentDictionary<Type, PropertyInfo>();
 		#endregion
 
 		#region 公共方法
@@ -82,7 +84,9 @@ namespace Zongsoft.Services
 						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(property, attribute, p));
+							list.Add(new MemberInjectionDescriptor(p, property, attribute));
+						else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
+							list.Add(new MemberInjectionDescriptor(p, property));
 					}
 
 					foreach(var field in type.DeclaredFields)
@@ -93,7 +97,9 @@ namespace Zongsoft.Services
 						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(field, attribute, p));
+							list.Add(new MemberInjectionDescriptor(p, field, attribute));
+						else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
+							list.Add(new MemberInjectionDescriptor(p, field));
 					}
 
 					type = type.BaseType?.GetTypeInfo();
@@ -109,39 +115,62 @@ namespace Zongsoft.Services
 		#region 嵌套子类
 		private class MemberInjectionDescriptor
 		{
-			public readonly MemberInfo Member;
-			public readonly Type ServiceType;
-			public readonly bool IsRequired;
-			public readonly IServiceProvider Provider;
+			private readonly MemberInfo _member;
+			private readonly Func<object> _valueThunk;
 
-			public MemberInjectionDescriptor(MemberInfo member, ServiceDependencyAttribute attribute, IServiceProvider provider)
+			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member, ServiceDependencyAttribute attribute)
 			{
-				this.Member = member;
-				this.IsRequired = attribute.IsRequired;
+				_member = member;
 
-				if(string.IsNullOrEmpty(attribute.Provider))
-					this.Provider = provider;
+				if(!string.IsNullOrEmpty(attribute.Provider))
+					provider = ApplicationContext.Current.Modules.Get(attribute.Provider).Services;
+
+				var serviceType = attribute.ServiceType ?? member switch
+				{
+					PropertyInfo property => property.PropertyType,
+					FieldInfo field => field.FieldType,
+					_ => throw new ArgumentException("Invalid member type."),
+				};
+
+				if(attribute.IsRequired)
+					_valueThunk = () => provider.GetRequiredService(serviceType);
 				else
-					this.Provider = ApplicationContext.Current.Modules.Get(attribute.Provider).Services;
+					_valueThunk = () => provider.GetService(serviceType);
+			}
 
-				this.ServiceType = attribute.ServiceType ??
-					member switch
+			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member)
+			{
+				_member = member;
+
+				var serviceType = member switch
+				{
+					PropertyInfo property => property.PropertyType,
+					FieldInfo field => field.FieldType,
+					_ => throw new ArgumentException("Invalid member type."),
+				};
+
+				if(!serviceType.IsGenericType || serviceType.GetGenericTypeDefinition() != typeof(IOptions<>))
+				{
+					var optionType = typeof(IOptions<>).MakeGenericType(serviceType);
+
+					_valueThunk = () =>
 					{
-						PropertyInfo property => property.PropertyType,
-						FieldInfo field => field.FieldType,
-						_ => null,
+						var property = _options.GetOrAdd(optionType, t => t.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance));
+						var instance = provider.GetService(optionType);
+						return instance == null ? null : Reflection.Reflector.GetValue(property, ref instance);
 					};
+				}
+				else
+					_valueThunk = () => provider.GetService(serviceType);
 			}
 
 			public void SetValue(ref object target)
 			{
 				Zongsoft.Reflection.Reflector.SetValue
 				(
-					this.Member,
+					_member,
 					ref target,
-					this.IsRequired ?
-						this.Provider.GetRequiredService(this.ServiceType) :
-						this.Provider.GetService(this.ServiceType)
+					_valueThunk()
 				);
 			}
 		}
