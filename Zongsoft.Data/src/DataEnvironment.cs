@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Reflection;
 
 using Zongsoft.Collections;
 using Zongsoft.Data.Common;
@@ -38,7 +38,8 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 提供数据访问操作的环境信息。
 	/// </summary>
-	[System.ComponentModel.DefaultProperty(nameof(Accessors))]
+	[DefaultMember(nameof(Accessors))]
+	[Services.Service(Members = "Accessors,Filters")]
 	public static class DataEnvironment
 	{
 		#region 成员字段
@@ -63,54 +64,30 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public static IDataAccessProvider Accessors
 		{
-			get
-			{
-				return _accessors;
-			}
-			set
-			{
-				_accessors = value ?? throw new ArgumentNullException();
-			}
+			get => _accessors;
+			set => _accessors = value ?? throw new ArgumentNullException();
 		}
 
 		public static IDataProviderFactory Providers
 		{
-			get
-			{
-				return _providers;
-			}
-			set
-			{
-				_providers = value ?? throw new ArgumentNullException();
-			}
+			get => _providers;
+			set => _providers = value ?? throw new ArgumentNullException();
 		}
 
 		public static INamedCollection<IDataDriver> Drivers
 		{
-			get
-			{
-				return _drivers;
-			}
+			get => _drivers;
 		}
 
 		public static DataAccessFilterCollection Filters
 		{
-			get
-			{
-				return _filters;
-			}
+			get => _filters;
 		}
 
 		public static IDataPopulatorProviderFactory Populators
 		{
-			get
-			{
-				return _populators;
-			}
-			set
-			{
-				_populators = value ?? throw new ArgumentNullException();
-			}
+			get => _populators;
+			set => _populators = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 	}
