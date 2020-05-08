@@ -28,58 +28,113 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
 	public static class ServiceCollectionExtension
 	{
-		public static void Register(this IServiceCollection services, Assembly assembly)
+		#region 私有变量
+		private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
+			.GetMethod("Configure", 1,
+				BindingFlags.Public | BindingFlags.Static,
+				null,
+				new[] { typeof(IServiceCollection), typeof(string), typeof(IConfiguration) },
+				null);
+		#endregion
+
+		public static void Register(this IServiceCollection services, Assembly assembly, IConfiguration configuration)
 		{
 			if(assembly == null)
 				throw new ArgumentNullException(nameof(assembly));
 
-			foreach(var type in assembly.ExportedTypes)
+			foreach(var exportedType in assembly.ExportedTypes)
 			{
+				var type = exportedType.GetTypeInfo();
+
 				//如果是非公共类（含抽象类）则忽略
 				if(type.IsNotPublic || !type.IsClass || (type.IsAbstract && !type.IsSealed))
 					continue;
 
 				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
 
-				if(attribute == null)
-					continue;
+				if(attribute != null)
+					RegisterServices(services, type, attribute);
 
-				if(type.IsAbstract)
+				if(configuration != null)
+					RegisterOptions(services, type, configuration);
+			}
+		}
+
+		private static void RegisterOptions(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+		{
+			static Type GetOptionType(Type type)
+			{
+				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IOptions<>) ?
+				       type.GenericTypeArguments[0] : type;
+			}
+
+			var properties = type.DeclaredProperties.Where(p => p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
+
+			foreach(var property in properties)
+			{
+				var attribute = property.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+
+				if(attribute != null)
 				{
-					if(type.IsSealed)
-						RegisterStaticMember(services, type.GetTypeInfo(), attribute.Provider, attribute.Members);
-
-					continue;
+					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
+					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
 				}
+			}
 
-				services.AddSingleton(type);
+			var fields = type.DeclaredFields.Where(p => p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
 
-				if(attribute.Contracts != null)
+			foreach(var field in fields)
+			{
+				var attribute = field.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+
+				if(attribute != null)
 				{
-					var contracts = attribute.Contracts;
+					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
+					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+				}
+			}
+		}
 
-					if(string.IsNullOrEmpty(attribute.Provider))
+		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
+		{
+			if(type.IsAbstract)
+			{
+				if(type.IsSealed)
+					RegisterStaticMember(services, type, attribute.Provider, attribute.Members);
+
+				return;
+			}
+
+			services.AddSingleton((Type)type);
+
+			if(attribute.Contracts != null)
+			{
+				var contracts = attribute.Contracts;
+
+				if(string.IsNullOrEmpty(attribute.Provider))
+				{
+					for(var i = 0; i < contracts.Length; i++)
 					{
-						for(var i = 0; i < contracts.Length; i++)
-						{
-							services.AddSingleton(contracts[i], services => services.GetService(type));
-						}
+						services.AddSingleton(contracts[i], services => services.GetService(type));
 					}
-					else
+				}
+				else
+				{
+					for(var i = 0; i < contracts.Length; i++)
 					{
-						for(var i = 0; i < contracts.Length; i++)
-						{
-							var contract = ServiceModular.GenerateContract(attribute.Provider, contracts[i]);
-							services.AddSingleton(contract, svcs => svcs.GetService(type));
-						}
+						var contract = ServiceModular.GenerateContract(attribute.Provider, contracts[i]);
+						services.AddSingleton(contract, svcs => svcs.GetService(type));
 					}
 				}
 			}

@@ -54,10 +54,7 @@ namespace Zongsoft.Configuration.Options
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
 		public IChangeToken GetChangeToken()
 		{
