@@ -60,12 +60,4 @@
 		       defaults="action=, id="
 		       position="Api" />
 	</extension>
-
-	<!-- 挂载控制器 -->
-	<extension path="/Workspace/Web/Controllers/Security">
-		<object name="Authentication" type="Zongsoft.Security.Web.Controllers.AuthenticationController, Zongsoft.Security.Web" />
-		<object name="Credentials" type="Zongsoft.Security.Web.Controllers.CredentialController, Zongsoft.Security.Web" />
-		<object name="Roles" type="Zongsoft.Security.Web.Controllers.RoleController, Zongsoft.Security.Web" />
-		<object name="Users" type="Zongsoft.Security.Web.Controllers.UserController, Zongsoft.Security.Web" />
-	</extension>
 </plugin>
