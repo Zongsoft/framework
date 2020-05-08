@@ -69,7 +69,7 @@ namespace Zongsoft.Plugins.Hosting
 					foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
 					{
 						if(!assembly.IsDynamic && assembly.FullName.StartsWith("Zongsoft."))
-							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly);
+							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, ctx.Configuration);
 					}
 
 					foreach(var plugin in tree.Plugins)
@@ -78,7 +78,7 @@ namespace Zongsoft.Plugins.Hosting
 							continue;
 
 						foreach(var assembly in plugin.Manifest.Assemblies)
-							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly);
+							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, ctx.Configuration);
 					}
 
 				}
