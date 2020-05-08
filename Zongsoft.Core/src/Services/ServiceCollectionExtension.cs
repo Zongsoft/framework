@@ -43,13 +43,22 @@ namespace Zongsoft.Services
 
 			foreach(var type in assembly.ExportedTypes)
 			{
-				if(type.IsNotPublic || type.IsAbstract || !type.IsClass)
+				//如果是非公共类（含抽象类）则忽略
+				if(type.IsNotPublic || !type.IsClass || (type.IsAbstract && !type.IsSealed))
 					continue;
 
 				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
 
 				if(attribute == null)
 					continue;
+
+				if(type.IsAbstract)
+				{
+					if(type.IsSealed)
+						RegisterStaticMember(services, type.GetTypeInfo(), attribute.Provider, attribute.Members);
+
+					continue;
+				}
 
 				services.AddSingleton(type);
 
@@ -71,6 +80,55 @@ namespace Zongsoft.Services
 							var contract = ServiceModular.GenerateContract(attribute.Provider, contracts[i]);
 							services.AddSingleton(contract, svcs => svcs.GetService(type));
 						}
+					}
+				}
+			}
+		}
+
+		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string module, string members)
+		{
+			if(string.IsNullOrEmpty(members))
+				return;
+
+			if(string.IsNullOrEmpty(module))
+			{
+				foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
+				{
+					var property = type.GetDeclaredProperty(member);
+
+					if(property != null)
+					{
+						services.AddSingleton(property.PropertyType, property.GetValue(null));
+						continue;
+					}
+
+					var field = type.GetDeclaredField(member);
+
+					if(field != null)
+					{
+						services.AddSingleton(field.FieldType, field.GetValue(null));
+						continue;
+					}
+				}
+			}
+			else
+			{
+				foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
+				{
+					var property = type.GetDeclaredProperty(member);
+
+					if(property != null)
+					{
+						services.AddSingleton(ServiceModular.GenerateContract(module, property.PropertyType), property.GetValue(null));
+						continue;
+					}
+
+					var field = type.GetDeclaredField(member);
+
+					if(field != null)
+					{
+						services.AddSingleton(ServiceModular.GenerateContract(module, field.FieldType), field.GetValue(null));
+						continue;
 					}
 				}
 			}
