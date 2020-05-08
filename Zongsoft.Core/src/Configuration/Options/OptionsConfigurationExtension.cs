@@ -34,7 +34,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Zongsoft.Configuration.Options
+namespace Zongsoft.Services
 {
 	public static class OptionsConfigurationExtension
 	{
@@ -50,7 +50,7 @@ namespace Zongsoft.Configuration.Options
 
 		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
 			IConfiguration configuration,
-			Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
+			Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
 		{
 			return services.Configure<TOptions>(string.Empty, configuration, configureBinder);
 		}
@@ -58,7 +58,7 @@ namespace Zongsoft.Configuration.Options
 		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
 			string name,
 			IConfiguration configuration,
-			Action<ConfigurationBinderOptions> configureBinder) where TOptions : class
+			Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
 		{
 			if(services == null)
 				throw new ArgumentNullException(nameof(services));
@@ -68,8 +68,8 @@ namespace Zongsoft.Configuration.Options
 
 			return services.AddOptions()
 				.Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
-				.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
-				.AddSingleton<IConfigureOptions<TOptions>>(new OptionsConfigurator<TOptions>(name, configuration, configureBinder));
+				.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
+				.AddSingleton<IConfigureOptions<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurator<TOptions>(name, configuration, configureBinder));
 		}
 	}
 }
