@@ -40,11 +40,20 @@ namespace Zongsoft.Plugins
 	public class PluginOptions : IEquatable<PluginOptions>
 	{
 		#region 构造函数
+		internal PluginOptions(Microsoft.Extensions.Hosting.IHostEnvironment environment)
+		{
+			this.EnvironmentName = environment.EnvironmentName;
+			this.ApplicationDirectory = environment.ContentRootPath;
+			this.PluginsPath = Path.Combine(this.ApplicationDirectory, "plugins");
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		}
+
 		/// <summary>
 		/// 构造插件设置对象。
 		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
-		public PluginOptions(string applicationDirectory) : this(applicationDirectory, null)
+		/// <param name="environmentName">指定的环境名。</param>
+		public PluginOptions(string applicationDirectory, string environmentName) : this(applicationDirectory, environmentName, null)
 		{
 		}
 
@@ -53,8 +62,9 @@ namespace Zongsoft.Plugins
 		/// </summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="pluginsDirectoryName">插件目录名，非完整路径。默认为“plugins”。</param>
+		/// <param name="environmentName">指定的环境名。</param>
 		/// <exception cref="System.ArgumentException">当<paramref name="applicationDirectory"/>参数值不为路径完全限定格式。</exception>
-		public PluginOptions(string applicationDirectory, string pluginsDirectoryName)
+		public PluginOptions(string applicationDirectory, string environmentName, string pluginsDirectoryName)
 		{
 			if(string.IsNullOrWhiteSpace(applicationDirectory))
 			{
@@ -71,12 +81,15 @@ namespace Zongsoft.Plugins
 			if(!Directory.Exists(this.ApplicationDirectory))
 				throw new DirectoryNotFoundException(this.ApplicationDirectory);
 
+			this.EnvironmentName = environmentName;
 			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
+		public string EnvironmentName { get; }
+
 		/// <summary>
 		/// 获取应用程序目录的完全限定路径，该属性值由构造函数注入。
 		/// </summary>

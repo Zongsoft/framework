@@ -156,7 +156,7 @@ namespace Zongsoft.Configuration
 				}.Build(null),
 				new Zongsoft.Configuration.Xml.XmlConfigurationSource()
 				{
-					Path = Path.Combine(filePath, $"{fileName}.{Zongsoft.Services.ApplicationContext.Current.Environment.Name.ToLowerInvariant()}.option"),
+					Path = Path.Combine(filePath, $"{fileName}.{_source.Options.EnvironmentName.ToLowerInvariant()}.option"),
 					Optional = true,
 					ReloadOnChange = true,
 				}.Build(null),

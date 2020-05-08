@@ -52,7 +52,7 @@ namespace Zongsoft.Plugins
 			_syncRoot = new object();
 
 			this.Options = services.GetService<PluginOptions>() ??
-			               new PluginOptions(services.GetRequiredService<IHostEnvironment>().ContentRootPath);
+			               new PluginOptions(services.GetRequiredService<IHostEnvironment>());
 
 			this.PluginTree = PluginTree.Get(this.Options);
 		}
