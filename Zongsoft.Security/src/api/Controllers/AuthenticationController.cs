@@ -87,12 +87,12 @@ namespace Zongsoft.Security.Web.Controllers
 			var duration = TimeSpan.FromHours(2);
 
 			//尝试通过验证上下文的参数集获取其他程序指定的凭证配置项
-			if(parameters != null && parameters.TryGetValue("Credential:Option", out var value) && value is Membership.Configuration.ICredentialOption option)
+			if(parameters != null && parameters.TryGetValue("Credential:Option", out var value) && value is Membership.Configuration.CredentialOptions options)
 			{
-				if(option.Policies.TryGet(scene, out var period))
+				if(options.Policies.TryGet(scene, out var period))
 					duration = period.Period;
 				else
-					duration = option.Period;
+					duration = options.Period;
 
 				//用完即从参数集中移除掉凭证配置项
 				parameters.Remove("Credential:Option");

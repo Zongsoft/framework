@@ -40,25 +40,16 @@ namespace Zongsoft.Security.Membership.Configuration
 		/// <summary>
 		/// 获取用户提供程序的配置信息。
 		/// </summary>
-		IUserOption User
-		{
-			get;
-		}
+		UserOptions Users { get; }
 
 		/// <summary>
 		/// 获取授权配置信息。
 		/// </summary>
-		IAuthorizationOption Authorization
-		{
-			get;
-		}
+		AuthorizationOptions Authorization { get; }
 
 		/// <summary>
 		/// 获取验证配置信息。
 		/// </summary>
-		IAuthenticationOption Authentication
-		{
-			get;
-		}
+		AuthenticationOptions Authentication { get; }
 	}
 }

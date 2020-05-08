@@ -34,6 +34,8 @@ using System.Collections.Generic;
 using Zongsoft.Data;
 using Zongsoft.Services;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Security.Membership
 {
 	[Service(Modules.Security, typeof(IPermissionProvider))]
@@ -41,26 +43,21 @@ namespace Zongsoft.Security.Membership
 	{
 		#region 成员字段
 		private IDataAccess _dataAccess;
+		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public PermissionProvider()
+		public PermissionProvider(IServiceProvider services)
 		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
 		}
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 

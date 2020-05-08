@@ -33,32 +33,26 @@ using System.ComponentModel;
 namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示用户管理配置的接口。
+	/// 表示恶意检测器的配置选项。
 	/// </summary>
-	public interface IUserOption
+	public class AttempterOptions
 	{
-		/// <summary>
-		/// 获取或设置密码的最小长度，零表示不限制。
-		/// </summary>
-		int PasswordLength
-		{
-			get; set;
-		}
+        public AttempterOptions()
+        {
+            this.Threshold = 3;
+            this.Window = TimeSpan.FromHours(1);
+        }
 
 		/// <summary>
-		/// 获取或设置密码的强度。
+		/// 获取或设置验证失败的阈值，零表示不限制。
 		/// </summary>
-		PasswordStrength PasswordStrength
-		{
-			get; set;
-		}
+        [DefaultValue(3)]
+		public int Threshold { get; set; }
 
 		/// <summary>
-		/// 获取或设置用户信息的有效性校验项。
+		/// 获取或设置验证失败超过指定的阈值后的锁定时长，默认为60分钟。
 		/// </summary>
-		IdentityVerification Verification
-		{
-			get; set;
-		}
+        [DefaultValue("1:0:0")]
+		public TimeSpan Window { get; set; }
 	}
 }

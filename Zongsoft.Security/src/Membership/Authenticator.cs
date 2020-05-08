@@ -60,40 +60,24 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get => "Normal";
-		}
+		public string Name { get => "Normal"; }
 
-		public Configuration.ICredentialOption Option
-		{
-			get; set;
-		}
+		public Configuration.CredentialOptions Options { get; set; }
 
 		[ServiceDependency]
-		public Attempter Attempter
-		{
-			get; set;
-		}
+		public Attempter Attempter { get; set; }
 
 		[ServiceDependency]
-		public ISecretProvider Secretor
-		{
-			get; set;
-		}
+		public ISecretProvider Secretor { get; set; }
 
-		[ServiceDependency]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess ?? this.DataAccessProvider.GetAccessor(Modules.Security);
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
+
+		[ServiceDependency(IsRequired = true)]
+		public IDataAccessProvider DataAccessProvider { get; set; }
 		#endregion
 
 		#region 验证方法
@@ -199,8 +183,8 @@ namespace Zongsoft.Security.Membership
 			context.User = this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
 
 			//设置凭证有效期的配置策略
-			if(this.Option != null)
-				context.Parameters["Credential:Option"] = this.Option;
+			if(this.Options != null)
+				context.Parameters["Credential:Option"] = this.Options;
 
 			//激发“Authenticated”事件
 			this.OnAuthenticated(context);
@@ -314,8 +298,8 @@ namespace Zongsoft.Security.Membership
 			context.User = user;
 
 			//设置凭证有效期的配置策略
-			if(this.Option != null)
-				context.Parameters["Credential:Option"] = this.Option;
+			if(this.Options != null)
+				context.Parameters["Credential:Option"] = this.Options;
 
 			//激发“Authenticated”事件
 			this.OnAuthenticated(context);

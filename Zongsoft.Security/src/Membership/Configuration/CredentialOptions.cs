@@ -29,18 +29,47 @@
 
 using System;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示授权配置的接口。
+	/// 表示凭证提供程序的配置选项。
 	/// </summary>
-	public interface IAuthorizationOption
+	public class CredentialOptions
 	{
-        /// <summary>
-        /// 获取一个可以进行授权管理的角色集。
-        /// </summary>
-		ISet<string> Roles { get; }
+        public CredentialOptions()
+        {
+            this.Period = TimeSpan.FromHours(4);
+            this.Policies = new Collections.NamedCollection<CredentialPolicy>(policy => policy.Name);
+        }
+
+		/// <summary>
+		/// 获取或设置凭证的默认有效期时长。
+		/// </summary>
+        [DefaultValue("4:0:0")]
+		public TimeSpan Period { get; set; }
+
+		/// <summary>
+		/// 获取策略配置集。
+		/// </summary>
+		public Collections.INamedCollection<CredentialPolicy> Policies { get; }
+
+		#region 嵌套子类
+		/// <summary>
+		/// 表示以凭证场景为依据的有效期配置项。
+		/// </summary>
+		public class CredentialPolicy
+		{
+			/// <summary>
+			/// 获取凭证场景。
+			/// </summary>
+			public string Name { get; set; }
+
+			/// <summary>
+			/// 获取或设置凭证的有效期时长。
+			/// </summary>
+			public TimeSpan Period { get; set; }
+		}
+		#endregion
 	}
 }

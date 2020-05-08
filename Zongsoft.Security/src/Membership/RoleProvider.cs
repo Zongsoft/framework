@@ -35,6 +35,8 @@ using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Security.Membership
 {
 	[Service(Modules.Security, typeof(IRoleProvider), typeof(IMemberProvider))]
@@ -58,10 +60,9 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency(IsRequired = true)]
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess;
+			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 

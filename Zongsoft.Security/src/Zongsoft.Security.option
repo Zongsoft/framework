@@ -2,15 +2,15 @@
 
 <options>
 	<option path="/Data">
-		<connectionStrings>
-			<connectionString name="Security"
-			                  provider="MsSql"
-			                  value="Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\Zongsoft\Zongsoft.Security\database\Zongsoft.Security.mdf;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" />
-		</connectionStrings>
+		<connectionSettings>
+			<connectionSetting name="Security"
+			                   provider="MsSql"
+			                   value="Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\Zongsoft\Zongsoft.Security\database\Zongsoft.Security.mdf;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" />
+		</connectionSettings>
 	</option>
 
 	<option path="/Security/Membership">
-		<general general.type="Zongsoft.Security.Membership.Options.Configuration.GeneralConfiguration, Zongsoft.Security">
+		<general>
 			<user verification="none"
 			      passwordLength="0" passwordStrength="None" />
 
@@ -21,9 +21,9 @@
 
 				<credential period="2:0:0">
 					<policies>
-						<policy scene="app" period="24:0:0" />
-						<policy scene="mobile" period="24:00:00" />
-						<policy scene="wechat" period="24:00:00" />
+						<policy policy.name="app" period="24:0:0" />
+						<policy policy.name="mobile" period="24:00:00" />
+						<policy policy.name="wechat" period="24:00:00" />
 					</policies>
 				</credential>
 			</authentication>

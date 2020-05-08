@@ -34,6 +34,8 @@ using System.Linq;
 using Zongsoft.Data;
 using Zongsoft.Services;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Security
 {
 	[Service(Modules.Security, typeof(ICensorship))]
@@ -49,20 +51,25 @@ namespace Zongsoft.Security
 		#region 成员字段
 		private string[] _keys;
 		private IDataAccess _dataAccess;
+		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public Censorship()
+		public Censorship(IServiceProvider services)
 		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
 		}
 
-		public Censorship(string[] keys)
+		public Censorship(IServiceProvider services, string[] keys)
 		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
 			_keys = keys;
 		}
 
-		public Censorship(IEnumerable<string> keys)
+		public Censorship(IServiceProvider services, IEnumerable<string> keys)
 		{
+			_services = services ?? throw new ArgumentNullException(nameof(services));
+
 			if(keys != null)
 				_keys = keys.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 		}
@@ -71,33 +78,14 @@ namespace Zongsoft.Security
 		#region 公共属性
 		public string[] Keys
 		{
-			get
-			{
-				return _keys;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				if(value.Length < 1)
-					throw new ArgumentException("The length of array is zero.");
-
-				_keys = value;
-			}
+			get => _keys;
+			set => _keys = value ?? throw new ArgumentNullException();
 		}
 
-		[ServiceDependency]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 

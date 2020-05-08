@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Membership
 			set => _cache = value ?? throw new ArgumentNullException();
 		}
 
-		public Configuration.IAttempterOption Option
+		public Configuration.AttempterOptions Options
 		{
 			get; set;
 		}
@@ -67,7 +67,7 @@ namespace Zongsoft.Security.Membership
 		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
 		public bool Verify(string identity, string @namespace)
 		{
-			var option = this.Option;
+			var option = this.Options;
 
 			if(option == null || option.Threshold < 1)
 				return true;
@@ -130,7 +130,7 @@ namespace Zongsoft.Security.Membership
 			threshold = 3;
 			window = TimeSpan.FromHours(1);
 
-			var option = this.Option;
+			var option = this.Options;
 
 			if(option != null)
 			{

@@ -28,28 +28,28 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示以凭证场景为依据的有效期配置项接口。
+	/// 表示用户管理的配置选项。
 	/// </summary>
-	public interface ICredentialPolicy
+	public class UserOptions
 	{
 		/// <summary>
-		/// 获取凭证场景。
+		/// 获取或设置密码的最小长度，零表示不限制。
 		/// </summary>
-		string Scene
-		{
-			get;
-		}
+		public int PasswordLength { get; set; }
 
 		/// <summary>
-		/// 获取或设置凭证的有效期时长。
+		/// 获取或设置密码的强度。
 		/// </summary>
-		TimeSpan Period
-		{
-			get; set;
-		}
+		public PasswordStrength PasswordStrength { get; set; }
+
+		/// <summary>
+		/// 获取或设置用户信息的有效性校验项。
+		/// </summary>
+		public IdentityVerification Verification { get; set; }
 	}
 }

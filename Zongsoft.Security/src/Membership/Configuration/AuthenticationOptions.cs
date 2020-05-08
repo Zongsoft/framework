@@ -33,22 +33,19 @@ using System.Collections.Generic;
 namespace Zongsoft.Security.Membership.Configuration
 {
 	/// <summary>
-	/// 表示验证配置的接口。
+	/// 表示身份验证的配置选项。
 	/// </summary>
-	public interface IAuthenticationOption
+	public class AuthenticationOptions
 	{
 		/// <summary>
 		/// 获取恶意检测器的配置项。
 		/// </summary>
-		IAttempterOption Attempter
-		{
-			get;
-		}
+		public AttempterOptions Attempter { get; set; }
 
 		/// <summary>
 		/// 获取凭证配置项。
 		/// </summary>
-		ICredentialOption Credential
+		CredentialOptions Credential
 		{
 			get;
 		}

@@ -54,7 +54,7 @@ namespace Zongsoft.Security.Membership.Common
 		#endregion
 
 		#region 公共属性
-		public Configuration.IUserOption Option
+		public Configuration.UserOptions Option
 		{
 			get;
 			set;
