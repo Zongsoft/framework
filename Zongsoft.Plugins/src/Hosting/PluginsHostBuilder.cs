@@ -63,21 +63,22 @@ namespace Zongsoft.Plugins.Hosting
 				if(ctx.Properties.TryGetValue(typeof(PluginOptions), out var options))
 				{
 					services.AddSingleton((PluginOptions)options);
-					PluginTree.Get((PluginOptions)options).Load();
+					var tree = PluginTree.Get((PluginOptions)options);
+					tree.Load();
 
 					foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
 					{
-						if(assembly.FullName.StartsWith("Zongsoft."))
-							_applicationContext.Services.Register(assembly);
+						if(!assembly.IsDynamic && assembly.FullName.StartsWith("Zongsoft."))
+							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly);
 					}
 
-					foreach(var plugin in _applicationContext.Plugins)
+					foreach(var plugin in tree.Plugins)
 					{
 						if(plugin.Status != PluginStatus.Loaded)
 							continue;
 
 						foreach(var assembly in plugin.Manifest.Assemblies)
-							_applicationContext.Services.Register(assembly);
+							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly);
 					}
 
 				}
@@ -132,7 +133,7 @@ namespace Zongsoft.Plugins.Hosting
 				if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
 					options = (PluginOptions)optionsValue;
 				else
-					context.Properties[typeof(PluginOptions)] = options = new PluginOptions(context.HostingEnvironment.ContentRootPath);
+					context.Properties[typeof(PluginOptions)] = options = new PluginOptions(context.HostingEnvironment);
 
 				var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
 				{
