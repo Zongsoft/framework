@@ -30,6 +30,7 @@
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Services
@@ -44,6 +45,7 @@ namespace Zongsoft.Services
 		private static readonly AssemblyBuilder _assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndCollect);
 		private static readonly ModuleBuilder _module = _assembly.DefineDynamicModule(ASSEMBLY_NAME);
 
+		private static readonly Dictionary<string, TypeBuilder> _definitions = new Dictionary<string, TypeBuilder>(StringComparer.OrdinalIgnoreCase);
 		private static readonly ConcurrentDictionary<ModularServiceKey, Type> _cache = new ConcurrentDictionary<ModularServiceKey, Type>();
 		#endregion
 
@@ -62,9 +64,15 @@ namespace Zongsoft.Services
 
 			return _cache.GetOrAdd(new ModularServiceKey(module, type), key =>
 			{
-				var builder = _module.DefineType(GetContractName(key.Module), TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract);
-				builder.DefineGenericParameters("T")[0].SetGenericParameterAttributes(GenericParameterAttributes.Covariant | GenericParameterAttributes.ReferenceTypeConstraint);
-				return builder.CreateType().MakeGenericType(key.ServiceType);
+				if(!_definitions.TryGetValue(module, out var definition))
+				{
+					definition = _module.DefineType(GetContractName(key.Module), TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract);
+					definition.DefineGenericParameters("T")[0].SetGenericParameterAttributes(GenericParameterAttributes.Covariant | GenericParameterAttributes.ReferenceTypeConstraint);
+
+					_definitions.Add(module, definition);
+				}
+
+				return definition.CreateType().MakeGenericType(key.ServiceType);
 			});
 		}
 		#endregion
