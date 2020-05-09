@@ -91,79 +91,49 @@ namespace Zongsoft.Data
 		/// </summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
-			set
-			{
-				_name = value ?? string.Empty;
-			}
+			get => _name;
+			set => _name = value ?? string.Empty;
 		}
 
 		/// <summary>
 		/// 获取数据访问名称映射器。
 		/// </summary>
-		public IDataAccessNaming Naming
-		{
-			get
-			{
-				return _naming;
-			}
-		}
+		public IDataAccessNaming Naming { get => _naming; }
 
 		/// <summary>
 		/// 获取数据模式解析器。
 		/// </summary>
-		public ISchemaParser Schema
-		{
-			get
-			{
-				if(_schema == null)
-					_schema = this.CreateSchema();
-
-				return _schema;
-			}
-		}
+		public ISchemaParser Schema { get => _schema ?? (_schema = this.CreateSchema()); }
 
 		/// <summary>
-		/// 获取或设置一个数据序号提供程序。
+		/// 获取或设置数据序号生成器。
 		/// </summary>
 		public Common.ISequence Sequence
 		{
-			get
-			{
-				return _sequence;
-			}
-			set
-			{
-				_sequence = this.CreateSequence(value);
-			}
+			get => _sequence ?? (_sequence = this.SequenceProvider.GetService(string.Empty));
+			set => _sequence = this.CreateSequence(value);
 		}
+
+		/// <summary>
+		/// 获取或设置数据序号生成器提供程序。
+		/// </summary>
+		[Services.ServiceDependency]
+		public Services.IServiceProvider<Common.ISequence> SequenceProvider { get; set; }
 
 		/// <summary>
 		/// 获取数据访问器的元数据容器。
 		/// </summary>
-		public abstract Metadata.IDataMetadataContainer Metadata
-		{
-			get;
-		}
+		public abstract Metadata.IDataMetadataContainer Metadata { get; }
 
 		/// <summary>
 		/// 获取或设置数据访问的验证器。
 		/// </summary>
-		public IDataValidator Validator
-		{
-			get; set;
-		}
+		public IDataValidator Validator { get; set; }
 
 		/// <summary>
 		/// 获取数据访问过滤器集合。
 		/// </summary>
-		public ICollection<IDataAccessFilter> Filters
-		{
-			get => _filters;
-		}
+		public ICollection<IDataAccessFilter> Filters { get => _filters; }
 		#endregion
 
 		#region 执行方法
