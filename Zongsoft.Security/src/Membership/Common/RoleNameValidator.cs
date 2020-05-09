@@ -41,35 +41,35 @@ namespace Zongsoft.Security.Membership.Common
 	public class RoleNameValidator : IValidator<string>, IMatchable<string>
 	{
 		#region 验证方法
-		public bool Validate(string parameter, Action<string> failure = null)
+		public bool Validate(string data, object parameter, Action<string> failure = null)
 		{
-			if(string.IsNullOrEmpty(parameter))
+			if(string.IsNullOrEmpty(data))
 			{
 				failure?.Invoke("The name is null or empty.");
 				return false;
 			}
 
 			//名字(用户名或角色名)的长度必须不少于4个字符
-			if(parameter.Length < 4)
+			if(data.Length < 4)
 			{
-				failure?.Invoke($"The '{parameter}' name length must be greater than 3.");
+				failure?.Invoke($"The '{data}' name length must be greater than 3.");
 				return false;
 			}
 
 			//名字(用户名或角色名)的首字符必须是字母、下划线、美元符
-			if(!(Char.IsLetter(parameter[0]) || parameter[0] == '_' || parameter[0] == '$'))
+			if(!(Char.IsLetter(data[0]) || data[0] == '_' || data[0] == '$'))
 			{
-				failure?.Invoke($"The '{parameter}' name contains illegal characters.");
+				failure?.Invoke($"The '{data}' name contains illegal characters.");
 				return false;
 			}
 
 			//检查名字(用户名或角色名)的其余字符的合法性
-			for(int i = 1; i < parameter.Length; i++)
+			for(int i = 1; i < data.Length; i++)
 			{
 				//名字的中间字符必须是字母、数字或下划线
-				if(!Char.IsLetterOrDigit(parameter[i]) && parameter[i] != '_')
+				if(!Char.IsLetterOrDigit(data[i]) && data[i] != '_')
 				{
-					failure?.Invoke($"The '{parameter}' name contains illegal characters.");
+					failure?.Invoke($"The '{data}' name contains illegal characters.");
 					return false;
 				}
 			}
@@ -78,10 +78,10 @@ namespace Zongsoft.Security.Membership.Common
 			return true;
 		}
 
-		public Task<bool> ValidateAsync(string data, Action<string> failure = null, CancellationToken cancellation = default)
+		public Task<bool> ValidateAsync(string data, object parameter, Action<string> failure = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
-			return Task.FromResult(this.Validate(data, failure));
+			return Task.FromResult(this.Validate(data, parameter, failure));
 		}
 		#endregion
 

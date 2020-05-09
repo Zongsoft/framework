@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Collections;
+using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership.Common
 {
@@ -53,33 +54,25 @@ namespace Zongsoft.Security.Membership.Common
 		private const int PASSWORD_STRENGTH_LETTER_DIGIT = PASSWORD_STRENGTH_DIGIT | PASSWORD_STRENGTH_LOWERCASE | PASSWORD_STRENGTH_UPPERCASE;
 		#endregion
 
-		#region 公共属性
-		public Configuration.UserOptions Option
-		{
-			get;
-			set;
-		}
-		#endregion
-
 		#region 验证方法
-		public bool Validate(string data, Action<string> failure = null)
+		public bool Validate(string data, object parameter, Action<string> failure = null)
 		{
-			var option = this.Option;
+			var options = parameter as Configuration.IdentityOptions;
 
 			//如果没有设置密码验证策略，则返回验证成功
-			if(option == null || option.PasswordLength < 1)
+			if(options == null || options.PasswordLength < 1)
 				return true;
 
 			//如果如果密码长度小于配置要求的长度，则返回验证失败
-			if(string.IsNullOrEmpty(data) || data.Length < option.PasswordLength)
+			if(string.IsNullOrEmpty(data) || data.Length < options.PasswordLength)
 			{
-				failure?.Invoke($"The password length must be no less than {option.PasswordLength} characters.");
+				failure?.Invoke($"The password length must be no less than {options.PasswordLength} characters.");
 				return false;
 			}
 
 			bool isValidate;
 
-			switch(option.PasswordStrength)
+			switch(options.PasswordStrength)
 			{
 				case PasswordStrength.Digits:
 					isValidate = this.GetStrength(data) == PASSWORD_STRENGTH_DIGIT;
@@ -133,10 +126,10 @@ namespace Zongsoft.Security.Membership.Common
 			return true;
 		}
 
-		public Task<bool> ValidateAsync(string data, Action<string> failure = null, CancellationToken cancellation = default)
+		public Task<bool> ValidateAsync(string data, object parameter, Action<string> failure = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
-			return Task.FromResult(this.Validate(data, failure));
+			return Task.FromResult(this.Validate(data, parameter, failure));
 		}
 		#endregion
 

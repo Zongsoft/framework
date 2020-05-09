@@ -41,7 +41,7 @@ namespace Zongsoft.Security.Membership.Common
 	public class UserNameValidator : IValidator<string>, IMatchable<string>
 	{
 		#region 验证方法
-		public bool Validate(string data, Action<string> failure = null)
+		public bool Validate(string data, object parameter, Action<string> failure = null)
 		{
 			if(string.IsNullOrEmpty(data))
 			{
@@ -78,10 +78,10 @@ namespace Zongsoft.Security.Membership.Common
 			return true;
 		}
 
-		public Task<bool> ValidateAsync(string data, Action<string> failure = null, CancellationToken cancellation = default)
+		public Task<bool> ValidateAsync(string data, object parameter, Action<string> failure = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
-			return Task.FromResult(this.Validate(data, failure));
+			return Task.FromResult(this.Validate(data, parameter, failure));
 		}
 		#endregion
 
