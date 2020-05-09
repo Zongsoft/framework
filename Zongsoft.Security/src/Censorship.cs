@@ -84,7 +84,7 @@ namespace Zongsoft.Security
 
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
+			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 		#endregion

@@ -62,7 +62,7 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
+			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 

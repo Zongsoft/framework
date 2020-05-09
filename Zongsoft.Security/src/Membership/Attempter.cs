@@ -32,6 +32,7 @@ using System;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Runtime.Caching;
+using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
@@ -48,10 +49,17 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public ICache Cache
 		{
-			get => _cache;
+			get => _cache ?? (_cache = this.CacheProvider?.GetService(Modules.Security) ?? this.CacheProvider?.GetService(string.Empty));
 			set => _cache = value ?? throw new ArgumentNullException();
 		}
 
+		[ServiceDependency]
+		public IServiceProvider<ICache> CacheProvider
+		{
+			get; set;
+		}
+
+		[Options("Security/Membership/Authentication/Attempter")]
 		public Configuration.AttempterOptions Options
 		{
 			get; set;

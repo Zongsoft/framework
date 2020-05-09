@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Configuration.Options;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -71,7 +72,7 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
+			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
@@ -86,7 +87,8 @@ namespace Zongsoft.Security.Membership
 
 		public ISequence Sequence { get => _dataAccess?.Sequence; }
 
-		public Configuration.UserOptions Options { get; set; }
+		[Options("Security/Membership/Identity")]
+		public Configuration.IdentityOptions Options { get; set; }
 		#endregion
 
 		#region 用户管理
@@ -852,7 +854,7 @@ namespace Zongsoft.Security.Membership
 			var validator = _services?.GetMatchedService<IValidator<string>>("password");
 
 			if(validator != null)
-				validator.Validate(password, message => throw new SecurityException("password.illegality", message));
+				validator.Validate(password, this.Options, message => throw new SecurityException("password.illegality", message));
 		}
 		#endregion
 

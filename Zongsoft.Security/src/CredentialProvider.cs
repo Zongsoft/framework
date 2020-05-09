@@ -29,9 +29,12 @@
 
 using System;
 
+using Zongsoft.Services;
+using Zongsoft.Runtime.Caching;
+
 namespace Zongsoft.Security
 {
-	[Zongsoft.Services.Service(Modules.Security, typeof(ICredentialProvider))]
+	[Service(Modules.Security, typeof(ICredentialProvider))]
 	public class CredentialProvider : ICredentialProvider
 	{
 		#region 事件定义
@@ -42,8 +45,8 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 成员字段
-		private Runtime.Caching.ICache _cache;
-		private readonly Runtime.Caching.MemoryCache _memoryCache;
+		private ICache _cache;
+		private readonly MemoryCache _memoryCache;
 		#endregion
 
 		#region 构造函数
@@ -60,10 +63,16 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 获取或设置凭证的缓存器。
 		/// </summary>
-		public Runtime.Caching.ICache Cache
+		public ICache Cache
 		{
-			get => _cache;
+			get => _cache ?? (_cache = this.CacheProvider?.GetService(Modules.Security) ?? this.CacheProvider?.GetService(string.Empty));
 			set => _cache = value ?? throw new ArgumentNullException();
+		}
+
+		[ServiceDependency]
+		public IServiceProvider<ICache> CacheProvider
+		{
+			get; set;
 		}
 		#endregion
 

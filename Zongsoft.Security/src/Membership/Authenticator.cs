@@ -33,6 +33,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
+using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
@@ -44,13 +45,13 @@ namespace Zongsoft.Security.Membership
 		private const string KEY_AUTHENTICATION_TEMPLATE = "Authentication";
 		#endregion
 
-		#region 成员字段
-		private IDataAccess _dataAccess;
-		#endregion
-
 		#region 事件声明
 		public event EventHandler<AuthenticationContext> Authenticated;
 		public event EventHandler<AuthenticationContext> Authenticating;
+		#endregion
+
+		#region 成员字段
+		private IDataAccess _dataAccess;
 		#endregion
 
 		#region 构造函数
@@ -62,6 +63,7 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public string Name { get => "Normal"; }
 
+		[Options("Security/Membership/Authentication/Credential")]
 		public Configuration.CredentialOptions Options { get; set; }
 
 		[ServiceDependency]
@@ -72,7 +74,7 @@ namespace Zongsoft.Security.Membership
 
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? this.DataAccessProvider.GetAccessor(Modules.Security);
+			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor(Modules.Security));
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 

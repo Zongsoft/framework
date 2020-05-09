@@ -39,13 +39,13 @@ namespace Zongsoft.Security.Membership
 	[Service(Modules.Security, typeof(IAuthorizer))]
 	public class Authorizer : IAuthorizer
 	{
-		#region 成员字段
-		private IDataAccess _dataAccess;
-		#endregion
-
 		#region 事件定义
 		public event EventHandler<AuthorizationContext> Authorizing;
 		public event EventHandler<AuthorizationContext> Authorized;
+		#endregion
+
+		#region 成员字段
+		private IDataAccess _dataAccess;
 		#endregion
 
 		#region 构造函数
@@ -55,18 +55,14 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency]
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor(Modules.Security));
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
+
+		[ServiceDependency(IsRequired = true)]
+		public IDataAccessProvider DataAccessProvider { get; set; }
 		#endregion
 
 		#region 公共方法
