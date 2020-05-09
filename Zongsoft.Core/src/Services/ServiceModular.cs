@@ -68,7 +68,6 @@ namespace Zongsoft.Services
 				{
 					definition = _module.DefineType(GetContractName(key.Module), TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract);
 					definition.DefineGenericParameters("T")[0].SetGenericParameterAttributes(GenericParameterAttributes.Covariant | GenericParameterAttributes.ReferenceTypeConstraint);
-
 					_definitions.Add(module, definition);
 				}
 

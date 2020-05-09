@@ -84,7 +84,7 @@ namespace Zongsoft.Services
 						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(p, property, attribute));
+							list.Add(new MemberInjectionDescriptor(p, property, t, attribute));
 						else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
 							list.Add(new MemberInjectionDescriptor(p, property));
 					}
@@ -97,7 +97,7 @@ namespace Zongsoft.Services
 						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(p, field, attribute));
+							list.Add(new MemberInjectionDescriptor(p, field, t, attribute));
 						else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
 							list.Add(new MemberInjectionDescriptor(p, field));
 					}
@@ -118,12 +118,9 @@ namespace Zongsoft.Services
 			private readonly MemberInfo _member;
 			private readonly Func<object> _valueThunk;
 
-			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member, ServiceDependencyAttribute attribute)
+			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member, Type type, ServiceDependencyAttribute attribute)
 			{
 				_member = member;
-
-				if(!string.IsNullOrEmpty(attribute.Provider))
-					provider = ApplicationContext.Current.Modules.Get(attribute.Provider).Services;
 
 				var serviceType = attribute.ServiceType ?? member switch
 				{
@@ -133,9 +130,9 @@ namespace Zongsoft.Services
 				};
 
 				if(attribute.IsRequired)
-					_valueThunk = () => provider.GetRequiredService(serviceType);
+					_valueThunk = () => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetRequiredService(serviceType);
 				else
-					_valueThunk = () => provider.GetService(serviceType);
+					_valueThunk = () => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetService(serviceType);
 			}
 
 			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member)
@@ -172,6 +169,22 @@ namespace Zongsoft.Services
 					ref target,
 					_valueThunk()
 				);
+			}
+
+			private static IServiceProvider GetModularServiceProvider(string name, Type type)
+			{
+				//即使服务注入注解没有指定容器/模块名，依然需要优先处理其所在类标注的服务注解中的容器/模块
+				if(string.IsNullOrEmpty(name))
+				{
+					var module = type.GetCustomAttribute<ServiceAttribute>(true)?.Provider;
+
+					if(string.IsNullOrEmpty(module))
+						return null;
+					else
+						return ApplicationContext.Current.Modules.Get(module).Services;
+				}
+
+				return ApplicationContext.Current.Modules.Get(name).Services;
 			}
 		}
 		#endregion

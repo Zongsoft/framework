@@ -40,6 +40,7 @@ namespace Zongsoft.Services
 	public static class ServiceCollectionExtension
 	{
 		#region 私有变量
+		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
 		private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
 			.GetMethod("Configure", 1,
 				BindingFlags.Public | BindingFlags.Static,
@@ -79,31 +80,36 @@ namespace Zongsoft.Services
 				       type.GenericTypeArguments[0] : type;
 			}
 
-			var properties = type.DeclaredProperties.Where(p => p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
-
-			foreach(var property in properties)
+			do
 			{
-				var attribute = property.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+				var properties = type.DeclaredProperties.Where(p => p.CanRead && p.CanWrite && p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
 
-				if(attribute != null)
+				foreach(var property in properties)
 				{
-					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
-					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+					var attribute = property.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+
+					if(attribute != null)
+					{
+						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
+						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+					}
 				}
-			}
 
-			var fields = type.DeclaredFields.Where(p => p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
+				var fields = type.DeclaredFields.Where(f => f.IsPublic && !f.IsInitOnly && f.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
 
-			foreach(var field in fields)
-			{
-				var attribute = field.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
-
-				if(attribute != null)
+				foreach(var field in fields)
 				{
-					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
-					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+					var attribute = field.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+
+					if(attribute != null)
+					{
+						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
+						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+					}
 				}
-			}
+
+				type = type.BaseType?.GetTypeInfo();
+			} while(type != null && type.GetTypeInfo() != ObjectType);
 		}
 
 		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
