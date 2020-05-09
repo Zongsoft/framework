@@ -40,11 +40,14 @@ namespace Zongsoft.Plugins
 	public class PluginOptions : IEquatable<PluginOptions>
 	{
 		#region 构造函数
-		internal PluginOptions(Microsoft.Extensions.Hosting.IHostEnvironment environment)
+		internal PluginOptions(Microsoft.Extensions.Hosting.IHostEnvironment environment, string pluginsDirectoryName = null)
 		{
+			if(environment == null)
+				throw new ArgumentNullException(nameof(environment));
+
 			this.EnvironmentName = environment.EnvironmentName;
 			this.ApplicationDirectory = environment.ContentRootPath;
-			this.PluginsPath = Path.Combine(this.ApplicationDirectory, "plugins");
+			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 
@@ -75,7 +78,7 @@ namespace Zongsoft.Plugins
 				this.ApplicationDirectory = applicationDirectory.Trim();
 
 				if(!Path.IsPathRooted(ApplicationDirectory))
-					throw new ArgumentException("This value of 'applicationDirectory' parameter is invalid.");
+					throw new ArgumentException($"The specified '{applicationDirectory}' application directory is not an absolute path.");
 			}
 
 			if(!Directory.Exists(this.ApplicationDirectory))
