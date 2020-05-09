@@ -167,6 +167,14 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>
+		/// 获取一个值，指示当前插件是否具有子插件集。
+		/// </summary>
+		public bool HasChildren
+		{
+			get => _children != null && _children.Count > 0;
+		}
+
+		/// <summary>
 		/// 获取当前插件的子插件集合。
 		/// </summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
