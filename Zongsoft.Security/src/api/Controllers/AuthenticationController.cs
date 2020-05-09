@@ -41,6 +41,7 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[Area(Modules.Security)]
+	[Route("{area}/{controller}/{action}/{id?}")]
 	public class AuthenticationController : ControllerBase
 	{
 		#region 成员字段
@@ -67,7 +68,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 公共方法
 		[HttpPost]
 		[ActionName("Signin")]
-		public Task<IActionResult> SigninAsync(string id, AuthenticationRequest request)
+		public Task<IActionResult> SigninAsync(string id, [FromBody]AuthenticationRequest request)
 		{
 			if(string.IsNullOrWhiteSpace(id))
 				return Task.FromResult((IActionResult)this.BadRequest());
