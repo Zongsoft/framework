@@ -39,6 +39,17 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 公共属性
+		public string Default { get; set; }
+		#endregion
+
+		#region 公共方法
+		public ConnectionSetting GetDefault()
+		{
+			return this.Default != null && this.TryGet(this.Default, out var setting) ? setting : null;
+		}
+		#endregion
+
 		#region 重写方法
 		protected override string GetKeyForItem(ConnectionSetting item)
 		{
