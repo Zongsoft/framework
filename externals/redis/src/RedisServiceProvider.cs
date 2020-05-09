@@ -48,15 +48,18 @@ namespace Zongsoft.Externals.Redis
 		#region 公共方法
 		public RedisService GetRedis(string name)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(name);
-
-			return _services.GetOrAdd(name, key =>
+			return _services.GetOrAdd(name ?? string.Empty, key =>
 			{
 				var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Externals/Redis/ConnectionSettings");
 
-				if(settings != null && settings.TryGet(key, out var setting))
-					return new RedisService(key, RedisServiceSettings.Parse(setting.Value));
+				if(settings != null)
+				{
+					if(string.IsNullOrEmpty(key))
+						key = settings.Default ?? string.Empty;
+
+					if(settings.TryGet(key, out var setting))
+						return new RedisService(key, RedisServiceSettings.Parse(setting.Value));
+				}
 
 				throw new KeyNotFoundException($"The Redis service with the specified name '{key}' is undefined.");
 			});
