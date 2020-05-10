@@ -28,11 +28,6 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Generic;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
 namespace Zongsoft.Web
 {
@@ -49,44 +44,6 @@ namespace Zongsoft.Web
 		{
 			//调用基类同名方法，以启动工作台下Startup下的所有工作者
 			base.OnOpen();
-
-			//加载插件中的Web程序集部件
-			this.LoadApplicationParts(this.ApplicationContext.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts, this.ApplicationContext.Plugins);
-		}
-		#endregion
-
-		#region 私有方法
-		private void LoadApplicationParts(ICollection<ApplicationPart> parts, IEnumerable<Plugins.Plugin> plugins)
-		{
-			if(parts == null || plugins == null)
-				return;
-
-			foreach(var plugin in plugins)
-			{
-				var assemblies = plugin.Manifest.Assemblies;
-
-				for(int i = 0; i < assemblies.Length; i++)
-				{
-					if(IsWebAssembly(assemblies[i]))
-						parts.Add(new AssemblyPart(assemblies[i]));
-				}
-
-				if(plugin.HasChildren)
-					LoadApplicationParts(parts, plugin.Children);
-			}
-		}
-
-		private static bool IsWebAssembly(Assembly assembly)
-		{
-			var references = assembly.GetReferencedAssemblies();
-
-			for(int i = 0; i < references.Length; i++)
-			{
-				if(references[i].Name.StartsWith("Microsoft.AspNetCore.", StringComparison.Ordinal))
-					return true;
-			}
-
-			return false;
 		}
 		#endregion
 	}

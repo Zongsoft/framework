@@ -28,11 +28,14 @@
  */
 
 using System;
+using System.Reflection;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
 namespace Zongsoft.Web
 {
@@ -49,6 +52,12 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public override ClaimsPrincipal Principal
+		{
+			get => this.HttpContext.User;
+		}
+
 		/// <summary>
 		/// 获取当前Web应用程序的上下文对象。
 		/// </summary>
@@ -65,14 +74,52 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 重写方法
-		public override ClaimsPrincipal Principal
+		public override void Initialize()
 		{
-			get => this.HttpContext.User;
+			base.Initialize();
+
+			//加载插件中的Web程序集部件
+			PopulateApplicationParts(this.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts, this.Plugins);
 		}
 
-		protected override Zongsoft.Plugins.IWorkbenchBase CreateWorkbench(out Zongsoft.Plugins.PluginTreeNode node)
+		protected override Plugins.IWorkbenchBase CreateWorkbench(out Plugins.PluginTreeNode node)
 		{
 			return base.CreateWorkbench(out node) ?? new Workbench(this);
+		}
+		#endregion
+
+		#region 私有方法
+		private static void PopulateApplicationParts(ICollection<ApplicationPart> parts, IEnumerable<Plugins.Plugin> plugins)
+		{
+			if(parts == null || plugins == null)
+				return;
+
+			foreach(var plugin in plugins)
+			{
+				var assemblies = plugin.Manifest.Assemblies;
+
+				for(int i = 0; i < assemblies.Length; i++)
+				{
+					if(IsWebAssembly(assemblies[i]))
+						parts.Add(new AssemblyPart(assemblies[i]));
+				}
+
+				if(plugin.HasChildren)
+					PopulateApplicationParts(parts, plugin.Children);
+			}
+		}
+
+		private static bool IsWebAssembly(Assembly assembly)
+		{
+			var references = assembly.GetReferencedAssemblies();
+
+			for(int i = 0; i < references.Length; i++)
+			{
+				if(references[i].Name.StartsWith("Microsoft.AspNetCore.", StringComparison.Ordinal))
+					return true;
+			}
+
+			return false;
 		}
 		#endregion
 	}
