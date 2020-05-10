@@ -447,7 +447,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 授权方法
 		[HttpGet]
-		[Route("[id]/[schemaId]:[actionId]")]
+		[Route("{id:int}/{schemaId}:{actionId}")]
 		public IActionResult Authorize(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))

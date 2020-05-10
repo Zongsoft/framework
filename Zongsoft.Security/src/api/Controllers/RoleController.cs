@@ -42,7 +42,7 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[Area(Modules.Security)]
-	[Zongsoft.Web.Controller("Roles")]
+	//[Zongsoft.Web.Controller("Roles")]
 	[Authorize(Roles = "Administrators, Security, Securities")]
 	[Authorization(Roles = "Security, Securities")]
 	public class RoleController : ControllerBase
