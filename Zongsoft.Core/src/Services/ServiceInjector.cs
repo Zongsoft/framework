@@ -46,30 +46,61 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		public static object Inject(this IServiceProvider provider, object target)
+		public static object Inject(this IServiceProvider provider, Type instanceType, params object[] parameters)
 		{
-			if(target == null || provider == null)
-				return target;
+			if(provider == null)
+				throw new ArgumentNullException(nameof(provider));
 
-			if(IsInjectable(provider, target.GetType(), out var descriptors))
+			if(instanceType == null)
+				throw new ArgumentNullException(nameof(instanceType));
+
+			//如果是静态类型则返回空
+			if(instanceType.IsAbstract && instanceType.IsSealed)
+				return null;
+
+			var instance = instanceType.IsAbstract ?
+				Data.Model.Build(instanceType) :
+				ActivatorUtilities.CreateInstance(provider, instanceType, parameters ?? Array.Empty<Type>());
+
+			if(IsInjectable(instanceType, out var descriptors))
 			{
 				for(int i = 0; i < descriptors.Length; i++)
-					descriptors[i].SetValue(ref target);
+					descriptors[i].SetValue(provider, ref instance);
+			}
+
+			return instance;
+		}
+
+		public static object Inject(this IServiceProvider provider, object target)
+		{
+			if(provider == null)
+				throw new ArgumentNullException(nameof(provider));
+
+			if(target == null)
+				return target;
+
+			if(IsInjectable(target.GetType(), out var descriptors))
+			{
+				for(int i = 0; i < descriptors.Length; i++)
+					descriptors[i].SetValue(provider, ref target);
 			}
 
 			return target;
 		}
 
-		public static bool IsInjectable(this IServiceProvider provider, Type type)
+		public static bool IsInjectable(this Type type)
 		{
-			return IsInjectable(provider, type, out _);
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			return IsInjectable(type, out _);
 		}
 		#endregion
 
 		#region 私有方法
-		private static bool IsInjectable(this IServiceProvider provider, Type type, out MemberInjectionDescriptor[] descriptors)
+		private static bool IsInjectable(Type type, out MemberInjectionDescriptor[] descriptors)
 		{
-			descriptors = _descriptors.GetOrAdd(type, (t, p) =>
+			descriptors = _descriptors.GetOrAdd(type, t =>
 			{
 				var type = t.GetTypeInfo();
 				var list = new List<MemberInjectionDescriptor>();
@@ -84,9 +115,9 @@ namespace Zongsoft.Services
 						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(p, property, t, attribute));
+							list.Add(new MemberInjectionDescriptor(property, t, attribute));
 						else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
-							list.Add(new MemberInjectionDescriptor(p, property));
+							list.Add(new MemberInjectionDescriptor(property));
 					}
 
 					foreach(var field in type.DeclaredFields)
@@ -97,16 +128,16 @@ namespace Zongsoft.Services
 						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(p, field, t, attribute));
+							list.Add(new MemberInjectionDescriptor(field, t, attribute));
 						else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
-							list.Add(new MemberInjectionDescriptor(p, field));
+							list.Add(new MemberInjectionDescriptor(field));
 					}
 
 					type = type.BaseType?.GetTypeInfo();
 				} while(type != null && type != ObjectType);
 
 				return list.Count > 0 ? list.ToArray() : null;
-			}, provider);
+			});
 
 			return descriptors != null && descriptors.Length > 0;
 		}
@@ -116,9 +147,9 @@ namespace Zongsoft.Services
 		private class MemberInjectionDescriptor
 		{
 			private readonly MemberInfo _member;
-			private readonly Func<object> _valueThunk;
+			private readonly Func<IServiceProvider, object> _valueFactory;
 
-			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member, Type type, ServiceDependencyAttribute attribute)
+			public MemberInjectionDescriptor(MemberInfo member, Type type, ServiceDependencyAttribute attribute)
 			{
 				_member = member;
 
@@ -130,12 +161,12 @@ namespace Zongsoft.Services
 				};
 
 				if(attribute.IsRequired)
-					_valueThunk = () => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetRequiredService(serviceType);
+					_valueFactory = provider => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetRequiredService(serviceType);
 				else
-					_valueThunk = () => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetService(serviceType);
+					_valueFactory = provider => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetService(serviceType);
 			}
 
-			public MemberInjectionDescriptor(IServiceProvider provider, MemberInfo member)
+			public MemberInjectionDescriptor(MemberInfo member)
 			{
 				_member = member;
 
@@ -150,7 +181,7 @@ namespace Zongsoft.Services
 				{
 					var optionType = typeof(IOptions<>).MakeGenericType(serviceType);
 
-					_valueThunk = () =>
+					_valueFactory = provider =>
 					{
 						var property = _options.GetOrAdd(optionType, t => t.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance));
 						var instance = provider.GetService(optionType);
@@ -158,16 +189,16 @@ namespace Zongsoft.Services
 					};
 				}
 				else
-					_valueThunk = () => provider.GetService(serviceType);
+					_valueFactory = provider => provider.GetService(serviceType);
 			}
 
-			public void SetValue(ref object target)
+			public void SetValue(IServiceProvider provider, ref object target)
 			{
-				Zongsoft.Reflection.Reflector.SetValue
+				Reflection.Reflector.SetValue
 				(
 					_member,
 					ref target,
-					_valueThunk()
+					_valueFactory(provider)
 				);
 			}
 
