@@ -58,7 +58,7 @@ namespace Zongsoft.Services
 			{
 				var descriptor = descriptors[i];
 
-				if(descriptor.ImplementationType != null && this.IsInjectable(descriptor.ImplementationType))
+				if(descriptor.ImplementationType != null && descriptor.ImplementationType.IsInjectable())
 				{
 					var method = GetFacotryMethod.MakeGenericMethod(descriptor.ImplementationType);
 					var factory = (Func<IServiceProvider, object>)method.Invoke(null, Array.Empty<object>());
@@ -72,7 +72,7 @@ namespace Zongsoft.Services
 			_provider = _descriptors.BuildServiceProvider(options);
 		}
 
-		internal ServiceProvider(string name, IServiceProvider provider)
+		private ServiceProvider(string name, IServiceProvider provider)
 		{
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_provider = provider ?? throw new ArgumentNullException(nameof(provider));
@@ -82,6 +82,9 @@ namespace Zongsoft.Services
 		#region 公共方法
 		public object GetService(Type serviceType)
 		{
+			if(serviceType == typeof(IServiceProvider))
+				return this;
+
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 
@@ -89,6 +92,13 @@ namespace Zongsoft.Services
 				return _provider.GetService(contract);
 
 			return _provider.GetService(serviceType);
+		}
+		#endregion
+
+		#region 内部方法
+		internal ServiceProvider CreateModularServiceProvider(string name)
+		{
+			return new ServiceProvider(name, _provider.CreateScope().ServiceProvider);
 		}
 		#endregion
 

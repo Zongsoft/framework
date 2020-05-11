@@ -52,12 +52,6 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共属性
-		/// <inheritdoc />
-		public override ClaimsPrincipal Principal
-		{
-			get => this.HttpContext.User;
-		}
-
 		/// <summary>
 		/// 获取当前Web应用程序的上下文对象。
 		/// </summary>
@@ -70,6 +64,12 @@ namespace Zongsoft.Web
 
 				return _http.HttpContext;
 			}
+		}
+
+		/// <inheritdoc />
+		public override ClaimsPrincipal Principal
+		{
+			get => this.HttpContext.User;
 		}
 		#endregion
 

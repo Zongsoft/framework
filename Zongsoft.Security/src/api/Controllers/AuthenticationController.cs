@@ -49,6 +49,10 @@ namespace Zongsoft.Security.Web.Controllers
 		private ICredentialProvider _credentialProvider;
 		#endregion
 
+		public AuthenticationController(IServiceProvider services)
+		{
+		}
+
 		#region 公共属性
 		[ServiceDependency]
 		public IAuthenticator Authenticator
@@ -67,7 +71,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 公共方法
 		[HttpPost]
-		[ActionName("Signin")]
+		//[ActionName("Signin")]
 		public Task<IActionResult> SigninAsync(string id, [FromBody]AuthenticationRequest request)
 		{
 			if(string.IsNullOrWhiteSpace(id))

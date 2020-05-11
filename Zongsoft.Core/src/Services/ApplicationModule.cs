@@ -94,7 +94,7 @@ namespace Zongsoft.Services
 					lock(_syncRoot)
 					{
 						if(_services == null)
-							_services = new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
+							_services = ApplicationContext.Current.Services.CreateModularServiceProvider(this.Name);
 					}
 				}
 
