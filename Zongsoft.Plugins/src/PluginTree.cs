@@ -106,15 +106,12 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 加载方法
-		public bool Load()
+		public PluginTree Load()
 		{
 			if(this.Status == PluginTreeStatus.None)
-			{
 				this.Loader.Load(this.Options);
-				return true;
-			}
 
-			return false;
+			return this;
 		}
 		#endregion
 

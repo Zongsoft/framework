@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
@@ -62,9 +64,11 @@ namespace Zongsoft.Plugins.Hosting
 			{
 				if(ctx.Properties.TryGetValue(typeof(PluginOptions), out var options))
 				{
+					//将插件启动设置选项加载到服务中
 					services.AddSingleton((PluginOptions)options);
-					var tree = PluginTree.Get((PluginOptions)options);
-					tree.Load();
+
+					//获取插件树并加载它
+					var tree = PluginTree.Get((PluginOptions)options).Load();
 
 					foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
 					{
