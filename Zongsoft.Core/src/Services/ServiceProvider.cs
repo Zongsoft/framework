@@ -43,7 +43,6 @@ namespace Zongsoft.Services
 		#region 成员字段
 		private readonly string _name;
 		private readonly IServiceProvider _provider;
-		private readonly IServiceCollection _descriptors;
 		#endregion
 
 		#region 构造函数
@@ -51,8 +50,6 @@ namespace Zongsoft.Services
 		{
 			if(descriptors == null)
 				throw new ArgumentNullException(nameof(descriptors));
-
-			_descriptors = new ServiceCollection();
 
 			for(int i = 0; i < descriptors.Count; i++)
 			{
@@ -62,14 +59,12 @@ namespace Zongsoft.Services
 				{
 					var method = GetFacotryMethod.MakeGenericMethod(descriptor.ImplementationType);
 					var factory = (Func<IServiceProvider, object>)method.Invoke(null, Array.Empty<object>());
-					descriptor = new ServiceDescriptor(descriptor.ServiceType, factory, descriptor.Lifetime);
+					descriptors[i] = new ServiceDescriptor(descriptor.ServiceType, factory, descriptor.Lifetime);
 				}
-
-				_descriptors.Add(descriptor);
 			}
 
-			_descriptors.AddSingleton(this);
-			_provider = _descriptors.BuildServiceProvider(options);
+			descriptors.AddSingleton(this);
+			_provider = descriptors.BuildServiceProvider(options);
 		}
 
 		private ServiceProvider(string name, IServiceProvider provider)
@@ -107,8 +102,6 @@ namespace Zongsoft.Services
 		{
 			if(_provider is IDisposable disposable)
 				disposable.Dispose();
-
-			_descriptors.Clear();
 		}
 		#endregion
 
