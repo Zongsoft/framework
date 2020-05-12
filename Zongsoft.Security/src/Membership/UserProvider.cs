@@ -41,7 +41,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(Modules.Security, typeof(IUserProvider))]
+	[Service(typeof(IUserProvider))]
 	public class UserProvider : IUserProvider
 	{
 		#region 常量定义

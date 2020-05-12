@@ -38,7 +38,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Security
 {
-	[Service(Modules.Security, typeof(ICensorship))]
+	[Service(typeof(ICensorship))]
 	public class Censorship : ICensorship
 	{
 		#region 常量定义

@@ -39,7 +39,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(Modules.Security, typeof(IRoleProvider), typeof(IMemberProvider))]
+	[Service(typeof(IRoleProvider), typeof(IMemberProvider))]
 	public class RoleProvider : IRoleProvider, IMemberProvider
 	{
 		#region 事件定义

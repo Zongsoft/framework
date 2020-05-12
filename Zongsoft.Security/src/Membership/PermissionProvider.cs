@@ -38,7 +38,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(Modules.Security, typeof(IPermissionProvider))]
+	[Service(typeof(IPermissionProvider))]
 	public class PermissionProvider : IPermissionProvider
 	{
 		#region 成员字段

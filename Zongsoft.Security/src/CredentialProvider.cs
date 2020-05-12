@@ -34,7 +34,7 @@ using Zongsoft.Runtime.Caching;
 
 namespace Zongsoft.Security
 {
-	[Service(Modules.Security, typeof(ICredentialProvider))]
+	[Service(typeof(ICredentialProvider))]
 	public class CredentialProvider : ICredentialProvider
 	{
 		#region 事件定义

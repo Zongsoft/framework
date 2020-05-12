@@ -37,7 +37,7 @@ using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(Modules.Security, typeof(IAuthenticator))]
+	[Service(typeof(IAuthenticator))]
 	public class Authenticator : IAuthenticator
 	{
 		#region 常量定义

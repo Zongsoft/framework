@@ -41,7 +41,7 @@ namespace Zongsoft.Security.Membership.Common
 	/// <summary>
 	/// 提供密码有效性验证的验证器类。
 	/// </summary>
-	[Service(Modules.Security, typeof(IValidator<string>))]
+	[Service(typeof(IValidator<string>))]
 	public class PasswordValidator : IValidator<string>, IMatchable<string>
 	{
 		#region 常量定义

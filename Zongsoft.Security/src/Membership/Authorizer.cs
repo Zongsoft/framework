@@ -36,7 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(Modules.Security, typeof(IAuthorizer))]
+	[Service(typeof(IAuthorizer))]
 	public class Authorizer : IAuthorizer
 	{
 		#region 事件定义

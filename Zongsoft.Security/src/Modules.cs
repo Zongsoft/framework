@@ -29,6 +29,8 @@
 
 using System;
 
+[assembly:Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+
 namespace Zongsoft.Security
 {
 	public static class Modules
