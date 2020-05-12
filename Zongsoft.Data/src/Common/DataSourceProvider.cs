@@ -50,7 +50,7 @@ namespace Zongsoft.Data.Common
 		#region 公共方法
 		public IEnumerable<IDataSource> GetSources(string name)
 		{
-			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionStrings");
+			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
 
 			if(connectionSettings != null)
 			{
