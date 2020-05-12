@@ -37,7 +37,6 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Zongsoft.Web
 {
-	[Services.Service(typeof(IControllerActivator))]
 	public class ControllerActivator : IControllerActivator
 	{
 		private static readonly ConcurrentDictionary<Type, ObjectFactory> _activators = new ConcurrentDictionary<Type, ObjectFactory>();
