@@ -117,7 +117,7 @@ namespace Zongsoft.Services
 			if(type.IsAbstract)
 			{
 				if(type.IsSealed)
-					RegisterStaticMember(services, type, attribute.Provider, attribute.Members);
+					RegisterStaticMember(services, type, attribute.Members);
 
 				return;
 			}
@@ -127,8 +127,9 @@ namespace Zongsoft.Services
 			if(attribute.Contracts != null)
 			{
 				var contracts = attribute.Contracts;
+				var moduleName = ServiceModular.GetModuleName(type);
 
-				if(string.IsNullOrEmpty(attribute.Provider))
+				if(string.IsNullOrEmpty(moduleName))
 				{
 					for(var i = 0; i < contracts.Length; i++)
 					{
@@ -139,19 +140,21 @@ namespace Zongsoft.Services
 				{
 					for(var i = 0; i < contracts.Length; i++)
 					{
-						var contract = ServiceModular.GenerateContract(attribute.Provider, contracts[i]);
+						var contract = ServiceModular.GenerateContract(moduleName, contracts[i]);
 						services.AddSingleton(contract, svcs => svcs.GetService(type));
 					}
 				}
 			}
 		}
 
-		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string module, string members)
+		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members)
 		{
 			if(string.IsNullOrEmpty(members))
 				return;
 
-			if(string.IsNullOrEmpty(module))
+			var moduleName = ServiceModular.GetModuleName(type);
+
+			if(string.IsNullOrEmpty(moduleName))
 			{
 				foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
 				{
@@ -180,7 +183,7 @@ namespace Zongsoft.Services
 
 					if(property != null)
 					{
-						services.AddSingleton(ServiceModular.GenerateContract(module, property.PropertyType), property.GetValue(null));
+						services.AddSingleton(ServiceModular.GenerateContract(moduleName, property.PropertyType), property.GetValue(null));
 						continue;
 					}
 
@@ -188,7 +191,7 @@ namespace Zongsoft.Services
 
 					if(field != null)
 					{
-						services.AddSingleton(ServiceModular.GenerateContract(module, field.FieldType), field.GetValue(null));
+						services.AddSingleton(ServiceModular.GenerateContract(moduleName, field.FieldType), field.GetValue(null));
 						continue;
 					}
 				}

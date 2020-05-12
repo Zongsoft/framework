@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections.Generic;
@@ -55,6 +56,13 @@ namespace Zongsoft.Services
 			return _cache.TryGetValue(new ModularServiceKey(module, type), out contract);
 		}
 
+		public static bool TryGetContract(Type type, out Type contract)
+		{
+			contract = null;
+			var module = GetModuleName(type);
+			return string.IsNullOrEmpty(module) ? false : _cache.TryGetValue(new ModularServiceKey(module, type), out contract);
+		}
+
 		public static Type GenerateContract(string module, Type type)
 		{
 			static string GetContractName(string name)
@@ -73,6 +81,38 @@ namespace Zongsoft.Services
 
 				return definition.CreateType().MakeGenericType(key.ServiceType);
 			});
+		}
+		#endregion
+
+		#region 内部方法
+		internal static string GetModuleName(Type type)
+		{
+			if(type.Assembly.IsDynamic ||
+			   type.Assembly.FullName.StartsWith("System", StringComparison.OrdinalIgnoreCase) ||
+			   type.Assembly.FullName.StartsWith("Microsoft", StringComparison.OrdinalIgnoreCase))
+				return null;
+
+			var attribute = type.Assembly.GetCustomAttribute<ApplicationModuleAttribute>();
+
+			if(attribute != null)
+				return attribute.Name;
+
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+			foreach(var assembly in type.Assembly.GetReferencedAssemblies())
+			{
+				var found = assemblies.FirstOrDefault(a => a.FullName == assembly.FullName);
+
+				if(found != null)
+				{
+					attribute = found.GetCustomAttribute<ApplicationModuleAttribute>();
+
+					if(attribute != null)
+						return attribute.Name;
+				}
+			}
+
+			return null;
 		}
 		#endregion
 

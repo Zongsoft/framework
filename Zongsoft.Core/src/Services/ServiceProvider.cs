@@ -64,10 +64,12 @@ namespace Zongsoft.Services
 			}
 
 			descriptors.AddSingleton(this);
+			descriptors.AddSingleton<IServiceProvider>(this);
+
 			_provider = descriptors.BuildServiceProvider(options);
 		}
 
-		private ServiceProvider(string name, IServiceProvider provider)
+		internal ServiceProvider(string name, IServiceProvider provider)
 		{
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_provider = provider ?? throw new ArgumentNullException(nameof(provider));
@@ -80,6 +82,9 @@ namespace Zongsoft.Services
 			if(serviceType == typeof(IServiceProvider))
 				return this;
 
+			if(serviceType == typeof(IServiceScopeFactory) || serviceType == typeof(IServiceScope))
+				return this;
+
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 
@@ -87,13 +92,6 @@ namespace Zongsoft.Services
 				return _provider.GetService(contract);
 
 			return _provider.GetService(serviceType);
-		}
-		#endregion
-
-		#region 内部方法
-		internal ServiceProvider CreateModularServiceProvider(string name)
-		{
-			return new ServiceProvider(name, _provider.CreateScope().ServiceProvider);
 		}
 		#endregion
 

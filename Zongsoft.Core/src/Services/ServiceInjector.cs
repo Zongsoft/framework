@@ -34,6 +34,7 @@ using System.Collections.Concurrent;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace Zongsoft.Services
 {
@@ -115,7 +116,7 @@ namespace Zongsoft.Services
 						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(property, t, attribute));
+							list.Add(new MemberInjectionDescriptor(property, attribute));
 						else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
 							list.Add(new MemberInjectionDescriptor(property));
 					}
@@ -128,7 +129,7 @@ namespace Zongsoft.Services
 						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
 						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(field, t, attribute));
+							list.Add(new MemberInjectionDescriptor(field, attribute));
 						else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
 							list.Add(new MemberInjectionDescriptor(field));
 					}
@@ -147,9 +148,9 @@ namespace Zongsoft.Services
 		private class MemberInjectionDescriptor
 		{
 			private readonly MemberInfo _member;
-			private readonly Func<IServiceProvider, object> _valueFactory;
+			private readonly Func<IServiceProvider, object, object> _valueFactory;
 
-			public MemberInjectionDescriptor(MemberInfo member, Type type, ServiceDependencyAttribute attribute)
+			public MemberInjectionDescriptor(MemberInfo member, ServiceDependencyAttribute attribute)
 			{
 				_member = member;
 
@@ -161,9 +162,9 @@ namespace Zongsoft.Services
 				};
 
 				if(attribute.IsRequired)
-					_valueFactory = provider => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetRequiredService(serviceType);
+					_valueFactory = (provider, target) => provider.GetRequiredService(ServiceModular.TryGetContract(target.GetType(), out var contract) ? contract : serviceType);
 				else
-					_valueFactory = provider => (GetModularServiceProvider(attribute.Provider, type) ?? provider).GetService(serviceType);
+					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target.GetType(), out var contract) ? contract : serviceType);
 			}
 
 			public MemberInjectionDescriptor(MemberInfo member)
@@ -181,7 +182,7 @@ namespace Zongsoft.Services
 				{
 					var optionType = typeof(IOptions<>).MakeGenericType(serviceType);
 
-					_valueFactory = provider =>
+					_valueFactory = (provider, target) =>
 					{
 						var property = _options.GetOrAdd(optionType, t => t.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance));
 						var instance = provider.GetService(optionType);
@@ -189,7 +190,7 @@ namespace Zongsoft.Services
 					};
 				}
 				else
-					_valueFactory = provider => provider.GetService(serviceType);
+					_valueFactory = (provider, target) => provider.GetService(serviceType);
 			}
 
 			public void SetValue(IServiceProvider provider, ref object target)
@@ -198,24 +199,8 @@ namespace Zongsoft.Services
 				(
 					_member,
 					ref target,
-					_valueFactory(provider)
+					_valueFactory(provider, target)
 				);
-			}
-
-			private static IServiceProvider GetModularServiceProvider(string name, Type type)
-			{
-				//即使服务注入注解没有指定容器/模块名，依然需要优先处理其所在类标注的服务注解中的容器/模块
-				if(string.IsNullOrEmpty(name))
-				{
-					var module = type.GetCustomAttribute<ServiceAttribute>(true)?.Provider;
-
-					if(string.IsNullOrEmpty(module))
-						return null;
-					else
-						return ApplicationContext.Current.Modules.Get(module).Services;
-				}
-
-				return ApplicationContext.Current.Modules.Get(name).Services;
 			}
 		}
 		#endregion
