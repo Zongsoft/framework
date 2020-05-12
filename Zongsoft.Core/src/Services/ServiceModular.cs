@@ -51,16 +51,16 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		public static bool TryGetContract(string module, Type type, out Type contract)
+		public static bool TryGetContract(string module, Type serviceType, out Type contract)
 		{
-			return _cache.TryGetValue(new ModularServiceKey(module, type), out contract);
+			return _cache.TryGetValue(new ModularServiceKey(module, serviceType), out contract);
 		}
 
-		public static bool TryGetContract(Type type, out Type contract)
+		public static bool TryGetContract(object target, Type serviceType, out Type contract)
 		{
 			contract = null;
-			var module = GetModuleName(type);
-			return string.IsNullOrEmpty(module) ? false : _cache.TryGetValue(new ModularServiceKey(module, type), out contract);
+			var module = GetModuleName(target.GetType());
+			return string.IsNullOrEmpty(module) ? false : _cache.TryGetValue(new ModularServiceKey(module, serviceType), out contract);
 		}
 
 		public static Type GenerateContract(string module, Type type)

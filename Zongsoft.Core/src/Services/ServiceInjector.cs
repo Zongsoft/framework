@@ -162,9 +162,9 @@ namespace Zongsoft.Services
 				};
 
 				if(attribute.IsRequired)
-					_valueFactory = (provider, target) => provider.GetRequiredService(ServiceModular.TryGetContract(target.GetType(), out var contract) ? contract : serviceType);
+					_valueFactory = (provider, target) => provider.GetRequiredService(ServiceModular.TryGetContract(target, serviceType, out var contract) ? contract : serviceType);
 				else
-					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target.GetType(), out var contract) ? contract : serviceType);
+					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target, serviceType, out var contract) ? contract : serviceType);
 			}
 
 			public MemberInjectionDescriptor(MemberInfo member)
