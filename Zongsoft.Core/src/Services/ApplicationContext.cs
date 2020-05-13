@@ -148,7 +148,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual ServiceProvider Services
+		public virtual IServiceProvider Services
 		{
 			get => _services;
 		}

@@ -85,7 +85,7 @@ namespace Zongsoft.Services
 			get; set;
 		}
 
-		public virtual ServiceProvider Services
+		public virtual IServiceProvider Services
 		{
 			get
 			{

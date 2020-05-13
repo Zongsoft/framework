@@ -58,7 +58,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取应用模块的服务容器。
 		/// </summary>
-		ServiceProvider Services { get; }
+		IServiceProvider Services { get; }
 
 		/// <summary>
 		/// 获取应用模块的授权目标集。
