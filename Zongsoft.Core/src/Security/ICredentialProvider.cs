@@ -35,6 +35,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 提供安全凭证相关操作的功能。
 	/// </summary>
+	[Obsolete]
 	public interface ICredentialProvider
 	{
 		#region 事件定义

@@ -36,6 +36,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 表示带凭证的用户主体类。
 	/// </summary>
+	[Obsolete]
 	public class CredentialPrincipal : IPrincipal
 	{
 		#region 公共字段

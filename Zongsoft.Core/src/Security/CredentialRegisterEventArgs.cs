@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
-	[Serializable]
+	[Obsolete]
 	public class CredentialRegisterEventArgs : EventArgs
 	{
 		#region 构造函数

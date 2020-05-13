@@ -35,7 +35,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 安全凭证操作相关的异常。
 	/// </summary>
-	[Serializable]
+	[Obsolete]
 	public class CredentialException : System.ApplicationException
 	{
 		#region 成员字段

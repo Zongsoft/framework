@@ -35,6 +35,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 表示安全凭证的实体类。
 	/// </summary>
+	[Obsolete]
 	public class Credential : IEquatable<Credential>
 	{
 		#region 常量定义

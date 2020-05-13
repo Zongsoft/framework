@@ -35,6 +35,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 表示带凭证的用户标识类。
 	/// </summary>
+	[Obsolete]
 	public class CredentialIdentity : IIdentity
 	{
 		#region 公共字段

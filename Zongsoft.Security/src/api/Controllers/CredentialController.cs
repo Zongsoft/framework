@@ -40,6 +40,7 @@ namespace Zongsoft.Security.Web.Controllers
 	[Area(Modules.Security)]
 	[Authorize]
 	[Authorization]
+	[Obsolete]
 	public class CredentialController : ControllerBase
 	{
 		#region 成员字段
