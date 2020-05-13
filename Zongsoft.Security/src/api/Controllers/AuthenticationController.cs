@@ -71,7 +71,6 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 公共方法
 		[HttpPost]
-		//[ActionName("Signin")]
 		public Task<IActionResult> SigninAsync(string id, [FromBody]AuthenticationRequest request)
 		{
 			if(string.IsNullOrWhiteSpace(id))

@@ -38,7 +38,7 @@ using Zongsoft.Configuration.Options;
 namespace Zongsoft.Security.Membership
 {
 	[Service(typeof(IAuthenticator))]
-	public class Authenticator : IAuthenticator
+	public partial class Authenticator : IAuthenticator
 	{
 		#region 常量定义
 		private const string KEY_AUTHENTICATION_SECRET = "Zongsoft.Security.Authentication";
@@ -61,7 +61,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		public string Name { get => "Normal"; }
+		public string Name { get => "Zongsoft.Authentication"; }
 
 		[Options("Security/Membership/Authentication/Credential")]
 		public Configuration.CredentialOptions Options { get; set; }
@@ -113,7 +113,7 @@ namespace Zongsoft.Security.Membership
 				return context.User;
 			}
 
-			//获取当前用户的密码及密码向量
+			//获取当前用户的密码及密码盐
 			var userId = this.GetPassword(identity, @namespace, out var storedPassword, out var storedPasswordSalt, out var status, out _);
 
 			//如果帐户不存在，则抛出异常
