@@ -93,14 +93,14 @@ namespace Zongsoft.Security
 			return false;
 		}
 
-		public static IEnumerable<Membership.IUserIdentity> GetUsers(this ClaimsPrincipal principal)
+		public static IEnumerable<T> GetModels<T>(this ClaimsPrincipal principal, Action<T, Claim> configure = null) where T : class
 		{
 			if(principal == null)
 				throw new ArgumentNullException(nameof(principal));
 
 			foreach(var identity in principal.Identities)
 			{
-				yield return identity.AsUser();
+				yield return identity.AsModel<T>(configure);
 			}
 		}
 	}

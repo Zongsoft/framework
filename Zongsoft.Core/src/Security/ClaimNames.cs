@@ -40,6 +40,7 @@ namespace Zongsoft.Security
 		public const string Creation = URI + "creation";
 		public const string Modification = URI + "modification";
 
+        public const string Token = URI + "token";
 		public const string Scenario = URI + "scenario";
 		public const string Timestamp = URI + "timestamp";
     }

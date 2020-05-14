@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -180,24 +181,32 @@ namespace Zongsoft.Security
 			return 0;
 		}
 
-		public static Membership.IUserIdentity AsUser(this IIdentity identity)
+		public static string GetToken(this IIdentity identity)
 		{
-			return AsUser(identity as ClaimsIdentity);
+			return GetToken(identity as ClaimsIdentity);
 		}
 
-		public static Membership.IUserIdentity AsUser(this ClaimsIdentity identity)
+		public static string GetToken(this ClaimsIdentity identity)
 		{
-			var model = AsModel<Membership.IUserIdentity>(identity, (user, claim) => FillUser(user, claim));
-			model.FullName = identity.Label;
-			return model;
+			return identity?.FindFirst(ClaimNames.Token)?.Value;
 		}
 
-		public static T AsModel<T>(this IIdentity identity, Action<T, Claim> configure) where T : class
+		public static string GetScenario(this IIdentity identity)
+		{
+			return GetScenario(identity as ClaimsIdentity);
+		}
+
+		public static string GetScenario(this ClaimsIdentity identity)
+		{
+			return identity?.FindFirst(ClaimNames.Scenario)?.Value;
+		}
+
+		public static T AsModel<T>(this IIdentity identity, Action<T, Claim> configure = null) where T : class
 		{
 			return AsModel(identity as ClaimsIdentity, configure);
 		}
 
-		public static T AsModel<T>(this ClaimsIdentity identity, Action<T, Claim> configure) where T : class
+		public static T AsModel<T>(this ClaimsIdentity identity, Action<T, Claim> configure = null) where T : class
 		{
 			if(identity == null || identity.IsAnonymous())
 				return null;
@@ -209,7 +218,20 @@ namespace Zongsoft.Security
 			else
 				model = Activator.CreateInstance<T>();
 
-			if(configure != null)
+			if(typeof(Membership.IUser).IsAssignableFrom(typeof(T)))
+			{
+				((Membership.IUser)model).FullName = identity.Label;
+
+				if(configure == null)
+					configure = (user, claim) => ((Membership.IUser)user).Properties.Add(claim.Type, claim.Value);
+
+				foreach(var claim in identity.Claims)
+				{
+					if(!FillUser((Membership.IUser)model, claim))
+						configure(model, claim);
+				}
+			}
+			else if(configure != null)
 			{
 				foreach(var claim in identity.Claims)
 					configure(model, claim);
@@ -218,25 +240,115 @@ namespace Zongsoft.Security
 			return model;
 		}
 
-		private static void FillUser(Membership.IUserIdentity user, Claim claim)
+		public static Claim AddClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
 		{
-			if(string.Equals(claim.Type, ClaimTypes.Name, StringComparison.OrdinalIgnoreCase))
+			if(string.IsNullOrEmpty(issuer))
+				issuer = ClaimsIdentity.DefaultIssuer;
+			if(string.IsNullOrEmpty(originalIssuer))
+				originalIssuer = ClaimsIdentity.DefaultIssuer;
+
+			var claim = new Claim(name, value, valueType, issuer, originalIssuer, identity);
+			identity.AddClaim(claim);
+			return claim;
+		}
+
+		public static byte[] Serialize(this ClaimsIdentity identity)
+		{
+			if(identity == null)
+				return null;
+
+			using(var memory = new MemoryStream())
 			{
-				user.Name = claim.Value;
+				using(var writer = new BinaryWriter(memory, System.Text.Encoding.UTF8, true))
+					identity.WriteTo(writer);
+
+				return memory.ToArray();
 			}
-			else if(string.Equals(claim.Type, ClaimTypes.NameIdentifier, StringComparison.OrdinalIgnoreCase))
+		}
+
+		public static ClaimsIdentity Deserialize(this byte[] buffer)
+		{
+			if(buffer == null || buffer.Length == 0)
+				return null;
+
+			using(var memory = new MemoryStream(buffer))
 			{
-				if(uint.TryParse(claim.Value, out var userId))
-					user.UserId = userId;
+				using(var reader = new BinaryReader(memory))
+					return new ClaimsIdentity(reader);
 			}
-			else if(string.Equals(claim.Type, ClaimNames.Namespace, StringComparison.OrdinalIgnoreCase))
+		}
+
+		public static ClaimsIdentity Deserialize(this Stream stream)
+		{
+			if(stream == null)
+				return null;
+
+			using(var reader = new BinaryReader(stream))
+				return new ClaimsIdentity(reader);
+		}
+
+		private static bool FillUser(Membership.IUser user, Claim claim)
+		{
+			switch(claim.Type)
 			{
-				user.Namespace = claim.Value;
+				case ClaimTypes.Name:
+					user.Name = claim.Value;
+					return true;
+				case ClaimTypes.NameIdentifier:
+					if(uint.TryParse(claim.Value, out var userId))
+					{
+						user.UserId = userId;
+						return true;
+					}
+
+					return false;
+				case ClaimTypes.Email:
+					user.Email = claim.Value;
+					return true;
+				case ClaimTypes.MobilePhone:
+					user.Phone = claim.Value;
+					return true;
+				case ClaimNames.Namespace:
+					user.Namespace = claim.Value;
+					return true;
+				case ClaimNames.Description:
+					user.Description = claim.Value;
+					return true;
+				case ClaimNames.UserStatus:
+					if(Enum.TryParse<Membership.UserStatus>(claim.Value, out var status))
+					{
+						user.Status = status;
+						return true;
+					}
+
+					return false;
+				case ClaimNames.UserStatusTimestamp:
+					if(DateTime.TryParse(claim.Value, out var timestamp))
+					{
+						user.StatusTimestamp = timestamp;
+						return true;
+					}
+
+					return false;
+				case ClaimNames.Creation:
+					if(DateTime.TryParse(claim.Value, out var creation))
+					{
+						user.Creation = creation;
+						return true;
+					}
+
+					return false;
+				case ClaimNames.Modification:
+					if(DateTime.TryParse(claim.Value, out var modification))
+					{
+						user.Modification = modification;
+						return true;
+					}
+
+					return false;
 			}
-			else if(string.Equals(claim.Type, ClaimNames.Description, StringComparison.OrdinalIgnoreCase))
-			{
-				user.Description = claim.Value;
-			}
+
+			return false;
 		}
 	}
 }

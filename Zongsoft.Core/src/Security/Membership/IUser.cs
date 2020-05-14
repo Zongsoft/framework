@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
@@ -83,6 +84,15 @@ namespace Zongsoft.Security.Membership
 		DateTime? Modification
 		{
 			get; set;
+		}
+
+		/// <summary>
+		/// 获取用户的扩展属性。
+		/// </summary>
+		[System.ComponentModel.DefaultValue(typeof(Dictionary<string, object>))]
+		IDictionary<string, object> Properties
+		{
+			get;
 		}
 	}
 }
