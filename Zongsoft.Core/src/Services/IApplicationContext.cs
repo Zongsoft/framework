@@ -72,11 +72,6 @@ namespace Zongsoft.Services
 		ClaimsPrincipal Principal { get; }
 
 		/// <summary>
-		/// 获取当前应用程序的用户信息。
-		/// </summary>
-		Security.Membership.IUserIdentity User { get; }
-
-		/// <summary>
 		/// 获取当前应用程序的模块集。
 		/// </summary>
 		INamedCollection<IApplicationModule> Modules { get; }

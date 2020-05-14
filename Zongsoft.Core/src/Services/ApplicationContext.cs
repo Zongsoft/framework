@@ -163,11 +163,6 @@ namespace Zongsoft.Services
 			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		}
 
-		public Security.Membership.IUserIdentity User
-		{
-			get => Security.ClaimsIdentityExtension.AsUser(this.Principal?.Identity);
-		}
-
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
