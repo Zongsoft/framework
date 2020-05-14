@@ -75,17 +75,6 @@ namespace Zongsoft.Web
 			get => this.DataService.CanUpdate;
 		}
 
-		protected virtual Zongsoft.Security.Credential Credential
-		{
-			get
-			{
-				if(this.User.Identity is Zongsoft.Security.CredentialIdentity identity)
-					return identity.Credential;
-
-				return null;
-			}
-		}
-
 		protected TService DataService
 		{
 			get
