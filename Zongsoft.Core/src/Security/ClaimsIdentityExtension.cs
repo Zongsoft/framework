@@ -181,26 +181,6 @@ namespace Zongsoft.Security
 			return 0;
 		}
 
-		public static string GetToken(this IIdentity identity)
-		{
-			return GetToken(identity as ClaimsIdentity);
-		}
-
-		public static string GetToken(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimNames.Token)?.Value;
-		}
-
-		public static string GetScenario(this IIdentity identity)
-		{
-			return GetScenario(identity as ClaimsIdentity);
-		}
-
-		public static string GetScenario(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimNames.Scenario)?.Value;
-		}
-
 		public static T AsModel<T>(this IIdentity identity, Action<T, Claim> configure = null) where T : class
 		{
 			return AsModel(identity as ClaimsIdentity, configure);
@@ -263,41 +243,6 @@ namespace Zongsoft.Security
 			var claim = new Claim(name, value, valueType, issuer, originalIssuer, identity);
 			identity.AddClaim(claim);
 			return claim;
-		}
-
-		public static byte[] Serialize(this ClaimsIdentity identity)
-		{
-			if(identity == null)
-				return null;
-
-			using(var memory = new MemoryStream())
-			{
-				using(var writer = new BinaryWriter(memory, System.Text.Encoding.UTF8, true))
-					identity.WriteTo(writer);
-
-				return memory.ToArray();
-			}
-		}
-
-		public static ClaimsIdentity Deserialize(this byte[] buffer)
-		{
-			if(buffer == null || buffer.Length == 0)
-				return null;
-
-			using(var memory = new MemoryStream(buffer))
-			{
-				using(var reader = new BinaryReader(memory))
-					return new ClaimsIdentity(reader);
-			}
-		}
-
-		public static ClaimsIdentity Deserialize(this Stream stream)
-		{
-			if(stream == null)
-				return null;
-
-			using(var reader = new BinaryReader(stream))
-				return new ClaimsIdentity(reader);
 		}
 
 		private static bool FillUser(Membership.IUser user, Claim claim)
