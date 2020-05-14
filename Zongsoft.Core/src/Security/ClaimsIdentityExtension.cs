@@ -208,6 +208,16 @@ namespace Zongsoft.Security
 
 		public static T AsModel<T>(this ClaimsIdentity identity, Action<T, Claim> configure = null) where T : class
 		{
+			static string GetClaimName(string text)
+			{
+				var index = text.LastIndexOf('/');
+
+				if(index >= 0 && index < text.Length - 1)
+					return text.Substring(index + 1);
+
+				return text;
+			}
+
 			if(identity == null || identity.IsAnonymous())
 				return null;
 
@@ -223,7 +233,7 @@ namespace Zongsoft.Security
 				((Membership.IUser)model).FullName = identity.Label;
 
 				if(configure == null)
-					configure = (user, claim) => ((Membership.IUser)user).Properties.Add(claim.Type, claim.Value);
+					configure = (user, claim) => ((Membership.IUser)user).Properties.Add(GetClaimName(claim.Type), claim.Value);
 
 				foreach(var claim in identity.Claims)
 				{
@@ -242,6 +252,9 @@ namespace Zongsoft.Security
 
 		public static Claim AddClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
 		{
+			if(identity == null)
+				throw new ArgumentNullException(nameof(identity));
+
 			if(string.IsNullOrEmpty(issuer))
 				issuer = ClaimsIdentity.DefaultIssuer;
 			if(string.IsNullOrEmpty(originalIssuer))
