@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
 	/// <summary>
 	/// 提供安全凭证相关操作的功能。
 	/// </summary>
-	[Obsolete]
 	public interface ICredentialProvider
 	{
 		#region 事件定义
@@ -54,10 +53,10 @@ namespace Zongsoft.Security
 
 		#region 方法定义
 		/// <summary>
-		/// 将指定的凭证对象注册到凭证容器中。
+		/// 将指定的用户身份注册到凭证容器中。
 		/// </summary>
-		/// <param name="credential">指定要注册的凭证对象。</param>
-		void Register(Credential credential);
+		/// <param name="identity">指定要注册的用户身份对象。</param>
+		void Register(ClaimsIdentity identity);
 
 		/// <summary>
 		/// 从安全凭证容器中注销指定的凭证。
@@ -69,23 +68,25 @@ namespace Zongsoft.Security
 		/// 续约指定的安全凭证。
 		/// </summary>
 		/// <param name="credentialId">指定要续约的安全凭证编号。</param>
+		/// <param name="token">续约的安全标记。</param>
+		/// <returns>返回续约成功的用户身份标识对象，如果续约失败则返回空(null)。</returns>
 		/// <remarks>注：续约操作会依次激发“Unregistered”和“Registered”事件。</remarks>
-		Credential Renew(string credentialId);
+		ClaimsIdentity Renew(string credentialId, string token);
 
 		/// <summary>
-		/// 获取指定安全凭证编号对应的<see cref="Credential"/>安全凭证对象。
+		/// 获取指定安全凭证编号对应的<see cref="ClaimsIdentity"/>用户身份标识对象。
 		/// </summary>
 		/// <param name="credentialId">指定要获取的安全凭证编号。</param>
-		/// <returns>返回的对应的安全凭证对象，如果指定的安全凭证编号不存在则返回空(null)。</returns>
-		Credential GetCredential(string credentialId);
+		/// <returns>返回的对应的用户身份标识对象，如果指定的安全凭证编号不存在则返回空(null)。</returns>
+		ClaimsIdentity GetIdentity(string credentialId);
 
 		/// <summary>
-		/// 获取指定用户及应用场景对应的<see cref="Credential"/>安全凭证对象。
+		/// 获取指定用户及应用场景对应的<see cref="ClaimsIdentity"/>用户身份标识对象。
 		/// </summary>
 		/// <param name="identity">指定要获取的安全凭证对应的用户唯一标识。</param>
 		/// <param name="scene">指定要获取的安全凭证对应的应用场景。</param>
-		/// <returns>返回成功的安全凭证对象，如果指定的用户及应用场景不存在对应的安全凭证则返回空(null)。</returns>
-		Credential GetCredential(string identity, string scene);
+		/// <returns>返回成功的用户身份标识对象，如果指定的用户及应用场景未被注册则返回空(null)。</returns>
+		ClaimsIdentity GetIdentity(string identity, string scene);
 		#endregion
 	}
 }

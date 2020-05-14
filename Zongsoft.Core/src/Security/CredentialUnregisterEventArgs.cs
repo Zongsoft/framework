@@ -28,26 +28,16 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
-	[Obsolete]
 	public class CredentialUnregisterEventArgs : EventArgs
 	{
 		#region 构造函数
-		public CredentialUnregisterEventArgs(string credentialId)
-		{
-			this.CredentialId = credentialId;
-		}
-
-		public CredentialUnregisterEventArgs(Credential credential, bool renewal = false)
+		public CredentialUnregisterEventArgs(string credentialId, bool renewal = false)
 		{
 			this.IsRenewal = renewal;
-			this.Credential = credential;
-
-			if(credential != null)
-				this.CredentialId = credential.CredentialId;
+			this.CredentialId = credentialId;
 		}
 		#endregion
 
@@ -56,14 +46,6 @@ namespace Zongsoft.Security
 		/// 获取注销的凭证编号。
 		/// </summary>
 		public string CredentialId
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取注销的凭证对象。
-		/// </summary>
-		public Credential Credential
 		{
 			get;
 		}

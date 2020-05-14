@@ -28,44 +28,27 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
-	[Obsolete]
 	public class CredentialRegisterEventArgs : EventArgs
 	{
 		#region 构造函数
-		public CredentialRegisterEventArgs(Credential credential, bool renewal = false)
+		public CredentialRegisterEventArgs(ClaimsIdentity identity, bool renewal = false)
 		{
 			this.IsRenewal = renewal;
-			this.Credential = credential ?? throw new ArgumentNullException(nameof(credential));
+			this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
-		/// 获取注册的应用场景。
+		/// 获取注册成功的凭证对象。
 		/// </summary>
-		public string Scene
+		public ClaimsIdentity Identity
 		{
-			get => this.Credential.Scene;
-		}
-
-		/// <summary>
-		/// 获取凭证的有效时长。
-		/// </summary>
-		public TimeSpan Duration
-		{
-			get => this.Credential.Duration;
-		}
-
-		/// <summary>
-		/// 获取或设置注册成功的凭证对象。
-		/// </summary>
-		public Credential Credential
-		{
-			get; set;
+			get;
 		}
 
 		/// <summary>
