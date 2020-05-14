@@ -105,19 +105,25 @@ namespace Zongsoft.Security
 			);
 		}
 
-		public static uint GetUserId(this IIdentity identity)
+		public static string GetIdentifier(this IIdentity identity)
 		{
-			return GetUserId(identity as ClaimsIdentity);
+			return GetIdentifier(identity as ClaimsIdentity);
 		}
 
-		public static uint GetUserId(this ClaimsIdentity identity)
+		public static string GetIdentifier(this ClaimsIdentity identity)
 		{
-			var value = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			return identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		}
 
-			if(value != null && value.Length > 0 && uint.TryParse(value, out var userId))
-				return userId;
+		public static T GetIdentifier<T>(this IIdentity identity)
+		{
+			return GetIdentifier<T>(identity as ClaimsIdentity);
+		}
 
-			return 0;
+		public static T GetIdentifier<T>(this ClaimsIdentity identity)
+		{
+			var claim = identity?.FindFirst(ClaimTypes.NameIdentifier);
+			return claim == null || claim.Value == null ? default : Common.Convert.ConvertValue<T>(claim.Value);
 		}
 
 		public static string GetEmail(this IIdentity identity)
