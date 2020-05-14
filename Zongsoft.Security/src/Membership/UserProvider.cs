@@ -898,7 +898,7 @@ namespace Zongsoft.Security.Membership
 			 *   2) 当前用户是系统管理员角色(Administrators)成员。
 			 */
 
-			var user = ApplicationContext.Current.User;
+			var user = ApplicationContext.Current.Principal.Identity.AsModel<IUser>(null);
 
 			if(user.UserId == userId || MembershipHelper.InRoles(this.DataAccess, user, MembershipHelper.Administrators))
 				return userId;

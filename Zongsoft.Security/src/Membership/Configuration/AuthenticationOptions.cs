@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Security.Membership.Configuration
 {
@@ -37,17 +37,84 @@ namespace Zongsoft.Security.Membership.Configuration
 	/// </summary>
 	public class AuthenticationOptions
 	{
+		#region 静态字段
+		public static readonly TimeSpan DefaultPeriod = TimeSpan.FromHours(4);
+		#endregion
+
+		#region 构造函数
+		public AuthenticationOptions()
+		{
+			this.Period = DefaultPeriod;
+			this.Policies = new Collections.NamedCollection<CredentialPolicy>(policy => policy.Name);
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置凭证的默认有效期时长。
+		/// </summary>
+		[DefaultValue("4:0:0")]
+		public TimeSpan Period
+		{
+			get; set;
+		}
+
 		/// <summary>
 		/// 获取恶意检测器的配置项。
 		/// </summary>
-		public AttempterOptions Attempter { get; set; }
+		public AttempterOptions Attempter
+		{
+			get; set;
+		}
 
 		/// <summary>
-		/// 获取凭证配置项。
+		/// 获取策略配置集。
 		/// </summary>
-		CredentialOptions Credential
+		public Collections.INamedCollection<CredentialPolicy> Policies
 		{
 			get;
 		}
+		#endregion
+
+		#region 公共方法
+		public TimeSpan GetPeriod(string scene)
+		{
+			var period = DefaultPeriod;
+
+			if(string.IsNullOrEmpty(scene))
+				period = this.Period;
+			else if(this.Policies.TryGet(scene, out var policy))
+				period = policy.Period;
+
+			if(period.TotalMinutes > 1)
+				return period;
+			else
+				return DefaultPeriod;
+		}
+		#endregion
+
+		#region 嵌套子类
+		/// <summary>
+		/// 表示以凭证场景为依据的有效期配置项。
+		/// </summary>
+		public class CredentialPolicy
+		{
+			/// <summary>
+			/// 获取凭证场景。
+			/// </summary>
+			public string Name
+			{
+				get; set;
+			}
+
+			/// <summary>
+			/// 获取或设置凭证的有效期时长。
+			/// </summary>
+			public TimeSpan Period
+			{
+				get; set;
+			}
+		}
+		#endregion
 	}
 }

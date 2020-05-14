@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -37,7 +38,7 @@ using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IAuthenticator))]
+	[Service(typeof(IAuthenticator), typeof(ICredentialProvider))]
 	public partial class Authenticator : IAuthenticator
 	{
 		#region 常量定义
@@ -46,25 +47,19 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 事件声明
-		public event EventHandler<AuthenticationContext> Authenticated;
-		public event EventHandler<AuthenticationContext> Authenticating;
+		public event EventHandler<AuthenticatedEventArgs> Authenticated;
+		public event EventHandler<AuthenticatingEventArgs> Authenticating;
 		#endregion
 
 		#region 成员字段
 		private IDataAccess _dataAccess;
 		#endregion
 
-		#region 构造函数
-		public Authenticator()
-		{
-		}
-		#endregion
-
 		#region 公共属性
 		public string Name { get => "Zongsoft.Authentication"; }
 
-		[Options("Security/Membership/Authentication/Credential")]
-		public Configuration.CredentialOptions Options { get; set; }
+		[Options("Security/Membership/Authentication")]
+		public Configuration.AuthenticationOptions Options { get; set; }
 
 		[ServiceDependency]
 		public Attempter Attempter { get; set; }
@@ -83,80 +78,38 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 验证方法
-		public IUserIdentity Authenticate(string identity, string password, string @namespace, string scene, ref IDictionary<string, object> parameters)
+		public ClaimsIdentity Authenticate(string identity, string password, string @namespace, string scene, ref IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
+			//设置凭证有效期的配置策略
+			if(parameters != null)
+				parameters["Authentication:Options"] = this.Options;
+
 			//创建验证上下文对象
-			var context = new AuthenticationContext(this, identity, @namespace, scene, parameters);
+			var args = new AuthenticatingEventArgs(this, @namespace, identity, scene, parameters);
 
 			//激发“Authenticating”事件
-			this.OnAuthenticating(context);
+			this.OnAuthenticating(args);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
 
 			//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
 			if(attempter != null && !attempter.Verify(identity, @namespace))
-			{
-				//设置当前上下文的异常
-				context.Exception = new AuthenticationException(AuthenticationReason.AccountSuspended);
-
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				//抛出异常
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return context.User;
-			}
+				throw new AuthenticationException(AuthenticationReason.AccountSuspended);
 
 			//获取当前用户的密码及密码盐
 			var userId = this.GetPassword(identity, @namespace, out var storedPassword, out var storedPasswordSalt, out var status, out _);
 
 			//如果帐户不存在，则抛出异常
 			if(userId == 0)
-			{
-				//设置当前上下文的异常
-				context.Exception = new AuthenticationException(AuthenticationReason.InvalidIdentity);
+				throw new AuthenticationException(AuthenticationReason.InvalidIdentity);
 
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				//抛出异常
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return null;
-			}
-
-			switch(status)
-			{
-				case UserStatus.Unapproved:
-					//因为账户状态异常而抛出验证异常
-					context.Exception = new AuthenticationException(AuthenticationReason.AccountUnapproved);
-
-					//激发“Authenticated”事件
-					this.OnAuthenticated(context);
-
-					if(context.Exception != null)
-						throw context.Exception;
-
-					return context.User;
-				case UserStatus.Disabled:
-					//因为账户状态异常而抛出验证异常
-					context.Exception = new AuthenticationException(AuthenticationReason.AccountDisabled);
-
-					//激发“Authenticated”事件
-					this.OnAuthenticated(context);
-
-					if(context.Exception != null)
-						throw context.Exception;
-
-					return context.User;
-			}
+			//如果账户状态异常，则抛出异常
+			if(status != UserStatus.Active)
+				throw new AuthenticationException(AuthenticationReason.AccountDisabled);
 
 			//如果验证失败，则抛出异常
 			if(!PasswordUtility.VerifyPassword(password, storedPassword, storedPasswordSalt, "SHA1"))
@@ -166,15 +119,7 @@ namespace Zongsoft.Security.Membership
 					attempter.Fail(identity, @namespace);
 
 				//密码校验失败则抛出验证异常
-				context.Exception = new AuthenticationException(AuthenticationReason.InvalidPassword);
-
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return context.User;
+				throw new AuthenticationException(AuthenticationReason.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
@@ -182,96 +127,47 @@ namespace Zongsoft.Security.Membership
 				attempter.Done(identity, @namespace);
 
 			//获取指定用户编号对应的用户对象
-			context.User = this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
+			var user = this.Identity(this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault(), scene, this.Options.GetPeriod(scene));
 
-			//设置凭证有效期的配置策略
-			if(this.Options != null)
-				context.Parameters["Credential:Option"] = this.Options;
+			//注册验证成功的凭证
+			this.Register(user);
 
 			//激发“Authenticated”事件
-			this.OnAuthenticated(context);
-
-			if(context.HasParameters)
-				parameters = context.Parameters;
-
-			//返回成功的验证结果
-			return context.User;
+			return this.OnAuthenticated(user, parameters);
 		}
 
-		public IUserIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scene, ref IDictionary<string, object> parameters)
+		public ClaimsIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scene, ref IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
+			//设置凭证有效期的配置策略
+			if(parameters != null)
+				parameters["Authentication:Options"] = this.Options;
+
 			//创建验证上下文对象
-			var context = new AuthenticationContext(this, identity, @namespace, scene, parameters);
+			var args = new AuthenticatingEventArgs(this, @namespace, identity, scene, parameters);
 
 			//激发“Authenticating”事件
-			this.OnAuthenticating(context);
+			this.OnAuthenticating(args);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
 
 			//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
 			if(attempter != null && !attempter.Verify(identity, @namespace))
-			{
-				//设置当前上下文的异常
-				context.Exception = new AuthenticationException(AuthenticationReason.AccountSuspended);
-
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				//抛出异常
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return context.User;
-			}
+				throw new AuthenticationException(AuthenticationReason.AccountSuspended);
 
 			//获取指定标识的用户对象
 			var user = this.DataAccess.Select<IUser>(MembershipHelper.GetUserIdentity(identity, out _) & this.GetNamespace(@namespace)).FirstOrDefault();
 
 			//如果帐户不存在，则抛出异常
 			if(user == null)
-			{
-				//设置当前上下文的异常
-				context.Exception = new AuthenticationException(AuthenticationReason.InvalidIdentity);
+				throw new AuthenticationException(AuthenticationReason.InvalidIdentity);
 
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				//抛出异常
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return null;
-			}
-
-			switch(user.Status)
-			{
-				case UserStatus.Unapproved:
-					//因为账户状态异常而抛出验证异常
-					context.Exception = new AuthenticationException(AuthenticationReason.AccountUnapproved);
-
-					//激发“Authenticated”事件
-					this.OnAuthenticated(context);
-
-					if(context.Exception != null)
-						throw context.Exception;
-
-					return context.User;
-				case UserStatus.Disabled:
-					//因为账户状态异常而抛出验证异常
-					context.Exception = new AuthenticationException(AuthenticationReason.AccountDisabled);
-
-					//激发“Authenticated”事件
-					this.OnAuthenticated(context);
-
-					if(context.Exception != null)
-						throw context.Exception;
-
-					return context.User;
-			}
+			//如果账户状态异常，则抛出异常
+			if(user.Status != UserStatus.Active)
+				throw new AuthenticationException(AuthenticationReason.AccountDisabled);
 
 			//如果验证失败，则抛出异常
 			if(!this.Secretor.Verify(GetSecretKey(identity, @namespace), secret))
@@ -280,37 +176,16 @@ namespace Zongsoft.Security.Membership
 				if(attempter != null)
 					attempter.Fail(identity, @namespace);
 
-				//密码校验失败则抛出验证异常
-				context.Exception = new AuthenticationException(AuthenticationReason.InvalidPassword);
-
-				//激发“Authenticated”事件
-				this.OnAuthenticated(context);
-
-				if(context.Exception != null)
-					throw context.Exception;
-
-				return context.User;
+				//验证码校验失败则抛出验证异常
+				throw new AuthenticationException(AuthenticationReason.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
 			if(attempter != null)
 				attempter.Done(identity, @namespace);
 
-			//更新上下文的用户对象
-			context.User = user;
-
-			//设置凭证有效期的配置策略
-			if(this.Options != null)
-				context.Parameters["Credential:Option"] = this.Options;
-
 			//激发“Authenticated”事件
-			this.OnAuthenticated(context);
-
-			if(context.HasParameters)
-				parameters = context.Parameters;
-
-			//返回成功的验证结果
-			return context.User;
+			return this.OnAuthenticated(this.Identity(user, scene, this.Options.GetPeriod(scene)), parameters);
 		}
 		#endregion
 
@@ -368,14 +243,25 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnAuthenticated(AuthenticationContext context)
+		private ClaimsIdentity OnAuthenticated(ClaimsIdentity user, IDictionary<string, object> parameters)
 		{
-			this.Authenticated?.Invoke(this, context);
+			var authenticated = this.Authenticated;
+			if(authenticated == null)
+				return user;
+
+			var args = new AuthenticatedEventArgs(this, user, parameters);
+			this.OnAuthenticated(args);
+			return args.Identity;
 		}
 
-		protected virtual void OnAuthenticating(AuthenticationContext context)
+		protected virtual void OnAuthenticated(AuthenticatedEventArgs args)
 		{
-			this.Authenticating?.Invoke(this, context);
+			this.Authenticated?.Invoke(this, args);
+		}
+
+		protected virtual void OnAuthenticating(AuthenticatingEventArgs args)
+		{
+			this.Authenticating?.Invoke(this, args);
 		}
 		#endregion
 

@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -68,10 +69,11 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public bool Authorize(uint userId, string schema, string action)
 		{
-			return this.Authorize(this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault(), schema, action);
+			return this.Authorizes(userId, MemberType.User)
+			           .Any(token => string.Equals(schema, token.Schema, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
 		}
 
-		public bool Authorize(IUserIdentity user, string schema, string action)
+		public bool Authorize(ClaimsIdentity user, string schema, string action)
 		{
 			if(user == null)
 				throw new ArgumentNullException(nameof(user));
@@ -90,18 +92,18 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
-			if(this.InRoles(user, MembershipHelper.Administrators))
+			if(this.InRoles(user.GetUserId(), MembershipHelper.Administrators))
 				return true;
 
 			//获取指定的安全凭证对应的有效的授权状态集
-			var tokens = this.Authorizes(user);
+			var tokens = this.Authorizes(user.GetUserId(), MemberType.User);
 
 			if(string.IsNullOrWhiteSpace(action) || action == "*")
 				context.IsAuthorized = tokens != null && tokens.Any(state => string.Equals(state.Schema, schema, StringComparison.OrdinalIgnoreCase));
 			else
 				context.IsAuthorized = tokens != null && tokens.Any(
 					token => string.Equals(token.Schema, schema, StringComparison.OrdinalIgnoreCase) &&
-					         token.Actions.Any(p => string.Equals(p.Action, action, StringComparison.OrdinalIgnoreCase))
+							 token.Actions.Any(p => string.Equals(p.Action, action, StringComparison.OrdinalIgnoreCase))
 				);
 
 			//激发“Authorized”事件
@@ -111,12 +113,12 @@ namespace Zongsoft.Security.Membership
 			return context.IsAuthorized;
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(IUserIdentity user)
+		public IEnumerable<AuthorizationToken> Authorizes(ClaimsIdentity user)
 		{
 			if(user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			return this.GetAuthorizedTokens(user.Namespace, user.UserId, MemberType.User);
+			return this.GetAuthorizedTokens(user.GetNamespace(), user.GetUserId(), MemberType.User);
 		}
 
 		public IEnumerable<AuthorizationToken> Authorizes(IRole role)
