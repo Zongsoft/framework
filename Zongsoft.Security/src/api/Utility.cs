@@ -37,6 +37,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
+[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+
 namespace Zongsoft.Security.Web
 {
 	internal static class Utility

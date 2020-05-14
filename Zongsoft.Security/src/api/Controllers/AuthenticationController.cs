@@ -46,12 +46,8 @@ namespace Zongsoft.Security.Web.Controllers
 	{
 		#region 成员字段
 		private IAuthenticator _authenticator;
-		private ICredentialProvider _credentialProvider;
+		private ICredentialProvider _authority;
 		#endregion
-
-		public AuthenticationController(IServiceProvider services)
-		{
-		}
 
 		#region 公共属性
 		[ServiceDependency]
@@ -62,10 +58,10 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency]
-		public ICredentialProvider CredentialProvider
+		public ICredentialProvider Authority
 		{
-			get => _credentialProvider;
-			set => _credentialProvider = value ?? throw new ArgumentNullException();
+			get => _authority;
+			set => _authority = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -87,43 +83,8 @@ namespace Zongsoft.Security.Web.Controllers
 				_authenticator.Authenticate(request.Identity, request.Password, request.Namespace, scene, ref parameters) :
 				_authenticator.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scene, ref parameters);
 
-			//设置凭证的默认有效期为2小时
-			var duration = TimeSpan.FromHours(2);
-
-			//尝试通过验证上下文的参数集获取其他程序指定的凭证配置项
-			if(parameters != null && parameters.TryGetValue("Credential:Option", out var value) && value is Membership.Configuration.CredentialOptions options)
-			{
-				if(options.Policies.TryGet(scene, out var period))
-					duration = period.Period;
-				else
-					duration = options.Period;
-
-				//用完即从参数集中移除掉凭证配置项
-				parameters.Remove("Credential:Option");
-			}
-
-			//尝试通过验证上下文的参数集获取其他程序指定的凭证有效期时长
-			if(parameters != null && parameters.TryGetValue("Credential:Period", out value) && value != null)
-			{
-				if(value is TimeSpan period)
-					duration = period;
-				else if(value is int integer && integer > 0)
-					duration = TimeSpan.FromMinutes(integer);
-				else if(value is string text && TimeSpan.TryParse(text, out period))
-					duration = period;
-
-				//用完即从参数集中移除掉凭证有效期时长
-				parameters.Remove("Credential:Period");
-			}
-
-			//创建用户凭证
-			var credential = new Credential(user, scene, duration, parameters);
-
-			//注册用户凭证
-			_credentialProvider.Register(credential);
-
 			//返回注册的凭证
-			return Task.FromResult((IActionResult)this.Ok(credential));
+			return Task.FromResult((IActionResult)this.Ok(user.AsModel<IUser>()));
 		}
 
 		[HttpGet]
@@ -132,7 +93,20 @@ namespace Zongsoft.Security.Web.Controllers
 		public void Signout(string id)
 		{
 			if(id != null && id.Length > 0)
-				_credentialProvider.Unregister(id);
+				_authority.Unregister(id);
+		}
+
+		[HttpPost("{token}")]
+		public Task<IActionResult> Renew(string id, string token)
+		{
+			if(string.IsNullOrWhiteSpace(id))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			var identity = _authority.Renew(id, token);
+
+			return identity == null ?
+				Task.FromResult((IActionResult)this.BadRequest()) :
+				Task.FromResult((IActionResult)this.Ok(identity));
 		}
 
 		[HttpGet]
