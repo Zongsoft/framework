@@ -88,8 +88,8 @@ namespace Zongsoft.Services
 		internal static string GetModuleName(Type type)
 		{
 			if(type.Assembly.IsDynamic ||
-			   type.Assembly.FullName.StartsWith("System", StringComparison.OrdinalIgnoreCase) ||
-			   type.Assembly.FullName.StartsWith("Microsoft", StringComparison.OrdinalIgnoreCase))
+			   type.Assembly.FullName.StartsWith("System") ||
+			   type.Assembly.FullName.StartsWith("Microsoft"))
 				return null;
 
 			var attribute = type.Assembly.GetCustomAttribute<ApplicationModuleAttribute>();
@@ -97,15 +97,19 @@ namespace Zongsoft.Services
 			if(attribute != null)
 				return attribute.Name;
 
-			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+				.Where(
+					a => !a.IsDynamic &&
+					!a.FullName.StartsWith("System") &&
+					!a.FullName.StartsWith("Microsoft"));
 
-			foreach(var assembly in type.Assembly.GetReferencedAssemblies())
+			foreach(var assemblyName in type.Assembly.GetReferencedAssemblies().Where(a => !a.FullName.StartsWith("System") && !a.FullName.StartsWith("Microsoft")))
 			{
-				var found = assemblies.FirstOrDefault(a => a.FullName == assembly.FullName);
+				var assembly = assemblies.FirstOrDefault(a => a.FullName == assemblyName.FullName);
 
-				if(found != null)
+				if(assembly != null)
 				{
-					attribute = found.GetCustomAttribute<ApplicationModuleAttribute>();
+					attribute = assembly.GetCustomAttribute<ApplicationModuleAttribute>();
 
 					if(attribute != null)
 						return attribute.Name;

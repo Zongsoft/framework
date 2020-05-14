@@ -34,7 +34,6 @@
 		<Folder Include="Messaging\" />
 		<Folder Include="Configuration\Profiles\" />
 		<Folder Include="Reflection\Expressions\" />
-		<Folder Include="Security\Membership\" />
 		<Folder Include="Services\Commands\" />
 		<Folder Include="Terminals\Commands\" />
 		<Folder Include="Transactions\" />

@@ -34,7 +34,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
-	public class ServiceProvider : IServiceProvider, IDisposable
+	internal class ServiceProvider : IServiceProvider, IDisposable
 	{
 		#region 静态字段
 		private static readonly MethodInfo GetFacotryMethod = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, Array.Empty<Type>(), null);
