@@ -52,6 +52,9 @@ namespace Zongsoft.Data.Common
 			if(connectionSetting == null)
 				throw new ArgumentNullException(nameof(connectionSetting));
 
+			if(string.IsNullOrWhiteSpace(connectionSetting.Driver))
+				throw new ArgumentException($"Missing driver ");
+
 			_name = connectionSetting.Name;
 			_connectionString = connectionSetting.Value;
 			_driverName = connectionSetting.Driver;
@@ -105,10 +108,7 @@ namespace Zongsoft.Data.Common
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 			set
 			{
 				if(string.IsNullOrWhiteSpace(value))
@@ -120,10 +120,7 @@ namespace Zongsoft.Data.Common
 
 		public string ConnectionString
 		{
-			get
-			{
-				return _connectionString;
-			}
+			get => _connectionString;
 			set
 			{
 				if(string.IsNullOrWhiteSpace(value))
@@ -144,8 +141,7 @@ namespace Zongsoft.Data.Common
 
 		public DataAccessMode Mode
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		public IDataDriver Driver
@@ -168,7 +164,7 @@ namespace Zongsoft.Data.Common
 			{
 				if(_features == null)
 				{
-					_features = new FeatureCollection(this.Driver.Features);
+					_features = new FeatureCollection(this.Driver?.Features);
 
 					if(!string.IsNullOrEmpty(_connectionString) && MARS_FEATURE.IsMatch(_connectionString))
 						_features.Add(Feature.MultipleActiveResultSets);
@@ -182,7 +178,9 @@ namespace Zongsoft.Data.Common
 		#region 重写方法
 		public override string ToString()
 		{
-			return $"[{_driverName}]{_name} ({_connectionString})";
+			return string.IsNullOrEmpty(_driverName) ?
+				$"{_name} <{_connectionString}>" :
+				$"[{_driverName}]{_name} <{_connectionString}>";
 		}
 		#endregion
 	}
