@@ -47,9 +47,11 @@ namespace Zongsoft.Security.Membership
 			};
 
 			identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(), ClaimValueTypes.UInteger32, issuer, issuer, identity));
-			identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String, issuer, issuer, identity));
-			identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String, issuer, issuer, identity));
 
+			if(!string.IsNullOrEmpty(user.Namespace))
+				identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String, issuer, issuer, identity));
+			if(!string.IsNullOrEmpty(user.Description))
+				identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String, issuer, issuer, identity));
 			if(!string.IsNullOrEmpty(user.Email))
 				identity.AddClaim(new Claim(ClaimTypes.Email, user.Email.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
 			if(!string.IsNullOrEmpty(user.Phone))
