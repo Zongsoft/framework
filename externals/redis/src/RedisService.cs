@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -265,6 +266,15 @@ namespace Zongsoft.Externals.Redis
 
 			key = GetKey(key);
 
+			if(value is MemoryStream memory)
+				return _database.StringSet(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+
+			if(value is byte[] buffer)
+			{
+				using(var memoryStream = new MemoryStream(buffer))
+				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+			}
+
 			if(value.GetType().IsDictionary(out var fields))
 			{
 				var transaction = _database.CreateTransaction();
@@ -335,6 +345,15 @@ namespace Zongsoft.Externals.Redis
 				return await _database.KeyDeleteAsync(key);
 
 			key = GetKey(key);
+
+			if(value is MemoryStream memory)
+				return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+
+			if(value is byte[] buffer)
+			{
+				using(var memoryStream = new MemoryStream(buffer))
+					return await _database.StringSetAsync(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+			}
 
 			if(value.GetType().IsDictionary(out var fields))
 			{
