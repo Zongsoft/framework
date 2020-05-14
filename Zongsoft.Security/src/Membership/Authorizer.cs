@@ -92,11 +92,11 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
-			if(this.InRoles(user.GetUserId(), MembershipHelper.Administrators))
+			if(this.InRoles(user.GetIdentifier<uint>(), MembershipHelper.Administrators))
 				return true;
 
 			//获取指定的安全凭证对应的有效的授权状态集
-			var tokens = this.Authorizes(user.GetUserId(), MemberType.User);
+			var tokens = this.Authorizes(user.GetIdentifier<uint>(), MemberType.User);
 
 			if(string.IsNullOrWhiteSpace(action) || action == "*")
 				context.IsAuthorized = tokens != null && tokens.Any(state => string.Equals(state.Schema, schema, StringComparison.OrdinalIgnoreCase));
@@ -118,7 +118,7 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			return this.GetAuthorizedTokens(user.GetNamespace(), user.GetUserId(), MemberType.User);
+			return this.GetAuthorizedTokens(user.GetNamespace(), user.GetIdentifier<uint>(), MemberType.User);
 		}
 
 		public IEnumerable<AuthorizationToken> Authorizes(IRole role)

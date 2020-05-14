@@ -28,22 +28,29 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 表示命名空间映射提供程序的接口。
+	/// 表示命名空间映射器的接口。
 	/// </summary>
-	public interface INamespaceProvider
+	public interface INamespaceMapper
 	{
+		T Map<T>(string @namespace)
+		{
+			if(this.TryMap<T>(@namespace, out var result))
+				return result;
+
+			return default;
+		}
+
 		/// <summary>
-		/// 尝试获取指定命名空间标识的唯一键。
+		/// 尝试获取指定命名空间的映射键值。
 		/// </summary>
-		/// <typeparam name="TKey">命名空间的唯一键类型。</typeparam>
+		/// <typeparam name="T">命名空间映射键的类型参数。</typeparam>
 		/// <param name="namespace">指定的命名空间标识。</param>
-		/// <param name="key">输出参数，表示对应命名空间标识的键。</param>
+		/// <param name="result">输出参数，表示对应命名空间映射的键值。</param>
 		/// <returns>如果获取成功则返回真(True)，否则返回假(False)。</returns>
-		bool TryGetKey<TKey>(string @namespace, out TKey key);
+		bool TryMap<T>(string @namespace, out T result);
 	}
 }

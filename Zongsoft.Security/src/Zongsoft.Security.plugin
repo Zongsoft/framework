@@ -44,10 +44,12 @@
 	<extension path="/Workbench/Security">
 		<object name="Authentication" value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
 			<expose name="Filters" value="{path:../@Filters}" />
+			<object name="Default" value="{srv:~@Security}" />
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">
 			<expose name="Filters" value="{path:../@Filters}" />
+			<object name="Default" value="{srv:~@Security}" />
 		</object>
 	</extension>
 </plugin>

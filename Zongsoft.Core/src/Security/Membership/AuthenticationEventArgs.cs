@@ -36,7 +36,6 @@ namespace Zongsoft.Security.Membership
 	public class AuthenticatedEventArgs : EventArgs
 	{
 		#region 成员字段
-		private ClaimsIdentity _identity;
 		private IDictionary<string, object> _parameters;
 		#endregion
 
@@ -44,7 +43,7 @@ namespace Zongsoft.Security.Membership
 		public AuthenticatedEventArgs(IAuthenticator authenticator, ClaimsIdentity identity, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-			this.Identity = identity;
+			this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
 
 			if(parameters != null)
 				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
@@ -55,26 +54,19 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取激发的验证器对象。
 		/// </summary>
-		public IAuthenticator Authenticator
-		{
-			get;
-		}
+		public IAuthenticator Authenticator { get; }
+
+		/// <summary>
+		/// 获取身份验证的用户身份。
+		/// </summary>
+		public ClaimsIdentity Identity { get; }
 
 		/// <summary>
 		/// 获取身份验证是否通过。
 		/// </summary>
 		public bool IsAuthenticated
 		{
-			get => _identity != null && _identity.IsAuthenticated && !string.IsNullOrEmpty(_identity.Name);
-		}
-
-		/// <summary>
-		/// 获取身份验证的用户身份。
-		/// </summary>
-		public ClaimsIdentity Identity
-		{
-			get => _identity;
-			set => _identity = value;
+			get => Identity != null && Identity.IsAuthenticated && !string.IsNullOrEmpty(Identity.Name);
 		}
 
 		/// <summary>
@@ -124,34 +116,22 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取激发的验证器对象。
 		/// </summary>
-		public IAuthenticator Authenticator
-		{
-			get;
-		}
+		public IAuthenticator Authenticator { get; }
 
 		/// <summary>
 		/// 获取身份验证的身份标识。
 		/// </summary>
-		public string Identity
-		{
-			get;
-		}
+		public string Identity { get; }
 
 		/// <summary>
 		/// 获取身份验证的命名空间。
 		/// </summary>
-		public string Namespace
-		{
-			get;
-		}
+		public string Namespace { get; }
 
 		/// <summary>
 		/// 获取身份验证的应用场景。
 		/// </summary>
-		public string Scenario
-		{
-			get;
-		}
+		public string Scenario { get; }
 
 		/// <summary>
 		/// 获取一个值，指示扩展参数集是否有内容。

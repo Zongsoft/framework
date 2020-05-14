@@ -890,7 +890,7 @@ namespace Zongsoft.Security.Membership
 		private uint GetUserId(uint userId)
 		{
 			if(userId == 0)
-				return ApplicationContext.Current.Principal.Identity.GetUserId();
+				return ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			/*
 			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
@@ -898,7 +898,7 @@ namespace Zongsoft.Security.Membership
 			 *   2) 当前用户是系统管理员角色(Administrators)成员。
 			 */
 
-			var user = ApplicationContext.Current.Principal.Identity.AsModel<IUser>(null);
+			var user = ApplicationContext.Current.Principal.Identity.AsModel<IUser>();
 
 			if(user.UserId == userId || MembershipHelper.InRoles(this.DataAccess, user, MembershipHelper.Administrators))
 				return userId;

@@ -72,19 +72,19 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(id))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var scene = id.Trim();
+			var scenario = id.Trim();
 			var parameters = request.Parameters;
 
 			//处理头部参数
 			this.FillParameters(ref parameters);
 
 			//进行身份验证
-			var user = string.IsNullOrEmpty(request.Secret) ?
-				_authenticator.Authenticate(request.Identity, request.Password, request.Namespace, scene, ref parameters) :
-				_authenticator.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scene, ref parameters);
+			var principal = string.IsNullOrEmpty(request.Secret) ?
+				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, ref parameters) :
+				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, ref parameters);
 
 			//返回注册的凭证
-			return Task.FromResult((IActionResult)this.Ok(user.AsModel<IUser>()));
+			return Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
 		}
 
 		[HttpGet]

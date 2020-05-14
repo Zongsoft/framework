@@ -87,11 +87,8 @@ namespace Zongsoft.Security.Membership
 			if(parameters != null)
 				parameters["Authentication:Options"] = this.Options;
 
-			//创建验证上下文对象
-			var args = new AuthenticatingEventArgs(this, @namespace, identity, scenario, parameters);
-
 			//激发“Authenticating”事件
-			this.OnAuthenticating(args);
+			this.OnAuthenticating(@namespace, identity, scenario, parameters);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
@@ -129,11 +126,8 @@ namespace Zongsoft.Security.Membership
 			//获取指定用户编号对应的用户对象
 			var user = this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
 
-			//注册验证成功的凭证
-			var principal = this.Register(this.Identity(user), scenario);
-
 			//激发“Authenticated”事件
-			return this.OnAuthenticated(principal, parameters);
+			return this.OnAuthenticated(user, parameters);
 		}
 
 		public ClaimsIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scenario, ref IDictionary<string, object> parameters)
@@ -145,11 +139,8 @@ namespace Zongsoft.Security.Membership
 			if(parameters != null)
 				parameters["Authentication:Options"] = this.Options;
 
-			//创建验证上下文对象
-			var args = new AuthenticatingEventArgs(this, @namespace, identity, scenario, parameters);
-
 			//激发“Authenticating”事件
-			this.OnAuthenticating(args);
+			this.OnAuthenticating(@namespace, identity, scenario, parameters);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
@@ -184,11 +175,8 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done(identity, @namespace);
 
-			//注册验证成功的凭证
-			var principal = this.Register(this.Identity(user), scenario);
-
 			//激发“Authenticated”事件
-			return this.OnAuthenticated(principal, parameters);
+			return this.OnAuthenticated(user, parameters);
 		}
 		#endregion
 
@@ -246,25 +234,21 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 激发事件
-		private ClaimsIdentity OnAuthenticated(ClaimsIdentity user, IDictionary<string, object> parameters)
+		private ClaimsIdentity OnAuthenticated(IUser user, IDictionary<string, object> parameters)
 		{
-			var authenticated = this.Authenticated;
-			if(authenticated == null)
-				return user;
-
-			var args = new AuthenticatedEventArgs(this, user, parameters);
-			this.OnAuthenticated(args);
-			return args.Identity;
+			var identity = this.Identity(user);
+			this.OnAuthenticated(identity, parameters);
+			return identity;
 		}
 
-		protected virtual void OnAuthenticated(AuthenticatedEventArgs args)
+		protected virtual void OnAuthenticated(ClaimsIdentity identity, IDictionary<string, object> parameters)
 		{
-			this.Authenticated?.Invoke(this, args);
+			this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(this, identity, parameters));
 		}
 
-		protected virtual void OnAuthenticating(AuthenticatingEventArgs args)
+		protected virtual void OnAuthenticating(string @namespace, string identity, string scenario, IDictionary<string, object> parameters)
 		{
-			this.Authenticating?.Invoke(this, args);
+			this.Authenticating?.Invoke(this, new AuthenticatingEventArgs(this, @namespace, identity, scenario, parameters));
 		}
 		#endregion
 

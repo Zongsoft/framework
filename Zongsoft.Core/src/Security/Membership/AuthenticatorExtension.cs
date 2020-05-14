@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 {
 	public static class AuthenticatorExtension
 	{
-		public static ClaimsIdentity Identity(this IAuthenticator authenticator, IUser user, string scene, TimeSpan? expiration = null)
+		public static ClaimsIdentity Identity(this IAuthenticator authenticator, IUser user, TimeSpan? expiration = null)
 		{
 			if(user == null)
 				return new ClaimsIdentity();
@@ -66,9 +66,6 @@ namespace Zongsoft.Security.Membership
 
 			if(user.Modification.HasValue)
 				identity.AddClaim(new Claim(ClaimNames.Modification, user.Modification.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
-
-			if(!string.IsNullOrEmpty(scene))
-				identity.AddClaim(new Claim(ClaimNames.Scenario, scene, ClaimValueTypes.String, issuer, issuer, identity));
 
 			if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
 				identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, issuer, issuer, identity));

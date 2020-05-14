@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
@@ -55,10 +54,8 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 将指定的凭证主体注册到凭证容器中。
 		/// </summary>
-		/// <param name="identity">指定要注册的用户身份标识对象。</param>
-		/// <param name="scenario">指定的应用场景。</param>
-		/// <returns>返回注册成功的凭证主体对象。</returns>
-		CredentialPrincipal Register(ClaimsIdentity identity, string scenario);
+		/// <param name="principal">指定要注册的凭证主体对象。</param>
+		void Register(CredentialPrincipal principal);
 
 		/// <summary>
 		/// 从安全凭证容器中注销指定的凭证。
@@ -76,19 +73,19 @@ namespace Zongsoft.Security
 		CredentialPrincipal Renew(string credentialId, string token);
 
 		/// <summary>
-		/// 获取指定安全凭证编号对应的<see cref="ClaimsIdentity"/>凭证主体对象。
+		/// 获取指定安全凭证编号对应的<see cref="CredentialPrincipal"/>凭证主体对象。
 		/// </summary>
 		/// <param name="credentialId">指定要获取的安全凭证编号。</param>
 		/// <returns>返回的对应的凭证主体对象，如果指定的安全凭证编号不存在则返回空(null)。</returns>
 		CredentialPrincipal GetPrincipal(string credentialId);
 
 		/// <summary>
-		/// 获取指定用户及应用场景对应的<see cref="ClaimsIdentity"/>凭证主体对象。
+		/// 获取指定用户及应用场景对应的<see cref="CredentialPrincipal"/>凭证主体对象。
 		/// </summary>
 		/// <param name="identity">指定要获取的安全凭证对应的用户唯一标识。</param>
-		/// <param name="scene">指定要获取的安全凭证对应的应用场景。</param>
+		/// <param name="scenario">指定要获取的安全凭证对应的应用场景。</param>
 		/// <returns>返回成功的凭证主体对象，如果指定的用户身份及应用场景未被注册则返回空(null)。</returns>
-		CredentialPrincipal GetPrincipal(string identity, string scene);
+		CredentialPrincipal GetPrincipal(string identity, string scenario);
 		#endregion
 	}
 }

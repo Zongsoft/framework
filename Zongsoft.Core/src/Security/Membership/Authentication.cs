@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -43,6 +44,10 @@ namespace Zongsoft.Security.Membership
 	[System.Reflection.DefaultMember(nameof(Authenticators))]
 	public class Authentication
 	{
+		#region 静态变量
+		private static DateTime EPOCH = new DateTime(2000, 1, 1);
+		#endregion
+
 		#region 单例字段
 		public static readonly Authentication Instance = new Authentication();
 		#endregion
@@ -60,27 +65,72 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		/// <summary>
+		/// 获取或设置凭证主体的提供程序。
+		/// </summary>
+		public ICredentialProvider Authority { get; set; }
+
+		/// <summary>
 		/// 获取身份验证器的集合。
 		/// </summary>
-		public ICollection<IAuthenticator> Authenticators
-		{
-			get;
-		}
+		public ICollection<IAuthenticator> Authenticators { get; }
 
 		/// <summary>
 		/// 获取一个身份验证的过滤器集合，该过滤器包含对身份验证的响应处理。
 		/// </summary>
-		public ICollection<IExecutionFilter> Filters
-		{
-			get;
-		}
+		public ICollection<IExecutionFilter> Filters { get; }
 
 		/// <summary>
-		/// 获取或设置命名空间提供程序。
+		/// 获取或设置命名空间映射器。
 		/// </summary>
-		public INamespaceProvider Namespaces
+		public INamespaceMapper Namespaces { get; set; }
+		#endregion
+
+		#region 公共方法
+		public CredentialPrincipal Authenticate(string identity, string password, string @namespace, string scenario, ref IDictionary<string, object> parameters)
 		{
-			get; set;
+			var identities = new List<ClaimsIdentity>(this.Authenticators.Count);
+
+			foreach(var authenticator in this.Authenticators)
+			{
+				identities.Add(authenticator.Authenticate(identity, password, @namespace, scenario, ref parameters));
+			}
+
+			var principal = new CredentialPrincipal(GenerateId(), GenerateId(), scenario, identities);
+
+			foreach(var filter in this.Filters)
+			{
+				filter.OnFiltered(principal);
+			}
+
+			this.Authority.Register(principal);
+
+			return principal;
+		}
+
+		public CredentialPrincipal AuthenticateSecret(string identity, string secret, string @namespace, string scenario, ref IDictionary<string, object> parameters)
+		{
+			var identities = new List<ClaimsIdentity>(this.Authenticators.Count);
+
+			foreach(var authenticator in this.Authenticators)
+			{
+				identities.Add(authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, ref parameters));
+			}
+
+			var principal = new CredentialPrincipal(GenerateId(), GenerateId(), scenario, identities);
+
+			foreach(var filter in this.Filters)
+			{
+				filter.OnFiltered(principal);
+			}
+
+			return principal;
+		}
+		#endregion
+
+		#region 静态方法
+		public static string GenerateId()
+		{
+			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Zongsoft.Common.Randomizer.GenerateString(8);
 		}
 		#endregion
 

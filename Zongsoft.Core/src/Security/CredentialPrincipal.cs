@@ -30,21 +30,29 @@
 using System;
 using System.IO;
 using System.Security.Claims;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Zongsoft.Security
 {
 	public class CredentialPrincipal : ClaimsPrincipal
 	{
 		#region 构造函数
-		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, TimeSpan expiration, ClaimsIdentity identity, params string[] roles) : base(identity)
+		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity, params string[] roles) : base(identity)
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
 			this.Scenario = scenario;
-			this.Expiration = expiration;
 
 			if(roles != null)
 				identity.AddRoles(roles);
+		}
+
+		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, IEnumerable<ClaimsIdentity> identities) : base(identities)
+		{
+			this.CredentialId = credentialId;
+			this.RenewalToken = renewalToken;
+			this.Scenario = scenario;
 		}
 
 		public CredentialPrincipal(BinaryReader reader) : base(reader)
@@ -77,19 +85,41 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取凭证编号。</summary>
 		public string CredentialId { get; }
 
+		/// <summary>获取续约标识。</summary>
 		public string RenewalToken { get; }
 
+		/// <summary>获取场景名称。</summary>
 		public string Scenario { get; }
 
-		public TimeSpan Expiration { get; }
+		/// <summary>获取或设置过期时长。</summary>
+		public TimeSpan Expiration { get; set; }
 		#endregion
 
 		#region 公共方法
 		public CredentialPrincipal Clone(string credentialId, string renewalToken)
 		{
 			return new CredentialPrincipal(this, credentialId, renewalToken);
+		}
+
+		public IDictionary<string, object> ToDictionary()
+		{
+			var dictionary = new Dictionary<string, object>()
+			{
+				{ nameof(CredentialId), this.CredentialId },
+				{ nameof(RenewalToken), this.RenewalToken },
+				{ nameof(Scenario), this.Scenario },
+				{ nameof(Expiration), this.Expiration },
+			};
+
+			dictionary.Add(nameof(Identity), this.Identity.AsModel<Membership.IUser>());
+			dictionary.Add(nameof(Identities),
+				this.Identities.Where(identity => identity != this.Identity)
+				               .Select(identity => identity.AsModel<Membership.IUser>()));
+
+			return dictionary;
 		}
 
 		public byte[] Serialize()
