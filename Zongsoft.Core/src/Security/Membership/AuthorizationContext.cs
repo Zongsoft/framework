@@ -28,16 +28,16 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
 	public class AuthorizationContext
 	{
 		#region 构造函数
-		public AuthorizationContext(IUserIdentity user, string schema, string action, bool isAuthorized)
+		public AuthorizationContext(ClaimsIdentity identity, string schema, string action, bool isAuthorized)
 		{
-			this.User = user;
+			this.Identity = identity;
 			this.Schema = schema;
 			this.Action = action;
 			this.IsAuthorized = isAuthorized;
@@ -48,34 +48,22 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取授权的用户对象。
 		/// </summary>
-		public IUserIdentity User
-		{
-			get;
-		}
+		public ClaimsIdentity Identity { get; }
 
 		/// <summary>
 		/// 获取待授权的资源标识。
 		/// </summary>
-		public string Schema
-		{
-			get;
-		}
+		public string Schema { get; }
 
 		/// <summary>
 		/// 获取待授权的行为标识。
 		/// </summary>
-		public string Action
-		{
-			get;
-		}
+		public string Action { get; }
 
 		/// <summary>
 		/// 获取或设置是否授权通过。
 		/// </summary>
-		public bool IsAuthorized
-		{
-			get; set;
-		}
+		public bool IsAuthorized { get; set; }
 		#endregion
 	}
 }

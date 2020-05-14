@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
@@ -41,22 +42,19 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 表示验证完成的事件。
 		/// </summary>
-		event EventHandler<AuthenticationContext> Authenticated;
+		event EventHandler<AuthenticatedEventArgs> Authenticated;
 
 		/// <summary>
 		/// 表示验证开始的事件。
 		/// </summary>
-		event EventHandler<AuthenticationContext> Authenticating;
+		event EventHandler<AuthenticatingEventArgs> Authenticating;
 		#endregion
 
 		#region 属性定义
 		/// <summary>
 		/// 获取验证器的名称。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
+		string Name { get; }
 		#endregion
 
 		#region 方法定义
@@ -68,9 +66,9 @@ namespace Zongsoft.Security.Membership
 		/// <param name="namespace">要验证的用户标识所属的命名空间。</param>
 		/// <param name="scene">指定的验证应用场景。</param>
 		/// <param name="parameters">指定的扩展参数集。</param>
-		/// <returns>如果验证成功则返回一个<see cref="IUserIdentity"/>对象。验证失败会抛出<seealso cref="AuthenticationException"/>异常。</returns>
+		/// <returns>如果验证成功则返回一个<see cref="ClaimsIdentity"/>对象。验证失败会抛出<seealso cref="AuthenticationException"/>异常。</returns>
 		/// <exception cref="AuthenticationException">当验证失败。</exception>
-		IUserIdentity Authenticate(string identity, string password, string @namespace, string scene, ref IDictionary<string, object> parameters);
+		ClaimsIdentity Authenticate(string identity, string password, string @namespace, string scene, ref IDictionary<string, object> parameters);
 
 		/// <summary>
 		/// 验证指定名称的用户是否有效并且和指定的验证码是否有效。
@@ -80,9 +78,9 @@ namespace Zongsoft.Security.Membership
 		/// <param name="namespace">要验证的用户标识所属的命名空间。</param>
 		/// <param name="scene">指定的验证应用场景。</param>
 		/// <param name="parameters">指定的扩展参数集。</param>
-		/// <returns>如果验证成功则返回一个<see cref="IUserIdentity"/>对象。验证失败会抛出<seealso cref="AuthenticationException"/>异常。</returns>
+		/// <returns>如果验证成功则返回一个<see cref="ClaimsIdentity"/>对象。验证失败会抛出<seealso cref="AuthenticationException"/>异常。</returns>
 		/// <exception cref="AuthenticationException">当验证失败。</exception>
-		IUserIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scene, ref IDictionary<string, object> parameters);
+		ClaimsIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scene, ref IDictionary<string, object> parameters);
 
 		/// <summary>
 		/// 生成一个验证码，并将其发送到指定用户标识所对应的手机或电子邮箱中。

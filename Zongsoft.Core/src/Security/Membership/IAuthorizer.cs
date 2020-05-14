@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
@@ -64,7 +65,7 @@ namespace Zongsoft.Security.Membership
 		/// <remarks>
 		/// 	<para>该验证会对指定的用户所属角色进行逐级向上展开做授权判断，因此只需对本方法一次调用即可得知当前用户对指定目标的特定行为的最终授权计算结果。</para>
 		/// </remarks>
-		bool Authorize(IUserIdentity user, string schema, string action);
+		bool Authorize(ClaimsIdentity user, string schema, string action);
 
 		/// <summary>
 		/// 获取指定用户的最终授权状态集。
@@ -75,7 +76,7 @@ namespace Zongsoft.Security.Membership
 		/// 	<para>注意：该集合仅包含了最终的已授权状态信息。</para>
 		/// 	<para>该方法对指定用户及其所属角色进行逐级向上展开做授权计算，因此只需对本方法一次调用即可得知指定用户的最终授权计算结果。</para>
 		/// </remarks>
-		IEnumerable<AuthorizationToken> Authorizes(IUserIdentity user);
+		IEnumerable<AuthorizationToken> Authorizes(ClaimsIdentity user);
 
 		/// <summary>
 		/// 获取指定角色的最终授权状态集。
@@ -107,13 +108,5 @@ namespace Zongsoft.Security.Membership
 		/// <param name="roleNames">要确认的角色名称数组。</param>
 		/// <returns>如果指定的用户是指定角色名称中的任一成员则返回真(true)；否则返回假(false)。</returns>
 		bool InRoles(uint userId, params string[] roleNames);
-
-		/// <summary>
-		/// 确定指定的用户是否属于指定的角色。
-		/// </summary>
-		/// <param name="user">要检查的用户对象。</param>
-		/// <param name="roleNames">要确认的角色名称数组。</param>
-		/// <returns>如果指定的用户是指定角色名称中的任一成员则返回真(true)；否则返回假(false)。</returns>
-		bool InRoles(IUserIdentity user, params string[] roleNames);
 	}
 }

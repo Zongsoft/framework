@@ -28,41 +28,25 @@
  */
 
 using System;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	public class AuthenticationContext
+	public class AuthenticatedEventArgs : EventArgs
 	{
 		#region 成员字段
-		private IUserIdentity _user;
+		private ClaimsIdentity _identity;
 		private IDictionary<string, object> _parameters;
 		#endregion
 
 		#region 构造函数
-		public AuthenticationContext(IAuthenticator authenticator, string identity, string @namespace, IUserIdentity user, string scene, IDictionary<string, object> parameters = null)
+		public AuthenticatedEventArgs(IAuthenticator authenticator, ClaimsIdentity identity, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-
 			this.Identity = identity;
-			this.Namespace = @namespace;
-			this.Scene = scene;
-			this.User = user;
 
-			if(parameters != null && parameters.Count > 0)
-				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
-		}
-
-		public AuthenticationContext(IAuthenticator authenticator, string identity, string @namespace, string scene, IDictionary<string, object> parameters = null)
-		{
-			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-
-			this.Identity = identity;
-			this.Namespace = @namespace;
-			this.Scene = scene;
-			_user = null;
-
-			if(parameters != null && parameters.Count > 0)
+			if(parameters != null)
 				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
@@ -81,11 +65,72 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		public bool IsAuthenticated
 		{
-			get => _user != null && this.Exception == null;
+			get => _identity != null && _identity.IsAuthenticated && !string.IsNullOrEmpty(_identity.Name);
 		}
 
 		/// <summary>
-		/// 获取身份验证使用的身份标识。
+		/// 获取身份验证的用户身份。
+		/// </summary>
+		public ClaimsIdentity Identity
+		{
+			get => _identity;
+			set => _identity = value;
+		}
+
+		/// <summary>
+		/// 获取一个值，指示扩展参数集是否有内容。
+		/// </summary>
+		public bool HasParameters
+		{
+			get => _parameters != null && _parameters.Count > 0;
+		}
+
+		/// <summary>
+		/// 获取验证结果的扩展参数集。
+		/// </summary>
+		public IDictionary<string, object> Parameters
+		{
+			get
+			{
+				if(_parameters == null)
+					System.Threading.Interlocked.CompareExchange(ref _parameters, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+				return _parameters;
+			}
+		}
+		#endregion
+	}
+
+	public class AuthenticatingEventArgs : EventArgs
+	{
+		#region 成员字段
+		private IDictionary<string, object> _parameters;
+		#endregion
+
+		#region 构造函数
+		public AuthenticatingEventArgs(IAuthenticator authenticator, string @namespace, string identity, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		{
+			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
+			this.Namespace = @namespace;
+			this.Identity = identity;
+			this.Scenario = scenario;
+
+			if(parameters != null)
+				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取激发的验证器对象。
+		/// </summary>
+		public IAuthenticator Authenticator
+		{
+			get;
+		}
+
+		/// <summary>
+		/// 获取身份验证的身份标识。
 		/// </summary>
 		public string Identity
 		{
@@ -103,32 +148,9 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取身份验证的应用场景。
 		/// </summary>
-		public string Scene
+		public string Scenario
 		{
 			get;
-		}
-
-		/// <summary>
-		/// 获取或设置身份验证对应的用户对象。
-		/// </summary>
-		public IUserIdentity User
-		{
-			get
-			{
-				return _user;
-			}
-			set
-			{
-				_user = value ?? throw new ArgumentNullException();
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置发生的错误异常。
-		/// </summary>
-		public Exception Exception
-		{
-			get; set;
 		}
 
 		/// <summary>
@@ -136,10 +158,7 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		public bool HasParameters
 		{
-			get
-			{
-				return _parameters != null && _parameters.Count > 0;
-			}
+			get => _parameters != null && _parameters.Count > 0;
 		}
 
 		/// <summary>

@@ -85,57 +85,57 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 事件响应
-		private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs args)
 		{
-			switch(e.Action)
+			switch(args.Action)
 			{
 				case NotifyCollectionChangedAction.Add:
-					for(int i=e.NewStartingIndex; i< e.NewItems.Count; i++)
+					for(int i=args.NewStartingIndex; i< args.NewItems.Count; i++)
 					{
-						((IAuthenticator)e.NewItems[i]).Authenticated += OnAuthenticated;
-						((IAuthenticator)e.NewItems[i]).Authenticating += OnAuthenticating;
+						((IAuthenticator)args.NewItems[i]).Authenticated += OnAuthenticated;
+						((IAuthenticator)args.NewItems[i]).Authenticating += OnAuthenticating;
 					}
 
 					break;
 				case NotifyCollectionChangedAction.Reset:
 				case NotifyCollectionChangedAction.Remove:
-					for(int i = e.OldStartingIndex; i < e.OldItems.Count; i++)
+					for(int i = args.OldStartingIndex; i < args.OldItems.Count; i++)
 					{
-						((IAuthenticator)e.OldItems[i]).Authenticated -= OnAuthenticated;
-						((IAuthenticator)e.OldItems[i]).Authenticating -= OnAuthenticating;
+						((IAuthenticator)args.OldItems[i]).Authenticated -= OnAuthenticated;
+						((IAuthenticator)args.OldItems[i]).Authenticating -= OnAuthenticating;
 					}
 
 					break;
 				case NotifyCollectionChangedAction.Replace:
-					for(int i = e.OldStartingIndex; i < e.OldItems.Count; i++)
+					for(int i = args.OldStartingIndex; i < args.OldItems.Count; i++)
 					{
-						((IAuthenticator)e.OldItems[i]).Authenticated -= OnAuthenticated;
-						((IAuthenticator)e.OldItems[i]).Authenticating -= OnAuthenticating;
+						((IAuthenticator)args.OldItems[i]).Authenticated -= OnAuthenticated;
+						((IAuthenticator)args.OldItems[i]).Authenticating -= OnAuthenticating;
 					}
 
-					for(int i = e.NewStartingIndex; i < e.NewItems.Count; i++)
+					for(int i = args.NewStartingIndex; i < args.NewItems.Count; i++)
 					{
-						((IAuthenticator)e.NewItems[i]).Authenticated += OnAuthenticated;
-						((IAuthenticator)e.NewItems[i]).Authenticating += OnAuthenticating;
+						((IAuthenticator)args.NewItems[i]).Authenticated += OnAuthenticated;
+						((IAuthenticator)args.NewItems[i]).Authenticating += OnAuthenticating;
 					}
 
 					break;
 			}
 		}
 
-		private void OnAuthenticating(object sender, AuthenticationContext context)
+		private void OnAuthenticating(object sender, AuthenticatingEventArgs args)
 		{
 			foreach(var filter in this.Filters)
 			{
-				filter.OnFiltering(context);
+				filter.OnFiltering(args);
 			}
 		}
 
-		private void OnAuthenticated(object sender, AuthenticationContext context)
+		private void OnAuthenticated(object sender, AuthenticatedEventArgs args)
 		{
 			foreach(var filter in this.Filters)
 			{
-				filter.OnFiltered(context);
+				filter.OnFiltered(args);
 			}
 		}
 		#endregion

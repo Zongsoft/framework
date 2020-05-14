@@ -57,6 +57,16 @@ namespace Zongsoft.Security.Membership
 		}
 		#endregion
 
+		#region 公共方法
+		public bool HasAction(string action)
+		{
+			if(string.IsNullOrEmpty(action))
+				return false;
+
+			return this.Actions.Any(token => string.Equals(token.Action, action, StringComparison.OrdinalIgnoreCase));
+		}
+		#endregion
+
 		#region 重写方法
 		public bool Equals(AuthorizationToken other)
 		{
