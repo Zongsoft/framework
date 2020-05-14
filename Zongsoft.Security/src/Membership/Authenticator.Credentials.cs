@@ -79,19 +79,13 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public void Register(ClaimsIdentity identity)
+		public CredentialPrincipal Register(ClaimsIdentity identity, string scenario)
 		{
 			if(identity == null || !identity.IsAuthenticated)
-				return;
-
-			//激发“Registering”事件
-			this.OnRegistering(identity);
-
-			var scene = identity.GetScenario();
-			var period = this.Options.GetPeriod(scene);
+				return null;
 
 			//确保同个用户在相同场景下只能存在一个凭证
-			if(this.Cache.GetValue(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scene)) is string credentialId && credentialId.Length > 0)
+			if(this.Cache.GetValue(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scenario)) is string credentialId && credentialId.Length > 0)
 			{
 				//将同名用户及场景下的原来的凭证删除（即踢下线）
 				this.Cache.Remove(this.GetCacheKeyOfCredential(credentialId));
@@ -103,20 +97,25 @@ namespace Zongsoft.Security.Membership
 			//生成一个新的凭证编号
 			credentialId = GenerateCredentialId();
 
-			//设置当前用户的续约标记
-			identity.AddClaim(ClaimNames.Token, GenerateCredentialId(), ClaimValueTypes.String);
+			//创建一个新的凭证主体对象
+			var principal = new CredentialPrincipal(credentialId, GenerateCredentialId(), scenario, this.Options.GetPeriod(scenario), identity);
+
+			//激发“Registering”事件
+			this.OnRegistering(principal);
 
 			//将当前用户身份保存到物理存储层中
-			this.Cache.SetValue(this.GetCacheKeyOfCredential(credentialId), identity.Serialize(), period);
+			this.Cache.SetValue(this.GetCacheKeyOfCredential(credentialId), principal.Serialize(), principal.Expiration);
 
 			//设置当前用户及场景所对应的唯一凭证号为新注册的凭证号
-			this.Cache.SetValue(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scene), credentialId, period);
+			this.Cache.SetValue(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scenario), credentialId, principal.Expiration);
 
 			//将凭证对象保存到本地内存缓存中
-			_memoryCache.SetValue(credentialId, new IdentityToken(identity), TimeSpan.FromSeconds(period.TotalSeconds * 0.6));
+			_memoryCache.SetValue(credentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
 
 			//激发“Registered”事件
-			this.OnRegistered(identity, false);
+			this.OnRegistered(principal, false);
+
+			return principal;
 		}
 
 		public void Unregister(string credentialId)
@@ -131,8 +130,8 @@ namespace Zongsoft.Security.Membership
 			this.Cache.Remove(this.GetCacheKeyOfCredential(credentialId));
 
 			//将当前用户及场景对应的凭证号记录删除
-			if(_memoryCache.TryGetValue<IdentityToken>(credentialId, out var token))
-				this.Cache.Remove(this.GetCacheKeyOfUser(token.Identity.GetUserId().ToString(), token.Identity.GetScenario()));
+			if(_memoryCache.TryGetValue<CredentialToken>(credentialId, out var token))
+				this.Cache.Remove(this.GetCacheKeyOfUser(token.Principal.Identity.GetUserId().ToString(), token.Principal.Scenario));
 
 			//从本地内存缓存中把指定编号的凭证对象删除
 			_memoryCache.Remove(credentialId);
@@ -141,39 +140,30 @@ namespace Zongsoft.Security.Membership
 			this.OnUnregistered(credentialId, false);
 		}
 
-		public ClaimsIdentity Renew(string credentialId, string token)
+		public CredentialPrincipal Renew(string credentialId, string token)
 		{
 			if(string.IsNullOrEmpty(credentialId))
 				throw new ArgumentNullException(nameof(credentialId));
 
-			var identity = this.GetIdentity(credentialId);
+			var principal = this.GetPrincipal(credentialId);
 
-			if(identity == null || token != identity.GetToken())
+			if(principal == null || token != principal.RenewalToken)
 				return null;
-
-			var scene = identity.GetScenario();
-			var period = this.Options.GetPeriod(scene);
 
 			//激发“Unregistered”事件
 			this.OnUnregistered(credentialId, true);
 
 			//创建一个新的凭证对象
-			identity = new ClaimsIdentity(identity);
-
-			//设置当前用户的续约标记
-			identity.AddClaim(ClaimNames.Token, GenerateCredentialId(), ClaimValueTypes.String);
-
-			//生成一个新的凭证编号
-			var newCredentialId = GenerateCredentialId();
+			principal = principal.Clone(GenerateCredentialId(), GenerateCredentialId());
 
 			//将当前用户身份保存到物理存储层中
-			this.Cache.SetValue(this.GetCacheKeyOfCredential(newCredentialId), identity.Serialize(), period);
+			this.Cache.SetValue(this.GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Expiration);
 
 			//将当前用户及场景对应的凭证号更改为新创建的凭证号
-			this.Cache.SetValue(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scene), newCredentialId, period);
+			this.Cache.SetValue(this.GetCacheKeyOfUser(principal.Identity.GetUserId().ToString(), principal.Scenario), principal.CredentialId, principal.Expiration);
 
 			//将新建的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(newCredentialId, new IdentityToken(identity), TimeSpan.FromSeconds(period.TotalSeconds * 0.6));
+			_memoryCache.SetValue(principal.CredentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
 
 			//将原来的凭证从物理存储层中删除
 			this.Cache.Remove(this.GetCacheKeyOfCredential(credentialId));
@@ -182,58 +172,52 @@ namespace Zongsoft.Security.Membership
 			_memoryCache.Remove(credentialId);
 
 			//激发“Registered”事件
-			this.OnRegistered(identity, true);
+			this.OnRegistered(principal, true);
 
 			//返回续约后的新凭证对象
-			return identity;
+			return principal;
 		}
 
-		public ClaimsIdentity GetIdentity(string credentialId)
+		public CredentialPrincipal GetPrincipal(string credentialId)
 		{
 			if(string.IsNullOrEmpty(credentialId))
 				return null;
 
-			string scene;
-			TimeSpan period;
-
 			//如果本地缓存获取成功则直接返回
-			if(_memoryCache.GetValue(credentialId) is IdentityToken token)
+			if(_memoryCache.GetValue(credentialId) is CredentialToken token)
 			{
 				if(token.Active())
 					this.Refresh(credentialId, token);
 
-				return token.Identity;
+				return token.Principal;
 			}
 
 			var value = this.Cache.GetValue(this.GetCacheKeyOfCredential(credentialId));
 
-			var identity = value switch
+			var principal = value switch
 			{
-				byte[] buffer => buffer.Deserialize(),
-				Stream stream => stream.Deserialize(),
-				BinaryReader reader => new ClaimsIdentity(reader),
+				byte[] buffer => CredentialPrincipal.Deserialize(buffer),
+				Stream stream => CredentialPrincipal.Deserialize(stream),
+				BinaryReader reader => new CredentialPrincipal(reader),
 				_ => null,
 			};
 
-			if(identity == null)
+			if(principal == null)
 				return null;
 
-			scene = identity.GetScenario();
-			period = this.Options.GetPeriod(scene);
-
 			//顺延当前用户及场景对应凭证号的缓存项的过期时长
-			this.Cache.SetExpiry(this.GetCacheKeyOfUser(identity.GetUserId().ToString(), scene), period);
+			this.Cache.SetExpiry(this.GetCacheKeyOfUser(principal.Identity.GetUserId().ToString(), principal.Scenario), principal.Expiration);
 
 			//顺延当前凭证缓存项的过期时长
-			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), period);
+			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), principal.Expiration);
 
 			//将获取到的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(credentialId, new IdentityToken(identity), TimeSpan.FromSeconds(period.TotalSeconds * 0.6));
+			_memoryCache.SetValue(credentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
 
-			return identity;
+			return principal;
 		}
 
-		public ClaimsIdentity GetIdentity(string identity, string scene)
+		public CredentialPrincipal GetPrincipal(string identity, string scene)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
@@ -243,7 +227,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(credentialId))
 				return null;
 
-			return this.GetIdentity(credentialId);
+			return this.GetPrincipal(credentialId);
 		}
 		#endregion
 
@@ -253,19 +237,19 @@ namespace Zongsoft.Security.Membership
 			if(e.Reason != CacheChangedReason.Expired)
 				return;
 
-			this.Refresh(e.Key, e.OldValue as IdentityToken);
+			this.Refresh(e.Key, e.OldValue as CredentialToken);
 		}
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnRegistered(ClaimsIdentity identity, bool renewal)
+		protected virtual void OnRegistered(CredentialPrincipal principal, bool renewal)
 		{
-			this.Registered?.Invoke(this, new CredentialRegisterEventArgs(identity, renewal));
+			this.Registered?.Invoke(this, new CredentialRegisterEventArgs(principal, renewal));
 		}
 
-		protected virtual void OnRegistering(ClaimsIdentity identity)
+		protected virtual void OnRegistering(CredentialPrincipal principal)
 		{
-			this.Registering?.Invoke(this, new CredentialRegisterEventArgs(identity));
+			this.Registering?.Invoke(this, new CredentialRegisterEventArgs(principal));
 		}
 
 		protected virtual void OnUnregistered(string credentialId, bool renewal)
@@ -280,16 +264,13 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 私有方法
-		private void Refresh(string credentialId, IdentityToken token)
+		private void Refresh(string credentialId, CredentialToken token)
 		{
-			var scene = token.Identity.GetScenario();
-			var period = this.Options.GetPeriod(scene);
-
 			//顺延当前用户及场景对应凭证号的缓存项的过期时长
-			this.Cache.SetExpiry(this.GetCacheKeyOfUser(token.Identity.GetUserId().ToString(), scene), period);
+			this.Cache.SetExpiry(this.GetCacheKeyOfUser(token.Principal.Identity.GetUserId().ToString(), token.Principal.Scenario), token.Principal.Expiration);
 
 			//顺延当前凭证缓存项的过期时长
-			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), period);
+			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), token.Principal.Expiration);
 
 			//重置本地缓存的时间信息
 			token.Reset();
@@ -321,7 +302,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 嵌套结构
-		private class IdentityToken
+		private class CredentialToken
 		{
 			#region 成员字段
 			private DateTime _issuedTime;
@@ -329,15 +310,15 @@ namespace Zongsoft.Security.Membership
 			#endregion
 
 			#region 构造函数
-			public IdentityToken(ClaimsIdentity identity)
+			public CredentialToken(CredentialPrincipal principal)
 			{
-				this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+				this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
 				_issuedTime = _activeTime = DateTime.Now;
 			}
 			#endregion
 
 			#region 公共属性
-			public ClaimsIdentity Identity
+			public CredentialPrincipal Principal
 			{
 				get;
 			}

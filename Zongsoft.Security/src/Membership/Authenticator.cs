@@ -78,7 +78,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 验证方法
-		public ClaimsIdentity Authenticate(string identity, string password, string @namespace, string scene, ref IDictionary<string, object> parameters)
+		public ClaimsIdentity Authenticate(string identity, string password, string @namespace, string scenario, ref IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
@@ -88,7 +88,7 @@ namespace Zongsoft.Security.Membership
 				parameters["Authentication:Options"] = this.Options;
 
 			//创建验证上下文对象
-			var args = new AuthenticatingEventArgs(this, @namespace, identity, scene, parameters);
+			var args = new AuthenticatingEventArgs(this, @namespace, identity, scenario, parameters);
 
 			//激发“Authenticating”事件
 			this.OnAuthenticating(args);
@@ -127,16 +127,16 @@ namespace Zongsoft.Security.Membership
 				attempter.Done(identity, @namespace);
 
 			//获取指定用户编号对应的用户对象
-			var user = this.Identity(this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault(), scene, this.Options.GetPeriod(scene));
+			var user = this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
 
 			//注册验证成功的凭证
-			this.Register(user);
+			var principal = this.Register(this.Identity(user), scenario);
 
 			//激发“Authenticated”事件
-			return this.OnAuthenticated(user, parameters);
+			return this.OnAuthenticated(principal, parameters);
 		}
 
-		public ClaimsIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scene, ref IDictionary<string, object> parameters)
+		public ClaimsIdentity AuthenticateSecret(string identity, string secret, string @namespace, string scenario, ref IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
@@ -146,7 +146,7 @@ namespace Zongsoft.Security.Membership
 				parameters["Authentication:Options"] = this.Options;
 
 			//创建验证上下文对象
-			var args = new AuthenticatingEventArgs(this, @namespace, identity, scene, parameters);
+			var args = new AuthenticatingEventArgs(this, @namespace, identity, scenario, parameters);
 
 			//激发“Authenticating”事件
 			this.OnAuthenticating(args);
@@ -184,8 +184,11 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done(identity, @namespace);
 
+			//注册验证成功的凭证
+			var principal = this.Register(this.Identity(user), scenario);
+
 			//激发“Authenticated”事件
-			return this.OnAuthenticated(this.Identity(user, scene, this.Options.GetPeriod(scene)), parameters);
+			return this.OnAuthenticated(principal, parameters);
 		}
 		#endregion
 

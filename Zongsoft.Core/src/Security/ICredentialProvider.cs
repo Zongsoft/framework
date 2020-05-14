@@ -53,10 +53,12 @@ namespace Zongsoft.Security
 
 		#region 方法定义
 		/// <summary>
-		/// 将指定的用户身份注册到凭证容器中。
+		/// 将指定的凭证主体注册到凭证容器中。
 		/// </summary>
-		/// <param name="identity">指定要注册的用户身份对象。</param>
-		void Register(ClaimsIdentity identity);
+		/// <param name="identity">指定要注册的用户身份标识对象。</param>
+		/// <param name="scenario">指定的应用场景。</param>
+		/// <returns>返回注册成功的凭证主体对象。</returns>
+		CredentialPrincipal Register(ClaimsIdentity identity, string scenario);
 
 		/// <summary>
 		/// 从安全凭证容器中注销指定的凭证。
@@ -65,28 +67,28 @@ namespace Zongsoft.Security
 		void Unregister(string credentialId);
 
 		/// <summary>
-		/// 续约指定的安全凭证。
+		/// 续约指定的凭证主体。
 		/// </summary>
 		/// <param name="credentialId">指定要续约的安全凭证编号。</param>
 		/// <param name="token">续约的安全标记。</param>
-		/// <returns>返回续约成功的用户身份标识对象，如果续约失败则返回空(null)。</returns>
+		/// <returns>返回续约成功的凭证主体对象，如果续约失败则返回空(null)。</returns>
 		/// <remarks>注：续约操作会依次激发“Unregistered”和“Registered”事件。</remarks>
-		ClaimsIdentity Renew(string credentialId, string token);
+		CredentialPrincipal Renew(string credentialId, string token);
 
 		/// <summary>
-		/// 获取指定安全凭证编号对应的<see cref="ClaimsIdentity"/>用户身份标识对象。
+		/// 获取指定安全凭证编号对应的<see cref="ClaimsIdentity"/>凭证主体对象。
 		/// </summary>
 		/// <param name="credentialId">指定要获取的安全凭证编号。</param>
-		/// <returns>返回的对应的用户身份标识对象，如果指定的安全凭证编号不存在则返回空(null)。</returns>
-		ClaimsIdentity GetIdentity(string credentialId);
+		/// <returns>返回的对应的凭证主体对象，如果指定的安全凭证编号不存在则返回空(null)。</returns>
+		CredentialPrincipal GetPrincipal(string credentialId);
 
 		/// <summary>
-		/// 获取指定用户及应用场景对应的<see cref="ClaimsIdentity"/>用户身份标识对象。
+		/// 获取指定用户及应用场景对应的<see cref="ClaimsIdentity"/>凭证主体对象。
 		/// </summary>
 		/// <param name="identity">指定要获取的安全凭证对应的用户唯一标识。</param>
 		/// <param name="scene">指定要获取的安全凭证对应的应用场景。</param>
-		/// <returns>返回成功的用户身份标识对象，如果指定的用户及应用场景未被注册则返回空(null)。</returns>
-		ClaimsIdentity GetIdentity(string identity, string scene);
+		/// <returns>返回成功的凭证主体对象，如果指定的用户身份及应用场景未被注册则返回空(null)。</returns>
+		CredentialPrincipal GetPrincipal(string identity, string scene);
 		#endregion
 	}
 }

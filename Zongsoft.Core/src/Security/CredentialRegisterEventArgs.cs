@@ -35,29 +35,23 @@ namespace Zongsoft.Security
 	public class CredentialRegisterEventArgs : EventArgs
 	{
 		#region 构造函数
-		public CredentialRegisterEventArgs(ClaimsIdentity identity, bool renewal = false)
+		public CredentialRegisterEventArgs(CredentialPrincipal principal, bool renewal = false)
 		{
 			this.IsRenewal = renewal;
-			this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+			this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
-		/// 获取注册成功的凭证对象。
+		/// 获取注册的凭证主体对象。
 		/// </summary>
-		public ClaimsIdentity Identity
-		{
-			get;
-		}
+		public CredentialPrincipal Principal { get; }
 
 		/// <summary>
 		/// 获取一个值，指示当前注册是否为续约引发。
 		/// </summary>
-		public bool IsRenewal
-		{
-			get;
-		}
+		public bool IsRenewal { get; }
 		#endregion
 	}
 }
