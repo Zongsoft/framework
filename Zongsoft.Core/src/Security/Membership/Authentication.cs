@@ -95,7 +95,7 @@ namespace Zongsoft.Security.Membership
 				identities.Add(authenticator.Authenticate(identity, password, @namespace, scenario, ref parameters));
 			}
 
-			var principal = new CredentialPrincipal(GenerateId(), GenerateId(), scenario, identities);
+			var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, identities);
 
 			foreach(var filter in this.Filters)
 			{
@@ -116,7 +116,7 @@ namespace Zongsoft.Security.Membership
 				identities.Add(authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, ref parameters));
 			}
 
-			var principal = new CredentialPrincipal(GenerateId(), GenerateId(), scenario, identities);
+			var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, identities);
 
 			foreach(var filter in this.Filters)
 			{
@@ -130,7 +130,13 @@ namespace Zongsoft.Security.Membership
 		#region 静态方法
 		public static string GenerateId()
 		{
-			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Zongsoft.Common.Randomizer.GenerateString(8);
+			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Randomizer.GenerateString(8);
+		}
+
+		public static string GenerateId(out string token)
+		{
+			token = ((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8);
+			return GenerateId();
 		}
 		#endregion
 
