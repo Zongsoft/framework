@@ -85,11 +85,11 @@ namespace Zongsoft.Security.Web.Controllers
 			if(parts.Length != 2)
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var identity = Authentication.Instance.Authority.Renew(parts[0], parts[1]);
+			var principal = Authentication.Instance.Authority.Renew(parts[0], parts[1]);
 
-			return identity == null ?
+			return principal == null ?
 				Task.FromResult((IActionResult)this.BadRequest()) :
-				Task.FromResult((IActionResult)this.Ok(identity));
+				Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
 		}
 
 		[HttpGet]
