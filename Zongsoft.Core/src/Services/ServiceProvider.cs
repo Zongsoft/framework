@@ -82,9 +82,6 @@ namespace Zongsoft.Services
 			if(serviceType == typeof(IServiceProvider))
 				return this;
 
-			if(serviceType == typeof(IServiceScopeFactory) || serviceType == typeof(IServiceScope))
-				return this;
-
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 

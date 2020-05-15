@@ -50,18 +50,14 @@ namespace Zongsoft.Plugins.Builders
 		#region 重写方法
 		public override Type GetValueType(Builtin builtin)
 		{
-			//调用基类同名方法
-			var type = base.GetValueType(builtin);
+			var type = base.GetValueType(builtin) ??
+				PluginUtility.GetOwnerElementType(builtin.Node);
 
 			if(type == null)
 			{
 				//尝试获取value属性值的类型
 				if(builtin.Properties.TryGet("value", out var property) && Parsers.Parser.CanParse(property.RawValue))
 					type = Parsers.Parser.GetValueType(property.RawValue, builtin);
-
-				//获取所有者元素类型（如果所有者如果是一个泛型集合的话，否则返回空）
-				if(type == null)
-					type = PluginUtility.GetOwnerElementType(builtin.Node);
 			}
 
 			return type;

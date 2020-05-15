@@ -299,7 +299,7 @@ namespace Zongsoft.Plugins
 					//更新属性类型
 					//property.Type = propertyType;
 
-					var propertyInfo = target.GetType().GetProperty(property.Name);
+					var propertyInfo = target.GetType().GetTypeInfo().DeclaredProperties.FirstOrDefault(p => p.CanRead && p.CanWrite && p.SetMethod.IsPublic && string.Equals(p.Name, property.Name, StringComparison.OrdinalIgnoreCase));
 
 					if(propertyInfo != null)
 					{
@@ -833,12 +833,15 @@ namespace Zongsoft.Plugins
 			if(instanceType == null)
 				return null;
 
-			var types = instanceType.GetInterfaces();
+			if(instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(ICollection<>))
+				return instanceType.GetGenericArguments()[0];
 
-			foreach(var type in types)
+			var contracts = instanceType.GetInterfaces();
+
+			foreach(var contract in contracts)
 			{
-				if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ICollection<>))
-					return type.GetGenericArguments()[0];
+				if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(ICollection<>))
+					return contract.GetGenericArguments()[0];
 			}
 
 			return null;

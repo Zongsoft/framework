@@ -111,7 +111,7 @@ namespace Zongsoft.Security
 				{ nameof(CredentialId), this.CredentialId },
 				{ nameof(RenewalToken), this.RenewalToken },
 				{ nameof(Scenario), this.Scenario },
-				{ nameof(Expiration), this.Expiration },
+				{ nameof(Expiration), this.Expiration.ToString() },
 			};
 
 			dictionary.Add(nameof(Identity), this.Identity.AsModel<Membership.IUser>());
