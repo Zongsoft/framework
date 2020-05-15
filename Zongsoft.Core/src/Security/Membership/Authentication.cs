@@ -86,6 +86,14 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
+		public void Secret(string identity, string @namespace = null)
+		{
+			foreach(var authenticator in this.Authenticators)
+			{
+				authenticator.Secret(identity, @namespace);
+			}
+		}
+
 		public CredentialPrincipal Authenticate(string identity, string password, string @namespace, string scenario, ref IDictionary<string, object> parameters)
 		{
 			var identities = new List<ClaimsIdentity>(this.Authenticators.Count);

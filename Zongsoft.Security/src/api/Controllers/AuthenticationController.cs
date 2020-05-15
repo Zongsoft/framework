@@ -44,27 +44,6 @@ namespace Zongsoft.Security.Web.Controllers
 	[Route("{area}/{controller}/{action}/{id?}")]
 	public class AuthenticationController : ControllerBase
 	{
-		#region 成员字段
-		private IAuthenticator _authenticator;
-		private ICredentialProvider _authority;
-		#endregion
-
-		#region 公共属性
-		[ServiceDependency]
-		public IAuthenticator Authenticator
-		{
-			get => _authenticator;
-			set => _authenticator = value ?? throw new ArgumentNullException();
-		}
-
-		[ServiceDependency]
-		public ICredentialProvider Authority
-		{
-			get => _authority;
-			set => _authority = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
 		#region 公共方法
 		[HttpPost]
 		public Task<IActionResult> SigninAsync(string id, [FromBody]AuthenticationRequest request)
@@ -93,16 +72,20 @@ namespace Zongsoft.Security.Web.Controllers
 		public void Signout(string id)
 		{
 			if(id != null && id.Length > 0)
-				_authority.Unregister(id);
+				Authentication.Instance.Authority.Unregister(id);
 		}
 
-		[HttpPost("{token}")]
-		public Task<IActionResult> Renew(string id, string token)
+		public Task<IActionResult> Renew(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var identity = _authority.Renew(id, token);
+			var parts = id.Split(':', '-');
+
+			if(parts.Length != 2)
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			var identity = Authentication.Instance.Authority.Renew(parts[0], parts[1]);
 
 			return identity == null ?
 				Task.FromResult((IActionResult)this.BadRequest()) :
@@ -118,9 +101,9 @@ namespace Zongsoft.Security.Web.Controllers
 			var parts = id.Split(':');
 
 			if(parts.Length > 1)
-				_authenticator.Secret(parts[1], parts[0]);
+				Authentication.Instance.Secret(parts[1], parts[0]);
 			else
-				_authenticator.Secret(parts[0], null);
+				Authentication.Instance.Secret(parts[0], null);
 
 			return this.NoContent();
 		}
