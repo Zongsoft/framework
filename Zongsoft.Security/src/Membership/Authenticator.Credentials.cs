@@ -145,7 +145,7 @@ namespace Zongsoft.Security.Membership
 			this.OnUnregistered(credentialId, true);
 
 			//创建一个新的凭证对象
-			principal = principal.Clone(Authentication.GenerateId(), Authentication.GenerateId());
+			principal = principal.Clone(Authentication.GenerateId(out token), token);
 
 			//将当前用户身份保存到物理存储层中
 			this.Cache.SetValue(this.GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Expiration);
