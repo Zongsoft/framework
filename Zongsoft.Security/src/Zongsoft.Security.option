@@ -18,11 +18,11 @@
 		<authentication period="4:0:0">
 			<attempter threshold="3" window="1:0:0" />
 
-			<policies>
-				<policy policy.name="app" period="24:0:0" />
-				<policy policy.name="mobile" period="24:00:00" />
-				<policy policy.name="wechat" period="24:00:00" />
-			</policies>
+			<expiration>
+				<period period.name="app" value="24:0:0" />
+				<period period.name="mobile" value="24:00:00" />
+				<period period.name="wechat" value="24:00:00" />
+			</expiration>
 		</authentication>
 	</option>
 </options>
