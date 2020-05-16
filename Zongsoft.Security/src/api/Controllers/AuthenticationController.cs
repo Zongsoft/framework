@@ -95,7 +95,7 @@ namespace Zongsoft.Security.Web.Controllers
 			return Task.FromResult((IActionResult)this.Unauthorized());
 		}
 
-		[HttpGet]
+		[HttpPost]
 		public IActionResult Secret(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
