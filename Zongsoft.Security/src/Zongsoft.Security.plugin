@@ -46,7 +46,7 @@
 		        authority="{srv:~@Security}"
 		        authenticator="{srv:~@Security}"
 		        value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
-			<expose name="Filters" value="{path:../@Filters}" />
+			<expose name="Handlers" value="{path:../@Handlers}" />
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">

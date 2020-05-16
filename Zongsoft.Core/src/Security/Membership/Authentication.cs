@@ -29,9 +29,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
-using Zongsoft.Common;
-using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
@@ -42,7 +39,7 @@ namespace Zongsoft.Security.Membership
 	public class Authentication
 	{
 		#region 静态变量
-		private static DateTime EPOCH = new DateTime(2000, 1, 1);
+		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1);
 		#endregion
 
 		#region 单例字段
@@ -52,7 +49,7 @@ namespace Zongsoft.Security.Membership
 		#region 构造函数
 		private Authentication()
 		{
-			this.Filters = new List<IExecutionFilter>();
+			this.Handlers = new List<IAuthenticationHandler>();
 		}
 		#endregion
 
@@ -68,9 +65,9 @@ namespace Zongsoft.Security.Membership
 		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
-		/// 获取一个身份验证的过滤器集合，该过滤器包含对身份验证的响应处理。
+		/// 获取一个身份验证处理器集合，该处理器包含对身份验证的响应处理。
 		/// </summary>
-		public ICollection<IExecutionFilter> Filters { get; }
+		public ICollection<IAuthenticationHandler> Handlers { get; }
 
 		/// <summary>
 		/// 获取或设置命名空间映射器。
@@ -82,37 +79,30 @@ namespace Zongsoft.Security.Membership
 		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			var result = authenticator.Authenticate(identity, password, @namespace, scenario, parameters);
-
-			if(result != null && result.Succeed)
-				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
-
-			var context = new AuthenticationContext(scenario, parameters) { Result = result };
-
-			foreach(var filter in this.Filters)
-			{
-				filter.OnFiltered(context);
-			}
-
-			if(context.Succeed && context.Principal is CredentialPrincipal principal)
-				this.Authority.Register(principal);
-
-			return context.Result;
+			return this.OnAuthenticated(scenario, authenticator.Authenticate(identity, password, @namespace, scenario, parameters));
 		}
 
 		public AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			var result = authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters);
+			return this.OnAuthenticated(scenario, authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters));
+		}
+		#endregion
 
-			if(result != null && result.Succeed)
+		#region 私有方法
+		private AuthenticationResult OnAuthenticated(string scenario, AuthenticationResult result)
+		{
+			if(result == null)
+				return null;
+
+			if(result.Succeed)
 				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
 
-			var context = new AuthenticationContext(scenario, parameters) { Result = result };
+			var context = new AuthenticationContext(scenario, result);
 
-			foreach(var filter in this.Filters)
+			foreach(var handler in this.Handlers)
 			{
-				filter.OnFiltered(context);
+				handler.Handle(context);
 			}
 
 			if(context.Succeed && context.Principal is CredentialPrincipal principal)
@@ -125,12 +115,12 @@ namespace Zongsoft.Security.Membership
 		#region 静态方法
 		public static string GenerateId()
 		{
-			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Randomizer.GenerateString(8);
+			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Common.Randomizer.GenerateString(8);
 		}
 
 		public static string GenerateId(out string token)
 		{
-			token = ((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8);
+			token = ((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Common.Randomizer.GenerateString(8);
 			return GenerateId();
 		}
 		#endregion
