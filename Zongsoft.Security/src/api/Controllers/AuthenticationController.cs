@@ -67,13 +67,13 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.BadRequest(new AuthenticationFailure(result)));
 		}
 
-		[HttpGet]
+		[HttpPost]
 		[Authorize]
 		[Authorization]
-		public void Signout(string id)
+		public void Signout()
 		{
-			if(id != null && id.Length > 0)
-				Authentication.Instance.Authority.Unregister(id);
+			if(this.User is CredentialPrincipal credential)
+				Authentication.Instance.Authority.Unregister(credential.CredentialId);
 		}
 
 		[HttpPost]
@@ -83,16 +83,16 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(id))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var parts = id.Split(':', '-');
+			if(this.User is CredentialPrincipal credential)
+			{
+				var principal = Authentication.Instance.Authority.Renew(credential.CredentialId, id);
 
-			if(parts.Length != 2)
-				return Task.FromResult((IActionResult)this.BadRequest());
+				return principal == null ?
+					Task.FromResult((IActionResult)this.BadRequest()) :
+					Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
+			}
 
-			var principal = Authentication.Instance.Authority.Renew(parts[0], parts[1]);
-
-			return principal == null ?
-				Task.FromResult((IActionResult)this.BadRequest()) :
-				Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
+			return Task.FromResult((IActionResult)this.Unauthorized());
 		}
 
 		[HttpGet]
