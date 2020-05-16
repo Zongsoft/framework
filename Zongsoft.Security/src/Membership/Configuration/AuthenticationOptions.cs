@@ -45,7 +45,7 @@ namespace Zongsoft.Security.Membership.Configuration
 		public AuthenticationOptions()
 		{
 			this.Period = DefaultPeriod;
-			this.Expiration = new Collections.NamedCollection<ExpirationPeriod>(policy => policy.Name);
+			this.Expiration = new Collections.NamedCollection<ExpirationScenario>(scenario => scenario.Name);
 		}
 		#endregion
 
@@ -64,18 +64,18 @@ namespace Zongsoft.Security.Membership.Configuration
 		/// <summary>
 		/// 获取凭证过期配置集。
 		/// </summary>
-		public Collections.INamedCollection<ExpirationPeriod> Expiration { get; }
+		public Collections.INamedCollection<ExpirationScenario> Expiration { get; }
 		#endregion
 
 		#region 公共方法
-		public TimeSpan GetPeriod(string scene)
+		public TimeSpan GetPeriod(string scenario)
 		{
 			var period = DefaultPeriod;
 
-			if(string.IsNullOrEmpty(scene))
+			if(string.IsNullOrEmpty(scenario))
 				period = this.Period;
-			else if(this.Expiration.TryGet(scene, out var expiration))
-				period = expiration.Value;
+			else if(this.Expiration.TryGet(scenario, out var expiration))
+				period = expiration.Period;
 
 			if(period.TotalMinutes > 1)
 				return period;
@@ -88,13 +88,13 @@ namespace Zongsoft.Security.Membership.Configuration
 		/// <summary>
 		/// 表示以凭证场景为依据的有效期配置项。
 		/// </summary>
-		public class ExpirationPeriod
+		public class ExpirationScenario
 		{
 			/// <summary>获取凭证场景名。</summary>
 			public string Name { get; set; }
 
 			/// <summary>获取或设置凭证的有效期时长。</summary>
-			public TimeSpan Value { get; set; }
+			public TimeSpan Period { get; set; }
 		}
 		#endregion
 	}

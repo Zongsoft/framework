@@ -19,9 +19,10 @@
 			<attempter threshold="3" window="1:0:0" />
 
 			<expiration>
-				<period period.name="app" value="24:0:0" />
-				<period period.name="mobile" value="24:00:00" />
-				<period period.name="wechat" value="24:00:00" />
+				<scenario scenario.name="web" period="8:0:0" />
+				<scenario scenario.name="app" period="24:0:0" />
+				<scenario scenario.name="mobile" period="24:00:00" />
+				<scenario scenario.name="wechat" period="24:00:00" />
 			</expiration>
 		</authentication>
 	</option>
