@@ -31,7 +31,6 @@ using System;
 using System.IO;
 using System.Security.Claims;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Zongsoft.Security
 {
@@ -72,12 +71,12 @@ namespace Zongsoft.Security
 			}
 		}
 
-		private CredentialPrincipal(CredentialPrincipal principal, string credentialId, string renewalToken) : base(principal)
+		private CredentialPrincipal(ClaimsPrincipal principal, string credentialId, string renewalToken, string scenario, TimeSpan expiration) : base(principal)
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
-			this.Scenario = principal.Scenario;
-			this.Expiration = principal.Expiration;
+			this.Scenario = scenario;
+			this.Expiration = expiration;
 		}
 		#endregion
 
@@ -98,7 +97,7 @@ namespace Zongsoft.Security
 		#region 公共方法
 		public CredentialPrincipal Clone(string credentialId, string renewalToken)
 		{
-			return new CredentialPrincipal(this, credentialId, renewalToken);
+			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Expiration);
 		}
 
 		public byte[] Serialize()
