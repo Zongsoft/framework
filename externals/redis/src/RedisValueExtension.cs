@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Redis
 			if(value.TryParse(out double number))
 				return number;
 
-			return value.ToString();
+			return value.Box();
 		}
 	}
 }
