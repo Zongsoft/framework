@@ -58,12 +58,12 @@ namespace Zongsoft.Security.Web.Controllers
 			this.FillParameters(ref parameters);
 
 			//进行身份验证
-			var principal = string.IsNullOrEmpty(request.Secret) ?
-				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, ref parameters) :
-				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, ref parameters);
+			var result = string.IsNullOrEmpty(request.Secret) ?
+				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, parameters) :
+				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, parameters);
 
-			//返回注册的凭证
-			return Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
+			if(result.Succeed)
+				return Task.FromResult((IActionResult)this.Ok(result.Principal.ToDictionary()));
 		}
 
 		[HttpGet]
@@ -101,9 +101,9 @@ namespace Zongsoft.Security.Web.Controllers
 			var parts = id.Split(':');
 
 			if(parts.Length > 1)
-				Authentication.Instance.Secret(parts[1], parts[0]);
+				Authentication.Instance.Authenticator.Secret(parts[1], parts[0]);
 			else
-				Authentication.Instance.Secret(parts[0], null);
+				Authentication.Instance.Authenticator.Secret(parts[0], null);
 
 			return this.NoContent();
 		}

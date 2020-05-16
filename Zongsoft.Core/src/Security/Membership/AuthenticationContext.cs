@@ -28,38 +28,51 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	/// <summary>
-	/// 表示验证失败原因的枚举。
-	/// </summary>
-	public enum AuthenticationReason
+	public class AuthenticationContext
 	{
-		None = 0,
+		#region 成员字段
+		private AuthenticationResult _result;
+		private IDictionary<string, object> _parameters;
+		#endregion
 
-		/// <summary>未知的原因</summary>
-		[Description("${Text.AuthenticationReason.Unknown}")]
-		Unknown = -1,
-		/// <summary>禁止验证通过</summary>
-		[Description("${Text.AuthenticationReason.Forbidden}")]
-		Forbidden = -2,
+		#region 构造函数
+		public AuthenticationContext(string scenario, IDictionary<string, object> parameters)
+		{
+			this.Scenario = scenario;
 
-		/// <summary>无效的身份标识</summary>
-		[Description("${Text.AuthenticationReason.InvalidIdentity}")]
-		InvalidIdentity = 1,
-		/// <summary>无效的密码</summary>
-		[Description("${Text.AuthenticationReason.InvalidPassword}")]
-		InvalidPassword = 2,
-		/// <summary>帐户尚未批准</summary>
-		[Description("${Text.AuthenticationReason.AccountUnapproved}")]
-		AccountUnapproved = 3,
-		/// <summary>帐户被暂时挂起（可能是因为密码验证失败次数过多。）</summary>
-		[Description("${Text.AuthenticationReason.AccountSuspended}")]
-		AccountSuspended = 4,
-		/// <summary>帐户已被禁用</summary>
-		[Description("${Text.AuthenticationReason.AccountDisabled}")]
-		AccountDisabled = 5,
+			if(parameters != null && parameters.Count > 0)
+				_parameters = new Dictionary<string, object>(parameters);
+		}
+		#endregion
+
+		#region 公共属性
+		public string Scenario { get; }
+
+		public bool HasParameters
+		{
+			get => _parameters != null && _parameters.Count > 0;
+		}
+
+		public IDictionary<string, object> Parameters
+		{
+			get
+			{
+				if(_parameters == null)
+					System.Threading.Interlocked.CompareExchange(ref _parameters, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+				return _parameters;
+			}
+		}
+
+		public AuthenticationResult Result
+		{
+			get => _result;
+			set => _result = value ?? throw new ArgumentNullException();
+		}
+		#endregion
 	}
 }

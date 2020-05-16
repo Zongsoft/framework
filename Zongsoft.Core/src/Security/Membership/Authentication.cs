@@ -28,10 +28,7 @@
  */
 
 using System;
-using System.Security.Claims;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
@@ -41,7 +38,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供身份验证的平台类。
 	/// </summary>
-	[System.Reflection.DefaultMember(nameof(Authenticators))]
+	[System.Reflection.DefaultMember(nameof(Authenticator))]
 	public class Authentication
 	{
 		#region 静态变量
@@ -55,10 +52,6 @@ namespace Zongsoft.Security.Membership
 		#region 构造函数
 		private Authentication()
 		{
-			var authenticators = new ObservableCollection<IAuthenticator>();
-			authenticators.CollectionChanged += OnCollectionChanged;
-
-			this.Authenticators = authenticators;
 			this.Filters = new List<IExecutionFilter>();
 		}
 		#endregion
@@ -70,9 +63,9 @@ namespace Zongsoft.Security.Membership
 		public ICredentialProvider Authority { get; set; }
 
 		/// <summary>
-		/// 获取身份验证器的集合。
+		/// 获取身份验证器。
 		/// </summary>
-		public ICollection<IAuthenticator> Authenticators { get; }
+		public IAuthenticator Authenticator { get; }
 
 		/// <summary>
 		/// 获取一个身份验证的过滤器集合，该过滤器包含对身份验证的响应处理。
@@ -86,52 +79,46 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public void Secret(string identity, string @namespace = null)
+		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
-			foreach(var authenticator in this.Authenticators)
-			{
-				authenticator.Secret(identity, @namespace);
-			}
-		}
+			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
+			var result = authenticator.Authenticate(identity, password, @namespace, scenario, parameters);
 
-		public CredentialPrincipal Authenticate(string identity, string password, string @namespace, string scenario, ref IDictionary<string, object> parameters)
-		{
-			var identities = new List<ClaimsIdentity>(this.Authenticators.Count);
-
-			foreach(var authenticator in this.Authenticators)
+			if(result != null && result.Succeed)
 			{
-				identities.Add(authenticator.Authenticate(identity, password, @namespace, scenario, ref parameters));
+				var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
+				this.Authority.Register(principal);
 			}
 
-			var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, identities);
+			var context = new AuthenticationContext(scenario, parameters) { Result = result };
 
 			foreach(var filter in this.Filters)
 			{
-				filter.OnFiltered(principal);
+				filter.OnFiltered(context);
 			}
 
-			this.Authority.Register(principal);
-
-			return principal;
+			return context.Result;
 		}
 
-		public CredentialPrincipal AuthenticateSecret(string identity, string secret, string @namespace, string scenario, ref IDictionary<string, object> parameters)
+		public AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
-			var identities = new List<ClaimsIdentity>(this.Authenticators.Count);
+			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
+			var result = authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters);
 
-			foreach(var authenticator in this.Authenticators)
+			if(result != null && result.Succeed)
 			{
-				identities.Add(authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, ref parameters));
+				var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
+				this.Authority.Register(principal);
 			}
 
-			var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, identities);
+			var context = new AuthenticationContext(scenario, parameters) { Result = result };
 
 			foreach(var filter in this.Filters)
 			{
-				filter.OnFiltered(principal);
+				filter.OnFiltered(context);
 			}
 
-			return principal;
+			return context.Result;
 		}
 		#endregion
 
@@ -145,62 +132,6 @@ namespace Zongsoft.Security.Membership
 		{
 			token = ((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8);
 			return GenerateId();
-		}
-		#endregion
-
-		#region 事件响应
-		private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs args)
-		{
-			switch(args.Action)
-			{
-				case NotifyCollectionChangedAction.Add:
-					for(int i=args.NewStartingIndex; i< args.NewItems.Count; i++)
-					{
-						((IAuthenticator)args.NewItems[i]).Authenticated += OnAuthenticated;
-						((IAuthenticator)args.NewItems[i]).Authenticating += OnAuthenticating;
-					}
-
-					break;
-				case NotifyCollectionChangedAction.Reset:
-				case NotifyCollectionChangedAction.Remove:
-					for(int i = args.OldStartingIndex; i < args.OldItems.Count; i++)
-					{
-						((IAuthenticator)args.OldItems[i]).Authenticated -= OnAuthenticated;
-						((IAuthenticator)args.OldItems[i]).Authenticating -= OnAuthenticating;
-					}
-
-					break;
-				case NotifyCollectionChangedAction.Replace:
-					for(int i = args.OldStartingIndex; i < args.OldItems.Count; i++)
-					{
-						((IAuthenticator)args.OldItems[i]).Authenticated -= OnAuthenticated;
-						((IAuthenticator)args.OldItems[i]).Authenticating -= OnAuthenticating;
-					}
-
-					for(int i = args.NewStartingIndex; i < args.NewItems.Count; i++)
-					{
-						((IAuthenticator)args.NewItems[i]).Authenticated += OnAuthenticated;
-						((IAuthenticator)args.NewItems[i]).Authenticating += OnAuthenticating;
-					}
-
-					break;
-			}
-		}
-
-		private void OnAuthenticating(object sender, AuthenticatingEventArgs args)
-		{
-			foreach(var filter in this.Filters)
-			{
-				filter.OnFiltering(args);
-			}
-		}
-
-		private void OnAuthenticated(object sender, AuthenticatedEventArgs args)
-		{
-			foreach(var filter in this.Filters)
-			{
-				filter.OnFiltered(args);
-			}
 		}
 		#endregion
 	}

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
@@ -55,7 +56,7 @@ namespace Zongsoft.Security
 		/// 将指定的凭证主体注册到凭证容器中。
 		/// </summary>
 		/// <param name="principal">指定要注册的凭证主体对象。</param>
-		void Register(CredentialPrincipal principal);
+		void Register(ClaimsPrincipal principal);
 
 		/// <summary>
 		/// 从安全凭证容器中注销指定的凭证。
