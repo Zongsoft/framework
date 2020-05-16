@@ -59,6 +59,8 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public ClaimsIdentity Identity { get; }
 
+		public ClaimsPrincipal Principal { get; set; }
+
 		public AuthenticationReason Reason { get; }
 
 		public Exception Exception { get; }

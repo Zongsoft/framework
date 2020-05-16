@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
@@ -67,6 +68,12 @@ namespace Zongsoft.Security.Membership
 				return _parameters;
 			}
 		}
+
+		public ClaimsPrincipal Principal { get => _result?.Principal; }
+
+		public bool Succeed { get => _result?.Succeed == true; }
+
+		public bool Failed { get => _result?.Failed == true; }
 
 		public AuthenticationResult Result
 		{

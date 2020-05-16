@@ -29,7 +29,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Security.Claims;
 using Zongsoft.Common;
 using Zongsoft.Services;
 
@@ -63,9 +63,9 @@ namespace Zongsoft.Security.Membership
 		public ICredentialProvider Authority { get; set; }
 
 		/// <summary>
-		/// 获取身份验证器。
+		/// 获取或设置身份验证器。
 		/// </summary>
-		public IAuthenticator Authenticator { get; }
+		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
 		/// 获取一个身份验证的过滤器集合，该过滤器包含对身份验证的响应处理。
@@ -85,10 +85,7 @@ namespace Zongsoft.Security.Membership
 			var result = authenticator.Authenticate(identity, password, @namespace, scenario, parameters);
 
 			if(result != null && result.Succeed)
-			{
-				var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
-				this.Authority.Register(principal);
-			}
+				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
 
 			var context = new AuthenticationContext(scenario, parameters) { Result = result };
 
@@ -96,6 +93,9 @@ namespace Zongsoft.Security.Membership
 			{
 				filter.OnFiltered(context);
 			}
+
+			if(context.Succeed && context.Principal is CredentialPrincipal principal)
+				this.Authority.Register(principal);
 
 			return context.Result;
 		}
@@ -106,10 +106,7 @@ namespace Zongsoft.Security.Membership
 			var result = authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters);
 
 			if(result != null && result.Succeed)
-			{
-				var principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
-				this.Authority.Register(principal);
-			}
+				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
 
 			var context = new AuthenticationContext(scenario, parameters) { Result = result };
 
@@ -117,6 +114,9 @@ namespace Zongsoft.Security.Membership
 			{
 				filter.OnFiltered(context);
 			}
+
+			if(context.Succeed && context.Principal is CredentialPrincipal principal)
+				this.Authority.Register(principal);
 
 			return context.Result;
 		}

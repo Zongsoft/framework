@@ -38,14 +38,11 @@ namespace Zongsoft.Security
 	public class CredentialPrincipal : ClaimsPrincipal
 	{
 		#region 构造函数
-		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity, params string[] roles) : base(identity)
+		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity) : base(identity)
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
 			this.Scenario = scenario;
-
-			if(roles != null)
-				identity.AddRoles(roles);
 		}
 
 		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, IEnumerable<ClaimsIdentity> identities) : base(identities)
@@ -102,24 +99,6 @@ namespace Zongsoft.Security
 		public CredentialPrincipal Clone(string credentialId, string renewalToken)
 		{
 			return new CredentialPrincipal(this, credentialId, renewalToken);
-		}
-
-		public IDictionary<string, object> ToDictionary()
-		{
-			var dictionary = new Dictionary<string, object>()
-			{
-				{ nameof(CredentialId), this.CredentialId },
-				{ nameof(RenewalToken), this.RenewalToken },
-				{ nameof(Scenario), this.Scenario },
-				{ nameof(Expiration), this.Expiration.ToString() },
-			};
-
-			dictionary.Add(nameof(Identity), this.Identity.AsModel<Membership.IUser>());
-			dictionary.Add(nameof(Identities),
-				this.Identities.Where(identity => identity != this.Identity)
-				               .Select(identity => identity.AsModel<Membership.IUser>()));
-
-			return dictionary;
 		}
 
 		public byte[] Serialize()

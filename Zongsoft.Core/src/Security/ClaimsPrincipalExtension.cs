@@ -28,7 +28,9 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
 
@@ -91,6 +93,41 @@ namespace Zongsoft.Security
 			}
 
 			return false;
+		}
+
+		public static IDictionary<string, object> ToDictionary(this ClaimsPrincipal principal)
+		{
+			if(principal == null)
+				throw new ArgumentNullException(nameof(principal));
+
+			var type = principal.GetType();
+			var dictionary = new Dictionary<string, object>();
+
+			if(type != typeof(ClaimsPrincipal) || type != typeof(GenericPrincipal))
+			{
+				var properties = type.GetTypeInfo().DeclaredProperties.Where(p =>
+					p.CanRead && !p.IsSpecialName &&
+					p.GetMethod.IsPublic && !p.GetMethod.IsStatic
+				);
+
+				foreach(var property in properties)
+				{
+					if(property.PropertyType == typeof(TimeSpan))
+						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
+					else
+						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
+				}
+			}
+
+			if(principal.Identity != null)
+				dictionary.Add(nameof(ClaimsPrincipal.Identity), principal.Identity.AsModel<Membership.IUser>());
+
+			if(principal.Identities != null)
+				dictionary.Add(nameof(ClaimsPrincipal.Identities), principal.Identities
+					.Where(identity => identity != principal.Identity)
+					.Select(identity => identity.AsModel<Membership.IUser>()));
+
+			return dictionary;
 		}
 
 		public static IEnumerable<T> GetModels<T>(this ClaimsPrincipal principal, Action<T, Claim> configure = null) where T : class

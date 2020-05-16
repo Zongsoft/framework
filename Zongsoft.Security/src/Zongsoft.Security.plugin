@@ -42,9 +42,11 @@
 
 	<!-- 挂载验证和授权集成模块 -->
 	<extension path="/Workbench/Security">
-		<object name="Authentication" authority="{srv:~@Security}" value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
+		<object name="Authentication"
+		        authority="{srv:~@Security}"
+		        authenticator="{srv:~@Security}"
+		        value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
 			<expose name="Filters" value="{path:../@Filters}" />
-			<object name="Default" value="{srv:~@Security}" />
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">

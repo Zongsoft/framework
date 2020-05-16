@@ -62,8 +62,9 @@ namespace Zongsoft.Security.Web.Controllers
 				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, parameters) :
 				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, parameters);
 
-			if(result.Succeed)
-				return Task.FromResult((IActionResult)this.Ok(result.Principal.ToDictionary()));
+			return result.Succeed ?
+				Task.FromResult((IActionResult)this.Ok(result.Principal.ToDictionary())) :
+				Task.FromResult((IActionResult)this.BadRequest(new AuthenticationFailure(result)));
 		}
 
 		[HttpGet]
@@ -75,6 +76,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Authentication.Instance.Authority.Unregister(id);
 		}
 
+		[HttpPost]
+		[Authorize]
 		public Task<IActionResult> Renew(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
@@ -172,6 +175,20 @@ namespace Zongsoft.Security.Web.Controllers
 				set;
 			}
 			#endregion
+		}
+
+		public struct AuthenticationFailure
+		{
+			public AuthenticationFailure(AuthenticationResult result)
+			{
+				this.Reason = result.Reason;
+				this.Message = result.Exception != null ?
+					result.Exception.Message :
+					Common.EnumUtility.GetEnumDescription(result.Reason);
+			}
+
+			public AuthenticationReason Reason { get; }
+			public string Message { get; }
 		}
 		#endregion
 	}
