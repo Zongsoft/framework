@@ -134,6 +134,11 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 重写方法
+		protected override ClaimsIdentity CreateClaimsIdentity(BinaryReader reader)
+		{
+			return new CredentialIdentity(reader);
+		}
+
 		protected override void WriteTo(BinaryWriter writer, byte[] userData)
 		{
 			if(userData == null || userData.Length == 0)

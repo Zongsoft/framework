@@ -40,8 +40,8 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				return new ClaimsIdentity();
 
-			var issuer = ClaimsIdentity.DefaultIssuer;
-			var identity = new GenericIdentity(user.Name, authenticator.Scheme)
+			var issuer = authenticator.Scheme;
+			var identity = new CredentialIdentity(user.Name, authenticator.Scheme, issuer)
 			{
 				Label = user.FullName
 			};
