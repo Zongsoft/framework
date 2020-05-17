@@ -69,7 +69,6 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPost]
 		[Authorize]
-		[Authorization]
 		public void Signout()
 		{
 			if(this.User is CredentialPrincipal credential)
@@ -179,6 +178,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		public struct AuthenticationFailure
 		{
+			#region 构造函数
 			public AuthenticationFailure(AuthenticationResult result)
 			{
 				this.Reason = result.Reason;
@@ -186,9 +186,12 @@ namespace Zongsoft.Security.Web.Controllers
 					result.Exception.Message :
 					Common.EnumUtility.GetEnumDescription(result.Reason);
 			}
+			#endregion
 
+			#region 公共属性
 			public AuthenticationReason Reason { get; }
 			public string Message { get; }
+			#endregion
 		}
 		#endregion
 	}

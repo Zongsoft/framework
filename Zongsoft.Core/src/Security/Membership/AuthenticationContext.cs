@@ -41,12 +41,13 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticationContext(string scenario, IDictionary<string, object> parameters)
+		public AuthenticationContext(string scenario, AuthenticationResult result)
 		{
 			this.Scenario = scenario;
+			_result = result ?? throw new ArgumentNullException(nameof(result));
 
-			if(parameters != null && parameters.Count > 0)
-				_parameters = new Dictionary<string, object>(parameters);
+			if(result.Parameters != null && result.Parameters.Count > 0)
+				_parameters = new Dictionary<string, object>(result.Parameters);
 		}
 		#endregion
 
