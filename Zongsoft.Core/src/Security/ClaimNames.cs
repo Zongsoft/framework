@@ -31,13 +31,14 @@ namespace Zongsoft.Security
 {
 	public static class ClaimNames
 	{
-		private const string URI = "http://schemas.zongsoft.com/security/claims/";
+		private const string URI = "http://schemas.zongsoft.com/security/claims";
 
-		public const string Namespace = URI + "namespace";
-		public const string Description = URI + "description";
-		public const string UserStatus = URI + "user-status";
-		public const string UserStatusTimestamp = URI + "user-status-timestamp";
-		public const string Creation = URI + "creation";
-		public const string Modification = URI + "modification";
+		public const string Namespace = URI + "/namespace";
+		public const string Description = URI + "/description";
+		public const string UserStatus = URI + "/user-status";
+		public const string UserStatusTimestamp = URI + "/user-status-timestamp";
+		public const string Creation = URI + "/creation";
+		public const string Modification = URI + "/modification";
+		public const string Authorization = URI + "/authorization";
 	}
 }
