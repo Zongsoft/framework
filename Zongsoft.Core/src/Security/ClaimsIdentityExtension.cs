@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
@@ -81,17 +82,35 @@ namespace Zongsoft.Security
 			return false;
 		}
 
-		public static void AddRoles(this ClaimsIdentity identity, string[] roles)
+		public static Claim AddRole(this ClaimsIdentity identity, string role)
+		{
+			return AddRole(identity, null, role);
+		}
+
+		public static Claim AddRole(this ClaimsIdentity identity, string issuer, string role)
+		{
+			if(string.IsNullOrEmpty(role))
+				return null;
+
+			if(string.IsNullOrEmpty(issuer))
+				issuer = ClaimsIdentity.DefaultIssuer;
+
+			var claim = new Claim(identity.RoleClaimType, role, ClaimValueTypes.String, issuer, issuer, identity);
+			identity.AddClaim(claim);
+			return claim;
+		}
+
+		public static void AddRoles(this ClaimsIdentity identity, IEnumerable<string> roles)
 		{
 			AddRoles(identity, null, roles);
 		}
 
-		public static void AddRoles(this ClaimsIdentity identity, string issuer, string[] roles)
+		public static void AddRoles(this ClaimsIdentity identity, string issuer, IEnumerable<string> roles)
 		{
 			if(identity == null)
 				throw new ArgumentNullException(nameof(identity));
 
-			if(roles == null || roles.Length == 0)
+			if(roles == null)
 				return;
 
 			if(string.IsNullOrEmpty(issuer))
@@ -100,7 +119,7 @@ namespace Zongsoft.Security
 			identity.AddClaims
 			(
 				roles.Where(role => role != null && role.Length > 0)
-				     .Select(role => new Claim(identity.RoleClaimType, role, ClaimValueTypes.String, issuer, issuer, identity))
+					 .Select(role => new Claim(identity.RoleClaimType, role, ClaimValueTypes.String, issuer, issuer, identity))
 			);
 		}
 
@@ -203,26 +222,53 @@ namespace Zongsoft.Security
 				return text;
 			}
 
+			static void ConfigureUser(T model, Claim claim)
+			{
+				var user = (Membership.IUser)model;
+
+				var isMultiple =
+					claim.Type == ClaimNames.Authorization ||
+					claim.Type == (claim.Subject?.RoleClaimType ?? ClaimsIdentity.DefaultRoleClaimType);
+
+				var key = GetClaimName(claim.Type) + (isMultiple ? "s" : null);
+
+				if(user.Properties.TryGetValue(key, out var value))
+				{
+					if(value is ICollection<string> collection)
+						collection.Add(claim.Value);
+					else
+						user.Properties[key] = new List<string>(new[] { value?.ToString(), claim.Value });
+				}
+				else
+				{
+					if(isMultiple)
+						user.Properties.Add(key, new List<string>(new[] { claim.Value }));
+					else
+						user.Properties.Add(key, claim.Value);
+				}
+			}
+
 			if(identity == null || identity.IsAnonymous())
 				return null;
 
 			T model;
 
 			if(typeof(T).IsAbstract)
-				model = Zongsoft.Data.Model.Build<T>();
+				model = Data.Model.Build<T>();
 			else
 				model = Activator.CreateInstance<T>();
 
 			if(typeof(Membership.IUser).IsAssignableFrom(typeof(T)))
 			{
-				((Membership.IUser)model).FullName = identity.Label;
+				var user = (Membership.IUser)model;
+				user.FullName = identity.Label;
 
 				if(configure == null)
-					configure = (user, claim) => ((Membership.IUser)user).Properties.Add(GetClaimName(claim.Type), claim.Value);
+					configure = ConfigureUser;
 
 				foreach(var claim in identity.Claims)
 				{
-					if(!FillUser((Membership.IUser)model, claim))
+					if(!FillUser(user, claim))
 						configure(model, claim);
 				}
 			}
