@@ -79,9 +79,6 @@ namespace Zongsoft.Services
 		#region 公共方法
 		public object GetService(Type serviceType)
 		{
-			if(serviceType == typeof(IServiceProvider))
-				return this;
-
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 

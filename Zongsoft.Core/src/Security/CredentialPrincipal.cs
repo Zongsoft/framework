@@ -36,6 +36,11 @@ namespace Zongsoft.Security
 {
 	public class CredentialPrincipal : ClaimsPrincipal
 	{
+		#region 静态字段
+		/// <summary>凭证验证的方案名。</summary>
+		public static readonly string Scheme = "Credential";
+		#endregion
+
 		#region 构造函数
 		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity) : base(identity)
 		{

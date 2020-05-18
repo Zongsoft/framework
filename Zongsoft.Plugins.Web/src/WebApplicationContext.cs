@@ -32,10 +32,9 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Web
 {
