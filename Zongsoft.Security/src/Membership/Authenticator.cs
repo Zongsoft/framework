@@ -235,6 +235,15 @@ namespace Zongsoft.Security.Membership
 		private AuthenticationResult OnAuthenticated(IUser user, IDictionary<string, object> parameters)
 		{
 			var identity = this.Identity(user);
+
+			if(MembershipHelper.GetAncestors(this.DataAccess, user, out var roles, out _) > 0)
+				identity.AddRoles(roles.Select(role => role.Name));
+
+			foreach(var token in MembershipHelper.GetAuthorizedTokens(this.DataAccess, user.Namespace, user.UserId, MemberType.User))
+			{
+				identity.AddClaim(ClaimNames.Authorization, token.Schema + ":" + string.Join(',', token.Actions.Select(a => a.Action)), ClaimValueTypes.String, this.Scheme);
+			}
+
 			this.OnAuthenticated(identity, parameters);
 			return AuthenticationResult.Success(identity);
 		}
