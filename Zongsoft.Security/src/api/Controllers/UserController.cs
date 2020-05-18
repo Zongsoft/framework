@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Data;
@@ -42,8 +43,9 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[Area(Modules.Security)]
-	[Authorize]
-	[Authorization]
+	[Authorize(Roles = "Administrators,Security,Securers")]
+	[Authorization(Roles = "Administrators,Security,Securers")]
+	[Route("{area}/Users/{action=Get}/{id?}")]
 	public class UserController : ControllerBase
 	{
 		#region 成员字段
@@ -191,7 +193,10 @@ namespace Zongsoft.Security.Web.Controllers
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 		}
 
-		public virtual IActionResult Post(IUser model)
+		[ProducesResponseType(StatusCodes.Status201Created)]
+		[ProducesResponseType(StatusCodes.Status409Conflict)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public virtual ActionResult<IUser> Post(IUser model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -200,7 +205,7 @@ namespace Zongsoft.Security.Web.Controllers
 			this.Request.Headers.TryGetValue("x-password", out var password);
 
 			if(this.UserProvider.Create(model, password))
-				return this.CreatedAtAction(nameof(Get), model.UserId);
+				return this.CreatedAtAction(nameof(Get), new { id = model.UserId }, model);
 
 			return this.Conflict();
 		}
@@ -312,6 +317,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 密码处理
 		[HttpGet]
+		[ActionName("Password.Has")]
 		public IActionResult HasPassword(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
@@ -329,6 +335,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPut]
+		[ActionName("Password.Change")]
 		public IActionResult ChangePassword(uint id, PasswordChangeEntity password)
 		{
 			return this.UserProvider.ChangePassword(id, password.OldPassword, password.NewPassword) ?
@@ -338,6 +345,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPost]
 		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
+		[ActionName("Password.Forget")]
 		public IActionResult ForgetPassword(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
@@ -354,6 +362,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPost]
 		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
+		[ActionName("Password.Reset")]
 		public IActionResult ResetPassword(string id, [FromBody]PasswordResetEntity content)
 		{
 			if(!string.IsNullOrWhiteSpace(content.Secret))
@@ -385,7 +394,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet]
 		[AllowAnonymous]
-		[ActionName("PasswordQuestions")]
+		[ActionName("Password.Questions")]
 		[Authorization(Suppressed = true)]
 		public IActionResult GetPasswordQuestions(string id)
 		{
@@ -416,7 +425,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPut]
-		[ActionName("PasswordAnswers")]
+		[ActionName("Password.Answers")]
 		public IActionResult SetPasswordQuestionsAndAnswers(uint id, [FromBody]PasswordQuestionsAndAnswersEntity content)
 		{
 			return this.UserProvider.SetPasswordQuestionsAndAnswers(id, content.Password, content.Questions, content.Answers) ?
@@ -447,7 +456,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 授权方法
 		[HttpGet]
-		[Route("{id:int}/{schemaId}:{actionId}")]
+		[Route("{schemaId}:{actionId}")]
 		public IActionResult Authorize(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))

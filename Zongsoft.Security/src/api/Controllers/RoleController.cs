@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Data;
@@ -42,8 +43,9 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[Area(Modules.Security)]
-	[Authorize(Roles = "Administrators, Security, Securities")]
-	[Authorization(Roles = "Security, Securities")]
+	[Authorize(Roles = "Administrators,Security,Securers")]
+	[Authorization(Roles = "Administrators,Security,Securers")]
+	[Route("{area}/Roles/{action=Get}/{id?}")]
 	public class RoleController : ControllerBase
 	{
 		#region 成员字段
@@ -121,13 +123,16 @@ namespace Zongsoft.Security.Web.Controllers
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 		}
 
-		public virtual IActionResult Post(IRole model)
+		[ProducesResponseType(StatusCodes.Status201Created)]
+		[ProducesResponseType(StatusCodes.Status409Conflict)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public virtual ActionResult<IRole> Post(IRole model)
 		{
 			if(model == null)
 				return this.BadRequest();
 
 			if(this.RoleProvider.Create(model))
-				return this.CreatedAtAction(nameof(Get), model.RoleId);
+				return this.CreatedAtAction(nameof(Get), new { id= model.RoleId }, model);
 
 			return this.Conflict();
 		}
@@ -278,7 +283,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 权限方法
 		[HttpGet]
 		[ActionName("Permissions")]
-		[Route("{id}/{schemaId}")]
+		[Route("{schemaId}")]
 		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId);
