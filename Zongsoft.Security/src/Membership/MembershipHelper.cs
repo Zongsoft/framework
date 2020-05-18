@@ -38,8 +38,6 @@ namespace Zongsoft.Security.Membership
 	internal static class MembershipHelper
 	{
 		#region 常量定义
-		internal const string Security = "Security";
-		internal const string Securities = "Securities";
 		internal const string Administrator = "Administrator";
 		internal const string Administrators = "Administrators";
 		#endregion
@@ -150,6 +148,86 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return flats.Count;
+		}
+
+		public static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, string @namespace, uint memberId, MemberType memberType)
+		{
+			var conditions = Condition.Equal("MemberId", memberId) & Condition.Equal("MemberType", memberType);
+
+			//获取指定成员的所有上级角色集和上级角色的层级列表
+			if(MembershipHelper.GetAncestors(dataAccess, @namespace, memberId, memberType, out var flats, out var hierarchies) > 0)
+			{
+				//如果指定成员有上级角色，则进行权限定义的查询条件还需要加上所有上级角色
+				conditions = ConditionCollection.Or(
+					conditions,
+					Condition.In("MemberId", flats.Select(p => p.RoleId)) & Condition.Equal("MemberType", MemberType.Role)
+				);
+			}
+
+			//获取指定条件的所有权限定义（注：禁止分页查询，并即时加载到数组中）
+			var permissions = dataAccess.Select<Permission>(conditions, Paging.Disabled).ToArray();
+
+			//获取指定条件的所有权限过滤定义（注：禁止分页查询，并即时加载到数组中）
+			var permissionFilters = dataAccess.Select<PermissionFilter>(conditions, Paging.Disabled).ToArray();
+
+			var states = new HashSet<Authorizer.AuthorizationState>();
+			IEnumerable<Permission> prepares;
+			IEnumerable<Authorizer.AuthorizationState> grants, denies;
+
+			//如果上级角色层级列表不为空则进行分层过滤
+			if(hierarchies != null && hierarchies.Count > 0)
+			{
+				//从最顶层（即距离指定成员最远的层）开始到最底层（集距离指定成员最近的层）
+				for(int i = hierarchies.Count - 1; i >= 0; i--)
+				{
+					//定义权限集过滤条件：当前层级的角色集的所有权限定义
+					prepares = permissions.Where(p => hierarchies[i].Any(role => role.RoleId == p.MemberId) && p.MemberType == MemberType.Role);
+
+					grants = prepares.Where(p => p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+					denies = prepares.Where(p => !p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+
+					states.UnionWith(grants);  //合并授予的权限定义
+					states.ExceptWith(denies); //排除拒绝的权限定义
+
+					//更新授权集中的相关目标的过滤文本
+					SetPermissionFilters(states, permissionFilters.Where(p => hierarchies[i].Any(role => role.RoleId == p.MemberId) && p.MemberType == MemberType.Role));
+				}
+			}
+
+			//查找权限定义中当前成员的设置项
+			prepares = permissions.Where(p => p.MemberId == memberId && p.MemberType == memberType);
+
+			grants = prepares.Where(p => p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+			denies = prepares.Where(p => !p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+
+			states.UnionWith(grants);  //合并授予的权限定义
+			states.ExceptWith(denies); //排除拒绝的权限定义
+
+			//更新授权集中的相关目标的过滤文本
+			SetPermissionFilters(states, permissionFilters.Where(p => p.MemberId == memberId && p.MemberType == memberType));
+
+			foreach(var group in states.GroupBy(p => p.SchemaId))
+			{
+				yield return new AuthorizationToken(group.Key, group.Select(p => new AuthorizationToken.ActionToken(p.ActionId, p.Filter)));
+			}
+		}
+
+		private static void SetPermissionFilters(IEnumerable<Authorizer.AuthorizationState> states, IEnumerable<PermissionFilter> filters)
+		{
+			var groups = filters.GroupBy(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId));
+
+			foreach(var group in groups)
+			{
+				var state = states.FirstOrDefault(p => p.Equals(group.Key));
+
+				if(state != null)
+				{
+					if(string.IsNullOrWhiteSpace(state.Filter))
+						state.Filter = string.Join("; ", group.Select(p => p.Filter));
+					else
+						state.Filter += " | " + string.Join("; ", group.Select(p => p.Filter));
+				}
+			}
 		}
 		#endregion
 
