@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Buffers;
 using System.Text;
 using System.Text.Json;
@@ -44,19 +45,12 @@ namespace Zongsoft.Web.Formatters
 	public class JsonOutputFormatter : TextOutputFormatter
 	{
 		#region 成员字段
-		private JsonSerializerOptions _options;
+		private Serialization.TextSerializationOptions _options;
 		#endregion
 
 		#region 构造函数
 		public JsonOutputFormatter()
 		{
-			_options = new JsonSerializerOptions()
-			{
-				PropertyNameCaseInsensitive = true,
-				PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-				DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-			};
-
 			SupportedEncodings.Add(Encoding.UTF8);
 			SupportedEncodings.Add(Encoding.Unicode);
 
@@ -81,7 +75,7 @@ namespace Zongsoft.Web.Formatters
 			try
 			{
 				var objectType = context.Object?.GetType() ?? context.ObjectType;
-				await JsonSerializer.SerializeAsync(writeStream, context.Object, objectType, options ?? _options);
+				await Serialization.Serializer.Json.SerializeAsync(writeStream, context.Object, objectType, options ?? _options);
 
 				if(writeStream is TranscodingWriteStream transcodingStream)
 				{
@@ -101,14 +95,12 @@ namespace Zongsoft.Web.Formatters
 		#endregion
 
 		#region 私有方法
-		private Stream GetWriteStream(HttpContext context, Encoding encoding, out JsonSerializerOptions options)
+		private Stream GetWriteStream(HttpContext context, Encoding encoding, out Serialization.TextSerializationOptions options)
 		{
 			options = null;
 
-			if(context.Request.Headers.TryGetValue("x-json-behaviors", out var header))
-			{
-				ParseBehaviors(header.ToString());
-			}
+			if(context.Request.Headers.TryGetValue("x-json-behaviors", out var behaviors))
+				options = GetSerializationOptions(behaviors);
 
 			if(encoding.CodePage == Encoding.UTF8.CodePage)
 				return context.Response.Body;
@@ -116,9 +108,71 @@ namespace Zongsoft.Web.Formatters
 			return new TranscodingWriteStream(context.Response.Body, encoding);
 		}
 
-		private static void ParseBehaviors(string text)
+		private static Serialization.TextSerializationOptions GetSerializationOptions(string behaviors)
 		{
-			var parts = Common.StringExtension.Slice(text.ToString(), ';');
+			if(string.IsNullOrEmpty(behaviors))
+				return null;
+
+			var parts = Common.StringExtension.Slice(behaviors, ';');
+			var options = new Serialization.TextSerializationOptions()
+			{
+				Indented = parts.Contains("Indented", StringComparer.OrdinalIgnoreCase),
+			};
+
+			foreach(var part in parts)
+			{
+				var index = part.IndexOf(':');
+
+				if(index > 0 && index < part.Length - 1)
+					SetOption(options, part.Substring(0, index), part.Substring(index + 1));
+			}
+
+			return options;
+		}
+
+		private static void SetOption(Serialization.TextSerializationOptions options, string key, string value)
+		{
+			if(string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+				return;
+
+			switch(key.Trim().ToLowerInvariant())
+			{
+				case "ignores":
+					var parts = Common.StringExtension.Slice(value.Trim().ToLowerInvariant(), ',', '|');
+
+					foreach(var part in parts)
+					{
+						switch(part)
+						{
+							case "null":
+								options.IgnoreNull = true;
+								break;
+							case "empty":
+								options.IgnoreEmpty = true;
+								break;
+							case "zero":
+								options.IgnoreZero = true;
+								break;
+						}
+					}
+
+					break;
+				case "casing":
+					switch(value.Trim().ToLowerInvariant())
+					{
+						case "none":
+							options.NamingConvention = Serialization.SerializationNamingConvention.None;
+							break;
+						case "camel":
+							options.NamingConvention = Serialization.SerializationNamingConvention.Camel;
+							break;
+						case "pascal":
+							options.NamingConvention = Serialization.SerializationNamingConvention.Pascal;
+							break;
+					}
+
+					break;
+			}
 		}
 		#endregion
 

@@ -487,11 +487,11 @@ namespace Zongsoft.Web
 		private class ResultEntity
 		{
 			[System.Text.Json.Serialization.JsonPropertyName("$")]
-			[Zongsoft.Runtime.Serialization.SerializationMember("$")]
+			[Serialization.SerializationMember("$")]
 			public object Data { get; set; }
 
 			[System.Text.Json.Serialization.JsonPropertyName("$paging")]
-			[Zongsoft.Runtime.Serialization.SerializationMember("$paging")]
+			[Serialization.SerializationMember("$paging")]
 			public IDictionary<string, string> Paging { get; set; }
 
 			public ResultEntity(object data)
