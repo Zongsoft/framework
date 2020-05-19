@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Serialization
 {
-	public class SerializationSettings
+	public class SerializationOptions
 	{
 		#region 成员字段
 		private int _maximumDepth;

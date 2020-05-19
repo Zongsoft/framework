@@ -47,7 +47,7 @@ namespace Zongsoft.Serialization
 		#region 公共属性
 		public static ITextSerializer Json
 		{
-			get => _json ?? JsonSerializerWrapper.Default;
+			get => _json ?? JsonSerializerWrapper.Instance;
 			set => _json = value ?? throw new ArgumentNullException();
 		}
 		#endregion
@@ -56,7 +56,7 @@ namespace Zongsoft.Serialization
 		private class JsonSerializerWrapper : ITextSerializer
 		{
 			#region 单例字段
-			public static readonly JsonSerializerWrapper Default = new JsonSerializerWrapper();
+			public static readonly JsonSerializerWrapper Instance = new JsonSerializerWrapper();
 			#endregion
 
 			#region 默认配置
@@ -80,106 +80,106 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 反序列化
-			public object Deserialize(Stream stream, SerializationSettings settings = null)
+			public object Deserialize(Stream stream, SerializationOptions options = null)
 			{
 				throw new NotImplementedException();
 			}
 
-			public object Deserialize(Stream stream, Type type, SerializationSettings settings = null)
+			public object Deserialize(Stream stream, Type type, SerializationOptions options = null)
 			{
 				using(var reader = new StreamReader(stream, Encoding.UTF8))
 				{
-					return JsonSerializer.Deserialize(reader.ReadToEnd(), type, GetOptions(settings));
+					return JsonSerializer.Deserialize(reader.ReadToEnd(), type, GetOptions(options));
 				}
 			}
 
-			public T Deserialize<T>(Stream stream, SerializationSettings settings = null)
+			public T Deserialize<T>(Stream stream, SerializationOptions options = null)
 			{
 				using(var reader = new StreamReader(stream, Encoding.UTF8))
 				{
-					return JsonSerializer.Deserialize<T>(reader.ReadToEnd(), GetOptions(settings));
+					return JsonSerializer.Deserialize<T>(reader.ReadToEnd(), GetOptions(options));
 				}
 			}
 
-			public ValueTask<object> DeserializeAsync(Stream stream, SerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				throw new NotImplementedException();
 			}
 
-			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
-				return JsonSerializer.DeserializeAsync(stream, type, GetOptions(settings), cancellationToken);
+				return JsonSerializer.DeserializeAsync(stream, type, GetOptions(options), cancellationToken);
 			}
 
-			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
-				return JsonSerializer.DeserializeAsync<T>(stream, GetOptions(settings), cancellationToken);
+				return JsonSerializer.DeserializeAsync<T>(stream, GetOptions(options), cancellationToken);
 			}
 
-			public object Deserialize(string text, TextSerializationSettings settings = null)
-			{
-				throw new NotImplementedException();
-			}
-
-			public object Deserialize(string text, Type type, TextSerializationSettings settings = null)
-			{
-				return JsonSerializer.Deserialize(text, type, GetOptions(settings));
-			}
-
-			public T Deserialize<T>(string text, TextSerializationSettings settings = null)
-			{
-				return JsonSerializer.Deserialize<T>(text, GetOptions(settings));
-			}
-
-			public ValueTask<object> DeserializeAsync(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public object Deserialize(string text, TextSerializationOptions options = null)
 			{
 				throw new NotImplementedException();
 			}
 
-			public ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public object Deserialize(string text, Type type, TextSerializationOptions options = null)
+			{
+				return JsonSerializer.Deserialize(text, type, GetOptions(options));
+			}
+
+			public T Deserialize<T>(string text, TextSerializationOptions options = null)
+			{
+				return JsonSerializer.Deserialize<T>(text, GetOptions(options));
+			}
+
+			public ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
+			{
+				throw new NotImplementedException();
+			}
+
+			public ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
 				{
-					return JsonSerializer.DeserializeAsync(stream, type, GetOptions(settings), cancellationToken);
+					return JsonSerializer.DeserializeAsync(stream, type, GetOptions(options), cancellationToken);
 				}
 			}
 
-			public ValueTask<T> DeserializeAsync<T>(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
 				{
-					return JsonSerializer.DeserializeAsync<T>(stream, GetOptions(settings), cancellationToken);
+					return JsonSerializer.DeserializeAsync<T>(stream, GetOptions(options), cancellationToken);
 				}
 			}
 			#endregion
 
 			#region 序列方法
-			public void Serialize(Stream stream, object graph, SerializationSettings settings = null)
+			public void Serialize(Stream stream, object graph, Type type = null, SerializationOptions options = null)
 			{
 				using(Utf8JsonWriter writer = new Utf8JsonWriter(stream))
 				{
-					JsonSerializer.Serialize(writer, graph, GetOptions(settings));
+					JsonSerializer.Serialize(writer, graph, type, GetOptions(options));
 				}
 			}
 
-			public string Serialize(object graph, TextSerializationSettings settings = null)
+			public string Serialize(object graph, TextSerializationOptions options = null)
 			{
-				return JsonSerializer.Serialize(graph, GetOptions(settings));
+				return JsonSerializer.Serialize(graph, GetOptions(options));
 			}
 
-			public Task SerializeAsync(Stream stream, object graph, SerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public Task SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				if(stream == null)
 					throw new ArgumentNullException(nameof(stream));
 
-				return JsonSerializer.SerializeAsync(stream, graph, GetOptions(settings), cancellationToken);
+				return JsonSerializer.SerializeAsync(stream, graph, type, GetOptions(options), cancellationToken);
 			}
 
-			public async Task<string> SerializeAsync(object graph, TextSerializationSettings settings = null, CancellationToken cancellationToken = default)
+			public async Task<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				using(var stream = new MemoryStream())
 				{
-					await JsonSerializer.SerializeAsync(stream, graph, GetOptions(settings), cancellationToken);
+					await JsonSerializer.SerializeAsync(stream, graph, GetOptions(options), cancellationToken);
 
 					using(var reader = new StreamReader(stream, Encoding.UTF8, false))
 					{
@@ -190,20 +190,20 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 私有方法
-			private static JsonSerializerOptions GetOptions(SerializationSettings settings)
+			private static JsonSerializerOptions GetOptions(SerializationOptions options)
 			{
-				if(settings == null)
+				if(options == null)
 					return DefaultOptions;
 
-				if(settings is TextSerializationSettings text)
+				if(options is TextSerializationOptions text)
 					return GetOptions(text);
 
 				return new JsonSerializerOptions()
 				{
 					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
-					MaxDepth = settings.MaximumDepth,
-					IgnoreNullValues = settings.IgnoreNull,
+					MaxDepth = options.MaximumDepth,
+					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = true,
 					Converters =
 					{
@@ -214,14 +214,14 @@ namespace Zongsoft.Serialization
 				};
 			}
 
-			private static JsonSerializerOptions GetOptions(TextSerializationSettings settings)
+			private static JsonSerializerOptions GetOptions(TextSerializationOptions options)
 			{
-				if(settings == null)
+				if(options == null)
 					return DefaultOptions;
 
 				JsonNamingPolicy naming = null;
 
-				switch(settings.NamingConvention)
+				switch(options.NamingConvention)
 				{
 					case SerializationNamingConvention.Camel:
 						naming = JsonNamingConvention.Camel;
@@ -235,9 +235,9 @@ namespace Zongsoft.Serialization
 				{
 					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
-					MaxDepth = settings.MaximumDepth,
-					WriteIndented = settings.Indented,
-					IgnoreNullValues = settings.IgnoreNull,
+					MaxDepth = options.MaximumDepth,
+					WriteIndented = options.Indented,
+					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = true,
 					PropertyNamingPolicy = naming,
 					DictionaryKeyPolicy = naming,

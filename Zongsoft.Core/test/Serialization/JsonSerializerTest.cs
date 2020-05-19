@@ -30,7 +30,7 @@ namespace Zongsoft.Serialization
 				User = user,
 			};
 
-			var text = Serializer.Json.Serialize(credential, new TextSerializationSettings()
+			var text = Serializer.Json.Serialize(credential, new TextSerializationOptions()
 			{
 				IgnoreNull = true,
 				Indented = true,

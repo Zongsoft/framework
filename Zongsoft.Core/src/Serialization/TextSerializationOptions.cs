@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Serialization
 {
-	public class TextSerializationSettings : SerializationSettings
+	public class TextSerializationOptions : SerializationOptions
 	{
 		#region 公共属性
 		/// <summary>

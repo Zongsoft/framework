@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,15 +35,15 @@ namespace Zongsoft.Serialization
 {
     public interface ITextSerializer : ISerializer
     {
-        string Serialize(object graph, TextSerializationSettings settings = null);
-        Task<string> SerializeAsync(object graph, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+        string Serialize(object graph, TextSerializationOptions options = null);
+        Task<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default);
 
-        object Deserialize(string text, TextSerializationSettings settings = null);
-        object Deserialize(string text, Type type, TextSerializationSettings settings = null);
-        T Deserialize<T>(string text, TextSerializationSettings settings = null);
+        object Deserialize(string text, TextSerializationOptions options = null);
+        object Deserialize(string text, Type type, TextSerializationOptions options = null);
+        T Deserialize<T>(string text, TextSerializationOptions options = null);
 
-        ValueTask<object> DeserializeAsync(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
-        ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
-        ValueTask<T> DeserializeAsync<T>(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+        ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default);
+        ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellationToken = default);
+        ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default);
     }
 }
