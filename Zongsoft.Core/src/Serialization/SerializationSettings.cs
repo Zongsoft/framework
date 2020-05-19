@@ -29,46 +29,38 @@
 
 using System;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true)]
-	public class SerializationMemberAttribute : Attribute
+	public class SerializationSettings
 	{
-		#region 构造函数
-		public SerializationMemberAttribute()
-		{
-		}
-
-		public SerializationMemberAttribute(string name)
-		{
-			this.Name = name == null ? string.Empty : name.Trim();
-		}
+		#region 成员字段
+		private int _maximumDepth;
 		#endregion
 
 		#region 公共属性
 		/// <summary>
-		/// 获取或设置序列化后的成员名称，如果为空(null)或空字符串("")则取对应的成员本身的名称。
+		/// 获取或设置最大的序列化深度，默认为零(不限制)。
 		/// </summary>
-		public string Name
+		public int MaximumDepth
 		{
-			get; set;
+			get => _maximumDepth;
+			set => _maximumDepth = Math.Max(0, value);
 		}
 
 		/// <summary>
-		/// 获取或设置成员序列化方向。
+		/// 获取或设置一个值，指示是否忽略空值(null)。
 		/// </summary>
-		public SerializationDirection Direction
-		{
-			get; set;
-		}
+		public bool IgnoreNull { get; set; }
 
 		/// <summary>
-		/// 获取或设置是否忽略序列化成员。
+		/// 获取或设置一个值，指示是否忽略空集和空字符串。
 		/// </summary>
-		public bool Ignored
-		{
-			get; set;
-		}
+		public bool IgnoreEmpty { get; set; }
+
+		/// <summary>
+		/// 获取或设置一个值，指示是否忽略零。
+		/// </summary>
+		public bool IgnoreZero { get; set; }
 		#endregion
 	}
 }

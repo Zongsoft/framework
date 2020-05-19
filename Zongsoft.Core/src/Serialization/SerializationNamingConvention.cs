@@ -28,33 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-	public class SerializationSettings
+	/// <summary>
+	/// 表示命名转换的枚举。
+	/// </summary>
+	public enum SerializationNamingConvention
 	{
-		#region 成员字段
-		private int _maximumDepth;
-		#endregion
+		/// <summary>无转换</summary>
+		None,
 
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置最大的序列化深度，默认为零(不限制)。
-		/// </summary>
-		public int MaximumDepth
-		{
-			get => _maximumDepth;
-			set => _maximumDepth = Math.Max(0, value);
-		}
+		/// <summary>驼峰(小驼峰)命名</summary>
+		Camel,
 
-        /// <summary>
-        /// 获取或设置是否忽略空值。
-        /// </summary>
-        public bool IgnoreNull
-        {
-            get; set;
-        }
-		#endregion
+		/// <summary>帕斯卡(大驼峰)命名</summary>
+		Pascal,
 	}
 }

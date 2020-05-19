@@ -28,23 +28,47 @@
  */
 
 using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-    public interface ITextSerializer : ISerializer
-    {
-        string Serialize(object graph, TextSerializationSettings settings = null);
-        Task<string> SerializeAsync(object graph, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true)]
+	public class SerializationMemberAttribute : Attribute
+	{
+		#region 构造函数
+		public SerializationMemberAttribute()
+		{
+		}
 
-        object Deserialize(string text, TextSerializationSettings settings = null);
-        object Deserialize(string text, Type type, TextSerializationSettings settings = null);
-        T Deserialize<T>(string text, TextSerializationSettings settings = null);
+		public SerializationMemberAttribute(string name)
+		{
+			this.Name = name == null ? string.Empty : name.Trim();
+		}
+		#endregion
 
-        ValueTask<object> DeserializeAsync(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
-        ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
-        ValueTask<T> DeserializeAsync<T>(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
-    }
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置序列化后的成员名称，如果为空(null)或空字符串("")则取对应的成员本身的名称。
+		/// </summary>
+		public string Name
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置成员序列化方向。
+		/// </summary>
+		public SerializationDirection Direction
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置是否忽略序列化成员。
+		/// </summary>
+		public bool Ignored
+		{
+			get; set;
+		}
+		#endregion
+	}
 }

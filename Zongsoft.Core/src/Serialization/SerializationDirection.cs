@@ -28,36 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-	public class TextSerializationSettings : SerializationSettings
+	/// <summary>
+	/// 表示序列化方向的枚举。
+	/// </summary>
+	public enum SerializationDirection
 	{
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，指示序列化后的文本是否保持缩进风格。
-		/// </summary>
-		public bool Indented
-		{
-			get; set;
-		}
+		/// <summary>未定义。</summary>
+		None,
 
-		/// <summary>
-		/// 获取或设置一个值，指示序列化的文本是否保持强类型信息。
-		/// </summary>
-		public bool Typed
-		{
-			get; set;
-		}
+		/// <summary>输入，即反序列化调用。</summary>
+		Input,
 
-		/// <summary>
-		/// 获取或设置一个值，指示序列化成员的命名转换方式。
-		/// </summary>
-		public SerializationNamingConvention NamingConvention
-		{
-			get; set;
-		}
-		#endregion
+		/// <summary>输出，即序列化调用。</summary>
+		Output,
 	}
 }

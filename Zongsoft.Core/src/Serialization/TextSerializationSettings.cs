@@ -28,22 +28,36 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-	/// <summary>
-	/// 表示命名转换的枚举。
-	/// </summary>
-	public enum SerializationNamingConvention
+	public class TextSerializationSettings : SerializationSettings
 	{
-		/// <summary>无转换</summary>
-		None,
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置一个值，指示序列化后的文本是否保持缩进风格。
+		/// </summary>
+		public bool Indented
+		{
+			get; set;
+		}
 
-		/// <summary>驼峰(小驼峰)命名</summary>
-		Camel,
+		/// <summary>
+		/// 获取或设置一个值，指示序列化的文本是否保持强类型信息。
+		/// </summary>
+		public bool Typed
+		{
+			get; set;
+		}
 
-		/// <summary>帕斯卡(大驼峰)命名</summary>
-		Pascal,
+		/// <summary>
+		/// 获取或设置一个值，指示序列化成员的命名转换方式。
+		/// </summary>
+		public SerializationNamingConvention NamingConvention
+		{
+			get; set;
+		}
+		#endregion
 	}
 }

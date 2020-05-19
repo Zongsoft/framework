@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Runtime.Serialization;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Collections
 {

@@ -28,22 +28,23 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
-	/// <summary>
-	/// 表示序列化方向的枚举。
-	/// </summary>
-	public enum SerializationDirection
-	{
-		/// <summary>未定义。</summary>
-		None,
+    public interface ITextSerializer : ISerializer
+    {
+        string Serialize(object graph, TextSerializationSettings settings = null);
+        Task<string> SerializeAsync(object graph, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
 
-		/// <summary>输入，即反序列化调用。</summary>
-		Input,
+        object Deserialize(string text, TextSerializationSettings settings = null);
+        object Deserialize(string text, Type type, TextSerializationSettings settings = null);
+        T Deserialize<T>(string text, TextSerializationSettings settings = null);
 
-		/// <summary>输出，即序列化调用。</summary>
-		Output,
-	}
+        ValueTask<object> DeserializeAsync(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+        ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+        ValueTask<T> DeserializeAsync<T>(string text, TextSerializationSettings settings = null, CancellationToken cancellationToken = default);
+    }
 }

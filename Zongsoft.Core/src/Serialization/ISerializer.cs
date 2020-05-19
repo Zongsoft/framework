@@ -32,7 +32,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
 	/// <summary>
 	/// 提供将对象序列化到流中和从流中反序列化对象的功能。

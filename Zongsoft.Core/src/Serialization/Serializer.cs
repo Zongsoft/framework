@@ -36,7 +36,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Runtime.Serialization
+namespace Zongsoft.Serialization
 {
 	public static class Serializer
 	{
@@ -47,34 +47,34 @@ namespace Zongsoft.Runtime.Serialization
 		#region 公共属性
 		public static ITextSerializer Json
 		{
-			get => _json ?? JsonSerializerInner.Default;
+			get => _json ?? JsonSerializerWrapper.Default;
 			set => _json = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class JsonSerializerInner : ITextSerializer
+		private class JsonSerializerWrapper : ITextSerializer
 		{
 			#region 单例字段
-			public static readonly JsonSerializerInner Default = new JsonSerializerInner();
+			public static readonly JsonSerializerWrapper Default = new JsonSerializerWrapper();
 			#endregion
 
 			#region 默认配置
 			private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions()
 			{
+				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
-				IgnoreNullValues = false,
-				IgnoreReadOnlyProperties = true,
 				Converters =
 				{
+					new TimeSpanConverter(),
 					new JsonStringEnumConverter(),
-					new ModelConverterFactory()
+					new ModelConverterFactory(),
 				},
 			};
 			#endregion
 
 			#region 构造函数
-			public JsonSerializerInner()
+			private JsonSerializerWrapper()
 			{
 			}
 			#endregion
@@ -200,12 +200,14 @@ namespace Zongsoft.Runtime.Serialization
 
 				return new JsonSerializerOptions()
 				{
+					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = settings.MaximumDepth,
 					IgnoreNullValues = settings.IgnoreNull,
 					IgnoreReadOnlyProperties = true,
 					Converters =
 					{
+						new TimeSpanConverter(),
 						new JsonStringEnumConverter(),
 						new ModelConverterFactory()
 					},
@@ -222,15 +224,16 @@ namespace Zongsoft.Runtime.Serialization
 				switch(settings.NamingConvention)
 				{
 					case SerializationNamingConvention.Camel:
-						naming = JsonNamingPolicy.CamelCase;
+						naming = JsonNamingConvention.Camel;
 						break;
 					case SerializationNamingConvention.Pascal:
-						naming = PascalCaseNamingPlicy.Instance;
+						naming = JsonNamingConvention.Pascal;
 						break;
 				}
 
 				return new JsonSerializerOptions()
 				{
+					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = settings.MaximumDepth,
 					WriteIndented = settings.Indented,
@@ -240,6 +243,7 @@ namespace Zongsoft.Runtime.Serialization
 					DictionaryKeyPolicy = naming,
 					Converters =
 					{
+						new TimeSpanConverter(),
 						new JsonStringEnumConverter(naming),
 						new ModelConverterFactory()
 					},
@@ -248,47 +252,75 @@ namespace Zongsoft.Runtime.Serialization
 			#endregion
 		}
 
-		private class PascalCaseNamingPlicy : JsonNamingPolicy
+		private static class JsonNamingConvention
 		{
-			public static readonly PascalCaseNamingPlicy Instance = new PascalCaseNamingPlicy();
+			public static readonly JsonNamingPolicy Camel = new LetterCaseNamingPolicy(chr => char.ToLowerInvariant(chr));
+			public static readonly JsonNamingPolicy Pascal = new LetterCaseNamingPolicy(chr => char.ToUpperInvariant(chr));
 
-			private PascalCaseNamingPlicy()
+			private class LetterCaseNamingPolicy : JsonNamingPolicy
 			{
-			}
+				#region 成员字段
+				private readonly Func<char, char> _converter;
+				#endregion
 
-			public override string ConvertName(string name)
-			{
-				if(string.IsNullOrEmpty(name))
-					return name;
-
-				return string.Create(name.Length, name, (chars, name) =>
+				#region 构造函数
+				public LetterCaseNamingPolicy(Func<char, char> converter)
 				{
-					name.AsSpan().CopyTo(chars);
-					FixCasing(chars);
-				});
-			}
-
-			private static void FixCasing(Span<char> chars)
-			{
-				for(int i = 0; i < chars.Length; i++)
-				{
-					if(i == 1 && !char.IsLower(chars[i]))
-						break;
-
-					bool hasNext = (i + 1 < chars.Length);
-
-					//如果下个字符是大写则终止
-					if(i > 0 && hasNext && !char.IsLower(chars[i + 1]))
-					{
-						//如果下个字符是空格，则在退出前将当前字符转换为大写
-						if(chars[i + 1] == ' ')
-							chars[i] = char.ToUpperInvariant(chars[i]);
-
-						break;
-					}
-
-					chars[i] = char.ToUpperInvariant(chars[i]);
+					_converter = converter ?? throw new ArgumentNullException(nameof(converter));
 				}
+				#endregion
+
+				#region 公共方法
+				public override string ConvertName(string name)
+				{
+					if(string.IsNullOrEmpty(name))
+						return name;
+
+					char[] chars = name.ToCharArray();
+					FixCasing(chars, _converter);
+					return new string(chars);
+				}
+				#endregion
+
+				#region 私有方法
+				private static void FixCasing(Span<char> chars, Func<char, char> converter)
+				{
+					var initial = true;
+
+					for(int i = 0; i < chars.Length; i++)
+					{
+						if(initial)
+						{
+							if(char.IsLetter(chars[i]))
+							{
+								chars[i] = converter(chars[i]);
+								initial = false;
+							}
+						}
+						else
+						{
+							if(!char.IsLetterOrDigit(chars[i]) && chars[i] != '_')
+								initial = true;
+						}
+					}
+				}
+				#endregion
+			}
+		}
+
+		private class TimeSpanConverter : JsonConverter<TimeSpan>
+		{
+			public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				if(reader.TokenType == JsonTokenType.Number)
+					return TimeSpan.FromSeconds(reader.GetDouble());
+				else
+					return TimeSpan.Parse(reader.GetString());
+			}
+
+			public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+			{
+				writer.WriteStringValue(value.ToString());
 			}
 		}
 
@@ -296,19 +328,12 @@ namespace Zongsoft.Runtime.Serialization
 		{
 			public override bool CanConvert(Type type)
 			{
-				return type.IsInterface || type.IsAbstract;
+				return (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
 			}
 
 			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
 			{
-				JsonConverter converter = (JsonConverter)Activator.CreateInstance(
-				   typeof(ModelConverter<>).MakeGenericType(new Type[] { type }),
-				   BindingFlags.Instance | BindingFlags.Public,
-				   binder: null,
-				   args: new object[] { options },
-				   culture: null);
-
-				return converter;
+				return (JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(new Type[] { type }));
 			}
 
 			private class ModelConverter<T> : JsonConverter<T> where T : class
@@ -316,21 +341,17 @@ namespace Zongsoft.Runtime.Serialization
 				private static readonly JsonEncodedText _TYPE_KEY_ = JsonEncodedText.Encode("$type");
 				private static readonly JsonEncodedText _TYPE_VALUE_ = JsonEncodedText.Encode(typeof(T).FullName);
 
-				private readonly Type _type;
-				private readonly JsonConverter<T> _converter;
-
-				public ModelConverter(JsonSerializerOptions options)
+				public override bool CanConvert(Type type)
 				{
-					_type = typeof(T);
-					_converter = (JsonConverter<T>)options.GetConverter(typeof(T));
+					return type.IsInterface || type.IsAbstract;
 				}
 
-				public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 				{
 					if(reader.TokenType != JsonTokenType.StartObject)
 						throw new JsonException();
 
-					var model = (Zongsoft.Data.IModel)Zongsoft.Data.Model.Build<T>();
+					var model = (Data.IModel)Data.Model.Build<T>();
 
 					while(reader.Read())
 					{
@@ -340,37 +361,81 @@ namespace Zongsoft.Runtime.Serialization
 						if(reader.TokenType != JsonTokenType.PropertyName)
 							throw new JsonException();
 
-						var key = reader.GetString();
+						var member = GetMember(type, reader.GetString(), out var memberType);
 						reader.Read();
+
+						if(member == null)
+							continue;
 
 						switch(reader.TokenType)
 						{
 							case JsonTokenType.None:
 							case JsonTokenType.Null:
-								model.TrySetValue(key, null);
+								model.TrySetValue(member.Name, null);
 								break;
 							case JsonTokenType.True:
-								model.TrySetValue(key, true);
+								model.TrySetValue(member.Name, true);
 								break;
 							case JsonTokenType.False:
-								model.TrySetValue(key, false);
+								model.TrySetValue(member.Name, false);
 								break;
 							case JsonTokenType.String:
-								model.TrySetValue(key, reader.GetString());
+								if(memberType == typeof(DateTime))
+									model.TrySetValue(member.Name, reader.GetDateTime());
+								else if(memberType == typeof(DateTimeOffset))
+									model.TrySetValue(member.Name, reader.GetDateTimeOffset());
+								else if(memberType.IsEnum)
+									model.TrySetValue(member.Name, Enum.Parse(memberType, reader.GetString(), true));
+								else
+									model.TrySetValue(member.Name, reader.GetString());
 								break;
 							case JsonTokenType.Number:
-								if(reader.TryGetInt32(out var integer))
-									model.TrySetValue(key, integer);
-								else if(reader.TryGetDouble(out var numeric))
-									model.TrySetValue(key, numeric);
+								switch(Type.GetTypeCode(memberType))
+								{
+									case TypeCode.Byte:
+										model.TrySetValue(member.Name, reader.GetByte());
+										break;
+									case TypeCode.SByte:
+										model.TrySetValue(member.Name, reader.GetSByte());
+										break;
+									case TypeCode.Int16:
+										model.TrySetValue(member.Name, reader.GetInt16());
+										break;
+									case TypeCode.Int32:
+										model.TrySetValue(member.Name, reader.GetInt32());
+										break;
+									case TypeCode.Int64:
+										model.TrySetValue(member.Name, reader.GetInt64());
+										break;
+									case TypeCode.UInt16:
+										model.TrySetValue(member.Name, reader.GetUInt16());
+										break;
+									case TypeCode.UInt32:
+										model.TrySetValue(member.Name, reader.GetUInt32());
+										break;
+									case TypeCode.UInt64:
+										model.TrySetValue(member.Name, reader.GetUInt64());
+										break;
+									case TypeCode.Single:
+										model.TrySetValue(member.Name, reader.GetSingle());
+										break;
+									case TypeCode.Double:
+										model.TrySetValue(member.Name, reader.GetDouble());
+										break;
+									case TypeCode.Decimal:
+										model.TrySetValue(member.Name, reader.GetDecimal());
+										break;
+									default:
+										if(memberType.IsEnum)
+											model.TrySetValue(member.Name, Enum.ToObject(memberType, reader.GetInt64()));
+										break;
+								}
 								break;
 							default:
-								var memberType = GetMemberType(key);
+								var value = JsonSerializer.Deserialize(ref reader, memberType, options);
 
-								if(memberType != null)
+								if(!model.TrySetValue(member.Name, value))
 								{
-									var value = JsonSerializer.Deserialize(ref reader, memberType, options);
-									model.TrySetValue(key, value);
 								}
 
 								break;
@@ -382,22 +447,60 @@ namespace Zongsoft.Runtime.Serialization
 
 				public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 				{
-					writer.WriteStartObject();
+					if(value == null)
+					{
+						writer.WriteNullValue();
+						return;
+					}
 
-					writer.WriteString(_TYPE_KEY_, _TYPE_VALUE_);
+					if(value is Data.IModel model)
+					{
+						writer.WriteStartObject();
+						writer.WriteString(_TYPE_KEY_, _TYPE_VALUE_);
 
-					if(_converter != null)
-						_converter.Write(writer, value, options);
-					else
-						JsonSerializer.Serialize(writer, value, options);
+						//JsonSerializer.Serialize(writer, model.GetChanges(), options);
 
-					writer.WriteEndObject();
+						writer.WriteEndObject();
+					}
 				}
 
-				private Type GetMemberType(string name)
+				private static MemberInfo GetMember(Type type, string name, out Type memberType)
 				{
-					return _type.GetProperty(name)?.PropertyType ??
-					       _type.GetField(name)?.FieldType;
+					var typeInfo = type.GetTypeInfo();
+					var contracts = typeInfo.GetInterfaces();
+					var index = 0;
+
+					do
+					{
+						foreach(var property in typeInfo.DeclaredProperties)
+						{
+							if(property.CanRead && property.GetMethod.IsPublic && !property.GetMethod.IsStatic && string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase))
+							{
+								memberType = property.PropertyType;
+								return property;
+							}
+						}
+
+						foreach(var field in typeInfo.DeclaredFields)
+						{
+							if(!field.IsInitOnly && field.IsPublic && !field.IsStatic && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
+							{
+								memberType = field.FieldType;
+								return field;
+							}
+						}
+
+						if(typeInfo.BaseType != null)
+							typeInfo = typeInfo.BaseType.GetTypeInfo();
+						else if(contracts != null && contracts.Length > 0 && index < contracts.Length)
+							typeInfo = contracts[index++].GetTypeInfo();
+						else
+							typeInfo = null;
+					}
+					while(typeInfo != null && typeInfo != typeof(object).GetTypeInfo());
+
+					memberType = null;
+					return null;
 				}
 			}
 		}

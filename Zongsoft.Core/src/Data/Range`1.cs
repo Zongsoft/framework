@@ -88,7 +88,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		[Runtime.Serialization.SerializationMember(Ignored = true)]
+		[Serialization.SerializationMember(Ignored = true)]
 		public bool HasValue
 		{
 			get
@@ -97,7 +97,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		[Runtime.Serialization.SerializationMember(Ignored = true)]
+		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsEmpty
 		{
 			get
@@ -106,7 +106,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		[Runtime.Serialization.SerializationMember(Ignored = true)]
+		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsZero
 		{
 			get
