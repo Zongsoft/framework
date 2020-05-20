@@ -607,16 +607,26 @@ namespace Zongsoft.Externals.Redis
 
 		public object GetValue(string key)
 		{
+			return this.GetValue<object>(key);
+		}
+
+		public T GetValue<T>(string key)
+		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
 			//确保连接成功
 			this.Connect();
 
-			return _database.StringGet(GetKey(key)).ToObject();
+			return _database.StringGet(GetKey(key)).GetValue<T>();
 		}
 
 		public object GetValue(string key, out TimeSpan? expiry)
+		{
+			return GetValue<object>(key, out expiry);
+		}
+
+		public T GetValue<T>(string key, out TimeSpan? expiry)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -626,20 +636,30 @@ namespace Zongsoft.Externals.Redis
 
 			var result = _database.StringGetWithExpiry(GetKey(key));
 			expiry = result.Expiry;
-			return result.Value.ToObject();
+			return result.Value.GetValue<T>();
 		}
 
-		public async Task<object> GetValueAsync(string key, CancellationToken cancellation = default)
+		public Task<object> GetValueAsync(string key, CancellationToken cancellation = default)
+		{
+			return this.GetValueAsync<object>(key, cancellation);
+		}
+
+		public async Task<T> GetValueAsync<T>(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
-			return (await _database.StringGetAsync(GetKey(key))).ToObject();
+			return (await _database.StringGetAsync(GetKey(key))).GetValue<T>();
 		}
 
-		public async Task<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default)
+		public Task<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default)
+		{
+			return this.GetValueExpiryAsync<object>(key, cancellation);
+		}
+
+		public async Task<(T Value, TimeSpan? Expiry)> GetValueExpiryAsync<T>(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -649,7 +669,7 @@ namespace Zongsoft.Externals.Redis
 			await this.ConnectAsync(cancellation);
 			var result = await _database.StringGetWithExpiryAsync(GetKey(key));
 
-			return (result.Value.ToObject(), result.Expiry);
+			return (result.Value.GetValue<T>(), result.Expiry);
 		}
 
 		public bool Remove(string key)
