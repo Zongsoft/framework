@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 
 using Zongsoft.Services;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.IO.Commands
 {
@@ -59,7 +60,7 @@ namespace Zongsoft.IO.Commands
 				if(info == null)
 					context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
 				else
-					context.Output.WriteLine(Runtime.Serialization.Serializer.Json.Serialize(info, new Runtime.Serialization.TextSerializationSettings() { Indented = true }));
+					context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
 
 				return info;
 			}

@@ -32,9 +32,9 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using Zongsoft.Common;
+using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
-using Zongsoft.Runtime.Caching;
 
 namespace Zongsoft.Externals.Redis
 {

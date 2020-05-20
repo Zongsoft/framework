@@ -36,9 +36,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
+using Zongsoft.Caching;
 using Zongsoft.Configuration;
 using Zongsoft.Services;
-using Zongsoft.Runtime.Caching;
 
 using StackExchange.Redis;
 

@@ -30,8 +30,8 @@
 using System;
 using System.IO;
 
+using Zongsoft.Caching;
 using Zongsoft.Services;
-using Zongsoft.Runtime.Caching;
 
 namespace Zongsoft.Security.Membership
 {

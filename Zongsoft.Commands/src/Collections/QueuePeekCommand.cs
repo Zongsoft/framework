@@ -31,7 +31,7 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
-using Zongsoft.Runtime.Serialization;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Collections.Commands
 {

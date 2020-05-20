@@ -34,7 +34,7 @@ namespace Zongsoft.Externals.Redis.Commands
 {
 	[DisplayName("Text.RedisSetCommand.Name")]
 	[Description("Text.RedisSetCommand.Description")]
-	[Zongsoft.Services.CommandOption(REQUISITE_OPTION, Type = typeof(Runtime.Caching.CacheRequisite), DefaultValue = Runtime.Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
+	[Zongsoft.Services.CommandOption(REQUISITE_OPTION, Type = typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
 	[Zongsoft.Services.CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
 	public class RedisSetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
@@ -56,7 +56,7 @@ namespace Zongsoft.Externals.Redis.Commands
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
 			var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
-			var requisite = context.Expression.Options.GetValue<Runtime.Caching.CacheRequisite>(REQUISITE_OPTION);
+			var requisite = context.Expression.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
 			var redis = RedisCommand.GetRedis(context.CommandNode);
 

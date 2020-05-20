@@ -33,7 +33,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
-using Zongsoft.Runtime.Serialization;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Commands
 {
@@ -78,7 +78,7 @@ namespace Zongsoft.Commands
 			if(graph is Stream stream)
 				return Serializer.Json.Deserialize<Dictionary<string, object>>(stream);
 
-			var settings = new TextSerializationSettings()
+			var options = new TextSerializationOptions()
 			{
 				MaximumDepth = context.Expression.Options.GetValue<int>(KEY_DEPTH_OPTION),
 				Typed = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
@@ -86,7 +86,7 @@ namespace Zongsoft.Commands
 				NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
 			};
 
-			var json = Serializer.Json.Serialize(graph, settings);
+			var json = Serializer.Json.Serialize(graph, options);
 
 			if(json != null)
 				context.Output.WriteLine(json);

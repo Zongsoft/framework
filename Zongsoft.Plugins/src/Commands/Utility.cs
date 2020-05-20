@@ -90,7 +90,7 @@ namespace Zongsoft.Plugins.Commands
 			if(value != null)
 			{
 				output.WriteLine();
-				output.WriteLine(Zongsoft.Runtime.Serialization.Serializer.Json.Serialize(value));
+				output.WriteLine(Serialization.Serializer.Json.Serialize(value));
 			}
 		}
 	}
