@@ -45,6 +45,7 @@ namespace Zongsoft.Security.Web.Controllers
 	[Area(Modules.Security)]
 	[Authorize(Roles = "Administrators,Security,Securers")]
 	[Authorization(Roles = "Administrators,Security,Securers")]
+	[Route("{area}/Users/{id:long}/{action=Get}")]
 	[Route("{area}/Users/{action=Get}/{id?}")]
 	public class UserController : ControllerBase
 	{
@@ -196,7 +197,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public virtual ActionResult<IUser> Post(IUser model)
+		public virtual ActionResult<IUser> Post([FromBody]IUser model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -282,9 +283,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetDescription(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
+		[HttpPatch("status")]
 		[ActionName("Status")]
-		public virtual IActionResult SetStatus(uint id, [FromRoute()]UserStatus status)
+		public virtual IActionResult SetStatus(uint id, [FromRoute]UserStatus status)
 		{
 			return this.UserProvider.SetStatus(id, status) ? (IActionResult)this.Ok() : this.NotFound();
 		}
@@ -305,10 +306,10 @@ namespace Zongsoft.Security.Web.Controllers
 			return existed ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpGet]
+		[HttpGet("{type}")]
 		[AllowAnonymous]
 		[Authorization(Suppressed = true)]
-		public IActionResult Verify(uint id, [FromRoute()]string type, [FromQuery]string secret)
+		public IActionResult Verify(uint id, [FromRoute]string type, [FromQuery]string secret)
 		{
 			return this.UserProvider.Verify(id, type, secret) ?
 			       (IActionResult)this.Ok() : this.BadRequest();
@@ -336,7 +337,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut]
 		[ActionName("Password.Change")]
-		public IActionResult ChangePassword(uint id, PasswordChangeEntity password)
+		public IActionResult ChangePassword(uint id, [FromBody]PasswordChangeEntity password)
 		{
 			return this.UserProvider.ChangePassword(id, password.OldPassword, password.NewPassword) ?
 				(IActionResult)this.Ok() : this.NotFound();
@@ -441,9 +442,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.MemberProvider.GetRoles(id, MemberType.User);
 		}
 
-		[HttpGet]
+		[HttpGet("{roles}")]
 		[ActionName("In")]
-		public IActionResult InRole(uint id, [FromRoute()]string roles)
+		public IActionResult InRole(uint id, [FromRoute]string roles)
 		{
 			if(string.IsNullOrEmpty(roles))
 				return this.BadRequest();
@@ -457,7 +458,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 授权方法
 		[HttpGet]
 		[Route("{schemaId}:{actionId}")]
-		public IActionResult Authorize(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
+		public IActionResult Authorize(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))
 				return this.BadRequest("Missing schema for the authorize operation.");
@@ -477,24 +478,24 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 权限方法
-		[HttpGet]
+		[HttpGet("{schemaId?}")]
 		[ActionName("Permissions")]
-		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute()]string schemaId = null)
+		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.User, schemaId);
 		}
 
-		[HttpPost]
+		[HttpPost("{schemaId}")]
 		[ActionName("Permissions")]
-		public IActionResult SetPermissions(uint id, [FromRoute()]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		public IActionResult SetPermissions(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
 			var count = this.PermissionProvider.SetPermissions(id, MemberType.User, schemaId, permissions, reset);
 			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissions), id) : this.NoContent();
 		}
 
-		[HttpDelete]
+		[HttpDelete("{schemaId}:{actionId}")]
 		[ActionName("Permission")]
-		public IActionResult RemovePermission(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
+		public IActionResult RemovePermission(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
 				return this.BadRequest();
@@ -503,32 +504,32 @@ namespace Zongsoft.Security.Web.Controllers
 				(IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpDelete]
+		[HttpDelete("{schemaId?}")]
 		[ActionName("Permissions")]
-		public IActionResult RemovePermissions(uint id, [FromRoute()]string schemaId = null)
+		public IActionResult RemovePermissions(uint id, [FromRoute]string schemaId = null)
 		{
 			var count = this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId);
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 		}
 
-		[HttpGet]
+		[HttpGet("{schemaId?}")]
 		[ActionName("PermissionFilters")]
-		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute()]string schemaId = null)
+		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute]string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissionFilters(id, MemberType.User, schemaId);
 		}
 
-		[HttpPost]
+		[HttpPost("{schemaId}")]
 		[ActionName("PermissionFilters")]
-		public IActionResult SetPermissionFilters(uint id, [FromRoute()]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		public IActionResult SetPermissionFilters(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
 			var count = this.PermissionProvider.SetPermissionFilters(id, MemberType.User, schemaId, permissions, reset);
 			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), id) : this.NoContent();
 		}
 
-		[HttpDelete]
+		[HttpDelete("{schemaId}:{actionId}")]
 		[ActionName("PermissionFilter")]
-		public IActionResult RemovePermissionFilter(uint id, [FromRoute()]string schemaId, [FromRoute()]string actionId)
+		public IActionResult RemovePermissionFilter(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
 				return this.BadRequest();
@@ -537,9 +538,9 @@ namespace Zongsoft.Security.Web.Controllers
 				(IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpDelete]
+		[HttpDelete("{schemaId?}")]
 		[ActionName("PermissionFilters")]
-		public IActionResult RemovePermissionFilters(uint id, [FromRoute()]string schemaId = null)
+		public IActionResult RemovePermissionFilters(uint id, [FromRoute]string schemaId = null)
 		{
 			var count = this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId);
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
@@ -549,22 +550,22 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 内部结构
 		public struct PasswordChangeEntity
 		{
-			public string OldPassword;
-			public string NewPassword;
+			public string OldPassword { get; set; }
+			public string NewPassword { get; set; }
 		}
 
 		public struct PasswordResetEntity
 		{
-			public string Secret;
-			public string Password;
-			public string[] PasswordAnswers;
+			public string Secret { get; set; }
+			public string Password { get; set; }
+			public string[] PasswordAnswers { get; set; }
 		}
 
 		public struct PasswordQuestionsAndAnswersEntity
 		{
-			public string Password;
-			public string[] Questions;
-			public string[] Answers;
+			public string Password { get; set; }
+			public string[] Questions { get; set; }
+			public string[] Answers { get; set; }
 		}
 		#endregion
 	}
