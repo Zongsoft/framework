@@ -486,7 +486,7 @@ namespace Zongsoft.Serialization
 								writer.WriteBoolean(key, (bool)propertyValue);
 								continue;
 							case TypeCode.DateTime:
-								writer.WriteString(key, propertyValue.ToString());
+								writer.WriteString(key, (DateTime)propertyValue);
 								continue;
 							case TypeCode.Byte:
 								writer.WriteNumber(key, (byte)propertyValue);
@@ -526,9 +526,13 @@ namespace Zongsoft.Serialization
 						switch(propertyValue)
 						{
 							case Guid _:
+								writer.WriteString(key, (Guid)propertyValue);
+								continue;
 							case TimeSpan _:
-							case DateTimeOffset _:
 								writer.WriteString(key, propertyValue.ToString());
+								continue;
+							case DateTimeOffset _:
+								writer.WriteString(key, (DateTimeOffset)propertyValue);
 								continue;
 						}
 
