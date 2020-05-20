@@ -466,7 +466,7 @@ namespace Zongsoft.Serialization
 
 					foreach(var property in value.GetType().GetTypeInfo().DeclaredProperties)
 					{
-						var key = options.PropertyNamingPolicy.ConvertName(property.Name);
+						var key = options.PropertyNamingPolicy == null ? property.Name : options.PropertyNamingPolicy.ConvertName(property.Name);
 						var propertyValue = Reflection.Reflector.GetValue(property, ref value);
 
 						if(propertyValue == null || Convert.IsDBNull(propertyValue))
