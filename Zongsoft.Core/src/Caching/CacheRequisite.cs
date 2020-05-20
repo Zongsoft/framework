@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
     /// <summary>
     /// 表示缓存设置项的必须条件的枚举。

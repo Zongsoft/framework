@@ -34,7 +34,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
 	public class MemoryCache : ICache, IEnumerable<KeyValuePair<string, object>>
 	{

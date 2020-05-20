@@ -28,24 +28,25 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
-	public static class CacheExtension
+	/// <summary>
+	/// 表示缓存项发生改变的原因。
+	/// </summary>
+	public enum CacheChangedReason
 	{
-        public static bool TryGetValue<T>(this ICache cache, string key, out T value)
-        {
-            if(cache == null)
-                throw new ArgumentNullException(nameof(cache));
+		/// <summary>系统内部原因。</summary>
+		None,
 
-            var cachedValue = cache.GetValue(key);
+		/// <summary>被手动删除的。</summary>
+		Removed,
 
-            if(cachedValue != null && Zongsoft.Common.Convert.TryConvertValue<T>(cachedValue, out value))
-                return true;
+		/// <summary>被手动更新的。</summary>
+		Updated,
 
-            value = default;
-            return false;
-        }
-    }
+		/// <summary>因为过期被删除。</summary>
+		Expired,
+	}
 }

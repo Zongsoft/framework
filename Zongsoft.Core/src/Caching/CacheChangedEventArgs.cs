@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
 	[Serializable]
 	public class CacheChangedEventArgs : EventArgs

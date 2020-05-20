@@ -32,7 +32,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
 	/// <summary>
 	/// 表示缓存容器的接口。

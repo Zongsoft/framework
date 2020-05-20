@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Runtime.Caching;
+using Zongsoft.Caching;
 using Zongsoft.Services;
 
 namespace Zongsoft.Security

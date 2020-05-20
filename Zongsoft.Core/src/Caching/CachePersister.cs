@@ -33,7 +33,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
 	public abstract class CachePersister<T>
 	{

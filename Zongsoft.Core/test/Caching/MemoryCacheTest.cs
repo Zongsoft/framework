@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading;
-using System.Collections.Generic;
 
 using Xunit;
 
-namespace Zongsoft.Runtime.Caching
+namespace Zongsoft.Caching
 {
 	public class MemoryCacheTest
 	{
