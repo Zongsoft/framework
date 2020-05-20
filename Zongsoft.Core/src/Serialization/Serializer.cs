@@ -29,9 +29,11 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -41,13 +43,13 @@ namespace Zongsoft.Serialization
 	public static class Serializer
 	{
 		#region 成员字段
-		private static ITextSerializer _json;
+		private static ITextSerializer _json = JsonSerializerWrapper.Instance;
 		#endregion
 
 		#region 公共属性
 		public static ITextSerializer Json
 		{
-			get => _json ?? JsonSerializerWrapper.Instance;
+			get => _json;
 			set => _json = value ?? throw new ArgumentNullException();
 		}
 		#endregion
@@ -341,11 +343,6 @@ namespace Zongsoft.Serialization
 				private static readonly JsonEncodedText _TYPE_KEY_ = JsonEncodedText.Encode("$type");
 				private static readonly JsonEncodedText _TYPE_VALUE_ = JsonEncodedText.Encode(typeof(T).FullName);
 
-				public override bool CanConvert(Type type)
-				{
-					return type.IsInterface || type.IsAbstract;
-				}
-
 				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 				{
 					if(reader.TokenType != JsonTokenType.StartObject)
@@ -436,6 +433,17 @@ namespace Zongsoft.Serialization
 
 								if(!model.TrySetValue(member.Name, value))
 								{
+									var collectionType = GetImplementedContract(memberType, typeof(ICollection<>));
+
+									if(collectionType != null && Reflection.Reflector.TryGetValue(member, (T)model, out var target))
+									{
+										var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
+
+										foreach(var item in (System.Collections.IEnumerable)value)
+										{
+											add.Invoke(target, new object[] { item });
+										}
+									}
 								}
 
 								break;
@@ -481,15 +489,6 @@ namespace Zongsoft.Serialization
 							}
 						}
 
-						foreach(var field in typeInfo.DeclaredFields)
-						{
-							if(!field.IsInitOnly && field.IsPublic && !field.IsStatic && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
-							{
-								memberType = field.FieldType;
-								return field;
-							}
-						}
-
 						if(typeInfo.BaseType != null)
 							typeInfo = typeInfo.BaseType.GetTypeInfo();
 						else if(contracts != null && contracts.Length > 0 && index < contracts.Length)
@@ -500,6 +499,22 @@ namespace Zongsoft.Serialization
 					while(typeInfo != null && typeInfo != typeof(object).GetTypeInfo());
 
 					memberType = null;
+					return null;
+				}
+
+				private static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
+				{
+					if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
+						return actual;
+
+					var contracts = actual.GetTypeInfo().ImplementedInterfaces;
+
+					foreach(var contract in contracts)
+					{
+						if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
+							return contract;
+					}
+
 					return null;
 				}
 			}
