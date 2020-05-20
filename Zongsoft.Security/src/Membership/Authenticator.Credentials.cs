@@ -183,18 +183,12 @@ namespace Zongsoft.Security.Membership
 				return token.Principal;
 			}
 
-			var value = this.Cache.GetValue(this.GetCacheKeyOfCredential(credentialId));
+			var buffer = this.Cache.GetValue<byte[]>(this.GetCacheKeyOfCredential(credentialId));
 
-			var principal = value switch
-			{
-				byte[] buffer => CredentialPrincipal.Deserialize(buffer),
-				Stream stream => CredentialPrincipal.Deserialize(stream),
-				BinaryReader reader => new CredentialPrincipal(reader),
-				_ => null,
-			};
-
-			if(principal == null)
+			if(buffer == null || buffer.Length == 0)
 				return null;
+
+			var principal = CredentialPrincipal.Deserialize(buffer);
 
 			//顺延当前用户及场景对应凭证号的缓存项的过期时长
 			this.Cache.SetExpiry(this.GetCacheKeyOfUser(principal.Identity.GetIdentifier(), principal.Scenario), principal.Expiration);
@@ -213,7 +207,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var credentialId = this.Cache.GetValue(this.GetCacheKeyOfUser(identity, scene)) as string;
+			var credentialId = this.Cache.GetValue<string>(this.GetCacheKeyOfUser(identity, scene));
 
 			if(string.IsNullOrEmpty(credentialId))
 				return null;
