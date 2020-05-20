@@ -30,9 +30,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Collections;
 
 namespace Zongsoft.Caching
 {
@@ -155,6 +155,11 @@ namespace Zongsoft.Caching
 			return null;
 		}
 
+		public T GetValue<T>(string key)
+		{
+			return (T)this.GetValue(key);
+		}
+
 		public object GetValue(string key, out TimeSpan? expiry)
 		{
 			if(key == null)
@@ -170,6 +175,11 @@ namespace Zongsoft.Caching
 			return null;
 		}
 
+		public T GetValue<T>(string key, out TimeSpan? expiry)
+		{
+			return (T)this.GetValue(key, out expiry);
+		}
+
 		public Task<object> GetValueAsync(string key, CancellationToken cancellation = default)
 		{
 			if(key == null)
@@ -183,6 +193,11 @@ namespace Zongsoft.Caching
 			return Task.FromResult<object>(null);
 		}
 
+		public async Task<T> GetValueAsync<T>(string key, CancellationToken cancellation = default)
+		{
+			return (T)await this.GetValueAsync(key, cancellation);
+		}
+
 		public Task<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default)
 		{
 			if(key == null)
@@ -194,6 +209,12 @@ namespace Zongsoft.Caching
 				return Task.FromResult((entry.Value, entry.Expiry));
 
 			return Task.FromResult<(object, TimeSpan?)>((null, null));
+		}
+
+		public async Task<(T Value, TimeSpan? Expiry)> GetValueExpiryAsync<T>(string key, CancellationToken cancellation = default)
+		{
+			var (value, expiry) = await this.GetValueExpiryAsync(key, cancellation);
+			return ((T)value, expiry);
 		}
 
 		public bool Remove(string key)

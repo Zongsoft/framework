@@ -192,10 +192,27 @@ namespace Zongsoft.Caching
 		/// <summary>
 		/// 从缓存字典中获取指定键的缓存值。
 		/// </summary>
+		/// <typeparam name="T">指定的缓存项类型。</typeparam>
+		/// <param name="key">指定要获取的键名。</param>
+		/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回指定类型的默认值。</returns>
+		T GetValue<T>(string key);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
 		/// <param name="key">指定要获取的键名。</param>
 		/// <param name="expiry">输出参数，表示指定缓存项的剩余有效期。</param>
 		/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
 		object GetValue(string key, out TimeSpan? expiry);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
+		/// <typeparam name="T">指定的缓存项类型。</typeparam>
+		/// <param name="key">指定要获取的键名。</param>
+		/// <param name="expiry">输出参数，表示指定缓存项的剩余有效期。</param>
+		/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
+		T GetValue<T>(string key, out TimeSpan? expiry);
 
 		/// <summary>
 		/// 从缓存字典中获取指定键的缓存值。
@@ -208,10 +225,28 @@ namespace Zongsoft.Caching
 		/// <summary>
 		/// 从缓存字典中获取指定键的缓存值。
 		/// </summary>
+		/// <typeparam name="T">指定的缓存项类型。</typeparam>
+		/// <param name="key">指定要获取的键。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>返回表示异步操作的任务对象。</returns>
+		Task<T> GetValueAsync<T>(string key, CancellationToken cancellation = default);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
 		/// <param name="key">指定要获取的键。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		Task<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default);
+
+		/// <summary>
+		/// 从缓存字典中获取指定键的缓存值。
+		/// </summary>
+		/// <typeparam name="T">指定的缓存项类型。</typeparam>
+		/// <param name="key">指定要获取的键。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>返回表示异步操作的任务对象。</returns>
+		Task<(T Value, TimeSpan? Expiry)> GetValueExpiryAsync<T>(string key, CancellationToken cancellation = default);
 		#endregion
 
 		#region 设置方法
