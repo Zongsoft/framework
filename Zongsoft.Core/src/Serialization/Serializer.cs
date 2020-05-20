@@ -67,6 +67,7 @@ namespace Zongsoft.Serialization
 			{
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
+				IgnoreReadOnlyProperties = false,
 				Converters =
 				{
 					new JsonTimeSpanConverter(),
@@ -207,7 +208,7 @@ namespace Zongsoft.Serialization
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = options.MaximumDepth,
 					IgnoreNullValues = options.IgnoreNull,
-					IgnoreReadOnlyProperties = true,
+					IgnoreReadOnlyProperties = false,
 					Converters =
 					{
 						new JsonTimeSpanConverter(),
@@ -241,7 +242,7 @@ namespace Zongsoft.Serialization
 					MaxDepth = options.MaximumDepth,
 					WriteIndented = options.Indented,
 					IgnoreNullValues = options.IgnoreNull,
-					IgnoreReadOnlyProperties = true,
+					IgnoreReadOnlyProperties = false,
 					PropertyNamingPolicy = naming,
 					DictionaryKeyPolicy = naming,
 					Converters =
