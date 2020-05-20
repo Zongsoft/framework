@@ -110,8 +110,8 @@ namespace Zongsoft.Data
 		/// </summary>
 		public Common.ISequence Sequence
 		{
-			get => _sequence ?? (_sequence = this.SequenceProvider.GetService(string.Empty));
-			set => _sequence = this.CreateSequence(value);
+			get => _sequence ?? (_sequence = this.CreateSequence());
+			set => _sequence = value ?? throw new ArgumentNullException();
 		}
 
 		/// <summary>
@@ -1658,8 +1658,13 @@ namespace Zongsoft.Data
 			return name;
 		}
 
-		protected virtual Common.ISequence CreateSequence(Common.ISequence sequence)
+		protected virtual Common.ISequence CreateSequence()
 		{
+			var sequence = this.SequenceProvider.GetService(this.Name);
+
+			if(sequence == null && !string.IsNullOrEmpty(this.Name))
+				sequence = this.SequenceProvider.GetService(string.Empty);
+
 			return sequence;
 		}
 

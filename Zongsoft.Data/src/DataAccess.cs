@@ -162,8 +162,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 序号构建
-		protected override ISequence CreateSequence(ISequence sequence)
+		protected override ISequence CreateSequence()
 		{
+			var sequence = base.CreateSequence();
+
 			if(sequence == null)
 				return null;
 
