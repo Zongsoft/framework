@@ -33,6 +33,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -68,7 +69,7 @@ namespace Zongsoft.Serialization
 				PropertyNameCaseInsensitive = true,
 				Converters =
 				{
-					new TimeSpanConverter(),
+					new JsonTimeSpanConverter(),
 					new JsonStringEnumConverter(),
 					new ModelConverterFactory(),
 				},
@@ -209,7 +210,7 @@ namespace Zongsoft.Serialization
 					IgnoreReadOnlyProperties = true,
 					Converters =
 					{
-						new TimeSpanConverter(),
+						new JsonTimeSpanConverter(),
 						new JsonStringEnumConverter(),
 						new ModelConverterFactory()
 					},
@@ -245,7 +246,7 @@ namespace Zongsoft.Serialization
 					DictionaryKeyPolicy = naming,
 					Converters =
 					{
-						new TimeSpanConverter(),
+						new JsonTimeSpanConverter(),
 						new JsonStringEnumConverter(naming),
 						new ModelConverterFactory()
 					},
@@ -310,7 +311,7 @@ namespace Zongsoft.Serialization
 			}
 		}
 
-		private class TimeSpanConverter : JsonConverter<TimeSpan>
+		private class JsonTimeSpanConverter : JsonConverter<TimeSpan>
 		{
 			public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 			{
@@ -461,15 +462,106 @@ namespace Zongsoft.Serialization
 						return;
 					}
 
-					if(value is Data.IModel model)
+					writer.WriteStartObject();
+
+					foreach(var property in value.GetType().GetTypeInfo().DeclaredProperties)
 					{
-						writer.WriteStartObject();
-						writer.WriteString(_TYPE_KEY_, _TYPE_VALUE_);
+						var key = options.PropertyNamingPolicy.ConvertName(property.Name);
+						var propertyValue = Reflection.Reflector.GetValue(property, ref value);
 
-						//JsonSerializer.Serialize(writer, model.GetChanges(), options);
+						if(propertyValue == null || Convert.IsDBNull(propertyValue))
+						{
+							if(!options.IgnoreNullValues)
+								writer.WriteNull(key);
 
-						writer.WriteEndObject();
+							continue;
+						}
+
+						switch(Type.GetTypeCode(property.PropertyType))
+						{
+							case TypeCode.String:
+								writer.WriteString(key, (string)propertyValue);
+								continue;
+							case TypeCode.Boolean:
+								writer.WriteBoolean(key, (bool)propertyValue);
+								continue;
+							case TypeCode.DateTime:
+								writer.WriteString(key, propertyValue.ToString());
+								continue;
+							case TypeCode.Byte:
+								writer.WriteNumber(key, (byte)propertyValue);
+								continue;
+							case TypeCode.SByte:
+								writer.WriteNumber(key, (sbyte)propertyValue);
+								continue;
+							case TypeCode.Int16:
+								writer.WriteNumber(key, (short)propertyValue);
+								continue;
+							case TypeCode.Int32:
+								writer.WriteNumber(key, (int)propertyValue);
+								continue;
+							case TypeCode.Int64:
+								writer.WriteNumber(key, (long)propertyValue);
+								continue;
+							case TypeCode.UInt16:
+								writer.WriteNumber(key, (ushort)propertyValue);
+								continue;
+							case TypeCode.UInt32:
+								writer.WriteNumber(key, (uint)propertyValue);
+								continue;
+							case TypeCode.UInt64:
+								writer.WriteNumber(key, (ulong)propertyValue);
+								continue;
+							case TypeCode.Single:
+								writer.WriteNumber(key, (float)propertyValue);
+								continue;
+							case TypeCode.Double:
+								writer.WriteNumber(key, (double)propertyValue);
+								continue;
+							case TypeCode.Decimal:
+								writer.WriteNumber(key, (decimal)propertyValue);
+								continue;
+						}
+
+						switch(propertyValue)
+						{
+							case Guid _:
+							case TimeSpan _:
+							case DateTimeOffset _:
+								writer.WriteString(key, propertyValue.ToString());
+								continue;
+						}
+
+						if(TryGetString(property, propertyValue, out var text))
+						{
+							writer.WriteString(key, text);
+							continue;
+						}
+
+						writer.WritePropertyName(key);
+						JsonSerializer.Serialize(writer, propertyValue, property.PropertyType, options);
 					}
+
+					writer.WriteEndObject();
+				}
+
+				private static bool TryGetString(PropertyInfo property, object value, out string text)
+				{
+					text = null;
+
+					if(value == null)
+						return false;
+
+					var converter = TypeDescriptor.GetConverter(property) ??
+					                TypeDescriptor.GetConverter(value.GetType());
+
+					if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(typeof(string)))
+					{
+						text = (string)converter.ConvertTo(value, typeof(string));
+						return true;
+					}
+
+					return false;
 				}
 
 				private static MemberInfo GetMember(Type type, string name, out Type memberType)
