@@ -94,33 +94,6 @@ namespace Zongsoft.Externals.Redis
 		}
 		#endregion
 
-		#region 静态属性
-		private static LuaScript _incrementScript;
-		private static LuaScript _decrementScript;
-
-		private static LuaScript IncrementScript
-		{
-			get
-			{
-				if(_incrementScript == null)
-					_incrementScript = LuaScript.Prepare(INCREMENT_SCRIPT);
-
-				return _incrementScript;
-			}
-		}
-
-		private static LuaScript DecrementScript
-		{
-			get
-			{
-				if(_decrementScript == null)
-					_decrementScript = LuaScript.Prepare(DECREMENT_SCRIPT);
-
-				return _decrementScript;
-			}
-		}
-		#endregion
-
 		#region 公共属性
 		public string Name
 		{
