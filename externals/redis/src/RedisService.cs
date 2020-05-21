@@ -46,6 +46,11 @@ namespace Zongsoft.Externals.Redis
 {
 	public class RedisService : ICache, ISequence, IDisposable
 	{
+		#region 常量定义
+		private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
+		private const string DECREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";
+		#endregion
+
 		#region 事件定义
 		event EventHandler<CacheChangedEventArgs> ICache.Changed
 		{
@@ -97,8 +102,6 @@ namespace Zongsoft.Externals.Redis
 		{
 			get
 			{
-				const string INCREMENT_SCRIPT = @"if redis.call('exists', @key)==0 then redis.call('set', @key, @seed, 'NX') end return redis.call('incrby', @key, @interval)";
-
 				if(_incrementScript == null)
 					_incrementScript = LuaScript.Prepare(INCREMENT_SCRIPT);
 
@@ -110,8 +113,6 @@ namespace Zongsoft.Externals.Redis
 		{
 			get
 			{
-				const string DECREMENT_SCRIPT = @"if redis.call('exists', @key)==0 then redis.call('set', @key, @seed, 'NX') end return redis.call('decrby', @key, @interval)";
-
 				if(_decrementScript == null)
 					_decrementScript = LuaScript.Prepare(DECREMENT_SCRIPT);
 
@@ -426,12 +427,7 @@ namespace Zongsoft.Externals.Redis
 			if(seed == 0)
 				return _database.StringDecrement(GetKey(key), interval);
 
-			return (long)_database.ScriptEvaluate(DecrementScript, new
-			{
-				key = GetKey(key),
-				interval,
-				seed,
-			});
+			return (long)_database.ScriptEvaluate(DECREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
 		public async Task<long> DecrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
@@ -445,12 +441,7 @@ namespace Zongsoft.Externals.Redis
 			if(seed == 0)
 				return await _database.StringDecrementAsync(GetKey(key), interval);
 
-			return (long) await _database.ScriptEvaluateAsync(DecrementScript, new
-			{
-				key = GetKey(key),
-				interval,
-				seed,
-			});
+			return (long)await _database.ScriptEvaluateAsync(DECREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
 		public long Increment(string key, int interval = 1, int seed = 0)
@@ -464,12 +455,7 @@ namespace Zongsoft.Externals.Redis
 			if(seed == 0)
 				return _database.StringIncrement(GetKey(key), interval);
 
-			return (long)_database.ScriptEvaluate(IncrementScript, new
-			{
-				key = (RedisKey)GetKey(key),
-				interval,
-				seed,
-			});
+			return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
 		public async Task<long> IncrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
@@ -483,12 +469,7 @@ namespace Zongsoft.Externals.Redis
 			if(seed == 0)
 				return await _database.StringIncrementAsync(GetKey(key), interval);
 
-			return (long)await _database.ScriptEvaluateAsync(IncrementScript, new
-			{
-				key = GetKey(key),
-				interval,
-				seed,
-			});
+			return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
 		void ISequence.Reset(string key, int value)
