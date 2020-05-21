@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -114,20 +115,30 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("{id:long}")]
 		public Task<IActionResult> Delete(uint id)
 		{
+			if(id == 0)
+				return Task.FromResult((IActionResult)this.BadRequest());
+
 			return this.RoleProvider.Delete(id) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{ids:required}")]
-		public Task<IActionResult> Delete(uint[] ids)
+		[HttpDelete]
+		public async Task<IActionResult> Delete()
 		{
+			var content = await this.Request.ReadAsStringAsync();
+
+			if(string.IsNullOrWhiteSpace(content))
+				return this.BadRequest();
+
+			var ids = Common.StringExtension.Slice<uint>(content, new[] { ',', '|' }, uint.TryParse).ToArray();
+
 			if(ids == null || ids.Length == 0)
-				return Task.FromResult((IActionResult)this.BadRequest());
+				return this.BadRequest();
 
 			return this.RoleProvider.Delete(ids) > 0 ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
+				(IActionResult)this.NoContent() :
+				(IActionResult)this.NotFound();
 		}
 
 		[HttpPost]
@@ -230,7 +241,7 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.MemberProvider.GetMembers(id, this.Request.GetDataSchema());
 		}
 
-		[HttpPost("{id:long}/Member/{memberType}:{memberId:int}")]
+		[HttpPut("{id:long}/Member/{memberType}:{memberId:int}")]
 		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
 			return this.MemberProvider.SetMembers(id, new[] { new Member(id, memberId, memberType) }, false) > 0 ?
@@ -238,8 +249,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPost("{id:long}/Members")]
-		[HttpPost("Members/{id:long}")]
+		[HttpPut("{id:long}/Members")]
+		[HttpPut("Members/{id:long}")]
 		public Task<IActionResult> SetMembers(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false)
 		{
 			return this.MemberProvider.SetMembers(id, members, reset) > 0 ?
@@ -268,9 +279,14 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 授权方法
 		[HttpGet("{id:long}/Authorizes")]
 		[HttpGet("Authorizes/{id:long}")]
-		public IEnumerable<AuthorizationToken> Authorizes(uint id)
+		public IActionResult Authorizes(uint id)
 		{
-			return this.Authorizer.Authorizes(id, MemberType.Role);
+			if(id == 0)
+				return this.BadRequest();
+
+			return this.Ok(this.Authorizer.Authorizes(id, MemberType.Role).Select(p =>
+				p.Schema + ":" + string.Join(',', p.Actions.Select(a => a.Action).ToArray())
+			));
 		}
 		#endregion
 
@@ -281,10 +297,10 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId);
 		}
 
-		[HttpPost("{id:long}/Permissions/{schemaId}")]
-		public Task<IActionResult> SetPermissions(uint id, string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		[HttpPut("{id:long}/Permissions")]
+		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
-			return this.PermissionProvider.SetPermissions(id, MemberType.Role, schemaId, permissions, reset) > 0 ?
+			return this.PermissionProvider.SetPermissions(id, MemberType.Role, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id })) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
@@ -314,10 +330,10 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.PermissionProvider.GetPermissionFilters(id, MemberType.Role, schemaId);
 		}
 
-		[HttpPost("{id:long}/Permission.Filters/{schemaId}")]
-		public Task<IActionResult> SetPermissionFilters(uint id, string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		[HttpPut("{id:long}/Permission.Filters")]
+		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
-			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, schemaId, permissions, reset) > 0 ?
+			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id })) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
