@@ -69,6 +69,9 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public bool Authorize(uint userId, string schema, string action)
 		{
+			if(userId == 0)
+				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
+
 			return this.Authorizes(userId, MemberType.User)
 			           .Any(token => string.Equals(schema, token.Schema, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
 		}
