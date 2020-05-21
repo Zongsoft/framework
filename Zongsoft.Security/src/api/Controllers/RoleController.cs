@@ -42,6 +42,7 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[ApiController]
 	[Area(Modules.Security)]
 	[Authorize(Roles = "Administrators,Security,Securers")]
 	[Authorization(Roles = "Administrators,Security,Securers")]
