@@ -42,11 +42,10 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
+	[ApiController]
 	[Area(Modules.Security)]
 	[Authorize(Roles = "Administrators,Security,Securers")]
-	[Authorization(Roles = "Administrators,Security,Securers")]
-	[Route("{area}/Users/{id:long}/{action=Get}")]
-	[Route("{area}/Users/{action=Get}/{id?}")]
+	[Route("[area]/Users")]
 	public class UserController : ControllerBase
 	{
 		#region 成员字段
@@ -87,113 +86,52 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 查询指定编号或用户标识、命名空间的用户。
-		/// </summary>
-		/// <param name="id">指定的路由参数，如果该参数为纯数字则会被当做为用户编号；否则请参考备注部分的处理规则。</param>
-		/// <param name="paging">指定的查询分页设置。</param>
-		/// <returns>返回的用户或用户集。</returns>
-		/// <remarks>
-		///		<para>注意：由于路由匹配约定，对于首字符为字母并且中间字符为字母、数字、下划线的路由数据并不会被匹配为<paramref name="id"/>，
-		///		因此对于查询用户标识和命名空间的组合条件，该参数应该使用冒号进行组合；而对于查询指定命名空间内的所有用户则应以冒号结尾，大致示意如下：</para>
-		///		<list type="bullet">
-		///			<listheader>
-		///				<term>URL</term>
-		///				<description>备注</description>
-		///			</listheader>
-		///			<item>
-		///				<term>/api/Security/User/*</term>
-		///				<description>查询系统中的所有用户，即忽略命名空间。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User</term>
-		///				<description>查询命名空间为空的所有用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/101</term>
-		///				<description>查询用户<seealso cref="User.UserId"/>为101的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/administrator</term>
-		///				<description>查询用户<seealso cref="User.Name"/>为：Administrator，且<seealso cref="User.Namespace"/>为空的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/13812345678!phone</term>
-		///				<description>
-		///					<para>因为手机号与用户编号都是数字，所以必须以叹号分隔的后缀以示区别。</para>
-		///					<para>查询用户<seealso cref="User.Phone"/>为：13812345678，且<seealso cref="User.Namespace"/>为空的用户。</para>
-		///				</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/popeye@zongsoft.com</term>
-		///				<description>查询用户<seealso cref="User.Email"/>为：popeye@zongsoft.com，且<seealso cref="User.Namespace"/>为空的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/zongsoft:popeye</term>
-		///				<description>查询用户<seealso cref="User.Name"/>为：Popeye，且<seealso cref="User.Namespace"/>为：zongsoft的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/zongsoft:13812345678</term>
-		///				<description>查询用户<seealso cref="User.Phone"/>为：13812345678，且<seealso cref="User.Namespace"/>为：zongsoft的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/zongsoft:popeye@zongsoft.com</term>
-		///				<description>查询用户<seealso cref="User.Email"/>为：popeye@zongsoft.com，且<seealso cref="User.Namespace"/>为：zongsoft的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/zongsoft:*</term>
-		///				<description>查询<seealso cref="User.Namespace"/>为：zongsoft的所有用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/:admin</term>
-		///				<description>查询<seealso cref="User.Namespace"/>为空，且用户<seealso cref="User.Name"/>为：Admin 的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/:13812345678</term>
-		///				<description>查询<seealso cref="User.Namespace"/>为空，且用户<seealso cref="User.Phone"/>为：13812345678 的用户。</description>
-		///			</item>
-		///			<item>
-		///				<term>/api/Security/User/:zongsoft@gmail.com</term>
-		///				<description>查询<seealso cref="User.Namespace"/>为空，且用户<seealso cref="User.Email"/>为：zongsoft@gmail.com 的用户。</description>
-		///			</item>
-		///		</list>
-		/// </remarks>
-		public virtual IActionResult Get(string id = null, [FromQuery]Paging paging = null)
+		[HttpGet("{id:long}")]
+		public Task<IActionResult> Get(uint id)
 		{
-			IUser user;
+			var user = this.UserProvider.GetUser(id);
 
-			//如果标识为空或星号，则进行多用户查询
-			if(string.IsNullOrEmpty(id) || id == "*")
-				return this.Ok(this.UserProvider.GetUsers(id, paging));
+			return user != null ?
+				Task.FromResult((IActionResult)this.Ok(user)) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
 
-			//解析用户标识参数
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
+		[HttpGet("{identity?}")]
+		[HttpGet("{namespace:required}:{identity:required}")]
+		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery] Paging paging = null)
+		{
+			object result;
 
-			//如果ID参数是数字则以编号方式返回唯一的用户信息
-			if(userId > 0)
-			{
-				user = this.UserProvider.GetUser(userId);
-				return user == null ? (IActionResult)this.NotFound() : this.Ok();
-			}
-
-			//如果用户标识为空或星号，则进行命名空间查询
 			if(string.IsNullOrEmpty(identity) || identity == "*")
-				return this.Ok(this.UserProvider.GetUsers(@namespace, paging));
+				result = this.UserProvider.GetUsers(@namespace, paging);
+			else
+				result = this.UserProvider.GetUser(identity, @namespace);
 
-			//返回指定标识的用户信息
-			user = this.UserProvider.GetUser(identity, @namespace);
-			return user == null ? (IActionResult)this.NotFound() : this.Ok(user);
+			return result != null ?
+				Task.FromResult((IActionResult)this.Ok(result)) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		public virtual IActionResult Delete(string id)
+		[HttpDelete("{id:long}")]
+		public Task<IActionResult> Delete(uint id)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
-
-			var count = this.UserProvider.Delete(Common.StringExtension.Slice<uint>(id, chr => chr == ',' || chr == '|', uint.TryParse).Where(p => p > 0).ToArray());
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.UserProvider.Delete(id) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
+		[HttpDelete("{ids:required}")]
+		public Task<IActionResult> Delete(uint[] ids)
+		{
+			if(ids == null || ids.Length == 0)
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.UserProvider.Delete(ids) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
+
+		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -211,8 +149,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.Conflict();
 		}
 
-		[HttpPatch]
-		[ActionName("Namespace")]
+		[HttpPatch("{id:long}/Namespace")]
+		[HttpPatch("Namespace/{id:long?}")]
 		public async Task<IActionResult> SetNamespace(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -223,8 +161,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetNamespace(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Name")]
+		[HttpPatch("{id:long}/Name")]
+		[HttpPatch("Name/{id:long?}")]
 		public async Task<IActionResult> SetName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -235,8 +173,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetName(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("FullName")]
+		[HttpPatch("{id:long}/FullName")]
+		[HttpPatch("FullName/{id:long?}")]
 		public async Task<IActionResult> SetFullName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -247,8 +185,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetFullName(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Email")]
+		[HttpPatch("{id:long}/Email")]
+		[HttpPatch("Email/{id:long?}")]
 		public async Task<IActionResult> SetEmail(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -259,8 +197,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetEmail(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Phone")]
+		[HttpPatch("{id:long}/Phone")]
+		[HttpPatch("Phone/{id:long?}")]
 		public async Task<IActionResult> SetPhone(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -271,8 +209,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetPhone(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Description")]
+		[HttpPatch("{id:long}/Description")]
+		[HttpPatch("Description/{id:long?}")]
 		public async Task<IActionResult> SetDescription(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -283,267 +221,307 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetDescription(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch("status")]
-		[ActionName("Status")]
-		public virtual IActionResult SetStatus(uint id, [FromRoute]UserStatus status)
+		[HttpPatch("{id:long}/Status/{value}")]
+		[HttpPatch("Status/{value}")]
+		public Task<IActionResult> SetStatus(uint id, UserStatus value)
 		{
-			return this.UserProvider.SetStatus(id, status) ? (IActionResult)this.Ok() : this.NotFound();
+			return this.UserProvider.SetStatus(id, value) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet]
-		[AllowAnonymous]
-		[Authorization(Suppressed = true)]
-		public virtual IActionResult Exists(string id)
+		[HttpHead("{id:long}")]
+		[HttpGet("{id:long}/exists")]
+		[HttpGet("exists")]
+		public Task<IActionResult> Exists(uint id)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
-
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
-			var existed = userId > 0 ?
-				this.UserProvider.Exists(userId) :
-				this.UserProvider.Exists(identity, @namespace);
-
-			return existed ? (IActionResult)this.Ok() : this.NotFound();
+			return this.UserProvider.Exists(id) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{type}")]
 		[AllowAnonymous]
-		[Authorization(Suppressed = true)]
-		public IActionResult Verify(uint id, [FromRoute]string type, [FromQuery]string secret)
+		[HttpHead("{namespace}:{identity}")]
+		[HttpGet("exists/{namespace}:{identity}")]
+		public Task<IActionResult> Exists(string @namespace, string identity)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.UserProvider.Exists(identity, @namespace) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
+
+		[AllowAnonymous]
+		[HttpGet("{id:long}/Verify/{type:required}")]
+		public Task<IActionResult> Verify(uint id, string type, [FromQuery]string secret)
 		{
 			return this.UserProvider.Verify(id, type, secret) ?
-			       (IActionResult)this.Ok() : this.BadRequest();
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.BadRequest());
 		}
 		#endregion
 
 		#region 密码处理
-		[HttpGet]
-		[ActionName("Password.Has")]
-		public IActionResult HasPassword(string id)
+		[HttpGet("{id:long}/Password.Has")]
+		[HttpGet("Password.Has")]
+		public Task<IActionResult> HasPassword(uint id = 0)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
-
-			bool existed;
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
-
-			if(userId > 0)
-				existed = this.UserProvider.HasPassword(userId);
-			else
-				existed = this.UserProvider.HasPassword(identity, @namespace);
-
-			return existed ? (IActionResult)this.Ok() : this.NotFound();
+			return this.UserProvider.HasPassword(id) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpPut]
-		[ActionName("Password.Change")]
-		public IActionResult ChangePassword(uint id, [FromBody]PasswordChangeEntity password)
+		[AllowAnonymous]
+		[HttpGet("Password.Has/{identity}")]
+		[HttpGet("Password.Has/{namespace:required}:{identity}")]
+		public Task<IActionResult> HasPassword(string @namespace, string identity)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.UserProvider.HasPassword(identity, @namespace) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
+
+		[HttpPut("{id:long}/Password.Change")]
+		[HttpPut("Password.Change")]
+		public Task<IActionResult> ChangePassword(uint id, [FromBody]PasswordChangeEntity password)
 		{
 			return this.UserProvider.ChangePassword(id, password.OldPassword, password.NewPassword) ?
-				(IActionResult)this.Ok() : this.NotFound();
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpPost]
 		[AllowAnonymous]
-		[Authorization(Suppressed = true)]
-		[ActionName("Password.Forget")]
-		public IActionResult ForgetPassword(string id)
+		[HttpPost("Password.Forget/{identity}")]
+		[HttpPost("Password.Forget/{namespace:required}:{identity}")]
+		public Task<IActionResult> ForgetPassword(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var parts = id.Split(':');
-			var userId = parts.Length > 1 ?
-				this.UserProvider.ForgetPassword(parts[1], parts[0]) :
-				this.UserProvider.ForgetPassword(parts[0], null);
-
-			return userId == 0 ? (IActionResult)this.NotFound() : this.Ok(userId);
+			return this.UserProvider.ForgetPassword(identity, @namespace) > 0 ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpPost]
 		[AllowAnonymous]
-		[Authorization(Suppressed = true)]
-		[ActionName("Password.Reset")]
-		public IActionResult ResetPassword(string id, [FromBody]PasswordResetEntity content)
+		[HttpPost("{id:long}/Password.Reset")]
+		[HttpPost("Password.Reset")]
+		public Task<IActionResult> ResetPassword(uint id, [FromBody]PasswordResetEntity content)
 		{
-			if(!string.IsNullOrWhiteSpace(content.Secret))
-			{
-				if(!uint.TryParse(id, out var userId))
-					return this.BadRequest("Invalid id argument, it must be a integer.");
+			if(string.IsNullOrWhiteSpace(content.Secret))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-				if(!this.UserProvider.ResetPassword(userId, content.Secret, content.Password))
-					return this.NotFound();
-			}
-			else if(content.PasswordAnswers != null && content.PasswordAnswers.Length > 0)
-			{
-				var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
-
-				//注意：该方法会将传入的纯数字的标识当做手机号处理
-				if(userId > 0)
-					identity = userId.ToString();
-
-				if(!this.UserProvider.ResetPassword(identity, @namespace, content.PasswordAnswers, content.Password))
-					return this.NotFound();
-			}
-			else
-			{
-				return this.BadRequest();
-			}
-
-			return this.Ok();
+			return this.UserProvider.ResetPassword(id, content.Secret, content.Password) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.BadRequest());
 		}
 
-		[HttpGet]
 		[AllowAnonymous]
-		[ActionName("Password.Questions")]
-		[Authorization(Suppressed = true)]
-		public IActionResult GetPasswordQuestions(string id)
+		[HttpPost("Password.Reset/{identity}")]
+		[HttpPost("Password.Reset/{namespace:required}:{identity}")]
+		public Task<IActionResult> ResetPassword(string @namespace, string identity, [FromBody]PasswordResetEntity content)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
-			string[] result;
+			if(content.PasswordAnswers == null || content.PasswordAnswers.Length < 3)
+				Task.FromResult(this.BadRequest());
 
-			if(userId > 0)
-				result = this.UserProvider.GetPasswordQuestions(userId);
-			else
-				result = this.UserProvider.GetPasswordQuestions(identity, @namespace);
+			return this.UserProvider.ResetPassword(identity, @namespace, content.PasswordAnswers, content.Password) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.BadRequest());
+		}
+
+		[HttpGet("{id:long}/Password.Questions")]
+		[HttpGet("Password.Questions")]
+		public Task<IActionResult> GetPasswordQuestions(uint id = 0)
+		{
+			var result = this.UserProvider.GetPasswordQuestions(id);
 
 			//如果返回的结果为空表示指定的表示的用户不存在
 			if(result == null)
-				return this.NotFound();
+				return Task.FromResult((IActionResult)this.NotFound());
 
 			//如果问题数组内容不是全空，则返回该数组
 			for(int i = 0; i < result.Length; i++)
 			{
 				if(!string.IsNullOrEmpty(result[i]))
-					return this.Ok(result);
+					return Task.FromResult((IActionResult)this.Ok(result));
 			}
 
 			//返回空消息
-			return this.NoContent();
+			return Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut]
-		[ActionName("Password.Answers")]
-		public IActionResult SetPasswordQuestionsAndAnswers(uint id, [FromBody]PasswordQuestionsAndAnswersEntity content)
+		[AllowAnonymous]
+		[HttpGet("Password.Questions/{identity}")]
+		[HttpGet("Password.Questions/{namespace:required}:{identity}")]
+		public Task<IActionResult> GetPasswordQuestions(string @namespace, string identity)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			var result = this.UserProvider.GetPasswordQuestions(identity, @namespace);
+
+			//如果返回的结果为空表示指定的表示的用户不存在
+			if(result == null)
+				return Task.FromResult((IActionResult)this.NotFound());
+
+			//如果问题数组内容不是全空，则返回该数组
+			for(int i = 0; i < result.Length; i++)
+			{
+				if(!string.IsNullOrEmpty(result[i]))
+					return Task.FromResult((IActionResult)this.Ok(result));
+			}
+
+			//返回空消息
+			return Task.FromResult((IActionResult)this.NoContent());
+		}
+
+		[HttpPut("{id:long}/Password.Answers")]
+		[HttpPut("Password.Answers")]
+		public Task<IActionResult> SetPasswordQuestionsAndAnswers(uint id, [FromBody]PasswordQuestionsAndAnswersEntity content)
 		{
 			return this.UserProvider.SetPasswordQuestionsAndAnswers(id, content.Password, content.Questions, content.Answers) ?
-				(IActionResult)this.Ok() : this.NotFound();
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 		#endregion
 
 		#region 成员方法
-		[HttpGet]
-		[ActionName("Roles")]
-		public IEnumerable<IRole> GetRoles(uint id)
+		[HttpGet("{id:long}/Roles")]
+		[HttpGet("Roles/{id:long?}")]
+		public IEnumerable<IRole> GetRoles(uint id = 0)
 		{
+			if(id == 0)
+				id = this.User.Identity.GetIdentifier<uint>();
+
 			return this.MemberProvider.GetRoles(id, MemberType.User);
 		}
 
-		[HttpGet("{roles}")]
-		[ActionName("In")]
-		public IActionResult InRole(uint id, [FromRoute]string roles)
+		[HttpGet("{id:long}/In/{roles:required}")]
+		[HttpGet("In/{roles:required}")]
+		public Task<IActionResult> InRole(uint id, string roles)
 		{
-			if(string.IsNullOrEmpty(roles))
-				return this.BadRequest();
+			if(string.IsNullOrWhiteSpace(roles))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.Authorizer.InRoles(id, Common.StringExtension.Slice(roles, ',', ';', '|').ToArray()) ?
-			       (IActionResult)this.Ok() :
-			       (IActionResult)this.NotFound();
+			return this.Authorizer.InRoles(id, Common.StringExtension.Slice(roles, ',', '|').ToArray()) ?
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 		#endregion
 
 		#region 授权方法
-		[HttpGet]
-		[Route("{schemaId}:{actionId}")]
-		public IActionResult Authorize(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
+		[HttpGet("{id:long}/Authorize/{schemaId}:{actionId}")]
+		[HttpGet("Authorize/{schemaId}:{actionId}")]
+		public Task<IActionResult> Authorize(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrWhiteSpace(schemaId))
-				return this.BadRequest("Missing schema for the authorize operation.");
-
+				return Task.FromResult((IActionResult)this.BadRequest("Missing schema for the authorize operation."));
 			if(string.IsNullOrWhiteSpace(actionId))
-				return this.BadRequest("Missing action for the authorize operation.");
+				return Task.FromResult((IActionResult)this.BadRequest("Missing action for the authorize operation."));
 
 			return this.Authorizer.Authorize(id, schemaId, actionId) ?
-				(IActionResult)this.Ok() : this.Forbid();
+				Task.FromResult((IActionResult)this.Ok()) :
+				Task.FromResult((IActionResult)this.Forbid());
 		}
 
-		[HttpGet]
-		public IEnumerable<AuthorizationToken> Authorizes(uint id)
+		[HttpGet("{id:long}/Authorizes")]
+		[HttpGet("Authorizes/{id:long?}")]
+		public IEnumerable<AuthorizationToken> Authorizes(uint id = 0)
 		{
+			if(id == 0)
+				id = this.User.Identity.GetIdentifier<uint>();
+
 			return this.Authorizer.Authorizes(id, MemberType.User);
 		}
 		#endregion
 
 		#region 权限方法
-		[HttpGet("{schemaId?}")]
-		[ActionName("Permissions")]
-		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute]string schemaId = null)
+		[HttpGet("{id:long}/Permissions/{schemaId?}")]
+		[HttpGet("Permissions/{schemaId?}")]
+		public IEnumerable<Permission> GetPermissions(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.User, schemaId);
 		}
 
-		[HttpPost("{schemaId}")]
-		[ActionName("Permissions")]
-		public IActionResult SetPermissions(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		[HttpPost("{id:long}/Permissions/{schemaId}")]
+		[HttpPost("Permissions/{schemaId}")]
+		public Task<IActionResult> SetPermissions(uint id, string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
-			var count = this.PermissionProvider.SetPermissions(id, MemberType.User, schemaId, permissions, reset);
-			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissions), id) : this.NoContent();
+			if(string.IsNullOrWhiteSpace(schemaId))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.PermissionProvider.SetPermissions(id, MemberType.User, schemaId, permissions, reset) > 0 ?
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id, schemaId })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{schemaId}:{actionId}")]
-		[ActionName("Permission")]
-		public IActionResult RemovePermission(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
+		[HttpDelete("{id:long}/Permission/{schemaId}:{actionId}")]
+		[HttpDelete("Permission/{schemaId}:{actionId}")]
+		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId = null)
 		{
-			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
-				return this.BadRequest();
+			if(string.IsNullOrWhiteSpace(schemaId) || string.IsNullOrWhiteSpace(actionId))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId, actionId) > 0 ?
-				(IActionResult)this.NoContent() : this.NotFound();
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{schemaId?}")]
-		[ActionName("Permissions")]
-		public IActionResult RemovePermissions(uint id, [FromRoute]string schemaId = null)
+		[HttpDelete("{id:long}/Permissions/{schemaId?}")]
+		[HttpDelete("Permissions/{schemaId?}")]
+		public Task<IActionResult> RemovePermissions(uint id, string schemaId = null)
 		{
-			var count = this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId);
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{schemaId?}")]
-		[ActionName("PermissionFilters")]
-		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute]string schemaId = null)
+		[HttpGet("{id:long}/Permission.Filters/{schemaId?}")]
+		[HttpGet("Permission.Filters/{schemaId?}")]
+		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissionFilters(id, MemberType.User, schemaId);
 		}
 
-		[HttpPost("{schemaId}")]
-		[ActionName("PermissionFilters")]
-		public IActionResult SetPermissionFilters(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		[HttpPost("{id:long}/Permission.Filters/{schemaId}")]
+		[HttpPost("Permission.Filters/{schemaId}")]
+		public Task<IActionResult> SetPermissionFilters(uint id, string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
-			var count = this.PermissionProvider.SetPermissionFilters(id, MemberType.User, schemaId, permissions, reset);
-			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), id) : this.NoContent();
+			if(string.IsNullOrWhiteSpace(schemaId))
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.PermissionProvider.SetPermissionFilters(id, MemberType.User, schemaId, permissions, reset) > 0 ?
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id, schemaId })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{schemaId}:{actionId}")]
-		[ActionName("PermissionFilter")]
-		public IActionResult RemovePermissionFilter(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
+		[HttpDelete("{id:long}/Permission.Filter/{schemaId}:{actionId}")]
+		[HttpDelete("Permission.Filter/{schemaId}:{actionId}")]
+		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
-				return this.BadRequest();
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId, actionId) > 0 ?
-				(IActionResult)this.NoContent() : this.NotFound();
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{schemaId?}")]
-		[ActionName("PermissionFilters")]
-		public IActionResult RemovePermissionFilters(uint id, [FromRoute]string schemaId = null)
+		[HttpDelete("{id:long}/Permission.Filters/{schemaId?}")]
+		[HttpDelete("Permission.Filters/{schemaId?}")]
+		public Task<IActionResult> RemovePermissionFilters(uint id, string schemaId = null)
 		{
-			var count = this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId);
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 		#endregion
 
