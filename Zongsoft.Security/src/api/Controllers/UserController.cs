@@ -135,7 +135,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public virtual ActionResult<IUser> Post([FromBody]IUser model)
+		public ActionResult<IUser> Post([FromBody]IUser model)
 		{
 			if(model == null)
 				return this.BadRequest();

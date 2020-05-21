@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -45,9 +44,7 @@ namespace Zongsoft.Security.Web.Controllers
 	[ApiController]
 	[Area(Modules.Security)]
 	[Authorize(Roles = "Administrators,Security,Securers")]
-	[Authorization(Roles = "Administrators,Security,Securers")]
-	[Route("{area}/Roles/{id:long}/{action=Get}")]
-	[Route("{area}/Roles/{action=Get}/{id?}")]
+	[Route("{area}/Roles")]
 	public class RoleController : ControllerBase
 	{
 		#region 成员字段
@@ -88,47 +85,56 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[Authorization]
-		public virtual IActionResult Get(string id = null, [FromQuery] Paging paging = null)
+		[HttpGet("{id:long}")]
+		public Task<IActionResult> Get(uint id)
 		{
-			IRole role;
+			var role = this.RoleProvider.GetRole(id);
 
-			//如果标识为空或星号，则进行多角色查询
-			if(string.IsNullOrEmpty(id) || id == "*")
-				return this.Ok(this.RoleProvider.GetRoles(id, paging));
+			return role != null ?
+				Task.FromResult((IActionResult)this.Ok(role)) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
 
-			//确认角色编号及标识
-			var roleId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
+		[HttpGet("{identity?}")]
+		[HttpGet("{namespace:required}:{identity:required}")]
+		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging paging = null)
+		{
+			object result;
 
-			//如果ID参数是数字则以编号方式返回唯一的角色信息
-			if(roleId > 0)
-			{
-				role = this.RoleProvider.GetRole(roleId);
-				return role == null ? (IActionResult)this.NotFound() : this.Ok(role);
-			}
-
-			//如果角色标识为空或星号，则进行命名空间查询
 			if(string.IsNullOrEmpty(identity) || identity == "*")
-				return this.Ok(this.RoleProvider.GetRoles(@namespace, paging));
+				result = this.RoleProvider.GetRoles(@namespace, paging);
+			else
+				result = this.RoleProvider.GetRole(identity, @namespace);
 
-			//返回指定标识的角色信息
-			role = this.RoleProvider.GetRole(identity, @namespace);
-			return role == null ? (IActionResult)this.NotFound() : this.Ok(role);
+			return result != null ?
+				Task.FromResult((IActionResult)this.Ok(result)) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		public virtual IActionResult Delete(string id)
+		[HttpDelete("{id:long}")]
+		public Task<IActionResult> Delete(uint id)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
-
-			var count = this.RoleProvider.Delete(Common.StringExtension.Slice<uint>(id, chr => chr == ',' || chr == '|', uint.TryParse).Where(p => p > 0).ToArray());
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.RoleProvider.Delete(id) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
+		[HttpDelete("{ids:required}")]
+		public Task<IActionResult> Delete(uint[] ids)
+		{
+			if(ids == null || ids.Length == 0)
+				return Task.FromResult((IActionResult)this.BadRequest());
+
+			return this.RoleProvider.Delete(ids) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
+
+		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public virtual ActionResult<IRole> Post([FromBody]IRole model)
+		public ActionResult<IRole> Post([FromBody]IRole model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -139,8 +145,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.Conflict();
 		}
 
-		[HttpPatch]
-		[ActionName("Namespace")]
+		[HttpPatch("{id:long}/Namespace")]
+		[HttpPatch("Namespace/{id:long}")]
 		public async Task<IActionResult> SetNamespace(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -151,8 +157,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetNamespace(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Name")]
+		[HttpPatch("{id:long}/Name")]
+		[HttpPatch("Name/{id:long}")]
 		public async Task<IActionResult> SetName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -163,8 +169,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetName(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("FullName")]
+		[HttpPatch("{id:long}/FullName")]
+		[HttpPatch("FullName/{id:long}")]
 		public async Task<IActionResult> SetFullName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -175,8 +181,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetFullName(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpPatch]
-		[ActionName("Description")]
+		[HttpPatch("{id:long}/Description")]
+		[HttpPatch("Description/{id:long}")]
 		public async Task<IActionResult> SetDescription(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -187,95 +193,81 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetDescription(id, content) ? (IActionResult)this.Ok() : this.NotFound();
 		}
 
-		[HttpGet]
-		[AllowAnonymous]
-		[Authorization(Suppressed = true)]
-		public virtual IActionResult Exists(string id)
+		[HttpHead("{id:long}")]
+		[HttpGet("{id:long}/exists")]
+		public Task<IActionResult> Exists(uint id)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
+			return this.RoleProvider.Exists(id) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
 
-			var userId = Utility.ResolvePattern(id, out var identity, out var @namespace, out _);
-			var existed = userId > 0 ?
-				this.RoleProvider.Exists(userId) :
-				this.RoleProvider.Exists(identity, @namespace);
+		[HttpHead("{namespace}:{identity}")]
+		[HttpGet("exists/{namespace}:{identity}")]
+		public Task<IActionResult> Exists(string @namespace, string identity)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return existed ? (IActionResult)this.Ok() : this.NotFound();
+			return this.RoleProvider.Exists(identity, @namespace) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 		#endregion
 
 		#region 成员方法
-		[HttpGet]
-		[ActionName("Roles")]
+		[HttpGet("{id:long}/Roles")]
+		[HttpGet("Roles/{id:long:required}")]
 		public IEnumerable<IRole> GetRoles(uint id)
 		{
 			return this.MemberProvider.GetRoles(id, MemberType.Role);
 		}
 
-		[HttpGet]
-		[ActionName("Members")]
+		[HttpGet("{id:long}/Members")]
+		[HttpGet("Members/{id:long:required}")]
 		public IEnumerable<Member> GetMembers(uint id)
 		{
 			return this.MemberProvider.GetMembers(id, this.Request.GetDataSchema());
 		}
 
-		[HttpPost("{member}")]
-		[ActionName("Member")]
-		public IActionResult SetMember(uint id, [FromRoute]string member)
+		[HttpPost("{id:long}/Member/{memberType}:{memberId:int}")]
+		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
-			if(string.IsNullOrEmpty(member))
-				return this.BadRequest();
-
-			var parts = member.Split(':');
-
-			if(!Enum.TryParse<MemberType>(parts[0], true, out var memberType))
-				return this.BadRequest("Invalid value of the member-type argument.");
-
-			if(!uint.TryParse(parts[1], out var memberId))
-				return this.BadRequest("Invalid value of the member-id argument.");
-
 			return this.MemberProvider.SetMembers(id, new[] { new Member(id, memberId, memberType) }, false) > 0 ?
-				(IActionResult)this.CreatedAtAction(nameof(GetMembers), id) : this.NoContent();
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPost]
-		[ActionName("Members")]
-		public IActionResult SetMembers(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false)
+		[HttpPost("{id:long}/Members")]
+		[HttpPost("Members/{id:long}")]
+		public Task<IActionResult> SetMembers(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false)
 		{
-			var count = this.MemberProvider.SetMembers(id, members, reset);
-			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetMembers), id) : this.NoContent();
+			return this.MemberProvider.SetMembers(id, members, reset) > 0 ?
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{member}")]
-		[ActionName("Member")]
-		public IActionResult RemoveMember(uint id, string member)
+		[HttpDelete("{id:long}/Member/{memberType}:{memberId:int}")]
+		public Task<IActionResult> RemoveMember(uint id, MemberType memberType, uint memberId)
 		{
-			if(string.IsNullOrEmpty(member))
-				return this.BadRequest();
-
-			var parts = member.Split(':');
-
-			if(!Enum.TryParse<MemberType>(parts[0], true, out var memberType))
-				return this.BadRequest("Invalid value of the member-type argument.");
-
-			if(!uint.TryParse(parts[1], out var memberId))
-				return this.BadRequest("Invalid value of the member-id argument.");
-
 			return this.MemberProvider.RemoveMember(id, memberId, memberType) ?
-				(IActionResult)this.NoContent() : this.NotFound();
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete]
-		[ActionName("Members")]
-		public IActionResult RemoveMembers(uint id)
+		[HttpDelete("{id:long}/Members")]
+		[HttpDelete("Members/{id:long}")]
+		public Task<IActionResult> RemoveMembers(uint id)
 		{
-			var count = this.MemberProvider.RemoveMembers(id);
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NoContent();
+			return this.MemberProvider.RemoveMembers(id) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 		#endregion
 
 		#region 授权方法
-		[HttpGet]
+		[HttpGet("{id:long}/Authorizes")]
+		[HttpGet("Authorizes/{id:long}")]
 		public IEnumerable<AuthorizationToken> Authorizes(uint id)
 		{
 			return this.Authorizer.Authorizes(id, MemberType.Role);
@@ -283,72 +275,70 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 权限方法
-		[HttpGet("{schemaId?}")]
-		[ActionName("Permissions")]
-		public IEnumerable<Permission> GetPermissions(uint id, [FromRoute]string schemaId = null)
+		[HttpGet("{id:long}/Permissions/{schemaId?}")]
+		public IEnumerable<Permission> GetPermissions(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId);
 		}
 
-		[HttpPost("{schemaId}")]
-		[ActionName("Permissions")]
-		public IActionResult SetPermissions(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		[HttpPost("{id:long}/Permissions/{schemaId}")]
+		public Task<IActionResult> SetPermissions(uint id, string schemaId, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
-			var count = this.PermissionProvider.SetPermissions(id, MemberType.Role, schemaId, permissions, reset);
-			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissions), id) : this.NoContent();
+			return this.PermissionProvider.SetPermissions(id, MemberType.Role, schemaId, permissions, reset) > 0 ?
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{schemaId}:{actionId}")]
-		[ActionName("Permission")]
-		public IActionResult RemovePermission(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
+		[HttpDelete("{id:long}/Permission/{schemaId}:{actionId}")]
+		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
-				return this.BadRequest();
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId, actionId) > 0 ?
-				(IActionResult)this.NoContent() : this.NotFound();
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{schemaId?}")]
-		[ActionName("Permissions")]
-		public IActionResult RemovePermissions(uint id, [FromRoute]string schemaId = null)
+		[HttpDelete("{id:long}/Permissions/{schemaId?}")]
+		public Task<IActionResult> RemovePermissions(uint id, string schemaId = null)
 		{
-			var count = this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId);
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{schemaId?}")]
-		[ActionName("PermissionFilters")]
-		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, [FromRoute]string schemaId = null)
+		[HttpGet("{id:long}/Permission.Filters/{schemaId?}")]
+		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.GetPermissionFilters(id, MemberType.Role, schemaId);
 		}
 
-		[HttpPost("{schemaId}")]
-		[ActionName("PermissionFilters")]
-		public IActionResult SetPermissionFilters(uint id, [FromRoute]string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		[HttpPost("{id:long}/Permission.Filters/{schemaId}")]
+		public Task<IActionResult> SetPermissionFilters(uint id, string schemaId, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
-			var count = this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, schemaId, permissions, reset);
-			return count > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), id) : this.NoContent();
+			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, schemaId, permissions, reset) > 0 ?
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id })) :
+				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{schemaId}:{actionId}")]
-		[ActionName("PermissionFilter")]
-		public IActionResult RemovePermissionFilter(uint id, [FromRoute]string schemaId, [FromRoute]string actionId)
+		[HttpDelete("{id:long}/Permission.Filter/{schemaId}:{actionId}")]
+		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
-				return this.BadRequest();
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId, actionId) > 0 ?
-				(IActionResult)this.NoContent() : this.NotFound();
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{schemaId?}")]
-		[ActionName("PermissionFilters")]
-		public IActionResult RemovePermissionFilters(uint id, [FromRoute]string schemaId = null)
+		[HttpDelete("{id:long}/Permission.Filters/{schemaId?}")]
+		public Task<IActionResult> RemovePermissionFilters(uint id, string schemaId = null)
 		{
-			var count = this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId);
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId) > 0 ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 		#endregion
 	}

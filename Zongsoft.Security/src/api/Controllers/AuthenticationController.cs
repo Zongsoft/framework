@@ -42,17 +42,18 @@ namespace Zongsoft.Security.Web.Controllers
 {
 	[ApiController]
 	[Area(Modules.Security)]
-	[Route("{area}/{controller}/{action}/{id?}")]
+	[Route("{area}/{controller}/{action}")]
 	public class AuthenticationController : ControllerBase
 	{
 		#region 公共方法
-		[HttpPost]
-		public Task<IActionResult> SigninAsync(string id, [FromBody]AuthenticationRequest request)
+		[HttpPost("{scenario:required}")]
+		public Task<IActionResult> SigninAsync(string scenario, [FromBody]AuthenticationRequest request)
 		{
-			if(string.IsNullOrWhiteSpace(id))
+			if(string.IsNullOrWhiteSpace(scenario))
+				return Task.FromResult((IActionResult)this.BadRequest());
+			if(string.IsNullOrWhiteSpace(request.Identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var scenario = id.Trim();
 			var parameters = request.Parameters;
 
 			//处理头部参数
@@ -76,8 +77,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Authentication.Instance.Authority.Unregister(credential.CredentialId);
 		}
 
-		[HttpPost]
 		[Authorize]
+		[HttpPost("{id:required}")]
 		public Task<IActionResult> Renew(string id)
 		{
 			if(string.IsNullOrWhiteSpace(id))
@@ -95,20 +96,15 @@ namespace Zongsoft.Security.Web.Controllers
 			return Task.FromResult((IActionResult)this.Unauthorized());
 		}
 
-		[HttpPost]
-		public IActionResult Secret(string id)
+		[HttpPost("{identity}")]
+		[HttpPost("{namespace}:{identity:required}")]
+		public Task<IActionResult> Secret(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(id))
-				return this.BadRequest();
+			if(string.IsNullOrWhiteSpace(identity))
+				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var parts = id.Split(':');
-
-			if(parts.Length > 1)
-				Authentication.Instance.Authenticator.Secret(parts[1], parts[0]);
-			else
-				Authentication.Instance.Authenticator.Secret(parts[0], null);
-
-			return this.NoContent();
+			Authentication.Instance.Authenticator.Secret(identity, @namespace);
+			return Task.FromResult((IActionResult)this.NoContent());
 		}
 		#endregion
 
@@ -134,24 +130,10 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 嵌套子类
 		public struct AuthenticationRequest
 		{
-			#region 成员字段
-			private string _identity;
-			#endregion
-
 			#region 公共属性
 			public string Identity
 			{
-				get
-				{
-					return _identity;
-				}
-				set
-				{
-					if(string.IsNullOrWhiteSpace(value))
-						throw new ArgumentNullException();
-
-					_identity = value.Trim();
-				}
+				get; set;
 			}
 
 			public string Password
@@ -171,8 +153,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 			public IDictionary<string, object> Parameters
 			{
-				get;
-				set;
+				get; set;
 			}
 			#endregion
 		}
