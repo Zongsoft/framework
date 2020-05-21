@@ -32,7 +32,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
@@ -43,45 +42,6 @@ namespace Zongsoft.Security.Web
 {
 	internal static class Utility
 	{
-		/// <summary>
-		/// 确认指定的标识模式文本是否为编号（即一个整数）。
-		/// </summary>
-		/// <param name="pattern">待解析的标识模式文本。</param>
-		/// <param name="identity">如果指定的<paramref name="pattern"/>参数值不是数字，则为其中的标识部分。</param>
-		/// <param name="prefix">如果指定<paramref name="pattern"/>参数值不是数字，则为其中的前缀部分，前缀以冒号(:)分隔。</param>
-		/// <param name="suffix">如果指定<paramref name="pattern"/>参数值不是数字，则为其中的后缀部分，后缀以叹号(!)分隔。</param>
-		/// <returns>如果指定的<paramref name="pattern"/>参数值是数字则返回其对应的数值，否则返回零。</returns>
-		public static uint ResolvePattern(string pattern, out string identity, out string prefix, out string suffix)
-		{
-			prefix = null;
-			suffix = null;
-			identity = null;
-
-			if(string.IsNullOrWhiteSpace(pattern))
-				return 0;
-
-			if(uint.TryParse(pattern, out var id))
-				return id;
-
-			var prefixIndex = pattern.IndexOf(':');
-			var suffixIndex = pattern.LastIndexOf('!');
-
-			if(suffixIndex > 0 && suffixIndex > prefixIndex)
-			{
-				identity = pattern.Substring(prefixIndex + 1, suffixIndex - prefixIndex - 1);
-				suffix = pattern.Substring(suffixIndex + 1);
-			}
-			else
-			{
-				identity = pattern.Substring(prefixIndex + 1);
-			}
-
-			if(prefixIndex > 0)
-				prefix = pattern.Substring(0, prefixIndex);
-
-			return 0;
-		}
-
 		public static string GetDataSchema(this HttpRequest request)
 		{
 			return GetHttpHeaderValue(request.Headers, "x-data-schema");
