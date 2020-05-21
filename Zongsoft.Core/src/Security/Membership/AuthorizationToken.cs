@@ -35,14 +35,6 @@ namespace Zongsoft.Security.Membership
 {
 	public struct AuthorizationToken : IEquatable<AuthorizationToken>
 	{
-		#region 公共字段
-		/// <summary>授权的资源标识。</summary>
-		public readonly string Schema;
-
-		/// <summary>授权的操作集。</summary>
-		public readonly ActionToken[] Actions;
-		#endregion
-
 		#region 构造函数
 		public AuthorizationToken(string schema, params ActionToken[] actions)
 		{
@@ -55,6 +47,14 @@ namespace Zongsoft.Security.Membership
 			this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
 			this.Actions = actions == null ? Array.Empty<ActionToken>() : actions.ToArray();
 		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>授权的资源标识。</summary>
+		public string Schema { get; }
+
+		/// <summary>授权的操作集。</summary>
+		public ActionToken[] Actions { get; }
 		#endregion
 
 		#region 公共方法
@@ -98,20 +98,20 @@ namespace Zongsoft.Security.Membership
 		#region 嵌套结构
 		public struct ActionToken : IEquatable<ActionToken>
 		{
-			#region 公共字段
-			/// <summary>授权的操作标识。</summary>
-			public readonly string Action;
-
-			/// <summary>授权的过滤表达式。</summary>
-			public readonly string Filter;
-			#endregion
-
 			#region 构造函数
 			public ActionToken(string action, string filter = null)
 			{
 				this.Action = action ?? throw new ArgumentNullException(nameof(action));
 				this.Filter = filter;
 			}
+			#endregion
+
+			#region 公共属性
+			/// <summary>授权的操作标识。</summary>
+			public string Action { get; }
+
+			/// <summary>授权的过滤表达式。</summary>
+			public string Filter { get; }
 			#endregion
 
 			#region 重写方法
