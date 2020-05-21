@@ -323,11 +323,13 @@ namespace Zongsoft.Security.Membership
 
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
-				var result = this.DataAccess.Delete<IUser>(Condition.In(nameof(IUser.UserId), ids), "Permissions,PermissionFilters") +
-				             this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.MemberType), MemberType.User) & Condition.In(nameof(Member.MemberId), ids));
+				var result = this.DataAccess.Delete<IUser>(Condition.In(nameof(IUser.UserId), ids)) +
+				             this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.MemberType), MemberType.User) & Condition.In(nameof(Member.MemberId), ids)) +
+				             this.DataAccess.Delete<Permission>(Condition.Equal(nameof(Permission.MemberType), MemberType.User) & Condition.In(nameof(Permission.MemberId), ids)) +
+				             this.DataAccess.Delete<PermissionFilter>(Condition.Equal(nameof(PermissionFilter.MemberType), MemberType.User) & Condition.In(nameof(PermissionFilter.MemberId), ids));
 
-				//提交事务
-				transaction.Commit();
+			//提交事务
+			transaction.Commit();
 
 				return result;
 			}
