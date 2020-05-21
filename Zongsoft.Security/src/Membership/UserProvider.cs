@@ -318,6 +318,9 @@ namespace Zongsoft.Security.Membership
 			if(ids == null || ids.Length < 1)
 				return 0;
 
+			if(ids.Contains(this.GetUserId(0)))
+				throw new ArgumentException("You cannot include yourself in the want to delete.");
+
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
 				var result = this.DataAccess.Delete<IUser>(Condition.In(nameof(IUser.UserId), ids), "Permissions,PermissionFilters") +
