@@ -36,15 +36,16 @@
 							"    if(jsonData.CredentialId)",
 							"    {",
 							"        postman.setGlobalVariable(\"credentialId\", jsonData.CredentialId);",
-							"        postman.setGlobalVariable(\"userId\", jsonData.User.UserId);",
-							"        postman.setGlobalVariable(\"phone\", jsonData.User.Phone);",
-							"        postman.setGlobalVariable(\"email\", jsonData.User.Email);",
+							"        postman.setGlobalVariable(\"renewalToken\", jsonData.RenewalToken);",
+							"        postman.setGlobalVariable(\"userId\", jsonData.Identity.UserId);",
+							"        postman.setGlobalVariable(\"phone\", jsonData.Identity.Phone);",
+							"        postman.setGlobalVariable(\"email\", jsonData.Identity.Email);",
 							"",
-							"        if(jsonData.User.SiteId)",
-							"            postman.setGlobalVariable(\"siteId\", jsonData.User.SiteId);",
+							"        if(jsonData.Identity.SiteId)",
+							"            postman.setGlobalVariable(\"siteId\", jsonData.Identity.SiteId);",
 							"",
-							"        if(jsonData.User.TenantId)",
-							"            postman.setGlobalVariable(\"tenantId\", jsonData.User.TenantId);",
+							"        if(jsonData.Identity.TenantId)",
+							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);",
 							"    }",
 							"}",
 							""
@@ -53,20 +54,15 @@
 					}
 				}
 			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
 			"request": {
 				"method": "POST",
 				"header": [
 					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "x-json-casing",
-						"value": "camel"
-					},
-					{
 						"key": "x-json-behaviors",
-						"value": "ignores:null"
+						"value": "ignores:null,empty; casing:camel"
 					},
 					{
 						"key": "x-json-datetime",
@@ -76,7 +72,12 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{identity}}\",\n  \"Password\":\"{{password}}\"\n}"
+					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{identity}}\",\n  \"Password\":\"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Authentication/Signin/{{scene}}",
@@ -142,27 +143,18 @@
 				"method": "POST",
 				"header": [
 					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "x-json-casing",
-						"value": "camel",
-						"disabled": true
-					},
-					{
 						"key": "x-json-behaviors",
-						"value": "ignores:null"
-					},
-					{
-						"key": "x-json-datetime",
-						"value": "yyyy-MM-dd HH:mm:ss",
-						"disabled": true
+						"value": "ignores:null,empty;casing:camel"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{phone}}\",\n  \"Secret\":\"12345\"\n}"
+					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{phone}}\",\n  \"Secret\":\"12345\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Authentication/Signin/{{scene}}",
@@ -184,10 +176,16 @@
 		{
 			"name": "Authentication.Signout",
 			"request": {
-				"method": "GET",
-				"header": [],
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}",
+						"type": "text"
+					}
+				],
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Signout/{{credentialId}}",
+					"raw": "http://{{url}}/Security/Authentication/Signout",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -195,8 +193,7 @@
 					"path": [
 						"Security",
 						"Authentication",
-						"Signout",
-						"{{credentialId}}"
+						"Signout"
 					]
 				},
 				"description": "注销指定的凭证"
@@ -206,7 +203,7 @@
 		{
 			"name": "Authentication.Secret",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "http://{{url}}/Security/Authentication/Secret/{{namespace}}:{{phone}}",
@@ -226,81 +223,77 @@
 			"response": []
 		},
 		{
-			"name": "Credentials.Get(id)",
+			"name": "Authentication.Renew",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "4c6a5c9b-bef3-4546-993c-fb2a4d2aed16",
+						"exec": [
+							"tests[\"IsSucceed\"] = responseCode.code >= 200 && responseCode.code <= 299;\r",
+							"\r",
+							"function convert(data) {\r",
+							"    return Object.keys(data).reduce((acc, key) => {\r",
+							"        const uppper = key[0].toLocaleUpperCase() + key.slice(1)\r",
+							"\r",
+							"        return Object.assign(acc, {\r",
+							"            [uppper]:\r",
+							"                data[key] instanceof Object\r",
+							"                    ? convert(data[key])\r",
+							"                    : data[key]\r",
+							"        })\r",
+							"\r",
+							"    }, Object.create(null))\r",
+							"}\r",
+							"\r",
+							"if (tests[\"IsSucceed\"]) {\r",
+							"    var jsonData = convert(JSON.parse(responseBody));\r",
+							"\r",
+							"    if (jsonData.CredentialId) {\r",
+							"        postman.setGlobalVariable(\"credentialId\", jsonData.CredentialId);\r",
+							"        postman.setGlobalVariable(\"renewalToken\", jsonData.RenewalToken);\r",
+							"        postman.setGlobalVariable(\"userId\", jsonData.Identity.UserId);\r",
+							"        postman.setGlobalVariable(\"phone\", jsonData.Identity.Phone);\r",
+							"        postman.setGlobalVariable(\"email\", jsonData.Identity.Email);\r",
+							"\r",
+							"        if (jsonData.Identity.SiteId)\r",
+							"            postman.setGlobalVariable(\"siteId\", jsonData.Identity.SiteId);\r",
+							"\r",
+							"        if (jsonData.Identity.TenantId)\r",
+							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);\r",
+							"    }\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
 						"type": "text",
 						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Credentials/{{credentialId}}",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Credentials",
-						"{{credentialId}}"
-					]
-				},
-				"description": "获取指定凭证号对应的凭证信息"
-			},
-			"response": []
-		},
-		{
-			"name": "Credentials.Get(scene)",
-			"request": {
-				"method": "GET",
-				"header": [
+					},
 					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}",
+						"key": "x-json-behaviors",
+						"value": "ignores:null,zero; casing:camel",
 						"type": "text"
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Credentials/{{userId}}!{{scene}}",
+					"raw": "http://{{url}}/Security/Authentication/Renew/{{renewalToken}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"Security",
-						"Credentials",
-						"{{userId}}!{{scene}}"
-					]
-				},
-				"description": "获取指定用户编号和场景的凭证信息"
-			},
-			"response": []
-		},
-		{
-			"name": "Credentials.Renew",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"type": "text",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Credentials/Renew/{{credentialId}}",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Credentials",
+						"Authentication",
 						"Renew",
-						"{{credentialId}}"
+						"{{renewalToken}}"
 					]
 				},
 				"description": "续约凭证"
@@ -315,17 +308,11 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"value": "text/plain",
-						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "系统管理员",
+					"raw": "用户全称·昵称",
 					"options": {
 						"raw": {
 							"language": "text"
@@ -350,6 +337,42 @@
 			"response": []
 		},
 		{
+			"name": "Users.Description",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "这是用户的描述信息。",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Description",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Description"
+					]
+				},
+				"description": "修改用户描述信息"
+			},
+			"response": []
+		},
+		{
 			"name": "Users.Email",
 			"request": {
 				"method": "PATCH",
@@ -361,10 +384,13 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": ""
+					"raw": "zongsoft@gmail.com",
+					"options": {
+						"raw": {}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Email/zongsoft@qq.com",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Email",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -373,8 +399,7 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Email",
-						"zongsoft@qq.com"
+						"Email"
 					]
 				},
 				"description": "修改用户邮箱地址"
@@ -393,10 +418,13 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": ""
+					"raw": "13866668888",
+					"options": {
+						"raw": {}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Phone/18912345678",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Phone",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -405,8 +433,7 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Phone",
-						"18912345678"
+						"Phone"
 					]
 				},
 				"description": "修改用户电话号码"
@@ -423,10 +450,6 @@
 						"value": "Credential {{credentialId}}"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://{{url}}/Security/Users/{{userId}}/Status/Active",
 					"protocol": "http",
@@ -451,7 +474,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Verify?type=forget&secret=123456",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Verify/forget?secret=123456",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -460,13 +483,10 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Verify"
+						"Verify",
+						"forget"
 					],
 					"query": [
-						{
-							"key": "type",
-							"value": "forget"
-						},
 						{
 							"key": "secret",
 							"value": "123456"
@@ -485,6 +505,11 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-json-behaviors",
+						"value": "ignores:null,zero; casing:camel",
+						"type": "text"
 					}
 				],
 				"url": {
@@ -503,7 +528,69 @@
 			"response": []
 		},
 		{
-			"name": "Users.Exists",
+			"name": "Users.Get(id)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-json-behaviors",
+						"type": "text",
+						"value": "ignores:null,zero; casing:camel"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}"
+					]
+				},
+				"description": "获取用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Get(identity)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-json-behaviors",
+						"type": "text",
+						"value": "ignores:null,zero; casing:camel"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{namespace}}:{{identity}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{namespace}}:{{identity}}"
+					]
+				},
+				"description": "获取用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Exists(id)",
 			"request": {
 				"method": "GET",
 				"header": [
@@ -517,7 +604,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/zongsoft:18912345678/Exists",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Exists",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -525,18 +612,18 @@
 					"path": [
 						"Security",
 						"Users",
-						"zongsoft:18912345678",
+						"{{userId}}",
 						"Exists"
 					]
 				},
-				"description": "获取指定标识的用户是否存在"
+				"description": "获取指定编号的用户是否存在"
 			},
 			"response": []
 		},
 		{
-			"name": "Users.Post",
+			"name": "Users.Exists(identity)",
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
@@ -545,16 +632,48 @@
 					{
 						"key": "Content-Type",
 						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/Exists/{{namespace}}:{{identity}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"Exists",
+						"{{namespace}}:{{identity}}"
+					]
+				},
+				"description": "获取指定标识的用户是否存在"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
 					},
 					{
 						"key": "x-password",
-						"value": "admin",
+						"value": "password",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Name\":\"Administrator\",\n  \"Namespace\":\"Zongsoft\"\n}"
+					"raw": "{\n  \"Name\":\"user1\",\n  \"Namespace\":\"{{namespace}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Users",
@@ -572,21 +691,87 @@
 			"response": []
 		},
 		{
-			"name": "Users.Password.Has",
+			"name": "Users.Delete",
 			"request": {
-				"method": "GET",
+				"method": "DELETE",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
 					},
 					{
-						"key": "Content-Type",
-						"value": "application/json"
+						"key": "x-password",
+						"type": "text",
+						"value": "password"
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Password/Has",
+					"raw": "http://{{url}}/Security/Users/404",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"404"
+					]
+				},
+				"description": "新增用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Delete(many)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-password",
+						"type": "text",
+						"value": "password"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "404,404,404",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users"
+					]
+				},
+				"description": "新增用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Password.Has(id)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Has",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -595,8 +780,29 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Password",
-						"Has"
+						"Password.Has"
+					]
+				},
+				"description": "判断指定标识的用户是否设置了密码"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Password.Has(identity)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/Password.Has/{{namespace}}:{{identity}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"Password.Has",
+						"{{namespace}}:{{identity}}"
 					]
 				},
 				"description": "判断指定标识的用户是否设置了密码"
@@ -611,18 +817,19 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"OldPassword\":\"{{password}}\",\n  \"NewPassword\":\"123\"\n}"
+					"raw": "{\n  \"OldPassword\":\"{{password}}\",\n  \"NewPassword\":\"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Password/Change",
+					"raw": "http://{{url}}/Security/Users/Password.Change",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -630,9 +837,7 @@
 					"path": [
 						"Security",
 						"Users",
-						"{{userId}}",
-						"Password",
-						"Change"
+						"Password.Change"
 					]
 				},
 				"description": "修改用户密码"
@@ -640,12 +845,26 @@
 			"response": []
 		},
 		{
-			"name": "Users.Password.Questions",
+			"name": "Users.Password.Change(id)",
 			"request": {
-				"method": "GET",
-				"header": [],
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"OldPassword\":\"{{password}}\",\n  \"NewPassword\":\"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Password/Questions",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Change",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -654,8 +873,57 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Password",
-						"Questions"
+						"Password.Change"
+					]
+				},
+				"description": "修改用户密码"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Password.Questions(id)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Questions",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Password.Questions"
+					]
+				},
+				"description": "获取用户的密码问题"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Password.Questions(identity)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/Password.Questions/{{namespace}}:{{identity}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"Password.Questions",
+						"{{namespace}}:{{identity}}"
 					]
 				},
 				"description": "获取用户的密码问题"
@@ -670,18 +938,19 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"Password\":\"admin\",\n\t\"Questions\":[\"question1\", \"question2\", \"question3\"],\n\t\"Answers\":[\"answer1\", \"answer2\", \"answer3\"]\n}"
+					"raw": "{\n\t\"Password\":\"{{password}}\",\n\t\"Questions\":[\"曾就读的小学名？\", \"曾就读的中学名？\", \"第一只宠物名？\"],\n\t\"Answers\":[\"小学\", \"中学\", \"你大爷\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Password/Answers",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Answers",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -690,8 +959,7 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Password",
-						"Answers"
+						"Password.Answers"
 					]
 				},
 				"description": "修改用户密码问题和答案"
@@ -703,12 +971,8 @@
 			"request": {
 				"method": "POST",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/zongsoft:18912345678/Password/Forget",
+					"raw": "http://{{url}}/Security/Users/Password.Forget/{{namespace}}:13866668888",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -716,9 +980,8 @@
 					"path": [
 						"Security",
 						"Users",
-						"zongsoft:18912345678",
-						"Password",
-						"Forget"
+						"Password.Forget",
+						"{{namespace}}:13866668888"
 					]
 				},
 				"description": "忘记密码"
@@ -729,18 +992,18 @@
 			"name": "Users.Password.Reset(secret)",
 			"request": {
 				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"secret\":\"559181\",\n  \"password\":\"{{password}}\"\n}"
+					"raw": "{\n  \"secret\":\"123456\",\n  \"password\":\"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/100/Password/Reset",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Reset",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -748,9 +1011,8 @@
 					"path": [
 						"Security",
 						"Users",
-						"100",
-						"Password",
-						"Reset"
+						"{{userId}}",
+						"Password.Reset"
 					]
 				},
 				"description": "重置密码"
@@ -761,18 +1023,18 @@
 			"name": "Users.Password.Reset(answers)",
 			"request": {
 				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"passwordAnswers\":[\"answer1\", \"answer2\", \"answer3\"],\n  \"password\":\"{{password}}\"\n}"
+					"raw": "{\n  \"passwordAnswers\":[\"answer1\", \"answer2\", \"answer3\"],\n  \"password\":\"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/zongsoft:18912345678/Password/Reset",
+					"raw": "http://{{url}}/Security/Users/Password.Reset/{{namespace}}:13866668888",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -780,9 +1042,8 @@
 					"path": [
 						"Security",
 						"Users",
-						"zongsoft:18912345678",
-						"Password",
-						"Reset"
+						"Password.Reset",
+						"{{namespace}}:13866668888"
 					]
 				},
 				"description": "重置密码（通过密码问答）"
@@ -790,7 +1051,7 @@
 			"response": []
 		},
 		{
-			"name": "Users.InRole",
+			"name": "Users.InRoles",
 			"request": {
 				"method": "GET",
 				"header": [
@@ -800,7 +1061,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/In/Administrators, Users",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/In/Administrators,Users",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -810,7 +1071,7 @@
 						"Users",
 						"{{userId}}",
 						"In",
-						"Administrators, Users"
+						"Administrators,Users"
 					]
 				},
 				"description": "判断用户是否属于指定角色"
@@ -818,7 +1079,7 @@
 			"response": []
 		},
 		{
-			"name": "Users.GetRoles",
+			"name": "Users.Roles",
 			"request": {
 				"method": "GET",
 				"header": [
@@ -855,7 +1116,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Authorize/Asset-Get",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Authorize/Asset:Get",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -865,7 +1126,7 @@
 						"Users",
 						"{{userId}}",
 						"Authorize",
-						"Asset-Get"
+						"Asset:Get"
 					]
 				},
 				"description": "判断指定用户是否具有授权"
@@ -883,12 +1144,12 @@
 					},
 					{
 						"key": "x-json-behaviors",
-						"value": "ignores:null",
+						"value": "ignores:null,empty; casing:camel",
 						"type": "text"
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Authorizes?",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Authorizes",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -898,13 +1159,6 @@
 						"Users",
 						"{{userId}}",
 						"Authorizes"
-					],
-					"query": [
-						{
-							"key": "",
-							"value": "",
-							"disabled": true
-						}
 					]
 				},
 				"description": "获取指定用户的最终授权集。"
@@ -941,20 +1195,21 @@
 		{
 			"name": "Users.Permissions",
 			"request": {
-				"method": "POST",
+				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Post\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Put\",\n        \"Granted\": true\n    }\n]"
+					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Create\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Update\",\n        \"Granted\": true\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Users/{{userId}}/Permissions",
@@ -970,6 +1225,34 @@
 					]
 				},
 				"description": "设置指定用户的权限集"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Permission",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission/SchemaId:ActionId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Permission",
+						"SchemaId:ActionId"
+					]
+				},
+				"description": "删除指定用户的单个权限项"
 			},
 			"response": []
 		},
@@ -1001,34 +1284,6 @@
 			"response": []
 		},
 		{
-			"name": "Users.Permission",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission/SchemaId-ActionId",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"Permission",
-						"SchemaId-ActionId"
-					]
-				},
-				"description": "删除指定用户的单个权限项"
-			},
-			"response": []
-		},
-		{
 			"name": "Users.PermissionFilters",
 			"request": {
 				"method": "GET",
@@ -1039,7 +1294,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/PermissionFilters",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1048,7 +1303,7 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"PermissionFilters"
+						"Permission.Filters"
 					]
 				},
 				"description": "获取指定用户的权限过滤集"
@@ -1058,23 +1313,24 @@
 		{
 			"name": "Users.PermissionFilters",
 			"request": {
-				"method": "POST",
+				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]"
+					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/PermissionFilters",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1083,37 +1339,10 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"PermissionFilters"
+						"Permission.Filters"
 					]
 				},
 				"description": "设置指定用户的权限过滤集"
-			},
-			"response": []
-		},
-		{
-			"name": "Users.PermissionFilters",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/PermissionFilters",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"PermissionFilters"
-					]
-				},
-				"description": "删除指定用户的权限过滤集"
 			},
 			"response": []
 		},
@@ -1128,7 +1357,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/PermissionFilter/SchemaId-ActionId",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filter/SchemaId:ActionId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1137,11 +1366,38 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"PermissionFilter",
-						"SchemaId-ActionId"
+						"Permission.Filter",
+						"SchemaId:ActionId"
 					]
 				},
 				"description": "删除指定用户的单个权限过滤项"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.PermissionFilters",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Permission.Filters"
+					]
+				},
+				"description": "删除指定用户的权限过滤集"
 			},
 			"response": []
 		},
@@ -1171,9 +1427,61 @@
 			"response": []
 		},
 		{
-			"name": "Roles.Post",
+			"name": "Roles.Get(id)",
 			"request": {
-				"method": "POST",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/1001",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"1001"
+					]
+				},
+				"description": "获取角色信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Get(identity)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/{{namespace}}:Administrators",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"{{namespace}}:Administrators"
+					]
+				},
+				"description": "获取角色信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Exists(id)",
+			"request": {
+				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
@@ -1182,16 +1490,79 @@
 					{
 						"key": "Content-Type",
 						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/404/Exists",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"404",
+						"Exists"
+					]
+				},
+				"description": "获取指定编号的角色是否存在"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Exists(identity)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
 					},
 					{
-						"key": "x-password",
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/Exists/{{namespace}}:Administrators",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"Exists",
+						"{{namespace}}:Administrators"
+					]
+				},
+				"description": "获取指定标识的角色是否存在"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-json-behaviors",
 						"type": "text",
-						"value": "admin"
+						"value": "ignores:null,empty; casing:camel"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Name\":\"Users\",\n  \"FullName\":\"普通用户\",\n  \"Namespace\":\"\"\n}"
+					"raw": "{\n  \"Name\":\"Users\",\n  \"FullName\":\"普通用户\",\n  \"Namespace\":\"\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Roles",
@@ -1219,7 +1590,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100028",
+					"raw": "http://{{url}}/Security/Roles/404",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1227,7 +1598,39 @@
 					"path": [
 						"Security",
 						"Roles",
-						"100028"
+						"404"
+					]
+				},
+				"description": "获取角色信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Delete(many)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "404,404,404",
+					"options": {
+						"raw": {}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Roles",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles"
 					]
 				},
 				"description": "获取角色信息"
@@ -1260,7 +1663,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100026/FullName",
+					"raw": "http://{{url}}/Security/Roles/404/FullName",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1268,11 +1671,85 @@
 					"path": [
 						"Security",
 						"Roles",
-						"100026",
+						"404",
 						"FullName"
 					]
 				},
 				"description": "修改角色全称"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Description",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "普通用户",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/404/Description",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"404",
+						"Description"
+					]
+				},
+				"description": "修改角色描述信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Authorizes",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					},
+					{
+						"key": "x-json-behaviors",
+						"type": "text",
+						"value": "ignores:null,empty; casing:camel"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/404/Authorizes",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"404",
+						"Authorizes"
+					]
+				},
+				"description": "获取指定角色的最终授权集。"
 			},
 			"response": []
 		},
@@ -1336,19 +1813,41 @@
 			"response": []
 		},
 		{
-			"name": "Roles.Members.Post",
+			"name": "Roles.Member",
 			"request": {
-				"method": "POST",
+				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Member/User:{{userId}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Member",
+						"User:{{userId}}"
+					]
+				},
+				"description": "设置单个角色成员信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Members",
+			"request": {
+				"method": "PUT",
+				"header": [
 					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"value": "application/json",
-						"type": "text"
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
 					}
 				],
 				"body": {
@@ -1384,62 +1883,7 @@
 			"response": []
 		},
 		{
-			"name": "Roles.Member.Post",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Member/User:1",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Roles",
-						"100",
-						"Member",
-						"User:1"
-					]
-				},
-				"description": "设置单个角色成员信息"
-			},
-			"response": []
-		},
-		{
-			"name": "Roles.Members.Delete",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Members",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Roles",
-						"100",
-						"Members"
-					]
-				},
-				"description": "删除指定角色的所有成员"
-			},
-			"response": []
-		},
-		{
-			"name": "Roles.Member.Delete",
+			"name": "Roles.Member",
 			"request": {
 				"method": "DELETE",
 				"header": [
@@ -1463,6 +1907,33 @@
 					]
 				},
 				"description": "删除指定角色的单个成员"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Members",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Members",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Members"
+					]
+				},
+				"description": "删除指定角色的所有成员"
 			},
 			"response": []
 		},
@@ -1496,7 +1967,7 @@
 		{
 			"name": "Roles.Permissions",
 			"request": {
-				"method": "POST",
+				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
@@ -1509,7 +1980,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Post\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Put\",\n        \"Granted\": true\n    }\n]"
+					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Create\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Update\",\n        \"Granted\": true\n    }\n]",
+					"options": {
+						"raw": {}
+					}
 				},
 				"url": {
 					"raw": "http://{{url}}/Security/Roles/100/Permissions",
@@ -1525,6 +1999,34 @@
 					]
 				},
 				"description": "设置指定角色的权限集"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Permission",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Permission/SchemaId:ActionId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Permission",
+						"SchemaId:ActionId"
+					]
+				},
+				"description": "删除指定角色的单个权限项"
 			},
 			"response": []
 		},
@@ -1556,34 +2058,6 @@
 			"response": []
 		},
 		{
-			"name": "Roles.Permission",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Permission/SchemaId-ActionId",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Roles",
-						"100",
-						"Permission",
-						"SchemaId-ActionId"
-					]
-				},
-				"description": "删除指定角色的单个权限项"
-			},
-			"response": []
-		},
-		{
 			"name": "Roles.PermissionFilters",
 			"request": {
 				"method": "GET",
@@ -1594,7 +2068,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/PermissionFilters",
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1603,7 +2077,7 @@
 						"Security",
 						"Roles",
 						"100",
-						"PermissionFilters"
+						"Permission.Filters"
 					]
 				},
 				"description": "获取指定角色的权限过滤集"
@@ -1613,7 +2087,7 @@
 		{
 			"name": "Roles.PermissionFilters",
 			"request": {
-				"method": "POST",
+				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
@@ -1626,10 +2100,13 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]"
+					"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]",
+					"options": {
+						"raw": {}
+					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/PermissionFilters",
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1638,37 +2115,10 @@
 						"Security",
 						"Roles",
 						"100",
-						"PermissionFilters"
+						"Permission.Filters"
 					]
 				},
 				"description": "设置指定角色的权限过滤集"
-			},
-			"response": []
-		},
-		{
-			"name": "Roles.PermissionFilters",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/PermissionFilters",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Roles",
-						"100",
-						"PermissionFilters"
-					]
-				},
-				"description": "删除指定角色的权限过滤集"
 			},
 			"response": []
 		},
@@ -1683,7 +2133,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/PermissionFilter/SchemaId-ActionId",
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filter/SchemaId:ActionId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1692,11 +2142,38 @@
 						"Security",
 						"Roles",
 						"100",
-						"PermissionFilter",
-						"SchemaId-ActionId"
+						"Permission.Filter",
+						"SchemaId:ActionId"
 					]
 				},
 				"description": "删除指定角色的单个权限过滤项"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.PermissionFilters",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Permission.Filters"
+					]
+				},
+				"description": "删除指定角色的权限过滤集"
 			},
 			"response": []
 		}
