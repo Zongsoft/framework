@@ -597,10 +597,6 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
 					}
 				],
 				"url": {
@@ -624,16 +620,7 @@
 			"name": "Users.Exists(identity)",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "http://{{url}}/Security/Users/Exists/{{namespace}}:{{identity}}",
 					"protocol": "http",
@@ -729,11 +716,6 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "x-password",
-						"type": "text",
-						"value": "password"
 					}
 				],
 				"body": {
@@ -964,7 +946,61 @@
 				},
 				"description": "修改用户密码问题和答案"
 			},
-			"response": []
+			"response": [
+				{
+					"name": "Users.Password.Answers",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Credential {{credentialId}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"Password\":\"{{password}}\",\n\t\"Questions\":[\"曾就读的小学名？\", \"曾就读的中学名？\", \"第一只宠物名？\"],\n\t\"Answers\":[\"小学\", \"中学\", \"你大爷\"]\n}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Answers",
+							"protocol": "http",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"Security",
+								"Users",
+								"{{userId}}",
+								"Password.Answers"
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Server",
+							"value": "Microsoft-IIS/10.0"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 22 May 2020 02:35:01 GMT"
+						}
+					],
+					"cookie": [],
+					"body": null
+				}
+			]
 		},
 		{
 			"name": "Users.Password.Forget",
@@ -1034,7 +1070,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Users/Password.Reset/{{namespace}}:13866668888",
+					"raw": "http://{{url}}/Security/Users/Password.Reset/{{namespace}}:{{identity}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1043,7 +1079,7 @@
 						"Security",
 						"Users",
 						"Password.Reset",
-						"{{namespace}}:13866668888"
+						"{{namespace}}:{{identity}}"
 					]
 				},
 				"description": "重置密码（通过密码问答）"
