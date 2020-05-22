@@ -34,16 +34,6 @@ namespace Zongsoft.Security.Membership
 	[Zongsoft.Data.Model("Security.Member")]
 	public struct Member : IEquatable<Member>
 	{
-		#region 成员字段
-		public uint RoleId;
-		public uint MemberId;
-		public MemberType MemberType;
-
-		public IRole Role;
-		public IRole MemberRole;
-		public IUser MemberUser;
-		#endregion
-
 		#region 构造函数
 		public Member(uint roleId, uint memberId, MemberType memberType)
 		{
@@ -55,6 +45,16 @@ namespace Zongsoft.Security.Membership
 			this.MemberRole = null;
 			this.MemberUser = null;
 		}
+		#endregion
+
+		#region 公共属性
+		public uint RoleId { get;set; }
+		public uint MemberId { get;set; }
+		public MemberType MemberType { get; set; }
+
+		public IRole Role { get; set; }
+		public IRole MemberRole { get;set; }
+		public IUser MemberUser { get;set; }
 		#endregion
 
 		#region 重写方法
