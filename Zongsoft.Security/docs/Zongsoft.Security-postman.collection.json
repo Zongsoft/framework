@@ -301,174 +301,6 @@
 			"response": []
 		},
 		{
-			"name": "Users.FullName",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "用户全称·昵称",
-					"options": {
-						"raw": {
-							"language": "text"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/FullName",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"FullName"
-					]
-				},
-				"description": "修改用户全称（昵称）"
-			},
-			"response": []
-		},
-		{
-			"name": "Users.Description",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "这是用户的描述信息。",
-					"options": {
-						"raw": {
-							"language": "text"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Description",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"Description"
-					]
-				},
-				"description": "修改用户描述信息"
-			},
-			"response": []
-		},
-		{
-			"name": "Users.Email",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "zongsoft@gmail.com",
-					"options": {
-						"raw": {}
-					}
-				},
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Email",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"Email"
-					]
-				},
-				"description": "修改用户邮箱地址"
-			},
-			"response": []
-		},
-		{
-			"name": "Users.Phone",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "13866668888",
-					"options": {
-						"raw": {}
-					}
-				},
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Phone",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"Phone"
-					]
-				},
-				"description": "修改用户电话号码"
-			},
-			"response": []
-		},
-		{
-			"name": "Users.Status",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}"
-					}
-				],
-				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Status/Active",
-					"protocol": "http",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"Security",
-						"Users",
-						"{{userId}}",
-						"Status",
-						"Active"
-					]
-				},
-				"description": "修改用户状态"
-			},
-			"response": []
-		},
-		{
 			"name": "Users.Verify",
 			"request": {
 				"method": "GET",
@@ -554,7 +386,7 @@
 						"{{userId}}"
 					]
 				},
-				"description": "获取用户信息"
+				"description": "获取指定编号的用户信息"
 			},
 			"response": []
 		},
@@ -585,7 +417,7 @@
 						"{{namespace}}:{{identity}}"
 					]
 				},
-				"description": "获取用户信息"
+				"description": "获取指定标识的用户信息"
 			},
 			"response": []
 		},
@@ -739,6 +571,209 @@
 					]
 				},
 				"description": "新增用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Update",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FullName\":\"xxxx\",\n\t\"Description\":\"...\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}"
+					]
+				},
+				"description": "修改用户信息"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.FullName",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "用户全称·昵称",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/FullName",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"FullName"
+					]
+				},
+				"description": "修改用户全称（昵称）"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Email",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "zongsoft@gmail.com",
+					"options": {
+						"raw": {}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Email",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Email"
+					]
+				},
+				"description": "修改用户邮箱地址"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Phone",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "13866668888",
+					"options": {
+						"raw": {}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Phone",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Phone"
+					]
+				},
+				"description": "修改用户电话号码"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Status",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Status/Active",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Status",
+						"Active"
+					]
+				},
+				"description": "修改用户状态"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.Description",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "这是用户的描述信息。",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Description",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Description"
+					]
+				},
+				"description": "修改用户描述信息"
 			},
 			"response": []
 		},
@@ -1229,6 +1264,34 @@
 			"response": []
 		},
 		{
+			"name": "Users.Permissions(schema)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permissions/schemaId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Permissions",
+						"schemaId"
+					]
+				},
+				"description": "获取指定用户的权限集"
+			},
+			"response": []
+		},
+		{
 			"name": "Users.Permissions",
 			"request": {
 				"method": "PUT",
@@ -1340,6 +1403,34 @@
 						"Users",
 						"{{userId}}",
 						"Permission.Filters"
+					]
+				},
+				"description": "获取指定用户的权限过滤集"
+			},
+			"response": []
+		},
+		{
+			"name": "Users.PermissionFilters(schema)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters/schemaId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Users",
+						"{{userId}}",
+						"Permission.Filters",
+						"schemaId"
 					]
 				},
 				"description": "获取指定用户的权限过滤集"
@@ -1484,12 +1575,12 @@
 						"1001"
 					]
 				},
-				"description": "获取角色信息"
+				"description": "获取指定编号的角色信息"
 			},
 			"response": []
 		},
 		{
-			"name": "Roles.Get(identity)",
+			"name": "Roles.Get(name)",
 			"request": {
 				"method": "GET",
 				"header": [
@@ -1510,7 +1601,7 @@
 						"{{namespace}}:Administrators"
 					]
 				},
-				"description": "获取角色信息"
+				"description": "获取指定名称的角色信息"
 			},
 			"response": []
 		},
@@ -1546,7 +1637,7 @@
 			"response": []
 		},
 		{
-			"name": "Roles.Exists(identity)",
+			"name": "Roles.Exists(name)",
 			"request": {
 				"method": "GET",
 				"header": [
@@ -1572,7 +1663,7 @@
 						"{{namespace}}:Administrators"
 					]
 				},
-				"description": "获取指定标识的角色是否存在"
+				"description": "获取指定名称的角色是否存在"
 			},
 			"response": []
 		},
@@ -1674,6 +1765,41 @@
 			"response": []
 		},
 		{
+			"name": "Roles.Update",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FullName\":\"xxxx\",\n\t\"Description\":\"...\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/404",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"404"
+					]
+				},
+				"description": "修改角色信息"
+			},
+			"response": []
+		},
+		{
 			"name": "Roles.FullName",
 			"request": {
 				"method": "PATCH",
@@ -1681,12 +1807,6 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"type": "text",
-						"value": "text/plain"
 					}
 				],
 				"body": {
@@ -1723,12 +1843,6 @@
 					{
 						"key": "Authorization",
 						"value": "Credential {{credentialId}}"
-					},
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"type": "text",
-						"value": "text/plain"
 					}
 				],
 				"body": {
@@ -1896,7 +2010,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Members?reset=true",
+					"raw": "http://{{url}}/Security/Roles/100/Members?reset=false",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1910,7 +2024,7 @@
 					"query": [
 						{
 							"key": "reset",
-							"value": "true"
+							"value": "false"
 						}
 					]
 				},
@@ -1994,6 +2108,34 @@
 						"Roles",
 						"100",
 						"Permissions"
+					]
+				},
+				"description": "获取指定角色的权限集"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.Permissions(schema)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Permissions/schemaId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Permissions",
+						"schemaId"
 					]
 				},
 				"description": "获取指定角色的权限集"
@@ -2114,6 +2256,34 @@
 						"Roles",
 						"100",
 						"Permission.Filters"
+					]
+				},
+				"description": "获取指定角色的权限过滤集"
+			},
+			"response": []
+		},
+		{
+			"name": "Roles.PermissionFilters(schema)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Credential {{credentialId}}"
+					}
+				],
+				"url": {
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters/schemaId",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Roles",
+						"100",
+						"Permission.Filters",
+						"schemaId"
 					]
 				},
 				"description": "获取指定角色的权限过滤集"
