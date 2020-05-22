@@ -245,7 +245,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
 			return this.MemberProvider.SetMembers(id, new[] { new Member(id, memberId, memberType) }, false) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
@@ -254,7 +254,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetMembers(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false)
 		{
 			return this.MemberProvider.SetMembers(id, members, reset) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
@@ -301,7 +301,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.Role, permissions, reset) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
@@ -334,7 +334,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, permissions, reset) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 

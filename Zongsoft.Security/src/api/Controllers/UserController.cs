@@ -458,7 +458,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 权限方法
-		[HttpGet("{id:long}/Permissions/{schemaId?}")]
+		[HttpGet("{id:long}/Permissions/{schemaId?}", Name = nameof(GetPermissions))]
 		[HttpGet("Permissions/{schemaId?}")]
 		public IEnumerable<Permission> GetPermissions(uint id, string schemaId = null)
 		{
@@ -470,7 +470,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.User, permissions, reset) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissions), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
@@ -495,7 +495,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{id:long}/Permission.Filters/{schemaId?}")]
+		[HttpGet("{id:long}/Permission.Filters/{schemaId?}", Name = nameof(GetPermissionFilters))]
 		[HttpGet("Permission.Filters/{schemaId?}")]
 		public IEnumerable<PermissionFilter> GetPermissionFilters(uint id, string schemaId = null)
 		{
@@ -507,7 +507,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.User, permissions, reset) > 0 ?
-				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id })) :
+				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissionFilters), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
