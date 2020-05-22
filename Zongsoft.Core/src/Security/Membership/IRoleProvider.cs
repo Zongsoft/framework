@@ -164,6 +164,14 @@ namespace Zongsoft.Security.Membership
 		/// <param name="roles">要创建的角色对象集。</param>
 		/// <returns>返回创建成功的角色数量。</returns>
 		int Create(IEnumerable<IRole> roles);
+
+		/// <summary>
+		/// 修改指定编号的角色信息。
+		/// </summary>
+		/// <param name="roleId">指定要修改的角色编号。</param>
+		/// <param name="role">要修改的角色对象。</param>
+		/// <returns>如果修改成功则返回真(true)，否则返回假(false)。</returns>
+		bool Update(uint roleId, IRole role);
 		#endregion
 	}
 }

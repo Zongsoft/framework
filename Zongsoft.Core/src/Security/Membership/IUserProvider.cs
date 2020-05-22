@@ -200,6 +200,14 @@ namespace Zongsoft.Security.Membership
 		/// <param name="users">要创建的用户对象集。</param>
 		/// <returns>返回创建成功的用户数量。</returns>
 		int Create(IEnumerable<IUser> users);
+
+		/// <summary>
+		/// 修改指定编号的用户信息。
+		/// </summary>
+		/// <param name="userId">指定要修改的用户编号。</param>
+		/// <param name="user">要修改的用户对象。</param>
+		/// <returns>如果修改成功则返回真(true)，否则返回假(false)。</returns>
+		bool Update(uint userId, IUser user);
 		#endregion
 
 		#region 密码管理
