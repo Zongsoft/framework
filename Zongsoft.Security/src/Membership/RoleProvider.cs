@@ -265,6 +265,47 @@ namespace Zongsoft.Security.Membership
 
 			return this.DataAccess.InsertMany<IRole>(roles);
 		}
+
+		public bool Update(uint roleId, IRole role)
+		{
+			if(role == null)
+				throw new ArgumentNullException(nameof(role));
+
+			if(!(role is IModel model) || !model.HasChanges())
+				return false;
+
+			if(model.HasChanges(nameof(IRole.Name)) && !string.IsNullOrWhiteSpace(role.Name))
+			{
+				//验证指定的名称是否合法
+				this.OnValidateName(role.Name);
+
+				//确保角色名是审核通过的
+				this.Censor(role.Name);
+			}
+
+			//验证指定的命名空间是否合规
+			if(model.HasChanges(nameof(IRole.Namespace)))
+			{
+				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
+
+				if(string.IsNullOrEmpty(@namespace))
+					role.Namespace = string.IsNullOrWhiteSpace(role.Namespace) ? null : role.Namespace.Trim();
+				else
+					role.Namespace = @namespace;
+			}
+
+			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId)) > 0)
+			{
+				foreach(var entry in model.GetChanges())
+				{
+					this.OnChanged(roleId, entry.Key, entry.Value);
+				}
+
+				return true;
+			}
+
+			return false;
+		}
 		#endregion
 
 		#region 成员管理

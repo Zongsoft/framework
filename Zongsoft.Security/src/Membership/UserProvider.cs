@@ -492,6 +492,50 @@ namespace Zongsoft.Security.Membership
 
 			return this.DataAccess.InsertMany(users);
 		}
+
+		public bool Update(uint userId, IUser user)
+		{
+			if(user == null)
+				throw new ArgumentNullException(nameof(user));
+
+			if(!(user is IModel model) || !model.HasChanges())
+				return false;
+
+			//确认指定的用户编号是否有效
+			userId = GetUserId(userId);
+
+			if(model.HasChanges(nameof(IUser.Name)) && !string.IsNullOrWhiteSpace(user.Name))
+			{
+				//验证指定的名称是否合法
+				this.OnValidateName(user.Name);
+
+				//确保用户名是审核通过的
+				this.Censor(user.Name);
+			}
+
+			//验证指定的命名空间是否合规
+			if(model.HasChanges(nameof(IUser.Namespace)))
+			{
+				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
+
+				if(string.IsNullOrEmpty(@namespace))
+					user.Namespace = string.IsNullOrWhiteSpace(user.Namespace) ? null : user.Namespace.Trim();
+				else
+					user.Namespace = @namespace;
+			}
+
+			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId)) > 0)
+			{
+				foreach(var entry in model.GetChanges())
+				{
+					this.OnChanged(userId, entry.Key, entry.Value);
+				}
+
+				return true;
+			}
+
+			return false;
+		}
 		#endregion
 
 		#region 密码管理
