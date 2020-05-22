@@ -114,10 +114,8 @@ namespace Zongsoft.Security.Membership
 		public bool SetNamespace(uint roleId, string @namespace)
 		{
 			if(this.DataAccess.Update<IRole>(
-				new
-				{
-					Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim()
-				}, new Condition(nameof(IRole.RoleId), roleId)) > 0)
+				new { Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim() },
+				new Condition(nameof(IRole.RoleId), roleId)) > 0)
 			{
 				this.OnChanged(roleId, nameof(IRole.Namespace), @namespace);
 				return true;
@@ -325,8 +323,7 @@ namespace Zongsoft.Security.Membership
 
 		public int RemoveMembers(uint roleId)
 		{
-			return this.DataAccess.Delete<Member>(
-				Condition.Equal(nameof(Member.RoleId), roleId));
+			return this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.RoleId), roleId));
 		}
 		#endregion
 
