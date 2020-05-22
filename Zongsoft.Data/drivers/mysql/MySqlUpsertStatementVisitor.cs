@@ -56,7 +56,8 @@ namespace Zongsoft.Data.MySql
 			var index = 0;
 
 			visitor.Output.Append("INSERT INTO ");
-			visitor.Visit(statement.Table);
+			//visitor.Visit(statement.Table);
+			visitor.Output.Append(visitor.Dialect.GetIdentifier(statement.Table));
 			visitor.Output.Append(" (");
 
 			foreach(var field in statement.Fields)
@@ -64,7 +65,8 @@ namespace Zongsoft.Data.MySql
 				if(index++ > 0)
 					visitor.Output.Append(",");
 
-				visitor.Visit(field);
+				//visitor.Visit(field);
+				visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
 			}
 
 			index = 0;
