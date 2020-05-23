@@ -192,6 +192,7 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
+		[Authorize]
 		[HttpPatch("{id:long}/FullName")]
 		[HttpPatch("FullName/{id:long?}")]
 		public async Task<IActionResult> SetFullName(uint id)
@@ -305,6 +306,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
+		[Authorize]
 		[HttpPut("{id:long}/Password.Change")]
 		[HttpPut("Password.Change")]
 		public Task<IActionResult> ChangePassword(uint id, [FromBody]PasswordChangeEntity password)
