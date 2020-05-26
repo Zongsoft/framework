@@ -13,16 +13,16 @@
 			<property name="Namespace" type="string" length="50" nullable="false" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
-			<complexProperty name="Members" role="Member" multiplicity="*" immutable="false">
+			<complexProperty name="Children" role="Member" multiplicity="*" immutable="false">
 				<link name="RoleId" role="RoleId" />
 			</complexProperty>
 
-			<complexProperty name="Users" role="Member:MemberUser" multiplicity="*">
-				<link name="RoleId" role="RoleId" />
-			</complexProperty>
+			<complexProperty name="Members" role="Member" multiplicity="*">
+				<link name="RoleId" role="MemberId" />
 
-			<complexProperty name="Roles" role="Member:MemberRole" multiplicity="*">
-				<link name="RoleId" role="RoleId" />
+				<constraints>
+					<constraint name="MemberType" value="1" />
+				</constraints>
 			</complexProperty>
 
 			<complexProperty name="Permissions" role="Permission" multiplicity="*" immutable="false">
@@ -68,6 +68,14 @@
 			<property name="Description" type="string" length="500" nullable="true" />
 
 			<complexProperty name="Roles" role="Member:Role" multiplicity="*">
+				<link name="UserId" role="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="Members" role="Member" multiplicity="*">
 				<link name="UserId" role="MemberId" />
 
 				<constraints>
