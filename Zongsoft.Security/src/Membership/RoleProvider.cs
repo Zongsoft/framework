@@ -193,19 +193,10 @@ namespace Zongsoft.Security.Membership
 			if(ids == null || ids.Length < 1)
 				return 0;
 
-			using(var transaction = new Zongsoft.Transactions.Transaction())
-			{
-				var count = this.DataAccess.Delete<IRole>(Condition.In(nameof(IRole.RoleId), ids)) +
-				            this.DataAccess.Delete<Member>(Condition.In(nameof(Member.RoleId), ids)) +
-				            this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.MemberId), MemberType.Role) & Condition.In(nameof(Member.MemberId), ids)) +
-				            this.DataAccess.Delete<Permission>(Condition.Equal(nameof(Permission.MemberType), MemberType.Role) & Condition.In(nameof(Permission.MemberId), ids)) +
-				            this.DataAccess.Delete<PermissionFilter>(Condition.Equal(nameof(PermissionFilter.MemberType), MemberType.Role) & Condition.In(nameof(PermissionFilter.MemberId), ids));
-
-				//提交事务
-				transaction.Commit();
-
-				return count;
-			}
+			return this.DataAccess.Delete<IRole>(
+				Condition.In(nameof(IRole.RoleId), ids) &
+				Condition.NotIn(nameof(IRole.Name), Role.Administrators, Role.Security),
+				"Members,Children,Permissions,PermissionFilters");
 		}
 
 		public IRole Create(string name, string @namespace, string fullName = null, string description = null)

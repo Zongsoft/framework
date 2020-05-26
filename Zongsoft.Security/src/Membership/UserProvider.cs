@@ -321,18 +321,10 @@ namespace Zongsoft.Security.Membership
 			if(ids.Contains(this.GetUserId(0)))
 				throw new ArgumentException("You cannot include yourself in the want to delete.");
 
-			using(var transaction = new Zongsoft.Transactions.Transaction())
-			{
-				var result = this.DataAccess.Delete<IUser>(Condition.In(nameof(IUser.UserId), ids)) +
-				             this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.MemberType), MemberType.User) & Condition.In(nameof(Member.MemberId), ids)) +
-				             this.DataAccess.Delete<Permission>(Condition.Equal(nameof(Permission.MemberType), MemberType.User) & Condition.In(nameof(Permission.MemberId), ids)) +
-				             this.DataAccess.Delete<PermissionFilter>(Condition.Equal(nameof(PermissionFilter.MemberType), MemberType.User) & Condition.In(nameof(PermissionFilter.MemberId), ids));
-
-			//提交事务
-			transaction.Commit();
-
-				return result;
-			}
+			return this.DataAccess.Delete<IUser>(
+				Condition.In(nameof(IUser.UserId), ids) &
+				Condition.NotEqual(nameof(IUser.Name), User.Administrator),
+				"Members,Permissions,PermissionFilters");
 		}
 
 		public IUser Create(string identity, string @namespace, UserStatus status = UserStatus.Active, string description = null)
