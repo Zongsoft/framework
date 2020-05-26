@@ -99,11 +99,13 @@ namespace Zongsoft.Security.Membership
 
 		public IUser GetUser(string identity, string @namespace = null)
 		{
+			EnsureRoles(this.DataAccess);
 			return this.DataAccess.Select<IUser>(MembershipHelper.GetUserIdentity(identity) & this.GetNamespace(@namespace)).FirstOrDefault();
 		}
 
 		public IEnumerable<IUser> GetUsers(string @namespace, Paging paging = null)
 		{
+			EnsureRoles(this.DataAccess);
 			return this.DataAccess.Select<IUser>(this.GetNamespace(@namespace), paging);
 		}
 
@@ -212,6 +214,8 @@ namespace Zongsoft.Security.Membership
 
 		public int SetNamespaces(string oldNamespace, string newNamespace)
 		{
+			EnsureRoles(this.DataAccess);
+
 			return this.DataAccess.Update<IUser>(
 				new
 				{
@@ -318,8 +322,10 @@ namespace Zongsoft.Security.Membership
 			if(ids == null || ids.Length < 1)
 				return 0;
 
-			if(ids.Contains(this.GetUserId(0)))
+			if(ids.Contains(GetUserId(0)))
 				throw new ArgumentException("You cannot include yourself in the want to delete.");
+
+			EnsureRoles(this.DataAccess);
 
 			return this.DataAccess.Delete<IUser>(
 				Condition.In(nameof(IUser.UserId), ids) &
@@ -516,7 +522,7 @@ namespace Zongsoft.Security.Membership
 					user.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId)) > 0)
+			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId), "!Name,!Status,!StatusTimestamp") > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{
@@ -736,7 +742,7 @@ namespace Zongsoft.Security.Membership
 
 		public string[] GetPasswordQuestions(uint userId)
 		{
-			var record = this.DataAccess.Select<UserSecretQuestion>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
+			var record = this.DataAccess.Select<UserSecretQuestion>(Condition.Equal(nameof(IUser.UserId), GetUserId(userId))).FirstOrDefault();
 
 			if(record.UserId == 0)
 				return null;
@@ -936,12 +942,12 @@ namespace Zongsoft.Security.Membership
 			/*
 			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
 			 *   1) 指定的用户就是当前用户自己；
-			 *   2) 当前用户是系统管理员角色(Administrators)成员。
+			 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
 			 */
 
 			var user = ApplicationContext.Current.Principal.Identity.AsModel<IUser>();
 
-			if(user.UserId == userId || MembershipHelper.InRoles(this.DataAccess, user, MembershipHelper.Administrators))
+			if(user.UserId == userId || MembershipHelper.InRoles(this.DataAccess, user, Role.Administrators, Role.Security))
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");
@@ -965,6 +971,13 @@ namespace Zongsoft.Security.Membership
 
 			var salt = this.GetPasswordAnswerSalt(userId, index);
 			return PasswordUtility.HashPassword(answer, salt);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static void EnsureRoles(IDataAccess dataAccess)
+		{
+			if(!MembershipHelper.InRoles(dataAccess, ApplicationContext.Current.Principal.Identity.AsModel<IUser>(), Role.Administrators, Role.Security))
+				throw new AuthorizationException("Denied: The current user is not a security administrator and is not authorized to perform this operation.");
 		}
 		#endregion
 
