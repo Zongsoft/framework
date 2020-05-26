@@ -322,7 +322,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 										constraints.Add(
 											new DataAssociationConstraint(
 												this.GetAttributeValue<string>(reader, XML_NAME_ATTRIBUTE),
-												this.GetAttributeValue(reader, XML_ACTOR_ATTRIBUTE, DataAssociationConstraintActor.Principal),
+												this.GetAttributeValue(reader, XML_ACTOR_ATTRIBUTE,
+													complexProperty.Multiplicity == DataAssociationMultiplicity.Many ?
+													DataAssociationConstraintActor.Foreign :
+													DataAssociationConstraintActor.Principal),
 												this.GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE)));
 									}
 									else
