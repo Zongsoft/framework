@@ -32,40 +32,29 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	/// <summary>
-	/// 表示权限系统角色的实体接口。
-	/// </summary>
 	[Zongsoft.Data.Model("Security.Role")]
-	public interface IRole
+	public abstract class Role : IRole
 	{
-		/// <summary>
-		/// 获取或设置角色编号。
-		/// </summary>
-		uint RoleId { get; set; }
+		#region 常量定义
+		/// <summary>系统管理员角色名。</summary>
+		public const string Administrators = nameof(Administrators);
 
-		/// <summary>
-		/// 获取或设置角色名称。
-		/// </summary>
-		string Name { get; set; }
+		/// <summary>安全管理员角色名。</summary>
+		public const string Security = nameof(Security);
+		#endregion
 
-		/// <summary>
-		/// 获取或设置角色全称。
-		/// </summary>
-		string FullName { get; set; }
+		#region 属性定义
+		public abstract uint RoleId { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色所属的命名空间。
-		/// </summary>
-		string Namespace { get; set; }
+		public abstract string Name { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色的描述信息。
-		/// </summary>
-		string Description { get; set; }
+		public abstract string FullName { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色成员子集。
-		/// </summary>
-		IEnumerable<Member> Children { get; set; }
+		public abstract string Namespace { get; set; }
+
+		public string Description { get; set; }
+
+		public IEnumerable<Member> Children { get; set; }
+		#endregion
 	}
 }

@@ -39,41 +39,26 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取或设置用户编号。
 		/// </summary>
-		uint UserId
-		{
-			get; set;
-		}
+		uint UserId { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户名称。
 		/// </summary>
-		string Name
-		{
-			get; set;
-		}
+		string Name { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户全称。
 		/// </summary>
-		string FullName
-		{
-			get; set;
-		}
+		string FullName { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户所属的命名空间。
 		/// </summary>
-		string Namespace
-		{
-			get; set;
-		}
+		string Namespace { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户的描述信息。
 		/// </summary>
-		string Description
-		{
-			get; set;
-		}
+		string Description { get; set; }
 	}
 }

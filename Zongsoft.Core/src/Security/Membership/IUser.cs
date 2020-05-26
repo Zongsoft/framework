@@ -41,58 +41,37 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取或设置用户的邮箱标识。
 		/// </summary>
-		string Email
-		{
-			get; set;
-		}
+		string Email { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户的电话标识。
 		/// </summary>
-		string Phone
-		{
-			get; set;
-		}
+		string Phone { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户状态。
 		/// </summary>
-		UserStatus Status
-		{
-			get; set;
-		}
+		UserStatus Status { get; set; }
 
 		/// <summary>
 		/// 获取或设置用户状态变更时间。
 		/// </summary>
-		DateTime? StatusTimestamp
-		{
-			get; set;
-		}
+		DateTime? StatusTimestamp { get; set; }
 
 		/// <summary>
 		/// 获取或设置创建时间。
 		/// </summary>
-		DateTime Creation
-		{
-			get; set;
-		}
+		DateTime Creation { get; set; }
 
 		/// <summary>
 		/// 获取或设置最后修改时间。
 		/// </summary>
-		DateTime? Modification
-		{
-			get; set;
-		}
+		DateTime? Modification { get; set; }
 
 		/// <summary>
 		/// 获取用户的扩展属性。
 		/// </summary>
 		[System.ComponentModel.DefaultValue(typeof(Dictionary<string, object>))]
-		IDictionary<string, object> Properties
-		{
-			get;
-		}
+		IDictionary<string, object> Properties { get; }
 	}
 }

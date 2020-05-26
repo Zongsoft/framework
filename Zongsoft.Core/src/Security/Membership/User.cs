@@ -28,44 +28,44 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	/// <summary>
-	/// 表示权限系统角色的实体接口。
-	/// </summary>
-	[Zongsoft.Data.Model("Security.Role")]
-	public interface IRole
+	[Zongsoft.Data.Model("Security.User")]
+	public abstract class User : IUser
 	{
-		/// <summary>
-		/// 获取或设置角色编号。
-		/// </summary>
-		uint RoleId { get; set; }
+		#region 常量定义
+		/// <summary>系统管理员用户名。</summary>
+		public const string Administrator = nameof(Administrator);
+		#endregion
 
-		/// <summary>
-		/// 获取或设置角色名称。
-		/// </summary>
-		string Name { get; set; }
+		#region 属性定义
+		public abstract uint UserId { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色全称。
-		/// </summary>
-		string FullName { get; set; }
+		public abstract string Name { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色所属的命名空间。
-		/// </summary>
-		string Namespace { get; set; }
+		public abstract string FullName { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色的描述信息。
-		/// </summary>
-		string Description { get; set; }
+		public abstract string Namespace { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色成员子集。
-		/// </summary>
-		IEnumerable<Member> Children { get; set; }
+		public abstract string Description { get; set; }
+
+		public abstract string Email { get; set; }
+
+		public abstract string Phone { get; set; }
+
+		public abstract UserStatus Status { get; set; }
+
+		public abstract DateTime? StatusTimestamp { get; set; }
+
+		public abstract DateTime Creation { get; set; }
+
+		public abstract DateTime? Modification { get; set; }
+
+		[DefaultValue(typeof(Dictionary<string, object>))]
+		public abstract IDictionary<string, object> Properties { get; }
+		#endregion
 	}
 }
