@@ -285,7 +285,7 @@ namespace Zongsoft.Security.Membership
 					role.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId)) > 0)
+			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId), "!Name") > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{
