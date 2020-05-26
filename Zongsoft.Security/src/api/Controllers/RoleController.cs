@@ -44,7 +44,7 @@ namespace Zongsoft.Security.Web.Controllers
 {
 	[ApiController]
 	[Area(Modules.Security)]
-	[Authorize(Roles = "Administrators,Security,Securers")]
+	[Authorize(Roles = Role.Administrators + "," + Role.Security)]
 	[Route("{area}/Roles")]
 	public class RoleController : ControllerBase
 	{
