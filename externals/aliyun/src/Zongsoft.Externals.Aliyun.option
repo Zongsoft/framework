@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Aliyun">
+		<!-- 阿里云的标准配置项：name 属性表示默认服务中心的名称（Hangzhou, Shenzhen, Qingdao, Beijing, Hongkong）；internal 属性为真(true)表示以内网地址访问，为假(false)表示以外网地址访问。 -->
+		<general name="Shenzhen" internal="false">
+			<certificates default="main">
+				<!-- 阿里云的凭证配置：name表示引用名；code表示凭证的ID值；secret表示凭证的密钥。 -->
+				<certificate name="main" code="Your Access Key Id" secret="Your Access Key Secret" />
+			</certificates>
+		</general>
+
+		<!-- 阿里云OSS的配置项 -->
+		<oss region="Shenzhen" certificate="">
+			<bucket name="The Bucket Name" region="The Service-Center-Name of The Bucket(e.g., Shenzhen)" certificate="" />
+		</oss>
+
+		<!-- 阿里云电信服务的配置项 -->
+		<telecom region="Hangzhou" certificate="">
+			<message>
+				<template name="Alarm" code="SMS_12345678" scheme="Your Signature of The SMS" />
+			</message>
+
+			<voice numbers="40012345678,40066668888">
+				<template name="Alarm" code="TTS_12345678" />
+			</voice>
+		</telecom>
+
+		<!-- 阿里云移动推送的配置项 -->
+		<pushing region="Hangzhou" certificate="">
+			<app name="The Friendly Name" code="The App Key" secret="The App Secret" />
+		</pushing>
+
+		<!-- 阿里云消息服务的配置项-->
+		<messaging name="Your Account Name of The MNS(Message Service)">
+			<queues region="Shenzhen" certificate="">
+				<queue name="The Queue Name" region="Shenzhen" certificate="" />
+			</queues>
+
+			<topics region="Shenzhen">
+				<topic name="The Topic Name" region="Shenzhen" certificate="" />
+			</topics>
+		</messaging>
+	</option>
+</options>

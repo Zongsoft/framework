@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Aliyun"
+        title="Zongsoft.Externals.Aliyun Plugin"
+        author="Zongsoft Corporation"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2015-06-16" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Aliyun" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workspace/Externals/Aliyun">
+		<object name="OSS" configuration="{opt:/Externals/Aliyun/OSS}" type="Zongsoft.Externals.Aliyun.Storages.StorageFileSystem, Zongsoft.Externals.Aliyun" />
+		<object name="Queues" configuration="{opt:/Externals/Aliyun/Messaging}" type="Zongsoft.Externals.Aliyun.Messaging.MessageQueueProvider, Zongsoft.Externals.Aliyun" />
+		<object name="Topics" configuration="{opt:/Externals/Aliyun/Messaging}" type="Zongsoft.Externals.Aliyun.Messaging.TopicProvider, Zongsoft.Externals.Aliyun" />
+		<object name="Phone" configuration="{opt:/Externals/Aliyun/Telecom}" type="Zongsoft.Externals.Aliyun.Telecom.Phone, Zongsoft.Externals.Aliyun" />
+		<object name="PushingSender" configuration="{opt:/Externals/Aliyun/Pushing}" type="Zongsoft.Externals.Aliyun.Pushing.PushingSender, Zongsoft.Externals.Aliyun" />
+	</extension>
+
+	<extension path="/Workbench/FileSystem">
+		<object name="AliyunOSS" value="{path:/Workspace/Externals/Aliyun/OSS}" />
+	</extension>
+
+	<extension path="/Workspace/Messaging">
+		<object name="Queues" value="{path:/Workspace/Externals/Aliyun/Queues}" />
+		<object name="Topics" value="{path:/Workspace/Externals/Aliyun/Topics}" />
+	</extension>
+
+	<extension path="/Workspace/Services">
+		<object name="MessageQueueProvider" value="{path:/Workspace/Externals/Aliyun/Queues}" />
+		<object name="MessageTopicProvider" value="{path:/Workspace/Externals/Aliyun/Topics}" />
+	</extension>
+
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Phone">
+			<object name="Send" value="{path:/Workspace/Externals/Aliyun/Phone.Sender}" />
+			<object name="Call" value="{path:/Workspace/Externals/Aliyun/Phone.Caller}" />
+		</object>
+
+		<object name="Pushing">
+			<object name="Send" sender="{path:/Workspace/Externals/Aliyun/PushingSender}" type="Zongsoft.Externals.Aliyun.Pushing.PushingSendCommand, Zongsoft.Externals.Aliyun" />
+		</object>
+	</extension>
+</plugin>

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<Authors>Popeye Zhong</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Description>This is a library about Aliyun SDK.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2015-2020. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/Zongsoft</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Reference Include="Zongsoft.Core">
+	    <HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+</Project>
