@@ -41,6 +41,8 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Web
 {
+	[ApiController]
+	[Route("[area]/[controller]")]
 	public class ApiControllerBase<TModel, TService> : ControllerBase where TService : class, IDataService<TModel>
 	{
 		#region 单例字段
@@ -94,146 +96,102 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
-		[HttpGet]
-		public virtual IActionResult Count(string id = null, [FromQuery]string keyword = null)
+		[HttpGet("{key:required}")]
+		public Task<IActionResult> CountAsync(string key)
 		{
-			if(string.IsNullOrEmpty(id))
-			{
-				if(string.IsNullOrEmpty(keyword))
-					return this.Content(this.DataService.Count(null).ToString(), "text/plain");
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string>(key).ToString()));
+		}
 
-				if(this.DataService.Searcher == null)
-					return this.BadRequest("The Count operation do not support searching by keyword.");
+		[HttpGet("{key1:required}-{key2:required}")]
+		public Task<IActionResult> CountAsync(string key1, string key2)
+		{
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string>(key1, key2).ToString()));
+		}
 
-				return this.Content(this.DataService.Searcher.Count(keyword).ToString(), "text/plain");
-			}
+		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
+		public Task<IActionResult> CountAsync(string key1, string key2, string key3)
+		{
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string>(key1, key2, key3).ToString()));
+		}
 
-			//不能同时指定编号和关键字参数
-			if(keyword != null && keyword.Length > 0)
-				return this.BadRequest("Cannot specify both 'id' and 'keyword' parameters.");
+		[HttpGet("{key:required}")]
+		public Task<IActionResult> ExistsAsync(string key)
+		{
+			return this.DataService.Exists(key) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
 
-			var parts = this.Slice(id);
+		[HttpGet("{key1:required}-{key2:required}")]
+		public Task<IActionResult> ExistsAsync(string key1, string key2)
+		{
+			return this.DataService.Exists(key1, key2) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
+		}
 
-			//switch(parts.Length)
-			//{
-			//	case 1:
-			//		return this.DataService.Count(parts[0]);
-			//	case 2:
-			//		return this.DataService.Count(parts[0], parts[1]);
-			//	case 3:
-			//		return this.DataService.Count(parts[0], parts[1], parts[2]);
-			//	default:
-			//		return this.BadRequest("The parts of id argument too many.");
-			//}
-
-			return this.BadRequest();
+		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
+		public Task<IActionResult> ExistsAsync(string key1, string key2, string key3)
+		{
+			return this.DataService.Exists(key1, key2, key3) ?
+				Task.FromResult((IActionResult)this.NoContent()) :
+				Task.FromResult((IActionResult)this.NotFound());
 		}
 
 		[HttpGet]
-		public virtual IActionResult Exists(string id = null, [FromQuery]string keyword = null)
-		{
-			bool existed;
-
-			if(string.IsNullOrEmpty(id))
-			{
-				if(string.IsNullOrEmpty(keyword))
-					existed = this.DataService.Exists(null);
-				else
-				{
-					if(this.DataService.Searcher == null)
-						return this.BadRequest("The Exists operation do not support searching by keyword.");
-
-					existed = this.DataService.Searcher.Exists(keyword);
-				}
-			}
-			else
-			{
-				//不能同时指定编号和关键字参数
-				if(keyword != null && keyword.Length > 0)
-					return this.BadRequest("Cannot specify both 'id' and 'keyword' parameters.");
-
-				var parts = this.Slice(id);
-
-				switch(parts.Length)
-				{
-					case 1:
-						if(parts[0].Contains(":") && this.DataService.Searcher != null)
-							existed = this.DataService.Searcher.Exists(parts[0]);
-						else
-							existed = this.DataService.Exists(parts[0]);
-						break;
-					case 2:
-						existed = this.DataService.Exists(parts[0], parts[1]);
-						break;
-					case 3:
-						existed = this.DataService.Exists(parts[0], parts[1], parts[2]);
-						break;
-					default:
-						return this.BadRequest("The parts of id argument too many.");
-				}
-			}
-
-			if(existed)
-				return this.Ok();
-			else
-				return this.NotFound();
-		}
-
-		[HttpGet]
-		public virtual IActionResult Search([FromQuery]string keyword, [FromQuery]Paging paging = null)
+		public Task<IActionResult> SearchAsync([FromQuery]string keyword, [FromQuery]Paging paging = null)
 		{
 			var searcher = this.DataService.Searcher;
 
 			if(searcher == null)
-				return this.BadRequest("This resource does not support the search operation.");
+				return Task.FromResult((IActionResult)this.BadRequest("This resource does not support the search operation."));
 
 			if(string.IsNullOrWhiteSpace(keyword))
-				this.BadRequest("Missing keyword for search.");
+				return Task.FromResult((IActionResult)this.BadRequest("Missing keyword for search."));
 
-			return this.Paginate(searcher.Search(keyword, Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), paging));
+			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), paging)));
 		}
 
-		[HttpGet]
-		public virtual IActionResult Get(string id = null, [FromQuery]Paging paging = null)
+		[HttpGet("{key}")]
+		public IActionResult Get(string key, [FromQuery]Paging paging = null)
 		{
-			if(string.IsNullOrEmpty(id))
+			if(string.IsNullOrWhiteSpace(key))
 				return this.Paginate(this.DataService.Select(null, this.GetSchema(), paging));
 
-			var parts = this.Slice(id);
-			IPageable pageable;
-
-			switch(parts.Length)
-			{
-				case 1:
-					return parts[0].Contains(":") && this.DataService.Searcher != null ?
-						this.Paginate(this.DataService.Searcher.Search(parts[0], this.GetSchema(), paging)) :
-						this.Paginate(this.DataService.Get<string>(parts[0], this.GetSchema(), paging, null, out pageable), pageable);
-				case 2:
-					return this.Paginate(this.DataService.Get<string, string>(parts[0], parts[1], this.GetSchema(), paging, null, out pageable), pageable);
-				case 3:
-					return this.Paginate(this.DataService.Get<string, string, string>(parts[0], parts[1], parts[2], this.GetSchema(), paging, null, out pageable), pageable);
-				default:
-					return this.BadRequest("Too many keys specified.");
-			}
+			return key.Contains(':') && this.DataService.Searcher != null ?
+				this.Paginate(this.DataService.Searcher.Search(key, this.GetSchema(), paging)) :
+				this.Paginate(this.DataService.Get<string>(key, this.GetSchema(), paging, null, out var pageable), pageable);
 		}
 
-		[HttpDelete]
-		public virtual IActionResult Delete(string id)
+		[HttpGet("{key1:required}-{key2:required}")]
+		public IActionResult Get(string key1, string key2, [FromQuery]Paging paging = null)
+		{
+			return this.Paginate(this.DataService.Get<string, string>(key1, key2, this.GetSchema(), paging, null, out var pageable), pageable);
+		}
+
+		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
+		public IActionResult Get(string key1, string key2, string key3, [FromQuery]Paging paging = null)
+		{
+			return this.Paginate(this.DataService.Get<string, string, string>(key1, key2, key3, this.GetSchema(), paging, null, out var pageable), pageable);
+		}
+
+		[HttpDelete("{keys:required}")]
+		public IActionResult Delete(string keys)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			if(string.IsNullOrWhiteSpace(id))
+			if(string.IsNullOrWhiteSpace(keys))
 				return this.BadRequest();
 
 			int count = 0;
-			var keys = Common.StringExtension.Slice(id, ',', '|').ToArray();
+			var parts = Common.StringExtension.Slice(keys, ',', '|').ToArray();
 
-			if(keys != null && keys.Length > 1)
+			if(parts != null && parts.Length > 1)
 			{
 				using(var transaction = new Zongsoft.Transactions.Transaction())
 				{
-					foreach(var key in keys)
+					foreach(var key in parts)
 					{
 						count += this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray());
 					}
@@ -244,12 +202,12 @@ namespace Zongsoft.Web
 				return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 			}
 
-			count = this.OnDelete(Common.StringExtension.Slice(id, '-').ToArray());
+			count = this.OnDelete(Common.StringExtension.Slice(keys, '-').ToArray());
 			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 		}
 
 		[HttpPost]
-		public virtual IActionResult Post([FromBody]TModel model)
+		public IActionResult Create([FromBody]TModel model)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -265,7 +223,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut]
-		public virtual IActionResult Put([FromBody]TModel model)
+		public IActionResult Upsert([FromBody]TModel model)
 		{
 			if(!(this.CanCreate && this.CanUpdate))
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -277,8 +235,8 @@ namespace Zongsoft.Web
 			return this.OnUpsert(model) > 0 ? (IActionResult)this.Ok(model) : this.Conflict();
 		}
 
-		[HttpPatch]
-		public virtual IActionResult Patch(string id, [FromBody]TModel model)
+		[HttpPatch("{keys}")]
+		public IActionResult Update(string keys, [FromBody]TModel model)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -287,13 +245,13 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			return this.OnUpdate(model, string.IsNullOrEmpty(id) ? Array.Empty<string>() : this.Slice(id)) > 0 ?
+			return this.OnUpdate(model, string.IsNullOrEmpty(keys) ? Array.Empty<string>() : Common.StringExtension.Slice(keys, '-').ToArray()) > 0 ?
 				(IActionResult)this.Ok() : this.NotFound();
 		}
 		#endregion
 
 		#region 上传方法
-		protected async Task<FileInfo> Upload(string path, Func<FileInfo, bool> uploaded = null)
+		protected async Task<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -321,7 +279,7 @@ namespace Zongsoft.Web
 			return null;
 		}
 
-		protected async Task<IEnumerable<T>> Upload<T>(string path, Func<FileInfo, T> uploaded, int limit = 0)
+		protected async Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit = 0)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -415,11 +373,6 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 保护方法
-		protected string[] Slice(string text)
-		{
-			return Utility.Slice(text);
-		}
-
 		protected IActionResult Paginate(object data, IPageable pageable = null)
 		{
 			if(data == null)
@@ -440,6 +393,8 @@ namespace Zongsoft.Web
 
 				void Paginator_Paginated(object sender, PagingEventArgs e)
 				{
+					pageable.Paginated -= Paginator_Paginated;
+
 					if(result.Paging == null)
 						result.Paging = new Dictionary<string, string>();
 
