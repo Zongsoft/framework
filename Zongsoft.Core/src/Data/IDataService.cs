@@ -106,6 +106,10 @@ namespace Zongsoft.Data
 		int Count(ICondition condition, IDictionary<string, object> states);
 		int Count(ICondition condition, string member);
 		int Count(ICondition condition, string member = null, IDictionary<string, object> states = null);
+
+		int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null);
+		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null);
+		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null);
 		#endregion
 
 		#region 递增方法

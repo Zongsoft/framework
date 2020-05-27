@@ -266,6 +266,21 @@ namespace Zongsoft.Data
 			return this.OnCount(condition, member, states);
 		}
 
+		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
+		{
+			return this.Count(this.ConvertKey(key, out _), member, states);
+		}
+
+		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null)
+		{
+			return this.Count(this.ConvertKey(key1, key2, out _), member, states);
+		}
+
+		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null)
+		{
+			return this.Count(this.ConvertKey(key1, key2, key3, out _), member, states);
+		}
+
 		protected virtual int OnCount(ICondition condition, string member, IDictionary<string, object> states)
 		{
 			return this.DataAccess.Count(this.Name, condition, member, states, ctx => this.OnCounting(ctx), ctx => this.OnCounted(ctx));
