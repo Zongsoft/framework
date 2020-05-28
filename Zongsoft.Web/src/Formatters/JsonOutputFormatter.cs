@@ -122,7 +122,7 @@ namespace Zongsoft.Web.Formatters
 				var index = part.IndexOf(':');
 
 				if(index > 0 && index < part.Length - 1)
-					SetOption(options, part.Substring(0, index), part.Substring(index + 1));
+					SetOption(options, part.Substring(0, index).Trim(), part.Substring(index + 1).Trim());
 			}
 
 			return options;
@@ -133,41 +133,18 @@ namespace Zongsoft.Web.Formatters
 			if(string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
 				return;
 
-			switch(key.Trim().ToLowerInvariant())
+			switch(key.ToLowerInvariant())
 			{
 				case "ignores":
-					var parts = Common.StringExtension.Slice(value.Trim().ToLowerInvariant(), ',', '|');
-
-					foreach(var part in parts)
-					{
-						switch(part)
-						{
-							case "null":
-								options.IgnoreNull = true;
-								break;
-							case "empty":
-								options.IgnoreEmpty = true;
-								break;
-							case "zero":
-								options.IgnoreZero = true;
-								break;
-						}
-					}
-
+					options.Ignores(value);
 					break;
 				case "casing":
-					switch(value.Trim().ToLowerInvariant())
-					{
-						case "none":
-							options.NamingConvention = Serialization.SerializationNamingConvention.None;
-							break;
-						case "camel":
-							options.NamingConvention = Serialization.SerializationNamingConvention.Camel;
-							break;
-						case "pascal":
-							options.NamingConvention = Serialization.SerializationNamingConvention.Pascal;
-							break;
-					}
+					if(string.Equals(value, "camel", StringComparison.OrdinalIgnoreCase))
+						options.NamingConvention = Serialization.SerializationNamingConvention.Camel;
+					else if(string.Equals(value, "pascal", StringComparison.OrdinalIgnoreCase))
+						options.NamingConvention = Serialization.SerializationNamingConvention.Pascal;
+					else
+						options.NamingConvention = Serialization.SerializationNamingConvention.None;
 
 					break;
 			}

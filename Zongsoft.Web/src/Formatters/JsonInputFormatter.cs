@@ -137,17 +137,11 @@ namespace Zongsoft.Web.Formatters
 			{
 				_stream = input;
 
-				// The "count" in the buffer is the size of any content from a previous read.
-				// Initialize them to 0 since nothing has been read so far.
 				_byteBuffer = new ArraySegment<byte>(
 					ArrayPool<byte>.Shared.Rent(MaxByteBufferSize),
 					0,
 					count: 0);
 
-				// Attempt to allocate a char buffer than can tolerate the worst-case scenario for this 
-				// encoding. This would allow the byte -> char conversion to complete in a single call.
-				// However limit the buffer size to prevent an encoding that has a very poor worst-case scenario. 
-				// The conversion process is tolerant of char buffer that is not large enough to convert all the bytes at once.
 				var maxCharBufferSize = Math.Min(MaxCharBufferSize, sourceEncoding.GetMaxCharCount(MaxByteBufferSize));
 				_charBuffer = new ArraySegment<char>(
 					ArrayPool<char>.Shared.Rent(maxCharBufferSize),
