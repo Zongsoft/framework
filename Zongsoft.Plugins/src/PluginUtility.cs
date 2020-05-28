@@ -447,7 +447,18 @@ namespace Zongsoft.Plugins
 						return true;
 					}
 
-					return ObtainParameter(builtin.Plugin, parameterType, parameterName, out parameterValue);
+					if(ObtainParameter(builtin.Plugin, parameterType, parameterName, out parameterValue))
+						return true;
+
+					var services = FindServiceProvider(builtin);
+
+					if(services != null)
+					{
+						parameterValue = services.GetService(parameterType);
+						return parameterValue != null;
+					}
+
+					return false;
 				});
 
 				if(target == null)
