@@ -44,15 +44,15 @@ namespace Zongsoft.Externals.Aliyun
 		#endregion
 
 		#region 成员字段
-		private string _name;
-		private HttpSignatureMode _signatureMode;
+		private readonly string _name;
+		private readonly HttpSignatureMode _signatureMode;
 		#endregion
 
 		#region 构造函数
 		protected HttpAuthenticator(string name, HttpSignatureMode signatureMode)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
 			_signatureMode = signatureMode;
@@ -62,25 +62,19 @@ namespace Zongsoft.Externals.Aliyun
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 		}
 
 		public HttpSignatureMode SignatureMode
 		{
-			get
-			{
-				return _signatureMode;
-			}
+			get => _signatureMode;
 		}
 		#endregion
 
 		#region 公共方法
 		public virtual string Signature(HttpRequestMessage request, string secret)
 		{
-			using(var algorithm = HMACSHA1.Create())
+			using(var algorithm = HMAC.Create("HMACSHA1"))
 			{
 				//设置散列加密算法的密钥
 				algorithm.Key = Encoding.UTF8.GetBytes(secret);
