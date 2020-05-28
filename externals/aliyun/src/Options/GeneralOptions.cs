@@ -84,9 +84,20 @@ namespace Zongsoft.Externals.Aliyun.Options
 		#region 嵌套子类
 		private class CertificateCollection : Zongsoft.Collections.NamedCollectionBase<ICertificate>, ICertificateProvider
 		{
-			public ICertificate Default
+			public string Default
 			{
 				get; set;
+			}
+
+			ICertificate ICertificateProvider.Default
+			{
+				get
+				{
+					if(this.TryGetItem(this.Default, out var certificate))
+						return certificate;
+
+					return null;
+				}
 			}
 
 			protected override string GetKeyForItem(ICertificate item)
