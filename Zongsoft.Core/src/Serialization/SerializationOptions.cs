@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Zongsoft.Serialization
 {
@@ -61,6 +62,37 @@ namespace Zongsoft.Serialization
 		/// 获取或设置一个值，指示是否忽略零。
 		/// </summary>
 		public bool IgnoreZero { get; set; }
+		#endregion
+
+		#region 公共方法
+		public SerializationOptions Ignores(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return this;
+
+			text = text.Trim();
+
+			if(text == "*")
+			{
+				this.IgnoreEmpty = true;
+				this.IgnoreNull = true;
+				this.IgnoreZero = true;
+			}
+			else
+			{
+				foreach(var part in Common.StringExtension.Slice(text, ',', '|'))
+				{
+					if(string.Equals(part, "null", StringComparison.OrdinalIgnoreCase))
+						this.IgnoreNull = true;
+					else if(string.Equals(part, "empty", StringComparison.OrdinalIgnoreCase))
+						this.IgnoreEmpty = true;
+					else if(string.Equals(part, "zero", StringComparison.OrdinalIgnoreCase))
+						this.IgnoreZero = true;
+				}
+			}
+
+			return this;
+		}
 		#endregion
 	}
 }

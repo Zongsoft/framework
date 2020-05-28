@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Serialization
 {
@@ -57,6 +56,34 @@ namespace Zongsoft.Serialization
 		public SerializationNamingConvention NamingConvention
 		{
 			get; set;
+		}
+		#endregion
+
+		#region 静态方法
+		public static TextSerializationOptions Camel(string ignores = null)
+		{
+			var options = new TextSerializationOptions()
+			{
+				NamingConvention = SerializationNamingConvention.Camel,
+			};
+
+			if(ignores != null && ignores.Length > 0)
+				options.Ignores(ignores);
+
+			return options;
+		}
+
+		public static TextSerializationOptions Pascal(string ignores = null)
+		{
+			var options = new TextSerializationOptions()
+			{
+				NamingConvention = SerializationNamingConvention.Pascal,
+			};
+
+			if(ignores != null && ignores.Length > 0)
+				options.Ignores(ignores);
+
+			return options;
 		}
 		#endregion
 	}
