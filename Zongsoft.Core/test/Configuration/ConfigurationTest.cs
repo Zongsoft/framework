@@ -170,6 +170,11 @@ namespace Zongsoft.Configuration
 	#region 选项实体
 	public class General
 	{
+		public General()
+		{
+			this.Certificates = new CertificateCollection();
+		}
+
 		public string Name
 		{
 			get; set;
@@ -183,7 +188,7 @@ namespace Zongsoft.Configuration
 
 		public CertificateCollection Certificates
 		{
-			get; set;
+			get;
 		}
 	}
 
