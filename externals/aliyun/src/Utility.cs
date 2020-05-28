@@ -143,6 +143,36 @@ namespace Zongsoft.Externals.Aliyun
 			return await thunk();
 		}
 
+		public static IDictionary<string, string> GetDictionary(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return null;
+
+			var parts = text.Split(',', '|');
+			var dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+			foreach(var part in parts)
+			{
+				if(string.IsNullOrEmpty(part))
+					continue;
+
+				var index = part.IndexOf('=');
+
+				if(index < 0)
+					index = part.IndexOf(':');
+
+				if(index <= 0)
+					continue;
+
+				var key = part.Substring(0, index);
+				var value = index < part.Length - 1 ? part.Substring(index + 1) : string.Empty;
+
+				dictionary[key] = value;
+			}
+
+			return dictionary;
+		}
+
 		public static class Xml
 		{
 			public static void MoveToEndElement(XmlReader reader)

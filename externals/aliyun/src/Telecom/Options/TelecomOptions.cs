@@ -30,37 +30,93 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Storages.Options
+namespace Zongsoft.Externals.Aliyun.Telecom.Options
 {
 	/// <summary>
-	/// 表示阿里云对象存储(OSS)相关的配置接口。
+	/// 表示电信通讯相关的配置选项。
 	/// </summary>
-	public interface IConfiguration
+	public class TelecomOptions
 	{
+		#region 公共属性
 		/// <summary>
-		/// 获取或设置对象存储所属的服务区域。
+		/// 获取或设置电信运营商区域。
 		/// </summary>
-		ServiceCenterName? Region
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
 		/// 获取或设置关联的凭证名。
 		/// </summary>
-		string Certificate
+		public string Certificate
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取存储器配置项集合。
+		/// 获取电信短信服务配置。
 		/// </summary>
-		Collections.INamedCollection<IBucketOption> Buckets
+		public TelecomMessageOption Message
 		{
 			get;
 		}
+
+		/// <summary>
+		/// 获取电信语音服务配置。
+		/// </summary>
+		public TelecomVoiceOption Voice
+		{
+			get;
+		}
+		#endregion
+
+		#region 嵌套子类
+		/// <summary>
+		/// 表示电信短信服务的配置选项。
+		/// </summary>
+		public class TelecomMessageOption
+		{
+			public TelecomMessageOption()
+			{
+				this.Templates = new TemplateOptionCollection();
+			}
+
+			/// <summary>
+			/// 获取短信模板配置项集合。
+			/// </summary>
+			public Collections.INamedCollection<TemplateOption> Templates
+			{
+				get;
+			}
+		}
+
+		/// <summary>
+		/// 表示电信语音服务的配置选项。
+		/// </summary>
+		public class TelecomVoiceOption
+		{
+			public TelecomVoiceOption()
+			{
+				this.Templates = new TemplateOptionCollection();
+			}
+
+			/// <summary>
+			/// 获取或设置语音号码数组。
+			/// </summary>
+			public string[] Numbers
+			{
+				get; set;
+			}
+
+			/// <summary>
+			/// 获取语音模板配置项集合。
+			/// </summary>
+			public Collections.INamedCollection<TemplateOption> Templates
+			{
+				get;
+			}
+		}
+		#endregion
 	}
 }

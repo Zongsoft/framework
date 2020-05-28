@@ -32,22 +32,17 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
+	[Services.Service(typeof(Collections.IQueueProvider))]
 	public class MessageQueueProvider : Zongsoft.Collections.IQueueProvider
 	{
 		#region 成员字段
-		private ConcurrentDictionary<string, MessageQueue> _queues;
-		private Options.IConfiguration _configuration;
+		private readonly ConcurrentDictionary<string, MessageQueue> _queues;
+		private Options.MessagingOptions _options;
 		#endregion
 
 		#region 构造函数
 		public MessageQueueProvider()
 		{
-			_queues = new ConcurrentDictionary<string, MessageQueue>(StringComparer.OrdinalIgnoreCase);
-		}
-
-		public MessageQueueProvider(Options.IConfiguration configuration)
-		{
-			_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 			_queues = new ConcurrentDictionary<string, MessageQueue>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
@@ -56,24 +51,16 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		/// <summary>
 		/// 获取或设置配置信息。
 		/// </summary>
-		public Options.IConfiguration Configuration
+		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/Messaging")]
+		public Options.MessagingOptions Options
 		{
-			get
-			{
-				return _configuration;
-			}
-			set
-			{
-				_configuration = value ?? throw new ArgumentNullException();
-			}
+			get => _options;
+			set => _options = value ?? throw new ArgumentNullException();
 		}
 
 		public MessageQueue this[string name]
 		{
-			get
-			{
-				return (MessageQueue)this.GetQueue(name);
-			}
+			get => (MessageQueue)this.GetQueue(name);
 		}
 		#endregion
 
@@ -81,7 +68,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		public Collections.IQueue GetQueue(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			return _queues.GetOrAdd(name, key => new MessageQueue(this, name));
 		}
@@ -90,45 +77,45 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region	内部方法
 		internal ICertificate GetCertificate(string name)
 		{
-			var configuration = this.EnsureConfiguration();
+			var options = this.EnsureOptions();
 			var certificate = string.Empty;
 
-			if(configuration.Queues.TryGet(name, out var option))
+			if(options.Queues.TryGet(name, out var option))
 				certificate = option.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				certificate = configuration.Queues.Certificate;
+				certificate = options.Queues.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				return Aliyun.Configuration.Instance.Certificates.Default;
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Configuration.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
 		}
 
 		internal string GetRequestUrl(string queueName, params string[] parts)
 		{
-			var configuration = this.EnsureConfiguration();
-			var region = configuration.Queues.Region ?? Aliyun.Configuration.Instance.Name;
+			var options = this.EnsureOptions();
+			var region = options.Queues.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 
-			if(configuration.Queues.TryGet(queueName, out var option) && option.Region.HasValue)
+			if(options.Queues.TryGet(queueName, out var option) && option.Region.HasValue)
 				region = option.Region.Value;
 
-			var center = ServiceCenter.GetInstance(region, Aliyun.Configuration.Instance.IsInternal);
+			var center = ServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);
 
 			var path = parts == null ? string.Empty : string.Join("/", parts);
 
 			if(string.IsNullOrEmpty(path))
-				return string.Format("http://{0}.{1}/queues/{2}", configuration.Name, center.Path, queueName);
+				return string.Format("http://{0}.{1}/queues/{2}", options.Name, center.Path, queueName);
 			else
-				return string.Format("http://{0}.{1}/queues/{2}/{3}", configuration.Name, center.Path, queueName, path);
+				return string.Format("http://{0}.{1}/queues/{2}/{3}", options.Name, center.Path, queueName, path);
 		}
 		#endregion
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.IConfiguration EnsureConfiguration()
+		private Options.MessagingOptions EnsureOptions()
 		{
-			return this.Configuration ?? throw new InvalidOperationException("Missing required configuration of the message queue provider(aliyun).");
+			return this.Options ?? throw new InvalidOperationException("Missing required configuration of the message queue provider(aliyun).");
 		}
 		#endregion
 	}

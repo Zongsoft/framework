@@ -28,47 +28,37 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options
 {
 	/// <summary>
-	/// 表示电信通讯相关的配置接口。
+	/// 表示阿里云消息主题提供程序的配置项集合。
 	/// </summary>
-	public interface IConfiguration
+	public class TopicOptionCollection : Collections.NamedCollectionBase<TopicOption>
 	{
+		#region 公共属性
 		/// <summary>
-		/// 获取或设置电信运营商区域。
+		/// 获取或设置提供程序所在的服务区域名。
 		/// </summary>
-		ServiceCenterName? Region
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置关联的凭证名。
+		/// 获取或设置提供程序默认的凭证名。
 		/// </summary>
-		string Certificate
+		public string Certificate
 		{
-			get;
-			set;
+			get; set;
 		}
+		#endregion
 
-		/// <summary>
-		/// 获取电信短信服务配置。
-		/// </summary>
-		ITelecomMessageOption Message
+		#region 重写方法
+		protected override string GetKeyForItem(TopicOption item)
 		{
-			get;
+			return item.Name;
 		}
-
-		/// <summary>
-		/// 获取电信语音服务配置。
-		/// </summary>
-		ITelecomVoiceOption Voice
-		{
-			get;
-		}
+		#endregion
 	}
 }

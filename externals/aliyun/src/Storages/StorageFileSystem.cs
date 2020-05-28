@@ -35,13 +35,15 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 using Zongsoft.IO;
+using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Aliyun.Storages
 {
+	[Service(typeof(Zongsoft.IO.IFileSystem))]
 	public class StorageFileSystem : Zongsoft.IO.IFileSystem
 	{
 		#region 成员字段
-		private Options.IConfiguration _configuration;
+		private Options.StorageOptions _options;
 		private StorageFileProvider _file;
 		private StorageDirectoryProvider _directory;
 		private ConcurrentDictionary<string, StorageClient> _pool;
@@ -54,15 +56,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			_directory = new StorageDirectoryProvider(this);
 			_pool = new ConcurrentDictionary<string, StorageClient>();
 		}
-
-		public StorageFileSystem(Options.IConfiguration configuration)
-		{
-			_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-
-			_file = new StorageFileProvider(this);
-			_directory = new StorageDirectoryProvider(this);
-			_pool = new ConcurrentDictionary<string, StorageClient>();
-		}
 		#endregion
 
 		#region 公共属性
@@ -71,38 +64,24 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		/// </summary>
 		public string Scheme
 		{
-			get
-			{
-				return "zfs.oss";
-			}
+			get => "zfs.oss";
 		}
 
 		public IFile File
 		{
-			get
-			{
-				return _file;
-			}
+			get => _file;
 		}
 
 		public IDirectory Directory
 		{
-			get
-			{
-				return _directory;
-			}
+			get => _directory;
 		}
 
-		public Options.IConfiguration Configuration
+		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/OSS")]
+		public Options.StorageOptions Options
 		{
-			get
-			{
-				return _configuration;
-			}
-			set
-			{
-				_configuration = value ?? throw new ArgumentNullException();
-			}
+			get => _options;
+			set => _options = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -121,10 +100,10 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return null;
 
 			//确认OSS对象存储配置
-			var configuration = this.EnsureConfiguration();
+			var options = this.EnsureOptions();
 
 			//获取当前路径对应的存储器配置项，注：BucketName即为路径中的第一节
-			configuration.Buckets.TryGet(path.Segments[0], out var bucket);
+			options.Buckets.TryGet(path.Segments[0], out var bucket);
 
 			//获取当前路径对应的服务区域
 			var region = this.GetRegion(bucket);
@@ -149,13 +128,13 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		private StorageClient CreateClient(string bucketName)
 		{
 			//确认OSS对象存储配置
-			var configuration = this.EnsureConfiguration();
+			var options = this.EnsureOptions();
 
 			//获取指定名称的存储器配置项
-			configuration.Buckets.TryGet(bucketName, out var bucket);
+			options.Buckets.TryGet(bucketName, out var bucket);
 
 			var region = this.GetRegion(bucket);
-			var center = StorageServiceCenter.GetInstance(region, Aliyun.Configuration.Instance.IsInternal);
+			var center = StorageServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);
 			var certificate = this.GetCertificate(bucket);
 
 			return new StorageClient(center, certificate);
@@ -163,28 +142,28 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 私有方法
-		private ICertificate GetCertificate(Options.IBucketOption bucket)
+		private ICertificate GetCertificate(Options.BucketOption bucket)
 		{
 			var certificate = bucket?.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				certificate = _configuration?.Certificate;
+				certificate = _options?.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				return Aliyun.Configuration.Instance.Certificates.Default;
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Configuration.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
 		}
 
-		private ServiceCenterName GetRegion(Options.IBucketOption bucket)
+		private ServiceCenterName GetRegion(Options.BucketOption bucket)
 		{
-			return bucket?.Region ?? _configuration?.Region ?? Aliyun.Configuration.Instance.Name;
+			return bucket?.Region ?? _options?.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.IConfiguration EnsureConfiguration()
+		private Options.StorageOptions EnsureOptions()
 		{
-			return this.Configuration ?? throw new InvalidOperationException("Missing required configuration of the OSS file-system(aliyun).");
+			return this.Options ?? throw new InvalidOperationException("Missing required configuration of the OSS file-system(aliyun).");
 		}
 		#endregion
 
@@ -649,33 +628,25 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				if(properties == null)
 					return null;
 
-				DateTimeOffset createdTimeOffset, modifiedTimeOffset;
 				DateTime? createdTime = null, modifiedTime = null;
 				int size = 0;
-				byte[] checksum = null;
-				object value;
 
-				if(properties.TryGetValue(StorageHeaders.ZFS_CREATEDTIME_PROPERTY, out value))
+				if(properties.TryGetValue(StorageHeaders.ZFS_CREATEDTIME_PROPERTY, out var value))
 				{
-					if(Zongsoft.Common.Convert.TryConvertValue(value, out createdTimeOffset))
+					if(Zongsoft.Common.Convert.TryConvertValue(value, out DateTimeOffset createdTimeOffset))
 						createdTime = createdTimeOffset.LocalDateTime;
 				}
 
 				if(properties.TryGetValue(StorageHeaders.HTTP_LAST_MODIFIED_PROPERTY, out value))
 				{
-					if(Zongsoft.Common.Convert.TryConvertValue(value, out modifiedTimeOffset))
+					if(Zongsoft.Common.Convert.TryConvertValue(value, out DateTimeOffset modifiedTimeOffset))
 						modifiedTime = modifiedTimeOffset.LocalDateTime;
 				}
 
 				if(properties.TryGetValue(StorageHeaders.HTTP_CONTENT_LENGTH_PROPERTY, out value))
 					Zongsoft.Common.Convert.TryConvertValue(value, out size);
 
-				if(properties.TryGetValue(StorageHeaders.HTTP_ETAG_PROPERTY, out value) && value != null)
-				{
-					checksum = Zongsoft.Common.Convert.FromHexString(value.ToString().Trim('"'), '-');
-				}
-
-				var info = new Zongsoft.IO.FileInfo(path, size, checksum, createdTime, modifiedTime, _fileSystem.GetUrl(path));
+				var info = new Zongsoft.IO.FileInfo(path, size, createdTime, modifiedTime, _fileSystem.GetUrl(path));
 
 				foreach(var property in properties)
 				{

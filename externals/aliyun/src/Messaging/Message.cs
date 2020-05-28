@@ -29,9 +29,9 @@
 
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -64,6 +64,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			request.Headers.Add("x-mns-version", "2015-06-06");
 			var response = await http.SendAsync(request);
 			return response.IsSuccessStatusCode;
+		}
+
+		public override DateTime Delay(TimeSpan duration)
+		{
+			return this.DelayAsync(duration).GetAwaiter().GetResult();
 		}
 
 		public override async Task<DateTime> DelayAsync(TimeSpan duration, CancellationToken cancellation = default)
@@ -102,6 +107,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			}
 
 			return this.Expires;
+		}
+
+		public override object Acknowledge(object parameter = null)
+		{
+			return this.AcknowledgeAsync(parameter).GetAwaiter().GetResult();
 		}
 
 		public override async Task<object> AcknowledgeAsync(object parameter = null, CancellationToken cancellation = default)

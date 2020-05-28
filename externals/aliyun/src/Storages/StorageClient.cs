@@ -29,10 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Storages
 {
@@ -56,28 +55,19 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#region 公共属性
 		public ICertificate Certificate
 		{
-			get
-			{
-				return _certificate;
-			}
+			get => _certificate;
 		}
 
 		public StorageServiceCenter ServiceCenter
 		{
-			get
-			{
-				return _serviceCenter;
-			}
+			get => _serviceCenter;
 		}
 		#endregion
 
 		#region 内部属性
 		internal HttpClient HttpClient
 		{
-			get
-			{
-				return _http;
-			}
+			get => _http;
 		}
 		#endregion
 

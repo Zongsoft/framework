@@ -28,30 +28,42 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Options
+namespace Zongsoft.Externals.Aliyun.Pushing.Options
 {
 	/// <summary>
-	/// 表示阿里云消息主题提供程序的配置项接口。
+	/// 表示移动推送相关的配置选项。
 	/// </summary>
-	public interface ITopicProviderOption : Collections.INamedCollection<ITopicOption>
+	public class PushingOptions
 	{
-		/// <summary>
-		/// 获取或设置提供程序所在的服务区域名。
-		/// </summary>
-		ServiceCenterName? Region
+		public PushingOptions()
 		{
-			get;
-			set;
+			this.Apps = new PushingAppOptionCollection();
 		}
 
 		/// <summary>
-		/// 获取或设置提供程序默认的凭证名。
+		/// 获取或设置移动推送运营商区域。
 		/// </summary>
-		string Certificate
+		public ServiceCenterName? Region
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置关联的凭证名。
+		/// </summary>
+		public string Certificate
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取移动推送的应用配置项集合。
+		/// </summary>
+		public Collections.INamedCollection<PushingAppOption> Apps
 		{
 			get;
-			set;
 		}
 	}
 }

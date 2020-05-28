@@ -28,9 +28,9 @@
  */
 
 using System;
+using System.Net.Http;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Externals.Aliyun.Pushing
@@ -38,10 +38,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 	/// <summary>
 	/// 提供移动推送功能的类。
 	/// </summary>
+	[Services.Service]
 	public class PushingSender
 	{
 		#region 成员字段
-		private Options.IConfiguration _configuration;
+		private Options.PushingOptions _options;
 		private readonly ConcurrentDictionary<string, HttpClient> _pool;
 		#endregion
 
@@ -56,16 +57,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		/// <summary>
 		/// 获取或设置移动推送配置信息。
 		/// </summary>
-		public Options.IConfiguration Configuration
+		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/Pushing")]
+		public Options.PushingOptions Options
 		{
-			get
-			{
-				return _configuration;
-			}
-			set
-			{
-				_configuration = value ?? throw new ArgumentNullException();
-			}
+			get => _options;
+			set => _options = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -91,10 +87,10 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				return null;
 
 			//确认移动推送的配置
-			var configuration = this.EnsureConfiguration();
+			var options = this.EnsureOptions();
 
 			//获取指定名称的短信模板配置，如果获取失败则抛出异常
-			if(!configuration.Apps.TryGet(name, out var app))
+			if(!options.Apps.TryGet(name, out var app))
 				throw new InvalidOperationException($"The specified '{name}' app is not existed.");
 
 			//获取当前短信模板关联的凭证
@@ -125,7 +121,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IDictionary<string, string> GenerateParameters(Options.IAppOption app, PushingSenderSettings settings)
+		protected virtual IDictionary<string, string> GenerateParameters(Options.PushingAppOption app, PushingSenderSettings settings)
 		{
 			var center = PushingServiceCenter.GetInstance(this.GetRegion(app));
 
@@ -138,7 +134,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				{ "Format", "JSON" },
 				{ "RegionId", center.Alias },
 				{ "Version", "2016-08-01" },
-				{ "AccessKeyId", this.GetCertificate(app).Name },
+				{ "AccessKeyId", this.GetCertificate(app).Code },
 				{ "SignatureMethod", "HMAC-SHA1" },
 				{ "SignatureVersion", "1.0" },
 				{ "SignatureNonce", ((ulong)Zongsoft.Common.Randomizer.GenerateInt64()).ToString() },
@@ -162,27 +158,27 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 私有方法
-		private ICertificate GetCertificate(Options.IAppOption app)
+		private ICertificate GetCertificate(Options.PushingAppOption app)
 		{
 			var certificate = app?.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				certificate = _configuration?.Certificate;
+				certificate = _options?.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				return Aliyun.Configuration.Instance.Certificates.Default;
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Configuration.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
 		}
 
-		private ServiceCenterName GetRegion(Options.IAppOption app)
+		private ServiceCenterName GetRegion(Options.PushingAppOption app)
 		{
-			return app?.Region ?? _configuration?.Region ?? Aliyun.Configuration.Instance.Name;
+			return app?.Region ?? _options?.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 		}
 
 		private HttpClient GetHttpClient(ICertificate certificate)
 		{
-			return _pool.GetOrAdd(certificate.Name, key =>
+			return _pool.GetOrAdd(certificate.Code, key =>
 			{
 				if(certificate == null)
 					throw new ArgumentNullException(nameof(certificate));
@@ -206,15 +202,15 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 
 			if(string.Equals(content.Headers.ContentType.MediaType, "application/json", StringComparison.OrdinalIgnoreCase) ||
 			   string.Equals(content.Headers.ContentType.MediaType, "text/json", StringComparison.OrdinalIgnoreCase))
-				return Zongsoft.Runtime.Serialization.Serializer.Json.Deserialize<PushingResult>(text);
+				return Zongsoft.Serialization.Serializer.Json.Deserialize<PushingResult>(text);
 
 			return new PushingResult("Unknown", text);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.IConfiguration EnsureConfiguration()
+		private Options.PushingOptions EnsureOptions()
 		{
-			return this.Configuration ?? throw new InvalidOperationException("Missing required configuration of the mobile-pushing sender(aliyun).");
+			return this.Options ?? throw new InvalidOperationException("Missing required configuration of the mobile-pushing sender(aliyun).");
 		}
 		#endregion
 	}

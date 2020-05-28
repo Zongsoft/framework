@@ -36,12 +36,17 @@ namespace Zongsoft.Externals.Aliyun
 	/// </summary>
 	public interface ICertificate
 	{
+		string Name
+		{
+			get; set;
+		}
+
 		/// <summary>
 		/// 获取凭证的标识（即：AccessKey）。
 		/// </summary>
-		string Name
+		string Code
 		{
-			get;
+			get; set;
 		}
 
 		/// <summary>
@@ -49,7 +54,7 @@ namespace Zongsoft.Externals.Aliyun
 		/// </summary>
 		string Secret
 		{
-			get;
+			get; set;
 		}
 	}
 }

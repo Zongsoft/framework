@@ -28,39 +28,36 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Pushing.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options
 {
 	/// <summary>
-	/// 表示移动推送相关的配置接口。
+	/// 表示消息队列的配置选项。
 	/// </summary>
-	public interface IConfiguration
+	public class QueueOption
 	{
 		/// <summary>
-		/// 获取或设置移动推送运营商区域。
+		/// 获取或设置消息队列名。
 		/// </summary>
-		ServiceCenterName? Region
+		public string Name
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置关联的凭证名。
+		/// 获取或设置消息队列所在的服务区域名，如果为空(null)或空字符串("")则由提供程序配置项指定。
 		/// </summary>
-		string Certificate
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取移动推送的应用配置项集合。
+		/// 获取或设置消息队列关联的凭证名，如果为空(null)或空字符串("")则由提供程序配置项指定。
 		/// </summary>
-		Collections.INamedCollection<IAppOption> Apps
+		public string Certificate
 		{
-			get;
+			get; set;
 		}
 	}
 }

@@ -30,19 +30,51 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Pushing.Options
 {
 	/// <summary>
-	/// 表示电信短信服务的配置接口。
+	/// 表示移动应用的配置选项。
 	/// </summary>
-	public interface ITelecomMessageOption
+	public class PushingAppOption
 	{
 		/// <summary>
-		/// 获取短信模板配置项集合。
+		/// 获取或设置移动应用的名称。
 		/// </summary>
-		Collections.INamedCollection<ITemplateOption> Templates
+		public string Name
 		{
-			get;
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置移动应用的代号(即移动推送的App-Key)。
+		/// </summary>
+		public string Code
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置移动应用的推送密码。
+		/// </summary>
+		public string Secret
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置移动应用所属的运营商区域。
+		/// </summary>
+		public ServiceCenterName? Region
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取或设置移动应用关联的凭证名。
+		/// </summary>
+		public string Certificate
+		{
+			get; set;
 		}
 	}
 }

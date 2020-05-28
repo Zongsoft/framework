@@ -28,42 +28,36 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Storages.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options
 {
 	/// <summary>
-	/// 表示存储器(Bucket)的配置项接口。
+	/// 表示消息主题的配置选项。
 	/// </summary>
-	public interface IBucketOption
+	public class TopicOption
 	{
-		#region 公共属性
 		/// <summary>
-		/// 获取或设置存储器的名称。
+		/// 获取或设置消息主题名。
 		/// </summary>
-		string Name
+		public string Name
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置存储器所属的运营商区域。
+		/// 获取或设置消息主题所在的服务区域名，如果为空(null)或空字符串("")则由提供程序配置项指定。
 		/// </summary>
-		ServiceCenterName? Region
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置存储器关联的凭证名。
+		/// 获取或设置消息主题关联的凭证名，如果为空(null)或空字符串("")则由提供程序配置项指定。
 		/// </summary>
-		string Certificate
+		public string Certificate
 		{
-			get;
-			set;
+			get; set;
 		}
-		#endregion
 	}
 }

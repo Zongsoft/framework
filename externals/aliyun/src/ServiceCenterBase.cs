@@ -43,7 +43,7 @@ namespace Zongsoft.Externals.Aliyun
 		#endregion
 
 		#region 构造函数
-		protected ServiceCenterBase(ServiceCenterName name, bool isInternal)
+		protected ServiceCenterBase(ServiceCenterName name, bool isIntranet)
 		{
 			_name = name;
 
@@ -51,23 +51,23 @@ namespace Zongsoft.Externals.Aliyun
 			{
 				case ServiceCenterName.Beijing: //北京服务中心
 					_alias = "cn-beijing";
-					_path = isInternal ? "beijing-internal.aliyuncs.com" : "beijing.aliyuncs.com";
+					_path = isIntranet ? "beijing-internal.aliyuncs.com" : "beijing.aliyuncs.com";
 					break;
 				case ServiceCenterName.Qingdao: //青岛服务中心
 					_alias = "cn-qingdao";
-					_path = isInternal ? "qingdao-internal.aliyuncs.com" : "qingdao.aliyuncs.com";
+					_path = isIntranet ? "qingdao-internal.aliyuncs.com" : "qingdao.aliyuncs.com";
 					break;
 				case ServiceCenterName.Hangzhou: //杭州服务中心
 					_alias = "cn-hangzhou";
-					_path = isInternal ? "hangzhou-internal.aliyuncs.com" : "hangzhou.aliyuncs.com";
+					_path = isIntranet ? "hangzhou-internal.aliyuncs.com" : "hangzhou.aliyuncs.com";
 					break;
 				case ServiceCenterName.Shenzhen: //深圳服务中心
 					_alias = "cn-shenzhen";
-					_path = isInternal ? "shenzhen-internal.aliyuncs.com" : "shenzhen.aliyuncs.com";
+					_path = isIntranet ? "shenzhen-internal.aliyuncs.com" : "shenzhen.aliyuncs.com";
 					break;
 				case ServiceCenterName.Hongkong: //香港服务中心
 					_alias = "cn-hongkong";
-					_path = isInternal ? "hongkong-internal.aliyuncs.com" : "hongkong.aliyuncs.com";
+					_path = isIntranet ? "hongkong-internal.aliyuncs.com" : "hongkong.aliyuncs.com";
 					break;
 			}
 		}
@@ -79,10 +79,7 @@ namespace Zongsoft.Externals.Aliyun
 		/// </summary>
 		public ServiceCenterName Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 		}
 
 		/// <summary>
@@ -90,14 +87,8 @@ namespace Zongsoft.Externals.Aliyun
 		/// </summary>
 		public string Alias
 		{
-			get
-			{
-				return _alias;
-			}
-			protected set
-			{
-				_alias = value;
-			}
+			get => _alias;
+			protected set => _alias = value;
 		}
 
 		/// <summary>
@@ -105,10 +96,7 @@ namespace Zongsoft.Externals.Aliyun
 		/// </summary>
 		public virtual string Path
 		{
-			get
-			{
-				return _path;
-			}
+			get => _path;
 			protected set
 			{
 				if(string.IsNullOrWhiteSpace(value))

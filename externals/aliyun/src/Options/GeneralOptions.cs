@@ -28,38 +28,72 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Options
+using Zongsoft.Services;
+using Zongsoft.Configuration;
+
+namespace Zongsoft.Externals.Aliyun.Options
 {
 	/// <summary>
-	/// 表示阿里云消息服务的配置接口。
+	/// 表示阿里云的常规配置选项。
 	/// </summary>
-	public interface IConfiguration
+	public class GeneralOptions
 	{
-		/// <summary>
-		/// 获取或设置消息服务的访问标识。
-		/// </summary>
-		string Name
+		#region 构造函数
+		public GeneralOptions()
 		{
-			get;
-			set;
+			this.Certificates = new CertificateCollection();
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置配置的服务中心。
+		/// </summary>
+		public ServiceCenterName Name
+		{
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取消息队列提供程序的配置项。
+		/// 获取或设置一个值，指示是否为内网访问。
 		/// </summary>
-		IQueueProviderOption Queues
+		[ConfigurationProperty("intranet")]
+		public bool IsIntranet
 		{
-			get;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取消息主题提供程序的配置项。
+		/// 获取阿里云的凭证提供程序。
 		/// </summary>
-		ITopicProviderOption Topics
+		public ICertificateProvider Certificates
 		{
 			get;
 		}
+		#endregion
+
+		#region 静态方法
+		private static GeneralOptions _instance;
+		public static GeneralOptions Instance
+		{
+			get => _instance ?? (_instance = ApplicationContext.Current.Configuration.GetOption<Options.GeneralOptions>("Externals/Aliyun/General"));
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class CertificateCollection : Zongsoft.Collections.NamedCollectionBase<ICertificate>, ICertificateProvider
+		{
+			public ICertificate Default
+			{
+				get; set;
+			}
+
+			protected override string GetKeyForItem(ICertificate item)
+			{
+				return item.Name;
+			}
+		}
+		#endregion
 	}
 }

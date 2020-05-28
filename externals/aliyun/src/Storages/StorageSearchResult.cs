@@ -98,30 +98,19 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 内部方法
-		internal Zongsoft.IO.PathInfo Append(string path, long size, string checksum, DateTimeOffset modifiedTime)
+		internal Zongsoft.IO.PathInfo Append(string path, long size, DateTimeOffset modifiedTime)
 		{
 			var items = _items;
 
 			if(items == null)
 				throw new ObjectDisposedException(this.GetType().FullName);
 
-			Zongsoft.IO.PathInfo info;
 			var fullPath = this.GetFullPath(path);
 			var url = _resolver.UrlThunk == null ? null : _resolver.UrlThunk(fullPath);
 
-			if(fullPath.EndsWith("/"))
-			{
-				info = new Zongsoft.IO.DirectoryInfo(fullPath, null, modifiedTime.LocalDateTime, url);
-			}
-			else
-			{
-				byte[] checksumBytes = null;
-
-				if(!string.IsNullOrWhiteSpace(checksum))
-					checksumBytes = Zongsoft.Common.Convert.FromHexString(checksum.Trim('"'), '-');
-
-				info = new Zongsoft.IO.FileInfo(fullPath, size, checksumBytes, null, modifiedTime.LocalDateTime, url);
-			}
+			var info = fullPath.EndsWith("/") ?
+				(IO.PathInfo)new Zongsoft.IO.DirectoryInfo(fullPath, null, modifiedTime.LocalDateTime, url) :
+				(IO.PathInfo)new Zongsoft.IO.FileInfo(fullPath, size, null, modifiedTime.LocalDateTime, url);
 
 			items.Add(info);
 			return info;

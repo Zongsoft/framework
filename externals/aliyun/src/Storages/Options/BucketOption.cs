@@ -30,56 +30,37 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Pushing.Options
+namespace Zongsoft.Externals.Aliyun.Storages.Options
 {
 	/// <summary>
-	/// 表示移动应用的配置项接口。
+	/// 表示存储器(Bucket)的配置项。
 	/// </summary>
-	public interface IAppOption
+	public class BucketOption
 	{
+		#region 公共属性
 		/// <summary>
-		/// 获取或设置移动应用的名称。
+		/// 获取或设置存储器的名称。
 		/// </summary>
-		string Name
+		public string Name
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置移动应用的代号(即移动推送的App-Key)。
+		/// 获取或设置存储器所属的运营商区域。
 		/// </summary>
-		string Code
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置移动应用的推送密码。
+		/// 获取或设置存储器关联的凭证名。
 		/// </summary>
-		string Secret
+		public string Certificate
 		{
-			get;
-			set;
+			get; set;
 		}
-
-		/// <summary>
-		/// 获取或设置移动应用所属的运营商区域。
-		/// </summary>
-		ServiceCenterName? Region
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置移动应用关联的凭证名。
-		/// </summary>
-		string Certificate
-		{
-			get;
-			set;
-		}
+		#endregion
 	}
 }

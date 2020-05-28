@@ -28,38 +28,15 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Options
+namespace Zongsoft.Externals.Aliyun.Storages.Options
 {
-	/// <summary>
-	/// 表示阿里云的常规配置接口。
-	/// </summary>
-	public interface IConfiguration
+	public class BucketOptionCollection : Collections.NamedCollectionBase<BucketOption>
 	{
-		/// <summary>
-		/// 获取或设置配置的服务中心。
-		/// </summary>
-		ServiceCenterName Name
+		protected override string GetKeyForItem(BucketOption item)
 		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置一个值，指示是否为内网访问。
-		/// </summary>
-		bool IsInternal
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取阿里云的凭证提供程序。
-		/// </summary>
-		ICertificateProvider Certificates
-		{
-			get;
+			return item.Name;
 		}
 	}
 }

@@ -172,7 +172,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 								owner.Append(dictionary["Key"],
 									Zongsoft.Common.Convert.ConvertValue<long>(dictionary["Size"]),
-									dictionary["ETag"],
 									Zongsoft.Common.Convert.ConvertValue<DateTimeOffset>(dictionary["LastModified"]));
 							}
 
@@ -185,7 +184,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 								if(owner == null)
 									owner = thunk(name, pattern, marker);
 
-								owner.Append(prefix, 0, null, DateTimeOffset.MinValue);
+								owner.Append(prefix, 0, DateTimeOffset.MinValue);
 							}
 
 							break;

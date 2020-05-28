@@ -197,11 +197,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			if(state is TopicEmailState)
 			{
-				return string.Format("<DirectMail>{0}</DirectMail>", Zongsoft.Runtime.Serialization.Serializer.Json.Serialize(state));
+				return string.Format("<DirectMail>{0}</DirectMail>", Zongsoft.Serialization.Serializer.Json.Serialize(state));
 			}
 			else if(state is TopicSmsState)
 			{
-				return string.Format("<DirectSMS>{0}</DirectSMS>", Zongsoft.Runtime.Serialization.Serializer.Json.Serialize(state));
+				return string.Format("<DirectSMS>{0}</DirectSMS>", Zongsoft.Serialization.Serializer.Json.Serialize(state));
 			}
 
 			return null;

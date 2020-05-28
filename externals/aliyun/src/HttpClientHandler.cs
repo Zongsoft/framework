@@ -58,7 +58,7 @@ namespace Zongsoft.Externals.Aliyun
 			switch(_authenticator.SignatureMode)
 			{
 				case HttpSignatureMode.Header:
-					request.Headers.Authorization = new AuthenticationHeaderValue(_authenticator.Name, _certificate.Name + ":" + _authenticator.Signature(request, _certificate.Secret));
+					request.Headers.Authorization = new AuthenticationHeaderValue(_authenticator.Name, _certificate.Code + ":" + _authenticator.Signature(request, _certificate.Secret));
 					break;
 				case HttpSignatureMode.Parameter:
 					var delimiter = string.IsNullOrWhiteSpace(request.RequestUri.Query) ? "?" : "&";

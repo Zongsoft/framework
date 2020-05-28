@@ -28,40 +28,46 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun
+namespace Zongsoft.Externals.Aliyun.Messaging.Options
 {
 	/// <summary>
-	/// 表示本应用的配置类。
+	/// 表示阿里云消息服务的配置选项。
 	/// </summary>
-	public static class Configuration
+	public class MessagingOptions
 	{
-		#region 成员字段
-		private static Options.IConfiguration _instance;
+		#region 构造函数
+		public MessagingOptions()
+		{
+			this.Queues = new QueueOptionCollection();
+			this.Topics = new TopicOptionCollection();
+		}
 		#endregion
 
-		#region	公共属性
+		#region 公共属性
 		/// <summary>
-		/// 获取或设置本应用的配置对象。
+		/// 获取或设置消息服务的访问标识。
 		/// </summary>
-		public static Options.IConfiguration Instance
+		public string Name
 		{
-			get
-			{
-				if(_instance == null)
-				{
-					_instance = Zongsoft.Options.OptionManager.Instance.GetOptionValue("/Externals/Aliyun/General") as Options.IConfiguration;
+			get; set;
+		}
 
-					if(_instance == null)
-						throw new InvalidOperationException("Missing required configuation of the Aliyun.");
-				}
+		/// <summary>
+		/// 获取消息队列提供程序的配置项。
+		/// </summary>
+		public QueueOptionCollection Queues
+		{
+			get;
+		}
 
-				return _instance;
-			}
-			set
-			{
-				_instance = value ?? throw new ArgumentNullException();
-			}
+		/// <summary>
+		/// 获取消息主题提供程序的配置项。
+		/// </summary>
+		public TopicOptionCollection Topics
+		{
+			get;
 		}
 		#endregion
 	}

@@ -28,41 +28,36 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options
 {
 	/// <summary>
-	/// 表示短信模板的配置项接口。
+	/// 表示阿里云消息队列提供程序的配置项集合。
 	/// </summary>
-	public interface ITemplateOption
+	public class QueueOptionCollection : Collections.NamedCollectionBase<QueueOption>
 	{
 		#region 公共属性
 		/// <summary>
-		/// 获取或设置模板的名称。
+		/// 获取或设置提供程序所在的服务区域名。
 		/// </summary>
-		string Name
+		public ServiceCenterName? Region
 		{
-			get;
-			set;
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置模板的代号。
+		/// 获取或设置提供程序默认的凭证名。
 		/// </summary>
-		string Code
+		public string Certificate
 		{
-			get;
-			set;
+			get; set;
 		}
+		#endregion
 
-		/// <summary>
-		/// 获取或设置模板的方案（即阿里云的短信签名）。
-		/// </summary>
-		string Scheme
+		#region 重写方法
+		protected override string GetKeyForItem(QueueOption item)
 		{
-			get;
-			set;
+			return item.Name;
 		}
 		#endregion
 	}

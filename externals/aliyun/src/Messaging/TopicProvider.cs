@@ -28,20 +28,21 @@
  */
 
 using System;
+using System.Text;
+using System.Net.Http;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Net.Http;
-using System.Text;
 
+using Zongsoft.Services;
 using Zongsoft.Messaging;
-using Zongsoft.Communication;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
+	[Service(typeof(ITopicProvider))]
 	public class TopicProvider : Zongsoft.Messaging.ITopicProvider
 	{
 		#region 成员字段
-		private Options.IConfiguration _configuration;
+		private Options.MessagingOptions _options;
 		private readonly ConcurrentDictionary<string, ITopic> _topics;
 		private readonly ConcurrentDictionary<string, HttpClient> _pool;
 		#endregion
@@ -58,19 +59,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		/// <summary>
 		/// 获取或设置配置信息。
 		/// </summary>
-		public Options.IConfiguration Configuration
+		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/Messaging")]
+		public Options.MessagingOptions Options
 		{
-			get
-			{
-				return _configuration;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_configuration = value;
-			}
+			get => _options;
+			set => _options = value ?? throw new ArgumentNullException();
 		}
 
 		public ITopic this[string name]
@@ -78,7 +71,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			get
 			{
 				if(string.IsNullOrWhiteSpace(name))
-					throw new ArgumentNullException("name");
+					throw new ArgumentNullException(nameof(name));
 
 				return this.Get(name);
 			}
@@ -91,9 +84,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			ITopic topic;
-
-			if(_topics.TryGetValue(name, out topic))
+			if(_topics.TryGetValue(name, out var topic))
 				return topic;
 
 			var http = this.GetHttpClient(name);
@@ -116,7 +107,6 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				throw new ArgumentNullException(nameof(name));
 
 			var http = this.GetHttpClient(name);
-
 			var response = http.PutAsync(this.GetRequestUrl(name), new StringContent(@"<Topic xmlns=""http://mns.aliyuncs.com/doc/v1/""><MaximumMessageSize>10240</MaximumMessageSize><LoggingEnabled>True</LoggingEnabled></Topic>", Encoding.UTF8, "application/xml"));
 
 			if(response.Result.IsSuccessStatusCode)
@@ -145,7 +135,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		{
 			var certificate = this.GetCertificate(name);
 
-			return _pool.GetOrAdd(certificate.Name, key =>
+			return _pool.GetOrAdd(certificate.Code, key =>
 			{
 				var http = new HttpClient(new HttpClientHandler(certificate, MessageQueueAuthenticator.Instance));
 				http.DefaultRequestHeaders.Add("x-mns-version", "2015-06-06");
@@ -155,45 +145,45 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 		internal ICertificate GetCertificate(string name)
 		{
-			var configuration = this.EnsureConfiguration();
+			var options = this.EnsureConfiguration();
 			var certificate = string.Empty;
 
-			if(configuration.Topics.TryGet(name, out var option))
+			if(options.Topics.TryGet(name, out var option))
 				certificate = option.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				certificate = configuration.Topics.Certificate;
+				certificate = options.Topics.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
-				return Aliyun.Configuration.Instance.Certificates.Default;
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Configuration.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
 		}
 
 		internal string GetRequestUrl(string topicName, params string[] parts)
 		{
-			var configuration = this.EnsureConfiguration();
-			var region = configuration.Topics.Region ?? Aliyun.Configuration.Instance.Name;
+			var options = this.EnsureConfiguration();
+			var region = options.Topics.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 
-			if(configuration.Topics.TryGet(topicName, out var option) && option.Region.HasValue)
+			if(options.Topics.TryGet(topicName, out var option) && option.Region.HasValue)
 				region = option.Region.Value;
 
-			var center = ServiceCenter.GetInstance(region, Aliyun.Configuration.Instance.IsInternal);
+			var center = ServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);
 
 			var path = parts == null ? string.Empty : string.Join("/", parts);
 
 			if(string.IsNullOrEmpty(path))
-				return string.Format("http://{0}.{1}/topics/{2}", configuration.Name, center.Path, topicName);
+				return string.Format("http://{0}.{1}/topics/{2}", options.Name, center.Path, topicName);
 			else
-				return string.Format("http://{0}.{1}/topics/{2}/{3}", configuration.Name, center.Path, topicName, path);
+				return string.Format("http://{0}.{1}/topics/{2}/{3}", options.Name, center.Path, topicName, path);
 		}
 		#endregion
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.IConfiguration EnsureConfiguration()
+		private Options.MessagingOptions EnsureConfiguration()
 		{
-			return this.Configuration ?? throw new InvalidOperationException("Missing required configuration of the topic provider(aliyun).");
+			return this.Options ?? throw new InvalidOperationException("Missing required configuration of the topic provider(aliyun).");
 		}
 		#endregion
 	}

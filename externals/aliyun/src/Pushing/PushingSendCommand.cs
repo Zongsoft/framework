@@ -58,19 +58,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 公共属性
+		[ServiceDependency]
 		public PushingSender Sender
 		{
-			get
-			{
-				return _sender;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_sender = value;
-			}
+			get => _sender;
+			set => _sender = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -78,7 +70,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		protected override object OnExecute(CommandContext context)
 		{
 			if(context.Parameter == null && context.Expression.Arguments.Length == 0)
-				throw new CommandException(ResourceUtility.GetString("Text.MissingCommandArguments"));
+				throw new CommandException(Properties.Resources.Text_MissingCommandArguments);
 
 			var destination = context.Expression.Options.GetValue<string>("target");
 
@@ -99,7 +91,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				var result = this.Send(
 					context.Expression.Options.GetValue<string>("name"),
 					context.Expression.Options.GetValue<string>("title"),
-					content, destination, settings, _ => context.Error.WriteLine(ResourceUtility.GetString("Text.NotificationSendCommand.Faild")));
+					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
 
 				if(result != null)
 				{
@@ -112,7 +104,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				var result = this.Send(
 					context.Expression.Options.GetValue<string>("name"),
 					context.Expression.Options.GetValue<string>("title"),
-					argument, destination, settings, _ => context.Error.WriteLine(ResourceUtility.GetString("Text.NotificationSendCommand.Faild")));
+					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
 
 				if(result != null)
 				{

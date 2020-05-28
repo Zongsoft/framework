@@ -38,26 +38,20 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 	public class TopicSubscription : Zongsoft.Messaging.ITopicSubscription
 	{
 		#region 成员字段
-		private Topic _topic;
+		private readonly Topic _topic;
 		#endregion
 
 		#region 构造函数
 		public TopicSubscription(Topic topic)
 		{
-			if(topic == null)
-				throw new ArgumentNullException(nameof(topic));
-
-			_topic = topic;
+			_topic = topic ?? throw new ArgumentNullException(nameof(topic));
 		}
 		#endregion
 
 		#region 公共属性
 		public Topic Topic
 		{
-			get
-			{
-				return _topic;
-			}
+			get => _topic;
 		}
 		#endregion
 

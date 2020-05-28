@@ -96,26 +96,17 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#region 公共属性
 		public string Id
 		{
-			get
-			{
-				return _id;
-			}
+			get => _id;
 		}
 
 		public string Path
 		{
-			get
-			{
-				return _path;
-			}
+			get => _path;
 		}
 
 		public long Length
 		{
-			get
-			{
-				return _length + _offset;
-			}
+			get => _length + _offset;
 		}
 
 		public long Position
@@ -124,7 +115,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			{
 				//确认当前是否可用的
 				this.EnsureDisposed();
-
 				return _length + _offset;
 			}
 		}
@@ -135,7 +125,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			{
 				//确认当前是否可用的
 				this.EnsureDisposed();
-
 				return _buffer.Length;
 			}
 		}

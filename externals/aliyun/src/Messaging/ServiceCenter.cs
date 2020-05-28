@@ -46,27 +46,27 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 构造函数
-		private ServiceCenter(ServiceCenterName name, bool isInternal) : base(name, isInternal)
+		private ServiceCenter(ServiceCenterName name, bool isIntranet) : base(name, isIntranet)
 		{
 			this.Path = MNS_CN_PREFIX + base.Path;
 		}
 		#endregion
 
 		#region 静态方法
-		public static ServiceCenter GetInstance(ServiceCenterName name, bool isInternal = false)
+		public static ServiceCenter GetInstance(ServiceCenterName name, bool isIntranet = false)
 		{
 			switch(name)
 			{
 				case ServiceCenterName.Beijing:
-					return isInternal ? Internal.Beijing : External.Beijing;
+					return isIntranet ? Intranet.Beijing : Internet.Beijing;
 				case ServiceCenterName.Qingdao:
-					return isInternal ? Internal.Qingdao : External.Qingdao;
+					return isIntranet ? Intranet.Qingdao : Internet.Qingdao;
 				case ServiceCenterName.Hangzhou:
-					return isInternal ? Internal.Hangzhou : External.Hangzhou;
+					return isIntranet ? Intranet.Hangzhou : Internet.Hangzhou;
 				case ServiceCenterName.Shenzhen:
-					return isInternal ? Internal.Shenzhen : External.Shenzhen;
+					return isIntranet ? Intranet.Shenzhen : Internet.Shenzhen;
 				case ServiceCenterName.Hongkong:
-					return isInternal ? Internal.Hongkong : External.Hongkong;
+					return isIntranet ? Intranet.Hongkong : Internet.Hongkong;
 			}
 
 			throw new NotSupportedException();
@@ -74,7 +74,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 嵌套子类
-		public static class External
+		public static class Internet
 		{
 			/// <summary>北京消息队列服务中心的外部访问地址</summary>
 			public static readonly ServiceCenter Beijing = new ServiceCenter(ServiceCenterName.Beijing, false);
@@ -92,7 +92,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			public static readonly ServiceCenter Hongkong = new ServiceCenter(ServiceCenterName.Hongkong, false);
 		}
 
-		public static class Internal
+		public static class Intranet
 		{
 			/// <summary>北京消息队列服务中心的内部访问地址</summary>
 			public static readonly ServiceCenter Beijing = new ServiceCenter(ServiceCenterName.Beijing, true);

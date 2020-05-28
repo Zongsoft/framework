@@ -28,30 +28,46 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Options
+namespace Zongsoft.Externals.Aliyun.Storages.Options
 {
 	/// <summary>
-	/// 表示阿里云消息队列提供程序的配置项接口。
+	/// 表示阿里云对象存储(OSS)相关的配置接口。
 	/// </summary>
-	public interface IQueueProviderOption : Collections.INamedCollection<IQueueOption>
+	public class StorageOptions
 	{
-		/// <summary>
-		/// 获取或设置提供程序所在的服务区域名。
-		/// </summary>
-		ServiceCenterName? Region
+		#region 构造函数
+		public StorageOptions()
 		{
-			get;
-			set;
+			this.Buckets = new BucketOptionCollection();
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置对象存储所属的服务区域。
+		/// </summary>
+		public ServiceCenterName? Region
+		{
+			get; set;
 		}
 
 		/// <summary>
-		/// 获取或设置提供程序默认的凭证名。
+		/// 获取或设置关联的凭证名。
 		/// </summary>
-		string Certificate
+		public string Certificate
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 获取存储器配置项集合。
+		/// </summary>
+		public Collections.INamedCollection<BucketOption> Buckets
 		{
 			get;
-			set;
 		}
+		#endregion
 	}
 }

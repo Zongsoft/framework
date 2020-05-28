@@ -30,27 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Pushing.Options
 {
-	/// <summary>
-	/// 表示电信语音服务的配置接口。
-	/// </summary>
-	public interface ITelecomVoiceOption
+	public class PushingAppOptionCollection : Collections.NamedCollectionBase<PushingAppOption>
 	{
-		/// <summary>
-		/// 获取或设置语音号码数组。
-		/// </summary>
-		string[] Numbers
+		protected override string GetKeyForItem(PushingAppOption item)
 		{
-			get; set;
-		}
-
-		/// <summary>
-		/// 获取语音模板配置项集合。
-		/// </summary>
-		Collections.INamedCollection<ITemplateOption> Templates
-		{
-			get;
+			return item.Name;
 		}
 	}
 }
