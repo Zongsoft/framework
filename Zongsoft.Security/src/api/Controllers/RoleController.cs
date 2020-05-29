@@ -264,7 +264,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPut("{id:long}/Member/{memberType}:{memberId:int}")]
 		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
-			return this.MemberProvider.SetMembers(id, new[] { new Member(id, memberId, memberType) }, false) > 0 ?
+			return this.MemberProvider.SetMember(new Member(id, memberId, memberType)) ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
