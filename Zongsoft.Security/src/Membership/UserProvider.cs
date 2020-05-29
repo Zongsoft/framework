@@ -522,7 +522,7 @@ namespace Zongsoft.Security.Membership
 					user.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId), "!Name,!Status,!StatusTimestamp") > 0)
+			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId), "*,!Name,!Status,!StatusTimestamp") > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{
