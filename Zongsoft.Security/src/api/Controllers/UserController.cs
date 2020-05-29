@@ -161,9 +161,9 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id:long?}")]
 		[HttpPatch("{id:long?}")]
-		public Task<IActionResult> Update(uint userId, [FromBody]IUser model)
+		public Task<IActionResult> Update(uint id, [FromBody]IUser model)
 		{
-			return this.UserProvider.Update(userId, model) ?
+			return this.UserProvider.Update(id, model) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}

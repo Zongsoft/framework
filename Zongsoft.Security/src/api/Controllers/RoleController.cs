@@ -158,12 +158,12 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id:long:required}")]
 		[HttpPatch("{id:long:required}")]
-		public Task<IActionResult> Update(uint roleId, [FromBody]IRole model)
+		public Task<IActionResult> Update(uint id, [FromBody]IRole model)
 		{
-			if(roleId == 0)
+			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.RoleProvider.Update(roleId, model) ?
+			return this.RoleProvider.Update(id, model) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
