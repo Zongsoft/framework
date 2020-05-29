@@ -137,6 +137,11 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
+			//验证指定的名称是否为系统内置名
+			if(string.Equals(name, Role.Administrators, StringComparison.OrdinalIgnoreCase) ||
+			   string.Equals(name, Role.Security, StringComparison.OrdinalIgnoreCase))
+				throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
+
 			//验证指定的名称是否合法
 			this.OnValidateName(name);
 
@@ -267,6 +272,11 @@ namespace Zongsoft.Security.Membership
 
 			if(model.HasChanges(nameof(IRole.Name)) && !string.IsNullOrWhiteSpace(role.Name))
 			{
+				//验证指定的名称是否为系统内置名
+				if(string.Equals(role.Name, Role.Administrators, StringComparison.OrdinalIgnoreCase) ||
+				   string.Equals(role.Name, Role.Security, StringComparison.OrdinalIgnoreCase))
+					throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
+
 				//验证指定的名称是否合法
 				this.OnValidateName(role.Name);
 
@@ -285,7 +295,7 @@ namespace Zongsoft.Security.Membership
 					role.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId), "!Name") > 0)
+			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId)) > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{
@@ -312,8 +322,19 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Select<Member>(Condition.Equal(nameof(Member.RoleId), roleId), schema);
 		}
 
+		public bool SetMember(Member member)
+		{
+			if(member.RoleId == 0 || member.MemberId == 0)
+				return false;
+
+			return this.DataAccess.Upsert(member) > 0;
+		}
+
 		public int SetMembers(uint roleId, params Member[] members)
 		{
+			if(members == null || members.Length == 0)
+				return 0;
+
 			return this.SetMembers(roleId, members, false);
 		}
 
@@ -322,21 +343,16 @@ namespace Zongsoft.Security.Membership
 			if(members == null)
 				return 0;
 
-			//如果指定角色编号不存在则退出
-			if(!this.DataAccess.Exists<IRole>(Condition.Equal(nameof(IRole.RoleId), roleId)))
-				return -1;
-
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
 				int count = 0;
 
 				//清空指定角色的所有成员
-				if(shouldResetting || members == null)
+				if(shouldResetting)
 					count = this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.RoleId), roleId));
 
 				//写入指定的角色成员集到数据库中
-				if(members != null)
-					count = this.DataAccess.UpsertMany<Member>(members.Select(m => new Member(roleId, m.MemberId, m.MemberType)));
+				count = this.DataAccess.UpsertMany<Member>(members.Select(m => new Member(roleId, m.MemberId, m.MemberType)));
 
 				//提交事务
 				transaction.Commit();

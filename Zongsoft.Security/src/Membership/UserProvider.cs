@@ -233,6 +233,10 @@ namespace Zongsoft.Security.Membership
 			//确认指定的用户编号是否有效
 			userId = GetUserId(userId);
 
+			//验证指定的名称是否为系统内置名
+			if(string.Equals(name, User.Administrator, StringComparison.OrdinalIgnoreCase))
+				throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
+
 			//验证指定的名称是否合法
 			this.OnValidateName(name);
 
@@ -504,6 +508,10 @@ namespace Zongsoft.Security.Membership
 
 			if(model.HasChanges(nameof(IUser.Name)) && !string.IsNullOrWhiteSpace(user.Name))
 			{
+				//验证指定的名称是否为系统内置名
+				if(string.Equals(user.Name, User.Administrator, StringComparison.OrdinalIgnoreCase))
+					throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
+
 				//验证指定的名称是否合法
 				this.OnValidateName(user.Name);
 
