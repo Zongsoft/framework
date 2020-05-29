@@ -54,7 +54,14 @@ namespace Zongsoft.Security.Membership
 		IEnumerable<Member> GetMembers(uint roleId, string schema = null);
 
 		/// <summary>
-		/// 设置更新指定角色下的成员。
+		/// 新增或更新指定角色成员。
+		/// </summary>
+		/// <param name="member">要设置的角色成员。</param>
+		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+		bool SetMember(Member member);
+
+		/// <summary>
+		/// 新增或更新指定角色下的成员。
 		/// </summary>
 		/// <param name="roleId">指定要更新的角色编号。</param>
 		/// <param name="members">要更新的角色成员集，如果为空则表示清空指定角色的成员集。</param>
