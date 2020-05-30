@@ -71,7 +71,12 @@ namespace Zongsoft.Web.Security
 			if(string.IsNullOrEmpty(_credentialId))
 				return Task.FromResult(AuthenticateResult.NoResult());
 
-			var principal = this.Options.Authority.GetPrincipal(_credentialId);
+			var authority = this.Options.Authority;
+
+			if(authority == null)
+				return Task.FromResult(AuthenticateResult.Fail("Missing the required credential authority."));
+
+			var principal = authority.GetPrincipal(_credentialId);
 
 			return principal == null ?
 				Task.FromResult(AuthenticateResult.Fail("Invalid credential Id.")) :
