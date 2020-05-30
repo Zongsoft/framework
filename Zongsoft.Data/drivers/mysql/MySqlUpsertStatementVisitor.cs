@@ -86,20 +86,32 @@ namespace Zongsoft.Data.MySql
 					visitor.Output.Append(")");
 			}
 
+			index = 0;
+			visitor.Output.AppendLine(" ON DUPLICATE KEY UPDATE ");
+
 			if(statement.Updation.Count > 0)
 			{
-				index = 0;
-				visitor.Output.AppendLine(" ON DUPLICATE KEY UPDATE ");
-
 				foreach(var item in statement.Updation)
 				{
 					if(index++ > 0)
 						visitor.Output.Append(",");
 
-					//visitor.Visit(item.Field);
 					visitor.Output.Append(visitor.Dialect.GetIdentifier(item.Field));
 					visitor.Output.Append("=");
 					visitor.Visit(item.Value);
+				}
+			}
+			else
+			{
+				foreach(var field in statement.Fields)
+				{
+					if(index++ > 0)
+						visitor.Output.Append(",");
+
+					visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
+					visitor.Output.Append("=VALUES(");
+					visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
+					visitor.Output.Append(")");
 				}
 			}
 
