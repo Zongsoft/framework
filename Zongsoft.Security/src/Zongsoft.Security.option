@@ -5,7 +5,7 @@
 		<connectionSettings>
 			<connectionSetting name="Security"
 			                   driver="MsSql"
-			                   value="Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\Zongsoft\Zongsoft.Security\database\Zongsoft.Security.mdf;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" />
+			                   value="Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\Zongsoft\Zongsoft.Security\database\Zongsoft.Security.mdf;Integrated Security=True;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" />
 		</connectionSettings>
 	</option>
 
