@@ -64,56 +64,36 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public T? Minimum
 		{
-			get
-			{
-				return _minimum;
-			}
-			set
-			{
-				//确保设置的范围起始值小于截止值
-				_minimum = this.EnsureMinimum(value);
-			}
+			get => _minimum;
+			set => _minimum = this.EnsureMinimum(value);
 		}
 
 		public T? Maximum
 		{
-			get
-			{
-				return _maximum;
-			}
-			set
-			{
-				//确保设置的范围截止值大于起始值
-				_maximum = this.EnsureMaximum(value);
-			}
+			get => _maximum;
+			set => _maximum = this.EnsureMaximum(value);
 		}
 
+		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool HasValue
 		{
-			get
-			{
-				return _minimum.HasValue || _maximum.HasValue;
-			}
+			get => _minimum.HasValue || _maximum.HasValue;
 		}
 
+		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsEmpty
 		{
-			get
-			{
-				return _minimum == null && _maximum == null;
-			}
+			get => _minimum == null && _maximum == null;
 		}
 
+		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsZero
 		{
-			get
-			{
-				return (_minimum == null || Comparer<T>.Default.Compare(_minimum.Value, default(T)) == 0) &&
-				       (_maximum == null || Comparer<T>.Default.Compare(_maximum.Value, default(T)) == 0);
-			}
+			get => (_minimum == null || Comparer<T>.Default.Compare(_minimum.Value, default) == 0) &&
+			       (_maximum == null || Comparer<T>.Default.Compare(_maximum.Value, default) == 0);
 		}
 		#endregion
 

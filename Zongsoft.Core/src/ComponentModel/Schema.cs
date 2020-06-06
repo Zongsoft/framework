@@ -127,6 +127,7 @@ namespace Zongsoft.ComponentModel
 			}
 		}
 
+		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool HasActions
 		{
