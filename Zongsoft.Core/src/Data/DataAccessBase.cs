@@ -139,8 +139,7 @@ namespace Zongsoft.Data
 		#region 执行方法
 		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, IDictionary<string, object> states = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 		{
-			IDictionary<string, object> outParameters;
-			return this.Execute<T>(name, inParameters, out outParameters, states, executing, executed);
+			return this.Execute<T>(name, inParameters, out _, states, executing, executed);
 		}
 
 		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDictionary<string, object> states = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
@@ -201,8 +200,7 @@ namespace Zongsoft.Data
 
 		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, IDictionary<string, object> states = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 		{
-			IDictionary<string, object> outParameters;
-			return this.ExecuteScalar(name, inParameters, out outParameters, states, executing, executed);
+			return this.ExecuteScalar(name, inParameters, out _, states, executing, executed);
 		}
 
 		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDictionary<string, object> states = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
