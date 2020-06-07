@@ -71,7 +71,7 @@ namespace Zongsoft.Data
 		protected DataServiceBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? throw new InvalidOperationException("Missing the required data access.");
+			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess));
 
 			//创建数据搜索器
 			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
@@ -84,7 +84,7 @@ namespace Zongsoft.Data
 
 			_name = name.Trim();
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? throw new InvalidOperationException("Missing the required data access.");
+			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess));
 
 			//创建数据搜索器
 			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
@@ -132,17 +132,8 @@ namespace Zongsoft.Data
 
 		public IDataAccess DataAccess
 		{
-			get
-			{
-				if(_dataAccess == null)
-					_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess));
-
-				return _dataAccess;
-			}
-			set
-			{
-				_dataAccess = value ?? throw new ArgumentNullException();
-			}
+			get => _dataAccess;
+			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
 		public IDataSearcher<TEntity> Searcher
