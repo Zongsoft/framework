@@ -78,13 +78,8 @@ namespace Zongsoft.Plugins.Hosting
 
 					foreach(var plugin in tree.Plugins)
 					{
-						if(plugin.Status != PluginStatus.Loaded)
-							continue;
-
-						foreach(var assembly in plugin.Manifest.Assemblies)
-							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, ctx.Configuration);
+						RegisterPlugin(plugin, services, ctx.Configuration);
 					}
-
 				}
 			});
 
@@ -128,6 +123,21 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 私有方法
+		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration)
+		{
+			if(plugin == null || plugin.Status != PluginStatus.Loaded)
+				return;
+
+			foreach(var assembly in plugin.Manifest.Assemblies)
+				Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, configuration);
+
+			if(plugin.HasChildren)
+			{
+				foreach(var child in plugin.Children)
+					RegisterPlugin(child, services, configuration);
+			}
+		}
+
 		private PluginsHostBuilderContext GetPluginsBuilderContext(HostBuilderContext context)
 		{
 			if(!context.Properties.TryGetValue(typeof(PluginsHostBuilderContext), out var contextValue))
