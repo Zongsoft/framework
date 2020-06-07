@@ -268,7 +268,7 @@ namespace Zongsoft.Security
 
 				foreach(var claim in identity.Claims)
 				{
-					if(!FillUser(user, claim))
+					if(!SetUserProperty(user, claim))
 						configure(model, claim);
 				}
 			}
@@ -296,7 +296,7 @@ namespace Zongsoft.Security
 			return claim;
 		}
 
-		private static bool FillUser(Membership.IUser user, Claim claim)
+		private static bool SetUserProperty(Membership.IUserIdentity user, Claim claim)
 		{
 			switch(claim.Type)
 			{
@@ -311,17 +311,26 @@ namespace Zongsoft.Security
 					}
 
 					return false;
-				case ClaimTypes.Email:
-					user.Email = claim.Value;
-					return true;
-				case ClaimTypes.MobilePhone:
-					user.Phone = claim.Value;
-					return true;
 				case ClaimNames.Namespace:
 					user.Namespace = claim.Value;
 					return true;
 				case ClaimNames.Description:
 					user.Description = claim.Value;
+					return true;
+			}
+
+			return false;
+		}
+
+		private static bool SetUserProperty(Membership.IUser user, Claim claim)
+		{
+			switch(claim.Type)
+			{
+				case ClaimTypes.Email:
+					user.Email = claim.Value;
+					return true;
+				case ClaimTypes.MobilePhone:
+					user.Phone = claim.Value;
 					return true;
 				case ClaimNames.UserStatus:
 					if(Enum.TryParse<Membership.UserStatus>(claim.Value, out var status))
@@ -357,7 +366,7 @@ namespace Zongsoft.Security
 					return false;
 			}
 
-			return false;
+			return SetUserProperty((Membership.IUserIdentity)user, claim);
 		}
 	}
 }
