@@ -42,7 +42,6 @@ using Zongsoft.Data;
 namespace Zongsoft.Web
 {
 	[ApiController]
-	[Route("[area]/[controller]")]
 	public class ApiControllerBase<TModel, TService> : ControllerBase where TService : class, IDataService<TModel>
 	{
 		#region 单例字段
@@ -96,25 +95,25 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{key:required}")]
+		[HttpGet("[action]/{key:required}")]
 		public Task<IActionResult> CountAsync(string key)
 		{
 			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string>(key).ToString()));
 		}
 
-		[HttpGet("{key1:required}-{key2:required}")]
+		[HttpGet("[action]/{key1:required}-{key2:required}")]
 		public Task<IActionResult> CountAsync(string key1, string key2)
 		{
 			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string>(key1, key2).ToString()));
 		}
 
-		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
+		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
 		public Task<IActionResult> CountAsync(string key1, string key2, string key3)
 		{
 			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string>(key1, key2, key3).ToString()));
 		}
 
-		[HttpGet("{key:required}")]
+		[HttpGet("[action]/{key:required}")]
 		public Task<IActionResult> ExistsAsync(string key)
 		{
 			return this.DataService.Exists(key) ?
@@ -122,7 +121,7 @@ namespace Zongsoft.Web
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{key1:required}-{key2:required}")]
+		[HttpGet("[action]/{key1:required}-{key2:required}")]
 		public Task<IActionResult> ExistsAsync(string key1, string key2)
 		{
 			return this.DataService.Exists(key1, key2) ?
@@ -130,7 +129,7 @@ namespace Zongsoft.Web
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
+		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
 		public Task<IActionResult> ExistsAsync(string key1, string key2, string key3)
 		{
 			return this.DataService.Exists(key1, key2, key3) ?
@@ -138,7 +137,7 @@ namespace Zongsoft.Web
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet]
+		[HttpGet("[action]")]
 		public Task<IActionResult> SearchAsync([FromQuery]string keyword, [FromQuery]Paging paging = null)
 		{
 			var searcher = this.DataService.Searcher;
@@ -152,7 +151,7 @@ namespace Zongsoft.Web
 			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), paging)));
 		}
 
-		[HttpGet("{key}")]
+		[HttpGet("{key?}")]
 		public IActionResult Get(string key, [FromQuery]Paging paging = null)
 		{
 			if(string.IsNullOrWhiteSpace(key))

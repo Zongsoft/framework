@@ -47,7 +47,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
-		[HttpPost]
+		[HttpPost("Count")]
 		public virtual IActionResult Count([FromBody]TConditional conditional)
 		{
 			if(conditional == null)
@@ -56,7 +56,7 @@ namespace Zongsoft.Web
 				return this.Content(this.DataService.Count(Conditional.ToCondition(conditional)).ToString(), "text/plain");
 		}
 
-		[HttpPost]
+		[HttpPost("Exists")]
 		public virtual IActionResult Exists([FromBody]TConditional conditional)
 		{
 			bool existed;
@@ -72,7 +72,7 @@ namespace Zongsoft.Web
 				return this.NotFound();
 		}
 
-		[HttpPost]
+		[HttpPost("Query")]
 		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging paging = null)
 		{
 			return this.Paginate(this.DataService.Select(Conditional.ToCondition(conditional), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), paging));
