@@ -54,11 +54,23 @@ namespace Zongsoft.Data.Common
 
 			if(connectionSettings != null)
 			{
-				foreach(var connectionSetting in connectionSettings)
+				if(string.IsNullOrEmpty(name))
 				{
-					if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-					   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
-						yield return new DataSource(connectionSetting);
+					var defaultSetting = connectionSettings.GetDefault();
+
+					if(defaultSetting == null)
+						yield break;
+					else
+						yield return new DataSource(defaultSetting);
+				}
+				else
+				{
+					foreach(var connectionSetting in connectionSettings)
+					{
+						if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+						   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
+							yield return new DataSource(connectionSetting);
+					}
 				}
 			}
 		}
