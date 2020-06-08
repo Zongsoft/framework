@@ -61,6 +61,8 @@ namespace Zongsoft.Security.Membership
 
 		public ClaimsPrincipal Principal { get; set; }
 
+		public IClaimsPrincipalTransformer Transformer { get; set; }
+
 		public AuthenticationReason Reason { get; }
 
 		public Exception Exception { get; }
@@ -75,6 +77,16 @@ namespace Zongsoft.Security.Membership
 		public bool Failed
 		{
 			get => this.Reason != AuthenticationReason.None || this.Exception != null || this.Identity == null || !this.Identity.IsAuthenticated;
+		}
+		#endregion
+
+		#region 公共方法
+		public object Transform()
+		{
+			if(this.Principal == null)
+				return null;
+
+			return (this.Transformer ?? ClaimsPrincipalTransformer.Default).Transform(this.Principal);
 		}
 		#endregion
 

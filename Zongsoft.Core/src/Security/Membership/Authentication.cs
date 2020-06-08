@@ -50,6 +50,7 @@ namespace Zongsoft.Security.Membership
 		private Authentication()
 		{
 			this.Challengers = new List<IAuthenticationChallenger>();
+			this.Transformers = new Collections.NamedCollection<IClaimsIdentityTransformer>(transformer => transformer.Name);
 		}
 		#endregion
 
@@ -65,9 +66,14 @@ namespace Zongsoft.Security.Membership
 		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
-		/// 获取一个身份验证验证器集合，该验证器包含对身份验证的响应处理。
+		/// 获取一个身份验证验证器集合。
 		/// </summary>
 		public ICollection<IAuthenticationChallenger> Challengers { get; }
+
+		/// <summary>
+		/// 获取一个身份转换器集合。
+		/// </summary>
+		public Collections.INamedCollection<IClaimsIdentityTransformer> Transformers { get; }
 
 		/// <summary>
 		/// 获取或设置命名空间映射器。
