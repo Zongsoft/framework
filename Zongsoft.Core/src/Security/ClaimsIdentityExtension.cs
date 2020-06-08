@@ -33,10 +33,14 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+using Zongsoft.Reflection;
+
 namespace Zongsoft.Security
 {
 	public static class ClaimsIdentityExtension
 	{
+		#region 公共方法
 		public static bool IsAnonymous(this IIdentity identity)
 		{
 			return identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.Name);
@@ -205,12 +209,12 @@ namespace Zongsoft.Security
 			return 0;
 		}
 
-		public static T AsModel<T>(this IIdentity identity, Action<T, Claim> configure = null) where T : class
+		public static T AsModel<T>(this IIdentity identity, Func<T, Claim, bool> configure = null) where T : class
 		{
 			return AsModel(identity as ClaimsIdentity, configure);
 		}
 
-		public static T AsModel<T>(this ClaimsIdentity identity, Action<T, Claim> configure = null) where T : class
+		public static T AsModel<T>(this ClaimsIdentity identity, Func<T, Claim, bool> configure = null) where T : class
 		{
 			static string GetClaimName(string text)
 			{
@@ -222,29 +226,27 @@ namespace Zongsoft.Security
 				return text;
 			}
 
-			static void ConfigureUser(T model, Claim claim)
+			static void ConfigureProperties(IDictionary<string, object> properties, Claim claim)
 			{
-				var user = (Membership.IUser)model;
-
 				var isMultiple =
 					claim.Type == ClaimNames.Authorization ||
 					claim.Type == (claim.Subject?.RoleClaimType ?? ClaimsIdentity.DefaultRoleClaimType);
 
 				var key = GetClaimName(claim.Type) + (isMultiple ? "s" : null);
 
-				if(user.Properties.TryGetValue(key, out var value))
+				if(properties.TryGetValue(key, out var value))
 				{
 					if(value is ICollection<string> collection)
 						collection.Add(claim.Value);
 					else
-						user.Properties[key] = new List<string>(new[] { value?.ToString(), claim.Value });
+						properties[key] = new List<string>(new[] { value?.ToString(), claim.Value });
 				}
 				else
 				{
 					if(isMultiple)
-						user.Properties.Add(key, new List<string>(new[] { claim.Value }));
+						properties.Add(key, new List<string>(new[] { claim.Value }));
 					else
-						user.Properties.Add(key, claim.Value);
+						properties.Add(key, claim.Value);
 				}
 			}
 
@@ -254,7 +256,7 @@ namespace Zongsoft.Security
 			T model;
 
 			if(typeof(T).IsAbstract)
-				model = Data.Model.Build<T>();
+				model = Model.Build<T>();
 			else
 				model = Activator.CreateInstance<T>();
 
@@ -263,19 +265,54 @@ namespace Zongsoft.Security
 				var user = (Membership.IUser)model;
 				user.FullName = identity.Label;
 
-				if(configure == null)
-					configure = ConfigureUser;
-
 				foreach(var claim in identity.Claims)
 				{
 					if(!SetUserProperty(user, claim))
-						configure(model, claim);
+					{
+						var configured = configure?.Invoke(model, claim);
+
+						if(configured == null || !configured.Value)
+							ConfigureProperties(user.Properties, claim);
+					}
+				}
+			}
+			else if(model is IModel m)
+			{
+				m.TrySetValue("FullName", identity.Label);
+				m.TrySetValue("Nickname", identity.Label);
+
+				foreach(var claim in identity.Claims)
+				{
+					if(!SetModelProperty(m, claim))
+					{
+						var configured = configure?.Invoke(model, claim);
+
+						if(configured == null || !configured.Value)
+						{
+							if(Reflector.TryGetValue(model, "Properties", out var value) && value is IDictionary<string, object> properties)
+								ConfigureProperties(properties, claim);
+						}
+					}
 				}
 			}
 			else if(configure != null)
 			{
+				Reflector.TrySetValue(model, "FullName", identity.Label);
+				Reflector.TrySetValue(model, "Nickname", identity.Label);
+
 				foreach(var claim in identity.Claims)
-					configure(model, claim);
+				{
+					if(!SetObjectProperty(model, claim))
+					{
+						var configured = configure?.Invoke(model, claim);
+
+						if(configured == null || !configured.Value)
+						{
+							if(Reflector.TryGetValue(model, "Properties", out var value) && value is IDictionary<string, object> properties)
+								ConfigureProperties(properties, claim);
+						}
+					}
+				}
 			}
 
 			return model;
@@ -295,7 +332,9 @@ namespace Zongsoft.Security
 			identity.AddClaim(claim);
 			return claim;
 		}
+		#endregion
 
+		#region 私有方法
 		private static bool SetUserProperty(Membership.IUserIdentity user, Claim claim)
 		{
 			switch(claim.Type)
@@ -368,5 +407,64 @@ namespace Zongsoft.Security
 
 			return SetUserProperty((Membership.IUserIdentity)user, claim);
 		}
+
+		private static bool SetModelProperty(IModel model, Claim claim)
+		{
+			switch(claim.Type)
+			{
+				case ClaimTypes.Name:
+					return model.TrySetValue(nameof(Membership.IUser.Name), claim.Value);
+				case ClaimTypes.NameIdentifier:
+					return uint.TryParse(claim.Value, out var userId) && model.TrySetValue(nameof(Membership.IUser.UserId), userId);
+				case ClaimNames.Namespace:
+					return model.TrySetValue(nameof(Membership.IUser.Namespace), claim.Value);
+				case ClaimNames.Description:
+					return model.TrySetValue(nameof(Membership.IUser.Description), claim.Value);
+				case ClaimTypes.Email:
+					return model.TrySetValue(nameof(Membership.IUser.Email), claim.Value);
+				case ClaimTypes.MobilePhone:
+					return model.TrySetValue(nameof(Membership.IUser.Phone), claim.Value);
+				case ClaimNames.UserStatus:
+					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && model.TrySetValue(nameof(Membership.IUser.Status), status);
+				case ClaimNames.UserStatusTimestamp:
+					return DateTime.TryParse(claim.Value, out var timestamp) && model.TrySetValue(nameof(Membership.IUser.StatusTimestamp), timestamp);
+				case ClaimNames.Creation:
+					return DateTime.TryParse(claim.Value, out var creation) && model.TrySetValue(nameof(Membership.IUser.Creation), creation);
+				case ClaimNames.Modification:
+					return DateTime.TryParse(claim.Value, out var modification) && model.TrySetValue(nameof(Membership.IUser.Modification), modification);
+			}
+
+			return false;
+		}
+
+		private static bool SetObjectProperty(object target, Claim claim)
+		{
+			switch(claim.Type)
+			{
+				case ClaimTypes.Name:
+					return Reflector.TrySetValue(target, nameof(Membership.IUser.Name), claim.Value);
+				case ClaimTypes.NameIdentifier:
+					return uint.TryParse(claim.Value, out var userId) && Reflector.TrySetValue(target, nameof(Membership.IUser.UserId), userId);
+				case ClaimNames.Namespace:
+					return Reflector.TrySetValue(target, nameof(Membership.IUser.Namespace), claim.Value);
+				case ClaimNames.Description:
+					return Reflector.TrySetValue(target, nameof(Membership.IUser.Description), claim.Value);
+				case ClaimTypes.Email:
+					return Reflector.TrySetValue(target, nameof(Membership.IUser.Email), claim.Value);
+				case ClaimTypes.MobilePhone:
+					return Reflector.TrySetValue(target, nameof(Membership.IUser.Phone), claim.Value);
+				case ClaimNames.UserStatus:
+					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && Reflector.TrySetValue(target, nameof(Membership.IUser.Status), status);
+				case ClaimNames.UserStatusTimestamp:
+					return DateTime.TryParse(claim.Value, out var timestamp) && Reflector.TrySetValue(target, nameof(Membership.IUser.StatusTimestamp), timestamp);
+				case ClaimNames.Creation:
+					return DateTime.TryParse(claim.Value, out var creation) && Reflector.TrySetValue(target, nameof(Membership.IUser.Creation), creation);
+				case ClaimNames.Modification:
+					return DateTime.TryParse(claim.Value, out var modification) && Reflector.TrySetValue(target, nameof(Membership.IUser.Modification), modification);
+			}
+
+			return false;
+		}
+		#endregion
 	}
 }

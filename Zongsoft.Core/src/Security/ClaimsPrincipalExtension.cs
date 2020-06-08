@@ -95,7 +95,7 @@ namespace Zongsoft.Security
 			return false;
 		}
 
-		public static IDictionary<string, object> ToDictionary(this ClaimsPrincipal principal)
+		public static IDictionary<string, object> ToDictionary(this ClaimsPrincipal principal, Func<ClaimsIdentity, object> identityTransform = null)
 		{
 			if(principal == null)
 				throw new ArgumentNullException(nameof(principal));
@@ -119,18 +119,21 @@ namespace Zongsoft.Security
 				}
 			}
 
+			if(identityTransform == null)
+				identityTransform = identity => identity.AsModel<Membership.IUser>();
+
 			if(principal.Identity != null)
-				dictionary.Add(nameof(ClaimsPrincipal.Identity), principal.Identity.AsModel<Membership.IUser>());
+				dictionary.Add(nameof(ClaimsPrincipal.Identity), identityTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 
 			if(principal.Identities != null)
 				dictionary.Add(nameof(ClaimsPrincipal.Identities), principal.Identities
 					.Where(identity => identity != principal.Identity)
-					.Select(identity => identity.AsModel<Membership.IUser>()));
+					.Select(identity => identityTransform(identity)));
 
 			return dictionary;
 		}
 
-		public static IEnumerable<T> GetModels<T>(this ClaimsPrincipal principal, Action<T, Claim> configure = null) where T : class
+		public static IEnumerable<T> GetModels<T>(this ClaimsPrincipal principal, Func<T, Claim, bool> configure = null) where T : class
 		{
 			if(principal == null)
 				throw new ArgumentNullException(nameof(principal));
