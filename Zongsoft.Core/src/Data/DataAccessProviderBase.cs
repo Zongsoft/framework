@@ -31,6 +31,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Configuration;
+using Zongsoft.Services;
+
 namespace Zongsoft.Data
 {
 	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, ICollection<TDataAccess> where TDataAccess : IDataAccess
@@ -60,7 +63,14 @@ namespace Zongsoft.Data
 		public IDataAccess GetAccessor(string name)
 		{
 			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+			{
+				var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
+
+				if(connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.Default))
+					throw new InvalidOperationException("Missing the default connection settings.");
+
+				name = connectionSettings.Default;
+			}
 
 			if(_accesses.TryGet(name, out var accessor))
 				return accessor;
