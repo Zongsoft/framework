@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, parameters);
 
 			return result.Succeed ?
-				Task.FromResult((IActionResult)this.Ok(result.Principal.ToDictionary())) :
+				Task.FromResult((IActionResult)this.Ok(result.Transform())) :
 				Task.FromResult((IActionResult)this.BadRequest(new AuthenticationFailure(result)));
 		}
 
@@ -90,7 +90,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 				return principal == null ?
 					Task.FromResult((IActionResult)this.BadRequest()) :
-					Task.FromResult((IActionResult)this.Ok(principal.ToDictionary()));
+					Task.FromResult((IActionResult)this.Ok(ClaimsPrincipalTransformer.Default.Transform(principal)));
 			}
 
 			return Task.FromResult((IActionResult)this.Unauthorized());
