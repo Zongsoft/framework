@@ -49,7 +49,7 @@ namespace Zongsoft.Security.Membership
 		#region 构造函数
 		private Authentication()
 		{
-			this.Handlers = new List<IAuthenticationHandler>();
+			this.Challengers = new List<IAuthenticationChallenger>();
 		}
 		#endregion
 
@@ -65,9 +65,9 @@ namespace Zongsoft.Security.Membership
 		public IAuthenticator Authenticator { get; set; }
 
 		/// <summary>
-		/// 获取一个身份验证处理器集合，该处理器包含对身份验证的响应处理。
+		/// 获取一个身份验证验证器集合，该验证器包含对身份验证的响应处理。
 		/// </summary>
-		public ICollection<IAuthenticationHandler> Handlers { get; }
+		public ICollection<IAuthenticationChallenger> Challengers { get; }
 
 		/// <summary>
 		/// 获取或设置命名空间映射器。
@@ -100,9 +100,9 @@ namespace Zongsoft.Security.Membership
 
 			var context = new AuthenticationContext(scenario, result);
 
-			foreach(var handler in this.Handlers)
+			foreach(var challenger in this.Challengers)
 			{
-				handler.Handle(context);
+				challenger.Challenge(context);
 			}
 
 			if(context.Succeed && context.Principal is CredentialPrincipal principal)

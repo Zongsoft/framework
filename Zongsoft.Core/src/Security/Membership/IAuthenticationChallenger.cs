@@ -32,8 +32,15 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	public interface IAuthenticationHandler
+	/// <summary>
+	/// 表示身份验证质询器的接口。
+	/// </summary>
+	public interface IAuthenticationChallenger
 	{
-		void Handle(AuthenticationContext context);
+		/// <summary>
+		/// 身份验证确认方法。
+		/// </summary>
+		/// <param name="context">身份验证上下文对象。</param>
+		void Challenge(AuthenticationContext context);
 	}
 }
