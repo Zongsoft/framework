@@ -54,7 +54,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Configuration\Xml\OptionConfigurationTest.option">
+    <None Update="Configuration\Xml\OptionConfigurationTest-2.option">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Configuration\Xml\OptionConfigurationTest-1.option">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

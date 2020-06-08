@@ -24,8 +24,8 @@
 	</option>
 
 	<option path="/Data">
-		<connectionSettings>
-			<connectionSetting connectionSetting.name="db" driver="mysql" mode="all" value="db.connectionString" />
+		<connectionSettings default="db1">
+			<connectionSetting connectionSetting.name="db1" driver="mysql" mode="all" value="db1.connectionString" />
 		</connectionSettings>
 	</option>
 

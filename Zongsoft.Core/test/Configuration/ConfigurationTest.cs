@@ -46,12 +46,12 @@ namespace Zongsoft.Configuration
 			Assert.NotNull(settings);
 			Assert.NotEmpty(settings);
 
-			var setting = settings.Get("db");
+			var setting = settings.Get("db1");
 
 			Assert.NotNull(setting);
-			Assert.Equal("db", setting.Name);
+			Assert.Equal("db1", setting.Name);
 			Assert.Equal("mysql", setting.Driver);
-			Assert.Equal("db.connectionString", setting.Value);
+			Assert.Equal("db1.connectionString", setting.Value);
 
 			Assert.True(setting.HasProperties);
 			Assert.Equal(2, setting.Properties.Count);

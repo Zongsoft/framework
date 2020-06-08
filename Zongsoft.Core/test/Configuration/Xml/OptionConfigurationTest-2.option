@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<configuration>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="db2" driver="postgres" mode="all" value="db2.connectionString" />
+		</connectionSettings>
+	</option>
+</configuration>
