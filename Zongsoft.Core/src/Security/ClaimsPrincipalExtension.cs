@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
 
@@ -93,55 +90,6 @@ namespace Zongsoft.Security
 			}
 
 			return false;
-		}
-
-		public static IDictionary<string, object> ToDictionary(this ClaimsPrincipal principal, Func<ClaimsIdentity, object> identityTransform = null)
-		{
-			if(principal == null)
-				throw new ArgumentNullException(nameof(principal));
-
-			var type = principal.GetType();
-			var dictionary = new Dictionary<string, object>();
-
-			if(type != typeof(ClaimsPrincipal) || type != typeof(GenericPrincipal))
-			{
-				var properties = type.GetTypeInfo().DeclaredProperties.Where(p =>
-					p.CanRead && !p.IsSpecialName &&
-					p.GetMethod.IsPublic && !p.GetMethod.IsStatic
-				);
-
-				foreach(var property in properties)
-				{
-					if(property.PropertyType == typeof(TimeSpan))
-						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
-					else
-						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
-				}
-			}
-
-			if(identityTransform == null)
-				identityTransform = identity => identity.AsModel<Membership.IUser>();
-
-			if(principal.Identity != null)
-				dictionary.Add(nameof(ClaimsPrincipal.Identity), identityTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
-
-			if(principal.Identities != null)
-				dictionary.Add(nameof(ClaimsPrincipal.Identities), principal.Identities
-					.Where(identity => identity != principal.Identity)
-					.Select(identity => identityTransform(identity)));
-
-			return dictionary;
-		}
-
-		public static IEnumerable<T> GetModels<T>(this ClaimsPrincipal principal, Func<T, Claim, bool> configure = null) where T : class
-		{
-			if(principal == null)
-				throw new ArgumentNullException(nameof(principal));
-
-			foreach(var identity in principal.Identities)
-			{
-				yield return identity.AsModel<T>(configure);
-			}
 		}
 	}
 }
