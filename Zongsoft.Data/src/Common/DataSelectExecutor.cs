@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Common
 			var command = context.Session.Build(statement);
 			context.Result = CreateResults(context.EntityType, context, statement, command, null);
 
-			return true;
+			return false;
 		}
 
 		protected virtual bool OnExecute(DataInsertContext context, SelectStatement statement)
