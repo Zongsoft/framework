@@ -61,6 +61,13 @@ namespace Zongsoft.Security.Membership
 		bool SetMember(Member member);
 
 		/// <summary>
+		/// 新增或更新指定的角色成员集。
+		/// </summary>
+		/// <param name="members">要更新的角色成员集。</param>
+		/// <returns>如果更新成功则返回更新的数量，否则返回零。</returns>
+		int SetMembers(IEnumerable<Member> members);
+
+		/// <summary>
 		/// 新增或更新指定角色下的成员。
 		/// </summary>
 		/// <param name="roleId">指定要更新的角色编号。</param>

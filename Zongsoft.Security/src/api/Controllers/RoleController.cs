@@ -238,7 +238,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 		#endregion
 
-		#region 成员方法
+		#region 成员操作
 		[HttpGet("{id:long}/Roles")]
 		[HttpGet("Roles/{id:long:required}")]
 		public Task<IActionResult> GetRoles(uint id)
@@ -248,6 +248,19 @@ namespace Zongsoft.Security.Web.Controllers
 			return roles != null && roles.Any() ?
 				Task.FromResult((IActionResult)this.Ok(roles)) :
 				Task.FromResult((IActionResult)this.NoContent());
+		}
+
+		[HttpPut("{id:long}/Roles")]
+		[HttpPut("Roles/{id:long}")]
+		public async Task<IActionResult> SetRoles(uint id)
+		{
+			var content = await this.Request.ReadAsStringAsync();
+
+			if(string.IsNullOrWhiteSpace(content))
+				return this.BadRequest();
+
+			var members = Zongsoft.Common.StringExtension.Slice<uint>(content, ',', uint.TryParse).Select(roleId => new Member(roleId, id, MemberType.Role));
+			return this.MemberProvider.SetMembers(members) > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetRoles), new { id }, members) : this.NotFound();
 		}
 
 		[HttpGet("{id:long}/Members")]
@@ -296,7 +309,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 		#endregion
 
-		#region 授权方法
+		#region 授权操作
 		[HttpGet("{id:long}/Authorizes")]
 		[HttpGet("Authorizes/{id:long}")]
 		public IActionResult Authorizes(uint id)
@@ -310,7 +323,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 		#endregion
 
-		#region 权限方法
+		#region 权限操作
 		[HttpGet("{id:long}/Permissions/{schemaId?}")]
 		public Task<IActionResult> GetPermissions(uint id, string schemaId = null)
 		{

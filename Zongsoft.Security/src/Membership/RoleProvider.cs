@@ -330,6 +330,14 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Upsert(member) > 0;
 		}
 
+		public int SetMembers(IEnumerable<Member> members)
+		{
+			if(members == null)
+				return 0;
+
+			return this.DataAccess.UpsertMany(members);
+		}
+
 		public int SetMembers(uint roleId, params Member[] members)
 		{
 			if(members == null || members.Length == 0)
