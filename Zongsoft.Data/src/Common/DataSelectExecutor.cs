@@ -195,17 +195,25 @@ namespace Zongsoft.Data.Common
 						var entity = _populator.Populate(_reader);
 
 						if(entity == null)
-							return default(T);
+							return default;
 
 						if(_statement.HasSlaves)
 						{
-							object container = null;
-
 							foreach(var slave in _statement.Slaves)
 							{
 								if(slave is SelectStatement selection && _slaves.TryGetValue(selection.Alias, out var token))
 								{
 									if(token.Schema.Token.MemberType == null)
+										continue;
+
+									object container;
+
+									if(token.Schema.Parent == null)
+										container = entity;
+									else
+										container = token.Schema.Parent.Token.GetValue(entity);
+
+									if(container == null)
 										continue;
 
 									//生成子查询语句对应的命令
@@ -230,14 +238,6 @@ namespace Zongsoft.Data.Common
 											results = (IEnumerable)list.GetType().GetMethod("ToArray").Invoke(list, Array.Empty<object>());
 										else
 											results = (IEnumerable)list;
-									}
-
-									if(container == null)
-									{
-										if(token.Schema.Parent == null)
-											container = entity;
-										else
-											container = token.Schema.Parent.Token.GetValue(entity);
 									}
 
 									token.Schema.Token.SetValue(container, results);
