@@ -281,6 +281,8 @@ namespace Zongsoft.Security
 				m.TrySetValue("FullName", identity.Label);
 				m.TrySetValue("Nickname", identity.Label);
 
+				var property = model.GetType().GetProperty("Properties");
+
 				foreach(var claim in identity.Claims)
 				{
 					if(!SetModelProperty(m, claim))
@@ -289,7 +291,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(Reflector.TryGetValue(model, "Properties", out var value) && value is IDictionary<string, object> properties)
+							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -300,6 +302,8 @@ namespace Zongsoft.Security
 				Reflector.TrySetValue(model, "FullName", identity.Label);
 				Reflector.TrySetValue(model, "Nickname", identity.Label);
 
+				var property = model.GetType().GetProperty("Properties");
+
 				foreach(var claim in identity.Claims)
 				{
 					if(!SetObjectProperty(model, claim))
@@ -308,7 +312,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(Reflector.TryGetValue(model, "Properties", out var value) && value is IDictionary<string, object> properties)
+							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -322,6 +326,12 @@ namespace Zongsoft.Security
 		{
 			if(identity == null)
 				throw new ArgumentNullException(nameof(identity));
+
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(string.IsNullOrEmpty(value))
+				return null;
 
 			if(string.IsNullOrEmpty(issuer))
 				issuer = ClaimsIdentity.DefaultIssuer;
