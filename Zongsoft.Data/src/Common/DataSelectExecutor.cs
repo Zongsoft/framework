@@ -251,7 +251,11 @@ namespace Zongsoft.Data.Common
 
 				public bool MoveNext()
 				{
-					return _reader.Read();
+					if(_reader.Read())
+						return true;
+
+					this.Dispose();
+					return false;
 				}
 
 				public void Reset()
@@ -308,8 +312,10 @@ namespace Zongsoft.Data.Common
 						return this.Current;
 					}
 				}
+				#endregion
 
-				void IDisposable.Dispose()
+				#region 处置方法
+				public void Dispose()
 				{
 					var reader = System.Threading.Interlocked.Exchange(ref _reader, null);
 
