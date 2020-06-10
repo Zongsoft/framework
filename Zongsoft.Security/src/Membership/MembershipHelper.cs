@@ -126,7 +126,7 @@ namespace Zongsoft.Security.Membership
 			                        .Where(m => m.Role != null)
 			                        .ToArray();
 
-			flats = new HashSet<IRole>();
+			flats = new HashSet<IRole>(RoleComparer.Instance);
 			hierarchies = new List<IEnumerable<IRole>>();
 
 			//从角色成员集合中查找出指定成员的父级角色
@@ -144,7 +144,7 @@ namespace Zongsoft.Security.Membership
 				//从角色成员集合中查找出当前层级中所有角色的父级角色集合（并进行全局去重）
 				parents = members.Where(m => parents.Any(p => p.RoleId == m.MemberId) && m.MemberType == MemberType.Role)
 				                 .Select(m => m.Role)
-				                 .Except(flats).ToList();
+				                 .Except(flats, RoleComparer.Instance).ToList();
 			}
 
 			return flats.Count;
@@ -155,7 +155,7 @@ namespace Zongsoft.Security.Membership
 			var conditions = Condition.Equal("MemberId", memberId) & Condition.Equal("MemberType", memberType);
 
 			//获取指定成员的所有上级角色集和上级角色的层级列表
-			if(MembershipHelper.GetAncestors(dataAccess, @namespace, memberId, memberType, out var flats, out var hierarchies) > 0)
+			if(GetAncestors(dataAccess, @namespace, memberId, memberType, out var flats, out var hierarchies) > 0)
 			{
 				//如果指定成员有上级角色，则进行权限定义的查询条件还需要加上所有上级角色
 				conditions = ConditionCollection.Or(
@@ -293,6 +293,39 @@ namespace Zongsoft.Security.Membership
 		{
 			return string.Equals(name, Administrator, StringComparison.OrdinalIgnoreCase) ||
 			       string.Equals(name, Administrators, StringComparison.OrdinalIgnoreCase);
+		}
+		#endregion
+
+		#region 嵌套子类
+		public class RoleComparer : IEqualityComparer<IRole>
+		{
+			#region 单例字段
+			public static readonly RoleComparer Instance = new RoleComparer();
+			#endregion
+
+			#region 私有构造
+			private RoleComparer()
+			{
+			}
+			#endregion
+
+			#region 公共方法
+			public bool Equals(IRole x, IRole y)
+			{
+				if(x == null && y == null)
+					return true;
+
+				if(x == null || y == null)
+					return false;
+
+				return x.RoleId == y.RoleId;
+			}
+
+			public int GetHashCode(IRole role)
+			{
+				return role == null ? 0 : (int)role.RoleId;
+			}
+			#endregion
 		}
 		#endregion
 	}
