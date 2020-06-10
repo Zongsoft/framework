@@ -444,8 +444,8 @@ namespace Zongsoft.Web
 			[Serialization.SerializationMember("$")]
 			public object Data { get; set; }
 
-			[System.Text.Json.Serialization.JsonPropertyName("$paging")]
-			[Serialization.SerializationMember("$paging")]
+			[System.Text.Json.Serialization.JsonPropertyName("$$")]
+			[Serialization.SerializationMember("$$")]
 			public IDictionary<string, string> Paging { get; set; }
 
 			public ResultEntity(object data)
