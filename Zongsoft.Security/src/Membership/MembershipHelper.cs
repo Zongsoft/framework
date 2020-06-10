@@ -53,7 +53,7 @@ namespace Zongsoft.Security.Membership
 				return true;
 
 			//处理非系统内置管理员账号
-			if(GetAncestors(dataAccess, user, out var flats, out var hierarchies) > 0)
+			if(GetAncestors(dataAccess, user, out var flats, out _) > 0)
 			{
 				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
 				return flats.Any(role =>
@@ -152,10 +152,16 @@ namespace Zongsoft.Security.Membership
 
 		public static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, string @namespace, uint memberId, MemberType memberType)
 		{
+			GetAncestors(dataAccess, @namespace, memberId, memberType, out var flats, out var hierarchies);
+			return GetAuthorizedTokens(dataAccess, flats, hierarchies, memberId, memberType);
+		}
+
+		public static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRole> flats, IList<IEnumerable<IRole>> hierarchies, uint memberId, MemberType memberType)
+		{
 			var conditions = Condition.Equal("MemberId", memberId) & Condition.Equal("MemberType", memberType);
 
 			//获取指定成员的所有上级角色集和上级角色的层级列表
-			if(GetAncestors(dataAccess, @namespace, memberId, memberType, out var flats, out var hierarchies) > 0)
+			if(flats != null && flats.Count > 0)
 			{
 				//如果指定成员有上级角色，则进行权限定义的查询条件还需要加上所有上级角色
 				conditions = ConditionCollection.Or(

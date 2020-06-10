@@ -236,10 +236,10 @@ namespace Zongsoft.Security.Membership
 		{
 			var identity = this.Identity(user);
 
-			if(MembershipHelper.GetAncestors(this.DataAccess, user, out var roles, out _) > 0)
+			if(MembershipHelper.GetAncestors(this.DataAccess, user, out var roles, out var hierarchies) > 0)
 				identity.AddRoles(roles.Select(role => role.Name));
 
-			foreach(var token in MembershipHelper.GetAuthorizedTokens(this.DataAccess, user.Namespace, user.UserId, MemberType.User))
+			foreach(var token in MembershipHelper.GetAuthorizedTokens(this.DataAccess, roles, hierarchies, user.UserId, MemberType.User))
 			{
 				identity.AddClaim(ClaimNames.Authorization, token.Schema + ":" + string.Join(',', token.Actions.Select(a => a.Action)), ClaimValueTypes.String, this.Scheme);
 			}
