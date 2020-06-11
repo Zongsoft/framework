@@ -215,8 +215,28 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
+			static object GetModelMemberValue(object target, string member)
+			{
+				if(target is IModel model)
+					return model.TryGetValue(member, out var value) ? value : null;
+				else
+					return Reflection.Reflector.TryGetValue(target, member, out var value) ? value : null;
+			}
+
 			if(this.OnCreate(model) > 0)
-				return this.Created(this.GetType().Name, model);
+			{
+				var keys = this.DataService.DataAccess.Metadata.Entities.Get(this.DataService.Name).Key;
+
+				object route = keys.Length switch
+				{
+					1 => new { key = GetModelMemberValue(model, keys[0].Name) },
+					2 => new { key1 = GetModelMemberValue(model, keys[0].Name), key2 = GetModelMemberValue(model, keys[1].Name) },
+					3 => new { key1 = GetModelMemberValue(model, keys[0].Name), key2 = GetModelMemberValue(model, keys[1].Name), key3 = GetModelMemberValue(model, keys[2].Name) },
+					_ => new { key = string.Empty },
+				};
+
+				return this.CreatedAtAction(nameof(Get), route, model);
+			}
 
 			return this.Conflict();
 		}
