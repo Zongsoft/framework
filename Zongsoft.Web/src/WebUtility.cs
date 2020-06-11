@@ -30,15 +30,64 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-namespace Zongsoft.Web.Http
+using Zongsoft.Data;
+
+namespace Zongsoft.Web
 {
-	public static class HttpRequestExtension
+	public static class WebUtility
 	{
+		#region 公共方法
+		public static IActionResult Paginate(object data, IPageable pageable = null)
+		{
+			static string GetPaging(Paging paging)
+			{
+				if(paging == null || Paging.IsDisabled(paging))
+					return null;
+
+				return paging.PageIndex.ToString() + "/" +
+				       paging.PageCount.ToString() + "(" +
+				       paging.TotalCount.ToString() + ")";
+			}
+
+			if(data == null)
+				return new NoContentResult();
+
+			//如果数据类型是值类型并且其值等于默认值，则返回HTTP状态为无内容
+			if(data.GetType().IsValueType && object.Equals(data, default))
+				return new NoContentResult();
+
+			if(pageable == null)
+				pageable = data as IPageable;
+
+			if(pageable != null)
+			{
+				var result = new ResultEntity(data);
+
+				pageable.Paginated += Paginator_Paginated;
+
+				void Paginator_Paginated(object sender, PagingEventArgs e)
+				{
+					pageable.Paginated -= Paginator_Paginated;
+
+					if(result.Paging == null)
+						result.Paging = new Dictionary<string, string>();
+
+					result.Paging[string.IsNullOrEmpty(e.Name) ? "$" : e.Name] = GetPaging(e.Paging);
+				}
+
+				return new OkObjectResult(result);
+			}
+
+			return new OkObjectResult(data);
+		}
+
 		public static async Task<string> ReadAsStringAsync(this HttpRequest request)
 		{
 			if(request == null)
@@ -60,5 +109,25 @@ namespace Zongsoft.Web.Http
 				return await reader.ReadToEndAsync();
 			}
 		}
+		#endregion
+
+		#region 嵌套结构
+		internal class ResultEntity
+		{
+			public ResultEntity(object data)
+			{
+				this.Data = data;
+				this.Paging = null;
+			}
+
+			[System.Text.Json.Serialization.JsonPropertyName("$")]
+			[Serialization.SerializationMember("$")]
+			public object Data { get; set; }
+
+			[System.Text.Json.Serialization.JsonPropertyName("$$")]
+			[Serialization.SerializationMember("$$")]
+			public IDictionary<string, string> Paging { get; set; }
+		}
+		#endregion
 	}
 }

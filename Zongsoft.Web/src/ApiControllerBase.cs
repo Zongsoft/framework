@@ -38,7 +38,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.IO;
 using Zongsoft.Data;
-using Zongsoft.Web.Http;
 
 namespace Zongsoft.Web
 {
@@ -271,7 +270,7 @@ namespace Zongsoft.Web
 				return this.UnprocessableEntity();
 
 			return this.OnUpdate(model, string.IsNullOrEmpty(keys) ? Array.Empty<string>() : Common.StringExtension.Slice(keys, '-').ToArray()) > 0 ?
-				(IActionResult)this.Ok() : this.NotFound();
+				(IActionResult)this.NoContent() : this.NotFound();
 		}
 		#endregion
 
@@ -407,29 +406,7 @@ namespace Zongsoft.Web
 			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
 				return this.NoContent();
 
-			if(pageable == null)
-				pageable = data as IPageable;
-
-			if(pageable != null)
-			{
-				var result = new ResultEntity(data);
-
-				pageable.Paginated += Paginator_Paginated;
-
-				void Paginator_Paginated(object sender, PagingEventArgs e)
-				{
-					pageable.Paginated -= Paginator_Paginated;
-
-					if(result.Paging == null)
-						result.Paging = new Dictionary<string, string>();
-
-					result.Paging[string.IsNullOrEmpty(e.Name) ? "$" : e.Name] = GetPaging(e.Paging);
-				}
-
-				return this.Ok(result);
-			}
-
-			return this.Ok(data);
+			return WebUtility.Paginate(data, pageable);
 		}
 		#endregion
 
@@ -449,36 +426,6 @@ namespace Zongsoft.Web
 		private string GetSchema()
 		{
 			return Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetPaging(Paging paging)
-		{
-			if(paging == null || Paging.IsDisabled(paging))
-				return null;
-
-			return paging.PageIndex.ToString() + "/" +
-				   paging.PageCount.ToString() + "(" +
-				   paging.TotalCount.ToString() + ")";
-		}
-		#endregion
-
-		#region 嵌套子类
-		private class ResultEntity
-		{
-			[System.Text.Json.Serialization.JsonPropertyName("$")]
-			[Serialization.SerializationMember("$")]
-			public object Data { get; set; }
-
-			[System.Text.Json.Serialization.JsonPropertyName("$$")]
-			[Serialization.SerializationMember("$$")]
-			public IDictionary<string, string> Paging { get; set; }
-
-			public ResultEntity(object data)
-			{
-				this.Data = data;
-				this.Paging = null;
-			}
 		}
 		#endregion
 	}
