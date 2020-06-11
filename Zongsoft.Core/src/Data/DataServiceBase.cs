@@ -775,8 +775,11 @@ namespace Zongsoft.Data
 				//修整查询条件
 				condition = this.OnValidate(Method.Get(), condition);
 
+				//设置分页器为空
+				pageable = null;
+
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out pageable);
+				return this.OnGet(condition, this.GetSchema(schema), states, out _);
 			}
 
 			var result = this.Select(condition, schema, paging, states, sortings);
@@ -833,8 +836,11 @@ namespace Zongsoft.Data
 				//修整查询条件
 				condition = this.OnValidate(Method.Get(), condition);
 
+				//设置分页器为空
+				pageable = null;
+
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out pageable);
+				return this.OnGet(condition, this.GetSchema(schema), states, out _);
 			}
 
 			var result = this.Select(condition, schema, paging, states, sortings);
@@ -891,8 +897,11 @@ namespace Zongsoft.Data
 				//修整查询条件
 				condition = this.OnValidate(Method.Get(), condition);
 
+				//设置分页器为空
+				pageable = null;
+
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out pageable);
+				return this.OnGet(condition, this.GetSchema(schema), states, out _);
 			}
 
 			var result = this.Select(condition, schema, paging, states, sortings);
