@@ -60,7 +60,7 @@ namespace Zongsoft.Data.Common.Expressions
 						 * 说明该参数值是数据提供程序或导航连接所得，因此必须将其值写回对应的数据项中。
 						 */
 						if(parameter.Schema != null)
-							parameter.Schema.Token.SetValue(data, parameter.HasValue ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(data, parameter.HasValue && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
 					}
 					else if(data != null)
 					{
