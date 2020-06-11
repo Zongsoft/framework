@@ -36,6 +36,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
+using Zongsoft.Web;
 using Zongsoft.Data;
 using Zongsoft.Services;
 using Zongsoft.Security.Membership;
@@ -100,12 +101,10 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("{namespace:required}:{name:required}")]
 		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging paging = null)
 		{
-			object result;
-
 			if(string.IsNullOrEmpty(name) || name == "*")
-				result = this.RoleProvider.GetRoles(@namespace, paging);
-			else
-				result = this.RoleProvider.GetRole(name, @namespace);
+				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, paging)));
+
+			var result = this.RoleProvider.GetRole(name, @namespace);
 
 			return result != null ?
 				Task.FromResult((IActionResult)this.Ok(result)) :

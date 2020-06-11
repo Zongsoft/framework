@@ -54,28 +54,5 @@ namespace Zongsoft.Security.Web
 
 			return null;
 		}
-
-		public static async Task<string> ReadAsStringAsync(this HttpRequest request)
-		{
-			if(request == null)
-				throw new ArgumentNullException(nameof(request));
-
-			MediaTypeHeaderValue mediaType;
-			MediaTypeHeaderValue.TryParse(request.ContentType, out mediaType);
-
-			var encoding = mediaType?.Encoding;
-			if(encoding == null || encoding == Encoding.UTF7)
-				encoding = Encoding.UTF8;
-
-			using(var reader = new StreamReader(
-				request.Body,
-				encoding,
-				detectEncodingFromByteOrderMarks: true,
-				bufferSize: 1024,
-				leaveOpen: true))
-			{
-				return await reader.ReadToEndAsync();
-			}
-		}
 	}
 }
