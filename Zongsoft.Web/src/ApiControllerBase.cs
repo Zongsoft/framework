@@ -38,6 +38,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.IO;
 using Zongsoft.Data;
+using Zongsoft.Web.Http;
 
 namespace Zongsoft.Web
 {
@@ -174,35 +175,40 @@ namespace Zongsoft.Web
 			return this.Paginate(this.DataService.Get<string, string, string>(key1, key2, key3, this.GetSchema(), paging, null, out var pageable), pageable);
 		}
 
-		[HttpDelete("{keys:required}")]
-		public IActionResult Delete(string keys)
+		[HttpDelete("{key?}")]
+		public async Task<IActionResult> Delete(string key)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			if(string.IsNullOrWhiteSpace(keys))
-				return this.BadRequest();
-
-			int count = 0;
-			var parts = Common.StringExtension.Slice(keys, ',', '|').ToArray();
-
-			if(parts != null && parts.Length > 1)
+			if(string.IsNullOrWhiteSpace(key))
 			{
-				using(var transaction = new Zongsoft.Transactions.Transaction())
+				var content = await this.Request.ReadAsStringAsync();
+
+				if(string.IsNullOrWhiteSpace(content))
+					return this.BadRequest();
+
+				var parts = Common.StringExtension.Slice(content, ',', '|');
+
+				if(parts != null && parts.Any())
 				{
-					foreach(var key in parts)
+					var count = 0;
+
+					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
-						count += this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray());
+						foreach(var part in parts)
+							count += this.OnDelete(Common.StringExtension.Slice(part, '-').ToArray());
+
+						transaction.Commit();
 					}
 
-					transaction.Commit();
+					return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 				}
-
-				return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
 			}
 
-			count = this.OnDelete(Common.StringExtension.Slice(keys, '-').ToArray());
-			return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+			return this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray()) > 0 ?
+				(IActionResult)this.NoContent() :
+				(IActionResult)this.NotFound();
 		}
 
 		[HttpPost]
