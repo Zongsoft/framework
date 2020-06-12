@@ -197,59 +197,5 @@ namespace Zongsoft.Security.Membership
 			this.Authorized?.Invoke(this, context);
 		}
 		#endregion
-
-		#region 嵌套子类
-		internal class AuthorizationState : IEquatable<AuthorizationState>
-		{
-			#region 公共字段
-			public readonly string SchemaId;
-			public readonly string ActionId;
-			public string Filter;
-			#endregion
-
-			#region 构造函数
-			public AuthorizationState(string schemaId, string actionId, string filter = null)
-			{
-				if(string.IsNullOrEmpty(schemaId))
-					throw new ArgumentNullException(nameof(schemaId));
-				if(string.IsNullOrEmpty(actionId))
-					throw new ArgumentNullException(nameof(actionId));
-
-				this.SchemaId = schemaId.ToUpperInvariant();
-				this.ActionId = actionId.ToUpperInvariant();
-				this.Filter = filter;
-			}
-			#endregion
-
-			#region 重写方法
-			public bool Equals(AuthorizationState other)
-			{
-				return string.Equals(this.SchemaId, other.SchemaId) &&
-				       string.Equals(this.ActionId, other.ActionId);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != typeof(AuthorizationState))
-					return false;
-
-				return this.Equals((AuthorizationState)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return this.SchemaId.GetHashCode() ^ this.ActionId.GetHashCode();
-			}
-
-			public override string ToString()
-			{
-				if(string.IsNullOrEmpty(this.Filter))
-					return this.SchemaId + ":" + this.ActionId;
-				else
-					return this.SchemaId + ":" + this.ActionId + "(" + this.Filter + ")";
-			}
-			#endregion
-		}
-		#endregion
 	}
 }

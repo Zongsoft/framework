@@ -176,9 +176,9 @@ namespace Zongsoft.Security.Membership
 			//获取指定条件的所有权限过滤定义（注：禁止分页查询，并即时加载到数组中）
 			var permissionFilters = dataAccess.Select<PermissionFilter>(conditions, Paging.Disabled).ToArray();
 
-			var states = new HashSet<Authorizer.AuthorizationState>();
+			var states = new HashSet<AuthorizationState>();
 			IEnumerable<Permission> prepares;
-			IEnumerable<Authorizer.AuthorizationState> grants, denies;
+			IEnumerable<AuthorizationState> grants, denies;
 
 			//如果上级角色层级列表不为空则进行分层过滤
 			if(hierarchies != null && hierarchies.Count > 0)
@@ -189,8 +189,8 @@ namespace Zongsoft.Security.Membership
 					//定义权限集过滤条件：当前层级的角色集的所有权限定义
 					prepares = permissions.Where(p => hierarchies[i].Any(role => role.RoleId == p.MemberId) && p.MemberType == MemberType.Role);
 
-					grants = prepares.Where(p => p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
-					denies = prepares.Where(p => !p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+					grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+					denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
 
 					states.UnionWith(grants);  //合并授予的权限定义
 					states.ExceptWith(denies); //排除拒绝的权限定义
@@ -203,8 +203,8 @@ namespace Zongsoft.Security.Membership
 			//查找权限定义中当前成员的设置项
 			prepares = permissions.Where(p => p.MemberId == memberId && p.MemberType == memberType);
 
-			grants = prepares.Where(p => p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
-			denies = prepares.Where(p => !p.Granted).Select(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+			grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+			denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
 
 			states.UnionWith(grants);  //合并授予的权限定义
 			states.ExceptWith(denies); //排除拒绝的权限定义
@@ -218,9 +218,9 @@ namespace Zongsoft.Security.Membership
 			}
 		}
 
-		private static void SetPermissionFilters(IEnumerable<Authorizer.AuthorizationState> states, IEnumerable<PermissionFilter> filters)
+		private static void SetPermissionFilters(IEnumerable<AuthorizationState> states, IEnumerable<PermissionFilter> filters)
 		{
-			var groups = filters.GroupBy(p => new Authorizer.AuthorizationState(p.SchemaId, p.ActionId));
+			var groups = filters.GroupBy(p => new AuthorizationState(p.SchemaId, p.ActionId));
 
 			foreach(var group in groups)
 			{
@@ -303,7 +303,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 嵌套子类
-		public class RoleComparer : IEqualityComparer<IRole>
+		private class RoleComparer : IEqualityComparer<IRole>
 		{
 			#region 单例字段
 			public static readonly RoleComparer Instance = new RoleComparer();
@@ -330,6 +330,60 @@ namespace Zongsoft.Security.Membership
 			public int GetHashCode(IRole role)
 			{
 				return role == null ? 0 : (int)role.RoleId;
+			}
+			#endregion
+		}
+
+		private class AuthorizationState : IEquatable<AuthorizationState>
+		{
+			#region 公共字段
+			private readonly string KEY;
+
+			public readonly string SchemaId;
+			public readonly string ActionId;
+			public string Filter;
+			#endregion
+
+			#region 构造函数
+			public AuthorizationState(string schemaId, string actionId, string filter = null)
+			{
+				if(string.IsNullOrEmpty(schemaId))
+					throw new ArgumentNullException(nameof(schemaId));
+				if(string.IsNullOrEmpty(actionId))
+					throw new ArgumentNullException(nameof(actionId));
+
+				this.KEY = schemaId.ToUpperInvariant() + ":" + actionId.ToUpperInvariant();
+				this.SchemaId = schemaId;
+				this.ActionId = actionId;
+				this.Filter = filter;
+			}
+			#endregion
+
+			#region 重写方法
+			public bool Equals(AuthorizationState other)
+			{
+				return string.Equals(this.KEY, other.KEY, StringComparison.Ordinal);
+			}
+
+			public override bool Equals(object obj)
+			{
+				if(obj == null || obj.GetType() != typeof(AuthorizationState))
+					return false;
+
+				return this.Equals((AuthorizationState)obj);
+			}
+
+			public override int GetHashCode()
+			{
+				return this.KEY.GetHashCode();
+			}
+
+			public override string ToString()
+			{
+				if(string.IsNullOrEmpty(this.Filter))
+					return this.SchemaId + ":" + this.ActionId;
+				else
+					return this.SchemaId + ":" + this.ActionId + "(" + this.Filter + ")";
 			}
 			#endregion
 		}
