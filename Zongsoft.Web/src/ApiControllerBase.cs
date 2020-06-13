@@ -154,24 +154,24 @@ namespace Zongsoft.Web
 		[HttpGet("{key?}")]
 		public IActionResult Get(string key, [FromQuery]Paging paging = null)
 		{
-			if(string.IsNullOrWhiteSpace(key))
-				return this.Paginate(this.DataService.Select(null, this.GetSchema(), paging));
-
-			return key.Contains(':') && this.DataService.Searcher != null ?
-				this.Paginate(this.DataService.Searcher.Search(key, this.GetSchema(), paging)) :
-				this.Paginate(this.DataService.Get<string>(key, this.GetSchema(), paging, null, out var pageable), pageable);
+			return this.Paginate
+			(
+				string.IsNullOrWhiteSpace(key) ?
+				this.OnGet(Array.Empty<string>(), paging) :
+				this.OnGet(new[] { key }, paging)
+			);
 		}
 
 		[HttpGet("{key1:required}-{key2:required}")]
 		public IActionResult Get(string key1, string key2, [FromQuery]Paging paging = null)
 		{
-			return this.Paginate(this.DataService.Get<string, string>(key1, key2, this.GetSchema(), paging, null, out var pageable), pageable);
+			return this.Paginate(this.OnGet(new[] { key1, key2 }, paging));
 		}
 
 		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
 		public IActionResult Get(string key1, string key2, string key3, [FromQuery]Paging paging = null)
 		{
-			return this.Paginate(this.DataService.Get<string, string, string>(key1, key2, key3, this.GetSchema(), paging, null, out var pageable), pageable);
+			return this.Paginate(this.OnGet(new[] { key1, key2, key3 }, paging));
 		}
 
 		[HttpDelete("{key?}")]
@@ -349,7 +349,27 @@ namespace Zongsoft.Web
 				throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual int OnDelete(params string[] keys)
+		protected virtual object OnGet(string[] keys, Paging paging)
+		{
+			if(keys == null || keys.Length == 0)
+				return this.DataService.Select(null, this.GetSchema(), paging);
+
+			switch(keys.Length)
+			{
+				case 1:
+					return keys[0].Contains(':') && this.DataService.Searcher != null ?
+						this.DataService.Searcher.Search(keys[0], this.GetSchema(), paging) :
+						this.DataService.Get<string>(keys[0], this.GetSchema(), paging);
+				case 2:
+					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), paging);
+				case 3:
+					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), paging);
+				default:
+					throw new ArgumentException("Too many keys specified.");
+			}
+		}
+
+		protected virtual int OnDelete(string[] keys)
 		{
 			if(keys == null || keys.Length == 0)
 				return 0;
@@ -397,16 +417,19 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 保护方法
-		protected IActionResult Paginate(object data, IPageable pageable = null)
+		protected IActionResult Paginate(object data)
 		{
 			if(data == null)
 				return this.NoContent();
+
+			if(data is IActionResult result)
+				return result;
 
 			//如果模型类型是值类型并且结果数据类型是该值类型并且结果数据等于空值，则返回HTTP状态为无内容
 			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
 				return this.NoContent();
 
-			return WebUtility.Paginate(data, pageable);
+			return WebUtility.Paginate(data);
 		}
 		#endregion
 
