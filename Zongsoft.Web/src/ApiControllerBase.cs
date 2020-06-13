@@ -280,6 +280,9 @@ namespace Zongsoft.Web
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
 
+			if(!Path.TryParse(path, out var pathInfo))
+				throw new ArgumentException($"Invalid path format.");
+
 			//如果上传的内容为空，则返回文件信息的空集
 			if(this.Request.Body == null || this.Request.ContentLength == null || this.Request.ContentLength == 0)
 			{
@@ -288,7 +291,13 @@ namespace Zongsoft.Web
 			}
 
 			//将上传的文件内容依次写入到指定的目录中
-			var files = _accessor.Write(this.Request, path, option => option.Cancel = option.Index > 1);
+			var files = _accessor.Write(this.Request, pathInfo.DirectoryUrl, option =>
+			{
+				if(pathInfo.IsFile)
+					option.FileName = pathInfo.FileName;
+
+				option.Cancel = option.Index > 1;
+			});
 
 			//依次遍历写入的文件对象
 			await foreach(var file in files)
@@ -308,6 +317,9 @@ namespace Zongsoft.Web
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
 
+			if(!Path.TryParse(path, out var pathInfo))
+				throw new ArgumentException($"Invalid path format.");
+
 			if(uploaded == null)
 				throw new ArgumentNullException(nameof(uploaded));
 
@@ -316,13 +328,13 @@ namespace Zongsoft.Web
 				return Enumerable.Empty<T>();
 
 			//将上传的文件内容依次写入到指定的目录中
-			var files = _accessor.Write(this.Request, path, option =>
+			var files = _accessor.Write(this.Request, pathInfo.DirectoryUrl, option =>
 			{
 				if(limit > 0)
 					option.Cancel = option.Index > limit;
 
-				if(!option.Cancel && limit != 1)
-					option.FileName = option.FileName + "-" + Zongsoft.Common.Randomizer.GenerateString();
+				if(!option.Cancel && limit != 1 && pathInfo.IsFile)
+					option.FileName = pathInfo.FileName + "-" + Zongsoft.Common.Randomizer.GenerateString();
 			});
 
 			T item;
