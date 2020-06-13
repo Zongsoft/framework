@@ -297,7 +297,7 @@ namespace Zongsoft.Web
 				if(uploaded == null || uploaded(file))
 					return file;
 
-				this.DeleteFile(file.Url);
+				this.DeleteFile(file.Path.Url);
 			}
 
 			return null;
@@ -335,7 +335,7 @@ namespace Zongsoft.Web
 				if((item = uploaded(file)) != null)
 					result.Add(item);
 				else
-					this.DeleteFile(file.Url);
+					this.DeleteFile(file.Path.Url);
 			}
 
 			return result;
