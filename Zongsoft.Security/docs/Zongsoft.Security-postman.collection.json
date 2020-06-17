@@ -45,7 +45,10 @@
 							"            postman.setGlobalVariable(\"siteId\", jsonData.Identity.SiteId);",
 							"",
 							"        if(jsonData.Identity.TenantId)",
+							"        {",
 							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);",
+							"            postman.setGlobalVariable(\"branchId\", jsonData.Identity.BranchId);",
+							"        }",
 							"    }",
 							"}",
 							""
@@ -63,11 +66,6 @@
 					{
 						"key": "x-json-behaviors",
 						"value": "ignores:null,empty; casing:camel"
-					},
-					{
-						"key": "x-json-datetime",
-						"value": "yyyy-MM-dd HH:mm:ss",
-						"disabled": true
 					}
 				],
 				"body": {
@@ -1402,7 +1400,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Permissions",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permissions/SchemaId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1411,7 +1409,8 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Permissions"
+						"Permissions",
+						"SchemaId"
 					]
 				},
 				"description": "删除指定用户的权限集"
@@ -1456,7 +1455,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters/schemaId",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters/SchemaId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1466,7 +1465,7 @@
 						"Users",
 						"{{userId}}",
 						"Permission.Filters",
-						"schemaId"
+						"SchemaId"
 					]
 				},
 				"description": "获取指定用户的权限过滤集"
@@ -1548,7 +1547,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters",
+					"raw": "http://{{url}}/Security/Users/{{userId}}/Permission.Filters/SchemaId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -1557,7 +1556,8 @@
 						"Security",
 						"Users",
 						"{{userId}}",
-						"Permission.Filters"
+						"Permission.Filters",
+						"SchemaId"
 					]
 				},
 				"description": "删除指定用户的权限过滤集"
@@ -2291,7 +2291,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Permissions",
+					"raw": "http://{{url}}/Security/Roles/100/Permissions/SchemaId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2300,7 +2300,8 @@
 						"Security",
 						"Roles",
 						"100",
-						"Permissions"
+						"Permissions",
+						"SchemaId"
 					]
 				},
 				"description": "删除指定角色的权限集"
@@ -2439,7 +2440,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters",
+					"raw": "http://{{url}}/Security/Roles/100/Permission.Filters/SchemaId",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2448,7 +2449,8 @@
 						"Security",
 						"Roles",
 						"100",
-						"Permission.Filters"
+						"Permission.Filters",
+						"SchemaId"
 					]
 				},
 				"description": "删除指定角色的权限过滤集"
