@@ -1278,7 +1278,7 @@ namespace Zongsoft.Data
 		public TValue GetValue<TValue>(string name, TValue defaultValue)
 		{
 			if(_members.TryGetValue(name, out var member))
-				return (TValue)Convert.ChangeType(member.GetValue(ref _data), typeof(TValue));
+				return Common.Convert.ConvertValue<TValue>(member.GetValue(ref _data), defaultValue);
 
 			return defaultValue;
 		}
@@ -1303,10 +1303,7 @@ namespace Zongsoft.Data
 		public bool TryGetValue<TValue>(string name, out TValue value)
 		{
 			if(_members.TryGetValue(name, out var member))
-			{
-				value = (TValue)Convert.ChangeType(member.GetValue(ref _data), typeof(TValue));
-				return true;
-			}
+				return Common.Convert.TryConvertValue<TValue>(member.GetValue(ref _data), out value);
 
 			value = default(TValue);
 			return false;
@@ -1316,7 +1313,7 @@ namespace Zongsoft.Data
 		{
 			if(_members.TryGetValue(name, out var member))
 			{
-				got?.Invoke((TValue)Convert.ChangeType(member.GetValue(ref _data), typeof(TValue)));
+				got?.Invoke(Common.Convert.ConvertValue<TValue>(member.GetValue(ref _data)));
 				return true;
 			}
 
