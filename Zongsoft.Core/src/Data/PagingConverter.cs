@@ -85,7 +85,6 @@ namespace Zongsoft.Data
 					return match.Groups["size"].Success ?
 					       Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
 					       Paging.Page(int.Parse(match.Groups["index"].Value));
-
 				}
 
 				return false;
