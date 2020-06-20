@@ -203,17 +203,17 @@ namespace Zongsoft.Data
 		#region 存在方法
 		public bool Exists<TKey>(TKey key, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(key, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key, out _), states);
 		}
 
 		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(key1, key2, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, out _), states);
 		}
 
 		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(key1, key2, key3, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, key3, out _), states);
 		}
 
 		public bool Exists(ICondition condition, IDictionary<string, object> states = null)
@@ -259,17 +259,17 @@ namespace Zongsoft.Data
 
 		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(key, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key, out _), member, states);
 		}
 
 		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(key1, key2, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key1, key2, out _), member, states);
 		}
 
 		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(key1, key2, key3, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, out _), member, states);
 		}
 
 		protected virtual int OnCount(ICondition condition, string member, IDictionary<string, object> states)
@@ -337,7 +337,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(key, out _));
+			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, out _));
 
 			//执行删除操作
 			return this.OnDelete(condition, this.GetSchema(schema), states);
@@ -357,7 +357,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(key1, key2, out _));
+			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, out _));
 
 			//执行删除操作
 			return this.OnDelete(condition, this.GetSchema(schema), states);
@@ -377,7 +377,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(key1, key2, key3, out _));
+			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, out _));
 
 			//执行删除操作
 			return this.OnDelete(condition, this.GetSchema(schema), states);
@@ -606,7 +606,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey>(object data, TKey key, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(key, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key, out _), schema, states);
 		}
 
 		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
@@ -616,7 +616,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(key1, key2, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, out _), schema, states);
 		}
 
 		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
@@ -626,7 +626,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(key1, key2, key3, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, out _), schema, states);
 		}
 
 		public int Update(object data, IDictionary<string, object> states = null)
@@ -765,7 +765,7 @@ namespace Zongsoft.Data
 
 		public object Get<TKey>(TKey key, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
 		{
-			var condition = this.ConvertKey(key, out var singular);
+			var condition = this.ConvertKey(Method.Get(), key, out var singular);
 
 			if(singular)
 			{
@@ -826,7 +826,7 @@ namespace Zongsoft.Data
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
 		{
-			var condition = this.ConvertKey(key1, key2, out var singular);
+			var condition = this.ConvertKey(Method.Get(), key1, key2, out var singular);
 
 			if(singular)
 			{
@@ -887,7 +887,7 @@ namespace Zongsoft.Data
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
 		{
-			var condition = this.ConvertKey(key1, key2, key3, out var singular);
+			var condition = this.ConvertKey(Method.Get(), key1, key2, key3, out var singular);
 
 			if(singular)
 			{
@@ -1267,14 +1267,15 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 键值操作
+		#region 条件转换
 		/// <summary>
-		/// 根据指定的查询参数值获取对应的查询<see cref="ICondition"/>条件。
+		/// 根据指定的参数值获取对应的操作<see cref="ICondition"/>条件。
 		/// </summary>
-		/// <param name="values">指定的查询值数组。</param>
-		/// <param name="singular">输出一个值，指示返回的查询条件执行后的结果是否为单个对象。</param>
-		/// <returns>返回对应的查询<see cref="ICondition"/>条件。</returns>
-		protected virtual ICondition GetKey(object[] values, out bool singular)
+		/// <param name="method">指定的操作方法。</param>
+		/// <param name="values">指定的参数值数组。</param>
+		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
+		/// <returns>返回对应的操作<see cref="ICondition"/>条件。</returns>
+		protected virtual ICondition OnCondition(Method method, object[] values, out bool singular)
 		{
 			//设置输出参数默认值
 			singular = false;
@@ -1324,39 +1325,39 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private ICondition ConvertKey<TKey>(TKey key, out bool singular)
-		{
-			return this.EnsureInquiryKey(new object[] { key }, out singular);
-		}
-
-		private ICondition ConvertKey<TKey1, TKey2>(TKey1 key1, TKey2 key2, out bool singular)
-		{
-			return this.EnsureInquiryKey(new object[] { key1, key2 }, out singular);
-		}
-
-		private ICondition ConvertKey<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
-		{
-			return this.EnsureInquiryKey(new object[] { key1, key2, key3 }, out singular);
-		}
-
-		private ICondition EnsureInquiryKey(object[] values, out bool singular)
+		private ICondition ConvertKey(Method method, object[] values, out bool singular)
 		{
 			if(values != null && values.Length > 3)
 				throw new NotSupportedException("Too many the keys.");
 
 			//获取查询键值对数组
-			var condition = this.GetKey(values ?? new object[0], out singular);
+			var criteria = this.OnCondition(method, values ?? new object[0], out singular);
 
-			if(condition == null)
+			if(criteria == null)
 				throw new ArgumentException($"The specified key is invalid of the {this.Name} service.");
 
-			if(condition != null && condition is ConditionCollection)
-			{
-				if(((ConditionCollection)condition).Count == 1)
-					return ((ConditionCollection)condition)[0];
-			}
+			if(criteria is ConditionCollection conditions)
+				return conditions.Count == 1 ? conditions[0] : conditions;
 
-			return condition;
+			return criteria;
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private ICondition ConvertKey<TKey>(Method method, TKey key, out bool singular)
+		{
+			return this.ConvertKey(method, new object[] { key }, out singular);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private ICondition ConvertKey<TKey1, TKey2>(Method method, TKey1 key1, TKey2 key2, out bool singular)
+		{
+			return this.ConvertKey(method, new object[] { key1, key2 }, out singular);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private ICondition ConvertKey<TKey1, TKey2, TKey3>(Method method, TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
+		{
+			return this.ConvertKey(method, new object[] { key1, key2, key3 }, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

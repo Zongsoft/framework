@@ -29,7 +29,6 @@
 	<ItemGroup>
 		<Folder Include="Common\" />
 		<Folder Include="ComponentModel\" />
-		<Folder Include="Data\" />
 		<Folder Include="Expressions\Tokenization\" />
 		<Folder Include="Messaging\" />
 		<Folder Include="Configuration\Profiles\" />
