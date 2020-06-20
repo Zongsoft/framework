@@ -42,7 +42,9 @@ namespace Zongsoft.Data
 	/// <list type="bullet">
 	///		<item>
 	///			<term>PageIndex|PageSize</term>
-	///			<description>分页条件：页号与每页记录数之间采用“|”或“@”符号分隔，其中每页记录数可选（忽略则表示系统默认值）。</description>
+	///			<description>分页条件：页号与每页记录数之间采用“|”或“@”符号分隔，其中每页记录数可选（忽略则表示系统默认值）。
+	///				<para>如果页号为数字零或“*”星号，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
+	///			</description>
 	///		</item>
 	///		<item>
 	///			<term>PageIndex/PageCount(TotalCount)</term>
@@ -68,6 +70,12 @@ namespace Zongsoft.Data
 		{
 			if(value is string text)
 			{
+				if(string.IsNullOrEmpty(text))
+					return Paging.Page(1);
+
+				if(text == "*" || text == "0")
+					return Paging.Disabled;
+
 				var match = _regex_.Match(text);
 
 				if(match.Success && match.Groups["index"].Success)
@@ -86,8 +94,6 @@ namespace Zongsoft.Data
 					       Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
 					       Paging.Page(int.Parse(match.Groups["index"].Value));
 				}
-
-				return false;
 			}
 
 			return base.ConvertFrom(context, culture, value);
