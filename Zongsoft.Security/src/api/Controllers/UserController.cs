@@ -99,10 +99,10 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet("{identity?}")]
 		[HttpGet("{namespace:required}:{identity:required}")]
-		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging paging = null)
+		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging page = null)
 		{
 			if(string.IsNullOrEmpty(identity) || identity == "*")
-				return Task.FromResult(WebUtility.Paginate(this.UserProvider.GetUsers(@namespace, paging)));
+				return Task.FromResult(WebUtility.Paginate(this.UserProvider.GetUsers(@namespace, page)));
 
 			var result = this.UserProvider.GetUser(identity, @namespace);
 

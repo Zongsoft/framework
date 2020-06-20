@@ -99,10 +99,10 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet("{name?}")]
 		[HttpGet("{namespace:required}:{name:required}")]
-		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging paging = null)
+		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging page = null)
 		{
 			if(string.IsNullOrEmpty(name) || name == "*")
-				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, paging)));
+				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, page)));
 
 			var result = this.RoleProvider.GetRole(name, @namespace);
 
