@@ -138,7 +138,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet("[action]")]
-		public Task<IActionResult> SearchAsync([FromQuery]string keyword, [FromQuery]Paging paging = null)
+		public Task<IActionResult> SearchAsync([FromQuery]string keyword, [FromQuery]Paging page = null)
 		{
 			var searcher = this.DataService.Searcher;
 
@@ -148,30 +148,30 @@ namespace Zongsoft.Web
 			if(string.IsNullOrWhiteSpace(keyword))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing keyword for search."));
 
-			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), paging)));
+			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), page)));
 		}
 
 		[HttpGet("{key?}")]
-		public IActionResult Get(string key, [FromQuery]Paging paging = null)
+		public IActionResult Get(string key, [FromQuery]Paging page = null)
 		{
 			return this.Paginate
 			(
 				string.IsNullOrWhiteSpace(key) ?
-				this.OnGet(Array.Empty<string>(), paging) :
-				this.OnGet(new[] { key }, paging)
+				this.OnGet(Array.Empty<string>(), page) :
+				this.OnGet(new[] { key }, page)
 			);
 		}
 
 		[HttpGet("{key1:required}-{key2:required}")]
-		public IActionResult Get(string key1, string key2, [FromQuery]Paging paging = null)
+		public IActionResult Get(string key1, string key2, [FromQuery]Paging page = null)
 		{
-			return this.Paginate(this.OnGet(new[] { key1, key2 }, paging));
+			return this.Paginate(this.OnGet(new[] { key1, key2 }, page));
 		}
 
 		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
-		public IActionResult Get(string key1, string key2, string key3, [FromQuery]Paging paging = null)
+		public IActionResult Get(string key1, string key2, string key3, [FromQuery]Paging page = null)
 		{
-			return this.Paginate(this.OnGet(new[] { key1, key2, key3 }, paging));
+			return this.Paginate(this.OnGet(new[] { key1, key2, key3 }, page));
 		}
 
 		[HttpDelete("{key?}")]
@@ -361,21 +361,21 @@ namespace Zongsoft.Web
 				throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual object OnGet(string[] keys, Paging paging)
+		protected virtual object OnGet(string[] keys, Paging page)
 		{
 			if(keys == null || keys.Length == 0)
-				return this.DataService.Select(null, this.GetSchema(), paging);
+				return this.DataService.Select(null, this.GetSchema(), page);
 
 			switch(keys.Length)
 			{
 				case 1:
 					return keys[0].Contains(':') && this.DataService.Searcher != null ?
-						this.DataService.Searcher.Search(keys[0], this.GetSchema(), paging) :
-						this.DataService.Get<string>(keys[0], this.GetSchema(), paging);
+						this.DataService.Searcher.Search(keys[0], this.GetSchema(), page) :
+						this.DataService.Get<string>(keys[0], this.GetSchema(), page);
 				case 2:
-					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), paging);
+					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), page);
 				case 3:
-					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), paging);
+					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), page);
 				default:
 					throw new ArgumentException("Too many keys specified.");
 			}

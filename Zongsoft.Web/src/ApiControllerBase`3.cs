@@ -73,9 +73,9 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("Query")]
-		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging paging = null)
+		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging page = null)
 		{
-			return this.Paginate(this.DataService.Select(Conditional.ToCondition(conditional), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), paging));
+			return this.Paginate(this.DataService.Select(Conditional.ToCondition(conditional), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page));
 		}
 		#endregion
 	}
