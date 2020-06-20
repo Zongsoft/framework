@@ -28,13 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 表示数据分页查询的设置类。
+	/// 表示数据分页的设置类。
 	/// </summary>
+	[TypeConverter(typeof(PagingConverter))]
 	public class Paging
 	{
 		#region 常量定义
