@@ -102,7 +102,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging page = null)
 		{
 			if(string.IsNullOrEmpty(name) || name == "*")
-				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, page)));
+				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, page ?? Paging.Page(1))));
 
 			var result = this.RoleProvider.GetRole(name, @namespace);
 

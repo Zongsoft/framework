@@ -148,7 +148,7 @@ namespace Zongsoft.Web
 			if(string.IsNullOrWhiteSpace(keyword))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing keyword for search."));
 
-			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), page)));
+			return Task.FromResult((IActionResult)this.Paginate(searcher.Search(keyword, this.GetSchema(), page ?? Paging.Page(1))));
 		}
 
 		[HttpGet("{key?}")]
@@ -363,6 +363,9 @@ namespace Zongsoft.Web
 
 		protected virtual object OnGet(string[] keys, Paging page)
 		{
+			if(page == null)
+				page = Paging.Page(1);
+
 			if(keys == null || keys.Length == 0)
 				return this.DataService.Select(null, this.GetSchema(), page);
 
