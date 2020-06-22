@@ -57,7 +57,7 @@ namespace Zongsoft.Web
 			}
 
 			if(data == null)
-				return new NoContentResult();
+				return new NotFoundResult();
 
 			//如果数据类型是值类型并且其值等于默认值，则返回HTTP状态为无内容
 			if(data.GetType().IsValueType && object.Equals(data, default))
