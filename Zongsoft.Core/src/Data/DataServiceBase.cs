@@ -1315,7 +1315,7 @@ namespace Zongsoft.Data
 			//创建返回的条件集（AND组合）
 			var conditions = ConditionCollection.And();
 
-			for(int i = 0; i < primaryKey.Length; i++)
+			for(int i = 0; i < values.Length; i++)
 			{
 				conditions.Add(Data.Condition.Equal(primaryKey[i].Name, values[i]));
 			}
