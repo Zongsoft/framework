@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.ComponentModel;
 
 namespace Zongsoft.Data
 {
@@ -45,7 +48,7 @@ namespace Zongsoft.Data
 			this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
 
 			if(attributes != null && attributes.Length > 0)
-				this.Conditioner = DataSearcherResolver.Create(attributes);
+				this.Conditioner = DataSearcherResolver.Create(typeof(TEntity).GetTypeInfo(), attributes);
 		}
 		#endregion
 
@@ -205,25 +208,29 @@ namespace Zongsoft.Data
 				if(!_mapping.TryGetValue(index < 0 ? string.Empty : keyword.Substring(0, index).Trim(), out var token))
 					return null;
 
+				if(token.Members.Length == 1)
+					return GetCondition(token.Members[0], keyword.Substring(index + 1).Trim());
+
 				var conditions = new ConditionCollection(token.Combination);
 
-				foreach(var field in token.Fields)
+				foreach(var member in token.Members)
 				{
-					if(field.IsExactly)
-						conditions.Add(Condition.Equal(field.Name, keyword.Substring(index + 1).Trim()));
-					else
-						conditions.Add(Condition.Like(field.Name, "%" + keyword.Substring(index + 1).Trim() + "%"));
+					conditions.Add(GetCondition(member, keyword.Substring(index + 1).Trim()));
 				}
 
-				if(conditions.Count == 1)
-					return conditions[0];
-				else
-					return conditions;
+				return conditions;
+
+				static Condition GetCondition(ConditionMemberToken member, string literal)
+				{
+					return member.IsExactly ?
+						Condition.Equal(member.Name, Common.Convert.ConvertValue(literal, member.Type, () => member.Converter)) :
+						Condition.Like(member.Name, "%" + literal + "%");
+				}
 			}
 			#endregion
 
 			#region 静态方法
-			public static DataSearcherResolver Create(DataSearcherAttribute[] attributes)
+			public static DataSearcherResolver Create(TypeInfo type, DataSearcherAttribute[] attributes)
 			{
 				if(attributes == null || attributes.Length == 0)
 					return null;
@@ -239,7 +246,7 @@ namespace Zongsoft.Data
 						if(index > 0)
 						{
 							var keys = pattern.Substring(0, index).Split(',');
-							var token = ConditionToken.Create(pattern.Substring(index + 1).Split(','));
+							var token = ConditionToken.Create(type, pattern.Substring(index + 1).Split(','));
 
 							if(keys.Length == 1)
 							{
@@ -255,15 +262,15 @@ namespace Zongsoft.Data
 						}
 						else
 						{
-							var token = ConditionToken.Create(pattern.Split(','));
+							var token = ConditionToken.Create(type, pattern.Split(','));
 
-							if(token.Fields.Length == 1)
-								mapping[token.Fields[0].Name] = token;
+							if(token.Members.Length == 1)
+								mapping[token.Members[0].Name] = token;
 							else
 							{
 								mapping[string.Empty] = token;
 
-								foreach(var field in token.Fields)
+								foreach(var field in token.Members)
 								{
 									mapping[field.Name] = token;
 								}
@@ -283,36 +290,67 @@ namespace Zongsoft.Data
 				/// <summary>条件组合方式</summary>
 				public ConditionCombination Combination;
 
-				/// <summary>条件字段数组</summary>
-				public ConditionFieldToken[] Fields;
+				/// <summary>条件成员数组</summary>
+				public ConditionMemberToken[] Members;
 				#endregion
 
 				#region 构造函数
-				public ConditionToken(ConditionFieldToken[] fields)
+				public ConditionToken(ConditionMemberToken[] members)
 				{
-					this.Fields = fields;
+					this.Members = members;
 					this.Combination = ConditionCombination.Or;
 				}
 				#endregion
 
 				#region 静态方法
-				public static ConditionToken Create(string[] fields)
+				public static ConditionToken Create(TypeInfo type, string[] members)
 				{
-					if(fields == null || fields.Length == 0)
-						throw new ArgumentNullException(nameof(fields));
+					if(members == null || members.Length == 0)
+						throw new ArgumentNullException(nameof(members));
 
-					var tokens = new List<ConditionFieldToken>(fields.Length);
+					var tokens = new List<ConditionMemberToken>(members.Length);
 
-					foreach(var field in fields)
+					foreach(var member in members)
 					{
-						if(!string.IsNullOrWhiteSpace(field))
-							tokens.Add(new ConditionFieldToken(field));
+						if(TryGetMember(type, member, out var memberInfo, out var isExactly))
+							tokens.Add(new ConditionMemberToken(memberInfo, isExactly));
 					}
 
 					if(tokens.Count == 0)
-						throw new InvalidOperationException("Missing specified search field definitions.");
+						throw new InvalidOperationException("Missing specified search member definitions.");
 
 					return new ConditionToken(tokens.ToArray());
+				}
+
+				private static bool TryGetMember(TypeInfo type, string pattern, out MemberInfo member, out bool isExactly)
+				{
+					member = null;
+					isExactly = true;
+
+					if(string.IsNullOrEmpty(pattern))
+						return false;
+
+					isExactly = pattern[0] == '!' || pattern[pattern.Length - 1] == '!' || (pattern[0] != '?' && pattern[pattern.Length - 1] != '?');
+
+					if(type == null || type.IsPrimitive || type == typeof(object).GetTypeInfo())
+						return false;
+
+					if(isExactly)
+						pattern = pattern.Trim('!');
+					else
+						pattern = pattern.Trim('?');
+
+					do
+					{
+						member = type.DeclaredMembers.FirstOrDefault(m => string.Equals(m.Name, pattern, StringComparison.OrdinalIgnoreCase));
+
+						if(member != null)
+							return true;
+
+						type = type.BaseType?.GetTypeInfo();
+					} while(type != null && type != typeof(object).GetTypeInfo());
+
+					return false;
 				}
 				#endregion
 
@@ -321,12 +359,12 @@ namespace Zongsoft.Data
 				{
 					var text = new System.Text.StringBuilder();
 
-					for(int i = 0; i < this.Fields.Length; i++)
+					for(int i = 0; i < this.Members.Length; i++)
 					{
 						if(i > 0)
 							text.Append(" " + this.Combination.ToString() + " ");
 
-						text.Append(this.Fields[i].ToString());
+						text.Append(this.Members[i].ToString());
 					}
 
 					return text.ToString();
@@ -334,29 +372,38 @@ namespace Zongsoft.Data
 				#endregion
 			}
 
-			private struct ConditionFieldToken
+			private readonly struct ConditionMemberToken
 			{
 				#region 公共字段
-				/// <summary>字段名称</summary>
-				public string Name;
+				/// <summary>成员名称</summary>
+				public readonly string Name;
+
+				/// <summary>成员类型</summary>
+				public readonly Type Type;
 
 				/// <summary>是否精确匹配</summary>
-				public bool IsExactly;
+				public readonly bool IsExactly;
+
+				/// <summary>类型转换器。</summary>
+				public readonly TypeConverter Converter;
 				#endregion
 
 				#region 构造函数
-				public ConditionFieldToken(string field)
+				public ConditionMemberToken(MemberInfo member, bool isExactly)
 				{
-					if(string.IsNullOrWhiteSpace(field))
-						throw new ArgumentNullException(nameof(field));
+					if(member == null)
+						throw new ArgumentNullException(nameof(member));
 
-					field = field.Trim();
-					this.IsExactly = field[0] == '!' || field[field.Length - 1] == '!' || (field[0] != '?' && field[field.Length - 1] != '?');
+					this.Name = member.Name;
+					this.Type = member switch { PropertyInfo property => property.PropertyType, FieldInfo field => field.FieldType, _ => null };
+					this.IsExactly = isExactly;
 
-					if(this.IsExactly)
-						this.Name = field.Trim('!');
+					var converter = TypeDescriptor.GetConverter(member);
+
+					if(converter.GetType() != typeof(TypeConverter))
+						this.Converter = converter;
 					else
-						this.Name = field.Trim('?');
+						this.Converter = null;
 				}
 				#endregion
 
