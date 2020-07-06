@@ -37,6 +37,21 @@ namespace Zongsoft.Services
 {
 	public static class ServiceProviderExtension
 	{
+		public static T Resolve<T>(this IServiceProvider services)
+		{
+			return services.GetService<T>();
+		}
+
+		public static T ResolveRequired<T>(this IServiceProvider services)
+		{
+			return services.GetRequiredService<T>();
+		}
+
+		public static object ResolveRequired(this IServiceProvider services, Type serviceType)
+		{
+			return services.GetRequiredService(serviceType);
+		}
+
 		public static T GetMatchedService<T>(this IServiceProvider services, object parameter)
 		{
 			return (T)GetMatchedService(services, typeof(T), parameter);
