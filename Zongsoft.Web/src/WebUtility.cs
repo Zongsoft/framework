@@ -66,7 +66,7 @@ namespace Zongsoft.Web
 			if(pageable == null)
 				pageable = data as IPageable;
 
-			if(pageable != null)
+			if(pageable != null && !pageable.Suppressed)
 			{
 				var result = new ResultEntity(data);
 
