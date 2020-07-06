@@ -139,6 +139,10 @@ namespace Zongsoft.Data.Common
 			}
 			#endregion
 
+			#region 公共属性
+			public bool Suppressed => Paging.IsDisabled(_context.Paging);
+			#endregion
+
 			#region 遍历迭代
 			public IEnumerator<T> GetEnumerator()
 			{

@@ -124,6 +124,10 @@ namespace Zongsoft.Data
 			}
 			#endregion
 
+			#region 公共属性
+			public bool Suppressed => ((IPageable)_source).Suppressed;
+			#endregion
+
 			#region 枚举遍历
 			public IEnumerator<T> GetEnumerator()
 			{
@@ -218,6 +222,10 @@ namespace Zongsoft.Data
 				_source = source;
 				((IPageable)_source).Paginated += this.OnPaginated;
 			}
+			#endregion
+
+			#region 公共属性
+			public bool Suppressed => ((IPageable)_source).Suppressed;
 			#endregion
 
 			#region 枚举遍历
