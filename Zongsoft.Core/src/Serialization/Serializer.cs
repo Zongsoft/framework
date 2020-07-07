@@ -366,6 +366,9 @@ namespace Zongsoft.Serialization
 						if(member == null)
 							continue;
 
+						if(memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof(Nullable<>))
+							memberType = Nullable.GetUnderlyingType(memberType);
+
 						switch(reader.TokenType)
 						{
 							case JsonTokenType.None:
