@@ -212,7 +212,7 @@ namespace Zongsoft.Data.Common
 
 									object container;
 
-									if(token.Schema.Parent == null)
+									if(token.Schema.Parent == null || token.Schema.Parent.Token.IsMultiple)
 										container = entity;
 									else
 										container = token.Schema.Parent.Token.GetValue(entity);
