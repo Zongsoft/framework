@@ -128,6 +128,9 @@ namespace Zongsoft.Data.Common.Expressions
 
 			foreach(var sorting in sortings)
 			{
+				if(string.IsNullOrEmpty(sorting.Name))
+					continue;
+
 				var source = statement.From(origin, sorting.Name, null, out var property);
 
 				var simplex = property.IsSimplex ?
