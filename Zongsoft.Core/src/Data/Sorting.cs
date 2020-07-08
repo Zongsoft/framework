@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Data
 {
 	/// <summary>
 	/// 表示数据排序的设置项。
 	/// </summary>
+	[TypeConverter(typeof(SortingConverter))]
 	public struct Sorting : IEquatable<Sorting>
 	{
 		#region 成员字段
@@ -53,27 +55,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取一个值，指示排序方式。
-		/// </summary>
-		public SortingMode Mode
-		{
-			get
-			{
-				return _mode;
-			}
-		}
+		/// <summary>获取一个值，指示排序方式。</summary>
+		public SortingMode Mode => _mode;
 
-		/// <summary>
-		/// 获取排序项名称（即排序的成员名）。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取排序项名称（即排序的成员名）。</summary>
+		public string Name => _name;
 		#endregion
 
 		#region 静态方法
@@ -96,13 +82,90 @@ namespace Zongsoft.Data
 		{
 			return new Sorting(name, SortingMode.Descending);
 		}
+
+		/// <summary>
+		/// 将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。
+		/// </summary>
+		/// <param name="text">待解析的排序设置规则文本。</param>
+		/// <returns>返回解析成功的<see cref="Sorting"/>排序设置。</returns>
+		/// <exception cref="ArgumentException">当指定的<paramref name="text"/>参数值不符合排序设置格式。</exception>
+		/// <exception cref="ArgumentNullException">当指定的<paramref name="text"/>参数值为空(null)或空字符串("")。</exception>
+		public static Sorting Parse(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				throw new ArgumentNullException(nameof(text));
+
+			if(TryParse(text, out var result))
+				return result;
+
+			throw new ArgumentException("Invalid sorting format.");
+		}
+
+		/// <summary>
+		/// 尝试将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。
+		/// </summary>
+		/// <param name="text">待解析的排序设置规则文本。</param>
+		/// <param name="value">输出参数，表示解析成功的<see cref="Sorting"/>排序设置。</param>
+		/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
+		public static bool TryParse(string text, out Sorting value)
+		{
+			const int NONE_STATE = 0;       //未开始
+			const int GAPS_STATE = 1;       //符号与名字的间隔
+			const int NAME_STATE = 2;       //名字区
+			const int WHITESPACE_STATE = 3; //空白字符(名字中间或尾)
+
+			value = default;
+
+			if(string.IsNullOrEmpty(text))
+				return false;
+
+			var span = text.AsSpan();
+			var mode = SortingMode.Ascending;
+			int state = NONE_STATE;
+			int index = 0, length = 0;
+
+			for(int i = 0; i < span.Length; i++)
+			{
+				if(span[i] == ' ' || span[i] == '\t')
+				{
+					if(state == NAME_STATE)
+						state = WHITESPACE_STATE;
+
+					continue;
+				}
+
+				if(span[i] == '+')
+				{
+					state = GAPS_STATE;
+					continue;
+				}
+
+				if(span[i] == '-' || span[i] == '~')
+				{
+					mode = SortingMode.Descending;
+					state = GAPS_STATE;
+					continue;
+				}
+
+				if(state == WHITESPACE_STATE)
+					return false;
+
+				if(state == NONE_STATE || state == GAPS_STATE)
+					index = i;
+
+				length++;
+				state = NAME_STATE;
+			}
+
+			value = new Sorting(span.Slice(index, length).ToString(), mode);
+			return true;
+		}
 		#endregion
 
 		#region 重写方法
 		public bool Equals(Sorting other)
 		{
-			return other._mode == _mode &&
-			       string.Equals(other._name, _name, StringComparison.OrdinalIgnoreCase);
+			return string.Equals(other._name, _name, StringComparison.OrdinalIgnoreCase);
 		}
 
 		public override bool Equals(object obj)
@@ -115,12 +178,12 @@ namespace Zongsoft.Data
 
 		public override int GetHashCode()
 		{
-			return _name.GetHashCode() ^ _mode.GetHashCode();
+			return HashCode.Combine(_name.ToUpperInvariant());
 		}
 
 		public override string ToString()
 		{
-			return string.Format("{0}({1})", _mode, _name);
+			return _mode == SortingMode.Descending ? "-" + _name : _name;
 		}
 		#endregion
 
