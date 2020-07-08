@@ -972,6 +972,10 @@ namespace Zongsoft.Data
 
 		protected virtual IEnumerable<TEntity> OnSelect(ICondition condition, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
 		{
+			//如果没有指定排序设置则应用默认排序规则
+			if(sortings == null || sortings.Length == 0)
+				sortings = this.GetSortings();
+
 			return this.DataAccess.Select<TEntity>(this.Name, condition, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
 		#endregion
@@ -1082,6 +1086,28 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#endregion
+
+		#region 默认排序
+		protected virtual Sorting[] GetSortings()
+		{
+			var sortings = SortingAttribute.GetSortings(this.GetType());
+
+			if(sortings == null || sortings.Length == 0)
+			{
+				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+
+				if(keys != null && keys.Length > 0)
+				{
+					sortings = new Sorting[keys.Length];
+
+					for(int i = 0; i < keys.Length; i++)
+						sortings[i] = Sorting.Descending(keys[i].Name);
+				}
+			}
+
+			return sortings;
+		}
 		#endregion
 
 		#region 校验方法
