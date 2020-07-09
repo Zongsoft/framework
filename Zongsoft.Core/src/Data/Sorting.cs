@@ -36,11 +36,11 @@ namespace Zongsoft.Data
 	/// 表示数据排序的设置项。
 	/// </summary>
 	[TypeConverter(typeof(SortingConverter))]
-	public struct Sorting : IEquatable<Sorting>
+	public readonly struct Sorting : IEquatable<Sorting>
 	{
 		#region 成员字段
-		private SortingMode _mode;
-		private string _name;
+		private readonly SortingMode _mode;
+		private readonly string _name;
 		#endregion
 
 		#region 构造函数
@@ -112,7 +112,7 @@ namespace Zongsoft.Data
 			const int NONE_STATE = 0;       //未开始
 			const int GAPS_STATE = 1;       //符号与名字的间隔
 			const int NAME_STATE = 2;       //名字区
-			const int WHITESPACE_STATE = 3; //空白字符(名字中间或尾)
+			const int WHITESPACE_STATE = 3; //空白字符(仅限名字中间或尾部)
 
 			value = default;
 
