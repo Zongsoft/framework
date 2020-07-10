@@ -88,7 +88,7 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 运行方法
-		public void Run<T>(State<T> state, IEnumerable<KeyValuePair<object, object>> parameters = null) where T : struct, IEquatable<T>
+		public void Run<T>(State<T> state, IEnumerable<KeyValuePair<object, object>> parameters = null) where T : struct
 		{
 			if(state == null)
 				throw new ArgumentNullException(nameof(state));
@@ -155,19 +155,19 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct, IEquatable<T>
+		protected virtual IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct
 		{
 			return _handlers.GetHandlers<T>() ?? Array.Empty<IStateHandler<T>>();
 		}
 		#endregion
 
 		#region 私有方法
-		private bool IsTransferred<T>(State<T> state) where T : struct, IEquatable<T>
+		private bool IsTransferred<T>(State<T> state) where T : struct
 		{
 			return state != null && _stack.Any(frame => frame is IStateContext<T> context && (context.Origin.Equals(state) || context.Destination.Equals(state)));
 		}
 
-		private IStateContext<T> GetContext<T>(State<T> destination) where T : struct, IEquatable<T>
+		private IStateContext<T> GetContext<T>(State<T> destination) where T : struct
 		{
 			//如果指定状态实例已经被处理过
 			if(IsTransferred(destination))
@@ -177,14 +177,14 @@ namespace Zongsoft.Flowing
 			var origin = destination.Diagram.GetState(destination) ?? throw new InvalidOperationException($"Unable to obtain the current state of the '{destination}' state instance.");
 
 			//如果流程图定义了当前的流转向量则返回新建的上下文对象
-			if(destination.Diagram.CanTransfer(origin, destination))
+			if(destination.Diagram.CanTransfer(origin.Value, destination.Value))
 				return this.CreateContext(origin, destination);
 
 			//返回空对象
 			return null;
 		}
 
-		private StateContext<T> CreateContext<T>(State<T> origin, State<T> destination) where T : struct, IEquatable<T>
+		private StateContext<T> CreateContext<T>(State<T> origin, State<T> destination) where T : struct
 		{
 			var contextType = typeof(StateContext<>).MakeGenericType(typeof(T));
 			return (StateContext<T>)Activator.CreateInstance(contextType, new object[] { this, origin, destination });

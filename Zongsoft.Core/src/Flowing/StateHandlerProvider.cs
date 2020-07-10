@@ -47,7 +47,7 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 公共方法
-		public IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct, IEquatable<T>
+		public IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct
 		{
 			var services = ApplicationContext.Current?.Services;
 

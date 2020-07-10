@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public interface IStateContext<T> where T : struct, IEquatable<T>
+	public interface IStateContext<T> where T : struct
 	{
 		IStateMachine StateMachine { get; }
 

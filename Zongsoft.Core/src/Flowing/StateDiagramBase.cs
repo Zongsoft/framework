@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public abstract class StateDiagramBase<TState, T> : IStateDiagram<TState, T> where TState : State<T> where T : struct, IEquatable<T>
+	public abstract class StateDiagramBase<TState, T> : IStateDiagram<T> where T : struct where TState : State<T>
 	{
 		#region 构造函数
 		protected StateDiagramBase(IServiceProvider serviceProvider)
@@ -60,11 +60,8 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool CanTransfer(TState origin, TState destination)
+		protected virtual bool CanTransfer(T origin, T destination)
 		{
-			if(origin == null || destination == null)
-				return false;
-
 			var vectors = this.Vectors;
 
 			if(vectors != null && vectors.Length > 0)
@@ -73,7 +70,7 @@ namespace Zongsoft.Flowing
 				{
 					var vector = vectors[i];
 
-					if(vector.Origin.Equals(origin.Value) && vector.Destination.Equals(destination.Value))
+					if(vector.Origin.Equals(origin) && vector.Destination.Equals(destination))
 						return true;
 				}
 			}
@@ -96,19 +93,19 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 显式实现
-		bool IStateDiagram<TState, T>.CanTransfer(TState origin, TState destination)
+		bool IStateDiagram<T>.CanTransfer(T origin, T destination)
 		{
 			return this.CanTransfer(origin, destination);
 		}
 
-		TState IStateDiagram<TState, T>.GetState(TState state)
+		State<T> IStateDiagram<T>.GetState(State<T> state)
 		{
-			return this.GetState(state);
+			return this.GetState(state as TState ?? throw new ArgumentException($"The specified the State type is not ‘{typeof(TState).FullName}’ type."));
 		}
 
-		bool IStateDiagram<TState, T>.SetState(TState state, IDictionary<object, object> parameters)
+		bool IStateDiagram<T>.SetState(State<T> state, IDictionary<object, object> parameters)
 		{
-			return this.SetState(state, parameters);
+			return this.SetState(state as TState ?? throw new ArgumentException($"The specified the State type is not ‘{typeof(TState).FullName}’ type."), parameters);
 		}
 		#endregion
 	}

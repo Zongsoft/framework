@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public class StateContext<T> : IStateContext<T> where T : struct, IEquatable<T>
+	public class StateContext<T> : IStateContext<T> where T : struct
 	{
 		#region 构造函数
 		public StateContext(IStateMachine machine, State<T> origin, State<T> destination)

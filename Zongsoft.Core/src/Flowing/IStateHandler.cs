@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public interface IStateHandler<T> where T : struct, IEquatable<T>
+	public interface IStateHandler<T> where T : struct
 	{
 		bool Enabled { get; }
 

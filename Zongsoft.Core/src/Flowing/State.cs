@@ -31,10 +31,10 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public abstract class State<T> : IEquatable<State<T>> where T : struct, IEquatable<T>
+	public abstract class State<T> : IEquatable<State<T>> where T : struct
 	{
 		#region 构造函数
-		protected State(IStateDiagram<State<T>, T> diagram, T value, DateTime? timestamp, string description = null)
+		protected State(IStateDiagram<T> diagram, T value, DateTime? timestamp, string description = null)
 		{
 			this.Diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
 			this.Value = value;
@@ -45,9 +45,9 @@ namespace Zongsoft.Flowing
 
 		#region 公共属性
 		/// <summary>
-		/// 获取当前状态所属的<see cref="IStateDiagram{TState, T}"/>状态图。
+		/// 获取当前状态所属的<see cref="IStateDiagram{T}"/>状态图。
 		/// </summary>
-		public IStateDiagram<State<T>, T> Diagram { get; }
+		public IStateDiagram<T> Diagram { get; }
 
 		/// <summary>
 		/// 获取或设置当前状态值。

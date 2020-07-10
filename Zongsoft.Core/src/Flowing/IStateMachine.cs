@@ -38,6 +38,6 @@ namespace Zongsoft.Flowing
 		IDictionary<object, object> Parameters { get; }
 		IStateHandlerProvider Handlers { get; set; }
 
-		void Run<T>(State<T> state, IEnumerable<KeyValuePair<object, object>> parameters = null) where T : struct, IEquatable<T>;
+		void Run<T>(State<T> state, IEnumerable<KeyValuePair<object, object>> parameters = null) where T : struct;
 	}
 }

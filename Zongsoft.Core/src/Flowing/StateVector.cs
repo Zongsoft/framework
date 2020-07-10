@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public readonly struct StateVector<T> : IEquatable<StateVector<T>> where T : struct, IEquatable<T>
+	public readonly struct StateVector<T> : IEquatable<StateVector<T>> where T : struct
 	{
 		#region 构造函数
 		public StateVector(T origin, T destination)
