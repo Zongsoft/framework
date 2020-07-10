@@ -34,11 +34,7 @@ namespace Zongsoft.Flowing
 	public abstract class State<T> : IEquatable<State<T>> where T : struct, IEquatable<T>
 	{
 		#region 构造函数
-		protected State(IStateDiagram<State<T>, T> diagram, T value, string description = null) : this(diagram, value, DateTime.Now, description)
-		{
-		}
-
-		protected State(IStateDiagram<State<T>, T> diagram, T value, DateTime timestamp, string description = null)
+		protected State(IStateDiagram<State<T>, T> diagram, T value, DateTime? timestamp, string description = null)
 		{
 			this.Diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
 			this.Value = value;

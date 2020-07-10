@@ -35,13 +35,16 @@ namespace Zongsoft.Flowing
 	public abstract class StateDiagramBase<TState, T> : IStateDiagram<TState, T> where TState : State<T> where T : struct, IEquatable<T>
 	{
 		#region 构造函数
-		protected StateDiagramBase()
+		protected StateDiagramBase(IServiceProvider serviceProvider)
 		{
+			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
 		#endregion
 
 		#region 公共属性
-		public StateVector<T>[] Vectors { get; }
+		public IServiceProvider ServiceProvider { get; }
+
+		public StateVector<T>[] Vectors { get; protected set; }
 		#endregion
 
 		#region 公共方法
