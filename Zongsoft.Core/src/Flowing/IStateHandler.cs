@@ -31,11 +31,9 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public interface IStateHandler<T> where T : struct
+	public interface IStateHandler<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
-		bool Enabled { get; }
-
-		void Handle(IStateContext<T> context);
-		void Finish(IStateContext<T> context);
+		void Handle(IStateContext<TKey, TValue> context);
+		void Finish(IStateContext<TKey, TValue> context);
 	}
 }

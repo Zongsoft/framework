@@ -88,23 +88,23 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 运行方法
-		public void Run<T>(State<T> state, IEnumerable<KeyValuePair<object, object>> parameters = null) where T : struct
+		public void Run<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters = null) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
 			if(state == null)
 				throw new ArgumentNullException(nameof(state));
 
-			if(parameters != null)
-			{
-				foreach(var parameter in parameters)
-					_parameters.TryAdd(parameter.Key, parameter.Value);
-			}
-
-			var context = GetContext(state);
+			var context = GetContext(state, description);
 
 			if(context == null)
 				return;
 
-			var handlers = this.GetHandlers<T>();
+			if(parameters != null)
+			{
+				foreach(var parameter in parameters)
+					context.Parameters.TryAdd(parameter.Key, parameter.Value);
+			}
+
+			var handlers = this.GetHandlers<TKey, TValue>();
 
 			foreach(var handler in handlers)
 				state.Diagram.Transfer(context, handler);
@@ -131,16 +131,16 @@ namespace Zongsoft.Flowing
 		{
 			var contextType = context.GetType().GetTypeInfo();
 			var argumentType = contextType.GenericTypeArguments[0];
-			var contextInterfaceType = typeof(IStateContext<>).MakeGenericType(argumentType);
+			var contextInterfaceType = typeof(IStateContext<,>).MakeGenericType(argumentType);
 
 			var method = _getHandlers.GetOrAdd(argumentType, type => __GetHandlersMethodTemplate__.MakeGenericMethod(type));
-			var invoker = Delegate.CreateDelegate(typeof(IEnumerable<>).MakeGenericType(typeof(IStateHandler<>).MakeGenericType(argumentType)), method);
+			var invoker = Delegate.CreateDelegate(typeof(IEnumerable<>).MakeGenericType(typeof(IStateHandler<,>).MakeGenericType(argumentType)), method);
 			var hs = invoker.DynamicInvoke();
 			var handlers = (System.Collections.IEnumerable)method.Invoke(this, null);
 
 			foreach(var handler in handlers)
 			{
-				var contract = handler.GetType().GetInterfaceMap(typeof(IStateHandler<>).MakeGenericType(argumentType));
+				var contract = handler.GetType().GetInterfaceMap(typeof(IStateHandler<,>).MakeGenericType(argumentType));
 
 				for(int i = 0; i < contract.InterfaceMethods.Length; i++)
 				{
@@ -155,39 +155,66 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct
+		protected virtual IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
-			return _handlers.GetHandlers<T>() ?? Array.Empty<IStateHandler<T>>();
+			return _handlers.GetHandlers<TKey, TValue>() ?? Array.Empty<IStateHandler<TKey, TValue>>();
 		}
 		#endregion
 
 		#region 私有方法
-		private bool IsTransferred<T>(State<T> state) where T : struct
+		private bool IsTransferred<TKey, TValue>(State<TKey, TValue> state, out TValue? origin) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
-			return state != null && _stack.Any(frame => frame is IStateContext<T> context && (context.Origin.Equals(state) || context.Destination.Equals(state)));
+			origin = null;
+
+			if(state == null)
+				return false;
+
+			foreach(var frame in _stack)
+			{
+				if(frame is IStateContext<TKey, TValue> context)
+				{
+					if(context.Key.Equals(state.Key))
+					{
+						if(origin == null)
+							origin = context.State.Destination;
+
+						if(context.State.Contains(state.Value))
+							return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
-		private IStateContext<T> GetContext<T>(State<T> destination) where T : struct
+		private IStateContext<TKey, TValue> GetContext<TKey, TValue>(State<TKey, TValue> destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
 			//如果指定状态实例已经被处理过
-			if(IsTransferred(destination))
+			if(IsTransferred(destination, out var origin))
 				return null;
 
 			//获取指定状态实例的当前状态
-			var origin = destination.Diagram.GetState(destination) ?? throw new InvalidOperationException($"Unable to obtain the current state of the '{destination}' state instance.");
+			if(origin == null)
+				origin = destination.Diagram.GetState(destination.Key)?.Value;
+
+			//如果源状态与目的状态相同则返回空
+			if(origin == null || origin.Value.Equals(destination.Value))
+				return null;
 
 			//如果流程图定义了当前的流转向量则返回新建的上下文对象
 			if(destination.Diagram.CanTransfer(origin.Value, destination.Value))
-				return this.CreateContext(origin, destination);
+			{
+				return this.CreateContext(destination.Diagram, destination.Key, origin.Value, destination.Value, description);
+			}
 
 			//返回空对象
 			return null;
 		}
 
-		private StateContext<T> CreateContext<T>(State<T> origin, State<T> destination) where T : struct
+		private StateContext<TKey, TValue> CreateContext<TKey, TValue>(IStateDiagram<TKey, TValue> diagram, TKey key, TValue origin, TValue destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
-			var contextType = typeof(StateContext<>).MakeGenericType(typeof(T));
-			return (StateContext<T>)Activator.CreateInstance(contextType, new object[] { this, origin, destination });
+			var contextType = typeof(StateContext<,>).MakeGenericType(typeof(TKey), typeof(TValue));
+			return (StateContext<TKey, TValue>)Activator.CreateInstance(contextType, new object[] { this, diagram, key, origin, destination, description });
 		}
 		#endregion
 

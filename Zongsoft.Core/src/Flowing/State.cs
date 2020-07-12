@@ -31,51 +31,38 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public abstract class State<T> : IEquatable<State<T>> where T : struct
+	public abstract class State<TKey, TValue> : IEquatable<State<TKey, TValue>> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		#region 构造函数
-		protected State(IStateDiagram<T> diagram, T value, DateTime? timestamp, string description = null)
+		protected State(IStateDiagram<TKey, TValue> diagram, TKey key, TValue value)
 		{
 			this.Diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
+			this.Key = key;
 			this.Value = value;
-			this.Timestamp = timestamp;
-			this.Description = description;
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>
-		/// 获取当前状态所属的<see cref="IStateDiagram{T}"/>状态图。
+		/// 获取当前状态所属的<see cref="IStateDiagram{TKey, TValue}"/>状态图。
 		/// </summary>
-		public IStateDiagram<T> Diagram { get; }
+		public IStateDiagram<TKey, TValue> Diagram { get; }
+
+		/// <summary>
+		/// 获取当前状态的键值。
+		/// </summary>
+		public TKey Key { get; }
 
 		/// <summary>
 		/// 获取或设置当前状态值。
 		/// </summary>
-		public T Value { get; set; }
-
-		/// <summary>
-		/// 获取或设置状态变更时间。
-		/// </summary>
-		public DateTime? Timestamp { get; set; }
-
-		/// <summary>
-		/// 获取或设置状态描述或变更说明。
-		/// </summary>
-		public string Description { get; set; }
-		#endregion
-
-		#region 抽象成员
-		internal protected abstract bool Match(State<T> state);
+		public TValue Value { get; set; }
 		#endregion
 
 		#region 重写方法
-		public virtual bool Equals(State<T> state)
+		public bool Equals(State<TKey, TValue> state)
 		{
-			if(state == null)
-				return false;
-
-			return this.Match(state) && this.Value.Equals(state.Value);
+			return state != null && this.Key.Equals(state.Key) && this.Value.Equals(state.Value);
 		}
 
 		public override bool Equals(object obj)
@@ -83,7 +70,17 @@ namespace Zongsoft.Flowing
 			if(obj == null || obj.GetType() != this.GetType())
 				return false;
 
-			return this.Equals((State<T>)obj);
+			return this.Equals((State<TKey, TValue>)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(this.Key, this.Value);
+		}
+
+		public override string ToString()
+		{
+			return this.Key.ToString() + ":" + this.Value.ToString();
 		}
 		#endregion
 	}

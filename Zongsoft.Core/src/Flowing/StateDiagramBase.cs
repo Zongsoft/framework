@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public abstract class StateDiagramBase<TState, T> : IStateDiagram<T> where T : struct where TState : State<T>
+	public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		#region 构造函数
 		protected StateDiagramBase(IServiceProvider serviceProvider)
@@ -44,23 +44,20 @@ namespace Zongsoft.Flowing
 		#region 公共属性
 		public IServiceProvider ServiceProvider { get; }
 
-		public StateVector<T>[] Vectors { get; protected set; }
+		public StateVector<TValue>[] Vectors { get; protected set; }
 		#endregion
 
 		#region 公共方法
-		public void Transfer(IStateContext<T> context, IStateHandler<T> handler)
+		public void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler)
 		{
 			this.OnTransfering(context);
-
-			if(handler.Enabled)
-				handler.Handle(context);
-
+			handler.Handle(context);
 			this.OnTransferred(context);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool CanTransfer(T origin, T destination)
+		protected virtual bool CanTransfer(TValue origin, TValue destination)
 		{
 			var vectors = this.Vectors;
 
@@ -78,34 +75,49 @@ namespace Zongsoft.Flowing
 			return false;
 		}
 
-		protected virtual void OnTransfering(IStateContext<T> context)
+		protected virtual void OnTransfering(IStateContext<TKey, TValue> context)
 		{
 		}
 
-		protected virtual void OnTransferred(IStateContext<T> context)
+		protected virtual void OnTransferred(IStateContext<TKey, TValue> context)
 		{
 		}
 		#endregion
 
 		#region 抽象方法
-		protected abstract TState GetState(TState state);
-		protected abstract bool SetState(TState state, IDictionary<object, object> parameters);
+		protected abstract State<TKey, TValue> GetState(TKey key);
+		protected abstract bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters);
+		protected virtual bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
+		{
+			if(state == null)
+				throw new ArgumentNullException(nameof(state));
+
+			return this.SetState(state.Key, state.Value, description, parameters);
+		}
 		#endregion
 
 		#region 显式实现
-		bool IStateDiagram<T>.CanTransfer(T origin, T destination)
+		bool IStateDiagram<TKey, TValue>.CanTransfer(TValue origin, TValue destination)
 		{
 			return this.CanTransfer(origin, destination);
 		}
 
-		State<T> IStateDiagram<T>.GetState(State<T> state)
+		State<TKey, TValue> IStateDiagram<TKey, TValue>.GetState(TKey key)
 		{
-			return this.GetState(state as TState ?? throw new ArgumentException($"The specified the State type is not ‘{typeof(TState).FullName}’ type."));
+			return this.GetState(key);
 		}
 
-		bool IStateDiagram<T>.SetState(State<T> state, IDictionary<object, object> parameters)
+		bool IStateDiagram<TKey, TValue>.SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters)
 		{
-			return this.SetState(state as TState ?? throw new ArgumentException($"The specified the State type is not ‘{typeof(TState).FullName}’ type."), parameters);
+			return this.SetState(key, value, description, parameters);
+		}
+
+		bool IStateDiagram<TKey, TValue>.SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
+		{
+			if(state == null)
+				throw new ArgumentNullException(nameof(state));
+
+			return this.SetState(state, description, parameters);
 		}
 		#endregion
 	}

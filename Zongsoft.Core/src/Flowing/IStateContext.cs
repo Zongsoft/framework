@@ -32,14 +32,16 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public interface IStateContext<T> where T : struct
+	public interface IStateContext<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
-		IStateMachine StateMachine { get; }
-
-		bool HasParameters { get; }
+		IStateMachine Machine { get; }
+		IStateDiagram<TKey, TValue> Diagram { get; }
 		IDictionary<object, object> Parameters { get; }
 
-		State<T> Origin { get; }
-		State<T> Destination { get; }
+		TKey Key { get; }
+		StateVector<TValue> State { get; }
+		string Description { get; set; }
+
+		bool SetState(string description = null);
 	}
 }

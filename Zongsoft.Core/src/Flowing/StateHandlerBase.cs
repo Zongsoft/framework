@@ -31,51 +31,36 @@ using System;
 
 namespace Zongsoft.Flowing
 {
-	public readonly struct StateVector<T> : IEquatable<StateVector<T>> where T : struct
+	public abstract class StateHandlerBase<TKey, TValue> : IStateHandler<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		#region 构造函数
-		public StateVector(T origin, T destination)
+		protected StateHandlerBase(IServiceProvider serviceProvider)
 		{
-			this.Origin = origin;
-			this.Destination = destination;
+			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
 		#endregion
 
-		#region 公共字段
-		public readonly T Origin;
-		public readonly T Destination;
-		#endregion
-
-		#region 公共方法
-		public bool Contains(T value)
+		#region 公共属性
+		public IServiceProvider ServiceProvider
 		{
-			return this.Origin.Equals(value) || this.Destination.Equals(value);
+			get;
 		}
 		#endregion
 
-		#region 重写方法
-		public bool Equals(StateVector<T> other)
+		#region 抽象方法
+		protected abstract void OnHandle(StateContext<TKey, TValue> context);
+		protected abstract void OnFinish(StateContext<TKey, TValue> context);
+		#endregion
+
+		#region 显式实现
+		void IStateHandler<TKey, TValue>.Handle(IStateContext<TKey, TValue> context)
 		{
-			return this.Origin.Equals(other.Origin) &&
-			       this.Destination.Equals(other.Destination);
+			this.OnHandle(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
 		}
 
-		public override bool Equals(object obj)
+		void IStateHandler<TKey, TValue>.Finish(IStateContext<TKey, TValue> context)
 		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((StateVector<T>)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(this.Origin, this.Destination);
-		}
-
-		public override string ToString()
-		{
-			return this.Origin.ToString() + "->" + this.Destination.ToString();
+			this.OnFinish(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
 		}
 		#endregion
 	}

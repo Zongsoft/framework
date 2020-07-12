@@ -47,13 +47,13 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 公共方法
-		public IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct
+		public IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
 			var services = ApplicationContext.Current?.Services;
 
 			if(services != null)
 			{
-				var handlers = services.Resolve<IEnumerable<IStateHandler<T>>>();
+				var handlers = services.Resolve<IEnumerable<IStateHandler<TKey, TValue>>>();
 
 				foreach(var handler in handlers)
 					yield return handler;
@@ -65,7 +65,7 @@ namespace Zongsoft.Flowing
 			{
 				foreach(var module in modules)
 				{
-					var handlers = module.Services.Resolve<IEnumerable<IStateHandler<T>>>();
+					var handlers = module.Services.Resolve<IEnumerable<IStateHandler<TKey, TValue>>>();
 
 					foreach(var handler in handlers)
 						yield return handler;

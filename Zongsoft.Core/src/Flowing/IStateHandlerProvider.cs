@@ -34,6 +34,6 @@ namespace Zongsoft.Flowing
 {
 	public interface IStateHandlerProvider
 	{
-		IEnumerable<IStateHandler<T>> GetHandlers<T>() where T : struct;
+		IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct;
 	}
 }

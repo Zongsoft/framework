@@ -32,18 +32,20 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Flowing
 {
-	public interface IStateDiagram<T> where T : struct
+	public interface IStateDiagram<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		#region 属性定义
-		StateVector<T>[] Vectors { get; }
+		StateVector<TValue>[] Vectors { get; }
 		#endregion
 
 		#region 方法定义
-		bool CanTransfer(T origin, T destination);
-		void Transfer(IStateContext<T> context, IStateHandler<T> handler);
+		bool CanTransfer(StateVector<TValue> state) => this.CanTransfer(state.Origin, state.Destination);
+		bool CanTransfer(TValue origin, TValue destination);
+		void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler);
 
-		State<T> GetState(State<T> state);
-		bool SetState(State<T> state, IDictionary<object, object> parameters);
+		State<TKey, TValue> GetState(TKey key);
+		bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters = null);
+		bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters = null);
 		#endregion
 	}
 }
