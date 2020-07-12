@@ -108,9 +108,7 @@ namespace Zongsoft.Collections
 			if(dictionary == null || dictionary.Count < 1)
 				return false;
 
-			object result;
-
-			if(dictionary.TryGetValue(key, out result))
+			if(dictionary.TryGetValue(key, out object result))
 			{
 				if(converter == null)
 					value = Zongsoft.Common.Convert.ConvertValue<TValue>(result);
@@ -128,9 +126,7 @@ namespace Zongsoft.Collections
 			if(dictionary == null || dictionary.Count < 1)
 				return false;
 
-			TValue value;
-
-			if(dictionary.TryGetValue(key, out value) && onGot != null)
+			if(dictionary.TryGetValue(key, out TValue value) && onGot != null)
 			{
 				onGot(value);
 				return true;
