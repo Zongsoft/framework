@@ -73,6 +73,8 @@ namespace Zongsoft.Serialization
 					new JsonTimeSpanConverter(),
 					new JsonStringEnumConverter(),
 					new ModelConverterFactory(),
+					new RangeConverterFactory(),
+					new NullableConverterFactory(),
 				},
 			};
 			#endregion
@@ -213,7 +215,9 @@ namespace Zongsoft.Serialization
 					{
 						new JsonTimeSpanConverter(),
 						new JsonStringEnumConverter(),
-						new ModelConverterFactory()
+						new ModelConverterFactory(),
+						new RangeConverterFactory(),
+						new NullableConverterFactory(),
 					},
 				};
 			}
@@ -249,7 +253,9 @@ namespace Zongsoft.Serialization
 					{
 						new JsonTimeSpanConverter(),
 						new JsonStringEnumConverter(naming),
-						new ModelConverterFactory()
+						new ModelConverterFactory(),
+						new RangeConverterFactory(),
+						new NullableConverterFactory(),
 					},
 				};
 			}
@@ -325,6 +331,109 @@ namespace Zongsoft.Serialization
 			public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
 			{
 				writer.WriteStringValue(value.ToString());
+			}
+		}
+
+		private class RangeConverterFactory : JsonConverterFactory
+		{
+			public override bool CanConvert(Type type)
+			{
+				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.Range<>);
+			}
+
+			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
+			{
+				return (JsonConverter)Activator.CreateInstance(typeof(RangeConverter<>).MakeGenericType(new Type[] { type }));
+			}
+
+			private class RangeConverter<T> : JsonConverter<T> where T : struct
+			{
+				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+				{
+					var method = type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public);
+					return (T)method.Invoke(null, new object[] { reader.GetString() });
+				}
+
+				public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+				{
+					writer.WriteStringValue(value.ToString());
+				}
+			}
+		}
+
+		private class NullableConverterFactory : JsonConverterFactory
+		{
+			public override bool CanConvert(Type type)
+			{
+				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+			}
+
+			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
+			{
+				return (JsonConverter)Activator.CreateInstance(typeof(NullableConverter<>).MakeGenericType(new Type[] { type }));
+			}
+
+			private class NullableConverter<T> : JsonConverter<T>
+			{
+				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+				{
+					var underlyingType = Nullable.GetUnderlyingType(type);
+
+					switch(reader.TokenType)
+					{
+						case JsonTokenType.Null:
+							return default;
+						case JsonTokenType.True:
+							return (T)Common.Convert.ConvertValue(true, underlyingType);
+						case JsonTokenType.False:
+							return (T)Common.Convert.ConvertValue(false, underlyingType);
+						case JsonTokenType.String:
+							return (T)Common.Convert.ConvertValue(reader.GetString(), underlyingType);
+						case JsonTokenType.Number:
+							return Type.GetTypeCode(underlyingType) switch
+							{
+								TypeCode.Byte => (T)Common.Convert.ConvertValue(reader.GetByte(), underlyingType),
+								TypeCode.SByte => (T)Common.Convert.ConvertValue(reader.GetSByte(), underlyingType),
+								TypeCode.Int16 => (T)Common.Convert.ConvertValue(reader.GetInt16(), underlyingType),
+								TypeCode.UInt16 => (T)Common.Convert.ConvertValue(reader.GetUInt16(), underlyingType),
+								TypeCode.Int32 => (T)Common.Convert.ConvertValue(reader.GetInt32(), underlyingType),
+								TypeCode.UInt32 => (T)Common.Convert.ConvertValue(reader.GetUInt32(), underlyingType),
+								TypeCode.Int64 => (T)Common.Convert.ConvertValue(reader.GetInt64(), underlyingType),
+								TypeCode.UInt64 => (T)Common.Convert.ConvertValue(reader.GetUInt64(), underlyingType),
+								TypeCode.Single => (T)Common.Convert.ConvertValue(reader.GetSingle(), underlyingType),
+								TypeCode.Double => (T)Common.Convert.ConvertValue(reader.GetDouble(), underlyingType),
+								TypeCode.Decimal => (T)Common.Convert.ConvertValue(reader.GetDecimal(), underlyingType),
+								_ => (T)(object)null,
+							};
+						default:
+							return (T)(object)null;
+					}
+				}
+
+				public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+				{
+					if(value == null)
+					{
+						writer.WriteNullValue();
+						return;
+					}
+
+					switch(Type.GetTypeCode(value.GetType()))
+					{
+						case TypeCode.Boolean:
+							writer.WriteBooleanValue(Common.Convert.ConvertValue<bool>(value));
+							break;
+						case TypeCode.Byte:
+							writer.WriteNumberValue(Common.Convert.ConvertValue<byte>(value));
+							break;
+						case TypeCode.SByte:
+							writer.WriteNumberValue(Common.Convert.ConvertValue<sbyte>(value));
+							break;
+						default:
+							writer.WriteStringValue(Common.Convert.ConvertValue<string>(value));
+							break;
+					}
+				}
 			}
 		}
 
