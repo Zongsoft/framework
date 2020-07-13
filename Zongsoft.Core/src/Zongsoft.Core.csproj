@@ -36,7 +36,6 @@
 		<Folder Include="Services\Commands\" />
 		<Folder Include="Terminals\Commands\" />
 		<Folder Include="Transactions\" />
-		<Folder Include="Transitions\" />
 		<Folder Include="Text\" />
 	</ItemGroup>
 
