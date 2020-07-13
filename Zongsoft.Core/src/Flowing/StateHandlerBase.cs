@@ -49,7 +49,13 @@ namespace Zongsoft.Flowing
 
 		#region 抽象方法
 		protected abstract void OnHandle(StateContext<TKey, TValue> context);
-		protected abstract void OnFinish(StateContext<TKey, TValue> context);
+		#endregion
+
+		#region 虚拟方法
+		protected virtual void OnFinish(StateContext<TKey, TValue> context)
+		{
+			context.SetState();
+		}
 		#endregion
 
 		#region 显式实现

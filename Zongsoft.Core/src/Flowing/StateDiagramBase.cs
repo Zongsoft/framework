@@ -51,7 +51,7 @@ namespace Zongsoft.Flowing
 		public void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler)
 		{
 			this.OnTransfering(context);
-			handler.Handle(context);
+			this.OnTransfer(context, handler);
 			this.OnTransferred(context);
 		}
 		#endregion
@@ -73,6 +73,11 @@ namespace Zongsoft.Flowing
 			}
 
 			return false;
+		}
+
+		protected virtual void OnTransfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler)
+		{
+			handler.Handle(context);
 		}
 
 		protected virtual void OnTransfering(IStateContext<TKey, TValue> context)
