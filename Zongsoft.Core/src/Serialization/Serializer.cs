@@ -481,16 +481,55 @@ namespace Zongsoft.Serialization
 						return;
 					}
 
-					switch(Type.GetTypeCode(value.GetType()))
+					switch(value)
 					{
-						case TypeCode.Boolean:
-							writer.WriteBooleanValue(Common.Convert.ConvertValue<bool>(value));
+						case bool _:
+							writer.WriteBooleanValue((bool)Convert.ChangeType(value, TypeCode.Boolean));
 							break;
-						case TypeCode.Byte:
-							writer.WriteNumberValue(Common.Convert.ConvertValue<byte>(value));
+						case byte _:
+							writer.WriteNumberValue((byte)Convert.ChangeType(value, TypeCode.Byte));
 							break;
-						case TypeCode.SByte:
-							writer.WriteNumberValue(Common.Convert.ConvertValue<sbyte>(value));
+						case sbyte _:
+							writer.WriteNumberValue((sbyte)Convert.ChangeType(value, TypeCode.SByte));
+							break;
+						case short _:
+							writer.WriteNumberValue((short)Convert.ChangeType(value, TypeCode.Int16));
+							break;
+						case ushort _:
+							writer.WriteNumberValue((ushort)Convert.ChangeType(value, TypeCode.UInt16));
+							break;
+						case int _:
+							writer.WriteNumberValue((int)Convert.ChangeType(value, TypeCode.Int32));
+							break;
+						case uint _:
+							writer.WriteNumberValue((uint)Convert.ChangeType(value, TypeCode.UInt32));
+							break;
+						case long _:
+							writer.WriteNumberValue((long)Convert.ChangeType(value, TypeCode.Int64));
+							break;
+						case ulong _:
+							writer.WriteNumberValue((ulong)Convert.ChangeType(value, TypeCode.UInt64));
+							break;
+						case float _:
+							writer.WriteNumberValue((float)Convert.ChangeType(value, TypeCode.Single));
+							break;
+						case double _:
+							writer.WriteNumberValue((double)Convert.ChangeType(value, TypeCode.Double));
+							break;
+						case decimal _:
+							writer.WriteNumberValue((decimal)Convert.ChangeType(value, TypeCode.Decimal));
+							break;
+						case DateTime _:
+							writer.WriteStringValue((DateTime)Convert.ChangeType(value, TypeCode.DateTime));
+							break;
+						case DateTimeOffset _:
+							writer.WriteStringValue((DateTimeOffset)Convert.ChangeType(value, typeof(DateTimeOffset)));
+							break;
+						case TimeSpan _:
+							writer.WriteStringValue(value.ToString());
+							break;
+						case Guid _:
+							writer.WriteStringValue((Guid)Convert.ChangeType(value, typeof(Guid)));
 							break;
 						default:
 							writer.WriteStringValue(Common.Convert.ConvertValue<string>(value));
