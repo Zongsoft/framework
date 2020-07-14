@@ -39,7 +39,7 @@ namespace Zongsoft.Flowing
 	{
 		#region 静态变量
 		private static readonly MethodInfo __GetHandlersMethodTemplate__ = typeof(StateMachine).GetMethod(nameof(GetHandlers), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		private static readonly ConcurrentDictionary<Type, MethodInfo> _getHandlers = new ConcurrentDictionary<Type, MethodInfo>();
+		private static readonly ConcurrentDictionary<ValueTuple<Type, Type>, MethodInfo> _getHandlers = new ConcurrentDictionary<ValueTuple<Type, Type>, MethodInfo>();
 		#endregion
 
 		#region 成员字段
@@ -50,10 +50,10 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 构造函数
-		public StateMachine()
+		public StateMachine(IServiceProvider serviceProvider)
 		{
 			_stack = new Stack<object>();
-			_handlers = StateHandlerProvider.Default;
+			_handlers = new StateHandlerProvider(serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider)));
 		}
 		#endregion
 
@@ -121,33 +121,34 @@ namespace Zongsoft.Flowing
 
 			var frames = _stack.Reverse().ToArray();
 
-			foreach(var frame in frames)
+			using(var transaction = new Transactions.Transaction())
 			{
-				this.OnStop(frame);
+				for(int i = 0; i < frames.Length; i++)
+				{
+					this.OnStop(frames[i]);
+				}
+
+				//提交事务
+				transaction.Commit();
 			}
 		}
 
 		private void OnStop(object context)
 		{
-			var contextType = context.GetType().GetTypeInfo();
-			var argumentType = contextType.GenericTypeArguments[0];
-			var contextInterfaceType = typeof(IStateContext<,>).MakeGenericType(argumentType);
-
-			var method = _getHandlers.GetOrAdd(argumentType, type => __GetHandlersMethodTemplate__.MakeGenericMethod(type));
-			var invoker = Delegate.CreateDelegate(typeof(IEnumerable<>).MakeGenericType(typeof(IStateHandler<,>).MakeGenericType(argumentType)), method);
-			var hs = invoker.DynamicInvoke();
+			var contextType = context.GetType();
+			var method = _getHandlers.GetOrAdd((contextType.GenericTypeArguments[0], contextType.GenericTypeArguments[1]), key => __GetHandlersMethodTemplate__.MakeGenericMethod(key.Item1, key.Item2));
 			var handlers = (System.Collections.IEnumerable)method.Invoke(this, null);
 
 			foreach(var handler in handlers)
 			{
-				var contract = handler.GetType().GetInterfaceMap(typeof(IStateHandler<,>).MakeGenericType(argumentType));
+				var contract = handler.GetType().GetInterfaceMap(typeof(IStateHandler<,>).MakeGenericType(contextType.GenericTypeArguments));
 
 				for(int i = 0; i < contract.InterfaceMethods.Length; i++)
 				{
 					if(contract.InterfaceMethods[i].Name == "Finish")
 					{
-						var finish = Delegate.CreateDelegate(typeof(Action<>).MakeGenericType(contextInterfaceType), contract.TargetMethods[i]);
 						contract.TargetMethods[i].Invoke(handler, new object[] { context });
+						break;
 					}
 				}
 			}
@@ -237,6 +238,29 @@ namespace Zongsoft.Flowing
 				if(_stack != null)
 					_stack.Clear();
 			}
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class StateHandlerProvider : IStateHandlerProvider
+		{
+			#region 成员字段
+			private readonly IServiceProvider _serviceProvider;
+			#endregion
+
+			#region 构造函数
+			internal StateHandlerProvider(IServiceProvider serviceProvider)
+			{
+				_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+			}
+			#endregion
+
+			#region 公共方法
+			public IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct
+			{
+				return (IEnumerable<IStateHandler<TKey, TValue>>)_serviceProvider.GetService(typeof(IEnumerable<IStateHandler<TKey, TValue>>));
+			}
+			#endregion
 		}
 		#endregion
 	}
