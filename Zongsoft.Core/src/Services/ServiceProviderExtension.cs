@@ -37,6 +37,11 @@ namespace Zongsoft.Services
 {
 	public static class ServiceProviderExtension
 	{
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name = null)
+		{
+			return services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
+		}
+
 		public static T Resolve<T>(this IServiceProvider services)
 		{
 			return services.GetService<T>();

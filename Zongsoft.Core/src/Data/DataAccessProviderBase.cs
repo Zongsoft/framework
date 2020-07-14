@@ -52,10 +52,7 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public int Count
 		{
-			get
-			{
-				return _accesses.Count;
-			}
+			get => _accesses.Count;
 		}
 		#endregion
 
