@@ -30,8 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Security;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Zongsoft.Data
 {

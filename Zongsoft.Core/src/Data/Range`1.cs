@@ -29,7 +29,6 @@
 
 using System;
 using System.Linq;
-using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -135,9 +134,7 @@ namespace Zongsoft.Data
 		#region 静态方法
 		public static Range<T> Parse(string text)
 		{
-			Range<T> result;
-
-			if(TryParse(text, out result))
+			if(TryParse(text, out var result))
 				return result;
 
 			throw new ArgumentException(string.Format("Invalid value '{0}' of the argument.", text));
@@ -145,33 +142,35 @@ namespace Zongsoft.Data
 
 		public static bool TryParse(string text, out Range<T> result)
 		{
-			result = default(Range<T>);
+			result = default;
 
-			if(string.IsNullOrWhiteSpace(text))
+			if(string.IsNullOrEmpty(text))
 				return false;
 
 			text = text.Trim().Trim('(', ')');
 
-			if(string.IsNullOrWhiteSpace(text))
+			if(string.IsNullOrEmpty(text))
 				return false;
 
 			var parts = text.Split('~').Select(p => p.Trim().Trim('?', '*')).ToArray();
 
-			if(!string.IsNullOrWhiteSpace(parts[0]))
+			if(!string.IsNullOrEmpty(parts[0]))
 			{
-				T from;
-
-				if(!Zongsoft.Common.Convert.TryConvertValue(parts[0], out from))
+				if(!Common.Convert.TryConvertValue(parts[0], out T from))
 					return false;
 
 				result.Minimum = from;
+
+				if(parts.Length == 1)
+				{
+					result.Maximum = from;
+					return true;
+				}
 			}
 
-			if(parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]))
+			if(parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
 			{
-				T to;
-
-				if(!Zongsoft.Common.Convert.TryConvertValue(parts[1], out to))
+				if(!Common.Convert.TryConvertValue(parts[1], out T to))
 					return false;
 
 				result.Maximum = to;
