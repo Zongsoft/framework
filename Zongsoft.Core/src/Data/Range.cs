@@ -42,6 +42,35 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public static object Create(Type type, object minimum, object maximum)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			if(!type.IsValueType)
+				throw new ArgumentException($"The specified 'type' parameter must be a value type.");
+
+			if(type.IsGenericType)
+			{
+				var prototype = type.GetGenericTypeDefinition();
+
+				if(prototype == typeof(Nullable<>) || prototype == typeof(Range<>))
+					type = type.GenericTypeArguments[0];
+			}
+
+			if(minimum != null && (minimum is string min && min != string.Empty && min != "?" && min != "*"))
+				minimum = Common.Convert.ConvertValue(minimum, type);
+			else
+				minimum = null;
+
+			if(maximum != null && (maximum is string max && max != string.Empty && max != "?" && max != "*"))
+				maximum = Common.Convert.ConvertValue(maximum, type);
+			else
+				maximum = null;
+
+			return Activator.CreateInstance(typeof(Range<>).MakeGenericType(type), new object[] { minimum, maximum });
+		}
+
 		public static Range<T> Create<T>(T minimum, T maximum) where T : struct, IComparable<T>
 		{
 			return new Range<T>(minimum, maximum);
@@ -231,10 +260,13 @@ namespace Zongsoft.Data
 			#region 构造函数
 			public RangeToken(Type underlyingType)
 			{
-				_underlyingType = underlyingType ?? throw new ArgumentNullException(nameof(underlyingType));
+				if(underlyingType == null)
+					throw new ArgumentNullException(nameof(underlyingType));
 
 				if(!underlyingType.IsValueType)
-					throw new ArgumentException();
+					throw new ArgumentException($"The specified 'underlyingType({underlyingType.FullName})' parameter must be a value type.");
+
+				_underlyingType = underlyingType.IsEnum ? Enum.GetUnderlyingType(underlyingType) : underlyingType;
 			}
 			#endregion
 
