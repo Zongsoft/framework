@@ -30,6 +30,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Security;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Zongsoft.Data
 {
@@ -112,7 +114,7 @@ namespace Zongsoft.Data
 			}
 
 			//确定是否为区间值，如果是则返回区间条件
-			if(Range.HasValue(context.Value, Fallback))
+			if(IsRange(context.Type) && Range.HasValue(context.Value, Fallback))
 				return result;
 
 			var optor = context.Operator;
@@ -153,7 +155,7 @@ namespace Zongsoft.Data
 			if((context.Behaviors & ConditionalBehaviors.IgnoreEmpty) == ConditionalBehaviors.IgnoreEmpty && context.Type == typeof(string) && string.IsNullOrWhiteSpace((string)context.Value))
 				return true;
 
-			if(Range.IsRange(context.Type))
+			if(IsRange(context.Type))
 				return Range.IsEmpty(context.Value);
 
 			return false;
@@ -161,6 +163,21 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
+		private static bool IsRange(Type type)
+		{
+			if(type.IsGenericType && type.IsValueType)
+			{
+				var prototype = type.GetGenericTypeDefinition();
+
+				if(prototype == typeof(Nullable<>))
+					return IsRange(Nullable.GetUnderlyingType(type));
+				else if(prototype == typeof(Range<>))
+					return true;
+			}
+
+			return false;
+		}
+
 		private object GetValue(ConditionOperator? @operator, object value)
 		{
 			if(value == null || System.Convert.IsDBNull(value))
