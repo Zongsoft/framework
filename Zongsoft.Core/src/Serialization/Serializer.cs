@@ -38,6 +38,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.AccessControl;
 
 namespace Zongsoft.Serialization
 {
@@ -350,13 +351,75 @@ namespace Zongsoft.Serialization
 			{
 				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 				{
-					var method = type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public);
-					return (T)method.Invoke(null, new object[] { reader.GetString() });
+					switch(reader.TokenType)
+					{
+						case JsonTokenType.String:
+							return (T)Common.Convert.ConvertValue(reader.GetString(), type);
+						case JsonTokenType.StartObject:
+							object minimum = null, maximum = null;
+
+							while(reader.Read())
+							{
+								if(reader.TokenType == JsonTokenType.EndObject)
+									break;
+
+								if(reader.TokenType != JsonTokenType.PropertyName)
+									throw new JsonException();
+
+								var name = reader.GetString();
+
+								if(string.Equals(name, "minimum", StringComparison.OrdinalIgnoreCase))
+									minimum = GetValue(ref reader, type.GenericTypeArguments[0]);
+								else if(string.Equals(name, "maximum", StringComparison.OrdinalIgnoreCase))
+									maximum = GetValue(ref reader, type.GenericTypeArguments[0]);
+							}
+
+							return (T)Data.Range.Create(type, minimum, maximum);
+					}
+
+					return default;
 				}
 
 				public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 				{
 					writer.WriteStringValue(value.ToString());
+				}
+
+				private object GetValue(ref Utf8JsonReader reader, Type type)
+				{
+					if(reader.TokenType == JsonTokenType.PropertyName)
+						reader.Read();
+
+					switch(reader.TokenType)
+					{
+						case JsonTokenType.None:
+						case JsonTokenType.Null:
+							return null;
+						case JsonTokenType.True:
+							return true;
+						case JsonTokenType.False:
+							return false;
+						case JsonTokenType.String:
+							return reader.GetString();
+						case JsonTokenType.Number:
+							return Type.GetTypeCode(type) switch
+							{
+								TypeCode.Byte => reader.GetByte(),
+								TypeCode.SByte => reader.GetSByte(),
+								TypeCode.Int16 => reader.GetInt16(),
+								TypeCode.UInt16 => reader.GetUInt16(),
+								TypeCode.Int32 => reader.GetInt32(),
+								TypeCode.UInt32 => reader.GetUInt32(),
+								TypeCode.Int64 => reader.GetInt64(),
+								TypeCode.UInt64 => reader.GetUInt64(),
+								TypeCode.Single => reader.GetSingle(),
+								TypeCode.Double => reader.GetDouble(),
+								TypeCode.Decimal => reader.GetDecimal(),
+								_ => throw new JsonException(),
+							};
+						default:
+							throw new JsonException();
+					}
 				}
 			}
 		}
@@ -392,17 +455,17 @@ namespace Zongsoft.Serialization
 						case JsonTokenType.Number:
 							return Type.GetTypeCode(underlyingType) switch
 							{
-								TypeCode.Byte => (T)Common.Convert.ConvertValue(reader.GetByte(), underlyingType),
-								TypeCode.SByte => (T)Common.Convert.ConvertValue(reader.GetSByte(), underlyingType),
-								TypeCode.Int16 => (T)Common.Convert.ConvertValue(reader.GetInt16(), underlyingType),
-								TypeCode.UInt16 => (T)Common.Convert.ConvertValue(reader.GetUInt16(), underlyingType),
-								TypeCode.Int32 => (T)Common.Convert.ConvertValue(reader.GetInt32(), underlyingType),
-								TypeCode.UInt32 => (T)Common.Convert.ConvertValue(reader.GetUInt32(), underlyingType),
-								TypeCode.Int64 => (T)Common.Convert.ConvertValue(reader.GetInt64(), underlyingType),
-								TypeCode.UInt64 => (T)Common.Convert.ConvertValue(reader.GetUInt64(), underlyingType),
-								TypeCode.Single => (T)Common.Convert.ConvertValue(reader.GetSingle(), underlyingType),
-								TypeCode.Double => (T)Common.Convert.ConvertValue(reader.GetDouble(), underlyingType),
-								TypeCode.Decimal => (T)Common.Convert.ConvertValue(reader.GetDecimal(), underlyingType),
+								TypeCode.Byte => (T)Convert.ChangeType(reader.GetByte(), underlyingType),
+								TypeCode.SByte => (T)Convert.ChangeType(reader.GetSByte(), underlyingType),
+								TypeCode.Int16 => (T)Convert.ChangeType(reader.GetInt16(), underlyingType),
+								TypeCode.UInt16 => (T)Convert.ChangeType(reader.GetUInt16(), underlyingType),
+								TypeCode.Int32 => (T)Convert.ChangeType(reader.GetInt32(), underlyingType),
+								TypeCode.UInt32 => (T)Convert.ChangeType(reader.GetUInt32(), underlyingType),
+								TypeCode.Int64 => (T)Convert.ChangeType(reader.GetInt64(), underlyingType),
+								TypeCode.UInt64 => (T)Convert.ChangeType(reader.GetUInt64(), underlyingType),
+								TypeCode.Single => (T)Convert.ChangeType(reader.GetSingle(), underlyingType),
+								TypeCode.Double => (T)Convert.ChangeType(reader.GetDouble(), underlyingType),
+								TypeCode.Decimal => (T)Convert.ChangeType(reader.GetDecimal(), underlyingType),
 								_ => (T)(object)null,
 							};
 						default:
@@ -498,7 +561,7 @@ namespace Zongsoft.Serialization
 								else if(memberType.IsEnum)
 									model.TrySetValue(member.Name, Enum.Parse(memberType, reader.GetString(), true));
 								else
-									model.TrySetValue(member.Name, reader.GetString());
+									model.TrySetValue(member.Name, Common.Convert.ConvertValue(reader.GetString(), memberType));
 								break;
 							case JsonTokenType.Number:
 								switch(Type.GetTypeCode(memberType))
