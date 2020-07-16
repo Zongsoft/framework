@@ -76,6 +76,11 @@ namespace Zongsoft.Web
 			get => this.DataService.CanUpdate;
 		}
 
+		protected virtual bool CanUpsert
+		{
+			get => this.CanCreate && this.CanUpdate;
+		}
+
 		protected TService DataService
 		{
 			get
@@ -249,7 +254,7 @@ namespace Zongsoft.Web
 		[HttpPut]
 		public IActionResult Upsert([FromBody]TModel model)
 		{
-			if(!(this.CanCreate && this.CanUpdate))
+			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			//确认模型是否有效
