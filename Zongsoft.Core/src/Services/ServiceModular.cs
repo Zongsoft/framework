@@ -60,7 +60,7 @@ namespace Zongsoft.Services
 		{
 			contract = null;
 			var module = GetModuleName(target.GetType());
-			return string.IsNullOrEmpty(module) ? false : _cache.TryGetValue(new ModularServiceKey(module, serviceType), out contract);
+			return !string.IsNullOrEmpty(module) && _cache.TryGetValue(new ModularServiceKey(module, serviceType), out contract);
 		}
 
 		public static Type GenerateContract(string module, Type type)
