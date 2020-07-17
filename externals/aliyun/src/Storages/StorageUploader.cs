@@ -73,16 +73,12 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 		public StorageUploader(StorageClient client, string path, IDictionary<string, object> extendedProperties, int bufferSize = DEFAULT_BUFFER_SIZE)
 		{
-			if(client == null)
-				throw new ArgumentNullException("client");
-
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
-
+				throw new ArgumentNullException(nameof(path));
 			if(bufferSize > MAXIMUM_BUFFER_SIZE)
-				throw new ArgumentOutOfRangeException("bufferSize");
+				throw new ArgumentOutOfRangeException(nameof(bufferSize));
 
-			_client = client;
+			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_path = path.Trim().TrimEnd('/', '\\');
 
 			_length = 0;
@@ -329,10 +325,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		private string Flush(byte[] buffer, int count, bool generateRequires)
 		{
 			if(buffer == null)
-				throw new ArgumentNullException("buffer");
-
+				throw new ArgumentNullException(nameof(buffer));
 			if(count > buffer.Length)
-				throw new ArgumentOutOfRangeException("count");
+				throw new ArgumentOutOfRangeException(nameof(count));
 
 			if(count < 1)
 				return null;

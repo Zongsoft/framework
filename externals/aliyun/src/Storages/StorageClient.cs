@@ -226,14 +226,14 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		{
 			if(properties == null)
 			{
-				properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-				properties[StorageHeaders.ZFS_CREATEDTIME_PROPERTY] = Utility.GetGmtTime();
+				properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+				{
+					[StorageHeaders.ZFS_CREATEDTIME_PROPERTY] = Utility.GetGmtTime()
+				};
 			}
 			else
 			{
-				object value;
-
-				if(!properties.TryGetValue(StorageHeaders.ZFS_CREATEDTIME_PROPERTY, out value))
+				if(!properties.ContainsKey(StorageHeaders.ZFS_CREATEDTIME_PROPERTY))
 					properties[StorageHeaders.ZFS_CREATEDTIME_PROPERTY] = Utility.GetGmtTime();
 			}
 
