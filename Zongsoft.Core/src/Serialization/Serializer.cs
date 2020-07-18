@@ -692,6 +692,14 @@ namespace Zongsoft.Serialization
 							continue;
 						}
 
+						if(property.PropertyType.IsEnum)
+						{
+							writer.WritePropertyName(key);
+							JsonSerializer.Serialize(writer, propertyValue, property.PropertyType, options);
+
+							continue;
+						}
+
 						switch(Type.GetTypeCode(property.PropertyType))
 						{
 							case TypeCode.String:
