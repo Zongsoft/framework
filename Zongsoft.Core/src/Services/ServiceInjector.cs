@@ -161,25 +161,43 @@ namespace Zongsoft.Services
 				};
 
 				if(attribute.IsRequired)
-					_valueFactory = (provider, target) =>
-					{
-						if(string.IsNullOrEmpty(attribute.Provider) ?
-							ServiceModular.TryGetContract(target, serviceType, out var contract) :
-							ServiceModular.TryGetContract(attribute.Provider, serviceType, out contract))
-							return provider.GetRequiredService(contract);
-						else
-							return provider.GetRequiredService(serviceType);
-					};
+				{
+					if(string.IsNullOrEmpty(attribute.Provider))
+						_valueFactory = (provider, target) =>
+						{
+							if(ServiceModular.TryGetContract(target, serviceType, out var contract))
+								return provider.GetRequiredService(contract);
+							else
+								return provider.GetRequiredService(serviceType);
+						};
+					else
+						_valueFactory = (provider, target) =>
+						{
+							if(ServiceModular.TryGetContract(attribute.Provider, serviceType, out var contract))
+								return provider.GetRequiredService(contract);
+							else
+								return provider.GetRequiredService(serviceType);
+						};
+				}
 				else
-					_valueFactory = (provider, target) =>
-					{
-						if(string.IsNullOrEmpty(attribute.Provider) ?
-							ServiceModular.TryGetContract(target, serviceType, out var contract) :
-							ServiceModular.TryGetContract(attribute.Provider, serviceType, out contract))
-							return provider.GetService(contract);
-						else
-							return provider.GetService(serviceType);
-					};
+				{
+					if(string.IsNullOrEmpty(attribute.Provider))
+						_valueFactory = (provider, target) =>
+						{
+							if(ServiceModular.TryGetContract(target, serviceType, out var contract))
+								return provider.GetService(contract);
+							else
+								return provider.GetService(serviceType);
+						};
+					else
+						_valueFactory = (provider, target) =>
+						{
+							if(ServiceModular.TryGetContract(attribute.Provider, serviceType, out var contract))
+								return provider.GetService(contract);
+							else
+								return provider.GetService(serviceType);
+						};
+				}
 			}
 
 			public MemberInjectionDescriptor(MemberInfo member)
