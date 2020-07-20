@@ -38,10 +38,10 @@ namespace Zongsoft.Caching
 	public abstract class CachePersister<T>
 	{
 		#region 成员字段
-		private ConcurrentBag<T> _cache;
-		private int _limit;
-		private TimeSpan _duration;
-		private Timer _timer;
+		private readonly ConcurrentBag<T> _cache;
+		private readonly int _limit;
+		private readonly TimeSpan _duration;
+		private readonly Timer _timer;
 		#endregion
 
 		#region 构造函数
@@ -122,18 +122,14 @@ namespace Zongsoft.Caching
 					_cache = cache;
 				}
 
-				public T Current
-				{
-					get => _current;
-				}
-
-				object IEnumerator.Current
-				{
-					get => _current;
-				}
+				public T Current => _current;
+				object IEnumerator.Current => _current;
 
 				public bool MoveNext()
 				{
+					if(_cache == null)
+						throw new ObjectDisposedException(nameof(Iterator));
+
 					return _cache.TryTake(out _current);
 				}
 
@@ -144,6 +140,7 @@ namespace Zongsoft.Caching
 
 				public void Dispose()
 				{
+					_cache = null;
 				}
 			}
 		}
