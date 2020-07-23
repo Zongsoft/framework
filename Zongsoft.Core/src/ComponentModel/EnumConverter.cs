@@ -141,9 +141,7 @@ namespace Zongsoft.ComponentModel
 		#region 私有方法
 		private long GetEnumValue(string valueText, bool throwExceptions)
 		{
-			long result;
-
-			if(!TryGetEnumValue(valueText, out result))
+			if(!TryGetEnumValue(valueText, out var result))
 			{
 				if(throwExceptions)
 					throw new FormatException(string.Format("Can not from this '{0}' string convert to '{1}' enum.", valueText, this.EnumType.AssemblyQualifiedName));
@@ -186,7 +184,7 @@ namespace Zongsoft.ComponentModel
 					return true;
 				}
 
-				if(string.Equals(valueText, entry.Alias.ToString(), StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(valueText, entry.Alias, StringComparison.OrdinalIgnoreCase))
 				{
 					underlyingValue = Convert.ToInt64(entry.Value);
 					return true;
