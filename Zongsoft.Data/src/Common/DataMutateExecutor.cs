@@ -62,13 +62,15 @@ namespace Zongsoft.Data.Common
 
 			if(isMultiple)
 			{
+				if(context.Data == null)
+					return false;
+
 				var continued = false;
 
 				foreach(var item in (IEnumerable)context.Data)
 				{
 					//更新当前操作数据
 					context.Data = item;
-
 					continued |= this.Mutate(context, statement, command);
 				}
 
