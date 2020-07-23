@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
 
@@ -95,7 +94,7 @@ namespace Zongsoft.Common
 
 				if(attribute != null && attribute.Alias != null)
 				{
-					alias = GetResourceString(attribute.Alias, field.DeclaringType.Assembly);
+					alias = attribute.Alias;
 					return true;
 				}
 			}
@@ -110,13 +109,8 @@ namespace Zongsoft.Common
 
 			if(field != null)
 			{
-				var attribute = (DescriptionAttribute)Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute));
-
-				if(attribute != null && attribute.Description != null)
-				{
-					description = GetResourceString(attribute.Description, field.DeclaringType.Assembly);
-					return true;
-				}
+				description = GetDescription(field);
+				return description != null;
 			}
 
 			description = null;
@@ -141,13 +135,10 @@ namespace Zongsoft.Common
 				return false;
 			}
 
-			var alias = (AliasAttribute)Attribute.GetCustomAttribute(field, typeof(AliasAttribute));
-			var description = (DescriptionAttribute)Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute));
-
 			entry = new EnumEntry(field.DeclaringType, field.Name,
 								underlyingType ? System.Convert.ChangeType(enumValue, Enum.GetUnderlyingType(enumValue.GetType())) : enumValue,
-								alias == null ? null : alias.Alias,
-								description == null ? null : GetResourceString(description.Description, field.DeclaringType.Assembly));
+								field.GetCustomAttribute<AliasAttribute>()?.Alias,
+								GetDescription(field));
 
 			return true;
 		}
@@ -206,19 +197,27 @@ namespace Zongsoft.Common
 
 			for(int i = 0; i < fields.Length; i++)
 			{
-				var alias = fields[i].GetCustomAttributes(typeof(AliasAttribute), false).OfType<AliasAttribute>().FirstOrDefault();
-				var description = fields[i].GetCustomAttributes(typeof(DescriptionAttribute), false).OfType<DescriptionAttribute>().FirstOrDefault();
-
 				entries[baseIndex + i] = new EnumEntry(enumType, fields[i].Name,
 													underlyingType ? System.Convert.ChangeType(fields[i].GetValue(null), Enum.GetUnderlyingType(enumType)) : fields[i].GetValue(null),
-													alias == null ? string.Empty : alias.Alias,
-													description == null ? string.Empty : GetResourceString(description.Description, enumType.Assembly));
+													fields[i].GetCustomAttribute<AliasAttribute>()?.Alias,
+													GetDescription(fields[i]));
 			}
 
 			return entries;
 		}
 
 		#region 私有方法
+		private static string GetDescription(FieldInfo field)
+		{
+			if(field == null)
+				throw new ArgumentNullException(nameof(field));
+
+			var attribute = field.GetCustomAttribute<DescriptionAttribute>();
+			var resourceKey = attribute?.Description ?? field.DeclaringType.Name + "." + field.Name;
+			return GetResourceString(resourceKey, field.DeclaringType.Assembly);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetResourceString(string name, Assembly assembly)
 		{
 			var names = assembly.GetManifestResourceNames();
@@ -234,7 +233,7 @@ namespace Zongsoft.Common
 					return value;
 			}
 
-			return name;
+			return null;
 		}
 		#endregion
 	}
