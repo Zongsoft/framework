@@ -44,7 +44,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 私有方法
-		private static IEnumerable<InsertStatement> BuildInserts(DataInsertContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+		private static IEnumerable<InsertStatement> BuildInserts(IDataMutateContextBase context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
 
@@ -69,7 +69,7 @@ namespace Zongsoft.Data.Common.Expressions
 						else
 						{
 							//确认当前成员是否有提供的写入值
-							var provided = context.Validate(simplex, out var value);
+							var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
 
 							var field = statement.Table.CreateField(schema.Token);
 							statement.Fields.Add(field);
