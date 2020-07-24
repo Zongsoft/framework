@@ -172,7 +172,7 @@ namespace Zongsoft.Data.Common
 			return _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
 		}
 
-		public static object GetValue(ref object target, string name)
+		public static object GetMemberValue(ref object target, string name)
 		{
 			if(target is IModel model)
 				return model.TryGetValue(name, out var value) ? value : null;
@@ -183,19 +183,66 @@ namespace Zongsoft.Data.Common
 			if(target is IDictionary classic)
 				return classic.Contains(name) ? classic[name] : null;
 
-			return Reflection.Reflector.GetValue(target, name);
+			return Reflection.Reflector.GetValue(ref target, name);
 		}
 
-		public static void SetValue(ref object target, string name, object value)
+		public static bool TryGetMemberValue(ref object target, string name, out object value)
 		{
 			if(target is IModel model)
-				model.TrySetValue(name, value);
+				return model.TryGetValue(name, out value);
+
 			if(target is IDictionary<string, object> generic)
-				generic[name] = value;
-			else if(target is IDictionary classic)
-				classic[name] = value;
-			else
-				Reflection.Reflector.SetValue(ref target, name, value);
+				return generic.TryGetValue(name, out value);
+
+			if(target is IDictionary classic)
+			{
+				if(classic.Contains(name))
+				{
+					value = classic[name];
+					return true;
+				}
+
+				value = null;
+				return false;
+			}
+
+			return Reflection.Reflector.TryGetValue(ref target, name, out value);
+		}
+
+		public static bool HasChanges(ref object data, string name)
+		{
+			if(data == null)
+				return false;
+
+			switch(data)
+			{
+				case IModel model:
+					return model.HasChanges(name);
+				case IDataDictionary dictionary:
+					return dictionary.HasChanges(name);
+				case IDictionary<string, object> generic:
+					return generic.ContainsKey(name);
+				case IDictionary classic:
+					return classic.Contains(name);
+			}
+
+			return true;
+		}
+
+		public static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
+		{
+			if(owner == null || owner.Token.Property.IsSimplex)
+				return false;
+
+			var links = ((Metadata.IDataEntityComplexProperty)owner.Token.Property).Links;
+
+			for(int i = 0; i < links.Length; i++)
+			{
+				if(object.Equals(links[i].Foreign, property))
+					return true;
+			}
+
+			return false;
 		}
 	}
 }

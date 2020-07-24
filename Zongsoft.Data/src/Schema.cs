@@ -48,14 +48,6 @@ namespace Zongsoft.Data
 			this.EntityType = entityType;
 			_members = entries ?? new Collections.NamedCollection<SchemaMember>(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
 		}
-
-		internal Schema(Metadata.IDataEntity entity, Type entityType, SchemaMember member)
-		{
-			this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
-			this.EntityType = entityType;
-			_members = new Collections.NamedCollection<SchemaMember>(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
-			_members.Add(member);
-		}
 		#endregion
 
 		#region 公共属性

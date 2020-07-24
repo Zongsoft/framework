@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
@@ -75,7 +74,7 @@ namespace Zongsoft.Data.Common.Expressions
 			var provided = context.Validate(member.Token.Property, out var value);
 
 			//如果不是批量更新，并且当前成员没有改动则返回
-			if(!context.IsMultiple && !this.HasChanges(data, member.Name) && !provided)
+			if(!context.IsMultiple && !Utility.HasChanges(ref data, member.Name) && !provided)
 				return;
 
 			if(member.Token.Property.IsSimplex)
@@ -95,7 +94,7 @@ namespace Zongsoft.Data.Common.Expressions
 					/*
 					 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号数，
 					 * 因此当参数类型为无符号数并且步长为负数(递减)，则可能导致参数类型转换溢出，
-					 * 所以必须将该参数类型重置为无符号整数。
+					 * 所以必须将该参数类型重置为有符号整数。
 					 */
 					parameter.DbType = System.Data.DbType.Int32;
 
@@ -119,7 +118,13 @@ namespace Zongsoft.Data.Common.Expressions
 
 				if(complex.Multiplicity == DataAssociationMultiplicity.Many)
 				{
-					this.BuildUpsertion(context, data, statement, member);
+					var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, data, member, member.Children);
+
+					//将新建的语句加入到主语句的从属集中
+					foreach(var upsert in upserts)
+					{
+						statement.Slaves.Add(upsert);
+					}
 				}
 				else
 				{
@@ -179,47 +184,6 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				this.BuildSchema(context, slave, slave.Table, member.Token.GetValue(data), child);
 			}
-		}
-
-		private void BuildUpsertion(DataUpdateContext context, object data, IStatementBase master, SchemaMember schema)
-		{
-			var entityType = schema.Parent == null ? context.EntityType : schema.Parent.Token.MemberType;
-
-			//构建 Upsert 操作上下文
-			var upsert = new DataUpsertContext(
-				context.DataAccess,
-				schema.Token.Property.Entity.Name,
-				true,
-				data,
-				new Schema(schema.Token.Property.Entity, entityType, schema),
-				context.HasStates ? context.States : null);
-
-			//构建 Upsert 语句
-			var statements = context.Source.Driver.Builder.Build(upsert);
-
-			//将新建的语句加入到主语句的从属集中
-			foreach(var statement in statements)
-			{
-				master.Slaves.Add(statement);
-			}
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool HasChanges(object data, string name)
-		{
-			switch(data)
-			{
-				case IModel model:
-					return model.HasChanges(name);
-				case IDataDictionary dictionary:
-					return dictionary.HasChanges(name);
-				case IDictionary<string, object> generic:
-					return generic.ContainsKey(name);
-				case System.Collections.IDictionary classic:
-					return classic.Contains(name);
-			}
-
-			return true;
 		}
 
 		private TableIdentifier Join(UpdateStatement statement, SchemaMember schema)

@@ -39,12 +39,12 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataInsertContext context)
 		{
-			return this.BuildStatements(context, context.Entity, null, context.Schema.Members);
+			return BuildInserts(context, context.Entity, null, context.Schema.Members);
 		}
 		#endregion
 
 		#region 私有方法
-		private IEnumerable<IMutateStatement> BuildStatements(DataInsertContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+		private static IEnumerable<InsertStatement> BuildInserts(DataInsertContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
 
@@ -74,8 +74,12 @@ namespace Zongsoft.Data.Common.Expressions
 							var field = statement.Table.CreateField(schema.Token);
 							statement.Fields.Add(field);
 
-							var parameter = this.IsLinked(owner, simplex) ?
-							                Expression.Parameter(schema.Token.Property.Name, simplex.Type) :
+							var parameter = Utility.IsLinked(owner, simplex) ?
+							                (
+												provided ?
+												Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+												Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+											) :
 											(
 												provided ?
 												Expression.Parameter(field, schema, value) :
@@ -96,7 +100,7 @@ namespace Zongsoft.Data.Common.Expressions
 							throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the insert operation.");
 
 						var complex = (IDataEntityComplexProperty)schema.Token.Property;
-						var slaves = this.BuildStatements(context, complex.Foreign, schema, schema.Children);
+						var slaves = BuildInserts(context, complex.Foreign, schema, schema.Children);
 
 						foreach(var slave in slaves)
 						{
@@ -109,23 +113,6 @@ namespace Zongsoft.Data.Common.Expressions
 				if(statement.Fields.Count > 0)
 					yield return statement;
 			}
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool IsLinked(SchemaMember owner, IDataEntitySimplexProperty property)
-		{
-			if(owner == null || owner.Token.Property.IsSimplex)
-				return false;
-
-			var links = ((IDataEntityComplexProperty)owner.Token.Property).Links;
-
-			for(int i = 0; i < links.Length; i++)
-			{
-				if(object.Equals(links[i].Foreign, property))
-					return true;
-			}
-
-			return false;
 		}
 		#endregion
 	}

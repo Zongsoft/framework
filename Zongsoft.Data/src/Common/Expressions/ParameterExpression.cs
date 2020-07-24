@@ -54,6 +54,20 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Direction = direction;
 		}
 
+		public ParameterExpression(string name, DbType type, object value)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name;
+			this.Direction = ParameterDirection.Input;
+
+			if(value != null)
+				this.Value = value;
+
+			this.DbType = type;
+		}
+
 		public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value)
 		{
 		}
@@ -177,7 +191,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(this.HasValue)
 				return $"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}";
 			else
-				return $"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema.ToString()}";
+				return $"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
 		}
 		#endregion
 	}

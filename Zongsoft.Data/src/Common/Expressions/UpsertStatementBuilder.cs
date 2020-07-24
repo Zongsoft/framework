@@ -39,12 +39,12 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataUpsertContext context)
 		{
-			return this.BuildStatements(context, context.Entity, context.Data, null, context.Schema.Members);
+			return BuildUpserts(context, context.Entity, context.Data, null, context.Schema.Members);
 		}
 		#endregion
 
 		#region 私有方法
-		private IEnumerable<IMutateStatement> BuildStatements(DataUpsertContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+		internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContextBase context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
 
@@ -74,11 +74,15 @@ namespace Zongsoft.Data.Common.Expressions
 							var field = statement.Table.CreateField(schema.Token);
 							statement.Fields.Add(field);
 
-							var parameter = this.IsLinked(owner, simplex) ?
-											Expression.Parameter(schema.Token.Property.Name, simplex.Type) :
+							var parameter = Utility.IsLinked(owner, simplex) ?
 											(
 												provided ?
-												Expression.Parameter(field, schema, value):
+												Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+												Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+											) :
+											(
+												provided ?
+												Expression.Parameter(field, schema, value) :
 												Expression.Parameter(field, schema)
 											);
 
@@ -86,7 +90,7 @@ namespace Zongsoft.Data.Common.Expressions
 							statement.Parameters.Add(parameter);
 
 							//处理完新增子句部分，接着再处理修改子句部分
-							if(!simplex.IsPrimaryKey && !simplex.Immutable && this.HasChanges(data, schema.Name))
+							if(!simplex.IsPrimaryKey && !simplex.Immutable && Utility.HasChanges(ref data, schema.Name))
 							{
 								//确认当前成员是否有提供的写入值
 								if(context.Validate(DataAccessMethod.Update, simplex, out value))
@@ -125,7 +129,7 @@ namespace Zongsoft.Data.Common.Expressions
 							throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
 
 						var complex = (IDataEntityComplexProperty)schema.Token.Property;
-						var slaves = this.BuildStatements(
+						var slaves = BuildUpserts(
 							context,
 							complex.Foreign,
 							context.IsMultiple ? null : schema.Token.GetValue(data),
@@ -143,41 +147,6 @@ namespace Zongsoft.Data.Common.Expressions
 				if(statement.Fields.Count > 0)
 					yield return statement;
 			}
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool IsLinked(SchemaMember owner, IDataEntitySimplexProperty property)
-		{
-			if(owner == null || owner.Token.Property.IsSimplex)
-				return false;
-
-			var links = ((IDataEntityComplexProperty)owner.Token.Property).Links;
-
-			for(int i = 0; i < links.Length; i++)
-			{
-				if(object.Equals(links[i].Foreign, property))
-					return true;
-			}
-
-			return false;
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool HasChanges(object data, string name)
-		{
-			switch(data)
-			{
-				case IModel model:
-					return model.HasChanges(name);
-				case IDataDictionary dictionary:
-					return dictionary.HasChanges(name);
-				case IDictionary<string, object> generic:
-					return generic.ContainsKey(name);
-				case System.Collections.IDictionary classic:
-					return classic.Contains(name);
-			}
-
-			return true;
 		}
 		#endregion
 	}
