@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -934,32 +933,6 @@ namespace Zongsoft.Data
 			}
 		}
 		#endregion
-
-		#region 公共方法
-		public bool Validate(Metadata.IDataEntityProperty property, out object value)
-		{
-			return this.Validate(DataAccessMethod.Insert, property, out value);
-		}
-
-		public bool Validate(DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
-		{
-			var validator = this.Validator;
-
-			if(validator != null)
-			{
-				switch(method)
-				{
-					case DataAccessMethod.Insert:
-						return validator.OnInsert(this, property, out value);
-					case DataAccessMethod.Update:
-						return validator.OnUpdate(this, property, out value);
-				}
-			}
-
-			value = null;
-			return false;
-		}
-		#endregion
 	}
 
 	public class DataUpdateContextBase : DataAccessContextBase, IDataMutateContextBase
@@ -1112,30 +1085,6 @@ namespace Zongsoft.Data
 				criteria ?? this.Condition :
 				validator.Validate(this, criteria ?? this.Condition);
 		}
-
-		public bool Validate(Metadata.IDataEntityProperty property, out object value)
-		{
-			return this.Validate(DataAccessMethod.Update, property, out value);
-		}
-
-		public bool Validate(DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
-		{
-			var validator = this.Validator;
-
-			if(validator != null)
-			{
-				switch(method)
-				{
-					case DataAccessMethod.Insert:
-						return validator.OnInsert(this, property, out value);
-					case DataAccessMethod.Update:
-						return validator.OnUpdate(this, property, out value);
-				}
-			}
-
-			value = null;
-			return false;
-		}
 		#endregion
 	}
 
@@ -1256,27 +1205,6 @@ namespace Zongsoft.Data
 				_schema = value;
 				this.OnPropertyChanged(nameof(Schema));
 			}
-		}
-		#endregion
-
-		#region 公共方法
-		public bool Validate(DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
-		{
-			var validator = this.Validator;
-
-			if(validator != null)
-			{
-				switch(method)
-				{
-					case DataAccessMethod.Insert:
-						return validator.OnInsert(this, property, out value);
-					case DataAccessMethod.Update:
-						return validator.OnUpdate(this, property, out value);
-				}
-			}
-
-			value = null;
-			return false;
 		}
 		#endregion
 	}

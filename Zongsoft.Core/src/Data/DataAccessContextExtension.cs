@@ -31,24 +31,38 @@ using System;
 
 namespace Zongsoft.Data
 {
-	/// <summary>
-	/// 表示写入操作上下文的基础接口。
-	/// </summary>
-	public interface IDataMutateContextBase : IDataAccessContextBase
+	public static class DataAccessContextExtension
 	{
-		/// <summary>获取写入操作对应的实体。</summary>
-		Metadata.IDataEntity Entity { get; }
+		public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
+		{
+			if(context == null)
+				throw new ArgumentNullException(nameof(context));
 
-		/// <summary>获取或设置写入操作的受影响记录数。</summary>
-		int Count { get; set; }
+			var validator = context.Validator;
 
-		/// <summary>获取或设置写入操作的数据。</summary>
-		object Data { get; set; }
+			if(validator != null)
+			{
+				switch(method)
+				{
+					case DataAccessMethod.Insert:
+						return validator.OnInsert(context, property, out value);
+					case DataAccessMethod.Update:
+						return validator.OnUpdate(context, property, out value);
+				}
+			}
 
-		/// <summary>获取一个值，指示是否为批量写入操作。</summary>
-		bool IsMultiple { get; }
+			value = null;
+			return false;
+		}
 
-		/// <summary>获取写入操作的验证器。</summary>
-		public IDataValidator Validator { get; }
+		public static bool Validate(this DataInsertContextBase context, Metadata.IDataEntityProperty property, out object value)
+		{
+			return Validate(context, DataAccessMethod.Insert, property, out value);
+		}
+
+		public static bool Validate(this DataUpdateContextBase context, Metadata.IDataEntityProperty property, out object value)
+		{
+			return Validate(context, DataAccessMethod.Update, property, out value);
+		}
 	}
 }
