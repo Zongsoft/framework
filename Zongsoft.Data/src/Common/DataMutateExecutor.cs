@@ -177,7 +177,7 @@ namespace Zongsoft.Data.Common
 					continue;
 
 				if(link.Foreign.Sequence == null)
-					parameter.Value = this.GetValue(data, link.Principal.Name);
+					parameter.Value = Utility.GetValue(ref data, link.Principal.Name);
 				else if(statement.Schema.HasChildren && statement.Schema.Children.TryGet(link.Foreign.Name, out var member))
 				{
 					/*
@@ -198,7 +198,7 @@ namespace Zongsoft.Data.Common
 							{
 								var equals = Expression.Equal(
 									updation.Table.CreateField(key),
-									Expression.Constant(GetValue(data, key.Name)));
+									Expression.Constant(Utility.GetValue(ref data, key.Name)));
 
 								if(updation.Where == null)
 									updation.Where = equals;
@@ -214,17 +214,6 @@ namespace Zongsoft.Data.Common
 					}
 				}
 			}
-		}
-
-		private object GetValue(object target, string name)
-		{
-			if(target is IDictionary<string, object> generic)
-				return generic.TryGetValue(name, out var value) ? value : null;
-
-			if(target is IDictionary classic)
-				return classic.Contains(name) ? classic[name] : null;
-
-			return Reflection.Reflector.GetValue(target, name);
 		}
 		#endregion
 	}

@@ -31,6 +31,8 @@ using System;
 using System.Data;
 using System.Reflection;
 using System.ComponentModel;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Common
@@ -168,6 +170,32 @@ namespace Zongsoft.Data.Common
 				throw new InvalidOperationException($"The '{type.FullName}' type of the specified '{member.DeclaringType.Name}.{member.Name}' member is not a type converter.");
 
 			return _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
+		}
+
+		public static object GetValue(ref object target, string name)
+		{
+			if(target is IModel model)
+				return model.TryGetValue(name, out var value) ? value : null;
+
+			if(target is IDictionary<string, object> generic)
+				return generic.TryGetValue(name, out var value) ? value : null;
+
+			if(target is IDictionary classic)
+				return classic.Contains(name) ? classic[name] : null;
+
+			return Reflection.Reflector.GetValue(target, name);
+		}
+
+		public static void SetValue(ref object target, string name, object value)
+		{
+			if(target is IModel model)
+				model.TrySetValue(name, value);
+			if(target is IDictionary<string, object> generic)
+				generic[name] = value;
+			else if(target is IDictionary classic)
+				classic[name] = value;
+			else
+				Reflection.Reflector.SetValue(ref target, name, value);
 		}
 	}
 }
