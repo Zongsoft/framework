@@ -90,7 +90,7 @@ namespace Zongsoft.Data.Common.Expressions
 							statement.Parameters.Add(parameter);
 
 							//处理完新增子句部分，接着再处理修改子句部分
-							if(!simplex.IsPrimaryKey && !simplex.Immutable && Utility.HasChanges(ref data, schema.Name))
+							if(!simplex.IsPrimaryKey && !simplex.Immutable && Utility.IsGenerateRequired(ref data, schema.Name))
 							{
 								//确认当前成员是否有提供的写入值
 								if(context.Validate(DataAccessMethod.Update, simplex, out value))
@@ -132,7 +132,7 @@ namespace Zongsoft.Data.Common.Expressions
 						var slaves = BuildUpserts(
 							context,
 							complex.Foreign,
-							context.IsMultiple ? null : schema.Token.GetValue(data),
+							null,
 							schema,
 							schema.Children);
 

@@ -70,11 +70,11 @@ namespace Zongsoft.Data.Common.Expressions
 			if(member.Token.Property.IsPrimaryKey)
 				return;
 
-			//确认当前成员是否有必须的写入值
+			//确认指定成员是否有必须的写入值
 			var provided = context.Validate(member.Token.Property, out var value);
 
-			//如果不是批量更新，并且当前成员没有改动则返回
-			if(!context.IsMultiple && !Utility.HasChanges(ref data, member.Name) && !provided)
+			//如果不是批量更新，并且指定成员不是必须要生成的且也没有必须写入的值，则返回
+			if(!context.IsMultiple && !Utility.IsGenerateRequired(ref data, member.Name) && !provided)
 				return;
 
 			if(member.Token.Property.IsSimplex)
