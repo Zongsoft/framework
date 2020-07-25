@@ -209,24 +209,20 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.TryGetValue(ref target, name, out value);
 		}
 
-		public static bool HasChanges(ref object data, string name)
+		public static bool IsGenerateRequired(ref object data, string name)
 		{
+			//注意：数据为空必须返回真
 			if(data == null)
-				return false;
+				return true;
 
-			switch(data)
+			return data switch
 			{
-				case IModel model:
-					return model.HasChanges(name);
-				case IDataDictionary dictionary:
-					return dictionary.HasChanges(name);
-				case IDictionary<string, object> generic:
-					return generic.ContainsKey(name);
-				case IDictionary classic:
-					return classic.Contains(name);
-			}
-
-			return true;
+				IModel model => model.HasChanges(name),
+				IDataDictionary dictionary => dictionary.HasChanges(name),
+				IDictionary<string, object> generic => generic.ContainsKey(name),
+				IDictionary classic => classic.Contains(name),
+				_ => true,
+			};
 		}
 
 		public static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
