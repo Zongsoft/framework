@@ -315,12 +315,12 @@ namespace Zongsoft.Data
 		#region 聚合方法
 		public int Count<T>(ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return (int)this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null);
+			return (int)(this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0d);
 		}
 
 		public int Count(string name, ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return (int)this.Aggregate(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null);
+			return (int)(this.Aggregate(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0d);
 		}
 
 		public double? Aggregate<T>(DataAggregateFunction function, string member, ICondition criteria = null, IDictionary<string, object> states = null)

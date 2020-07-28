@@ -243,7 +243,7 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(Method.Count(), criteria);
 
 			//执行聚合操作
-			return (int)this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, states);
+			return (int)(this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, states) ?? 0d);
 		}
 
 		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
