@@ -33,13 +33,29 @@ using System.Collections.Generic;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 为数据访问的计数事件提供数据。
+	/// 为数据访问的聚合事件提供数据。
 	/// </summary>
-	public class DataCountedEventArgs : DataAccessEventArgs<DataCountContextBase>
+	public class DataAggregatingEventArgs : DataAggregatedEventArgs
 	{
+		#region 成员字段
+		private bool _cancel;
+		#endregion
+
 		#region 构造函数
-		public DataCountedEventArgs(DataCountContextBase context) : base(context)
+		public DataAggregatingEventArgs(DataAggregateContextBase context) : base(context)
 		{
+			_cancel = false;
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取或设置一个值，表示是否取消当前操作。
+		/// </summary>
+		public bool Cancel
+		{
+			get => _cancel;
+			set => _cancel = value;
 		}
 		#endregion
 	}

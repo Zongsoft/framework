@@ -41,12 +41,12 @@ namespace Zongsoft.Data
 	{
 		#region 事件定义
 		public event EventHandler<DataAccessErrorEventArgs> Error;
-		public event EventHandler<DataCountedEventArgs> Counted;
-		public event EventHandler<DataCountingEventArgs> Counting;
 		public event EventHandler<DataExecutedEventArgs> Executed;
 		public event EventHandler<DataExecutingEventArgs> Executing;
 		public event EventHandler<DataExistedEventArgs> Existed;
 		public event EventHandler<DataExistingEventArgs> Existing;
+		public event EventHandler<DataAggregatedEventArgs> Aggregated;
+		public event EventHandler<DataAggregatingEventArgs> Aggregating;
 		public event EventHandler<DataIncrementedEventArgs> Incremented;
 		public event EventHandler<DataIncrementingEventArgs> Incrementing;
 		public event EventHandler<DataDeletedEventArgs> Deleted;
@@ -312,73 +312,58 @@ namespace Zongsoft.Data
 		protected abstract void OnExists(DataExistContextBase context);
 		#endregion
 
-		#region 计数方法
-		public int Count<T>(ICondition condition)
+		#region 聚合方法
+		public int Count<T>(ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.GetName<T>(), condition, string.Empty, null, null, null);
+			return (int)this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateMethod.Count, member), criteria, null, null, null);
 		}
 
-		public int Count<T>(ICondition condition, IDictionary<string, object> states)
+		public int Count(string name, ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.GetName<T>(), condition, string.Empty, states, null, null);
+			return (int)this.Aggregate(name, new DataAggregate(DataAggregateMethod.Count, member), criteria, null, null, null);
 		}
 
-		public int Count<T>(ICondition condition, string member)
+		public double? Aggregate<T>(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.GetName<T>(), condition, member, null, null, null);
+			return this.Aggregate(this.GetName<T>(), new DataAggregate(method, member), criteria, states, null, null);
 		}
 
-		public int Count<T>(ICondition condition, string member, IDictionary<string, object> states, Func<DataCountContextBase, bool> counting = null, Action<DataCountContextBase> counted = null)
+		public double? Aggregate(string name, DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.GetName<T>(), condition, member, states, counting, counted);
+			return this.Aggregate(name, new DataAggregate(method, member), criteria, states, null, null);
 		}
 
-		public int Count(string name, ICondition condition)
-		{
-			return this.Count(name, condition, string.Empty, null, null, null);
-		}
-
-		public int Count(string name, ICondition condition, IDictionary<string, object> states)
-		{
-			return this.Count(name, condition, string.Empty, states, null, null);
-		}
-
-		public int Count(string name, ICondition condition, string member)
-		{
-			return this.Count(name, condition, member, null, null, null);
-		}
-
-		public int Count(string name, ICondition condition, string member, IDictionary<string, object> states, Func<DataCountContextBase, bool> counting = null, Action<DataCountContextBase> counted = null)
+		public double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDictionary<string, object> states = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			//创建数据访问上下文对象
-			var context = this.CreateCountContext(name, condition, member, states);
+			var context = this.CreateAggregateContext(name, aggregate, criteria, states);
 
 			//处理数据访问操作前的回调
-			if(counting != null && counting(context))
+			if(aggregating != null && aggregating(context))
 				return context.Result;
 
-			//激发“Counting”事件，如果被中断则返回
-			if(this.OnCounting(context))
+			//激发“Aggregating”事件，如果被中断则返回
+			if(this.OnAggregating(context))
 				return context.Result;
 
 			//调用数据访问过滤器前事件
 			this.OnFiltering(context);
 
-			//执行计数操作方法
-			this.OnCount(context);
+			//执行聚合操作方法
+			this.OnAggregate(context);
 
 			//调用数据访问过滤器后事件
 			this.OnFiltered(context);
 
-			//激发“Counted”事件
-			this.OnCounted(context);
+			//激发“Aggregated”事件
+			this.OnAggregated(context);
 
 			//处理数据访问操作后的回调
-			if(counted != null)
-				counted(context);
+			if(aggregated != null)
+				aggregated(context);
 
 			var result = context.Result;
 
@@ -389,7 +374,7 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		protected abstract void OnCount(DataCountContextBase context);
+		protected abstract void OnAggregate(DataAggregateContextBase context);
 		#endregion
 
 		#region 递增方法
@@ -1679,38 +1664,21 @@ namespace Zongsoft.Data
 
 		#region 抽象方法
 		protected abstract ISchemaParser CreateSchema();
-		protected abstract DataCountContextBase CreateCountContext(string name, ICondition condition, string member, IDictionary<string, object> states);
-		protected abstract DataExistContextBase CreateExistContext(string name, ICondition condition, IDictionary<string, object> states);
 		protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> states);
-		protected abstract DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition condition, int interval, IDictionary<string, object> states);
-		protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition condition, ISchema schema, IDictionary<string, object> states);
+		protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDictionary<string, object> states);
+		protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states);
+		protected abstract DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states);
+		protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDictionary<string, object> states);
 		protected abstract DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states);
 		protected abstract DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states);
-		protected abstract DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition condition, ISchema schema, IDictionary<string, object> states);
-		protected abstract DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition condition, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states);
+		protected abstract DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states);
+		protected abstract DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states);
 		#endregion
 
 		#region 激发事件
 		protected virtual void OnError(DataAccessErrorEventArgs args)
 		{
 			this.Error?.Invoke(this, args);
-		}
-
-		protected virtual void OnCounted(DataCountContextBase context)
-		{
-			this.Counted?.Invoke(this, new DataCountedEventArgs(context));
-		}
-
-		protected virtual bool OnCounting(DataCountContextBase context)
-		{
-			var e = this.Counting;
-
-			if(e == null)
-				return false;
-
-			var args = new DataCountingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
 		}
 
 		protected virtual void OnExecuted(DataExecuteContextBase context)
@@ -1743,6 +1711,23 @@ namespace Zongsoft.Data
 				return false;
 
 			var args = new DataExistingEventArgs(context);
+			e(this, args);
+			return args.Cancel;
+		}
+
+		protected virtual void OnAggregated(DataAggregateContextBase context)
+		{
+			this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
+		}
+
+		protected virtual bool OnAggregating(DataAggregateContextBase context)
+		{
+			var e = this.Aggregating;
+
+			if(e == null)
+				return false;
+
+			var args = new DataAggregatingEventArgs(context);
 			e(this, args);
 			return args.Cancel;
 		}

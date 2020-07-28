@@ -39,13 +39,12 @@ namespace Zongsoft.Data
 		#region 事件定义
 		public event EventHandler<DataGettedEventArgs<TEntity>> Getted;
 		public event EventHandler<DataGettingEventArgs<TEntity>> Getting;
-
-		public event EventHandler<DataCountedEventArgs> Counted;
-		public event EventHandler<DataCountingEventArgs> Counting;
 		public event EventHandler<DataExecutedEventArgs> Executed;
 		public event EventHandler<DataExecutingEventArgs> Executing;
 		public event EventHandler<DataExistedEventArgs> Existed;
 		public event EventHandler<DataExistingEventArgs> Existing;
+		public event EventHandler<DataAggregatedEventArgs> Aggregated;
+		public event EventHandler<DataAggregatingEventArgs> Aggregating;
 		public event EventHandler<DataIncrementedEventArgs> Incremented;
 		public event EventHandler<DataIncrementingEventArgs> Incrementing;
 		public event EventHandler<DataDeletedEventArgs> Deleted;
@@ -234,27 +233,17 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 计数方法
-		public int Count(ICondition condition, IDictionary<string, object> states)
-		{
-			return this.Count(condition, string.Empty, states);
-		}
-
-		public int Count(ICondition condition, string member)
-		{
-			return this.Count(condition, member, null);
-		}
-
-		public int Count(ICondition condition, string member = null, IDictionary<string, object> states = null)
+		#region 聚合方法
+		public int Count(ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
 			//进行授权验证
 			this.Authorize(Method.Count(), ref states);
 
 			//修整查询条件
-			condition = this.OnValidate(Method.Count(), condition);
+			criteria = this.OnValidate(Method.Count(), criteria);
 
-			//执行计数操作
-			return this.OnCount(condition, member, states);
+			//执行聚合操作
+			return (int)this.OnAggregate(new DataAggregate(DataAggregateMethod.Count, member), criteria, states);
 		}
 
 		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
@@ -272,9 +261,36 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, out _), member, states);
 		}
 
-		protected virtual int OnCount(ICondition condition, string member, IDictionary<string, object> states)
+		public double? Aggregate(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
-			return this.DataAccess.Count(this.Name, condition, member, states, ctx => this.OnCounting(ctx), ctx => this.OnCounted(ctx));
+			//进行授权验证
+			this.Authorize(Method.Aggregate(method), ref states);
+
+			//修整查询条件
+			criteria = this.OnValidate(Method.Aggregate(method), criteria);
+
+			//执行聚合操作
+			return this.OnAggregate(new DataAggregate(method, member), criteria, states);
+		}
+
+		public double? Aggregate<TKey>(TKey key, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		{
+			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key, out _), states);
+		}
+
+		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		{
+			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key1, key2, out _), states);
+		}
+
+		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		{
+			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key1, key2, key3, out _), states);
+		}
+
+		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states)
+		{
+			return this.DataAccess.Aggregate(this.Name, aggregate, criteria, states, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
 		}
 		#endregion
 
@@ -1139,23 +1155,6 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnCounted(DataCountContextBase context)
-		{
-			this.Counted?.Invoke(this, new DataCountedEventArgs(context));
-		}
-
-		protected virtual bool OnCounting(DataCountContextBase context)
-		{
-			var e = this.Counting;
-
-			if(e == null)
-				return false;
-
-			var args = new DataCountingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
-		}
-
 		protected virtual void OnExecuted(DataExecuteContextBase context)
 		{
 			this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
@@ -1186,6 +1185,23 @@ namespace Zongsoft.Data
 				return false;
 
 			var args = new DataExistingEventArgs(context);
+			e(this, args);
+			return args.Cancel;
+		}
+
+		protected virtual void OnAggregated(DataAggregateContextBase context)
+		{
+			this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
+		}
+
+		protected virtual bool OnAggregating(DataAggregateContextBase context)
+		{
+			var e = this.Aggregating;
+
+			if(e == null)
+				return false;
+
+			var args = new DataAggregatingEventArgs(context);
 			e(this, args);
 			return args.Cancel;
 		}
@@ -1475,7 +1491,12 @@ namespace Zongsoft.Data
 
 			public static Method Count()
 			{
-				return new Method(DataAccessMethod.Count);
+				return new Method(nameof(Count), DataAccessMethod.Aggregate);
+			}
+
+			public static Method Aggregate(DataAggregateMethod aggregate)
+			{
+				return new Method(aggregate.ToString(), DataAccessMethod.Aggregate);
 			}
 
 			public static Method Exists()
@@ -1544,16 +1565,13 @@ namespace Zongsoft.Data
 
 			#region 公共方法
 			/// <summary>
-			/// 获取一个值，指示当前方法是否为读取方法(Count/Exists/Select)。
+			/// 获取一个值，指示当前方法是否为读取方法(Select/Exists/Aggregate)。
 			/// </summary>
 			public bool IsReading
 			{
-				get
-				{
-					return this.Kind == DataAccessMethod.Count ||
-						this.Kind == DataAccessMethod.Exists ||
-						this.Kind == DataAccessMethod.Select;
-				}
+				get => this.Kind == DataAccessMethod.Select ||
+					   this.Kind == DataAccessMethod.Exists ||
+					   this.Kind == DataAccessMethod.Aggregate;
 			}
 
 			/// <summary>
@@ -1561,14 +1579,11 @@ namespace Zongsoft.Data
 			/// </summary>
 			public bool IsWriting
 			{
-				get
-				{
-					return this.Kind == DataAccessMethod.Increment || 
-						this.Kind == DataAccessMethod.Delete ||
-						this.Kind == DataAccessMethod.Insert ||
-						this.Kind == DataAccessMethod.Update ||
-						this.Kind == DataAccessMethod.Upsert;
-				}
+				get => this.Kind == DataAccessMethod.Delete ||
+				       this.Kind == DataAccessMethod.Insert ||
+				       this.Kind == DataAccessMethod.Update ||
+				       this.Kind == DataAccessMethod.Upsert ||
+				       this.Kind == DataAccessMethod.Increment;
 			}
 			#endregion
 

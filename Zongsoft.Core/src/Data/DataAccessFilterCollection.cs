@@ -51,15 +51,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get => _items.Count;
-		}
+		public int Count { get => _items.Count; }
 
-		public bool IsReadOnly
-		{
-			get => false;
-		}
+		public bool IsReadOnly { get => false; }
 		#endregion
 
 		#region 公共方法
@@ -212,7 +206,6 @@ namespace Zongsoft.Data
 		private class FilterToken
 		{
 			#region 成员字段
-			private ICollection<IDataAccessFilter> _counts;
 			private ICollection<IDataAccessFilter> _exists;
 			private ICollection<IDataAccessFilter> _selects;
 			private ICollection<IDataAccessFilter> _deletes;
@@ -220,6 +213,7 @@ namespace Zongsoft.Data
 			private ICollection<IDataAccessFilter> _updates;
 			private ICollection<IDataAccessFilter> _upserts;
 			private ICollection<IDataAccessFilter> _executes;
+			private ICollection<IDataAccessFilter> _aggregates;
 			private ICollection<IDataAccessFilter> _increments;
 			#endregion
 
@@ -231,11 +225,6 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 私有属性
-			private ICollection<IDataAccessFilter> Counts
-			{
-				get => this.EnsureFilters(ref _counts);
-			}
-
 			private ICollection<IDataAccessFilter> Exists
 			{
 				get => this.EnsureFilters(ref _exists);
@@ -271,6 +260,11 @@ namespace Zongsoft.Data
 				get => this.EnsureFilters(ref _executes);
 			}
 
+			private ICollection<IDataAccessFilter> Aggregates
+			{
+				get => this.EnsureFilters(ref _aggregates);
+			}
+
 			private ICollection<IDataAccessFilter> Increments
 			{
 				get => this.EnsureFilters(ref _increments);
@@ -282,7 +276,7 @@ namespace Zongsoft.Data
 			{
 				if(filter.Methods == null || filter.Methods.Length == 0)
 				{
-					this.Counts.Add(filter);
+					this.Aggregates.Add(filter);
 					this.Exists.Add(filter);
 					this.Selects.Add(filter);
 					this.Deletes.Add(filter);
@@ -298,8 +292,8 @@ namespace Zongsoft.Data
 					{
 						switch(filter.Methods[i])
 						{
-							case DataAccessMethod.Count:
-								this.Counts.Add(filter);
+							case DataAccessMethod.Aggregate:
+								this.Aggregates.Add(filter);
 								break;
 							case DataAccessMethod.Exists:
 								this.Exists.Add(filter);
@@ -334,7 +328,6 @@ namespace Zongsoft.Data
 			{
 				if(filter.Methods == null || filter.Methods.Length == 0)
 				{
-					_counts?.Remove(filter);
 					_exists?.Remove(filter);
 					_selects?.Remove(filter);
 					_deletes?.Remove(filter);
@@ -342,6 +335,7 @@ namespace Zongsoft.Data
 					_updates?.Remove(filter);
 					_upserts?.Remove(filter);
 					_executes?.Remove(filter);
+					_aggregates?.Remove(filter);
 					_increments?.Remove(filter);
 				}
 				else
@@ -350,9 +344,6 @@ namespace Zongsoft.Data
 					{
 						switch(filter.Methods[i])
 						{
-							case DataAccessMethod.Count:
-								_counts?.Remove(filter);
-								break;
 							case DataAccessMethod.Exists:
 								_exists?.Remove(filter);
 								break;
@@ -374,6 +365,9 @@ namespace Zongsoft.Data
 							case DataAccessMethod.Execute:
 								_executes?.Remove(filter);
 								break;
+							case DataAccessMethod.Aggregate:
+								_aggregates?.Remove(filter);
+								break;
 							case DataAccessMethod.Increment:
 								_increments?.Remove(filter);
 								break;
@@ -388,9 +382,6 @@ namespace Zongsoft.Data
 
 				switch(method)
 				{
-					case DataAccessMethod.Count:
-						filters = _counts;
-						break;
 					case DataAccessMethod.Exists:
 						filters = _exists;
 						break;
@@ -411,6 +402,9 @@ namespace Zongsoft.Data
 						break;
 					case DataAccessMethod.Execute:
 						filters = _executes;
+						break;
+					case DataAccessMethod.Aggregate:
+						filters = _aggregates;
 						break;
 					case DataAccessMethod.Increment:
 						filters = _increments;

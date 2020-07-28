@@ -39,12 +39,12 @@ namespace Zongsoft.Data
 	public interface IDataService
 	{
 		#region 事件定义
-		event EventHandler<DataCountedEventArgs> Counted;
-		event EventHandler<DataCountingEventArgs> Counting;
 		event EventHandler<DataExecutedEventArgs> Executed;
 		event EventHandler<DataExecutingEventArgs> Executing;
 		event EventHandler<DataExistedEventArgs> Existed;
 		event EventHandler<DataExistingEventArgs> Existing;
+		event EventHandler<DataAggregatedEventArgs> Aggregated;
+		event EventHandler<DataAggregatingEventArgs> Aggregating;
 		event EventHandler<DataIncrementedEventArgs> Incremented;
 		event EventHandler<DataIncrementingEventArgs> Incrementing;
 		event EventHandler<DataDeletedEventArgs> Deleted;
@@ -102,14 +102,16 @@ namespace Zongsoft.Data
 		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null);
 		#endregion
 
-		#region 计数方法
-		int Count(ICondition condition, IDictionary<string, object> states);
-		int Count(ICondition condition, string member);
-		int Count(ICondition condition, string member = null, IDictionary<string, object> states = null);
-
+		#region 聚合方法
+		int Count(ICondition criteria = null, string member = null, IDictionary<string, object> states = null);
 		int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null);
 		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null);
 		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null);
+
+		double? Aggregate(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate<TKey>(TKey key, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
+		double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
+		double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
 		#endregion
 
 		#region 递增方法

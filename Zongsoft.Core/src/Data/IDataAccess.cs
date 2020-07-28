@@ -44,12 +44,12 @@ namespace Zongsoft.Data
 	{
 		#region 事件定义
 		event EventHandler<DataAccessErrorEventArgs> Error;
-		event EventHandler<DataCountedEventArgs> Counted;
-		event EventHandler<DataCountingEventArgs> Counting;
 		event EventHandler<DataExecutedEventArgs> Executed;
 		event EventHandler<DataExecutingEventArgs> Executing;
 		event EventHandler<DataExistedEventArgs> Existed;
 		event EventHandler<DataExistingEventArgs> Existing;
+		event EventHandler<DataAggregatedEventArgs> Aggregated;
+		event EventHandler<DataAggregatingEventArgs> Aggregating;
 		event EventHandler<DataIncrementedEventArgs> Incremented;
 		event EventHandler<DataIncrementingEventArgs> Incrementing;
 		event EventHandler<DataDeletedEventArgs> Deleted;
@@ -114,16 +114,13 @@ namespace Zongsoft.Data
 		bool Exists(string name, ICondition condition, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
 		#endregion
 
-		#region 计数方法
-		int Count<T>(ICondition condition);
-		int Count<T>(ICondition condition, IDictionary<string, object> states);
-		int Count<T>(ICondition condition, string member);
-		int Count<T>(ICondition condition, string member, IDictionary<string, object> states, Func<DataCountContextBase, bool> counting = null, Action<DataCountContextBase> counted = null);
+		#region 聚合方法
+		int Count<T>(ICondition criteria = null, string member = null, IDictionary<string, object> states = null);
+		int Count(string name, ICondition criteria = null, string member = null, IDictionary<string, object> states = null);
 
-		int Count(string name, ICondition condition);
-		int Count(string name, ICondition condition, IDictionary<string, object> states);
-		int Count(string name, ICondition condition, string member);
-		int Count(string name, ICondition condition, string member, IDictionary<string, object> states, Func<DataCountContextBase, bool> counting = null, Action<DataCountContextBase> counted = null);
+		double? Aggregate<T>(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate(string name, DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDictionary<string, object> states = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null);
 		#endregion
 
 		#region 递增方法

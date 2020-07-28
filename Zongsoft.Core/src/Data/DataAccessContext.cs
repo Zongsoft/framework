@@ -33,111 +33,6 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class DataCountContextBase : DataAccessContextBase
-	{
-		#region 成员字段
-		private int _result;
-		private ICondition _condition;
-		private string _member;
-		#endregion
-
-		#region 构造函数
-		protected DataCountContextBase(IDataAccess dataAccess, string name, ICondition condition, string member, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Count, states)
-		{
-			_condition = condition;
-			_member = member;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置计数操作的结果。
-		/// </summary>
-		public int Result
-		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				if(_result == value)
-					return;
-
-				_result = value;
-				this.OnPropertyChanged(nameof(Result));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置计数操作的条件。
-		/// </summary>
-		public ICondition Condition
-		{
-			get
-			{
-				return _condition;
-			}
-			set
-			{
-				if(_condition == value)
-					return;
-
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
-			}
-		}
-
-		/// <summary>
-		/// 获取当前计数操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置计数操作的包含成员。
-		/// </summary>
-		public string Member
-		{
-			get
-			{
-				return _member;
-			}
-			set
-			{
-				if(_member == value)
-					return;
-
-				_member = value;
-				this.OnPropertyChanged(nameof(Member));
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		public ICondition Validate(ICondition criteria = null)
-		{
-			var validator = this.Validator;
-
-			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
-		}
-		#endregion
-	}
-
 	public class DataExistContextBase : DataAccessContextBase
 	{
 		#region 成员字段
@@ -329,6 +224,96 @@ namespace Zongsoft.Data
 				_outParameters = value;
 				this.OnPropertyChanged(nameof(OutParameters));
 			}
+		}
+		#endregion
+	}
+
+	public class DataAggregateContextBase : DataAccessContextBase
+	{
+		#region 成员字段
+		private double? _result;
+		private ICondition _condition;
+		#endregion
+
+		#region 构造函数
+		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Aggregate, states)
+		{
+			_condition = criteria;
+			this.Aggregate = aggregate;
+			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Validator = dataAccess.Validator;
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>
+		/// 获取数据访问对应的实体元数据。
+		/// </summary>
+		public Metadata.IDataEntity Entity
+		{
+			get;
+		}
+
+		/// <summary>
+		/// 获取或设置聚合操作的结果。
+		/// </summary>
+		public double? Result
+		{
+			get
+			{
+				return _result;
+			}
+			set
+			{
+				if(_result == value)
+					return;
+
+				_result = value;
+				this.OnPropertyChanged(nameof(Result));
+			}
+		}
+
+		/// <summary>
+		/// 获取或设置聚合操作的条件。
+		/// </summary>
+		public ICondition Condition
+		{
+			get
+			{
+				return _condition;
+			}
+			set
+			{
+				if(_condition == value)
+					return;
+
+				_condition = value;
+				this.OnPropertyChanged(nameof(Condition));
+			}
+		}
+
+		/// <summary>
+		/// 获取当前聚合操作的验证器。
+		/// </summary>
+		public IDataValidator Validator
+		{
+			get;
+		}
+
+		/// <summary>
+		/// 获取聚合操作的聚合元素。
+		/// </summary>
+		public DataAggregate Aggregate { get; }
+		#endregion
+
+		#region 公共方法
+		public ICondition Validate(ICondition criteria = null)
+		{
+			var validator = this.Validator;
+
+			return validator == null ?
+				criteria ?? this.Condition :
+				validator.Validate(this, criteria ?? this.Condition);
 		}
 		#endregion
 	}

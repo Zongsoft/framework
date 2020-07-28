@@ -73,8 +73,8 @@ namespace Zongsoft.Data
 		{
 			switch(context.Method)
 			{
-				case DataAccessMethod.Count:
-					this.OnCounted((DataCountContextBase)context);
+				case DataAccessMethod.Aggregate:
+					this.OnAggregated((DataAggregateContextBase)context);
 					break;
 				case DataAccessMethod.Exists:
 					this.OnExisted((DataExistContextBase)context);
@@ -107,8 +107,8 @@ namespace Zongsoft.Data
 		{
 			switch(context.Method)
 			{
-				case DataAccessMethod.Count:
-					this.OnCounting((DataCountContextBase)context);
+				case DataAccessMethod.Aggregate:
+					this.OnAggregating((DataAggregateContextBase)context);
 					break;
 				case DataAccessMethod.Exists:
 					this.OnExisting((DataExistContextBase)context);
@@ -161,11 +161,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnCounting(DataCountContextBase context)
+		protected virtual void OnAggregating(DataAggregateContextBase context)
 		{
 		}
 
-		protected virtual void OnCounted(DataCountContextBase context)
+		protected virtual void OnAggregated(DataAggregateContextBase context)
 		{
 		}
 
