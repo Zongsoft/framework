@@ -73,9 +73,9 @@ namespace Zongsoft.Data.MySql
 			return new MySqlUpsertStatementBuilder();
 		}
 
-		protected override IStatementBuilder<DataCountContext> CreateCountStatementBuilder()
+		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder()
 		{
-			return new MySqlCountStatementBuilder();
+			return new MySqlAggregateStatementBuilder();
 		}
 
 		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder()

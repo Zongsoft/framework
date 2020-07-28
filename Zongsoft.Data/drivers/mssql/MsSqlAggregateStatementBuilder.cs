@@ -35,14 +35,10 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MsSql
 {
-	public class MsSqlCountStatementVisitor : CountStatementVisitor
+	public class MsSqlAggregateStatementBuilder : AggregateStatementBuilder
 	{
-		#region 单例字段
-		public static readonly MsSqlCountStatementVisitor Instance = new MsSqlCountStatementVisitor();
-		#endregion
-
 		#region 构造函数
-		private MsSqlCountStatementVisitor()
+		public MsSqlAggregateStatementBuilder()
 		{
 		}
 		#endregion

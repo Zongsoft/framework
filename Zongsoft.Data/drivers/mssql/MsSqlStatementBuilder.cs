@@ -73,9 +73,9 @@ namespace Zongsoft.Data.MsSql
 			return new MsSqlUpsertStatementBuilder();
 		}
 
-		protected override IStatementBuilder<DataCountContext> CreateCountStatementBuilder()
+		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder()
 		{
-			return new MsSqlCountStatementBuilder();
+			return new MsSqlAggregateStatementBuilder();
 		}
 
 		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder()

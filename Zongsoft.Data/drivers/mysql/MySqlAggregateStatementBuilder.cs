@@ -11,20 +11,20 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Data.MsSql library.
+ * This file is part of Zongsoft.Data.MySql library.
  *
- * The Zongsoft.Data.MsSql is free software: you can redistribute it and/or modify
+ * The Zongsoft.Data.MySql is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Data.MsSql is distributed in the hope that it will be useful,
+ * The Zongsoft.Data.MySql is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Data.MsSql library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Data.MySql library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -33,12 +33,12 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MySql
 {
-	public class MsSqlCountStatementBuilder : CountStatementBuilder
+	public class MySqlAggregateStatementBuilder : AggregateStatementBuilder
 	{
 		#region 构造函数
-		public MsSqlCountStatementBuilder()
+		public MySqlAggregateStatementBuilder()
 		{
 		}
 		#endregion

@@ -76,8 +76,8 @@ namespace Zongsoft.Data.MySql
 				case UpsertStatement upsert:
 					MySqlUpsertStatementVisitor.Instance.Visit(this, upsert);
 					break;
-				case CountStatement count:
-					MySqlCountStatementVisitor.Instance.Visit(this, count);
+				case AggregateStatement aggregate:
+					MySqlAggregateStatementVisitor.Instance.Visit(this, aggregate);
 					break;
 				case ExistStatement exist:
 					MySqlExistStatementVisitor.Instance.Visit(this, exist);
@@ -204,27 +204,27 @@ namespace Zongsoft.Data.MySql
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetAggregateName(Grouping.AggregateMethod method)
+			private string GetAggregateName(DataAggregateMethod method)
 			{
 				switch(method)
 				{
-					case Grouping.AggregateMethod.Count:
+					case DataAggregateMethod.Count:
 						return "COUNT";
-					case Grouping.AggregateMethod.Sum:
+					case DataAggregateMethod.Sum:
 						return "SUM";
-					case Grouping.AggregateMethod.Average:
+					case DataAggregateMethod.Average:
 						return "AVG";
-					case Grouping.AggregateMethod.Maximum:
+					case DataAggregateMethod.Maximum:
 						return "MAX";
-					case Grouping.AggregateMethod.Minimum:
+					case DataAggregateMethod.Minimum:
 						return "MIN";
-					case Grouping.AggregateMethod.Deviation:
+					case DataAggregateMethod.Deviation:
 						return "STDEV";
-					case Grouping.AggregateMethod.DeviationPopulation:
+					case DataAggregateMethod.DeviationPopulation:
 						return "STDEV_POP";
-					case Grouping.AggregateMethod.Variance:
+					case DataAggregateMethod.Variance:
 						return "VARIANCE";
-					case Grouping.AggregateMethod.VariancePopulation:
+					case DataAggregateMethod.VariancePopulation:
 						return "VAR_POP";
 					default:
 						throw new NotSupportedException($"Invalid '{method}' aggregate method.");

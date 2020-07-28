@@ -35,10 +35,14 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MySql
 {
-	public class MySqlCountStatementBuilder : CountStatementBuilder
+	public class MySqlAggregateStatementVisitor : AggregateStatementVisitor
 	{
+		#region 单例字段
+		public static readonly MySqlAggregateStatementVisitor Instance = new MySqlAggregateStatementVisitor();
+		#endregion
+
 		#region 构造函数
-		public MySqlCountStatementBuilder()
+		private MySqlAggregateStatementVisitor()
 		{
 		}
 		#endregion
