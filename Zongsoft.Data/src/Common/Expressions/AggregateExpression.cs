@@ -34,30 +34,17 @@ namespace Zongsoft.Data.Common.Expressions
 	public class AggregateExpression : MethodExpression
 	{
 		#region 构造函数
-		public AggregateExpression(DataAggregateMethod method, params IExpression[] arguments) : base(method.ToString(), MethodType.Function, arguments)
+		public AggregateExpression(DataAggregateFunction function, params IExpression[] arguments) : base(function.ToString(), MethodType.Function, arguments)
 		{
-			this.Method = method;
+			this.Function = function;
 		}
 		#endregion
 
 		#region 公共属性
-		public DataAggregateMethod Method
-		{
-			get;
-		}
+		public DataAggregateFunction Function { get; }
 		#endregion
 
 		#region 静态方法
-		public static AggregateExpression Count(FieldIdentifier field, string alias = null)
-		{
-			if(field == null)
-				return new AggregateExpression(DataAggregateMethod.Count, Constant(0)) { Alias = alias ?? "Count" };
-
-			field.Alias = null;
-
-			return new AggregateExpression(DataAggregateMethod.Count, field) { Alias = alias ?? "Count" };
-		}
-
 		public static AggregateExpression Aggregate(FieldIdentifier field, DataAggregate aggregate)
 		{
 			if(field == null)
@@ -65,7 +52,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			field.Alias = null;
 
-			return new AggregateExpression(aggregate.Method, field) { Alias = aggregate.Alias ?? aggregate.Name + "_" + aggregate.Method.ToString() };
+			return new AggregateExpression(aggregate.Function, field) { Alias = aggregate.Alias ?? aggregate.Name + "_" + aggregate.Function.ToString() };
 		}
 		#endregion
 	}

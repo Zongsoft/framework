@@ -98,9 +98,9 @@ namespace Zongsoft.Data.Common.Expressions
 				if(string.IsNullOrEmpty(aggregate.Name) || aggregate.Name == "*")
 				{
 					statement.Select.Members.Add(
-						new AggregateExpression(aggregate.Method, Expression.Constant(0))
+						new AggregateExpression(aggregate.Function, Expression.Constant(0))
 						{
-							Alias = string.IsNullOrEmpty(aggregate.Alias) ? aggregate.Method.ToString() : aggregate.Alias
+							Alias = string.IsNullOrEmpty(aggregate.Alias) ? aggregate.Function.ToString() : aggregate.Alias
 						});
 				}
 				else
@@ -111,7 +111,7 @@ namespace Zongsoft.Data.Common.Expressions
 						throw new DataException($"The field '{property.Name}' of aggregate function can not be a complex property.");
 
 					statement.Select.Members.Add(
-						new AggregateExpression(aggregate.Method, source.CreateField(property))
+						new AggregateExpression(aggregate.Function, source.CreateField(property))
 						{
 							Alias = string.IsNullOrEmpty(aggregate.Alias) ? aggregate.Name : aggregate.Alias
 						});

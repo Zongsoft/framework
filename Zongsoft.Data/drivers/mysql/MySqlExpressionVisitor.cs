@@ -193,7 +193,7 @@ namespace Zongsoft.Data.MySql
 				switch(method)
 				{
 					case AggregateExpression aggregate:
-						return this.GetAggregateName(aggregate.Method);
+						return this.GetAggregateName(aggregate.Function);
 					case SequenceExpression sequence:
 						return this.GetSequenceName(sequence);
 					default:
@@ -204,30 +204,30 @@ namespace Zongsoft.Data.MySql
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetAggregateName(DataAggregateMethod method)
+			private string GetAggregateName(DataAggregateFunction function)
 			{
-				switch(method)
+				switch(function)
 				{
-					case DataAggregateMethod.Count:
+					case DataAggregateFunction.Count:
 						return "COUNT";
-					case DataAggregateMethod.Sum:
+					case DataAggregateFunction.Sum:
 						return "SUM";
-					case DataAggregateMethod.Average:
+					case DataAggregateFunction.Average:
 						return "AVG";
-					case DataAggregateMethod.Maximum:
+					case DataAggregateFunction.Maximum:
 						return "MAX";
-					case DataAggregateMethod.Minimum:
+					case DataAggregateFunction.Minimum:
 						return "MIN";
-					case DataAggregateMethod.Deviation:
+					case DataAggregateFunction.Deviation:
 						return "STDEV";
-					case DataAggregateMethod.DeviationPopulation:
+					case DataAggregateFunction.DeviationPopulation:
 						return "STDEV_POP";
-					case DataAggregateMethod.Variance:
+					case DataAggregateFunction.Variance:
 						return "VARIANCE";
-					case DataAggregateMethod.VariancePopulation:
+					case DataAggregateFunction.VariancePopulation:
 						return "VAR_POP";
 					default:
-						throw new NotSupportedException($"Invalid '{method}' aggregate method.");
+						throw new NotSupportedException($"Invalid '{function}' aggregate method.");
 				}
 			}
 

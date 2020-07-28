@@ -652,7 +652,7 @@ namespace Zongsoft.Data.Common.Expressions
 				switch(method)
 				{
 					case AggregateExpression aggregate:
-						return aggregate.Method.ToString();
+						return aggregate.Function.ToString();
 					case SequenceExpression sequence:
 						return sequence.Method.ToString();
 					default:
