@@ -105,8 +105,8 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 计数方法
-		protected override void OnCount(DataCountContextBase context)
+		#region 聚合方法
+		protected override void OnAggregate(DataAggregateContextBase context)
 		{
 			this.Provider.Execute((IDataAccessContext)context);
 		}
@@ -194,14 +194,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 上下文法
-		protected override DataCountContextBase CreateCountContext(string name, ICondition condition, string member, IDictionary<string, object> states)
+		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDictionary<string, object> states)
 		{
-			return new DataCountContext(this, name, condition, member, states);
-		}
-
-		protected override DataExistContextBase CreateExistContext(string name, ICondition condition, IDictionary<string, object> states)
-		{
-			return new DataExistContext(this, name, condition, states);
+			return new DataExistContext(this, name, criteria, states);
 		}
 
 		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> states)
@@ -209,14 +204,19 @@ namespace Zongsoft.Data
 			return new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, states);
 		}
 
-		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition condition, int interval, IDictionary<string, object> states)
+		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states)
 		{
-			return new DataIncrementContext(this, name, member, condition, interval, states);
+			return new DataAggregateContext(this, name, aggregate, criteria, states);
 		}
 
-		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition condition, ISchema schema, IDictionary<string, object> states)
+		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states)
 		{
-			return new DataDeleteContext(this, name, condition, schema, states);
+			return new DataIncrementContext(this, name, member, criteria, interval, states);
+		}
+
+		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDictionary<string, object> states)
+		{
+			return new DataDeleteContext(this, name, criteria, schema, states);
 		}
 
 		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states)
@@ -229,14 +229,14 @@ namespace Zongsoft.Data
 			return new DataUpsertContext(this, name, isMultiple, data, schema, states);
 		}
 
-		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition condition, ISchema schema, IDictionary<string, object> states)
+		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
-			return new DataUpdateContext(this, name, isMultiple, data, condition, schema, states);
+			return new DataUpdateContext(this, name, isMultiple, data, criteria, schema, states);
 		}
 
-		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition condition, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
+		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
 		{
-			return new DataSelectContext(this, name, entityType, grouping, condition, schema, paging, sortings, states);
+			return new DataSelectContext(this, name, entityType, grouping, criteria, schema, paging, sortings, states);
 		}
 		#endregion
 

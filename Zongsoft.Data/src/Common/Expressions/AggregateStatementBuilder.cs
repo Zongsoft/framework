@@ -30,16 +30,29 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Data.Metadata;
-
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class CountStatement : SelectStatementBase
+	public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
 	{
-		#region 构造函数
-		public CountStatement(IDataEntity entity, string alias = null) : base(entity, alias)
+		public IEnumerable<IStatementBase> Build(DataAggregateContext context)
 		{
+			var statement = new AggregateStatement(context.Entity);
+			var field = (FieldIdentifier)null;
+
+			if(string.IsNullOrWhiteSpace(context.Aggregate.Name))
+				field = null;
+			else if(context.Aggregate.Name == "*")
+				field = statement.Table.CreateField("*");
+			else
+				field = statement.From(context.Aggregate.Name, null, out var property).CreateField(property);
+
+			//添加返回的聚合函数成员
+			statement.Select.Members.Add(AggregateExpression.Aggregate(field, context.Aggregate));
+
+			//生成条件子句
+			statement.Where = statement.Where(context.Validate());
+
+			yield return statement;
 		}
-		#endregion
 	}
 }

@@ -34,18 +34,18 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.Common
 {
-	public class DataCountExecutor : IDataExecutor<CountStatement>
+	public class DataCountExecutor : IDataExecutor<AggregateStatement>
 	{
 		#region 执行方法
-		public bool Execute(IDataAccessContext context, CountStatement statement)
+		public bool Execute(IDataAccessContext context, AggregateStatement statement)
 		{
-			if(context is DataCountContext ctx)
+			if(context is DataAggregateContext ctx)
 				return this.OnExecute(ctx, statement);
 
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
 		}
 
-		protected virtual bool OnExecute(DataCountContext context, CountStatement statement)
+		protected virtual bool OnExecute(DataAggregateContext context, AggregateStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(statement);

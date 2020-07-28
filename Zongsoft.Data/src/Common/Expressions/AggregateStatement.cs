@@ -30,9 +30,16 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data.Metadata;
+
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class CountStatementVisitor : SelectStatementVisitorBase<CountStatement>
+	public class AggregateStatement : SelectStatementBase
 	{
+		#region 构造函数
+		public AggregateStatement(IDataEntity entity, string alias = null) : base(entity, alias)
+		{
+		}
+		#endregion
 	}
 }

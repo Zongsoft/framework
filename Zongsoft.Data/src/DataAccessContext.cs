@@ -40,29 +40,14 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataAccessContext : IDataAccessContextBase
 	{
-		/// <summary>
-		/// 获取当前上下文对应的数据源。
-		/// </summary>
-		IDataSource Source
-		{
-			get;
-		}
+		/// <summary>获取当前上下文对应的数据源。</summary>
+		IDataSource Source { get; }
 
-		/// <summary>
-		/// 获取数据提供程序。
-		/// </summary>
-		IDataProvider Provider
-		{
-			get;
-		}
+		/// <summary>获取数据提供程序。</summary>
+		IDataProvider Provider { get; }
 
-		/// <summary>
-		/// 获取当前上下文关联的数据会话。
-		/// </summary>
-		DataSession Session
-		{
-			get;
-		}
+		/// <summary>获取当前上下文关联的数据会话。</summary>
+		DataSession Session { get; }
 	}
 
 	/// <summary>
@@ -70,37 +55,6 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataMutateContext : IDataAccessContext, IDataMutateContextBase
 	{
-	}
-
-	public class DataCountContext : DataCountContextBase, IDataAccessContext
-	{
-		#region 构造函数
-		public DataCountContext(IDataAccess dataAccess, string name, ICondition condition, string member, IDictionary<string, object> states = null) : base(dataAccess, name, condition, member, states)
-		{
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
-			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
-		}
-		#endregion
-
-		#region 公共属性
-		public IDataSource Source
-		{
-			get
-			{
-				return this.Session.Source;
-			}
-		}
-
-		public IDataProvider Provider
-		{
-			get;
-		}
-
-		public DataSession Session
-		{
-			get;
-		}
-		#endregion
 	}
 
 	public class DataExistContext : DataExistContextBase, IDataAccessContext
@@ -162,6 +116,28 @@ namespace Zongsoft.Data
 		{
 			get;
 		}
+		#endregion
+	}
+
+	public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext
+	{
+		#region 构造函数
+		public DataAggregateContext(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, aggregate, criteria, states)
+		{
+			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+		}
+		#endregion
+
+		#region 公共属性
+		public IDataSource Source
+		{
+			get => this.Session.Source;
+		}
+
+		public IDataProvider Provider { get; }
+
+		public DataSession Session { get; }
 		#endregion
 	}
 

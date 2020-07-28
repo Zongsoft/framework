@@ -28,21 +28,20 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class AggregateExpression : MethodExpression
 	{
 		#region 构造函数
-		public AggregateExpression(Grouping.AggregateMethod method, params IExpression[] arguments) : base(method.ToString(), MethodType.Function, arguments)
+		public AggregateExpression(DataAggregateMethod method, params IExpression[] arguments) : base(method.ToString(), MethodType.Function, arguments)
 		{
 			this.Method = method;
 		}
 		#endregion
 
 		#region 公共属性
-		public Grouping.AggregateMethod Method
+		public DataAggregateMethod Method
 		{
 			get;
 		}
@@ -52,11 +51,21 @@ namespace Zongsoft.Data.Common.Expressions
 		public static AggregateExpression Count(FieldIdentifier field, string alias = null)
 		{
 			if(field == null)
-				return new AggregateExpression(Grouping.AggregateMethod.Count, Constant(0)) { Alias = alias ?? "Count" };
+				return new AggregateExpression(DataAggregateMethod.Count, Constant(0)) { Alias = alias ?? "Count" };
 
 			field.Alias = null;
 
-			return new AggregateExpression(Grouping.AggregateMethod.Count, field) { Alias = alias ?? "Count" };
+			return new AggregateExpression(DataAggregateMethod.Count, field) { Alias = alias ?? "Count" };
+		}
+
+		public static AggregateExpression Aggregate(FieldIdentifier field, DataAggregate aggregate)
+		{
+			if(field == null)
+				throw new ArgumentNullException(nameof(field));
+
+			field.Alias = null;
+
+			return new AggregateExpression(aggregate.Method, field) { Alias = aggregate.Alias ?? aggregate.Name + "_" + aggregate.Method.ToString() };
 		}
 		#endregion
 	}

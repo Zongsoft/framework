@@ -253,7 +253,7 @@ namespace Zongsoft.Data.Common
 					case UpsertStatement upsert:
 						continued = _upsert.Execute(context, upsert);
 						break;
-					case CountStatement count:
+					case AggregateStatement count:
 						continued = _count.Execute(context, count);
 						break;
 					case ExistStatement exist:

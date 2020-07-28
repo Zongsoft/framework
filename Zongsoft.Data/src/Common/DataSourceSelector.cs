@@ -69,9 +69,9 @@ namespace Zongsoft.Data.Common
 		{
 			switch(context.Method)
 			{
-				case DataAccessMethod.Count:
 				case DataAccessMethod.Exists:
 				case DataAccessMethod.Select:
+				case DataAccessMethod.Aggregate:
 					return DataAccessMode.ReadOnly;
 				default:
 					return DataAccessMode.WriteOnly;

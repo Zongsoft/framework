@@ -32,27 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class CountStatementBuilder : IStatementBuilder<DataCountContext>
+	public class AggregateStatementVisitor : SelectStatementVisitorBase<AggregateStatement>
 	{
-		public IEnumerable<IStatementBase> Build(DataCountContext context)
-		{
-			var statement = new CountStatement(context.Entity);
-			var field = (FieldIdentifier)null;
-
-			if(string.IsNullOrWhiteSpace(context.Member))
-				field = null;
-			else if(context.Member == "*")
-				field = statement.Table.CreateField("*");
-			else
-				field = statement.From(context.Member, null, out var property).CreateField(property);
-
-			//添加返回的COUNT聚合函数成员
-			statement.Select.Members.Add(AggregateExpression.Count(field));
-
-			//生成条件子句
-			statement.Where = statement.Where(context.Validate());
-
-			yield return statement;
-		}
 	}
 }

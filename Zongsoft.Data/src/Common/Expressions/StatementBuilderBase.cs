@@ -39,9 +39,9 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 成员字段
-		private IStatementBuilder<DataCountContext> _count;
 		private IStatementBuilder<DataExistContext> _exist;
 		private IStatementBuilder<DataExecuteContext> _execution;
+		private IStatementBuilder<DataAggregateContext> _aggregate;
 		private IStatementBuilder<DataIncrementContext> _increment;
 
 		private IStatementBuilder<DataSelectContext> _select;
@@ -73,12 +73,12 @@ namespace Zongsoft.Data.Common.Expressions
 					return this.GetBuilder(ref _update, () => this.CreateUpdateStatementBuilder()).Build((DataUpdateContext)context);
 				case DataAccessMethod.Upsert:
 					return this.GetBuilder(ref _upsert, () => this.CreateUpsertStatementBuilder()).Build((DataUpsertContext)context);
-				case DataAccessMethod.Count:
-					return this.GetBuilder(ref _count, () => this.CreateCountStatementBuilder()).Build((DataCountContext)context);
 				case DataAccessMethod.Exists:
 					return this.GetBuilder(ref _exist, () => this.CreateExistStatementBuilder()).Build((DataExistContext)context);
 				case DataAccessMethod.Execute:
 					return this.GetBuilder(ref _execution, () => this.CreateExecutionStatementBuilder()).Build((DataExecuteContext)context);
+				case DataAccessMethod.Aggregate:
+					return this.GetBuilder(ref _aggregate, () => this.CreateAggregateStatementBuilder()).Build((DataAggregateContext)context);
 				case DataAccessMethod.Increment:
 					return this.GetBuilder(ref _increment, () => this.CreateIncrementStatementBuilder()).Build((DataIncrementContext)context);
 				default:
@@ -111,9 +111,9 @@ namespace Zongsoft.Data.Common.Expressions
 		protected abstract IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder();
 		protected abstract IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder();
 
-		protected abstract IStatementBuilder<DataCountContext> CreateCountStatementBuilder();
 		protected abstract IStatementBuilder<DataExistContext> CreateExistStatementBuilder();
 		protected abstract IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder();
+		protected abstract IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder();
 
 		protected virtual IStatementBuilder<DataIncrementContext> CreateIncrementStatementBuilder()
 		{
