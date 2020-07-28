@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Data
 {
@@ -37,14 +36,14 @@ namespace Zongsoft.Data
 	/// </summary>
 	public enum DataAccessMethod
 	{
-		/// <summary>计数方法</summary>
-		Count = 1,
+		/// <summary>执行方法</summary>
+		Execute,
 
 		/// <summary>是否存在</summary>
 		Exists,
 
-		/// <summary>执行方法</summary>
-		Execute,
+		/// <summary>聚合方法</summary>
+		Aggregate,
 
 		/// <summary>递增递减</summary>
 		Increment,
