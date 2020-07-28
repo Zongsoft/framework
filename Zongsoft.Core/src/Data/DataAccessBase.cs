@@ -315,22 +315,22 @@ namespace Zongsoft.Data
 		#region 聚合方法
 		public int Count<T>(ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return (int)this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateMethod.Count, member), criteria, null, null, null);
+			return (int)this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null);
 		}
 
 		public int Count(string name, ICondition criteria = null, string member = null, IDictionary<string, object> states = null)
 		{
-			return (int)this.Aggregate(name, new DataAggregate(DataAggregateMethod.Count, member), criteria, null, null, null);
+			return (int)this.Aggregate(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null);
 		}
 
-		public double? Aggregate<T>(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
+		public double? Aggregate<T>(DataAggregateFunction function, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(this.GetName<T>(), new DataAggregate(method, member), criteria, states, null, null);
+			return this.Aggregate(this.GetName<T>(), new DataAggregate(function, member), criteria, states, null, null);
 		}
 
-		public double? Aggregate(string name, DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
+		public double? Aggregate(string name, DataAggregateFunction function, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(name, new DataAggregate(method, member), criteria, states, null, null);
+			return this.Aggregate(name, new DataAggregate(function, member), criteria, states, null, null);
 		}
 
 		public double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDictionary<string, object> states = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null)

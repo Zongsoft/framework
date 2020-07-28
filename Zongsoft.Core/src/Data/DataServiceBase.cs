@@ -243,7 +243,7 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(Method.Count(), criteria);
 
 			//执行聚合操作
-			return (int)this.OnAggregate(new DataAggregate(DataAggregateMethod.Count, member), criteria, states);
+			return (int)this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, states);
 		}
 
 		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
@@ -261,31 +261,31 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, out _), member, states);
 		}
 
-		public double? Aggregate(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null)
+		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDictionary<string, object> states = null)
 		{
 			//进行授权验证
-			this.Authorize(Method.Aggregate(method), ref states);
+			this.Authorize(Method.Aggregate(function), ref states);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Aggregate(method), criteria);
+			criteria = this.OnValidate(Method.Aggregate(function), criteria);
 
 			//执行聚合操作
-			return this.OnAggregate(new DataAggregate(method, member), criteria, states);
+			return this.OnAggregate(new DataAggregate(function, member), criteria, states);
 		}
 
-		public double? Aggregate<TKey>(TKey key, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey>(TKey key, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key, out _), states);
 		}
 
-		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key1, key2, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, out _), states);
 		}
 
-		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateMethod method, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(method, member, this.ConvertKey(Method.Aggregate(method), key1, key2, key3, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, key3, out _), states);
 		}
 
 		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states)
@@ -1494,7 +1494,7 @@ namespace Zongsoft.Data
 				return new Method(nameof(Count), DataAccessMethod.Aggregate);
 			}
 
-			public static Method Aggregate(DataAggregateMethod aggregate)
+			public static Method Aggregate(DataAggregateFunction aggregate)
 			{
 				return new Method(aggregate.ToString(), DataAccessMethod.Aggregate);
 			}

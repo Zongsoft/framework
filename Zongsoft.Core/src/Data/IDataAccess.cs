@@ -118,8 +118,8 @@ namespace Zongsoft.Data
 		int Count<T>(ICondition criteria = null, string member = null, IDictionary<string, object> states = null);
 		int Count(string name, ICondition criteria = null, string member = null, IDictionary<string, object> states = null);
 
-		double? Aggregate<T>(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
-		double? Aggregate(string name, DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate<T>(DataAggregateFunction method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate(string name, DataAggregateFunction method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
 		double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDictionary<string, object> states = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null);
 		#endregion
 

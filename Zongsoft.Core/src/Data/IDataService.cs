@@ -108,10 +108,10 @@ namespace Zongsoft.Data
 		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null);
 		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null);
 
-		double? Aggregate(DataAggregateMethod method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
-		double? Aggregate<TKey>(TKey key, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
-		double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
-		double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateMethod method, string member, IDictionary<string, object> states = null);
+		double? Aggregate(DataAggregateFunction method, string member, ICondition criteria = null, IDictionary<string, object> states = null);
+		double? Aggregate<TKey>(TKey key, DataAggregateFunction method, string member, IDictionary<string, object> states = null);
+		double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction method, string member, IDictionary<string, object> states = null);
+		double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction method, string member, IDictionary<string, object> states = null);
 		#endregion
 
 		#region 递增方法

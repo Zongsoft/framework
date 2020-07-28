@@ -32,9 +32,9 @@ using System;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 表示聚合方法的枚举。
+	/// 表示聚合函数的枚举。
 	/// </summary>
-	public enum DataAggregateMethod
+	public enum DataAggregateFunction
 	{
 		/// <summary>数量</summary>
 		Count,

@@ -71,63 +71,63 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public Grouping Count(string name, string alias = null)
+		public Grouping Count(string member, string alias = null)
 		{
-			_aggregates.Count(name, alias);
+			_aggregates.Count(member, alias);
 			return this;
 		}
 
-		public Grouping Sum(string name, string alias = null)
+		public Grouping Sum(string member, string alias = null)
 		{
-			_aggregates.Sum(name, alias);
+			_aggregates.Sum(member, alias);
 			return this;
 		}
 
-		public Grouping Average(string name, string alias = null)
+		public Grouping Average(string member, string alias = null)
 		{
-			_aggregates.Average(name, alias);
+			_aggregates.Average(member, alias);
 			return this;
 		}
 
-		public Grouping Median(string name, string alias = null)
+		public Grouping Median(string member, string alias = null)
 		{
-			_aggregates.Median(name, alias);
+			_aggregates.Median(member, alias);
 			return this;
 		}
 
-		public Grouping Maximum(string name, string alias = null)
+		public Grouping Maximum(string member, string alias = null)
 		{
-			_aggregates.Maximum(name, alias);
+			_aggregates.Maximum(member, alias);
 			return this;
 		}
 
-		public Grouping Minimum(string name, string alias = null)
+		public Grouping Minimum(string member, string alias = null)
 		{
-			_aggregates.Minimum(name, alias);
+			_aggregates.Minimum(member, alias);
 			return this;
 		}
 
-		public Grouping Deviation(string name, string alias = null)
+		public Grouping Deviation(string member, string alias = null)
 		{
-			_aggregates.Deviation(name, alias);
+			_aggregates.Deviation(member, alias);
 			return this;
 		}
 
-		public Grouping DeviationPopulation(string name, string alias = null)
+		public Grouping DeviationPopulation(string member, string alias = null)
 		{
-			_aggregates.DeviationPopulation(name, alias);
+			_aggregates.DeviationPopulation(member, alias);
 			return this;
 		}
 
-		public Grouping Variance(string name, string alias = null)
+		public Grouping Variance(string member, string alias = null)
 		{
-			_aggregates.Variance(name, alias);
+			_aggregates.Variance(member, alias);
 			return this;
 		}
 
-		public Grouping VariancePopulation(string name, string alias = null)
+		public Grouping VariancePopulation(string member, string alias = null)
 		{
-			_aggregates.VariancePopulation(name, alias);
+			_aggregates.VariancePopulation(member, alias);
 			return this;
 		}
 		#endregion
@@ -197,7 +197,7 @@ namespace Zongsoft.Data
 			{
 				foreach(var aggregate in _aggregates)
 				{
-					text.Append(aggregate.Method.ToString() + ": " + aggregate.Name);
+					text.Append(aggregate.Function.ToString() + ": " + aggregate.Name);
 
 					if(aggregate.Alias != null && aggregate.Alias.Length > 0)
 						text.Append(" '" + aggregate.Alias + "'");

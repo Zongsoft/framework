@@ -37,9 +37,9 @@ namespace Zongsoft.Data
 	public struct DataAggregate
 	{
 		#region 构造函数
-		public DataAggregate(DataAggregateMethod method, string name, string alias = null)
+		public DataAggregate(DataAggregateFunction function, string name, string alias = null)
 		{
-			this.Method = method;
+			this.Function = function;
 			this.Name = name;
 			this.Alias = alias;
 		}
@@ -57,9 +57,9 @@ namespace Zongsoft.Data
 		public string Alias { get; }
 
 		/// <summary>
-		/// 获取聚合元素的聚合方法。
+		/// 获取聚合元素的聚合函数。
 		/// </summary>
-		public DataAggregateMethod Method { get; }
+		public DataAggregateFunction Function { get; }
 		#endregion
 	}
 }
