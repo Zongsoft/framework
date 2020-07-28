@@ -34,7 +34,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.Common
 {
-	public class DataCountExecutor : IDataExecutor<AggregateStatement>
+	public class DataAggregateExecutor : IDataExecutor<AggregateStatement>
 	{
 		#region 执行方法
 		public bool Execute(IDataAccessContext context, AggregateStatement statement)
@@ -54,9 +54,9 @@ namespace Zongsoft.Data.Common
 			var result = command.ExecuteScalar();
 
 			if(result == null || System.Convert.IsDBNull(result))
-				context.Result = -1;
+				context.Result = null;
 			else
-				context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result);
+				context.Result = Zongsoft.Common.Convert.ConvertValue<double>(result);
 
 			return true;
 		}

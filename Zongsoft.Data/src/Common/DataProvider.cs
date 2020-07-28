@@ -211,9 +211,9 @@ namespace Zongsoft.Data.Common
 			private readonly DataUpdateExecutor _update;
 			private readonly DataUpsertExecutor _upsert;
 
-			private readonly DataCountExecutor _count;
 			private readonly DataExistExecutor _exist;
 			private readonly DataExecuteExecutor _execution;
+			private readonly DataAggregateExecutor _aggregate;
 			#endregion
 
 			#region 私有构造
@@ -225,9 +225,9 @@ namespace Zongsoft.Data.Common
 				_update = new DataUpdateExecutor();
 				_upsert = new DataUpsertExecutor();
 
-				_count = new DataCountExecutor();
 				_exist = new DataExistExecutor();
 				_execution = new DataExecuteExecutor();
+				_aggregate = new DataAggregateExecutor();
 			}
 			#endregion
 
@@ -253,14 +253,14 @@ namespace Zongsoft.Data.Common
 					case UpsertStatement upsert:
 						continued = _upsert.Execute(context, upsert);
 						break;
-					case AggregateStatement count:
-						continued = _count.Execute(context, count);
-						break;
 					case ExistStatement exist:
 						continued = _exist.Execute(context, exist);
 						break;
 					case ExecutionStatement execution:
 						continued = _execution.Execute(context, execution);
+						break;
+					case AggregateStatement aggregate:
+						continued = _aggregate.Execute(context, aggregate);
 						break;
 					default:
 						continued = context.Session.Build(statement).ExecuteNonQuery() > 0;
