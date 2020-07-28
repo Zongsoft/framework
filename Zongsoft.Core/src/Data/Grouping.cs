@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -39,9 +38,7 @@ namespace Zongsoft.Data
 	public class Grouping
 	{
 		#region 成员字段
-		private GroupKey[] _keys;
-		private ICondition _filter;
-		private AggregateCollection _aggregates;
+		private readonly DataAggregateCollection _aggregates;
 		#endregion
 
 		#region 构造函数
@@ -50,9 +47,9 @@ namespace Zongsoft.Data
 			if(keys == null || keys.Length == 0)
 				throw new ArgumentNullException(nameof(keys));
 
-			_keys = keys;
-			_filter = filter;
-			_aggregates = new AggregateCollection(this);
+			this.Keys = keys;
+			this.Filter = filter;
+			_aggregates = new DataAggregateCollection();
 		}
 		#endregion
 
@@ -60,39 +57,17 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取分组键的成员数组。
 		/// </summary>
-		public GroupKey[] Keys
-		{
-			get
-			{
-				return _keys;
-			}
-		}
+		public GroupKey[] Keys { get; }
 
 		/// <summary>
 		/// 获取分组的聚合成员集合。
 		/// </summary>
-		public AggregateCollection Aggregates
-		{
-			get
-			{
-				return _aggregates;
-			}
-		}
+		public DataAggregateCollection Aggregates { get => _aggregates; }
 
 		/// <summary>
 		/// 获取或设置分组的过滤条件，默认为空。
 		/// </summary>
-		public ICondition Filter
-		{
-			get
-			{
-				return _filter;
-			}
-			set
-			{
-				_filter = value;
-			}
-		}
+		public ICondition Filter { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -203,11 +178,11 @@ namespace Zongsoft.Data
 		{
 			var text = new System.Text.StringBuilder();
 
-			if(_keys != null && _keys.Length > 0)
+			if(Keys != null && Keys.Length > 0)
 			{
 				text.Append("Keys: ");
 
-				foreach(var key in _keys)
+				foreach(var key in Keys)
 				{
 					text.Append(key.Name);
 
@@ -231,9 +206,9 @@ namespace Zongsoft.Data
 				}
 			}
 
-			if(_filter != null)
+			if(Filter != null)
 			{
-				text.AppendLine("Filter: " + _filter.ToString());
+				text.AppendLine("Filter: " + Filter.ToString());
 			}
 
 			if(text == null)
@@ -254,149 +229,6 @@ namespace Zongsoft.Data
 				this.Name = name;
 				this.Alias = alias;
 			}
-		}
-
-		public struct Aggregate
-		{
-			public string Name;
-			public string Alias;
-			public AggregateMethod Method;
-
-			public Aggregate(AggregateMethod method, string name, string alias)
-			{
-				this.Method = method;
-				this.Name = name;
-				this.Alias = alias;
-			}
-		}
-
-		public class AggregateCollection : IEnumerable<Aggregate>
-		{
-			#region 私有变量
-			private Grouping _grouping;
-			private ICollection<Aggregate> _members;
-			#endregion
-
-			#region 私有构造
-			internal AggregateCollection(Grouping grouping)
-			{
-				_grouping = grouping;
-				_members = new List<Aggregate>();
-			}
-			#endregion
-
-			#region 公共方法
-			public AggregateCollection Count(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Count, name, alias);
-			}
-
-			public AggregateCollection Sum(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Sum, name, alias);
-			}
-
-			public AggregateCollection Average(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Average, name, alias);
-			}
-
-			public AggregateCollection Median(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Median, name, alias);
-			}
-
-			public AggregateCollection Maximum(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Maximum, name, alias);
-			}
-
-			public AggregateCollection Minimum(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Minimum, name, alias);
-			}
-
-			public AggregateCollection Deviation(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Deviation, name, alias);
-			}
-
-			public AggregateCollection DeviationPopulation(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.DeviationPopulation, name, alias);
-			}
-
-			public AggregateCollection Variance(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.Variance, name, alias);
-			}
-
-			public AggregateCollection VariancePopulation(string name, string alias = null)
-			{
-				return this.Aggregate(AggregateMethod.VariancePopulation, name, alias);
-			}
-			#endregion
-
-			#region 私有方法
-			private AggregateCollection Aggregate(AggregateMethod method, string name, string alias = null)
-			{
-				if(string.IsNullOrEmpty(name) && method != AggregateMethod.Count)
-					throw new ArgumentNullException(nameof(name));
-
-				_members.Add(new Aggregate(method, name, alias));
-
-				return this;
-			}
-			#endregion
-
-			#region 遍历实现
-			public IEnumerator<Aggregate> GetEnumerator()
-			{
-				foreach(var member in _members)
-					yield return member;
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return this.GetEnumerator();
-			}
-			#endregion
-		}
-
-		/// <summary>
-		/// 表示聚合方法的枚举。
-		/// </summary>
-		public enum AggregateMethod
-		{
-			/// <summary>数量</summary>
-			Count,
-
-			/// <summary>总和</summary>
-			Sum,
-
-			/// <summary>平均值</summary>
-			Average,
-
-			/// <summary>中间值</summary>
-			Median,
-
-			/// <summary>最大值</summary>
-			Maximum,
-
-			/// <summary>最小值</summary>
-			Minimum,
-
-			/// <summary>标准偏差</summary>
-			Deviation,
-
-			/// <summary>总体标准偏差</summary>
-			DeviationPopulation,
-
-			/// <summary>方差</summary>
-			Variance,
-
-			/// <summary>总体方差</summary>
-			VariancePopulation,
 		}
 		#endregion
 	}
