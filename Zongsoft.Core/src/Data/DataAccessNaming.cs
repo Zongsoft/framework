@@ -30,6 +30,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data
 {
@@ -39,23 +40,20 @@ namespace Zongsoft.Data
 	public class DataAccessNaming : IDataAccessNaming, ICollection<KeyValuePair<Type, string>>
 	{
 		#region 成员字段
-		private readonly IDictionary<Type, string> _mapping;
+		private readonly ConcurrentDictionary<Type, string> _mapping;
 		#endregion
 
 		#region 构造函数
 		public DataAccessNaming()
 		{
-			_mapping = new Dictionary<Type, string>();
+			_mapping = new ConcurrentDictionary<Type, string>();
 		}
 		#endregion
 
 		#region 公共属性
 		public int Count
 		{
-			get
-			{
-				return _mapping.Count;
-			}
+			get => _mapping.Count;
 		}
 		#endregion
 
@@ -78,11 +76,7 @@ namespace Zongsoft.Data
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if(_mapping.TryGetValue(type, out var name))
-				return name;
-
-			//将非空的名字注册到映射表中
-			return _mapping[type] = GetName(type);
+			return _mapping.GetOrAdd(type, key => GetName(key));
 		}
 
 		public string Get<T>()
@@ -129,37 +123,15 @@ namespace Zongsoft.Data
 
 		private static bool TryGetNameFromAttribute(Type type, out string name)
 		{
-			name = null;
-
-			foreach(var attribute in type.CustomAttributes)
-			{
-				if(attribute.AttributeType == typeof(ModelAttribute))
-				{
-					switch(attribute.ConstructorArguments.Count)
-					{
-						case 1:
-							if(attribute.ConstructorArguments[0].ArgumentType == typeof(string))
-							{
-								name = (string)attribute.ConstructorArguments[0].Value;
-								return true;
-							}
-
-							break;
-					}
-				}
-			}
-
-			return false;
+			name = ((ModelAttribute)Attribute.GetCustomAttribute(type, typeof(ModelAttribute), true))?.Name;
+			return name != null && name.Length > 0;
 		}
 		#endregion
 
 		#region 集合成员
 		bool ICollection<KeyValuePair<Type, string>>.IsReadOnly
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		void ICollection<KeyValuePair<Type, string>>.Add(KeyValuePair<Type, string> item)
@@ -174,18 +146,25 @@ namespace Zongsoft.Data
 
 		bool ICollection<KeyValuePair<Type, string>>.Contains(KeyValuePair<Type, string> item)
 		{
-			return _mapping.TryGetValue(item.Key, out var name) &&
-			       string.Equals(name, item.Value, StringComparison.OrdinalIgnoreCase);
+			return _mapping.ContainsKey(item.Key);
 		}
 
 		void ICollection<KeyValuePair<Type, string>>.CopyTo(KeyValuePair<Type, string>[] array, int arrayIndex)
 		{
-			_mapping.CopyTo(array, arrayIndex);
+			int offset = 0;
+
+			foreach(var entry in _mapping)
+			{
+				if(arrayIndex + offset >= array.Length)
+					break;
+
+				array[arrayIndex + offset++] = entry;
+			}
 		}
 
 		bool ICollection<KeyValuePair<Type, string>>.Remove(KeyValuePair<Type, string> item)
 		{
-			return _mapping.Remove(item);
+			return _mapping.TryRemove(item.Key, out _);
 		}
 
 		public IEnumerator<KeyValuePair<Type, string>> GetEnumerator()
