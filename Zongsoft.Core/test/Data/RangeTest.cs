@@ -15,16 +15,32 @@ namespace Zongsoft.Data.Tests
 			var age = new Range<byte>(100, 18);
 			var ageText = age.ToString();
 
-			var birthdate = new Range<DateTime>(new DateTime(1979, 6, 9), null);
-			var birthdateText = birthdate.ToString();
-
 			var range = Range<int>.Parse(ageText);
 			Assert.Equal(18, range.Minimum);
 			Assert.Equal(100, range.Maximum);
 
+			range = Range<int>.Parse(" 520 ");
+			Assert.Equal(520, range.Minimum);
+			Assert.Equal(520, range.Maximum);
+
+			range = Range<int>.Parse("  * ~  520  ");
+			Assert.Null(range.Minimum);
+			Assert.Equal(520, range.Maximum);
+
+			range = Range<int>.Parse(" ( ? ~  520 ) ");
+			Assert.Null(range.Minimum);
+			Assert.Equal(520, range.Maximum);
+
 			Assert.True(Range.IsRange(age, out min, out max));
 			Assert.Equal(18, (byte)min);
 			Assert.Equal(100, (byte)max);
+
+			var birthdate = new Range<DateTime>(new DateTime(1979, 6, 9), null);
+			var birthdateText = birthdate.ToString().TrimStart('(').TrimEnd(')');
+
+			var duration = Range<DateTime>.Parse(birthdateText);
+			Assert.Equal(new DateTime(1979, 6, 9), duration.Minimum);
+			Assert.Null(duration.Maximum);
 
 			Assert.True(Range.IsRange(birthdate, out min, out max));
 			Assert.Equal(new DateTime(1979, 6, 9), (DateTime)min);

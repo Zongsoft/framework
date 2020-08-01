@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -134,49 +133,52 @@ namespace Zongsoft.Data
 		#region 静态方法
 		public static Range<T> Parse(string text)
 		{
-			if(TryParse(text, out var result))
-				return result;
+			if(string.IsNullOrEmpty(text))
+				throw new ArgumentNullException(nameof(text));
 
-			throw new ArgumentException(string.Format("Invalid value '{0}' of the argument.", text));
+			var result = RangeParser.Parse<T>(text.AsSpan(), 0);
+
+			if(result.IsFailed(out var message))
+				throw new ArgumentException(message ?? string.Format("Invalid value '{0}' of the argument.", text));
+
+			T? minimum = null, maximum = null;
+
+			if(!result.Minimum.IsEmpty)
+				minimum = Common.Convert.ConvertValue<T>(result.Minimum.ToString());
+
+			if(!result.Maximum.IsEmpty)
+				maximum = Common.Convert.ConvertValue<T>(result.Maximum.ToString());
+
+			return new Range<T>(minimum, maximum);
 		}
 
-		public static bool TryParse(string text, out Range<T> result)
+		public static bool TryParse(string text, out Range<T> value)
 		{
-			result = default;
+			value = default;
 
 			if(string.IsNullOrEmpty(text))
 				return false;
 
-			text = text.Trim().Trim('(', ')');
+			var result = RangeParser.Parse<T>(text.AsSpan(), 0);
 
-			if(string.IsNullOrEmpty(text))
+			if(result.IsFailed(out _))
 				return false;
 
-			var parts = text.Split('~').Select(p => p.Trim().Trim('?', '*')).ToArray();
+			T? minimum = null, maximum = null;
 
-			if(!string.IsNullOrEmpty(parts[0]))
+			if(!result.Minimum.IsEmpty)
 			{
-				if(!Common.Convert.TryConvertValue(parts[0], out T from))
+				if(!Common.Convert.TryConvertValue(result.Minimum.ToString(), out minimum))
 					return false;
-
-				result.Minimum = from;
-
-				if(parts.Length == 1)
-				{
-					result.Maximum = from;
-					return true;
-				}
 			}
 
-			if(parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+			if(!result.Maximum.IsEmpty)
 			{
-				if(!Common.Convert.TryConvertValue(parts[1], out T to))
+				if(!Common.Convert.TryConvertValue(result.Maximum.ToString(), out maximum))
 					return false;
-
-				result.Maximum = to;
 			}
 
-			//最后返回真（即使输出参数为空）
+			value = new Range<T>(minimum, maximum);
 			return true;
 		}
 		#endregion
@@ -223,14 +225,16 @@ namespace Zongsoft.Data
 				if(_maximum == null)
 					return string.Empty;
 				else
-					return string.Format("(~{0})", _maximum.ToString());
+					return string.Format("(?~{0})", _maximum.ToString());
 			}
 			else
 			{
 				if(_maximum == null)
-					return string.Format("({0})", _minimum.ToString());
+					return string.Format("({0}~?)", _minimum.ToString());
 				else
-					return string.Format("({0}~{1})", _minimum.ToString(), _maximum.ToString());
+					return EqualityComparer<T>.Default.Equals(_minimum.Value, _maximum.Value) ?
+						_minimum.ToString() :
+						$"({_minimum}~{_maximum})";
 			}
 		}
 		#endregion
