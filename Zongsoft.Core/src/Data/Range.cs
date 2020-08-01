@@ -58,15 +58,15 @@ namespace Zongsoft.Data
 					type = type.GenericTypeArguments[0];
 			}
 
-			if(minimum != null && (minimum is string min && min != string.Empty && min != "?" && min != "*"))
-				minimum = Common.Convert.ConvertValue(minimum, type);
-			else
+			if(minimum == null || (minimum is string min && (string.IsNullOrWhiteSpace(min) || min == "?" || min == "*")))
 				minimum = null;
-
-			if(maximum != null && (maximum is string max && max != string.Empty && max != "?" && max != "*"))
-				maximum = Common.Convert.ConvertValue(maximum, type);
 			else
+				minimum = Common.Convert.ConvertValue(minimum, type);
+
+			if(maximum == null || (maximum is string max && (string.IsNullOrWhiteSpace(max) || max == "?" || max == "*")))
 				maximum = null;
+			else
+				maximum = Common.Convert.ConvertValue(maximum, type);
 
 			return Activator.CreateInstance(typeof(Range<>).MakeGenericType(type), new object[] { minimum, maximum });
 		}
