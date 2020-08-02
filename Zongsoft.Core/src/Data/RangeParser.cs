@@ -34,7 +34,7 @@ namespace Zongsoft.Data
 	internal static class RangeParser
 	{
 		#region 公共方法
-		public static RangeParserResult Parse<T>(ReadOnlySpan<char> span, int start) where T : struct
+		public static RangeParserResult Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
 		{
 			var minimum = ReadOnlySpan<char>.Empty;
 			var maximum = ReadOnlySpan<char>.Empty;
@@ -391,7 +391,7 @@ namespace Zongsoft.Data
 	internal static class DateTimeRangeParser
 	{
 		#region 公共方法
-		public static DateTimeRangeParserResult Parse<T>(ReadOnlySpan<char> span, int start) where T : struct
+		public static DateTimeRangeParserResult? Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
 		{
 			var name = string.Empty;
 			var value = 0;
@@ -405,6 +405,8 @@ namespace Zongsoft.Data
 
 				switch(context.State)
 				{
+					case State.Exit:
+						return null;
 					case State.Error:
 						return new DateTimeRangeParserResult(context.ErrorMessage);
 					case State.Start:
@@ -436,7 +438,18 @@ namespace Zongsoft.Data
 					_ => new DateTimeRangeParserResult($"Invalid datetime range function name: {name}."),
 				};
 
+			if(context.State == State.Identifier)
+			{
+				//必须移动指针到最后，以便Reset正确计算内容值
+				context.Move(-1);
+
+				//获取最终的标识名称
+				context.Reset(out var text);
+				name = text.ToString();
+			}
+
 			if(context.State == State.Identifier || context.State == State.Gutter)
+			{
 				return (name.ToLowerInvariant()) switch
 				{
 					"today" => GetToday(),
@@ -447,6 +460,7 @@ namespace Zongsoft.Data
 					"lastyear" => GetLastYear(),
 					_ => new DateTimeRangeParserResult($"Invalid datetime range identifier: {name}."),
 				};
+			}
 
 			return new DateTimeRangeParserResult($"Invalid datetime range expression format.");
 		}
@@ -468,7 +482,7 @@ namespace Zongsoft.Data
 		private static DateTimeRangeParserResult GetThisWeek()
 		{
 			var firstday = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-			return new DateTimeRangeParserResult(firstday, firstday.AddSeconds((60 * 60 * 24 * 6) - 1));
+			return new DateTimeRangeParserResult(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 		}
 
 		private static DateTimeRangeParserResult GetThisMonth()
@@ -553,10 +567,13 @@ namespace Zongsoft.Data
 		#region 私有方法
 		private static void DoStart(ref DataTimeRangeParserContext context)
 		{
+			if(context.IsWhitespace)
+				return;
+
 			if(context.IsLetter)
 				context.Accept(State.Identifier);
 			else
-				context.Error($"The invalid character '{context.Character}' is at {context.Index + 1} character.");
+				context.Accept(State.Exit);
 		}
 
 		private static void DoFinal(ref DataTimeRangeParserContext context)
@@ -629,7 +646,7 @@ namespace Zongsoft.Data
 
 					break;
 				default:
-					if(context.IsDigit)
+					if(context.IsDigit || context.IsWhitespace)
 						context.Accept(State.Argument);
 					else
 						context.Error($"The argument in the datetime range expression must be a number.");
@@ -653,7 +670,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套结构
-		public ref struct DateTimeRangeParserResult
+		public struct DateTimeRangeParserResult
 		{
 			#region 私有字段
 			private readonly string _message;
@@ -762,6 +779,14 @@ namespace Zongsoft.Data
 				_state = state;
 			}
 
+			public void Reset(out ReadOnlySpan<char> value)
+			{
+				value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
+
+				_count = 0;
+				_whitespaces = 0;
+			}
+
 			public void Accept(State state)
 			{
 				if(char.IsWhiteSpace(_character))
@@ -787,6 +812,7 @@ namespace Zongsoft.Data
 			Start,
 			Final,
 			Error,
+			Exit,
 
 			Identifier,
 			Gutter,

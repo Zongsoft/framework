@@ -136,9 +136,24 @@ namespace Zongsoft.Data
 			if(string.IsNullOrEmpty(text))
 				throw new ArgumentNullException(nameof(text));
 
-			var result = RangeParser.Parse<T>(text.AsSpan(), 0);
+			string message;
 
-			if(result.IsFailed(out var message))
+			if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTimeOffset))
+			{
+				var duration = DateTimeRangeParser.Parse<T>(text.AsSpan());
+
+				if(duration != null)
+				{
+					if(duration.Value.IsFailed(out message))
+						throw new ArgumentException(message ?? string.Format("Invalid value '{0}' of the argument.", text));
+
+					return (Range<T>)Range.Create(typeof(T), duration.Value.Minimum, duration.Value.Maximum);
+				}
+			}
+
+			var result = RangeParser.Parse<T>(text.AsSpan());
+
+			if(result.IsFailed(out message))
 				throw new ArgumentException(message ?? string.Format("Invalid value '{0}' of the argument.", text));
 
 			T? minimum = null, maximum = null;
@@ -159,7 +174,21 @@ namespace Zongsoft.Data
 			if(string.IsNullOrEmpty(text))
 				return false;
 
-			var result = RangeParser.Parse<T>(text.AsSpan(), 0);
+			if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTimeOffset))
+			{
+				var duration = DateTimeRangeParser.Parse<T>(text.AsSpan());
+
+				if(duration != null)
+				{
+					if(duration.Value.IsFailed(out _))
+						return false;
+
+					value = (Range<T>)Range.Create(typeof(T), duration.Value.Minimum, duration.Value.Maximum);
+					return true;
+				}
+			}
+
+			var result = RangeParser.Parse<T>(text.AsSpan());
 
 			if(result.IsFailed(out _))
 				return false;

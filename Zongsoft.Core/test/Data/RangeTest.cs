@@ -48,6 +48,140 @@ namespace Zongsoft.Data.Tests
 		}
 
 		[Fact]
+		public void TestToday()
+		{
+			var today = Range<DateTime>.Parse("today()");
+
+			Assert.NotNull(today.Minimum);
+			Assert.NotNull(today.Maximum);
+			Assert.Equal(DateTime.Today, today.Minimum.Value);
+			Assert.Equal(DateTime.Today, today.Maximum.Value.Date);
+			Assert.Equal(23, today.Maximum.Value.Hour);
+			Assert.Equal(59, today.Maximum.Value.Minute);
+			Assert.Equal(59, today.Maximum.Value.Second);
+		}
+
+		[Fact]
+		public void TestYesterday()
+		{
+			var yesterday = Range<DateTime>.Parse("Yesterday");
+
+			Assert.NotNull(yesterday.Minimum);
+			Assert.NotNull(yesterday.Maximum);
+			Assert.Equal(DateTime.Today.AddDays(-1), yesterday.Minimum.Value);
+			Assert.Equal(DateTime.Today.AddDays(-1), yesterday.Maximum.Value.Date);
+			Assert.Equal(23, yesterday.Maximum.Value.Hour);
+			Assert.Equal(59, yesterday.Maximum.Value.Minute);
+			Assert.Equal(59, yesterday.Maximum.Value.Second);
+		}
+
+		[Fact]
+		public void TestThisWeek()
+		{
+			var thisweek = Range<DateTime>.Parse("ThisWeek");
+
+			Assert.NotNull(thisweek.Minimum);
+			Assert.NotNull(thisweek.Maximum);
+			Assert.Equal(0, thisweek.Minimum.Value.Hour);
+			Assert.Equal(0, thisweek.Minimum.Value.Minute);
+			Assert.Equal(0, thisweek.Minimum.Value.Second);
+			Assert.Equal(23, thisweek.Maximum.Value.Hour);
+			Assert.Equal(59, thisweek.Maximum.Value.Minute);
+			Assert.Equal(59, thisweek.Maximum.Value.Second);
+		}
+
+		[Fact]
+		public void TestAgo()
+		{
+			var just = DateTime.Now;
+			var year1 = Range<DateTime>.Parse("ago(1y)");
+
+			Assert.Null(year1.Minimum);
+			Assert.NotNull(year1.Maximum);
+			Assert.Equal(DateTime.Today.AddYears(-1), year1.Maximum.Value.Date);
+			Assert.InRange(year1.Maximum.Value.TimeOfDay, just.TimeOfDay, DateTime.Now.TimeOfDay);
+
+			var month2 = Range<DateTime>.Parse(" ago ( 2M ) ");
+
+			Assert.Null(month2.Minimum);
+			Assert.NotNull(month2.Maximum);
+			Assert.Equal(DateTime.Today.AddMonths(-2), month2.Maximum.Value.Date);
+			Assert.InRange(month2.Maximum.Value.TimeOfDay, just.TimeOfDay, DateTime.Now.TimeOfDay);
+
+			var day3 = Range<DateTime>.Parse(" ago( 3 d ) ");
+
+			Assert.Null(day3.Minimum);
+			Assert.NotNull(day3.Maximum);
+			Assert.Equal(DateTime.Today.AddDays(-3), day3.Maximum.Value.Date);
+			Assert.InRange(day3.Maximum.Value.TimeOfDay, just.TimeOfDay, DateTime.Now.TimeOfDay);
+
+			var hours3 = Range<DateTime>.Parse(" ago( 4 h ) ");
+
+			Assert.Null(hours3.Minimum);
+			Assert.NotNull(hours3.Maximum);
+			Assert.InRange(hours3.Maximum.Value, just.AddHours(-4), DateTime.Now.AddHours(-4));
+
+			var minutes5 = Range<DateTime>.Parse(" ago (5 m) ");
+
+			Assert.Null(minutes5.Minimum);
+			Assert.NotNull(minutes5.Maximum);
+			Assert.InRange(minutes5.Maximum.Value, just.AddMinutes(-5), DateTime.Now.AddMinutes(-5));
+
+			var seconds10 = Range<DateTime>.Parse(" ago(10s) ");
+
+			Assert.Null(seconds10.Minimum);
+			Assert.NotNull(seconds10.Maximum);
+			Assert.InRange(seconds10.Maximum.Value, just.AddSeconds(-10), DateTime.Now.AddSeconds(-10));
+		}
+
+		[Fact]
+		public void TestLast()
+		{
+			var just = DateTime.Now;
+			var year1 = Range<DateTime>.Parse("last(1y)");
+
+			Assert.NotNull(year1.Minimum);
+			Assert.NotNull(year1.Maximum);
+			Assert.InRange(year1.Minimum.Value, just.AddYears(-1), DateTime.Now.AddYears(-1));
+			Assert.InRange(year1.Maximum.Value, just, DateTime.Now);
+
+			var month2 = Range<DateTime>.Parse(" last ( 2  M   ) ");
+
+			Assert.NotNull(month2.Minimum);
+			Assert.NotNull(month2.Maximum);
+			Assert.InRange(month2.Minimum.Value, just.AddMonths(-2), DateTime.Now.AddMonths(-2));
+			Assert.InRange(month2.Maximum.Value, just, DateTime.Now);
+
+			var day13 = Range<DateTime>.Parse(" last ( 13D)  ");
+
+			Assert.NotNull(day13.Minimum);
+			Assert.NotNull(day13.Maximum);
+			Assert.InRange(day13.Minimum.Value, just.AddDays(-13), DateTime.Now.AddDays(-13));
+			Assert.InRange(day13.Maximum.Value, just, DateTime.Now);
+
+			var hours15 = Range<DateTime>.Parse(" last ( 15 h)  ");
+
+			Assert.NotNull(hours15.Minimum);
+			Assert.NotNull(hours15.Maximum);
+			Assert.InRange(hours15.Minimum.Value, just.AddHours(-15), DateTime.Now.AddHours(-15));
+			Assert.InRange(hours15.Maximum.Value, just, DateTime.Now);
+
+			var minutes35 = Range<DateTime>.Parse(" last ( 35 m)");
+
+			Assert.NotNull(minutes35.Minimum);
+			Assert.NotNull(minutes35.Maximum);
+			Assert.InRange(minutes35.Minimum.Value, just.AddMinutes(-35), DateTime.Now.AddMinutes(-35));
+			Assert.InRange(minutes35.Maximum.Value, just, DateTime.Now);
+
+			var seconds152 = Range<DateTime>.Parse("last( 152 s)");
+
+			Assert.NotNull(seconds152.Minimum);
+			Assert.NotNull(seconds152.Maximum);
+			Assert.InRange(seconds152.Minimum.Value, just.AddSeconds(-152), DateTime.Now.AddSeconds(-152));
+			Assert.InRange(seconds152.Maximum.Value, just, DateTime.Now);
+		}
+
+		[Fact]
 		public void TestConverter()
 		{
 			const string JSON = @"{""age"":""18~40"",""timestamp"":""2020-6-1~2020-12-31""}";
