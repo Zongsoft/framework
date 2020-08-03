@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
@@ -101,7 +102,7 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 私有方法
+		#region 状态处理
 		private static void DoStart(ref RangeParserContext context)
 		{
 			switch(context.Character)
@@ -368,7 +369,6 @@ namespace Zongsoft.Data
 		{
 			/// <summary>无标记</summary>
 			None = 0,
-
 			/// <summary>圆括号包裹</summary>
 			Parenthesis = 1,
 		}
@@ -394,8 +394,7 @@ namespace Zongsoft.Data
 		public static DateTimeRangeParserResult? Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
 		{
 			var name = string.Empty;
-			var value = 0;
-			var unit = '\0';
+			var arguments = new List<DataTimeRangeFunctionArgument>();
 
 			var context = new DataTimeRangeParserContext(span);
 
@@ -421,48 +420,240 @@ namespace Zongsoft.Data
 					case State.Gutter:
 						DoGutter(ref context);
 						break;
-					case State.Argument:
-						DoArgument(ref context, out value, out unit);
+					case State.Method:
+						DoMethod(ref context);
 						break;
-					case State.Unit:
-						DoUnit(ref context);
+					case State.Number:
+						if(DoNumber(ref context, out var value, out var unit))
+							arguments.Add(new DataTimeRangeFunctionArgument(value, unit));
+						break;
+					case State.Argument:
+						DoArgument(ref context);
+						break;
+					case State.ArgumentFinal:
+						DoArgumentFinal(ref context);
 						break;
 				}
 			}
 
-			if(context.State == State.Final)
-				return (name.ToLowerInvariant()) switch
-				{
-					"ago" => GetAgo(value, unit),
-					"last" => GetLast(value, unit),
-					_ => new DateTimeRangeParserResult($"Invalid datetime range function name: {name}."),
-				};
-
-			if(context.State == State.Identifier)
+			switch(context.State)
 			{
-				//必须移动指针到最后，以便Reset正确计算内容值
-				context.Move(-1);
+				case State.Identifier:
+					//必须移动指针到最后，以便Reset正确计算内容值
+					context.Move(-1);
 
-				//获取最终的标识名称
-				context.Reset(out var text);
+					//获取最终的标识名
+					context.Reset(State.Final, out var text);
+
+					//更新标识名称(函数名)
+					name = text.ToString();
+
+					break;
+				case State.Gutter:
+				case State.Final:
+					break;
+				default:
+					return new DateTimeRangeParserResult($"Invalid datetime range expression format.");
+			}
+
+			switch(name.ToLowerInvariant())
+			{
+				case "today":
+					return GetToday();
+				case "yesterday":
+					return GetYesterday();
+				case "thisweek":
+					return GetThisWeek();
+				case "thismonth":
+					return GetThisMonth();
+				case "thisyear":
+					return GetThisYear();
+				case "lastyear":
+					return GetLastYear();
+				case "ago":
+					if(arguments.Count < 1)
+						return new DateTimeRangeParserResult($"The Ago range function is missing a required parameter.");
+					else if(arguments.Count > 1)
+						return new DateTimeRangeParserResult($"The Ago range function has too many parameters.");
+
+					return GetAgo(arguments[0].Value, arguments[0].Unit);
+				case "last":
+					if(arguments.Count < 1)
+						return new DateTimeRangeParserResult($"The Last range function is missing a required parameter.");
+					else if(arguments.Count > 1)
+						return new DateTimeRangeParserResult($"The Last range function has too many parameters.");
+
+					return GetLast(arguments[0].Value, arguments[0].Unit);
+				case "year":
+					if(arguments.Count < 1)
+						return new DateTimeRangeParserResult($"The Year range function is missing a required parameter.");
+					else if(arguments.Count > 1)
+						return new DateTimeRangeParserResult($"The Year range function has too many parameters.");
+
+					return GetYear(arguments[0].Value);
+				case "month":
+					if(arguments.Count < 2)
+						return new DateTimeRangeParserResult($"The Month range function is missing a required parameter.");
+					else if(arguments.Count > 2)
+						return new DateTimeRangeParserResult($"The Month range function has too many parameters.");
+
+					return GetMonth(arguments[0].Value, arguments[1].Value);
+				default:
+					return new DateTimeRangeParserResult($"Invalid datetime range function name: {name}.");
+			};
+		}
+		#endregion
+
+		#region 状态处理
+		private static void DoStart(ref DataTimeRangeParserContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			if(context.IsLetter)
+				context.Accept(State.Identifier);
+			else
+				context.Accept(State.Exit);
+		}
+
+		private static void DoFinal(ref DataTimeRangeParserContext context)
+		{
+			if(!context.IsWhitespace)
+				context.Error("The datatime range expression contains redundant content.");
+		}
+
+		private static void DoIdentifier(ref DataTimeRangeParserContext context, out string name)
+		{
+			if(context.Character == '(')
+			{
+				context.Reset(State.Method, out var text);
 				name = text.ToString();
 			}
-
-			if(context.State == State.Identifier || context.State == State.Gutter)
+			else if(context.IsWhitespace)
 			{
-				return (name.ToLowerInvariant()) switch
-				{
-					"today" => GetToday(),
-					"yesterday" => GetYesterday(),
-					"thisweek" => GetThisWeek(),
-					"thismonth" => GetThisMonth(),
-					"thisyear" => GetThisYear(),
-					"lastyear" => GetLastYear(),
-					_ => new DateTimeRangeParserResult($"Invalid datetime range identifier: {name}."),
-				};
+				context.Reset(State.Gutter, out var text);
+				name = text.ToString();
+			}
+			else if(context.IsLetterOrDigit)
+			{
+				name = null;
+				context.Accept(State.Identifier);
+			}
+			else
+			{
+				name = null;
+				context.Error($"The invalid character '{context.Character}' is at {context.Index + 1} character.");
+			}
+		}
+
+		private static void DoGutter(ref DataTimeRangeParserContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			if(context.Character == '(')
+				context.Reset(State.Method);
+			else
+				context.Error($"Invalid datetime range expression format.");
+		}
+
+		private static void DoMethod(ref DataTimeRangeParserContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			if(context.IsDigit)
+				context.Accept(State.Number);
+			else if(context.Character == ')')
+				context.Reset(State.Final);
+			else
+				context.Error($"The function parameter of the datetime range contains the illegal character '{context.Character}' at {context.Index + 1} position.");
+		}
+
+		private static bool DoNumber(ref DataTimeRangeParserContext context, out int value, out char unit)
+		{
+			static int GetNumberValue(ref DataTimeRangeParserContext context, State state)
+			{
+				context.Reset(state, out var text);
+
+				if(text.Length > 0)
+					return int.Parse(text.ToString());
+
+				context.Error($"Missing datetime range function parameter value.");
+				return 0;
 			}
 
-			return new DateTimeRangeParserResult($"Invalid datetime range expression format.");
+			if(context.IsWhitespace)
+			{
+				unit = '\0';
+				value = GetNumberValue(ref context, State.ArgumentFinal);
+				return true;
+			}
+
+			switch(context.Character)
+			{
+				case ')':
+					unit = '\0';
+					value = GetNumberValue(ref context, State.Final);
+					return true;
+				case ',':
+					unit = '\0';
+					value = GetNumberValue(ref context, State.Argument);
+					return true;
+				case 'Y':
+				case 'y':
+				case 'M':
+				case 'D':
+				case 'd':
+				case 'H':
+				case 'h':
+				case 'm':
+				case 'S':
+				case 's':
+					unit = context.Character;
+					value = GetNumberValue(ref context, State.ArgumentFinal);
+					return true;
+				default:
+					if(context.IsDigit)
+						context.Accept(State.Number);
+					else
+						context.Error($"The argument in the datetime range expression must be a number.");
+
+					value = 0;
+					unit = '\0';
+
+					return false;
+			}
+		}
+
+		private static void DoArgument(ref DataTimeRangeParserContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			if(context.IsDigit)
+				context.Accept(State.Number);
+			else
+				context.Error($"The function parameter of the datetime range contains the illegal character '{context.Character}' at {context.Index + 1} position.");
+		}
+
+		private static void DoArgumentFinal(ref DataTimeRangeParserContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			switch(context.Character)
+			{
+				case ')':
+					context.Reset(State.Final);
+					break;
+				case ',':
+					context.Reset(State.Argument);
+					break;
+				default:
+					context.Error($"The function parameter of the datetime range contains the illegal character '{context.Character}' at {context.Index + 1} position.");
+					break;
+			}
 		}
 		#endregion
 
@@ -540,7 +731,9 @@ namespace Zongsoft.Data
 				case 's':
 					return new DateTimeRangeParserResult(null, now.AddSeconds(-number));
 				default:
-					throw new ArgumentException("Invalid datetime range unit.");
+					return unit == '\0' ?
+						new DateTimeRangeParserResult($"Missing parameter unit of the datetime range function.") :
+						new DateTimeRangeParserResult($"Invalid parameter unit({unit}) of the datetime range function.");
 			}
 		}
 
@@ -570,113 +763,10 @@ namespace Zongsoft.Data
 				case 's':
 					return new DateTimeRangeParserResult(now.AddSeconds(-number), now);
 				default:
-					throw new ArgumentException("Invalid datetime range unit.");
+					return unit == '\0' ?
+						new DateTimeRangeParserResult($"Missing parameter unit of the datetime range function.") :
+						new DateTimeRangeParserResult($"Invalid parameter unit({unit}) of the datetime range function.");
 			}
-		}
-		#endregion
-
-		#region 私有方法
-		private static void DoStart(ref DataTimeRangeParserContext context)
-		{
-			if(context.IsWhitespace)
-				return;
-
-			if(context.IsLetter)
-				context.Accept(State.Identifier);
-			else
-				context.Accept(State.Exit);
-		}
-
-		private static void DoFinal(ref DataTimeRangeParserContext context)
-		{
-			if(!context.IsWhitespace)
-				context.Error("The datatime range expression contains redundant content.");
-		}
-
-		private static void DoIdentifier(ref DataTimeRangeParserContext context, out string name)
-		{
-			if(context.Character == '(')
-			{
-				context.Reset(State.Argument, out var value);
-				name = value.ToString();
-			}
-			else if(context.IsWhitespace)
-			{
-				context.Reset(State.Gutter, out var value);
-				name = value.ToString();
-			}
-			else if(context.IsLetterOrDigit)
-			{
-				name = null;
-				context.Accept(State.Identifier);
-			}
-			else
-			{
-				name = null;
-				context.Error($"The invalid character '{context.Character}' is at {context.Index + 1} character.");
-			}
-		}
-
-		private static void DoGutter(ref DataTimeRangeParserContext context)
-		{
-			if(context.IsWhitespace)
-				return;
-
-			if(context.Character == '(')
-				context.Reset(State.Argument);
-			else
-				context.Error($"Invalid datetime range expression format.");
-		}
-
-		private static void DoArgument(ref DataTimeRangeParserContext context, out int value, out char unit)
-		{
-			switch(context.Character)
-			{
-				case 'Y':
-				case 'y':
-				case 'M':
-				case 'D':
-				case 'd':
-				case 'H':
-				case 'h':
-				case 'm':
-				case 'S':
-				case 's':
-					unit = context.Character;
-					context.Reset(State.Unit, out var text);
-
-					if(text.Length > 0)
-					{
-						value = int.Parse(text.ToString());
-					}
-					else
-					{
-						value = 0;
-						context.Error($"Missing the argument value.");
-					}
-
-					break;
-				default:
-					if(context.IsDigit || context.IsWhitespace)
-						context.Accept(State.Argument);
-					else
-						context.Error($"The argument in the datetime range expression must be a number.");
-
-					value = 0;
-					unit = '\0';
-					break;
-			}
-		}
-
-		private static void DoUnit(ref DataTimeRangeParserContext context)
-		{
-			if(context.IsWhitespace)
-				return;
-
-			if(context.Character == ')')
-				context.Reset(State.Final);
-			else
-				context.Error($"The invalid character '{context.Character}' is at {context.Index + 1} character.");
 		}
 		#endregion
 
@@ -815,6 +905,22 @@ namespace Zongsoft.Data
 			}
 			#endregion
 		}
+
+		private struct DataTimeRangeFunctionArgument
+		{
+			#region 构造函数
+			public DataTimeRangeFunctionArgument(int value, char unit = '\0')
+			{
+				this.Value = value;
+				this.Unit = unit;
+			}
+			#endregion
+
+			#region 公共字段
+			public int Value;
+			public char Unit;
+			#endregion
+		}
 		#endregion
 
 		#region 枚举定义
@@ -827,8 +933,10 @@ namespace Zongsoft.Data
 
 			Identifier,
 			Gutter,
+			Method,
+			Number,
 			Argument,
-			Unit
+			ArgumentFinal,
 		}
 		#endregion
 	}
