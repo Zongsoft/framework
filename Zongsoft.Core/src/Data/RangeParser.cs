@@ -481,26 +481,37 @@ namespace Zongsoft.Data
 
 		private static DateTimeRangeParserResult GetThisWeek()
 		{
-			var firstday = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+			var today = DateTime.Today;
+			var days = (int)today.DayOfWeek;
+			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
 			return new DateTimeRangeParserResult(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 		}
 
 		private static DateTimeRangeParserResult GetThisMonth()
 		{
-			var firstday = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-			return new DateTimeRangeParserResult(firstday, new DateTime(firstday.Year, firstday.Month, DateTime.DaysInMonth(firstday.Year, firstday.Month), 23, 59, 59, 999));
+			return GetMonth(DateTime.Today.Year, DateTime.Today.Month);
 		}
 
 		private static DateTimeRangeParserResult GetThisYear()
 		{
-			var firstday = new DateTime(DateTime.Today.Year, 1, 1);
-			return new DateTimeRangeParserResult(firstday, new DateTime(firstday.Year, 12, 31, 23, 59, 59, 999));
+			return GetYear(DateTime.Today.Year);
 		}
 
 		private static DateTimeRangeParserResult GetLastYear()
 		{
-			var firstday = new DateTime(DateTime.Today.Year - 1, 1, 1);
+			return GetYear(DateTime.Today.Year - 1);
+		}
+
+		private static DateTimeRangeParserResult GetYear(int year)
+		{
+			var firstday = new DateTime(year, 1, 1);
 			return new DateTimeRangeParserResult(firstday, new DateTime(firstday.Year, 12, 31, 23, 59, 59, 999));
+		}
+
+		private static DateTimeRangeParserResult GetMonth(int year, int month)
+		{
+			var firstday = new DateTime(year, month, 1);
+			return new DateTimeRangeParserResult(firstday, new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
 		}
 
 		private static DateTimeRangeParserResult GetAgo(int number, char unit)
