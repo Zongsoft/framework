@@ -226,6 +226,127 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#region 区段计算
+		public static Range<DateTime> GetToday()
+		{
+			var today = DateTime.Today;
+			return new Range<DateTime>(today, today.AddSeconds((60 * 60 * 24) - 1));
+		}
+
+		public static Range<DateTime> GetYesterday()
+		{
+			var yesterday = DateTime.Today.AddDays(-1);
+			return new Range<DateTime>(yesterday, yesterday.AddSeconds((60 * 60 * 24) - 1));
+		}
+
+		public static Range<DateTime> GetThisWeek()
+		{
+			var today = DateTime.Today;
+			var days = (int)today.DayOfWeek;
+			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
+			return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
+		}
+
+		public static Range<DateTime> GetThisMonth()
+		{
+			var today = DateTime.Today;
+			return GetMonth(today.Year, today.Month);
+		}
+
+		public static Range<DateTime> GetThisYear()
+		{
+			return GetYear(DateTime.Today.Year);
+		}
+
+		public static Range<DateTime> GetLastYear()
+		{
+			return GetYear(DateTime.Today.Year - 1);
+		}
+
+		public static Range<DateTime> GetYear(int year)
+		{
+			var firstday = new DateTime(year, 1, 1);
+			return new Range<DateTime>(firstday, new DateTime(year, 12, 31, 23, 59, 59, 999));
+		}
+
+		public static Range<DateTime> GetMonth(int year, int month)
+		{
+			var firstday = new DateTime(year, month, 1);
+			return new Range<DateTime>(firstday, new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
+		}
+
+		public static Range<DateTime> GetAgo(int number, char unit)
+		{
+			var now = DateTime.Now;
+
+			if(number == 0)
+				return new Range<DateTime>(null, now);
+
+			switch(unit)
+			{
+				case 'Y':
+				case 'y':
+					return new Range<DateTime>(null, now.AddYears(-number));
+				case 'M':
+					return new Range<DateTime>(null, now.AddMonths(-number));
+				case 'D':
+				case 'd':
+					return new Range<DateTime>(null, now.AddDays(-number));
+				case 'H':
+				case 'h':
+					return new Range<DateTime>(null, now.AddHours(-number));
+				case 'm':
+					return new Range<DateTime>(null, now.AddMinutes(-number));
+				case 'S':
+				case 's':
+					return new Range<DateTime>(null, now.AddSeconds(-number));
+				default:
+					throw new ArgumentException(unit == '\0' ?
+						$"Missing the parameter unit of the ago datetime range function." :
+						$"Invalid parameter unit({unit}) of the ago datetime range function.");
+			}
+		}
+
+		public static Range<DateTime> GetLast(int number, char unit)
+		{
+			var now = DateTime.Now;
+
+			switch(unit)
+			{
+				case 'Y':
+				case 'y':
+					return number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, 1, 1), now) :
+						new Range<DateTime>(now.AddYears(-number), now);
+				case 'M':
+					return number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, 1), now) :
+						new Range<DateTime>(now.AddMonths(-number), now);
+				case 'D':
+				case 'd':
+					return number == 0 ?
+						new Range<DateTime>(now.Date, now) :
+						new Range<DateTime>(now.AddDays(-number), now);
+				case 'H':
+				case 'h':
+					return number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0), now) :
+						new Range<DateTime>(now.AddHours(-number), now);
+				case 'm':
+					return number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0), now) :
+						new Range<DateTime>(now.AddMinutes(-number), now);
+				case 'S':
+				case 's':
+					return new Range<DateTime>(now.AddSeconds(-number), now);
+				default:
+					throw new ArgumentException(unit == '\0' ?
+						$"Missing the parameter unit of the ago datetime range function." :
+						$"Invalid parameter unit({unit}) of the ago datetime range function.");
+			}
+		}
+		#endregion
+
 		#region 嵌套子类
 		private struct HasValueProxy
 		{
