@@ -394,7 +394,7 @@ namespace Zongsoft.Data
 		public static DateTimeRangeParserResult? Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
 		{
 			var name = string.Empty;
-			var arguments = new List<DataTimeRangeFunctionArgument>();
+			IList<DataTimeRangeFunctionArgument> arguments = null;
 
 			var context = new DataTimeRangeParserContext(span);
 
@@ -425,7 +425,12 @@ namespace Zongsoft.Data
 						break;
 					case State.Number:
 						if(DoNumber(ref context, out var value, out var unit))
+						{
+							if(arguments == null)
+								arguments = new List<DataTimeRangeFunctionArgument>();
+
 							arguments.Add(new DataTimeRangeFunctionArgument(value, unit));
+						}
 						break;
 					case State.Argument:
 						DoArgument(ref context);
@@ -459,48 +464,52 @@ namespace Zongsoft.Data
 			switch(name.ToLowerInvariant())
 			{
 				case "today":
-					return GetToday();
+					return new DateTimeRangeParserResult(Range.GetToday());
 				case "yesterday":
-					return GetYesterday();
+					return new DateTimeRangeParserResult(Range.GetYesterday());
 				case "thisweek":
-					return GetThisWeek();
+					return new DateTimeRangeParserResult(Range.GetThisWeek());
 				case "thismonth":
-					return GetThisMonth();
+					return new DateTimeRangeParserResult(Range.GetThisMonth());
 				case "thisyear":
-					return GetThisYear();
+					return new DateTimeRangeParserResult(Range.GetThisYear());
 				case "lastyear":
-					return GetLastYear();
+					return new DateTimeRangeParserResult(Range.GetLastYear());
 				case "ago":
-					if(arguments.Count < 1)
+					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Ago range function is missing a required parameter.");
-					else if(arguments.Count > 1)
+
+					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Ago range function has too many parameters.");
 
-					return GetAgo(arguments[0].Value, arguments[0].Unit);
+					return new DateTimeRangeParserResult(Range.GetAgo(arguments[0].Value, arguments[0].Unit));
 				case "last":
-					if(arguments.Count < 1)
+					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Last range function is missing a required parameter.");
-					else if(arguments.Count > 1)
+
+					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Last range function has too many parameters.");
 
-					return GetLast(arguments[0].Value, arguments[0].Unit);
+					return new DateTimeRangeParserResult(Range.GetLast(arguments[0].Value, arguments[0].Unit));
 				case "year":
-					if(arguments.Count < 1)
+					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Year range function is missing a required parameter.");
-					else if(arguments.Count > 1)
+
+					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Year range function has too many parameters.");
 
-					return GetYear(arguments[0].Value);
+					return new DateTimeRangeParserResult(Range.GetYear(arguments[0].Value));
 				case "month":
-					if(arguments.Count < 2)
-						return new DateTimeRangeParserResult($"The Month range function is missing a required parameter.");
-					else if(arguments.Count > 2)
+					if(arguments == null || arguments.Count < 2)
+						return new DateTimeRangeParserResult($"The Month range function is missing required parameters.");
+
+					if(arguments.Count > 2)
 						return new DateTimeRangeParserResult($"The Month range function has too many parameters.");
 
-					return GetMonth(arguments[0].Value, arguments[1].Value);
+					return new DateTimeRangeParserResult(Range.GetMonth(arguments[0].Value, arguments[1].Value));
 				default:
 					return new DateTimeRangeParserResult($"Invalid datetime range function name: {name}.");
-			};
+			}
 		}
 		#endregion
 
@@ -657,119 +666,6 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 区段计算
-		private static DateTimeRangeParserResult GetToday()
-		{
-			var today = DateTime.Today;
-			return new DateTimeRangeParserResult(today, today.AddSeconds((60 * 60 * 24) - 1));
-		}
-
-		private static DateTimeRangeParserResult GetYesterday()
-		{
-			var yesterday = DateTime.Today.AddDays(-1);
-			return new DateTimeRangeParserResult(yesterday, yesterday.AddSeconds((60 * 60 * 24) - 1));
-		}
-
-		private static DateTimeRangeParserResult GetThisWeek()
-		{
-			var today = DateTime.Today;
-			var days = (int)today.DayOfWeek;
-			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
-			return new DateTimeRangeParserResult(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
-		}
-
-		private static DateTimeRangeParserResult GetThisMonth()
-		{
-			return GetMonth(DateTime.Today.Year, DateTime.Today.Month);
-		}
-
-		private static DateTimeRangeParserResult GetThisYear()
-		{
-			return GetYear(DateTime.Today.Year);
-		}
-
-		private static DateTimeRangeParserResult GetLastYear()
-		{
-			return GetYear(DateTime.Today.Year - 1);
-		}
-
-		private static DateTimeRangeParserResult GetYear(int year)
-		{
-			var firstday = new DateTime(year, 1, 1);
-			return new DateTimeRangeParserResult(firstday, new DateTime(firstday.Year, 12, 31, 23, 59, 59, 999));
-		}
-
-		private static DateTimeRangeParserResult GetMonth(int year, int month)
-		{
-			var firstday = new DateTime(year, month, 1);
-			return new DateTimeRangeParserResult(firstday, new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
-		}
-
-		private static DateTimeRangeParserResult GetAgo(int number, char unit)
-		{
-			if(number == 0)
-				return GetToday();
-
-			var now = DateTime.Now;
-
-			switch(unit)
-			{
-				case 'Y':
-				case 'y':
-					return new DateTimeRangeParserResult(null, now.AddYears(-number));
-				case 'M':
-					return new DateTimeRangeParserResult(null, now.AddMonths(-number));
-				case 'D':
-				case 'd':
-					return new DateTimeRangeParserResult(null, now.AddDays(-number));
-				case 'H':
-				case 'h':
-					return new DateTimeRangeParserResult(null, now.AddHours(-number));
-				case 'm':
-					return new DateTimeRangeParserResult(null, now.AddMinutes(-number));
-				case 'S':
-				case 's':
-					return new DateTimeRangeParserResult(null, now.AddSeconds(-number));
-				default:
-					return unit == '\0' ?
-						new DateTimeRangeParserResult($"Missing parameter unit of the datetime range function.") :
-						new DateTimeRangeParserResult($"Invalid parameter unit({unit}) of the datetime range function.");
-			}
-		}
-
-		private static DateTimeRangeParserResult GetLast(int number, char unit)
-		{
-			if(number == 0)
-				return GetToday();
-
-			var now = DateTime.Now;
-
-			switch(unit)
-			{
-				case 'Y':
-				case 'y':
-					return new DateTimeRangeParserResult(now.AddYears(-number), now);
-				case 'M':
-					return new DateTimeRangeParserResult(now.AddMonths(-number), now);
-				case 'D':
-				case 'd':
-					return new DateTimeRangeParserResult(now.AddDays(-number), now);
-				case 'H':
-				case 'h':
-					return new DateTimeRangeParserResult(now.AddHours(-number), now);
-				case 'm':
-					return new DateTimeRangeParserResult(now.AddMinutes(-number), now);
-				case 'S':
-				case 's':
-					return new DateTimeRangeParserResult(now.AddSeconds(-number), now);
-				default:
-					return unit == '\0' ?
-						new DateTimeRangeParserResult($"Missing parameter unit of the datetime range function.") :
-						new DateTimeRangeParserResult($"Invalid parameter unit({unit}) of the datetime range function.");
-			}
-		}
-		#endregion
-
 		#region 嵌套结构
 		public struct DateTimeRangeParserResult
 		{
@@ -790,11 +686,11 @@ namespace Zongsoft.Data
 				this.Maximum = DateTime.MaxValue;
 			}
 
-			public DateTimeRangeParserResult(DateTime? minimum, DateTime? maximum)
+			public DateTimeRangeParserResult(Range<DateTime> duration)
 			{
 				_message = null;
-				this.Minimum = minimum;
-				this.Maximum = maximum;
+				this.Minimum = duration.Minimum;
+				this.Maximum = duration.Maximum;
 			}
 			#endregion
 
