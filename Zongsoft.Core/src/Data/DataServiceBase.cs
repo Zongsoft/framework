@@ -1127,9 +1127,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 校验方法
-		protected virtual ICondition OnValidate(Method method, ICondition condition)
+		protected virtual ICondition OnValidate(Method method, ICondition criteria)
 		{
-			return condition;
+			return criteria;
 		}
 
 		protected virtual void OnValidate(Method method, IDataDictionary<TEntity> data)
