@@ -41,18 +41,12 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据搜索服务的名称，该名称亦为数据搜索接口的调用名。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
+		string Name { get; }
 
 		/// <summary>
 		/// 获取数据搜索关键字的条件解析器。
 		/// </summary>
-		IDataSearcherConditioner Conditioner
-		{
-			get;
-		}
+		IDataSearcherConditioner Conditioner { get; }
 
 		int Count(string keyword, IDictionary<string, object> states = null);
 		bool Exists(string keyword, IDictionary<string, object> states = null);
