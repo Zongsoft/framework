@@ -331,10 +331,10 @@ namespace Zongsoft.Data
 		#region 删除方法
 		public int Delete<TKey>(TKey key, IDictionary<string, object> states = null)
 		{
-			return this.Delete<TKey>(key, null, null, states);
+			return this.Delete<TKey>(key, null, states);
 		}
 
-		public int Delete<TKey>(TKey key, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Delete<TKey>(TKey key, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -343,7 +343,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, filter, out _));
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, null, out _));
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), states);
@@ -351,10 +351,10 @@ namespace Zongsoft.Data
 
 		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
 		{
-			return this.Delete<TKey1, TKey2>(key1, key2, null, null, states);
+			return this.Delete<TKey1, TKey2>(key1, key2, null, states);
 		}
 
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -363,7 +363,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, filter, out _));
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, null, out _));
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), states);
@@ -371,10 +371,10 @@ namespace Zongsoft.Data
 
 		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
 		{
-			return this.Delete<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, states);
+			return this.Delete<TKey1, TKey2, TKey3>(key1, key2, key3, null, states);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -383,7 +383,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, filter, out _));
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, null, out _));
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), states);
@@ -565,34 +565,34 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		public int Update<TKey>(object data, TKey key, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey>(object data, TKey key, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey>(data, key, null, filter, states);
+			return this.Update<TKey>(data, key, null, states);
 		}
 
-		public int Update<TKey>(object data, TKey key, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey>(object data, TKey key, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key, filter, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key, null, out _), schema, states);
 		}
 
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey1, TKey2>(data, key1, key2, null, filter, states);
+			return this.Update<TKey1, TKey2>(data, key1, key2, null, states);
 		}
 
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, filter, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, null, out _), schema, states);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey1, TKey2, TKey3>(data, key1, key2, key3, null, filter, states);
+			return this.Update<TKey1, TKey2, TKey3>(data, key1, key2, key3, null, states);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, filter, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, null, out _), schema, states);
 		}
 
 		public int Update(object data, IDictionary<string, object> states = null)

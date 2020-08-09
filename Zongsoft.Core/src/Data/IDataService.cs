@@ -124,11 +124,11 @@ namespace Zongsoft.Data
 
 		#region 删除方法
 		int Delete<TKey>(TKey key, IDictionary<string, object> states = null);
-		int Delete<TKey>(TKey key, string schema, string filter = null, IDictionary<string, object> states = null);
+		int Delete<TKey>(TKey key, string schema, IDictionary<string, object> states = null);
 		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states = null);
-		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null);
+		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null);
 		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null);
-		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null);
+		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null);
 
 		int Delete(ICondition criteria, IDictionary<string, object> states = null);
 		int Delete(ICondition criteria, string schema, IDictionary<string, object> states = null);
@@ -151,12 +151,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		int Update<TKey>(object data, TKey key, string filter = null, IDictionary<string, object> states = null);
-		int Update<TKey>(object data, TKey key, string schema, string filter = null, IDictionary<string, object> states = null);
-		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string filter = null, IDictionary<string, object> states = null);
-		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null);
-		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDictionary<string, object> states = null);
-		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null);
+		int Update<TKey>(object data, TKey key, IDictionary<string, object> states = null);
+		int Update<TKey>(object data, TKey key, string schema, IDictionary<string, object> states = null);
+		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDictionary<string, object> states = null);
+		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null);
+		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null);
+		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null);
 
 		int Update(object data, IDictionary<string, object> states = null);
 		int Update(object data, string schema, IDictionary<string, object> states = null);
