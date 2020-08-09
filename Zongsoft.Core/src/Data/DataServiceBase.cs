@@ -1328,7 +1328,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private ICondition ConvertKey<TKey>(Method method, TKey key, string filter, out bool singular)
 		{
-			return this.ConvertKey(method, new object[] { key }, filter, out singular);
+			return this.ConvertKey(method, key == null ? Array.Empty<object>() : new object[] { key }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
