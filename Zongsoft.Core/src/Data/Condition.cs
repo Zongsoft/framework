@@ -374,7 +374,7 @@ namespace Zongsoft.Data
 				case ConditionOperator.Like:
 					return string.Format("{0} LIKE {1}", _name, text);
 				case ConditionOperator.Between:
-					return string.Format("{0} BETWEEN [{1}]", _name, text);
+					return string.Format("{0} BETWEEN ({1})", _name, text);
 				case ConditionOperator.In:
 					return string.Format("{0} IN [{1}]", _name, text);
 				case ConditionOperator.NotIn:

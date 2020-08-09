@@ -80,14 +80,8 @@ namespace Zongsoft.Data
 		/// </summary>
 		public ConditionCombination Combination
 		{
-			get
-			{
-				return _conditionCombination;
-			}
-			set
-			{
-				_conditionCombination = value;
-			}
+			get => _conditionCombination;
+			set => _conditionCombination = value;
 		}
 		#endregion
 
