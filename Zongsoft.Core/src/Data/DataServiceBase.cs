@@ -1373,13 +1373,13 @@ namespace Zongsoft.Data
 				throw new NotSupportedException("Too many the keys.");
 
 			//获取查询键值对数组
-			var criteria = this.OnCondition(method, values ?? new object[0], out singular);
+			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular);
 
 			if(criteria == null)
 				throw new ArgumentException($"The specified key is invalid of the {this.Name} service.");
 
-			if(criteria is ConditionCollection conditions)
-				return conditions.Count == 1 ? conditions[0] : conditions;
+			if(criteria is ConditionCollection conditions && conditions.Count == 1)
+				return conditions[0];
 
 			return criteria;
 		}
