@@ -36,19 +36,19 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data
 {
-	public class DataSearcher<TEntity> : IDataSearcher<TEntity>, IDataSearcher
+	public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 	{
 		#region 成员字段
 		private IDataSearcherConditioner _conditioner;
 		#endregion
 
 		#region 构造函数
-		public DataSearcher(IDataService<TEntity> dataService, DataSearcherAttribute[] attributes)
+		public DataSearcher(IDataService<TModel> dataService, DataSearcherAttribute[] attributes)
 		{
 			this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
 
 			if(attributes != null && attributes.Length > 0)
-				this.Conditioner = DataSearcherResolver.Create(typeof(TEntity).GetTypeInfo(), attributes);
+				this.Conditioner = DataSearcherResolver.Create(typeof(TModel).GetTypeInfo(), attributes);
 		}
 		#endregion
 
@@ -61,7 +61,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public IDataService<TEntity> DataService
+		public IDataService<TModel> DataService
 		{
 			get;
 		}
@@ -93,37 +93,37 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 搜索方法
-		public IEnumerable<TEntity> Search(string keyword, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, string.Empty, null, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, string.Empty, null, states, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, string.Empty, paging, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, string schema, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, schema, null, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, schema, null, states, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings)
 		{
 			return this.Search(keyword, schema, paging, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
 			return this.DataService.Select(
 				this.Resolve(nameof(Search), keyword, filter, states),

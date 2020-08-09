@@ -35,15 +35,15 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据搜索器的泛型接口。
 	/// </summary>
-	/// <typeparam name="TEntity">关于搜索服务对应的数据实体类型。</typeparam>
-	public interface IDataSearcher<TEntity> : IDataSearcher
+	/// <typeparam name="TModel">关于搜索服务对应的数据模型类型。</typeparam>
+	public interface IDataSearcher<TModel> : IDataSearcher
 	{
-		new IEnumerable<TEntity> Search(string keyword, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, string schema, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
 	}
 }

@@ -34,11 +34,11 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class DataServiceBase<TEntity> : IDataService<TEntity>
+	public class DataServiceBase<TModel> : IDataService<TModel>
 	{
 		#region 事件定义
-		public event EventHandler<DataGettedEventArgs<TEntity>> Getted;
-		public event EventHandler<DataGettingEventArgs<TEntity>> Getting;
+		public event EventHandler<DataGettedEventArgs<TModel>> Getted;
+		public event EventHandler<DataGettingEventArgs<TModel>> Getting;
 		public event EventHandler<DataExecutedEventArgs> Executed;
 		public event EventHandler<DataExecutingEventArgs> Executing;
 		public event EventHandler<DataExistedEventArgs> Existed;
@@ -62,7 +62,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private string _name;
 		private IDataAccess _dataAccess;
-		private IDataSearcher<TEntity> _searcher;
+		private IDataSearcher<TModel> _searcher;
 		private IServiceProvider _serviceProvider;
 		#endregion
 
@@ -73,7 +73,7 @@ namespace Zongsoft.Data
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new DataSearcher<TEntity>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = new DataSearcher<TModel>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
 		}
 
 		protected DataServiceBase(string name, IServiceProvider serviceProvider)
@@ -86,7 +86,7 @@ namespace Zongsoft.Data
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new DataSearcher<TEntity>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = new DataSearcher<TModel>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
 		}
 		#endregion
 
@@ -100,7 +100,7 @@ namespace Zongsoft.Data
 					var dataAccess = this.DataAccess;
 
 					if(dataAccess != null && dataAccess.Naming != null)
-						_name = dataAccess.Naming.Get<TEntity>();
+						_name = dataAccess.Naming.Get<TModel>();
 				}
 
 				return _name;
@@ -135,7 +135,7 @@ namespace Zongsoft.Data
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
-		public IDataSearcher<TEntity> Searcher
+		public IDataSearcher<TModel> Searcher
 		{
 			get => _searcher;
 			set => _searcher = value ?? throw new ArgumentNullException();
@@ -436,7 +436,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//将当前插入数据对象转换成数据字典
-			var dictionary = DataDictionary.GetDictionary<TEntity>(data);
+			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
 			//验证待新增的数据
 			this.OnValidate(Method.Insert(), dictionary);
@@ -444,7 +444,7 @@ namespace Zongsoft.Data
 			return this.OnInsert(dictionary, this.GetSchema(schema, data.GetType()), states);
 		}
 
-		protected virtual int OnInsert(IDataDictionary<TEntity> data, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, IDictionary<string, object> states)
 		{
 			if(data == null || data.Data == null)
 				return 0;
@@ -470,7 +470,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//将当前插入数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TEntity>(items);
+			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
 			foreach(var dictionary in dictionares)
 			{
@@ -481,7 +481,7 @@ namespace Zongsoft.Data
 			return this.OnInsertMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), states);
 		}
 
-		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TEntity>> items, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDictionary<string, object> states)
 		{
 			if(items == null)
 				return 0;
@@ -509,7 +509,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//将当前复写数据对象转换成数据字典
-			var dictionary = DataDictionary.GetDictionary<TEntity>(data);
+			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
 			//验证待复写的数据
 			this.OnValidate(Method.Upsert(), dictionary);
@@ -517,7 +517,7 @@ namespace Zongsoft.Data
 			return this.OnUpsert(dictionary, this.GetSchema(schema, data.GetType()), states);
 		}
 
-		protected virtual int OnUpsert(IDataDictionary<TEntity> data, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, IDictionary<string, object> states)
 		{
 			if(data == null || data.Data == null)
 				return 0;
@@ -543,7 +543,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//将当前复写数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TEntity>(items);
+			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
 			foreach(var dictionary in dictionares)
 			{
@@ -554,7 +554,7 @@ namespace Zongsoft.Data
 			return this.OnUpsertMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), states);
 		}
 
-		protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TEntity>> items, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDictionary<string, object> states)
 		{
 			if(items == null)
 				return 0;
@@ -619,7 +619,7 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Update(), ref states);
 
 			//将当前更新数据对象转换成数据字典
-			var dictionary = DataDictionary.GetDictionary<TEntity>(data);
+			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
 			//如果指定了更新条件，则尝试将条件中的主键值同步设置到数据字典中
 			if(criteria != null)
@@ -646,7 +646,7 @@ namespace Zongsoft.Data
 			return this.OnUpdate(dictionary, criteria, this.GetSchema(schema, data.GetType()), states);
 		}
 
-		protected virtual int OnUpdate(IDataDictionary<TEntity> data, ICondition criteria, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
 			if(data == null || data.Data == null)
 				return 0;
@@ -671,7 +671,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//将当前更新数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TEntity>(items);
+			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
 			foreach(var dictionary in dictionares)
 			{
@@ -682,7 +682,7 @@ namespace Zongsoft.Data
 			return this.OnUpdateMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), states);
 		}
 
-		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TEntity>> items, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDictionary<string, object> states)
 		{
 			if(items == null)
 				return 0;
@@ -845,54 +845,54 @@ namespace Zongsoft.Data
 			return this.Select(criteria, schema, paging, states, sortings);
 		}
 
-		protected virtual TEntity OnGet(ICondition criteria, ISchema schema, IDictionary<string, object> states)
+		protected virtual TModel OnGet(ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
-			return this.DataAccess.Select<TEntity>(this.Name, criteria, schema, null, states, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx)).FirstOrDefault();
+			return this.DataAccess.Select<TModel>(this.Name, criteria, schema, null, states, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx)).FirstOrDefault();
 		}
 		#endregion
 
 		#region 常规查询
-		public IEnumerable<TEntity> Select(IDictionary<string, object> states = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(IDictionary<string, object> states = null, params Sorting[] sortings)
 		{
 			return this.Select(null, string.Empty, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, null, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, paging, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, paging, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, string schema, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings)
 		{
 			return this.Select(criteria, schema, null, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
 			return this.Select(criteria, schema, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
 		{
 			return this.Select(criteria, schema, paging, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
 			//进行授权验证
 			this.Authorize(Method.Select(), ref states);
@@ -901,16 +901,16 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(Method.Select(), criteria);
 
 			//执行查询方法
-			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
+			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TModel)), paging, sortings, states);
 		}
 
-		protected virtual IEnumerable<TEntity> OnSelect(ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
+		protected virtual IEnumerable<TModel> OnSelect(ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
 		{
 			//如果没有指定排序设置则应用默认排序规则
 			if(sortings == null || sortings.Length == 0)
 				sortings = this.GetSortings();
 
-			return this.DataAccess.Select<TEntity>(this.Name, criteria, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
+			return this.DataAccess.Select<TModel>(this.Name, criteria, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
 		#endregion
 
@@ -964,7 +964,7 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(Method.Select(), criteria);
 
 			//执行查询方法
-			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
+			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TModel)), paging, sortings, states);
 		}
 
 		protected virtual IEnumerable<T> OnSelect<T>(Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
@@ -1050,7 +1050,7 @@ namespace Zongsoft.Data
 			return criteria;
 		}
 
-		protected virtual void OnValidate(Method method, IDataDictionary<TEntity> data)
+		protected virtual void OnValidate(Method method, IDataDictionary<TModel> data)
 		{
 		}
 		#endregion
@@ -1058,7 +1058,7 @@ namespace Zongsoft.Data
 		#region 激发事件
 		protected virtual void OnGetted(DataSelectContextBase context)
 		{
-			this.Getted?.Invoke(this, new DataGettedEventArgs<TEntity>(context));
+			this.Getted?.Invoke(this, new DataGettedEventArgs<TModel>(context));
 		}
 
 		protected virtual bool OnGetting(DataSelectContextBase context)
@@ -1068,7 +1068,7 @@ namespace Zongsoft.Data
 			if(e == null)
 				return false;
 
-			var args = new DataGettingEventArgs<TEntity>(context);
+			var args = new DataGettingEventArgs<TModel>(context);
 			e(this, args);
 			return args.Cancel;
 		}
@@ -1346,7 +1346,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private ISchema GetSchema(string expression, Type type = null)
 		{
-			return this.DataAccess.Schema.Parse(this.Name, expression, type ?? typeof(TEntity));
+			return this.DataAccess.Schema.Parse(this.Name, expression, type ?? typeof(TModel));
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -1554,7 +1554,7 @@ namespace Zongsoft.Data
 			#endregion
 		}
 
-		public sealed class Condition : Zongsoft.Data.Condition.Builder<TEntity>
+		public sealed class Condition : Zongsoft.Data.Condition.Builder<TModel>
 		{
 			#region 私有构造
 			private Condition()

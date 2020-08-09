@@ -35,31 +35,31 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据服务的泛型接口。
 	/// </summary>
-	/// <typeparam name="TEntity">关于数据服务对应的数据实体类型。</typeparam>
-	public interface IDataService<TEntity> : IDataService
+	/// <typeparam name="TModel">关于数据服务对应的数据模型类型。</typeparam>
+	public interface IDataService<TModel> : IDataService
 	{
 		#region 事件定义
-		event EventHandler<DataGettedEventArgs<TEntity>> Getted;
-		event EventHandler<DataGettingEventArgs<TEntity>> Getting;
+		event EventHandler<DataGettedEventArgs<TModel>> Getted;
+		event EventHandler<DataGettingEventArgs<TModel>> Getting;
 		#endregion
 
 		#region 属性定义
 		/// <summary>
 		/// 获取数据搜索器对象。
 		/// </summary>
-		IDataSearcher<TEntity> Searcher { get; }
+		IDataSearcher<TModel> Searcher { get; }
 		#endregion
 
 		#region 查询方法
-		new IEnumerable<TEntity> Select(IDictionary<string, object> states = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, string schema, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(IDictionary<string, object> states = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
 		#endregion
 	}
 }
