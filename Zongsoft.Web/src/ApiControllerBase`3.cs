@@ -51,9 +51,9 @@ namespace Zongsoft.Web
 		public virtual IActionResult Count([FromBody]TConditional conditional)
 		{
 			if(conditional == null)
-				return this.Content(this.DataService.Count(null).ToString(), "text/plain");
+				return this.Content(this.DataService.Count().ToString(), "text/plain");
 			else
-				return this.Content(this.DataService.Count(Conditional.ToCondition(conditional)).ToString(), "text/plain");
+				return this.Content(this.DataService.Count(Conditional.ToCondition(conditional), null, null).ToString(), "text/plain");
 		}
 
 		[HttpPost("Exists")]
@@ -64,7 +64,7 @@ namespace Zongsoft.Web
 			if(conditional == null)
 				existed = this.DataService.Exists(null);
 			else
-				existed = this.DataService.Exists(Conditional.ToCondition(conditional));
+				existed = this.DataService.Exists(Conditional.ToCondition(conditional), null);
 
 			if(existed)
 				return this.Ok();
