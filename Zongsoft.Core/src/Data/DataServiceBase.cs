@@ -73,7 +73,7 @@ namespace Zongsoft.Data
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = new DataSearcher<TEntity>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
 		}
 
 		protected DataServiceBase(string name, IServiceProvider serviceProvider)
@@ -86,7 +86,7 @@ namespace Zongsoft.Data
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new InnerDataSearcher(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = new DataSearcher<TEntity>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
 		}
 		#endregion
 
@@ -200,36 +200,36 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public bool Exists<TKey>(TKey key, IDictionary<string, object> states = null)
+		public bool Exists<TKey>(TKey key, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key, filter, out _), states);
 		}
 
-		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
+		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, filter, out _), states);
 		}
 
-		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
+		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, key3, out _), states);
+			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, key3, filter, out _), states);
 		}
 
-		public bool Exists(ICondition condition, IDictionary<string, object> states = null)
+		public bool Exists(ICondition criteria, IDictionary<string, object> states = null)
 		{
 			//进行授权验证
 			this.Authorize(Method.Exists(), ref states);
 
 			//修整查询条件
-			condition = this.OnValidate(Method.Exists(), condition);
+			criteria = this.OnValidate(Method.Exists(), criteria);
 
 			//执行存在操作
-			return this.OnExists(condition, states);
+			return this.OnExists(criteria, states);
 		}
 
-		protected virtual bool OnExists(ICondition condition, IDictionary<string, object> states)
+		protected virtual bool OnExists(ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.DataAccess.Exists(this.Name, condition, states, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
+			return this.DataAccess.Exists(this.Name, criteria, states, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
 		}
 		#endregion
 
@@ -246,19 +246,19 @@ namespace Zongsoft.Data
 			return (int)(this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, states) ?? 0d);
 		}
 
-		public int Count<TKey>(TKey key, string member = null, IDictionary<string, object> states = null)
+		public int Count<TKey>(TKey key, string member = null, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key, filter, out _), member, states);
 		}
 
-		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDictionary<string, object> states = null)
+		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key1, key2, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key1, key2, filter, out _), member, states);
 		}
 
-		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDictionary<string, object> states = null)
+		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, out _), member, states);
+			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, filter, out _), member, states);
 		}
 
 		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDictionary<string, object> states = null)
@@ -273,19 +273,19 @@ namespace Zongsoft.Data
 			return this.OnAggregate(new DataAggregate(function, member), criteria, states);
 		}
 
-		public double? Aggregate<TKey>(TKey key, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey>(TKey key, DataAggregateFunction function, string member, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key, filter, out _), states);
 		}
 
-		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction function, string member, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, filter, out _), states);
 		}
 
-		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction function, string member, IDictionary<string, object> states = null)
+		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction function, string member, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, key3, out _), states);
+			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, key3, filter, out _), states);
 		}
 
 		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states)
@@ -295,76 +295,46 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		public long Decrement(string member, ICondition condition, IDictionary<string, object> states)
+		public long Decrement(string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Decrement(member, condition, 1, states);
+			return this.Decrement(member, criteria, 1, states);
 		}
 
-		public long Decrement(string member, ICondition condition, int interval)
+		public long Decrement(string member, ICondition criteria, int interval = 1, IDictionary<string, object> states = null)
 		{
-			return this.Decrement(member, condition, interval, null);
+			return this.Increment(member, criteria, -interval, states);
 		}
 
-		public long Decrement(string member, ICondition condition, int interval = 1, IDictionary<string, object> states = null)
+		public long Increment(string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Increment(member, condition, -interval, states);
+			return this.Increment(member, criteria, 1, states);
 		}
 
-		public long Increment(string member, ICondition condition, IDictionary<string, object> states)
-		{
-			return this.Increment(member, condition, 1, states);
-		}
-
-		public long Increment(string member, ICondition condition, int interval)
-		{
-			return this.Increment(member, condition, interval, null);
-		}
-
-		public long Increment(string member, ICondition condition, int interval = 1, IDictionary<string, object> states = null)
+		public long Increment(string member, ICondition criteria, int interval = 1, IDictionary<string, object> states = null)
 		{
 			//进行授权验证
 			this.Authorize(Method.Increment(), ref states);
 
 			//修整查询条件
-			condition = this.OnValidate(Method.Increment(), condition);
+			criteria = this.OnValidate(Method.Increment(), criteria);
 
 			//执行递增操作
-			return this.OnIncrement(member, condition, interval, states);
+			return this.OnIncrement(member, criteria, interval, states);
 		}
 
-		protected virtual long OnIncrement(string member, ICondition condition, int interval, IDictionary<string, object> states)
+		protected virtual long OnIncrement(string member, ICondition criteria, int interval, IDictionary<string, object> states)
 		{
-			return this.DataAccess.Increment(this.Name, member, condition, interval, states, ctx => this.OnIncrementing(ctx), ctx => this.OnIncremented(ctx));
+			return this.DataAccess.Increment(this.Name, member, criteria, interval, states, ctx => this.OnIncrementing(ctx), ctx => this.OnIncremented(ctx));
 		}
 		#endregion
 
 		#region 删除方法
-		public int Delete<TKey>(TKey key, string schema = null)
+		public int Delete<TKey>(TKey key, IDictionary<string, object> states = null)
 		{
-			return this.Delete<TKey>(key, schema, null);
+			return this.Delete<TKey>(key, null, null, states);
 		}
 
-		public int Delete<TKey>(TKey key, string schema, IDictionary<string, object> states)
-		{
-			//确认是否可以执行该操作
-			this.EnsureDelete();
-
-			//进行授权验证
-			this.Authorize(Method.Delete(), ref states);
-
-			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, out _));
-
-			//执行删除操作
-			return this.OnDelete(condition, this.GetSchema(schema), states);
-		}
-
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema = null)
-		{
-			return this.Delete<TKey1, TKey2>(key1, key2, schema, null);
-		}
-
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states)
+		public int Delete<TKey>(TKey key, string schema, string filter = null, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -373,18 +343,18 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, out _));
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, filter, out _));
 
 			//执行删除操作
-			return this.OnDelete(condition, this.GetSchema(schema), states);
+			return this.OnDelete(criteria, this.GetSchema(schema), states);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema = null)
+		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
 		{
-			return this.Delete<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null);
+			return this.Delete<TKey1, TKey2>(key1, key2, null, null, states);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states)
+		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -393,18 +363,38 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//将删除键转换成条件对象，并进行修整
-			var condition = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, out _));
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, filter, out _));
 
 			//执行删除操作
-			return this.OnDelete(condition, this.GetSchema(schema), states);
+			return this.OnDelete(criteria, this.GetSchema(schema), states);
 		}
 
-		public int Delete(ICondition condition, string schema = null)
+		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
 		{
-			return this.Delete(condition, schema, (IDictionary<string, object>)null);
+			return this.Delete<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, states);
 		}
 
-		public int Delete(ICondition condition, string schema, IDictionary<string, object> states)
+		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureDelete();
+
+			//进行授权验证
+			this.Authorize(Method.Delete(), ref states);
+
+			//将删除键转换成条件对象，并进行修整
+			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, filter, out _));
+
+			//执行删除操作
+			return this.OnDelete(criteria, this.GetSchema(schema), states);
+		}
+
+		public int Delete(ICondition criteria, IDictionary<string, object> states = null)
+		{
+			return this.Delete(criteria, null, states);
+		}
+
+		public int Delete(ICondition criteria, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -413,38 +403,28 @@ namespace Zongsoft.Data
 			this.Authorize(Method.Delete(), ref states);
 
 			//修整删除条件
-			condition = this.OnValidate(Method.Delete(), condition);
+			criteria = this.OnValidate(Method.Delete(), criteria);
 
 			//执行删除操作
-			return this.OnDelete(condition, this.GetSchema(schema), states);
+			return this.OnDelete(criteria, this.GetSchema(schema), states);
 		}
 
-		protected virtual int OnDelete(ICondition condition, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnDelete(ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
-			if(condition == null)
-				throw new NotSupportedException("The condition cann't is null on delete operation.");
+			if(criteria == null)
+				throw new NotSupportedException("The criteria cann't is null on delete operation.");
 
-			return this.DataAccess.Delete(this.Name, condition, schema, states, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx));
+			return this.DataAccess.Delete(this.Name, criteria, schema, states, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx));
 		}
 		#endregion
 
 		#region 插入方法
-		public int Insert(object data)
-		{
-			return this.Insert(data, null, null);
-		}
-
-		public int Insert(object data, IDictionary<string, object> states)
+		public int Insert(object data, IDictionary<string, object> states = null)
 		{
 			return this.Insert(data, null, states);
 		}
 
-		public int Insert(object data, string schema)
-		{
-			return this.Insert(data, schema, null);
-		}
-
-		public int Insert(object data, string schema, IDictionary<string, object> states)
+		public int Insert(object data, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert();
@@ -473,22 +453,12 @@ namespace Zongsoft.Data
 			return this.DataAccess.Insert(this.Name, data, schema, states, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 		}
 
-		public int InsertMany(IEnumerable items)
-		{
-			return this.InsertMany(items, null, null);
-		}
-
-		public int InsertMany(IEnumerable items, IDictionary<string, object> states)
+		public int InsertMany(IEnumerable items, IDictionary<string, object> states = null)
 		{
 			return this.InsertMany(items, null, states);
 		}
 
-		public int InsertMany(IEnumerable items, string schema)
-		{
-			return this.InsertMany(items, schema, null);
-		}
-
-		public int InsertMany(IEnumerable items, string schema, IDictionary<string, object> states)
+		public int InsertMany(IEnumerable items, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert();
@@ -522,22 +492,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 复写方法
-		public int Upsert(object data)
-		{
-			return this.Upsert(data, null, null);
-		}
-
-		public int Upsert(object data, IDictionary<string, object> states)
+		public int Upsert(object data, IDictionary<string, object> states = null)
 		{
 			return this.Upsert(data, null, states);
 		}
 
-		public int Upsert(object data, string schema)
-		{
-			return this.Upsert(data, schema, null);
-		}
-
-		public int Upsert(object data, string schema, IDictionary<string, object> states)
+		public int Upsert(object data, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert();
@@ -566,22 +526,12 @@ namespace Zongsoft.Data
 			return this.DataAccess.Upsert(this.Name, data, schema, states, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
 		}
 
-		public int UpsertMany(IEnumerable items)
-		{
-			return this.UpsertMany(items, null, null);
-		}
-
-		public int UpsertMany(IEnumerable items, IDictionary<string, object> states)
+		public int UpsertMany(IEnumerable items, IDictionary<string, object> states = null)
 		{
 			return this.UpsertMany(items, null, states);
 		}
 
-		public int UpsertMany(IEnumerable items, string schema)
-		{
-			return this.UpsertMany(items, schema, null);
-		}
-
-		public int UpsertMany(IEnumerable items, string schema, IDictionary<string, object> states)
+		public int UpsertMany(IEnumerable items, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert();
@@ -615,34 +565,34 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		public int Update<TKey>(object data, TKey key, IDictionary<string, object> states = null)
+		public int Update<TKey>(object data, TKey key, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey>(data, key, null, states);
+			return this.Update<TKey>(data, key, null, filter, states);
 		}
 
-		public int Update<TKey>(object data, TKey key, string schema, IDictionary<string, object> states = null)
+		public int Update<TKey>(object data, TKey key, string schema, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key, filter, out _), schema, states);
 		}
 
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey1, TKey2>(data, key1, key2, null, states);
+			return this.Update<TKey1, TKey2>(data, key1, key2, null, filter, states);
 		}
 
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, filter, out _), schema, states);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update<TKey1, TKey2, TKey3>(data, key1, key2, key3, null, states);
+			return this.Update<TKey1, TKey2, TKey3>(data, key1, key2, key3, null, filter, states);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states = null)
+		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, out _), schema, states);
+			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, filter, out _), schema, states);
 		}
 
 		public int Update(object data, IDictionary<string, object> states = null)
@@ -655,12 +605,12 @@ namespace Zongsoft.Data
 			return this.Update(data, null, schema, states);
 		}
 
-		public int Update(object data, ICondition condition, IDictionary<string, object> states = null)
+		public int Update(object data, ICondition criteria, IDictionary<string, object> states = null)
 		{
-			return this.Update(data, condition, null, states);
+			return this.Update(data, criteria, null, states);
 		}
 
-		public int Update(object data, ICondition condition, string schema, IDictionary<string, object> states = null)
+		public int Update(object data, ICondition criteria, string schema, IDictionary<string, object> states = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpdate();
@@ -672,7 +622,7 @@ namespace Zongsoft.Data
 			var dictionary = DataDictionary.GetDictionary<TEntity>(data);
 
 			//如果指定了更新条件，则尝试将条件中的主键值同步设置到数据字典中
-			if(condition != null)
+			if(criteria != null)
 			{
 				//获取当前数据服务的实体主键集
 				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
@@ -681,27 +631,27 @@ namespace Zongsoft.Data
 				{
 					foreach(var key in keys)
 					{
-						condition.Match(key.Name, c => dictionary.TrySetValue(c.Name, c.Value));
+						criteria.Match(key.Name, c => dictionary.TrySetValue(c.Name, c.Value));
 					}
 				}
 			}
 
 			//修整过滤条件
-			condition = this.OnValidate(Method.Update(), condition ?? this.EnsureUpdateCondition(dictionary));
+			criteria = this.OnValidate(Method.Update(), criteria ?? this.EnsureUpdateCondition(dictionary));
 
 			//验证待更新的数据
 			this.OnValidate(Method.Update(), dictionary);
 
 			//执行更新操作
-			return this.OnUpdate(dictionary, condition, this.GetSchema(schema, data.GetType()), states);
+			return this.OnUpdate(dictionary, criteria, this.GetSchema(schema, data.GetType()), states);
 		}
 
-		protected virtual int OnUpdate(IDataDictionary<TEntity> data, ICondition condition, ISchema schema, IDictionary<string, object> states)
+		protected virtual int OnUpdate(IDataDictionary<TEntity> data, ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
 			if(data == null || data.Data == null)
 				return 0;
 
-			return this.DataAccess.Update(this.Name, data, condition, schema, states, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
+			return this.DataAccess.Update(this.Name, data, criteria, schema, states, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
 		}
 
 		public int UpdateMany(IEnumerable items, IDictionary<string, object> states = null)
@@ -744,44 +694,39 @@ namespace Zongsoft.Data
 		#region 查询方法
 
 		#region 单键查询
-		public object Get<TKey>(TKey key, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, string.Empty, null, null, out _, sortings);
+			return this.Get<TKey>(key, string.Empty, null, null, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, string.Empty, null, states, out _, sortings);
+			return this.Get<TKey>(key, string.Empty, null, states, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, Paging paging, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, string.Empty, paging, null, out _, sortings);
+			return this.Get<TKey>(key, string.Empty, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, string schema, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, string schema, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, schema, null, null, out _, sortings);
+			return this.Get<TKey>(key, schema, null, null, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, schema, null, states, out _, sortings);
+			return this.Get<TKey>(key, schema, null, states, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, string schema, Paging paging, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, string schema, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey>(key, schema, paging, null, out _, sortings);
+			return this.Get<TKey>(key, schema, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey>(TKey key, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey>(TKey key, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key, schema, paging, states, out _, sortings);
-		}
-
-		public object Get<TKey>(TKey key, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
-		{
-			var condition = this.ConvertKey(Method.Get(), key, out var singular);
+			var criteria = this.ConvertKey(Method.Get(), key, filter, out var singular);
 
 			if(singular)
 			{
@@ -789,60 +734,50 @@ namespace Zongsoft.Data
 				this.Authorize(Method.Get(), ref states);
 
 				//修整查询条件
-				condition = this.OnValidate(Method.Get(), condition);
-
-				//设置分页器为空
-				pageable = null;
+				criteria = this.OnValidate(Method.Get(), criteria);
 
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out _);
+				return this.OnGet(criteria, this.GetSchema(schema), states);
 			}
 
-			var result = this.Select(condition, schema, paging, states, sortings);
-			pageable = result as IPageable;
-			return result;
+			return this.Select(criteria, schema, paging, states, sortings);
 		}
 		#endregion
 
 		#region 双键查询
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, null, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, states, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, states, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, paging, null, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, null, states, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, schema, null, states, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, out _, sortings);
+			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, schema, paging, states, out _, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
-		{
-			var condition = this.ConvertKey(Method.Get(), key1, key2, out var singular);
+			var criteria = this.ConvertKey(Method.Get(), key1, key2, filter, out var singular);
 
 			if(singular)
 			{
@@ -850,60 +785,50 @@ namespace Zongsoft.Data
 				this.Authorize(Method.Get(), ref states);
 
 				//修整查询条件
-				condition = this.OnValidate(Method.Get(), condition);
-
-				//设置分页器为空
-				pageable = null;
+				criteria = this.OnValidate(Method.Get(), criteria);
 
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out _);
+				return this.OnGet(criteria, this.GetSchema(schema), states);
 			}
 
-			var result = this.Select(condition, schema, paging, states, sortings);
-			pageable = result as IPageable;
-			return result;
+			return this.Select(criteria, schema, paging, states, sortings);
 		}
 		#endregion
 
 		#region 三键查询
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, string.Empty, null, null, out _, sortings);
+			return this.Get(key1, key2, key3, string.Empty, null, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, string.Empty, null, states, out _, sortings);
+			return this.Get(key1, key2, key3, string.Empty, null, states, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, string.Empty, paging, null, out _, sortings);
+			return this.Get(key1, key2, key3, string.Empty, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, schema, null, null, out _, sortings);
+			return this.Get(key1, key2, key3, schema, null, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, schema, null, states, out _, sortings);
+			return this.Get(key1, key2, key3, schema, null, states, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, schema, paging, null, out _, sortings);
+			return this.Get(key1, key2, key3, schema, paging, null, filter, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Get(key1, key2, key3, schema, paging, states, out _, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDictionary<string, object> states, out IPageable pageable, params Sorting[] sortings)
-		{
-			var condition = this.ConvertKey(Method.Get(), key1, key2, key3, out var singular);
+			var criteria = this.ConvertKey(Method.Get(), key1, key2, key3, filter, out var singular);
 
 			if(singular)
 			{
@@ -911,25 +836,18 @@ namespace Zongsoft.Data
 				this.Authorize(Method.Get(), ref states);
 
 				//修整查询条件
-				condition = this.OnValidate(Method.Get(), condition);
-
-				//设置分页器为空
-				pageable = null;
+				criteria = this.OnValidate(Method.Get(), criteria);
 
 				//执行单条查询方法
-				return this.OnGet(condition, this.GetSchema(schema), states, out _);
+				return this.OnGet(criteria, this.GetSchema(schema), states);
 			}
 
-			var result = this.Select(condition, schema, paging, states, sortings);
-			pageable = result as IPageable;
-			return result;
+			return this.Select(criteria, schema, paging, states, sortings);
 		}
 
-		protected virtual TEntity OnGet(ICondition condition, ISchema schema, IDictionary<string, object> states, out IPageable pageable)
+		protected virtual TEntity OnGet(ICondition criteria, ISchema schema, IDictionary<string, object> states)
 		{
-			var result = this.DataAccess.Select<TEntity>(this.Name, condition, schema, null, states, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx));
-			pageable = result as IPageable;
-			return result.FirstOrDefault();
+			return this.DataAccess.Select<TEntity>(this.Name, criteria, schema, null, states, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx)).FirstOrDefault();
 		}
 		#endregion
 
@@ -939,60 +857,60 @@ namespace Zongsoft.Data
 			return this.Select(null, string.Empty, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, params Sorting[] sortings)
 		{
-			return this.Select(condition, string.Empty, null, null, sortings);
+			return this.Select(criteria, string.Empty, null, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, string.Empty, null, states, sortings);
+			return this.Select(criteria, string.Empty, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select(condition, string.Empty, paging, null, sortings);
+			return this.Select(criteria, string.Empty, paging, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, string.Empty, paging, states, sortings);
+			return this.Select(criteria, string.Empty, paging, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, string schema, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, null, null, sortings);
+			return this.Select(criteria, schema, null, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, null, states, sortings);
+			return this.Select(criteria, schema, null, states, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, string schema, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, paging, null, sortings);
+			return this.Select(criteria, schema, paging, null, sortings);
 		}
 
-		public IEnumerable<TEntity> Select(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
 			//进行授权验证
 			this.Authorize(Method.Select(), ref states);
 
 			//修整查询条件
-			condition = this.OnValidate(Method.Select(), condition);
+			criteria = this.OnValidate(Method.Select(), criteria);
 
 			//执行查询方法
-			return this.OnSelect(condition, this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
+			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
 		}
 
-		protected virtual IEnumerable<TEntity> OnSelect(ICondition condition, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
+		protected virtual IEnumerable<TEntity> OnSelect(ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
 		{
 			//如果没有指定排序设置则应用默认排序规则
 			if(sortings == null || sortings.Length == 0)
 				sortings = this.GetSortings();
 
-			return this.DataAccess.Select<TEntity>(this.Name, condition, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
+			return this.DataAccess.Select<TEntity>(this.Name, criteria, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
 		#endregion
 
@@ -1027,31 +945,31 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, null, schema, paging, states, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, ICondition condition, string schema, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select<T>(grouping, condition, schema, null, null, sortings);
+			return this.Select<T>(grouping, criteria, schema, null, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(grouping, condition, schema, null, states, sortings);
+			return this.Select<T>(grouping, criteria, schema, null, states, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, ICondition condition, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings)
 		{
 			//进行授权验证
 			this.Authorize(Method.Select(), ref states);
 
 			//修整查询条件
-			condition = this.OnValidate(Method.Select(), condition);
+			criteria = this.OnValidate(Method.Select(), criteria);
 
 			//执行查询方法
-			return this.OnSelect<T>(grouping, condition, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
+			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TEntity)), paging, sortings, states);
 		}
 
-		protected virtual IEnumerable<T> OnSelect<T>(Grouping grouping, ICondition condition, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
+		protected virtual IEnumerable<T> OnSelect<T>(Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states)
 		{
-			return this.DataAccess.Select<T>(this.Name, grouping, condition, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
+			return this.DataAccess.Select<T>(this.Name, grouping, criteria, schema, paging, states, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
 		#endregion
 
@@ -1061,44 +979,44 @@ namespace Zongsoft.Data
 			return this.Select(states, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, params Sorting[] sortings)
 		{
-			return this.Select(condition, sortings);
+			return this.Select(criteria, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, states, sortings);
+			return this.Select(criteria, states, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, string schema, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, sortings);
+			return this.Select(criteria, schema, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, states, sortings);
+			return this.Select(criteria, schema, states, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, string schema, Paging paging, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, paging, sortings);
+			return this.Select(criteria, schema, paging, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, schema, paging, states, sortings);
+			return this.Select(criteria, schema, paging, states, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, Paging paging, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select(condition, paging, sortings);
+			return this.Select(criteria, paging, sortings);
 		}
 
-		IEnumerable IDataService.Select(ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataService.Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select(condition, paging, states, sortings);
+			return this.Select(criteria, paging, states, sortings);
 		}
 		#endregion
 
@@ -1364,42 +1282,65 @@ namespace Zongsoft.Data
 
 			return conditions;
 		}
+
+		/// <summary>
+		/// 将指定的过滤表达式文本转换为条件。
+		/// </summary>
+		/// <param name="method">指定的操作方法。</param>
+		/// <param name="filter">指定的过滤表达式文本。</param>
+		/// <returns>返回对应的过滤条件。</returns>
+		protected virtual ICondition OnCondition(Method method, string filter)
+		{
+			return null;
+		}
 		#endregion
 
 		#region 私有方法
-		private ICondition ConvertKey(Method method, object[] values, out bool singular)
+		private ICondition ConvertKey(Method method, object[] values, string filter, out bool singular)
 		{
 			if(values != null && values.Length > 3)
 				throw new NotSupportedException("Too many the keys.");
 
-			//获取查询键值对数组
-			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular);
-
-			if(criteria == null)
+			//获取查询键值对数组，如果没有映射到条件则抛出异常
+			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular) ??
 				throw new ArgumentException($"The specified key is invalid of the {this.Name} service.");
 
-			if(criteria is ConditionCollection conditions && conditions.Count == 1)
-				return conditions[0];
+			//如果不是单值结果则生成对应的过滤条件
+			var filtering = singular ? null : this.OnCondition(method, filter);
 
-			return criteria;
+			if(criteria is ConditionCollection conditions)
+			{
+				if(filtering == null)
+					return conditions.Count == 1 ? conditions[0] : conditions;
+
+				if(conditions.Combination == ConditionCombination.And)
+				{
+					conditions.Add(filtering);
+					return conditions;
+				}
+
+				return ConditionCollection.And(conditions, filtering);
+			}
+
+			return filtering == null ? criteria : ConditionCollection.And(criteria, filtering);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey>(Method method, TKey key, out bool singular)
+		private ICondition ConvertKey<TKey>(Method method, TKey key, string filter, out bool singular)
 		{
-			return this.ConvertKey(method, new object[] { key }, out singular);
+			return this.ConvertKey(method, new object[] { key }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2>(Method method, TKey1 key1, TKey2 key2, out bool singular)
+		private ICondition ConvertKey<TKey1, TKey2>(Method method, TKey1 key1, TKey2 key2, string filter, out bool singular)
 		{
-			return this.ConvertKey(method, new object[] { key1, key2 }, out singular);
+			return this.ConvertKey(method, new object[] { key1, key2 }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2, TKey3>(Method method, TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
+		private ICondition ConvertKey<TKey1, TKey2, TKey3>(Method method, TKey1 key1, TKey2 key2, TKey3 key3, string filter, out bool singular)
 		{
-			return this.ConvertKey(method, new object[] { key1, key2, key3 }, out singular);
+			return this.ConvertKey(method, new object[] { key1, key2, key3 }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -1620,28 +1561,6 @@ namespace Zongsoft.Data
 			{
 			}
 			#endregion
-		}
-
-		private sealed class InnerDataSearcher : DataSearcher<TEntity>
-		{
-			public InnerDataSearcher(DataServiceBase<TEntity> dataService, DataSearcherAttribute[] attributes) : base(dataService, attributes)
-			{
-			}
-
-			protected override ICondition Resolve(string method, string keyword, IDictionary<string, object> states = null)
-			{
-				switch(method)
-				{
-					case nameof(this.Count):
-						return ((DataServiceBase<TEntity>)this.DataService).OnValidate(Method.Count(), base.Resolve(method, keyword, states));
-					case nameof(this.Exists):
-						return ((DataServiceBase<TEntity>)this.DataService).OnValidate(Method.Exists(), base.Resolve(method, keyword, states));
-					case nameof(this.Search):
-						return ((DataServiceBase<TEntity>)this.DataService).OnValidate(Method.Select(method), base.Resolve(method, keyword, states));
-				}
-
-				return base.Resolve(method, keyword, states);
-			}
 		}
 		#endregion
 	}

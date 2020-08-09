@@ -74,59 +74,59 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 计数方法
-		public int Count(string keyword, IDictionary<string, object> states = null)
+		public int Count(string keyword, string filter = null, IDictionary<string, object> states = null)
 		{
 			return this.DataService.Count(
-				this.Resolve(nameof(Count), keyword, states),
+				this.Resolve(nameof(Count), keyword, filter, states),
 				string.Empty,
 				states);
 		}
 		#endregion
 
 		#region 存在方法
-		public bool Exists(string keyword, IDictionary<string, object> states = null)
+		public bool Exists(string keyword, string filter = null, IDictionary<string, object> states = null)
 		{
 			return this.DataService.Exists(
-				this.Resolve(nameof(Exists), keyword, states),
+				this.Resolve(nameof(Exists), keyword, filter, states),
 				states);
 		}
 		#endregion
 
 		#region 搜索方法
-		public IEnumerable<TEntity> Search(string keyword, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, null, null, sortings);
+			return this.Search(keyword, string.Empty, null, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, null, states, sortings);
+			return this.Search(keyword, string.Empty, null, states, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, paging, null, sortings);
+			return this.Search(keyword, string.Empty, paging, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, string schema, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, null, null, sortings);
+			return this.Search(keyword, schema, null, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, null, states, sortings);
+			return this.Search(keyword, schema, null, states, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, paging, null, sortings);
+			return this.Search(keyword, schema, paging, null, filter, sortings);
 		}
 
-		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<TEntity> Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings)
 		{
 			return this.DataService.Select(
-				this.Resolve(nameof(Search), keyword, states),
+				this.Resolve(nameof(Search), keyword, filter, states),
 				schema,
 				paging,
 				states,
@@ -135,51 +135,51 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 显式实现
-		IEnumerable IDataSearcher.Search(string keyword, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, null, null, sortings);
+			return this.Search(keyword, string.Empty, null, null, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, IDictionary<string, object> states, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, null, states, sortings);
+			return this.Search(keyword, string.Empty, null, states, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, Paging paging, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, Paging paging, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, string.Empty, paging, null, sortings);
+			return this.Search(keyword, string.Empty, paging, null, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, string schema, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, string schema, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, null, null, sortings);
+			return this.Search(keyword, schema, null, null, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, string schema, IDictionary<string, object> states, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, null, states, sortings);
+			return this.Search(keyword, schema, null, states, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, paging, null, sortings);
+			return this.Search(keyword, schema, paging, null, filter, sortings);
 		}
 
-		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter, params Sorting[] sortings)
 		{
-			return this.Search(keyword, schema, paging, states, sortings);
+			return this.Search(keyword, schema, paging, states, filter, sortings);
 		}
 		#endregion
 
 		#region 条件解析
-		protected virtual ICondition Resolve(string method, string keyword, IDictionary<string, object> states = null)
+		protected virtual ICondition Resolve(string method, string keyword, string filter = null, IDictionary<string, object> states = null)
 		{
 			var conditioner = this.Conditioner;
 
 			if(conditioner == null)
 				throw new InvalidOperationException("Missing the required keyword condition resolver.");
 
-			return conditioner.Resolve(method, keyword, states);
+			return conditioner.Resolve(method, keyword, filter, states);
 		}
 		#endregion
 
@@ -198,7 +198,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 解析方法
-			public ICondition Resolve(string method, string keyword, IDictionary<string, object> states)
+			public ICondition Resolve(string method, string keyword, string filter = null, IDictionary<string, object> states = null)
 			{
 				if(string.IsNullOrWhiteSpace(keyword))
 					return null;

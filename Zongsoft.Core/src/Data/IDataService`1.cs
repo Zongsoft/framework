@@ -52,14 +52,14 @@ namespace Zongsoft.Data
 
 		#region 查询方法
 		new IEnumerable<TEntity> Select(IDictionary<string, object> states = null, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, string schema, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TEntity> Select(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, string schema, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TEntity> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
 		#endregion
 	}
 }

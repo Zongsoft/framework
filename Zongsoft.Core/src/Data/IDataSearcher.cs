@@ -48,15 +48,15 @@ namespace Zongsoft.Data
 		/// </summary>
 		IDataSearcherConditioner Conditioner { get; }
 
-		int Count(string keyword, IDictionary<string, object> states = null);
-		bool Exists(string keyword, IDictionary<string, object> states = null);
+		int Count(string keyword, string filter = null, IDictionary<string, object> states = null);
+		bool Exists(string keyword, string filter = null, IDictionary<string, object> states = null);
 
-		IEnumerable Search(string keyword, params Sorting[] sortings);
-		IEnumerable Search(string keyword, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable Search(string keyword, Paging paging, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, Paging paging, IDictionary<string, object> states, string filter = null, params Sorting[] sortings);
 	}
 }
