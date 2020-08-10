@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions
 {
@@ -41,18 +42,19 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public DataAggregateFunction Function { get; }
+		public new DataAggregateFunction Function { get; }
 		#endregion
 
 		#region 静态方法
-		public static AggregateExpression Aggregate(FieldIdentifier field, DataAggregate aggregate)
+		public static AggregateExpression Aggregate(IExpression argument, DataAggregate aggregate)
 		{
-			if(field == null)
-				throw new ArgumentNullException(nameof(field));
+			if(argument is FieldIdentifier field)
+				field.Alias = null;
 
-			field.Alias = null;
-
-			return new AggregateExpression(aggregate.Function, field) { Alias = aggregate.Alias ?? aggregate.Name + "_" + aggregate.Function.ToString() };
+			return new AggregateExpression(aggregate.Function, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument })
+			{
+				Alias = aggregate.Alias ?? aggregate.Name + "_" + aggregate.Function.ToString()
+			};
 		}
 		#endregion
 	}

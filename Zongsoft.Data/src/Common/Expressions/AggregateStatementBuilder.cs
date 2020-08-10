@@ -37,17 +37,15 @@ namespace Zongsoft.Data.Common.Expressions
 		public IEnumerable<IStatementBase> Build(DataAggregateContext context)
 		{
 			var statement = new AggregateStatement(context.Entity);
-			var field = (FieldIdentifier)null;
+			var argument = (IExpression)null;
 
-			if(string.IsNullOrWhiteSpace(context.Aggregate.Name))
-				field = null;
-			else if(context.Aggregate.Name == "*")
-				field = statement.Table.CreateField("*");
+			if(string.IsNullOrWhiteSpace(context.Aggregate.Name) || context.Aggregate.Name == "*")
+				argument = Expression.Literal("*");
 			else
-				field = statement.From(context.Aggregate.Name, null, out var property).CreateField(property);
+				argument = statement.From(context.Aggregate.Name, null, out var property).CreateField(property);
 
 			//添加返回的聚合函数成员
-			statement.Select.Members.Add(AggregateExpression.Aggregate(field, context.Aggregate));
+			statement.Select.Members.Add(AggregateExpression.Aggregate(argument, context.Aggregate));
 
 			//生成条件子句
 			statement.Where = statement.Where(context.Validate());
