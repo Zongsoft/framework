@@ -1299,11 +1299,10 @@ namespace Zongsoft.Data
 		private ICondition ConvertKey(Method method, object[] values, string filter, out bool singular)
 		{
 			if(values != null && values.Length > 3)
-				throw new NotSupportedException("Too many the keys.");
+				throw new NotSupportedException("Too many key values specified.");
 
 			//获取查询键值对数组，如果没有映射到条件则抛出异常
-			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular) ??
-				throw new ArgumentException($"The specified key is invalid of the {this.Name} service.");
+			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular);
 
 			//如果不是单值结果则生成对应的过滤条件
 			var filtering = singular ? null : this.OnCondition(method, filter);
@@ -1322,7 +1321,7 @@ namespace Zongsoft.Data
 				return ConditionCollection.And(conditions, filtering);
 			}
 
-			return filtering == null ? criteria : ConditionCollection.And(criteria, filtering);
+			return filtering == null ? criteria : (criteria == null ? filtering : ConditionCollection.And(criteria, filtering));
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
