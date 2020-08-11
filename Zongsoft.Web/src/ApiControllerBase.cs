@@ -142,8 +142,8 @@ namespace Zongsoft.Web
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("[action]")]
-		public Task<IActionResult> Search([FromQuery]string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(SortingBinder))]Sorting[] sortings = null)
+		[HttpGet("[action]/{**keyword}")]
+		public Task<IActionResult> Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(SortingBinder))]Sorting[] sortings = null)
 		{
 			var searcher = this.DataService.Searcher;
 
