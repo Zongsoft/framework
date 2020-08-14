@@ -158,55 +158,55 @@ namespace Zongsoft.Data.Common.Expressions
 					parameter => statement.Parameters.Add(parameter));
 
 			throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
+		}
 
-			FieldIdentifier GetField(IStatement host, Condition condition)
+		internal static FieldIdentifier GetField(IStatement host, Condition condition)
+		{
+			var source = From(host, condition.Name, (src, complex) => CreateSubquery(host, src, complex, condition.Value as ICondition), out var property);
+
+			if(property.IsSimplex)
+				return source.CreateField(property);
+
+			if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
 			{
-				var source = From(statement, condition.Name, (src, complex) => CreateSubquery(host, src, complex, condition.Value as ICondition), out var property);
-
-				if(property.IsSimplex)
-					return source.CreateField(property);
-
-				if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
-				{
-					condition.Value = source;
-					return null;
-				}
-
-				throw new DataException($"The specified '{condition.Name}' condition is associated with a one-to-many composite(navigation) property and does not support the {condition.Operator} operation.");
+				condition.Value = source;
+				return null;
 			}
 
-			ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition condition)
+			throw new DataException($"The specified '{condition.Name}' condition is associated with a one-to-many composite(navigation) property and does not support the {condition.Operator} operation.");
+		}
+
+		private static ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition condition)
+		{
+			var subquery = host.Subquery(complex.Foreign);
+			var where = ConditionExpression.And();
+
+			foreach(var link in complex.Links)
 			{
-				var subquery = host.Subquery(complex.Foreign);
-				var where = ConditionExpression.And();
+				subquery.Select.Members.Add(subquery.Table.CreateField(link.Foreign));
 
-				foreach(var link in complex.Links)
+				where.Add(Expression.Equal(
+					subquery.Table.CreateField(link.Foreign),
+					source.CreateField(link.Principal)
+				));
+			}
+
+			if(complex.HasConstraints())
+			{
+				foreach(var constraint in complex.Constraints)
 				{
-					subquery.Select.Members.Add(subquery.Table.CreateField(link.Foreign));
-
 					where.Add(Expression.Equal(
-						subquery.Table.CreateField(link.Foreign),
-						source.CreateField(link.Principal)
+						subquery.Table.CreateField(constraint.Name),
+						complex.GetConstraintValue(constraint)
 					));
 				}
-
-				if(complex.HasConstraints())
-				{
-					foreach(var constraint in complex.Constraints)
-					{
-						where.Add(Expression.Equal(
-							subquery.Table.CreateField(constraint.Name),
-							complex.GetConstraintValue(constraint)
-						));
-					}
-				}
-
-				if(condition != null)
-					where.Add(Where(subquery, condition));
-
-				subquery.Where = where;
-				return subquery;
 			}
+
+			if(condition != null)
+				where.Add(Where(subquery, condition));
+
+			subquery.Where = where;
+			return subquery;
 		}
 	}
 }
