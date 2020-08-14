@@ -35,43 +35,40 @@ namespace Zongsoft.Data
 	public enum ConditionOperator
 	{
 		/// <summary>等于</summary>
-		[Zongsoft.ComponentModel.Alias("==")]
+		[ComponentModel.Alias("==")]
 		Equal,
 
 		/// <summary>不等于</summary>
-		[Zongsoft.ComponentModel.Alias("!=")]
+		[ComponentModel.Alias("!=")]
 		NotEqual,
 
 		/// <summary>大于</summary>
-		[Zongsoft.ComponentModel.Alias(">")]
+		[ComponentModel.Alias(">")]
 		GreaterThan,
 
 		/// <summary>大于或等于</summary>
-		[Zongsoft.ComponentModel.Alias(">=")]
+		[ComponentModel.Alias(">=")]
 		GreaterThanEqual,
 
 		/// <summary>小于</summary>
-		[Zongsoft.ComponentModel.Alias("<")]
+		[ComponentModel.Alias("<")]
 		LessThan,
 
 		/// <summary>小于或等于</summary>
-		[Zongsoft.ComponentModel.Alias("<=")]
+		[ComponentModel.Alias("<=")]
 		LessThanEqual,
 
 		/// <summary>模糊匹配</summary>
-		[Zongsoft.ComponentModel.Alias("*=")]
+		[ComponentModel.Alias("*=")]
 		Like,
 
 		/// <summary>介于</summary>
-		[Zongsoft.ComponentModel.Alias("~")]
 		Between,
 
 		/// <summary>范围</summary>
-		[Zongsoft.ComponentModel.Alias("^")]
 		In,
 
 		/// <summary>排除范围</summary>
-		[Zongsoft.ComponentModel.Alias("!^")]
 		NotIn,
 
 		/// <summary>存在(单目运算符)</summary>

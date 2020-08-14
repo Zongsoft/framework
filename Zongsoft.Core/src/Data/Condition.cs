@@ -59,52 +59,25 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置条件项的名称。
-		/// </summary>
+		/// <summary>获取或设置条件项的名称。</summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value.Trim();
-			}
+			get => _name;
+			set => _name = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取或设置条件项的值。
-		/// </summary>
+		/// <summary>获取或设置条件项的值。</summary>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
-			set
-			{
-				_value = value;
-			}
+			get => _value;
+			set => _value = value;
 		}
 
-		/// <summary>
-		/// 获取或设置条件项的操作符。
-		/// </summary>
+		/// <summary>获取或设置条件项的操作符。</summary>
 		public ConditionOperator Operator
 		{
-			get
-			{
-				return _operator;
-			}
-			set
-			{
-				_operator = value;
-			}
+			get => _operator;
+			set => _operator = value;
 		}
 		#endregion
 
