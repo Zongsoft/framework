@@ -50,6 +50,13 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>赋值(=)</summary>
 		Assign,
 
+		/// <summary>位与</summary>
+		And,
+		/// <summary>位或</summary>
+		Or,
+		/// <summary>位异或</summary>
+		Xor,
+
 		/// <summary>逻辑非</summary>
 		Not,
 		/// <summary>逻辑与</summary>

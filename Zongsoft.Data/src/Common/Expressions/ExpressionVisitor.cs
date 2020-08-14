@@ -589,6 +589,12 @@ namespace Zongsoft.Data.Common.Expressions
 						return "%";
 					case Operator.Assign:
 						return "=";
+					case Operator.And:
+						return "&";
+					case Operator.Or:
+						return "|";
+					case Operator.Xor:
+						return "^";
 					case Operator.Not:
 						return "NOT";
 					case Operator.AndAlso:
