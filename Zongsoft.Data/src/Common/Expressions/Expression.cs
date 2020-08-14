@@ -222,14 +222,29 @@ namespace Zongsoft.Data.Common.Expressions
 			return new BinaryExpression(Operator.Modulo, left, right);
 		}
 
+		public static BinaryExpression And(IExpression left, IExpression right)
+		{
+			return new BinaryExpression(Operator.And, left, right);
+		}
+
 		public static BinaryExpression AndAlso(IExpression left, IExpression right)
 		{
 			return new BinaryExpression(Operator.AndAlso, left, right);
 		}
 
+		public static BinaryExpression Or(IExpression left, IExpression right)
+		{
+			return new BinaryExpression(Operator.Or, left, right);
+		}
+
 		public static BinaryExpression OrElse(IExpression left, IExpression right)
 		{
 			return new BinaryExpression(Operator.OrElse, left, right);
+		}
+
+		public static BinaryExpression Xor(IExpression left, IExpression right)
+		{
+			return new BinaryExpression(Operator.Xor, left, right);
 		}
 
 		public static UnaryExpression Exists(IExpression operand)
