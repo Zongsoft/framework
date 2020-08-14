@@ -115,7 +115,17 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.Equal);
 		}
 
+		public static Condition Equal(string name, Operand value)
+		{
+			return new Condition(name, value, ConditionOperator.Equal);
+		}
+
 		public static Condition NotEqual(string name, object value)
+		{
+			return new Condition(name, value, ConditionOperator.NotEqual);
+		}
+
+		public static Condition NotEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.NotEqual);
 		}
@@ -125,7 +135,17 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.GreaterThan);
 		}
 
+		public static Condition GreaterThan(string name, Operand value)
+		{
+			return new Condition(name, value, ConditionOperator.GreaterThan);
+		}
+
 		public static Condition GreaterThanEqual(string name, object value)
+		{
+			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
+		}
+
+		public static Condition GreaterThanEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
 		}
@@ -135,7 +155,17 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.LessThan);
 		}
 
+		public static Condition LessThan(string name, Operand value)
+		{
+			return new Condition(name, value, ConditionOperator.LessThan);
+		}
+
 		public static Condition LessThanEqual(string name, object value)
+		{
+			return new Condition(name, value, ConditionOperator.LessThanEqual);
+		}
+
+		public static Condition LessThanEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThanEqual);
 		}
@@ -455,7 +485,17 @@ namespace Zongsoft.Data
 				return Condition.Equal(name, value);
 			}
 
+			public static Condition Equal(string name, Operand value)
+			{
+				return Condition.Equal(name, value);
+			}
+
 			public static Condition NotEqual(string name, object value)
+			{
+				return Condition.NotEqual(name, value);
+			}
+
+			public static Condition NotEqual(string name, Operand value)
 			{
 				return Condition.NotEqual(name, value);
 			}
@@ -465,7 +505,17 @@ namespace Zongsoft.Data
 				return Condition.GreaterThan(name, value);
 			}
 
+			public static Condition GreaterThan(string name, Operand value)
+			{
+				return Condition.GreaterThan(name, value);
+			}
+
 			public static Condition GreaterThanEqual(string name, object value)
+			{
+				return Condition.GreaterThanEqual(name, value);
+			}
+
+			public static Condition GreaterThanEqual(string name, Operand value)
 			{
 				return Condition.GreaterThanEqual(name, value);
 			}
@@ -475,7 +525,17 @@ namespace Zongsoft.Data
 				return Condition.LessThan(name, value);
 			}
 
+			public static Condition LessThan(string name, Operand value)
+			{
+				return Condition.LessThan(name, value);
+			}
+
 			public static Condition LessThanEqual(string name, object value)
+			{
+				return Condition.LessThanEqual(name, value);
+			}
+
+			public static Condition LessThanEqual(string name, Operand value)
 			{
 				return Condition.LessThanEqual(name, value);
 			}
