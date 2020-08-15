@@ -47,6 +47,24 @@ namespace Zongsoft.Data
 		#region 静态方法
 		public static FieldOperand Field(string name) => new FieldOperand(name);
 		public static ConstantOperand<T> Constant<T>(T value) => new ConstantOperand<T>(value);
+
+		public static string GetSymbol(OperandType type)
+		{
+			return type switch
+			{
+				OperandType.Add => "+",
+				OperandType.Subtract => "-",
+				OperandType.Multiply => "*",
+				OperandType.Divide => "/",
+				OperandType.Modulo => "%",
+				OperandType.And => "&",
+				OperandType.Or => "|",
+				OperandType.Xor => "^",
+				OperandType.Not => "!",
+				OperandType.Negate => "-",
+				_ => string.Empty,
+			};
+		}
 		#endregion
 
 		#region 符号重写
@@ -99,6 +117,13 @@ namespace Zongsoft.Data
 			public Operand Left { get; }
 			public Operand Right { get; }
 			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return $"{this.Left} {GetSymbol(this.Type)} {this.Right}";
+			}
+			#endregion
 		}
 
 		public class UnaryOperand : Operand
@@ -113,6 +138,13 @@ namespace Zongsoft.Data
 			#region 公共属性
 			public Operand Operand { get; }
 			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return $"{GetSymbol(this.Type)}{this.Operand}";
+			}
+			#endregion
 		}
 
 		public class ConstantOperand<T> : Operand
@@ -126,6 +158,13 @@ namespace Zongsoft.Data
 
 			#region 公共属性
 			public T Value { get; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return this.Value == null ? "<NULL>" : this.Value.ToString();
+			}
 			#endregion
 		}
 
@@ -143,6 +182,13 @@ namespace Zongsoft.Data
 
 			#region 公共属性
 			public string Name { get; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return this.Name;
+			}
 			#endregion
 		}
 		#endregion
