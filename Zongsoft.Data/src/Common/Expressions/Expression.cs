@@ -133,6 +133,19 @@ namespace Zongsoft.Data.Common.Expressions
 		}
 
 		/// <summary>
+		/// 创建一个参数表达式。
+		/// </summary>
+		/// <param name="value">指定的参数值。</param>
+		/// <returns></returns>
+		public static ParameterExpression Parameter(object value)
+		{
+			if(value == null)
+				throw new ArgumentNullException(nameof(value));
+
+			return new ParameterExpression(ParameterExpression.Anonymous, Utility.GetDbType(value), value);
+		}
+
+		/// <summary>
 		/// 创建一个参数表达式，参数名将由所属参数集合自动命名。
 		/// </summary>
 		/// <param name="field">指定参数关联的字段标识。</param>
