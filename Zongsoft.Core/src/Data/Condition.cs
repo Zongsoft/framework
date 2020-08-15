@@ -28,10 +28,10 @@
  */
 
 using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace Zongsoft.Data
 {
@@ -40,73 +40,36 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class Condition : ICondition, IEquatable<Condition>
 	{
-		#region 成员字段
-		private string _name;
-		private object _value;
-		private ConditionOperator _operator;
-		#endregion
-
 		#region 构造函数
 		public Condition(string name, object value, ConditionOperator @operator = ConditionOperator.Equal)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+			this.Field = Operand.Field(name);
+			this.Value = value;
+			this.Operator = @operator;
+			this.Name = name;
+		}
 
-			_name = name.Trim();
-			_value = value;
-			_operator = @operator;
+		public Condition(Operand field, object value, ConditionOperator @operator = ConditionOperator.Equal)
+		{
+			this.Field = field ?? throw new ArgumentNullException(nameof(field));
+			this.Value = value;
+			this.Operator = @operator;
+			this.Name = (field as Operand.FieldOperand)?.Name;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置条件项的名称。</summary>
-		public string Name
-		{
-			get => _name;
-			set => _name = value ?? throw new ArgumentNullException();
-		}
+		/// <summary>获取条件项的名称。</summary>
+		public string Name { get; }
 
-		/// <summary>获取或设置条件项的值。</summary>
-		public object Value
-		{
-			get => _value;
-			set => _value = value;
-		}
+		/// <summary>获取条件项的字段域(左操作元)。</summary>
+		public Operand Field { get; }
+
+		/// <summary>获取或设置条件项的比对值(右操作元)。</summary>
+		public object Value { get; set; }
 
 		/// <summary>获取或设置条件项的操作符。</summary>
-		public ConditionOperator Operator
-		{
-			get => _operator;
-			set => _operator = value;
-		}
-		#endregion
-
-		#region 公共方法
-		public IEnumerable GetValues()
-		{
-			var items = _value as IEnumerable;
-
-			if(items == null)
-				yield return _value;
-			else
-			{
-				foreach(var item in items)
-					yield return item;
-			}
-		}
-
-		public IEnumerable<T> GetValues<T>()
-		{
-			var items = _value as IEnumerable<T>;
-
-			if(items == null)
-				yield return (T)_value;
-			else
-			{
-				foreach(T item in items)
-					yield return item;
-			}
-		}
+		public ConditionOperator Operator { get; set; }
 		#endregion
 
 		#region 静态方法
@@ -120,6 +83,11 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.Equal);
 		}
 
+		public static Condition Equal(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.Equal);
+		}
+
 		public static Condition NotEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.NotEqual);
@@ -128,6 +96,11 @@ namespace Zongsoft.Data
 		public static Condition NotEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.NotEqual);
+		}
+
+		public static Condition NotEqual(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.NotEqual);
 		}
 
 		public static Condition GreaterThan(string name, object value)
@@ -140,6 +113,11 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.GreaterThan);
 		}
 
+		public static Condition GreaterThan(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.GreaterThan);
+		}
+
 		public static Condition GreaterThanEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
@@ -148,6 +126,11 @@ namespace Zongsoft.Data
 		public static Condition GreaterThanEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
+		}
+
+		public static Condition GreaterThanEqual(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.GreaterThanEqual);
 		}
 
 		public static Condition LessThan(string name, object value)
@@ -160,6 +143,11 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.LessThan);
 		}
 
+		public static Condition LessThan(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.LessThan);
+		}
+
 		public static Condition LessThanEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThanEqual);
@@ -170,6 +158,11 @@ namespace Zongsoft.Data
 			return new Condition(name, value, ConditionOperator.LessThanEqual);
 		}
 
+		public static Condition LessThanEqual(Operand field, Operand value)
+		{
+			return new Condition(field, value, ConditionOperator.LessThanEqual);
+		}
+
 		public static Condition Like(string name, string value)
 		{
 			if(string.IsNullOrEmpty(value))
@@ -178,47 +171,36 @@ namespace Zongsoft.Data
 				return new Condition(name, value, ConditionOperator.Like);
 		}
 
+		public static Condition Like(Operand field, string value)
+		{
+			if(string.IsNullOrEmpty(value))
+				return new Condition(field, value, ConditionOperator.Equal);
+			else
+				return new Condition(field, value, ConditionOperator.Like);
+		}
+
 		public static Condition Between<T>(string name, Range<T> range) where T : struct, IComparable<T>
 		{
 			return range.ToCondition(name);
 		}
 
-		public static Condition Between<T>(string name, T begin, T end) where T : struct, IComparable<T>
+		public static Condition Between<T>(string name, T minimum, T maximum) where T : struct, IComparable<T>
 		{
-			T[] value;
-
-			//如果起始值大于截止值则交换位置
-			if(Comparer<T>.Default.Compare(begin, end) > 0)
-				value = new T[] { end, begin };
-			else
-				value = new T[] { begin, end };
-
-			return new Condition(name, value, ConditionOperator.Between);
+			return (new Range<T>(minimum, maximum)).ToCondition(name);
 		}
 
-		public static Condition Between<T>(string name, T? begin, T? end) where T : struct, IComparable<T>
+		public static Condition Between<T>(string name, T? minimum, T? maximum) where T : struct, IComparable<T>
 		{
-			//如果两个参数都有值并且起始值大于截止值，则进行交换赋值
-			if(begin.HasValue && end.HasValue)
-			{
-				if(Comparer<T>.Default.Compare(begin.Value, end.Value) > 0)
-					return new Condition(name, new T[] { end.Value, begin.Value }, ConditionOperator.Between);
-				else
-					return new Condition(name, new T[] { begin.Value, end.Value }, ConditionOperator.Between);
-			}
+			if(minimum == null && maximum == null)
+				return null;
 
-			if(begin.HasValue)
-				return Condition.GreaterThanEqual(name, begin.Value);
-			else if(end.HasValue)
-				return Condition.LessThanEqual(name, end.Value);
-
-			return null;
+			return (new Range<T>(minimum, maximum)).ToCondition(name);
 		}
 
 		public static Condition In<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
 		{
 			if(values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			return new Condition(name, values, ConditionOperator.In);
 		}
@@ -226,7 +208,7 @@ namespace Zongsoft.Data
 		public static Condition In<T>(string name, params T[] values) where T : IEquatable<T>
 		{
 			if(values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			return new Condition(name, values, ConditionOperator.In);
 		}
@@ -234,7 +216,7 @@ namespace Zongsoft.Data
 		public static Condition NotIn<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
 		{
 			if(values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			return new Condition(name, values, ConditionOperator.NotIn);
 		}
@@ -242,7 +224,7 @@ namespace Zongsoft.Data
 		public static Condition NotIn<T>(string name, params T[] values) where T : IEquatable<T>
 		{
 			if(values == null)
-				throw new ArgumentNullException("values");
+				throw new ArgumentNullException(nameof(values));
 
 			return new Condition(name, values, ConditionOperator.NotIn);
 		}
@@ -255,42 +237,6 @@ namespace Zongsoft.Data
 		public static Condition NotExists(string name, ICondition filter = null)
 		{
 			return new Condition(name, filter, ConditionOperator.NotExists);
-		}
-
-		public static bool GetBetween(Condition condition, out object begin, out object end)
-		{
-			begin = end = null;
-
-			if(condition == null || condition.Operator != ConditionOperator.Between || condition.Value == null)
-				return false;
-
-			if(condition.Value is IEnumerable)
-			{
-				int index = 0;
-
-				foreach(var item in (IEnumerable)condition.Value)
-				{
-					if(index++ == 0)
-						begin = item;
-					else
-						end = item;
-
-					if(index >= 2)
-						break;
-				}
-
-				return index > 0;
-			}
-
-			if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(Tuple<,>), condition.Value.GetType()))
-			{
-				begin = Reflection.Reflector.GetValue(condition.Value, "Item1");
-				end = Reflection.Reflector.GetValue(condition.Value, "Item2");
-
-				return true;
-			}
-
-			return false;
 		}
 		#endregion
 
@@ -338,8 +284,9 @@ namespace Zongsoft.Data
 			if(other == null)
 				return false;
 
-			return string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) &&
-			       _operator == other.Operator && _value == other.Value;
+			return this.Operator == other.Operator &&
+				object.Equals(this.Field, other.Field) &&
+				object.Equals(this.Value, other.Value);
 		}
 
 		public override bool Equals(object obj)
@@ -349,10 +296,12 @@ namespace Zongsoft.Data
 
 		public override int GetHashCode()
 		{
-			if(_value == null)
-				return _name.GetHashCode() ^ _operator.GetHashCode();
+			var value = this.Value;
+
+			if(value == null)
+				return HashCode.Combine(this.Operator, this.Field);
 			else
-				return _name.GetHashCode() ^ _operator.GetHashCode() ^ _value.GetHashCode();
+				return HashCode.Combine(this.Operator, this.Field, value);
 		}
 
 		public override string ToString()
@@ -363,32 +312,32 @@ namespace Zongsoft.Data
 			switch(this.Operator)
 			{
 				case ConditionOperator.Equal:
-					return this.IsNull(value) ? _name + " IS NULL" : string.Format("{0} == {1}", _name, text);
+					return this.IsNull(value) ? $"{this.Field} IS NULL" : $"{this.Field} == {text}";
 				case ConditionOperator.NotEqual:
-					return this.IsNull(value) ? _name + " IS NOT NULL" : string.Format("{0} != {1}", _name, text);
+					return this.IsNull(value) ? $"{this.Field} IS NOT NULL" : $"{this.Field} != {text}";
 				case ConditionOperator.GreaterThan:
-					return string.Format("{0} > {1}", _name, text);
+					return $"{this.Field} > {text}";
 				case ConditionOperator.GreaterThanEqual:
-					return string.Format("{0} >= {1}", _name, text);
+					return $"{this.Field} >= {text}";
 				case ConditionOperator.LessThan:
-					return string.Format("{0} < {1}", _name, text);
+					return $"{this.Field} < {text}";
 				case ConditionOperator.LessThanEqual:
-					return string.Format("{0} <= {1}", _name, text);
+					return $"{this.Field} <= {text}";
 				case ConditionOperator.Like:
-					return string.Format("{0} LIKE {1}", _name, text);
+					return $"{this.Field} LIKE {text}";
 				case ConditionOperator.Between:
-					return string.Format("{0} BETWEEN ({1})", _name, text);
+					return $"{this.Field} BETWEEN ({text})";
 				case ConditionOperator.In:
-					return string.Format("{0} IN [{1}]", _name, text);
+					return $"{this.Field} IN [{text}]";
 				case ConditionOperator.NotIn:
-					return string.Format("{0} NOT IN [{1}]", _name, text);
+					return $"{this.Field} NOT IN [{text}]";
 				case ConditionOperator.Exists:
-					return "EXISTS " + _name + (value == null ? null : " (" + value.ToString() + ")");
+					return $"{this.Field} EXISTS ({value})";
 				case ConditionOperator.NotExists:
-					return "NOT EXISTS " + _name + (value == null ? null : " (" + value.ToString() + ")");
+					return $"{this.Field} NOT EXISTS ({value})";
+				default:
+					return $"{this.Field} {this.Operator} {text}";
 			}
-
-			return $"{_name} {_operator} {text}";
 		}
 		#endregion
 
@@ -420,13 +369,15 @@ namespace Zongsoft.Data
 					return value.ToString();
 				case TypeCode.Char:
 					return "'" + value.ToString() + "'";
+				case TypeCode.String:
+					return "\"" + value.ToString() + "\"";
 			}
 
-			if(value is IEnumerable && (value.GetType() != typeof(string) && value.GetType() != typeof(StringBuilder)))
+			if(value is IEnumerable enumerable)
 			{
 				var text = new StringBuilder();
 
-				foreach(var item in (IEnumerable)value)
+				foreach(var item in enumerable)
 				{
 					if(text.Length > 0)
 						text.Append(", ");
@@ -437,19 +388,19 @@ namespace Zongsoft.Data
 				return text.ToString();
 			}
 
-			return "\"" + value.ToString() + "\"";
+			return value.ToString();
 		}
 		#endregion
 
 		#region 显式实现
 		bool ICondition.Contains(string name)
 		{
-			return string.Equals(name, _name, StringComparison.OrdinalIgnoreCase);
+			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase);
 		}
 
 		bool ICondition.Match(string name, Action<Condition> matched)
 		{
-			if(name != null && name.Length > 0 && string.Equals(name, _name, StringComparison.OrdinalIgnoreCase))
+			if(this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
 			{
 				matched?.Invoke(this);
 				return true;
@@ -460,7 +411,7 @@ namespace Zongsoft.Data
 
 		int ICondition.Matches(string name, Action<Condition> matched)
 		{
-			if(name != null && name.Length > 0 && string.Equals(name, _name, StringComparison.OrdinalIgnoreCase))
+			if(this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
 			{
 				matched?.Invoke(this);
 				return 1;
@@ -490,6 +441,11 @@ namespace Zongsoft.Data
 				return Condition.Equal(name, value);
 			}
 
+			public static Condition Equal(Operand field, Operand value)
+			{
+				return Condition.Equal(field, value);
+			}
+
 			public static Condition NotEqual(string name, object value)
 			{
 				return Condition.NotEqual(name, value);
@@ -498,6 +454,11 @@ namespace Zongsoft.Data
 			public static Condition NotEqual(string name, Operand value)
 			{
 				return Condition.NotEqual(name, value);
+			}
+
+			public static Condition NotEqual(Operand field, Operand value)
+			{
+				return Condition.NotEqual(field, value);
 			}
 
 			public static Condition GreaterThan(string name, object value)
@@ -510,6 +471,11 @@ namespace Zongsoft.Data
 				return Condition.GreaterThan(name, value);
 			}
 
+			public static Condition GreaterThan(Operand field, Operand value)
+			{
+				return Condition.GreaterThan(field, value);
+			}
+
 			public static Condition GreaterThanEqual(string name, object value)
 			{
 				return Condition.GreaterThanEqual(name, value);
@@ -518,6 +484,11 @@ namespace Zongsoft.Data
 			public static Condition GreaterThanEqual(string name, Operand value)
 			{
 				return Condition.GreaterThanEqual(name, value);
+			}
+
+			public static Condition GreaterThanEqual(Operand field, Operand value)
+			{
+				return Condition.GreaterThanEqual(field, value);
 			}
 
 			public static Condition LessThan(string name, object value)
@@ -530,6 +501,11 @@ namespace Zongsoft.Data
 				return Condition.LessThan(name, value);
 			}
 
+			public static Condition LessThan(Operand field, Operand value)
+			{
+				return Condition.LessThan(field, value);
+			}
+
 			public static Condition LessThanEqual(string name, object value)
 			{
 				return Condition.LessThanEqual(name, value);
@@ -540,9 +516,19 @@ namespace Zongsoft.Data
 				return Condition.LessThanEqual(name, value);
 			}
 
+			public static Condition LessThanEqual(Operand field, Operand value)
+			{
+				return Condition.LessThanEqual(field, value);
+			}
+
 			public static Condition Like(string name, string value)
 			{
 				return Condition.Like(name, value);
+			}
+
+			public static Condition Like(Operand field, string value)
+			{
+				return Condition.Like(field, value);
 			}
 
 			public static Condition Between<TValue>(string name, Range<TValue> range) where TValue : struct, IComparable<TValue>
@@ -550,14 +536,14 @@ namespace Zongsoft.Data
 				return Condition.Between<TValue>(name, range);
 			}
 
-			public static Condition Between<TValue>(string name, TValue begin, TValue end) where TValue : struct, IComparable<TValue>
+			public static Condition Between<TValue>(string name, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue>
 			{
-				return Condition.Between<TValue>(name, begin, end);
+				return Condition.Between<TValue>(name, minimum, maximum);
 			}
 
-			public static Condition Between<TValue>(string name, TValue? begin, TValue? end) where TValue : struct, IComparable<TValue>
+			public static Condition Between<TValue>(string name, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue>
 			{
-				return Condition.Between<TValue>(name, begin, end);
+				return Condition.Between<TValue>(name, minimum, maximum);
 			}
 
 			public static Condition In<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue>
@@ -632,14 +618,14 @@ namespace Zongsoft.Data
 				return Condition.Between<TValue>(Reflection.ExpressionUtility.GetMemberName(member), range);
 			}
 
-			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue begin, TValue end) where TValue : struct, IComparable<TValue>
+			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue>
 			{
-				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), begin, end);
+				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
 			}
 
-			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? begin, TValue? end) where TValue : struct, IComparable<TValue>
+			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue>
 			{
-				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), begin, end);
+				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
 			}
 
 			public static Condition In<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue>
