@@ -263,18 +263,18 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public bool Exists<T>(ICondition condition, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
+		public bool Exists<T>(ICondition criteria, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
 		{
-			return this.Exists(this.GetName<T>(), condition, states, existing, existed);
+			return this.Exists(this.GetName<T>(), criteria, states, existing, existed);
 		}
 
-		public bool Exists(string name, ICondition condition, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
+		public bool Exists(string name, ICondition criteria, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			//创建数据访问上下文对象
-			var context = this.CreateExistContext(name, condition, states);
+			var context = this.CreateExistContext(name, criteria, states);
 
 			//处理数据访问操作前的回调
 			if(existing != null && existing(context))
@@ -378,42 +378,42 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		public long Increment<T>(string member, ICondition condition)
+		public long Increment<T>(string member, ICondition criteria)
 		{
-			return this.Increment(this.GetName<T>(), member, condition, 1, null, null, null);
+			return this.Increment(this.GetName<T>(), member, criteria, 1, null, null, null);
 		}
 
-		public long Increment<T>(string member, ICondition condition, IDictionary<string, object> states)
+		public long Increment<T>(string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Increment(this.GetName<T>(), member, condition, 1, states, null, null);
+			return this.Increment(this.GetName<T>(), member, criteria, 1, states, null, null);
 		}
 
-		public long Increment<T>(string member, ICondition condition, int interval)
+		public long Increment<T>(string member, ICondition criteria, int interval)
 		{
-			return this.Increment(this.GetName<T>(), member, condition, interval, null, null, null);
+			return this.Increment(this.GetName<T>(), member, criteria, interval, null, null, null);
 		}
 
-		public long Increment<T>(string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
+		public long Increment<T>(string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
 		{
-			return this.Increment(this.GetName<T>(), member, condition, interval, states, incrementing, incremented);
+			return this.Increment(this.GetName<T>(), member, criteria, interval, states, incrementing, incremented);
 		}
 
-		public long Increment(string name, string member, ICondition condition)
+		public long Increment(string name, string member, ICondition criteria)
 		{
-			return this.Increment(name, member, condition, 1, null, null, null);
+			return this.Increment(name, member, criteria, 1, null, null, null);
 		}
 
-		public long Increment(string name, string member, ICondition condition, IDictionary<string, object> states)
+		public long Increment(string name, string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Increment(name, member, condition, 1, states, null, null);
+			return this.Increment(name, member, criteria, 1, states, null, null);
 		}
 
-		public long Increment(string name, string member, ICondition condition, int interval)
+		public long Increment(string name, string member, ICondition criteria, int interval)
 		{
-			return this.Increment(name, member, condition, interval, null, null, null);
+			return this.Increment(name, member, criteria, interval, null, null, null);
 		}
 
-		public long Increment(string name, string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
+		public long Increment(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -422,7 +422,7 @@ namespace Zongsoft.Data
 				throw new ArgumentNullException(nameof(member));
 
 			//创建数据访问上下文对象
-			var context = this.CreateIncrementContext(name, member, condition, interval, states);
+			var context = this.CreateIncrementContext(name, member, criteria, interval, states);
 
 			//处理数据访问操作前的回调
 			if(incrementing != null && incrementing(context))
@@ -457,87 +457,87 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public long Decrement<T>(string member, ICondition condition)
+		public long Decrement<T>(string member, ICondition criteria)
 		{
-			return this.Decrement(this.GetName<T>(), member, condition, 1, null, null, null);
+			return this.Decrement(this.GetName<T>(), member, criteria, 1, null, null, null);
 		}
 
-		public long Decrement<T>(string member, ICondition condition, IDictionary<string, object> states)
+		public long Decrement<T>(string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Decrement(this.GetName<T>(), member, condition, 1, states, null, null);
+			return this.Decrement(this.GetName<T>(), member, criteria, 1, states, null, null);
 		}
 
-		public long Decrement<T>(string member, ICondition condition, int interval)
+		public long Decrement<T>(string member, ICondition criteria, int interval)
 		{
-			return this.Decrement(this.GetName<T>(), member, condition, interval, null, null, null);
+			return this.Decrement(this.GetName<T>(), member, criteria, interval, null, null, null);
 		}
 
-		public long Decrement<T>(string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
+		public long Decrement<T>(string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
 		{
-			return this.Increment(this.GetName<T>(), member, condition, -interval, states, decrementing, decremented);
+			return this.Increment(this.GetName<T>(), member, criteria, -interval, states, decrementing, decremented);
 		}
 
-		public long Decrement(string name, string member, ICondition condition)
+		public long Decrement(string name, string member, ICondition criteria)
 		{
-			return this.Decrement(name, member, condition, 1, null, null, null);
+			return this.Decrement(name, member, criteria, 1, null, null, null);
 		}
 
-		public long Decrement(string name, string member, ICondition condition, IDictionary<string, object> states)
+		public long Decrement(string name, string member, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Decrement(name, member, condition, 1, states, null, null);
+			return this.Decrement(name, member, criteria, 1, states, null, null);
 		}
 
-		public long Decrement(string name, string member, ICondition condition, int interval)
+		public long Decrement(string name, string member, ICondition criteria, int interval)
 		{
-			return this.Decrement(name, member, condition, interval, null, null, null);
+			return this.Decrement(name, member, criteria, interval, null, null, null);
 		}
 
-		public long Decrement(string name, string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
+		public long Decrement(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
 		{
-			return this.Increment(name, member, condition, -interval, states, decrementing, decremented);
+			return this.Increment(name, member, criteria, -interval, states, decrementing, decremented);
 		}
 
 		protected abstract void OnIncrement(DataIncrementContextBase context);
 		#endregion
 
 		#region 删除方法
-		public int Delete<T>(ICondition condition, string schema = null)
+		public int Delete<T>(ICondition criteria, string schema = null)
 		{
-			return this.Delete(this.GetName<T>(), condition, schema, null, null, null);
+			return this.Delete(this.GetName<T>(), criteria, schema, null, null, null);
 		}
 
-		public int Delete<T>(ICondition condition, IDictionary<string, object> states)
+		public int Delete<T>(ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Delete(this.GetName<T>(), condition, string.Empty, states, null, null);
+			return this.Delete(this.GetName<T>(), criteria, string.Empty, states, null, null);
 		}
 
-		public int Delete<T>(ICondition condition, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
+		public int Delete<T>(ICondition criteria, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
 		{
-			return this.Delete(this.GetName<T>(), condition, schema, states, deleting, deleted);
+			return this.Delete(this.GetName<T>(), criteria, schema, states, deleting, deleted);
 		}
 
-		public int Delete(string name, ICondition condition, string schema = null)
+		public int Delete(string name, ICondition criteria, string schema = null)
 		{
-			return this.Delete(name, condition, schema, null, null, null);
+			return this.Delete(name, criteria, schema, null, null, null);
 		}
 
-		public int Delete(string name, ICondition condition, IDictionary<string, object> states)
+		public int Delete(string name, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Delete(name, condition, string.Empty, states, null, null);
+			return this.Delete(name, criteria, string.Empty, states, null, null);
 		}
 
-		public int Delete(string name, ICondition condition, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
+		public int Delete(string name, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
 		{
-			return this.Delete(name, condition, this.Schema.Parse(name, schema), states, deleting, deleted);
+			return this.Delete(name, criteria, this.Schema.Parse(name, schema), states, deleting, deleted);
 		}
 
-		public int Delete(string name, ICondition condition, ISchema schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
+		public int Delete(string name, ICondition criteria, ISchema schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			//创建数据访问上下文对象
-			var context = this.CreateDeleteContext(name, condition, schema, states);
+			var context = this.CreateDeleteContext(name, criteria, schema, states);
 
 			//处理数据访问操作前的回调
 			if(deleting != null && deleting(context))
@@ -1128,36 +1128,36 @@ namespace Zongsoft.Data
 			return this.Update(this.GetName<T>(), data, null, schema, states, null, null);
 		}
 
-		public int Update<T>(T data, ICondition condition)
+		public int Update<T>(T data, ICondition criteria)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, string.Empty, null, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
 		}
 
-		public int Update<T>(T data, ICondition condition, IDictionary<string, object> states)
+		public int Update<T>(T data, ICondition criteria, IDictionary<string, object> states)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, string.Empty, states, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, string.Empty, states, null, null);
 		}
 
-		public int Update<T>(T data, ICondition condition, string schema)
+		public int Update<T>(T data, ICondition criteria, string schema)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, schema, null, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
 		}
 
-		public int Update<T>(T data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
+		public int Update<T>(T data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, schema, states, updating, updated);
+			return this.Update(this.GetName<T>(), data, criteria, schema, states, updating, updated);
 		}
 
 		public int Update<T>(object data)
@@ -1192,36 +1192,36 @@ namespace Zongsoft.Data
 			return this.Update(this.GetName<T>(), data, null, schema, states, null, null);
 		}
 
-		public int Update<T>(object data, ICondition condition)
+		public int Update<T>(object data, ICondition criteria)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, string.Empty, null, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
 		}
 
-		public int Update<T>(object data, ICondition condition, IDictionary<string, object> states)
+		public int Update<T>(object data, ICondition criteria, IDictionary<string, object> states)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, string.Empty, states, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, string.Empty, states, null, null);
 		}
 
-		public int Update<T>(object data, ICondition condition, string schema)
+		public int Update<T>(object data, ICondition criteria, string schema)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, schema, null, null, null);
+			return this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
 		}
 
-		public int Update<T>(object data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
+		public int Update<T>(object data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
 			if(data == null)
 				return 0;
 
-			return this.Update(this.GetName<T>(), data, condition, schema, states, updating, updated);
+			return this.Update(this.GetName<T>(), data, criteria, schema, states, updating, updated);
 		}
 
 		public int Update(string name, object data)
@@ -1244,27 +1244,27 @@ namespace Zongsoft.Data
 			return this.Update(name, data, null, schema, states, null, null);
 		}
 
-		public int Update(string name, object data, ICondition condition)
+		public int Update(string name, object data, ICondition criteria)
 		{
-			return this.Update(name, data, condition, string.Empty, null, null, null);
+			return this.Update(name, data, criteria, string.Empty, null, null, null);
 		}
 
-		public int Update(string name, object data, ICondition condition, IDictionary<string, object> states)
+		public int Update(string name, object data, ICondition criteria, IDictionary<string, object> states)
 		{
-			return this.Update(name, data, condition, string.Empty, states, null, null);
+			return this.Update(name, data, criteria, string.Empty, states, null, null);
 		}
 
-		public int Update(string name, object data, ICondition condition, string schema)
+		public int Update(string name, object data, ICondition criteria, string schema)
 		{
-			return this.Update(name, data, condition, schema, null, null, null);
+			return this.Update(name, data, criteria, schema, null, null, null);
 		}
 
-		public int Update(string name, object data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
+		public int Update(string name, object data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
-			return this.Update(name, data, condition, this.Schema.Parse(name, schema, data.GetType()), states, updating, updated);
+			return this.Update(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), states, updating, updated);
 		}
 
-		public int Update(string name, object data, ICondition condition, ISchema schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
+		public int Update(string name, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -1273,7 +1273,7 @@ namespace Zongsoft.Data
 				return 0;
 
 			//创建数据访问上下文对象
-			var context = this.CreateUpdateContext(name, false, data, condition, schema, states);
+			var context = this.CreateUpdateContext(name, false, data, criteria, schema, states);
 
 			//处理数据访问操作前的回调
 			if(updating != null && updating(context))
@@ -1421,49 +1421,49 @@ namespace Zongsoft.Data
 			return this.Select<T>(this.GetName<T>(), null, string.Empty, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, string.Empty, null, null, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, string.Empty, null, states, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, Paging paging, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, string.Empty, paging, null, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, string.Empty, paging, states, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, string schema, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, schema, null, null, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, schema, null, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, schema, null, states, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, schema, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, schema, paging, null, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, schema, paging, states, sortings, null, null);
+			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
-			return this.Select<T>(this.GetName<T>(), condition, schema, paging, states, sortings, selecting, selected);
+			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, states, sortings, selecting, selected);
 		}
 
 		public IEnumerable<T> Select<T>(string name, IDictionary<string, object> states = null, params Sorting[] sortings)
@@ -1471,58 +1471,58 @@ namespace Zongsoft.Data
 			return this.Select<T>(name, null, string.Empty, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, string.Empty, null, null, sortings, null, null);
+			return this.Select<T>(name, criteria, string.Empty, null, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, string.Empty, null, states, sortings, null, null);
+			return this.Select<T>(name, criteria, string.Empty, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, Paging paging, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, string.Empty, paging, null, sortings, null, null);
+			return this.Select<T>(name, criteria, string.Empty, paging, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, string.Empty, paging, states, sortings, null, null);
+			return this.Select<T>(name, criteria, string.Empty, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, string schema, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, schema, null, null, sortings, null, null);
+			return this.Select<T>(name, criteria, schema, null, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, schema, null, states, sortings, null, null);
+			return this.Select<T>(name, criteria, schema, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, schema, paging, null, sortings, null, null);
+			return this.Select<T>(name, criteria, schema, paging, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, condition, schema, paging, states, sortings, null, null);
+			return this.Select<T>(name, criteria, schema, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
-			return this.Select<T>(name, condition, this.Schema.Parse(name, schema, typeof(T)), paging, states, sortings, selecting, selected);
+			return this.Select<T>(name, criteria, this.Schema.Parse(name, schema, typeof(T)), paging, states, sortings, selecting, selected);
 		}
 
-		public IEnumerable<T> Select<T>(string name, ICondition condition, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			//创建数据访问上下文对象
-			var context = this.CreateSelectContext(name, typeof(T), condition, null, schema, paging, sortings, states);
+			var context = this.CreateSelectContext(name, typeof(T), criteria, null, schema, paging, sortings, states);
 
 			//执行查询方法
 			return this.Select<T>(context, selecting, selected);
@@ -1560,33 +1560,33 @@ namespace Zongsoft.Data
 			return this.Select<T>(name, grouping, null, schema, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, grouping, condition, schema, null, null, sortings, null, null);
+			return this.Select<T>(name, grouping, criteria, schema, null, null, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, grouping, condition, schema, null, states, sortings, null, null);
+			return this.Select<T>(name, grouping, criteria, schema, null, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings)
 		{
-			return this.Select<T>(name, grouping, condition, schema, paging, states, sortings, null, null);
+			return this.Select<T>(name, grouping, criteria, schema, paging, states, sortings, null, null);
 		}
 
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
-			return this.Select<T>(name, grouping, condition, string.IsNullOrWhiteSpace(schema) ? null : this.Schema.Parse(name, schema, typeof(T)), paging, states, sortings, selecting, selected);
+			return this.Select<T>(name, grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.Schema.Parse(name, schema, typeof(T)), paging, states, sortings, selecting, selected);
 		}
 
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			//创建数据访问上下文对象
-			var context = this.CreateSelectContext(name, typeof(T), condition, grouping, schema, paging, sortings, states);
+			var context = this.CreateSelectContext(name, typeof(T), criteria, grouping, schema, paging, sortings, states);
 
 			//执行查询方法
 			return this.Select<T>(context, selecting, selected);

@@ -110,8 +110,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		bool Exists<T>(ICondition condition, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
-		bool Exists(string name, ICondition condition, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
+		bool Exists<T>(ICondition criteria, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
+		bool Exists(string name, ICondition criteria, IDictionary<string, object> states = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
 		#endregion
 
 		#region 聚合方法
@@ -124,36 +124,36 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		long Increment<T>(string member, ICondition condition);
-		long Increment<T>(string member, ICondition condition, IDictionary<string, object> states);
-		long Increment<T>(string member, ICondition condition, int interval);
-		long Increment<T>(string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
+		long Increment<T>(string member, ICondition criteria);
+		long Increment<T>(string member, ICondition criteria, IDictionary<string, object> states);
+		long Increment<T>(string member, ICondition criteria, int interval);
+		long Increment<T>(string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
 
-		long Increment(string name, string member, ICondition condition);
-		long Increment(string name, string member, ICondition condition, IDictionary<string, object> states);
-		long Increment(string name, string member, ICondition condition, int interval);
-		long Increment(string name, string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
+		long Increment(string name, string member, ICondition criteria);
+		long Increment(string name, string member, ICondition criteria, IDictionary<string, object> states);
+		long Increment(string name, string member, ICondition criteria, int interval);
+		long Increment(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
 
-		long Decrement<T>(string member, ICondition condition);
-		long Decrement<T>(string member, ICondition condition, IDictionary<string, object> states);
-		long Decrement<T>(string member, ICondition condition, int interval);
-		long Decrement<T>(string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
+		long Decrement<T>(string member, ICondition criteria);
+		long Decrement<T>(string member, ICondition criteria, IDictionary<string, object> states);
+		long Decrement<T>(string member, ICondition criteria, int interval);
+		long Decrement<T>(string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
 
-		long Decrement(string name, string member, ICondition condition);
-		long Decrement(string name, string member, ICondition condition, IDictionary<string, object> states);
-		long Decrement(string name, string member, ICondition condition, int interval);
-		long Decrement(string name, string member, ICondition condition, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
+		long Decrement(string name, string member, ICondition criteria);
+		long Decrement(string name, string member, ICondition criteria, IDictionary<string, object> states);
+		long Decrement(string name, string member, ICondition criteria, int interval);
+		long Decrement(string name, string member, ICondition criteria, int interval, IDictionary<string, object> states, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
 		#endregion
 
 		#region 删除方法
-		int Delete<T>(ICondition condition, string schema = null);
-		int Delete<T>(ICondition condition, IDictionary<string, object> states);
-		int Delete<T>(ICondition condition, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete<T>(ICondition criteria, string schema = null);
+		int Delete<T>(ICondition criteria, IDictionary<string, object> states);
+		int Delete<T>(ICondition criteria, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 
-		int Delete(string name, ICondition condition, string schema = null);
-		int Delete(string name, ICondition condition, IDictionary<string, object> states);
-		int Delete(string name, ICondition condition, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
-		int Delete(string name, ICondition condition, ISchema schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete(string name, ICondition criteria, string schema = null);
+		int Delete(string name, ICondition criteria, IDictionary<string, object> states);
+		int Delete(string name, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete(string name, ICondition criteria, ISchema schema, IDictionary<string, object> states, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 		#endregion
 
 		#region 插入方法
@@ -229,29 +229,29 @@ namespace Zongsoft.Data
 		int Update<T>(T data, IDictionary<string, object> states);
 		int Update<T>(T data, string schema);
 		int Update<T>(T data, string schema, IDictionary<string, object> states);
-		int Update<T>(T data, ICondition condition);
-		int Update<T>(T data, ICondition condition, IDictionary<string, object> states);
-		int Update<T>(T data, ICondition condition, string schema);
-		int Update<T>(T data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update<T>(T data, ICondition criteria);
+		int Update<T>(T data, ICondition criteria, IDictionary<string, object> states);
+		int Update<T>(T data, ICondition criteria, string schema);
+		int Update<T>(T data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int Update<T>(object data);
 		int Update<T>(object data, IDictionary<string, object> states);
 		int Update<T>(object data, string schema);
 		int Update<T>(object data, string schema, IDictionary<string, object> states);
-		int Update<T>(object data, ICondition condition);
-		int Update<T>(object data, ICondition condition, IDictionary<string, object> states);
-		int Update<T>(object data, ICondition condition, string schema);
-		int Update<T>(object data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update<T>(object data, ICondition criteria);
+		int Update<T>(object data, ICondition criteria, IDictionary<string, object> states);
+		int Update<T>(object data, ICondition criteria, string schema);
+		int Update<T>(object data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int Update(string name, object data);
 		int Update(string name, object data, IDictionary<string, object> states);
 		int Update(string name, object data, string schema);
 		int Update(string name, object data, string schema, IDictionary<string, object> states);
-		int Update(string name, object data, ICondition condition);
-		int Update(string name, object data, ICondition condition, IDictionary<string, object> states);
-		int Update(string name, object data, ICondition condition, string schema);
-		int Update(string name, object data, ICondition condition, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-		int Update(string name, object data, ICondition condition, ISchema schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update(string name, object data, ICondition criteria);
+		int Update(string name, object data, ICondition criteria, IDictionary<string, object> states);
+		int Update(string name, object data, ICondition criteria, string schema);
+		int Update(string name, object data, ICondition criteria, string schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update(string name, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int UpdateMany<T>(IEnumerable<T> items);
 		int UpdateMany<T>(IEnumerable<T> items, IDictionary<string, object> states);
@@ -272,27 +272,27 @@ namespace Zongsoft.Data
 
 		#region 查询方法
 		IEnumerable<T> Select<T>(IDictionary<string, object> states = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, string schema, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(ICondition criteria, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, Paging paging, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 
 		IEnumerable<T> Select<T>(string name, IDictionary<string, object> states = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, string schema, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
-		IEnumerable<T> Select<T>(string name, ICondition condition, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 
 		IEnumerable<T> Select<T>(string name, Grouping grouping, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, IDictionary<string, object> states, params Sorting[] sortings);
@@ -300,11 +300,11 @@ namespace Zongsoft.Data
 		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, IDictionary<string, object> states, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, IDictionary<string, object> states, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition condition, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, IDictionary<string, object> states, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 		#endregion
 	}
 }

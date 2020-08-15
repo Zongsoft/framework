@@ -41,9 +41,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition condition, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Exists, states)
+		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Exists, states)
 		{
-			_condition = condition;
+			_condition = criteria;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
 		}
@@ -329,17 +329,17 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition condition, int interval = 1, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Increment, states)
+		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval = 1, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Increment, states)
 		{
 			if(string.IsNullOrEmpty(member))
 				throw new ArgumentNullException(nameof(member));
 
-			if(condition == null)
-				throw new ArgumentNullException(nameof(condition));
+			if(criteria == null)
+				throw new ArgumentNullException(nameof(criteria));
 
 			_member = member;
 			_interval = interval;
-			_condition = condition ?? throw new ArgumentNullException(nameof(condition));
+			_condition = criteria ?? throw new ArgumentNullException(nameof(criteria));
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
 		}
@@ -489,10 +489,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition condition, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
+		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
 		{
 			_grouping = grouping;
-			_condition = condition;
+			_condition = criteria;
 			_schema = schema;
 			_paging = paging;
 			_sortings = sortings;
@@ -690,9 +690,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition condition, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Delete, states)
+		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Delete, states)
 		{
-			_condition = condition;
+			_condition = criteria;
 			_schema = schema;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
@@ -931,10 +931,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition condition, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Update, states)
+		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Update, states)
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
-			_condition = condition;
+			_condition = criteria;
 			_schema = schema;
 			_isMultiple = isMultiple;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
