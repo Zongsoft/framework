@@ -160,6 +160,75 @@ namespace Zongsoft.Data.Common.Expressions
 			throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
 		}
 
+		public static IExpression GetOperandExpression(this IStatement statement, Operand operand, out DbType dbType)
+		{
+			dbType = DbType.Object;
+
+			if(operand == null)
+				return null;
+
+			switch(operand.Type)
+			{
+				case OperandType.Field:
+					return GetField(statement, ((Operand.FieldOperand)operand).Name, out dbType);
+				case OperandType.Constant:
+					var value = Reflection.Reflector.GetValue(operand, nameof(Operand.ConstantOperand<object>.Value));
+
+					if(value == null || Convert.IsDBNull(value))
+						return Expression.Constant(null);
+
+					if(Range.IsRange(value, out var minimum, out var maximum))
+					{
+					}
+
+					var parameter = Expression.Parameter(value);
+					statement.Parameters.Add(parameter);
+					return parameter;
+				case OperandType.Not:
+					return Expression.Not(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, out dbType));
+				case OperandType.Negate:
+					return Expression.Negate(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, out dbType));
+				case OperandType.Add:
+					return GetBinaryExpression(statement, operand, Expression.Add, out dbType);
+				case OperandType.Subtract:
+					return GetBinaryExpression(statement, operand, Expression.Subtract, out dbType);
+				case OperandType.Multiply:
+					return GetBinaryExpression(statement, operand, Expression.Multiply, out dbType);
+				case OperandType.Modulo:
+					return GetBinaryExpression(statement, operand, Expression.Modulo, out dbType);
+				case OperandType.Divide:
+					return GetBinaryExpression(statement, operand, Expression.Divide, out dbType);
+				case OperandType.And:
+					return GetBinaryExpression(statement, operand, Expression.And, out dbType);
+				case OperandType.Or:
+					return GetBinaryExpression(statement, operand, Expression.Or, out dbType);
+				case OperandType.Xor:
+					return GetBinaryExpression(statement, operand, Expression.Xor, out dbType);
+				default:
+					throw new DataException($"Unsupported '{operand.Type}' operand type.");
+			}
+
+			static IExpression GetBinaryExpression(IStatement host, Operand opd, Func<IExpression, IExpression, IExpression> generator, out DbType dbType)
+			{
+				var binary = (Operand.BinaryOperand)opd;
+				return generator(host.GetOperandExpression(binary.Left, out dbType), host.GetOperandExpression(binary.Right, out dbType));
+			}
+		}
+
+		internal static FieldIdentifier GetField(IStatement host, string name, out DbType dbType)
+		{
+			var source = From(host, name, (src, complex) => CreateSubquery(host, src, complex, null), out var property);
+
+			if(property.IsSimplex)
+			{
+				dbType = ((IDataEntitySimplexProperty)property).Type;
+				return source.CreateField(property);
+			}
+
+			dbType = DbType.Object;
+			throw new DataException($"The specified '{name}' field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.");
+		}
+
 		internal static FieldIdentifier GetField(IStatement host, Condition condition)
 		{
 			var source = From(host, condition.Name, (src, complex) => CreateSubquery(host, src, complex, condition.Value as ICondition), out var property);
@@ -174,6 +243,16 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 
 			throw new DataException($"The specified '{condition.Name}' condition is associated with a one-to-many composite(navigation) property and does not support the {condition.Operator} operation.");
+		}
+
+		internal static ISource GetSubquery(this IStatement statement, string name, ICondition filter)
+		{
+			var subquery = From(statement, name, (src, complex) => CreateSubquery(statement, src, complex, filter), out var property);
+
+			if(property.IsComplex && ((IDataEntityComplexProperty)property).Multiplicity == DataAssociationMultiplicity.Many)
+				return subquery;
+
+			throw new DataException($"The specified '{name}' field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated.");
 		}
 
 		private static ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition condition)
