@@ -147,7 +147,7 @@ namespace Zongsoft.Data
 			#endregion
 		}
 
-		public class ConstantOperand<T> : Operand
+		public class ConstantOperand<T> : Operand, IConvertible
 		{
 			#region 构造函数
 			public ConstantOperand(T value) : base(OperandType.Constant)
@@ -164,6 +164,93 @@ namespace Zongsoft.Data
 			public override string ToString()
 			{
 				return this.Value == null ? "<NULL>" : this.Value.ToString();
+			}
+			#endregion
+
+			#region 类型转换
+			public char ToChar(IFormatProvider provider)
+			{
+				return this.Value == null ? '\0' : (char)Convert.ChangeType(this.Value, TypeCode.Char, provider);
+			}
+
+			public bool ToBoolean(IFormatProvider provider)
+			{
+				return this.Value != null && (bool)Convert.ChangeType(this.Value, TypeCode.Boolean, provider);
+			}
+
+			public byte ToByte(IFormatProvider provider)
+			{
+				return this.Value == null ? (byte)0 : (byte)Convert.ChangeType(this.Value, TypeCode.Byte, provider);
+			}
+
+			public sbyte ToSByte(IFormatProvider provider)
+			{
+				return this.Value == null ? (sbyte)0 : (sbyte)Convert.ChangeType(this.Value, TypeCode.SByte, provider);
+			}
+
+			public short ToInt16(IFormatProvider provider)
+			{
+				return this.Value == null ? (short)0 : (short)Convert.ChangeType(this.Value, TypeCode.Int16, provider);
+			}
+
+			public int ToInt32(IFormatProvider provider)
+			{
+				return this.Value == null ? 0 : (int)Convert.ChangeType(this.Value, TypeCode.Int32, provider);
+			}
+
+			public long ToInt64(IFormatProvider provider)
+			{
+				return this.Value == null ? 0L : (long)Convert.ChangeType(this.Value, TypeCode.Int64, provider);
+			}
+
+			public ushort ToUInt16(IFormatProvider provider)
+			{
+				return this.Value == null ? (ushort)0 : (ushort)Convert.ChangeType(this.Value, TypeCode.UInt16, provider);
+			}
+
+			public uint ToUInt32(IFormatProvider provider)
+			{
+				return this.Value == null ? 0u : (uint)Convert.ChangeType(this.Value, TypeCode.UInt32, provider);
+			}
+
+			public ulong ToUInt64(IFormatProvider provider)
+			{
+				return this.Value == null ? 0 : (ulong)Convert.ChangeType(this.Value, TypeCode.UInt64, provider);
+			}
+
+			public decimal ToDecimal(IFormatProvider provider)
+			{
+				return this.Value == null ? 0m : (decimal)Convert.ChangeType(this.Value, TypeCode.Decimal, provider);
+			}
+
+			public double ToDouble(IFormatProvider provider)
+			{
+				return this.Value == null ? 0d : (double)Convert.ChangeType(this.Value, TypeCode.Double, provider);
+			}
+
+			public float ToSingle(IFormatProvider provider)
+			{
+				return this.Value == null ? 0f : (float)Convert.ChangeType(this.Value, TypeCode.Single, provider);
+			}
+
+			public DateTime ToDateTime(IFormatProvider provider)
+			{
+				return this.Value == null ? DateTime.MinValue : (DateTime)Convert.ChangeType(this.Value, TypeCode.DateTime, provider);
+			}
+
+			public string ToString(IFormatProvider provider)
+			{
+				return this.Value == null ? null : (string)Convert.ChangeType(this.Value, TypeCode.String, provider);
+			}
+
+			public TypeCode GetTypeCode()
+			{
+				return this.Value == null ? TypeCode.Object : System.Type.GetTypeCode(this.Value.GetType());
+			}
+
+			public object ToType(Type conversionType, IFormatProvider provider)
+			{
+				return Convert.ChangeType(this.Value, conversionType, provider);
 			}
 			#endregion
 		}
