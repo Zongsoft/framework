@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -1265,11 +1266,9 @@ namespace Zongsoft.Data
 						singular = false;
 						return Condition.In(primaryKey[0].Name, parts);
 					}
-
-					return Condition.Equal(primaryKey[0].Name, parts[0]);
 				}
 
-				return Condition.Equal(primaryKey[0].Name, values[0]);
+				return Condition.Equal(primaryKey[0].Name, ConvertValue(values[0], primaryKey[0].Type));
 			}
 
 			//创建返回的条件集（AND组合）
@@ -1277,7 +1276,7 @@ namespace Zongsoft.Data
 
 			for(int i = 0; i < values.Length; i++)
 			{
-				conditions.Add(Data.Condition.Equal(primaryKey[i].Name, values[i]));
+				conditions.Add(Data.Condition.Equal(primaryKey[i].Name, ConvertValue(values[i], primaryKey[i].Type)));
 			}
 
 			return conditions;
@@ -1395,6 +1394,58 @@ namespace Zongsoft.Data
 		{
 			if(!(this.CanInsert && this.CanUpdate))
 				throw new InvalidOperationException("The upsert operation is not allowed.");
+		}
+
+		private static object ConvertValue(object value, DbType dbType)
+		{
+			if(value == null)
+				return null;
+
+			switch(dbType)
+			{
+				case DbType.Byte:
+					return Common.Convert.ConvertValue<byte>(value);
+				case DbType.SByte:
+					return Common.Convert.ConvertValue<sbyte>(value);
+				case DbType.Boolean:
+					return Common.Convert.ConvertValue<bool>(value);
+				case DbType.Int16:
+					return Common.Convert.ConvertValue<short>(value);
+				case DbType.Int32:
+					return Common.Convert.ConvertValue<int>(value);
+				case DbType.Int64:
+					return Common.Convert.ConvertValue<long>(value);
+				case DbType.UInt16:
+					return Common.Convert.ConvertValue<ushort>(value);
+				case DbType.UInt32:
+					return Common.Convert.ConvertValue<uint>(value);
+				case DbType.UInt64:
+					return Common.Convert.ConvertValue<ulong>(value);
+				case DbType.Single:
+					return Common.Convert.ConvertValue<float>(value);
+				case DbType.Double:
+					return Common.Convert.ConvertValue<double>(value);
+				case DbType.Decimal:
+				case DbType.Currency:
+					return Common.Convert.ConvertValue<decimal>(value);
+				case DbType.Date:
+				case DbType.Time:
+				case DbType.DateTime:
+				case DbType.DateTime2:
+				case DbType.DateTimeOffset:
+					return Common.Convert.ConvertValue<DateTime>(value);
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+					return Common.Convert.ConvertValue<string>(value);
+				case DbType.Guid:
+					return Common.Convert.ConvertValue<Guid>(value);
+				case DbType.Binary:
+					return Common.Convert.ConvertValue<byte[]>(value);
+				default:
+					return value;
+			}
 		}
 		#endregion
 
