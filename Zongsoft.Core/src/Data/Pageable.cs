@@ -71,35 +71,21 @@ namespace Zongsoft.Data
 			return new FilteredCollection<T>(source, predicate);
 		}
 
-		public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, System.Linq.Expressions.Expression<Func<TSource, TResult>> map)
-		{
-			return (IEnumerable<TResult>)Map(source, Reflection.ExpressionUtility.GetMemberName(map));
-		}
-
-		public static IEnumerable Map<TSource>(this IEnumerable<TSource> source, string path)
+		public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> map)
 		{
 			if(source == null)
 				throw new ArgumentNullException(nameof(source));
 
-			if(string.IsNullOrEmpty(path))
-				return source;
+			if(map == null)
+				throw new ArgumentNullException(nameof(map));
 
 			var pageable = source as IPageable;
 
 			if(pageable == null)
 				throw new ArgumentException($"The specified data source does not implement the '{nameof(IPageable)}' interface.");
 
-			object Map(TSource entity)
-			{
-				if(entity == null)
-					return null;
-
-				return Reflection.Reflector.GetValue(entity, path);
-			}
-
-			var elementType = typeof(TSource).GetProperty(path)?.PropertyType ?? typeof(TSource).GetField(path).FieldType;
-			var collectionType = typeof(MappedCollection<,>).MakeGenericType(typeof(TSource), elementType);
-			return (IEnumerable)Activator.CreateInstance(collectionType, new object[] { source, new Func<TSource, object>(Map) });
+			var collectionType = typeof(MappedCollection<,>).MakeGenericType(typeof(TSource), typeof(TResult));
+			return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, new object[] { source, map });
 		}
 		#endregion
 
@@ -211,12 +197,12 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 私有变量
-			private IEnumerable<TSource> _source;
-			private Func<TSource, object> _map;
+			private readonly IEnumerable<TSource> _source;
+			private readonly Func<TSource, TResult> _map;
 			#endregion
 
 			#region 构造函数
-			public MappedCollection(IEnumerable<TSource> source, Func<TSource, object> map)
+			public MappedCollection(IEnumerable<TSource> source, Func<TSource, TResult> map)
 			{
 				_map = map;
 				_source = source;
@@ -256,10 +242,10 @@ namespace Zongsoft.Data
 			private class MappedIterator : IEnumerator<TResult>, IEnumerator, IDisposable
 			{
 				private IEnumerator<TSource> _iterator;
-				private Func<TSource, object> _map;
+				private Func<TSource, TResult> _map;
 				private Action _exit;
 
-				public MappedIterator(IEnumerator<TSource> iterator, Func<TSource, object> map, Action exit)
+				public MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> map, Action exit)
 				{
 					_iterator = iterator;
 					_map = map;
