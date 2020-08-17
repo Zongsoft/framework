@@ -290,6 +290,11 @@ namespace Zongsoft.Data.Common.Expressions
 			return new BinaryExpression(Operator.Between, operand, range);
 		}
 
+		public static BinaryExpression Between(IExpression operand, IExpression minimum, IExpression maximum)
+		{
+			return new BinaryExpression(Operator.Between, operand, new RangeExpression(minimum, maximum));
+		}
+
 		public static BinaryExpression Equal(IExpression left, IExpression right)
 		{
 			return new BinaryExpression(Operator.Equal, left, right);
