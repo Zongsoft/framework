@@ -30,6 +30,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Collections;
 
 using Zongsoft.Data.Metadata;
 
@@ -148,19 +149,141 @@ namespace Zongsoft.Data.Common.Expressions
 				return null;
 
 			if(criteria is Condition c)
-				return ConditionExtension.ToExpression(c,
-					field => GetField(statement, field),
-					parameter => statement.Parameters.Add(parameter));
+				return GetConditionExpression(statement, c);
 
 			if(criteria is ConditionCollection cc)
-				return ConditionExtension.ToExpression(cc,
-					field => GetField(statement, field),
-					parameter => statement.Parameters.Add(parameter));
+				return GetConditionExpression(statement, cc);
 
 			throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
 		}
 
-		public static IExpression GetOperandExpression(this IStatement statement, Operand operand, out DbType dbType)
+		private static ConditionExpression GetConditionExpression(IStatement statement, ConditionCollection conditions)
+		{
+			if(conditions == null)
+				throw new ArgumentNullException(nameof(conditions));
+
+			ConditionExpression expressions = new ConditionExpression(conditions.Combination);
+
+			foreach(var condition in conditions)
+			{
+				switch(condition)
+				{
+					case Condition c:
+						var item = GetConditionExpression(statement, c);
+
+						if(item != null)
+							expressions.Add(item);
+
+						break;
+					case ConditionCollection cc:
+						var items = GetConditionExpression(statement, cc);
+
+						if(items != null && items.Count > 0)
+							expressions.Add(items);
+
+						break;
+				}
+			}
+
+			return expressions.Count > 0 ? expressions : null;
+		}
+
+		private static IExpression GetConditionExpression(IStatement statement, Condition condition)
+		{
+			if(condition == null)
+				throw new ArgumentNullException(nameof(condition));
+
+			var field = statement.GetOperandExpression(condition.Field, out _);
+
+			if(condition.Value == null)
+			{
+				return condition.Operator switch
+				{
+					ConditionOperator.Like => Expression.Equal(field, null),
+					ConditionOperator.Equal => Expression.Equal(field, null),
+					ConditionOperator.NotEqual => Expression.NotEqual(field, null),
+					_ => throw new DataException($"The specified '{condition.Name}' parameter value of the type {condition.Operator} condition is null."),
+				};
+			}
+
+			if(condition.Operator == ConditionOperator.Equal && Range.IsRange(condition.Value))
+				condition.Operator = ConditionOperator.Between;
+
+			switch(condition.Operator)
+			{
+				case ConditionOperator.Between:
+					if(Range.IsRange(condition.Value, out var minimum, out var maximum))
+					{
+						if(object.Equals(minimum, maximum))
+							return Expression.Equal(field, statement.Parameters.AddParameter(minimum));
+
+						if(minimum == null)
+							return maximum == null ? null : Expression.LessThanOrEqual(field, statement.Parameters.AddParameter(maximum));
+
+						return maximum == null ?
+							   Expression.GreaterThanOrEqual(field, statement.Parameters.AddParameter(minimum)) :
+							   Expression.Between(field, statement.Parameters.AddParameter(minimum), statement.Parameters.AddParameter(maximum));
+					}
+
+					throw new DataException($"Illegal range condition value.");
+				case ConditionOperator.Like:
+					return Expression.Like(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.Exists:
+					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter1)
+						return Expression.Exists((IExpression)statement.GetSubquery(condition.Name, filter1));
+
+					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
+				case ConditionOperator.NotExists:
+					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter2)
+						return Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, filter2));
+
+					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
+				case ConditionOperator.In:
+					return Expression.In(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.NotIn:
+					return Expression.NotIn(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.Equal:
+					return Expression.Equal(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.NotEqual:
+					return Expression.NotEqual(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.GreaterThan:
+					return Expression.GreaterThan(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.GreaterThanEqual:
+					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.LessThan:
+					return Expression.LessThan(field, GetConditionValue(statement, condition.Value));
+				case ConditionOperator.LessThanEqual:
+					return Expression.LessThanOrEqual(field, GetConditionValue(statement, condition.Value));
+				default:
+					throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
+			}
+		}
+
+		private static IExpression GetConditionValue(IStatement statement, object value)
+		{
+			if(value == null)
+				return null;
+
+			if(value is IExpression expression)
+				return expression;
+
+			if(value is Operand operand)
+				return statement.GetOperandExpression(operand, out _);
+
+			if(value.GetType().IsArray || (value.GetType() != typeof(string) && value is IEnumerable))
+			{
+				var collection = new ExpressionCollection();
+
+				foreach(var item in (IEnumerable)value)
+					collection.Add(statement.Parameters.AddParameter(item));
+
+				return collection;
+			}
+
+			return statement.Parameters.AddParameter(value);
+		}
+
+		private static IExpression GetOperandExpression(this IStatement statement, Operand operand, out DbType dbType)
 		{
 			dbType = DbType.Object;
 
@@ -177,13 +300,17 @@ namespace Zongsoft.Data.Common.Expressions
 					if(value == null || Convert.IsDBNull(value))
 						return Expression.Constant(null);
 
-					if(Range.IsRange(value, out var minimum, out var maximum))
+					if(Zongsoft.Common.TypeExtension.IsCollection(value.GetType()))
 					{
+						var collection = new ExpressionCollection();
+
+						foreach(var item in (ICollection)value)
+							collection.Add(statement.Parameters.AddParameter(item));
+
+						return collection;
 					}
 
-					var parameter = Expression.Parameter(value);
-					statement.Parameters.Add(parameter);
-					return parameter;
+					return statement.Parameters.AddParameter(value);
 				case OperandType.Not:
 					return Expression.Not(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, out dbType));
 				case OperandType.Negate:
@@ -215,7 +342,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		internal static FieldIdentifier GetField(IStatement host, string name, out DbType dbType)
+		private static FieldIdentifier GetField(IStatement host, string name, out DbType dbType)
 		{
 			var source = From(host, name, (src, complex) => CreateSubquery(host, src, complex, null), out var property);
 
@@ -229,23 +356,7 @@ namespace Zongsoft.Data.Common.Expressions
 			throw new DataException($"The specified '{name}' field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.");
 		}
 
-		internal static FieldIdentifier GetField(IStatement host, Condition condition)
-		{
-			var source = From(host, condition.Name, (src, complex) => CreateSubquery(host, src, complex, condition.Value as ICondition), out var property);
-
-			if(property.IsSimplex)
-				return source.CreateField(property);
-
-			if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
-			{
-				condition.Value = source;
-				return null;
-			}
-
-			throw new DataException($"The specified '{condition.Name}' condition is associated with a one-to-many composite(navigation) property and does not support the {condition.Operator} operation.");
-		}
-
-		internal static ISource GetSubquery(this IStatement statement, string name, ICondition filter)
+		private static ISource GetSubquery(this IStatement statement, string name, ICondition filter)
 		{
 			var subquery = From(statement, name, (src, complex) => CreateSubquery(statement, src, complex, filter), out var property);
 
@@ -286,6 +397,13 @@ namespace Zongsoft.Data.Common.Expressions
 
 			subquery.Where = where;
 			return subquery;
+		}
+
+		private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value)
+		{
+			var parameter = Expression.Parameter(value);
+			parameters.Add(parameter);
+			return parameter;
 		}
 	}
 }

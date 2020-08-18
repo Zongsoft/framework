@@ -29,79 +29,13 @@
 
 using System;
 using System.Collections;
-using System.Data;
 
 namespace Zongsoft.Data.Common.Expressions
 {
+	[Obsolete]
 	public static class ConditionExtension
 	{
 		#region 公共方法
-		public static IExpression GetConditionExpression(IStatement statement, Condition condition)
-		{
-			if(condition == null)
-				throw new ArgumentNullException(nameof(condition));
-
-			//var value = GetConditionValue(condition, field, append);
-
-			//if(value == null)
-			//	return null;
-
-			var field = statement.GetOperandExpression(condition.Field, out var dbType);
-			IExpression value = null;
-
-			if(condition.Value == null)
-			{
-				if(condition.Operator == ConditionOperator.Equal || condition.Operator == ConditionOperator.NotEqual || condition.Operator == ConditionOperator.Like)
-					value = ConstantExpression.Null;
-
-				throw new DataException($"The specified '{condition.Name}' parameter value of the type {condition.Operator.ToString()} condition is null.");
-			}
-			else if(condition.Operator == ConditionOperator.Equal && Range.IsRange(condition.Value))
-				condition.Operator = ConditionOperator.Between;
-
-			switch(condition.Operator)
-			{
-				case ConditionOperator.Between:
-					if(value is RangeExpression range)
-						return Expression.Between(field, range);
-					else
-						return value as BinaryExpression;
-				case ConditionOperator.Like:
-					if(Expression.IsNull(value))
-						return Expression.Equal(field, value);
-					else
-						return Expression.Like(field, value);
-				case ConditionOperator.Exists:
-					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter1)
-						return Expression.Exists((IExpression)statement.GetSubquery(condition.Name, filter1));
-
-					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
-				case ConditionOperator.NotExists:
-					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter2)
-						return Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, filter2));
-
-					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
-				case ConditionOperator.In:
-					return Expression.In(field, value);
-				case ConditionOperator.NotIn:
-					return Expression.NotIn(field, value);
-				case ConditionOperator.Equal:
-					return Expression.Equal(field, value);
-				case ConditionOperator.NotEqual:
-					return Expression.NotEqual(field, value);
-				case ConditionOperator.GreaterThan:
-					return Expression.GreaterThan(field, value);
-				case ConditionOperator.GreaterThanEqual:
-					return Expression.GreaterThanOrEqual(field, value);
-				case ConditionOperator.LessThan:
-					return Expression.LessThan(field, value);
-				case ConditionOperator.LessThanEqual:
-					return Expression.LessThanOrEqual(field, value);
-				default:
-					throw new NotSupportedException($"Invalid '{condition.Operator}' condition operator.");
-			}
-		}
-
 		public static IExpression ToExpression(this Condition condition,
 		                                            Func<Condition, FieldIdentifier> fieldThunk,
 		                                            Action<ParameterExpression> append = null)
