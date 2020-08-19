@@ -45,7 +45,7 @@ namespace Zongsoft.Data.Common.Expressions
 				argument = statement.From(context.Aggregate.Name, null, out var property).CreateField(property);
 
 			//添加返回的聚合函数成员
-			statement.Select.Members.Add(AggregateExpression.Aggregate(argument, context.Aggregate));
+			statement.Select.Members.Add(AggregateExpression.Aggregate(context.Aggregate, argument));
 
 			//生成条件子句
 			statement.Where = statement.Where(context.Validate());
