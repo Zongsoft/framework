@@ -42,7 +42,7 @@ namespace Zongsoft.Data.Common.Expressions
 		public ParameterExpression Add(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input)
 		{
 			var parameter = Expression.Parameter(name, type, direction);
-			base.AddItem(parameter);
+			this.AddItem(parameter);
 			return parameter;
 		}
 		#endregion
