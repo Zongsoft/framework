@@ -58,8 +58,10 @@ namespace Zongsoft.Data.Common.Expressions
 			//生成条件子句
 			statement.Where = this.Where(context, statement);
 
-			if(statement.Fields.Count > 0)
-				yield return statement;
+			if(statement.Fields.Count == 0)
+				throw new DataException($"The update statement is missing a necessary set clause.");
+
+			yield return statement;
 		}
 		#endregion
 
