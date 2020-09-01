@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -37,12 +37,14 @@ namespace Zongsoft.Web.Binding
 	[Zongsoft.Services.Service]
 	public class RangeModelBinderProvider : IModelBinderProvider
 	{
+		private static readonly ConcurrentDictionary<Type, IModelBinder> _binders = new ConcurrentDictionary<Type, IModelBinder>();
+
 		public IModelBinder GetBinder(ModelBinderProviderContext context)
 		{
 			var modelType = context.Metadata.UnderlyingOrModelType;
 
 			if(modelType.IsGenericType && modelType.GenericTypeArguments.Length == 1 && modelType.GetGenericTypeDefinition() == typeof(Zongsoft.Data.Range<>))
-				return (IModelBinder)Activator.CreateInstance(typeof(RangeModelBinder<>).MakeGenericType(modelType.GenericTypeArguments[0]));
+				return _binders.GetOrAdd(modelType.GenericTypeArguments[0], type => (IModelBinder)Activator.CreateInstance(typeof(RangeModelBinder<>).MakeGenericType(type)));
 
 			return null;
 		}

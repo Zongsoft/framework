@@ -41,14 +41,14 @@ namespace Zongsoft.Web.Binding
 		#endregion
 
 		#region 私有变量
-		private readonly TryParseDelegate TryParse;
+		private readonly TryParseDelegate _TryParse_;
 		#endregion
 
 		#region 构造函数
 		public RangeModelBinder()
 		{
 			var method = typeof(Data.Range<T>).GetMethod(nameof(Data.Range<T>.TryParse));
-			TryParse = (TryParseDelegate)method.CreateDelegate(typeof(TryParseDelegate));
+			_TryParse_ = (TryParseDelegate)method.CreateDelegate(typeof(TryParseDelegate));
 		}
 		#endregion
 
@@ -61,7 +61,7 @@ namespace Zongsoft.Web.Binding
 				context.Result = ModelBindingResult.Success(Zongsoft.Data.Range<DateTime>.Empty);
 			else
 			{
-				if(TryParse.Invoke(value.FirstValue, out var range))
+				if(_TryParse_.Invoke(value.FirstValue, out var range))
 					context.Result = ModelBindingResult.Success(range);
 				else
 					context.ModelState.TryAddModelError(context.ModelName, $"The specified '{context.ModelName}' parameter value '{value.FirstValue}' cannot be converted to the Range<{typeof(T).FullName}> type.");
