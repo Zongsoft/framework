@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
+using Zongsoft.Web;
 using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
@@ -46,6 +47,20 @@ namespace Zongsoft.Security.Web.Controllers
 	public class AuthenticationController : ControllerBase
 	{
 		#region 公共方法
+		[HttpPost("{id:int:required}")]
+		public async Task<IActionResult> Verify(uint id)
+		{
+			var password = await this.Request.ReadAsStringAsync();
+
+			return Authentication.Instance.Verify(id, password) switch
+			{
+				AuthenticationReason.None => this.NoContent(),
+				AuthenticationReason.InvalidIdentity => this.NotFound(),
+				AuthenticationReason.InvalidPassword => this.BadRequest(),
+				_ => this.Forbid(),
+			};
+		}
+
 		[HttpPost("{scenario:required}")]
 		public Task<IActionResult> SigninAsync(string scenario, [FromBody]AuthenticationRequest request)
 		{

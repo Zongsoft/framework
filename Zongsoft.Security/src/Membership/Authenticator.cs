@@ -78,6 +78,43 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 验证方法
+		public AuthenticationReason Verify(uint userId, string password)
+		{
+			//获取验证失败的解决器
+			var attempter = this.Attempter;
+
+			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
+			if(attempter != null && !attempter.Verify(userId.ToString()))
+				return AuthenticationReason.AccountSuspended;
+
+			var user = this.DataAccess.Select<UserSecret>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
+
+			//如果帐户不存在则返回无效账户
+			if(user.UserId == 0)
+				return AuthenticationReason.InvalidIdentity;
+
+			//如果账户状态异常则返回账户状态异常
+			if(user.Status != UserStatus.Active)
+				return AuthenticationReason.AccountDisabled;
+
+			if(!PasswordUtility.VerifyPassword(password, user.Password, user.PasswordSalt, "SHA1"))
+			{
+				//通知验证尝试失败
+				if(attempter != null)
+					attempter.Fail(userId.ToString());
+
+				//密码校验失败则返回密码验证失败
+				return AuthenticationReason.InvalidPassword;
+			}
+
+			//通知验证尝试成功，即清空验证失败记录
+			if(attempter != null)
+				attempter.Done(userId.ToString());
+
+			//返回校验成功
+			return AuthenticationReason.None;
+		}
+
 		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
