@@ -80,6 +80,14 @@ namespace Zongsoft.Security.Membership
 		AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters);
 
 		/// <summary>
+		/// 验证指定编号的用户身份。
+		/// </summary>
+		/// <param name="userId">要验证的用户编号。</param>
+		/// <param name="password">验证的用户密码。</param>
+		/// <returns>返回验证成功或失败的缘由。</returns>
+		AuthenticationReason Verify(uint userId, string password);
+
+		/// <summary>
 		/// 生成一个验证码，并将其发送到指定用户标识所对应的手机或电子邮箱中。
 		/// </summary>
 		/// <param name="identity">要获取的用户标识，仅限用户的“Phone”或“Email”。</param>
