@@ -73,7 +73,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="identity">指定待验证的用户标识。</param>
 		/// <param name="scene">表示验证操作的场景。</param>
 		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
-		public bool Verify(string identity, string @namespace)
+		public bool Verify(string identity, string @namespace = null)
 		{
 			var option = this.Options;
 
@@ -94,7 +94,7 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		/// <param name="identity">指定验证成功的用户标识。</param>
 		/// <param name="scene">表示验证操作的场景。</param>
-		public void Done(string identity, string @namespace)
+		public void Done(string identity, string @namespace = null)
 		{
 			var cache = this.Cache;
 
@@ -108,7 +108,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="identity">指定验证失败的用户标识。</param>
 		/// <param name="scene">表示验证操作的场景。</param>
 		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
-		public bool Fail(string identity, string @namespace)
+		public bool Fail(string identity, string @namespace = null)
 		{
 			if(!(this.Cache is ISequence sequence))
 				throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
