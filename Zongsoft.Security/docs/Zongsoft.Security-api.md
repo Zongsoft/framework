@@ -106,6 +106,25 @@
 
 -----
 
+## 身份确认
+```url
+[POST] /Security/Authentication/Verify
+```
+
+> 适用于特定安全操作之前进行身份确认，譬如修改用户手机号码(`phone`)、邮箱地址(`email`)前，再次确认当前用户的身份。
+
+### 参数说明
+- 必须带有 `Authorization` 身份授权头。
+- 请求内容为当前用户的密码明文。
+
+### 响应消息
+- `2XX` 表示验证成功；
+- `400` 表示密码错误；
+- `401` 表示未登录，即没有提供有效的 `Authorization` 身份授权头；
+- `403` 表示当前账户已被锁定。
+
+-----
+
 ## 获取角色信息
 ```url
 [GET] /Security/Roles
@@ -525,7 +544,7 @@ x-data-schema: *, MemberUser{*}, MemberRole{*}
 **注意：** 该接口支持匿名调用，即不需要提供 `Authorization` 验证头。
 
 ```url
-[GET] /Security/Users/{userId}/Verify/{type}?secret=xxx
+[POST] /Security/Users/{userId}/Verify/{type}?secret=xxx
 ```
 
 ### 参数说明
