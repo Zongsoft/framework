@@ -66,12 +66,12 @@ namespace Zongsoft.Security.Commands
 				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 			//从环境中查找秘密提供程序
-			var secretProvider = SecretCommand.FindSecretProvider(context.CommandNode);
+			var secretor = SecretCommand.FindSecretor(context.CommandNode);
 
-			if(secretProvider == null)
-				throw new CommandException("Missing required secret provider for the command.");
+			if(secretor == null)
+				throw new CommandException("Missing required secretor for the command.");
 
-			if(secretProvider.Verify(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], out var extra))
+			if(secretor.Verify(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], out var extra))
 			{
 				if(extra != null && extra.Length > 0)
 					context.Output.WriteLine(extra);

@@ -75,10 +75,10 @@ namespace Zongsoft.Security.Commands
 		protected override object OnExecute(CommandContext context)
 		{
 			//从环境中查找秘密提供程序
-			var secretProvider = SecretCommand.FindSecretProvider(context.CommandNode);
+			var secretor = SecretCommand.FindSecretor(context.CommandNode);
 
-			if(secretProvider == null)
-				throw new CommandException("Missing required secret provider for the command.");
+			if(secretor == null)
+				throw new CommandException("Missing required secretor for the command.");
 
 			var name = context.Expression.Options.GetValue<string>(KEY_NAME_OPTION);
 			var pattern = context.Expression.Options.GetValue<string>(KEY_PATTERN_OPTION);
@@ -86,9 +86,9 @@ namespace Zongsoft.Security.Commands
 			switch(context.Expression.Arguments.Length)
 			{
 				case 0:
-					return secretProvider.Generate(name, pattern, null);
+					return secretor.Generate(name, pattern, null);
 				case 1:
-					return secretProvider.Generate(name, pattern, context.Expression.Arguments[0]);
+					return secretor.Generate(name, pattern, context.Expression.Arguments[0]);
 			}
 
 			//定义返回验证码的数组
@@ -96,7 +96,7 @@ namespace Zongsoft.Security.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				results[i] = secretProvider.Generate(name, pattern, context.Expression.Arguments[i]);
+				results[i] = secretor.Generate(name, pattern, context.Expression.Arguments[i]);
 			}
 
 			return results;

@@ -30,6 +30,7 @@
 using System;
 using System.ComponentModel;
 
+using Zongsoft.Caching;
 using Zongsoft.Services;
 
 namespace Zongsoft.Security.Commands
@@ -38,10 +39,6 @@ namespace Zongsoft.Security.Commands
 	[Description("Text.SecretCommand.Description")]
 	public class SecretCommand : CommandBase<CommandContext>
 	{
-		#region 成员字段
-		private ISecretProvider _secret;
-		#endregion
-
 		#region 构造函数
 		public SecretCommand() : base("Secret")
 		{
@@ -53,43 +50,37 @@ namespace Zongsoft.Security.Commands
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置验证码提供程序。
-		/// </summary>
-		[Zongsoft.Services.ServiceDependency]
-		public ISecretProvider Secret
-		{
-			get
-			{
-				return _secret;
-			}
-			set
-			{
-				_secret = value;
-			}
-		}
+		/// <summary>获取或设置验证码提供程序。</summary>
+		public ISecretor Secretor { get; set; }
 		#endregion
 
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			if(context.Parameter is ISecretProvider)
-				_secret = (ISecretProvider)context.Parameter;
+			switch(context.Parameter)
+			{
+				case ISecretor secretor:
+					this.Secretor = secretor;
+					break;
+				case ICache cache:
+					this.Secretor = Zongsoft.Security.Secretor.GetSecretor(cache);
+					break;
+			}
 
-			return null;
+			return this.Secretor;
 		}
 		#endregion
 
 		#region 内部方法
-		internal static ISecretProvider FindSecretProvider(CommandTreeNode node)
+		internal static ISecretor FindSecretor(CommandTreeNode node)
 		{
 			if(node == null)
 				return null;
 
 			if(node.Command is SecretCommand command)
-				return command.Secret;
+				return command.Secretor;
 
-			return FindSecretProvider(node.Parent);
+			return FindSecretor(node.Parent);
 		}
 		#endregion
 	}
