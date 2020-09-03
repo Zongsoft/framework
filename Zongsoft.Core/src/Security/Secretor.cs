@@ -28,14 +28,13 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 
 using Zongsoft.Caching;
-using Zongsoft.Services;
 
 namespace Zongsoft.Security
 {
-	[Service(typeof(ISecretProvider))]
-	public class SecretProvider : ISecretProvider
+	public class Secretor : ISecretor
 	{
 		#region 常量定义
 		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -47,14 +46,10 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
-		public SecretProvider() : this(null)
-		{
-		}
-
-		public SecretProvider(ICache cache)
+		public Secretor(ICache cache)
 		{
 			//设置缓存容器
-			this.Cache = cache;
+			this.Cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
 			//设置属性的默认值
 			_expiry = TimeSpan.FromMinutes(10);
@@ -64,13 +59,9 @@ namespace Zongsoft.Security
 
 		#region 公共属性
 		/// <summary>
-		/// 获取或设置秘密内容的缓存容器。
+		/// 获取秘密内容的缓存容器。
 		/// </summary>
-		[ServiceDependency]
-		public ICache Cache
-		{
-			get; set;
-		}
+		public ICache Cache { get; }
 
 		/// <summary>
 		/// 获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。
@@ -248,6 +239,20 @@ namespace Zongsoft.Security
 				timestamp = EPOCH.AddSeconds(number);
 
 			return !string.IsNullOrEmpty(secret);
+		}
+		#endregion
+
+		#region 静态方法
+		private static readonly ConcurrentDictionary<ICache, ISecretor> _secretors = new ConcurrentDictionary<ICache, ISecretor>();
+
+		public static ISecretor GetSecretor(ICache cache, Func<ICache, ISecretor> factory = null)
+		{
+			if(cache == null)
+				throw new ArgumentNullException(nameof(cache));
+
+			return factory == null ?
+				_secretors.GetOrAdd(cache, key => new Secretor(key)) :
+				_secretors.GetOrAdd(cache, key => factory(key));
 		}
 		#endregion
 	}

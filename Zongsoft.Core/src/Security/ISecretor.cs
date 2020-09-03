@@ -34,24 +34,13 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 提供秘密（验证码）生成和校验功能的接口。
 	/// </summary>
-	public interface ISecretProvider
+	public interface ISecretor
 	{
-		/// <summary>
-		/// 获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。
-		/// </summary>
-		TimeSpan Expiry
-		{
-			get; set;
-		}
+		/// <summary>获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。</summary>
+		TimeSpan Expiry { get; set; }
 
-		/// <summary>
-		/// 获取或设置重新生成秘密（验证码）的最小间隔时长，如果为零则表示不做限制。
-		/// </summary>
-		TimeSpan Period
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置重新生成秘密（验证码）的最小间隔时长，如果为零则表示不做限制。</summary>
+		TimeSpan Period { get; set; }
 
 		/// <summary>
 		/// 生成一个指定名称的秘密（验证码）。
