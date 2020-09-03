@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -36,7 +35,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
-using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
@@ -47,12 +45,23 @@ namespace Zongsoft.Security.Web.Controllers
 	public class AuthenticationController : ControllerBase
 	{
 		#region 公共方法
-		[HttpPost("{id:int:required}")]
-		public async Task<IActionResult> Verify(uint id)
+		[HttpPost]
+		[Authorize]
+		public async Task<IActionResult> Verify()
 		{
+			var identity = this.User.Identity;
+
+			if(identity == null || !identity.IsAuthenticated)
+				return this.Unauthorized();
+
+			var userId = identity.GetIdentifier<uint>();
+
+			if(userId == 0)
+				return this.Unauthorized();
+
 			var password = await this.Request.ReadAsStringAsync();
 
-			return Authentication.Instance.Verify(id, password) switch
+			return Authentication.Instance.Verify(userId, password) switch
 			{
 				AuthenticationReason.None => this.NoContent(),
 				AuthenticationReason.InvalidIdentity => this.NotFound(),
@@ -73,6 +82,10 @@ namespace Zongsoft.Security.Web.Controllers
 
 			//处理头部参数
 			this.FillParameters(ref parameters);
+
+			//如果参数数超过特定值则返回无效的请求
+			if(parameters != null && parameters.Count > 10)
+				return Task.FromResult((IActionResult)this.BadRequest());
 
 			//进行身份验证
 			var result = string.IsNullOrEmpty(request.Secret) ?
@@ -146,30 +159,11 @@ namespace Zongsoft.Security.Web.Controllers
 		public struct AuthenticationRequest
 		{
 			#region 公共属性
-			public string Identity
-			{
-				get; set;
-			}
-
-			public string Password
-			{
-				get; set;
-			}
-
-			public string Secret
-			{
-				get; set;
-			}
-
-			public string Namespace
-			{
-				get; set;
-			}
-
-			public IDictionary<string, object> Parameters
-			{
-				get; set;
-			}
+			public string Identity { get; set; }
+			public string Password { get; set; }
+			public string Secret { get; set; }
+			public string Namespace { get; set; }
+			public IDictionary<string, object> Parameters { get; set; }
 			#endregion
 		}
 
