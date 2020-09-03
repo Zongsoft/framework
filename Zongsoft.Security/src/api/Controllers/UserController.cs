@@ -277,7 +277,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[AllowAnonymous]
-		[HttpGet("{id:long}/Verify/{type:required}")]
+		[HttpPost("{id:long}/Verify/{type:required}")]
 		public Task<IActionResult> Verify(uint id, string type, [FromQuery]string secret)
 		{
 			return this.UserProvider.Verify(id, type, secret) ?
