@@ -213,7 +213,9 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetEmail(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetEmail(id, content, true) ?
+				(IActionResult)this.RedirectToAction(nameof(Verify), new { id, type = "user.email" }) :
+				(IActionResult)this.NotFound();
 		}
 
 		[HttpPatch("{id:long}/Phone")]
@@ -225,7 +227,9 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetPhone(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetPhone(id, content, true) ?
+				(IActionResult)this.RedirectToAction(nameof(Verify), new { id, type = "user.phone" }) :
+				(IActionResult)this.NotFound();
 		}
 
 		[HttpPatch("{id:long}/Description")]
