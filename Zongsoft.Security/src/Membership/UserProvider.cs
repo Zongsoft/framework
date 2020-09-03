@@ -59,6 +59,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 成员字段
 		private IDataAccess _dataAccess;
+		private ISecretor _secretor;
 		private readonly IServiceProvider _services;
 		#endregion
 
@@ -78,9 +79,6 @@ namespace Zongsoft.Security.Membership
 
 		[ServiceDependency]
 		public Attempter Attempter { get; set; }
-
-		[ServiceDependency]
-		public ISecretProvider SecretProvider { get; set; }
 
 		[ServiceDependency]
 		public ICensorship Censorship { get; set; }
@@ -122,13 +120,13 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Exists<IUser>(MembershipHelper.GetUserIdentity(identity) & this.GetNamespace(@namespace));
 		}
 
-		public bool SetEmail(uint userId, string email)
+		public bool SetEmail(uint userId, string email, bool verifiable = true)
 		{
 			//确认指定的用户编号是否有效
 			userId = GetUserId(userId);
 
 			//判断是否邮箱地址是否需要校验
-			if(this.IsVerifyEmailRequired())
+			if(verifiable)
 			{
 				//获取指定编号的用户
 				var user = this.GetUser(userId);
@@ -157,13 +155,13 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		public bool SetPhone(uint userId, string phone)
+		public bool SetPhone(uint userId, string phone, bool verifiable = true)
 		{
 			//确认指定的用户编号是否有效
 			userId = GetUserId(userId);
 
 			//判断是否电话号码是否需要校验
-			if(this.IsVerifyPhoneRequired())
+			if(verifiable)
 			{
 				//获取指定编号的用户
 				var user = this.GetUser(userId);
@@ -609,11 +607,6 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var secretor = this.SecretProvider;
-
-			if(secretor == null)
-				throw new InvalidOperationException("Missing secret provider.");
-
 			//解析用户标识的查询条件
 			var condition = MembershipHelper.GetUserIdentity(identity, out var identityType);
 
@@ -635,7 +628,7 @@ namespace Zongsoft.Security.Membership
 						throw new InvalidOperationException("The user's email is unset.");
 
 					//生成校验密文
-					var secret = secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
+					var secret = this.GetSecretor().Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
 
 					//发送忘记密码的邮件通知
 					CommandExecutor.Default.Execute($"email.send -template:{KEY_AUTHENTICATION_TEMPLATE} {user.Email}", new
@@ -651,7 +644,7 @@ namespace Zongsoft.Security.Membership
 						throw new InvalidOperationException("The user's phone-number is unset.");
 
 					//生成校验密文
-					secret = secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
+					secret = this.GetSecretor().Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
 
 					//发送忘记密码的短信通知
 					CommandExecutor.Default.Execute($"phone.send -template:{KEY_AUTHENTICATION_TEMPLATE} {user.Phone}", new
@@ -674,13 +667,8 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(secret))
 				return false;
 
-			var secretProvider = this.SecretProvider;
-
-			if(secret == null)
-				throw new InvalidOperationException("Missing secret provider.");
-
 			//如果重置密码的校验码验证成功
-			if(secretProvider.Verify($"{KEY_FORGET_SECRET}:{userId}", secret))
+			if(this.GetSecretor().Verify($"{KEY_FORGET_SECRET}:{userId}", secret))
 			{
 				//确认新密码是否符合密码规则
 				this.OnValidatePassword(newPassword);
@@ -817,13 +805,8 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(type))
 				throw new ArgumentNullException(nameof(type));
 
-			var verifier = SecretProvider;
-
-			if(verifier == null)
-				return false;
-
 			//校验指定的密文
-			var succeed = verifier.Verify($"{type}:{userId}", secret, out var extra);
+			var succeed = this.GetSecretor().Verify($"{type}:{userId}", secret, out var extra);
 
 			//如果校验成功并且密文中有附加数据
 			if(succeed && (extra != null && extra.Length > 0))
@@ -858,12 +841,12 @@ namespace Zongsoft.Security.Membership
 		#region 虚拟方法
 		protected virtual bool IsVerifyEmailRequired()
 		{
-			return (this.Options.Verification & Configuration.IdentityVerification.Email) == Configuration.IdentityVerification.Email && this.SecretProvider != null;
+			return (this.Options.Verification & Configuration.IdentityVerification.Email) == Configuration.IdentityVerification.Email;
 		}
 
 		protected virtual bool IsVerifyPhoneRequired()
 		{
-			return (this.Options.Verification & Configuration.IdentityVerification.Phone) == Configuration.IdentityVerification.Phone && this.SecretProvider != null;
+			return (this.Options.Verification & Configuration.IdentityVerification.Phone) == Configuration.IdentityVerification.Phone;
 		}
 
 		protected virtual void OnChangeEmail(IUser user, string email)
@@ -871,8 +854,7 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				return;
 
-			var secretProvider = this.SecretProvider ?? throw new InvalidOperationException("Missing required secret provider for the user's email change operation.");
-			var secret = secretProvider.Generate($"{KEY_EMAIL_SECRET}:{user.UserId}", email);
+			var secret = this.GetSecretor().Generate($"{KEY_EMAIL_SECRET}:{user.UserId}", email);
 
 			CommandExecutor.Default.Execute($"email.send -template:{KEY_EMAIL_SECRET} {email}", new
 			{
@@ -886,8 +868,7 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				return;
 
-			var secretProvider = this.SecretProvider ?? throw new InvalidOperationException("Missing required secret provider for the user's phone change operation.");
-			var secret = secretProvider.Generate($"{KEY_PHONE_SECRET}:{user.UserId}", phone);
+			var secret = this.GetSecretor().Generate($"{KEY_PHONE_SECRET}:{user.UserId}", phone);
 
 			CommandExecutor.Default.Execute($"phone.send -template:{KEY_IMPORTANT_CHANGE_TEMPLATE} {phone}", new
 			{
@@ -921,6 +902,18 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 私有方法
+		private ISecretor GetSecretor()
+		{
+			if(_secretor == null)
+			{
+				var cacheProvider = _services.GetRequiredService<IServiceProvider<Zongsoft.Caching.ICache>>();
+				var cache = cacheProvider?.GetService(Modules.Security) ?? cacheProvider?.GetService(string.Empty);
+				_secretor = Secretor.GetSecretor(cache) ?? throw new InvalidOperationException("Missing the required secretor.");
+			}
+
+			return _secretor;
+		}
+
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private void Censor(string name)
 		{

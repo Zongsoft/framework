@@ -64,9 +64,6 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public Attempter Attempter { get; set; }
 
-		[ServiceDependency]
-		public ISecretProvider Secretor { get; set; }
-
 		public IDataAccess DataAccess
 		{
 			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor(Modules.Security));
@@ -196,7 +193,10 @@ namespace Zongsoft.Security.Membership
 			if(user.Status != UserStatus.Active)
 				return AuthenticationResult.Fail(AuthenticationReason.AccountDisabled);
 
-			if(!this.Secretor.Verify(GetSecretKey(identity, @namespace), secret))
+			//获取必须的秘密生成器
+			var secretor = Secretor.GetSecretor(this.Cache) ?? throw new InvalidOperationException($"Missing a required secretor.");
+
+			if(!secretor.Verify(GetSecretKey(identity, @namespace), secret))
 			{
 				//通知验证尝试失败
 				if(attempter != null)
@@ -218,7 +218,8 @@ namespace Zongsoft.Security.Membership
 		#region 获取秘密
 		public void Secret(string identity, string @namespace = null)
 		{
-			var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing a required secret provider.");
+			//获取必须的秘密生成器
+			var secretor = Secretor.GetSecretor(this.Cache) ?? throw new InvalidOperationException($"Missing a required secretor.");
 			var secret = secretor.Generate(GetSecretKey(identity, @namespace));
 
 			switch(MembershipHelper.GetIdentityType(identity))
