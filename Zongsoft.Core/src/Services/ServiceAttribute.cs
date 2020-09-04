@@ -39,9 +39,20 @@ namespace Zongsoft.Services
 		{
 			this.Contracts = contracts;
 		}
+
+		public ServiceAttribute(string name, params Type[] contracts)
+		{
+			this.Name = name;
+			this.Contracts = contracts;
+		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>
+		/// 获取服务的名称。
+		/// </summary>
+		public string Name { get; }
+
         /// <summary>
         /// 获取服务的契约类型数组，如果为空则表示服务的类型即为该注解所标示的类型。
         /// </summary>
