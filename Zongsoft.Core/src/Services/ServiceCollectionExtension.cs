@@ -124,6 +124,9 @@ namespace Zongsoft.Services
 
 			services.AddSingleton((Type)type);
 
+			if(!string.IsNullOrEmpty(attribute.Name))
+				ServiceProviderExtension.Register(attribute.Name, type);
+
 			if(attribute.Contracts != null)
 			{
 				var contracts = attribute.Contracts;

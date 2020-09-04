@@ -30,6 +30,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,9 +38,49 @@ namespace Zongsoft.Services
 {
 	public static class ServiceProviderExtension
 	{
+		#region 私有变量
+		private static readonly ConcurrentDictionary<string, Type> _naming = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 内部方法
+		internal static bool Register(string name, Type serviceType)
+		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			if(name.Length > 7 && name.EndsWith("Service"))
+				_naming.TryAdd(name.Substring(0, name.Length - 7), serviceType);
+
+			return _naming.TryAdd(name, serviceType);
+		}
+		#endregion
+
+		#region 公共方法
 		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name = null)
 		{
 			return services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
+		}
+
+		public static object Resolve(this IServiceProvider services, string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(_naming.TryGetValue(name, out var type))
+				return services.GetService(type);
+
+			return null;
+		}
+
+		public static object ResolveRequired(this IServiceProvider services, string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(_naming.TryGetValue(name, out var type))
+				return services.GetRequiredService(type);
+
+			throw new InvalidOperationException($"The service named '{name}' does not exist.");
 		}
 
 		public static T Resolve<T>(this IServiceProvider services)
@@ -118,5 +159,6 @@ namespace Zongsoft.Services
 					yield return item;
 			}
 		}
+		#endregion
 	}
 }
