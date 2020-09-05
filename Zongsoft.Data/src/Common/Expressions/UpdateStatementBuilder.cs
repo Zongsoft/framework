@@ -59,7 +59,7 @@ namespace Zongsoft.Data.Common.Expressions
 			statement.Where = this.Where(context, statement);
 
 			if(statement.Fields.Count == 0)
-				throw new DataException($"The update statement is missing a necessary set clause.");
+				throw new DataException($"The update statement is missing a required set clause.");
 
 			yield return statement;
 		}
