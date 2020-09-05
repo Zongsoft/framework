@@ -84,8 +84,9 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		/// <param name="userId">要验证的用户编号。</param>
 		/// <param name="password">验证的用户密码。</param>
-		/// <returns>返回验证成功或失败的缘由。</returns>
-		AuthenticationReason Verify(uint userId, string password);
+		/// <param name="reason">输出参数，指示验证失败的理由短语。</param>
+		/// <returns>如果验证通过则返回真(True)，否则返回假(False)。</returns>
+		bool Verify(uint userId, string password, out string reason);
 
 		/// <summary>
 		/// 生成一个验证码，并将其发送到指定用户标识所对应的手机或电子邮箱中。
