@@ -33,25 +33,25 @@ using System.Runtime.Serialization;
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 授权验证失败时引发的异常。
+	/// 表示授权验证失败时引发的异常。
 	/// </summary>
 	[Serializable]
-	public class AuthorizationException : ApplicationException
+	public class AuthorizationException : SecurityException
 	{
 		#region 构造函数
 		public AuthorizationException() : base(Properties.Resources.Text_AuthorizationException_Message)
 		{
 		}
 
-		public AuthorizationException(string message) : base(message ?? Properties.Resources.Text_AuthorizationException_Message)
+		public AuthorizationException(string reason) : base(reason, Properties.Resources.Text_AuthorizationException_Message)
 		{
 		}
 
-		public AuthorizationException(string message, Exception innerException) : base(message ?? Properties.Resources.Text_AuthorizationException_Message, innerException)
+		public AuthorizationException(string reason, string message) : base(reason, message ?? Properties.Resources.Text_AuthorizationException_Message)
 		{
 		}
 
-		protected AuthorizationException(SerializationInfo info, StreamingContext context) : base(info, context)
+		public AuthorizationException(string reason, string message, Exception innerException) : base(reason, message ?? Properties.Resources.Text_AuthorizationException_Message, innerException)
 		{
 		}
 		#endregion

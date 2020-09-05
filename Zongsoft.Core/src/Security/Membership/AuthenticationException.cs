@@ -33,72 +33,26 @@ using System.Runtime.Serialization;
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 身份验证失败时引发的异常。
+	/// 表示身份验证失败时引发的异常。
 	/// </summary>
 	[Serializable]
-	public class AuthenticationException : ApplicationException
+	public class AuthenticationException : SecurityException
 	{
 		#region 构造函数
-		public AuthenticationException()
-		{
-			this.Reason = AuthenticationReason.Unknown;
-		}
-
-		public AuthenticationException(string message) : base(message, null)
-		{
-			this.Reason = AuthenticationReason.Unknown;
-		}
-
-		public AuthenticationException(string message, Exception innerException) : base(message, innerException)
-		{
-			this.Reason = AuthenticationReason.Unknown;
-		}
-
-		public AuthenticationException(AuthenticationReason reason) : this(reason, string.Empty, null)
+		public AuthenticationException() : base(Properties.Resources.Text_AuthenticationException_Message)
 		{
 		}
 
-		public AuthenticationException(AuthenticationReason reason, string message) : this(reason, message, null)
+		public AuthenticationException(string reason) : base(reason, Properties.Resources.Text_AuthenticationException_Message, null)
 		{
 		}
 
-		public AuthenticationException(AuthenticationReason reason, string message, Exception innerException) : base(message, innerException)
+		public AuthenticationException(string reason, string message) : base(reason, message)
 		{
-			this.Reason = reason;
 		}
 
-		protected AuthenticationException(SerializationInfo info, StreamingContext context) : base(info, context)
+		public AuthenticationException(string reason, string message, Exception innerException) : base(reason, message, innerException)
 		{
-			this.Reason = (AuthenticationReason)info.GetInt32(nameof(Reason));
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取验证失败的原因。
-		/// </summary>
-		public AuthenticationReason Reason { get; }
-
-		/// <inheritdoc />
-		public override string Message
-		{
-			get
-			{
-				var message = base.Message;
-
-				if(string.IsNullOrEmpty(message))
-					return Common.EnumUtility.GetEnumDescription(this.Reason);
-
-				return message;
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-			info.AddValue(nameof(Reason), this.Reason);
 		}
 		#endregion
 	}

@@ -32,47 +32,51 @@ using System.Runtime.Serialization;
 
 namespace Zongsoft.Security
 {
+	[Serializable]
 	public class SecurityException : Exception
 	{
-		#region 成员字段
-		private string _reason;
-		#endregion
-
 		#region 构造函数
 		public SecurityException()
 		{
+			this.Reason = SecurityReasons.Unknown;
 		}
 
 		public SecurityException(string message) : base(message, null)
 		{
+			this.Reason = SecurityReasons.Unknown;
 		}
 
 		public SecurityException(string message, Exception innerException) : base(message, innerException)
 		{
+			this.Reason = SecurityReasons.Unknown;
 		}
 
 		public SecurityException(string reason, string message) : base(message, null)
 		{
-			_reason = reason;
+			this.Reason = reason;
 		}
 
 		public SecurityException(string reason, string message, Exception innerException) : base(message, innerException)
 		{
-			_reason = reason;
+			this.Reason = reason;
 		}
 
 		protected SecurityException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
-			_reason = info.GetString("Reason");
+			this.Reason = info.GetString(nameof(Reason));
 		}
 		#endregion
 
+		#region 公共方法
+		/// <summary>获取或设置异常理由的短语。</summary>
+		public string Reason { get; set; }
+		#endregion
+
 		#region 重写方法
-		public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
+		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			base.GetObjectData(info, context);
-
-			info.AddValue("Reason", _reason);
+			info.AddValue(nameof(Reason), this.Reason);
 		}
 		#endregion
 	}

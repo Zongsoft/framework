@@ -42,7 +42,7 @@ namespace Zongsoft.Security.Membership
 			this.Parameters = parameters;
 		}
 
-		private AuthenticationResult(AuthenticationReason reason, IDictionary<string, object> parameters)
+		private AuthenticationResult(string reason, IDictionary<string, object> parameters)
 		{
 			this.Reason = reason;
 			this.Parameters = parameters;
@@ -51,7 +51,7 @@ namespace Zongsoft.Security.Membership
 		private AuthenticationResult(Exception exception, IDictionary<string, object> parameters)
 		{
 			this.Exception = exception;
-			this.Reason = AuthenticationReason.Unknown;
+			this.Reason = SecurityReasons.Unknown;
 			this.Parameters = parameters;
 		}
 		#endregion
@@ -63,7 +63,7 @@ namespace Zongsoft.Security.Membership
 
 		public IClaimsPrincipalTransformer Transformer { get; set; }
 
-		public AuthenticationReason Reason { get; }
+		public string Reason { get; }
 
 		public Exception Exception { get; }
 
@@ -76,7 +76,7 @@ namespace Zongsoft.Security.Membership
 
 		public bool Failed
 		{
-			get => this.Reason != AuthenticationReason.None || this.Exception != null || this.Identity == null || !this.Identity.IsAuthenticated;
+			get => !string.IsNullOrEmpty(this.Reason) || this.Exception != null || this.Identity == null || !this.Identity.IsAuthenticated;
 		}
 		#endregion
 
@@ -110,7 +110,7 @@ namespace Zongsoft.Security.Membership
 			return new AuthenticationResult(identity ?? throw new ArgumentNullException(nameof(identity)), parameters);
 		}
 
-		public static AuthenticationResult Fail(AuthenticationReason reason, IDictionary<string, object> parameters = null)
+		public static AuthenticationResult Fail(string reason, IDictionary<string, object> parameters = null)
 		{
 			return new AuthenticationResult(reason, parameters);
 		}

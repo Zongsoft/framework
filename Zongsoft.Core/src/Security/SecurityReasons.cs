@@ -28,38 +28,34 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership
+namespace Zongsoft.Security
 {
 	/// <summary>
-	/// 表示验证失败原因的枚举。
+	/// 提供安全理由短语的定义类。
 	/// </summary>
-	public enum AuthenticationReason
+	public static class SecurityReasons
 	{
-		None = 0,
-
 		/// <summary>未知的原因</summary>
-		[Description("${Text.AuthenticationReason.Unknown}")]
-		Unknown = -1,
+		public static readonly string Unknown = nameof(Unknown);
+
 		/// <summary>禁止验证通过</summary>
-		[Description("${Text.AuthenticationReason.Forbidden}")]
-		Forbidden = -2,
+		public static readonly string Forbidden = nameof(Forbidden);
 
 		/// <summary>无效的身份标识</summary>
-		[Description("${Text.AuthenticationReason.InvalidIdentity}")]
-		InvalidIdentity = 1,
+		public static readonly string InvalidIdentity = nameof(InvalidIdentity);
+
 		/// <summary>无效的密码</summary>
-		[Description("${Text.AuthenticationReason.InvalidPassword}")]
-		InvalidPassword = 2,
+		public static readonly string InvalidPassword = nameof(InvalidPassword);
+
 		/// <summary>帐户尚未批准</summary>
-		[Description("${Text.AuthenticationReason.AccountUnapproved}")]
-		AccountUnapproved = 3,
-		/// <summary>帐户被暂时挂起（可能是因为密码验证失败次数过多。）</summary>
-		[Description("${Text.AuthenticationReason.AccountSuspended}")]
-		AccountSuspended = 4,
+		public static readonly string AccountUnapproved = nameof(AccountUnapproved);
+
+		/// <summary>帐户被暂时挂起（可能因为密码验证失败次数过多）</summary>
+		public static readonly string AccountSuspended = nameof(AccountSuspended);
+
 		/// <summary>帐户已被禁用</summary>
-		[Description("${Text.AuthenticationReason.AccountDisabled}")]
-		AccountDisabled = 5,
+		public static readonly string AccountDisabled = nameof(AccountDisabled);
 	}
 }
