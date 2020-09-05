@@ -34,11 +34,11 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 
 using Microsoft.Net.Http.Headers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Zongsoft.Web.Security
 {
@@ -81,6 +81,23 @@ namespace Zongsoft.Web.Security
 			return principal == null ?
 				Task.FromResult(AuthenticateResult.Fail("Invalid credential Id.")) :
 				Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, this.Scheme.Name)));
+		}
+
+		protected override async Task HandleForbiddenAsync(AuthenticationProperties properties)
+		{
+			if(properties != null && properties.Parameters.Count > 0)
+			{
+				if(properties.Parameters.TryGetValue("Reason", out var reason) && reason != null)
+					this.Response.Headers.Add("X-Security-Reason", reason.ToString());
+
+				if(properties.Parameters.TryGetValue("Message", out var message) && message != null)
+				{
+					this.Response.ContentType = "text/plain; charset=utf-8";
+					await this.Response.WriteAsync(message.ToString(), System.Text.Encoding.UTF8);
+				}
+			}
+
+			await base.HandleForbiddenAsync(properties);
 		}
 
 		protected override Task HandleSignInAsync(ClaimsPrincipal user, AuthenticationProperties properties)
