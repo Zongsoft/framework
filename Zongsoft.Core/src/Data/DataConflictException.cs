@@ -59,45 +59,35 @@ namespace Zongsoft.Data
 		{
 		}
 
-		public DataConflictException(string driverName, int code, string key, string value) : base(driverName, code)
+		public DataConflictException(string driverName, int code, string key, string value, params string[] fields) : base(driverName, code)
 		{
 			this.Key = key;
 			this.Value = value;
+			this.Fields = fields;
 		}
 
 		protected DataConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 			this.Key = info.GetString(nameof(Key));
 			this.Value = info.GetString(nameof(Value));
+			this.Fields = info.GetValue(nameof(Fields), typeof(string[])) as string[];
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置数据冲突的键名。
-		/// </summary>
-		public string Key
-		{
-			get; set;
-		}
+		/// <summary>获取或设置数据冲突的键名。</summary>
+		public string Key { get; set; }
 
-		/// <summary>
-		/// 获取或设置数据冲突的键值。
-		/// </summary>
-		public string Value
-		{
-			get; set;
-		}
+		/// <summary>获取或设置数据冲突的键值。</summary>
+		public string Value { get; set; }
 
-		/// <summary>
-		/// 获取数据冲突异常的消息文本。
-		/// </summary>
+		/// <summary>获取或设置冲突的字段名数组。</summary>
+		public string[] Fields { get; set; }
+
+		/// <summary>获取数据冲突异常的消息文本。</summary>
 		public override string Message
 		{
-			get
-			{
-				return string.Format(Properties.Resources.Text_DataConflictException_Message, this.Key, this.Value);
-			}
+			get => string.Format(Properties.Resources.Text_DataConflictException_Message, this.Key, this.Value);
 		}
 		#endregion
 
@@ -108,6 +98,7 @@ namespace Zongsoft.Data
 
 			info.AddValue(nameof(Key), this.Key);
 			info.AddValue(nameof(Value), this.Value);
+			info.AddValue(nameof(Fields), this.Fields);
 		}
 		#endregion
 	}
