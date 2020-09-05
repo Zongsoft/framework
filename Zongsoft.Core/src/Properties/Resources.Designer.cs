@@ -196,6 +196,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 身份验证失败。 的本地化字符串。
+        /// </summary>
+        internal static string Text_AuthenticationException_Message {
+            get {
+                return ResourceManager.GetString("Text.AuthenticationException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 帐户已被封。 的本地化字符串。
         /// </summary>
         internal static string Text_AuthenticationReason_AccountDisabled {
@@ -259,7 +268,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 验证失败 的本地化字符串。
+        ///   查找类似 其他未知原因。 的本地化字符串。
         /// </summary>
         internal static string Text_AuthenticationReason_Unknown {
             get {

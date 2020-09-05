@@ -162,6 +162,9 @@
   <data name="Error.UnSupportedNodeType" xml:space="preserve">
     <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
+  <data name="Text.AuthenticationException.Message" xml:space="preserve">
+    <value>身份验证失败。</value>
+  </data>
   <data name="Text.AuthenticationReason.AccountDisabled" xml:space="preserve">
     <value>帐户已被封。</value>
   </data>
@@ -184,7 +187,7 @@
     <value>验证成功</value>
   </data>
   <data name="Text.AuthenticationReason.Unknown" xml:space="preserve">
-    <value>验证失败</value>
+    <value>其他未知原因。</value>
   </data>
   <data name="Text.AuthorizationException.Message" xml:space="preserve">
     <value>禁止访问，您没有访问这项资源的授权。</value>
