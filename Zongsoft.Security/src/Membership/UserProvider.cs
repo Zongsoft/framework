@@ -591,15 +591,27 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done("#" + userId.ToString(), null);
 
-			//重新生成密码随机数
-			var passwordSalt = this.GetPasswordSalt();
+			if(string.IsNullOrEmpty(newPassword))
+			{
+				return this.DataAccess.Update<IUser>(
+					   new
+					   {
+						   Password = DBNull.Value,
+						   PasswordSalt = DBNull.Value,
+					   }, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+			}
+			else
+			{
+				//重新生成密码随机数
+				var passwordSalt = this.GetPasswordSalt();
 
-			return this.DataAccess.Update<IUser>(
-				new
-				{
-					Password = PasswordUtility.HashPassword(newPassword, passwordSalt),
-					PasswordSalt = passwordSalt,
-				}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+				return this.DataAccess.Update<IUser>(
+					new
+					{
+						Password = PasswordUtility.HashPassword(newPassword, passwordSalt),
+						PasswordSalt = passwordSalt,
+					}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+			}
 		}
 
 		public uint ForgetPassword(string identity, string @namespace = null)
