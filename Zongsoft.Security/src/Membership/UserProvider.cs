@@ -73,7 +73,7 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
+			get => _dataAccess ??= _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security);
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
@@ -569,7 +569,7 @@ namespace Zongsoft.Security.Membership
 
 			//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
 			if(attempter != null && !attempter.Verify("#" + userId.ToString(), null))
-				throw new AuthenticationException(AuthenticationReason.AccountSuspended);
+				throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
 
 			//获取用户密码及密码盐
 			var secret = this.DataAccess.Select<UserPasswordToken>(Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
@@ -584,7 +584,7 @@ namespace Zongsoft.Security.Membership
 					attempter.Fail("#" + userId.ToString(), null);
 
 				//抛出验证失败异常
-				throw new AuthenticationException(AuthenticationReason.InvalidPassword);
+				throw new SecurityException(SecurityReasons.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
@@ -797,7 +797,7 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			if(!PasswordUtility.VerifyPassword(password, token.Password, token.PasswordSalt))
-				throw new SecurityException("Verification:Password", "The password verify failed.");
+				throw new SecurityException(SecurityReasons.InvalidPassword, "The password verify failed.");
 
 			return this.DataAccess.Update<IUser>(new
 			{

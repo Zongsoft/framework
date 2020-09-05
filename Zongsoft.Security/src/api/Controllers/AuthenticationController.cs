@@ -61,11 +61,16 @@ namespace Zongsoft.Security.Web.Controllers
 
 			var password = await this.Request.ReadAsStringAsync();
 
-			return Authentication.Instance.Verify(userId, password) switch
+			if(Authentication.Instance.Verify(userId, password, out var reason))
+				return this.NoContent();
+
+			//添加失败原因短语到返回头
+			this.Response.Headers.Add("X-Security-Reason", reason);
+
+			return reason switch
 			{
-				AuthenticationReason.None => this.NoContent(),
-				AuthenticationReason.InvalidIdentity => this.NotFound(),
-				AuthenticationReason.InvalidPassword => this.BadRequest(),
+				nameof(SecurityReasons.InvalidIdentity) => this.NotFound(),
+				nameof(SecurityReasons.InvalidPassword) => this.BadRequest(),
 				_ => this.Forbid(),
 			};
 		}
@@ -173,14 +178,12 @@ namespace Zongsoft.Security.Web.Controllers
 			public AuthenticationFailure(AuthenticationResult result)
 			{
 				this.Reason = result.Reason;
-				this.Message = result.Exception != null ?
-					result.Exception.Message :
-					Common.EnumUtility.GetEnumDescription(result.Reason);
+				this.Message = result.Exception?.Message;
 			}
 			#endregion
 
 			#region 公共属性
-			public AuthenticationReason Reason { get; }
+			public string Reason { get; }
 			public string Message { get; }
 			#endregion
 		}
