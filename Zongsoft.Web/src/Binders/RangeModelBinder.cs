@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Zongsoft.Web.Binding
+namespace Zongsoft.Web.Binders
 {
 	public class RangeModelBinder<T> : IModelBinder where T : struct, IComparable<T>
 	{

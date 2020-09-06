@@ -32,7 +32,7 @@ using System.Collections.Concurrent;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Zongsoft.Web.Binding
+namespace Zongsoft.Web.Binders
 {
 	[Zongsoft.Services.Service]
 	public class RangeModelBinderProvider : IModelBinderProvider
