@@ -36,7 +36,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 using Zongsoft.Data;
 
-namespace Zongsoft.Web
+namespace Zongsoft.Web.Binders
 {
 	internal class SortingBinder : IModelBinder
 	{
