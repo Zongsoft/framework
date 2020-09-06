@@ -73,7 +73,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("Query")]
-		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(SortingBinder))]Sorting[] sortings = null)
+		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
 		{
 			return this.Paginate(this.DataService.Select(Conditional.ToCondition(conditional), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page ?? Paging.Page(1), sortings));
 		}
