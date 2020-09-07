@@ -36,18 +36,14 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据访问的上下文基类。
 	/// </summary>
-	public abstract class DataAccessContextBase : IDataAccessContextBase, IDisposable, INotifyPropertyChanged
+	public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable, INotifyPropertyChanged where TOptions : IDataOptions
 	{
 		#region 事件定义
 		public event PropertyChangedEventHandler PropertyChanged;
 		#endregion
 
-		#region 成员字段
-		private IDictionary<string, object> _states;
-		#endregion
-
 		#region 构造函数
-		protected DataAccessContextBase(IDataAccess dataAccess, string name, DataAccessMethod method, IDictionary<string, object> states)
+		protected DataAccessContextBase(IDataAccess dataAccess, string name, DataAccessMethod method, TOptions options)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -55,7 +51,7 @@ namespace Zongsoft.Data
 			this.Name = name;
 			this.Method = method;
 			this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
-			_states = states;
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
 		}
 		#endregion
 
@@ -93,11 +89,16 @@ namespace Zongsoft.Data
 		}
 
 		/// <summary>
+		/// 获取当前数据操作的选项对象。
+		/// </summary>
+		public TOptions Options { get; }
+
+		/// <summary>
 		/// 获取一个值，指示当前上下文是否含有附加的状态数据。
 		/// </summary>
 		public bool HasStates
 		{
-			get => _states != null && _states.Count > 0;
+			get => this.Options.HasStates;
 		}
 
 		/// <summary>
@@ -105,13 +106,7 @@ namespace Zongsoft.Data
 		/// </summary>
 		public IDictionary<string, object> States
 		{
-			get
-			{
-				if(_states == null)
-					System.Threading.Interlocked.CompareExchange(ref _states, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _states;
-			}
+			get => this.Options.States;
 		}
 		#endregion
 
@@ -123,10 +118,6 @@ namespace Zongsoft.Data
 
 		protected virtual void Dispose(bool disposing)
 		{
-			var states = _states;
-
-			if(states != null)
-				states.Clear();
 		}
 		#endregion
 

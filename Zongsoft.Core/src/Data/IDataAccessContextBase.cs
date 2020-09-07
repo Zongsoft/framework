@@ -52,4 +52,14 @@ namespace Zongsoft.Data
 		/// <summary>获取当前上下文的附加状态数据集。</summary>
 		IDictionary<string, object> States { get; }
 	}
+
+	/// <summary>
+	/// 表示数据访问的上下文的基本接口。
+	/// </summary>
+	/// <typeparam name="TOptions">当前数据操作的选项类型。</typeparam>
+	public interface IDataAccessContextBase<TOptions> : IDataAccessContextBase where TOptions : IDataOptions
+	{
+		/// <summary>获取当前数据访问操作的选项对象。</summary>
+		TOptions Options { get; }
+	}
 }
