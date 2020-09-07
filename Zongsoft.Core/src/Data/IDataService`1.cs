@@ -51,15 +51,15 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 查询方法
-		new IEnumerable<TModel> Select(IDictionary<string, object> states = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(IDataSelectOptions options = null, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, IDataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDictionary<string, object> states, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
 		#endregion
 	}
 }
