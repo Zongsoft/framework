@@ -60,7 +60,7 @@ namespace Zongsoft.Data
 	public class DataExistContext : DataExistContextBase, IDataAccessContext
 	{
 		#region 构造函数
-		public DataExistContext(IDataAccess dataAccess, string name, ICondition condition, IDictionary<string, object> states = null) : base(dataAccess, name, condition, states)
+		public DataExistContext(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, criteria, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -91,7 +91,7 @@ namespace Zongsoft.Data
 	public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext
 	{
 		#region 构造函数
-		public DataExecuteContext(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDictionary<string, object> states = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, states)
+		public DataExecuteContext(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -122,7 +122,7 @@ namespace Zongsoft.Data
 	public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext
 	{
 		#region 构造函数
-		public DataAggregateContext(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, aggregate, criteria, states)
+		public DataAggregateContext(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, aggregate, criteria, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -144,7 +144,7 @@ namespace Zongsoft.Data
 	public class DataIncrementContext : DataIncrementContextBase, IDataMutateContext
 	{
 		#region 构造函数
-		public DataIncrementContext(IDataAccess dataAccess, string name, string member, ICondition condition, int interval, IDictionary<string, object> states = null) : base(dataAccess, name, member, condition, interval, states)
+		public DataIncrementContext(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, IDataIncrementOptions options = null) : base(dataAccess, name, member, criteria, interval, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -175,7 +175,7 @@ namespace Zongsoft.Data
 	public class DataDeleteContext : DataDeleteContextBase, IDataMutateContext
 	{
 		#region 构造函数
-		public DataDeleteContext(IDataAccess dataAccess, string name, ICondition condition, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, condition, schema, states)
+		public DataDeleteContext(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, criteria, schema, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -214,7 +214,7 @@ namespace Zongsoft.Data
 	public class DataInsertContext : DataInsertContextBase, IDataMutateContext
 	{
 		#region 构造函数
-		public DataInsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, isMultiple, data, schema, states)
+		public DataInsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -253,7 +253,7 @@ namespace Zongsoft.Data
 	public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext
 	{
 		#region 构造函数
-		public DataUpdateContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition condition, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, isMultiple, data, condition, schema, states)
+		public DataUpdateContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, isMultiple, data, criteria, schema, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -292,7 +292,7 @@ namespace Zongsoft.Data
 	public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext
 	{
 		#region 构造函数
-		public DataUpsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, isMultiple, data, schema, states)
+		public DataUpsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
@@ -331,7 +331,7 @@ namespace Zongsoft.Data
 	public class DataSelectContext : DataSelectContextBase, IDataAccessContext
 	{
 		#region 构造函数
-		public DataSelectContext(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition condition, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, entityType, grouping, condition, schema, paging, sortings, states)
+		public DataSelectContext(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, entityType, grouping, criteria, schema, paging, sortings, options)
 		{
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
