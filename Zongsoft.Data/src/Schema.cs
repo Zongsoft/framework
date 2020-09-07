@@ -40,46 +40,28 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		internal Schema(SchemaParser parser, string text, Metadata.IDataEntity entity, Type entityType, Collections.INamedCollection<SchemaMember> entries)
+		internal Schema(SchemaParser parser, string text, Metadata.IDataEntity entity, Type modelType, Collections.INamedCollection<SchemaMember> entries)
 		{
 			_parser = parser ?? throw new ArgumentNullException(nameof(parser));
 			this.Text = text ?? throw new ArgumentNullException(nameof(text));
 			this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
-			this.EntityType = entityType;
+			this.ModelType = modelType;
 			_members = entries ?? new Collections.NamedCollection<SchemaMember>(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get => this.Entity.Name;
-		}
+		public string Name { get => this.Entity.Name; }
 
-		public string Text
-		{
-			get;
-		}
+		public string Text { get; }
 
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
-		public Type EntityType
-		{
-			get;
-		}
+		public Type ModelType { get; }
 
-		public bool IsEmpty
-		{
-			get => _members == null || _members.Count == 0;
-		}
+		public bool IsEmpty { get => _members == null || _members.Count == 0; }
 
-		public Collections.INamedCollection<SchemaMember> Members
-		{
-			get => _members;
-		}
+		public Collections.INamedCollection<SchemaMember> Members { get => _members; }
 		#endregion
 
 		#region 公共方法

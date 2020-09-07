@@ -153,7 +153,7 @@ namespace Zongsoft.Data
 		#region 内部方法
 		internal void Append(Schema schema, string expression)
 		{
-			var entries = base.Parse(expression, token => this.Resolve(token), new SchemaData(schema.Entity, schema.EntityType), schema.Members);
+			var entries = base.Parse(expression, token => this.Resolve(token), new SchemaData(schema.Entity, schema.ModelType), schema.Members);
 		}
 		#endregion
 

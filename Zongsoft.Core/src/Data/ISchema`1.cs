@@ -41,10 +41,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据模式元素集合。
 		/// </summary>
-		Collections.INamedCollection<TMember> Members
-		{
-			get;
-		}
+		Collections.INamedCollection<TMember> Members { get; }
 
 		/// <summary>
 		/// 查找指定路径的模式元素。
