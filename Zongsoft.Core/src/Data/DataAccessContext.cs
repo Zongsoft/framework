@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class DataExistContextBase : DataAccessContextBase
+	public class DataExistContextBase : DataAccessContextBase<IDataExistsOptions>
 	{
 		#region 成员字段
 		private ICondition _criteria;
@@ -41,7 +41,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Exists, states)
+		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? DataExistsOptions.Empty)
 		{
 			_criteria = criteria;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
@@ -117,7 +117,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataExecuteContextBase : DataAccessContextBase
+	public class DataExecuteContextBase : DataAccessContextBase<IDataExecuteOptions>
 	{
 		#region 成员字段
 		private bool _isScalar;
@@ -128,7 +128,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Execute, states)
+		protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? DataExecuteOptions.Empty)
 		{
 			_isScalar = isScalar;
 			_resultType = resultType ?? throw new ArgumentNullException(nameof(resultType));
@@ -228,7 +228,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataAggregateContextBase : DataAccessContextBase
+	public class DataAggregateContextBase : DataAccessContextBase<IDataAggregateOptions>
 	{
 		#region 成员字段
 		private double? _result;
@@ -236,7 +236,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Aggregate, states)
+		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, DataAccessMethod.Aggregate, options ?? DataAggregateOptions.Empty)
 		{
 			_criteria = criteria;
 			this.Aggregate = aggregate;
@@ -318,7 +318,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataIncrementContextBase : DataAccessContextBase, IDataMutateContextBase
+	public class DataIncrementContextBase : DataAccessContextBase<IDataIncrementOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private int _count;
@@ -329,7 +329,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval = 1, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Increment, states)
+		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null) : base(dataAccess, name, DataAccessMethod.Increment, options ?? DataIncrementOptions.Empty)
 		{
 			if(string.IsNullOrEmpty(member))
 				throw new ArgumentNullException(nameof(member));
@@ -472,7 +472,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataSelectContextBase : DataAccessContextBase
+	public class DataSelectContextBase : DataAccessContextBase<IDataSelectOptions>
 	{
 		#region 委托定义
 		public delegate bool FilterDelegate(DataSelectContextBase context, ref object data);
@@ -489,7 +489,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
+		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, DataAccessMethod.Select, options ?? DataSelectOptions.Empty)
 		{
 			_grouping = grouping;
 			_criteria = criteria;
@@ -681,7 +681,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataDeleteContextBase : DataAccessContextBase, IDataMutateContextBase
+	public class DataDeleteContextBase : DataAccessContextBase<IDataDeleteOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private int _count;
@@ -690,7 +690,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Delete, states)
+		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, DataAccessMethod.Delete, options ?? DataDeleteOptions.Empty)
 		{
 			_criteria = criteria;
 			_schema = schema;
@@ -799,7 +799,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataInsertContextBase : DataAccessContextBase, IDataMutateContextBase
+	public class DataInsertContextBase : DataAccessContextBase<IDataInsertOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private int _count;
@@ -809,7 +809,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Insert, states)
+		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Insert, options ?? DataInsertOptions.Empty)
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_schema = schema;
@@ -920,7 +920,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataUpdateContextBase : DataAccessContextBase, IDataMutateContextBase
+	public class DataUpdateContextBase : DataAccessContextBase<IDataUpdateOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private int _count;
@@ -931,7 +931,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Update, states)
+		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? DataUpdateOptions.Empty)
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_criteria = criteria;
@@ -1073,7 +1073,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataUpsertContextBase : DataAccessContextBase, IDataMutateContextBase
+	public class DataUpsertContextBase : DataAccessContextBase<IDataUpsertOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private int _count;
@@ -1083,7 +1083,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Upsert, states)
+		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Upsert, options ?? DataUpsertOptions.Empty)
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_schema = schema;
