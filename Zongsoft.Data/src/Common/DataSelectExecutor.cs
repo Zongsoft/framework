@@ -60,7 +60,7 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(statement);
-			context.Result = CreateResults(context.EntityType, context, statement, command, null);
+			context.Result = CreateResults(context.ModelType, context, statement, command, null);
 
 			return false;
 		}

@@ -224,7 +224,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var key in statement.Entity.Key)
 				{
-					if(!statement.Entity.GetTokens(context.EntityType).TryGet(key.Name, out var token))
+					if(!statement.Entity.GetTokens(context.ModelType).TryGet(key.Name, out var token))
 						throw new DataException($"No required primary key field values were specified for the updation '{statement.Entity.Name}' entity data.");
 
 					var field = statement.Table.CreateField(key);

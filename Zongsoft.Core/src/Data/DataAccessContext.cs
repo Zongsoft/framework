@@ -489,7 +489,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
+		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
 		{
 			_grouping = grouping;
 			_condition = criteria;
@@ -497,7 +497,7 @@ namespace Zongsoft.Data
 			_paging = paging;
 			_sortings = sortings;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.EntityType = entityType ?? typeof(object);
+			this.ModelType = modelType ?? typeof(object);
 			this.Validator = dataAccess.Validator;
 		}
 		#endregion
@@ -514,7 +514,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取查询要返回的结果集元素类型。
 		/// </summary>
-		public Type EntityType
+		public Type ModelType
 		{
 			get;
 		}
@@ -532,7 +532,7 @@ namespace Zongsoft.Data
 				}
 
 				if(_resultFilter != null && _result is IPageable source)
-					Pageable.Filter(source, this.EntityType, OnFilter);
+					Pageable.Filter(source, this.ModelType, OnFilter);
 
 				return _result;
 			}
@@ -888,7 +888,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取插入数据的元素类型。
 		/// </summary>
-		public virtual Type EntityType
+		public virtual Type ModelType
 		{
 			get
 			{
@@ -1003,7 +1003,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取更新数据的元素类型。
 		/// </summary>
-		public virtual Type EntityType
+		public virtual Type ModelType
 		{
 			get
 			{
@@ -1162,7 +1162,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取操作数据的元素类型。
 		/// </summary>
-		public virtual Type EntityType
+		public virtual Type ModelType
 		{
 			get
 			{
