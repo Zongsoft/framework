@@ -36,14 +36,14 @@ namespace Zongsoft.Data
 	public class DataExistContextBase : DataAccessContextBase
 	{
 		#region 成员字段
-		private ICondition _condition;
+		private ICondition _criteria;
 		private bool _result;
 		#endregion
 
 		#region 构造函数
 		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Exists, states)
 		{
-			_condition = criteria;
+			_criteria = criteria;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
 		}
@@ -61,19 +61,19 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置判断操作的条件。
 		/// </summary>
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value;
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -111,8 +111,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 	}
@@ -232,13 +232,13 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private double? _result;
-		private ICondition _condition;
+		private ICondition _criteria;
 		#endregion
 
 		#region 构造函数
 		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Aggregate, states)
 		{
-			_condition = criteria;
+			_criteria = criteria;
 			this.Aggregate = aggregate;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
@@ -276,19 +276,19 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置聚合操作的条件。
 		/// </summary>
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value;
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -312,8 +312,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 	}
@@ -323,7 +323,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private int _count;
 		private string _member;
-		private ICondition _condition;
+		private ICondition _criteria;
 		private int _interval;
 		private long _result;
 		#endregion
@@ -339,7 +339,7 @@ namespace Zongsoft.Data
 
 			_member = member;
 			_interval = interval;
-			_condition = criteria ?? throw new ArgumentNullException(nameof(criteria));
+			_criteria = criteria ?? throw new ArgumentNullException(nameof(criteria));
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
 		}
@@ -386,19 +386,19 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value ?? throw new ArgumentNullException();
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value ?? throw new ArgumentNullException();
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -449,8 +449,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 
@@ -480,7 +480,7 @@ namespace Zongsoft.Data
 
 		#region 成员字段
 		private IEnumerable _result;
-		private ICondition _condition;
+		private ICondition _criteria;
 		private ISchema _schema;
 		private Paging _paging;
 		private Grouping _grouping;
@@ -492,7 +492,7 @@ namespace Zongsoft.Data
 		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Select, states)
 		{
 			_grouping = grouping;
-			_condition = criteria;
+			_criteria = criteria;
 			_schema = schema;
 			_paging = paging;
 			_sortings = sortings;
@@ -568,19 +568,19 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置查询操作的条件。
 		/// </summary>
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value;
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -675,8 +675,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 	}
@@ -685,14 +685,14 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private int _count;
-		private ICondition _condition;
+		private ICondition _criteria;
 		private ISchema _schema;
 		#endregion
 
 		#region 构造函数
 		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Delete, states)
 		{
-			_condition = criteria;
+			_criteria = criteria;
 			_schema = schema;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.Validator = dataAccess.Validator;
@@ -730,19 +730,19 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置删除操作的条件。
 		/// </summary>
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value;
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -780,8 +780,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 
@@ -925,7 +925,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private int _count;
 		private object _data;
-		private ICondition _condition;
+		private ICondition _criteria;
 		private ISchema _schema;
 		private bool _isMultiple;
 		#endregion
@@ -934,7 +934,7 @@ namespace Zongsoft.Data
 		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDictionary<string, object> states = null) : base(dataAccess, name, DataAccessMethod.Update, states)
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
-			_condition = criteria;
+			_criteria = criteria;
 			_schema = schema;
 			_isMultiple = isMultiple;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
@@ -1017,19 +1017,19 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置更新操作的条件。
 		/// </summary>
-		public ICondition Condition
+		public ICondition Criteria
 		{
 			get
 			{
-				return _condition;
+				return _criteria;
 			}
 			set
 			{
-				if(_condition == value)
+				if(_criteria == value)
 					return;
 
-				_condition = value;
-				this.OnPropertyChanged(nameof(Condition));
+				_criteria = value;
+				this.OnPropertyChanged(nameof(Criteria));
 			}
 		}
 
@@ -1067,8 +1067,8 @@ namespace Zongsoft.Data
 			var validator = this.Validator;
 
 			return validator == null ?
-				criteria ?? this.Condition :
-				validator.Validate(this, criteria ?? this.Condition);
+				criteria ?? this.Criteria :
+				validator.Validate(this, criteria ?? this.Criteria);
 		}
 		#endregion
 	}
