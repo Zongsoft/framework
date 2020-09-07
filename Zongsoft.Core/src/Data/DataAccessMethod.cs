@@ -60,7 +60,7 @@ namespace Zongsoft.Data
 		/// <summary>更新方法</summary>
 		Update,
 
-		/// <summary>新增或更新</summary>
+		/// <summary>增改方法</summary>
 		Upsert,
 	}
 }
