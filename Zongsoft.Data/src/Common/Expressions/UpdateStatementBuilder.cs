@@ -218,7 +218,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 		private IExpression Where(DataUpdateContext context, UpdateStatement statement)
 		{
-			if(context.IsMultiple || context.Condition == null)
+			if(context.IsMultiple || context.Criteria == null)
 			{
 				var criteria = new ConditionExpression(ConditionCombination.And);
 
