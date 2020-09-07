@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据删除操作选项的类。
 	/// </summary>
-	public class DataDeleteOptions : DataOptionsBase, IDataDeleteOptions { }
+	public class DataDeleteOptions : DataOptionsBase, IDataDeleteOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据删除操作的选项实例。</summary>
+		public static readonly DataDeleteOptions Empty = new DataDeleteOptions();
+		#endregion
+	}
 }

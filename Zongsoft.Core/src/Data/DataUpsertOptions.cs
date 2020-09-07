@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据增改操作选项的类。
 	/// </summary>
-	public class DataUpsertOptions : DataOptionsBase, IDataUpsertOptions { }
+	public class DataUpsertOptions : DataOptionsBase, IDataUpsertOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据增改操作的选项实例。</summary>
+		public static readonly DataUpsertOptions Empty = new DataUpsertOptions();
+		#endregion
+	}
 }

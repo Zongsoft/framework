@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据新增操作选项的类。
 	/// </summary>
-	public class DataInsertOptions : DataOptionsBase, IDataInsertOptions { }
+	public class DataInsertOptions : DataOptionsBase, IDataInsertOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据新增操作的选项实例。</summary>
+		public static readonly DataInsertOptions Empty = new DataInsertOptions();
+		#endregion
+	}
 }

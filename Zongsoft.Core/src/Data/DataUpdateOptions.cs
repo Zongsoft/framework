@@ -59,8 +59,15 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataUpdateOptions : DataOptionsBase, IDataUpdateOptions
 	{
+		#region 单例字段
+		/// <summary>获取一个空的数据更新操作的选项实例。</summary>
+		public static readonly DataUpdateOptions Empty = new DataUpdateOptions();
+		#endregion
+
+		#region 公共属性
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
+		#endregion
 	}
 
 	/// <summary>

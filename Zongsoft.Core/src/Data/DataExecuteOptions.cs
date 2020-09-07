@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据执行操作选项的类。
 	/// </summary>
-	public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions { }
+	public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据执行操作的选项实例。</summary>
+		public static readonly DataExecuteOptions Empty = new DataExecuteOptions();
+		#endregion
+	}
 }

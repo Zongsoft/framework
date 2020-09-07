@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据递增(递减)操作选项的类。
 	/// </summary>
-	public class DataIncrementOptions : DataOptionsBase, IDataIncrementOptions { }
+	public class DataIncrementOptions : DataOptionsBase, IDataIncrementOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据递增(递减)操作的选项实例。</summary>
+		public static readonly DataIncrementOptions Empty = new DataIncrementOptions();
+		#endregion
+	}
 }

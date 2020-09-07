@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据存在操作选项的类。
 	/// </summary>
-	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions { }
+	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据存在操作的选项实例。</summary>
+		public static readonly DataExistsOptions Empty = new DataExistsOptions();
+		#endregion
+	}
 }

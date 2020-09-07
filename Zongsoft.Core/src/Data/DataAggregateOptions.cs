@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据聚合操作选项的类。
 	/// </summary>
-	public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions { }
+	public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据聚合操作的选项实例。</summary>
+		public static readonly DataAggregateOptions Empty = new DataAggregateOptions();
+		#endregion
+	}
 }

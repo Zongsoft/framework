@@ -40,5 +40,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据查询操作选项的类。
 	/// </summary>
-	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions { }
+	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
+	{
+		#region 单例字段
+		/// <summary>获取一个空的数据查询操作的选项实例。</summary>
+		public static readonly DataSelectOptions Empty = new DataSelectOptions();
+		#endregion
+	}
 }
