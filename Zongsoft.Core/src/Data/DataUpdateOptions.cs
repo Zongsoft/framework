@@ -75,6 +75,14 @@ namespace Zongsoft.Data
 	/// </summary>
 	public static class DataUpdateOptionsExtension
 	{
+		public static bool HasBehaviors(this IDataUpdateOptions options, UpdateBehaviors behaviors)
+		{
+			if(options == null)
+				return false;
+
+			return (options.Behaviors & behaviors) == behaviors;
+		}
+
 		public static IDataUpdateOptions EnableBehaviors(this IDataUpdateOptions options, UpdateBehaviors behaviors)
 		{
 			if(options == null)
