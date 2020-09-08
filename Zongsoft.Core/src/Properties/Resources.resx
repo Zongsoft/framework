@@ -219,6 +219,9 @@
   <data name="Text.DataConflictException.Message" xml:space="preserve">
     <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
   </data>
+  <data name="Text.DataConstraintException.Message" xml:space="preserve">
+    <value>数据约束失败。</value>
+  </data>
   <data name="Text.ExitCommand.Confirm" xml:space="preserve">
     <value>您确认是否要退出(输入Yes则退出)？</value>
   </data>

@@ -367,6 +367,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 数据约束失败。 的本地化字符串。
+        /// </summary>
+        internal static string Text_DataConstraintException_Message {
+            get {
+                return ResourceManager.GetString("Text.DataConstraintException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 您确认是否要退出(输入Yes则退出)？ 的本地化字符串。
         /// </summary>
         internal static string Text_ExitCommand_Confirm {
