@@ -117,7 +117,7 @@ namespace Zongsoft.Data.Common.Expressions
 					break;
 			}
 
-			visitor.Visit(joining.Condition);
+			visitor.Visit(joining.Conditions);
 		}
 
 		public static void VisitWhere(this IExpressionVisitor visitor, IExpression where)

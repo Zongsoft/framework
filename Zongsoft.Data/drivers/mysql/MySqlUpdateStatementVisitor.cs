@@ -106,7 +106,7 @@ namespace Zongsoft.Data.MySql
 					if(source is JoinClause join)
 					{
 						expressions.Add(join.Type == JoinType.Inner ? Expression.Literal("AND") : Expression.Literal("OR"));
-						expressions.Add(join.Condition);
+						expressions.Add(join.Conditions);
 					}
 				}
 

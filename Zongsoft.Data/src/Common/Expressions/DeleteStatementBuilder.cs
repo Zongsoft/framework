@@ -160,7 +160,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var link in complex.Links)
 				{
-					join.Condition.Add(
+					join.Conditions.Add(
 						Expression.Equal(
 							statement.Table.CreateField(link.Role),
 							reference.CreateField(link.Name)));
@@ -200,7 +200,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var key in entity.Key)
 				{
-					join.Condition.Add(
+					join.Conditions.Add(
 						Expression.Equal(
 							statement.Table.CreateField(key),
 							reference.CreateField(key)));

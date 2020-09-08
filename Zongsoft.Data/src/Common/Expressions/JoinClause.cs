@@ -46,7 +46,7 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			this.Name = name ?? string.Empty;
 			this.Target = target ?? throw new ArgumentNullException(nameof(target));
-			this.Condition = ConditionExpression.And();
+			this.Conditions = ConditionExpression.And();
 			this.Type = type;
 		}
 		#endregion
@@ -58,45 +58,27 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <remarks>
 		///		<para>在概念层生成中通过该属性来表示导航属性的名称。</para>
 		/// </remarks>
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
 		/// <summary>
 		/// 获取关联子句的别名，即关联的目标表（源）的别名。
 		/// </summary>
-		public string Alias
-		{
-			get
-			{
-				return this.Target.Alias;
-			}
-		}
+		public string Alias { get => this.Target.Alias; }
 
 		/// <summary>
 		/// 获取关联的目标表（源）。
 		/// </summary>
-		public ISource Target
-		{
-			get;
-		}
+		public ISource Target { get; }
 
 		/// <summary>
 		/// 获取关联的种类。
 		/// </summary>
-		public JoinType Type
-		{
-			get;
-		}
+		public JoinType Type { get; }
 
 		/// <summary>
 		/// 获取关联的连接条件集。
 		/// </summary>
-		public ConditionExpression Condition
-		{
-			get;
-		}
+		public ConditionExpression Conditions { get; }
 		#endregion
 
 		#region 公共方法
@@ -200,7 +182,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			for(int i = 0; i < super.Key.Length; i++)
 			{
-				joining.Condition.Add(
+				joining.Conditions.Add(
 					Expression.Equal(
 						table.CreateField(table.Entity.Key[i]),
 						target.CreateField(target.Entity.Key[i])));
@@ -237,7 +219,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			for(int i = 0; i < target.Key.Length; i++)
 			{
-				joining.Condition.Add(
+				joining.Conditions.Add(
 					Expression.Equal(
 						targetTable.CreateField(target.Key[i]),
 						sourceTable.CreateField(sourceTable.Entity.Key[i])));
@@ -284,12 +266,12 @@ namespace Zongsoft.Data.Common.Expressions
 				foreach(var constraint in complex.Constraints)
 				{
 					if(constraint.Actor == DataAssociationConstraintActor.Principal)
-						joining.Condition.Add(
+						joining.Conditions.Add(
 							Expression.Equal(
 								source.CreateField(constraint.Name),
 								complex.GetConstraintValue(constraint)));
 					else
-						joining.Condition.Add(
+						joining.Conditions.Add(
 							Expression.Equal(
 								target.CreateField(constraint.Name),
 								complex.GetConstraintValue(constraint)));
@@ -298,7 +280,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			foreach(var link in complex.Links)
 			{
-				joining.Condition.Add(
+				joining.Conditions.Add(
 					Expression.Equal(
 						target.CreateField(link.Role),
 						source.CreateField(link.Name)));
