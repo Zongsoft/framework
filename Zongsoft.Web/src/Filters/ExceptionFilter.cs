@@ -61,7 +61,8 @@ namespace Zongsoft.Web.Filters
 			}
 			else if(context.Exception is DataConflictException conflictException)
 			{
-				context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
+				if(!string.IsNullOrEmpty(conflictException.Key))
+					context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
 
 				var problem = new ProblemDetails()
 				{
@@ -77,6 +78,16 @@ namespace Zongsoft.Web.Filters
 				}
 
 				context.Result = new ConflictObjectResult(problem);
+			}
+			else if(context.Exception is DataConstraintException constraintException)
+			{
+				if(!string.IsNullOrEmpty(constraintException.Field))
+				{
+					context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
+					context.HttpContext.Response.Headers.Add("X-Constraint-Field", constraintException.Field);
+				}
+
+				context.Result = new BadRequestResult();
 			}
 		}
 	}
