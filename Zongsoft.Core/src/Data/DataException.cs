@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
@@ -43,6 +44,10 @@ namespace Zongsoft.Data
 		}
 
 		public DataException(string message, Exception innerException = null) : base(message, innerException)
+		{
+		}
+
+		protected DataException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 		}
 		#endregion

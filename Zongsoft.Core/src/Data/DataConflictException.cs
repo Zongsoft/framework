@@ -32,34 +32,14 @@ using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 表示数据冲突的异常类。
+	/// </summary>
 	public class DataConflictException : DataAccessException
 	{
 		#region 构造函数
-		public DataConflictException(string message) : base(string.Empty, 0, message)
-		{
-		}
-
-		public DataConflictException(string message, Exception innerException) : base(string.Empty, 0, message, innerException)
-		{
-		}
-
-		public DataConflictException(string driverName, int code) : base(driverName, code)
-		{
-		}
-
-		public DataConflictException(string driverName, int code, string message) : base(driverName, code, message)
-		{
-		}
-
-		public DataConflictException(string driverName, int code, Exception innerException) : base(driverName, code, innerException)
-		{
-		}
-
-		public DataConflictException(string driverName, int code, string message, Exception innerException) : base(driverName, code, message, innerException)
-		{
-		}
-
-		public DataConflictException(string driverName, int code, string key, string value, params string[] fields) : base(driverName, code)
+		public DataConflictException(string driverName, int code, string key, string value, string[] fields, Exception innerException = null) :
+			base(driverName, code, string.Format(Properties.Resources.Text_DataConflictException_Message, key, value), innerException)
 		{
 			this.Key = key;
 			this.Value = value;
@@ -83,12 +63,6 @@ namespace Zongsoft.Data
 
 		/// <summary>获取或设置冲突的字段名数组。</summary>
 		public string[] Fields { get; set; }
-
-		/// <summary>获取数据冲突异常的消息文本。</summary>
-		public override string Message
-		{
-			get => string.Format(Properties.Resources.Text_DataConflictException_Message, this.Key, this.Value);
-		}
 		#endregion
 
 		#region 重写方法

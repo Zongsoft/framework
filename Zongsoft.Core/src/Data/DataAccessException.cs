@@ -38,25 +38,13 @@ namespace Zongsoft.Data
 	public class DataAccessException : DataException
 	{
 		#region 构造函数
-		public DataAccessException(string driverName, int code)
+		public DataAccessException(string driverName, int code, Exception innerException = null) : base(null, innerException)
 		{
 			this.Code = code;
 			this.DriverName = driverName;
 		}
 
-		public DataAccessException(string driverName, int code, string message) : base(message)
-		{
-			this.Code = code;
-			this.DriverName = driverName;
-		}
-
-		public DataAccessException(string driverName, int code, Exception innerException) : base(null, innerException)
-		{
-			this.Code = code;
-			this.DriverName = driverName;
-		}
-
-		public DataAccessException(string driverName, int code, string message, Exception innerException) : base(message, innerException)
+		public DataAccessException(string driverName, int code, string message, Exception innerException = null) : base(message, innerException)
 		{
 			this.Code = code;
 			this.DriverName = driverName;
