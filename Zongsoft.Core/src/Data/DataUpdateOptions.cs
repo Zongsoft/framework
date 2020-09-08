@@ -64,6 +64,15 @@ namespace Zongsoft.Data
 		public static readonly DataUpdateOptions Empty = new DataUpdateOptions();
 		#endregion
 
+		#region 构造函数
+		public DataUpdateOptions() { }
+
+		public DataUpdateOptions(UpdateBehaviors behaviors)
+		{
+			this.Behaviors = behaviors;
+		}
+		#endregion
+
 		#region 公共属性
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
