@@ -81,9 +81,9 @@ namespace Zongsoft.Data.MySql
 				{
 					case 1062:
 						if(this.TryGetConflict(error.Message, out var key, out var value))
-							return new DataConflictException(this.Name, error.Number, key, value);
+							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
 						else
-							return new DataConflictException(this.Name, error.Number, error);
+							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
 					default:
 						return new DataAccessException(this.Name, error.Number, error);
 				}
