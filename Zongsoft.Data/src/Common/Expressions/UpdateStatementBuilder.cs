@@ -69,7 +69,7 @@ namespace Zongsoft.Data.Common.Expressions
 		private void BuildSchema(DataUpdateContext context, UpdateStatement statement, TableIdentifier table, object data, SchemaMember member)
 		{
 			//如果不允许更新主键，则忽略对主键修改的构建
-			if(!context.Options.HasBehaviors(UpdateBehaviors.PrimaryKey) && member.Token.Property.IsPrimaryKey)
+			if(member.Token.Property.IsPrimaryKey && !context.Options.HasBehaviors(UpdateBehaviors.PrimaryKey))
 				return;
 
 			//确认指定成员是否有必须的写入值
