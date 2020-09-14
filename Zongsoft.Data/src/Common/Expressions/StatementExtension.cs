@@ -33,6 +33,7 @@ using System.Data.Common;
 using System.Collections;
 
 using Zongsoft.Data.Metadata;
+using System.Runtime.Serialization.Formatters;
 
 namespace Zongsoft.Data.Common.Expressions
 {
@@ -193,6 +194,16 @@ namespace Zongsoft.Data.Common.Expressions
 			if(condition == null)
 				throw new ArgumentNullException(nameof(condition));
 
+			if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
+			{
+				if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter)
+					return condition.Operator == ConditionOperator.Exists ?
+						Expression.Exists((IExpression)statement.GetSubquery(condition.Name, filter)) :
+						Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, filter));
+
+				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
+			}
+
 			var field = statement.GetOperandExpression(condition.Field, out _);
 
 			if(condition.Value == null)
@@ -228,16 +239,6 @@ namespace Zongsoft.Data.Common.Expressions
 					throw new DataException($"Illegal range condition value.");
 				case ConditionOperator.Like:
 					return Expression.Like(field, GetConditionValue(statement, condition.Value));
-				case ConditionOperator.Exists:
-					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter1)
-						return Expression.Exists((IExpression)statement.GetSubquery(condition.Name, filter1));
-
-					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
-				case ConditionOperator.NotExists:
-					if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter2)
-						return Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, filter2));
-
-					throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 				case ConditionOperator.In:
 					return Expression.In(field, GetConditionValue(statement, condition.Value));
 				case ConditionOperator.NotIn:
