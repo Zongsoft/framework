@@ -186,7 +186,7 @@ namespace Zongsoft.Data.Common
 					_statement = statement;
 					_reader = reader;
 					_paginate = paginate;
-					_slaves = GetSlaves(_statement, _reader);
+					_slaves = GetSlaves(_context, _statement, _reader);
 					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(entity, typeof(T), _reader);
 				}
 				#endregion
@@ -210,12 +210,7 @@ namespace Zongsoft.Data.Common
 									if(token.Schema.Token.MemberType == null)
 										continue;
 
-									object container;
-
-									if(token.Schema.Parent == null || token.Schema.Parent.Token.IsMultiple)
-										container = entity;
-									else
-										container = token.Schema.Parent.Token.GetValue(entity);
+									object container = GetCurrentContainer(entity, token);
 
 									if(container == null)
 										continue;
@@ -269,9 +264,9 @@ namespace Zongsoft.Data.Common
 				#endregion
 
 				#region 私有方法
-				private IDictionary<string, SlaveToken> GetSlaves(IStatementBase statement, IDataReader reader)
+				private static IDictionary<string, SlaveToken> GetSlaves(DataSelectContext context, IStatementBase statement, IDataReader reader)
 				{
-					IEnumerable<ParameterToken> GetParameters(string path)
+					static IEnumerable<ParameterToken> GetParameters(IDataReader reader, string path)
 					{
 						if(string.IsNullOrEmpty(path))
 							yield break;
@@ -293,10 +288,10 @@ namespace Zongsoft.Data.Common
 						{
 							if(slave is SelectStatementBase selection && !string.IsNullOrEmpty(selection.Alias))
 							{
-								var schema = _context.Schema.Find(selection.Alias);
+								var schema = context.Schema.Find(selection.Alias);
 
 								if(schema != null)
-									tokens.Add(selection.Alias, new SlaveToken(schema, GetParameters(selection.Alias)));
+									tokens.Add(selection.Alias, new SlaveToken(schema, GetParameters(reader, selection.Alias)));
 							}
 						}
 
@@ -306,15 +301,38 @@ namespace Zongsoft.Data.Common
 
 					return null;
 				}
+
+				private static object GetCurrentContainer(object entity, SlaveToken token)
+				{
+					if(token.Schema.Parent == null || token.Schema.Parent.Token.IsMultiple)
+						return entity;
+
+					var stack = new Stack<SchemaMember>();
+					var member = token.Schema.Parent;
+					var container = entity;
+
+					while(member != null)
+					{
+						stack.Push(member);
+						member = member.Parent;
+					}
+
+					while(stack.TryPop(out member))
+					{
+						container = member.Token.GetValue(container);
+
+						if(container == null)
+							return null;
+					}
+
+					return container;
+				}
 				#endregion
 
 				#region 显式实现
 				object IEnumerator.Current
 				{
-					get
-					{
-						return this.Current;
-					}
+					get => this.Current;
 				}
 				#endregion
 
