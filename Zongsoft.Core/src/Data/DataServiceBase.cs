@@ -1449,6 +1449,9 @@ namespace Zongsoft.Data
 
 			/// <summary>对应的数据访问方法种类。</summary>
 			public readonly DataAccessMethod Kind;
+
+			/// <summary>获取是否为批量写入操作。</summary>
+			public readonly bool IsMultiple;
 			#endregion
 
 			#region 构造函数
@@ -1456,29 +1459,31 @@ namespace Zongsoft.Data
 			{
 				this.Kind = kind;
 				this.Name = kind.ToString();
+				this.IsMultiple = false;
 			}
 
-			private Method(string name, DataAccessMethod kind)
+			private Method(string name, DataAccessMethod kind, bool isMultiple)
 			{
 				this.Name = name ?? kind.ToString();
 				this.Kind = kind;
+				this.IsMultiple = isMultiple;
 			}
 			#endregion
 
 			#region 静态方法
 			public static Method Get()
 			{
-				return new Method(nameof(Get), DataAccessMethod.Select);
+				return new Method(nameof(Get), DataAccessMethod.Select, false);
 			}
 
 			public static Method Count()
 			{
-				return new Method(nameof(Count), DataAccessMethod.Aggregate);
+				return new Method(nameof(Count), DataAccessMethod.Aggregate, false);
 			}
 
 			public static Method Aggregate(DataAggregateFunction aggregate)
 			{
-				return new Method(aggregate.ToString(), DataAccessMethod.Aggregate);
+				return new Method(aggregate.ToString(), DataAccessMethod.Aggregate, false);
 			}
 
 			public static Method Exists()
@@ -1493,12 +1498,12 @@ namespace Zongsoft.Data
 
 			public static Method Increment()
 			{
-				return new Method(nameof(Increment), DataAccessMethod.Increment);
+				return new Method(nameof(Increment), DataAccessMethod.Increment, false);
 			}
 
 			public static Method Decrement()
 			{
-				return new Method(nameof(Decrement), DataAccessMethod.Increment);
+				return new Method(nameof(Decrement), DataAccessMethod.Increment, false);
 			}
 
 			public static Method Select(string name = null)
@@ -1506,7 +1511,7 @@ namespace Zongsoft.Data
 				if(string.IsNullOrEmpty(name))
 					return new Method(DataAccessMethod.Select);
 				else
-					return new Method(name, DataAccessMethod.Select);
+					return new Method(name, DataAccessMethod.Select, false);
 			}
 
 			public static Method Delete()
@@ -1521,7 +1526,7 @@ namespace Zongsoft.Data
 
 			public static Method InsertMany()
 			{
-				return new Method(nameof(InsertMany), DataAccessMethod.Insert);
+				return new Method(nameof(InsertMany), DataAccessMethod.Insert, true);
 			}
 
 			public static Method Update()
@@ -1531,7 +1536,7 @@ namespace Zongsoft.Data
 
 			public static Method UpdateMany()
 			{
-				return new Method(nameof(UpdateMany), DataAccessMethod.Update);
+				return new Method(nameof(UpdateMany), DataAccessMethod.Update, true);
 			}
 
 			public static Method Upsert()
@@ -1541,19 +1546,26 @@ namespace Zongsoft.Data
 
 			public static Method UpsertMany()
 			{
-				return new Method(nameof(UpsertMany), DataAccessMethod.Upsert);
+				return new Method(nameof(UpsertMany), DataAccessMethod.Upsert, true);
 			}
 			#endregion
 
 			#region 公共方法
+			public bool IsDelete { get => this.Kind == DataAccessMethod.Delete; }
+			public bool IsInsert { get => this.Kind == DataAccessMethod.Insert; }
+			public bool IsUpdate { get => this.Kind == DataAccessMethod.Update; }
+			public bool IsUpsert { get => this.Kind == DataAccessMethod.Upsert; }
+			public bool IsSelect { get => this.Kind == DataAccessMethod.Select; }
+			public bool IsGet { get => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get); }
+
 			/// <summary>
 			/// 获取一个值，指示当前方法是否为读取方法(Select/Exists/Aggregate)。
 			/// </summary>
 			public bool IsReading
 			{
 				get => this.Kind == DataAccessMethod.Select ||
-					   this.Kind == DataAccessMethod.Exists ||
-					   this.Kind == DataAccessMethod.Aggregate;
+				       this.Kind == DataAccessMethod.Exists ||
+				       this.Kind == DataAccessMethod.Aggregate;
 			}
 
 			/// <summary>
