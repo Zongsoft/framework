@@ -1551,11 +1551,17 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共方法
+			/// <summary>获取一个值，指示当前是否为删除方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Delete"/>。</summary>
 			public bool IsDelete { get => this.Kind == DataAccessMethod.Delete; }
+			/// <summary>获取一个值，指示当前是否为新增方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Insert"/>。</summary>
 			public bool IsInsert { get => this.Kind == DataAccessMethod.Insert; }
+			/// <summary>获取一个值，指示当前是否为更新方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Update"/>。</summary>
 			public bool IsUpdate { get => this.Kind == DataAccessMethod.Update; }
+			/// <summary>获取一个值，指示当前是否为增改方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Upsert"/>。</summary>
 			public bool IsUpsert { get => this.Kind == DataAccessMethod.Upsert; }
+			/// <summary>获取一个值，指示当前是否为查询方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/>。</summary>
 			public bool IsSelect { get => this.Kind == DataAccessMethod.Select; }
+			/// <summary>获取一个值，指示当前是否为获取方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于“Get”。</summary>
 			public bool IsGet { get => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get); }
 
 			/// <summary>
