@@ -190,7 +190,7 @@ namespace Zongsoft.Data
 		int InsertMany(string name, IEnumerable items, ISchema schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 		#endregion
 
-		#region 复写方法
+		#region 增改方法
 		int Upsert<T>(T data);
 		int Upsert<T>(T data, IDataUpsertOptions options);
 		int Upsert<T>(T data, string schema);

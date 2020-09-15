@@ -835,7 +835,7 @@ namespace Zongsoft.Data
 		protected abstract void OnInsert(DataInsertContextBase context);
 		#endregion
 
-		#region 复写方法
+		#region 增改方法
 		public int Upsert<T>(T data)
 		{
 			if(data == null)
