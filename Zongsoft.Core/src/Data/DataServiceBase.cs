@@ -430,10 +430,13 @@ namespace Zongsoft.Data
 			//将当前插入数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
-			//验证待新增的数据
-			this.OnValidate(Method.Insert(), dictionary);
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, data.GetType());
 
-			return this.OnInsert(dictionary, this.GetSchema(schema, data.GetType()), options);
+			//验证待新增的数据
+			this.OnValidate(Method.Insert(), schematic, dictionary);
+
+			return this.OnInsert(dictionary, schematic, options);
 		}
 
 		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, IDataInsertOptions options)
@@ -464,13 +467,16 @@ namespace Zongsoft.Data
 			//将当前插入数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
 			foreach(var dictionary in dictionares)
 			{
 				//验证待新增的数据
-				this.OnValidate(Method.InsertMany(), dictionary);
+				this.OnValidate(Method.InsertMany(), schematic, dictionary);
 			}
 
-			return this.OnInsertMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), options);
+			return this.OnInsertMany(dictionares, schematic, options);
 		}
 
 		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataInsertOptions options)
@@ -483,7 +489,7 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 复写方法
+		#region 增改方法
 		public int Upsert(object data, IDataUpsertOptions options = null)
 		{
 			return this.Upsert(data, null, options);
@@ -503,10 +509,13 @@ namespace Zongsoft.Data
 			//将当前复写数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
-			//验证待复写的数据
-			this.OnValidate(Method.Upsert(), dictionary);
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, data.GetType());
 
-			return this.OnUpsert(dictionary, this.GetSchema(schema, data.GetType()), options);
+			//验证待复写的数据
+			this.OnValidate(Method.Upsert(), schematic, dictionary);
+
+			return this.OnUpsert(dictionary, schematic, options);
 		}
 
 		protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, IDataUpsertOptions options)
@@ -537,13 +546,16 @@ namespace Zongsoft.Data
 			//将当前复写数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
 			foreach(var dictionary in dictionares)
 			{
 				//验证待复写的数据
-				this.OnValidate(Method.UpsertMany(), dictionary);
+				this.OnValidate(Method.UpsertMany(), schematic, dictionary);
 			}
 
-			return this.OnUpsertMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), options);
+			return this.OnUpsertMany(dictionares, schematic, options);
 		}
 
 		protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataUpsertOptions options)
@@ -631,11 +643,14 @@ namespace Zongsoft.Data
 			//修整过滤条件
 			criteria = this.OnValidate(Method.Update(), criteria ?? this.EnsureUpdateCondition(dictionary));
 
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, data.GetType());
+
 			//验证待更新的数据
-			this.OnValidate(Method.Update(), dictionary);
+			this.OnValidate(Method.Update(), schematic, dictionary);
 
 			//执行更新操作
-			return this.OnUpdate(dictionary, criteria, this.GetSchema(schema, data.GetType()), options);
+			return this.OnUpdate(dictionary, criteria, schematic, options);
 		}
 
 		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
@@ -665,13 +680,16 @@ namespace Zongsoft.Data
 			//将当前更新数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
 
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
 			foreach(var dictionary in dictionares)
 			{
 				//验证待更新的数据
-				this.OnValidate(Method.UpdateMany(), dictionary);
+				this.OnValidate(Method.UpdateMany(), schematic, dictionary);
 			}
 
-			return this.OnUpdateMany(dictionares, this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType())), options);
+			return this.OnUpdateMany(dictionares, schematic, options);
 		}
 
 		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataUpdateOptions options)
@@ -1042,7 +1060,7 @@ namespace Zongsoft.Data
 			return criteria;
 		}
 
-		protected virtual void OnValidate(Method method, IDataDictionary<TModel> data)
+		protected virtual void OnValidate(Method method, ISchema schema, IDataDictionary<TModel> data)
 		{
 		}
 		#endregion
@@ -1450,7 +1468,7 @@ namespace Zongsoft.Data
 			/// <summary>对应的数据访问方法种类。</summary>
 			public readonly DataAccessMethod Kind;
 
-			/// <summary>获取是否为批量写入操作。</summary>
+			/// <summary>获取一个值，指示该方法是否为批量写入操作。</summary>
 			public readonly bool IsMultiple;
 			#endregion
 
