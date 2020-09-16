@@ -280,19 +280,26 @@ namespace Zongsoft.Security.Membership
 		}
 		#endregion
 
+		#region 质询完成
+		void IAuthenticator.OnChallenged(AuthenticationContext context)
+		{
+			var identity = context.Result.Identity;
+			var userId = identity.GetIdentifier<uint>();
+
+			if(MembershipHelper.GetAncestors(this.DataAccess, userId, identity.Name, identity.GetNamespace(), out var roles, out var hierarchies) > 0)
+				identity.AddRoles(roles.Select(role => role.Name));
+
+			foreach(var token in MembershipHelper.GetAuthorizedTokens(this.DataAccess, roles, hierarchies, userId, MemberType.User))
+			{
+				identity.AddClaim(ClaimNames.Authorization, token.Schema + ":" + string.Join(',', token.Actions.Select(a => a.Action)), ClaimValueTypes.String, this.Scheme);
+			}
+		}
+		#endregion
+
 		#region 激发事件
 		private AuthenticationResult OnAuthenticated(IUser user, IDictionary<string, object> parameters)
 		{
 			var identity = this.Identity(user);
-
-			if(MembershipHelper.GetAncestors(this.DataAccess, user, out var roles, out var hierarchies) > 0)
-				identity.AddRoles(roles.Select(role => role.Name));
-
-			foreach(var token in MembershipHelper.GetAuthorizedTokens(this.DataAccess, roles, hierarchies, user.UserId, MemberType.User))
-			{
-				identity.AddClaim(ClaimNames.Authorization, token.Schema + ":" + string.Join(',', token.Actions.Select(a => a.Action)), ClaimValueTypes.String, this.Scheme);
-			}
-
 			this.OnAuthenticated(identity, parameters);
 			return AuthenticationResult.Success(identity);
 		}

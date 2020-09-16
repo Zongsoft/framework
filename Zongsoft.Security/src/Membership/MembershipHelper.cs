@@ -67,29 +67,43 @@ namespace Zongsoft.Security.Membership
 
 		public static int GetAncestors(IDataAccess dataAccess, IUserIdentity user, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
 		{
+			if(user == null)
+			{
+				flats = null;
+				hierarchies = null;
+				return 0;
+			}
+
+			return GetAncestors(dataAccess, user.UserId, user.Name, user.Namespace, out flats, out hierarchies);
+		}
+
+		public static int GetAncestors(IDataAccess dataAccess, uint userId, string name, string @namespace, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
+		{
 			flats = null;
 			hierarchies = null;
 
-			//如果指定编号的用户不存在，则退出
-			if(user == null)
+			//如果指定的用户编号为零或用户名为空则退出
+			if(userId == 0 || string.IsNullOrEmpty(name))
 				return 0;
 
 			//如果指定编号的用户是内置的“Administrator”账号，则直接返回（因为内置管理员只隶属于内置的“Administrators”角色，而不能属于其他角色）
-			if(string.Equals(user.Name, Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, Administrator, StringComparison.OrdinalIgnoreCase))
 			{
 				//获取当前用户同命名空间下的“Administrators”内置角色
-				flats = new HashSet<IRole>(dataAccess.Select<IRole>(Condition.Equal(nameof(IRole.Name), Administrators) & Condition.Equal(nameof(IRole.Namespace), user.Namespace)));
+				flats = new HashSet<IRole>(dataAccess.Select<IRole>(Condition.Equal(nameof(IRole.Name), Administrators) & Condition.Equal(nameof(IRole.Namespace), @namespace)));
 
 				if(flats.Count > 0)
 				{
-					hierarchies = new List<IEnumerable<IRole>>();
-					hierarchies.Add(flats);
+					hierarchies = new List<IEnumerable<IRole>>
+					{
+						flats
+					};
 				}
 
 				return flats.Count;
 			}
 
-			return GetAncestors(dataAccess, user.Namespace, user.UserId, MemberType.User, out flats, out hierarchies);
+			return GetAncestors(dataAccess, @namespace, userId, MemberType.User, out flats, out hierarchies);
 		}
 
 		public static int GetAncestors(IDataAccess dataAccess, IRole role, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
