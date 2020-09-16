@@ -41,10 +41,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticationContext(string scenario, AuthenticationResult result)
+		public AuthenticationContext(string scheme, string scenario, AuthenticationResult result)
 		{
-			this.Scenario = scenario;
 			_result = result ?? throw new ArgumentNullException(nameof(result));
+
+			this.Scheme = scheme;
+			this.Scenario = scenario;
 
 			if(result.Parameters != null && result.Parameters.Count > 0)
 				_parameters = new Dictionary<string, object>(result.Parameters);
@@ -52,13 +54,19 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取验证器的方案名。</summary>
+		public string Scheme { get; }
+
+		/// <summary>获取验证的场景名。</summary>
 		public string Scenario { get; }
 
+		/// <summary>获取一个值，指示参数集是否有值。</summary>
 		public bool HasParameters
 		{
 			get => _parameters != null && _parameters.Count > 0;
 		}
 
+		/// <summary>获取参数集。</summary>
 		public IDictionary<string, object> Parameters
 		{
 			get
@@ -70,12 +78,16 @@ namespace Zongsoft.Security.Membership
 			}
 		}
 
+		/// <summary>获取当前验证的用户主体。</summary>
 		public ClaimsPrincipal Principal { get => _result?.Principal; }
 
+		/// <summary>获取一个值，指示是否验证成功。</summary>
 		public bool Succeed { get => _result?.Succeed == true; }
 
+		/// <summary>获取一个值，指示是否验证失败。</summary>
 		public bool Failed { get => _result?.Failed == true; }
 
+		/// <summary>获取验证的结果。</summary>
 		public AuthenticationResult Result
 		{
 			get => _result;
