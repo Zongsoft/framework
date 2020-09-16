@@ -91,18 +91,18 @@ namespace Zongsoft.Security.Membership
 		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return this.OnAuthenticated(scenario, authenticator.Authenticate(identity, password, @namespace, scenario, parameters));
+			return this.OnAuthenticated(authenticator, scenario, authenticator.Authenticate(identity, password, @namespace, scenario, parameters));
 		}
 
 		public AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return this.OnAuthenticated(scenario, authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters));
+			return this.OnAuthenticated(authenticator, scenario, authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters));
 		}
 		#endregion
 
 		#region 私有方法
-		private AuthenticationResult OnAuthenticated(string scenario, AuthenticationResult result)
+		private AuthenticationResult OnAuthenticated(IAuthenticator authenticator, string scenario, AuthenticationResult result)
 		{
 			if(result == null)
 				return null;
@@ -110,15 +110,20 @@ namespace Zongsoft.Security.Membership
 			if(result.Succeed)
 				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
 
-			var context = new AuthenticationContext(scenario, result);
+			var context = new AuthenticationContext(authenticator.Scheme, scenario, result);
 
 			foreach(var challenger in this.Challengers)
 			{
 				challenger.Challenge(context);
 			}
 
-			if(context.Succeed && context.Principal is CredentialPrincipal principal)
-				this.Authority.Register(principal);
+			if(context.Succeed)
+			{
+				authenticator.OnChallenged(context);
+
+				if(context.Principal is CredentialPrincipal principal)
+					this.Authority.Register(principal);
+			}
 
 			return context.Result;
 		}

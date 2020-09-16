@@ -80,6 +80,12 @@ namespace Zongsoft.Security.Membership
 		AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters);
 
 		/// <summary>
+		/// 当质询完成后回调的通知。
+		/// </summary>
+		/// <param name="context">身份验证上下文对象。</param>
+		void OnChallenged(AuthenticationContext context);
+
+		/// <summary>
 		/// 验证指定编号的用户身份。
 		/// </summary>
 		/// <param name="userId">要验证的用户编号。</param>
