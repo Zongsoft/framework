@@ -918,7 +918,7 @@ namespace Zongsoft.Data
 		{
 			//如果没有指定排序设置则应用默认排序规则
 			if(sortings == null || sortings.Length == 0)
-				sortings = this.GetSortings();
+				sortings = this.GetDefaultSortings();
 
 			return this.DataAccess.Select<TModel>(this.Name, criteria, schema, paging, options, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
@@ -1033,6 +1033,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 默认排序
+		private Sorting[] _defaultSortings;
+
+		private Sorting[] GetDefaultSortings()
+		{
+			if(_defaultSortings == null)
+				_defaultSortings = GetSortings() ?? Array.Empty<Sorting>();
+
+			return _defaultSortings;
+		}
+
 		protected virtual Sorting[] GetSortings()
 		{
 			var sortings = SortingAttribute.GetSortings(this.GetType());
@@ -1634,9 +1644,7 @@ namespace Zongsoft.Data
 		public sealed class Condition : Zongsoft.Data.Condition.Builder<TModel>
 		{
 			#region 私有构造
-			private Condition()
-			{
-			}
+			private Condition() { }
 			#endregion
 		}
 		#endregion
