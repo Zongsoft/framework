@@ -178,6 +178,28 @@ namespace Zongsoft.Security
 			return identity?.FindFirst(ClaimNames.Namespace)?.Value;
 		}
 
+		public static bool SetNamespace(this IIdentity identity, string @namespace)
+		{
+			return SetNamespace(identity as ClaimsIdentity, @namespace);
+		}
+
+		public static bool SetNamespace(this ClaimsIdentity identity, string @namespace, string issuer = null, string originalIssuer = null)
+		{
+			if(identity == null)
+				return false;
+
+			var removed = false;
+			var claims = identity.FindAll(ClaimNames.Namespace);
+
+			foreach(var claim in claims)
+				removed |= identity.TryRemoveClaim(claim);
+
+			if(string.IsNullOrWhiteSpace(@namespace))
+				return removed;
+
+			return AddClaim(identity, ClaimNames.Namespace, @namespace, ClaimValueTypes.String, issuer, originalIssuer) != null;
+		}
+
 		public static Membership.UserStatus GetStatus(this ClaimsIdentity identity)
 		{
 			var status = identity?.FindFirst(ClaimNames.UserStatus)?.Value;
