@@ -224,7 +224,7 @@ namespace Zongsoft.Data
 				{
 					return member.IsExactly ?
 						Condition.Equal(member.Name, Common.Convert.ConvertValue(literal, member.Type, () => member.Converter)) :
-						Condition.Like(member.Name, "%" + literal + "%");
+						Condition.Like(member.Name, literal + "%");
 				}
 			}
 			#endregion
