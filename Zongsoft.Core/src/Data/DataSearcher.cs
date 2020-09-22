@@ -312,8 +312,8 @@ namespace Zongsoft.Data
 
 					foreach(var member in members)
 					{
-						if(TryGetMember(type, member, out var memberInfo, out var isExactly))
-							tokens.Add(new ConditionMemberToken(memberInfo, isExactly));
+						if(TryGetMember(type, member, out var path, out var memberInfo, out var isExactly))
+							tokens.Add(new ConditionMemberToken(path, memberInfo, isExactly));
 					}
 
 					if(tokens.Count == 0)
@@ -322,8 +322,9 @@ namespace Zongsoft.Data
 					return new ConditionToken(tokens.ToArray());
 				}
 
-				private static bool TryGetMember(TypeInfo type, string pattern, out MemberInfo member, out bool isExactly)
+				private static bool TryGetMember(TypeInfo type, string pattern, out string path, out MemberInfo member, out bool isExactly)
 				{
+					path = null;
 					member = null;
 					isExactly = true;
 
@@ -335,22 +336,49 @@ namespace Zongsoft.Data
 					if(type == null || type.IsPrimitive || type == typeof(object).GetTypeInfo())
 						return false;
 
-					if(isExactly)
-						pattern = pattern.Trim('!');
-					else
-						pattern = pattern.Trim('?');
+					path = isExactly ? pattern.Trim('!') : pattern.Trim('?');
+					var parts = path.Split('.');
+					var inherits = new Stack<Type>();
 
-					do
+					for(int i = 0; i < parts.Length; i++)
 					{
-						member = type.DeclaredMembers.FirstOrDefault(m => string.Equals(m.Name, pattern, StringComparison.OrdinalIgnoreCase));
+						inherits.Clear();
 
-						if(member != null)
-							return true;
+						do
+						{
+							member = type.DeclaredMembers.FirstOrDefault(m => string.Equals(m.Name, parts[i], StringComparison.OrdinalIgnoreCase));
 
-						type = type.BaseType?.GetTypeInfo();
-					} while(type != null && type != typeof(object).GetTypeInfo());
+							if(member != null)
+								break;
 
-					return false;
+							if(type.BaseType != null)
+								inherits.Push(type.BaseType);
+
+							if(type.ImplementedInterfaces != null)
+							{
+								foreach(var contract in type.ImplementedInterfaces)
+									inherits.Push(contract);
+							}
+
+							type = inherits.Pop().GetTypeInfo();
+						} while(type != null && type != typeof(object).GetTypeInfo());
+
+						if(member == null)
+							return false;
+
+						type = member.MemberType switch
+						{
+							MemberTypes.Field => ((FieldInfo)member).FieldType.GetTypeInfo(),
+							MemberTypes.Property => ((PropertyInfo)member).PropertyType.GetTypeInfo(),
+							MemberTypes.Method => ((MethodInfo)member).ReturnType.GetTypeInfo(),
+							_ => null,
+						};
+
+						if(type == null)
+							return false;
+					}
+
+					return member != null;
 				}
 				#endregion
 
@@ -389,12 +417,12 @@ namespace Zongsoft.Data
 				#endregion
 
 				#region 构造函数
-				public ConditionMemberToken(MemberInfo member, bool isExactly)
+				public ConditionMemberToken(string name, MemberInfo member, bool isExactly)
 				{
 					if(member == null)
 						throw new ArgumentNullException(nameof(member));
 
-					this.Name = member.Name;
+					this.Name = name;
 					this.Type = member switch { PropertyInfo property => property.PropertyType, FieldInfo field => field.FieldType, _ => null };
 					this.IsExactly = isExactly;
 
