@@ -2270,6 +2270,16 @@
 							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);",
 							"            postman.setGlobalVariable(\"branchId\", jsonData.Identity.BranchId);",
 							"        }",
+							"",
+							"        if(jsonData.Identity.VendorId)",
+							"            postman.setGlobalVariable(\"vendorId\", jsonData.Identity.VendorId);",
+							"",
+							"        if(jsonData.Identity.DomainId)",
+							"            postman.setGlobalVariable(\"domainId\", jsonData.Identity.DomainId);",
+							"",
+							"        if(jsonData.Identity.Administrative)",
+							"            postman.setGlobalVariable(\"administrative\", jsonData.Identity.Administrative);",
+							"",
 							"    }",
 							"}",
 							""
@@ -2291,7 +2301,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{identity}}\",\n  \"Password\":\"{{password}}\"\n}",
+					"raw": "{\n  \"Identity\":\"{{identity}}\",\n  \"Password\":\"{{password}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
