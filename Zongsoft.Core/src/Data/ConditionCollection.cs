@@ -276,6 +276,25 @@ namespace Zongsoft.Data
 			return this.Matches(this, name, condition => { matched?.Invoke(condition); return false; });
 		}
 
+		public int AddRange(IEnumerable<ICondition> items)
+		{
+			if(items == null)
+				return 0;
+
+			var count = 0;
+
+			foreach(var item in items)
+			{
+				if(item != null)
+				{
+					this.Add(item);
+					count++;
+				}
+			}
+
+			return count;
+		}
+
 		/// <summary>
 		/// 创建一个与当前集合内容相同的新条件集，并将指定的条件项追加到新集中。
 		/// </summary>
