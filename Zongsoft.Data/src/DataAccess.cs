@@ -196,7 +196,7 @@ namespace Zongsoft.Data
 		#region 上下文法
 		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options)
 		{
-			return new DataExistContext(this, name, criteria, options);
+			return new DataExistContext(this, name, criteria.Flatten(), options);
 		}
 
 		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options)
@@ -206,17 +206,17 @@ namespace Zongsoft.Data
 
 		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options)
 		{
-			return new DataAggregateContext(this, name, aggregate, criteria, options);
+			return new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
 		}
 
 		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options)
 		{
-			return new DataIncrementContext(this, name, member, criteria, interval, options);
+			return new DataIncrementContext(this, name, member, criteria.Flatten(), interval, options);
 		}
 
 		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options)
 		{
-			return new DataDeleteContext(this, name, criteria, schema, options);
+			return new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
 		}
 
 		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options)
@@ -231,12 +231,12 @@ namespace Zongsoft.Data
 
 		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
 		{
-			return new DataUpdateContext(this, name, isMultiple, data, criteria, schema, options);
+			return new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
 		}
 
 		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options)
 		{
-			return new DataSelectContext(this, name, entityType, grouping, criteria, schema, paging, sortings, options);
+			return new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);
 		}
 		#endregion
 
