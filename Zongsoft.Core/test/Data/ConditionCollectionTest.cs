@@ -76,5 +76,75 @@ namespace Zongsoft.Data.Tests
 			Assert.Equal(2, cs.Count);
 
 		}
+
+		[Fact]
+		public void TestFlatten()
+		{
+			var conditions = ConditionCollection.And
+			(
+				Condition.Equal("Field_1", "F1.Value"),
+				Condition.Equal("Field_2", 100),
+				ConditionCollection.And
+				(
+				),
+				Condition.Equal("Field_3", DateTime.Now),
+				ConditionCollection.Or
+				(
+					Condition.Equal("Field_11", "F11.Value")
+				),
+				Condition.GreaterThan("Field_4", 150),
+				Condition.LessThan("Field_5", 5000.67),
+				ConditionCollection.And
+				(
+					Condition.Equal("Field_21", "F21.Value")
+				),
+				ConditionCollection.Or
+				(
+					Condition.Equal("Field_31", "F31.Value"),
+					Condition.Equal("Field_32", "F32.Value")
+				),
+				ConditionCollection.And
+				(
+					Condition.Equal("Field_41", "F41.Value"),
+					Condition.Equal("Field_42", "F42.Value"),
+					Condition.Equal("Field_43", "F43.Value")
+				),
+				ConditionCollection.And
+				(
+					Condition.Equal("Field_51", "F51.Value"),
+					Condition.Equal("Field_52", "F52.Value"),
+					ConditionCollection.And
+					(
+					),
+					ConditionCollection.And
+					(
+						Condition.Equal("Field_501", "F501.Value"),
+						Condition.Equal("Field_502", "F502.Value")
+					),
+					ConditionCollection.Or
+					(
+						Condition.Equal("Field_503", "F503.Value")
+					),
+					ConditionCollection.Or
+					(
+						Condition.Equal("Field_504", "F504.Value"),
+						Condition.Equal("Field_505", "F505.Value")
+					),
+					ConditionCollection.Or
+					(
+						Condition.Equal("Field_506", "F506.Value"),
+						ConditionCollection.Or
+						(
+							Condition.Equal("Field_510", "F510.Value")
+						)
+					),
+					Condition.Equal("Field_53", "F53.Value")
+				)
+			);
+
+			conditions.Flatten();
+
+			//Assert.Equal(20, conditions.Count);
+		}
 	}
 }
