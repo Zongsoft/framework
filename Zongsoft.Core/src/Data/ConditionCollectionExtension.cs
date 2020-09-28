@@ -27,12 +27,81 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 提供条件集合扩展方法的静态扩展类。
+	/// </summary>
 	public static class ConditionCollectionExtension
 	{
+		#region 集合构建
+		/// <summary>
+		/// 构建条件「与」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「与」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「与」集的其他项数组。</param>
+		/// <returns>返回构建的条件「与」集。</returns>
+		public static ConditionCollection And(this ICondition criteria, params ICondition[] conditions)
+		{
+			return Combine(ConditionCombination.And, criteria, conditions);
+		}
+
+		/// <summary>
+		/// 构建条件「与」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「与」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「与」集的其他项集合。</param>
+		/// <returns>返回构建的条件「与」集。</returns>
+		public static ConditionCollection And(this ICondition criteria, IEnumerable<ICondition> conditions)
+		{
+			return Combine(ConditionCombination.And, criteria, conditions);
+		}
+
+		/// <summary>
+		/// 构建条件「或」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「或」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「或」集的其他项数组。</param>
+		/// <returns>返回构建的条件「或」集。</returns>
+		public static ConditionCollection Or(this ICondition criteria, params ICondition[] conditions)
+		{
+			return Combine(ConditionCombination.Or, criteria, conditions);
+		}
+
+		/// <summary>
+		/// 构建条件「或」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「或」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「或」集的其他项集合。</param>
+		/// <returns>返回构建的条件「或」集。</returns>
+		public static ConditionCollection Or(this ICondition criteria, IEnumerable<ICondition> conditions)
+		{
+			return Combine(ConditionCombination.Or, criteria, conditions);
+		}
+
+		private static ConditionCollection Combine(ConditionCombination combination, ICondition criteria, IEnumerable<ICondition> conditions)
+		{
+			if(conditions == null)
+				throw new ArgumentNullException(nameof(conditions));
+
+			if(criteria == null)
+				return new ConditionCollection(combination, conditions);
+
+			if(criteria is ConditionCollection cs && cs.Combination == combination)
+			{
+				cs.AddRange(conditions);
+				return cs;
+			}
+
+			return new ConditionCollection(combination, conditions.Prepend(criteria));
+		}
+		#endregion
+
+		#region 展平处理
 		/// <summary>
 		/// 将指定的条件展平。
 		/// </summary>
@@ -93,5 +162,6 @@ namespace Zongsoft.Data
 
 			return conditions;
 		}
+		#endregion
 	}
 }
