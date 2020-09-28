@@ -39,7 +39,7 @@ namespace Zongsoft.Security.Membership
 	public class AuthorizationException : SecurityException
 	{
 		#region 构造函数
-		public AuthorizationException() : base(Properties.Resources.Text_AuthorizationException_Message)
+		public AuthorizationException() : base(SecurityReasons.Forbidden, Properties.Resources.Text_AuthorizationException_Message)
 		{
 		}
 
