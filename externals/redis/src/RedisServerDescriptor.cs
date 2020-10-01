@@ -43,7 +43,7 @@ namespace Zongsoft.Externals.Redis
 				throw new ArgumentNullException(nameof(server));
 
 			this.ServerType = server.ServerType;
-			this.IsSlave = server.IsSlave;
+			this.IsSlave = server.IsReplica;
 			this.IsConnected = server.IsConnected;
 			this.EndPoint = server.EndPoint;
 			this.Version = server.Version;
