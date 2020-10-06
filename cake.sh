@@ -2,17 +2,17 @@
 
 set -ex
 
-project_core='Zongsoft.Core/build.cake'
-project_data='Zongsoft.Data/build.cake'
-project_web='Zongsoft.Web/build.cake'
-project_plugins='Zongsoft.Plugins/build.cake'
-project_plugins_web='Zongsoft.Plugins.Web/build.cake'
-project_security='Zongsoft.Security/build.cake'
-project_commands='Zongsoft.Commands/build.cake'
-project_aliyun='externals/aliyun/build.cake'
-project_redis='externals/redis/build.cake'
+project_core="Zongsoft.Core/build.cake"
+project_data="Zongsoft.Data/build.cake"
+project_web="Zongsoft.Web/build.cake"
+project_plugins="Zongsoft.Plugins/build.cake"
+project_plugins_web="Zongsoft.Plugins.Web/build.cake"
+project_security="Zongsoft.Security/build.cake"
+project_commands="Zongsoft.Commands/build.cake"
+project_aliyun="externals/aliyun/build.cake"
+project_redis="externals/redis/build.cake"
 
-CAKE_ARGS='--verbosity=verbose'
+CAKE_ARGS="--verbosity=verbose"
 
 dotnet tool restore
 
