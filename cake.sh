@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-CAKE_ARGS="--verbosity=verbose"
-PROJECT_CORE="Zongsoft.Core/build.cake"
+CAKE_ARGS="--verbosity=verbose";
+PROJECT_CORE="Zongsoft.Core/build.cake";
 
 dotnet tool restore
 
