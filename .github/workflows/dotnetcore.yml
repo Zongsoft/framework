@@ -22,7 +22,8 @@ jobs:
     - name: Run the Cake script
       uses: cake-build/cake-action@v1
       with:
-        script-path: ./cake.ps1
+        script-path: cake.ps1
+        verbosity: Diagnostic
 
     - name: Make cake executable
       run: chmod +x ./cake.sh
