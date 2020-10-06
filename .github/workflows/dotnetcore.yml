@@ -18,8 +18,8 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Install dependencies
-      run: dotnet restore
+      run: ./cake.sh -target=restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: ./cake.sh -target=build
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: ./cake.sh -target=test
