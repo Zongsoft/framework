@@ -15,7 +15,7 @@ namespace Zongsoft.Externals.Redis.Tests
 			_redis = new RedisService("test", RedisServiceSettings.Parse("127.0.0.1"));
 		}
 
-		[Fact]
+		//[Fact]
 		public void TestIncrementByOne()
 		{
 			var KEY = GetKey();
@@ -41,7 +41,7 @@ namespace Zongsoft.Externals.Redis.Tests
 			Assert.False(_redis.Exists(KEY));
 		}
 
-		[Fact]
+		//[Fact]
 		public void TestIncrementByInterval()
 		{
 			var KEY = GetKey();
@@ -65,7 +65,7 @@ namespace Zongsoft.Externals.Redis.Tests
 			Assert.False(_redis.Exists(KEY));
 		}
 
-		[Fact]
+		//[Fact]
 		public void TestIncrementWithSeed()
 		{
 			var KEY = GetKey();
@@ -93,7 +93,7 @@ namespace Zongsoft.Externals.Redis.Tests
 			Assert.False(_redis.Exists(KEY));
 		}
 
-		#region 私有方法
+		#region 绉佹湁鏂规硶
 		private static string GetKey()
 		{
 			return "Test:SequenceId." + Zongsoft.Common.Randomizer.GenerateString() + "-" + Environment.TickCount64.ToString();
