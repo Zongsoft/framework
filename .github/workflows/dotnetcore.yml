@@ -22,8 +22,7 @@ jobs:
     - name: Run Cake script
       uses: ecampidoglio/cake-action@v1.1.1
       with:
-        target: Run-Integration-Tests
-        cake-bootstrap: true
+        cake-bootstrap: false
 
     - name: Make cake executable
       run: chmod +x ./cake.sh
