@@ -70,21 +70,12 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -101,21 +92,12 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -154,21 +136,12 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -185,29 +158,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
 		public new Schema Schema
 		{
-			get
-			{
-				return (Schema)base.Schema;
-			}
+			get => (Schema)base.Schema;
 		}
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -224,29 +185,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
 		public new Schema Schema
 		{
-			get
-			{
-				return (Schema)base.Schema;
-			}
+			get => (Schema)base.Schema;
 		}
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -263,29 +212,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
 		public new Schema Schema
 		{
-			get
-			{
-				return (Schema)base.Schema;
-			}
+			get => (Schema)base.Schema;
 		}
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -302,29 +239,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
 		public new Schema Schema
 		{
-			get
-			{
-				return (Schema)base.Schema;
-			}
+			get => (Schema)base.Schema;
 		}
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
@@ -341,29 +266,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public IDataSource Source
 		{
-			get
-			{
-				return this.Session.Source;
-			}
+			get => this.Session.Source;
 		}
 
-		public IDataProvider Provider
-		{
-			get;
-		}
+		public IDataProvider Provider { get; }
 
 		public new Schema Schema
 		{
-			get
-			{
-				return (Schema)base.Schema;
-			}
+			get => (Schema)base.Schema;
 		}
 
-		public DataSession Session
-		{
-			get;
-		}
+		public DataSession Session { get; }
 		#endregion
 	}
 
