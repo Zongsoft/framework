@@ -169,7 +169,7 @@ namespace Zongsoft.Data
 			if(sequence == null)
 				return null;
 
-			return new DataSequenceProvider(this, this.Provider, sequence);
+			return new DataSequenceProvider(this.Provider, sequence);
 		}
 		#endregion
 
@@ -260,13 +260,11 @@ namespace Zongsoft.Data
 			#region 成员字段
 			private readonly ISequence _sequence;
 			private readonly IDataProvider _provider;
-			private readonly IDataAccess _dataAccess;
 			#endregion
 
 			#region 构造函数
-			public DataSequenceProvider(IDataAccess dataAccess, IDataProvider provider, ISequence sequence)
+			public DataSequenceProvider(IDataProvider provider, ISequence sequence)
 			{
-				_dataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
 				_provider = provider ?? throw new ArgumentNullException(nameof(provider));
 				_sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
 			}
@@ -433,7 +431,7 @@ namespace Zongsoft.Data
 			private bool GetRequiredValue(IDataMutateContextBase context, IDataEntitySimplexProperty property, out object value)
 			{
 				value = null;
-				var validator = _dataAccess.Validator;
+				var validator = context.Options.ValidatorSuppressed ? null : context.Validator;
 				return validator != null && validator.OnInsert(context, property, out value);
 			}
 			#endregion
