@@ -41,7 +41,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? DataExistsOptions.Empty)
+		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? new DataExistsOptions())
 		{
 			_criteria = criteria;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
@@ -128,7 +128,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? DataExecuteOptions.Empty)
+		protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? new DataExecuteOptions())
 		{
 			_isScalar = isScalar;
 			_resultType = resultType ?? throw new ArgumentNullException(nameof(resultType));
@@ -236,7 +236,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, DataAccessMethod.Aggregate, options ?? DataAggregateOptions.Empty)
+		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, DataAccessMethod.Aggregate, options ?? new DataAggregateOptions())
 		{
 			_criteria = criteria;
 			this.Aggregate = aggregate;
@@ -329,7 +329,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null) : base(dataAccess, name, DataAccessMethod.Increment, options ?? DataIncrementOptions.Empty)
+		protected DataIncrementContextBase(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null) : base(dataAccess, name, DataAccessMethod.Increment, options ?? new DataIncrementOptions())
 		{
 			if(string.IsNullOrEmpty(member))
 				throw new ArgumentNullException(nameof(member));
@@ -489,7 +489,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, DataAccessMethod.Select, options ?? DataSelectOptions.Empty)
+		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, DataAccessMethod.Select, options ?? new DataSelectOptions())
 		{
 			_grouping = grouping;
 			_criteria = criteria;
@@ -690,7 +690,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, DataAccessMethod.Delete, options ?? DataDeleteOptions.Empty)
+		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, DataAccessMethod.Delete, options ?? new DataDeleteOptions())
 		{
 			_criteria = criteria;
 			_schema = schema;
@@ -809,7 +809,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Insert, options ?? DataInsertOptions.Empty)
+		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Insert, options ?? new DataInsertOptions())
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_schema = schema;
@@ -931,7 +931,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? DataUpdateOptions.Empty)
+		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? new DataUpdateOptions())
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_criteria = criteria;
@@ -1083,7 +1083,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Upsert, options ?? DataUpsertOptions.Empty)
+		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Upsert, options ?? new DataUpsertOptions())
 		{
 			_data = data ?? throw new ArgumentNullException(nameof(data));
 			_schema = schema;
