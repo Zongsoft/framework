@@ -38,16 +38,19 @@ namespace Zongsoft.Data
 			if(context == null)
 				throw new ArgumentNullException(nameof(context));
 
-			var validator = context.Validator;
-
-			if(validator != null)
+			if(!context.Options.ValidatorSuppressed)
 			{
-				switch(method)
+				var validator = context.Validator;
+
+				if(validator != null)
 				{
-					case DataAccessMethod.Insert:
-						return validator.OnInsert(context, property, out value);
-					case DataAccessMethod.Update:
-						return validator.OnUpdate(context, property, out value);
+					switch(method)
+					{
+						case DataAccessMethod.Insert:
+							return validator.OnInsert(context, property, out value);
+						case DataAccessMethod.Update:
+							return validator.OnUpdate(context, property, out value);
+					}
 				}
 			}
 

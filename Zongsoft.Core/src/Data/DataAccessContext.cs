@@ -71,7 +71,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -178,7 +178,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -233,6 +233,11 @@ namespace Zongsoft.Data
 		public long Result { get; set; }
 
 		/// <summary>
+		/// 获取写入操作的选项对象。
+		/// </summary>
+		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+
+		/// <summary>
 		/// 获取当前递增(减)操作的验证器。
 		/// </summary>
 		public virtual IDataValidator Validator
@@ -244,7 +249,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -366,7 +371,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -408,6 +413,11 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>
+		/// 获取写入操作的选项对象。
+		/// </summary>
+		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+
+		/// <summary>
 		/// 获取当前删除操作的验证器。
 		/// </summary>
 		public virtual IDataValidator Validator
@@ -419,7 +429,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -478,6 +488,11 @@ namespace Zongsoft.Data
 		/// 获取或设置插入操作的数据模式（即插入的数据形状结构）。
 		/// </summary>
 		public ISchema Schema { get; set; }
+
+		/// <summary>
+		/// 获取写入操作的选项对象。
+		/// </summary>
+		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
 		/// <summary>
 		/// 获取插入数据的元素类型。
@@ -548,6 +563,11 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>
+		/// 获取写入操作的选项对象。
+		/// </summary>
+		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+
+		/// <summary>
 		/// 获取更新数据的元素类型。
 		/// </summary>
 		public virtual Type ModelType
@@ -573,7 +593,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public ICondition Validate(ICondition criteria = null)
 		{
-			var validator = this.Validator;
+			var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 			return validator == null ?
 				criteria ?? this.Criteria :
@@ -619,6 +639,11 @@ namespace Zongsoft.Data
 		/// 获取或设置操作的数据模式（即更新或新增的数据形状结构）。
 		/// </summary>
 		public ISchema Schema { get; set; }
+
+		/// <summary>
+		/// 获取写入操作的选项对象。
+		/// </summary>
+		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
 		/// <summary>
 		/// 获取操作数据的元素类型。
