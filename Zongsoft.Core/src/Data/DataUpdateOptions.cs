@@ -48,7 +48,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据更新操作选项的接口。
 	/// </summary>
-	public interface IDataUpdateOptions : IDataOptions
+	public interface IDataUpdateOptions : IDataMutateOptions
 	{
 		/// <summary>获取或设置更新行为。</summary>
 		UpdateBehaviors Behaviors { get; set; }
@@ -57,7 +57,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据更新操作选项的类。
 	/// </summary>
-	public class DataUpdateOptions : DataOptionsBase, IDataUpdateOptions
+	public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	{
 		#region 单例字段
 		/// <summary>获取一个空的数据更新操作的选项实例。</summary>
@@ -76,6 +76,17 @@ namespace Zongsoft.Data
 		#region 公共属性
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
+		#endregion
+
+		#region 静态方法
+		/// <summary>
+		/// 创建一个禁用数据验证器的更新选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataUpdateOptions"/>更新选项对象。</returns>
+		public static DataUpdateOptions SuppressValidator()
+		{
+			return new DataUpdateOptions() { ValidatorSuppressed = true };
+		}
 		#endregion
 	}
 

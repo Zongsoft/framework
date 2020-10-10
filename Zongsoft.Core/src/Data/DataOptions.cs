@@ -47,4 +47,18 @@ namespace Zongsoft.Data
 		public bool HasStates { get => _states != null && _states.Count > 0; }
 		#endregion
 	}
+
+	public interface IDataMutateOptions : IDataOptions
+	{
+		/// <summary>
+		/// 获取或设置一个值，指示是否禁用<see cref="IDataValidator"/>数据验证器，默认不禁用。
+		/// </summary>
+		bool ValidatorSuppressed { get; set; }
+	}
+
+	public abstract class DataMutateOptions : DataOptionsBase, IDataMutateOptions
+	{
+		/// <inheritdoc />
+		public bool ValidatorSuppressed { get; set; }
+	}
 }

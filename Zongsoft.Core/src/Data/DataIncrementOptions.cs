@@ -35,16 +35,22 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据递增(递减)操作选项的接口。
 	/// </summary>
-	public interface IDataIncrementOptions : IDataOptions { }
+	public interface IDataIncrementOptions : IDataMutateOptions { }
 
 	/// <summary>
 	/// 表示数据递增(递减)操作选项的类。
 	/// </summary>
-	public class DataIncrementOptions : DataOptionsBase, IDataIncrementOptions
+	public class DataIncrementOptions : DataMutateOptions, IDataIncrementOptions
 	{
-		#region 单例字段
-		/// <summary>获取一个空的数据递增(递减)操作的选项实例。</summary>
-		public static readonly DataIncrementOptions Empty = new DataIncrementOptions();
+		#region 静态方法
+		/// <summary>
+		/// 创建一个禁用数据验证器的递增(递减)选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataIncrementOptions"/>递增(递减)选项对象。</returns>
+		public static DataIncrementOptions SuppressValidator()
+		{
+			return new DataIncrementOptions() { ValidatorSuppressed = true };
+		}
 		#endregion
 	}
 }

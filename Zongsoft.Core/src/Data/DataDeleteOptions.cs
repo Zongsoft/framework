@@ -35,16 +35,22 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据删除操作选项的接口。
 	/// </summary>
-	public interface IDataDeleteOptions : IDataOptions { }
+	public interface IDataDeleteOptions : IDataMutateOptions { }
 
 	/// <summary>
 	/// 表示数据删除操作选项的类。
 	/// </summary>
-	public class DataDeleteOptions : DataOptionsBase, IDataDeleteOptions
+	public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 	{
-		#region 单例字段
-		/// <summary>获取一个空的数据删除操作的选项实例。</summary>
-		public static readonly DataDeleteOptions Empty = new DataDeleteOptions();
+		#region 静态方法
+		/// <summary>
+		/// 创建一个禁用数据验证器的删除选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataDeleteOptions"/>删除选项对象。</returns>
+		public static DataDeleteOptions SuppressValidator()
+		{
+			return new DataDeleteOptions() { ValidatorSuppressed = true };
+		}
 		#endregion
 	}
 }

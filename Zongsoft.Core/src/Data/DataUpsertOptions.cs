@@ -35,16 +35,22 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据增改操作选项的接口。
 	/// </summary>
-	public interface IDataUpsertOptions : IDataOptions { }
+	public interface IDataUpsertOptions : IDataMutateOptions { }
 
 	/// <summary>
 	/// 表示数据增改操作选项的类。
 	/// </summary>
-	public class DataUpsertOptions : DataOptionsBase, IDataUpsertOptions
+	public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 	{
-		#region 单例字段
-		/// <summary>获取一个空的数据增改操作的选项实例。</summary>
-		public static readonly DataUpsertOptions Empty = new DataUpsertOptions();
+		#region 静态方法
+		/// <summary>
+		/// 创建一个禁用数据验证器的增改选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataUpsertOptions"/>增改选项对象。</returns>
+		public static DataUpsertOptions SuppressValidator()
+		{
+			return new DataUpsertOptions() { ValidatorSuppressed = true };
+		}
 		#endregion
 	}
 }

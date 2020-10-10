@@ -35,16 +35,33 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据查询操作选项的接口。
 	/// </summary>
-	public interface IDataSelectOptions : IDataOptions { }
+	public interface IDataSelectOptions : IDataOptions
+	{
+		/// <summary>
+		/// 获取或设置一个值，指示是否禁用<see cref="IDataValidator"/>数据验证器，默认不禁用。
+		/// </summary>
+		bool ValidatorSuppressed { get; set; }
+	}
 
 	/// <summary>
 	/// 表示数据查询操作选项的类。
 	/// </summary>
 	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 	{
-		#region 单例字段
-		/// <summary>获取一个空的数据查询操作的选项实例。</summary>
-		public static readonly DataSelectOptions Empty = new DataSelectOptions();
+		#region 公共属性
+		/// <inheritdoc />
+		public bool ValidatorSuppressed { get; set; }
+		#endregion
+
+		#region 静态方法
+		/// <summary>
+		/// 创建一个禁用数据验证器的查询选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
+		public static DataSelectOptions SuppressValidator()
+		{
+			return new DataSelectOptions() { ValidatorSuppressed = true };
+		}
 		#endregion
 	}
 }
