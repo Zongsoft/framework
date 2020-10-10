@@ -48,7 +48,10 @@ namespace Zongsoft.Data
 		/// <summary>获取一个值，指示是否为批量写入操作。</summary>
 		bool IsMultiple { get; }
 
+		/// <summary>获取写入操作的选项。</summary>
+		IDataMutateOptions Options { get; }
+
 		/// <summary>获取写入操作的验证器。</summary>
-		public IDataValidator Validator { get; }
+		IDataValidator Validator { get; }
 	}
 }

@@ -84,7 +84,7 @@ namespace Zongsoft.Data
 		}
 
 		/// <summary>
-		/// 获取当前数据操作的选项对象。
+		/// 获取当前数据访问操作的选项对象。
 		/// </summary>
 		public TOptions Options { get; }
 
