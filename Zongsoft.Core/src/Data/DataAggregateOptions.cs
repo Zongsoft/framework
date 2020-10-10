@@ -38,7 +38,7 @@ namespace Zongsoft.Data
 	public interface IDataAggregateOptions : IDataOptions
 	{
 		/// <summary>
-		/// 获取或设置一个值，指示是否禁用<see cref="IDataValidator"/>数据验证器，默认不禁用。
+		/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
 		/// </summary>
 		bool ValidatorSuppressed { get; set; }
 	}
