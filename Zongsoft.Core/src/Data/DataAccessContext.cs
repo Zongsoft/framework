@@ -35,17 +35,11 @@ namespace Zongsoft.Data
 {
 	public class DataExistContextBase : DataAccessContextBase<IDataExistsOptions>
 	{
-		#region 成员字段
-		private ICondition _criteria;
-		private bool _result;
-		#endregion
-
 		#region 构造函数
 		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? new DataExistsOptions())
 		{
-			_criteria = criteria;
+			this.Criteria = criteria;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -53,55 +47,24 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取或设置判断操作的条件。
 		/// </summary>
-		public ICondition Criteria
-		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value;
-				this.OnPropertyChanged(nameof(Criteria));
-			}
-		}
-
-		/// <summary>
-		/// 获取当前判断操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
+		public ICondition Criteria { get; set; }
 
 		/// <summary>
 		/// 获取判断操作的结果，即指定条件的数据是否存在。
 		/// </summary>
-		public bool Result
-		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				if(_result == value)
-					return;
+		public bool Result { get; set; }
 
-				_result = value;
-				this.OnPropertyChanged(nameof(Result));
-			}
+		/// <summary>
+		/// 获取当前判断操作的验证器。
+		/// </summary>
+		public virtual IDataValidator Validator
+		{
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 
@@ -120,20 +83,16 @@ namespace Zongsoft.Data
 	public class DataExecuteContextBase : DataAccessContextBase<IDataExecuteOptions>
 	{
 		#region 成员字段
-		private bool _isScalar;
-		private object _result;
 		private Type _resultType;
-		private IDictionary<string, object> _inParameters;
-		private IDictionary<string, object> _outParameters;
 		#endregion
 
 		#region 构造函数
 		protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? new DataExecuteOptions())
 		{
-			_isScalar = isScalar;
 			_resultType = resultType ?? throw new ArgumentNullException(nameof(resultType));
-			_inParameters = inParameters;
-			_outParameters = outParameters;
+			this.IsScalar = isScalar;
+			this.InParameters = inParameters;
+			this.OutParameters = outParameters;
 			this.Command = DataContextUtility.GetCommand(name, dataAccess.Metadata);
 		}
 		#endregion
@@ -142,106 +101,47 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的命令元数据。
 		/// </summary>
-		public Metadata.IDataCommand Command
-		{
-			get;
-		}
+		public Metadata.IDataCommand Command { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否为返回单值。
 		/// </summary>
-		public bool IsScalar
-		{
-			get
-			{
-				return _isScalar;
-			}
-		}
+		public bool IsScalar { get; }
 
 		/// <summary>
 		/// 获取或设置执行结果的类型。
 		/// </summary>
 		public Type ResultType
 		{
-			get
-			{
-				return _resultType;
-			}
-			set
-			{
-				if(_resultType == value)
-					return;
-
-				_resultType = value ?? throw new ArgumentNullException();
-				this.OnPropertyChanged(nameof(ResultType));
-			}
+			get => _resultType;
+			set => _resultType = value ?? throw new ArgumentNullException();
 		}
 
 		/// <summary>
 		/// 获取或设置执行操作的结果。
 		/// </summary>
-		public object Result
-		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				if(_result == value)
-					return;
-
-				_result = value;
-				this.OnPropertyChanged(nameof(Result));
-			}
-		}
+		public object Result { get; set; }
 
 		/// <summary>
 		/// 获取执行操作的输入参数。
 		/// </summary>
-		public IDictionary<string, object> InParameters
-		{
-			get
-			{
-				return _inParameters;
-			}
-		}
+		public IDictionary<string, object> InParameters { get; }
 
 		/// <summary>
 		/// 获取或设置执行操作的输出参数。
 		/// </summary>
-		public IDictionary<string, object> OutParameters
-		{
-			get
-			{
-				return _outParameters;
-			}
-			set
-			{
-				if(_outParameters == value)
-					return;
-
-				_outParameters = value;
-				this.OnPropertyChanged(nameof(OutParameters));
-			}
-		}
+		public IDictionary<string, object> OutParameters { get; set; }
 		#endregion
 	}
 
 	public class DataAggregateContextBase : DataAccessContextBase<IDataAggregateOptions>
 	{
-		#region 成员字段
-		private double? _result;
-		private ICondition _criteria;
-		#endregion
-
 		#region 构造函数
 		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, DataAccessMethod.Aggregate, options ?? new DataAggregateOptions())
 		{
-			_criteria = criteria;
+			this.Criteria = criteria;
 			this.Aggregate = aggregate;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -249,61 +149,30 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取或设置聚合操作的结果。
 		/// </summary>
-		public double? Result
-		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				if(_result == value)
-					return;
-
-				_result = value;
-				this.OnPropertyChanged(nameof(Result));
-			}
-		}
+		public double? Result { get; set; }
 
 		/// <summary>
 		/// 获取或设置聚合操作的条件。
 		/// </summary>
-		public ICondition Criteria
-		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value;
-				this.OnPropertyChanged(nameof(Criteria));
-			}
-		}
-
-		/// <summary>
-		/// 获取当前聚合操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
+		public ICondition Criteria { get; set; }
 
 		/// <summary>
 		/// 获取聚合操作的聚合元素。
 		/// </summary>
 		public DataAggregate Aggregate { get; }
+
+		/// <summary>
+		/// 获取当前聚合操作的验证器。
+		/// </summary>
+		public virtual IDataValidator Validator
+		{
+			get => this.DataAccess.Validator;
+		}
 		#endregion
 
 		#region 公共方法
@@ -321,11 +190,8 @@ namespace Zongsoft.Data
 	public class DataIncrementContextBase : DataAccessContextBase<IDataIncrementOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
-		private int _count;
 		private string _member;
 		private ICondition _criteria;
-		private int _interval;
-		private long _result;
 		#endregion
 
 		#region 构造函数
@@ -334,14 +200,11 @@ namespace Zongsoft.Data
 			if(string.IsNullOrEmpty(member))
 				throw new ArgumentNullException(nameof(member));
 
-			if(criteria == null)
-				throw new ArgumentNullException(nameof(criteria));
-
 			_member = member;
-			_interval = interval;
 			_criteria = criteria ?? throw new ArgumentNullException(nameof(criteria));
+
+			this.Interval = interval;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -349,97 +212,32 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
-		public int Count
-		{
-			get => _count;
-			set
-			{
-				if(_count == value)
-					return;
-
-				_count = value;
-				this.OnPropertyChanged(nameof(Count));
-			}
-		}
+		public int Count { get; set; }
 
 		public string Member
 		{
-			get
-			{
-				return _member;
-			}
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				if(_member == value)
-					return;
-
-				_member = value;
-				this.OnPropertyChanged(nameof(Member));
-			}
+			get => _member;
+			set => _member = string.IsNullOrWhiteSpace(value) ? throw new ArgumentNullException() : value;
 		}
 
 		public ICondition Criteria
 		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value ?? throw new ArgumentNullException();
-				this.OnPropertyChanged(nameof(Criteria));
-			}
+			get => _criteria;
+			set => _criteria = value ?? throw new ArgumentNullException();
 		}
+
+		public int Interval { get; set; }
+
+		public long Result { get; set; }
 
 		/// <summary>
 		/// 获取当前递增(减)操作的验证器。
 		/// </summary>
-		public IDataValidator Validator
+		public virtual IDataValidator Validator
 		{
-			get;
-		}
-
-		public int Interval
-		{
-			get
-			{
-				return _interval;
-			}
-			set
-			{
-				if(_interval == value)
-					return;
-
-				_interval = value;
-				this.OnPropertyChanged(nameof(Interval));
-			}
-		}
-
-		public long Result
-		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				if(_result == value)
-					return;
-
-				_result = value;
-				this.OnPropertyChanged(nameof(Result));
-			}
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 
@@ -480,25 +278,18 @@ namespace Zongsoft.Data
 
 		#region 成员字段
 		private IEnumerable _result;
-		private ICondition _criteria;
-		private ISchema _schema;
-		private Paging _paging;
-		private Grouping _grouping;
-		private Sorting[] _sortings;
-		private FilterDelegate _resultFilter;
 		#endregion
 
 		#region 构造函数
 		protected DataSelectContextBase(IDataAccess dataAccess, string name, Type modelType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, DataAccessMethod.Select, options ?? new DataSelectOptions())
 		{
-			_grouping = grouping;
-			_criteria = criteria;
-			_schema = schema;
-			_paging = paging;
-			_sortings = sortings;
+			this.Grouping = grouping;
+			this.Criteria = criteria;
+			this.Schema = schema;
+			this.Paging = paging;
+			this.Sortings = sortings;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
 			this.ModelType = modelType ?? typeof(object);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -506,18 +297,42 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取查询要返回的结果集元素类型。
 		/// </summary>
-		public Type ModelType
-		{
-			get;
-		}
+		public Type ModelType { get; }
+
+		/// <summary>
+		/// 获取或设置查询操作的条件。
+		/// </summary>
+		public ICondition Criteria { get; set; }
+
+		/// <summary>
+		/// 获取或设置查询操作的结果数据模式（即查询结果的形状结构）。
+		/// </summary>
+		public ISchema Schema { get; set; }
+
+		/// <summary>
+		/// 获取或设置查询操作的分组。
+		/// </summary>
+		public Grouping Grouping { get; set; }
+
+		/// <summary>
+		/// 获取或设置查询操作的分页设置。
+		/// </summary>
+		public Paging Paging { get; set; }
+
+		/// <summary>
+		/// 获取或设置查询操作的排序设置。
+		/// </summary>
+		public Sorting[] Sortings { get; set; }
+
+		/// <summary>
+		/// 获取或设置查询结果的过滤器。
+		/// </summary>
+		public FilterDelegate ResultFilter { get; set; }
 
 		/// <summary>
 		/// 获取或设置查询操作的结果集。
@@ -528,144 +343,23 @@ namespace Zongsoft.Data
 			{
 				bool OnFilter(ref object data)
 				{
-					return _resultFilter(this, ref data);
+					return ResultFilter(this, ref data);
 				}
 
-				if(_resultFilter != null && _result is IPageable source)
+				if(ResultFilter != null && _result is IPageable source)
 					Pageable.Filter(source, this.ModelType, OnFilter);
 
 				return _result;
 			}
-			set
-			{
-				if(_result == value)
-					return;
-
-				_result = value ?? throw new ArgumentNullException();
-				this.OnPropertyChanged(nameof(Result));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置查询结果的过滤器。
-		/// </summary>
-		public FilterDelegate ResultFilter
-		{
-			get
-			{
-				return _resultFilter;
-			}
-			set
-			{
-				if(_resultFilter == value)
-					return;
-
-				_resultFilter = value;
-				this.OnPropertyChanged(nameof(ResultFilter));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置查询操作的条件。
-		/// </summary>
-		public ICondition Criteria
-		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value;
-				this.OnPropertyChanged(nameof(Criteria));
-			}
+			set => _result = value ?? throw new ArgumentNullException();
 		}
 
 		/// <summary>
 		/// 获取当前查询操作的验证器。
 		/// </summary>
-		public IDataValidator Validator
+		public virtual IDataValidator Validator
 		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置查询操作的结果数据模式（即查询结果的形状结构）。
-		/// </summary>
-		public ISchema Schema
-		{
-			get
-			{
-				return _schema;
-			}
-			set
-			{
-				if(_schema == value)
-					return;
-
-				_schema = value;
-				this.OnPropertyChanged(nameof(Schema));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置查询操作的分组。
-		/// </summary>
-		public Grouping Grouping
-		{
-			get
-			{
-				return _grouping;
-			}
-			set
-			{
-				if(_grouping == value)
-					return;
-
-				_grouping = value;
-				this.OnPropertyChanged(nameof(Grouping));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置查询操作的分页设置。
-		/// </summary>
-		public Paging Paging
-		{
-			get
-			{
-				return _paging;
-			}
-			set
-			{
-				if(_paging == value)
-					return;
-
-				_paging = value;
-				this.OnPropertyChanged(nameof(Paging));
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置查询操作的排序设置。
-		/// </summary>
-		public Sorting[] Sortings
-		{
-			get
-			{
-				return _sortings;
-			}
-			set
-			{
-				if(_sortings == value)
-					return;
-
-				_sortings = value;
-				this.OnPropertyChanged(nameof(Sortings));
-			}
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 
@@ -683,19 +377,12 @@ namespace Zongsoft.Data
 
 	public class DataDeleteContextBase : DataAccessContextBase<IDataDeleteOptions>, IDataMutateContextBase
 	{
-		#region 成员字段
-		private int _count;
-		private ICondition _criteria;
-		private ISchema _schema;
-		#endregion
-
 		#region 构造函数
 		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, DataAccessMethod.Delete, options ?? new DataDeleteOptions())
 		{
-			_criteria = criteria;
-			_schema = schema;
+			this.Criteria = criteria;
+			this.Schema = schema;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -703,74 +390,29 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取或设置删除操作的受影响记录数。
 		/// </summary>
-		public int Count
-		{
-			get
-			{
-				return _count;
-			}
-			set
-			{
-				if(_count == value)
-					return;
-
-				_count = value;
-				this.OnPropertyChanged(nameof(Count));
-			}
-		}
+		public int Count { get; set; }
 
 		/// <summary>
 		/// 获取或设置删除操作的条件。
 		/// </summary>
-		public ICondition Criteria
-		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value;
-				this.OnPropertyChanged(nameof(Criteria));
-			}
-		}
-
-		/// <summary>
-		/// 获取当前删除操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
+		public ICondition Criteria { get; set; }
 
 		/// <summary>
 		/// 获取或设置删除操作的数据模式（即删除数据的形状结构）。
 		/// </summary>
-		public ISchema Schema
-		{
-			get
-			{
-				return _schema;
-			}
-			set
-			{
-				if(_schema == value)
-					return;
+		public ISchema Schema { get; set; }
 
-				_schema = value;
-				this.OnPropertyChanged(nameof(Schema));
-			}
+		/// <summary>
+		/// 获取当前删除操作的验证器。
+		/// </summary>
+		public virtual IDataValidator Validator
+		{
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 
@@ -801,21 +443,13 @@ namespace Zongsoft.Data
 
 	public class DataInsertContextBase : DataAccessContextBase<IDataInsertOptions>, IDataMutateContextBase
 	{
-		#region 成员字段
-		private int _count;
-		private object _data;
-		private ISchema _schema;
-		private bool _isMultiple;
-		#endregion
-
 		#region 构造函数
 		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Insert, options ?? new DataInsertOptions())
 		{
-			_data = data ?? throw new ArgumentNullException(nameof(data));
-			_schema = schema;
-			_isMultiple = isMultiple;
+			this.Data = data ?? throw new ArgumentNullException(nameof(data));
+			this.Schema = schema;
+			this.IsMultiple = isMultiple;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -823,67 +457,27 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取当前新增操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否为批量新增操作。
 		/// </summary>
-		public bool IsMultiple
-		{
-			get
-			{
-				return _isMultiple;
-			}
-		}
+		public bool IsMultiple { get; }
 
 		/// <summary>
 		/// 获取或设置插入操作的受影响记录数。
 		/// </summary>
-		public int Count
-		{
-			get
-			{
-				return _count;
-			}
-			set
-			{
-				if(_count == value)
-					return;
-
-				_count = value;
-				this.OnPropertyChanged(nameof(Count));
-			}
-		}
+		public int Count { get; set; }
 
 		/// <summary>
 		/// 获取或设置插入操作的数据。
 		/// </summary>
-		public object Data
-		{
-			get
-			{
-				return _data;
-			}
-			set
-			{
-				if(_data == value)
-					return;
+		public object Data { get; set; }
 
-				_data = value;
-				this.OnPropertyChanged(nameof(Data));
-			}
-		}
+		/// <summary>
+		/// 获取或设置插入操作的数据模式（即插入的数据形状结构）。
+		/// </summary>
+		public ISchema Schema { get; set; }
 
 		/// <summary>
 		/// 获取插入数据的元素类型。
@@ -892,53 +486,33 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(_isMultiple && _data is IEnumerable)
-					return Common.TypeExtension.GetElementType(_data.GetType());
+				if(IsMultiple && Data is IEnumerable)
+					return Common.TypeExtension.GetElementType(Data.GetType());
 
-				return _data.GetType();
+				return Data.GetType();
 			}
 		}
 
 		/// <summary>
-		/// 获取或设置插入操作的数据模式（即插入的数据形状结构）。
+		/// 获取当前新增操作的验证器。
 		/// </summary>
-		public ISchema Schema
+		public virtual IDataValidator Validator
 		{
-			get
-			{
-				return _schema;
-			}
-			set
-			{
-				if(_schema == value)
-					return;
-
-				_schema = value;
-				this.OnPropertyChanged(nameof(Schema));
-			}
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 	}
 
 	public class DataUpdateContextBase : DataAccessContextBase<IDataUpdateOptions>, IDataMutateContextBase
 	{
-		#region 成员字段
-		private int _count;
-		private object _data;
-		private ICondition _criteria;
-		private ISchema _schema;
-		private bool _isMultiple;
-		#endregion
-
 		#region 构造函数
 		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? new DataUpdateOptions())
 		{
-			_data = data ?? throw new ArgumentNullException(nameof(data));
-			_criteria = criteria;
-			_schema = schema;
-			_isMultiple = isMultiple;
+			this.Data = data ?? throw new ArgumentNullException(nameof(data));
+			this.Criteria = criteria;
+			this.Schema = schema;
+			this.IsMultiple = isMultiple;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -946,59 +520,32 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否为批量更新操作。
 		/// </summary>
-		public bool IsMultiple
-		{
-			get
-			{
-				return _isMultiple;
-			}
-		}
+		public bool IsMultiple { get; }
 
 		/// <summary>
 		/// 获取或设置更新操作的受影响记录数。
 		/// </summary>
-		public int Count
-		{
-			get
-			{
-				return _count;
-			}
-			set
-			{
-				if(_count == value)
-					return;
-
-				_count = value;
-				this.OnPropertyChanged(nameof(Count));
-			}
-		}
+		public int Count { get; set; }
 
 		/// <summary>
 		/// 获取或设置更新操作的数据。
 		/// </summary>
-		public object Data
-		{
-			get
-			{
-				return _data;
-			}
-			set
-			{
-				if(_data == value)
-					return;
+		public object Data { get; set; }
 
-				_data = value;
-				this.OnPropertyChanged(nameof(Data));
-			}
-		}
+		/// <summary>
+		/// 获取或设置更新操作的条件。
+		/// </summary>
+		public ICondition Criteria { get; set; }
+
+		/// <summary>
+		/// 获取或设置更新操作的数据模式（即更新的数据形状结构）。
+		/// </summary>
+		public ISchema Schema { get; set; }
 
 		/// <summary>
 		/// 获取更新数据的元素类型。
@@ -1007,57 +554,19 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(_isMultiple && _data is IEnumerable)
-					return Common.TypeExtension.GetElementType(_data.GetType());
+				if(IsMultiple && Data is IEnumerable)
+					return Common.TypeExtension.GetElementType(Data.GetType());
 
-				return _data.GetType();
-			}
-		}
-
-		/// <summary>
-		/// 获取或设置更新操作的条件。
-		/// </summary>
-		public ICondition Criteria
-		{
-			get
-			{
-				return _criteria;
-			}
-			set
-			{
-				if(_criteria == value)
-					return;
-
-				_criteria = value;
-				this.OnPropertyChanged(nameof(Criteria));
+				return Data.GetType();
 			}
 		}
 
 		/// <summary>
 		/// 获取当前更新操作的验证器。
 		/// </summary>
-		public IDataValidator Validator
+		public virtual IDataValidator Validator
 		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置更新操作的数据模式（即更新的数据形状结构）。
-		/// </summary>
-		public ISchema Schema
-		{
-			get
-			{
-				return _schema;
-			}
-			set
-			{
-				if(_schema == value)
-					return;
-
-				_schema = value;
-				this.OnPropertyChanged(nameof(Schema));
-			}
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 
@@ -1075,21 +584,13 @@ namespace Zongsoft.Data
 
 	public class DataUpsertContextBase : DataAccessContextBase<IDataUpsertOptions>, IDataMutateContextBase
 	{
-		#region 成员字段
-		private int _count;
-		private object _data;
-		private ISchema _schema;
-		private bool _isMultiple;
-		#endregion
-
 		#region 构造函数
 		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Upsert, options ?? new DataUpsertOptions())
 		{
-			_data = data ?? throw new ArgumentNullException(nameof(data));
-			_schema = schema;
-			_isMultiple = isMultiple;
+			this.Data = data ?? throw new ArgumentNullException(nameof(data));
+			this.Schema = schema;
+			this.IsMultiple = isMultiple;
 			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
-			this.Validator = dataAccess.Validator;
 		}
 		#endregion
 
@@ -1097,67 +598,27 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问对应的实体元数据。
 		/// </summary>
-		public Metadata.IDataEntity Entity
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取当前写入操作的验证器。
-		/// </summary>
-		public IDataValidator Validator
-		{
-			get;
-		}
+		public Metadata.IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取一个值，指示是否为批量操作。
 		/// </summary>
-		public bool IsMultiple
-		{
-			get
-			{
-				return _isMultiple;
-			}
-		}
+		public bool IsMultiple { get; }
 
 		/// <summary>
 		/// 获取或设置操作的受影响记录数。
 		/// </summary>
-		public int Count
-		{
-			get
-			{
-				return _count;
-			}
-			set
-			{
-				if(_count == value)
-					return;
-
-				_count = value;
-				this.OnPropertyChanged(nameof(Count));
-			}
-		}
+		public int Count { get; set; }
 
 		/// <summary>
 		/// 获取或设置操作的数据。
 		/// </summary>
-		public object Data
-		{
-			get
-			{
-				return _data;
-			}
-			set
-			{
-				if(_data == value)
-					return;
+		public object Data { get; set; }
 
-				_data = value;
-				this.OnPropertyChanged(nameof(Data));
-			}
-		}
+		/// <summary>
+		/// 获取或设置操作的数据模式（即更新或新增的数据形状结构）。
+		/// </summary>
+		public ISchema Schema { get; set; }
 
 		/// <summary>
 		/// 获取操作数据的元素类型。
@@ -1166,30 +627,19 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(_isMultiple && _data is IEnumerable)
-					return Common.TypeExtension.GetElementType(_data.GetType());
+				if(IsMultiple && Data is IEnumerable)
+					return Common.TypeExtension.GetElementType(Data.GetType());
 
-				return _data.GetType();
+				return Data.GetType();
 			}
 		}
 
 		/// <summary>
-		/// 获取或设置操作的数据模式（即更新或新增的数据形状结构）。
+		/// 获取当前写入操作的验证器。
 		/// </summary>
-		public ISchema Schema
+		public virtual IDataValidator Validator
 		{
-			get
-			{
-				return _schema;
-			}
-			set
-			{
-				if(_schema == value)
-					return;
-
-				_schema = value;
-				this.OnPropertyChanged(nameof(Schema));
-			}
+			get => this.DataAccess.Validator;
 		}
 		#endregion
 	}

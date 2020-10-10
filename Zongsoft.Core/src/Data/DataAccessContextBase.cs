@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -36,12 +35,8 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据访问的上下文基类。
 	/// </summary>
-	public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable, INotifyPropertyChanged where TOptions : IDataOptions
+	public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable where TOptions : IDataOptions
 	{
-		#region 事件定义
-		public event PropertyChangedEventHandler PropertyChanged;
-		#endregion
-
 		#region 构造函数
 		protected DataAccessContextBase(IDataAccess dataAccess, string name, DataAccessMethod method, TOptions options)
 		{
@@ -118,13 +113,6 @@ namespace Zongsoft.Data
 
 		protected virtual void Dispose(bool disposing)
 		{
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnPropertyChanged(string propertyName)
-		{
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 		#endregion
 
