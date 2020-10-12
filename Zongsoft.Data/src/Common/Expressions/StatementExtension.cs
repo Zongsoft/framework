@@ -196,10 +196,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 			if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
 			{
-				if(condition.Field.Type == OperandType.Field && condition.Value is ICondition filter)
+				if(condition.Field.Type == OperandType.Field)
 					return condition.Operator == ConditionOperator.Exists ?
-						Expression.Exists((IExpression)statement.GetSubquery(condition.Name, filter)) :
-						Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, filter));
+						Expression.Exists((IExpression)statement.GetSubquery(condition.Name, condition.Value as ICondition)) :
+						Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, condition.Value as ICondition));
 
 				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 			}
@@ -367,7 +367,7 @@ namespace Zongsoft.Data.Common.Expressions
 			throw new DataException($"The specified '{name}' field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated.");
 		}
 
-		private static ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition condition)
+		private static ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition criteria)
 		{
 			var subquery = host.Subquery(complex.Foreign);
 			var where = ConditionExpression.And();
@@ -393,8 +393,8 @@ namespace Zongsoft.Data.Common.Expressions
 				}
 			}
 
-			if(condition != null)
-				where.Add(Where(subquery, condition));
+			if(criteria != null)
+				where.Add(Where(subquery, criteria));
 
 			subquery.Where = where;
 			return subquery;
