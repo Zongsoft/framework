@@ -282,7 +282,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 		public static BinaryExpression Like(IExpression left, IExpression right)
 		{
-			return new BinaryExpression(Operator.Like, left, right);
+			return new BinaryExpression(Operator.Like, left, right ?? ConstantExpression.Null);
 		}
 
 		public static BinaryExpression Between(IExpression operand, RangeExpression range)
@@ -297,12 +297,12 @@ namespace Zongsoft.Data.Common.Expressions
 
 		public static BinaryExpression Equal(IExpression left, IExpression right)
 		{
-			return new BinaryExpression(Operator.Equal, left, right);
+			return new BinaryExpression(Operator.Equal, left, right ?? ConstantExpression.Null);
 		}
 
 		public static BinaryExpression NotEqual(IExpression left, IExpression right)
 		{
-			return new BinaryExpression(Operator.NotEqual, left, right);
+			return new BinaryExpression(Operator.NotEqual, left, right ?? ConstantExpression.Null);
 		}
 
 		public static BinaryExpression LessThan(IExpression left, IExpression right)
