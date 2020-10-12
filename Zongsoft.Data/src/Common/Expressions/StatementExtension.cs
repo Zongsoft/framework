@@ -33,7 +33,6 @@ using System.Data.Common;
 using System.Collections;
 
 using Zongsoft.Data.Metadata;
-using System.Runtime.Serialization.Formatters;
 
 namespace Zongsoft.Data.Common.Expressions
 {
