@@ -78,7 +78,7 @@ namespace Zongsoft.Web
 
 		protected virtual bool CanUpsert
 		{
-			get => this.CanCreate && this.CanUpdate;
+			get => this.CanCreate && this.CanUpdate && this.DataService.CanUpsert;
 		}
 
 		protected TService DataService
@@ -168,13 +168,13 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet("{key1:required}-{key2:required}")]
-		public IActionResult Get(string key1, string key2, [FromQuery] string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
+		public IActionResult Get(string key1, string key2, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
 		{
 			return this.Paginate(this.OnGet(new[] { key1, key2 }, filter, page, sortings));
 		}
 
 		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
-		public IActionResult Get(string key1, string key2, string key3, [FromQuery] string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
+		public IActionResult Get(string key1, string key2, string key3, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
 		{
 			return this.Paginate(this.OnGet(new[] { key1, key2, key3 }, filter, page, sortings));
 		}
