@@ -81,6 +81,11 @@ namespace Zongsoft.Data
 		bool CanUpdate { get; }
 
 		/// <summary>
+		/// 获取一个值，指示是否支持增改操作。
+		/// </summary>
+		bool CanUpsert { get; }
+
+		/// <summary>
 		/// 获取数据访问接口。
 		/// </summary>
 		IDataAccess DataAccess { get; }

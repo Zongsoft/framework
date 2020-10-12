@@ -121,6 +121,8 @@ namespace Zongsoft.Data
 
 		public virtual bool CanUpdate { get => true; }
 
+		public virtual bool CanUpsert { get => true; }
+
 		public IDataAccess DataAccess
 		{
 			get => _dataAccess;
@@ -1411,7 +1413,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private void EnsureUpsert()
 		{
-			if(!(this.CanInsert && this.CanUpdate))
+			if(!(this.CanInsert && this.CanUpdate && this.CanUpsert))
 				throw new InvalidOperationException("The upsert operation is not allowed.");
 		}
 
