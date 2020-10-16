@@ -38,7 +38,6 @@
   <ItemGroup>
     <Folder Include="Expressions\" />
     <Folder Include="IO\" />
-    <Folder Include="Data\" />
   </ItemGroup>
 
   <ItemGroup>
