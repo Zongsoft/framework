@@ -74,7 +74,63 @@ namespace Zongsoft.Data.Tests
 			cs = and1 | and2;
 			Assert.Equal(ConditionCombination.Or, cs.Combination);
 			Assert.Equal(2, cs.Count);
+		}
 
+		[Fact]
+		public void TestCombine()
+		{
+			/* 注意：“与”运算符相对“或”运算符有更高优先级 */
+
+			var criteria =
+				Condition.Equal("a", null) |
+				Condition.Equal("b", null) &
+				Condition.Equal("c", null) |
+				Condition.Equal("d", null);
+
+			Assert.Equal(3, criteria.Count);
+			Assert.Equal(ConditionCombination.Or, criteria.Combination);
+			Assert.IsType<Condition>(criteria[0]);
+			Assert.Equal("a", ((Condition)criteria[0]).Name);
+			Assert.IsType<Condition>(criteria[2]);
+			Assert.Equal("d", ((Condition)criteria[2]).Name);
+
+			Assert.IsType<ConditionCollection>(criteria[1]);
+			var conditions = (ConditionCollection)criteria[1];
+			Assert.Equal(2, conditions.Count);
+			Assert.Equal(ConditionCombination.And, conditions.Combination);
+			Assert.IsType<Condition>(conditions[0]);
+			Assert.Equal("b", ((Condition)conditions[0]).Name);
+			Assert.IsType<Condition>(conditions[1]);
+			Assert.Equal("c", ((Condition)conditions[1]).Name);
+
+			criteria =
+				(
+					Condition.Equal("a", null) |
+					Condition.Equal("b", null)
+				) &
+				Condition.Equal("c", null) |
+				Condition.Equal("d", null);
+
+			Assert.Equal(2, criteria.Count);
+			Assert.Equal(ConditionCombination.Or, criteria.Combination);
+			Assert.IsType<Condition>(criteria[1]);
+			Assert.Equal("d", ((Condition)criteria[1]).Name);
+
+			Assert.IsType<ConditionCollection>(criteria[0]);
+			conditions = (ConditionCollection)criteria[0];
+			Assert.Equal(2, conditions.Count);
+			Assert.Equal(ConditionCombination.And, conditions.Combination);
+			Assert.IsType<Condition>(conditions[1]);
+			Assert.Equal("c", ((Condition)conditions[1]).Name);
+
+			Assert.IsType<ConditionCollection>(conditions[0]);
+			conditions = (ConditionCollection)conditions[0];
+			Assert.Equal(2, conditions.Count);
+			Assert.Equal(ConditionCombination.Or, conditions.Combination);
+			Assert.IsType<Condition>(conditions[0]);
+			Assert.Equal("a", ((Condition)conditions[0]).Name);
+			Assert.IsType<Condition>(conditions[1]);
+			Assert.Equal("b", ((Condition)conditions[1]).Name);
 		}
 
 		[Fact]
