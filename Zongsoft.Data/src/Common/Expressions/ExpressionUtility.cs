@@ -41,6 +41,8 @@ namespace Zongsoft.Data.Common.Expressions
 			if(operand == null)
 				return null;
 
+			Type type;
+
 			switch(operand)
 			{
 				case Operand.FieldOperand field:
@@ -51,14 +53,19 @@ namespace Zongsoft.Data.Common.Expressions
 						unary.Operand.Convert(typeThunk, fieldThunk, valueThunk)
 					);
 				case Operand.BinaryOperand binary:
-					return new BinaryExpression(
-						binary.Type.GetOperator(binary.GetOperandValueType(typeThunk)),
-						binary.Left.Convert(typeThunk, fieldThunk, valueThunk),
-						binary.Right.Convert(typeThunk, fieldThunk, valueThunk)
-					);
+					type = binary.GetOperandValueType(typeThunk);
+
+					return type == typeof(string) ?
+						(IExpression)MethodExpression.Function("concat",
+							binary.Left.Convert(typeThunk, fieldThunk, valueThunk),
+							binary.Right.Convert(typeThunk, fieldThunk, valueThunk)) :
+						new BinaryExpression(
+							binary.Type.GetOperator(type),
+							binary.Left.Convert(typeThunk, fieldThunk, valueThunk),
+							binary.Right.Convert(typeThunk, fieldThunk, valueThunk));
 			}
 
-			var type = operand.GetType();
+			type = operand.GetType();
 
 			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Operand.ConstantOperand<>))
 				return valueThunk(GetValueMethod.MakeGenericMethod(type.GenericTypeArguments[0]).Invoke(operand, null));
