@@ -267,17 +267,11 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			switch(unary.Operator)
 			{
-				case Operator.Minus:
-					_output.Append("-");
-					break;
 				case Operator.Not:
-					_output.Append("NOT ");
-					break;
+				case Operator.Negate:
 				case Operator.Exists:
-					_output.Append("EXISTS ");
-					break;
 				case Operator.NotExists:
-					_output.Append("NOT EXISTS ");
+					_output.Append(this.GetSymbol(unary.Operator));
 					break;
 			}
 
@@ -297,7 +291,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected virtual IExpression VisitBinary(BinaryExpression expression)
 		{
-			//是否需要括号包裹
+			//值表达式(右元)是否需要括号包裹
 			var parenthesisRequired = false;
 
 			switch(expression.Operator)
@@ -321,8 +315,25 @@ namespace Zongsoft.Data.Common.Expressions
 					break;
 			}
 
+			//获取当前双目表达式的运算优先级
+			var precedence = expression.Operator.GetPrecedence();
+
+			//如果左元的运算优先级低于当前双目表达式则表示左元需要采用括号进行组合(提级)
+			var precedenceCompound = expression.Left is BinaryExpression left && left.Operator.GetPrecedence() < precedence;
+
+			if(precedenceCompound)
+				_output.Append("(");
+
 			this.Visit(expression.Left);
+
+			if(precedenceCompound)
+				_output.Append(")");
+
 			_output.Append(this.GetSymbol(expression.Operator));
+
+			//如果不是必须带括号的计算符，则计算左元的运算优先级以确认是否需要生成括号
+			if(!parenthesisRequired)
+				parenthesisRequired = expression.Right is BinaryExpression right && right.Operator.GetPrecedence() < precedence;
 
 			if(parenthesisRequired)
 				_output.Append("(");
@@ -347,12 +358,11 @@ namespace Zongsoft.Data.Common.Expressions
 		protected virtual IExpression VisitMethod(MethodExpression expression)
 		{
 			var methodName = this.Dialect.GetMethodName(expression);
-			var isFunction = char.IsLetter(methodName[0]) || methodName[0] == '_';
 
 			//先输出方法或变量名
 			_output.Append(methodName);
 
-			if(isFunction)
+			if(expression.MethodType == MethodType.Function)
 			{
 				_output.Append("(");
 
@@ -465,11 +475,13 @@ namespace Zongsoft.Data.Common.Expressions
 			switch(@operator)
 			{
 				case Operator.Assign:
-				case Operator.Minus:
+				case Operator.Negate:
 				case Operator.Plus:
-				case Operator.Modulo:
-				case Operator.Divide:
+				case Operator.Add:
+				case Operator.Subtract:
 				case Operator.Multiply:
+				case Operator.Divide:
+				case Operator.Modulo:
 				case Operator.Equal:
 				case Operator.NotEqual:
 				case Operator.GreaterThan:
@@ -579,7 +591,11 @@ namespace Zongsoft.Data.Common.Expressions
 				{
 					case Operator.Plus:
 						return "+";
-					case Operator.Minus:
+					case Operator.Negate:
+						return "-";
+					case Operator.Add:
+						return "+";
+					case Operator.Subtract:
 						return "-";
 					case Operator.Multiply:
 						return "*";

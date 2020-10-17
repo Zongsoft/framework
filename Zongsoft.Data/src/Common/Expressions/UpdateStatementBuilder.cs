@@ -29,7 +29,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions
@@ -102,6 +102,17 @@ namespace Zongsoft.Data.Common.Expressions
 
 					//字段设置项的值为字段加参数的加法表达式
 					statement.Fields.Add(new FieldValue(field, field.Add(parameter)));
+				}
+				else if(member.Token.MemberType == typeof(Operand))
+				{
+					var operand = (Operand)member.Token.GetValue(data);
+
+					var expression = operand.Convert(
+						path => ((Schema)context.DataAccess.Schema.Parse(context.Name, path, context.ModelType)).Members.ElementAt(0).Token.MemberType,
+						path => table.CreateField(((Schema)context.DataAccess.Schema.Parse(context.Name, path, context.ModelType)).Members.ElementAt(0).Token),
+						value => Expression.Parameter("?", Utility.GetDbType(value), value));
+
+					statement.Fields.Add(new FieldValue(field, expression));
 				}
 				else
 				{

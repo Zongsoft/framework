@@ -37,31 +37,36 @@ namespace Zongsoft.Data.Common.Expressions
 	/// </summary>
 	public enum Operator
 	{
-		/// <summary>加号或正号(+)</summary>
+		/// <summary>正号(<c>+</c>)</summary>
 		Plus,
-		/// <summary>减号或负号(-)</summary>
-		Minus,
-		/// <summary>乘号(*)</summary>
+		/// <summary>负号(<c>-</c>)</summary>
+		Negate,
+
+		/// <summary>加号(<c>+</c>)</summary>
+		Add,
+		/// <summary>减号(<c>-</c>)</summary>
+		Subtract,
+		/// <summary>乘号(<c>*</c>)</summary>
 		Multiply,
-		/// <summary>除号(/)</summary>
+		/// <summary>除号(<c>/</c>)</summary>
 		Divide,
-		/// <summary>取模(%)</summary>
+		/// <summary>取模(<c>%</c>)</summary>
 		Modulo,
-		/// <summary>赋值(=)</summary>
+		/// <summary>赋值(<c>=</c>)</summary>
 		Assign,
 
-		/// <summary>位与</summary>
+		/// <summary>位与(<c>&amp;</c>)</summary>
 		And,
-		/// <summary>位或</summary>
+		/// <summary>位或(<c>|</c>)</summary>
 		Or,
-		/// <summary>位异或</summary>
+		/// <summary>位异或(<c>^</c>)</summary>
 		Xor,
 
-		/// <summary>逻辑非</summary>
+		/// <summary>逻辑非(<c>!</c>)</summary>
 		Not,
-		/// <summary>逻辑与</summary>
+		/// <summary>逻辑与(<c>&amp;&amp;</c>)</summary>
 		AndAlso,
-		/// <summary>逻辑或</summary>
+		/// <summary>逻辑或(<c>||</c>)</summary>
 		OrElse,
 
 		/// <summary>如果一组的比较都为真，则为真。</summary>
@@ -81,22 +86,22 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>如果操作数与一种模式相匹配，那么就为真。</summary>
 		Like,
 
-		/// <summary>是(IS)</summary>
+		/// <summary>是(<c>IS</c>)</summary>
 		Is,
-		/// <summary>不是(NOT IS)</summary>
+		/// <summary>不是(<c>NOT IS</c>)</summary>
 		NotIs,
 
-		/// <summary>等于号(==)</summary>
+		/// <summary>等于号(<c>==</c>)</summary>
 		Equal,
-		/// <summary>不等于(!=)</summary>
+		/// <summary>不等于(<c>!=</c>)</summary>
 		NotEqual,
-		/// <summary>小于(&lt;)</summary>
+		/// <summary>小于(<c>&lt;</c>)</summary>
 		LessThan,
-		/// <summary>小于等于(&lt;=)</summary>
+		/// <summary>小于等于(<c>&lt;=</c>)</summary>
 		LessThanOrEqual,
-		/// <summary>大于(>)</summary>
+		/// <summary>大于(<c>&gt;</c>)</summary>
 		GreaterThan,
-		/// <summary>大于等于(>=)</summary>
+		/// <summary>大于等于(<c>&gt;=</c>)</summary>
 		GreaterThanOrEqual,
 	}
 }

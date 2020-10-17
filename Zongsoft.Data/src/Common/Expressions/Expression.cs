@@ -186,7 +186,7 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <returns>返回的求反后的算术表达式。</returns>
 		public static UnaryExpression Negate(IExpression operand)
 		{
-			return new UnaryExpression(Operator.Minus, operand);
+			return new UnaryExpression(Operator.Negate, operand);
 		}
 
 		/// <summary>
@@ -212,12 +212,12 @@ namespace Zongsoft.Data.Common.Expressions
 
 		public static BinaryExpression Add(IExpression left, IExpression right)
 		{
-			return new BinaryExpression(Operator.Plus, left, right);
+			return new BinaryExpression(Operator.Add, left, right);
 		}
 
 		public static BinaryExpression Subtract(IExpression left, IExpression right)
 		{
-			return new BinaryExpression(Operator.Minus, left, right);
+			return new BinaryExpression(Operator.Subtract, left, right);
 		}
 
 		public static BinaryExpression Multiply(IExpression left, IExpression right)

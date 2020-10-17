@@ -41,7 +41,7 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
-			this.Type = type;
+			this.MethodType = type;
 			this.Arguments = arguments;
 		}
 		#endregion
@@ -59,7 +59,7 @@ namespace Zongsoft.Data.Common.Expressions
 			set;
 		}
 
-		public MethodType Type
+		public MethodType MethodType
 		{
 			get;
 		}

@@ -147,6 +147,30 @@ namespace Zongsoft.Data
 			#endregion
 		}
 
+		public class FieldOperand : Operand
+		{
+			#region 构造函数
+			public FieldOperand(string name) : base(OperandType.Field)
+			{
+				if(string.IsNullOrWhiteSpace(name))
+					throw new ArgumentNullException(nameof(name));
+
+				this.Name = name.Trim();
+			}
+			#endregion
+
+			#region 公共属性
+			public string Name { get; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return this.Name;
+			}
+			#endregion
+		}
+
 		public class ConstantOperand<T> : Operand, IConvertible
 		{
 			#region 构造函数
@@ -243,6 +267,11 @@ namespace Zongsoft.Data
 				return this.Value == null ? null : (string)Convert.ChangeType(this.Value, TypeCode.String, provider);
 			}
 
+			public object ToObject()
+			{
+				return this.Value;
+			}
+
 			public TypeCode GetTypeCode()
 			{
 				return this.Value == null ? TypeCode.Object : System.Type.GetTypeCode(this.Value.GetType());
@@ -251,30 +280,6 @@ namespace Zongsoft.Data
 			public object ToType(Type conversionType, IFormatProvider provider)
 			{
 				return Convert.ChangeType(this.Value, conversionType, provider);
-			}
-			#endregion
-		}
-
-		public class FieldOperand : Operand
-		{
-			#region 构造函数
-			public FieldOperand(string name) : base(OperandType.Field)
-			{
-				if(string.IsNullOrWhiteSpace(name))
-					throw new ArgumentNullException(nameof(name));
-
-				this.Name = name.Trim();
-			}
-			#endregion
-
-			#region 公共属性
-			public string Name { get; }
-			#endregion
-
-			#region 重写方法
-			public override string ToString()
-			{
-				return this.Name;
 			}
 			#endregion
 		}
