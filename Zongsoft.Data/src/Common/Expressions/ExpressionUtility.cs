@@ -34,8 +34,6 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public static class ExpressionUtility
 	{
-		private static readonly MethodInfo GetValueMethod = typeof(Operand.ConstantOperand<>).GetMethod(nameof(Operand.ConstantOperand<object>.ToObject));
-
 		public static IExpression Convert(this Operand operand, Func<string, Type> typeThunk, Func<string, IExpression> fieldThunk, Func<object, IExpression> valueThunk)
 		{
 			if(operand == null)
@@ -68,7 +66,7 @@ namespace Zongsoft.Data.Common.Expressions
 			type = operand.GetType();
 
 			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Operand.ConstantOperand<>))
-				return valueThunk(GetValueMethod.MakeGenericMethod(type.GenericTypeArguments[0]).Invoke(operand, null));
+				return valueThunk(operand.GetType().GetMethod("ToObject").Invoke(operand, null));
 
 			throw new DataException($"Unsupported {operand.GetType().FullName} operand type.");
 		}
