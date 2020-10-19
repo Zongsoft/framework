@@ -135,6 +135,17 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 创建一个参数表达式。
 		/// </summary>
+		/// <param name="type">指定的参数的数据类型。</param>
+		/// <param name="value">指定的参数值。</param>
+		/// <returns></returns>
+		public static ParameterExpression Parameter(System.Data.DbType type, object value)
+		{
+			return new ParameterExpression(ParameterExpression.Anonymous, type, value);
+		}
+
+		/// <summary>
+		/// 创建一个参数表达式。
+		/// </summary>
 		/// <param name="value">指定的参数值。</param>
 		/// <returns></returns>
 		public static ParameterExpression Parameter(object value)

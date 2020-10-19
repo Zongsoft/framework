@@ -85,41 +85,61 @@ namespace Zongsoft.Data.Common.Expressions
 				if(member.Token.Property.Immutable && !provided)
 					return;
 
+				//创建当前单值属性的对应的字段标识
 				var field = table.CreateField(member.Token);
-				var parameter = provided ?
-					Expression.Parameter(field, member, value) :
-					Expression.Parameter(field, member);
 
-				//如果当前的数据成员类型为递增步长类型则生成递增表达式
-				if(member.Token.MemberType == typeof(Interval))
-				{
-					/*
-					 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号数，
-					 * 因此当参数类型为无符号数并且步长为负数(递减)，则可能导致参数类型转换溢出，
-					 * 所以必须将该参数类型重置为有符号整数。
-					 */
-					parameter.DbType = System.Data.DbType.Int32;
-
-					//字段设置项的值为字段加参数的加法表达式
-					statement.Fields.Add(new FieldValue(field, field.Add(parameter)));
-				}
-				else if(member.Token.MemberType == typeof(Operand))
+				if(member.Token.MemberType == typeof(Operand))
 				{
 					var operand = (Operand)member.Token.GetValue(data);
 
 					var expression = operand.Convert(
-						path => ((Schema)context.DataAccess.Schema.Parse(context.Name, path, context.ModelType)).Members.ElementAt(0).Token.MemberType,
-						path => table.CreateField(((Schema)context.DataAccess.Schema.Parse(context.Name, path, context.ModelType)).Members.ElementAt(0).Token),
-						value => Expression.Parameter("?", Utility.GetDbType(value), value));
+						path =>
+						{
+							var token = Find(context.DataAccess.Schema, context.Name, path, context.ModelType);
+
+							if(token.Property.IsSimplex)
+								return Utility.FromDbType(((IDataEntitySimplexProperty)token.Property).Type);
+
+							throw new DataException($"The specified '{path}' property is not a simplex property, so its data type cannot be confirmed.");
+						},
+						path => table.CreateField(Find(context.DataAccess.Schema, context.Name, path, context.ModelType)),
+						value =>
+						{
+							var parameter = Expression.Parameter(Utility.GetDbType(value), value);
+							statement.Parameters.Add(parameter);
+							return parameter;
+						});
 
 					statement.Fields.Add(new FieldValue(field, expression));
 				}
 				else
 				{
-					statement.Fields.Add(new FieldValue(field, parameter));
+					var parameter = provided ?
+						Expression.Parameter(field, member, value) :
+						Expression.Parameter(field, member);
+
+					statement.Parameters.Add(parameter);
+
+					//如果当前的数据成员类型为递增步长类型则生成递增表达式
+					if(member.Token.MemberType == typeof(Interval))
+					{
+						/*
+						 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号数，
+						 * 因此当参数类型为无符号数并且步长为负数(递减)，则可能导致参数类型转换溢出，
+						 * 所以必须将该参数类型重置为有符号整数。
+						 */
+						parameter.DbType = System.Data.DbType.Int32;
+
+						//字段设置项的值为「字段+参数」的加法表达式
+						statement.Fields.Add(new FieldValue(field, field.Add(parameter)));
+					}
+					else
+					{
+						//字段设置项的值即为参数
+						statement.Fields.Add(new FieldValue(field, parameter));
+					}
 				}
 
-				statement.Parameters.Add(parameter);
 			}
 			else
 			{
@@ -251,6 +271,16 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 
 			return statement.Where(context.Validate());
+		}
+
+		private static DataEntityPropertyToken Find(ISchemaParser schema, string name, string path, Type modelType)
+		{
+			var schematic = (Schema)schema.Parse(name, path, modelType);
+
+			if(schematic.Members.Count > 0)
+				return schematic.Members.ElementAt(0).Token;
+
+			throw new DataException($"Invalid '{path}' model path, the {name} entity is mapped to the '{modelType.FullName}' model type.");
 		}
 		#endregion
 	}
