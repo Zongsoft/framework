@@ -84,8 +84,6 @@ namespace Zongsoft.Data.MySql
 							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
 						else
 							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
-					default:
-						return new DataAccessException(this.Name, error.Number, error);
 				}
 			}
 
