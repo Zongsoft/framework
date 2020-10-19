@@ -100,9 +100,13 @@ namespace Zongsoft.Data.Common.Expressions
 				return null;
 
 			var type1 = GetOperandValueType(binary.Left, typeThunk);
+
+			if(type1 == typeof(string))
+				return typeof(string);
+
 			var type2 = GetOperandValueType(binary.Right, typeThunk);
 
-			if(type1 == typeof(string) || type2 == typeof(string))
+			if(type2 == typeof(string))
 				return typeof(string);
 
 			return type1 ?? type2;
