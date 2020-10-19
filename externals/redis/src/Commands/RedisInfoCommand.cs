@@ -67,14 +67,18 @@ namespace Zongsoft.Externals.Redis.Commands
 				for(int i = 0; i < info.Servers.Length; i++)
 				{
 					content.Append(CommandOutletColor.DarkGray, "  [" + (i + 1).ToString() + "] ")
-					       .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
-					       .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
-					       .Append(CommandOutletColor.DarkGray, "(")
-					       .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
-					       .Append(CommandOutletColor.DarkGray, ") ")
-					       .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
-					       .Append(CommandOutletColor.DarkGray, "/")
-					       .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsConnected ? "Connected" : "Unconnected");
+						   .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
+						   .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
+						   .Append(CommandOutletColor.DarkGray, "(")
+						   .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
+						   .Append(CommandOutletColor.DarkGray, ") ")
+						   .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
+						   .Append(CommandOutletColor.DarkGray, ":");
+
+					if(info.Servers[i].IsConnected)
+						content.AppendLine(CommandOutletColor.Green, "Connected");
+					else
+						content.AppendLine(CommandOutletColor.DarkRed, "Unconnected");
 				}
 			}
 
