@@ -81,7 +81,7 @@ namespace Zongsoft.Configuration.Models
 			return this;
 		}
 
-		public ModelConfigurationSource<TModel> OnSet(Action<TModel> persistent)
+		public ModelConfigurationSource<TModel> OnChange(Action<TModel> persistent)
 		{
 			if(persistent == null)
 				throw new ArgumentNullException(nameof(persistent));

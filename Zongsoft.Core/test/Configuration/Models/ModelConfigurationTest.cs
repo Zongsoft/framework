@@ -10,6 +10,12 @@ namespace Zongsoft.Configuration.Models
 {
 	public class ModelConfigurationTest
 	{
+		#region 常量定义
+		private const int TENANT_ID = 1;
+		private const int BRANCH_ID = 0x01020300;
+		private const string MODULE = "*";
+		#endregion
+
 		public static IConfigurationRoot GetConfiguration(Action<IConfigurationEntity> persistent = null)
 		{
 			//初始化数据（模拟数据库中的配置表中的记录）
@@ -53,9 +59,9 @@ namespace Zongsoft.Configuration.Models
 				{
 					yield return Data.Model.Build<IConfigurationEntity>(model =>
 					{
-						model.TenantId = 1;
-						model.BranchId = 0x01020300;
-						model.Module = "*";
+						model.TenantId = TENANT_ID;
+						model.BranchId = BRANCH_ID;
+						model.Module = MODULE;
 						model.Key = entry.Key;
 						model.Value = entry.Value;
 					});
@@ -67,10 +73,10 @@ namespace Zongsoft.Configuration.Models
 			return new ConfigurationBuilder()
 				.AddModels(models, source =>
 				{
-					source.OnSet(model => Console.WriteLine(model.GetInfo()));
+					source.OnChange(model => System.Diagnostics.Debug.WriteLine(model.GetInfo()));
 
 					if(persistent != null)
-						source.OnSet(persistent);
+						source.OnChange(persistent);
 				})
 				.Build();
 		}
@@ -122,6 +128,7 @@ namespace Zongsoft.Configuration.Models
 			configuration.GetSection("general:name").Value = "abc";
 			configuration.GetSection("general:intranet").Value = "false";
 			configuration.GetSection("general:certificates:default").Value = "test";
+			configuration.GetSection("general:newkey").Value = "new-value";
 
 			static void OnChanged(IConfigurationEntity entity)
 			{
@@ -137,6 +144,18 @@ namespace Zongsoft.Configuration.Models
 						Assert.Equal("test", entity.Value);
 						break;
 				}
+
+				if(entity.TenantId != TENANT_ID)
+					entity.TenantId = TENANT_ID;
+				if(entity.BranchId != BRANCH_ID)
+					entity.BranchId = BRANCH_ID;
+				if(string.IsNullOrEmpty(entity.Module))
+					entity.Module = MODULE;
+
+				/*
+				 * 这里进行持久化操作，譬如调用数据层的Upsert方法：
+				 * this.DataAccess.Upsert(entity);
+				 */
 			}
 		}
 	}
@@ -161,7 +180,7 @@ namespace Zongsoft.Configuration.Models
 			if(entity == null)
 				return string.Empty;
 
-			return $"{entity.TenantId}.{entity.BranchId}:{entity.Module}" + Environment.NewLine +
+			return $"[{entity.TenantId}.{entity.BranchId}:{entity.Module}]" + Environment.NewLine +
 				   $"{entity.Key}={entity.Value}";
 		}
 	}
