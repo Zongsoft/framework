@@ -54,6 +54,10 @@ namespace Zongsoft.Configuration
 
 		internal static TypeConverter GetConverter(MemberInfo member)
 		{
+			/*
+			 * 注意：TypeDescriptor.GetConverter(...) 方法对于 MemberInfo(PropertyInfo/FieldInfo) 并不适用。
+			 */
+
 			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
 
 			if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
@@ -64,15 +68,13 @@ namespace Zongsoft.Configuration
 
 		internal static ConfigurationAttribute GetConfigurationAttribute(this Type type)
 		{
+			if(type == null || type == typeof(object))
+				return null;
+
 			var attribute = type.GetCustomAttribute<ConfigurationAttribute>(true);
 
-			if(attribute == null && type != typeof(object))
-			{
-				attribute = GetConfigurationAttribute(type.BaseType);
-
-				if(attribute != null)
-					return attribute;
-			}
+			if(attribute != null)
+				return attribute;
 
 			foreach(var contract in type.GetTypeInfo().ImplementedInterfaces)
 			{
@@ -82,7 +84,7 @@ namespace Zongsoft.Configuration
 					return attribute;
 			}
 
-			return null;
+			return GetConfigurationAttribute(type.BaseType);
 		}
 	}
 }
