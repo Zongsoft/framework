@@ -19,7 +19,7 @@
 		</object>
 	</extension>
 
-	<!-- 挂在终端命令 -->
+	<!-- 挂载终端命令 -->
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Exit" type="Zongsoft.Terminals.Commands.ExitCommand, Zongsoft.Core" />
 		<object name="Clear" type="Zongsoft.Terminals.Commands.ClearCommand, Zongsoft.Core" />
