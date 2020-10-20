@@ -44,7 +44,7 @@ namespace Zongsoft.Configuration.Profiles
 	///		<para>INI文件中的每一行文本为一个元素单位，其类型分别为 Section(节)、Entry/Parameter(条目/参数)、Comment(注释)。</para>
 	///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；可以省略值的部分。譬如：name=value 或者只有名称的“条目”：name。注意：在同一个设置节中，各个条目的名称必须唯一。</para>
 	///		<para>Section: 所有的“条目”都是以“节”为单位结合在一起的。“节”名字都被方括号包围着。在“节”声明后的所有“条目”都是属于该“节”。对于一个“节”没有明显的结束标志符，一个“节”的开始就是上一个“节”的结束。</para>
-	///		<para>注意：节是支持嵌套的，如果在中括号里面以空格或制表符(Tab)分隔来表示节的嵌套关系。</para>
+	///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
 	///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的。所有的注释语句不管多长都是独占一行直到结束的，在注释符和行结束符之间的所有内容都是被忽略的。</para>
 	/// </remarks>
 	public class Profile
@@ -177,6 +177,7 @@ namespace Zongsoft.Configuration.Profiles
 								profile._items.Add(new ProfileComment(content, lineNumber));
 							else
 								section.Items.Add(new ProfileComment(content, lineNumber));
+
 							break;
 					}
 
