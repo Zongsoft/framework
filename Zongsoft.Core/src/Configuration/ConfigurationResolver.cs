@@ -323,16 +323,19 @@ namespace Zongsoft.Configuration
 		{
 			#region 成员字段
 			private string _configurationKey;
-			private TypeConverter _converter;
-
-			public readonly PropertyInfo Property;
 			#endregion
 
 			#region 构造函数
 			public PropertyToken(PropertyInfo property)
 			{
 				this.Property = property;
+				this.Converter = ConfigurationUtility.GetConverter(property);
 			}
+			#endregion
+
+			#region 公共字段
+			public readonly TypeConverter Converter;
+			public readonly PropertyInfo Property;
 			#endregion
 
 			#region 公共属性
@@ -354,17 +357,6 @@ namespace Zongsoft.Configuration
 					}
 
 					return _configurationKey;
-				}
-			}
-
-			public TypeConverter Converter
-			{
-				get
-				{
-					if(_converter == null)
-						_converter = ConfigurationUtility.GetConverter(this.Property);
-
-					return _converter;
 				}
 			}
 			#endregion
@@ -408,7 +400,7 @@ namespace Zongsoft.Configuration
 
 			public override bool Equals(object obj)
 			{
-				if(obj == null || obj.GetType() == this.GetType())
+				if(obj == null || obj.GetType() != this.GetType())
 					return false;
 
 				return this.Property.Equals((PropertyToken)obj);
@@ -416,7 +408,7 @@ namespace Zongsoft.Configuration
 
 			public override int GetHashCode()
 			{
-				return HashCode.Combine(Property);
+				return this.Property.GetHashCode();
 			}
 
 			public override string ToString()
