@@ -204,16 +204,16 @@ namespace Zongsoft.Services
 			{
 				_member = member;
 
-				var serviceType = member switch
+				var memberType = member switch
 				{
 					PropertyInfo property => property.PropertyType,
 					FieldInfo field => field.FieldType,
 					_ => throw new ArgumentException("Invalid member type."),
 				};
 
-				if(!serviceType.IsGenericType || serviceType.GetGenericTypeDefinition() != typeof(IOptions<>))
+				if(!memberType.IsGenericType || memberType.GetGenericTypeDefinition() != typeof(IOptions<>))
 				{
-					var optionType = typeof(IOptions<>).MakeGenericType(serviceType);
+					var optionType = typeof(IOptions<>).MakeGenericType(memberType);
 
 					_valueFactory = (provider, target) =>
 					{
@@ -223,7 +223,7 @@ namespace Zongsoft.Services
 					};
 				}
 				else
-					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target, serviceType, out var contract) ? contract : serviceType);
+					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target, memberType, out var contract) ? contract : memberType);
 			}
 
 			public void SetValue(IServiceProvider provider, ref object target)
