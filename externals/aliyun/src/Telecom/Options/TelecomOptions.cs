@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Linq;
+using System.Globalization;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Telecom.Options
@@ -41,34 +44,22 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// <summary>
 		/// 获取或设置电信运营商区域。
 		/// </summary>
-		public ServiceCenterName? Region
-		{
-			get; set;
-		}
+		public ServiceCenterName? Region { get; set; }
 
 		/// <summary>
 		/// 获取或设置关联的凭证名。
 		/// </summary>
-		public string Certificate
-		{
-			get; set;
-		}
+		public string Certificate { get; set; }
 
 		/// <summary>
 		/// 获取电信短信服务配置。
 		/// </summary>
-		public TelecomMessageOption Message
-		{
-			get;
-		}
+		public TelecomMessageOption Message { get; }
 
 		/// <summary>
 		/// 获取电信语音服务配置。
 		/// </summary>
-		public TelecomVoiceOption Voice
-		{
-			get;
-		}
+		public TelecomVoiceOption Voice { get; }
 		#endregion
 
 		#region 嵌套子类
@@ -77,18 +68,19 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// </summary>
 		public class TelecomMessageOption
 		{
+			#region 构造函数
 			public TelecomMessageOption()
 			{
 				this.Templates = new TemplateOptionCollection();
 			}
+			#endregion
 
+			#region 公共属性
 			/// <summary>
 			/// 获取短信模板配置项集合。
 			/// </summary>
-			public Collections.INamedCollection<TemplateOption> Templates
-			{
-				get;
-			}
+			public Collections.INamedCollection<TemplateOption> Templates { get; }
+			#endregion
 		}
 
 		/// <summary>
@@ -96,26 +88,68 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// </summary>
 		public class TelecomVoiceOption
 		{
+			#region 构造函数
 			public TelecomVoiceOption()
 			{
 				this.Templates = new TemplateOptionCollection();
 			}
+			#endregion
 
+			#region 公共属性
 			/// <summary>
 			/// 获取或设置语音号码数组。
 			/// </summary>
-			public string[] Numbers
-			{
-				get; set;
-			}
+			[TypeConverter(typeof(NumbersConverter))]
+			public string[] Numbers { get; set; }
 
 			/// <summary>
 			/// 获取语音模板配置项集合。
 			/// </summary>
-			public Collections.INamedCollection<TemplateOption> Templates
+			public Collections.INamedCollection<TemplateOption> Templates { get; }
+			#endregion
+
+			#region 类型转换
+			private class NumbersConverter : TypeConverter
 			{
-				get;
+				public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+				{
+					return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+				}
+
+				public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+				{
+					return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+				}
+
+				public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+				{
+					if(value is string text)
+					{
+						if(string.IsNullOrEmpty(text))
+							return null;
+
+						return Zongsoft.Common.StringExtension.Slice(text, ',').ToArray();
+					}
+
+					return base.ConvertFrom(context, culture, value);
+				}
+
+				public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+				{
+					if(destinationType == typeof(string))
+					{
+						return value switch
+						{
+							string text => text,
+							IEnumerable<string> strings => string.Join(',', strings),
+							_ => value?.ToString(),
+						};
+					}
+
+					return base.ConvertTo(context, culture, value, destinationType);
+				}
 			}
+			#endregion
 		}
 		#endregion
 	}
