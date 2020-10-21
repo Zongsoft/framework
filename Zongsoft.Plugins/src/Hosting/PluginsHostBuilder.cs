@@ -70,15 +70,17 @@ namespace Zongsoft.Plugins.Hosting
 					//获取插件树并加载它
 					var tree = PluginTree.Get((PluginOptions)options).Load();
 
+					var registry = new HashSet<Assembly>();
+
 					foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
 					{
-						if(!assembly.IsDynamic && assembly.FullName.StartsWith("Zongsoft."))
+						if(!assembly.IsDynamic && assembly.FullName.StartsWith("Zongsoft.") && registry.Add(assembly))
 							Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, ctx.Configuration);
 					}
 
 					foreach(var plugin in tree.Plugins)
 					{
-						RegisterPlugin(plugin, services, ctx.Configuration);
+						RegisterPlugin(plugin, services, ctx.Configuration, registry);
 					}
 				}
 			});
@@ -123,18 +125,21 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 私有方法
-		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration)
+		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration, ISet<Assembly> registry)
 		{
 			if(plugin == null || plugin.Status != PluginStatus.Loaded)
 				return;
 
 			foreach(var assembly in plugin.Manifest.Assemblies)
-				Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, configuration);
+			{
+				if(registry.Add(assembly))
+					Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, configuration);
+			}
 
 			if(plugin.HasChildren)
 			{
 				foreach(var child in plugin.Children)
-					RegisterPlugin(child, services, configuration);
+					RegisterPlugin(child, services, configuration, registry);
 			}
 		}
 
