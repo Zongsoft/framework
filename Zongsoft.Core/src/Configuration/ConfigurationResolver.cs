@@ -97,7 +97,7 @@ namespace Zongsoft.Configuration
 						if(property.SetValue(instance, section.Value))
 							return;
 
-						throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, instance.GetType()));
+						throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
 					}
 
 					this.OnUnrecognize(instance, section.Key, section.Value);
