@@ -103,9 +103,9 @@ namespace Zongsoft.Configuration
 			return (T)GetOptionValue(configuration, typeof(T), path, defaultValue);
 		}
 
-		public static object GetOptionValue(this IConfiguration configuration, Type type, string key)
+		public static object GetOptionValue(this IConfiguration configuration, Type type, string path)
 		{
-			return GetOptionValue(configuration, type, key, defaultValue: null);
+			return GetOptionValue(configuration, type, path, defaultValue: null);
 		}
 
 		public static object GetOptionValue(this IConfiguration configuration, Type type, string path, object defaultValue)

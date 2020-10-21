@@ -41,26 +41,17 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// <summary>
 		/// 获取或设置模板的名称。
 		/// </summary>
-		public string Name
-		{
-			get; set;
-		}
+		public string Name { get; set; }
 
 		/// <summary>
 		/// 获取或设置模板的代号。
 		/// </summary>
-		public string Code
-		{
-			get; set;
-		}
+		public string Code { get; set; }
 
 		/// <summary>
 		/// 获取或设置模板的方案（即阿里云的短信签名）。
 		/// </summary>
-		public string Scheme
-		{
-			get; set;
-		}
+		public string Scheme { get; set; }
 		#endregion
 	}
 }
