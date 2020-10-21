@@ -58,13 +58,13 @@ namespace Zongsoft.Configuration.Options
 		#region 公共方法
 		public TOptions Create(string name)
 		{
-			var options = this.OnCreate();
+			var options = this.OnCreate(name);
 
 			foreach(var before in _beforeConfigures)
 			{
 				if(before is IConfigureNamedOptions<TOptions> namedConfigure)
 					namedConfigure.Configure(name, options);
-				else if(name == string.Empty)
+				else if(string.IsNullOrEmpty(name))
 					before.Configure(options);
 			}
 
@@ -94,14 +94,14 @@ namespace Zongsoft.Configuration.Options
 		#endregion
 
 		#region 虚拟方法
-		protected virtual TOptions OnCreate()
+		protected virtual TOptions OnCreate(string name)
 		{
 			var type = typeof(TOptions);
 
 			if(type.IsInterface || type.IsAbstract)
 				return Zongsoft.Data.Model.Build<TOptions>();
 
-			return new TOptions();
+			return Activator.CreateInstance<TOptions>();
 		}
 		#endregion
 	}
