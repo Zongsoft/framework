@@ -42,7 +42,7 @@ namespace Zongsoft.Configuration
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
 
-			configuration.GetSection(ConvertPath(path)).Bind(instance);
+			configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path)).Bind(instance);
 		}
 
 		public static void Bind(this IConfiguration configuration, object instance)
@@ -85,7 +85,7 @@ namespace Zongsoft.Configuration
 			configureOptions?.Invoke(options);
 
 			if(!string.IsNullOrEmpty(path))
-				configuration = configuration.GetSection(ConvertPath(path));
+				configuration = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path));
 
 			if(configuration is IConfigurationSection section && section.Value != null)
 				return Common.Convert.ConvertValue(section.Value, type);
@@ -113,7 +113,7 @@ namespace Zongsoft.Configuration
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
 
-			var section = configuration.GetSection(ConvertPath(path));
+			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path));
 			var value = section.Value;
 
 			if(value == null)
@@ -134,7 +134,7 @@ namespace Zongsoft.Configuration
 			configureOptions?.Invoke(options);
 
 			if(!string.IsNullOrEmpty(path))
-				configuration = configuration.GetSection(ConvertPath(path));
+				configuration = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path));
 
 			GetResolver(instance.GetType()).Attach(instance, configuration, options);
 		}
@@ -149,14 +149,6 @@ namespace Zongsoft.Configuration
 				return Activator.CreateInstance(attribute.ResolverType) as IConfigurationResolver ?? ConfigurationResolver.Default;
 
 			return ConfigurationResolver.Default;
-		}
-
-		private static string ConvertPath(string path)
-		{
-			if(string.IsNullOrEmpty(path))
-				return path;
-
-			return path.Trim('/').Replace('/', ':');
 		}
 		#endregion
 	}

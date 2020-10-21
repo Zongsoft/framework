@@ -36,6 +36,14 @@ namespace Zongsoft.Configuration
 {
 	public static class ConfigurationUtility
 	{
+		public static string GetConfigurationPath(string key)
+		{
+			if(string.IsNullOrWhiteSpace(key))
+				return string.Empty;
+
+			return key.Trim('/').Replace('/', ':');
+		}
+
 		public static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
 		{
 			if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
