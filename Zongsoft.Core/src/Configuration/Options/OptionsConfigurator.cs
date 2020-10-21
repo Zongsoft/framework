@@ -28,23 +28,50 @@
  */
 
 using System;
+using System.Linq;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Options
 {
-	public class OptionsConfigurator<TOptions> : ConfigureNamedOptions<TOptions> where TOptions : class
+	public class OptionsConfigurator<TOptions> : IConfigureNamedOptions<TOptions>, IConfigureOptions<TOptions> where TOptions : class
 	{
-		public OptionsConfigurator(string name, IConfiguration configuration) : this(name, configuration, _ => { })
+		#region 成员字段
+		private readonly string _name;
+		private readonly IConfiguration _configuration;
+		private readonly Action<ConfigurationBinderOptions> _configureBinder;
+		#endregion
+
+		#region 构造函数
+		public OptionsConfigurator(string name, IConfiguration configuration) : this(name, configuration, null)
 		{
 		}
 
 		public OptionsConfigurator(string name, IConfiguration configuration, Action<ConfigurationBinderOptions> configureBinder)
-			: base(name, options => configuration.Bind(options, configureBinder))
 		{
-			if(configuration == null)
-				throw new ArgumentNullException(nameof(configuration));
+			_name = name;
+			_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+			_configureBinder = configureBinder;
 		}
+		#endregion
+
+		#region 公共方法
+		public void Configure(TOptions options)
+		{
+			this.Configure(string.Empty, options);
+		}
+
+		public void Configure(string name, TOptions options)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = _name;
+
+			var configuration = string.IsNullOrEmpty(name) ? _configuration :
+				_configuration.GetChildren().FirstOrDefault(child => string.Equals(child.Key, name, StringComparison.OrdinalIgnoreCase));
+
+			configuration?.Bind(options, _configureBinder);
+		}
+		#endregion
 	}
 }
