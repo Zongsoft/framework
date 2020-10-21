@@ -42,7 +42,7 @@ namespace Zongsoft.Services
 		#region 私有变量
 		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
 		private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
-			.GetMethod("Configure", 1,
+			.GetMethod(nameof(OptionsConfigurationExtension.Configure), 1,
 				BindingFlags.Public | BindingFlags.Static,
 				null,
 				new[] { typeof(IServiceCollection), typeof(string), typeof(IConfiguration) },
@@ -91,7 +91,7 @@ namespace Zongsoft.Services
 					if(attribute != null)
 					{
 						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
-						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 					}
 				}
 
@@ -104,7 +104,7 @@ namespace Zongsoft.Services
 					if(attribute != null)
 					{
 						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
-						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(attribute.Path) });
+						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 					}
 				}
 
