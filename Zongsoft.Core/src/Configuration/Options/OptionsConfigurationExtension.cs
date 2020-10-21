@@ -45,7 +45,7 @@ namespace Zongsoft.Services
 
 		public static IServiceCollection Configure<TOptions>(this IServiceCollection services, string name, IConfiguration configuration) where TOptions : class
 		{
-			return services.Configure<TOptions>(name, configuration, _ => { });
+			return services.Configure<TOptions>(name, configuration, null);
 		}
 
 		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
