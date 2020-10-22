@@ -360,7 +360,7 @@ namespace Zongsoft.Data
 									inherits.Push(contract);
 							}
 
-							type = inherits.Pop().GetTypeInfo();
+							type = inherits.TryPop(out var inheritance) ? inheritance.GetTypeInfo() : null;
 						} while(type != null && type != typeof(object).GetTypeInfo());
 
 						if(member == null)
