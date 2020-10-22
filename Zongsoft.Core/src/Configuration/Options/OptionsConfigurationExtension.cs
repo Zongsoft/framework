@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
@@ -66,10 +67,45 @@ namespace Zongsoft.Services
 			if(configuration == null)
 				throw new ArgumentNullException(nameof(configuration));
 
+			//确保选项类型没有重复注册，以免导致选项的重复解析（重复解析对字典/集合可能是有害的）
+			if(services.Exists<TOptions>(name, configuration, configureBinder))
+				return services;
+
 			return services.AddOptions()
 				.Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
 				.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
 				.AddSingleton<IConfigureOptions<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurator<TOptions>(name, configuration, configureBinder));
+		}
+
+		private static bool Exists<TOptions>(this IServiceCollection services, string name, IConfiguration configuration, Action<Configuration.ConfigurationBinderOptions> binder) where TOptions : class
+		{
+			static bool CompareConfiguration(IConfiguration a, IConfiguration b)
+			{
+				if(a == null)
+					return b == null;
+
+				if(b == null)
+					return a == null;
+
+				if(a is IConfigurationSection x && b is IConfigurationSection y)
+					return string.Equals(x.Path, y.Path, StringComparison.OrdinalIgnoreCase);
+
+				return object.Equals(a, b);
+			}
+
+			return services.Any(descriptor =>
+			{
+				var instance = descriptor.ImplementationInstance;
+
+				if(instance != null && instance is Configuration.Options.OptionsConfigurator<TOptions> configurator)
+				{
+					return CompareConfiguration(configuration, configurator.Configuration) &&
+							string.Equals(name, configurator.Name, StringComparison.OrdinalIgnoreCase) &&
+							object.Equals(binder, configurator.ConfigurationBinder);
+				}
+
+				return false;
+			});
 		}
 	}
 }
