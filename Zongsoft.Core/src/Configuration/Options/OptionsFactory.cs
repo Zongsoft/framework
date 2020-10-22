@@ -37,8 +37,8 @@ namespace Zongsoft.Configuration.Options
 	public class OptionsFactory<TOptions> : IOptionsFactory<TOptions> where TOptions : class, new()
 	{
 		#region 私有变量
-		private readonly IEnumerable<IConfigureOptions<TOptions>> _beforeConfigures;
-		private readonly IEnumerable<IPostConfigureOptions<TOptions>> _afterConfigures;
+		private readonly IEnumerable<IConfigureOptions<TOptions>> _configurators;
+		private readonly IEnumerable<IPostConfigureOptions<TOptions>> _postConfigurators;
 		private readonly IEnumerable<IValidateOptions<TOptions>> _validations;
 		#endregion
 
@@ -49,8 +49,8 @@ namespace Zongsoft.Configuration.Options
 
 		public OptionsFactory(IEnumerable<IConfigureOptions<TOptions>> configures, IEnumerable<IPostConfigureOptions<TOptions>> postConfigures, IEnumerable<IValidateOptions<TOptions>> validations)
 		{
-			_beforeConfigures = configures;
-			_afterConfigures = postConfigures;
+			_configurators = configures;
+			_postConfigurators = postConfigures;
 			_validations = validations;
 		}
 		#endregion
@@ -60,17 +60,17 @@ namespace Zongsoft.Configuration.Options
 		{
 			var options = this.OnCreate(name);
 
-			foreach(var before in _beforeConfigures)
+			foreach(var configurator in _configurators)
 			{
-				if(before is IConfigureNamedOptions<TOptions> namedConfigure)
+				if(configurator is IConfigureNamedOptions<TOptions> namedConfigure)
 					namedConfigure.Configure(name, options);
 				else if(string.IsNullOrEmpty(name))
-					before.Configure(options);
+					configurator.Configure(options);
 			}
 
-			foreach(var after in _afterConfigures)
+			foreach(var post in _postConfigurators)
 			{
-				after.PostConfigure(name, options);
+				post.PostConfigure(name, options);
 			}
 
 			if(_validations != null)

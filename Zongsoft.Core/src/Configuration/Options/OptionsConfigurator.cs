@@ -35,14 +35,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Options
 {
-	public class OptionsConfigurator<TOptions> : IConfigureNamedOptions<TOptions>, IConfigureOptions<TOptions> where TOptions : class
+	public class OptionsConfigurator<TOptions> : IConfigureNamedOptions<TOptions> where TOptions : class
 	{
-		#region 成员字段
-		private readonly string _name;
-		private readonly IConfiguration _configuration;
-		private readonly Action<ConfigurationBinderOptions> _configureBinder;
-		#endregion
-
 		#region 构造函数
 		public OptionsConfigurator(string name, IConfiguration configuration) : this(name, configuration, null)
 		{
@@ -50,10 +44,16 @@ namespace Zongsoft.Configuration.Options
 
 		public OptionsConfigurator(string name, IConfiguration configuration, Action<ConfigurationBinderOptions> configureBinder)
 		{
-			_name = name;
-			_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-			_configureBinder = configureBinder;
+			this.Name = name;
+			this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+			this.ConfigurationBinder = configureBinder;
 		}
+		#endregion
+
+		#region 公共属性
+		public string Name { get; }
+		public IConfiguration Configuration { get; }
+		public Action<ConfigurationBinderOptions> ConfigurationBinder { get; }
 		#endregion
 
 		#region 公共方法
@@ -65,12 +65,13 @@ namespace Zongsoft.Configuration.Options
 		public void Configure(string name, TOptions options)
 		{
 			if(string.IsNullOrEmpty(name))
-				name = _name;
+				name = this.Name;
 
-			var configuration = string.IsNullOrEmpty(name) ? _configuration :
-				_configuration.GetChildren().FirstOrDefault(child => string.Equals(child.Key, name, StringComparison.OrdinalIgnoreCase));
+			var configuration = string.IsNullOrEmpty(name) ? this.Configuration :
+				this.Configuration.GetChildren().FirstOrDefault(child => string.Equals(child.Key, name, StringComparison.OrdinalIgnoreCase));
 
-			configuration?.Bind(options, _configureBinder);
+			//调用Zongsoft的配置绑定方法：Zongsoft.Configuration.ConfigurationBinder.Bind(...)
+			configuration?.Bind(options, this.ConfigurationBinder);
 		}
 		#endregion
 	}
