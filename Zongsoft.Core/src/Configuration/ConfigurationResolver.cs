@@ -309,7 +309,7 @@ namespace Zongsoft.Configuration
 		protected void OnUnrecognize(object target, IConfiguration configuration)
 		{
 			if(configuration is IConfigurationSection section && section.Value != null)
-				this.OnUnrecognize(target, section.Path, section.Value);
+				this.OnUnrecognize(target, section.Key, section.Value);
 
 			foreach(var child in configuration.GetChildren())
 			{
