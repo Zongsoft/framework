@@ -51,10 +51,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共属性
-		public IConfigurationRecognizer Recognizer
-		{
-			get; set;
-		}
+		public IConfigurationRecognizerProvider Recognizers { get; set; }
 		#endregion
 
 		#region 解析方法
@@ -100,7 +97,7 @@ namespace Zongsoft.Configuration
 						throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
 					}
 
-					this.OnUnrecognize(instance, section.Key, section.Value);
+					this.OnUnrecognize(instance, properties, section, options);
 				}
 				else
 				{
@@ -117,37 +114,47 @@ namespace Zongsoft.Configuration
 					}
 					else
 					{
-						var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
-
-						if(dictionaryType != null)
-						{
-							if(dictionaryType.GenericTypeArguments[0] != typeof(string))
-								return;
-
-							var valueType = dictionaryType.GenericTypeArguments[1];
-							var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
-
-							Reflection.Reflector.SetValue(setter, ref instance, this.Resolve(valueType, configuration, options), new object[] { section.Key });
-
-							return;
-						}
-
-						var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
-
-						if(collectionType != null)
-						{
-							var valueType = collectionType.GenericTypeArguments[0];
-							var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
-
-							add.Invoke(instance, new object[] { this.Resolve(valueType, configuration, options) });
-
-							return;
-						}
-
-						this.OnUnrecognize(instance, configuration);
+						if(!this.ResolveCollection(instance, section, options))
+							this.OnUnrecognize(instance, properties, section, options);
 					}
 				}
 			}
+		}
+
+		private bool ResolveCollection(object instance, IConfigurationSection configuration, ConfigurationBinderOptions options)
+		{
+			var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
+
+			if(dictionaryType != null)
+			{
+				object key = configuration.Key;
+
+				//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
+				if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
+					throw new ConfigurationException($"Unable to convert the ‘{key}’ configuration key to a dictionary key type of ‘{dictionaryType.GenericTypeArguments[0].FullName}’ type.");
+
+				var valueType = dictionaryType.GenericTypeArguments[1];
+				var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
+
+				Reflection.Reflector.SetValue(setter, ref instance, this.Resolve(valueType, configuration, options), new object[] { key });
+
+				return true;
+			}
+
+			var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
+
+			if(collectionType != null)
+			{
+				var valueType = collectionType.GenericTypeArguments[0];
+				var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
+
+				add.Invoke(instance, new object[] { this.Resolve(valueType, configuration, options) });
+
+				return true;
+			}
+
+			//返回失败
+			return false;
 		}
 		#endregion
 
@@ -301,20 +308,50 @@ namespace Zongsoft.Configuration
 			return properties;
 		}
 
-		protected virtual void OnUnrecognize(object target, string name, string value)
+		protected virtual void OnUnrecognize(object target, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
 		{
-			(this.Recognizer ?? ConfigurationRecognizer.Default).Recognize(target, name, value);
-		}
+			var unrecognizedProperty = ConfigurationRecognizerProvider.GetUnrecognizedProperty(target.GetType());
 
-		protected void OnUnrecognize(object target, IConfiguration configuration)
-		{
-			if(configuration is IConfigurationSection section && section.Value != null)
-				this.OnUnrecognize(target, section.Key, section.Value);
-
-			foreach(var child in configuration.GetChildren())
+			if(unrecognizedProperty == null)
 			{
-				this.OnUnrecognize(target, child);
+				if(options!.UnrecognizedError)
+					throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
+
+				return;
 			}
+
+			if(configuration.Value == null)
+			{
+				var attribute = unrecognizedProperty.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
+
+				//如果指定的未识别属性名被注解为空或星号，则表示它是一个默认集合属性
+				if(attribute != null && (string.IsNullOrEmpty(attribute.Name) || attribute.Name == "*"))
+				{
+					var token = properties[unrecognizedProperty.Name];
+					var value = token.GetValue(target);
+
+					if(value == null)
+					{
+						value = this.CreateInstance(unrecognizedProperty.PropertyType);
+
+						if(!token.SetValue(target, value))
+							throw new ConfigurationException($"The default collection property {unrecognizedProperty.Name} of '{target.GetType().FullName}' type is null and it cannot be set.");
+					}
+
+					//解析默认集合成功则返回，否则抛出异常
+					if(this.ResolveCollection(value, configuration, options))
+						return;
+
+					throw new ConfigurationException($"The {unrecognizedProperty.Name} property of type '{target.GetType().FullName}' is annotated as the default collection, but the binding for this property fails.");
+				}
+			}
+
+			var recognizers = this.Recognizers ?? ConfigurationRecognizerProvider.Default;
+			var recognizer = recognizers.GetRecognize(target.GetType()) ??
+				throw new ConfigurationException($"Unable to get a recognizer of type '{target.GetType().FullName}'.");
+
+			if(!recognizer.Recognize(target, configuration, options) && options!.UnrecognizedError)
+				throw new ConfigurationException($"The '{configuration.Path}' configuration section is not recognized.");
 		}
 		#endregion
 
