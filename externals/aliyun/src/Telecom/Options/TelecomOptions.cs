@@ -40,6 +40,14 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 	/// </summary>
 	public class TelecomOptions
 	{
+		#region 构造函数
+		public TelecomOptions()
+		{
+			this.Message = new TelecomMessageOption();
+			this.Voice = new TelecomVoiceOption();
+		}
+		#endregion
+
 		#region 公共属性
 		/// <summary>
 		/// 获取或设置电信运营商区域。
