@@ -29,12 +29,10 @@
 
 using System;
 
-using Microsoft.Extensions.Configuration;
-
 namespace Zongsoft.Configuration
 {
-	public interface IConfigurationRecognizer
+	public interface IConfigurationRecognizerProvider
 	{
-		bool Recognize(object target, IConfigurationSection configuration, ConfigurationBinderOptions options);
+		IConfigurationRecognizer GetRecognize(Type type);
 	}
 }
