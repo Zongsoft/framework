@@ -31,6 +31,7 @@ namespace Zongsoft.Configuration
 
 			TestGeneral(configuration.GetOption<General>("/general"));
 			TestMobile(configuration.GetOption<Mobile>("mobile"));
+			TestStorage(configuration.GetOption<Storage>("storage"));
 		}
 
 		[Fact]
@@ -164,6 +165,22 @@ namespace Zongsoft.Configuration
 			Assert.Equal("A123", notification.Code);
 			Assert.Equal("****", notification.Secret);
 		}
+
+		private void TestStorage(Storage storage)
+		{
+			Assert.NotNull(storage);
+			Assert.Equal("Shanghai", storage.Region);
+			Assert.True(string.IsNullOrEmpty(storage.Certificate));
+
+			Assert.NotEmpty(storage.Buckets);
+			Assert.Equal(1, storage.Buckets.Count);
+
+			var bucket = storage.Buckets["zongsoft-files"];
+			Assert.NotNull(bucket);
+			Assert.Equal("zongsoft-files", bucket.Name);
+			Assert.Equal("Shenzhen", bucket.Region);
+			Assert.Equal("test", bucket.Certificate);
+		}
 		#endregion
 	}
 
@@ -175,47 +192,24 @@ namespace Zongsoft.Configuration
 			this.Certificates = new CertificateCollection();
 		}
 
-		public string Name
-		{
-			get; set;
-		}
+		public string Name { get; set; }
 
 		[ConfigurationProperty("Intranet")]
-		public bool IsIntranet
-		{
-			get; set;
-		}
+		public bool IsIntranet { get; set; }
 
-		public CertificateCollection Certificates
-		{
-			get;
-		}
+		public CertificateCollection Certificates { get; }
 	}
 
 	public class Certificate
 	{
-		public string Name
-		{
-			get; set;
-		}
-
-		public string Code
-		{
-			get; set;
-		}
-
-		public string Secret
-		{
-			get; set;
-		}
+		public string Name { get; set; }
+		public string Code { get; set; }
+		public string Secret { get; set; }
 	}
 
 	public class CertificateCollection : Zongsoft.Collections.NamedCollectionBase<Certificate>
 	{
-		public string Default
-		{
-			get; set;
-		}
+		public string Default { get; set; }
 
 		public Certificate GetDefault()
 		{
@@ -233,33 +227,32 @@ namespace Zongsoft.Configuration
 		}
 	}
 
+	[Configuration(nameof(Buckets))]
+	public class Storage
+	{
+		public string Region { get; set; }
+		public string Certificate { get; set; }
+
+		[ConfigurationProperty("*")]
+		public IDictionary<string, Bucket> Buckets { get; set; }
+	}
+
+	public class Bucket
+	{
+		public string Name { get; set; }
+		public string Region { get; set; }
+		public string Certificate { get; set; }
+	}
+
 	public class Mobile
 	{
-		public string Region
-		{
-			get; set;
-		}
-
-		public string Certificate
-		{
-			get; set;
-		}
-
-		public IDictionary<string, Template> Messages
-		{
-			get; set;
-		}
-
-		public Voices Voices
-		{
-			get; set;
-		}
+		public string Region { get; set; }
+		public string Certificate { get; set; }
+		public IDictionary<string, Template> Messages { get; set; }
+		public Voices Voices { get; set; }
 
 		[ConfigurationProperty("Pushing")]
-		public Notifications Notifications
-		{
-			get; set;
-		}
+		public Notifications Notifications { get; set; }
 	}
 
 	public class Voices : Dictionary<string, Template>
@@ -269,27 +262,18 @@ namespace Zongsoft.Configuration
 		}
 
 		[TypeConverter(typeof(NumbersConverter))]
-		public string[] Numbers
-		{
-			get; set;
-		}
+		public string[] Numbers { get; set; }
 
 		public class NumbersConverter : TypeConverter
 		{
 			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 			{
-				if(sourceType == typeof(string))
-					return true;
-
-				return base.CanConvertFrom(context, sourceType);
+				return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 			}
 
 			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 			{
-				if(destinationType == typeof(string))
-					return true;
-
-				return base.CanConvertTo(context, destinationType);
+				return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 			}
 
 			public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
@@ -302,8 +286,8 @@ namespace Zongsoft.Configuration
 
 			public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
 			{
-				if(value is string[] array)
-					return string.Join(',', array);
+				if(value is IEnumerable<string> strings)
+					return string.Join(',', strings);
 
 				return base.ConvertTo(context, culture, value, destinationType);
 			}
@@ -320,38 +304,16 @@ namespace Zongsoft.Configuration
 
 	public class Template
 	{
-		public string Name
-		{
-			get; set;
-		}
-
-		public string Code
-		{
-			get; set;
-		}
-
-		public string Scheme
-		{
-			get; set;
-		}
+		public string Name { get; set; }
+		public string Code { get; set; }
+		public string Scheme { get; set; }
 	}
 
 	public class App
 	{
-		public string Key
-		{
-			get; set;
-		}
-
-		public string Code
-		{
-			get; set;
-		}
-
-		public string Secret
-		{
-			get; set;
-		}
+		public string Key { get; set; }
+		public string Code { get; set; }
+		public string Secret { get; set; }
 	}
 	#endregion
 }

@@ -9,6 +9,10 @@
 			</certificates>
 		</general>
 
+		<storage region="Shanghai" certificate="">
+			<bucket bucket.name="zongsoft-files" region="Shenzhen" certificate="test" />
+		</storage>
+
 		<mobile region="Shenzhen" certificate="">
 			<messages>
 				<template template.name="Alarm" code="SMS_01" scheme="Zongsoft" />
