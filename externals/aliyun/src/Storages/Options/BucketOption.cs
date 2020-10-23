@@ -41,26 +41,17 @@ namespace Zongsoft.Externals.Aliyun.Storages.Options
 		/// <summary>
 		/// 获取或设置存储器的名称。
 		/// </summary>
-		public string Name
-		{
-			get; set;
-		}
+		public string Name { get; set; }
 
 		/// <summary>
 		/// 获取或设置存储器所属的运营商区域。
 		/// </summary>
-		public ServiceCenterName? Region
-		{
-			get; set;
-		}
+		public ServiceCenterName? Region { get; set; }
 
 		/// <summary>
 		/// 获取或设置存储器关联的凭证名。
 		/// </summary>
-		public string Certificate
-		{
-			get; set;
-		}
+		public string Certificate { get; set; }
 		#endregion
 	}
 }
