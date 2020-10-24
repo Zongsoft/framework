@@ -234,12 +234,18 @@
   <data name="Text.Optional" xml:space="preserve">
     <value>可选的</value>
   </data>
+  <data name="Text.QueueCommand.Description" xml:space="preserve">
+    <value>提供队列操作命令的队列。</value>
+  </data>
   <data name="Text.QueueCommand.Message" xml:space="preserve">
     <value>当前名为 '{0}' 队列，总计 {1} 个元素，其类型是：{2}
 队列信息：{3}</value>
   </data>
   <data name="Text.QueueCommand.MissingQueueProvider" xml:space="preserve">
     <value>当前队列命令缺少队列提供程序，因此无法选取指定名称的队列。</value>
+  </data>
+  <data name="Text.QueueCommand.Name" xml:space="preserve">
+    <value>队列命令</value>
   </data>
   <data name="Text.QueueCommand.NotFoundQueue" xml:space="preserve">
     <value>从队列提供程序中没有找到指定名称为”{0}“的队列。</value>

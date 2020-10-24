@@ -412,6 +412,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 提供队列操作命令的队列。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueueCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 当前名为 &apos;{0}&apos; 队列，总计 {1} 个元素，其类型是：{2}
         ///队列信息：{3} 的本地化字符串。
         /// </summary>
@@ -427,6 +436,15 @@ namespace Zongsoft.Properties {
         internal static string Text_QueueCommand_MissingQueueProvider {
             get {
                 return ResourceManager.GetString("Text.QueueCommand.MissingQueueProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 队列命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueueCommand.Name", resourceCulture);
             }
         }
         

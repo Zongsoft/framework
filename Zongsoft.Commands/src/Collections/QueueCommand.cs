@@ -28,12 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Collections.Commands
 {
+	[DisplayName("Text.QueueCommand.Name")]
+	[Description("Text.QueueCommand.Description")]
 	[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
 	public class QueueCommand : CommandBase<CommandContext>
 	{
