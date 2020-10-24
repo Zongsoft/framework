@@ -30,11 +30,14 @@
 using System;
 using System.IO;
 using System.Text;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Collections.Commands
 {
+	[DisplayName("Text.QueueInCommand.Name")]
+	[Description("Text.QueueInCommand.Description")]
 	[CommandOption("type", Type = typeof(ContentType), DefaultValue = ContentType.String)]
 	[CommandOption("encoding", Type = typeof(Encoding), DefaultValue = "utf-8")]
 	[CommandOption("round", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Round")]

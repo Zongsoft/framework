@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -35,6 +36,8 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Collections.Commands
 {
+	[DisplayName("Text.QueuePeekCommand.Name")]
+	[Description("Text.QueuePeekCommand.Description")]
 	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
 	public class QueuePeekCommand : CommandBase<CommandContext>
 	{

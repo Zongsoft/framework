@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -36,6 +36,8 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Collections.Commands
 {
+	[DisplayName("Text.QueueOutCommand.Name")]
+	[Description("Text.QueueOutCommand.Description")]
 	[CommandOption("count", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Count")]
 	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
 	public class QueueOutCommand : CommandBase<CommandContext>
