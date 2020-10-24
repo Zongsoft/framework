@@ -110,6 +110,13 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 重写方法
+		public override string ToString()
+		{
+			return string.Join(Environment.NewLine, _providers.Select(provider => provider.ToString()));
+		}
+		#endregion
+
 		#region 释放处置
 		public void Dispose()
 		{
