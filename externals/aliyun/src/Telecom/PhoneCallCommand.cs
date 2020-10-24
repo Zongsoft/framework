@@ -37,13 +37,13 @@ using Zongsoft.Serialization;
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
 	[CommandOption(KEY_TEMPLATE_OPTION, typeof(string), null, true, "Text.PhoneCallCommand.Options.Template")]
-	[CommandOption(KEY_PARAMETER_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Parameter")]
+	[CommandOption(KEY_PARAMETERS_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Parameters")]
 	[CommandOption(KEY_EXTRA_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Extra")]
 	public class PhoneCallCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
 		private const string KEY_TEMPLATE_OPTION = "template";
-		private const string KEY_PARAMETER_OPTION = "parameter";
+		private const string KEY_PARAMETERS_OPTION = "parameters";
 		private const string KEY_EXTRA_OPTION = "extra";
 		#endregion
 
@@ -68,7 +68,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				this.CallAsync(
 					context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 					context.Expression.Arguments,
-					context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETER_OPTION)),
+					context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
 					context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION))
 			);
 		}

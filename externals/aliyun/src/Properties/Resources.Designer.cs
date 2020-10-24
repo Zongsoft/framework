@@ -153,9 +153,9 @@ namespace Zongsoft.Externals.Aliyun.Properties {
         /// <summary>
         ///   查找类似 语音模板参数，参数之间使用逗号或竖线分隔，参数键值使用等号或冒号分隔（譬如：key1=value1,key2:value2）。 的本地化字符串。
         /// </summary>
-        internal static string Text_PhoneCallCommand_Options_Parameter {
+        internal static string Text_PhoneCallCommand_Options_Parameters {
             get {
-                return ResourceManager.GetString("Text.PhoneCallCommand.Options.Parameter", resourceCulture);
+                return ResourceManager.GetString("Text.PhoneCallCommand.Options.Parameters", resourceCulture);
             }
         }
         
@@ -180,9 +180,9 @@ namespace Zongsoft.Externals.Aliyun.Properties {
         /// <summary>
         ///   查找类似 短信模板参数，参数之间使用逗号或竖线分隔，参数键值使用等号或冒号分隔（譬如：key1=value1,key2:value2）。 的本地化字符串。
         /// </summary>
-        internal static string Text_PhoneSendCommand_Options_Parameter {
+        internal static string Text_PhoneSendCommand_Options_Parameters {
             get {
-                return ResourceManager.GetString("Text.PhoneSendCommand.Options.Parameter", resourceCulture);
+                return ResourceManager.GetString("Text.PhoneSendCommand.Options.Parameters", resourceCulture);
             }
         }
         

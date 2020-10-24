@@ -35,14 +35,14 @@ using Zongsoft.Serialization;
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
 	[CommandOption(KEY_TEMPLATE_OPTION, typeof(string), null, true, "Text.PhoneSendCommand.Options.Template")]
-	[CommandOption(KEY_PARAMETER_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Parameter")]
+	[CommandOption(KEY_PARAMETERS_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Parameters")]
 	[CommandOption(KEY_SCHEME_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Scheme")]
 	[CommandOption(KEY_EXTRA_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Extra")]
 	public class PhoneSendCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
 		private const string KEY_TEMPLATE_OPTION = "template";
-		private const string KEY_PARAMETER_OPTION = "parameter";
+		private const string KEY_PARAMETERS_OPTION = "parameters";
 		private const string KEY_SCHEME_OPTION = "scheme";
 		private const string KEY_EXTRA_OPTION = "extra";
 		#endregion
@@ -67,7 +67,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			var result = Utility.ExecuteTask(() => _phone.SendAsync(
 				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 				context.Expression.Arguments,
-				context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETER_OPTION)),
+				context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
 				context.Expression.Options.GetValue<string>(KEY_SCHEME_OPTION),
 				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION)));
 
