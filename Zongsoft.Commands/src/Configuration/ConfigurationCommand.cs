@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 
@@ -35,6 +37,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Configuration.Commands
 {
+	[DisplayName("Text.ConfigurationCommand.Name")]
+	[Description("Text.ConfigurationCommand.Description")]
 	public class ConfigurationCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
@@ -68,7 +72,7 @@ namespace Zongsoft.Configuration.Commands
 				_configuration = configuration;
 
 			//打印配置信息
-			Print(_configuration, context.Output, 0);
+			Print(_configuration, context.Output, false, 0);
 
 			return _configuration;
 		}
@@ -86,7 +90,7 @@ namespace Zongsoft.Configuration.Commands
 			return GetConfiguration(node.Parent);
 		}
 
-		internal static void Print(IConfiguration configuration, ICommandOutlet output, int depth)
+		internal static void Print(IConfiguration configuration, ICommandOutlet output, bool simplify, int depth)
 		{
 			if(configuration == null)
 				return;
@@ -99,27 +103,41 @@ namespace Zongsoft.Configuration.Commands
 				{
 					output.WriteLine(CommandOutletContent
 						.Create(CommandOutletColor.Gray, $"[{++index}] ")
-						.Append(CommandOutletColor.DarkGreen, provider.GetType().FullName)
+						.AppendLine(CommandOutletColor.DarkYellow, provider.GetType().FullName)
+						.Append(CommandOutletColor.DarkGray, provider.ToString())
 					);
-				}
 
-				output.WriteLine();
-				output.WriteLine(root.GetDebugView());
+					var keys = provider.GetChildKeys(Array.Empty<string>(), null).Distinct(StringComparer.OrdinalIgnoreCase);
+
+					foreach(var key in keys)
+					{
+						output.WriteLine("\t" + key);
+					}
+
+					if(keys.Any())
+						output.WriteLine();
+				}
 			}
 			else if(configuration is IConfigurationSection section)
 			{
 				if(depth > 0)
-					output.Write(new string('\t', depth));
+					output.Write(new string(' ', depth * 4));
 
 				if(section.Value == null)
 				{
-					output.WriteLine(CommandOutletColor.DarkYellow, section.Path);
+					if(depth > 0 && simplify)
+						output.WriteLine(CommandOutletColor.DarkYellow, section.Key);
+					else
+						output.WriteLine(CommandOutletColor.DarkYellow, section.Path);
 				}
 				else
 				{
-					output.WriteLine(CommandOutletContent
-						.Create(CommandOutletColor.DarkGreen, ConfigurationPath.GetParentPath(section.Path))
-						.Append(CommandOutletColor.DarkCyan, ":")
+					var content = simplify ?
+						CommandOutletContent.Create("") :
+						CommandOutletContent.Create(CommandOutletColor.DarkGreen, ConfigurationPath.GetParentPath(section.Path))
+						                    .Append(CommandOutletColor.DarkCyan, ":");
+
+					output.WriteLine(content
 						.Append(CommandOutletColor.Green, section.Key)
 						.Append(CommandOutletColor.DarkMagenta, "=")
 						.Append(CommandOutletColor.DarkGray, section.Value)
@@ -128,7 +146,7 @@ namespace Zongsoft.Configuration.Commands
 
 				foreach(var child in section.GetChildren())
 				{
-					Print(child, output, depth + 1);
+					Print(child, output, simplify, depth + 1);
 				}
 			}
 		}

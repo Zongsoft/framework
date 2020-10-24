@@ -43,10 +43,15 @@ namespace Zongsoft.Configuration.Commands
 	///		<code>[configuration.]get path1 path2 path3...</code>
 	///		<para>通过 arguments 来指定要查找的选项路径。</para>
 	/// </remarks>
-	[DisplayName("Text.OptionsGetCommand.Name")]
-	[Description("Text.OptionsGetCommand.Description")]
+	[DisplayName("Text.ConfigurationGetCommand.Name")]
+	[Description("Text.ConfigurationGetCommand.Description")]
+	[CommandOption(KEY_SIMPLIFY_OPTION, DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
 	public class ConfigurationGetCommand : CommandBase<CommandContext>
 	{
+		#region 常量定义
+		private const string KEY_SIMPLIFY_OPTION = "simplify";
+		#endregion
+
 		#region 构造函数
 		public ConfigurationGetCommand() : base("Get")
 		{
@@ -70,8 +75,8 @@ namespace Zongsoft.Configuration.Commands
 
 			if(context.Expression.Arguments.Length == 1)
 			{
-				var section = configuration.GetSection(context.Expression.Arguments[0]);
-				ConfigurationCommand.Print(section, context.Output, 0);
+				var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[0]));
+				ConfigurationCommand.Print(section, context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
 				return section;
 			}
 
@@ -79,8 +84,8 @@ namespace Zongsoft.Configuration.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				sections[i] = configuration.GetSection(context.Expression.Arguments[i]);
-				ConfigurationCommand.Print(sections[i], context.Output, 0);
+				sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[i]));
+				ConfigurationCommand.Print(sections[i], context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
 			}
 
 			return sections;
