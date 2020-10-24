@@ -74,6 +74,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// <summary>
 		/// 表示电信短信服务的配置选项。
 		/// </summary>
+		[Configuration.Configuration(nameof(Templates))]
 		public class TelecomMessageOption
 		{
 			#region 构造函数
@@ -87,6 +88,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 			/// <summary>
 			/// 获取短信模板配置项集合。
 			/// </summary>
+			[Configuration.ConfigurationProperty("")]
 			public Collections.INamedCollection<TemplateOption> Templates { get; }
 			#endregion
 		}
@@ -94,6 +96,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		/// <summary>
 		/// 表示电信语音服务的配置选项。
 		/// </summary>
+		[Configuration.Configuration(nameof(Templates))]
 		public class TelecomVoiceOption
 		{
 			#region 构造函数
@@ -113,6 +116,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 			/// <summary>
 			/// 获取语音模板配置项集合。
 			/// </summary>
+			[Configuration.ConfigurationProperty("")]
 			public Collections.INamedCollection<TemplateOption> Templates { get; }
 			#endregion
 
