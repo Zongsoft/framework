@@ -60,10 +60,6 @@
 			<object name="Stop" type="Zongsoft.Messaging.Commands.ListenerStopCommand, Zongsoft.Commands" />
 		</object>
 
-		<object name="Collections" />
-	</extension>
-
-	<extension path="/Workbench/Executor/Commands/Collections">
 		<object name="Queue">
 			<queue.command>
 				<object type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
