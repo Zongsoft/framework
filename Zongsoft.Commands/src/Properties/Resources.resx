@@ -165,6 +165,21 @@
   <data name="Text.CommandUsages" xml:space="preserve">
     <value>命令使用方法：</value>
   </data>
+  <data name="Text.ConfigurationCommand.Description" xml:space="preserve">
+    <value>该命令提供获取当前程序的配置信息。</value>
+  </data>
+  <data name="Text.ConfigurationCommand.Name" xml:space="preserve">
+    <value>配置命令</value>
+  </data>
+  <data name="Text.ConfigurationCommand.Options.Simplify" xml:space="preserve">
+    <value>是否以简化的方式显式。</value>
+  </data>
+  <data name="Text.ConfigurationGetCommand.Description" xml:space="preserve">
+    <value>该命令查看指定路径的配置信息。</value>
+  </data>
+  <data name="Text.ConfigurationGetCommand.Name" xml:space="preserve">
+    <value>获取配置命令</value>
+  </data>
   <data name="Text.Disabled" xml:space="preserve">
     <value>已禁用</value>
   </data>
@@ -218,12 +233,6 @@
   </data>
   <data name="Text.Optional" xml:space="preserve">
     <value>可选的</value>
-  </data>
-  <data name="Text.OptionsGetCommand.Description" xml:space="preserve">
-    <value>该命令提供获取当前选项提供程序中的选项配置。</value>
-  </data>
-  <data name="Text.OptionsGetCommand.Name" xml:space="preserve">
-    <value>选项获取命令</value>
   </data>
   <data name="Text.QueueCommand.Message" xml:space="preserve">
     <value>当前名为 '{0}' 队列，总计 {1} 个元素，其类型是：{2}

@@ -205,6 +205,51 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 该命令提供获取当前程序的配置信息。 的本地化字符串。
+        /// </summary>
+        internal static string Text_ConfigurationCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.ConfigurationCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 配置命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_ConfigurationCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.ConfigurationCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 是否以简化的方式显式。 的本地化字符串。
+        /// </summary>
+        internal static string Text_ConfigurationCommand_Options_Simplify {
+            get {
+                return ResourceManager.GetString("Text.ConfigurationCommand.Options.Simplify", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 该命令查看指定路径的配置信息。 的本地化字符串。
+        /// </summary>
+        internal static string Text_ConfigurationGetCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.ConfigurationGetCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 获取配置命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_ConfigurationGetCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.ConfigurationGetCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 已禁用 的本地化字符串。
         /// </summary>
         internal static string Text_Disabled {
@@ -363,24 +408,6 @@ namespace Zongsoft.Properties {
         internal static string Text_Optional {
             get {
                 return ResourceManager.GetString("Text.Optional", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 该命令提供获取当前选项提供程序中的选项配置。 的本地化字符串。
-        /// </summary>
-        internal static string Text_OptionsGetCommand_Description {
-            get {
-                return ResourceManager.GetString("Text.OptionsGetCommand.Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 选项获取命令 的本地化字符串。
-        /// </summary>
-        internal static string Text_OptionsGetCommand_Name {
-            get {
-                return ResourceManager.GetString("Text.OptionsGetCommand.Name", resourceCulture);
             }
         }
         
