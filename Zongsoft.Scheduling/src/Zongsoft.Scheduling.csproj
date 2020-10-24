@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Scheduling Library</Product>
+		<Copyright>Copyright(C) Zongsoft Studio 2018-2020. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Scheduling</PackageProjectUrl>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseExpression>http://www.gnu.org/licenses/agpl-3.0.txt</PackageLicenseExpression>
+		<AssemblyVersion>1.0.2020.0</AssemblyVersion>
+		<FileVersion>1.0.2020.0</FileVersion>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Reference Include="Zongsoft.Core">
+	    <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+</Project>

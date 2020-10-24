@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Scheduling Cron Library</Product>
+		<Copyright>Copyright(C) Zongsoft Studio 2018-2020. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Scheduling/cron</PackageProjectUrl>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseExpression>http://www.gnu.org/licenses/agpl-3.0.txt</PackageLicenseExpression>
+		<AssemblyVersion>1.0.2020.0</AssemblyVersion>
+		<FileVersion>1.0.2020.0</FileVersion>
+	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="Cronos" Version="0.7.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\src\Zongsoft.Scheduling.csproj" />
+	</ItemGroup>
+</Project>

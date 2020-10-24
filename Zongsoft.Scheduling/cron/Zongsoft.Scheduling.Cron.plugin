@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Scheduling.Cron" version="1.0"
+        title="Zongsoft.Scheduling.Cron plugin"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        copyright="Copyright (C) 2018-2020 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2018-05-01 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Scheduling.Cron" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Scheduling" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Scheduling/Triggers">
+		<object name="Cron" value="{static:Zongsoft.Scheduling.CronTrigger.Builder, Zongsoft.Scheduling.Cron}" />
+	</extension>
+</plugin>
