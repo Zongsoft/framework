@@ -103,7 +103,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 			//获取指定名称的语音模板配置，如果获取失败则抛出异常
 			if(!options.Message.Templates.TryGet(name, out var template))
-				throw new InvalidOperationException($"The specified '{name}' sms template is not existed.");
+				throw new InvalidOperationException($"The specified '{name}' voice template is not existed.");
 
 			//获取当前电信服务的凭证
 			var certificate = this.GetCertificate();
@@ -284,14 +284,14 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 结果结构
 		public struct Result
 		{
-			public string Code;
-			public string Message;
-
 			public Result(string code, string message)
 			{
 				this.Code = code;
 				this.Message = message;
 			}
+
+			public string Code { get; set; }
+			public string Message { get; set; }
 
 			public override string ToString()
 			{
