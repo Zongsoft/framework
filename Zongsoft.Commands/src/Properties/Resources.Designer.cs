@@ -412,6 +412,24 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 清除指定队列中的所有元素。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueClearCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueueClearCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 清空队列 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueClearCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueueClearCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 提供队列操作命令的队列。 的本地化字符串。
         /// </summary>
         internal static string Text_QueueCommand_Description {
@@ -494,11 +512,38 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 返回指定队列的元素个数。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueCountCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueueCountCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 名为 &apos;{0}&apos; 队列，总计 {1} 个元素。 的本地化字符串。
         /// </summary>
         internal static string Text_QueueCountCommand_Message {
             get {
                 return ResourceManager.GetString("Text.QueueCountCommand.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 队列数量命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueCountCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueueCountCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 将指定的参数加入到指定的队列中。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueInCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueueInCommand.Description", resourceCulture);
             }
         }
         
@@ -512,6 +557,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 入队命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueInCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueueInCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 名为&apos;{0}&apos;的队列为空集。 的本地化字符串。
         /// </summary>
         internal static string Text_QueueIsEmpty {
@@ -521,11 +575,47 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 从指定队列的队首移出元素。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueOutCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueueOutCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 第 {0} 轮，出队 {1} 条记录，{2} 队列。 的本地化字符串。
         /// </summary>
         internal static string Text_QueueOutCommand_Message {
             get {
                 return ResourceManager.GetString("Text.QueueOutCommand.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 出队命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueOutCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueueOutCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 返回指定队列的队首元素，但并不移除它。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueuePeekCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.QueuePeekCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 查看队首 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueuePeekCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.QueuePeekCommand.Name", resourceCulture);
             }
         }
         

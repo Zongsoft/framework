@@ -234,6 +234,12 @@
   <data name="Text.Optional" xml:space="preserve">
     <value>可选的</value>
   </data>
+  <data name="Text.QueueClearCommand.Description" xml:space="preserve">
+    <value>清除指定队列中的所有元素。</value>
+  </data>
+  <data name="Text.QueueClearCommand.Name" xml:space="preserve">
+    <value>清空队列</value>
+  </data>
   <data name="Text.QueueCommand.Description" xml:space="preserve">
     <value>提供队列操作命令的队列。</value>
   </data>
@@ -262,17 +268,41 @@
   <data name="Text.QueueCommand.Options.Round" xml:space="preserve">
     <value>出队或入队操作循环执行的次数，默认值为1。如果在出队命令中该参数为负数则表示直至将队列出空为止。</value>
   </data>
+  <data name="Text.QueueCountCommand.Description" xml:space="preserve">
+    <value>返回指定队列的元素个数。</value>
+  </data>
   <data name="Text.QueueCountCommand.Message" xml:space="preserve">
     <value>名为 '{0}' 队列，总计 {1} 个元素。</value>
+  </data>
+  <data name="Text.QueueCountCommand.Name" xml:space="preserve">
+    <value>队列数量命令</value>
+  </data>
+  <data name="Text.QueueInCommand.Description" xml:space="preserve">
+    <value>将指定的参数加入到指定的队列中。</value>
   </data>
   <data name="Text.QueueInCommand.Message" xml:space="preserve">
     <value>第 {0} 轮，入队 {1} 条记录，{2} 队列。</value>
   </data>
+  <data name="Text.QueueInCommand.Name" xml:space="preserve">
+    <value>入队命令</value>
+  </data>
   <data name="Text.QueueIsEmpty" xml:space="preserve">
     <value>名为'{0}'的队列为空集。</value>
   </data>
+  <data name="Text.QueueOutCommand.Description" xml:space="preserve">
+    <value>从指定队列的队首移出元素。</value>
+  </data>
   <data name="Text.QueueOutCommand.Message" xml:space="preserve">
     <value>第 {0} 轮，出队 {1} 条记录，{2} 队列。</value>
+  </data>
+  <data name="Text.QueueOutCommand.Name" xml:space="preserve">
+    <value>出队命令</value>
+  </data>
+  <data name="Text.QueuePeekCommand.Description" xml:space="preserve">
+    <value>返回指定队列的队首元素，但并不移除它。</value>
+  </data>
+  <data name="Text.QueuePeekCommand.Name" xml:space="preserve">
+    <value>查看队首</value>
   </data>
   <data name="Text.Required" xml:space="preserve">
     <value>必须的</value>
