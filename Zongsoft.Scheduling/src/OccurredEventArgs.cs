@@ -43,15 +43,9 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get;
-		}
+		public int Count { get; }
 
-		public string ScheduleId
-		{
-			get;
-		}
+		public string ScheduleId { get; }
 		#endregion
 	}
 }

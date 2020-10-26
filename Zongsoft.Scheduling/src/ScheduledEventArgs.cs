@@ -44,20 +44,11 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 公共属性
-		public string ScheduleId
-		{
-			get;
-		}
+		public string ScheduleId { get; }
 
-		public int Count
-		{
-			get;
-		}
+		public int Count { get; }
 
-		public ITrigger[] Triggers
-		{
-			get;
-		}
+		public ITrigger[] Triggers { get; }
 		#endregion
 	}
 }

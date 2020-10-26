@@ -73,26 +73,17 @@ namespace Zongsoft.Scheduling
 		#region 公共属性
 		public DateTime? NextTime
 		{
-			get
-			{
-				return _token?.Timestamp;
-			}
+			get => _token?.Timestamp;
 		}
 
 		public DateTime? LastTime
 		{
-			get
-			{
-				return _lastTime;
-			}
+			get => _lastTime;
 		}
 
 		public IRetriever Retriever
 		{
-			get
-			{
-				return _retriever;
-			}
+			get => _retriever;
 			set
 			{
 				if(value == null)
@@ -112,18 +103,12 @@ namespace Zongsoft.Scheduling
 
 		public IReadOnlyCollection<ITrigger> Triggers
 		{
-			get
-			{
-				return _triggers;
-			}
+			get => _triggers;
 		}
 
 		public IReadOnlyCollection<IHandler> Handlers
 		{
-			get
-			{
-				return _handlers;
-			}
+			get => _handlers;
 		}
 
 		public bool IsScheduling
@@ -137,10 +122,7 @@ namespace Zongsoft.Scheduling
 
 		public bool HasStates
 		{
-			get
-			{
-				return _states != null && _states.Count > 0;
-			}
+			get => _states != null && _states.Count > 0;
 		}
 
 		public IDictionary<string, object> States

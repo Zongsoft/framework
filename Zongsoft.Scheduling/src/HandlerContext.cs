@@ -50,45 +50,31 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 公共属性
-		public int Index
-		{
-			get;
-		}
+		/// <inheritdoc />
+		public int Index { get; }
 
-		public string ScheduleId
-		{
-			get;
-		}
+		/// <inheritdoc />
+		public string ScheduleId { get; }
 
-		public DateTime Timestamp
-		{
-			get;
-		}
+		/// <inheritdoc />
+		public DateTime Timestamp { get; }
 
-		public HandlerFailure? Failure
-		{
-			get;
-			set;
-		}
+		/// <inheritdoc />
+		public HandlerFailure? Failure { get; set; }
 
-		public IScheduler Scheduler
-		{
-			get;
-		}
+		/// <inheritdoc />
+		public IScheduler Scheduler { get; }
 
-		public ITrigger Trigger
-		{
-			get;
-		}
+		/// <inheritdoc />
+		public ITrigger Trigger { get; }
 
+		/// <inheritdoc />
 		public bool HasParameters
 		{
-			get
-			{
-				return _parameters != null && _parameters.Count > 0;
-			}
+			get => _parameters != null && _parameters.Count > 0;
 		}
 
+		/// <inheritdoc />
 		public IDictionary<string, object> Parameters
 		{
 			get

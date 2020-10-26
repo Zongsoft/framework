@@ -40,28 +40,17 @@ namespace Zongsoft.Scheduling
 		/// <summary>
 		/// 获取触发器的表达式文本。
 		/// </summary>
-		string Expression
-		{
-			get;
-		}
+		string Expression { get; }
 
 		/// <summary>
 		/// 获取或设置触发器的生效时间。
 		/// </summary>
-		DateTime? EffectiveTime
-		{
-			get;
-			set;
-		}
+		DateTime? EffectiveTime { get; set; }
 
 		/// <summary>
 		/// 获取或设置触发器的截止时间。
 		/// </summary>
-		DateTime? ExpirationTime
-		{
-			get;
-			set;
-		}
+		DateTime? ExpirationTime { get; set; }
 		#endregion
 
 		#region 方法定义

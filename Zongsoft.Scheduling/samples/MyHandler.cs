@@ -57,7 +57,7 @@ namespace Zongsoft.Scheduling.Samples
 
 			//随机模拟业务处理发生异常
 			if(random % 11 == 0 || random % 97 == 0 || random % 101 == 0)
-				throw new InvalidOperationException("This is a mock error in the handler.", new ArgumentOutOfRangeException("unnamed"));
+				throw new InvalidOperationException("This is a mock error in the handler.", new ArgumentOutOfRangeException("unnamed", actualValue:random, null));
 
 			//模拟实际业务处理逻辑（停顿0~1秒）
 			Thread.Sleep(random % (1 * 1000));

@@ -60,67 +60,42 @@ namespace Zongsoft.Scheduling
 		/// <summary>
 		/// 获取一个值，指示最近一次调度的时间。
 		/// </summary>
-		DateTime? LastTime
-		{
-			get;
-		}
+		DateTime? LastTime { get; }
 
 		/// <summary>
 		/// 获取一个值，指示下一次调度的时间。
 		/// </summary>
-		DateTime? NextTime
-		{
-			get;
-		}
+		DateTime? NextTime { get; }
 
 		/// <summary>
 		/// 获取或设置调度失败的重试器。
 		/// </summary>
-		IRetriever Retriever
-		{
-			get;
-			set;
-		}
+		IRetriever Retriever { get; set; }
 
 		/// <summary>
 		/// 获取调度器中的调度触发器集。
 		/// </summary>
-		IReadOnlyCollection<ITrigger> Triggers
-		{
-			get;
-		}
+		IReadOnlyCollection<ITrigger> Triggers { get; }
 
 		/// <summary>
 		/// 获取调度器中的调度处理器集。
 		/// </summary>
-		IReadOnlyCollection<IHandler> Handlers
-		{
-			get;
-		}
+		IReadOnlyCollection<IHandler> Handlers { get; }
 
 		/// <summary>
 		/// 获取一个值，指示当前调度器是否处于工作中。
 		/// </summary>
-		bool IsScheduling
-		{
-			get;
-		}
+		bool IsScheduling { get; }
 
 		/// <summary>
 		/// 获取一个值，指示当前调度器是否含有附加数据。
 		/// </summary>
-		bool HasStates
-		{
-			get;
-		}
+		bool HasStates { get; }
 
 		/// <summary>
 		/// 获取当前调度器的附加数据字典。
 		/// </summary>
-		IDictionary<string, object> States
-		{
-			get;
-		}
+		IDictionary<string, object> States { get; }
 		#endregion
 
 		#region 方法声明

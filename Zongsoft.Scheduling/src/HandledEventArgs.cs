@@ -44,28 +44,16 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 公共属性
-		public IHandler Handler
-		{
-			get;
-		}
+		public IHandler Handler { get; }
 
 		public ITrigger Trigger
 		{
-			get
-			{
-				return this.Context.Trigger;
-			}
+			get => this.Context.Trigger;
 		}
 
-		public IHandlerContext Context
-		{
-			get;
-		}
+		public IHandlerContext Context { get; }
 
-		public Exception Exception
-		{
-			get;
-		}
+		public Exception Exception { get; }
 		#endregion
 	}
 }

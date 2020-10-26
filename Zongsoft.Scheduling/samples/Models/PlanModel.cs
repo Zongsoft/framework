@@ -53,41 +53,12 @@ namespace Zongsoft.Scheduling.Samples.Models
 		#endregion
 
 		#region 公共属性
-		public uint PlanId
-		{
-			get;
-			set;
-		}
-
-		public string Name
-		{
-			get;
-			set;
-		}
-
-		public bool Enabled
-		{
-			get;
-			set;
-		}
-
-		public DateTime? EffectiveTime
-		{
-			get;
-			set;
-		}
-
-		public DateTime? ExpirationTime
-		{
-			get;
-			set;
-		}
-
-		public string CronExpression
-		{
-			get;
-			set;
-		}
+		public uint PlanId { get; set; }
+		public string Name { get; set; }
+		public bool Enabled { get; set; }
+		public DateTime? EffectiveTime { get; set; }
+		public DateTime? ExpirationTime { get; set; }
+		public string CronExpression { get; set; }
 		#endregion
 	}
 }

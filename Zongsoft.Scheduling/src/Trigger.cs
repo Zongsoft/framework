@@ -43,10 +43,7 @@ namespace Zongsoft.Scheduling
 		#region 静态属性
 		public static IDictionary<string, ITriggerBuilder> Builders
 		{
-			get
-			{
-				return _builders;
-			}
+			get => _builders;
 		}
 		#endregion
 
@@ -66,17 +63,14 @@ namespace Zongsoft.Scheduling
 
 			scheme = scheme.Trim();
 
+			if(!_builders.TryGetValue(scheme, out var builder))
+				throw new InvalidProgramException($"The '{scheme}' trigger builder not found.");
+
 			var key = scheme + ":" + expression + "|" +
-				(expiration.HasValue ? expiration.Value.Ticks.ToString() : "?") + "-" +
+				(expiration.HasValue ? expiration.Value.Ticks.ToString() : "?") + "~" +
 				(effective.HasValue ? effective.Value.Ticks.ToString() : "?");
 
-			return _triggers.GetOrAdd(key, _ =>
-			{
-				if(_builders.TryGetValue(scheme, out var builder))
-					return builder.Build(expression, expiration, effective);
-
-				throw new InvalidProgramException($"The '{scheme}' trigger builder not found.");
-			});
+			return _triggers.GetOrAdd(key, _ => builder.Build(expression, expiration, effective));
 		}
 		#endregion
 	}

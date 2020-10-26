@@ -34,8 +34,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Scheduling.Samples
 {
@@ -77,8 +75,8 @@ namespace Zongsoft.Scheduling.Samples
 
 				//根据当前计划的Cron表达式生成对应的触发器
 				var trigger = this.GetCronTrigger(plan.CronExpression,
-												  plan.EffectiveTime,
-												  plan.ExpirationTime);
+				                                  plan.EffectiveTime,
+				                                  plan.ExpirationTime);
 
 				//如果触发器生成成功，则将当前任务计划加入到调度器中
 				if(trigger != null)
