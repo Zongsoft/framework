@@ -53,7 +53,7 @@ namespace Zongsoft.Scheduling.Commands
 			var scheduler = worker as IScheduler;
 
 			if(scheduler == null)
-				throw new CommandException("");
+				throw new CommandException("Missing a required scheduler.");
 
 			scheduler.Handled += this.Scheduler_Handled;
 			scheduler.Occurred += this.Scheduler_Occurred;
@@ -102,7 +102,7 @@ namespace Zongsoft.Scheduling.Commands
 			var name = e.Exception == null ? Properties.Resources.Scheduler_Handled_Succeed : Properties.Resources.Scheduler_Handled_Failed;
 
 			//获取处理完成的事件信息内容
-			var content = this.GetHandledContent(name, e);
+			var content = this.GetHandledContent(name, CommandOutletColor.DarkGreen, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -163,7 +163,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Failed(object sender, HandledEventArgs e)
 		{
 			//获取重试失败的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Failed_Name, e);
+			var content = this.GetHandledContent(Properties.Resources.Retriever_Failed_Name, CommandOutletColor.DarkRed, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -172,7 +172,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Succeed(object sender, HandledEventArgs e)
 		{
 			//获取重试成功的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Succeed_Name, e);
+			var content = this.GetHandledContent(Properties.Resources.Retriever_Succeed_Name, CommandOutletColor.DarkYellow, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -181,7 +181,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Discarded(object sender, HandledEventArgs e)
 		{
 			//获取重试丢弃的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Discarded_Name, e);
+			var content = this.GetHandledContent(Properties.Resources.Retriever_Discarded_Name, CommandOutletColor.Magenta, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -189,9 +189,9 @@ namespace Zongsoft.Scheduling.Commands
 		#endregion
 
 		#region 私有方法
-		private CommandOutletContent GetHandledContent(string name, HandledEventArgs args)
+		private CommandOutletContent GetHandledContent(string name, CommandOutletColor color, HandledEventArgs args)
 		{
-			var content = CommandOutletContent.Create(name)
+			var content = CommandOutletContent.Create(color, name)
 				.Append(CommandOutletColor.DarkGray, "(")
 				.Append(CommandOutletColor.DarkCyan, args.Context.ScheduleId.ToString())
 				.Append(CommandOutletColor.DarkGray, "): ")

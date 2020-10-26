@@ -48,14 +48,8 @@ namespace Zongsoft.Scheduling.Commands
 		#region 公共属性
 		public IScheduler Scheduler
 		{
-			get
-			{
-				return this.Worker as IScheduler;
-			}
-			set
-			{
-				this.Worker = value;
-			}
+			get => this.Worker as IScheduler;
+			set => this.Worker = value;
 		}
 		#endregion
 
