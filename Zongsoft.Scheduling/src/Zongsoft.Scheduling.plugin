@@ -19,7 +19,7 @@
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Scheduler">
 			<scheduler.command>
-				<object type="Zongsoft.Scheduling.Commands.SchedulerCommand, Zongsoft.Scheduling" />
+				<object name="Scheduler" type="Zongsoft.Scheduling.Commands.SchedulerCommand, Zongsoft.Scheduling" />
 			</scheduler.command>
 
 			<object name="Listen" type="Zongsoft.Scheduling.Commands.SchedulerListenCommand, Zongsoft.Scheduling" />
