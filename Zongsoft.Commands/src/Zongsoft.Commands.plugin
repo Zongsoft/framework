@@ -22,7 +22,7 @@
 
 		<object name="Secret">
 			<secret.command>
-				<object type="Zongsoft.Security.Commands.SecretCommand, Zongsoft.Commands" />
+				<object name="Secret" type="Zongsoft.Security.Commands.SecretCommand, Zongsoft.Commands" />
 			</secret.command>
 
 			<object name="Generate" type="Zongsoft.Security.Commands.SecretGenerateCommand, Zongsoft.Commands" />
@@ -31,7 +31,7 @@
 
 		<object name="File">
 			<file.command>
-				<object type="Zongsoft.IO.Commands.FileCommand, Zongsoft.Commands" />
+				<object name="File" type="Zongsoft.IO.Commands.FileCommand, Zongsoft.Commands" />
 			</file.command>
 
 			<object name="Open" type="Zongsoft.IO.Commands.FileOpenCommand, Zongsoft.Commands" />
@@ -45,7 +45,7 @@
 
 		<object name="Configuration">
 			<configuration.command>
-				<object type="Zongsoft.Configuration.Commands.ConfigurationCommand, Zongsoft.Commands" />
+				<object name="Configuration" type="Zongsoft.Configuration.Commands.ConfigurationCommand, Zongsoft.Commands" />
 			</configuration.command>
 
 			<object name="Get" type="Zongsoft.Configuration.Commands.ConfigurationGetCommand, Zongsoft.Commands" />
@@ -53,7 +53,7 @@
 
 		<object name="Messaging">
 			<messaging.command>
-				<object type="Zongsoft.Messaging.Commands.ListenerCommand, Zongsoft.Commands" />
+				<object name="Messaging" type="Zongsoft.Messaging.Commands.ListenerCommand, Zongsoft.Commands" />
 			</messaging.command>
 
 			<object name="Start" type="Zongsoft.Messaging.Commands.ListenerStartCommand, Zongsoft.Commands" />
@@ -62,7 +62,7 @@
 
 		<object name="Queue">
 			<queue.command>
-				<object type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
+				<object name="Queue" type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
 			</queue.command>
 
 			<object name="In" type="Zongsoft.Collections.Commands.QueueInCommand, Zongsoft.Commands" />
