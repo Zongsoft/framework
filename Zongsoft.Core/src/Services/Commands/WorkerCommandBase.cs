@@ -39,12 +39,14 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 构造函数
-		protected WorkerCommandBase(string name) : base(name)
+		protected WorkerCommandBase(string name, IServiceProvider serviceProvider) : base(name)
 		{
+			this.ServiceProvider = serviceProvider;
 		}
 
-		protected WorkerCommandBase(string name, bool enabled) : base(name, enabled)
+		protected WorkerCommandBase(string name, bool enabled, IServiceProvider serviceProvider) : base(name, enabled)
 		{
+			this.ServiceProvider = serviceProvider;
 		}
 		#endregion
 
@@ -71,6 +73,8 @@ namespace Zongsoft.Services.Commands
 				this.OnPropertyChanged(nameof(Worker));
 			}
 		}
+
+		protected IServiceProvider ServiceProvider { get; set; }
 		#endregion
 
 		#region 重写方法
