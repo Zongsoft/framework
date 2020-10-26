@@ -159,4 +159,13 @@
   <data name="Scheduler.Triggers" xml:space="preserve">
     <value>调度触发器：{0}</value>
   </data>
+  <data name="SchedulerCommand.Description" xml:space="preserve">
+    <value>调度命令集的根命令，提供调度器切换和注入功能。</value>
+  </data>
+  <data name="SchedulerCommand.Name" xml:space="preserve">
+    <value>调度器命令</value>
+  </data>
+  <data name="SchedulerCommand.Options.Name" xml:space="preserve">
+    <value>指定要切换的调度器名称。</value>
+  </data>
 </root>

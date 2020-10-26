@@ -28,19 +28,27 @@
  */
 
 using System;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Scheduling.Commands
 {
+	[DisplayName("SchedulerCommand.Name")]
+	[Description("SchedulerCommand.Description")]
+	[CommandOption(KEY_NAME_OPTION, typeof(string), Description = "SchedulerCommand.Options.Name")]
 	public class SchedulerCommand : Zongsoft.Services.Commands.WorkerCommandBase
 	{
+		#region 常量定义
+		private const string KEY_NAME_OPTION = "name";
+		#endregion
+
 		#region 构造函数
-		public SchedulerCommand() : base("Scheduler")
+		public SchedulerCommand(IServiceProvider serviceProvider) : base("Scheduler", serviceProvider)
 		{
 		}
 
-		public SchedulerCommand(string name) : base(name)
+		public SchedulerCommand(string name, IServiceProvider serviceProvider) : base(name, serviceProvider)
 		{
 		}
 		#endregion
@@ -50,6 +58,23 @@ namespace Zongsoft.Scheduling.Commands
 		{
 			get => this.Worker as IScheduler;
 			set => this.Worker = value;
+		}
+		#endregion
+
+		#region 重写方法
+		protected override object OnExecute(CommandContext context)
+		{
+			if(context.Expression.Options.TryGetValue<string>(KEY_NAME_OPTION, out var name) && !string.IsNullOrEmpty(name))
+			{
+				var scheduler = (this.ServiceProvider ?? ApplicationContext.Current.Services).Resolve(name) as IScheduler;
+
+				if(scheduler == null)
+					throw new CommandException($"The specified '{name}' does not exist or it's not a scheduler.");
+
+				return this.Scheduler = scheduler;
+			}
+
+			return base.OnExecute(context);
 		}
 		#endregion
 

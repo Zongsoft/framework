@@ -19,7 +19,7 @@ namespace Zongsoft.Scheduling.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -183,6 +183,33 @@ namespace Zongsoft.Scheduling.Properties {
         internal static string Scheduler_Triggers {
             get {
                 return ResourceManager.GetString("Scheduler.Triggers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 调度命令集的根命令，提供调度器切换和注入功能。 的本地化字符串。
+        /// </summary>
+        internal static string SchedulerCommand_Description {
+            get {
+                return ResourceManager.GetString("SchedulerCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 调度器命令 的本地化字符串。
+        /// </summary>
+        internal static string SchedulerCommand_Name {
+            get {
+                return ResourceManager.GetString("SchedulerCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 指定要切换的调度器名称。 的本地化字符串。
+        /// </summary>
+        internal static string SchedulerCommand_Options_Name {
+            get {
+                return ResourceManager.GetString("SchedulerCommand.Options.Name", resourceCulture);
             }
         }
     }
