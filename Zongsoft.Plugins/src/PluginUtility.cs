@@ -28,11 +28,11 @@
  */
 
 using System;
+using System.Linq;
+using System.Text;
 using System.Reflection;
 using System.ComponentModel;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 using Zongsoft.Services;
 using Zongsoft.Reflection;
@@ -43,7 +43,7 @@ namespace Zongsoft.Plugins
 	public static class PluginUtility
 	{
 		#region 私有变量
-		private static int _anonymousId;
+		private static volatile int _anonymousId;
 		#endregion
 
 		#region 获取类型
@@ -288,44 +288,21 @@ namespace Zongsoft.Plugins
 
 				try
 				{
-					string converterTypeName = null;
-					//Type propertyType;
+					var memberExpression = MemberExpression.Parse(property.Name);
 
-					//如果构件中当前属性名在目标对象中不存在则记录告警日志
-					//注意：对于不存在的集合成员的获取类型可能会失败，但是下面的设置操作可能会成功，因此这里不能直接返回。
-					//if(!Reflection.MemberAccess.TryGetMemberType(target, property.Name, out propertyType, out converterTypeName))
-					//	Zongsoft.Diagnostics.Logger.Warn($"The '{property.Name}' property of '{builtin}' builtin is not existed on '{target.GetType().FullName}' target.");
-
-					//更新属性类型
-					//property.Type = propertyType;
-
-					var propertyInfo = target.GetType().GetTypeInfo().DeclaredProperties.FirstOrDefault(p => p.CanRead && p.CanWrite && p.SetMethod.IsPublic && string.Equals(p.Name, property.Name, StringComparison.OrdinalIgnoreCase));
-
-					if(propertyInfo != null)
+					MemberExpressionEvaluator.Default.SetValue(memberExpression, target, ctx =>
 					{
-						property.Type = propertyInfo.PropertyType;
-						converterTypeName = propertyInfo.GetCustomAttribute<TypeConverterAttribute>()?.ConverterTypeName;
-					}
-					else
-					{
-						var fieldInfo = target.GetType().GetField(property.Name);
+						var converterTypeName = ctx.Member.GetCustomAttribute<TypeConverterAttribute>(true)?.ConverterTypeName;
 
-						if(fieldInfo != null)
+						//更新属性的类型转换器
+						if(converterTypeName != null && converterTypeName.Length > 0)
 						{
-							property.Type = fieldInfo.FieldType;
-							converterTypeName = fieldInfo.GetCustomAttribute<TypeConverterAttribute>()?.ConverterTypeName;
+							property.Converter = Activator.CreateInstance(GetType(converterTypeName)) as TypeConverter ??
+							                     throw new InvalidOperationException($"The '{converterTypeName}' type declared by the '{property.Name}' member of type '{target.GetType().FullName}' is not a type converter.");
 						}
-					}
 
-					//更新属性的类型转换器
-					if(converterTypeName != null && converterTypeName.Length > 0)
-					{
-						property.Converter = Activator.CreateInstance(GetType(converterTypeName)) as TypeConverter ??
-						                     throw new InvalidOperationException($"The '{converterTypeName}' type declared by the '{property.Name}' member of type '{target.GetType().FullName}' is not a type converter.");
-					}
-
-					//将构件中当前属性值更新目标对象的对应属性中
-					Reflector.TrySetValue(target, property.Name, property.Value);
+						return property.Value;
+					});
 				}
 				catch(Exception ex)
 				{
@@ -517,11 +494,13 @@ namespace Zongsoft.Plugins
 
 			return null;
 		}
+		#endregion
 
 		#region 委托定义
 		internal delegate bool ObtainParameterCallback(Type parameterType, string parameterName, out object parameterValue);
 		#endregion
 
+		#region 参数回调
 		internal static bool ObtainParameter(Plugin plugin, Type parameterType, string parameterName, out object parameterValue)
 		{
 			if(parameterType == typeof(Plugin))
@@ -553,6 +532,7 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
+		#region 其他方法
 		internal static IApplicationModule FindApplicationModule(Builtin builtin)
 		{
 			if(builtin == null || builtin.Node == null || builtin.Node.Parent == null)
@@ -932,5 +912,6 @@ namespace Zongsoft.Plugins
 
 			return true;
 		}
+		#endregion
 	}
 }
