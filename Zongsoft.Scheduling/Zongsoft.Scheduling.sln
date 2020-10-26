@@ -5,7 +5,11 @@ VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Scheduling", "src\Zongsoft.Scheduling.csproj", "{007C7F85-835C-4330-A4ED-55EE8A925A1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Scheduling.Cron", "cron\Zongsoft.Scheduling.Cron.csproj", "{DCC1FC76-91F9-4B31-8F79-F4A44D278A28}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Scheduling.Cron", "cron\Zongsoft.Scheduling.Cron.csproj", "{DCC1FC76-91F9-4B31-8F79-F4A44D278A28}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{BA0258A6-442C-4A62-B0AB-07BB8ABE5A8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Scheduling.Samples", "samples\Zongsoft.Scheduling.Samples.csproj", "{9B5EC399-809B-4110-83B3-750141A019C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,16 @@ Global
 		{DCC1FC76-91F9-4B31-8F79-F4A44D278A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCC1FC76-91F9-4B31-8F79-F4A44D278A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCC1FC76-91F9-4B31-8F79-F4A44D278A28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B5EC399-809B-4110-83B3-750141A019C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B5EC399-809B-4110-83B3-750141A019C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B5EC399-809B-4110-83B3-750141A019C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B5EC399-809B-4110-83B3-750141A019C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9B5EC399-809B-4110-83B3-750141A019C4} = {BA0258A6-442C-4A62-B0AB-07BB8ABE5A8C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E2F7670E-155C-4134-8282-52490B332797}
