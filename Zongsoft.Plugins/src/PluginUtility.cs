@@ -292,9 +292,21 @@ namespace Zongsoft.Plugins
 
 					MemberExpressionEvaluator.Default.SetValue(memberExpression, target, ctx =>
 					{
+						//更新扩展属性的类型
+						if(property.Type == null)
+						{
+							property.Type = ctx.Member switch
+							{
+								PropertyInfo propertyInfo => propertyInfo.PropertyType,
+								FieldInfo fieldInfo => fieldInfo.FieldType,
+								MethodInfo methodInfo => methodInfo.ReturnType,
+								_ => null,
+							};
+						}
+
 						var converterTypeName = ctx.Member.GetCustomAttribute<TypeConverterAttribute>(true)?.ConverterTypeName;
 
-						//更新属性的类型转换器
+						//更新扩展属性的类型转换器
 						if(converterTypeName != null && converterTypeName.Length > 0)
 						{
 							property.Converter = Activator.CreateInstance(GetType(converterTypeName)) as TypeConverter ??
