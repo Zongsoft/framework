@@ -42,6 +42,11 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 	{
+		#region 构造函数
+		public DataDeleteOptions() { }
+		public DataDeleteOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		#region 静态方法
 		/// <summary>
 		/// 创建一个禁用数据验证器的删除选项。

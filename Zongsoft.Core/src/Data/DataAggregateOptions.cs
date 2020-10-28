@@ -48,6 +48,11 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions
 	{
+		#region 构造函数
+		public DataAggregateOptions() { }
+		public DataAggregateOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		#region 公共属性
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }

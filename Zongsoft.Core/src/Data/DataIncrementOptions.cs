@@ -42,6 +42,11 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataIncrementOptions : DataMutateOptions, IDataIncrementOptions
 	{
+		#region 构造函数
+		public DataIncrementOptions() { }
+		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		#region 静态方法
 		/// <summary>
 		/// 创建一个禁用数据验证器的递增(递减)选项。

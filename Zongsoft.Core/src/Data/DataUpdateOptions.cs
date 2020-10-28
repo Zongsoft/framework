@@ -61,11 +61,10 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataUpdateOptions() { }
+		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
 
-		public DataUpdateOptions(UpdateBehaviors behaviors)
-		{
-			this.Behaviors = behaviors;
-		}
+		public DataUpdateOptions(UpdateBehaviors behaviors) { this.Behaviors = behaviors; }
+		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> states) : base(states) { this.Behaviors = behaviors; }
 		#endregion
 
 		#region 公共属性

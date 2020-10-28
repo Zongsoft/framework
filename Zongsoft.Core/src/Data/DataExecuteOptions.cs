@@ -42,5 +42,9 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions
 	{
+		#region 构造函数
+		public DataExecuteOptions() { }
+		public DataExecuteOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
 	}
 }

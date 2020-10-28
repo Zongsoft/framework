@@ -40,6 +40,12 @@ namespace Zongsoft.Data
 
 		#region 构造函数
 		protected DataOptionsBase() { _states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase); }
+		protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> states)
+		{
+			_states = states == null ?
+				new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) :
+				new Dictionary<string, object>(states, StringComparer.OrdinalIgnoreCase);
+		}
 		#endregion
 
 		#region 公共属性
@@ -58,6 +64,11 @@ namespace Zongsoft.Data
 
 	public abstract class DataMutateOptions : DataOptionsBase, IDataMutateOptions
 	{
+		#region 构造函数
+		protected DataMutateOptions() { }
+		protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }
 	}

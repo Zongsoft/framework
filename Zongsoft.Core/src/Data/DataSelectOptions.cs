@@ -48,6 +48,11 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 	{
+		#region 构造函数
+		public DataSelectOptions() { }
+		public DataSelectOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		#region 公共属性
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }

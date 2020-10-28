@@ -48,6 +48,11 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions
 	{
+		#region 构造函数
+		public DataExistsOptions() { }
+		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		#endregion
+
 		#region 公共属性
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }
