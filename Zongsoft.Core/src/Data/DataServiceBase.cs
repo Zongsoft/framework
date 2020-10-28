@@ -163,6 +163,10 @@ namespace Zongsoft.Data
 
 		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataExecuteOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Execute(), options);
 
@@ -181,6 +185,10 @@ namespace Zongsoft.Data
 
 		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataExecuteOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Execute(), options);
 
@@ -211,6 +219,10 @@ namespace Zongsoft.Data
 
 		public bool Exists(ICondition criteria, IDataExistsOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataExistsOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Exists(), options);
 
@@ -230,6 +242,10 @@ namespace Zongsoft.Data
 		#region 聚合方法
 		public int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataAggregateOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Count(), options);
 
@@ -257,6 +273,10 @@ namespace Zongsoft.Data
 
 		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataAggregateOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Aggregate(function), options);
 
@@ -306,6 +326,10 @@ namespace Zongsoft.Data
 
 		public long Increment(string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataIncrementOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Increment(), options);
 
@@ -333,6 +357,10 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureDelete();
 
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataDeleteOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Delete(), options);
 
@@ -352,6 +380,10 @@ namespace Zongsoft.Data
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataDeleteOptions();
 
 			//进行授权验证
 			this.Authorize(Method.Delete(), options);
@@ -373,6 +405,10 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureDelete();
 
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataDeleteOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Delete(), options);
 
@@ -392,6 +428,10 @@ namespace Zongsoft.Data
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataDeleteOptions();
 
 			//进行授权验证
 			this.Authorize(Method.Delete(), options);
@@ -423,11 +463,15 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureInsert();
 
-			//进行授权验证
-			this.Authorize(Method.Insert(), options);
-
 			if(data == null)
 				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(Method.Insert(), options);
 
 			//将当前插入数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -460,11 +504,15 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureInsert();
 
-			//进行授权验证
-			this.Authorize(Method.InsertMany(), options);
-
 			if(items == null)
 				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(Method.InsertMany(), options);
 
 			//将当前插入数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -502,11 +550,15 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureUpsert();
 
-			//进行授权验证
-			this.Authorize(Method.Upsert(), options);
-
 			if(data == null)
 				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpsertOptions();
+
+			//进行授权验证
+			this.Authorize(Method.Upsert(), options);
 
 			//将当前复写数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -539,11 +591,15 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureUpsert();
 
-			//进行授权验证
-			this.Authorize(Method.UpsertMany(), options);
-
 			if(items == null)
 				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpsertOptions();
+
+			//进行授权验证
+			this.Authorize(Method.UpsertMany(), options);
 
 			//将当前复写数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -621,6 +677,13 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureUpdate();
 
+			if(data == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpdateOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Update(), options);
 
@@ -673,11 +736,15 @@ namespace Zongsoft.Data
 			//确认是否可以执行该操作
 			this.EnsureUpdate();
 
-			//进行授权验证
-			this.Authorize(Method.UpdateMany(), options);
-
 			if(items == null)
 				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpdateOptions();
+
+			//进行授权验证
+			this.Authorize(Method.UpdateMany(), options);
 
 			//将当前更新数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -738,6 +805,10 @@ namespace Zongsoft.Data
 
 		public object Get<TKey>(TKey key, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
 			var criteria = this.ConvertKey(Method.Get(), key, filter, out var singular);
 
 			if(singular)
@@ -789,6 +860,10 @@ namespace Zongsoft.Data
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
 			var criteria = this.ConvertKey(Method.Get(), key1, key2, filter, out var singular);
 
 			if(singular)
@@ -840,6 +915,10 @@ namespace Zongsoft.Data
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
 			var criteria = this.ConvertKey(Method.Get(), key1, key2, key3, filter, out var singular);
 
 			if(singular)
@@ -906,6 +985,10 @@ namespace Zongsoft.Data
 
 		public IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Select(), options);
 
@@ -969,6 +1052,10 @@ namespace Zongsoft.Data
 
 		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, IDataSelectOptions options = null, params Sorting[] sortings)
 		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
 			//进行授权验证
 			this.Authorize(Method.Select(), options);
 
