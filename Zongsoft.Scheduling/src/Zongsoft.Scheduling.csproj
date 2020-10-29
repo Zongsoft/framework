@@ -10,6 +10,12 @@
 		<AssemblyVersion>1.0.2020.0</AssemblyVersion>
 		<FileVersion>1.0.2020.0</FileVersion>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DocumentationFile>D:\Zongsoft\Framework\Zongsoft.Scheduling\src\Zongsoft.Scheduling.xml</DocumentationFile>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Zongsoft.Scheduling.xml" />
+	</ItemGroup>
 	<ItemGroup>
 	  <Reference Include="Zongsoft.Core">
 	    <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
