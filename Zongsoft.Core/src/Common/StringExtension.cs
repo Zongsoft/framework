@@ -30,6 +30,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Common
 {
@@ -183,7 +184,12 @@ namespace Zongsoft.Common
 
 		public static IEnumerable<string> Slice(this string text, char separator)
 		{
-			return Slice<string>(text, chr => chr == separator, null);
+			return Slice<string>(text, 0, 0, chr => chr == separator, null);
+		}
+
+		public static IEnumerable<string> Slice(this string text, int start, int count, char separator)
+		{
+			return Slice<string>(text, start, count, chr => chr == separator, null);
 		}
 
 		public static IEnumerable<string> Slice(this string text, params char[] separators)
@@ -191,17 +197,35 @@ namespace Zongsoft.Common
 			if(separators == null || separators.Length == 0)
 				return null;
 
-			return Slice<string>(text, chr => separators.Contains(chr), null);
+			return Slice<string>(text, 0, 0, chr => separators.Contains(chr), null);
+		}
+
+		public static IEnumerable<string> Slice(this string text, int start, int count, params char[] separators)
+		{
+			if(separators == null || separators.Length == 0)
+				return null;
+
+			return Slice<string>(text, start, count, chr => separators.Contains(chr), null);
 		}
 
 		public static IEnumerable<string> Slice(this string text, Func<char, bool> separator)
 		{
-			return Slice<string>(text, separator, null);
+			return Slice<string>(text, 0, 0, separator, null);
+		}
+
+		public static IEnumerable<string> Slice(this string text, int start, int count, Func<char, bool> separator)
+		{
+			return Slice<string>(text, start, count, separator, null);
 		}
 
 		public static IEnumerable<T> Slice<T>(this string text, char separator, TryParser<T> parser)
 		{
-			return Slice(text, chr => chr == separator, parser);
+			return Slice(text, 0, 0, chr => chr == separator, parser);
+		}
+
+		public static IEnumerable<T> Slice<T>(this string text, int start, int count, char separator, TryParser<T> parser)
+		{
+			return Slice(text, start, count, chr => chr == separator, parser);
 		}
 
 		public static IEnumerable<T> Slice<T>(this string text, char[] separators, TryParser<T> parser)
@@ -209,10 +233,23 @@ namespace Zongsoft.Common
 			if(separators == null || separators.Length == 0)
 				return null;
 
-			return Slice(text, chr => separators.Contains(chr), parser);
+			return Slice(text, 0, 0, chr => separators.Contains(chr), parser);
+		}
+
+		public static IEnumerable<T> Slice<T>(this string text, int start, int count, char[] separators, TryParser<T> parser)
+		{
+			if(separators == null || separators.Length == 0)
+				return null;
+
+			return Slice(text, start, count, chr => separators.Contains(chr), parser);
 		}
 
 		public static IEnumerable<T> Slice<T>(this string text, Func<char, bool> separator, TryParser<T> parser)
+		{
+			return Slice<T>(text, 0, 0, separator, parser);
+		}
+
+		public static IEnumerable<T> Slice<T>(this string text, int start, int count, Func<char, bool> separator, TryParser<T> parser)
 		{
 			if(separator == null)
 				throw new ArgumentNullException(nameof(separator));
@@ -223,12 +260,20 @@ namespace Zongsoft.Common
 			if(string.IsNullOrEmpty(text))
 				yield break;
 
+			if(start < 0 || start >= text.Length)
+				throw new ArgumentOutOfRangeException(nameof(start));
+
+			if(count < 1)
+				count = text.Length - start;
+			else if(start + count > text.Length)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
 			int index = -1; //分隔符的位置
 			int tails = 0;  //尾巴空白字符数
 			string part;
 			T value;
 
-			for(int i = 0; i < text.Length; i++)
+			for(int i = start; i < count; i++)
 			{
 				if(char.IsWhiteSpace(text, i))
 				{
