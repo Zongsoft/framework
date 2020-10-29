@@ -195,13 +195,13 @@ namespace Zongsoft.Messaging
 					return;
 
 				if(buffer == null)
-					throw new ArgumentNullException("buffer");
+					throw new ArgumentNullException(nameof(buffer));
 
 				if(offset < 0 || offset >= buffer.Length - 1)
-					throw new ArgumentOutOfRangeException("offset");
+					throw new ArgumentOutOfRangeException(nameof(offset));
 
 				if(count < 0 || count > buffer.Length - offset)
-					throw new ArgumentOutOfRangeException("count");
+					throw new ArgumentOutOfRangeException(nameof(count));
 
 				var data = new byte[count];
 				Array.Copy(buffer, offset, data, 0, count);

@@ -53,10 +53,7 @@ namespace Zongsoft.Services
 
 		public ExecutionContext(IExecutor executor, object data = null, IDictionary<string, object> parameters = null)
 		{
-			if(executor == null)
-				throw new ArgumentNullException(nameof(executor));
-
-			_executor = executor;
+			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
 			_data = data;
 
 			if(parameters != null && parameters.Count > 0)
@@ -70,10 +67,7 @@ namespace Zongsoft.Services
 		/// </summary>
 		public virtual IExecutor Executor
 		{
-			get
-			{
-				return _executor;
-			}
+			get => _executor;
 		}
 
 		/// <summary>
@@ -81,10 +75,7 @@ namespace Zongsoft.Services
 		/// </summary>
 		public object Data
 		{
-			get
-			{
-				return _data;
-			}
+			get => _data;
 		}
 
 		/// <summary>
@@ -92,14 +83,8 @@ namespace Zongsoft.Services
 		/// </summary>
 		public virtual Exception Exception
 		{
-			get
-			{
-				return _exception;
-			}
-			internal protected set
-			{
-				_exception = value;
-			}
+			get => _exception;
+			internal protected set => _exception = value;
 		}
 
 		/// <summary>
@@ -110,10 +95,7 @@ namespace Zongsoft.Services
 		/// </remarks>
 		public virtual bool HasParameters
 		{
-			get
-			{
-				return (_parameters != null);
-			}
+			get => _parameters != null;
 		}
 
 		/// <summary>
@@ -135,14 +117,8 @@ namespace Zongsoft.Services
 		/// </summary>
 		public object Result
 		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				_result = value;
-			}
+			get => _result;
+			set => _result = value;
 		}
 		#endregion
 	}

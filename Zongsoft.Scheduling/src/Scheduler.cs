@@ -39,6 +39,9 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Scheduling
 {
+	/// <summary>
+	/// 提供定时任务调度功能的调度器。
+	/// </summary>
 	public class Scheduler : WorkerBase, IScheduler
 	{
 		#region 事件定义
@@ -154,6 +157,14 @@ namespace Zongsoft.Scheduling
 			return this.Schedule(handler, trigger, null);
 		}
 
+		/// <summary>
+		/// 排程操作，将指定的处理器与触发器绑定。
+		/// </summary>
+		/// <param name="handler">指定要绑定的处理器。</param>
+		/// <param name="trigger">指定要调度的触发器。</param>
+		/// <param name="onTrigger">当触发器触发后的回调方法，暂不支持。</param>
+		/// <returns>如果排程成功则返回真(True)，否则返回假(False)。</returns>
+		/// <remarks>同一个处理器不能多次绑定到同一个触发器。</remarks>
 		public bool Schedule(IHandler handler, ITrigger trigger, Action<IHandlerContext> onTrigger)
 		{
 			if(trigger == null)
