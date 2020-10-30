@@ -199,7 +199,7 @@ namespace Zongsoft.Scheduling
 				return this.ScheduleCore(handler, trigger);
 			}
 
-			//定义找到的调度项变量（默认没有找到）
+			//定义找到的调度项变量
 			ScheduleToken? found = null;
 
 			//循环遍历排程集，查找重新排程的触发器
@@ -706,15 +706,15 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 私有变量
-			private ISet<IHandler> _handlers;
-			private AutoResetEvent _semaphore;
+			private readonly ISet<IHandler> _handlers;
+			private readonly AutoResetEvent _semaphore;
 			#endregion
 
 			#region 构造函数
 			public ScheduleToken(ITrigger trigger, ISet<IHandler> handlers)
 			{
 				this.Trigger = trigger;
-				this._handlers = handlers;
+				_handlers = handlers;
 				_semaphore = new AutoResetEvent(true);
 			}
 			#endregion
@@ -725,10 +725,7 @@ namespace Zongsoft.Scheduling
 			/// </summary>
 			public int Count
 			{
-				get
-				{
-					return _handlers.Count;
-				}
+				get => _handlers.Count;
 			}
 
 			/// <summary>
@@ -856,9 +853,7 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 私有构造
-			private TriggerComparer()
-			{
-			}
+			private TriggerComparer() { }
 			#endregion
 
 			#region 公共方法
@@ -883,7 +878,7 @@ namespace Zongsoft.Scheduling
 		private class TriggerCollection : IReadOnlyCollection<ITrigger>
 		{
 			#region 成员字段
-			private IDictionary<ITrigger, ScheduleToken> _schedules;
+			private readonly IDictionary<ITrigger, ScheduleToken> _schedules;
 			#endregion
 
 			#region 构造函数
@@ -894,13 +889,7 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 公共属性
-			public int Count
-			{
-				get
-				{
-					return _schedules.Count;
-				}
-			}
+			public int Count { get => _schedules.Count; }
 			#endregion
 
 			#region 枚举遍历

@@ -37,19 +37,13 @@ namespace Zongsoft.Scheduling
     public interface ITrigger : IEquatable<ITrigger>
     {
 		#region 属性定义
-		/// <summary>
-		/// 获取触发器的表达式文本。
-		/// </summary>
+		/// <summary>获取触发器的表达式文本。</summary>
 		string Expression { get; }
 
-		/// <summary>
-		/// 获取或设置触发器的生效时间。
-		/// </summary>
+		/// <summary>获取或设置触发器的生效时间。</summary>
 		DateTime? EffectiveTime { get; set; }
 
-		/// <summary>
-		/// 获取或设置触发器的截止时间。
-		/// </summary>
+		/// <summary>获取或设置触发器的截止时间。</summary>
 		DateTime? ExpirationTime { get; set; }
 		#endregion
 
