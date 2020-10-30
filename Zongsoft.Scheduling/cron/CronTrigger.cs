@@ -80,26 +80,30 @@ namespace Zongsoft.Scheduling
 		#region 公共方法
 		public DateTime? GetNextOccurrence(bool inclusive = false)
 		{
-			var now = this.Now();
+			var origin = this.GetTimestamp();
 
-			if(this.EffectiveTime.HasValue && now < this.EffectiveTime.Value)
-				return null;
-			if(this.ExpirationTime.HasValue && now > this.ExpirationTime.Value)
+			if(this.ExpirationTime.HasValue && this.ExpirationTime.Value < origin)
 				return null;
 
-			return _expression.GetNextOccurrence(now, inclusive);
+			//如果生效时间晚于计时起点，则计时起点为生效时间
+			if(this.EffectiveTime.HasValue && this.EffectiveTime.Value > origin)
+				origin = this.GetTimestamp(this.EffectiveTime);
+
+			return _expression.GetNextOccurrence(origin, inclusive);
 		}
 
 		public DateTime? GetNextOccurrence(DateTime origin, bool inclusive = false)
 		{
-			var now = this.Now(origin);
+			origin = this.GetTimestamp(origin);
 
-			if(this.EffectiveTime.HasValue && now < this.EffectiveTime.Value)
-				return null;
-			if(this.ExpirationTime.HasValue && now > this.ExpirationTime.Value)
+			if(this.ExpirationTime.HasValue && this.ExpirationTime.Value < origin)
 				return null;
 
-			return _expression.GetNextOccurrence(this.Now(origin), inclusive);
+			//如果生效时间晚于此刻，则计时起点为生效时间
+			if(this.EffectiveTime.HasValue && this.EffectiveTime.Value > origin)
+				origin = this.GetTimestamp(this.EffectiveTime);
+
+			return _expression.GetNextOccurrence(origin, inclusive);
 		}
 		#endregion
 
@@ -135,9 +139,9 @@ namespace Zongsoft.Scheduling
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private DateTime Now(DateTime? timestamp = null)
+		private DateTime GetTimestamp(DateTime? origin = null)
 		{
-			return new DateTime(timestamp.HasValue ? timestamp.Value.Ticks : DateTime.Now.Ticks, DateTimeKind.Utc);
+			return new DateTime(origin.HasValue ? origin.Value.Ticks : DateTime.Now.Ticks, DateTimeKind.Utc);
 		}
 		#endregion
 
