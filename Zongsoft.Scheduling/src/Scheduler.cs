@@ -56,7 +56,6 @@ namespace Zongsoft.Scheduling
 		private TaskToken _token;
 		private ConcurrentDictionary<ITrigger, ScheduleToken> _schedules;
 		private HashSet<IHandler> _handlers;
-		private TriggerCollection _triggers;
 		private IDictionary<string, object> _states;
 		private IRetriever _retriever;
 		#endregion
@@ -68,7 +67,6 @@ namespace Zongsoft.Scheduling
 
 			_handlers = new HashSet<IHandler>();
 			_schedules = new ConcurrentDictionary<ITrigger, ScheduleToken>(TriggerComparer.Instance);
-			_triggers = new TriggerCollection(_schedules);
 			_retriever = new Retriever();
 		}
 		#endregion
@@ -106,7 +104,7 @@ namespace Zongsoft.Scheduling
 
 		public IReadOnlyCollection<ITrigger> Triggers
 		{
-			get => _triggers;
+			get => _schedules.Keys as IReadOnlyCollection<ITrigger> ?? _schedules.Keys.ToArray();
 		}
 
 		public IReadOnlyCollection<IHandler> Handlers
@@ -359,6 +357,7 @@ namespace Zongsoft.Scheduling
 
 			DateTime? earliest = null;
 			var schedules = new List<ScheduleToken>();
+			IList<ITrigger> removables = null;
 
 			//循环遍历排程集，找出其中最早的触发时间点
 			foreach(var schedule in _schedules.Values)
@@ -370,7 +369,20 @@ namespace Zongsoft.Scheduling
 				//获取当前排程项的下次触发时间
 				var timestamp = schedule.Trigger.GetNextOccurrence();
 
-				if(timestamp.HasValue && (earliest == null || timestamp.Value <= earliest))
+				//如果下次触发时间为空则表示该触发器已过期
+				if(timestamp == null)
+				{
+					if(removables == null)
+						removables = new List<ITrigger>();
+
+					//将过期的触发器加入到待移除队列中
+					removables.Add(schedule.Trigger);
+
+					//跳过当前排程项
+					continue;
+				}
+
+				if(earliest == null || timestamp.Value <= earliest)
 				{
 					//如果下次触发时间比之前找到的最早项还早，则将之前的排程列表清空
 					if(timestamp.Value < earliest)
@@ -382,6 +394,13 @@ namespace Zongsoft.Scheduling
 					//将找到的最早排程项加入到列表中
 					schedules.Add(schedule);
 				}
+			}
+
+			//如果待移除队列不为空，则尝试将待移除的排程删除
+			if(removables != null)
+			{
+				foreach(var removable in removables)
+					_schedules.TryRemove(removable, out _);
 			}
 
 			//如果找到最早的触发时间，则将找到的排程项列表加入到调度进程中
@@ -871,37 +890,6 @@ namespace Zongsoft.Scheduling
 					return 0;
 
 				return obj.GetType().GetHashCode() ^ obj.GetHashCode();
-			}
-			#endregion
-		}
-
-		private class TriggerCollection : IReadOnlyCollection<ITrigger>
-		{
-			#region 成员字段
-			private readonly IDictionary<ITrigger, ScheduleToken> _schedules;
-			#endregion
-
-			#region 构造函数
-			public TriggerCollection(IDictionary<ITrigger, ScheduleToken> schedules)
-			{
-				_schedules = schedules ?? throw new ArgumentNullException(nameof(schedules));
-			}
-			#endregion
-
-			#region 公共属性
-			public int Count { get => _schedules.Count; }
-			#endregion
-
-			#region 枚举遍历
-			public IEnumerator<ITrigger> GetEnumerator()
-			{
-				foreach(var schedule in _schedules)
-					yield return schedule.Key;
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return this.GetEnumerator();
 			}
 			#endregion
 		}
