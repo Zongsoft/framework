@@ -114,19 +114,12 @@ namespace Zongsoft.Scheduling
 
 		public override bool Equals(object obj)
 		{
-			return base.Equals(obj as CronTrigger);
+			return this.Equals(obj as CronTrigger);
 		}
 
 		public override int GetHashCode()
 		{
-			var code = _expression.GetHashCode();
-
-			if(this.EffectiveTime.HasValue)
-				code ^= this.EffectiveTime.Value.GetHashCode();
-			if(this.ExpirationTime.HasValue)
-				code ^= this.ExpirationTime.Value.GetHashCode();
-
-			return code;
+			return HashCode.Combine(_expression, this.EffectiveTime, this.ExpirationTime);
 		}
 
 		public override string ToString()
