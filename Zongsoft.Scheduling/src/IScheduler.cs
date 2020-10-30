@@ -38,6 +38,9 @@ namespace Zongsoft.Scheduling
 	public interface IScheduler : Zongsoft.Services.IWorker
 	{
 		#region 事件声明
+		/// <summary>表示调度项已经过期的事件。</summary>
+		event EventHandler<ExpiredEventArgs> Expired;
+
 		/// <summary>表示一个处理器执行完成的事件。</summary>
 		/// <remarks>
 		/// 	<para>可通过<seealso cref="HandledEventArgs.Exception"/>属性来确认最近一次处理是否成功。</para>

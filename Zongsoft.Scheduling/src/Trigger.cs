@@ -45,6 +45,14 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 静态方法
+		public static bool IsExpired(this ITrigger trigger)
+		{
+			if(trigger == null)
+				return true;
+
+			return trigger.ExpirationTime.HasValue && trigger.ExpirationTime.Value.ToUniversalTime() < DateTime.UtcNow;
+		}
+
 		public static ITrigger Cron(string expression, DateTime? expiration = null, DateTime? effective = null)
 		{
 			if(string.IsNullOrWhiteSpace(expression))

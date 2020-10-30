@@ -45,6 +45,7 @@ namespace Zongsoft.Scheduling
 	public class Scheduler : WorkerBase, IScheduler
 	{
 		#region 事件定义
+		public event EventHandler<ExpiredEventArgs> Expired;
 		public event EventHandler<HandledEventArgs> Handled;
 		public event EventHandler<OccurredEventArgs> Occurred;
 		public event EventHandler<OccurringEventArgs> Occurring;
@@ -170,6 +171,9 @@ namespace Zongsoft.Scheduling
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
+			if(trigger.IsExpired())
+				return false;
+
 			if(onTrigger != null) //TODO: 暂时不支持该功能
 				throw new NotSupportedException();
 
@@ -189,6 +193,9 @@ namespace Zongsoft.Scheduling
 				throw new ArgumentNullException(nameof(handler));
 			if(trigger == null)
 				throw new ArgumentNullException(nameof(trigger));
+
+			if(trigger.IsExpired())
+				return false;
 
 			//将处理器增加到处理器集中，如果添加成功（说明该处理器没有被调度过）
 			if(_handlers.Add(handler))
@@ -357,7 +364,7 @@ namespace Zongsoft.Scheduling
 
 			DateTime? earliest = null;
 			var schedules = new List<ScheduleToken>();
-			IList<ITrigger> removables = null;
+			IList<ScheduleToken> removables = null;
 
 			//循环遍历排程集，找出其中最早的触发时间点
 			foreach(var schedule in _schedules.Values)
@@ -373,10 +380,10 @@ namespace Zongsoft.Scheduling
 				if(timestamp == null)
 				{
 					if(removables == null)
-						removables = new List<ITrigger>();
+						removables = new List<ScheduleToken>();
 
 					//将过期的触发器加入到待移除队列中
-					removables.Add(schedule.Trigger);
+					removables.Add(schedule);
 
 					//跳过当前排程项
 					continue;
@@ -400,7 +407,10 @@ namespace Zongsoft.Scheduling
 			if(removables != null)
 			{
 				foreach(var removable in removables)
-					_schedules.TryRemove(removable, out _);
+				{
+					if(_schedules.TryRemove(removable.Trigger, out var schedule))
+						this.OnExpired(schedule.Trigger, schedule.Handlers.ToArray());
+				}
 			}
 
 			//如果找到最早的触发时间，则将找到的排程项列表加入到调度进程中
@@ -410,6 +420,11 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 激发事件
+		protected virtual void OnExpired(ITrigger trigger, IHandler[] handlers)
+		{
+			this.Expired?.Invoke(this, new ExpiredEventArgs(trigger, handlers));
+		}
+
 		protected virtual void OnHandled(IHandler handler, IHandlerContext context, Exception exception)
 		{
 			this.Handled?.Invoke(this, new HandledEventArgs(handler, context, exception));
