@@ -32,7 +32,6 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Scheduling
 {
@@ -49,35 +48,32 @@ namespace Zongsoft.Scheduling
 		#region 私有构造
 		private CronTrigger(string expression, DateTime? expiration = null, DateTime? effective = null)
 		{
+			if(string.IsNullOrWhiteSpace(expression))
+				throw new ArgumentNullException(nameof(expression));
+
 			try
 			{
 				_expression = Cronos.CronExpression.Parse(expression, Cronos.CronFormat.IncludeSeconds);
 			}
 			catch(Exception ex)
 			{
-				throw new ArgumentException($"The specified '{expression}' is an illegal Cron expression.", ex);
+				throw new ArgumentException($"The specified '{expression}' is an illegal cron expression.", ex);
 			}
 
 			this.Expression = _expression.ToString();
-			this.ExpirationTime = expiration;
-			this.EffectiveTime = effective;
+			this.EffectiveTime = effective.HasValue && effective.Value.ToUniversalTime() <= DateTime.UtcNow ? null : effective;
+			this.ExpirationTime = expiration.HasValue && expiration.Value.ToUniversalTime() <= DateTime.UtcNow ? DateTime.MinValue : expiration;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取触发器的Cron表达式。
-		/// </summary>
+		/// <summary>获取触发器的Cron表达式。</summary>
 		public string Expression { get; }
 
-		/// <summary>
-		/// 获取或设置触发器的生效时间。
-		/// </summary>
+		/// <summary>获取或设置触发器的生效时间。</summary>
 		public DateTime? EffectiveTime { get; set; }
 
-		/// <summary>
-		/// 获取或设置触发器的截止时间。
-		/// </summary>
+		/// <summary>获取或设置触发器的截止时间。</summary>
 		public DateTime? ExpirationTime { get; set; }
 		#endregion
 

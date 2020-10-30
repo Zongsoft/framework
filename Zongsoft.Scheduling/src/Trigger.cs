@@ -41,10 +41,7 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 静态属性
-		public static IDictionary<string, ITriggerBuilder> Builders
-		{
-			get => _builders;
-		}
+		public static IDictionary<string, ITriggerBuilder> Builders { get => _builders; }
 		#endregion
 
 		#region 静态方法
@@ -61,14 +58,22 @@ namespace Zongsoft.Scheduling
 			if(string.IsNullOrWhiteSpace(scheme))
 				throw new ArgumentNullException(nameof(scheme));
 
-			scheme = scheme.Trim();
+			scheme = scheme.Trim().ToLowerInvariant();
 
 			if(!_builders.TryGetValue(scheme, out var builder))
 				throw new InvalidProgramException($"The '{scheme}' trigger builder not found.");
 
+			//如果生效时间早于此刻，则忽略指定的生效时间
+			if(effective.HasValue && effective.Value.ToUniversalTime() <= DateTime.UtcNow)
+				effective = null;
+
+			//如果过期时间早于此刻（即已经过期），则将过期时间指定为一个固定的过去时间
+			if(expiration.HasValue && expiration.Value.ToUniversalTime() <= DateTime.UtcNow)
+				expiration = DateTime.MinValue;
+
 			var key = scheme + ":" + expression + "|" +
-				(expiration.HasValue ? expiration.Value.Ticks.ToString() : "?") + "~" +
-				(effective.HasValue ? effective.Value.Ticks.ToString() : "?");
+				(effective.HasValue ? effective.Value.Ticks.ToString() : "?") + "~" +
+				(expiration.HasValue ? expiration.Value.Ticks.ToString() : "?");
 
 			return _triggers.GetOrAdd(key, _ => builder.Build(expression, expiration, effective));
 		}
