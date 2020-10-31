@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Scheduling
 {
-	public interface IHandler : IEquatable<IHandler>
+	public interface IHandler
 	{
 		void Handle(IHandlerContext context);
 	}

@@ -57,17 +57,13 @@ namespace Zongsoft.Scheduling.Commands
 			if(worker is IScheduler scheduler)
 			{
 				//构造基本信息内容
-				var content = SchedulerCommand.GetInfo(scheduler, true);
+				var content = SchedulerCommand.GetInfo(scheduler, true).AppendLine();
 
 				//获取“limit”命令参数
 				var limit = context.Expression.Options.GetValue<int>(KEY_LIMIT_OPTION);
 
 				if(limit > 0)
 				{
-					//构造触发器信息内容
-					content.AppendLine().AppendLine()
-					       .AppendLine(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Scheduler_Triggers, scheduler.Triggers.Count));
-
 					var index = 0;
 
 					//遍历生成触发器信息
@@ -82,26 +78,23 @@ namespace Zongsoft.Scheduling.Commands
 
 						content.Append(CommandOutletColor.DarkYellow, $"[{++index}] ")
 						       .AppendLine(trigger.ToString());
-					}
 
-					//构造处理器信息内容
-					content.AppendLine()
-					       .AppendLine(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Scheduler_Handlers, scheduler.Handlers.Count));
+						//获取当前触发器下的处理器集合
+						var handlers = scheduler.GetHandlers(trigger);
 
-					index = 0;
-
-					//遍历生成处理器信息
-					foreach(var handler in scheduler.Handlers)
-					{
-						//限制输出前100个
-						if(index == limit)
+						//遍历生成处理器信息
+						for(int i = 0; i < handlers.Length; i++)
 						{
-							content.AppendLine(CommandOutletColor.Gray, "\t... ...");
-							break;
-						}
+							//限制输出前100个
+							if(i >= limit)
+							{
+								content.AppendLine(CommandOutletColor.Gray, "\t... ...");
+								break;
+							}
 
-						content.Append(CommandOutletColor.DarkYellow, $"[{++index}] ")
-						       .AppendLine(handler.ToString());
+							content.Append(CommandOutletColor.DarkCyan, $"\t[{i + 1}] ")
+								   .AppendLine(handlers[i].ToString());
+						}
 					}
 				}
 

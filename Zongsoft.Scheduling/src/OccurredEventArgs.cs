@@ -35,17 +35,17 @@ namespace Zongsoft.Scheduling
 	public class OccurredEventArgs : EventArgs
 	{
 		#region 构造函数
-		public OccurredEventArgs(string scheduleId, int count)
+		public OccurredEventArgs(string eventId, int count)
 		{
 			this.Count = count;
-			this.ScheduleId = scheduleId;
+			this.EventId = eventId;
 		}
 		#endregion
 
 		#region 公共属性
 		public int Count { get; }
 
-		public string ScheduleId { get; }
+		public string EventId { get; }
 		#endregion
 	}
 }

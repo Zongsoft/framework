@@ -106,15 +106,6 @@ namespace Zongsoft.Scheduling.Properties {
         }
         
         /// <summary>
-        ///   查找类似 执行处理器：{0} 的本地化字符串。
-        /// </summary>
-        internal static string Scheduler_Handlers {
-            get {
-                return ResourceManager.GetString("Scheduler.Handlers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 未执行过 的本地化字符串。
         /// </summary>
         internal static string Scheduler_NoLastTime {
@@ -174,15 +165,6 @@ namespace Zongsoft.Scheduling.Properties {
         internal static string Scheduler_Scheduled_Name {
             get {
                 return ResourceManager.GetString("Scheduler.Scheduled.Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 调度触发器：{0} 的本地化字符串。
-        /// </summary>
-        internal static string Scheduler_Triggers {
-            get {
-                return ResourceManager.GetString("Scheduler.Triggers", resourceCulture);
             }
         }
         

@@ -35,7 +35,7 @@ namespace Zongsoft.Scheduling
 	public class ExpiredEventArgs : EventArgs
 	{
 		#region 构造函数
-		public ExpiredEventArgs(ITrigger trigger, IHandler[] handlers)
+		public ExpiredEventArgs(ITrigger trigger, HandlerToken[] handlers)
 		{
 			this.Trigger = trigger;
 			this.Handlers = handlers;
@@ -45,7 +45,7 @@ namespace Zongsoft.Scheduling
 		#region 公共属性
 		public ITrigger Trigger { get; }
 
-		public IHandler[] Handlers { get; }
+		public HandlerToken[] Handlers { get; }
 		#endregion
 	}
 }

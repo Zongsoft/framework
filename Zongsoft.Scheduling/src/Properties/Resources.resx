@@ -132,9 +132,6 @@
   <data name="Scheduler.Handled.Succeed" xml:space="preserve">
     <value>处理成功</value>
   </data>
-  <data name="Scheduler.Handlers" xml:space="preserve">
-    <value>执行处理器：{0}</value>
-  </data>
   <data name="Scheduler.NoLastTime" xml:space="preserve">
     <value>未执行过</value>
   </data>
@@ -155,9 +152,6 @@
   </data>
   <data name="Scheduler.Scheduled.Name" xml:space="preserve">
     <value>排程完成</value>
-  </data>
-  <data name="Scheduler.Triggers" xml:space="preserve">
-    <value>调度触发器：{0}</value>
   </data>
   <data name="SchedulerCommand.Description" xml:space="preserve">
     <value>调度命令集的根命令，提供调度器切换和注入功能。</value>

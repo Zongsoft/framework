@@ -41,7 +41,10 @@ namespace Zongsoft.Scheduling
 		int Index { get; }
 
 		/// <summary>获取调度任务编号。</summary>
-		string ScheduleId { get; }
+		long ScheduleId { get; }
+
+		/// <summary>获取激发事件标识。</summary>
+		string EventId { get; }
 
 		/// <summary>获取任务首次调度的时间。</summary>
 		DateTime Timestamp { get; }

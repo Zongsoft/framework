@@ -35,16 +35,16 @@ namespace Zongsoft.Scheduling
 	public class ScheduledEventArgs : EventArgs
 	{
 		#region 构造函数
-		public ScheduledEventArgs(string scheduleId, int count, ITrigger[] triggers)
+		public ScheduledEventArgs(string eventId, int count, ITrigger[] triggers)
 		{
 			this.Count = count;
+			this.EventId = eventId;
 			this.Triggers = triggers;
-			this.ScheduleId = scheduleId;
 		}
 		#endregion
 
 		#region 公共属性
-		public string ScheduleId { get; }
+		public string EventId { get; }
 
 		public int Count { get; }
 

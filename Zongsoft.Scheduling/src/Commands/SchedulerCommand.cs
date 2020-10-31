@@ -89,7 +89,7 @@ namespace Zongsoft.Scheduling.Commands
 		{
 			var content = CommandOutletContent.Create(CommandOutletColor.DarkCyan, scheduler.Name + " ")
 				.Append(CommandOutletColor.DarkGray, "(")
-				.Append(CommandOutletColor.Cyan, $"{scheduler.Triggers.Count}, {scheduler.Handlers.Count}")
+				.Append(CommandOutletColor.Cyan, $"{scheduler.Triggers.Count}/{scheduler.Count}")
 				.Append(CommandOutletColor.DarkGray, ") ")
 				.Append(CommandOutletColor.DarkYellow,      //最近执行时间
 					scheduler.LastTime.HasValue ? "(" + scheduler.LastTime.Value.ToString() + ")" : Properties.Resources.Scheduler_NoLastTime)

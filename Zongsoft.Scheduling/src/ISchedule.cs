@@ -28,21 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Scheduling
 {
-	public class OccurringEventArgs : EventArgs
+	public interface ISchedule
 	{
-		#region 构造函数
-		public OccurringEventArgs(string eventId)
-		{
-			this.EventId = eventId;
-		}
-		#endregion
+		long ScheduleId { get; }
+		IHandler Handler { get; }
+		ITrigger Trigger { get; }
+	}
 
-		#region 公共属性
-		public string EventId { get; }
-		#endregion
+	public interface ISchedule<TKey> : ISchedule where TKey : struct, IEquatable<TKey>
+	{
+		TKey Key { get; }
 	}
 }

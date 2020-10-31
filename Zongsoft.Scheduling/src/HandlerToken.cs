@@ -28,21 +28,44 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Scheduling
 {
-	public class OccurringEventArgs : EventArgs
+	public readonly struct HandlerToken : IEquatable<HandlerToken>
 	{
 		#region 构造函数
-		public OccurringEventArgs(string eventId)
+		public HandlerToken(long scheduleId, IHandler handler)
 		{
-			this.EventId = eventId;
+			this.ScheduleId = scheduleId;
+			this.Handler = handler;
 		}
 		#endregion
 
-		#region 公共属性
-		public string EventId { get; }
+		#region 公共字段
+		public readonly long ScheduleId;
+		public readonly IHandler Handler;
+		#endregion
+
+		#region 重写方法
+		public bool Equals(HandlerToken token)
+		{
+			return this.ScheduleId == token.ScheduleId;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is HandlerToken token && this.ScheduleId == token.ScheduleId;
+		}
+
+		public override int GetHashCode()
+		{
+			return this.ScheduleId.GetHashCode();
+		}
+
+		public override string ToString()
+		{
+			return this.ScheduleId + ":" + this.Handler.ToString();
+		}
 		#endregion
 	}
 }

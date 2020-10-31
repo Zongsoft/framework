@@ -39,13 +39,14 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 构造函数
-		public HandlerContext(IScheduler scheduler, ITrigger trigger, string scheduleId, DateTime timestamp, int index)
+		public HandlerContext(IScheduler scheduler, long scheduleId, ITrigger trigger, string eventId, DateTime timestamp, int index)
 		{
-			this.Index = index;
-			this.Timestamp = timestamp;
-			this.ScheduleId = scheduleId;
 			this.Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
 			this.Trigger = trigger ?? throw new ArgumentNullException(nameof(trigger));
+			this.ScheduleId = scheduleId;
+			this.EventId = eventId;
+			this.Timestamp = timestamp;
+			this.Index = index;
 		}
 		#endregion
 
@@ -54,7 +55,10 @@ namespace Zongsoft.Scheduling
 		public int Index { get; }
 
 		/// <inheritdoc />
-		public string ScheduleId { get; }
+		public long ScheduleId { get; }
+
+		/// <inheritdoc />
+		public string EventId { get; }
 
 		/// <inheritdoc />
 		public DateTime Timestamp { get; }

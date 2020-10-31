@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Threading;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
@@ -55,6 +54,7 @@ namespace Zongsoft.Scheduling.Commands
 			if(scheduler == null)
 				throw new CommandException("Missing a required scheduler.");
 
+			scheduler.Expired += this.Scheduler_Expired;
 			scheduler.Handled += this.Scheduler_Handled;
 			scheduler.Occurred += this.Scheduler_Occurred;
 			scheduler.Occurring += this.Scheduler_Occurring;
@@ -81,6 +81,7 @@ namespace Zongsoft.Scheduling.Commands
 			if(scheduler == null)
 				return;
 
+			scheduler.Expired -= this.Scheduler_Expired;
 			scheduler.Handled -= this.Scheduler_Handled;
 			scheduler.Occurred -= this.Scheduler_Occurred;
 			scheduler.Occurring -= this.Scheduler_Occurring;
@@ -96,6 +97,10 @@ namespace Zongsoft.Scheduling.Commands
 		#endregion
 
 		#region 事件处理
+		private void Scheduler_Expired(object sender, ExpiredEventArgs e)
+		{
+		}
+
 		private void Scheduler_Handled(object sender, HandledEventArgs e)
 		{
 			//根据处理完成事件参数来设置标志名
@@ -115,7 +120,7 @@ namespace Zongsoft.Scheduling.Commands
 
 			content.Prepend(Properties.Resources.Scheduler_Occurred_Name)
 				.After(CommandOutletColor.DarkGray, "(")
-				.After(CommandOutletColor.DarkCyan, e.ScheduleId)
+				.After(CommandOutletColor.DarkCyan, e.EventId)
 				.After(CommandOutletColor.DarkGray, "): ")
 				.After(CommandOutletColor.Magenta, e.Count.ToString() + " ");
 
@@ -129,7 +134,7 @@ namespace Zongsoft.Scheduling.Commands
 
 			content.Prepend(Properties.Resources.Scheduler_Occurring_Name)
 				.After(CommandOutletColor.DarkGray, "(")
-				.After(CommandOutletColor.DarkCyan, e.ScheduleId)
+				.After(CommandOutletColor.DarkCyan, e.EventId)
 				.After(CommandOutletColor.DarkGray, ")");
 
 			this.Context.Output.WriteLine(content.First);
@@ -142,7 +147,7 @@ namespace Zongsoft.Scheduling.Commands
 
 			content.Prepend(Properties.Resources.Scheduler_Scheduled_Name)
 				.After(CommandOutletColor.DarkGray, "(")
-				.After(CommandOutletColor.DarkCyan, e.ScheduleId)
+				.After(CommandOutletColor.DarkCyan, e.EventId)
 				.After(CommandOutletColor.DarkGray, "): ")
 				.After(CommandOutletColor.Magenta, e.Count.ToString() + " ");
 
@@ -193,9 +198,11 @@ namespace Zongsoft.Scheduling.Commands
 		{
 			var content = CommandOutletContent.Create(color, name)
 				.Append(CommandOutletColor.DarkGray, "(")
-				.Append(CommandOutletColor.DarkCyan, args.Context.ScheduleId.ToString())
+				.Append(CommandOutletColor.DarkCyan, args.Context.EventId)
+				.Append(CommandOutletColor.DarkGray, ".")
+				.Append(CommandOutletColor.DarkYellow, (args.Context.Index + 1).ToString())
 				.Append(CommandOutletColor.DarkGray, "): ")
-				.Append(CommandOutletColor.DarkYellow, $"[{args.Context.Index + 1}] ")
+				.Append(CommandOutletColor.DarkYellow, $"[{args.Context.ScheduleId}] ")
 				.Append(CommandOutletColor.DarkCyan, args.Handler.ToString())
 				.Append(CommandOutletColor.DarkGray, "@")
 				.Append(CommandOutletColor.DarkMagenta, args.Context.Trigger.ToString());
