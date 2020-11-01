@@ -77,12 +77,6 @@ namespace Zongsoft.Scheduling
 
 		/// <summary>获取一个值，指示当前调度器是否处于工作中。</summary>
 		bool IsScheduling { get; }
-
-		/// <summary>获取一个值，指示当前调度器是否含有附加数据。</summary>
-		bool HasStates { get; }
-
-		/// <summary>获取当前调度器的附加数据字典。</summary>
-		IDictionary<string, object> States { get; }
 		#endregion
 
 		#region 方法声明
@@ -94,20 +88,29 @@ namespace Zongsoft.Scheduling
 		HandlerToken[] GetHandlers(ITrigger trigger);
 
 		/// <summary>
+		/// 获取指定编号的调度项。
+		/// </summary>
+		/// <param name="scheduleId">指定要获取的调度项编号。</param>
+		/// <returns>如果找到则返回指定编号的调度项，否则返回空(null)。</returns>
+		//ISchedule GetSchedule(long scheduleId);
+
+		/// <summary>
 		/// 排程操作，将指定的处理器与触发器绑定。
 		/// </summary>
 		/// <param name="handler">指定要绑定的处理器。</param>
 		/// <param name="trigger">指定要调度的触发器。</param>
+		/// <param name="data">指定的附加数据。</param>
 		/// <returns>返回排程成功的调度项编号，零表示排程失败。</returns>
-		long Schedule(IHandler handler, ITrigger trigger);
+		long Schedule(IHandler handler, ITrigger trigger, object data = null);
 
 		/// <summary>
 		/// 重新排程，将指定的处理器绑定到新的触发器并自动将其关联的原触发器解绑。
 		/// </summary>
 		/// <param name="scheduleId">指定要重排的调度项编号。</param>
 		/// <param name="trigger">指定要调度的新触发器。</param>
+		/// <param name="data">指定的附加数据。</param>
 		/// <returns>如果重排成功则返回真(True)，否则返回假(False)。</returns>
-		bool Reschedule(long scheduleId, ITrigger trigger);
+		bool Reschedule(long scheduleId, ITrigger trigger, object data = null);
 
 		/// <summary>
 		/// 清空所有排程，即将调度器中的所有绑定关系解除。

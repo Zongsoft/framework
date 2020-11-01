@@ -55,10 +55,9 @@ namespace Zongsoft.Scheduling
 		private long _sequence;
 		private DateTime? _lastTime;
 		private TaskToken _token;
-		private ConcurrentDictionary<ITrigger, ScheduleToken> _schedules;
-		private ConcurrentDictionary<long, Schedule> _schedulars;
-		private IDictionary<string, object> _states;
 		private IRetriever _retriever;
+		private readonly ConcurrentDictionary<long, ScheduleToken> _schedules;
+		private readonly ConcurrentDictionary<ITrigger, Dispatchable> _dispatchables;
 		#endregion
 
 		#region 构造函数
@@ -67,14 +66,14 @@ namespace Zongsoft.Scheduling
 			this.CanPauseAndContinue = true;
 
 			_sequence = 1;
-			_schedules = new ConcurrentDictionary<ITrigger, ScheduleToken>(TriggerComparer.Instance);
 			_retriever = new Retriever();
-			_schedulars = new ConcurrentDictionary<long, Schedule>();
+			_schedules = new ConcurrentDictionary<long, ScheduleToken>();
+			_dispatchables = new ConcurrentDictionary<ITrigger, Dispatchable>();
 		}
 		#endregion
 
 		#region 公共属性
-		public int Count { get => _schedulars.Count; }
+		public int Count { get => _schedules.Count; }
 
 		public DateTime? NextTime { get => _token?.Timestamp; }
 
@@ -102,7 +101,7 @@ namespace Zongsoft.Scheduling
 
 		public IReadOnlyCollection<ITrigger> Triggers
 		{
-			get => _schedules.Keys as IReadOnlyCollection<ITrigger> ?? _schedules.Keys.ToArray();
+			get => _dispatchables.Keys as IReadOnlyCollection<ITrigger> ?? _dispatchables.Keys.ToArray();
 		}
 
 		public bool IsScheduling
@@ -113,22 +112,6 @@ namespace Zongsoft.Scheduling
 				return token != null && !token.IsCancellationRequested;
 			}
 		}
-
-		public bool HasStates
-		{
-			get => _states != null && _states.Count > 0;
-		}
-
-		public IDictionary<string, object> States
-		{
-			get
-			{
-				if(_states == null)
-					Interlocked.CompareExchange(ref _states, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _states;
-			}
-		}
 		#endregion
 
 		#region 公共方法
@@ -137,56 +120,41 @@ namespace Zongsoft.Scheduling
 			if(trigger == null)
 				throw new ArgumentNullException(nameof(trigger));
 
-			if(_schedules.TryGetValue(trigger, out var schedule))
+			if(_dispatchables.TryGetValue(trigger, out var schedule))
 				return schedule.Handlers;
 			else
 				return Array.Empty<HandlerToken>();
 		}
 
-		public Schedule GetSchedule(long scheduleId)
-		{
-			if(_schedulars.TryGetValue(scheduleId, out var schedule))
-				return schedule;
+		//public ISchedule GetSchedule(long scheduleId)
+		//{
+		//	if(_schedules.TryGetValue(scheduleId, out var schedule))
+		//		return schedule;
 
-			return null;
-		}
+		//	return null;
+		//}
 
-		public long Schedule(IHandler handler, ITrigger trigger)
+		public long Schedule(IHandler handler, ITrigger trigger, object data = null)
 		{
-			return this.Schedule(handler, trigger, null);
-		}
-
-		/// <summary>
-		/// 排程操作，将指定的处理器与触发器绑定。
-		/// </summary>
-		/// <param name="handler">指定要绑定的处理器。</param>
-		/// <param name="trigger">指定要调度的触发器。</param>
-		/// <param name="onTrigger">当触发器触发后的回调方法，暂不支持。</param>
-		/// <returns>返回排程成功的调度项编号，零表示排程失败。</returns>
-		/// <remarks>同一个处理器不能多次绑定到同一个触发器。</remarks>
-		public long Schedule(IHandler handler, ITrigger trigger, Action<IHandlerContext> onTrigger)
-		{
-			if(trigger == null)
-				throw new ArgumentNullException(nameof(trigger));
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
+
+			if(trigger == null)
+				throw new ArgumentNullException(nameof(trigger));
 
 			if(trigger.IsExpired())
 				return 0;
 
-			if(onTrigger != null) //TODO: 暂时不支持该功能
-				throw new NotSupportedException();
-
 			//将该处理器加入到指定的触发器中的调度处理集
-			var scheduleId = this.ScheduleCore(handler, trigger);
+			var scheduleId = this.ScheduleCore(handler, trigger, 0, data);
 
-			if(scheduleId > 0 && _schedulars.TryAdd(scheduleId, this.CreateSchedule(scheduleId, handler, trigger)))
+			if(scheduleId > 0 && _schedules.TryAdd(scheduleId, new ScheduleToken(scheduleId, handler, trigger, data)))
 				return scheduleId;
 
 			return 0;
 		}
 
-		public bool Reschedule(long scheduleId, ITrigger trigger)
+		public bool Reschedule(long scheduleId, ITrigger trigger, object data = null)
 		{
 			if(trigger == null)
 				throw new ArgumentNullException(nameof(trigger));
@@ -194,22 +162,22 @@ namespace Zongsoft.Scheduling
 			if(trigger.IsExpired())
 				return false;
 
-			if(!_schedulars.TryGetValue(scheduleId, out var schedule))
+			if(!_schedules.TryGetValue(scheduleId, out var schedule))
 				return false;
 
-			if(_schedules.TryGetValue(schedule.Trigger, out var older))
+			if(_dispatchables.TryGetValue(schedule.Trigger, out var older))
 			{
 				older.RemoveHandler(scheduleId);
 
-				if(older.IsEmpty && _schedules.TryRemove(older.Trigger, out _))
+				if(older.IsEmpty && _dispatchables.TryRemove(older.Trigger, out older))
 				{
 					if(older.HasHandlers)
-						_schedules.TryAdd(older.Trigger, older);
+						_dispatchables.TryAdd(older.Trigger, older);
 				}
 			}
 
 			//将该处理器加入到指定的触发器中的调度处理集
-			return this.ScheduleCore(schedule.Handler, schedule.Trigger = trigger, scheduleId) > 0;
+			return this.ScheduleCore(schedule.Handler, schedule.Trigger = trigger, scheduleId, data) > 0;
 		}
 
 		public void Unschedule()
@@ -221,8 +189,8 @@ namespace Zongsoft.Scheduling
 			if(token != null)
 				token.Cancel();
 
+			_dispatchables.Clear();
 			_schedules.Clear();
-			_schedulars.Clear();
 		}
 
 		public bool Unschedule(ITrigger trigger)
@@ -230,7 +198,7 @@ namespace Zongsoft.Scheduling
 			if(trigger == null)
 				return false;
 
-			if(_schedules.TryRemove(trigger, out var schedule))
+			if(_dispatchables.TryRemove(trigger, out var schedule))
 			{
 				schedule.ClearHandlers();
 				return true;
@@ -241,16 +209,16 @@ namespace Zongsoft.Scheduling
 
 		public bool Unschedule(long scheduleId)
 		{
-			if(_schedulars.TryRemove(scheduleId, out var schedule))
+			if(_schedules.TryRemove(scheduleId, out var schedule))
 			{
-				if(_schedules.TryGetValue(schedule.Trigger, out var older))
+				if(_dispatchables.TryGetValue(schedule.Trigger, out var older))
 				{
 					older.RemoveHandler(scheduleId);
 
-					if(older.IsEmpty && _schedules.TryRemove(older.Trigger, out _))
+					if(older.IsEmpty && _dispatchables.TryRemove(older.Trigger, out _))
 					{
 						if(older.HasHandlers)
-							_schedules.TryAdd(older.Trigger, older);
+							_dispatchables.TryAdd(older.Trigger, older);
 					}
 				}
 
@@ -308,9 +276,9 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 虚拟方法
-		protected virtual Schedule CreateSchedule(long scheduleId, IHandler handler, ITrigger trigger)
+		protected virtual IHandlerContext CreateContext(ITrigger trigger, HandlerToken token, string eventId, DateTime timestamp, int index)
 		{
-			return new Schedule(scheduleId, handler, trigger);
+			return new HandlerContext(this, token.ScheduleId, trigger, eventId, timestamp, index, token.Data);
 		}
 
 		protected virtual void OnRetrieverChanged(IRetriever newRetriever, IRetriever oldRetriever)
@@ -328,18 +296,18 @@ namespace Zongsoft.Scheduling
 		protected void Scan()
 		{
 			//如果排程集为空则退出扫描
-			if(_schedules.IsEmpty)
+			if(_dispatchables.IsEmpty)
 				return;
 
 			DateTime? earliest = null;
-			var schedules = new List<ScheduleToken>();
+			var schedules = new List<Dispatchable>();
 			IList<ITrigger> removables = null;
 
 			//循环遍历排程集，找出其中最早的触发时间点
-			foreach(var schedule in _schedules.Values)
+			foreach(var schedule in _dispatchables.Values)
 			{
 				//如果当前排程项的处理器集空了，则忽略它
-				if(schedule.Count == 0)
+				if(schedule.IsEmpty)
 					continue;
 
 				//获取当前排程项的下次触发时间
@@ -377,7 +345,7 @@ namespace Zongsoft.Scheduling
 			{
 				foreach(var removable in removables)
 				{
-					if(_schedules.TryRemove(removable, out var schedule))
+					if(_dispatchables.TryRemove(removable, out var schedule))
 						this.OnExpired(schedule.Trigger, schedule.Handlers);
 				}
 			}
@@ -416,7 +384,7 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 私有方法
-		private void Refire(ScheduleToken schedule)
+		private void Refire(Dispatchable schedule)
 		{
 			//获取当前的任务标记
 			var token = _token;
@@ -444,7 +412,7 @@ namespace Zongsoft.Scheduling
 			}
 		}
 
-		private void Fire(DateTime timestamp, IEnumerable<ScheduleToken> schedules)
+		private void Fire(DateTime timestamp, IEnumerable<Dispatchable> schedules)
 		{
 			if(schedules == null)
 				return;
@@ -525,7 +493,7 @@ namespace Zongsoft.Scheduling
 					foreach(var handlerToken in schedule.Handlers)
 					{
 						//创建处理上下文对象
-						var context = new HandlerContext(this, handlerToken.ScheduleId, schedule.Trigger, token.EventId, token.Timestamp, count++);
+						var context = this.CreateContext(schedule.Trigger, handlerToken, token.EventId, token.Timestamp, count++);
 
 						Task.Run(() => this.Handle(handlerToken.Handler, context))//异步调用处理器进行处理（该方法内会屏蔽异常，并对执行异常的处理器进行重发处理）
 						.ContinueWith(t => this.OnHandled(handlerToken.Handler, context, t.Result)); //异步调用处理器完成后，再激发“Handled”事件
@@ -567,13 +535,17 @@ namespace Zongsoft.Scheduling
 			}
 		}
 
-		private long ScheduleCore(IHandler handler, ITrigger trigger, long scheduleId = 0)
+		private long ScheduleCore(IHandler handler, ITrigger trigger, long scheduleId, object data)
 		{
+			long Increase(long id) => id > 0 ? id : Interlocked.Increment(ref _sequence);
+
 			//获取指定触发器关联的执行处理器集合
-			var schedule = _schedules.GetOrAdd(trigger, (key, id) => new ScheduleToken(key, handler, id > 0 ? id : Interlocked.Increment(ref _sequence)), scheduleId);
+			var dispatchable = _dispatchables.GetOrAdd(trigger,
+				(key, state) => new Dispatchable(key, handler, state.thunk(state.id), state.data),
+				new { id = scheduleId, thunk = new Func<long, long>(Increase), data });
 
 			if(scheduleId > 0)
-				this.Refire(schedule);
+				this.Refire(dispatchable);
 
 			//返回调度项编号
 			return scheduleId;
@@ -590,15 +562,15 @@ namespace Zongsoft.Scheduling
 
 			#region 私有变量
 			private CancellationTokenSource _cancellation;
-			private readonly ISet<ScheduleToken> _schedules;
+			private readonly ISet<Dispatchable> _schedules;
 			#endregion
 
 			#region 构造函数
-			public TaskToken(DateTime timestamp, IEnumerable<ScheduleToken> schedules)
+			public TaskToken(DateTime timestamp, IEnumerable<Dispatchable> schedules)
 			{
 				this.Timestamp = timestamp;
 				this.EventId = Common.Randomizer.GenerateString();
-				_schedules = new HashSet<ScheduleToken>(schedules);
+				_schedules = new HashSet<Dispatchable>(schedules);
 				_cancellation = new CancellationTokenSource();
 			}
 			#endregion
@@ -613,7 +585,7 @@ namespace Zongsoft.Scheduling
 				}
 			}
 
-			public IEnumerable<ScheduleToken> Schedules
+			public IEnumerable<Dispatchable> Schedules
 			{
 				get
 				{
@@ -634,7 +606,7 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 公共方法
-			public bool Append(ScheduleToken token, Action<string, int, ITrigger[]> succeed)
+			public bool Append(Dispatchable token, Action<string, int, ITrigger[]> succeed)
 			{
 				var schedules = _schedules;
 
@@ -694,7 +666,27 @@ namespace Zongsoft.Scheduling
 			#endregion
 		}
 
-		private struct ScheduleToken : IEquatable<ScheduleToken>, IEquatable<ITrigger>
+		private class ScheduleToken
+		{
+			#region 构造函数
+			public ScheduleToken(long scheduleId, IHandler handler, ITrigger trigger, object data)
+			{
+				this.ScheduleId = scheduleId;
+				this.Handler = handler;
+				this.Trigger = trigger;
+				this.Data = data;
+			}
+			#endregion
+
+			#region 公共属性
+			public long ScheduleId { get; }
+			public object Data { get; }
+			public IHandler Handler { get; }
+			public ITrigger Trigger { get; internal set; }
+			#endregion
+		}
+
+		private struct Dispatchable : IEquatable<Dispatchable>, IEquatable<ITrigger>
 		{
 			#region 公共字段
 			public readonly ITrigger Trigger;
@@ -705,18 +697,18 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 构造函数
-			public ScheduleToken(ITrigger trigger, IHandler handler, long scheduleId)
+			public Dispatchable(ITrigger trigger, IHandler handler, long scheduleId, object data)
 			{
 				this.Trigger = trigger;
 				_tokens = new ConcurrentDictionary<long, HandlerToken>();
-				_tokens.TryAdd(scheduleId, new HandlerToken(scheduleId, handler));
+				_tokens.TryAdd(scheduleId, new HandlerToken(scheduleId, handler, data));
 			}
 			#endregion
 
 			#region 公共属性
 			public int Count { get => _tokens.Count; }
 			public bool HasHandlers { get => _tokens.Count > 0; }
-			public bool IsEmpty { get => _tokens.Count == 0; }
+			public bool IsEmpty { get => _tokens.IsEmpty; }
 			public HandlerToken[] Handlers { get => _tokens.Values.ToArray(); }
 			#endregion
 
@@ -741,17 +733,22 @@ namespace Zongsoft.Scheduling
 				return this.Trigger.Equals(trigger);
 			}
 
-			public bool Equals(ScheduleToken other)
+			public bool Equals(Dispatchable other)
 			{
 				return this.Trigger.Equals(other.Trigger);
 			}
 
-			public override bool Equals(object obj)
+			public override bool Equals(object other)
 			{
-				if(obj == null || obj.GetType() != this.GetType())
+				if(other == null)
 					return false;
 
-				return this.Equals((ScheduleToken)obj);
+				return other switch
+				{
+					ITrigger trigger => this.Trigger.Equals(trigger),
+					Dispatchable schedule => this.Trigger.Equals(schedule.Trigger),
+					_ => false,
+				};
 			}
 
 			public override int GetHashCode()
@@ -761,36 +758,7 @@ namespace Zongsoft.Scheduling
 
 			public override string ToString()
 			{
-				return this.Trigger.ToString() + " (" + _tokens.Count + ")";
-			}
-			#endregion
-		}
-
-		private class TriggerComparer : IEqualityComparer<ITrigger>
-		{
-			#region 单例字段
-			public static readonly TriggerComparer Instance = new TriggerComparer();
-			#endregion
-
-			#region 私有构造
-			private TriggerComparer() { }
-			#endregion
-
-			#region 公共方法
-			public bool Equals(ITrigger x, ITrigger y)
-			{
-				if(x == null || y == null)
-					return false;
-
-				return x.GetType() == y.GetType() && x.Equals(y);
-			}
-
-			public int GetHashCode(ITrigger obj)
-			{
-				if(obj == null)
-					return 0;
-
-				return obj.GetType().GetHashCode() ^ obj.GetHashCode();
+				return this.Trigger.ToString() + " (" + _tokens.Count.ToString() + ")";
 			}
 			#endregion
 		}

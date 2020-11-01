@@ -34,12 +34,15 @@ namespace Zongsoft.Scheduling
 	public interface ISchedule
 	{
 		long ScheduleId { get; }
-		IHandler Handler { get; }
-		ITrigger Trigger { get; }
+		object Data { get; set; }
 	}
 
-	public interface ISchedule<TKey> : ISchedule where TKey : struct, IEquatable<TKey>
+	public interface ISchedule<TKey, TData> : ISchedule
+		where TKey : struct, IEquatable<TKey>
+		where TData : class
 	{
+		long ScheduleId { get; }
 		TKey Key { get; }
+		TData Data { get; }
 	}
 }

@@ -58,6 +58,9 @@ namespace Zongsoft.Scheduling
 		/// <summary>获取关联的触发器对象。</summary>
 		ITrigger Trigger { get; }
 
+		/// <summary>获取调度的附件数据。</summary>
+		object Data { get; }
+
 		/// <summary>获取一个值，指示上下文是否含有扩展参数。</summary>
 		bool HasParameters { get; }
 

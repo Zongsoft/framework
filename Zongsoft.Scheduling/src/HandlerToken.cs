@@ -34,16 +34,18 @@ namespace Zongsoft.Scheduling
 	public readonly struct HandlerToken : IEquatable<HandlerToken>
 	{
 		#region 构造函数
-		public HandlerToken(long scheduleId, IHandler handler)
+		public HandlerToken(long scheduleId, IHandler handler, object data)
 		{
 			this.ScheduleId = scheduleId;
 			this.Handler = handler;
+			this.Data = data;
 		}
 		#endregion
 
 		#region 公共字段
 		public readonly long ScheduleId;
 		public readonly IHandler Handler;
+		public readonly object Data;
 		#endregion
 
 		#region 重写方法
@@ -52,9 +54,9 @@ namespace Zongsoft.Scheduling
 			return this.ScheduleId == token.ScheduleId;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object other)
 		{
-			return obj is HandlerToken token && this.ScheduleId == token.ScheduleId;
+			return other is HandlerToken token && this.ScheduleId == token.ScheduleId;
 		}
 
 		public override int GetHashCode()
@@ -64,7 +66,7 @@ namespace Zongsoft.Scheduling
 
 		public override string ToString()
 		{
-			return this.ScheduleId + ":" + this.Handler.ToString();
+			return this.ScheduleId + ":" + this.Handler.ToString() + Environment.NewLine + this.Data;
 		}
 		#endregion
 	}

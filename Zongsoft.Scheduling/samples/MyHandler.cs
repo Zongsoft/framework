@@ -38,15 +38,12 @@ namespace Zongsoft.Scheduling.Samples
 {
 	public class MyHandler : IHandler
 	{
-		#region 成员字段
-		private uint _key;
+		#region 单例字段
+		public static readonly MyHandler Default = new MyHandler();
 		#endregion
 
 		#region 构造函数
-		public MyHandler(uint key)
-		{
-			_key = key;
-		}
+		public MyHandler() { }
 		#endregion
 
 		#region 处理方法
@@ -61,31 +58,6 @@ namespace Zongsoft.Scheduling.Samples
 
 			//模拟实际业务处理逻辑（停顿0~1秒）
 			Thread.Sleep(random % (1 * 1000));
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(IHandler other)
-		{
-			if(other == null || other.GetType() != this.GetType())
-				return false;
-
-			return ((MyHandler)other)._key == _key;
-		}
-
-		public override bool Equals(object obj)
-		{
-			return this.Equals(obj as IHandler);
-		}
-
-		public override int GetHashCode()
-		{
-			return (int)_key;
-		}
-
-		public override string ToString()
-		{
-			return this.GetType().Name + "#" + _key.ToString();
 		}
 		#endregion
 	}
