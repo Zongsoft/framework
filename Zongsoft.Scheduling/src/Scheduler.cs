@@ -126,13 +126,13 @@ namespace Zongsoft.Scheduling
 				return Array.Empty<HandlerToken>();
 		}
 
-		//public ISchedule GetSchedule(long scheduleId)
-		//{
-		//	if(_schedules.TryGetValue(scheduleId, out var schedule))
-		//		return schedule;
+		public ScheduleToken GetSchedule(long scheduleId)
+		{
+			if(_schedules.TryGetValue(scheduleId, out var schedule))
+				return schedule;
 
-		//	return null;
-		//}
+			return null;
+		}
 
 		public long Schedule(IHandler handler, ITrigger trigger, object data = null)
 		{
@@ -663,26 +663,6 @@ namespace Zongsoft.Scheduling
 					_cancellation.Dispose();
 				}
 			}
-			#endregion
-		}
-
-		private class ScheduleToken
-		{
-			#region 构造函数
-			public ScheduleToken(long scheduleId, IHandler handler, ITrigger trigger, object data)
-			{
-				this.ScheduleId = scheduleId;
-				this.Handler = handler;
-				this.Trigger = trigger;
-				this.Data = data;
-			}
-			#endregion
-
-			#region 公共属性
-			public long ScheduleId { get; }
-			public object Data { get; }
-			public IHandler Handler { get; }
-			public ITrigger Trigger { get; internal set; }
 			#endregion
 		}
 

@@ -31,18 +31,23 @@ using System;
 
 namespace Zongsoft.Scheduling
 {
-	public interface ISchedule
+	public class ScheduleToken
 	{
-		long ScheduleId { get; }
-		object Data { get; set; }
-	}
+		#region 构造函数
+		public ScheduleToken(long scheduleId, IHandler handler, ITrigger trigger, object data)
+		{
+			this.ScheduleId = scheduleId;
+			this.Handler = handler;
+			this.Trigger = trigger;
+			this.Data = data;
+		}
+		#endregion
 
-	public interface ISchedule<TKey, TData> : ISchedule
-		where TKey : struct, IEquatable<TKey>
-		where TData : class
-	{
-		long ScheduleId { get; }
-		TKey Key { get; }
-		TData Data { get; }
+		#region 公共属性
+		public long ScheduleId { get; }
+		public object Data { get; }
+		public IHandler Handler { get; }
+		public ITrigger Trigger { get; internal set; }
+		#endregion
 	}
 }

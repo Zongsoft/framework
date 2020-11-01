@@ -92,7 +92,7 @@ namespace Zongsoft.Scheduling
 		/// </summary>
 		/// <param name="scheduleId">指定要获取的调度项编号。</param>
 		/// <returns>如果找到则返回指定编号的调度项，否则返回空(null)。</returns>
-		//ISchedule GetSchedule(long scheduleId);
+		ScheduleToken GetSchedule(long scheduleId);
 
 		/// <summary>
 		/// 排程操作，将指定的处理器与触发器绑定。

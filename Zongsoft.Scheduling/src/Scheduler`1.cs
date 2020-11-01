@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -37,43 +36,76 @@ namespace Zongsoft.Scheduling
 	public abstract class Scheduler<TKey, TData> : Scheduler where TKey : struct, IEquatable<TKey> where TData : class
 	{
 		#region 成员字段
-		private readonly ConcurrentDictionary<TKey, ISchedule<TKey, TData>> _schedules;
+		private readonly ConcurrentDictionary<TKey, long> _mapping;
 		#endregion
 
 		#region 构造函数
 		public Scheduler()
 		{
-			_schedules = new ConcurrentDictionary<TKey, ISchedule<TKey, TData>>();
+			_mapping = new ConcurrentDictionary<TKey, long>();
 		}
 		#endregion
 
-		#region 公共属性
-		public ICollection<ISchedule<TKey, TData>> Schedules { get => _schedules.Values; }
-		#endregion
-
 		#region 公共方法
+		public ScheduleToken GetSchedule(TKey key)
+		{
+			return _mapping.TryGetValue(key, out var scheduleId) ? this.GetSchedule(scheduleId) : null;
+		}
+
 		public long Schedule(TKey key)
 		{
-			var schedule = this.GetSchedules(new[] { key }).FirstOrDefault();
+			var data = this.GetData(key);
 
-			if(schedule == null)
+			if(data == null)
 			{
-				this.Unschedule(key);
+				if(_mapping.TryGetValue(key, out var scheduleId) && this.Unschedule(scheduleId))
+					return scheduleId;
+
 				return 0;
 			}
 
-			if(_schedules.TryAdd(key, schedule))
-				return this.Schedule(this.GetHandler(schedule), this.GetTrigger(schedule), schedule.Data);
-
-			return this.Reschedule(schedule.ScheduleId, this.GetTrigger(schedule), schedule.Data) ? schedule.ScheduleId : 0;
+			return this.Schedule(key, data);
 		}
 
 		public bool Unschedule(TKey key)
 		{
-			if(_schedules.TryGetValue(key, out var schedule))
-				return this.Unschedule(schedule.ScheduleId);
+			if(_mapping.TryGetValue(key, out var scheduleId))
+				return this.Unschedule(scheduleId);
 
 			return false;
+		}
+		#endregion
+
+		#region 调度实现
+		private long Schedule(TKey key, TData data)
+		{
+			if(data == null)
+				return 0;
+
+			var state = new ScheduleState(key, data);
+
+			var scheduleId = _mapping.GetOrAdd(key,
+				(_, state) => state.Id = this.Schedule(this.GetHandler(state.Data), this.GetTrigger(state.Data), state.Data),
+				state);
+
+			if(state.Id > 0)
+				return scheduleId;
+
+			return this.Reschedule(scheduleId, this.GetTrigger(data), data) ? scheduleId : 0;
+		}
+		#endregion
+
+		#region 初始方法
+		protected virtual void Initialize(IEnumerable<KeyValuePair<TKey, TData>> schedulars)
+		{
+			if(schedulars == null)
+				return;
+
+			foreach(var schedular in schedulars)
+			{
+				if(schedular.Value != null)
+					this.Schedule(schedular.Key, schedular.Value);
+			}
 		}
 		#endregion
 
@@ -81,7 +113,7 @@ namespace Zongsoft.Scheduling
 		protected override void OnStart(string[] args)
 		{
 			//初始化调度记录
-			this.Initialize();
+			this.Initialize(null);
 
 			//调用基类同名方法
 			base.OnStart(args);
@@ -97,26 +129,25 @@ namespace Zongsoft.Scheduling
 		}
 		#endregion
 
-		#region 初始化器
-		protected virtual void Initialize()
-		{
-			var schedules = this.GetSchedules(null);
-
-			if(schedules == null)
-				return;
-
-			foreach(var schedule in schedules)
-			{
-				if(schedule != null && _schedules.TryAdd(schedule.Key, schedule))
-					this.Schedule(this.GetHandler(schedule), this.GetTrigger(schedule));
-			}
-		}
+		#region 抽象方法
+		protected abstract ITrigger GetTrigger(TData data);
+		protected abstract IHandler GetHandler(TData data);
+		protected abstract TData GetData(TKey key);
 		#endregion
 
-		#region 抽象方法
-		protected abstract ITrigger GetTrigger(ISchedule<TKey, TData> schedule);
-		protected abstract IHandler GetHandler(ISchedule<TKey, TData> schedule);
-		protected abstract IEnumerable<ISchedule<TKey, TData>> GetSchedules(IEnumerable<TKey> keys);
+		#region 嵌套子类
+		private class ScheduleState
+		{
+			public ScheduleState(TKey key, TData data)
+			{
+				this.Key = key;
+				this.Data = data;
+			}
+
+			public long Id;
+			public readonly TKey Key;
+			public readonly TData Data;
+		}
 		#endregion
 	}
 }

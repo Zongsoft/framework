@@ -32,9 +32,7 @@
  */
  
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Scheduling.Samples
 {
@@ -45,15 +43,28 @@ namespace Zongsoft.Scheduling.Samples
 		#endregion
 
 		#region 重写方法
-		protected override ITrigger GetTrigger(ISchedule<uint, Models.PlanModel> schedule)
+		protected override void Initialize(IEnumerable<KeyValuePair<uint, Models.PlanModel>> schedulars)
 		{
-			if(schedule == null || string.IsNullOrWhiteSpace(schedule.Data.CronExpression))
+			static IEnumerable<KeyValuePair<uint, Models.PlanModel>> Mock(int count)
+			{
+				for(int i = 0; i < count; i++)
+				{
+					yield return new KeyValuePair<uint, Models.PlanModel>((uint)(i + 1), new Models.PlanModel((uint)(i + 1), null, GenerateCron()));
+				}
+			}
+
+			base.Initialize(schedulars ?? Mock(200));
+		}
+
+		protected override ITrigger GetTrigger(Models.PlanModel data)
+		{
+			if(data == null || string.IsNullOrWhiteSpace(data.CronExpression))
 				return null;
 
 			try
 			{
 				//因为无效的Cron表达式可能会导致解析异常，所以需要捕获异常
-				return Trigger.Cron(schedule.Data.CronExpression, schedule.Data.ExpirationTime, schedule.Data.EffectiveTime);
+				return Trigger.Cron(data.CronExpression, data.ExpirationTime, data.EffectiveTime);
 			}
 			catch(Exception ex)
 			{
@@ -63,33 +74,19 @@ namespace Zongsoft.Scheduling.Samples
 			return null;
 		}
 
-		protected override IHandler GetHandler(ISchedule<uint, Models.PlanModel> schedule)
+		protected override IHandler GetHandler(Models.PlanModel data)
 		{
 			return MyHandler.Default;
 		}
 
-		protected override IEnumerable<ISchedule<uint, Models.PlanModel>> GetSchedules(IEnumerable<uint> keys)
+		protected override Models.PlanModel GetData(uint key)
 		{
-			//建集为空，模拟全量初始化
-			if(keys == null)
-			{
-				for(int i = 0; i < 200; i++)
-				{
-					yield return new MySchedule(new Models.PlanModel((uint)(i + 1), null, GenerateCron()));
-				}
-
-				yield break;
-			}
-
-			foreach(var key in keys)
-			{
-				yield return new MySchedule(new Models.PlanModel(key, null, GenerateCron()));
-			}
+			return new Models.PlanModel(key, null, GenerateCron());
 		}
 		#endregion
 
 		#region 私有方法
-		private string GenerateCron()
+		private static string GenerateCron()
 		{
 			return (Common.Randomizer.GenerateInt32() % 6) switch
 			{
@@ -98,23 +95,10 @@ namespace Zongsoft.Scheduling.Samples
 				2 => "0 0,10,20,30,40,50 * * * ?", //每10分钟来一发
 				3 => "0 0,30 * * * ?",             //每30分钟来一发
 				4 => "0 0 0/2 * * ?",              //每2个小时来一发
-				5 => "0 0 * ? * 1-5",              //工作日（周一至周五）的每小时来一发
-				_ => "0 0 * * * ?",                //负数：每小时整点来一发
+				5 => "0 0 * ? * 1-5",              //周一至周五的每小时来一发
+				_ => "0 0 * * * ?",                //每小时整点来一发
 			};
 		}
 		#endregion
-	}
-
-	public class MySchedule : ISchedule<uint, Models.PlanModel>
-	{
-		public MySchedule(Models.PlanModel data)
-		{
-			this.Data = data ?? throw new ArgumentNullException(nameof(data));
-		}
-
-		public uint Key { get => this.Data.PlanId; }
-		public long ScheduleId { get; set; }
-		public Models.PlanModel Data { get; set; }
-		object ISchedule.Data { get => this.Data; set => this.Data = value as Models.PlanModel; }
 	}
 }
