@@ -35,7 +35,7 @@ using System;
 
 namespace Zongsoft.Scheduling
 {
-	public class CronTrigger : ITrigger, IEquatable<ITrigger>
+	public class CronTrigger : ITrigger, IEquatable<ITrigger>, IEquatable<CronTrigger>
 	{
 		#region 单例字段
 		public static readonly ITriggerBuilder Builder = new CronTriggerBuilder();
@@ -99,7 +99,7 @@ namespace Zongsoft.Scheduling
 			if(this.ExpirationTime.HasValue && this.ExpirationTime.Value < origin)
 				return null;
 
-			//如果生效时间晚于此刻，则计时起点为生效时间
+			//如果生效时间晚于计时起点，则计时起点为生效时间
 			if(this.EffectiveTime.HasValue && this.EffectiveTime.Value > origin)
 				origin = this.GetTimestamp(this.EffectiveTime);
 
@@ -110,15 +110,20 @@ namespace Zongsoft.Scheduling
 		#region 重写方法
 		public bool Equals(ITrigger other)
 		{
-			return (other is CronTrigger cron) &&
-				cron._expression.Equals(_expression) &&
+			return this.Equals(other as CronTrigger);
+		}
+
+		public bool Equals(CronTrigger other)
+		{
+			return other != null &&
+				_expression.Equals(other._expression) &&
 				this.EffectiveTime == other.EffectiveTime &&
 				this.ExpirationTime == other.ExpirationTime;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object other)
 		{
-			return this.Equals(obj as CronTrigger);
+			return this.Equals(other as CronTrigger);
 		}
 
 		public override int GetHashCode()
