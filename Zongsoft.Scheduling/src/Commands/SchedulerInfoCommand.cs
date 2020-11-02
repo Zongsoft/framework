@@ -71,27 +71,29 @@ namespace Zongsoft.Scheduling.Commands
 					{
 						if(index == limit)
 						{
-							content.AppendLine(CommandOutletColor.Gray, "\t... ...");
+							content.AppendLine(CommandOutletColor.DarkMagenta, "\t... ...");
 							break;
 						}
 
-						content.Append(CommandOutletColor.DarkYellow, $"[{++index}] ")
-						       .AppendLine(trigger.ToString());
-
 						//获取当前触发器下的处理器集合
-						var handlers = scheduler.GetHandlers(trigger);
+						var tokens = scheduler.GetHandlers(trigger);
+
+						content.Append(CommandOutletColor.DarkYellow, $"[{++index}] ")
+						       .Append(CommandOutletColor.DarkGreen, trigger.ToString())
+						       .AppendLine(CommandOutletColor.DarkMagenta, $" ({tokens.Length})");
 
 						//遍历生成处理器信息
-						for(int i = 0; i < handlers.Length; i++)
+						for(int i = 0; i < tokens.Length; i++)
 						{
 							if(i >= limit)
 							{
-								content.AppendLine(CommandOutletColor.Gray, "\t... ...");
+								content.AppendLine(CommandOutletColor.DarkMagenta, "\t... ...");
 								break;
 							}
 
-							content.Append(CommandOutletColor.DarkCyan, $"    [{i + 1}] ")
-								   .AppendLine(handlers[i].ToString());
+							content.Append(CommandOutletColor.DarkCyan, $"    {tokens[i].ScheduleId, 5}")
+							       .Append(CommandOutletColor.DarkGray, " : ")
+							       .AppendLine(tokens[i].ToString());
 						}
 					}
 				}

@@ -200,7 +200,7 @@ namespace Zongsoft.Scheduling.Commands
 				.Append(CommandOutletColor.DarkGray, "(")
 				.Append(CommandOutletColor.DarkCyan, args.Context.EventId)
 				.Append(CommandOutletColor.DarkGray, ".")
-				.Append(CommandOutletColor.DarkYellow, (args.Context.Index + 1).ToString())
+				.Append(CommandOutletColor.DarkBlue, (args.Context.Index + 1).ToString())
 				.Append(CommandOutletColor.DarkGray, "): ")
 				.Append(CommandOutletColor.DarkYellow, $"[{args.Context.ScheduleId}] ")
 				.Append(CommandOutletColor.DarkCyan, args.Handler.ToString())
