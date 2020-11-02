@@ -69,7 +69,6 @@ namespace Zongsoft.Scheduling.Commands
 					//遍历生成触发器信息
 					foreach(var trigger in scheduler.Triggers)
 					{
-						//限制输出前100个
 						if(index == limit)
 						{
 							content.AppendLine(CommandOutletColor.Gray, "\t... ...");
@@ -85,14 +84,13 @@ namespace Zongsoft.Scheduling.Commands
 						//遍历生成处理器信息
 						for(int i = 0; i < handlers.Length; i++)
 						{
-							//限制输出前100个
 							if(i >= limit)
 							{
 								content.AppendLine(CommandOutletColor.Gray, "\t... ...");
 								break;
 							}
 
-							content.Append(CommandOutletColor.DarkCyan, $"\t[{i + 1}] ")
+							content.Append(CommandOutletColor.DarkCyan, $"    [{i + 1}] ")
 								   .AppendLine(handlers[i].ToString());
 						}
 					}

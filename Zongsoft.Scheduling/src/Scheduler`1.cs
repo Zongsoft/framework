@@ -82,7 +82,7 @@ namespace Zongsoft.Scheduling
 			if(data == null)
 				return 0;
 
-			var state = new ScheduleState(key, data);
+			var state = new ScheduleState(data);
 
 			var scheduleId = _mapping.GetOrAdd(key,
 				(_, state) => state.Id = this.Schedule(this.GetHandler(state.Data), this.GetTrigger(state.Data), state.Data),
@@ -138,14 +138,12 @@ namespace Zongsoft.Scheduling
 		#region 嵌套子类
 		private class ScheduleState
 		{
-			public ScheduleState(TKey key, TData data)
+			public ScheduleState(TData data)
 			{
-				this.Key = key;
 				this.Data = data;
 			}
 
 			public long Id;
-			public readonly TKey Key;
 			public readonly TData Data;
 		}
 		#endregion

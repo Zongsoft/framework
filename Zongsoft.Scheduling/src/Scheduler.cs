@@ -54,7 +54,7 @@ namespace Zongsoft.Scheduling
 		#region 成员字段
 		private long _sequence;
 		private DateTime? _lastTime;
-		private TaskToken _token;
+		private LaunchToken _launcher;
 		private IRetriever _retriever;
 		private readonly ConcurrentDictionary<long, ScheduleToken> _schedules;
 		private readonly ConcurrentDictionary<ITrigger, Dispatchable> _dispatchables;
@@ -75,7 +75,7 @@ namespace Zongsoft.Scheduling
 		#region 公共属性
 		public int Count { get => _schedules.Count; }
 
-		public DateTime? NextTime { get => _token?.Timestamp; }
+		public DateTime? NextTime { get => _launcher?.Timestamp; }
 
 		public DateTime? LastTime { get => _lastTime; }
 
@@ -108,7 +108,7 @@ namespace Zongsoft.Scheduling
 		{
 			get
 			{
-				var token = _token;
+				var token = _launcher;
 				return token != null && !token.IsCancellationRequested;
 			}
 		}
@@ -183,7 +183,7 @@ namespace Zongsoft.Scheduling
 		public void Unschedule()
 		{
 			//将待触发的任务标记置空
-			var token = Interlocked.Exchange(ref _token, null);
+			var token = Interlocked.Exchange(ref _launcher, null);
 
 			//如果待触发的任务标记不为空，则将其取消
 			if(token != null)
@@ -242,7 +242,7 @@ namespace Zongsoft.Scheduling
 		protected override void OnStop(string[] args)
 		{
 			//将待触发的任务标记置空
-			var token = Interlocked.Exchange(ref _token, null);
+			var token = Interlocked.Exchange(ref _launcher, null);
 
 			//如果待触发的任务标记不为空，则将其取消
 			if(token != null)
@@ -255,7 +255,7 @@ namespace Zongsoft.Scheduling
 		protected override void OnPause()
 		{
 			//将待触发的任务标记置空
-			var token = Interlocked.Exchange(ref _token, null);
+			var token = Interlocked.Exchange(ref _launcher, null);
 
 			//如果待触发的任务标记不为空，则将其取消
 			if(token != null)
@@ -387,7 +387,7 @@ namespace Zongsoft.Scheduling
 		private void Refire(Dispatchable schedule)
 		{
 			//获取当前的任务标记
-			var token = _token;
+			var token = _launcher;
 
 			//如果当前任务标记为空（表示还没有启动排程）或任务标记已经被取消过（表示任务处于暂停或停止状态）
 			if(token == null || token.IsCancellationRequested)
@@ -418,20 +418,20 @@ namespace Zongsoft.Scheduling
 				return;
 
 			//首先获取待处理的任务凭证
-			var pendding = _token;
+			var pendding = _launcher;
 
 			//如果待处理的任务凭证有效并且指定要重新触发的时间大于或等于待触发时间则忽略当次调度
 			if(pendding != null && timestamp >= pendding.Timestamp)
 				return;
 
 			//创建一个新的任务凭证
-			var current = new TaskToken(timestamp, schedules);
+			var current = new LaunchToken(timestamp, schedules);
 
 			//循环确保本次替换的任务凭证没有覆盖到其他线程乱入的
 			while(pendding == null || timestamp < pendding.Timestamp)
 			{
 				//将新的触发凭证设置到全局变量，并确保该设置不会覆盖其他线程的乱入
-				var last = Interlocked.CompareExchange(ref _token, current, pendding);
+				var last = Interlocked.CompareExchange(ref _launcher, current, pendding);
 
 				//如果设置成功则退出该循环
 				if(last == pendding)
@@ -460,7 +460,7 @@ namespace Zongsoft.Scheduling
 			Task.Delay(duration).ContinueWith((task, state) =>
 			{
 				//获取当前的任务调度凭证
-				var token = (TaskToken)state;
+				var token = (LaunchToken)state;
 
 				//注意：防坑处理！！！
 				//任务线程可能没有延迟足够的时长就提前进入，所以必须防止这种提前进入导致的触发器的触发时间计算错误
@@ -475,7 +475,7 @@ namespace Zongsoft.Scheduling
 				_lastTime = token.Timestamp;
 
 				//注意：必须将待处理任务标记置空（否则会误导Scan方法重新进入Fire方法内的有效性判断）
-				_token = null;
+				_launcher = null;
 
 				//启动新一轮的调度扫描
 				this.Scan();
@@ -553,7 +553,7 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 嵌套子类
-		private class TaskToken : IDisposable
+		private class LaunchToken : IDisposable
 		{
 			#region 公共字段
 			public readonly string EventId;
@@ -566,7 +566,7 @@ namespace Zongsoft.Scheduling
 			#endregion
 
 			#region 构造函数
-			public TaskToken(DateTime timestamp, IEnumerable<Dispatchable> schedules)
+			public LaunchToken(DateTime timestamp, IEnumerable<Dispatchable> schedules)
 			{
 				this.Timestamp = timestamp;
 				this.EventId = Common.Randomizer.GenerateString();

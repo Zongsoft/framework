@@ -66,7 +66,7 @@ namespace Zongsoft.Scheduling
 
 		public override string ToString()
 		{
-			return this.ScheduleId + ":" + this.Handler.ToString() + Environment.NewLine + this.Data;
+			return this.ScheduleId + ":" + this.Handler.ToString();
 		}
 		#endregion
 	}

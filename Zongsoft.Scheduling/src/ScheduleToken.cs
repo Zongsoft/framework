@@ -45,7 +45,7 @@ namespace Zongsoft.Scheduling
 
 		#region 公共属性
 		public long ScheduleId { get; }
-		public object Data { get; }
+		public object Data { get; internal set; }
 		public IHandler Handler { get; }
 		public ITrigger Trigger { get; internal set; }
 		#endregion
