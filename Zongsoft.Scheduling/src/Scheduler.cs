@@ -401,19 +401,19 @@ namespace Zongsoft.Scheduling
 			//获取下次触发的时间点
 			var timestamp = schedular.Trigger.GetNextOccurrence();
 
-			//如果下次触发时间不为空（即需要触发）
-			if(timestamp.HasValue)
+			//如果下次触发时间为空（即不需要触发）
+			if(timestamp == null)
+				return;
+
+			if(timestamp < launcher.Timestamp)       //如果新得到的触发时间小于待触发的时间，则尝试调度新的时间点
+				this.Fire(timestamp.Value, new[] { schedular });
+			else if(timestamp == launcher.Timestamp) //如果新得到的触发时间等于待触发的时间，则尝试将其加入到待触发任务中
 			{
-				if(timestamp < launcher.Timestamp)       //如果新得到的触发时间小于待触发的时间，则尝试调度新的时间点
-					this.Fire(timestamp.Value, new[] { schedular });
-				else if(timestamp == launcher.Timestamp) //如果新得到的触发时间等于待触发的时间，则尝试将其加入到待触发任务中
+				launcher.Append(schedular, (id, count, triggers) =>
 				{
-					launcher.Append(schedular, (id, count, triggers) =>
-					{
-						//激发“Scheduled”事件
-						this.OnScheduled(id, count, triggers);
-					});
-				}
+					//激发“Scheduled”事件
+					this.OnScheduled(id, count, triggers);
+				});
 			}
 		}
 
@@ -462,52 +462,7 @@ namespace Zongsoft.Scheduling
 			//获取延迟的时长
 			var duration = Utility.GetDuration(timestamp);
 
-			Task.Delay(duration).ContinueWith((task, state) =>
-			{
-				//获取当前的任务调度凭证
-				var launcher = (LauncherDescriptor)state;
-
-				//注意：防坑处理！！！
-				//任务线程可能没有延迟足够的时长就提前进入，所以必须防止这种提前进入导致的触发器的触发时间计算错误
-				if(Utility.Now() < launcher.Timestamp)
-					SpinWait.SpinUntil(() => launcher.IsCancellationRequested || DateTime.Now.Ticks >= launcher.Timestamp.Ticks);
-
-				//如果任务已经被取消，则退出
-				if(launcher.IsCancellationRequested)
-					return;
-
-				//将最近触发时间点设为此时此刻
-				_lastTime = launcher.Timestamp;
-
-				//注意：必须将待处理任务标记置空（否则会误导Scan方法重新进入Fire方法内的有效性判断）
-				_launcher = null;
-
-				//启动新一轮的调度扫描
-				this.Scan();
-
-				//设置处理次数
-				int count = 0;
-
-				//激发“Occurring”事件
-				this.OnOccurring(launcher.EventId);
-
-				//遍历待执行的调度项集合（该集合内部确保了线程安全）
-				foreach(var schedular in launcher.Schedulars)
-				{
-					//遍历当前调度项内的所有处理器集合（该集合内部确保了线程安全）
-					foreach(var handlerToken in schedular.Schedules.Values)
-					{
-						//创建处理上下文对象
-						var context = this.CreateContext(handlerToken, launcher.EventId, launcher.Timestamp, count++);
-
-						Task.Run(() => this.Handle(handlerToken.Handler, context))//异步调用处理器进行处理（该方法内会屏蔽异常，并对执行异常的处理器进行重发处理）
-						.ContinueWith(t => this.OnHandled(handlerToken.Handler, context, t.Result)); //异步调用处理器完成后，再激发“Handled”事件
-					}
-				}
-
-				//激发“Occurred”事件
-				this.OnOccurred(launcher.EventId, count);
-			}, current, current.GetToken());
+			Task.Delay(duration).ContinueWith(this.OnFire, current, current.GetToken());
 
 			try
 			{
@@ -518,6 +473,53 @@ namespace Zongsoft.Scheduling
 			{
 				Zongsoft.Diagnostics.Logger.Error(ex);
 			}
+		}
+
+		private void OnFire(Task task, object state)
+		{
+			//获取当前的任务调度凭证
+			var launcher = (LauncherDescriptor)state;
+
+			//注意：防坑处理！！！
+			//任务线程可能没有延迟足够的时长就提前进入，所以必须防止这种提前进入导致的触发器的触发时间计算错误
+			if(Utility.Now() < launcher.Timestamp)
+				SpinWait.SpinUntil(() => launcher.IsCancellationRequested || DateTime.Now.Ticks >= launcher.Timestamp.Ticks);
+
+			//如果任务已经被取消，则退出
+			if(launcher.IsCancellationRequested)
+				return;
+
+			//将最近触发时间点设为此时此刻
+			_lastTime = launcher.Timestamp;
+
+			//注意：必须将待处理任务标记置空（否则会误导Scan方法重新进入Fire方法内的有效性判断）
+			_launcher = null;
+
+			//启动新一轮的调度扫描
+			this.Scan();
+
+			//设置处理次数
+			int count = 0;
+
+			//激发“Occurring”事件
+			this.OnOccurring(launcher.EventId);
+
+			//遍历待执行的调度项集合（该集合内部确保了线程安全）
+			foreach(var schedular in launcher.Schedulars)
+			{
+				//遍历当前调度项内的所有处理器集合（该集合内部确保了线程安全）
+				foreach(var handlerToken in schedular.Schedules.Values)
+				{
+					//创建处理上下文对象
+					var context = this.CreateContext(handlerToken, launcher.EventId, launcher.Timestamp, count++);
+
+					Task.Run(() => this.Handle(handlerToken.Handler, context))//异步调用处理器进行处理（该方法内会屏蔽异常，并对执行异常的处理器进行重发处理）
+					.ContinueWith(t => this.OnHandled(handlerToken.Handler, context, t.Result)); //异步调用处理器完成后，再激发“Handled”事件
+				}
+			}
+
+			//激发“Occurred”事件
+			this.OnOccurred(launcher.EventId, count);
 		}
 
 		private Exception Handle(IHandler handler, IHandlerContext context)
