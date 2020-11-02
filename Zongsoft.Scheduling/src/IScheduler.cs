@@ -104,6 +104,14 @@ namespace Zongsoft.Scheduling
 		long Schedule(IHandler handler, ITrigger trigger, object data = null);
 
 		/// <summary>
+		/// 排程操作。
+		/// </summary>
+		/// <typeparam name="Token">排程任务的令牌类型。</typeparam>
+		/// <param name="token">指定要排程的任务令牌。</param>
+		/// <returns>返回排程成功的调度项编号，零表示排程失败。</returns>
+		long Schedule<Token>(Token token);
+
+		/// <summary>
 		/// 重新排程，将指定的处理器绑定到新的触发器并自动将其关联的原触发器解绑。
 		/// </summary>
 		/// <param name="scheduleId">指定要重排的调度项编号。</param>
@@ -125,11 +133,19 @@ namespace Zongsoft.Scheduling
 		bool Unschedule(ITrigger trigger);
 
 		/// <summary>
-		/// 解除指定处理器的所有排程。
+		/// 解除指定的编号的排程。
 		/// </summary>
 		/// <param name="scheduleId">指定要解除的调度项编号。</param>
 		/// <returns>如果解除成功则返回真(True)，否则返回假(False)。</returns>
 		bool Unschedule(long scheduleId);
+
+		/// <summary>
+		/// 解除指定任务的排程。
+		/// </summary>
+		/// <typeparam name="Token">排程任务的令牌类型。</typeparam>
+		/// <param name="token">指定要解除的任务令牌。</param>
+		/// <returns>如果解除成功则返回真(True)，否则返回假(False)。</returns>
+		bool Unschedule<Token>(Token token);
 		#endregion
 	}
 }

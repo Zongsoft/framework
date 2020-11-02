@@ -74,6 +74,22 @@ namespace Zongsoft.Scheduling
 
 			return false;
 		}
+
+		protected override long OnSchedule<Token>(Token token)
+		{
+			if(token is TKey key)
+				return this.Schedule(key);
+
+			throw new NotSupportedException();
+		}
+
+		protected override bool OnUnschedule<Token>(Token token)
+		{
+			if(token is TKey key)
+				return this.Unschedule(key);
+
+			throw new NotSupportedException();
+		}
 		#endregion
 
 		#region 调度实现

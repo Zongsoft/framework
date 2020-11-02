@@ -221,6 +221,12 @@ namespace Zongsoft.Scheduling
 
 			return false;
 		}
+
+		long IScheduler.Schedule<Token>(Token token) => this.OnSchedule(token);
+		bool IScheduler.Unschedule<Token>(Token token) => this.OnUnschedule(token);
+
+		protected virtual long OnSchedule<Token>(Token token) => throw new NotSupportedException();
+		protected virtual bool OnUnschedule<Token>(Token token) => throw new NotSupportedException();
 		#endregion
 
 		#region 重写方法
