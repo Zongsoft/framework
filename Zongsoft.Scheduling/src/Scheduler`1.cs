@@ -40,7 +40,7 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 构造函数
-		public Scheduler()
+		protected Scheduler(string name = null) : base(name)
 		{
 			_mapping = new ConcurrentDictionary<TKey, long>();
 		}
