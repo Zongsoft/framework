@@ -462,7 +462,8 @@ namespace Zongsoft.Scheduling
 			//获取延迟的时长
 			var duration = Utility.GetDuration(timestamp);
 
-			Task.Delay(duration).ContinueWith(this.OnFire, current, current.GetToken());
+			Task.Delay(duration.TotalHours > 24 ? TimeSpan.FromHours(24) : duration, current.GetToken())
+				.ContinueWith(this.OnFire, current, current.GetToken());
 
 			try
 			{
@@ -477,13 +478,30 @@ namespace Zongsoft.Scheduling
 
 		private void OnFire(Task task, object state)
 		{
+			//如果任务已经被取消，则退出
+			if(task.IsCanceled)
+				return;
+
 			//获取当前的任务调度凭证
 			var launcher = (LauncherDescriptor)state;
 
-			//注意：防坑处理！！！
-			//任务线程可能没有延迟足够的时长就提前进入，所以必须防止这种提前进入导致的触发器的触发时间计算错误
-			if(Utility.Now() < launcher.Timestamp)
-				SpinWait.SpinUntil(() => launcher.IsCancellationRequested || DateTime.Now.Ticks >= launcher.Timestamp.Ticks);
+			//获取当前时间(即本任务实际触发时间）与本任务设定的触发时间的间隔
+			var period = Utility.GetDuration(launcher.Timestamp);
+
+			//处理任务提前进入的情况
+			if(period.Ticks < 0)
+			{
+				//注意：任务线程可能没有延迟足够的时长就提前进入，一般这种提前量很短
+				if(period.TotalMilliseconds > -200) //提前200毫秒
+					SpinWait.SpinUntil(() => launcher.IsCancellationRequested || DateTime.Now.Ticks >= launcher.Timestamp.Ticks);
+				else
+				{
+					Task.Delay(period.TotalHours < 24 ? TimeSpan.FromHours(24) : TimeSpan.FromTicks(-period.Ticks), launcher.GetToken())
+						.ContinueWith(this.OnFire, state, launcher.GetToken());
+
+					return;
+				}
+			}
 
 			//如果任务已经被取消，则退出
 			if(launcher.IsCancellationRequested)
