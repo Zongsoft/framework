@@ -88,15 +88,18 @@ namespace Zongsoft.Scheduling.Samples
 		#region 私有方法
 		private static string GenerateCron()
 		{
-			return (Common.Randomizer.GenerateInt32() % 6) switch
+			return (Common.Randomizer.GenerateInt32() % 9) switch
 			{
-				0 => "0 * * * * ?",                //每分钟来一发
+				0 => "0 * * * * ?",                //每1分钟来一发
 				1 => "0 0/5 * * * ?",              //每5分钟来一发
 				2 => "0 0,10,20,30,40,50 * * * ?", //每10分钟来一发
 				3 => "0 0,30 * * * ?",             //每30分钟来一发
 				4 => "0 0 0/2 * * ?",              //每2个小时来一发
 				5 => "0 0 * ? * 1-5",              //周一至周五的每小时来一发
-				_ => "0 0 * * * ?",                //每小时整点来一发
+				6 => "0 0 0 L 6 ?",                //6月的最后一天来一发
+				7 => "0 0 0 1 1 ?",                //1月1号来一发
+				8 => "0 0 0 31 12 ?",              //12月31号来一发
+				_ => "0 0 * * * ?",                //每1小时来一发
 			};
 		}
 		#endregion
