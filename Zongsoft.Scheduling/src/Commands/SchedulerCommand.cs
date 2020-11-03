@@ -66,7 +66,7 @@ namespace Zongsoft.Scheduling.Commands
 		{
 			if(context.Expression.Options.TryGetValue<string>(KEY_NAME_OPTION, out var name) && !string.IsNullOrEmpty(name))
 			{
-				var scheduler = (this.ServiceProvider ?? ApplicationContext.Current.Services).Resolve(name) as IScheduler;
+				var scheduler = SchedulerProvider.Default.GetScheduler(name);
 
 				if(scheduler == null)
 					throw new CommandException($"The specified '{name}' does not exist or it's not a scheduler.");
