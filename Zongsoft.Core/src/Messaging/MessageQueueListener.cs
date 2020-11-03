@@ -29,13 +29,15 @@
 
 using System;
 using System.IO;
+using System.ComponentModel;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
 {
-	[System.ComponentModel.DisplayName("${Text.MessageQueueListener.Title}")]
-	[System.ComponentModel.Description("${Text.MessageQueueListener.Description}")]
+	[DisplayName("${Text.MessageQueueListener.Title}")]
+	[Description("${Text.MessageQueueListener.Description}")]
 	public class MessageQueueListener : Zongsoft.Communication.ListenerBase
 	{
 		#region 成员字段
@@ -57,6 +59,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
+		[TypeConverter(typeof(QueueConverter))]
 		public Zongsoft.Collections.IQueue Queue
 		{
 			get
@@ -222,6 +225,27 @@ namespace Zongsoft.Messaging
 					cancellation.Cancel();
 			}
 			#endregion
+		}
+
+		private class QueueConverter : TypeConverter
+		{
+			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+			{
+				return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+			}
+
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+			{
+				if(value is string name)
+				{
+					var queueProvider = (Collections.IQueueProvider)Services.ApplicationContext.Current?.Services?.GetService(typeof(Collections.IQueueProvider));
+
+					if(queueProvider != null)
+						return queueProvider.GetQueue(name);
+				}
+
+				return base.ConvertFrom(context, culture, value);
+			}
 		}
 		#endregion
 	}
