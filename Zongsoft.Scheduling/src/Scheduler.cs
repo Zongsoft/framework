@@ -117,10 +117,7 @@ namespace Zongsoft.Scheduling
 		#region 公共方法
 		public HandlerToken[] GetHandlers(ITrigger trigger)
 		{
-			if(trigger == null)
-				throw new ArgumentNullException(nameof(trigger));
-
-			if(_schedulars.TryGetValue(trigger, out var schedular))
+			if(trigger != null && _schedulars.TryGetValue(trigger, out var schedular))
 				return schedular.Schedules.Values.Select(schedule => new HandlerToken(schedule.ScheduleId, schedule.Handler, schedule.Data)).ToArray();
 			else
 				return Array.Empty<HandlerToken>();
@@ -139,10 +136,7 @@ namespace Zongsoft.Scheduling
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			if(trigger == null)
-				throw new ArgumentNullException(nameof(trigger));
-
-			if(trigger.IsExpired())
+			if(trigger == null || trigger.IsExpired())
 				return 0;
 
 			return this.ScheduleCore(0, handler, trigger, data);
@@ -150,10 +144,7 @@ namespace Zongsoft.Scheduling
 
 		public bool Reschedule(long scheduleId, ITrigger trigger, object data = null)
 		{
-			if(trigger == null)
-				throw new ArgumentNullException(nameof(trigger));
-
-			if(trigger.IsExpired())
+			if(trigger == null || trigger.IsExpired())
 				return false;
 
 			if(!_schedules.TryGetValue(scheduleId, out var schedule))
