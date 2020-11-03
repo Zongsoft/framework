@@ -14,6 +14,7 @@
 
 	<extension path="/Workbench/Scheduling">
 		<object name="Triggers" value="{static:Zongsoft.Scheduling.Trigger.Builders, Zongsoft.Scheduling}" />
+		<object name="Schedulers" value="{static:Zongsoft.Scheduling.SchedulerProvider.Default, Zongsoft.Scheduling}" />
 	</extension>
 
 	<extension path="/Workbench/Executor/Commands">
