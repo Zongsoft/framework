@@ -22,7 +22,7 @@ SET Project_4_Destination=zongsoft\scheduling\
 SET Project_5_Name=Zongsoft.Scheduling.Cron
 SET Project_5_Path=Zongsoft.Scheduling
 SET Project_5_Directory=cron
-SET Project_5_Destination=zongsoft\scheduling\
+SET Project_5_Destination=zongsoft\scheduling\cron\
 
 SET Project_6_Name=Zongsoft.Externals.Aliyun
 SET Project_6_Path=externals\aliyun
