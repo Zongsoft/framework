@@ -144,11 +144,11 @@ namespace Zongsoft.Scheduling
 
 		public bool Reschedule(long scheduleId, ITrigger trigger, object data = null)
 		{
-			if(trigger == null || trigger.IsExpired())
-				return false;
-
 			if(!_schedules.TryGetValue(scheduleId, out var schedule))
 				return false;
+
+			if(trigger == null || trigger.IsExpired())
+				return this.Unschedule(scheduleId);
 
 			if(_schedulars.TryGetValue(schedule.Trigger, out var older))
 			{
