@@ -104,6 +104,14 @@ namespace Zongsoft.Scheduling
 				(_, state) => state.Id = this.Schedule(this.GetHandler(state.Data), this.GetTrigger(state.Data), state.Data),
 				state);
 
+			//如果新增的调度失败，则需要将失败的调度项删除
+			if(scheduleId == 0)
+			{
+				if(_mapping.TryRemove(key, out var id) && id != 0)
+					_mapping.TryAdd(key, id);
+			}
+
+			//如果上面的新增调度成功，则返回该新增的调度项编号
 			if(state.Id > 0)
 				return scheduleId;
 
