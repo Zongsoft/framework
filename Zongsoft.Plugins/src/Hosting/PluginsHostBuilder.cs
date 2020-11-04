@@ -56,6 +56,11 @@ namespace Zongsoft.Plugins.Hosting
 				if(options != null)
 					ctx.Properties[typeof(PluginOptions)] = options;
 
+				var environment = Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
+
+				if(!string.IsNullOrWhiteSpace(environment))
+					ctx.HostingEnvironment.EnvironmentName = environment.Trim();
+
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
 				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(pluginsHostBuilderContext.Options));
 			});
