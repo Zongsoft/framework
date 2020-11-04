@@ -49,11 +49,12 @@ namespace Zongsoft.Configuration
 			if(providers == null)
 				throw new ArgumentNullException(nameof(providers));
 
-			int index = 0;
+			int index = providers.Count;
 			_providers = new IConfigurationProvider[providers.Count];
 
+			//注意：必须反转配置提供程序
 			foreach(var provider in providers)
-				_providers[index++] = provider;
+				_providers[--index] = provider;
 
 			_reloadToken = new CompositeChangeToken(providers.Select(p => p.GetReloadToken()).ToArray());
 		}
@@ -75,23 +76,27 @@ namespace Zongsoft.Configuration
 
 		public void Load()
 		{
-			foreach(var provider in _providers)
-				provider.Load();
+			var providers = _providers;
+
+			for(int i = 0; i < providers.Length; i++)
+				providers[i].Load();
 		}
 
 		public void Set(string key, string value)
 		{
-			foreach(var provider in _providers)
-			{
-				provider.Set(key, value);
-			}
+			var providers = _providers;
+
+			for(int i = 0; i < providers.Length; i++)
+				providers[i].Set(key, value);
 		}
 
 		public bool TryGet(string key, out string value)
 		{
-			foreach(var provider in _providers)
+			var providers = _providers;
+
+			for(int i = 0; i < providers.Length; i++)
 			{
-				if(provider.TryGet(key, out value))
+				if(providers[i].TryGet(key, out value))
 					return true;
 			}
 
@@ -110,11 +115,13 @@ namespace Zongsoft.Configuration
 		#region 处置方法
 		public void Dispose()
 		{
-			foreach(var provider in _providers)
+			var providers = _providers;
+
+			for(int i = 0; i < providers.Length; i++)
 			{
-				if(provider is IAsyncDisposable asyncDisposable)
+				if(providers[i] is IAsyncDisposable asyncDisposable)
 					asyncDisposable.DisposeAsync().GetAwaiter().GetResult();
-				else if(provider is IDisposable disposable)
+				else if(providers[i] is IDisposable disposable)
 					disposable.Dispose();
 			}
 
