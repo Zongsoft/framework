@@ -263,17 +263,16 @@ namespace Zongsoft.Common
 			if(start < 0 || start >= text.Length)
 				throw new ArgumentOutOfRangeException(nameof(start));
 
-			if(count < 1)
-				count = text.Length - start;
-			else if(start + count > text.Length)
+			if(count > 0 && start + count > text.Length)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
+			int length = count < 1 ? text.Length : start + count;
 			int index = -1; //分隔符的位置
 			int tails = 0;  //尾巴空白字符数
 			string part;
 			T value;
 
-			for(int i = start; i < count; i++)
+			for(int i = start; i < length; i++)
 			{
 				if(char.IsWhiteSpace(text, i))
 				{
@@ -304,7 +303,8 @@ namespace Zongsoft.Common
 
 			if(index < text.Length - 1)
 			{
-				part = text.Substring(++index, text.Length - index - tails);
+				index = index < 0 ? start : index + 1;
+				part = text.Substring(index, text.Length - index - tails);
 
 				if(parser == null)
 					yield return (T)(object)part;
