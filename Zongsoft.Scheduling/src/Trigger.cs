@@ -53,15 +53,15 @@ namespace Zongsoft.Scheduling
 			return trigger.ExpirationTime.HasValue && trigger.ExpirationTime.Value.ToUniversalTime() < DateTime.UtcNow;
 		}
 
-		public static ITrigger Cron(string expression, DateTime? expiration = null, DateTime? effective = null)
+		public static ITrigger Cron(string expression, DateTime? expiration = null, DateTime? effective = null, string description = null)
 		{
 			if(string.IsNullOrWhiteSpace(expression))
 				return null;
 
-			return Get("cron", expression, expiration, effective);
+			return Get("cron", expression, expiration, effective, description);
 		}
 
-		public static ITrigger Get(string scheme, string expression, DateTime? expiration = null, DateTime? effective = null)
+		public static ITrigger Get(string scheme, string expression, DateTime? expiration = null, DateTime? effective = null, string description = null)
 		{
 			if(string.IsNullOrWhiteSpace(scheme))
 				throw new ArgumentNullException(nameof(scheme));
@@ -83,7 +83,7 @@ namespace Zongsoft.Scheduling
 				(effective.HasValue ? effective.Value.Ticks.ToString() : "?") + "~" +
 				(expiration.HasValue ? expiration.Value.Ticks.ToString() : "?");
 
-			return _triggers.GetOrAdd(key, _ => builder.Build(expression, expiration, effective));
+			return _triggers.GetOrAdd(key, _ => builder.Build(expression, expiration, effective, description));
 		}
 		#endregion
 	}

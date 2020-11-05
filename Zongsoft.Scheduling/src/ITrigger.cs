@@ -45,6 +45,9 @@ namespace Zongsoft.Scheduling
 
 		/// <summary>获取或设置触发器的截止时间。</summary>
 		DateTime? ExpirationTime { get; set; }
+
+		/// <summary>获取或设置触发器的描述文本。</summary>
+		string Description { get; set; }
 		#endregion
 
 		#region 方法定义

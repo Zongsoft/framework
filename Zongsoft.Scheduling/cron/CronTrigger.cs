@@ -46,7 +46,7 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 私有构造
-		private CronTrigger(string expression, DateTime? expiration = null, DateTime? effective = null)
+		private CronTrigger(string expression, DateTime? expiration = null, DateTime? effective = null, string description = null)
 		{
 			if(string.IsNullOrWhiteSpace(expression))
 				throw new ArgumentNullException(nameof(expression));
@@ -63,6 +63,7 @@ namespace Zongsoft.Scheduling
 			this.Expression = _expression.ToString();
 			this.EffectiveTime = effective.HasValue && effective.Value.ToUniversalTime() <= DateTime.UtcNow ? null : effective;
 			this.ExpirationTime = expiration.HasValue && expiration.Value.ToUniversalTime() <= DateTime.UtcNow ? DateTime.MinValue : expiration;
+			this.Description = description;
 		}
 		#endregion
 
@@ -70,11 +71,14 @@ namespace Zongsoft.Scheduling
 		/// <summary>获取触发器的Cron表达式。</summary>
 		public string Expression { get; }
 
-		/// <summary>获取或设置触发器的生效时间。</summary>
+		/// <inheritdoc/>
 		public DateTime? EffectiveTime { get; set; }
 
-		/// <summary>获取或设置触发器的截止时间。</summary>
+		/// <inheritdoc/>
 		public DateTime? ExpirationTime { get; set; }
+
+		/// <inheritdoc/>
+		public string Description { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -153,12 +157,12 @@ namespace Zongsoft.Scheduling
 		#region 构建器类
 		private class CronTriggerBuilder : ITriggerBuilder
 		{
-			public ITrigger Build(string expression, DateTime? expiration = null, DateTime? effective = null)
+			public ITrigger Build(string expression, DateTime? expiration = null, DateTime? effective = null, string description = null)
 			{
 				if(string.IsNullOrWhiteSpace(expression))
 					throw new ArgumentNullException(nameof(expression));
 
-				return new CronTrigger(expression, expiration, effective);
+				return new CronTrigger(expression, expiration, effective, description);
 			}
 		}
 		#endregion
