@@ -82,6 +82,9 @@ namespace Zongsoft.Scheduling.Commands
 						       .Append(CommandOutletColor.DarkGreen, trigger.ToString())
 						       .AppendLine(CommandOutletColor.DarkMagenta, $" ({tokens.Length})");
 
+						if(!string.IsNullOrWhiteSpace(trigger.Description))
+							content.AppendLine(CommandOutletColor.DarkGray, trigger.Description);
+
 						//遍历生成处理器信息
 						for(int i = 0; i < tokens.Length; i++)
 						{

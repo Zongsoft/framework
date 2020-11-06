@@ -207,6 +207,9 @@ namespace Zongsoft.Scheduling.Commands
 				.Append(CommandOutletColor.DarkGray, "@")
 				.Append(CommandOutletColor.DarkMagenta, args.Context.Trigger.ToString());
 
+			if(!string.IsNullOrWhiteSpace(args.Context.Trigger.Description))
+				content.Append(CommandOutletColor.DarkGray, "(" + args.Context.Trigger.Description + ")");
+
 			if(args.Context.Failure.HasValue)
 			{
 				var failure = args.Context.Failure.Value;
