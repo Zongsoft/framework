@@ -56,6 +56,16 @@ namespace Zongsoft.Scheduling.Samples
 			base.Initialize(schedulars ?? Mock(200));
 		}
 
+		protected override Models.PlanModel GetData(uint key)
+		{
+			return new Models.PlanModel(key, null, GenerateCron());
+		}
+
+		protected override IHandler GetHandler(Models.PlanModel data)
+		{
+			return MyHandler.Default;
+		}
+
 		protected override ITrigger GetTrigger(Models.PlanModel data)
 		{
 			if(data == null || string.IsNullOrWhiteSpace(data.CronExpression))
@@ -64,7 +74,7 @@ namespace Zongsoft.Scheduling.Samples
 			try
 			{
 				//因为无效的Cron表达式可能会导致解析异常，所以需要捕获异常
-				return Trigger.Cron(data.CronExpression, data.ExpirationTime, data.EffectiveTime);
+				return Trigger.Cron(data.CronExpression, data.ExpirationTime, data.EffectiveTime, $"{data.PlanId}:{data.CronExpression}");
 			}
 			catch(Exception ex)
 			{
@@ -72,16 +82,6 @@ namespace Zongsoft.Scheduling.Samples
 			}
 
 			return null;
-		}
-
-		protected override IHandler GetHandler(Models.PlanModel data)
-		{
-			return MyHandler.Default;
-		}
-
-		protected override Models.PlanModel GetData(uint key)
-		{
-			return new Models.PlanModel(key, null, GenerateCron());
 		}
 		#endregion
 
