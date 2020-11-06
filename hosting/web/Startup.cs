@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -17,9 +16,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
-using Zongsoft.Configuration;
-using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Hosting.Web
 {
@@ -70,6 +66,7 @@ namespace Zongsoft.Hosting.Web
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
+				endpoints.Map("/", async ctx => ctx.Response.Redirect("/Application"));
 			});
 		}
 	}
