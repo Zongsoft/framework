@@ -1560,6 +1560,11 @@ namespace Zongsoft.Data
 			return this.Select<T>(name, grouping, null, schema, paging, options, sortings, null, null);
 		}
 
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, Paging paging, params Sorting[] sortings)
+		{
+			return this.Select<T>(name, grouping, criteria, (ISchema)null, paging, null, sortings, null, null);
+		}
+
 		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, params Sorting[] sortings)
 		{
 			return this.Select<T>(name, grouping, criteria, schema, null, null, sortings, null, null);
