@@ -43,28 +43,20 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		public DataSearcher(IDataService<TModel> dataService, DataSearcherAttribute[] attributes)
+		public DataSearcher(IDataService<TModel> dataService)
 		{
 			this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
 
+			var attributes = dataService.GetType().GetCustomAttributes<DataSearcherAttribute>(true).ToArray();
 			if(attributes != null && attributes.Length > 0)
 				this.Conditioner = DataSearcherResolver.Create(typeof(TModel).GetTypeInfo(), attributes);
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get
-			{
-				return this.DataService.Name;
-			}
-		}
+		public string Name { get => this.DataService.Name; }
 
-		public IDataService<TModel> DataService
-		{
-			get;
-		}
+		public IDataService<TModel> DataService { get; }
 
 		public IDataSearcherConditioner Conditioner
 		{
@@ -76,8 +68,13 @@ namespace Zongsoft.Data
 		#region 计数方法
 		public int Count(string keyword, string filter = null, IDataOptions options = null)
 		{
+			return this.OnCount(this.Resolve(nameof(Count), keyword, filter, options), options);
+		}
+
+		protected virtual int OnCount(ICondition criteria, IDataOptions options = null)
+		{
 			return this.DataService.Count(
-				this.Resolve(nameof(Count), keyword, filter, options),
+				criteria,
 				string.Empty,
 				options as IDataAggregateOptions);
 		}
@@ -86,9 +83,12 @@ namespace Zongsoft.Data
 		#region 存在方法
 		public bool Exists(string keyword, string filter = null, IDataOptions options = null)
 		{
-			return this.DataService.Exists(
-				this.Resolve(nameof(Exists), keyword, filter, options),
-				options as IDataExistsOptions);
+			return this.OnExists(this.Resolve(nameof(Exists), keyword, filter, options), options);
+		}
+
+		protected virtual bool OnExists(ICondition criteria, IDataOptions options = null)
+		{
+			return this.DataService.Exists(criteria, options as IDataExistsOptions);
 		}
 		#endregion
 
@@ -125,12 +125,34 @@ namespace Zongsoft.Data
 
 		public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, string filter = null, params Sorting[] sortings)
 		{
-			return this.DataService.Select(
+			return this.OnSearch(
 				this.Resolve(nameof(Search), keyword, filter, options),
+				schema,
+				paging,
+				options,
+				sortings);
+		}
+
+		protected virtual IEnumerable<TModel> OnSearch(ICondition criteria, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
+		{
+			return this.DataService.Select(
+				criteria,
 				schema,
 				paging,
 				options as IDataSelectOptions,
 				sortings);
+		}
+		#endregion
+
+		#region 条件解析
+		protected virtual ICondition Resolve(string method, string keyword, string filter = null, IDataOptions options = null)
+		{
+			var conditioner = this.Conditioner;
+
+			if(conditioner == null)
+				throw new InvalidOperationException("Missing the required keyword condition resolver.");
+
+			return conditioner.Resolve(method, keyword, filter, options);
 		}
 		#endregion
 
@@ -168,18 +190,6 @@ namespace Zongsoft.Data
 		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDataOptions options, string filter, params Sorting[] sortings)
 		{
 			return this.Search(keyword, schema, paging, options, filter, sortings);
-		}
-		#endregion
-
-		#region 条件解析
-		protected virtual ICondition Resolve(string method, string keyword, string filter = null, IDataOptions options = null)
-		{
-			var conditioner = this.Conditioner;
-
-			if(conditioner == null)
-				throw new InvalidOperationException("Missing the required keyword condition resolver.");
-
-			return conditioner.Resolve(method, keyword, filter, options);
 		}
 		#endregion
 

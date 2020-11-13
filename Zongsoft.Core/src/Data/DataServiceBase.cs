@@ -68,16 +68,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataServiceBase(IServiceProvider serviceProvider)
+		protected DataServiceBase(IServiceProvider serviceProvider, IDataSearcher<TModel> searcher = null)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new DataSearcher<TModel>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = searcher ?? new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, IDataSearcher<TModel> searcher = null)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -87,7 +87,7 @@ namespace Zongsoft.Data
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
 			//创建数据搜索器
-			_searcher = new DataSearcher<TModel>(this, (DataSearcherAttribute[])Attribute.GetCustomAttributes(this.GetType(), typeof(DataSearcherAttribute), true));
+			_searcher = searcher ?? new DataSearcher<TModel>(this);
 		}
 		#endregion
 
