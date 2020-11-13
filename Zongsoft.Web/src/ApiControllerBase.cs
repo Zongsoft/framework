@@ -148,7 +148,7 @@ namespace Zongsoft.Web
 			var searcher = this.DataService.Searcher;
 
 			if(searcher == null)
-				return Task.FromResult((IActionResult)this.BadRequest("This resource does not support the search operation."));
+				return Task.FromResult((IActionResult)this.StatusCode(StatusCodes.Status405MethodNotAllowed));
 
 			if(string.IsNullOrWhiteSpace(keyword))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing keyword for search."));
