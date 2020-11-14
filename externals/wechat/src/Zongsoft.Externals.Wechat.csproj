@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<Authors>Popeye Zhong</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Description>This is a library about Wechat SDK.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2015-2020. All rights reserved.</Copyright>
+		<PackageProjectUrl>https://github.com/Zongsoft</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.7" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+</Project>

@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Wechat"
+        title="Zongsoft.Externals.Wechat Plugin"
+        author="Zongsoft Corporation"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2019-08-10" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Wechat" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workspace/Externals/Wechat">
+		<object name="Credentials" configuration="{opt:/Externals/Wechat/General}" type="Zongsoft.Externals.Wechat.CredentialProvider, Zongsoft.Externals.Wechat" />
+	</extension>
+
+	<extension path="/Workbench/Web/Routes">
+		<route name="Wechat" kind="api"
+		       url="Externals/Wechat/{controller}/{action}/{id}/{*args}"
+		       constraints="action=^[A-Za-z]+\w*$"
+		       defaults="action=, id="
+		       position="Api" />
+
+		<route name="WechatReversed" kind="api"
+		       url="Externals/Wechat/{controller}/{id}/{action}/{*args}"
+		       defaults="action=, id="
+		       position="Api" />
+	</extension>
+
+	<extension path="/Workspace/Web/Controllers/Externals/Wechat">
+		<object name="Fallback" type="Zongsoft.Externals.Wechat.Controllers.FallbackController, Zongsoft.Externals.Wechat" />
+		<object name="Credentials" type="Zongsoft.Externals.Wechat.Controllers.CredentialController, Zongsoft.Externals.Wechat"
+		        provider="{path:/Workspace/Externals/Wechat/Credentials}" />
+	</extension>
+</plugin>

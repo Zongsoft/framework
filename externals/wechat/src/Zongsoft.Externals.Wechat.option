@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Wechat">
+		<general>
+			<apps default="AppId">
+				<app id="AppId" secret="AppSecret" token="Your Token" key="Your AES Key" />
+			</apps>
+		</general>
+	</option>
+</options>
