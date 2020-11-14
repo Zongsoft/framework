@@ -60,9 +60,6 @@ namespace Zongsoft.Web
 			if(data == null)
 				return new NotFoundResult();
 
-			if(data is Array array && array.Length == 0)
-				return new NoContentResult();
-
 			if(data is ICollection collection && collection.Count == 0)
 				return new NoContentResult();
 
