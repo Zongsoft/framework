@@ -139,7 +139,6 @@ namespace Zongsoft.Data.Common.Expressions
 						statement.Fields.Add(new FieldValue(field, parameter));
 					}
 				}
-
 			}
 			else
 			{
