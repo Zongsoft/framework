@@ -48,6 +48,10 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			var inherits = entity.GetInherits();
 
+			//更新当前操作的容器数据
+			if(data != null && owner != null)
+				data = owner.Token.GetValue(data);
+
 			foreach(var inherit in inherits)
 			{
 				var statement = new UpsertStatement(inherit, owner);
@@ -89,33 +93,44 @@ namespace Zongsoft.Data.Common.Expressions
 							statement.Values.Add(parameter);
 							statement.Parameters.Add(parameter);
 
-							//处理完新增子句部分，接着再处理修改子句部分
-							if(!simplex.IsPrimaryKey && !simplex.Immutable && Utility.IsGenerateRequired(ref data, schema.Name))
+							/* 开始处理修改子句部分 */
+
+							//忽略不可变字段和序列字段
+							if(simplex.Immutable || simplex.Sequence != null)
+								continue;
+
+							if(owner != null)
 							{
-								//确认当前成员是否有提供的写入值
-								if(context.Validate(DataAccessMethod.Update, simplex, out value))
-								{
-									parameter = Expression.Parameter(field, schema, value);
-									statement.Parameters.Add(parameter);
-								}
+								//只有一对一(零)的导航属性才需要验证对应的字段值是否变更过，如果没有变更则忽略当前字段
+								if(owner.Token.Property is IDataEntityComplexProperty complex &&
+								   complex.Multiplicity != DataAssociationMultiplicity.Many &&
+								   !Utility.IsGenerateRequired(ref data, schema.Name))
+									continue;
+							}
 
-								//如果当前的数据成员类型为递增步长类型则生成递增表达式
-								if(schema.Token.MemberType == typeof(Interval))
-								{
-									/*
-									 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号整数，
-									 * 因此当参数类型为无符号整数并且步长为负数(递减)，则可能导致参数类型转换溢出，
-									 * 所以必须将该参数类型重置为有符号整数（32位整数）。
-									 */
-									parameter.DbType = System.Data.DbType.Int32;
+							//确认当前成员是否有提供的写入值
+							if(context.Validate(DataAccessMethod.Update, simplex, out value))
+							{
+								parameter = Expression.Parameter(field, schema, value);
+								statement.Parameters.Add(parameter);
+							}
 
-									//字段设置项的值为字段加参数的加法表达式
-									statement.Updation.Add(new FieldValue(field, field.Add(parameter)));
-								}
-								else
-								{
-									statement.Updation.Add(new FieldValue(field, parameter));
-								}
+							//如果当前的数据成员类型为递增步长类型则生成递增表达式
+							if(schema.Token.MemberType == typeof(Interval))
+							{
+								/*
+								 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号整数，
+								 * 因此当参数类型为无符号整数并且步长为负数(递减)，则可能导致参数类型转换溢出，
+								 * 所以必须将该参数类型重置为有符号整数（32位整数）。
+								 */
+								parameter.DbType = System.Data.DbType.Int32;
+
+								//字段设置项的值为字段加参数的加法表达式
+								statement.Updation.Add(new FieldValue(field, field.Add(parameter)));
+							}
+							else
+							{
+								statement.Updation.Add(new FieldValue(field, parameter));
 							}
 						}
 					}
