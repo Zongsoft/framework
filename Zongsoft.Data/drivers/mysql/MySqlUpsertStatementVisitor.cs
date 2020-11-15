@@ -105,6 +105,10 @@ namespace Zongsoft.Data.MySql
 			{
 				foreach(var field in statement.Fields)
 				{
+					//忽略修改序列字段
+					if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
+						continue;
+
 					if(index++ > 0)
 						visitor.Output.Append(",");
 
