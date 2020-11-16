@@ -46,37 +46,17 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取插入语句对应的序号字段值（如果有的话）的查询语句。
-		/// </summary>
-		public SelectStatement Sequence
-		{
-			get; set;
-		}
+		/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
+		public SelectStatement Sequence { get; set; }
 
-		/// <summary>
-		/// 获取新增或更新字段集合。
-		/// </summary>
-		public IList<FieldIdentifier> Fields
-		{
-			get;
-		}
+		/// <summary>获取新增或更新字段集合。</summary>
+		public IList<FieldIdentifier> Fields { get; }
 
-		/// <summary>
-		/// 获取新增或更新字段值集合。
-		/// </summary>
-		public IList<IExpression> Values
-		{
-			get;
-		}
+		/// <summary>获取新增或更新字段值集合。</summary>
+		public IList<IExpression> Values { get; }
 
-		/// <summary>
-		/// 获取更新字段/值的集合。
-		/// </summary>
-		public ICollection<FieldValue> Updation
-		{
-			get;
-		}
+		/// <summary>获取更新字段/值的集合。</summary>
+		public ICollection<FieldValue> Updation { get; }
 		#endregion
 	}
 }
