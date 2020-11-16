@@ -49,6 +49,8 @@ namespace Zongsoft.Data.Common
 					return this.OnExecute(selection, statement);
 				case DataInsertContext insertion:
 					return this.OnExecute(insertion, statement);
+				case DataUpsertContext upsertion:
+					return this.OnExecute(upsertion, statement);
 				case DataIncrementContext increment:
 					return this.OnExecute(increment, statement);
 			}
@@ -69,6 +71,34 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(statement);
+
+			//绑定命令参数
+			statement.Bind(context, command, context.Data);
+
+			using(var reader = command.ExecuteReader())
+			{
+				if(reader.Read())
+				{
+					for(int i = 0; i < reader.FieldCount; i++)
+					{
+						var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
+
+						if(schema != null)
+							schema.Token.SetValue(context.Data, reader.GetValue(i));
+					}
+				}
+			}
+
+			return true;
+		}
+
+		protected virtual bool OnExecute(DataUpsertContext context, SelectStatement statement)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(statement);
+
+			//绑定命令参数
+			statement.Bind(context, command, context.Data);
 
 			using(var reader = command.ExecuteReader())
 			{

@@ -55,6 +55,7 @@ namespace Zongsoft.Data.Common.Expressions
 			foreach(var inherit in inherits)
 			{
 				var statement = new UpsertStatement(inherit, owner);
+				var sequences = new List<IDataEntitySimplexProperty>();
 
 				foreach(var schema in schemas)
 				{
@@ -94,6 +95,9 @@ namespace Zongsoft.Data.Common.Expressions
 							statement.Parameters.Add(parameter);
 
 							/* 开始处理修改子句部分 */
+
+							if(simplex.Sequence != null)
+								sequences.Add(simplex);
 
 							//忽略不可变字段和序列字段
 							if(simplex.Immutable || simplex.Sequence != null)
@@ -156,6 +160,33 @@ namespace Zongsoft.Data.Common.Expressions
 							slave.Schema = schema;
 							statement.Slaves.Add(slave);
 						}
+					}
+				}
+
+				if(sequences != null && sequences.Count > 0)
+				{
+					var selection = new SelectStatement(inherit);
+
+					for(int i = 0; i < sequences.Count; i++)
+						selection.Select.Members.Add(selection.CreateField(sequences[i]));
+
+					var conditions = ConditionExpression.And();
+
+					foreach(var fieldSetter in statement.Updation)
+					{
+						conditions.Add(Expression.Equal(fieldSetter.Field, fieldSetter.Value));
+					}
+
+					if(conditions.Count > 0)
+					{
+						if(statement.HasParameters)
+						{
+							foreach(var parameter in statement.Parameters)
+								selection.Parameters.Add(parameter);
+						}
+
+						selection.Where = conditions;
+						statement.Sequence = selection;
 					}
 				}
 
