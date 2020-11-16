@@ -186,6 +186,36 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.GetValue(ref target, name);
 		}
 
+		public static object GetDefaultValue(DbType dbType, bool nullable = false)
+		{
+			if(nullable)
+				return null;
+
+			return dbType switch
+			{
+				DbType.Byte => (byte)0,
+				DbType.SByte => (sbyte)0,
+				DbType.Int16 => (short)0,
+				DbType.UInt16 => (ushort)0,
+				DbType.Int32 => 0,
+				DbType.UInt32 => 0,
+				DbType.Int64 => 0,
+				DbType.UInt64 => 0,
+				DbType.Single => 0,
+				DbType.Double => 0,
+				DbType.Decimal => 0m,
+				DbType.Currency => 0m,
+				DbType.Boolean => false,
+				DbType.Date => DateTime.Today,
+				DbType.Time => DateTime.Now,
+				DbType.DateTime => DateTime.Now,
+				DbType.DateTime2 => DateTime.Now,
+				DbType.DateTimeOffset => DateTime.UtcNow,
+				DbType.Guid => Guid.Empty,
+				_ => null,
+			};
+		}
+
 		public static bool TryGetMemberValue(ref object target, string name, out object value)
 		{
 			if(target is IModel model)

@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Common
 						{
 							var value = field.Token.GetValue(context.Data);
 
-							if(value == null || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)))
+							if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)))
 								field.Token.SetValue(context.Data, Convert.ChangeType(((DataAccess)context.DataAccess).Increase(context, sequence, context.Data), field.Token.MemberType));
 						}
 					}

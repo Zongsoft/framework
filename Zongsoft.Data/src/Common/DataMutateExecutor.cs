@@ -185,12 +185,12 @@ namespace Zongsoft.Data.Common
 				{
 					/*
 					 * 如果复合属性的外链字段含序号器(自增)，链接参数值不能直接绑定必须通过执行器动态绑定
-					 * 如果当前语句为新增并且含有主键，则在该语句执行之后由其从属语句再更新对应的外链字段的序号器(自增)值
+					 * 如果当前语句为新增或增改并且含有主键，则在该语句执行之后由其从属语句再更新对应的外链字段的序号器(自增)值
 					 */
 
 					parameter.Schema = member;
 
-					if(statement is InsertStatement && link.Principal.Entity.Key.Length > 0)
+					if(link.Principal.Entity.Key.Length > 0 && (statement is InsertStatement || statement is UpsertStatement))
 					{
 						if(updation == null)
 						{
@@ -201,7 +201,7 @@ namespace Zongsoft.Data.Common
 							{
 								var equals = Expression.Equal(
 									updation.Table.CreateField(key),
-									Expression.Constant(Utility.GetMemberValue(ref data, key.Name)));
+									Expression.Constant(Utility.GetMemberValue(ref data, key.Name) ?? Utility.GetDefaultValue(key.Type, key.Nullable)));
 
 								if(updation.Where == null)
 									updation.Where = equals;
