@@ -84,7 +84,12 @@ namespace Zongsoft.Data.Common
 						var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
 
 						if(schema != null)
+						{
+							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+								schema = child;
+
 							schema.Token.SetValue(context.Data, reader.GetValue(i));
+						}
 					}
 				}
 			}
@@ -109,7 +114,12 @@ namespace Zongsoft.Data.Common
 						var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
 
 						if(schema != null)
+						{
+							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+								schema = child;
+
 							schema.Token.SetValue(context.Data, reader.GetValue(i));
+						}
 					}
 				}
 			}
