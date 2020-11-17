@@ -186,10 +186,15 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected virtual IExpression VisitField(FieldIdentifier field)
 		{
-			if(field.Table == null || string.IsNullOrEmpty(field.Table.Alias))
+			var alias = field.Table.Alias;
+
+			if(field.Table is IStatementBase statement && !string.IsNullOrEmpty(statement.Table.Alias))
+				alias = statement.Table.Alias;
+
+			if(field.Table == null || string.IsNullOrEmpty(alias))
 				_output.Append(this.GetIdentifier(field));
 			else
-				_output.Append(field.Table.Alias + "." + this.GetIdentifier(field));
+				_output.Append(alias + "." + this.GetIdentifier(field));
 
 			if(!string.IsNullOrEmpty(field.Alias))
 				_output.Append(" AS " + this.GetAlias(field.Alias));
