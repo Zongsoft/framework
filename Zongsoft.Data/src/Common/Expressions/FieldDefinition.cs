@@ -50,55 +50,32 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 获取字段的名称。
 		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
 		/// <summary>
 		/// 获取或设置字段的数据类型。
 		/// </summary>
-		public System.Data.DbType DbType
-		{
-			get;
-			set;
-		}
+		public System.Data.DbType DbType { get; set; }
 
 		/// <summary>
 		/// 获取或设置字段是否允许为空。
 		/// </summary>
-		public bool Nullable
-		{
-			get;
-			set;
-		}
+		public bool Nullable { get; set; }
 
 		/// <summary>
 		/// 获取或设置数值字段的最大长度。
 		/// </summary>
-		public int Length
-		{
-			get;
-			set;
-		}
+		public int Length { get; set; }
 
 		/// <summary>
 		/// 获取或设置数值字段的精度。
 		/// </summary>
-		public byte Precision
-		{
-			get;
-			set;
-		}
+		public byte Precision { get; set; }
 
 		/// <summary>
 		/// 获取或设置数值字段的小数点位数。
 		/// </summary>
-		public byte Scale
-		{
-			get;
-			set;
-		}
+		public byte Scale { get; set; }
 		#endregion
 
 		#region 重写方法

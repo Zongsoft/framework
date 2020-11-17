@@ -53,36 +53,22 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 获取字段标识所属的源（表标识、关联子句）。
 		/// </summary>
-		public ISource Table
-		{
-			get;
-		}
+		public ISource Table { get; }
 
 		/// <summary>
 		/// 获取字段名称。
 		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
 		/// <summary>
 		/// 获取或设置字段标识的别名。
 		/// </summary>
-		public string Alias
-		{
-			get;
-			set;
-		}
+		public string Alias { get; set; }
 
 		/// <summary>
 		/// 获取或设置字段标识对应的实体属性标记。
 		/// </summary>
-		public Metadata.DataEntityPropertyToken Token
-		{
-			get;
-			set;
-		}
+		public Metadata.DataEntityPropertyToken Token { get; set; }
 		#endregion
 
 		#region 公共方法

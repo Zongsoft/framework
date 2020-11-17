@@ -67,27 +67,17 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取一个值，指示<c>Form</c>属性是否有值。</summary>
 		public bool HasFrom
 		{
 			get => this.From != null && this.From.Count > 0;
 		}
 
-		/// <summary>
-		/// 获取一个数据源的集合，可以在 Where 子句中引用的字段源。
-		/// </summary>
-		public INamedCollection<ISource> From
-		{
-			get;
-		}
+		/// <summary>获取一个数据源的集合，可以在<c>Where</c>子句中引用的字段源。</summary>
+		public INamedCollection<ISource> From { get; }
 
-		/// <summary>
-		/// 获取或设置条件子句。
-		/// </summary>
-		public IExpression Where
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置条件子句。</summary>
+		public IExpression Where { get; set; }
 		#endregion
 
 		#region 公共方法

@@ -58,27 +58,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public TableIdentifier Table
-		{
-			get;
-			protected set;
-		}
+		public TableIdentifier Table { get; protected set; }
 
-		public IDataEntity Entity
-		{
-			get
-			{
-				return this.Table?.Entity;
-			}
-		}
+		public IDataEntity Entity { get => this.Table?.Entity; }
 
-		public virtual bool HasSlaves
-		{
-			get
-			{
-				return _slaves != null && _slaves.Count > 0;
-			}
-		}
+		public virtual bool HasSlaves { get => _slaves != null && _slaves.Count > 0; }
 
 		public virtual ICollection<IStatementBase> Slaves
 		{
@@ -91,13 +75,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		public virtual bool HasParameters
-		{
-			get
-			{
-				return _parameters != null && _parameters.Count > 0;
-			}
-		}
+		public virtual bool HasParameters { get => _parameters != null && _parameters.Count > 0; }
 
 		public virtual ParameterExpressionCollection Parameters
 		{

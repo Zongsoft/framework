@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
@@ -43,14 +42,15 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public FieldIdentifier Field
-		{
-			get;
-		}
+		public FieldIdentifier Field { get; }
 
-		public IExpression Value
+		public IExpression Value { get; }
+		#endregion
+
+		#region 重写方法
+		public override string ToString()
 		{
-			get;
+			return this.Field + "=" + this.Value;
 		}
 		#endregion
 	}

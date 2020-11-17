@@ -63,21 +63,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取查询语句的别名。
-		/// </summary>
-		public string Alias
-		{
-			get;
-		}
+		/// <summary>获取查询语句的别名。</summary>
+		public string Alias { get; }
 
-		/// <summary>
-		/// 获取查询语句的选择子句。
-		/// </summary>
-		public SelectClause Select
-		{
-			get;
-		}
+		/// <summary>获取查询语句的选择子句。</summary>
+		public SelectClause Select { get; }
 		#endregion
 
 		#region 公共方法
