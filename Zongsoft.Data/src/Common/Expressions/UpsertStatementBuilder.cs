@@ -96,6 +96,8 @@ namespace Zongsoft.Data.Common.Expressions
 
 							/* 开始处理修改子句部分 */
 
+							//注：可能因为非主键的唯一约束导致新增部分失败，
+							//因此必须对含有外部序列字段的UPSERT语句，增加一个重新获取这些外部序列字段的附属查询语句。
 							if(simplex.Sequence != null)
 								sequences.Add(simplex);
 
@@ -103,7 +105,12 @@ namespace Zongsoft.Data.Common.Expressions
 							if(simplex.Immutable || simplex.Sequence != null)
 								continue;
 
-							if(owner != null)
+							if(owner == null)
+							{
+								if(!Utility.IsGenerateRequired(ref data, schema.Name))
+									continue;
+							}
+							else
 							{
 								//只有一对一(零)的导航属性才需要验证对应的字段值是否变更过，如果没有变更则忽略当前字段
 								if(owner.Token.Property is IDataEntityComplexProperty complex &&
@@ -151,7 +158,7 @@ namespace Zongsoft.Data.Common.Expressions
 						var slaves = BuildUpserts(
 							context,
 							complex.Foreign,
-							null,
+							data,
 							schema,
 							schema.Children);
 
@@ -163,9 +170,10 @@ namespace Zongsoft.Data.Common.Expressions
 					}
 				}
 
+				//构建重新获取外部序列字段的附属查询语句
 				if(sequences != null && sequences.Count > 0)
 				{
-					var selection = new SelectStatement(inherit);
+					var selection = new SelectStatement(inherit, owner?.FullPath);
 
 					for(int i = 0; i < sequences.Count; i++)
 						selection.Select.Members.Add(selection.CreateField(sequences[i]));
@@ -186,7 +194,7 @@ namespace Zongsoft.Data.Common.Expressions
 						}
 
 						selection.Where = conditions;
-						statement.Sequence = selection;
+						statement.Slaves.Add(selection);
 					}
 				}
 
