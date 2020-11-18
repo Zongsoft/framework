@@ -182,6 +182,50 @@ namespace Zongsoft.Common
 			return false;
 		}
 
+		public static string Mask(this string text, int prefix, int suffix, int start = 0, int count = 0)
+		{
+			if(string.IsNullOrEmpty(text))
+				return text;
+
+			if(start < 0 || start > text.Length - 1)
+				throw new ArgumentOutOfRangeException(nameof(start));
+
+			if(count <= 0)
+				count = text.Length - start;
+			else if(start + count > text.Length)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			prefix = Math.Max(0, prefix);
+
+			if(prefix > count)
+				prefix = count;
+
+			if(suffix < 0)
+				suffix = Math.Min(-suffix, (count - prefix) / 2);
+			else if(suffix > count)
+				suffix = count;
+
+			suffix = Math.Min(suffix, count - prefix);
+
+			var characters = new char[text.Length];
+
+			for(int i = 0; i < text.Length; i++)
+			{
+				if(i < start || i > start + count)
+				{
+					characters[i] = text[i];
+					continue;
+				}
+
+				if(i < start + prefix || i >= start + count - suffix)
+					characters[i] = text[i];
+				else
+					characters[i] = '*';
+			}
+
+			return new string(characters);
+		}
+
 		public static IEnumerable<string> Slice(this string text, char separator)
 		{
 			return Slice<string>(text, 0, 0, chr => chr == separator, null);
