@@ -142,7 +142,7 @@ namespace Zongsoft.Data.Common
 			#region 公共方法
 			public object Populate(IDataRecord record)
 			{
-				return _converter.ConvertFromString(record.GetString(0));
+				return _converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
 			}
 			#endregion
 		}
