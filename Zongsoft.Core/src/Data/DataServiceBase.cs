@@ -152,6 +152,8 @@ namespace Zongsoft.Data
 		#region 授权验证
 		protected virtual void Authorize(Method method, IDataOptions options)
 		{
+			if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
+				throw new Security.Membership.AuthorizationException();
 		}
 		#endregion
 
