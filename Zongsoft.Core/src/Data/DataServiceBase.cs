@@ -135,6 +135,8 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
+		public IDataServiceValidator<TModel> Validator { get; }
+
 		public IServiceProvider ServiceProvider
 		{
 			get => _serviceProvider;
@@ -150,8 +152,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 授权验证
-		protected virtual void Authorize(Method method, IDataOptions options)
+		protected virtual void Authorize(DataServiceMethod method, IDataOptions options)
 		{
+			var validator = this.Validator;
+
+			if(validator != null)
+			{
+				validator.Authorize(method, options);
+				return;
+			}
+
 			if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
 				throw new Security.Membership.AuthorizationException();
 		}
@@ -170,7 +180,7 @@ namespace Zongsoft.Data
 				options = new DataExecuteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Execute(), options);
+			this.Authorize(DataServiceMethod.Execute(), options);
 
 			return this.OnExecute<T>(name, inParameters, out outParameters, options);
 		}
@@ -192,7 +202,7 @@ namespace Zongsoft.Data
 				options = new DataExecuteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Execute(), options);
+			this.Authorize(DataServiceMethod.Execute(), options);
 
 			return this.OnExecuteScalar(name, inParameters, out outParameters, options);
 		}
@@ -206,17 +216,17 @@ namespace Zongsoft.Data
 		#region 存在方法
 		public bool Exists<TKey>(TKey key, string filter = null, IDataExistsOptions options = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key, filter, out _), options);
+			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, filter, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, string filter = null, IDataExistsOptions options = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, filter, out _), options);
+			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, filter, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDataExistsOptions options = null)
 		{
-			return this.Exists(this.ConvertKey(Method.Exists(), key1, key2, key3, filter, out _), options);
+			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, filter, out _), options);
 		}
 
 		public bool Exists(ICondition criteria, IDataExistsOptions options = null)
@@ -226,10 +236,10 @@ namespace Zongsoft.Data
 				options = new DataExistsOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Exists(), options);
+			this.Authorize(DataServiceMethod.Exists(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Exists(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options);
 
 			//执行存在操作
 			return this.OnExists(criteria, options);
@@ -249,10 +259,10 @@ namespace Zongsoft.Data
 				options = new DataAggregateOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Count(), options);
+			this.Authorize(DataServiceMethod.Count(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Count(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options);
 
 			//执行聚合操作
 			return (int)(this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0d);
@@ -260,17 +270,17 @@ namespace Zongsoft.Data
 
 		public int Count<TKey>(TKey key, string member = null, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key, filter, out _), member, options);
+			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key, filter, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key1, key2, filter, out _), member, options);
+			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, filter, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Count(this.ConvertKey(Method.Count(), key1, key2, key3, filter, out _), member, options);
+			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, filter, out _), member, options);
 		}
 
 		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
@@ -280,10 +290,10 @@ namespace Zongsoft.Data
 				options = new DataAggregateOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Aggregate(function), options);
+			this.Authorize(DataServiceMethod.Aggregate(function), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Aggregate(function), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options);
 
 			//执行聚合操作
 			return this.OnAggregate(new DataAggregate(function, member), criteria, options);
@@ -291,17 +301,17 @@ namespace Zongsoft.Data
 
 		public double? Aggregate<TKey>(TKey key, DataAggregateFunction function, string member, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key, filter, out _), options);
+			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, filter, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction function, string member, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, filter, out _), options);
+			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, filter, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction function, string member, string filter = null, IDataAggregateOptions options = null)
 		{
-			return this.Aggregate(function, member, this.ConvertKey(Method.Aggregate(function), key1, key2, key3, filter, out _), options);
+			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, filter, out _), options);
 		}
 
 		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options)
@@ -333,10 +343,10 @@ namespace Zongsoft.Data
 				options = new DataIncrementOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Increment(), options);
+			this.Authorize(DataServiceMethod.Increment(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Increment(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options);
 
 			//执行递增操作
 			return this.OnIncrement(member, criteria, interval, options);
@@ -364,10 +374,10 @@ namespace Zongsoft.Data
 				options = new DataDeleteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Delete(), options);
+			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key, null, out _));
+			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key, null, out _), options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -388,10 +398,10 @@ namespace Zongsoft.Data
 				options = new DataDeleteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Delete(), options);
+			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, null, out _));
+			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, null, out _), options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -412,10 +422,10 @@ namespace Zongsoft.Data
 				options = new DataDeleteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Delete(), options);
+			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(Method.Delete(), this.ConvertKey(Method.Delete(), key1, key2, key3, null, out _));
+			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, null, out _), options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -436,10 +446,10 @@ namespace Zongsoft.Data
 				options = new DataDeleteOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Delete(), options);
+			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//修整删除条件
-			criteria = this.OnValidate(Method.Delete(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -473,7 +483,7 @@ namespace Zongsoft.Data
 				options = new DataInsertOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Insert(), options);
+			this.Authorize(DataServiceMethod.Insert(), options);
 
 			//将当前插入数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -482,7 +492,7 @@ namespace Zongsoft.Data
 			var schematic = this.GetSchema(schema, data.GetType());
 
 			//验证待新增的数据
-			this.OnValidate(Method.Insert(), schematic, dictionary);
+			this.OnValidate(DataServiceMethod.Insert(), schematic, dictionary, options);
 
 			return this.OnInsert(dictionary, schematic, options);
 		}
@@ -514,7 +524,7 @@ namespace Zongsoft.Data
 				options = new DataInsertOptions();
 
 			//进行授权验证
-			this.Authorize(Method.InsertMany(), options);
+			this.Authorize(DataServiceMethod.InsertMany(), options);
 
 			//将当前插入数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -525,7 +535,7 @@ namespace Zongsoft.Data
 			foreach(var dictionary in dictionares)
 			{
 				//验证待新增的数据
-				this.OnValidate(Method.InsertMany(), schematic, dictionary);
+				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
 			}
 
 			return this.OnInsertMany(dictionares, schematic, options);
@@ -560,7 +570,7 @@ namespace Zongsoft.Data
 				options = new DataUpsertOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Upsert(), options);
+			this.Authorize(DataServiceMethod.Upsert(), options);
 
 			//将当前复写数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -569,7 +579,7 @@ namespace Zongsoft.Data
 			var schematic = this.GetSchema(schema, data.GetType());
 
 			//验证待复写的数据
-			this.OnValidate(Method.Upsert(), schematic, dictionary);
+			this.OnValidate(DataServiceMethod.Upsert(), schematic, dictionary, options);
 
 			return this.OnUpsert(dictionary, schematic, options);
 		}
@@ -601,7 +611,7 @@ namespace Zongsoft.Data
 				options = new DataUpsertOptions();
 
 			//进行授权验证
-			this.Authorize(Method.UpsertMany(), options);
+			this.Authorize(DataServiceMethod.UpsertMany(), options);
 
 			//将当前复写数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -612,7 +622,7 @@ namespace Zongsoft.Data
 			foreach(var dictionary in dictionares)
 			{
 				//验证待复写的数据
-				this.OnValidate(Method.UpsertMany(), schematic, dictionary);
+				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
 			}
 
 			return this.OnUpsertMany(dictionares, schematic, options);
@@ -636,7 +646,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey>(object data, TKey key, string schema, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key, null, out _), schema, options);
+			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, null, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDataUpdateOptions options = null)
@@ -646,7 +656,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, null, out _), schema, options);
+			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, null, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDataUpdateOptions options = null)
@@ -656,7 +666,7 @@ namespace Zongsoft.Data
 
 		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, this.ConvertKey(Method.Update(), key1, key2, key3, null, out _), schema, options);
+			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, null, out _), schema, options);
 		}
 
 		public int Update(object data, IDataUpdateOptions options = null)
@@ -687,7 +697,7 @@ namespace Zongsoft.Data
 				options = new DataUpdateOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Update(), options);
+			this.Authorize(DataServiceMethod.Update(), options);
 
 			//将当前更新数据对象转换成数据字典
 			var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -708,13 +718,13 @@ namespace Zongsoft.Data
 			}
 
 			//修整过滤条件
-			criteria = this.OnValidate(Method.Update(), criteria ?? this.EnsureUpdateCondition(dictionary));
+			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.EnsureUpdateCondition(dictionary), options);
 
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
 
 			//验证待更新的数据
-			this.OnValidate(Method.Update(), schematic, dictionary);
+			this.OnValidate(DataServiceMethod.Update(), schematic, dictionary, options);
 
 			//执行更新操作
 			return this.OnUpdate(dictionary, criteria, schematic, options);
@@ -746,7 +756,7 @@ namespace Zongsoft.Data
 				options = new DataUpdateOptions();
 
 			//进行授权验证
-			this.Authorize(Method.UpdateMany(), options);
+			this.Authorize(DataServiceMethod.UpdateMany(), options);
 
 			//将当前更新数据集合对象转换成数据字典集合
 			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
@@ -757,7 +767,7 @@ namespace Zongsoft.Data
 			foreach(var dictionary in dictionares)
 			{
 				//验证待更新的数据
-				this.OnValidate(Method.UpdateMany(), schematic, dictionary);
+				this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
 			}
 
 			return this.OnUpdateMany(dictionares, schematic, options);
@@ -811,15 +821,15 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(Method.Get(), key, filter, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key, filter, out var singular);
 
 			if(singular)
 			{
 				//进行授权验证
-				this.Authorize(Method.Get(), options);
+				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(Method.Get(), criteria);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -866,15 +876,15 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(Method.Get(), key1, key2, filter, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, filter, out var singular);
 
 			if(singular)
 			{
 				//进行授权验证
-				this.Authorize(Method.Get(), options);
+				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(Method.Get(), criteria);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -921,15 +931,15 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(Method.Get(), key1, key2, key3, filter, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, filter, out var singular);
 
 			if(singular)
 			{
 				//进行授权验证
-				this.Authorize(Method.Get(), options);
+				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(Method.Get(), criteria);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -992,10 +1002,10 @@ namespace Zongsoft.Data
 				options = new DataSelectOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Select(), options);
+			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Select(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
@@ -1064,10 +1074,10 @@ namespace Zongsoft.Data
 				options = new DataSelectOptions();
 
 			//进行授权验证
-			this.Authorize(Method.Select(), options);
+			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(Method.Select(), criteria);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
@@ -1161,13 +1171,15 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 校验方法
-		protected virtual ICondition OnValidate(Method method, ICondition criteria)
+		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, IDataOptions options)
 		{
-			return criteria;
+			var validator = this.Validator;
+			return validator == null ? criteria : validator.Validate(method, criteria, options);
 		}
 
-		protected virtual void OnValidate(Method method, ISchema schema, IDataDictionary<TModel> data)
+		protected virtual void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options)
 		{
+			this.Validator?.Validate(method, schema, data, options);
 		}
 		#endregion
 
@@ -1351,7 +1363,7 @@ namespace Zongsoft.Data
 		/// <param name="values">指定的参数值数组。</param>
 		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
 		/// <returns>返回对应的操作<see cref="ICondition"/>条件。</returns>
-		protected virtual ICondition OnCondition(Method method, object[] values, out bool singular)
+		protected virtual ICondition OnCondition(DataServiceMethod method, object[] values, out bool singular)
 		{
 			//设置输出参数默认值
 			singular = false;
@@ -1403,14 +1415,14 @@ namespace Zongsoft.Data
 		/// <param name="method">指定的操作方法。</param>
 		/// <param name="filter">指定的过滤表达式文本。</param>
 		/// <returns>返回对应的过滤条件。</returns>
-		protected virtual ICondition OnCondition(Method method, string filter)
+		protected virtual ICondition OnCondition(DataServiceMethod method, string filter)
 		{
 			return null;
 		}
 		#endregion
 
 		#region 私有方法
-		private ICondition ConvertKey(Method method, object[] values, string filter, out bool singular)
+		private ICondition ConvertKey(DataServiceMethod method, object[] values, string filter, out bool singular)
 		{
 			if(values != null && values.Length > 3)
 				throw new NotSupportedException("Too many key values specified.");
@@ -1439,19 +1451,19 @@ namespace Zongsoft.Data
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey>(Method method, TKey key, string filter, out bool singular)
+		private ICondition ConvertKey<TKey>(DataServiceMethod method, TKey key, string filter, out bool singular)
 		{
 			return this.ConvertKey(method, key == null ? Array.Empty<object>() : new object[] { key }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2>(Method method, TKey1 key1, TKey2 key2, string filter, out bool singular)
+		private ICondition ConvertKey<TKey1, TKey2>(DataServiceMethod method, TKey1 key1, TKey2 key2, string filter, out bool singular)
 		{
 			return this.ConvertKey(method, new object[] { key1, key2 }, filter, out singular);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2, TKey3>(Method method, TKey1 key1, TKey2 key2, TKey3 key3, string filter, out bool singular)
+		private ICondition ConvertKey<TKey1, TKey2, TKey3>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, string filter, out bool singular)
 		{
 			return this.ConvertKey(method, new object[] { key1, key2, key3 }, filter, out singular);
 		}
@@ -1565,183 +1577,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套子类
-		protected struct Method : IEquatable<Method>
-		{
-			#region 公共字段
-			/// <summary>方法的名称。</summary>
-			public readonly string Name;
-
-			/// <summary>对应的数据访问方法种类。</summary>
-			public readonly DataAccessMethod Kind;
-
-			/// <summary>获取一个值，指示该方法是否为批量写入操作。</summary>
-			public readonly bool IsMultiple;
-			#endregion
-
-			#region 构造函数
-			private Method(DataAccessMethod kind)
-			{
-				this.Kind = kind;
-				this.Name = kind.ToString();
-				this.IsMultiple = false;
-			}
-
-			private Method(string name, DataAccessMethod kind, bool isMultiple)
-			{
-				this.Name = name ?? kind.ToString();
-				this.Kind = kind;
-				this.IsMultiple = isMultiple;
-			}
-			#endregion
-
-			#region 静态方法
-			public static Method Get()
-			{
-				return new Method(nameof(Get), DataAccessMethod.Select, false);
-			}
-
-			public static Method Count()
-			{
-				return new Method(nameof(Count), DataAccessMethod.Aggregate, false);
-			}
-
-			public static Method Aggregate(DataAggregateFunction aggregate)
-			{
-				return new Method(aggregate.ToString(), DataAccessMethod.Aggregate, false);
-			}
-
-			public static Method Exists()
-			{
-				return new Method(DataAccessMethod.Exists);
-			}
-
-			public static Method Execute()
-			{
-				return new Method(DataAccessMethod.Execute);
-			}
-
-			public static Method Increment()
-			{
-				return new Method(nameof(Increment), DataAccessMethod.Increment, false);
-			}
-
-			public static Method Decrement()
-			{
-				return new Method(nameof(Decrement), DataAccessMethod.Increment, false);
-			}
-
-			public static Method Select(string name = null)
-			{
-				if(string.IsNullOrEmpty(name))
-					return new Method(DataAccessMethod.Select);
-				else
-					return new Method(name, DataAccessMethod.Select, false);
-			}
-
-			public static Method Delete()
-			{
-				return new Method(DataAccessMethod.Delete);
-			}
-
-			public static Method Insert()
-			{
-				return new Method(DataAccessMethod.Insert);
-			}
-
-			public static Method InsertMany()
-			{
-				return new Method(nameof(InsertMany), DataAccessMethod.Insert, true);
-			}
-
-			public static Method Update()
-			{
-				return new Method(DataAccessMethod.Update);
-			}
-
-			public static Method UpdateMany()
-			{
-				return new Method(nameof(UpdateMany), DataAccessMethod.Update, true);
-			}
-
-			public static Method Upsert()
-			{
-				return new Method(DataAccessMethod.Upsert);
-			}
-
-			public static Method UpsertMany()
-			{
-				return new Method(nameof(UpsertMany), DataAccessMethod.Upsert, true);
-			}
-			#endregion
-
-			#region 公共方法
-			/// <summary>获取一个值，指示当前是否为删除方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Delete"/>。</summary>
-			public bool IsDelete { get => this.Kind == DataAccessMethod.Delete; }
-			/// <summary>获取一个值，指示当前是否为新增方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Insert"/>。</summary>
-			public bool IsInsert { get => this.Kind == DataAccessMethod.Insert; }
-			/// <summary>获取一个值，指示当前是否为更新方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Update"/>。</summary>
-			public bool IsUpdate { get => this.Kind == DataAccessMethod.Update; }
-			/// <summary>获取一个值，指示当前是否为增改方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Upsert"/>。</summary>
-			public bool IsUpsert { get => this.Kind == DataAccessMethod.Upsert; }
-			/// <summary>获取一个值，指示当前是否为查询方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/>。</summary>
-			public bool IsSelect { get => this.Kind == DataAccessMethod.Select; }
-			/// <summary>获取一个值，指示当前是否为获取方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于“Get”。</summary>
-			public bool IsGet { get => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get); }
-
-			/// <summary>
-			/// 获取一个值，指示当前方法是否为读取方法(Select/Exists/Aggregate)。
-			/// </summary>
-			public bool IsReading
-			{
-				get => this.Kind == DataAccessMethod.Select ||
-				       this.Kind == DataAccessMethod.Exists ||
-				       this.Kind == DataAccessMethod.Aggregate;
-			}
-
-			/// <summary>
-			/// 获取一个值，指示当前方法是否为修改方法(Incremnet/Decrement/Delete/Insert/Update/Upsert)。
-			/// </summary>
-			public bool IsWriting
-			{
-				get => this.Kind == DataAccessMethod.Delete ||
-				       this.Kind == DataAccessMethod.Insert ||
-				       this.Kind == DataAccessMethod.Update ||
-				       this.Kind == DataAccessMethod.Upsert ||
-				       this.Kind == DataAccessMethod.Increment;
-			}
-			#endregion
-
-			#region 重写方法
-			public bool Equals(Method method)
-			{
-				return this.Kind == method.Kind && string.Equals(this.Name, method.Name);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != typeof(Method))
-					return false;
-
-				return this.Equals((Method)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return HashCode.Combine(Name);
-			}
-
-			public override string ToString()
-			{
-				return this.Name;
-			}
-			#endregion
-		}
-
 		public sealed class Condition : Zongsoft.Data.Condition.Builder<TModel>
 		{
-			#region 私有构造
 			private Condition() { }
-			#endregion
 		}
 		#endregion
 	}
