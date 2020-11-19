@@ -45,25 +45,29 @@ namespace Zongsoft.Data
 			_conditionCombination = conditionCombination;
 		}
 
-		public ConditionCollection(ConditionCombination conditionCombination, IEnumerable<ICondition> items)
+		internal ConditionCollection(ConditionCombination conditionCombination, Condition condition)
+		{
+			_conditionCombination = conditionCombination;
+
+			if(condition != null)
+				this.Add(condition);
+		}
+
+		internal ConditionCollection(ConditionCombination conditionCombination, Condition a, Condition b)
+		{
+			_conditionCombination = conditionCombination;
+
+			if(a != null)
+				this.Add(a);
+			if(b != null)
+				this.Add(b);
+		}
+
+		private ConditionCollection(ConditionCombination conditionCombination, IEnumerable<ICondition> items)
 		{
 			_conditionCombination = conditionCombination;
 
 			if(items != null)
-			{
-				foreach(var item in items)
-				{
-					if(item != null)
-						this.Add(item);
-				}
-			}
-		}
-
-		public ConditionCollection(ConditionCombination conditionCombination, params ICondition[] items)
-		{
-			_conditionCombination = conditionCombination;
-
-			if(items != null && items.Length > 0)
 			{
 				foreach(var item in items)
 				{
@@ -86,54 +90,46 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 符号重写
-		public static ConditionCollection operator +(Condition condition, ConditionCollection conditions)
+		public static ConditionCollection operator +(ICondition condition, ConditionCollection conditions)
 		{
-			if(conditions == null)
-				throw new ArgumentNullException(nameof(conditions));
-
 			if(condition == null)
 				return conditions;
 
-			return new ConditionCollection(conditions.Combination, Combine(condition, conditions));
+			if(conditions == null)
+				return condition as ConditionCollection;
+
+			if(condition is ConditionCollection collection)
+				Combine(collection, conditions);
+			else
+				conditions.Insert(0, condition);
+
+			return conditions;
 		}
 
-		public static ConditionCollection operator +(ConditionCollection conditions, Condition condition)
+		public static ConditionCollection operator +(ConditionCollection conditions, ICondition condition)
 		{
-			if(conditions == null)
-				throw new ArgumentNullException(nameof(conditions));
-
 			if(condition == null)
 				return conditions;
 
-			return new ConditionCollection(conditions.Combination, Combine(conditions, condition));
+			if(conditions == null)
+				return condition as ConditionCollection;
+
+			if(condition is ConditionCollection collection)
+				Combine(conditions, collection);
+			else
+				conditions.Add(condition);
+
+			return conditions;
 		}
 
 		public static ConditionCollection operator &(Condition condition, ConditionCollection conditions)
 		{
-			if(condition == null)
-				return conditions;
-
-			if(conditions == null)
-				return new ConditionCollection(ConditionCombination.And, condition);
-
-			if(conditions.Combination == ConditionCombination.And)
-				return new ConditionCollection(ConditionCombination.And, Combine(condition, conditions));
-			else
-				return new ConditionCollection(ConditionCombination.And, condition, conditions);
+			return And(condition, conditions);
 		}
 
 		public static ConditionCollection operator &(ConditionCollection conditions, Condition condition)
 		{
-			if(condition == null)
-				return conditions;
-
-			if(conditions == null)
-				return new ConditionCollection(ConditionCombination.And, condition);
-
-			if(conditions.Combination == ConditionCombination.And)
-				return new ConditionCollection(ConditionCombination.And, Combine(conditions, condition));
-			else
-				return new ConditionCollection(ConditionCombination.And, conditions, condition);
+			return And(conditions, condition);
 		}
 
 		public static ConditionCollection operator &(ConditionCollection left, ConditionCollection right)
@@ -144,48 +140,17 @@ namespace Zongsoft.Data
 			if(right == null)
 				return left;
 
-			if(left.Combination == ConditionCombination.And)
-			{
-				if(right.Combination == ConditionCombination.And)
-					return new ConditionCollection(ConditionCombination.And, Combine(left, right));
-				else
-					return left.Append(right);
-			}
-			else
-			{
-				if(right.Combination == ConditionCombination.And)
-					return right.Prepend(left);
-				else
-					return new ConditionCollection(ConditionCombination.And, left, right);
-			}
+			return And(left, right);
 		}
 
 		public static ConditionCollection operator |(Condition condition, ConditionCollection conditions)
 		{
-			if(condition == null)
-				return conditions;
-
-			if(conditions == null)
-				return new ConditionCollection(ConditionCombination.Or, condition);
-
-			if(conditions.Combination == ConditionCombination.Or)
-				return new ConditionCollection(ConditionCombination.Or, Combine(condition, conditions));
-			else
-				return new ConditionCollection(ConditionCombination.Or, condition, conditions);
+			return Or(condition, conditions);
 		}
 
 		public static ConditionCollection operator |(ConditionCollection conditions, Condition condition)
 		{
-			if(condition == null)
-				return conditions;
-
-			if(conditions == null)
-				return new ConditionCollection(ConditionCombination.Or, condition);
-
-			if(conditions.Combination == ConditionCombination.Or)
-				return new ConditionCollection(ConditionCombination.Or, Combine(conditions, condition));
-			else
-				return new ConditionCollection(ConditionCombination.Or, conditions, condition);
+			return Or(conditions, condition);
 		}
 
 		public static ConditionCollection operator |(ConditionCollection left, ConditionCollection right)
@@ -196,42 +161,75 @@ namespace Zongsoft.Data
 			if(right == null)
 				return left;
 
-			if(left.Combination == ConditionCombination.Or)
-			{
-				if(right.Combination == ConditionCombination.Or)
-					return new ConditionCollection(ConditionCombination.Or, Combine(left, right));
-				else
-					return left.Append(right);
-			}
-			else
-			{
-				if(right.Combination == ConditionCombination.Or)
-					return right.Prepend(left);
-				else
-					return new ConditionCollection(ConditionCombination.Or, left, right);
-			}
+			return Or(left, right);
 		}
 		#endregion
 
-		#region 公共静态
-		public static ConditionCollection Or(IEnumerable<ICondition> items)
+		#region 静态方法
+		public static ConditionCollection And(params ICondition[] items)
 		{
-			return new ConditionCollection(ConditionCombination.Or, items);
-		}
-
-		public static ConditionCollection Or(params ICondition[] items)
-		{
-			return new ConditionCollection(ConditionCombination.Or, items);
+			return And((IEnumerable<ICondition>)items);
 		}
 
 		public static ConditionCollection And(IEnumerable<ICondition> items)
 		{
-			return new ConditionCollection(ConditionCombination.And, items);
+			var conditions = new ConditionCollection(ConditionCombination.And);
+
+			if(items != null)
+				Combine(conditions, items);
+
+			return conditions;
 		}
 
-		public static ConditionCollection And(params ICondition[] items)
+		public static ConditionCollection Or(params ICondition[] items)
 		{
-			return new ConditionCollection(ConditionCombination.And, items);
+			return Or((IEnumerable<ICondition>)items);
+		}
+
+		public static ConditionCollection Or(IEnumerable<ICondition> items)
+		{
+			var conditions = new ConditionCollection(ConditionCombination.Or);
+
+			if(items != null)
+				Combine(conditions, items);
+
+			return conditions;
+		}
+
+		private static void Combine(ConditionCollection owner, IEnumerable<ICondition> items)
+		{
+			if(owner == null || items == null)
+				return;
+
+			var combination = owner.Combination;
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				if(item is ConditionCollection conditions)
+				{
+					if(conditions.Count == 0)
+						continue;
+
+					if(conditions.Count == 1)
+					{
+						owner.Add(conditions[0]);
+						continue;
+					}
+
+					if(conditions.Combination == combination)
+					{
+						Combine(owner, conditions);
+						continue;
+					}
+
+					conditions.Flatten();
+				}
+
+				owner.Add(item);
+			}
 		}
 		#endregion
 
@@ -305,7 +303,7 @@ namespace Zongsoft.Data
 			if(items == null || items.Length < 1)
 				return this;
 
-			return new ConditionCollection(this.Combination, this.Items.Concat(items).Where(item => item != null));
+			return new ConditionCollection(this.Combination, this.Items.Concat(items.Where(item => item != null)));
 		}
 
 		/// <summary>
@@ -318,7 +316,7 @@ namespace Zongsoft.Data
 			if(items == null || items.Length < 1)
 				return this;
 
-			return new ConditionCollection(this.Combination, items.Concat(this.Items).Where(item => item != null));
+			return new ConditionCollection(this.Combination, items.Concat(this.Items.Where(item => item != null)));
 		}
 		#endregion
 
@@ -353,32 +351,6 @@ namespace Zongsoft.Data
 			}
 
 			return "(" + text.ToString() + ")";
-		}
-		#endregion
-
-		#region 私有静态
-		private static IEnumerable<ICondition> Combine(params ICondition[] conditions)
-		{
-			if(conditions == null)
-				yield break;
-
-			for(int i = 0; i < conditions.Length; i++)
-			{
-				if(conditions[i] == null)
-					continue;
-
-				var items = conditions[i] as IEnumerable<ICondition>;
-
-				if(items == null)
-					yield return conditions[i];
-				else
-				{
-					foreach(var item in items)
-					{
-						yield return item;
-					}
-				}
-			}
 		}
 		#endregion
 

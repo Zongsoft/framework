@@ -33,24 +33,26 @@ namespace Zongsoft.Data.Tests
 			cs = and1 + new Condition("key", "value");
 			Assert.Equal(ConditionCombination.And, cs.Combination);
 			Assert.Equal(3, cs.Count);
+			Assert.True(object.ReferenceEquals(cs, and1));
 
 			cs = new Condition("key", "value") + and2;
 			Assert.Equal(ConditionCombination.And, cs.Combination);
 			Assert.Equal(4, cs.Count);
+			Assert.True(object.ReferenceEquals(cs, and2));
 
 			//开始条件集合的并运算
 
 			cs = and1 & and2;
 			Assert.Equal(ConditionCombination.And, cs.Combination);
-			Assert.Equal(5, cs.Count);
+			Assert.Equal(7, cs.Count);
 
 			cs = and1 & or2;
 			Assert.Equal(ConditionCombination.And, cs.Combination);
-			Assert.Equal(3, cs.Count);
+			Assert.Equal(4, cs.Count);
 
 			cs = or1 & and2;
 			Assert.Equal(ConditionCombination.And, cs.Combination);
-			Assert.Equal(4, cs.Count);
+			Assert.Equal(5, cs.Count);
 
 			cs = or1 & or2;
 			Assert.Equal(ConditionCombination.And, cs.Combination);

@@ -47,7 +47,7 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「与」集。</returns>
 		public static ConditionCollection And(this ICondition criteria, params ICondition[] conditions)
 		{
-			return Combine(ConditionCombination.And, criteria, conditions);
+			return ConditionCollection.And(Enumerate(criteria, conditions));
 		}
 
 		/// <summary>
@@ -58,7 +58,18 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「与」集。</returns>
 		public static ConditionCollection And(this ICondition criteria, IEnumerable<ICondition> conditions)
 		{
-			return Combine(ConditionCombination.And, criteria, conditions);
+			return ConditionCollection.And(Enumerate(criteria, conditions));
+		}
+
+		/// <summary>
+		/// 构建条件「与」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「与」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「与」集的其他项集合。</param>
+		/// <returns>返回构建的条件「与」集。</returns>
+		public static ConditionCollection And(this ICondition criteria, ConditionCollection conditions)
+		{
+			return ConditionCollection.And(Enumerate(criteria, conditions));
 		}
 
 		/// <summary>
@@ -69,7 +80,7 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「或」集。</returns>
 		public static ConditionCollection Or(this ICondition criteria, params ICondition[] conditions)
 		{
-			return Combine(ConditionCombination.Or, criteria, conditions);
+			return ConditionCollection.Or(Enumerate(criteria, conditions));
 		}
 
 		/// <summary>
@@ -80,24 +91,30 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「或」集。</returns>
 		public static ConditionCollection Or(this ICondition criteria, IEnumerable<ICondition> conditions)
 		{
-			return Combine(ConditionCombination.Or, criteria, conditions);
+			return ConditionCollection.Or(Enumerate(criteria, conditions));
 		}
 
-		private static ConditionCollection Combine(ConditionCombination combination, ICondition criteria, IEnumerable<ICondition> conditions)
+		/// <summary>
+		/// 构建条件「或」集。
+		/// </summary>
+		/// <param name="criteria">指定构建条件「或」集的条件项。</param>
+		/// <param name="conditions">指定构建条件「或」集的其他项集合。</param>
+		/// <returns>返回构建的条件「或」集。</returns>
+		public static ConditionCollection Or(this ICondition criteria, ConditionCollection conditions)
 		{
-			if(conditions == null)
-				throw new ArgumentNullException(nameof(conditions));
+			return ConditionCollection.Or(Enumerate(criteria, conditions));
+		}
 
-			if(criteria == null)
-				return new ConditionCollection(combination, conditions);
+		private static IEnumerable<ICondition> Enumerate(ICondition first, IEnumerable<ICondition> conditions)
+		{
+			if(first != null)
+				yield return first;
 
-			if(criteria is ConditionCollection cs && cs.Combination == combination)
+			if(conditions != null)
 			{
-				cs.AddRange(conditions);
-				return cs;
+				foreach(var condition in conditions)
+					yield return condition;
 			}
-
-			return new ConditionCollection(combination, conditions.Prepend(criteria));
 		}
 		#endregion
 
