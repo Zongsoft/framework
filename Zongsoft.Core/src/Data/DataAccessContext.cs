@@ -501,10 +501,15 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(IsMultiple && Data is IEnumerable)
-					return Common.TypeExtension.GetElementType(Data.GetType());
+				var data = this.Data;
 
-				return Data.GetType();
+				if(data == null)
+					return null;
+
+				if(this.IsMultiple && data is IEnumerable)
+					return Common.TypeExtension.GetElementType(data.GetType());
+
+				return data.GetType();
 			}
 		}
 
@@ -574,10 +579,15 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(IsMultiple && Data is IEnumerable)
-					return Common.TypeExtension.GetElementType(Data.GetType());
+				var data = this.Data;
 
-				return Data.GetType();
+				if(data == null)
+					return null;
+
+				if(this.IsMultiple && data is IEnumerable)
+					return Common.TypeExtension.GetElementType(data.GetType());
+
+				return data.GetType();
 			}
 		}
 
@@ -652,10 +662,15 @@ namespace Zongsoft.Data
 		{
 			get
 			{
-				if(IsMultiple && Data is IEnumerable)
-					return Common.TypeExtension.GetElementType(Data.GetType());
+				var data = this.Data;
 
-				return Data.GetType();
+				if(data == null)
+					return null;
+
+				if(this.IsMultiple && data is IEnumerable)
+					return Common.TypeExtension.GetElementType(data.GetType());
+
+				return data.GetType();
 			}
 		}
 
