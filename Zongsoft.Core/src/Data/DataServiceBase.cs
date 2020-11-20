@@ -135,7 +135,7 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
-		public IDataServiceValidator<TModel> Validator { get; }
+		public IDataServiceValidator<TModel> Validator { get; protected set; }
 
 		public IServiceProvider ServiceProvider
 		{
