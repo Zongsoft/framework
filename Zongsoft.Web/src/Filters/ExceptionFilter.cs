@@ -45,49 +45,55 @@ namespace Zongsoft.Web.Filters
 	{
 		public void OnException(ExceptionContext context)
 		{
-			if(context.Exception is AuthenticationException authentication)
+			switch(context.Exception)
 			{
-				context.HttpContext.Response.Headers.Add("X-Security-Reason", authentication.Reason.ToString());
-				context.Result = new UnauthorizedResult();
-			}
-			else if(context.Exception is SecurityException securityException)
-			{
-				var properties = new AuthenticationProperties();
+				case AuthenticationException authentication:
+					context.HttpContext.Response.Headers.Add("X-Security-Reason", authentication.Reason.ToString());
+					context.Result = new UnauthorizedResult();
+					break;
+				case SecurityException securityException:
+					var properties = new AuthenticationProperties();
 
-				properties.Items.Add(nameof(SecurityException.Reason), securityException.Reason);
-				properties.Parameters.Add(nameof(SecurityException.Reason), securityException.Reason);
+					properties.Items.Add(nameof(SecurityException.Reason), securityException.Reason);
+					properties.Parameters.Add(nameof(SecurityException.Reason), securityException.Reason);
 
-				context.Result = new ForbidResult(properties);
-			}
-			else if(context.Exception is DataConflictException conflictException)
-			{
-				if(!string.IsNullOrEmpty(conflictException.Key))
-					context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
+					context.Result = new ForbidResult(properties);
+					break;
+				case DataArgumentException argumentException:
+					if(string.IsNullOrWhiteSpace(argumentException.Name))
+						context.Result = argumentException.Value == null ? (IActionResult)new BadRequestResult() : new BadRequestObjectResult(argumentException.Value);
+					else
+						context.Result = new BadRequestObjectResult(new { argumentException.Name, argumentException.Value });
 
-				var problem = new ProblemDetails()
-				{
-					Status = StatusCodes.Status409Conflict,
-					Type = conflictException.Key,
-					Detail = conflictException.Message,
-				};
+					break;
+				case DataConflictException conflictException:
+					if(!string.IsNullOrEmpty(conflictException.Key))
+						context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
 
-				if(conflictException.Fields != null && conflictException.Fields.Length > 0)
-				{
-					context.HttpContext.Response.Headers.Add("X-Conflict-Fields", string.Join(',', conflictException.Fields));
-					problem.Extensions.Add(nameof(DataConflictException.Fields), conflictException.Fields);
-				}
+					var problem = new ProblemDetails()
+					{
+						Status = StatusCodes.Status409Conflict,
+						Type = conflictException.Key,
+						Detail = conflictException.Message,
+					};
 
-				context.Result = new ConflictObjectResult(problem);
-			}
-			else if(context.Exception is DataConstraintException constraintException)
-			{
-				if(!string.IsNullOrEmpty(constraintException.Field))
-				{
-					context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
-					context.HttpContext.Response.Headers.Add("X-Constraint-Field", constraintException.Field);
-				}
+					if(conflictException.Fields != null && conflictException.Fields.Length > 0)
+					{
+						context.HttpContext.Response.Headers.Add("X-Conflict-Fields", string.Join(',', conflictException.Fields));
+						problem.Extensions.Add(nameof(DataConflictException.Fields), conflictException.Fields);
+					}
 
-				context.Result = new BadRequestResult();
+					context.Result = new ConflictObjectResult(problem);
+					break;
+				case DataConstraintException constraintException:
+					if(!string.IsNullOrEmpty(constraintException.Field))
+					{
+						context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
+						context.HttpContext.Response.Headers.Add("X-Constraint-Field", constraintException.Field);
+					}
+
+					context.Result = new BadRequestResult();
+					break;
 			}
 		}
 	}
