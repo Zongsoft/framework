@@ -216,6 +216,9 @@
   <data name="Text.CredentialException.Message" xml:space="preserve">
     <value>凭证错误：指定的凭证是无效的或已经过期。</value>
   </data>
+  <data name="Text.DataArgumentException.Message" xml:space="preserve">
+    <value>无效的数据参数或者内容值。</value>
+  </data>
   <data name="Text.DataConflictException.Message" xml:space="preserve">
     <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
   </data>

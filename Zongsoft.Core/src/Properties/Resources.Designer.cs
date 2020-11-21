@@ -47,8 +47,8 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性
-        ///   重写当前线程的 CurrentUICulture 属性。
+        ///   重写当前线程的 CurrentUICulture 属性，对
+        ///   使用此强类型资源类的所有资源查找执行重写。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -354,6 +354,15 @@ namespace Zongsoft.Properties {
         internal static string Text_CredentialException_Message {
             get {
                 return ResourceManager.GetString("Text.CredentialException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无效的数据参数或者内容值。 的本地化字符串。
+        /// </summary>
+        internal static string Text_DataArgumentException_Message {
+            get {
+                return ResourceManager.GetString("Text.DataArgumentException.Message", resourceCulture);
             }
         }
         
