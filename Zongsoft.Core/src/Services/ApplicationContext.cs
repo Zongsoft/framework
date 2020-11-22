@@ -57,6 +57,9 @@ namespace Zongsoft.Services
 		private volatile int _stopped;
 		private volatile int _disposed;
 
+		private string _title;
+		private string _description;
+
 		private readonly ServiceProvider _services;
 		private ICollection<IApplicationInitializer> _initializers;
 
@@ -107,12 +110,14 @@ namespace Zongsoft.Services
 
 		public string Title
 		{
-			get => this.Configuration?.GetSection("ApplicationTitle").Value;
+			get => string.IsNullOrWhiteSpace(_title) ? this.Configuration?.GetSection("ApplicationTitle").Value : _title;
+			protected set => _title = value;
 		}
 
 		public string Description
 		{
-			get => this.Configuration?.GetSection("ApplicationDescription").Value;
+			get => string.IsNullOrWhiteSpace(_description) ? this.Configuration?.GetSection("ApplicationDescription").Value : _description;
+			protected set => _description = value;
 		}
 
 		public virtual string ApplicationPath
