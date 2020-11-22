@@ -43,13 +43,18 @@ namespace Zongsoft.Plugins
 
 		public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, Action<Hosting.IPluginsHostBuilder> configure = null) where TApplicationContext : PluginApplicationContext
 		{
+			return ConfigurePlugins<TApplicationContext>(builder, null, configure);
+		}
+
+		public static IHostBuilder ConfigurePlugins<TApplicationContext>(this IHostBuilder builder, string applicationName, Action<Hosting.IPluginsHostBuilder> configure = null) where TApplicationContext : PluginApplicationContext
+		{
 			if(builder == null)
 				throw new ArgumentNullException(nameof(builder));
 
 			if(typeof(TApplicationContext).IsAbstract)
 				throw new ArgumentException($"The specified '{typeof(TApplicationContext).FullName}' application context type cannot be abstract.");
 
-			var pluginsBuilder = new Hosting.PluginsHostBuilder(builder);
+			var pluginsBuilder = new Hosting.PluginsHostBuilder(applicationName, builder);
 			configure?.Invoke(pluginsBuilder);
 
 			builder.ConfigureServices(services =>

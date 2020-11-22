@@ -37,14 +37,15 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public class PluginsHostBuilderContext : HostBuilderContext
 	{
-        public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
+		#region 构造函数
+		public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
         }
+		#endregion
 
-        public PluginOptions Options
-        {
-            get;
-        }
+		#region 公共属性
+		public PluginOptions Options { get; }
+		#endregion
 	}
 }

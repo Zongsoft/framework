@@ -46,7 +46,7 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 构造函数
-		public PluginsHostBuilder(IHostBuilder builder)
+		public PluginsHostBuilder(string applicationName, IHostBuilder builder)
 		{
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 
@@ -60,6 +60,9 @@ namespace Zongsoft.Plugins.Hosting
 
 				if(!string.IsNullOrWhiteSpace(environment))
 					ctx.HostingEnvironment.EnvironmentName = environment.Trim();
+
+				if(!string.IsNullOrWhiteSpace(applicationName))
+					ctx.HostingEnvironment.ApplicationName = applicationName;
 
 				var pluginsHostBuilderContext = GetPluginsBuilderContext(ctx);
 				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(pluginsHostBuilderContext.Options));
