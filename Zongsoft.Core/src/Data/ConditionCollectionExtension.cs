@@ -69,6 +69,9 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「与」集。</returns>
 		public static ConditionCollection And(this ICondition criteria, ConditionCollection conditions)
 		{
+			if(criteria == null)
+				return conditions;
+
 			return ConditionCollection.And(Enumerate(criteria, conditions));
 		}
 
@@ -102,6 +105,9 @@ namespace Zongsoft.Data
 		/// <returns>返回构建的条件「或」集。</returns>
 		public static ConditionCollection Or(this ICondition criteria, ConditionCollection conditions)
 		{
+			if(criteria == null)
+				return conditions;
+
 			return ConditionCollection.Or(Enumerate(criteria, conditions));
 		}
 
@@ -112,8 +118,13 @@ namespace Zongsoft.Data
 
 			if(conditions != null)
 			{
-				foreach(var condition in conditions)
-					yield return condition;
+				if(conditions is ConditionCollection cs)
+					yield return cs;
+				else
+				{
+					foreach(var condition in conditions)
+						yield return condition;
+				}
 			}
 		}
 		#endregion
