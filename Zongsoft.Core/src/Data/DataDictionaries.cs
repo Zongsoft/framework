@@ -218,32 +218,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _dictionary.Count;
-			}
-		}
+		public object Data { get => _dictionary; }
 
-		public object Data
-		{
-			get
-			{
-				return _dictionary;
-			}
-		}
+		public int Count { get => _dictionary.Count; }
+
+		public bool IsEmpty { get => _dictionary.Count == 0; }
 
 		public object this[string name]
 		{
-			get
-			{
-				return _dictionary[name];
-			}
-			set
-			{
-				_dictionary[name] = value;
-			}
+			get => _dictionary[name];
+			set => _dictionary[name] = value;
 		}
 		#endregion
 
@@ -717,32 +701,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _dictionary.Count;
-			}
-		}
+		public object Data { get => _dictionary; }
 
-		public object Data
-		{
-			get
-			{
-				return _dictionary;
-			}
-		}
+		public int Count { get => _dictionary.Count; }
+
+		public bool IsEmpty { get => _dictionary.Count == 0; }
 
 		public object this[string name]
 		{
-			get
-			{
-				return _dictionary[name];
-			}
-			set
-			{
-				_dictionary[name] = value;
-			}
+			get => _dictionary[name];
+			set => _dictionary[name] = value;
 		}
 		#endregion
 
@@ -1184,41 +1152,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public object Data
-		{
-			get
-			{
-				return _data;
-			}
-		}
+		public object Data { get => _data; }
 
-		public int Count
-		{
-			get
-			{
-				return _members.Count;
-			}
-		}
+		public int Count { get => _members.Count; }
+
+		public bool IsEmpty { get => _members.Count == 0; }
 
 		public object this[string key]
 		{
-			get
-			{
-				return this.GetValue(key);
-			}
-			set
-			{
-				this.SetValue(key, value);
-			}
+			get => this.GetValue(key);
+			set => this.SetValue(key, value);
 		}
 
-		public ICollection<string> Keys
-		{
-			get
-			{
-				return _members.Keys;
-			}
-		}
+		public ICollection<string> Keys { get => _members.Keys; }
 
 		public ICollection<object> Values
 		{
@@ -1226,15 +1172,12 @@ namespace Zongsoft.Data
 			{
 				return _members.Values.Select(member =>
 				{
-					switch(member.MemberType)
+					return member.MemberType switch
 					{
-						case MemberTypes.Field:
-							return ((FieldInfo)member).GetGetter().Invoke(ref _data);
-						case MemberTypes.Property:
-							return ((PropertyInfo)member).GetGetter().Invoke(ref _data);
-						default:
-							return null;
-					}
+						MemberTypes.Field => ((FieldInfo)member).GetGetter().Invoke(ref _data),
+						MemberTypes.Property => ((PropertyInfo)member).GetGetter().Invoke(ref _data),
+						_ => null,
+					};
 				}).ToArray();
 			}
 		}
@@ -1648,48 +1591,26 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public object Data
-		{
-			get
-			{
-				return _model;
-			}
-		}
+		public object Data { get => _model; }
 
-		public int Count
-		{
-			get
-			{
-				return _model.GetCount();
-			}
-		}
+		public int Count { get => _model.GetCount(); }
+
+		public bool IsEmpty { get => !_model.HasChanges(); }
 
 		public object this[string key]
 		{
-			get
-			{
-				return this.GetValue(key);
-			}
-			set
-			{
-				this.SetValue(key, value);
-			}
+			get => this.GetValue(key);
+			set => this.SetValue(key, value);
 		}
 
 		public ICollection<string> Keys
 		{
-			get
-			{
-				return _model.GetChanges().Keys;
-			}
+			get => _model.GetChanges().Keys;
 		}
 
 		public ICollection<object> Values
 		{
-			get
-			{
-				return _model.GetChanges().Values;
-			}
+			get => _model.GetChanges().Values;
 		}
 		#endregion
 

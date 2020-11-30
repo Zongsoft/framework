@@ -35,10 +35,8 @@ namespace Zongsoft.Data
 {
 	public interface IDataDictionary : IDictionary, IDictionary<string, object>
 	{
-		object Data
-		{
-			get;
-		}
+		object Data { get; }
+		bool IsEmpty { get; }
 
 		bool Contains(string name);
 
