@@ -45,9 +45,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 构造函数
-		public WebApplicationContext(IServiceProvider services) : base(services)
-		{
-		}
+		public WebApplicationContext(IServiceProvider services) : base(services) { }
 		#endregion
 
 		#region 公共属性
