@@ -31,13 +31,14 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Plugins.Web.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("Plugins")]
 	public class PluginController : ControllerBase
