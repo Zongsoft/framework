@@ -38,6 +38,11 @@ namespace Zongsoft.Data
 	public interface IDataSelectOptions : IDataOptions
 	{
 		/// <summary>
+		/// 获取或设置一个值，指示是否进行去重查询。
+		/// </summary>
+		bool IsDistinct { get; set; }
+
+		/// <summary>
 		/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
 		/// </summary>
 		bool ValidatorSuppressed { get; set; }
@@ -54,6 +59,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public bool IsDistinct { get; set; }
+
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }
 		#endregion
