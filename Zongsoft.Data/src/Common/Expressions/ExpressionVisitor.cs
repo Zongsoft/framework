@@ -186,7 +186,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected virtual IExpression VisitField(FieldIdentifier field)
 		{
-			var alias = field.Table.Alias;
+			var alias = field.Table?.Alias;
 
 			if(field.Table is IStatementBase statement && !string.IsNullOrEmpty(statement.Table.Alias))
 				alias = statement.Table.Alias;
