@@ -47,6 +47,15 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Name = name.Trim();
 			this.Alias = alias;
 		}
+
+		public FieldIdentifier(string name, string alias = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
+			this.Alias = alias;
+		}
 		#endregion
 
 		#region 公共属性

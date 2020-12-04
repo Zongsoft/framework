@@ -89,7 +89,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				if(grouping.Filter != null)
 				{
-					statement.GroupBy.Having = statement.Where(grouping.Filter);
+					statement.GroupBy.Having = statement.Where(grouping.Filter, false);
 				}
 			}
 

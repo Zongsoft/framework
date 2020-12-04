@@ -143,21 +143,21 @@ namespace Zongsoft.Data.Common.Expressions
 			return found.Source;
 		}
 
-		public static IExpression Where(this IStatement statement, ICondition criteria)
+		public static IExpression Where(this IStatement statement, ICondition criteria, bool fieldExpending = true)
 		{
 			if(criteria == null)
 				return null;
 
 			if(criteria is Condition c)
-				return GetConditionExpression(statement, c);
+				return GetConditionExpression(statement, c, fieldExpending);
 
 			if(criteria is ConditionCollection cc)
-				return GetConditionExpression(statement, cc);
+				return GetConditionExpression(statement, cc, fieldExpending);
 
 			throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
 		}
 
-		private static ConditionExpression GetConditionExpression(IStatement statement, ConditionCollection conditions)
+		private static ConditionExpression GetConditionExpression(IStatement statement, ConditionCollection conditions, bool fieldExpending)
 		{
 			if(conditions == null)
 				throw new ArgumentNullException(nameof(conditions));
@@ -169,14 +169,14 @@ namespace Zongsoft.Data.Common.Expressions
 				switch(condition)
 				{
 					case Condition c:
-						var item = GetConditionExpression(statement, c);
+						var item = GetConditionExpression(statement, c, fieldExpending);
 
 						if(item != null)
 							expressions.Add(item);
 
 						break;
 					case ConditionCollection cc:
-						var items = GetConditionExpression(statement, cc);
+						var items = GetConditionExpression(statement, cc, fieldExpending);
 
 						if(items != null && items.Count > 0)
 							expressions.Add(items);
@@ -188,7 +188,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return expressions.Count > 0 ? expressions : null;
 		}
 
-		private static IExpression GetConditionExpression(IStatement statement, Condition condition)
+		private static IExpression GetConditionExpression(IStatement statement, Condition condition, bool fieldExpending)
 		{
 			if(condition == null)
 				throw new ArgumentNullException(nameof(condition));
@@ -203,7 +203,7 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 			}
 
-			var field = statement.GetOperandExpression(condition.Field, out _);
+			var field = statement.GetOperandExpression(condition.Field, fieldExpending, out _);
 
 			if(condition.Value == null)
 			{
@@ -237,29 +237,29 @@ namespace Zongsoft.Data.Common.Expressions
 
 					throw new DataException($"Illegal range condition value.");
 				case ConditionOperator.Like:
-					return Expression.Like(field, GetConditionValue(statement, condition.Value));
+					return Expression.Like(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.In:
-					return Expression.In(field, GetConditionValue(statement, condition.Value));
+					return Expression.In(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.NotIn:
-					return Expression.NotIn(field, GetConditionValue(statement, condition.Value));
+					return Expression.NotIn(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.Equal:
-					return Expression.Equal(field, GetConditionValue(statement, condition.Value));
+					return Expression.Equal(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.NotEqual:
-					return Expression.NotEqual(field, GetConditionValue(statement, condition.Value));
+					return Expression.NotEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.GreaterThan:
-					return Expression.GreaterThan(field, GetConditionValue(statement, condition.Value));
+					return Expression.GreaterThan(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.GreaterThanEqual:
-					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, condition.Value));
+					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.LessThan:
-					return Expression.LessThan(field, GetConditionValue(statement, condition.Value));
+					return Expression.LessThan(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.LessThanEqual:
-					return Expression.LessThanOrEqual(field, GetConditionValue(statement, condition.Value));
+					return Expression.LessThanOrEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				default:
 					throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
 			}
 		}
 
-		private static IExpression GetConditionValue(IStatement statement, object value)
+		private static IExpression GetConditionValue(IStatement statement, object value, bool fieldExpending)
 		{
 			if(value == null)
 				return null;
@@ -268,7 +268,7 @@ namespace Zongsoft.Data.Common.Expressions
 				return expression;
 
 			if(value is Operand operand)
-				return statement.GetOperandExpression(operand, out _);
+				return statement.GetOperandExpression(operand, fieldExpending, out _);
 
 			if(value.GetType().IsArray || (value.GetType() != typeof(string) && value is IEnumerable))
 			{
@@ -283,7 +283,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return statement.Parameters.AddParameter(value);
 		}
 
-		private static IExpression GetOperandExpression(this IStatement statement, Operand operand, out DbType dbType)
+		private static IExpression GetOperandExpression(this IStatement statement, Operand operand, bool fieldExpending, out DbType dbType)
 		{
 			dbType = DbType.Object;
 
@@ -293,7 +293,9 @@ namespace Zongsoft.Data.Common.Expressions
 			switch(operand.Type)
 			{
 				case OperandType.Field:
-					return GetField(statement, ((Operand.FieldOperand)operand).Name, out dbType);
+					return fieldExpending ?
+						GetField(statement, ((Operand.FieldOperand)operand).Name, out dbType) :
+						new FieldIdentifier(((Operand.FieldOperand)operand).Name);
 				case OperandType.Constant:
 					var value = Reflection.Reflector.GetValue(operand, nameof(Operand.ConstantOperand<object>.Value));
 
@@ -312,33 +314,33 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return statement.Parameters.AddParameter(value);
 				case OperandType.Not:
-					return Expression.Not(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, out dbType));
+					return Expression.Not(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
 				case OperandType.Negate:
-					return Expression.Negate(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, out dbType));
+					return Expression.Negate(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
 				case OperandType.Add:
-					return GetBinaryExpression(statement, operand, Expression.Add, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Add, fieldExpending, out dbType);
 				case OperandType.Subtract:
-					return GetBinaryExpression(statement, operand, Expression.Subtract, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Subtract, fieldExpending, out dbType);
 				case OperandType.Multiply:
-					return GetBinaryExpression(statement, operand, Expression.Multiply, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Multiply, fieldExpending, out dbType);
 				case OperandType.Modulo:
-					return GetBinaryExpression(statement, operand, Expression.Modulo, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Modulo, fieldExpending, out dbType);
 				case OperandType.Divide:
-					return GetBinaryExpression(statement, operand, Expression.Divide, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Divide, fieldExpending, out dbType);
 				case OperandType.And:
-					return GetBinaryExpression(statement, operand, Expression.And, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.And, fieldExpending, out dbType);
 				case OperandType.Or:
-					return GetBinaryExpression(statement, operand, Expression.Or, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Or, fieldExpending, out dbType);
 				case OperandType.Xor:
-					return GetBinaryExpression(statement, operand, Expression.Xor, out dbType);
+					return GetBinaryExpression(statement, operand, Expression.Xor, fieldExpending, out dbType);
 				default:
 					throw new DataException($"Unsupported '{operand.Type}' operand type.");
 			}
 
-			static IExpression GetBinaryExpression(IStatement host, Operand opd, Func<IExpression, IExpression, IExpression> generator, out DbType dbType)
+			static IExpression GetBinaryExpression(IStatement host, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DbType dbType)
 			{
 				var binary = (Operand.BinaryOperand)opd;
-				return generator(host.GetOperandExpression(binary.Left, out dbType), host.GetOperandExpression(binary.Right, out dbType));
+				return generator(host.GetOperandExpression(binary.Left, fieldExpending, out dbType), host.GetOperandExpression(binary.Right, fieldExpending, out dbType));
 			}
 		}
 
