@@ -41,6 +41,9 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			var statement = new SelectStatement(context.Entity) { Paging = context.Paging };
 
+			if(statement.Select != null)
+				statement.Select.IsDistinct = context.Options.IsDistinct;
+
 			//生成分组子句
 			if(context.Grouping != null)
 				this.GenerateGrouping(statement, context.Grouping);
