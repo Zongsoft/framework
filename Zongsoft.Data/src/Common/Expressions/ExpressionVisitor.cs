@@ -60,26 +60,17 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 公共属性
 		public int Depth
 		{
-			get
-			{
-				return _depth;
-			}
+			get => _depth;
 		}
 
 		public virtual IExpressionDialect Dialect
 		{
-			get
-			{
-				return NormalDialect.Instance;
-			}
+			get => NormalDialect.Instance;
 		}
 
 		public StringBuilder Output
 		{
-			get
-			{
-				return _output;
-			}
+			get => _output;
 		}
 		#endregion
 

@@ -43,19 +43,12 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 获取一个数据源的集合，可以在 Where 子句中引用的字段源。
 		/// </summary>
-		Zongsoft.Collections.INamedCollection<ISource> From
-		{
-			get;
-		}
+		Zongsoft.Collections.INamedCollection<ISource> From { get; }
 
 		/// <summary>
 		/// 获取或设置条件子句。
 		/// </summary>
-		IExpression Where
-		{
-			get;
-			set;
-		}
+		IExpression Where { get; set; }
 		#endregion
 
 		#region 方法定义

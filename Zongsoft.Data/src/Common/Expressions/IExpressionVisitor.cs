@@ -35,20 +35,9 @@ namespace Zongsoft.Data.Common.Expressions
 	public interface IExpressionVisitor
 	{
 		#region 属性定义
-		int Depth
-		{
-			get;
-		}
-
-		StringBuilder Output
-		{
-			get;
-		}
-
-		IExpressionDialect Dialect
-		{
-			get;
-		}
+		int Depth { get; }
+		StringBuilder Output { get; }
+		IExpressionDialect Dialect { get; }
 		#endregion
 
 		#region 方法定义

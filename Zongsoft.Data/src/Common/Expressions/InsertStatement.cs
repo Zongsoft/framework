@@ -49,42 +49,27 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 获取插入语句对应的序号字段值（如果有的话）的查询语句。
 		/// </summary>
-		public SelectStatement Sequence
-		{
-			get; set;
-		}
+		public SelectStatement Sequence { get; set; }
 
 		/// <summary>
 		/// 获取或设置插入语句对应的模式成员。
 		/// </summary>
-		public SchemaMember Schema
-		{
-			get; set;
-		}
+		public SchemaMember Schema { get; set; }
 
 		/// <summary>
 		/// 获取新增或更新字段集合。
 		/// </summary>
-		public IList<FieldIdentifier> Fields
-		{
-			get;
-		}
+		public IList<FieldIdentifier> Fields { get; }
 
 		/// <summary>
 		/// 获取新增或更新字段值集合。
 		/// </summary>
-		public IList<IExpression> Values
-		{
-			get;
-		}
+		public IList<IExpression> Values { get; }
 
 		/// <summary>
 		/// 获取或设置输出子句。
 		/// </summary>
-		public ReturningClause Returning
-		{
-			get; set;
-		}
+		public ReturningClause Returning { get; set; }
 		#endregion
 	}
 }
