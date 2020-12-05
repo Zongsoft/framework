@@ -70,7 +70,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(context.Depth == 0)
 				context.WriteLine(";");
 
-			if(statement.Paging != null && statement.Paging.PageSize > 0)
+			if(statement.Paging != null && statement.Paging.PageIndex > 0 && statement.Paging.PageSize > 0)
 			{
 				context.WriteLine("SELECT COUNT(*)");
 
