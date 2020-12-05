@@ -338,12 +338,12 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 访问方法
-		IExpression IExpression.Accept(IExpressionVisitor visitor)
+		string IExpression.Accept(IExpressionVisitor visitor)
 		{
 			return this.Accept(visitor);
 		}
 
-		internal protected virtual IExpression Accept(IExpressionVisitor visitor)
+		internal protected virtual string Accept(IExpressionVisitor visitor)
 		{
 			return visitor.Visit(this);
 		}

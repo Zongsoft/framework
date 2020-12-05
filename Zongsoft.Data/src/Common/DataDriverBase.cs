@@ -35,15 +35,11 @@ namespace Zongsoft.Data.Common
 {
 	public abstract class DataDriverBase : IDataDriver
 	{
-		#region 成员字段
-		private readonly VisitorPool _visitors;
-		#endregion
-
 		#region 构造函数
 		protected DataDriverBase()
 		{
-			//创建访问器对象池
-			_visitors = new VisitorPool(this.CreateVisitor);
+			//创建表达式访问器
+			this.Visitor = this.CreateVisitor();
 
 			//创建功能特性集合
 			this.Features = new FeatureCollection();
@@ -77,7 +73,7 @@ namespace Zongsoft.Data.Common
 				throw new ArgumentNullException(nameof(statement));
 
 			//创建指定语句的数据命令
-			var command = this.CreateCommand(this.Script(statement), CommandType.Text);
+			var command = this.CreateCommand(this.Visitor.Visit(statement), CommandType.Text);
 
 			//设置数据命令的参数集
 			if(statement.HasParameters)
@@ -115,59 +111,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 保护方法
-		protected abstract Expressions.IExpressionVisitor CreateVisitor();
+		protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
 
 		protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression)
 		{
 			parameter.DbType = expression.DbType;
-		}
-		#endregion
-
-		#region 私有方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string Script(Expressions.IStatementBase statement)
-		{
-			Expressions.IExpressionVisitor visitor = null;
-
-			try
-			{
-				//从对象池中获取一个访问器
-				visitor = _visitors.GetObject();
-
-				//访问指定的语句
-				visitor.Visit(statement);
-
-				//输出访问器的脚本内容
-				return visitor.Output.ToString();
-			}
-			finally
-			{
-				//将使用完成的访问器释放回对象池
-				if(visitor != null)
-					_visitors.Release(visitor);
-			}
-		}
-		#endregion
-
-		#region 嵌套子类
-		private class VisitorPool : Zongsoft.Collections.ObjectPool<Expressions.IExpressionVisitor>
-		{
-			#region 内部构造
-			internal VisitorPool(Func<Expressions.IExpressionVisitor> creator) : base(creator, null)
-			{
-			}
-			#endregion
-
-			#region 重写方法
-			protected override void OnTakein(Expressions.IExpressionVisitor visitor)
-			{
-				//清空访问器的脚本缓冲区内容
-				visitor.Output.Clear();
-
-				//调用基类同名方法
-				base.OnTakein(visitor);
-			}
-			#endregion
 		}
 		#endregion
 	}

@@ -66,6 +66,9 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>获取当前访问输出缓存。</summary>
 		public StringBuilder Output { get => _output; }
 
+		/// <summary>获取表达式方言。</summary>
+		public IExpressionDialect Dialect { get => _visitor.Dialect; }
+
 		/// <summary>获取当前访问表达式。</summary>
 		public IExpression Expression { get => _stack.TryPeek(out var value) ? value : null; }
 
@@ -74,7 +77,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共方法
-		public T Find<T>(int level) where T : IExpression
+		public T Find<T>(int level = 0) where T : IExpression
 		{
 			var index = 0;
 			var found = default(T);
@@ -85,7 +88,7 @@ namespace Zongsoft.Data.Common.Expressions
 				{
 					found = matched;
 
-					if(level > 0 && index++ == level)
+					if(level >= 0 && index++ == level)
 						return found;
 				}
 			}

@@ -33,6 +33,6 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public interface IStatementVisitor<TStatement> where TStatement : IStatementBase
 	{
-		void Visit(IExpressionVisitor visitor, TStatement statement);
+		void Visit(ExpressionVisitorContext context, TStatement statement);
 	}
 }

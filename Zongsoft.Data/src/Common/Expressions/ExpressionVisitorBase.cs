@@ -32,7 +32,7 @@ using System.Data;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public abstract class ExpressionVisitorBase
+	public abstract class ExpressionVisitorBase : IExpressionVisitor
 	{
 		#region 事件定义
 		public event EventHandler<ExpressionEventArgs> Unrecognized;

@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
@@ -48,7 +47,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共方法
-		public IExpression Accept(IExpressionVisitor visitor)
+		public string Accept(IExpressionVisitor visitor)
 		{
 			return visitor.Visit(this);
 		}

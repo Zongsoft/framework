@@ -35,13 +35,11 @@ namespace Zongsoft.Data.Common.Expressions
 	public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStatement> where TStatement : SelectStatementBase
 	{
 		#region 构造函数
-		protected SelectStatementVisitorBase()
-		{
-		}
+		protected SelectStatementVisitorBase() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, TStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, TStatement statement)
 		{
 			if(statement.Select == null || statement.Select.Members.Count == 0)
 			{
@@ -51,47 +49,47 @@ namespace Zongsoft.Data.Common.Expressions
 					throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 			}
 
-			this.VisitSelect(visitor, statement.Select);
-			this.VisitFrom(visitor, statement.From);
-			this.VisitWhere(visitor, statement.Where);
+			this.VisitSelect(context, statement.Select);
+			this.VisitFrom(context, statement.From);
+			this.VisitWhere(context, statement.Where);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitSelect(IExpressionVisitor visitor, SelectClause clause)
+		protected virtual void VisitSelect(ExpressionVisitorContext context, SelectClause clause)
 		{
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("SELECT ");
+			context.Write("SELECT ");
 
 			if(clause.IsDistinct)
-				visitor.Output.Append("DISTINCT ");
+				context.Write("DISTINCT ");
 
 			int index = 0;
 
 			foreach(var member in clause.Members)
 			{
 				if(index++ > 0)
-					visitor.Output.AppendLine(",");
+					context.WriteLine(",");
 
-				visitor.Visit(member);
+				context.Visit(member);
 			}
 		}
 
-		protected virtual void VisitFrom(IExpressionVisitor visitor, ICollection<ISource> sources)
+		protected virtual void VisitFrom(ExpressionVisitorContext context, ICollection<ISource> sources)
 		{
-			visitor.VisitFrom(sources, (v, j) => this.VisitJoin(v, j));
+			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, join));
 		}
 
-		protected virtual void VisitJoin(IExpressionVisitor visitor, JoinClause joining)
+		protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining)
 		{
-			visitor.VisitJoin(joining);
+			context.VisitJoin(joining);
 		}
 
-		protected virtual void VisitWhere(IExpressionVisitor visitor, IExpression where)
+		protected virtual void VisitWhere(ExpressionVisitorContext context, IExpression where)
 		{
-			visitor.VisitWhere(where);
+			context.VisitWhere(where);
 		}
 		#endregion
 	}

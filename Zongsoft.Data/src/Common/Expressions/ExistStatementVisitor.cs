@@ -28,18 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class ExistStatementVisitor : SelectStatementVisitorBase<ExistStatement>
 	{
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, ExistStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
 		{
-			visitor.Output.Append("SELECT COUNT(*) FROM " + statement.Table.Name + " WHERE EXISTS(");
-			base.OnVisit(visitor, statement);
-			visitor.Output.Append(")");
+			context.Write("SELECT COUNT(*) FROM " + statement.Table.Name + " WHERE EXISTS(");
+			base.OnVisit(context, statement);
+			context.Write(")");
 		}
 		#endregion
 	}

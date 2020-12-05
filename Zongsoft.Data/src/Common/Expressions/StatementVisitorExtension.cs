@@ -34,102 +34,102 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	internal static class StatementVisitorExtension
 	{
-		public static void VisitFrom(this IExpressionVisitor visitor, ICollection<ISource> sources, Action<IExpressionVisitor, JoinClause> join)
+		public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause> join)
 		{
 			if(sources == null || sources.Count == 0)
 				return;
 
-			visitor.Output.Append(" FROM ");
+			context.Write(" FROM ");
 
 			foreach(var source in sources)
 			{
 				switch(source)
 				{
 					case TableIdentifier table:
-						visitor.Visit(table);
+						context.Visit(table);
 
 						break;
 					case SelectStatement subquery:
-						visitor.Output.Append("(");
+						context.Write("(");
 
 						//递归生成子查询语句
-						visitor.Visit(subquery);
+						context.Visit(subquery);
 
 						if(string.IsNullOrEmpty(subquery.Alias))
-							visitor.Output.Append(")");
+							context.Write(")");
 						else
-							visitor.Output.Append(") AS " + subquery.Alias);
+							context.Write(") AS " + subquery.Alias);
 
 						break;
 					case JoinClause joining:
 						if(join == null)
-							VisitJoin(visitor, joining);
+							VisitJoin(context, joining);
 						else
-							join(visitor, joining);
+							join(context, joining);
 
 						break;
 				}
 			}
 		}
 
-		public static void VisitJoin(this IExpressionVisitor visitor, JoinClause joining)
+		public static void VisitJoin(this ExpressionVisitorContext context, JoinClause joining)
 		{
-			visitor.Output.AppendLine();
+			context.WriteLine();
 
 			switch(joining.Type)
 			{
 				case JoinType.Inner:
-					visitor.Output.Append("INNER JOIN ");
+					context.Write("INNER JOIN ");
 					break;
 				case JoinType.Left:
-					visitor.Output.Append("LEFT JOIN ");
+					context.Write("LEFT JOIN ");
 					break;
 				case JoinType.Right:
-					visitor.Output.Append("RIGHT JOIN ");
+					context.Write("RIGHT JOIN ");
 					break;
 				case JoinType.Full:
-					visitor.Output.Append("FULL JOIN ");
+					context.Write("FULL JOIN ");
 					break;
 			}
 
 			switch(joining.Target)
 			{
 				case TableIdentifier table:
-					visitor.Visit(table);
+					context.Visit(table);
 
 					if(string.IsNullOrEmpty(joining.Name))
-						visitor.Output.AppendLine(" ON");
+						context.WriteLine(" ON");
 					else
-						visitor.Output.AppendLine(" ON /* " + joining.Name + " */");
+						context.WriteLine(" ON /* " + joining.Name + " */");
 
 					break;
 				case SelectStatement subquery:
-					visitor.Output.Append("(");
+					context.Write("(");
 
 					//递归生成子查询语句
-					visitor.Visit(subquery);
+					context.Visit(subquery);
 
 					if(string.IsNullOrEmpty(subquery.Alias))
-						visitor.Output.AppendLine(") ON");
+						context.WriteLine(") ON");
 					else
-						visitor.Output.AppendLine(") AS " + subquery.Alias + " ON");
+						context.WriteLine(") AS " + subquery.Alias + " ON");
 
 					break;
 			}
 
-			visitor.Visit(joining.Conditions);
+			context.Visit(joining.Conditions);
 		}
 
-		public static void VisitWhere(this IExpressionVisitor visitor, IExpression where)
+		public static void VisitWhere(this ExpressionVisitorContext context, IExpression where)
 		{
 			if(where == null)
 				return;
 
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("WHERE ");
-			visitor.Visit(where);
+			context.Write("WHERE ");
+			context.Visit(where);
 		}
 	}
 }

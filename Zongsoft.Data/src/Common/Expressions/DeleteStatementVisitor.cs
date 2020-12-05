@@ -41,49 +41,49 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, DeleteStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
 		{
 			if(statement.Returning != null && statement.Returning.Table != null)
-				visitor.Visit(statement.Returning.Table);
+				context.Visit(statement.Returning.Table);
 
-			visitor.Output.Append("DELETE ");
+			context.Write("DELETE ");
 
-			this.VisitTables(visitor, statement, statement.Tables);
-			this.VisitFrom(visitor, statement, statement.From);
-			this.VisitWhere(visitor, statement, statement.Where);
+			this.VisitTables(context, statement, statement.Tables);
+			this.VisitFrom(context, statement, statement.From);
+			this.VisitWhere(context, statement, statement.Where);
 
-			visitor.Output.AppendLine(";");
+			context.WriteLine(";");
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitTables(IExpressionVisitor visitor, DeleteStatement statement, IList<TableIdentifier> tables)
+		protected virtual void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables)
 		{
 			for(int i = 0; i < tables.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
 				if(string.IsNullOrEmpty(tables[i].Alias))
-					visitor.Output.Append(tables[i].Name);
+					context.Write(tables[i].Name);
 				else
-					visitor.Output.Append(tables[i].Alias);
+					context.Write(tables[i].Alias);
 			}
 		}
 
-		protected virtual void VisitFrom(IExpressionVisitor visitor, DeleteStatement statement, ICollection<ISource> sources)
+		protected virtual void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 		{
-			visitor.VisitFrom(sources, (v, j) => this.VisitJoin(v, statement, j));
+			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
 		}
 
-		protected virtual void VisitJoin(IExpressionVisitor visitor, DeleteStatement statement, JoinClause joining)
+		protected virtual void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining)
 		{
-			visitor.VisitJoin(joining);
+			context.VisitJoin(joining);
 		}
 
-		protected virtual void VisitWhere(IExpressionVisitor visitor, DeleteStatement statement, IExpression where)
+		protected virtual void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
 		{
-			visitor.VisitWhere(where);
+			context.VisitWhere(where);
 		}
 		#endregion
 	}

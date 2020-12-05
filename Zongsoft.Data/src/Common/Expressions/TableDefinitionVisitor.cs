@@ -28,31 +28,30 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class TableDefinitionVisitor : StatementVisitorBase<TableDefinition>
 	{
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, TableDefinition statement)
+		protected override void OnVisit(ExpressionVisitorContext context, TableDefinition statement)
 		{
 			if(statement.IsTemporary)
-				visitor.Output.AppendLine($"CREATE TEMPORARY TABLE {statement.Name} (");
+				context.WriteLine($"CREATE TEMPORARY TABLE {statement.Name} (");
 			else
-				visitor.Output.AppendLine($"CREATE TABLE {statement.Name} (");
+				context.WriteLine($"CREATE TABLE {statement.Name} (");
 
 			int index = 0;
 
 			foreach(var field in statement.Fields)
 			{
 				if(index++ > 0)
-					visitor.Output.AppendLine(",");
+					context.WriteLine(",");
 
-				visitor.Visit(field);
+				context.Visit(field);
 			}
 
-			visitor.Output.AppendLine(");");
+			context.WriteLine(");");
 		}
 		#endregion
 	}

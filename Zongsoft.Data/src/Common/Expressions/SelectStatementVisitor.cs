@@ -28,20 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement>
 	{
 		#region 构造函数
-		protected SelectStatementVisitor()
-		{
-		}
+		protected SelectStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, SelectStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 		{
 			if(statement.Select == null || statement.Select.Members.Count == 0)
 			{
@@ -51,100 +48,100 @@ namespace Zongsoft.Data.Common.Expressions
 					throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 			}
 
-			this.VisitSelect(visitor, statement.Select);
-			this.VisitInto(visitor, statement.Into);
-			this.VisitFrom(visitor, statement.From);
-			this.VisitWhere(visitor, statement.Where);
-			this.VisitGroupBy(visitor, statement.GroupBy);
-			this.VisitOrderBy(visitor, statement.OrderBy);
+			this.VisitSelect(context, statement.Select);
+			this.VisitInto(context, statement.Into);
+			this.VisitFrom(context, statement.From);
+			this.VisitWhere(context, statement.Where);
+			this.VisitGroupBy(context, statement.GroupBy);
+			this.VisitOrderBy(context, statement.OrderBy);
 		}
 
-		protected override void OnVisiting(IExpressionVisitor visitor, SelectStatement statement)
+		protected override void OnVisiting(ExpressionVisitorContext context, SelectStatement statement)
 		{
 			if(!string.IsNullOrEmpty(statement.Alias))
-				visitor.Output.AppendLine($"/* {statement.Alias} */");
+				context.WriteLine($"/* {statement.Alias} */");
 
 			//调用基类同名方法
-			base.OnVisiting(visitor, statement);
+			base.OnVisiting(context, statement);
 		}
 
-		protected override void OnVisited(IExpressionVisitor visitor, SelectStatement statement)
+		protected override void OnVisited(ExpressionVisitorContext context, SelectStatement statement)
 		{
-			if(visitor.Depth == 0)
-				visitor.Output.AppendLine(";");
+			if(context.Depth == 0)
+				context.WriteLine(";");
 
 			if(statement.Paging != null && statement.Paging.PageSize > 0)
 			{
-				visitor.Output.AppendLine("SELECT COUNT(*)");
+				context.WriteLine("SELECT COUNT(*)");
 
-				this.VisitFrom(visitor, statement.From);
-				this.VisitWhere(visitor, statement.Where);
+				this.VisitFrom(context, statement.From);
+				this.VisitWhere(context, statement.Where);
 			}
 
 			//调用基类同名方法
-			base.OnVisited(visitor, statement);
+			base.OnVisited(context, statement);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitInto(IExpressionVisitor visitor, IIdentifier into)
+		protected virtual void VisitInto(ExpressionVisitorContext context, IIdentifier into)
 		{
 			if(into == null)
 				return;
 
-			visitor.Output.Append(" INTO ");
-			visitor.Visit(into);
+			context.Write(" INTO ");
+			context.Visit(into);
 		}
 
-		protected virtual void VisitGroupBy(IExpressionVisitor visitor, GroupByClause clause)
+		protected virtual void VisitGroupBy(ExpressionVisitorContext context, GroupByClause clause)
 		{
 			if(clause == null || clause.Keys.Count == 0)
 				return;
 
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("GROUP BY ");
+			context.Write("GROUP BY ");
 
 			int index = 0;
 
 			foreach(var key in clause.Keys)
 			{
 				if(index++ > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Visit(key);
+				context.Visit(key);
 			}
 
 			if(clause.Having != null)
 			{
-				visitor.Output.AppendLine();
-				visitor.Output.Append("HAVING ");
-				visitor.Visit(clause.Having);
+				context.WriteLine();
+				context.Write("HAVING ");
+				context.Visit(clause.Having);
 			}
 		}
 
-		protected virtual void VisitOrderBy(IExpressionVisitor visitor, OrderByClause clause)
+		protected virtual void VisitOrderBy(ExpressionVisitorContext context, OrderByClause clause)
 		{
 			if(clause == null || clause.Members.Count == 0)
 				return;
 
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("ORDER BY ");
+			context.Write("ORDER BY ");
 
 			int index = 0;
 
 			foreach(var member in clause.Members)
 			{
 				if(index++ > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Visit(member.Field);
+				context.Visit(member.Field);
 
 				if(member.Mode == SortingMode.Descending)
-					visitor.Output.Append(" DESC");
+					context.Write(" DESC");
 			}
 		}
 		#endregion

@@ -35,66 +35,64 @@ namespace Zongsoft.Data.Common.Expressions
 	public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 	{
 		#region 构造函数
-		protected InsertStatementVisitor()
-		{
-		}
+		protected InsertStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, InsertStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
 		{
 			if(statement.Fields == null || statement.Fields.Count == 0)
 				throw new DataException("Missing required fields in the insert statment.");
 
 			if(statement.Returning != null && statement.Returning.Table != null)
-				visitor.Visit(statement.Returning.Table);
+				context.Visit(statement.Returning.Table);
 
-			visitor.Output.Append("INSERT INTO ");
-			visitor.Visit(statement.Table);
+			context.Write("INSERT INTO ");
+			context.Visit(statement.Table);
 
-			this.VisitFields(visitor, statement, statement.Fields);
-			this.VisitValues(visitor, statement, statement.Values, statement.Fields.Count);
+			this.VisitFields(context, statement, statement.Fields);
+			this.VisitValues(context, statement, statement.Values, statement.Fields.Count);
 
-			visitor.Output.AppendLine(";");
+			context.WriteLine(";");
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitFields(IExpressionVisitor visitor, InsertStatement statement, ICollection<FieldIdentifier> fields)
+		protected virtual void VisitFields(ExpressionVisitorContext context, InsertStatement statement, ICollection<FieldIdentifier> fields)
 		{
 			int index = 0;
 
-			visitor.Output.Append(" (");
+			context.Write(" (");
 
 			foreach(var field in fields)
 			{
 				if(index++ > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Visit(field);
+				context.Visit(field);
 			}
 
-			visitor.Output.Append(")");
+			context.Write(")");
 		}
 
-		protected virtual void VisitValues(IExpressionVisitor visitor, InsertStatement statement, ICollection<IExpression> values, int rounds)
+		protected virtual void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
 		{
 			int index = 0;
 
-			visitor.Output.AppendLine(" VALUES");
+			context.WriteLine(" VALUES");
 
 			foreach(var value in values)
 			{
 				if(index > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
 				if(index % rounds == 0)
-					visitor.Output.Append("(");
+					context.Write("(");
 
-				visitor.Visit(value);
+				context.Visit(value);
 
 				if(++index % rounds == 0)
-					visitor.Output.Append(")");
+					context.Write(")");
 			}
 		}
 		#endregion

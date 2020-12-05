@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class ExecutionStatementVisitor : StatementVisitorBase<ExecutionStatement>
 	{
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, ExecutionStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, ExecutionStatement statement)
 		{
 			throw new NotImplementedException();
 		}

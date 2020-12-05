@@ -35,13 +35,11 @@ namespace Zongsoft.Data.Common.Expressions
 	public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 	{
 		#region 构造函数
-		protected UpdateStatementVisitor()
-		{
-		}
+		protected UpdateStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, UpdateStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, UpdateStatement statement)
 		{
 			if(statement.Tables == null || statement.Tables.Count == 0)
 				throw new DataException("Missing required tables in the update statement.");
@@ -50,61 +48,61 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new DataException("Missing required fields in the update statment.");
 
 			if(statement.Returning != null && statement.Returning.Table != null)
-				visitor.Visit(statement.Returning.Table);
+				context.Visit(statement.Returning.Table);
 
-			visitor.Output.Append("UPDATE ");
-			this.VisitTables(visitor, statement, statement.Tables);
+			context.Write("UPDATE ");
+			this.VisitTables(context, statement, statement.Tables);
 
-			visitor.Output.AppendLine(" SET");
-			this.VisitFields(visitor, statement, statement.Fields);
+			context.WriteLine(" SET");
+			this.VisitFields(context, statement, statement.Fields);
 
-			this.VisitFrom(visitor, statement, statement.From);
-			this.VisitWhere(visitor, statement, statement.Where);
+			this.VisitFrom(context, statement, statement.From);
+			this.VisitWhere(context, statement, statement.Where);
 
-			visitor.Output.AppendLine(";");
+			context.WriteLine(";");
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitTables(IExpressionVisitor visitor, UpdateStatement statement, IList<TableIdentifier> tables)
+		protected virtual void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 		{
 			for(int i = 0; i < tables.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Visit(tables[i]);
+				context.Visit(tables[i]);
 			}
 		}
 
-		protected virtual void VisitFields(IExpressionVisitor visitor, UpdateStatement statement, ICollection<FieldValue> fields)
+		protected virtual void VisitFields(ExpressionVisitorContext context, UpdateStatement statement, ICollection<FieldValue> fields)
 		{
 			var index = 0;
 
 			foreach(var field in fields)
 			{
 				if(index++ > 0)
-					visitor.Output.AppendLine(",");
+					context.WriteLine(",");
 
-				visitor.Visit(field.Field);
-				visitor.Output.Append("=");
-				visitor.Visit(field.Value);
+				context.Visit(field.Field);
+				context.Write("=");
+				context.Visit(field.Value);
 			}
 		}
 
-		protected virtual void VisitFrom(IExpressionVisitor visitor, UpdateStatement statement, ICollection<ISource> sources)
+		protected virtual void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 		{
-			visitor.VisitFrom(sources, (v, j) => this.VisitJoin(v, statement, j));
+			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
 		}
 
-		protected virtual void VisitJoin(IExpressionVisitor visitor, UpdateStatement statement, JoinClause joining)
+		protected virtual void VisitJoin(ExpressionVisitorContext context, UpdateStatement statement, JoinClause joining)
 		{
-			visitor.VisitJoin(joining);
+			context.VisitJoin(joining);
 		}
 
-		protected virtual void VisitWhere(IExpressionVisitor visitor, UpdateStatement statement, IExpression where)
+		protected virtual void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
 		{
-			visitor.VisitWhere(where);
+			context.VisitWhere(where);
 		}
 		#endregion
 	}

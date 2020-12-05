@@ -28,20 +28,17 @@
  */
 
 using System;
-using System.Text;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public interface IExpressionVisitor
 	{
 		#region 属性定义
-		int Depth { get; }
-		StringBuilder Output { get; }
 		IExpressionDialect Dialect { get; }
 		#endregion
 
 		#region 方法定义
-		IExpression Visit(IExpression expression);
+		string Visit(IExpression expression);
 		#endregion
 	}
 }
