@@ -70,8 +70,10 @@ namespace Zongsoft.Data.MsSql
 			if(context.Output.Length > 0)
 				context.WriteLine();
 
-			context.Write("OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString() + " ROWS ");
-			context.Write("FETCH NEXT " + paging.PageSize.ToString() + " ROWS ONLY");
+			if(paging.PageIndex > 0)
+				context.Write($"OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
+			else
+				context.Write($"OFFSET 0 ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
 		}
 		#endregion
 	}
