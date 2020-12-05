@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,63 +41,61 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 构造函数
-		private MySqlUpsertStatementVisitor()
-		{
-		}
+		private MySqlUpsertStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, UpsertStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 		{
 			if(statement.Fields == null || statement.Fields.Count == 0)
 				throw new DataException("Missing required fields in the upsert statment.");
 
 			var index = 0;
 
-			visitor.Output.Append("INSERT INTO ");
+			context.Write("INSERT INTO ");
 			//visitor.Visit(statement.Table);
-			visitor.Output.Append(visitor.Dialect.GetIdentifier(statement.Table));
-			visitor.Output.Append(" (");
+			context.Write(context.Dialect.GetIdentifier(statement.Table));
+			context.Write(" (");
 
 			foreach(var field in statement.Fields)
 			{
 				if(index++ > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
 				//visitor.Visit(field);
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
+				context.Write(context.Dialect.GetIdentifier(field.Name));
 			}
 
 			index = 0;
-			visitor.Output.AppendLine(") VALUES ");
+			context.WriteLine(") VALUES ");
 
 			foreach(var value in statement.Values)
 			{
 				if(index++ > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
 				if(index % statement.Fields.Count == 1)
-					visitor.Output.Append("(");
+					context.Write("(");
 
-				visitor.Visit(value);
+				context.Visit(value);
 
 				if(index % statement.Fields.Count == 0)
-					visitor.Output.Append(")");
+					context.Write(")");
 			}
 
 			index = 0;
-			visitor.Output.AppendLine(" ON DUPLICATE KEY UPDATE ");
+			context.WriteLine(" ON DUPLICATE KEY UPDATE ");
 
 			if(statement.Updation.Count > 0)
 			{
 				foreach(var item in statement.Updation)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append(visitor.Dialect.GetIdentifier(item.Field));
-					visitor.Output.Append("=");
-					visitor.Visit(item.Value);
+					context.Write(context.Dialect.GetIdentifier(item.Field));
+					context.Write("=");
+					context.Visit(item.Value);
 				}
 			}
 			else
@@ -110,16 +107,16 @@ namespace Zongsoft.Data.MySql
 						continue;
 
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
-					visitor.Output.Append("=VALUES(");
-					visitor.Output.Append(visitor.Dialect.GetIdentifier(field.Name));
-					visitor.Output.Append(")");
+					context.Write(context.Dialect.GetIdentifier(field.Name));
+					context.Write("=VALUES(");
+					context.Write(context.Dialect.GetIdentifier(field.Name));
+					context.Write(")");
 				}
 			}
 
-			visitor.Output.AppendLine(";");
+			context.WriteLine(";");
 		}
 		#endregion
 	}

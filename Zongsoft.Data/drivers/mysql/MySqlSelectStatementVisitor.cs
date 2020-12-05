@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,32 +41,30 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 构造函数
-		private MySqlSelectStatementVisitor()
-		{
-		}
+		private MySqlSelectStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, SelectStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 		{
 			//调用基类同名方法
-			base.OnVisit(visitor, statement);
+			base.OnVisit(context, statement);
 
 			if(statement.Paging != null && statement.Paging.PageSize > 0)
-				this.VisitPaging(visitor, statement.Paging);
+				this.VisitPaging(context, statement.Paging);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitPaging(IExpressionVisitor visitor, Paging paging)
+		protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
 		{
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("LIMIT " + paging.PageSize.ToString());
+			context.Write("LIMIT " + paging.PageSize.ToString());
 
 			if(paging.PageIndex > 1)
-				visitor.Output.Append(" OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString());
+				context.Write(" OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString());
 		}
 		#endregion
 	}

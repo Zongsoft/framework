@@ -35,59 +35,69 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MySql
 {
-	public class MySqlExpressionVisitor : ExpressionVisitor
+	public class MySqlExpressionVisitor : ExpressionVisitorBase
 	{
 		#region 构造函数
-		public MySqlExpressionVisitor()
-		{
-		}
+		public MySqlExpressionVisitor() { }
 		#endregion
 
 		#region 公共属性
 		public override IExpressionDialect Dialect
 		{
-			get
-			{
-				return MySqlExpressionDialect.Instance;
-			}
+			get => MySqlExpressionDialect.Instance;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override IExpression VisitStatement(IStatementBase statement)
+		protected override void VisitExists(ExpressionVisitorContext context, IExpression expression)
+		{
+			var statement = context.Find<IStatement>();
+
+			if(statement is SelectStatementBase)
+			{
+				base.VisitExists(context, expression);
+				return;
+			}
+
+			context.WriteLine("SELECT * FROM (");
+			base.VisitExists(context, expression);
+			context.WriteLine(")");
+		}
+
+		protected override void VisitStatement(ExpressionVisitorContext context, IStatementBase statement)
 		{
 			switch(statement)
 			{
 				case TableDefinition table:
-					MySqlTableDefinitionVisitor.Instance.Visit(this, table);
+					MySqlTableDefinitionVisitor.Instance.Visit(context, table);
 					break;
 				case SelectStatement select:
-					MySqlSelectStatementVisitor.Instance.Visit(this, select);
+					MySqlSelectStatementVisitor.Instance.Visit(context, select);
 					break;
 				case DeleteStatement delete:
-					MySqlDeleteStatementVisitor.Instance.Visit(this, delete);
+					MySqlDeleteStatementVisitor.Instance.Visit(context, delete);
 					break;
 				case InsertStatement insert:
-					MySqlInsertStatementVisitor.Instance.Visit(this, insert);
+					MySqlInsertStatementVisitor.Instance.Visit(context, insert);
 					break;
 				case UpdateStatement update:
-					MySqlUpdateStatementVisitor.Instance.Visit(this, update);
+					MySqlUpdateStatementVisitor.Instance.Visit(context, update);
 					break;
 				case UpsertStatement upsert:
-					MySqlUpsertStatementVisitor.Instance.Visit(this, upsert);
+					MySqlUpsertStatementVisitor.Instance.Visit(context, upsert);
 					break;
 				case AggregateStatement aggregate:
-					MySqlAggregateStatementVisitor.Instance.Visit(this, aggregate);
+					MySqlAggregateStatementVisitor.Instance.Visit(context, aggregate);
 					break;
 				case ExistStatement exist:
-					MySqlExistStatementVisitor.Instance.Visit(this, exist);
+					MySqlExistStatementVisitor.Instance.Visit(context, exist);
 					break;
 				case ExecutionStatement execution:
-					MySqlExecutionStatementVisitor.Instance.Visit(this, execution);
+					MySqlExecutionStatementVisitor.Instance.Visit(context, execution);
 					break;
+				default:
+					throw new DataException($"Not supported '{statement}' statement.");
 			}
-
-			return statement;
 		}
 		#endregion
 
@@ -99,9 +109,7 @@ namespace Zongsoft.Data.MySql
 			#endregion
 
 			#region 私有构造
-			private MySqlExpressionDialect()
-			{
-			}
+			private MySqlExpressionDialect() { }
 			#endregion
 
 			#region 公共方法
@@ -249,9 +257,7 @@ namespace Zongsoft.Data.MySql
 			#endregion
 
 			#region 私有构造
-			private MySqlTableDefinitionVisitor()
-			{
-			}
+			private MySqlTableDefinitionVisitor() { }
 			#endregion
 		}
 		#endregion

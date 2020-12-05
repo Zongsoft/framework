@@ -42,16 +42,14 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 构造函数
-		private MySqlUpdateStatementVisitor()
-		{
-		}
+		private MySqlUpdateStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void VisitTables(IExpressionVisitor visitor, UpdateStatement statement, IList<TableIdentifier> tables)
+		protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 		{
 			//调用基类同名方法
-			base.VisitTables(visitor, statement, tables);
+			base.VisitTables(context, statement, tables);
 
 			/*
 			 * 注意：由于 MySQL 的 UPDATE 语句不支持 FROM 子句，因此必须将其改写为多表修改的语法。
@@ -66,16 +64,16 @@ namespace Zongsoft.Data.MySql
 						case TableIdentifier table:
 							if(!tables.Contains(table))
 							{
-								visitor.Output.Append(",");
-								visitor.Visit(table);
+								context.Write(",");
+								context.Visit(table);
 							}
 
 							break;
 						case JoinClause join:
 							if(join.Target is TableIdentifier target)
 							{
-								visitor.Output.Append(",");
-								visitor.Visit(target);
+								context.Write(",");
+								context.Visit(target);
 							}
 							else
 							{
@@ -90,7 +88,7 @@ namespace Zongsoft.Data.MySql
 			}
 		}
 
-		protected override void VisitWhere(IExpressionVisitor visitor, UpdateStatement statement, IExpression where)
+		protected override void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
 		{
 			/*
 			 * 注意：由于 MySQL 的 UPDATE 语句不支持 FROM 子句，因此必须将其改写为多表修改的语法。
@@ -118,10 +116,10 @@ namespace Zongsoft.Data.MySql
 			}
 
 			//调用基类同名方法
-			base.VisitWhere(visitor, statement, where);
+			base.VisitWhere(context, statement, where);
 		}
 
-		protected override void VisitFrom(IExpressionVisitor visitor, UpdateStatement statement, ICollection<ISource> sources)
+		protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 		{
 			/*
 			 * 由于 MySQL 的 UPDATE 语句不支持 FROM 子句，故不输出任何内容，且不调用基类同名方法以避免生成错误的语句。
