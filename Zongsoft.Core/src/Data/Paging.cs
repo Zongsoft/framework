@@ -56,17 +56,13 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 创建默认的分页设置。<see cref="PageIndex"/>默认值为1（即首页），<see cref="PageSize"/>默认值为20。
 		/// </summary>
-		public Paging() : this(1, PAGE_SIZE)
-		{
-		}
+		public Paging() : this(1, PAGE_SIZE) { }
 
 		/// <summary>
 		/// 创建指定页号的分页设置。<see cref="PageSize"/>默认值为20。
 		/// </summary>
 		/// <param name="pageIndex"></param>
-		public Paging(int pageIndex) : this(pageIndex, PAGE_SIZE)
-		{
-		}
+		public Paging(int pageIndex) : this(pageIndex, PAGE_SIZE) { }
 
 		/// <summary>
 		/// 创建指定页号和页大小的分页设置。
@@ -86,29 +82,20 @@ namespace Zongsoft.Data
 		/// </summary>
 		public int PageSize
 		{
-			get
-			{
-				return _pageSize;
-			}
-			set
-			{
-				_pageSize = Math.Max(value, 0);
-			}
+			get => _pageSize;
+			set => _pageSize = Math.Max(value, 0);
 		}
 
 		/// <summary>
-		/// 获取或设置当前查询的页号，页号从1开始，如果设置小于1的数值均被重置为1。
+		/// 获取或设置当前查询的页号，页号从1开始，如果设置值小于零则被重置为0。
 		/// </summary>
+		/// <remarks>
+		/// 注意：零表示不分页，仅获取 <see cref="PageSize"/> 属性所指定的记录数。
+		/// </remarks>
 		public int PageIndex
 		{
-			get
-			{
-				return _pageIndex;
-			}
-			set
-			{
-				_pageIndex = Math.Max(value, 1);
-			}
+			get => _pageIndex;
+			set => _pageIndex = Math.Max(value, 0);
 		}
 
 		/// <summary>
@@ -133,14 +120,8 @@ namespace Zongsoft.Data
 		/// </summary>
 		public long TotalCount
 		{
-			get
-			{
-				return _totalCount;
-			}
-			set
-			{
-				_totalCount = Math.Max(value, -1);
-			}
+			get => _totalCount;
+			set => _totalCount = Math.Max(value, -1);
 		}
 		#endregion
 
@@ -173,7 +154,7 @@ namespace Zongsoft.Data
 		/// <returns>如果指定的分页设置的页大小于或等于零，则返回真(True)否则返回假(False)。</returns>
 		public static bool IsDisabled(Paging paging)
 		{
-			return paging != null && paging.PageSize <= 0;
+			return paging == null || paging.PageSize <= 0;
 		}
 		#endregion
 	}
