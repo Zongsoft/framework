@@ -55,21 +55,8 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 公共属性
-		public override string Name
-		{
-			get
-			{
-				return Key;
-			}
-		}
-
-		public override IStatementBuilder Builder
-		{
-			get
-			{
-				return MySqlStatementBuilder.Default;
-			}
-		}
+		public override string Name => Key;
+		public override IStatementBuilder Builder => MySqlStatementBuilder.Default;
 		#endregion
 
 		#region 公共方法

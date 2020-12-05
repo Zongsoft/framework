@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -38,9 +37,7 @@ namespace Zongsoft.Data.MsSql
 	public class MsSqlAggregateStatementBuilder : AggregateStatementBuilder
 	{
 		#region 构造函数
-		public MsSqlAggregateStatementBuilder()
-		{
-		}
+		public MsSqlAggregateStatementBuilder() { }
 		#endregion
 	}
 }

@@ -42,10 +42,7 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 公共属性
-		public override IExpressionDialect Dialect
-		{
-			get => MySqlExpressionDialect.Instance;
-		}
+		public override IExpressionDialect Dialect => MySqlExpressionDialect.Instance;
 		#endregion
 
 		#region 重写方法
