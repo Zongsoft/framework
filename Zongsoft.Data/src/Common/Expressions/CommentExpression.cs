@@ -41,11 +41,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public string Text
-		{
-			get;
-			set;
-		}
+		public string Text { get; set; }
 		#endregion
 
 		#region 重写方法

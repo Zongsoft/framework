@@ -36,7 +36,6 @@ namespace Zongsoft.Data.Common
 	public abstract class DataDriverBase : IDataDriver
 	{
 		#region 成员字段
-		private readonly FeatureCollection _features;
 		private readonly VisitorPool _visitors;
 		#endregion
 
@@ -47,28 +46,18 @@ namespace Zongsoft.Data.Common
 			_visitors = new VisitorPool(this.CreateVisitor);
 
 			//创建功能特性集合
-			_features = new FeatureCollection();
+			this.Features = new FeatureCollection();
 		}
 		#endregion
 
 		#region 公共属性
-		public abstract string Name
-		{
-			get;
-		}
+		public abstract string Name { get; }
 
-		public FeatureCollection Features
-		{
-			get
-			{
-				return _features;
-			}
-		}
+		public FeatureCollection Features { get; }
 
-		public abstract Expressions.IStatementBuilder Builder
-		{
-			get;
-		}
+		public Expressions.ExpressionVisitorBase Visitor { get; }
+
+		public abstract Expressions.IStatementBuilder Builder { get; }
 		#endregion
 
 		#region 公共方法
@@ -138,11 +127,13 @@ namespace Zongsoft.Data.Common
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private string Script(Expressions.IStatementBase statement)
 		{
-			//从对象池中获取一个访问器
-			var visitor = _visitors.GetObject();
+			Expressions.IExpressionVisitor visitor = null;
 
 			try
 			{
+				//从对象池中获取一个访问器
+				visitor = _visitors.GetObject();
+
 				//访问指定的语句
 				visitor.Visit(statement);
 
@@ -152,7 +143,8 @@ namespace Zongsoft.Data.Common
 			finally
 			{
 				//将使用完成的访问器释放回对象池
-				_visitors.Release(visitor);
+				if(visitor != null)
+					_visitors.Release(visitor);
 			}
 		}
 		#endregion
