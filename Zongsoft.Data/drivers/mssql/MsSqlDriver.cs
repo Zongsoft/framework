@@ -54,21 +54,8 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 公共属性
-		public override string Name
-		{
-			get
-			{
-				return Key;
-			}
-		}
-
-		public override IStatementBuilder Builder
-		{
-			get
-			{
-				return MsSqlStatementBuilder.Default;
-			}
-		}
+		public override string Name => Key;
+		public override IStatementBuilder Builder => MsSqlStatementBuilder.Default;
 		#endregion
 
 		#region 公共方法
@@ -115,7 +102,7 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 保护方法
-		protected override IExpressionVisitor CreateVisitor()
+		protected override ExpressionVisitorBase CreateVisitor()
 		{
 			return new MsSqlExpressionVisitor();
 		}

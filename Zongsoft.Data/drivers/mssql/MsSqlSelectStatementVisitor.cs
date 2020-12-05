@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,13 +41,11 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 构造函数
-		private MsSqlSelectStatementVisitor()
-		{
-		}
+		private MsSqlSelectStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, SelectStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 		{
 			//由于分页子句必须依赖于排序(OrderBy)子句，所以在没有指定排序子句的情况下默认以主键进行排序
 			if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy == null && statement.Table != null)
@@ -60,21 +57,21 @@ namespace Zongsoft.Data.MsSql
 			}
 
 			//调用基类同名方法
-			base.OnVisit(visitor, statement);
+			base.OnVisit(context, statement);
 
 			if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy != null)
-				this.VisitPaging(visitor, statement.Paging);
+				this.VisitPaging(context, statement.Paging);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void VisitPaging(IExpressionVisitor visitor, Paging paging)
+		protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
 		{
-			if(visitor.Output.Length > 0)
-				visitor.Output.AppendLine();
+			if(context.Output.Length > 0)
+				context.WriteLine();
 
-			visitor.Output.Append("OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString() + " ROWS ");
-			visitor.Output.Append("FETCH NEXT " + paging.PageSize.ToString() + " ROWS ONLY");
+			context.Write("OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString() + " ROWS ");
+			context.Write("FETCH NEXT " + paging.PageSize.ToString() + " ROWS ONLY");
 		}
 		#endregion
 	}

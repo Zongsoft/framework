@@ -35,59 +35,51 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MsSql
 {
-	public class MsSqlExpressionVisitor : ExpressionVisitor
+	public class MsSqlExpressionVisitor : ExpressionVisitorBase
 	{
 		#region 构造函数
-		public MsSqlExpressionVisitor()
-		{
-		}
+		public MsSqlExpressionVisitor() { }
 		#endregion
 
 		#region 公共属性
-		public override IExpressionDialect Dialect
-		{
-			get
-			{
-				return MsSqlExpressionDialect.Instance;
-			}
-		}
+		public override IExpressionDialect Dialect => MsSqlExpressionDialect.Instance;
 		#endregion
 
 		#region 重写方法
-		protected override IExpression VisitStatement(IStatementBase statement)
+		protected override void VisitStatement(ExpressionVisitorContext context, IStatementBase statement)
 		{
 			switch(statement)
 			{
 				case TableDefinition table:
-					MsSqlTableDefinitionVisitor.Instance.Visit(this, table);
+					MsSqlTableDefinitionVisitor.Instance.Visit(context, table);
 					break;
 				case SelectStatement select:
-					MsSqlSelectStatementVisitor.Instance.Visit(this, select);
+					MsSqlSelectStatementVisitor.Instance.Visit(context, select);
 					break;
 				case DeleteStatement delete:
-					MsSqlDeleteStatementVisitor.Instance.Visit(this, delete);
+					MsSqlDeleteStatementVisitor.Instance.Visit(context, delete);
 					break;
 				case InsertStatement insert:
-					MsSqlInsertStatementVisitor.Instance.Visit(this, insert);
+					MsSqlInsertStatementVisitor.Instance.Visit(context, insert);
 					break;
 				case UpdateStatement update:
-					MsSqlUpdateStatementVisitor.Instance.Visit(this, update);
+					MsSqlUpdateStatementVisitor.Instance.Visit(context, update);
 					break;
 				case UpsertStatement upsert:
-					MsSqlUpsertStatementVisitor.Instance.Visit(this, upsert);
+					MsSqlUpsertStatementVisitor.Instance.Visit(context, upsert);
 					break;
 				case AggregateStatement aggregate:
-					MsSqlAggregateStatementVisitor.Instance.Visit(this, aggregate);
+					MsSqlAggregateStatementVisitor.Instance.Visit(context, aggregate);
 					break;
 				case ExistStatement exist:
-					MsSqlExistStatementVisitor.Instance.Visit(this, exist);
+					MsSqlExistStatementVisitor.Instance.Visit(context, exist);
 					break;
 				case ExecutionStatement execution:
-					MsSqlExecutionStatementVisitor.Instance.Visit(this, execution);
+					MsSqlExecutionStatementVisitor.Instance.Visit(context, execution);
 					break;
+				default:
+					throw new DataException($"Not supported '{statement}' statement.");
 			}
-
-			return statement;
 		}
 		#endregion
 
@@ -265,30 +257,28 @@ namespace Zongsoft.Data.MsSql
 			#endregion
 
 			#region 私有构造
-			private MsSqlTableDefinitionVisitor()
-			{
-			}
+			private MsSqlTableDefinitionVisitor() { }
 			#endregion
 
 			#region 重写方法
-			protected override void OnVisit(IExpressionVisitor visitor, TableDefinition statement)
+			protected override void OnVisit(ExpressionVisitorContext context, TableDefinition statement)
 			{
 				if(statement.IsTemporary)
-					visitor.Output.AppendLine($"CREATE TABLE #{statement.Name} (");
+					context.WriteLine($"CREATE TABLE #{statement.Name} (");
 				else
-					visitor.Output.AppendLine($"CREATE TABLE {statement.Name} (");
+					context.WriteLine($"CREATE TABLE {statement.Name} (");
 
 				int index = 0;
 
 				foreach(var field in statement.Fields)
 				{
 					if(index++ > 0)
-						visitor.Output.AppendLine(",");
+						context.WriteLine(",");
 
-					visitor.Visit(field);
+					context.Visit(field);
 				}
 
-				visitor.Output.AppendLine(");");
+				context.WriteLine(");");
 			}
 			#endregion
 		}

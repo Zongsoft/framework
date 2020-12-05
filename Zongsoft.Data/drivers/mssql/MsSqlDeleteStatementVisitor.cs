@@ -42,33 +42,31 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 构造函数
-		private MsSqlDeleteStatementVisitor()
-		{
-		}
+		private MsSqlDeleteStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void VisitFrom(IExpressionVisitor visitor, DeleteStatement statement, ICollection<ISource> sources)
+		protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 		{
 			//生成OUTPUT(RETURNING)子句
-			this.VisitOutput(visitor, statement.Returning);
+			this.VisitOutput(context, statement.Returning);
 
 			//调用基类同名方法
-			base.VisitFrom(visitor, statement, sources);
+			base.VisitFrom(context, statement, sources);
 		}
 		#endregion
 
 		#region 私有方法
-		private void VisitOutput(IExpressionVisitor visitor, ReturningClause returning)
+		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
 		{
 			if(returning == null)
 				return;
 
-			visitor.Output.AppendLine();
-			visitor.Output.Append("OUTPUT ");
+			context.WriteLine();
+			context.Write("OUTPUT ");
 
 			if(returning.Members == null || returning.Members.Count == 0)
-				visitor.Output.Append("DELETED.*");
+				context.Write("DELETED.*");
 			else
 			{
 				int index = 0;
@@ -76,16 +74,16 @@ namespace Zongsoft.Data.MsSql
 				foreach(var member in returning.Members)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
+					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
 				}
 			}
 
 			if(returning.Table != null)
 			{
-				visitor.Output.Append(" INTO ");
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(returning.Table.Identifier()));
+				context.Write(" INTO ");
+				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
 			}
 		}
 		#endregion

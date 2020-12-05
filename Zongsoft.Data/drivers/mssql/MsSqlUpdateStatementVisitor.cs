@@ -42,44 +42,42 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 构造函数
-		private MsSqlUpdateStatementVisitor()
-		{
-		}
+		private MsSqlUpdateStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void VisitTables(IExpressionVisitor visitor, UpdateStatement statement, IList<TableIdentifier> tables)
+		protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 		{
 			if(tables.Count > 1)
 				throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
 
 			if(string.IsNullOrEmpty(tables[0].Alias))
-				visitor.Visit(tables[0]);
+				context.Visit(tables[0]);
 			else
-				visitor.Output.Append(tables[0].Alias);
+				context.Write(tables[0].Alias);
 		}
 
-		protected override void VisitFrom(IExpressionVisitor visitor, UpdateStatement statement, ICollection<ISource> sources)
+		protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 		{
 			//生成OUTPUT(RETURNING)子句
-			this.VisitOutput(visitor, statement.Returning);
+			this.VisitOutput(context, statement.Returning);
 
 			//调用基类同名方法
-			base.VisitFrom(visitor, statement, sources);
+			base.VisitFrom(context, statement, sources);
 		}
 		#endregion
 
 		#region 私有方法
-		private void VisitOutput(IExpressionVisitor visitor, ReturningClause returning)
+		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
 		{
 			if(returning == null)
 				return;
 
-			visitor.Output.AppendLine();
-			visitor.Output.Append("OUTPUT ");
+			context.WriteLine();
+			context.Write("OUTPUT ");
 
 			if(returning.Members == null || returning.Members.Count == 0)
-				visitor.Output.Append("DELETED.*");
+				context.Write("DELETED.*");
 			else
 			{
 				int index = 0;
@@ -87,16 +85,16 @@ namespace Zongsoft.Data.MsSql
 				foreach(var member in returning.Members)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
+					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
 				}
 			}
 
 			if(returning.Table != null)
 			{
-				visitor.Output.Append(" INTO ");
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(returning.Table.Identifier()));
+				context.Write(" INTO ");
+				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
 			}
 		}
 		#endregion

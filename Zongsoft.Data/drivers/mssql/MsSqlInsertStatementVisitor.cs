@@ -42,33 +42,31 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 构造函数
-		private MsSqlInsertStatementVisitor()
-		{
-		}
+		private MsSqlInsertStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void VisitValues(IExpressionVisitor visitor, InsertStatement statement, ICollection<IExpression> values, int rounds)
+		protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
 		{
 			//生成OUTPUT(RETURNING)子句
-			this.VisitOutput(visitor, statement.Returning);
+			this.VisitOutput(context, statement.Returning);
 
 			//调用基类同名方法
-			base.VisitValues(visitor, statement, values, rounds);
+			base.VisitValues(context, statement, values, rounds);
 		}
 		#endregion
 
 		#region 私有方法
-		private void VisitOutput(IExpressionVisitor visitor, ReturningClause returning)
+		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
 		{
 			if(returning == null)
 				return;
 
-			visitor.Output.AppendLine();
-			visitor.Output.Append("OUTPUT ");
+			context.WriteLine();
+			context.Write("OUTPUT ");
 
 			if(returning.Members == null || returning.Members.Count == 0)
-				visitor.Output.Append("INSERTED.*");
+				context.Write("INSERTED.*");
 			else
 			{
 				int index = 0;
@@ -76,16 +74,16 @@ namespace Zongsoft.Data.MsSql
 				foreach(var member in returning.Members)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
+					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
 				}
 			}
 
 			if(returning.Table != null)
 			{
-				visitor.Output.Append(" INTO ");
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(returning.Table.Identifier()));
+				context.Write(" INTO ");
+				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
 			}
 		}
 		#endregion

@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,13 +41,11 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 构造函数
-		private MsSqlUpsertStatementVisitor()
-		{
-		}
+		private MsSqlUpsertStatementVisitor() { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnVisit(IExpressionVisitor visitor, UpsertStatement statement)
+		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 		{
 			const string SOURCE_ALIAS = "SRC";
 			const string TARGET_ALIAS = "TAR";
@@ -56,113 +53,113 @@ namespace Zongsoft.Data.MsSql
 			if(statement.Fields == null || statement.Fields.Count == 0)
 				throw new DataException("Missing required fields in the upsert statment.");
 
-			visitor.Output.Append("MERGE INTO ");
-			visitor.Visit(statement.Table);
+			context.Write("MERGE INTO ");
+			context.Visit(statement.Table);
 			//visitor.Output.Append(" AS " + TARGET_ALIAS);
-			visitor.Output.AppendLine(" USING (SELECT ");
+			context.WriteLine(" USING (SELECT ");
 
 			for(int i = 0; i < statement.Values.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Visit(statement.Values[i]);
+				context.Visit(statement.Values[i]);
 			}
 
-			visitor.Output.AppendLine(") AS " + SOURCE_ALIAS + " (");
+			context.WriteLine(") AS " + SOURCE_ALIAS + " (");
 
 			for(int i = 0; i < statement.Fields.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Output.Append("[" + statement.Fields[i].Name + "]");
+				context.Write("[" + statement.Fields[i].Name + "]");
 			}
 
-			visitor.Output.AppendLine(") ON");
+			context.WriteLine(") ON");
 
 			for(int i = 0; i < statement.Entity.Key.Length; i++)
 			{
 				var field = Metadata.DataEntityPropertyExtension.GetFieldName(statement.Entity.Key[i], out _);
 
 				if(i > 0)
-					visitor.Output.Append(" AND ");
+					context.Write(" AND ");
 
 				if(string.IsNullOrEmpty(statement.Table.Alias))
-					visitor.Output.Append($"[{field}]={SOURCE_ALIAS}.[{field}]");
+					context.Write($"[{field}]={SOURCE_ALIAS}.[{field}]");
 				else
-					visitor.Output.Append($"{statement.Table.Alias}.[{field}]={SOURCE_ALIAS}.[{field}]");
+					context.Write($"{statement.Table.Alias}.[{field}]={SOURCE_ALIAS}.[{field}]");
 			}
 
 			if(statement.Updation.Count > 0)
 			{
-				visitor.Output.AppendLine();
-				visitor.Output.Append("WHEN MATCHED");
+				context.WriteLine();
+				context.Write("WHEN MATCHED");
 
 				if(statement.Where != null)
 				{
-					visitor.Output.Append(" AND ");
-					visitor.Visit(statement.Where);
+					context.WriteLine(" AND ");
+					context.Visit(statement.Where);
 				}
 
-				visitor.Output.AppendLine(" THEN");
-				visitor.Output.Append("\tUPDATE SET ");
+				context.WriteLine(" THEN");
+				context.Write("\tUPDATE SET ");
 
 				int index = 0;
 
 				foreach(var item in statement.Updation)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Visit(item.Field);
-					visitor.Output.Append("=");
-					visitor.Visit(item.Value);
+					context.Visit(item.Field);
+					context.Write("=");
+					context.Visit(item.Value);
 				}
 			}
 
-			visitor.Output.AppendLine();
-			visitor.Output.AppendLine("WHEN NOT MATCHED THEN");
-			visitor.Output.Append("\tINSERT (");
+			context.WriteLine();
+			context.WriteLine("WHEN NOT MATCHED THEN");
+			context.Write("\tINSERT (");
 
 			for(int i = 0; i < statement.Fields.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(statement.Fields[i]));
+				context.Write(context.Dialect.GetIdentifier(statement.Fields[i]));
 			}
 
-			visitor.Output.Append(") VALUES (");
+			context.Write(") VALUES (");
 
 			for(int i = 0; i < statement.Fields.Count; i++)
 			{
 				if(i > 0)
-					visitor.Output.Append(",");
+					context.Write(",");
 
-				visitor.Output.Append(SOURCE_ALIAS + ".[" + statement.Fields[i].Name + "]");
+				context.Write(SOURCE_ALIAS + ".[" + statement.Fields[i].Name + "]");
 			}
 
-			visitor.Output.Append(")");
+			context.Write(")");
 
 			//输出返回子句
-			this.VisitOutput(visitor, statement.Returning);
+			this.VisitOutput(context, statement.Returning);
 
-			visitor.Output.AppendLine(";");
+			context.WriteLine(";");
 		}
 		#endregion
 
 		#region 私有方法
-		private void VisitOutput(IExpressionVisitor visitor, ReturningClause returning)
+		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
 		{
 			if(returning == null)
 				return;
 
-			visitor.Output.AppendLine();
-			visitor.Output.Append("OUTPUT ");
+			context.WriteLine();
+			context.Write("OUTPUT ");
 
 			if(returning.Members == null || returning.Members.Count == 0)
-				visitor.Output.Append("INSERTED.*");
+				context.Write("INSERTED.*");
 			else
 			{
 				int index = 0;
@@ -170,16 +167,16 @@ namespace Zongsoft.Data.MsSql
 				foreach(var member in returning.Members)
 				{
 					if(index++ > 0)
-						visitor.Output.Append(",");
+						context.Write(",");
 
-					visitor.Output.Append((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
+					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
 				}
 			}
 
 			if(returning.Table != null)
 			{
-				visitor.Output.Append(" INTO ");
-				visitor.Output.Append(visitor.Dialect.GetIdentifier(returning.Table.Identifier()));
+				context.Write(" INTO ");
+				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
 			}
 		}
 		#endregion
