@@ -78,6 +78,11 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		/// <summary>
+		/// 获取一个值，指示是否启用了分页。
+		/// </summary>
+		public bool Enabled => _pageSize > 0 && _pageIndex > 0;
+
+		/// <summary>
 		/// 获取或设置页大小，如果该属性值为零则表示不分页。
 		/// </summary>
 		public int PageSize
