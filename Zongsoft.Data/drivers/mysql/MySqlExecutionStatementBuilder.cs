@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -38,9 +37,7 @@ namespace Zongsoft.Data.MySql
 	public class MySqlExecutionStatementBuilder : ExecutionStatementBuilder
 	{
 		#region 构造函数
-		public MySqlExecutionStatementBuilder()
-		{
-		}
+		public MySqlExecutionStatementBuilder() { }
 		#endregion
 	}
 }

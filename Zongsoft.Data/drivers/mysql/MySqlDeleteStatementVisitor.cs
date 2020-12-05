@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,9 +41,7 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 构造函数
-		private MySqlDeleteStatementVisitor()
-		{
-		}
+		private MySqlDeleteStatementVisitor() { }
 		#endregion
 	}
 }
