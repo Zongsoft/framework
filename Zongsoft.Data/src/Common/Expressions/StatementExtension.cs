@@ -196,9 +196,17 @@ namespace Zongsoft.Data.Common.Expressions
 			if(condition.Operator == ConditionOperator.Exists || condition.Operator == ConditionOperator.NotExists)
 			{
 				if(condition.Field.Type == OperandType.Field)
+				{
+					var subquery = statement.GetSubquery(condition.Name, condition.Value as ICondition);
+
+					//设置子查询的返回记录数限定为1，以提升查询性能
+					if(subquery is SelectStatement select)
+						select.Paging = Paging.Page(0, 1);
+
 					return condition.Operator == ConditionOperator.Exists ?
-						Expression.Exists((IExpression)statement.GetSubquery(condition.Name, condition.Value as ICondition)) :
-						Expression.NotExists((IExpression)statement.GetSubquery(condition.Name, condition.Value as ICondition));
+						Expression.Exists((IExpression)subquery) :
+						Expression.NotExists((IExpression)subquery);
+				}
 
 				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 			}
