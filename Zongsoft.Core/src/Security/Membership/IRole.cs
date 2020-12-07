@@ -38,6 +38,14 @@ namespace Zongsoft.Security.Membership
 	[Zongsoft.Data.Model("Security.Role")]
 	public interface IRole : IEquatable<IRole>
 	{
+		#region 常量定义
+		/// <summary>系统管理员角色名。</summary>
+		public const string Administrators = nameof(Administrators);
+
+		/// <summary>安全管理员角色名。</summary>
+		public const string Security = nameof(Security);
+		#endregion
+
 		/// <summary>
 		/// 获取或设置角色编号。
 		/// </summary>

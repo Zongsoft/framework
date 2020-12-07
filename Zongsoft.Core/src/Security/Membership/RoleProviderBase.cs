@@ -120,8 +120,8 @@ namespace Zongsoft.Security.Membership
 				throw new ArgumentNullException(nameof(name));
 
 			//验证指定的名称是否为系统内置名
-			if(string.Equals(name, Role.Administrators, StringComparison.OrdinalIgnoreCase) ||
-			   string.Equals(name, Role.Security, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+			   string.Equals(name, IRole.Security, StringComparison.OrdinalIgnoreCase))
 				throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
 
 			//验证指定的名称是否合法
@@ -179,7 +179,7 @@ namespace Zongsoft.Security.Membership
 
 			return this.DataAccess.Delete<TRole>(
 				Condition.In(nameof(IRole.RoleId), ids) &
-				Condition.NotIn(nameof(IRole.Name), Role.Administrators, Role.Security),
+				Condition.NotIn(nameof(IRole.Name), IRole.Administrators, IRole.Security),
 				"Members,Children,Permissions,PermissionFilters");
 		}
 
@@ -188,7 +188,13 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			var role = this.CreateRole(name, @namespace, fullName, description);
+			var role = this.CreateRole();
+
+			role.Name = name;
+			role.FullName = fullName;
+			role.Namespace = @namespace;
+			role.Description = string.IsNullOrEmpty(description) ? null : description;
+
 			return this.Create(role) ? role : default;
 		}
 
@@ -246,8 +252,8 @@ namespace Zongsoft.Security.Membership
 			if(model.HasChanges(nameof(IRole.Name)) && !string.IsNullOrWhiteSpace(role.Name))
 			{
 				//验证指定的名称是否为系统内置名
-				if(string.Equals(role.Name, Role.Administrators, StringComparison.OrdinalIgnoreCase) ||
-				   string.Equals(role.Name, Role.Security, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+				   string.Equals(role.Name, IRole.Security, StringComparison.OrdinalIgnoreCase))
 					throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
 
 				//验证指定的名称是否合法
@@ -280,7 +286,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 抽象方法
-		protected abstract TRole CreateRole(string name, string @namespace, string fullName, string description = null);
+		protected abstract TRole CreateRole();
 		#endregion
 
 		#region 虚拟方法

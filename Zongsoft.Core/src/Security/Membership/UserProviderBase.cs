@@ -221,7 +221,7 @@ namespace Zongsoft.Security.Membership
 			userId = GetUserId(userId);
 
 			//验证指定的名称是否为系统内置名
-			if(string.Equals(name, User.Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
 				throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
 
 			//验证指定的名称是否合法
@@ -317,7 +317,7 @@ namespace Zongsoft.Security.Membership
 
 			return this.DataAccess.Delete<TUser>(
 				Condition.In(nameof(IUser.UserId), ids) &
-				Condition.NotEqual(nameof(IUser.Name), User.Administrator),
+				Condition.NotEqual(nameof(IUser.Name), IUser.Administrator),
 				"Members,Permissions,PermissionFilters");
 		}
 
@@ -331,7 +331,11 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var user = this.CreateUser(identity, @namespace, status, description);
+			var user = this.CreateUser();
+
+			user.Namespace = @namespace;
+			user.Status = status;
+			user.Description = string.IsNullOrEmpty(description) ? null : description;
 
 			switch(MembershipUtility.GetIdentityType(identity))
 			{
@@ -460,7 +464,7 @@ namespace Zongsoft.Security.Membership
 			if(model.HasChanges(nameof(IUser.Name)) && !string.IsNullOrWhiteSpace(user.Name))
 			{
 				//验证指定的名称是否为系统内置名
-				if(string.Equals(user.Name, User.Administrator, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
 					throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
 
 				//验证指定的名称是否合法
@@ -742,9 +746,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 抽象方法
-		protected abstract TUser CreateUser(string identity, string @namespace, UserStatus status, string description = null);
-		protected abstract bool IsVerifyEmailRequired();
-		protected abstract bool IsVerifyPhoneRequired();
+		protected abstract TUser CreateUser();
 		#endregion
 
 		#region 虚拟方法
@@ -924,6 +926,9 @@ namespace Zongsoft.Security.Membership
 			if(validator != null)
 				validator.Validate(password, message => throw new SecurityException("password.illegality", message));
 		}
+
+		protected virtual bool IsVerifyEmailRequired() => true;
+		protected virtual bool IsVerifyPhoneRequired() => true;
 		#endregion
 
 		#region 激发事件
@@ -959,7 +964,7 @@ namespace Zongsoft.Security.Membership
 
 			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
-			if(current == userId || ApplicationContext.Current.Principal.InRoles(new[] { Role.Administrators, Role.Security }))
+			if(current == userId || ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security }))
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");
@@ -988,7 +993,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static void EnsureRoles()
 		{
-			if(!ApplicationContext.Current.Principal.InRoles(new[] { Role.Administrators, Role.Security }))
+			if(!ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security }))
 				throw new AuthorizationException("Denied: The current user is not a security administrator and is not authorized to perform this operation.");
 		}
 		#endregion

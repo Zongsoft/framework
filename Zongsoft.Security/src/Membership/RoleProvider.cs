@@ -34,8 +34,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IRoleProvider<Role>))]
-	public class RoleProvider : RoleProviderBase<Role>
+	[Service(typeof(IRoleProvider<IRole>))]
+	public class RoleProvider : RoleProviderBase<IRole>
 	{
 		#region 构造函数
 		public RoleProvider(IServiceProvider serviceProvider) : base(null, serviceProvider) { }
@@ -47,16 +47,9 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 重写方法
-		protected override Role CreateRole(string name, string @namespace, string fullName, string description = null)
+		protected override IRole CreateRole()
 		{
-			var role = Model.Build<Role>();
-
-			role.Name = name;
-			role.Namespace = @namespace;
-			role.FullName = fullName;
-			role.Description = description;
-
-			return role;
+			return Model.Build<IRole>();
 		}
 
 		protected override void OnValidateName(string name)

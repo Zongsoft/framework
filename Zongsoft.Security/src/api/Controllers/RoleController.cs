@@ -45,13 +45,13 @@ namespace Zongsoft.Security.Web.Controllers
 {
 	[ApiController]
 	[Area(Modules.Security)]
-	[Authorize(Roles = Role.Administrators + "," + Role.Security)]
+	[Authorize(Roles = IRole.Administrators + "," + IRole.Security)]
 	[Route("{area}/Roles")]
 	public class RoleController : ControllerBase
 	{
 		#region 成员字段
 		private IAuthorizer _authorizer;
-		private IRoleProvider<Role> _roleProvider;
+		private IRoleProvider<IRole> _roleProvider;
 		private IMemberProvider _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IRoleProvider<Role> RoleProvider
+		public IRoleProvider<IRole> RoleProvider
 		{
 			get => _roleProvider;
 			set => _roleProvider = value ?? throw new ArgumentNullException();
@@ -144,7 +144,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<Role> Create([FromBody]Role model)
+		public ActionResult<IRole> Create([FromBody]IRole model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -157,7 +157,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id:required}")]
 		[HttpPatch("{id:required}")]
-		public Task<IActionResult> Update(uint id, [FromBody]Role model)
+		public Task<IActionResult> Update(uint id, [FromBody]IRole model)
 		{
 			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());

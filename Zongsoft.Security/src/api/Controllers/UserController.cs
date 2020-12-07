@@ -50,7 +50,7 @@ namespace Zongsoft.Security.Web.Controllers
 	public class UserController : ControllerBase
 	{
 		#region 成员字段
-		private IUserProvider<User> _userProvider;
+		private IUserProvider<IUser> _userProvider;
 		private IAuthorizer _authorizer;
 		private IMemberProvider _memberProvider;
 		private IPermissionProvider _permissionProvider;
@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IUserProvider<User> UserProvider
+		public IUserProvider<IUser> UserProvider
 		{
 			get => _userProvider;
 			set => _userProvider = value ?? throw new ArgumentNullException();
@@ -144,7 +144,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<User> Create([FromBody]User model)
+		public ActionResult<IUser> Create([FromBody]IUser model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -160,7 +160,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id?}")]
 		[HttpPatch("{id?}")]
-		public Task<IActionResult> Update(uint id, [FromBody]User model)
+		public Task<IActionResult> Update(uint id, [FromBody]IUser model)
 		{
 			return this.UserProvider.Update(id, model) ?
 				Task.FromResult((IActionResult)this.NoContent()) :

@@ -38,6 +38,11 @@ namespace Zongsoft.Security.Membership
 	[Zongsoft.Data.Model("Security.User")]
 	public interface IUser : IUserIdentity, IEquatable<IUser>
 	{
+		#region 常量定义
+		/// <summary>系统管理员用户名。</summary>
+		public const string Administrator = nameof(Administrator);
+		#endregion
+
 		/// <summary>
 		/// 获取或设置用户的邮箱标识。
 		/// </summary>
