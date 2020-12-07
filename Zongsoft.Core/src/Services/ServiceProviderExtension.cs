@@ -56,9 +56,24 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name = null)
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, bool required = false)
 		{
-			return services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
+			return GetDataAccess(services, null, required);
+		}
+
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name = null, bool required = false)
+		{
+			var data = services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
+
+			if(data == null && required)
+			{
+				if(string.IsNullOrEmpty(name))
+					throw new InvalidOperationException($"Unable to acquire the default data accessor.");
+				else
+					throw new InvalidOperationException($"Unable to acquire the data accessor with the name ‘{name}’.");
+			}
+
+			return data;
 		}
 
 		public static object Resolve(this IServiceProvider services, string name)
