@@ -35,23 +35,13 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供关于角色和角色成员管理的接口。
 	/// </summary>
-	public interface IRoleProvider
+	public interface IRoleProvider<TRole> where TRole : IRole
 	{
 		#region 事件定义
 		/// <summary>
 		/// 表示角色信息发生更改之后的事件。
 		/// </summary>
 		event EventHandler<ChangedEventArgs> Changed;
-		#endregion
-
-		#region 属性定义
-		/// <summary>
-		/// 获取数据序号提供程序。
-		/// </summary>
-		Common.ISequence Sequence
-		{
-			get;
-		}
 		#endregion
 
 		#region 方法定义
@@ -75,7 +65,7 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		/// <param name="roleId">要查找的角色编号。</param>
 		/// <returns>返回由<paramref name="roleId"/>参数指定的角色对象，如果没有找到指定编号的角色则返回空。</returns>
-		IRole GetRole(uint roleId);
+		TRole GetRole(uint roleId);
 
 		/// <summary>
 		/// 获取指定名称对应的角色对象。
@@ -84,7 +74,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="namespace">要查找的角色所属的命名空间，如果为空(null)或空字符串("")则表示当前用户所在命名空间。</param>
 		/// <returns>返回找到的角色对象；如果在指定的命名空间内没有找到指定名称的角色则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="name"/>参数为空(null)或者全空格字符。</exception>
-		IRole GetRole(string name, string @namespace = null);
+		TRole GetRole(string name, string @namespace = null);
 
 		/// <summary>
 		/// 获取指定命名空间中的角色集。
@@ -92,7 +82,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="namespace">要获取的角色集所属的命名空间。如果为星号(*)则忽略命名空间即系统中的所有角色；如果为空(null)或空字符串("")则查找当前用户所在命名空间的角色集。</param>
 		/// <param name="paging">查询的分页设置，默认为第一页。</param>
 		/// <returns>返回当前命名空间中的所有角色对象集。</returns>
-		IEnumerable<IRole> GetRoles(string @namespace, Zongsoft.Data.Paging paging = null);
+		IEnumerable<TRole> GetRoles(string @namespace, Zongsoft.Data.Paging paging = null);
 
 		/// <summary>
 		/// 设置指定编号的角色所属命名空间。
@@ -149,21 +139,21 @@ namespace Zongsoft.Security.Membership
 		/// <param name="fullName">指定的新建角色的全称。</param>
 		/// <param name="description">指定的新建角色的描述信息。</param>
 		/// <returns>返回创建成功的角色对象，如果为空(null)则表示创建失败。</returns>
-		IRole Create(string name, string @namespace, string fullName = null, string description = null);
+		TRole Create(string name, string @namespace, string fullName = null, string description = null);
 
 		/// <summary>
 		/// 创建一个角色。
 		/// </summary>
 		/// <param name="role">要创建的角色对象。</param>
 		/// <returns>如果创建成功则返回真(true)，否则返回假(false)。</returns>
-		bool Create(IRole role);
+		bool Create(TRole role);
 
 		/// <summary>
 		/// 创建单个或者多个角色。
 		/// </summary>
 		/// <param name="roles">要创建的角色对象集。</param>
 		/// <returns>返回创建成功的角色数量。</returns>
-		int Create(IEnumerable<IRole> roles);
+		int Create(IEnumerable<TRole> roles);
 
 		/// <summary>
 		/// 修改指定编号的角色信息。
@@ -171,7 +161,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="roleId">指定要修改的角色编号。</param>
 		/// <param name="role">要修改的角色对象。</param>
 		/// <returns>如果修改成功则返回真(true)，否则返回假(false)。</returns>
-		bool Update(uint roleId, IRole role);
+		bool Update(uint roleId, TRole role);
 		#endregion
 	}
 }
