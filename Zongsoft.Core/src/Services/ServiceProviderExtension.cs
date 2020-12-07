@@ -61,7 +61,7 @@ namespace Zongsoft.Services
 			return GetDataAccess(services, null, required);
 		}
 
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name = null, bool required = false)
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name, bool required = false)
 		{
 			var data = services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
 
