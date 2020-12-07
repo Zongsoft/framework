@@ -287,6 +287,8 @@ namespace Zongsoft.Security
 				var user = (Membership.IUser)model;
 				user.FullName = identity.Label;
 
+				var property = model.GetType().GetProperty("Properties");
+
 				foreach(var claim in identity.Claims)
 				{
 					if(!SetUserProperty(user, claim))
@@ -294,7 +296,10 @@ namespace Zongsoft.Security
 						var configured = configure?.Invoke(model, claim);
 
 						if(configured == null || !configured.Value)
-							ConfigureProperties(user.Properties, claim);
+						{
+							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
+								ConfigureProperties(properties, claim);
+						}
 					}
 				}
 			}

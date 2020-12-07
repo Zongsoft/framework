@@ -72,11 +72,5 @@ namespace Zongsoft.Security.Membership
 		/// 获取或设置最后修改时间。
 		/// </summary>
 		DateTime? Modification { get; set; }
-
-		/// <summary>
-		/// 获取用户的扩展属性。
-		/// </summary>
-		[System.ComponentModel.DefaultValue(typeof(Dictionary<string, object>))]
-		IDictionary<string, object> Properties { get; }
 	}
 }

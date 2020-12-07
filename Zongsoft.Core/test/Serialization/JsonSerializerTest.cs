@@ -19,7 +19,6 @@ namespace Zongsoft.Serialization
 				p.UserId = 100;
 				p.Name = "Popeye";
 				p.FullName = "钟少";
-				p.Properties.Add("roles", new string[] { "Administrators" });
 			});
 
 			var credential = new Credential()
@@ -71,17 +70,6 @@ namespace Zongsoft.Serialization
 			Assert.Equal(100u, credential.User.UserId);
 			Assert.Equal("Popeye", credential.User.Name);
 			Assert.Equal("钟少", credential.User.FullName);
-			Assert.NotEmpty(credential.User.Properties);
-
-			Assert.True(credential.User.Properties.TryGetValue("roles", out var value));
-			Assert.NotNull(value);
-			Assert.IsType<JsonElement>(value);
-			var roles = ((JsonElement)value).GetArray(it => it.GetString());
-
-			Assert.NotEmpty(roles);
-			Assert.Equal(2, roles.Length);
-			Assert.Equal("Administrators", roles[0]);
-			Assert.Equal("Users", roles[1]);
 		}
 
 		public class Credential
