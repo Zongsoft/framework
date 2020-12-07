@@ -51,7 +51,7 @@ namespace Zongsoft.Security.Web.Controllers
 	{
 		#region 成员字段
 		private IAuthorizer _authorizer;
-		private IRoleProvider _roleProvider;
+		private IRoleProvider<Role> _roleProvider;
 		private IMemberProvider _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IRoleProvider RoleProvider
+		public IRoleProvider<Role> RoleProvider
 		{
 			get => _roleProvider;
 			set => _roleProvider = value ?? throw new ArgumentNullException();
@@ -87,7 +87,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{id:long}")]
+		[HttpGet("{id}")]
 		public Task<IActionResult> Get(uint id)
 		{
 			var role = this.RoleProvider.GetRole(id);
@@ -111,7 +111,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id:long}")]
+		[HttpDelete("{id}")]
 		public Task<IActionResult> Delete(uint id)
 		{
 			if(id == 0)
@@ -144,7 +144,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<IRole> Create([FromBody]IRole model)
+		public ActionResult<Role> Create([FromBody]Role model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -155,9 +155,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.Conflict();
 		}
 
-		[HttpPut("{id:long:required}")]
-		[HttpPatch("{id:long:required}")]
-		public Task<IActionResult> Update(uint id, [FromBody]IRole model)
+		[HttpPut("{id:required}")]
+		[HttpPatch("{id:required}")]
+		public Task<IActionResult> Update(uint id, [FromBody]Role model)
 		{
 			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());
@@ -167,8 +167,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpPatch("{id:long}/Namespace")]
-		[HttpPatch("Namespace/{id:long}")]
+		[HttpPatch("{id}/Namespace")]
+		[HttpPatch("Namespace/{id}")]
 		public async Task<IActionResult> SetNamespace(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -179,8 +179,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetNamespace(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpPatch("{id:long}/Name")]
-		[HttpPatch("Name/{id:long}")]
+		[HttpPatch("{id}/Name")]
+		[HttpPatch("Name/{id}")]
 		public async Task<IActionResult> SetName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -191,8 +191,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpPatch("{id:long}/FullName")]
-		[HttpPatch("FullName/{id:long}")]
+		[HttpPatch("{id}/FullName")]
+		[HttpPatch("FullName/{id}")]
 		public async Task<IActionResult> SetFullName(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -203,8 +203,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetFullName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpPatch("{id:long}/Description")]
-		[HttpPatch("Description/{id:long}")]
+		[HttpPatch("{id}/Description")]
+		[HttpPatch("Description/{id}")]
 		public async Task<IActionResult> SetDescription(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -215,8 +215,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetDescription(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpHead("{id:long}")]
-		[HttpGet("{id:long}/exists")]
+		[HttpHead("{id}")]
+		[HttpGet("{id}/exists")]
 		public Task<IActionResult> Exists(uint id)
 		{
 			return this.RoleProvider.Exists(id) ?
@@ -238,8 +238,8 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 成员操作
-		[HttpGet("{id:long}/Roles")]
-		[HttpGet("Roles/{id:long:required}")]
+		[HttpGet("{id}/Roles")]
+		[HttpGet("Roles/{id:required}")]
 		public Task<IActionResult> GetRoles(uint id)
 		{
 			var roles = this.MemberProvider.GetRoles(id, MemberType.Role);
@@ -249,8 +249,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id:long}/Roles")]
-		[HttpPut("Roles/{id:long}")]
+		[HttpPut("{id}/Roles")]
+		[HttpPut("Roles/{id}")]
 		public async Task<IActionResult> SetRoles(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -262,8 +262,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.MemberProvider.SetMembers(members) > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetRoles), new { id }, members) : this.NotFound();
 		}
 
-		[HttpGet("{id:long}/Members")]
-		[HttpGet("Members/{id:long:required}")]
+		[HttpGet("{id}/Members")]
+		[HttpGet("Members/{id:required}")]
 		public Task<IActionResult> GetMembers(uint id)
 		{
 			var members = this.MemberProvider.GetMembers(id, this.Request.GetDataSchema());
@@ -273,7 +273,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id:long}/Member/{memberType}:{memberId:int}")]
+		[HttpPut("{id}/Member/{memberType}:{memberId:int}")]
 		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
 			return this.MemberProvider.SetMember(new Member(id, memberId, memberType)) ?
@@ -281,8 +281,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id:long}/Members")]
-		[HttpPut("Members/{id:long}")]
+		[HttpPut("{id}/Members")]
+		[HttpPut("Members/{id}")]
 		public Task<IActionResult> SetMembers(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false)
 		{
 			return this.MemberProvider.SetMembers(id, members, reset) > 0 ?
@@ -290,7 +290,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id:long}/Member/{memberType}:{memberId:int}")]
+		[HttpDelete("{id}/Member/{memberType}:{memberId:int}")]
 		public Task<IActionResult> RemoveMember(uint id, MemberType memberType, uint memberId)
 		{
 			return this.MemberProvider.RemoveMember(id, memberId, memberType) ?
@@ -298,8 +298,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id:long}/Members")]
-		[HttpDelete("Members/{id:long}")]
+		[HttpDelete("{id}/Members")]
+		[HttpDelete("Members/{id}")]
 		public Task<IActionResult> RemoveMembers(uint id)
 		{
 			return this.MemberProvider.RemoveMembers(id) > 0 ?
@@ -309,8 +309,8 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 授权操作
-		[HttpGet("{id:long}/Authorizes")]
-		[HttpGet("Authorizes/{id:long}")]
+		[HttpGet("{id}/Authorizes")]
+		[HttpGet("Authorizes/{id}")]
 		public IActionResult Authorizes(uint id)
 		{
 			if(id == 0)
@@ -323,7 +323,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 权限操作
-		[HttpGet("{id:long}/Permissions/{schemaId?}")]
+		[HttpGet("{id}/Permissions/{schemaId?}")]
 		public Task<IActionResult> GetPermissions(uint id, string schemaId = null)
 		{
 			var result = this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId)
@@ -335,7 +335,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id:long}/Permissions")]
+		[HttpPut("{id}/Permissions")]
 		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.Role, permissions, reset) > 0 ?
@@ -343,7 +343,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id:long}/Permission/{schemaId}:{actionId}")]
+		[HttpDelete("{id}/Permission/{schemaId}:{actionId}")]
 		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
@@ -354,7 +354,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id:long}/Permissions/{schemaId?}")]
+		[HttpDelete("{id}/Permissions/{schemaId?}")]
 		public Task<IActionResult> RemovePermissions(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId) > 0 ?
@@ -362,7 +362,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{id:long}/Permission.Filters/{schemaId?}")]
+		[HttpGet("{id}/Permission.Filters/{schemaId?}")]
 		public Task<IActionResult> GetPermissionFilters(uint id, string schemaId = null)
 		{
 			var result = this.PermissionProvider.GetPermissionFilters(id, MemberType.Role, schemaId)
@@ -374,7 +374,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id:long}/Permission.Filters")]
+		[HttpPut("{id}/Permission.Filters")]
 		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, permissions, reset) > 0 ?
@@ -382,7 +382,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id:long}/Permission.Filter/{schemaId}:{actionId}")]
+		[HttpDelete("{id}/Permission.Filter/{schemaId}:{actionId}")]
 		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
 		{
 			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
@@ -393,7 +393,7 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id:long}/Permission.Filters/{schemaId?}")]
+		[HttpDelete("{id}/Permission.Filters/{schemaId?}")]
 		public Task<IActionResult> RemovePermissionFilters(uint id, string schemaId = null)
 		{
 			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId) > 0 ?
