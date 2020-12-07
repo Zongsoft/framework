@@ -45,16 +45,21 @@ namespace Zongsoft.Security.Membership
 
 		#region 属性定义
 		public abstract uint RoleId { get; set; }
-
 		public abstract string Name { get; set; }
-
 		public abstract string FullName { get; set; }
-
 		public abstract string Namespace { get; set; }
-
 		public string Description { get; set; }
-
 		public IEnumerable<Member> Children { get; set; }
+		#endregion
+
+		#region 重写方法
+		public bool Equals(IRole role) => role != null && role.RoleId == this.RoleId;
+		public bool Equals(Role role) => role != null && role.RoleId == this.RoleId;
+		public override bool Equals(object obj) => this.Equals(obj as IRole);
+		public override int GetHashCode() => (int)this.RoleId;
+		public override string ToString() => string.IsNullOrEmpty(this.Namespace) ?
+			$"#{this.RoleId}:{this.Name}" :
+			$"#{this.RoleId}:{this.Name}@{this.Namespace}";
 		#endregion
 	}
 }

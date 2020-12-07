@@ -29,36 +29,34 @@
 
 using System;
 
-namespace Zongsoft.Security.Membership
+namespace Zongsoft.Security
 {
 	/// <summary>
-	/// 表示权限系统用户标识的接口。
+	/// 表示身份验证失败的处理器。
 	/// </summary>
-	public interface IUserIdentity : IEquatable<IUserIdentity>
+	public interface IAttempter
 	{
 		/// <summary>
-		/// 获取或设置用户编号。
+		/// 校验指定身份是否可以继续验证。
 		/// </summary>
-		uint UserId { get; set; }
+		/// <param name="identity">指定待验证的身份标识。</param>
+		/// <param name="namespace">表示身份标识所属的命名空间。</param>
+		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
+		bool Verify(string identity, string @namespace = null);
 
 		/// <summary>
-		/// 获取或设置用户名称。
+		/// 验证成功方法。
 		/// </summary>
-		string Name { get; set; }
+		/// <param name="identity">指定验证成功的身份标识。</param>
+		/// <param name="namespace">表示身份标识所属的命名空间。</param>
+		void Done(string identity, string @namespace = null);
 
 		/// <summary>
-		/// 获取或设置用户全称。
+		/// 验证失败方法。
 		/// </summary>
-		string FullName { get; set; }
-
-		/// <summary>
-		/// 获取或设置用户所属的命名空间。
-		/// </summary>
-		string Namespace { get; set; }
-
-		/// <summary>
-		/// 获取或设置用户的描述信息。
-		/// </summary>
-		string Description { get; set; }
+		/// <param name="identity">指定验证失败的身份标识。</param>
+		/// <param name="namespace">表示身份标识所属的命名空间。</param>
+		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
+		bool Fail(string identity, string @namespace = null);
 	}
 }

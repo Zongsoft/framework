@@ -36,7 +36,7 @@ namespace Zongsoft.Security.Membership
 	/// 表示权限系统角色的实体接口。
 	/// </summary>
 	[Zongsoft.Data.Model("Security.Role")]
-	public interface IRole
+	public interface IRole : IEquatable<IRole>
 	{
 		/// <summary>
 		/// 获取或设置角色编号。

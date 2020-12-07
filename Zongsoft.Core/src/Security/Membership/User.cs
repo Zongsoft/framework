@@ -34,7 +34,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Security.Membership
 {
 	[Zongsoft.Data.Model("Security.User")]
-	public abstract class User : IUser
+	public abstract class User : IUser, IEquatable<User>, IEquatable<IUser>, IEquatable<IUserIdentity>
 	{
 		#region 常量定义
 		/// <summary>系统管理员用户名。</summary>
@@ -43,29 +43,30 @@ namespace Zongsoft.Security.Membership
 
 		#region 属性定义
 		public abstract uint UserId { get; set; }
-
 		public abstract string Name { get; set; }
-
 		public abstract string FullName { get; set; }
-
 		public abstract string Namespace { get; set; }
-
 		public abstract string Description { get; set; }
-
 		public abstract string Email { get; set; }
-
 		public abstract string Phone { get; set; }
-
 		public abstract UserStatus Status { get; set; }
-
 		public abstract DateTime? StatusTimestamp { get; set; }
-
 		public abstract DateTime Creation { get; set; }
-
 		public abstract DateTime? Modification { get; set; }
 
 		[DefaultValue(typeof(Dictionary<string, object>))]
 		public abstract IDictionary<string, object> Properties { get; }
+		#endregion
+
+		#region 重写方法
+		public bool Equals(IUserIdentity user) => user != null && user.UserId == this.UserId;
+		public bool Equals(IUser user) => user != null && user.UserId == this.UserId;
+		public bool Equals(User user) => user != null && user.UserId == this.UserId;
+		public override bool Equals(object obj) => this.Equals(obj as IUser);
+		public override int GetHashCode() => (int)this.UserId;
+		public override string ToString() => string.IsNullOrEmpty(this.Namespace) ?
+			$"#{this.UserId}:{this.Name}" :
+			$"#{this.UserId}:{this.Name}@{this.Namespace}";
 		#endregion
 	}
 }

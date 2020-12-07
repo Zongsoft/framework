@@ -36,7 +36,7 @@ namespace Zongsoft.Security.Membership
 	/// 表示权限系统用户实体的接口。
 	/// </summary>
 	[Zongsoft.Data.Model("Security.User")]
-	public interface IUser : IUserIdentity
+	public interface IUser : IUserIdentity, IEquatable<IUser>
 	{
 		/// <summary>
 		/// 获取或设置用户的邮箱标识。
