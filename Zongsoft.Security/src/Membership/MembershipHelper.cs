@@ -130,8 +130,11 @@ namespace Zongsoft.Security.Membership
 			flats = null;
 			hierarchies = null;
 
+			var condition = @namespace == "*" || @namespace == "?" ?
+				null : Condition.Equal("Role.Namespace", string.IsNullOrWhiteSpace(@namespace) ? null : @namespace);
+
 			//获取指定用户所属命名空间下的所有成员及其关联的角色对象（注：即时加载到内存中）
-			var members = dataAccess.Select<Member>(Condition.Equal("Role.Namespace", @namespace), "*, Role{*}")
+			var members = dataAccess.Select<Member>(condition, "*, Role{*}")
 			                        .Where(m => m.Role != null)
 			                        .ToArray();
 
