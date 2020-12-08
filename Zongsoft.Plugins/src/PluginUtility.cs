@@ -277,10 +277,10 @@ namespace Zongsoft.Plugins
 
 		internal static void UpdateProperties(object target, Builtin builtin, IEnumerable<string> ignoredProperties)
 		{
-			if(target == null || builtin == null || !builtin.HasProperties)
+			if(target == null || builtin == null)
 				return;
 
-			foreach(var property in builtin.Properties)
+			foreach(var property in builtin.GetProperties())
 			{
 				//如果当前属性名为忽略属性则忽略设置
 				if(ignoredProperties != null && ignoredProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))

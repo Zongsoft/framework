@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
@@ -155,9 +157,7 @@ namespace Zongsoft.Plugins
 		/// 获取构件的位置。
 		/// </summary>
 		/// <remarks>
-		///		<para>
-		///		在同级的构件中，通过指定该属性值来调整构件的排列顺序。
-		///		</para>
+		/// 	<para>在同级的构件中，通过指定该属性值来调整构件的排列顺序。</para>
 		/// </remarks>
 		public string Position
 		{
@@ -277,6 +277,26 @@ namespace Zongsoft.Plugins
 					System.Threading.Interlocked.CompareExchange(ref _properties, new PluginExtendedPropertyCollection(this), null);
 
 				return _properties;
+			}
+		}
+		#endregion
+
+		#region 扩展属性
+		public IEnumerable<PluginExtendedProperty> GetProperties()
+		{
+			if(this.HasProperties)
+			{
+				if(_node.HasProperties)
+					return _properties.Concat(_node.Properties);
+				else
+					return _properties;
+			}
+			else
+			{
+				if(_node.HasProperties)
+					return _node.Properties;
+				else
+					return Array.Empty<PluginExtendedProperty>();
 			}
 		}
 		#endregion
