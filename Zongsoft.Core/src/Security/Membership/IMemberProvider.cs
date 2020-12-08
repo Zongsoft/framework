@@ -38,17 +38,25 @@ namespace Zongsoft.Security.Membership
 	public interface IMemberProvider
 	{
 		/// <summary>
+		/// 获取指定成员的所有祖先角色集。
+		/// </summary>
+		/// <param name="memberId">指定的成员编号(用户或角色)。</param>
+		/// <param name="memberType">指定的成员类型。</param>
+		/// <returns></returns>
+		IEnumerable<IRole> GetAncestors(uint memberId, MemberType memberType);
+
+		/// <summary>
 		/// 获取指定成员的父级角色集。
 		/// </summary>
-		/// <param name="memberId">要搜索的成员编号(用户或角色)。</param>
-		/// <param name="memberType">要搜索的成员类型。</param>
+		/// <param name="memberId">指定的成员编号(用户或角色)。</param>
+		/// <param name="memberType">指定的成员类型。</param>
 		/// <returns>返回指定成员的父级角色集。</returns>
 		IEnumerable<IRole> GetRoles(uint memberId, MemberType memberType);
 
 		/// <summary>
 		/// 获取指定角色的直属成员集。
 		/// </summary>
-		/// <param name="roleId">要搜索的角色编号。</param>
+		/// <param name="roleId">指定的角色编号。</param>
 		/// <param name="schema">指定的数据模式表达式文本。</param>
 		/// <returns>返回隶属于指定角色的直属子级成员集。</returns>
 		IEnumerable<Member> GetMembers(uint roleId, string schema = null);
