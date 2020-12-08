@@ -54,15 +54,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		protected UserProviderBase(string name, IServiceProvider serviceProvider)
+		protected UserProviderBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
 			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor("Security") ?? serviceProvider.GetDataAccess(true);
+				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
 
-			if(!string.IsNullOrEmpty(name))
-				this.DataAccess.Naming.Map<TUser>(name);
+			if(!string.IsNullOrEmpty(Mapping.Instance.User))
+				this.DataAccess.Naming.Map<TUser>(Mapping.Instance.User);
 		}
 		#endregion
 
@@ -973,7 +973,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private long GetPasswordSalt()
 		{
-			return Math.Abs(Zongsoft.Common.Randomizer.GenerateInt64());
+			return Math.Abs(Randomizer.GenerateInt64());
 		}
 
 		private byte[] GetPasswordAnswerSalt(uint userId, int index)

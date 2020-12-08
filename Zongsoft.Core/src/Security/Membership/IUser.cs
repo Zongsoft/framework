@@ -35,8 +35,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 表示权限系统用户实体的接口。
 	/// </summary>
-	[Zongsoft.Data.Model("Security.User")]
-	public interface IUser : IUserIdentity, IEquatable<IUser>
+	public interface IUser : IUserIdentity
 	{
 		#region 常量定义
 		/// <summary>系统管理员用户名。</summary>

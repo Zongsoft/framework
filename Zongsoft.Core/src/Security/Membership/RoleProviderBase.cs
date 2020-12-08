@@ -44,15 +44,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		protected RoleProviderBase(string name, IServiceProvider serviceProvider)
+		protected RoleProviderBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
 			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor("Security") ?? serviceProvider.GetDataAccess(true);
+				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
 
-			if(!string.IsNullOrEmpty(name))
-				this.DataAccess.Naming.Map<TRole>(name);
+			if(!string.IsNullOrEmpty(Mapping.Instance.Role))
+				this.DataAccess.Naming.Map<TRole>(Mapping.Instance.Role);
 		}
 		#endregion
 

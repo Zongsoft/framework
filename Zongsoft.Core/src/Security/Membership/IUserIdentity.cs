@@ -34,7 +34,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 表示权限系统用户标识的接口。
 	/// </summary>
-	public interface IUserIdentity : IEquatable<IUserIdentity>
+	public interface IUserIdentity
 	{
 		/// <summary>
 		/// 获取或设置用户编号。

@@ -28,51 +28,49 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 表示权限系统角色的实体接口。
+	/// 表示安全管理数据表映射的类。
 	/// </summary>
-	public interface IRole
+	public class Mapping
 	{
 		#region 常量定义
-		/// <summary>系统管理员角色名。</summary>
-		public const string Administrators = nameof(Administrators);
-
-		/// <summary>安全管理员角色名。</summary>
 		public const string Security = nameof(Security);
 		#endregion
 
-		/// <summary>
-		/// 获取或设置角色编号。
-		/// </summary>
-		uint RoleId { get; set; }
+		#region 单例字段
+		/// <summary>获取唯一的安全管理数据表实体映射对象。</summary>
+		public static readonly Mapping Instance = new Mapping()
+		{
+			User = $"{Security}.{nameof(User)}",
+			Role = $"{Security}.{nameof(Role)}",
+			Member = $"{Security}.{nameof(Member)}",
+			Permission = $"{Security}.{nameof(Permission)}",
+			PermissionFilter = $"{Security}.{nameof(PermissionFilter)}",
+		};
+		#endregion
 
-		/// <summary>
-		/// 获取或设置角色名称。
-		/// </summary>
-		string Name { get; set; }
+		#region 私有构造
+		private Mapping() { }
+		#endregion
 
-		/// <summary>
-		/// 获取或设置角色全称。
-		/// </summary>
-		string FullName { get; set; }
+		#region 公共树型
+		/// <summary>获取或设置用户实体的映射名称。</summary>
+		public string User { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色所属的命名空间。
-		/// </summary>
-		string Namespace { get; set; }
+		/// <summary>获取或设置角色实体的映射名称。</summary>
+		public string Role { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色的描述信息。
-		/// </summary>
-		string Description { get; set; }
+		/// <summary>获取或设置成员实体的映射名称。</summary>
+		public string Member { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色成员子集。
-		/// </summary>
-		IEnumerable<Member> Children { get; set; }
+		/// <summary>获取或设置权限实体的映射名称。</summary>
+		public string Permission { get; set; }
+
+		/// <summary>获取或设置权限过滤实体的映射名称。</summary>
+		public string PermissionFilter { get; set; }
+		#endregion
 	}
 }

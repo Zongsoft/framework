@@ -31,7 +31,6 @@ using System;
 
 namespace Zongsoft.Security.Membership
 {
-	[Zongsoft.Data.Model("Security.Member")]
 	public struct Member : IEquatable<Member>
 	{
 		#region 构造函数
