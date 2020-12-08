@@ -34,8 +34,6 @@ using System.Collections.Generic;
 using Zongsoft.Data;
 using Zongsoft.Services;
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Zongsoft.Security.Membership
 {
 	[Service(typeof(IPermissionProvider))]
@@ -48,9 +46,9 @@ namespace Zongsoft.Security.Membership
 				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
 
 			if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
-				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Permission);
+				this.DataAccess.Naming.Map<Permission>(Mapping.Instance.Permission);
 			if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
-				this.DataAccess.Naming.Map<Member>(Mapping.Instance.PermissionFilter);
+				this.DataAccess.Naming.Map<PermissionFilter>(Mapping.Instance.PermissionFilter);
 		}
 		#endregion
 
