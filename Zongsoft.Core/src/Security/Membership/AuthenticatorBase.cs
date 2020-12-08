@@ -246,7 +246,7 @@ namespace Zongsoft.Security.Membership
 				@namespace = null;
 
 			var token = this.DataAccess.Select<UserSecret>(Mapping.Instance.User,
-				MembershipUtility.GetIdentityCondition(identity) & Condition.Equal(nameof(IUser.Namespace), @namespace)).FirstOrDefault();
+				MembershipUtility.GetIdentityCondition(identity) & this.GetNamespace(@namespace)).FirstOrDefault();
 
 			if(token.UserId == 0)
 			{
@@ -306,12 +306,16 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private Condition GetNamespace(string @namespace)
 		{
-			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IUser.Namespace), null);
-			else if(@namespace != "*")
-				return Condition.Equal(nameof(IUser.Namespace), @namespace);
+			if(@namespace == "*" || @namespace == "?")
+				return null;
 
-			return null;
+			var existed = this.DataAccess.Metadata.Entities.Get(Mapping.Instance.User).Properties.Contains(nameof(IUser.Namespace));
+
+			if(string.IsNullOrEmpty(@namespace))
+				return existed ? Condition.Equal(nameof(IUser.Namespace), null) : null;
+			else
+				return existed ? Condition.Equal(nameof(IUser.Namespace), @namespace) : throw new DataArgumentException(nameof(@namespace));
+
 		}
 		#endregion
 
