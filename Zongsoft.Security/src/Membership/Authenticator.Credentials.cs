@@ -50,7 +50,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public Authenticator()
+		public Authenticator(IServiceProvider serviceProvider) : base(serviceProvider)
 		{
 			_memoryCache = new MemoryCache("Zongsoft.Security.Authenticator");
 
@@ -62,7 +62,7 @@ namespace Zongsoft.Security.Membership
 		#region 公共属性
 		public ICache Cache
 		{
-			get => _cache ?? (_cache = this.CacheProvider?.GetService(Modules.Security) ?? this.CacheProvider?.GetService(string.Empty));
+			get => _cache ??= this.CacheProvider?.GetService(Modules.Security) ?? this.CacheProvider?.GetService(string.Empty);
 			set => _cache = value ?? throw new ArgumentNullException();
 		}
 

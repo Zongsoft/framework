@@ -19,8 +19,8 @@
 
 	<extension path="/Workbench/Modules">
 		<object name="Security" type="Zongsoft.Services.ApplicationModule, Zongsoft.Core"
-		        title="{res:Text.Security.Title}"
-		        description="{res:Text.Security.Description}" />
+		        title="{res:Security.Title}"
+		        description="{res:Security.Description}" />
 	</extension>
 
 	<extension path="/Workbench/Modules/Security">
@@ -38,6 +38,11 @@
 	<!-- 挂载数据访问器 -->
 	<extension path="/Workbench/Data/Accessors">
 		<object name="Security" />
+	</extension>
+
+	<!-- 挂载数据访问映射 -->
+	<extension path="/Workbench/Security">
+		<object name="Mapping" value="{static:Zongsoft.Security.Membership.Mapping.Instance, Zongsoft.Core}" />
 	</extension>
 
 	<!-- 挂载验证和授权集成模块 -->

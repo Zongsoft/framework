@@ -95,7 +95,7 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
-			if(this.InRoles(user.GetIdentifier<uint>(), MembershipHelper.Administrators))
+			if(this.InRoles(user.GetIdentifier<uint>(), IRole.Administrators))
 				return true;
 
 			//获取指定的安全凭证对应的有效的授权状态集

@@ -35,6 +35,6 @@ namespace Zongsoft.Security
 {
 	public static class Modules
 	{
-		public const string Security = "Security";
+		public const string Security = nameof(Security);
 	}
 }

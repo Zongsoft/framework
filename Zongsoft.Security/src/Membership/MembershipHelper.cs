@@ -37,11 +37,6 @@ namespace Zongsoft.Security.Membership
 {
 	internal static class MembershipHelper
 	{
-		#region 常量定义
-		internal const string Administrator = "Administrator";
-		internal const string Administrators = "Administrators";
-		#endregion
-
 		#region 公共方法
 		public static bool InRoles(IDataAccess dataAccess, IUserIdentity user, params string[] roleNames)
 		{
@@ -49,7 +44,7 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			//如果指定的用户编号对应的是系统内置管理员（即 Administrator），那么它拥有对任何角色的隶属判断
-			if(string.Equals(user.Name, Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
 				return true;
 
 			//处理非系统内置管理员账号
@@ -57,7 +52,7 @@ namespace Zongsoft.Security.Membership
 			{
 				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
 				return flats.Any(role =>
-					string.Equals(role.Name, Administrators, StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
 					roleNames.Contains(role.Name)
 				);
 			}
@@ -87,10 +82,10 @@ namespace Zongsoft.Security.Membership
 				return 0;
 
 			//如果指定编号的用户是内置的“Administrator”账号，则直接返回（因为内置管理员只隶属于内置的“Administrators”角色，而不能属于其他角色）
-			if(string.Equals(name, Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
 			{
 				//获取当前用户同命名空间下的“Administrators”内置角色
-				flats = new HashSet<IRole>(dataAccess.Select<IRole>(Condition.Equal(nameof(IRole.Name), Administrators) & Condition.Equal(nameof(IRole.Namespace), @namespace)));
+				flats = new HashSet<IRole>(dataAccess.Select<IRole>(Condition.Equal(nameof(IRole.Name), IRole.Administrators) & Condition.Equal(nameof(IRole.Namespace), @namespace)));
 
 				if(flats.Count > 0)
 				{
@@ -251,68 +246,11 @@ namespace Zongsoft.Security.Membership
 		}
 		#endregion
 
-		#region 内部方法
-		internal static Condition GetUserIdentity(string identity)
-		{
-			return GetUserIdentity(identity, out _);
-		}
-
-		internal static Condition GetUserIdentity(string identity, out UserIdentityType identityType)
-		{
-			if(string.IsNullOrWhiteSpace(identity))
-				throw new ArgumentNullException(nameof(identity));
-
-			if(identity.Contains("@"))
-			{
-				identityType = UserIdentityType.Email;
-				return Condition.Equal(nameof(IUser.Email), identity);
-			}
-
-			if(IsNumericString(identity))
-			{
-				identityType = UserIdentityType.Phone;
-				return Condition.Equal(nameof(IUser.Phone), identity);
-			}
-
-			identityType = UserIdentityType.Name;
-			return Condition.Equal(nameof(IUser.Name), identity);
-		}
-
-		internal static UserIdentityType GetIdentityType(string identity)
-		{
-			if(string.IsNullOrEmpty(identity))
-				throw new ArgumentNullException(nameof(identity));
-
-			if(identity.Contains("@"))
-				return UserIdentityType.Email;
-
-			if(IsNumericString(identity))
-				return UserIdentityType.Phone;
-
-			return UserIdentityType.Name;
-		}
-		#endregion
-
 		#region 私有方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static bool IsNumericString(string text)
-		{
-			if(string.IsNullOrEmpty(text))
-				return false;
-
-			for(var i = 0; i < text.Length; i++)
-			{
-				if(text[i] < '0' || text[i] > '9')
-					return false;
-			}
-
-			return true;
-		}
-
 		private static bool IsBuiltin(string name)
 		{
-			return string.Equals(name, Administrator, StringComparison.OrdinalIgnoreCase) ||
-			       string.Equals(name, Administrators, StringComparison.OrdinalIgnoreCase);
+			return string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase) ||
+			       string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase);
 		}
 		#endregion
 

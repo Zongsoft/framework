@@ -40,7 +40,7 @@ namespace Zongsoft.Security.Membership
 	public class UserProvider : UserProviderBase<IUser>
 	{
 		#region 构造函数
-		public UserProvider(IServiceProvider serviceProvider) : base(null, serviceProvider) { }
+		public UserProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
 		#endregion
 
 		#region 公共属性

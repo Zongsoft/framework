@@ -38,7 +38,7 @@ namespace Zongsoft.Security.Membership
 	public class RoleProvider : RoleProviderBase<IRole>
 	{
 		#region 构造函数
-		public RoleProvider(IServiceProvider serviceProvider) : base(null, serviceProvider) { }
+		public RoleProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
 		#endregion
 
 		#region 公共属性

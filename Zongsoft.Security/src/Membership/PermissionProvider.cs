@@ -41,24 +41,21 @@ namespace Zongsoft.Security.Membership
 	[Service(typeof(IPermissionProvider))]
 	public class PermissionProvider : IPermissionProvider
 	{
-		#region 成员字段
-		private IDataAccess _dataAccess;
-		private readonly IServiceProvider _services;
-		#endregion
-
 		#region 构造函数
-		public PermissionProvider(IServiceProvider services)
+		public PermissionProvider(IServiceProvider serviceProvider)
 		{
-			_services = services ?? throw new ArgumentNullException(nameof(services));
+			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
+				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
+
+			if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
+				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Permission);
+			if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
+				this.DataAccess.Naming.Map<Member>(Mapping.Instance.PermissionFilter);
 		}
 		#endregion
 
 		#region 公共属性
-		public IDataAccess DataAccess
-		{
-			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
-			set => _dataAccess = value ?? throw new ArgumentNullException();
-		}
+		public IDataAccess DataAccess { get; }
 		#endregion
 
 		#region 公共方法

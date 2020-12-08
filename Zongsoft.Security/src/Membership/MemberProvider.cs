@@ -40,13 +40,13 @@ namespace Zongsoft.Security.Membership
 	public class MemberProvider : IMemberProvider
 	{
 		#region 构造函数
-		public MemberProvider(string name, IServiceProvider serviceProvider)
+		public MemberProvider(IServiceProvider serviceProvider)
 		{
 			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor("Security") ?? serviceProvider.GetDataAccess(true);
+				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
 
-			if(!string.IsNullOrEmpty(name))
-				this.DataAccess.Naming.Map<Member>(name);
+			if(!string.IsNullOrEmpty(Mapping.Instance.Member))
+				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Member);
 		}
 		#endregion
 

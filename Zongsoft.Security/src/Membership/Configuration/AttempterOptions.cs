@@ -37,22 +37,22 @@ namespace Zongsoft.Security.Membership.Configuration
 	/// </summary>
 	public class AttempterOptions
 	{
-        public AttempterOptions()
-        {
-            this.Threshold = 3;
-            this.Window = TimeSpan.FromHours(1);
-        }
+		public AttempterOptions()
+		{
+			this.Threshold = 3;
+			this.Window = TimeSpan.FromHours(1);
+		}
 
 		/// <summary>
 		/// 获取或设置验证失败的阈值，零表示不限制。
 		/// </summary>
-        [DefaultValue(3)]
+		[DefaultValue(3)]
 		public int Threshold { get; set; }
 
 		/// <summary>
 		/// 获取或设置验证失败超过指定的阈值后的锁定时长，默认为60分钟。
 		/// </summary>
-        [DefaultValue("1:0:0")]
+		[DefaultValue("1:0:0")]
 		public TimeSpan Window { get; set; }
 	}
 }
