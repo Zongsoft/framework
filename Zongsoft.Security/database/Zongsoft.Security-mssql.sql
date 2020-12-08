@@ -1,8 +1,8 @@
 CREATE TABLE [dbo].[Security_Role] (
-  [RoleId] INT NOT NULL,
-  [Namespace] VARCHAR(50) NULL,
-  [Name] VARCHAR(50) NOT NULL,
-  [FullName] NVARCHAR(50) NULL,
+  [RoleId]      INT           NOT NULL,
+  [Namespace]   VARCHAR(50)   NULL,
+  [Name]        VARCHAR(50)   NOT NULL,
+  [FullName]    NVARCHAR(50)  NULL,
   [Description] NVARCHAR(500) NULL,
   CONSTRAINT [PK_Security_Role] PRIMARY KEY CLUSTERED ([RoleId]),
   CONSTRAINT [UX_Security_Role_Name] UNIQUE NONCLUSTERED ([Namespace], [Name])
@@ -10,25 +10,25 @@ CREATE TABLE [dbo].[Security_Role] (
 GO
 
 CREATE TABLE [dbo].[Security_User] (
-  [UserId] INT NOT NULL,
-  [Namespace] VARCHAR(50) NULL,
-  [Name] VARCHAR(50) NOT NULL,
-  [FullName] NVARCHAR(50) NULL,
-  [Password] VARBINARY(64) NULL,
-  [PasswordSalt] BIGINT NULL,
-  [Email] VARCHAR(50) NULL,
-  [Phone] VARCHAR(50) NULL,
-  [Status] TINYINT NOT NULL DEFAULT 0,
-  [StatusTimestamp] DATETIME NULL,
-  [PasswordQuestion1] NVARCHAR(50) NULL,
-  [PasswordAnswer1] VARBINARY(64) NULL,
-  [PasswordQuestion2] NVARCHAR(50) NULL,
-  [PasswordAnswer2] VARBINARY(64) NULL,
-  [PasswordQuestion3] NVARCHAR(50) NULL,
-  [PasswordAnswer3] VARBINARY(64) NULL,
-  [Creation] DATETIME NOT NULL DEFAULT getdate(),
-  [Modification] DATETIME NULL,
-  [Description] NVARCHAR(500) NULL,
+  [UserId]            INT           NOT NULL,
+  [Namespace]         VARCHAR(50)   NULL,
+  [Name]              VARCHAR(50)   NOT NULL,
+  [FullName]          NVARCHAR(50)  NULL,
+  [Password]          VARBINARY(64) NULL,
+  [PasswordSalt]      BIGINT        NULL,
+  [Email]             VARCHAR(50)   NULL,
+  [Phone]             VARCHAR(50)   NULL,
+  [Status]            TINYINT       NOT NULL DEFAULT 0,
+  [StatusTimestamp]   DATETIME      NULL,
+  [PasswordQuestion1] NVARCHAR(50)  NULL,
+  [PasswordAnswer1]   VARBINARY(64) NULL,
+  [PasswordQuestion2] NVARCHAR(50)  NULL,
+  [PasswordAnswer2]   VARBINARY(64) NULL,
+  [PasswordQuestion3] NVARCHAR(50)  NULL,
+  [PasswordAnswer3]   VARBINARY(64) NULL,
+  [Creation]          DATETIME      NOT NULL DEFAULT getdate(),
+  [Modification]      DATETIME      NULL,
+  [Description]       NVARCHAR(500) NULL,
   CONSTRAINT [PK_Security_User] PRIMARY KEY CLUSTERED ([UserId]),
   CONSTRAINT [UX_Security_User_Name] UNIQUE NONCLUSTERED ([Namespace], [Name])
 )
@@ -41,35 +41,35 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_Security_User_Email]
 GO
 
 CREATE TABLE [dbo].[Security_Member] (
-  [RoleId] INT NOT NULL,
-  [MemberId] INT NOT NULL,
+  [RoleId]     INT     NOT NULL,
+  [MemberId]   INT     NOT NULL,
   [MemberType] TINYINT NOT NULL,
   CONSTRAINT [PK_Security_Member] PRIMARY KEY CLUSTERED ([RoleId], [MemberId], [MemberType])
 )
 GO
 
 CREATE TABLE [dbo].[Security_Permission] (
-  [MemberId] INT NOT NULL,
-  [MemberType] TINYINT NOT NULL,
-  [SchemaId] VARCHAR(50) NOT NULL,
-  [ActionId] VARCHAR(50) NOT NULL,
-  [Granted] BIT NOT NULL,
+  [MemberId]   INT         NOT NULL,
+  [MemberType] TINYINT     NOT NULL,
+  [SchemaId]   VARCHAR(50) NOT NULL,
+  [ActionId]   VARCHAR(50) NOT NULL,
+  [Granted]    BIT         NOT NULL,
   CONSTRAINT [PK_Security_Permission] PRIMARY KEY CLUSTERED ([MemberId], [MemberType], [SchemaId], [ActionId])
 )
 GO
 
 CREATE TABLE [dbo].[Security_PermissionFilter] (
-  [MemberId] INT NOT NULL,
-  [MemberType] TINYINT NOT NULL,
-  [SchemaId] VARCHAR(50) NOT NULL,
-  [ActionId] VARCHAR(50) NOT NULL,
-  [Filter] VARCHAR(1000) NOT NULL,
+  [MemberId]   INT           NOT NULL,
+  [MemberType] TINYINT       NOT NULL,
+  [SchemaId]   VARCHAR(50)   NOT NULL,
+  [ActionId]   VARCHAR(50)   NOT NULL,
+  [Filter]     VARCHAR(1000) NOT NULL,
   CONSTRAINT [PK_Security_PermissionFilter] PRIMARY KEY CLUSTERED ([MemberId], [MemberType], [SchemaId], [ActionId])
 )
 GO
 
 CREATE TABLE [dbo].[Security_Censorship] (
-  [Name] VARCHAR(50) NOT NULL,
+  [Name] VARCHAR(50)  NOT NULL,
   [Word] NVARCHAR(50) NOT NULL,
   CONSTRAINT [PK_Security_Censorship] PRIMARY KEY CLUSTERED ([Name], [Word])
 )
