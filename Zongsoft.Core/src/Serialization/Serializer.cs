@@ -576,7 +576,9 @@ namespace Zongsoft.Serialization
 
 						if(member == null)
 						{
-							reader.Skip();
+							if(reader.TokenType == JsonTokenType.StartArray || reader.TokenType == JsonTokenType.StartObject)
+								reader.Skip();
+
 							continue;
 						}
 
