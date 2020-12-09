@@ -74,11 +74,6 @@ namespace Zongsoft.Security.Membership
 		/// 获取一个身份转换器集合。
 		/// </summary>
 		public Collections.INamedCollection<IClaimsIdentityTransformer> Transformers { get; }
-
-		/// <summary>
-		/// 获取或设置命名空间映射器。
-		/// </summary>
-		public INamespaceMapper Namespaces { get; set; }
 		#endregion
 
 		#region 公共方法
