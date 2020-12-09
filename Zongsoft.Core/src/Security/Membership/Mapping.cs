@@ -27,6 +27,8 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+
 using Zongsoft.Data;
 
 namespace Zongsoft.Security.Membership
@@ -89,6 +91,23 @@ namespace Zongsoft.Security.Membership
 					return Data.Condition.Equal(nameof(IUser.Namespace), null);
 				else
 					return Data.Condition.Equal(nameof(IUser.Namespace), @namespace);
+			}
+
+			public string GetField(string entity)
+			{
+				return "Namespace";
+			}
+
+			public string GetNamespace(IUser user, out string field)
+			{
+				field = nameof(IUser.Namespace);
+				return user == null ? null : user.Namespace;
+			}
+
+			public string GetNamespace(IRole role, out string field)
+			{
+				field = nameof(IRole.Namespace);
+				return role == null ? null : role.Namespace;
 			}
 		}
 		#endregion
