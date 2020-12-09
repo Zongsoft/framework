@@ -167,7 +167,7 @@ namespace Zongsoft.Security.Membership
 			if(roleNames == null || roleNames.Length < 1)
 				return false;
 
-			return MembershipHelper.InRoles(
+			return MembershipUtility.InRoles(
 				this.DataAccess,
 				this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId), "UserId, Name, Namespace").FirstOrDefault(),
 				roleNames);
@@ -175,7 +175,7 @@ namespace Zongsoft.Security.Membership
 
 		public bool InRoles(IUserIdentity user, params string[] roleNames)
 		{
-			return MembershipHelper.InRoles(this.DataAccess, user, roleNames);
+			return MembershipUtility.InRoles(this.DataAccess, user as IUser, roleNames);
 		}
 		#endregion
 

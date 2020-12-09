@@ -38,81 +38,6 @@ namespace Zongsoft.Security.Membership
 	internal static class MembershipHelper
 	{
 		#region 公共方法
-		public static bool InRoles(IDataAccess dataAccess, IUserIdentity user, params string[] roleNames)
-		{
-			if(user == null || user.Name == null || roleNames == null || roleNames.Length < 1)
-				return false;
-
-			//如果指定的用户编号对应的是系统内置管理员（即 Administrator），那么它拥有对任何角色的隶属判断
-			if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
-				return true;
-
-			//处理非系统内置管理员账号
-			if(GetAncestors(dataAccess, user, out var flats, out _) > 0)
-			{
-				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
-				return flats.Any(role =>
-					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
-					roleNames.Contains(role.Name)
-				);
-			}
-
-			return false;
-		}
-
-		public static int GetAncestors(IDataAccess dataAccess, IUserIdentity user, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
-		{
-			if(user == null)
-			{
-				flats = null;
-				hierarchies = null;
-				return 0;
-			}
-
-			return GetAncestors(dataAccess, user.UserId, user.Name, user.Namespace, out flats, out hierarchies);
-		}
-
-		public static int GetAncestors(IDataAccess dataAccess, uint userId, string name, string @namespace, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
-		{
-			flats = null;
-			hierarchies = null;
-
-			//如果指定的用户编号为零或用户名为空则退出
-			if(userId == 0 || string.IsNullOrEmpty(name))
-				return 0;
-
-			//如果指定编号的用户是内置的“Administrator”账号，则直接返回（因为内置管理员只隶属于内置的“Administrators”角色，而不能属于其他角色）
-			if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
-			{
-				//获取当前用户同命名空间下的“Administrators”内置角色
-				flats = new HashSet<IRole>(dataAccess.Select<IRole>(Condition.Equal(nameof(IRole.Name), IRole.Administrators) & Condition.Equal(nameof(IRole.Namespace), @namespace)));
-
-				if(flats.Count > 0)
-				{
-					hierarchies = new List<IEnumerable<IRole>>
-					{
-						flats
-					};
-				}
-
-				return flats.Count;
-			}
-
-			return GetAncestors(dataAccess, @namespace, userId, MemberType.User, out flats, out hierarchies);
-		}
-
-		public static int GetAncestors(IDataAccess dataAccess, IRole role, out ISet<IRole> flats, out IList<IEnumerable<IRole>> hierarchies)
-		{
-			flats = null;
-			hierarchies = null;
-
-			//如果指定编号的角色不存在或是一个内置角色（内置角色没有归属），则退出
-			if(role == null || IsBuiltin(role.Name))
-				return 0;
-
-			return GetAncestors(dataAccess, role.Namespace, role.RoleId, MemberType.Role, out flats, out hierarchies);
-		}
-
 		/// <summary>
 		/// 获取指定用户或角色的上级角色集。
 		/// </summary>
@@ -246,14 +171,6 @@ namespace Zongsoft.Security.Membership
 						state.Filter += " | " + string.Join("; ", group.Select(p => p.Filter));
 				}
 			}
-		}
-		#endregion
-
-		#region 私有方法
-		private static bool IsBuiltin(string name)
-		{
-			return string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase) ||
-			       string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase);
 		}
 		#endregion
 
