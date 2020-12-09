@@ -31,37 +31,24 @@ using System;
 
 namespace Zongsoft.Security.Membership
 {
-	public struct Member : IEquatable<Member>
+	public struct Member<TRole, TUser> : IEquatable<Member<TRole, TUser>> where TRole : IRole where TUser : IUser
 	{
-		#region 构造函数
-		public Member(uint roleId, uint memberId, MemberType memberType)
-		{
-			this.RoleId = roleId;
-			this.MemberId = memberId;
-			this.MemberType = memberType;
-
-			this.Role = null;
-			this.MemberRole = null;
-			this.MemberUser = null;
-		}
-		#endregion
-
 		#region 公共属性
 		public uint RoleId { get;set; }
 		public uint MemberId { get;set; }
 		public MemberType MemberType { get; set; }
 
-		public IRole Role { get; set; }
-		public IRole MemberRole { get;set; }
-		public IUser MemberUser { get;set; }
+		public TRole Role { get; set; }
+		public TRole MemberRole { get;set; }
+		public TUser MemberUser { get;set; }
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Member other)
+		public bool Equals(Member<TRole, TUser> other)
 		{
 			return this.RoleId == other.RoleId &&
-			       this.MemberId == other.MemberId &&
-			       this.MemberType == other.MemberType;
+				   this.MemberId == other.MemberId &&
+				   this.MemberType == other.MemberType;
 		}
 
 		public override bool Equals(object obj)
@@ -69,7 +56,7 @@ namespace Zongsoft.Security.Membership
 			if(obj == null || obj.GetType() != this.GetType())
 				return false;
 
-			return this.Equals((Member)obj);
+			return this.Equals((Member<TRole, TUser>)obj);
 		}
 
 		public override int GetHashCode()

@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供关于角色成员管理的接口。
 	/// </summary>
-	public interface IMemberProvider
+	public interface IMemberProvider<TRole, TUser> where TRole : IRole where TUser : IUser
 	{
 		/// <summary>
 		/// 获取指定成员的所有祖先角色集。
@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="memberId">指定的成员编号(用户或角色)。</param>
 		/// <param name="memberType">指定的成员类型。</param>
 		/// <returns></returns>
-		IEnumerable<IRole> GetAncestors(uint memberId, MemberType memberType);
+		IEnumerable<TRole> GetAncestors(uint memberId, MemberType memberType);
 
 		/// <summary>
 		/// 获取指定成员的父级角色集。
@@ -51,7 +51,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="memberId">指定的成员编号(用户或角色)。</param>
 		/// <param name="memberType">指定的成员类型。</param>
 		/// <returns>返回指定成员的父级角色集。</returns>
-		IEnumerable<IRole> GetRoles(uint memberId, MemberType memberType);
+		IEnumerable<TRole> GetRoles(uint memberId, MemberType memberType);
 
 		/// <summary>
 		/// 获取指定角色的直属成员集。
@@ -59,14 +59,16 @@ namespace Zongsoft.Security.Membership
 		/// <param name="roleId">指定的角色编号。</param>
 		/// <param name="schema">指定的数据模式表达式文本。</param>
 		/// <returns>返回隶属于指定角色的直属子级成员集。</returns>
-		IEnumerable<Member> GetMembers(uint roleId, string schema = null);
+		IEnumerable<Member<TRole, TUser>> GetMembers(uint roleId, string schema = null);
 
 		/// <summary>
 		/// 新增或更新指定角色成员。
 		/// </summary>
-		/// <param name="member">要设置的角色成员。</param>
+		/// <param name="roleId">指定的角色编号。</param>
+		/// <param name="memberId">指定的成员编号（用户或角色）。</param>
+		/// <param name="memberType">指定的成员类型。</param>
 		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
-		bool SetMember(Member member);
+		bool SetMember(uint roleId, uint memberId, MemberType memberType);
 
 		/// <summary>
 		/// 新增或更新指定的角色成员集。
