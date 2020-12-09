@@ -575,7 +575,10 @@ namespace Zongsoft.Serialization
 						reader.Read();
 
 						if(member == null)
+						{
+							reader.Skip();
 							continue;
+						}
 
 						if(memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof(Nullable<>))
 							memberType = Nullable.GetUnderlyingType(memberType);
