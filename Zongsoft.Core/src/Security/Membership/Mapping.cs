@@ -27,7 +27,7 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+using Zongsoft.Data;
 
 namespace Zongsoft.Security.Membership
 {
@@ -42,21 +42,22 @@ namespace Zongsoft.Security.Membership
 
 		#region 单例字段
 		/// <summary>获取唯一的安全管理数据表实体映射对象。</summary>
-		public static readonly Mapping Instance = new Mapping()
-		{
-			User = $"{Security}.{nameof(User)}",
-			Role = $"{Security}.{nameof(Role)}",
-			Member = $"{Security}.{nameof(Member)}",
-			Permission = $"{Security}.{nameof(Permission)}",
-			PermissionFilter = $"{Security}.{nameof(PermissionFilter)}",
-		};
+		public static readonly Mapping Instance = new Mapping();
 		#endregion
 
 		#region 私有构造
-		private Mapping() { }
+		private Mapping()
+		{
+			this.User = $"{Security}.{nameof(User)}";
+			this.Role = $"{Security}.{nameof(Role)}";
+			this.Member = $"{Security}.{nameof(Member)}";
+			this.Permission = $"{Security}.{nameof(Permission)}";
+			this.PermissionFilter = $"{Security}.{nameof(PermissionFilter)}";
+			this.Namespace = new DefaultNamespaceConditioner();
+		}
 		#endregion
 
-		#region 公共树型
+		#region 公共属性
 		/// <summary>获取或设置用户实体的映射名称。</summary>
 		public string User { get; set; }
 
@@ -71,6 +72,25 @@ namespace Zongsoft.Security.Membership
 
 		/// <summary>获取或设置权限过滤实体的映射名称。</summary>
 		public string PermissionFilter { get; set; }
+
+		/// <summary>获取或设置命名空间的条件转换器。</summary>
+		public INamespaceConditioner Namespace { get; set; }
+		#endregion
+
+		#region 命名空间转换器类
+		private class DefaultNamespaceConditioner : INamespaceConditioner
+		{
+			public Condition GetCondition(string entity, string @namespace)
+			{
+				if(@namespace == "*" || @namespace == "?")
+					return null;
+
+				if(string.IsNullOrEmpty(@namespace))
+					return Data.Condition.Equal(nameof(IUser.Namespace), null);
+				else
+					return Data.Condition.Equal(nameof(IUser.Namespace), @namespace);
+			}
+		}
 		#endregion
 	}
 }
