@@ -23,7 +23,7 @@
 		        description="{res:Security.Description}" />
 	</extension>
 
-	<extension path="/Workbench/Modules/Security">
+	<extension path="/Workbench/Modules/Security/Schemas">
 		<object name="Role" title="{res:Role.Title}" description="{res:Role.Description}" visible="false">
 			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
 			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
