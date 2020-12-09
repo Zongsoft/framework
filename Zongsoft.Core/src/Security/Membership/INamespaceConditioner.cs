@@ -39,12 +39,14 @@ namespace Zongsoft.Security.Membership
 		Condition GetCondition(string entity, string @namespace);
 
 		string GetField(string entity);
-		string GetNamespace(IUser user, out string field);
 		string GetNamespace(IRole role, out string field);
+		string GetNamespace(IUser user, out string field);
+		string GetNamespace(System.Security.Claims.ClaimsIdentity identity, out string field);
 
 		#region 默认实现
-		public string GetNamespace(IUser user) => GetNamespace(user, out _);
 		public string GetNamespace(IRole role) => GetNamespace(role, out _);
+		public string GetNamespace(IUser user) => GetNamespace(user, out _);
+		public string GetNamespace(System.Security.Claims.ClaimsIdentity identity) => GetNamespace(identity, out _);
 		#endregion
 	}
 }

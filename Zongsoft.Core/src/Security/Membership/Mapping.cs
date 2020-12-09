@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Security.Claims;
 
 using Zongsoft.Data;
 
@@ -108,6 +109,12 @@ namespace Zongsoft.Security.Membership
 			{
 				field = nameof(IRole.Namespace);
 				return role == null ? null : role.Namespace;
+			}
+
+			public string GetNamespace(ClaimsIdentity identity, out string field)
+			{
+				field = nameof(IUser.Namespace);
+				return identity?.GetNamespace();
 			}
 		}
 		#endregion
