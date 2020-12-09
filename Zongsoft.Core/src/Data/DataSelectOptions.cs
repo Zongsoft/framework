@@ -68,12 +68,23 @@ namespace Zongsoft.Data
 
 		#region 静态方法
 		/// <summary>
-		/// 创建一个禁用数据验证器的查询选项。
+		/// 创建一个去重的查询选项。
 		/// </summary>
 		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions SuppressValidator()
+		public static DataSelectOptions Distinct() => new DataSelectOptions() { IsDistinct = true };
+
+		/// <summary>
+		/// 创建一个禁用数据验证器的查询选项。
+		/// </summary>
+		/// <param name="distinct">指示是否进行去重查询。</param>
+		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
+		public static DataSelectOptions SuppressValidator(bool distinct = false)
 		{
-			return new DataSelectOptions() { ValidatorSuppressed = true };
+			return new DataSelectOptions()
+			{
+				IsDistinct = distinct,
+				ValidatorSuppressed = true,
+			};
 		}
 		#endregion
 	}
