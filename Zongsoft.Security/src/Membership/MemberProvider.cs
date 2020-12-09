@@ -28,110 +28,17 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IMemberProvider))]
-	public class MemberProvider : IMemberProvider
+	[Service(typeof(IMemberProvider<IRole, IUser>))]
+	public class MemberProvider : MemberProviderBase<IRole, IUser>
 	{
 		#region 构造函数
-		public MemberProvider(IServiceProvider serviceProvider)
-		{
-			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
-
-			if(!string.IsNullOrEmpty(Mapping.Instance.Member))
-				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Member);
-		}
-		#endregion
-
-		#region 公共属性
-		public IDataAccess DataAccess { get; }
-		#endregion
-
-		#region 公共方法
-		public IEnumerable<IRole> GetAncestors(uint memberId, MemberType memberType)
-		{
-			return MembershipHelper.GetAncestors(this.DataAccess, null, memberId, memberType, out var flats, out _) > 0 ?
-				(IEnumerable<IRole>)flats : Array.Empty<IRole>();
-		}
-
-		public IEnumerable<IRole> GetRoles(uint memberId, MemberType memberType)
-		{
-			return this.DataAccess.Select<Member>(
-				Condition.Equal(nameof(Member.MemberId), memberId) & Condition.Equal(nameof(Member.MemberType), memberType),
-				"*, Role{*}").Map(p => p.Role);
-		}
-
-		public IEnumerable<Member> GetMembers(uint roleId, string schema = null)
-		{
-			return this.DataAccess.Select<Member>(Condition.Equal(nameof(Member.RoleId), roleId), schema);
-		}
-
-		public bool SetMember(Member member)
-		{
-			if(member.RoleId == 0 || member.MemberId == 0)
-				return false;
-
-			return this.DataAccess.Upsert(member) > 0;
-		}
-
-		public int SetMembers(IEnumerable<Member> members)
-		{
-			if(members == null)
-				return 0;
-
-			return this.DataAccess.UpsertMany(members);
-		}
-
-		public int SetMembers(uint roleId, params Member[] members)
-		{
-			if(members == null || members.Length == 0)
-				return 0;
-
-			return this.SetMembers(roleId, members, false);
-		}
-
-		public int SetMembers(uint roleId, IEnumerable<Member> members, bool shouldResetting = false)
-		{
-			if(members == null)
-				return 0;
-
-			using(var transaction = new Zongsoft.Transactions.Transaction())
-			{
-				int count = 0;
-
-				//清空指定角色的所有成员
-				if(shouldResetting)
-					count = this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.RoleId), roleId));
-
-				//写入指定的角色成员集到数据库中
-				count = this.DataAccess.UpsertMany<Member>(members.Select(m => new Member(roleId, m.MemberId, m.MemberType)));
-
-				//提交事务
-				transaction.Commit();
-
-				return count;
-			}
-		}
-
-		public bool RemoveMember(uint roleId, uint memberId, MemberType memberType)
-		{
-			return this.DataAccess.Delete<Member>(
-				Condition.Equal(nameof(Member.RoleId), roleId) &
-				Condition.Equal(nameof(Member.MemberId), memberId) &
-				Condition.Equal(nameof(Member.MemberType), memberType)) > 0;
-		}
-
-		public int RemoveMembers(uint roleId)
-		{
-			return this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.RoleId), roleId));
-		}
+		public MemberProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
 		#endregion
 	}
 }
