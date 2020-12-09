@@ -34,6 +34,7 @@ using System.Security.Principal;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
+using Zongsoft.Common;
 using Zongsoft.Reflection;
 
 namespace Zongsoft.Security
@@ -347,6 +348,113 @@ namespace Zongsoft.Security
 			}
 
 			return model;
+		}
+
+		public static bool TryGetClaim<T>(this IIdentity identity, string name, out T value, StringExtension.TryParser<T> converter = null)
+		{
+			if(identity is ClaimsIdentity claimsIdentity)
+				return TryGetClaim<T>(claimsIdentity, name, out value, converter);
+
+			value = default;
+			return false;
+		}
+
+		public static bool TryGetClaim<T>(this ClaimsIdentity identity, string name, out T value, StringExtension.TryParser<T> converter = null)
+		{
+			if(TryGetClaim(identity, name, out var text))
+			{
+				if(converter != null)
+					converter(text, out value);
+				else
+					value = Common.Convert.ConvertValue<T>(text);
+
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
+		public static bool TryGetClaim(this IIdentity identity, string name, out string value)
+		{
+			if(identity is ClaimsIdentity claimsIdentity)
+				return TryGetClaim(claimsIdentity, name, out value);
+
+			value = null;
+			return false;
+		}
+
+		public static bool TryGetClaim(this ClaimsIdentity identity, string name, out string value)
+		{
+			if(identity == null)
+				throw new ArgumentNullException(nameof(identity));
+
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			var claim = identity.FindFirst(name);
+
+			if(claim != null)
+			{
+				value = claim.Value;
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
+
+		public static bool TryGetClaims<T>(this IIdentity identity, string name, out T[] values, StringExtension.TryParser<T> converter = null)
+		{
+			if(identity is ClaimsIdentity claimsIdentity)
+				return TryGetClaims<T>(claimsIdentity, name, out values, converter);
+
+			values = null;
+			return false;
+		}
+
+		public static bool TryGetClaims<T>(this ClaimsIdentity identity, string name, out T[] values, StringExtension.TryParser<T> converter = null)
+		{
+			if(TryGetClaims(identity, name, out var raws))
+			{
+				var list = new List<T>(raws.Length);
+
+				if(converter == null)
+					converter = Common.Convert.TryConvertValue<T>;
+
+				foreach(var raw in raws)
+				{
+					if(converter(raw, out var value))
+						list.Add(value);
+				}
+
+				values = list.ToArray();
+				return true;
+			}
+
+			values = null;
+			return false;
+		}
+
+		public static bool TryGetClaims(this IIdentity identity, string name, out string[] values)
+		{
+			if(identity is ClaimsIdentity claimsIdentity)
+				return TryGetClaims(claimsIdentity, name, out values);
+
+			values = null;
+			return false;
+		}
+
+		public static bool TryGetClaims(this ClaimsIdentity identity, string name, out string[] values)
+		{
+			if(identity == null)
+				throw new ArgumentNullException(nameof(identity));
+
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			values = identity.FindAll(name).Select(claim => claim.Value).ToArray();
+			return values != null && values.Length > 0;
 		}
 
 		public static Claim AddClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
