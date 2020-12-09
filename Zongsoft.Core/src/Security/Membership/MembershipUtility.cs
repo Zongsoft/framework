@@ -28,14 +28,56 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 
 namespace Zongsoft.Security.Membership
 {
-	internal static class MembershipUtility
+	public static class MembershipUtility
 	{
 		#region 公共方法
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, string @namespace = null) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
+
+			var filter = Mapping.Instance.Namespace.GetCondition(Mapping.Instance.Role, @namespace);
+
+			if(filter != null)
+				filter = new Condition("Role." + filter.Name, filter.Value, filter.Operator);
+
+			var roles = new HashSet<TRole>(dataAccess.Select<Member<TRole, IUser>>(
+				Mapping.Instance.Member,
+				Condition.Equal(nameof(Member.MemberId), memberId) &
+				Condition.Equal(nameof(Member.MemberType), memberType) &
+				filter,
+				"Role{*}").Select(p => p.Role), RoleComparer<TRole>.Instance);
+
+			if(roles.Count > 0)
+			{
+				var intersection = roles.Select(role => role.RoleId).ToArray();
+
+				while(intersection.Any())
+				{
+					var parents = dataAccess.Select<Member<TRole, IUser>>(
+						Mapping.Instance.Member,
+						Condition.In(nameof(Member.MemberId), intersection) &
+						Condition.Equal(nameof(Member.MemberType), MemberType.Role) &
+						filter,
+						"Role{*}", DataSelectOptions.Distinct()).Select(p => p.Role).ToArray();
+
+					intersection = parents.Except(roles, RoleComparer<TRole>.Instance).Select(p => p.RoleId).ToArray();
+					roles.UnionWith(parents);
+				}
+			}
+
+			return roles;
+		}
+		#endregion
+
+		#region 内部方法
 		internal static Condition GetIdentityCondition(string identity)
 		{
 			return GetIdentityCondition(identity, out _);
@@ -91,6 +133,26 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return true;
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class RoleComparer<TRole> : IEqualityComparer<TRole> where TRole : IRole
+		{
+			public static readonly RoleComparer<TRole> Instance = new RoleComparer<TRole>();
+
+			public bool Equals(TRole x, TRole y)
+			{
+				if(x == null)
+					return y == null;
+				else
+					return y == null ? false : x.RoleId == y.RoleId;
+			}
+
+			public int GetHashCode(TRole role)
+			{
+				return (int)role.RoleId;
+			}
 		}
 		#endregion
 	}
