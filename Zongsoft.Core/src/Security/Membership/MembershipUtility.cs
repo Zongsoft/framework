@@ -38,22 +38,201 @@ namespace Zongsoft.Security.Membership
 	public static class MembershipUtility
 	{
 		#region 公共方法
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, string @namespace = null) where TRole : IRole
+		public static bool InRoles(IDataAccess dataAccess, IRole role, params string[] roleNames)
+		{
+			if(role == null || role.Name == null || roleNames == null || roleNames.Length < 1)
+				return false;
+
+			//如果指定的角色对应的是系统内置管理员（即 Administrators），那么它拥有对任何角色的隶属判断
+			if(string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase))
+				return true;
+
+			//处理非系统内置管理员角色
+			if(GetAncestors(dataAccess, role, out ISet<IRole> flats, out _) > 0)
+			{
+				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
+				return flats.Any(role =>
+					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+					roleNames.Contains(role.Name)
+				);
+			}
+
+			return false;
+		}
+
+		public static bool InRoles(IDataAccess dataAccess, IUser user, params string[] roleNames)
+		{
+			if(user == null || user.Name == null || roleNames == null || roleNames.Length < 1)
+				return false;
+
+			//如果指定的用户对应的是系统内置管理员（即 Administrator），那么它拥有对任何角色的隶属判断
+			if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+				return true;
+
+			//处理非系统内置管理员账号
+			if(GetAncestors(dataAccess, user, out ISet<IRole> flats, out _) > 0)
+			{
+				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
+				return flats.Any(role =>
+					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+					roleNames.Contains(role.Name)
+				);
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// 获取指定角色的所有上级角色集。
+		/// </summary>
+		/// <param name="dataAccess">数据访问服务。</param>
+		/// <param name="role">指定的角色对象。</param>
+		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
+		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
+		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
+		public static int GetAncestors<TRole>(IDataAccess dataAccess, IRole role, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
 
-			var filter = Mapping.Instance.Namespace.GetCondition(Mapping.Instance.Role, @namespace);
+			if(role == null)
+				throw new ArgumentNullException(nameof(role));
 
-			if(filter != null)
-				filter = new Condition("Role." + filter.Name, filter.Value, filter.Operator);
+			//获取角色表的命名空间字段名
+			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
+
+			return GetAncestors(
+				dataAccess,
+				role.RoleId,
+				MemberType.Role,
+				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(role)),
+				out flats, out hierarchies);
+		}
+
+		/// <summary>
+		/// 获取指定用户的所有上级角色集。
+		/// </summary>
+		/// <param name="dataAccess">数据访问服务。</param>
+		/// <param name="user">指定的用户对象。</param>
+		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
+		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
+		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
+		public static int GetAncestors<TRole>(IDataAccess dataAccess, IUser user, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
+
+			if(user == null)
+				throw new ArgumentNullException(nameof(user));
+
+			//获取角色表的命名空间字段名
+			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
+
+			return GetAncestors(
+				dataAccess,
+				user.UserId,
+				MemberType.User,
+				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(user)),
+				out flats, out hierarchies);
+		}
+
+		/// <summary>
+		/// 获取指定用户或角色的上级角色集。
+		/// </summary>
+		/// <param name="dataAccess">数据访问服务。</param>
+		/// <param name="memberId">成员编号（用户或角色）。</param>
+		/// <param name="memberType">成员类型，表示<paramref name="memberId"/>对应的成员类型。</param>
+		/// <param name="filter"></param>
+		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
+		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
+		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
+		private static int GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
+
+			flats = null;
+			hierarchies = null;
+
+			//获取指定命名空间下的所有成员及其关联的角色对象（注：即时加载到内存中）
+			var members = dataAccess.Select<Member<TRole, IUser>>(
+				filter, "*, Role{*}")
+				.Where(m => m.Role != null)
+				.ToArray();
+
+			flats = new HashSet<TRole>(RoleComparer<TRole>.Instance);
+			hierarchies = new List<IEnumerable<TRole>>();
+
+			//从角色成员集合中查找出指定成员的父级角色
+			var parents = members.Where(m => m.MemberId == memberId && m.MemberType == memberType)
+								 .Select(m => m.Role).ToList();
+
+			//如果父级角色集不为空
+			while(parents.Any())
+			{
+				//将父角色集合并到输出参数中
+				flats.UnionWith(parents);
+				//将特定层级的所有父角色集加入到层级列表中
+				hierarchies.Add(parents);
+
+				//从角色成员集合中查找出当前层级中所有角色的父级角色集合（并进行全局去重）
+				parents = members.Where(m => parents.Any(p => p.RoleId == m.MemberId) && m.MemberType == MemberType.Role)
+								 .Select(m => m.Role)
+								 .Except(flats, RoleComparer<TRole>.Instance).ToList();
+			}
+
+			return flats.Count;
+		}
+
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IRole role) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
+
+			if(role == null)
+				throw new ArgumentNullException(nameof(role));
+
+			//获取角色表的命名空间字段名
+			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
+
+			return GetAncestors<TRole>(
+				dataAccess,
+				role.RoleId,
+				MemberType.Role,
+				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(role)));
+		}
+
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IUser user) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
+
+			if(user == null)
+				throw new ArgumentNullException(nameof(user));
+
+			//获取角色表的命名空间字段名
+			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
+
+			return GetAncestors<TRole>(
+				dataAccess,
+				user.UserId,
+				MemberType.User,
+				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(user)));
+		}
+
+		private static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter) where TRole : IRole
+		{
+			if(dataAccess == null)
+				throw new ArgumentNullException(nameof(dataAccess));
 
 			var roles = new HashSet<TRole>(dataAccess.Select<Member<TRole, IUser>>(
 				Mapping.Instance.Member,
 				Condition.Equal(nameof(Member.MemberId), memberId) &
 				Condition.Equal(nameof(Member.MemberType), memberType) &
 				filter,
-				"Role{*}").Select(p => p.Role), RoleComparer<TRole>.Instance);
+				"Role{*}")
+				.Where(m => m.Role != null)
+				.Select(m => m.Role), RoleComparer<TRole>.Instance);
 
 			if(roles.Count > 0)
 			{
@@ -66,7 +245,9 @@ namespace Zongsoft.Security.Membership
 						Condition.In(nameof(Member.MemberId), intersection) &
 						Condition.Equal(nameof(Member.MemberType), MemberType.Role) &
 						filter,
-						"Role{*}", DataSelectOptions.Distinct()).Select(p => p.Role).ToArray();
+						"Role{*}", DataSelectOptions.Distinct())
+						.Where(m => m.Role != null)
+						.Select(m => m.Role).ToArray();
 
 					intersection = parents.Except(roles, RoleComparer<TRole>.Instance).Select(p => p.RoleId).ToArray();
 					roles.UnionWith(parents);
@@ -133,6 +314,12 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return true;
+		}
+
+		private static bool IsBuiltin(string name)
+		{
+			return string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase) ||
+			       string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase);
 		}
 		#endregion
 

@@ -59,7 +59,17 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public IEnumerable<TRole> GetAncestors(uint memberId, MemberType memberType)
 		{
-			return MembershipUtility.GetAncestors<TRole>(this.DataAccess, memberId, memberType);
+			switch(memberType)
+			{
+				case MemberType.User:
+					var user = this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUser.UserId), memberId)).FirstOrDefault();
+					return user == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, user);
+				case MemberType.Role:
+					var role = this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRole.RoleId), memberId)).FirstOrDefault();
+					return role == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, role);
+				default:
+					return null;
+			}
 		}
 
 		public IEnumerable<TRole> GetRoles(uint memberId, MemberType memberType)
