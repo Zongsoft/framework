@@ -942,16 +942,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private Condition GetNamespace(string @namespace)
 		{
-			if(@namespace == "*" || @namespace == "?")
-				return null;
-
-			var name = this.DataAccess.Naming.Get<TUser>() ?? Mapping.Instance.User;
-			var existed = this.DataAccess.Metadata.Entities.Get(name).Properties.Contains(nameof(IUser.Namespace));
-
-			if(string.IsNullOrEmpty(@namespace))
-				return existed ? Condition.Equal(nameof(IUser.Namespace), null) : null;
-			else
-				return existed ? Condition.Equal(nameof(IUser.Namespace), @namespace) : throw new DataArgumentException(nameof(@namespace));
+			return Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TUser>(), @namespace);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

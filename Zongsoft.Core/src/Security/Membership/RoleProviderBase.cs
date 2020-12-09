@@ -325,12 +325,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private Condition GetNamespace(string @namespace)
 		{
-			if(string.IsNullOrEmpty(@namespace))
-				return Condition.Equal(nameof(IRole.Namespace), ApplicationContext.Current.Principal.Identity.GetNamespace());
-			else if(@namespace != "*")
-				return Condition.Equal(nameof(IRole.Namespace), @namespace);
-
-			return null;
+			return Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TRole>(), @namespace);
 		}
 		#endregion
 	}
