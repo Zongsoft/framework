@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 成员字段
 		private IUserProvider<IUser> _userProvider;
 		private IAuthorizer _authorizer;
-		private IMemberProvider _memberProvider;
+		private IMemberProvider<IRole, IUser> _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
 
@@ -72,7 +72,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IMemberProvider MemberProvider
+		public IMemberProvider<IRole, IUser> MemberProvider
 		{
 			get => _memberProvider;
 			set => _memberProvider = value ?? throw new ArgumentNullException();
@@ -420,6 +420,17 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 成员操作
+		[HttpGet("{id}/Ancestors")]
+		[HttpGet("Ancestors/{id:required}")]
+		public Task<IActionResult> GetAncestors(uint id)
+		{
+			var roles = this.MemberProvider.GetAncestors(id, MemberType.User);
+
+			return roles != null && roles.Any() ?
+				Task.FromResult((IActionResult)this.Ok(roles)) :
+				Task.FromResult((IActionResult)this.NoContent());
+		}
+
 		[HttpGet("{id}/Roles")]
 		[HttpGet("Roles/{id?}")]
 		public Task<IActionResult> GetRoles(uint id = 0)

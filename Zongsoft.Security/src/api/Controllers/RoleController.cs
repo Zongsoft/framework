@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 成员字段
 		private IAuthorizer _authorizer;
 		private IRoleProvider<IRole> _roleProvider;
-		private IMemberProvider _memberProvider;
+		private IMemberProvider<IRole, IUser> _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
 
@@ -72,7 +72,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IMemberProvider MemberProvider
+		public IMemberProvider<IRole, IUser> MemberProvider
 		{
 			get => _memberProvider;
 			set => _memberProvider = value ?? throw new ArgumentNullException();
@@ -238,6 +238,17 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 成员操作
+		[HttpGet("{id}/Ancestors")]
+		[HttpGet("Ancestors/{id:required}")]
+		public Task<IActionResult> GetAncestors(uint id)
+		{
+			var roles = this.MemberProvider.GetAncestors(id, MemberType.Role);
+
+			return roles != null && roles.Any() ?
+				Task.FromResult((IActionResult)this.Ok(roles)) :
+				Task.FromResult((IActionResult)this.NoContent());
+		}
+
 		[HttpGet("{id}/Roles")]
 		[HttpGet("Roles/{id:required}")]
 		public Task<IActionResult> GetRoles(uint id)
@@ -276,7 +287,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPut("{id}/Member/{memberType}:{memberId:int}")]
 		public Task<IActionResult> SetMember(uint id, MemberType memberType, uint memberId)
 		{
-			return this.MemberProvider.SetMember(new Member(id, memberId, memberType)) ?
+			return this.MemberProvider.SetMember(id, memberId, memberType) ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetMembers), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
