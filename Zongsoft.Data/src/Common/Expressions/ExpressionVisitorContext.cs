@@ -39,7 +39,6 @@ namespace Zongsoft.Data.Common.Expressions
 	public class ExpressionVisitorContext
 	{
 		#region 成员字段
-		private int _count;
 		private ExpressionVisitorCounter _counter;
 		private readonly ExpressionVisitorBase _visitor;
 		private readonly StringBuilder _output;
@@ -52,7 +51,7 @@ namespace Zongsoft.Data.Common.Expressions
 			_visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
 			_stack = new ExpressionStack();
 			_output = new StringBuilder(Math.Max(capacity, 64));
-			_counter = new ExpressionVisitorCounter(ref _count);
+			_counter = new ExpressionVisitorCounter();
 		}
 		#endregion
 
@@ -121,17 +120,68 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 嵌套子类
-		public struct ExpressionVisitorCounter
+		public class ExpressionVisitorCounter
 		{
+			#region 成员字段
 			private int _value;
-			public ExpressionVisitorCounter(ref int value) => _value = value;
-			public int Value => _value;
-			public bool Indent() => _value++ > 0;
-			public bool Dedent() => --_value > 0;
-			public int Increase() => ++_value;
-			public int IncreasePost() => _value++;
-			public int Decrease() => --_value;
-			public int DecreasePost() => _value--;
+			private int[] _values;
+			#endregion
+
+			#region 构造函数
+			public ExpressionVisitorCounter() { }
+			#endregion
+
+			#region 公共方法
+			public int GetValue(int index = 0)
+			{
+				return index == 0 && _values == null ? _value : _values[index];
+			}
+
+			public bool Indent(int index = 0)
+			{
+				if(index <= 0)
+					return _value++ > 0;
+				else
+				{
+					this.Resize(index + 1);
+					return _values[index]++ > 0;
+				}
+			}
+
+			public bool Dedent(int index = 0)
+			{
+				if(index <= 0)
+					return --_value > 0;
+				else
+				{
+					this.Resize(index + 1);
+					return --_values[index] > 0;
+				}
+			}
+			#endregion
+
+			#region 私有方法
+			private void Resize(int count)
+			{
+				if(count < 2)
+					return;
+
+				if(count > 64)
+					throw new ArgumentOutOfRangeException(nameof(count));
+
+				if(_values == null)
+				{
+					_values = new int[count];
+					_values[0] = _value;
+				}
+				else
+				{
+					var newValues = new int[count];
+					Array.Copy(_values, 0, newValues, 0, _values.Length);
+					_values = newValues;
+				}
+			}
+			#endregion
 		}
 
 		private class ExpressionStack : IStack<IExpression>
