@@ -116,12 +116,12 @@ namespace Zongsoft.Security.Membership
 			return context.IsAuthorized;
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(ClaimsIdentity user)
+		public IEnumerable<AuthorizationToken> Authorizes(ClaimsIdentity identity)
 		{
-			if(user == null)
-				throw new ArgumentNullException(nameof(user));
+			if(identity == null)
+				throw new ArgumentNullException(nameof(identity));
 
-			return this.GetAuthorizedTokens(user.GetNamespace(), user.GetIdentifier<uint>(), MemberType.User);
+			return MembershipUtility.GetAuthorizes(this.DataAccess, identity);
 		}
 
 		public IEnumerable<AuthorizationToken> Authorizes(IRole role)
@@ -129,37 +129,23 @@ namespace Zongsoft.Security.Membership
 			if(role == null)
 				throw new ArgumentNullException(nameof(role));
 
-			return this.GetAuthorizedTokens(role.Namespace, role.RoleId, MemberType.Role);
+			return MembershipUtility.GetAuthorizes(this.DataAccess, role);
 		}
 
 		public IEnumerable<AuthorizationToken> Authorizes(uint memberId, MemberType memberType)
 		{
-			string @namespace;
-
 			if(memberType == MemberType.User)
 			{
 				//获取指定编号的用户对象
-				var user = this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), memberId), "!, UserId, Name, Namespace").FirstOrDefault();
-
-				//如果指定编号的用户不存在，则退出
-				if(user == null)
-					return Array.Empty<AuthorizationToken>();
-
-				@namespace = user.Namespace;
+				var user = this.DataAccess.Select<IUser>(Mapping.Instance.User, Condition.Equal(nameof(IUser.UserId), memberId)).FirstOrDefault();
+				return user == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, user);
 			}
 			else
 			{
 				//获取指定编号的角色对象
-				var role = this.DataAccess.Select<IRole>(Condition.Equal(nameof(IRole.RoleId), memberId), "!, RoleId, Name, Namespace").FirstOrDefault();
-
-				//如果指定编号的角色不存在或是一个内置角色（内置角色没有归属），则退出
-				if(role == null)
-					return Array.Empty<AuthorizationToken>();
-
-				@namespace = role.Namespace;
+				var role = this.DataAccess.Select<IRole>(Mapping.Instance.Role, Condition.Equal(nameof(IRole.RoleId), memberId)).FirstOrDefault();
+				return role == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, role);
 			}
-
-			return this.GetAuthorizedTokens(@namespace, memberId, memberType);
 		}
 
 		public bool InRoles(uint userId, params string[] roleNames)
@@ -176,13 +162,6 @@ namespace Zongsoft.Security.Membership
 		public bool InRoles(IUserIdentity user, params string[] roleNames)
 		{
 			return MembershipUtility.InRoles(this.DataAccess, user as IUser, roleNames);
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual IEnumerable<AuthorizationToken> GetAuthorizedTokens(string @namespace, uint memberId, MemberType memberType)
-		{
-			return MembershipHelper.GetAuthorizedTokens(this.DataAccess, @namespace, memberId, memberType);
 		}
 		#endregion
 
