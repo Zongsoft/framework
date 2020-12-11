@@ -201,7 +201,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					//设置子查询的返回记录数限定为1，以提升查询性能
 					if(subquery is SelectStatement select)
-						select.Paging = Paging.Page(0, 1);
+						select.Paging = Paging.Limit(1);
 
 					return condition.Operator == ConditionOperator.Exists ?
 						Expression.Exists((IExpression)subquery) :
