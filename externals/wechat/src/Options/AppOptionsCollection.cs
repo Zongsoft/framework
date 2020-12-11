@@ -28,38 +28,21 @@
  */
 
 using System;
-using System.Web.Http;
-using System.Threading.Tasks;
 
-namespace Zongsoft.Externals.Wechat.Controllers
+namespace Zongsoft.Externals.Wechat.Options
 {
-	public class CredentialController : ApiController
+	public class AppOptionsCollection : Collections.NamedCollectionBase<AppOptions>
 	{
-		#region 成员字段
-		private ICredentialProvider _provider;
-		#endregion
-
 		#region 公共属性
-		public ICredentialProvider Provider
-		{
-			get => _provider;
-			set => _provider = value ?? throw new ArgumentNullException();
-		}
+		public string Default { get; set; }
 		#endregion
 
 		#region 公共方法
-		[HttpGet]
-		public async Task<object> Get(string id)
-		{
-			return this.Text(await _provider.GetCredentialAsync(id));
-		}
+		public AppOptions GetDefault() => this.Default != null && this.TryGetItem(this.Default, out var app) ? app : null;
+		#endregion
 
-		[HttpGet]
-		[ActionName("Ticket")]
-		public async Task<object> GetTicket(string id)
-		{
-			return this.Text(await _provider.GetTicketAsync(id));
-		}
+		#region 重写方法
+		protected override string GetKeyForItem(AppOptions item) => item.Name;
 		#endregion
 	}
 }

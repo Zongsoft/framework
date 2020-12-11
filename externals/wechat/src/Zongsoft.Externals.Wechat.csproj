@@ -9,6 +9,14 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="api\**" />
+	  <Compile Remove="guarding\**" />
+	  <EmbeddedResource Remove="api\**" />
+	  <EmbeddedResource Remove="guarding\**" />
+	  <None Remove="api\**" />
+	  <None Remove="guarding\**" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.7" />
 	</ItemGroup>
 	<ItemGroup>

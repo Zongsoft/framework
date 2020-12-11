@@ -28,19 +28,39 @@
  */
 
 using System;
-using System.Net.Http;
-using System.Web.Http;
+using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Mvc;
 
 namespace Zongsoft.Externals.Wechat.Controllers
 {
-	public static class ControllerExtension
+	[Route("Credentials")]
+	public class CredentialController : ControllerBase
 	{
-		public static HttpResponseMessage Text(this ApiController controller, string text, System.Text.Encoding encoding = null)
+		#region 成员字段
+		private ICredentialProvider _provider;
+		#endregion
+
+		#region 公共属性
+		public ICredentialProvider Provider
 		{
-			return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-			{
-				Content = new StringContent(text, encoding ?? System.Text.Encoding.UTF8, "text/plain")
-			};
+			get => _provider;
+			set => _provider = value ?? throw new ArgumentNullException();
 		}
+		#endregion
+
+		#region 公共方法
+		[HttpGet("{id}")]
+		public async Task<object> Get(string id)
+		{
+			return this.Content(await _provider.GetCredentialAsync(id));
+		}
+
+		[HttpGet("{id}/Ticket")]
+		public async Task<object> GetTicket(string id)
+		{
+			return this.Content(await _provider.GetTicketAsync(id));
+		}
+		#endregion
 	}
 }

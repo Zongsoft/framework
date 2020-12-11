@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Wechat.Guarding"
+        title="Zongsoft.Externals.Wechat.Guarding Plugin"
+        version="1.0"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2020. All rights reserved."
+        description="">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Wechat.Guarding" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Externals.Wechat" />
+		</dependencies>
+	</manifest>
+</plugin>

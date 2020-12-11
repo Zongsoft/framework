@@ -29,48 +29,33 @@
 
 using System;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Zongsoft.Externals.Wechat.Options.Configuration
+namespace Zongsoft.Externals.Wechat.Controllers
 {
-	public class AppElement : OptionConfigurationElement, IAppSetting
+	public class FallbackController : ControllerBase
 	{
-		#region 常量定义
-		private const string XML_ID_ATTRIBUTE = "id";
-		private const string XML_SECRET_ATTRIBUTE = "secret";
-		private const string XML_TOKEN_ATTRIBUTE = "token";
-		private const string XML_KEY_ATTRIBUTE = "key";
-		#endregion
-
-		#region 公共属性
-		[OptionConfigurationProperty(XML_ID_ATTRIBUTE, OptionConfigurationPropertyBehavior.IsKey)]
-		public string Id
+		public object Get(string signature, uint timestamp, string nonce)
 		{
-			get => (string)this[XML_ID_ATTRIBUTE];
-			set => this[XML_ID_ATTRIBUTE] = value;
+			if(this.Request.Query.TryGetValue("echostr", out var result))
+				return this.Content(result.ToString());
+
+			return this.NoContent();
 		}
 
-		[OptionConfigurationProperty(XML_SECRET_ATTRIBUTE, OptionConfigurationPropertyBehavior.IsRequired)]
-		public string Secret
+		private void PrintRequestInfo()
 		{
-			get => (string)this[XML_SECRET_ATTRIBUTE];
-			set => this[XML_SECRET_ATTRIBUTE] = value;
-		}
+			var text = new System.Text.StringBuilder();
 
-		[OptionConfigurationProperty(XML_TOKEN_ATTRIBUTE)]
-		public string Token
-		{
-			get => (string)this[XML_TOKEN_ATTRIBUTE];
-			set => this[XML_TOKEN_ATTRIBUTE] = value;
-		}
+			text.Append("(" + this.Request.Method + ")");
+			text.AppendLine(this.Request.Path.ToString());
 
-		[OptionConfigurationProperty(XML_KEY_ATTRIBUTE)]
-		public string Key
-		{
-			get => (string)this[XML_KEY_ATTRIBUTE];
-			set => this[XML_KEY_ATTRIBUTE] = value;
+			foreach(var header in this.Request.Headers)
+			{
+				text.AppendLine(header.Key + ":" + string.Join(";", header.Value));
+			}
+
+			Zongsoft.Diagnostics.Logger.Error(text.ToString());
 		}
-		#endregion
 	}
 }

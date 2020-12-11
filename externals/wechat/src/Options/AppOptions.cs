@@ -29,37 +29,25 @@
 
 using System;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Configuration;
-
-namespace Zongsoft.Externals.Wechat.Options.Configuration
+namespace Zongsoft.Externals.Wechat.Options
 {
-	public class GeneralConfiguration : OptionConfigurationElement, IConfiguration
+	/// <summary>
+	/// 表示微信开放平台的第三方应用设置选项类。
+	/// </summary>
+	public class AppOptions
 	{
-		#region 常量定义
-		private const string XML_APPS_COLLECTION = "apps";
-		#endregion
-
 		#region 公共属性
-		[OptionConfigurationProperty(XML_APPS_COLLECTION)]
-		public AppElementCollection Apps
-		{
-			get
-			{
-				return (AppElementCollection)this[XML_APPS_COLLECTION];
-			}
-		}
-		#endregion
+		/// <summary>获取或设置第三方平台应用标识，即微信开放平台的<c>component_appid</c>。</summary>
+		public string Name { get; set; }
 
-		#region 显式实现
-		IAppSettingCollection IConfiguration.Apps
-		{
-			get
-			{
-				return this.Apps;
-			}
-		}
-		#endregion
+		/// <summary>获取或设置第三方平台应用口令，即微信开放平台的<c>component_appsecret</c>。</summary>
+		public string Secret { get; set; }
 
+		/// <summary>获取或设置第三方平台应用标记，即微信开放平台的“消息校验Token”。</summary>
+		public string Nonce { get; set; }
+
+		/// <summary>获取或设置第三方平台应用对称加解密的密钥，即微信开放平台的<c>symmetric_key</c>或<c>AESEncodingKey</c>。</summary>
+		public string Key { get; set; }
+		#endregion
 	}
 }

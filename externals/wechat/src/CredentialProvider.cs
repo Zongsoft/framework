@@ -55,7 +55,8 @@ namespace Zongsoft.Externals.Wechat
 		#region 公共属性
 		public ICache Cache { get; set; }
 
-		public Options.IConfiguration Configuration { get; set; }
+		[Zongsoft.Configuration.Options.Options("Externals/Wechat/Platform")]
+		public Options.PlatformOptions Options { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -64,12 +65,12 @@ namespace Zongsoft.Externals.Wechat
 			return this.GetCredentialAsync(GetApp(appId));
 		}
 
-		public async Task<string> GetCredentialAsync(Options.IAppSetting app)
+		public async Task<string> GetCredentialAsync(Options.AppOptions app)
 		{
 			if(app == null)
 				throw new ArgumentNullException(nameof(app));
 
-			var key = GetCredentalKey(app.Id);
+			var key = GetCredentalKey(app.Name);
 
 			//首先从本地内存缓存中获取凭证标记，如果获取成功并且凭证未过期则返回该凭证号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
@@ -79,7 +80,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(string.IsNullOrEmpty(credentialId))
 			{
-				token = await this.GetRemoteCredentialAsync(app.Id, app.Secret);
+				token = await this.GetRemoteCredentialAsync(app.Name, app.Secret);
 
 				if(this.Cache.SetValue(key, token.Key, token.Expiry.GetDuration()))
 					_localCache[key] = token;
@@ -102,12 +103,12 @@ namespace Zongsoft.Externals.Wechat
 			return this.GetTicketAsync(GetApp(appId));
 		}
 
-		public async Task<string> GetTicketAsync(Options.IAppSetting app)
+		public async Task<string> GetTicketAsync(Options.AppOptions app)
 		{
 			if(app == null)
 				throw new ArgumentNullException(nameof(app));
 
-			var key = GetTicketKey(app.Id);
+			var key = GetTicketKey(app.Name);
 
 			//首先从本地内存缓存中获取票据标记，如果获取成功并且票据未过期则返回该票据号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
@@ -180,12 +181,12 @@ namespace Zongsoft.Externals.Wechat
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.IAppSetting GetApp(string appId)
+		private Options.AppOptions GetApp(string appId)
 		{
-			var configuration = this.Configuration ?? throw new WechatException("Missing required configuration for the Wechat credential provider.");
+			var configuration = this.Options ?? throw new WechatException("Missing required configuration for the Wechat credential provider.");
 
 			if(string.IsNullOrEmpty(appId))
-				return configuration.Apps.Default ?? throw new InvalidOperationException("Missing The Wechat application default configuration.");
+				return configuration.Apps.GetDefault() ?? throw new InvalidOperationException("Missing The Wechat application default configuration.");
 
 			if(configuration.Apps.TryGet(appId, out var app))
 				return app;
@@ -252,17 +253,18 @@ namespace Zongsoft.Externals.Wechat
 
 		public class CredentialToken : Token
 		{
-			#region 公共字段
-			[Zongsoft.Runtime.Serialization.SerializationMember("access_token")]
-			public string CredentialId;
-			#endregion
-
 			#region 构造函数
 			public CredentialToken(string credentialId, DateTime expiry)
 			{
 				this.CredentialId = credentialId;
 				this.Expiry = expiry;
 			}
+			#endregion
+
+			#region 公共属性
+			[Zongsoft.Serialization.SerializationMember("access_token")]
+			[System.Text.Json.Serialization.JsonPropertyName("access_token")]
+			public string CredentialId { get; set; }
 			#endregion
 
 			#region 重写属性
@@ -272,17 +274,18 @@ namespace Zongsoft.Externals.Wechat
 
 		public class TicketToken : Token
 		{
-			#region 公共字段
-			[Zongsoft.Runtime.Serialization.SerializationMember("ticket")]
-			public string TicketId;
-			#endregion
-
 			#region 构造函数
 			public TicketToken(string ticketId, DateTime expiry)
 			{
 				this.TicketId = ticketId;
 				this.Expiry = expiry;
 			}
+			#endregion
+
+			#region 公共属性
+			[Zongsoft.Serialization.SerializationMember("ticket")]
+			[System.Text.Json.Serialization.JsonPropertyName("ticket")]
+			public string TicketId { get; set; }
 			#endregion
 
 			#region 重写属性
