@@ -142,6 +142,19 @@ namespace Zongsoft.Data
 
 		#region 静态方法
 		/// <summary>
+		/// 创建指定记录数的限定设置。
+		/// </summary>
+		/// <param name="count">限定返回的记录数。</param>
+		/// <returns>返回新创建的分页设置对象。</returns>
+		public static Paging Limit(int count = 1)
+		{
+			if(count < 1)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			return new Paging(0, count);
+		}
+
+		/// <summary>
 		/// 以指定的页号及大小创建一个分页设置对象。
 		/// </summary>
 		/// <param name="index">指定的页号，默认为1。</param>
