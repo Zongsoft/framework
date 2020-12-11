@@ -134,29 +134,25 @@ namespace Zongsoft.Data.Common.Expressions
 			#region 公共方法
 			public int GetValue(int index = 0)
 			{
-				return index == 0 && _values == null ? _value : _values[index];
+				return index <= 0 && _values == null ? _value : _values[index];
 			}
 
 			public bool Indent(int index = 0)
 			{
-				if(index <= 0)
+				if(index <= 0 && _values == null)
 					return _value++ > 0;
-				else
-				{
-					this.Resize(index + 1);
-					return _values[index]++ > 0;
-				}
+
+				this.Resize(index + 1);
+				return _values[index]++ > 0;
 			}
 
 			public bool Dedent(int index = 0)
 			{
-				if(index <= 0)
+				if(index <= 0 && _values == null)
 					return --_value > 0;
-				else
-				{
-					this.Resize(index + 1);
-					return --_values[index] > 0;
-				}
+
+				this.Resize(index + 1);
+				return --_values[index] > 0;
 			}
 			#endregion
 
@@ -176,9 +172,7 @@ namespace Zongsoft.Data.Common.Expressions
 				}
 				else
 				{
-					var newValues = new int[count];
-					Array.Copy(_values, 0, newValues, 0, _values.Length);
-					_values = newValues;
+					Array.Resize(ref _values, count);
 				}
 			}
 			#endregion
