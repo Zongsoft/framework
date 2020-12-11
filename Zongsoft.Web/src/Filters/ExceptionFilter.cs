@@ -94,6 +94,10 @@ namespace Zongsoft.Web.Filters
 
 					context.Result = new BadRequestResult();
 					break;
+				case NotSupportedException unsupported:
+				case NotImplementedException unimplemented:
+					context.Result = new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+					break;
 			}
 		}
 	}
