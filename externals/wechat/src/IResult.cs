@@ -31,36 +31,18 @@ using System;
 
 namespace Zongsoft.Externals.Wechat
 {
-	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
-	/// </summary>
-	public struct ErrorMessage
+	public interface IResult
 	{
-		#region 构造函数
-		public ErrorMessage(int code, string message)
-		{
-			this.Code = code;
-			this.Message = message;
-		}
-		#endregion
-
 		#region 公共属性
 		/// <summary>获取或设置错误码。</summary>
 		[Zongsoft.Serialization.SerializationMember("errcode")]
 		[System.Text.Json.Serialization.JsonPropertyName("errcode")]
-		public int Code { get; set; }
+		public int ErrorCode { get; set; }
 
 		/// <summary>获取或设置错误消息。</summary>
 		[Zongsoft.Serialization.SerializationMember("errmsg")]
 		[System.Text.Json.Serialization.JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
+		public string ErrorMessage { get; set; }
 		#endregion
 	}
 }

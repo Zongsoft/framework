@@ -7,5 +7,17 @@
 				<app app.name="AppId" secret="AppSecret" nonce="Token" key="SymmetricKey" />
 			</apps>
 		</platform>
+
+		<applet>
+			<apps default="AppId">
+				<app app.name="AppId" secret="AppSecret" />
+			</apps>
+		</applet>
+
+		<channel>
+			<apps>
+				<app app.name="AppId" secret="AppSecret" />
+			</apps>
+		</channel>
 	</option>
 </options>

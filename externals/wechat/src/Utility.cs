@@ -59,6 +59,26 @@ namespace Zongsoft.Externals.Wechat
 			return false;
 		}
 
+		public static async System.Threading.Tasks.Task<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, out ErrorResult error)
+		{
+			if(response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			if(response.StatusCode == System.Net.HttpStatusCode.NoContent || response.Content.Headers.ContentLength <= 0)
+			{
+				error = default;
+				return default;
+			}
+
+			var content = await response.Content.ReadAsStreamAsync();
+			error = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync<ErrorResult>(content);
+
+			if(response.IsSuccessStatusCode && error.Code == 0)
+				result = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync());
+
+			return null;
+		}
+
 		public static TimeSpan GetDuration(this DateTime timestamp)
 		{
 			return timestamp.Kind == DateTimeKind.Utc ? timestamp - DateTime.UtcNow : timestamp - DateTime.Now;

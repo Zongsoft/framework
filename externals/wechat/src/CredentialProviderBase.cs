@@ -37,7 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class CredentialProvider : ICredentialProvider
+	public abstract class CredentialProviderBase : ICredentialProvider
 	{
 		#region 成员字段
 		private HttpClient _http;
@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 构造函数
-		public CredentialProvider()
+		public CredentialProviderBase()
 		{
 			_http = new HttpClient();
 			_localCache = new Dictionary<string, Token>();
@@ -54,23 +54,15 @@ namespace Zongsoft.Externals.Wechat
 
 		#region 公共属性
 		public ICache Cache { get; set; }
-
-		[Zongsoft.Configuration.Options.Options("Externals/Wechat/Platform")]
-		public Options.PlatformOptions Options { get; set; }
 		#endregion
 
 		#region 公共方法
-		public Task<string> GetCredentialAsync(string appId)
+		public async Task<string> GetCredentialAsync(string appId)
 		{
-			return this.GetCredentialAsync(GetApp(appId));
-		}
+			if(string.IsNullOrEmpty(appId))
+				throw new ArgumentNullException(nameof(appId));
 
-		public async Task<string> GetCredentialAsync(Options.AppOptions app)
-		{
-			if(app == null)
-				throw new ArgumentNullException(nameof(app));
-
-			var key = GetCredentalKey(app.Name);
+			var key = GetCredentalKey(appId);
 
 			//首先从本地内存缓存中获取凭证标记，如果获取成功并且凭证未过期则返回该凭证号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
@@ -80,7 +72,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(string.IsNullOrEmpty(credentialId))
 			{
-				token = await this.GetRemoteCredentialAsync(app.Name, app.Secret);
+				token = await this.GetRemoteCredentialAsync(appId, this.GetSecret(appId));
 
 				if(this.Cache.SetValue(key, token.Key, token.Expiry.GetDuration()))
 					_localCache[key] = token;
@@ -98,17 +90,12 @@ namespace Zongsoft.Externals.Wechat
 			}
 		}
 
-		public Task<string> GetTicketAsync(string appId)
+		public async Task<string> GetTicketAsync(string appId)
 		{
-			return this.GetTicketAsync(GetApp(appId));
-		}
+			if(string.IsNullOrEmpty(appId))
+				throw new ArgumentNullException(nameof(appId));
 
-		public async Task<string> GetTicketAsync(Options.AppOptions app)
-		{
-			if(app == null)
-				throw new ArgumentNullException(nameof(app));
-
-			var key = GetTicketKey(app.Name);
+			var key = GetTicketKey(appId);
 
 			//首先从本地内存缓存中获取票据标记，如果获取成功并且票据未过期则返回该票据号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
@@ -118,7 +105,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(string.IsNullOrEmpty(ticketId))
 			{
-				token = await this.GetRemoteTicketAsync(await this.GetCredentialAsync(app));
+				token = await this.GetRemoteTicketAsync(await this.GetCredentialAsync(appId));
 
 				if(this.Cache.SetValue(key, token.Key, token.Expiry.GetDuration()))
 					_localCache[key] = token;
@@ -137,15 +124,19 @@ namespace Zongsoft.Externals.Wechat
 		}
 		#endregion
 
+		#region 抽象方法
+		protected abstract string GetSecret(string appId);
+		#endregion
+
 		#region 私有方法
 		private async Task<Token> GetRemoteCredentialAsync(string appId, string secret, int retries = 3)
 		{
-			var response = await _http.GetAsync($"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appId}&secret={secret}");
+			var response = await _http.GetAsync(Urls.GetAccessToken("client_credential", appId, secret));
 
 			if(response.IsSuccessStatusCode && response.TryGetJson<CredentialToken>(out var token) && token.IsValid)
 				return token;
 
-			if(response.TryGetJson<ErrorMessage>(out var error) && error.Code != 0)
+			if(response.TryGetJson<ErrorResult>(out var error) && error.Code != 0)
 			{
 				if(error.Code == ErrorCodes.Busy && retries > 0)
 				{
@@ -161,12 +152,12 @@ namespace Zongsoft.Externals.Wechat
 
 		private async Task<Token> GetRemoteTicketAsync(string credentialId, int retries = 3)
 		{
-			var response = await _http.GetAsync($"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={credentialId}&type=jsapi");
+			var response = await _http.GetAsync(Urls.GetTicketUrl(credentialId, "jsapi"));
 
 			if(response.IsSuccessStatusCode && response.TryGetJson<TicketToken>(out var token) && token.IsValid)
 				return token;
 
-			if(response.TryGetJson<ErrorMessage>(out var error) && error.Code != 0)
+			if(response.TryGetJson<ErrorResult>(out var error) && error.Code != 0)
 			{
 				if(error.Code == ErrorCodes.Busy && retries > 0)
 				{
@@ -178,20 +169,6 @@ namespace Zongsoft.Externals.Wechat
 			}
 
 			throw new WechatException(await response.Content.ReadAsStringAsync());
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Options.AppOptions GetApp(string appId)
-		{
-			var configuration = this.Options ?? throw new WechatException("Missing required configuration for the Wechat credential provider.");
-
-			if(string.IsNullOrEmpty(appId))
-				return configuration.Apps.GetDefault() ?? throw new InvalidOperationException("Missing The Wechat application default configuration.");
-
-			if(configuration.Apps.TryGet(appId, out var app))
-				return app;
-
-			throw new InvalidOperationException($"The specified '{appId}' Wechat application configuration does not exist.");
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

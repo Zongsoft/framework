@@ -30,7 +30,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat.Options
+using Zongsoft.Externals.Wechat.Options;
+
+namespace Zongsoft.Externals.Wechat.Platforms.Options
 {
 	/// <summary>
 	/// 表示微信开放平台的选项类。
