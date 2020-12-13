@@ -59,34 +59,22 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 获取对应的表元数据元素，与<see cref="Table"/>属性互斥。
 		/// </summary>
-		public IDataEntity Entity
-		{
-			get;
-		}
+		public IDataEntity Entity { get; }
 
 		/// <summary>
 		/// 获取对应的表定义，与<see cref="Entity"/>属性互斥。
 		/// </summary>
-		public TableDefinition Table
-		{
-			get;
-		}
+		public TableDefinition Table { get; }
 
 		/// <summary>
 		/// 获取表的物理名称（即数据库中表的名称）。
 		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
 		/// <summary>
-		/// 获取表标识的别名。
+		/// 获取或设置表标识的别名。
 		/// </summary>
-		public string Alias
-		{
-			get;
-		}
+		public string Alias { get; set; }
 
 		/// <summary>
 		/// 获取一个值，指示当前表标识是否指向一个临时表。
