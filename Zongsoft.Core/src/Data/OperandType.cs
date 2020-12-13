@@ -63,5 +63,7 @@ namespace Zongsoft.Data
 		Field,
 		/// <summary>常量</summary>
 		Constant,
+		/// <summary>函数</summary>
+		Function,
 	}
 }

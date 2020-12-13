@@ -47,6 +47,8 @@ namespace Zongsoft.Data
 		#region 静态方法
 		public static FieldOperand Field(string name) => new FieldOperand(name);
 		public static ConstantOperand<T> Constant<T>(T value) => new ConstantOperand<T>(value);
+		public static FunctionOperand Function(string name, params Operand[] arguments) => new FunctionOperand(name, arguments);
+		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter = null) => new AggregateOperand(aggregate, member, filter);
 
 		public static string GetSymbol(OperandType type)
 		{
@@ -143,6 +145,60 @@ namespace Zongsoft.Data
 			public override string ToString()
 			{
 				return $"{GetSymbol(this.Type)}{this.Operand}";
+			}
+			#endregion
+		}
+
+		public class FunctionOperand : Operand
+		{
+			#region 构造函数
+			public FunctionOperand(string name, params Operand[] arguments) : base(OperandType.Function)
+			{
+				if(string.IsNullOrWhiteSpace(name))
+					throw new ArgumentNullException(nameof(name));
+
+				this.Name = name.ToUpperInvariant();
+				this.Arguments = arguments;
+			}
+			#endregion
+
+			#region 公共属性
+			public string Name { get; }
+			public Operand[] Arguments { get; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return this.Arguments == null || this.Arguments.Length == 0 ? $"{this.Name}()" : $"{this.Name}(...)";
+			}
+			#endregion
+		}
+
+		public class AggregateOperand : Operand
+		{
+			#region 构造函数
+			public AggregateOperand(DataAggregateFunction function, string member, ICondition filter = null) : base(OperandType.Function)
+			{
+				if(string.IsNullOrWhiteSpace(member))
+					throw new ArgumentNullException(nameof(member));
+
+				this.Function = function;
+				this.Member = member;
+				this.Filter = filter;
+			}
+			#endregion
+
+			#region 公共属性
+			public new DataAggregateFunction Function { get; }
+			public string Member { get; }
+			public ICondition Filter { get; set; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				return $"{this.Function}({this.Member})";
 			}
 			#endregion
 		}
