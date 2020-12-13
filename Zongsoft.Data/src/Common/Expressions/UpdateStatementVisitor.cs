@@ -86,7 +86,16 @@ namespace Zongsoft.Data.Common.Expressions
 
 				context.Visit(field.Field);
 				context.Write("=");
+
+				var parenthesisRequired = field.Value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
 				context.Visit(field.Value);
+
+				if(parenthesisRequired)
+					context.Write(")");
 			}
 		}
 

@@ -266,7 +266,7 @@ namespace Zongsoft.Data.Common.Expressions
 		protected virtual void VisitBinary(ExpressionVisitorContext context, BinaryExpression expression)
 		{
 			//值表达式(右元)是否需要括号包裹
-			var parenthesisRequired = false;
+			var parenthesisRequired = expression.Right is IStatementBase;
 
 			switch(expression.Operator)
 			{
@@ -295,12 +295,13 @@ namespace Zongsoft.Data.Common.Expressions
 			//如果左元的运算优先级低于当前双目表达式则表示左元需要采用括号进行组合(提级)
 			var precedenceCompound = expression.Left is BinaryExpression left && left.Operator.GetPrecedence() < precedence;
 
-			if(precedenceCompound)
+			//如果左元是一个语句也需要使用括号
+			if(precedenceCompound || expression.Left is IStatementBase)
 				context.Write("(");
 
 			this.OnVisit(context, expression.Left);
 
-			if(precedenceCompound)
+			if(precedenceCompound || expression.Left is IStatementBase)
 				context.Write(")");
 
 			context.Write(this.GetSymbol(expression.Operator));

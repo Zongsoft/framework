@@ -89,7 +89,15 @@ namespace Zongsoft.Data.Common.Expressions
 				if(index % rounds == 0)
 					context.Write("(");
 
+				var parenthesisRequired = value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
 				context.Visit(value);
+
+				if(parenthesisRequired)
+					context.Write(")");
 
 				if(++index % rounds == 0)
 					context.Write(")");

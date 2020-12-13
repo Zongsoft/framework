@@ -77,7 +77,15 @@ namespace Zongsoft.Data.MySql
 				if(index % statement.Fields.Count == 1)
 					context.Write("(");
 
+				var parenthesisRequired = value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
 				context.Visit(value);
+
+				if(parenthesisRequired)
+					context.Write(")");
 
 				if(index % statement.Fields.Count == 0)
 					context.Write(")");
@@ -95,7 +103,16 @@ namespace Zongsoft.Data.MySql
 
 					context.Write(context.Dialect.GetIdentifier(item.Field));
 					context.Write("=");
+
+					var parenthesisRequired = item.Value is IStatementBase;
+
+					if(parenthesisRequired)
+						context.Write("(");
+
 					context.Visit(item.Value);
+
+					if(parenthesisRequired)
+						context.Write(")");
 				}
 			}
 			else
