@@ -29,7 +29,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions
@@ -38,6 +38,17 @@ namespace Zongsoft.Data.Common.Expressions
 	{
 		#region 常量定义
 		private const string TEMPORARY_ALIAS = "tmp";
+		#endregion
+
+		#region 构造函数
+		public UpdateStatementBuilder()
+		{
+			this.OperandConverter = new UpdateOperandConverter();
+		}
+		#endregion
+
+		#region 公共属性
+		public OperandConverter<DataUpdateContext> OperandConverter { get; }
 		#endregion
 
 		#region 构建方法
@@ -91,25 +102,7 @@ namespace Zongsoft.Data.Common.Expressions
 				if(member.Token.MemberType == typeof(Operand))
 				{
 					var operand = (Operand)member.Token.GetValue(data);
-
-					var expression = operand.Convert(
-						path =>
-						{
-							var token = Find(context.DataAccess.Schema, context.Name, path, context.ModelType);
-
-							if(token.Property.IsSimplex)
-								return Utility.FromDbType(((IDataEntitySimplexProperty)token.Property).Type);
-
-							throw new DataException($"The specified '{path}' property is not a simplex property, so its data type cannot be confirmed.");
-						},
-						path => table.CreateField(Find(context.DataAccess.Schema, context.Name, path, context.ModelType)),
-						value =>
-						{
-							var parameter = Expression.Parameter(Utility.GetDbType(value), value);
-							statement.Parameters.Add(parameter);
-							return parameter;
-						});
-
+					var expression = this.OperandConverter.Convert(context, statement, operand);
 					statement.Fields.Add(new FieldValue(field, expression));
 				}
 				else
@@ -271,15 +264,39 @@ namespace Zongsoft.Data.Common.Expressions
 
 			return statement.Where(context.Validate());
 		}
+		#endregion
 
-		private static DataEntityPropertyToken Find(ISchemaParser schema, string name, string path, Type modelType)
+		#region 嵌套子类
+		private class UpdateOperandConverter : OperandConverter<DataUpdateContext>
 		{
-			var schematic = (Schema)schema.Parse(name, path, modelType);
+			protected override IExpression GetField(DataUpdateContext context, IStatementBase statement, string name)
+			{
+				var property = context.Entity.Find(name);
 
-			if(schematic.Members.Count > 0)
-				return schematic.Members.ElementAt(0).Token;
+				if(property.IsSimplex)
+					return statement.Table.CreateField(property);
 
-			throw new DataException($"Invalid '{path}' model path, the {name} entity is mapped to the '{modelType.FullName}' model type.");
+				throw new DataException($"The specified '{name}' property is not a simplex property, so it cannot participate in the simple operations.");
+			}
+
+			protected override IExpression GetValue(DataUpdateContext context, IStatementBase statement, object value)
+			{
+				var parameter = Expression.Parameter(Utility.GetDbType(value), value);
+				statement.Parameters.Add(parameter);
+				return parameter;
+			}
+
+			protected override Type GetOperandType(DataUpdateContext context, string name)
+			{
+				var property = context.Entity.Find(name);
+
+				if(property.IsSimplex)
+					return Utility.FromDbType(((IDataEntitySimplexProperty)property).Type);
+
+				throw new DataException($"The specified '{name}' property is not a simplex property, so its data type cannot be confirmed.");
+			}
+
+			protected override IDataEntity GetEntity(DataUpdateContext context) => context.Entity;
 		}
 		#endregion
 	}
