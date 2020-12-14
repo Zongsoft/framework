@@ -131,42 +131,48 @@ namespace Zongsoft.Data.Common.Expressions
 		private IExpression GenerateAggregate(TContext context, IStatementBase statement, Operand.AggregateOperand aggregate)
 		{
 			var entity = this.GetEntity(context);
-			SelectStatement selection = null;
+			SelectStatement selection;
+			IDataEntityProperty property;
+			FieldIdentifier field;
 			var parts = aggregate.Member.Split('.', StringSplitOptions.RemoveEmptyEntries);
 
-			if(parts.Length == 1)
+			switch(parts.Length)
 			{
-				if(!entity.Properties.TryGet(parts[0], out var property))
-					throw new DataException($"");
+				case 1:
+					if(!entity.Properties.TryGet(parts[0], out property))
+						throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
 
-				selection = new SelectStatement(entity);
-				var field = selection.Table.CreateField(property);
-				selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
-			}
-			else
-			{
-				if(!entity.Properties.TryGet(parts[0], out var property))
-					throw new DataException($"");
+					selection = new SelectStatement(entity);
+					field = selection.Table.CreateField(property);
+					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
 
-				if(property.IsSimplex)
-					throw new DataException($"");
+					break;
+				case 2:
+					if(!entity.Properties.TryGet(parts[0], out property))
+						throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
 
-				var complex = (IDataEntityComplexProperty)property;
+					if(property.IsSimplex)
+						throw new DataException($"The specified '{parts[0]}' is a simple property and cannot be navigated.");
 
-				selection = new SelectStatement(complex.Foreign);
-				var field = selection.Table.CreateField(complex.Foreign.Properties.Get(parts[1]));
-				selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
+					var complex = (IDataEntityComplexProperty)property;
 
-				var conditions = ConditionExpression.And();
+					selection = new SelectStatement(complex.Foreign);
+					field = selection.Table.CreateField(complex.Foreign.Properties.Get(parts[1]));
+					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
 
-				foreach(var link in complex.Links)
-				{
-					conditions.Add(Expression.Equal(
-						selection.Table.CreateField(link.Foreign),
-						statement.Table.CreateField(link.Principal)));
-				}
+					var conditions = ConditionExpression.And();
 
-				selection.Where = conditions;
+					foreach(var link in complex.Links)
+					{
+						conditions.Add(Expression.Equal(
+							selection.Table.CreateField(link.Foreign),
+							statement.Table.CreateField(link.Principal)));
+					}
+
+					selection.Where = conditions;
+					break;
+				default:
+					throw new DataException($"Invalid aggregate member ‘{aggregate.Member}’ because its navigation level is too deep.");
 			}
 
 			if(aggregate.Filter != null)
