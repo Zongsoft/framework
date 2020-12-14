@@ -220,7 +220,14 @@ namespace Zongsoft.Data.Common
 					var entity = context.Entity;
 
 					if(!string.IsNullOrEmpty(statement.Alias))
-						entity = ((IDataEntityComplexProperty)context.Entity.Find(statement.Alias)).Foreign;
+					{
+						var complex = (IDataEntityComplexProperty)context.Entity.Find(statement.Alias);
+
+						if(complex.ForeignProperty == null || complex.ForeignProperty.IsSimplex)
+							entity = complex.Foreign;
+						else
+							entity = ((IDataEntityComplexProperty)complex.ForeignProperty).Foreign;
+					}
 
 					_context = context;
 					_statement = statement;
