@@ -28,23 +28,30 @@
  */
 
 using System;
-using System.Collections.Generic;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Diagnostics
 {
-	public class LoggerHandlerCollection : Zongsoft.Collections.NamedCollectionBase<LoggerHandler>
+	public abstract class LoggerBase<T> : ILogger<T>
 	{
-		#region 构造函数
-		public LoggerHandlerCollection() : base(StringComparer.OrdinalIgnoreCase)
+		#region 公共属性
+		public ILogFormatter<T> Formatter { get; protected set; }
+		public IPredication<LogEntry> Predication { get; protected set; }
+		#endregion
+
+		#region 公共方法
+		public void Log(LogEntry entry)
 		{
+			var predication = this.Predication;
+
+			if(predication == null || predication.Predicate(entry))
+				this.OnLog(entry);
 		}
 		#endregion
 
-		#region 重写方法
-		protected override string GetKeyForItem(LoggerHandler item)
-		{
-			return item.Name;
-		}
+		#region 抽象方法
+		protected abstract void OnLog(LogEntry entry);
 		#endregion
 	}
 }

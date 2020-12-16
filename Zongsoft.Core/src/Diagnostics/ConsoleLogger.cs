@@ -32,10 +32,11 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics
 {
-	public class ConsoleLogger : ILogger
+	public class ConsoleLogger : LoggerBase<string>
 	{
+		#region 公共方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
-		public void Log(LogEntry entry)
+		protected override void OnLog(LogEntry entry)
 		{
 			if(entry == null)
 				return;
@@ -61,7 +62,7 @@ namespace Zongsoft.Diagnostics
 			try
 			{
 				//打印日志信息
-				Console.WriteLine(entry);
+				Console.WriteLine(this.Format(entry));
 			}
 			finally
 			{
@@ -69,5 +70,13 @@ namespace Zongsoft.Diagnostics
 				Console.ResetColor();
 			}
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual string Format(LogEntry entry)
+		{
+			return (this.Formatter ?? XmlLogFormatter.Instance).Format(entry);
+		}
+		#endregion
 	}
 }

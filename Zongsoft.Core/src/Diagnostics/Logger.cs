@@ -29,26 +29,21 @@
 
 using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics
 {
 	public static class Logger
 	{
-		#region 成员字段
-		private static LoggerHandlerCollection _handlers;
+		#region 静态构造
+		static Logger()
+		{
+			Loggers = new List<ILogger>();
+		}
 		#endregion
 
 		#region 公共属性
-		public static LoggerHandlerCollection Handlers
-		{
-			get
-			{
-				if(_handlers == null)
-					System.Threading.Interlocked.CompareExchange(ref _handlers, new LoggerHandlerCollection(), null);
-
-				return _handlers;
-			}
-		}
+		public static ICollection<ILogger> Loggers { get; }
 		#endregion
 
 		#region 日志方法
@@ -250,13 +245,13 @@ namespace Zongsoft.Diagnostics
 
 		private static void Log(LogEntry entry)
 		{
-			if(entry == null || _handlers == null)
+			if(entry == null)
 				return;
 
-			System.Threading.Tasks.Parallel.ForEach(_handlers, handler =>
+			System.Threading.Tasks.Parallel.ForEach(Loggers, logger =>
 			{
-				if(handler != null)
-					handler.Handle(entry);
+				if(logger != null)
+					logger.Log(entry);
 			});
 		}
 		#endregion

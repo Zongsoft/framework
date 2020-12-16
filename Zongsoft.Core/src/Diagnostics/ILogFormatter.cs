@@ -31,9 +31,8 @@ using System;
 
 namespace Zongsoft.Diagnostics
 {
-	public interface ILogger
+	public interface ILogFormatter<out T>
 	{
-		Services.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
+		T Format(LogEntry entry);
 	}
 }

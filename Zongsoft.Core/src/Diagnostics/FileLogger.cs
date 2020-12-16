@@ -35,7 +35,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Diagnostics
 {
-	public abstract class FileLogger : ILogger
+	public abstract class FileLogger<T> : LoggerBase<T>
 	{
 		#region 常量定义
 		private const int DEFAULT_LIMIT = 1024 * 1024;
@@ -67,22 +67,24 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 公共属性
-		public string FilePath
-		{
-			get; set;
-		}
+		/// <summary>
+		/// 获取或设置文件路径。
+		/// </summary>
+		public string FilePath { get; set; }
 
 		/// <summary>
 		/// 获取或设置日志文件的大小限制，单位为字节(Byte)，默认为1MB。
 		/// </summary>
-		public int Limit
-		{
-			get; set;
-		}
+		public int Limit { get; set; }
+
+		/// <summary>
+		/// 获取或设置日志格式化器。
+		/// </summary>
+		public ILogFormatter<T> Formatter { get; set; }
 		#endregion
 
 		#region 日志方法
-		public void Log(LogEntry entry)
+		protected override void OnLog(LogEntry entry)
 		{
 			if(entry == null)
 				return;
@@ -171,6 +173,12 @@ namespace Zongsoft.Diagnostics
 				directoryPath = Services.ApplicationContext.Current.EnsureDirectory(Path.GetDirectoryName(filePath));
 
 			return Path.Combine(directoryPath, Path.GetFileName(filePath));
+		}
+
+		protected virtual T Format(LogEntry entry)
+		{
+			var formatter = this.Formatter ?? throw new InvalidOperationException("Missing required formatter of the file logger.");
+			return formatter.Format(entry);
 		}
 		#endregion
 
