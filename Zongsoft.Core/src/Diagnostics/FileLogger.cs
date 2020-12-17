@@ -76,11 +76,6 @@ namespace Zongsoft.Diagnostics
 		/// 获取或设置日志文件的大小限制，单位为字节(Byte)，默认为1MB。
 		/// </summary>
 		public int Limit { get; set; }
-
-		/// <summary>
-		/// 获取或设置日志格式化器。
-		/// </summary>
-		public ILogFormatter<T> Formatter { get; set; }
 		#endregion
 
 		#region 日志方法

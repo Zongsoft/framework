@@ -36,7 +36,10 @@ namespace Zongsoft.Diagnostics
 	public abstract class LoggerBase<T> : ILogger<T>
 	{
 		#region 公共属性
+		/// <summary>获取或设置日志格式化器。</summary>
 		public ILogFormatter<T> Formatter { get; protected set; }
+
+		/// <summary>获取或设置日志断言。</summary>
 		public IPredication<LogEntry> Predication { get; protected set; }
 		#endregion
 
