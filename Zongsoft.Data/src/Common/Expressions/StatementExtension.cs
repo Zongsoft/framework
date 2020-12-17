@@ -28,9 +28,11 @@
  */
 
 using System;
+using System.Linq;
 using System.Data;
 using System.Data.Common;
 using System.Collections;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
@@ -247,9 +249,27 @@ namespace Zongsoft.Data.Common.Expressions
 				case ConditionOperator.Like:
 					return Expression.Like(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.In:
-					return Expression.In(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					var value = GetConditionValue(statement, condition.Value, fieldExpending);
+					var count = GetCollectionCount(value);
+
+					if(count == 0)
+						return null;
+
+					if(count == 1 && value is IEnumerable<IExpression> es1)
+						return Expression.Equal(field, es1.FirstOrDefault());
+
+					return Expression.In(field, value);
 				case ConditionOperator.NotIn:
-					return Expression.NotIn(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					value = GetConditionValue(statement, condition.Value, fieldExpending);
+					count = GetCollectionCount(value);
+
+					if(count == 0)
+						return null;
+
+					if(count == 1 && value is IEnumerable<IExpression> es2)
+						return Expression.NotEqual(field, es2.FirstOrDefault());
+
+					return Expression.NotIn(field, value);
 				case ConditionOperator.Equal:
 					return Expression.Equal(field, GetConditionValue(statement, condition.Value, fieldExpending));
 				case ConditionOperator.NotEqual:
@@ -414,6 +434,20 @@ namespace Zongsoft.Data.Common.Expressions
 			var parameter = Expression.Parameter(value);
 			parameters.Add(parameter);
 			return parameter;
+		}
+
+		private static int GetCollectionCount(object value)
+		{
+			if(value == null)
+				return 0;
+
+			if(value is ICollection<IExpression> genericCollection)
+				return genericCollection.Count;
+
+			if(value is ICollection classicCollection)
+				return classicCollection.Count;
+
+			return 1;
 		}
 	}
 }
