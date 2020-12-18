@@ -104,12 +104,16 @@ namespace Zongsoft.Flowing
 					context.Parameters.TryAdd(parameter.Key, parameter.Value);
 			}
 
+			var count = 0;
 			var handlers = this.GetHandlers<TKey, TValue>();
 
 			foreach(var handler in handlers)
-				state.Diagram.Transfer(context, handler);
+			{
+				if(count++ == 0)
+					_stack.Push(context);
 
-			_stack.Push(context);
+				state.Diagram.Transfer(context, handler);
+			}
 		}
 		#endregion
 
