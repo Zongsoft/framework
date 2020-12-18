@@ -34,29 +34,29 @@ namespace Zongsoft.Flowing
 	public readonly struct StateVector<T> : IEquatable<StateVector<T>> where T : struct
 	{
 		#region 构造函数
-		public StateVector(T origin, T destination)
+		public StateVector(T source, T destination)
 		{
-			this.Origin = origin;
+			this.Source = source;
 			this.Destination = destination;
 		}
 		#endregion
 
 		#region 公共字段
-		public readonly T Origin;
+		public readonly T Source;
 		public readonly T Destination;
 		#endregion
 
 		#region 公共方法
 		public bool Contains(T value)
 		{
-			return this.Origin.Equals(value) || this.Destination.Equals(value);
+			return this.Source.Equals(value) || this.Destination.Equals(value);
 		}
 		#endregion
 
 		#region 重写方法
 		public bool Equals(StateVector<T> other)
 		{
-			return this.Origin.Equals(other.Origin) &&
+			return this.Source.Equals(other.Source) &&
 			       this.Destination.Equals(other.Destination);
 		}
 
@@ -70,12 +70,12 @@ namespace Zongsoft.Flowing
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(this.Origin, this.Destination);
+			return HashCode.Combine(this.Source, this.Destination);
 		}
 
 		public override string ToString()
 		{
-			return this.Origin.ToString() + "->" + this.Destination.ToString();
+			return this.Source.ToString() + "->" + this.Destination.ToString();
 		}
 		#endregion
 	}

@@ -41,10 +41,7 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 公共属性
-		public IServiceProvider ServiceProvider
-		{
-			get;
-		}
+		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
 		#region 抽象方法

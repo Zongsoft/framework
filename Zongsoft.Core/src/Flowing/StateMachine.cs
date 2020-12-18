@@ -163,9 +163,9 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 私有方法
-		private bool IsTransferred<TKey, TValue>(State<TKey, TValue> state, out TValue? origin) where TKey : struct, IEquatable<TKey> where TValue : struct
+		private bool IsTransferred<TKey, TValue>(State<TKey, TValue> state, out TValue? source) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
-			origin = null;
+			source = null;
 
 			if(state == null)
 				return false;
@@ -176,8 +176,8 @@ namespace Zongsoft.Flowing
 				{
 					if(context.Key.Equals(state.Key))
 					{
-						if(origin == null)
-							origin = context.State.Destination;
+						if(source == null)
+							source = context.State.Destination;
 
 						if(context.State.Contains(state.Value))
 							return true;
@@ -212,10 +212,10 @@ namespace Zongsoft.Flowing
 			return null;
 		}
 
-		private StateContext<TKey, TValue> CreateContext<TKey, TValue>(IStateDiagram<TKey, TValue> diagram, TKey key, TValue origin, TValue destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
+		private StateContext<TKey, TValue> CreateContext<TKey, TValue>(IStateDiagram<TKey, TValue> diagram, TKey key, TValue source, TValue destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
 			var contextType = typeof(StateContext<,>).MakeGenericType(typeof(TKey), typeof(TValue));
-			return (StateContext<TKey, TValue>)Activator.CreateInstance(contextType, new object[] { this, diagram, key, origin, destination, description });
+			return (StateContext<TKey, TValue>)Activator.CreateInstance(contextType, new object[] { this, diagram, key, source, destination, description });
 		}
 		#endregion
 

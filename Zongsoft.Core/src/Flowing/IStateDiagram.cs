@@ -39,8 +39,8 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 方法定义
-		bool CanTransfer(StateVector<TValue> state) => this.CanTransfer(state.Origin, state.Destination);
-		bool CanTransfer(TValue origin, TValue destination);
+		bool CanTransfer(StateVector<TValue> state) => this.CanTransfer(state.Source, state.Destination);
+		bool CanTransfer(TValue source, TValue destination);
 		void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler);
 
 		State<TKey, TValue> GetState(TKey key);

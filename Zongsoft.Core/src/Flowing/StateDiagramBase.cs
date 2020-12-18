@@ -57,7 +57,7 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool CanTransfer(TValue origin, TValue destination)
+		protected virtual bool CanTransfer(TValue source, TValue destination)
 		{
 			var vectors = this.Vectors;
 
@@ -67,7 +67,7 @@ namespace Zongsoft.Flowing
 				{
 					var vector = vectors[i];
 
-					if(vector.Origin.Equals(origin) && vector.Destination.Equals(destination))
+					if(vector.Source.Equals(source) && vector.Destination.Equals(destination))
 						return true;
 				}
 			}
@@ -102,9 +102,9 @@ namespace Zongsoft.Flowing
 		#endregion
 
 		#region 显式实现
-		bool IStateDiagram<TKey, TValue>.CanTransfer(TValue origin, TValue destination)
+		bool IStateDiagram<TKey, TValue>.CanTransfer(TValue source, TValue destination)
 		{
-			return this.CanTransfer(origin, destination);
+			return this.CanTransfer(source, destination);
 		}
 
 		State<TKey, TValue> IStateDiagram<TKey, TValue>.GetState(TKey key)

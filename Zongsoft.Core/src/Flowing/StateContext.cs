@@ -37,12 +37,12 @@ namespace Zongsoft.Flowing
 	public class StateContext<TKey, TValue> : IStateContext<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		#region 构造函数
-		public StateContext(IStateMachine machine, IStateDiagram<TKey, TValue> diagram, TKey key, TValue origin, TValue destination, string description)
+		public StateContext(IStateMachine machine, IStateDiagram<TKey, TValue> diagram, TKey key, TValue source, TValue destination, string description)
 		{
 			this.Machine = machine ?? throw new ArgumentNullException(nameof(machine));
 			this.Diagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
 			this.Key = key;
-			this.State = new StateVector<TValue>(origin, destination);
+			this.State = new StateVector<TValue>(source, destination);
 			this.Description = description;
 			this.Parameters = new ParameterCollection(machine);
 		}
