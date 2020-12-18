@@ -191,21 +191,21 @@ namespace Zongsoft.Flowing
 		private IStateContext<TKey, TValue> GetContext<TKey, TValue>(State<TKey, TValue> destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
 		{
 			//如果指定状态实例已经被处理过
-			if(IsTransferred(destination, out var origin))
+			if(IsTransferred(destination, out var source))
 				return null;
 
 			//获取指定状态实例的当前状态
-			if(origin == null)
-				origin = destination.Diagram.GetState(destination.Key)?.Value;
+			if(source == null)
+				source = destination.Diagram.GetState(destination.Key)?.Value;
 
 			//如果源状态与目的状态相同则返回空
-			if(origin == null || origin.Value.Equals(destination.Value))
+			if(source == null || source.Value.Equals(destination.Value))
 				return null;
 
 			//如果流程图定义了当前的流转向量则返回新建的上下文对象
-			if(destination.Diagram.CanTransfer(origin.Value, destination.Value))
+			if(destination.Diagram.CanTransfer(source.Value, destination.Value))
 			{
-				return this.CreateContext(destination.Diagram, destination.Key, origin.Value, destination.Value, description);
+				return this.CreateContext(destination.Diagram, destination.Key, source.Value, destination.Value, description);
 			}
 
 			//返回空对象
