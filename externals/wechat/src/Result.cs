@@ -28,44 +28,11 @@
  */
 
 using System;
-using System.IO;
 
-using Microsoft.AspNetCore.Mvc;
-
-namespace Zongsoft.Externals.Wechat.Controllers
+namespace Zongsoft.Externals.Wechat
 {
-	[ApiController]
-	[Route("Wechat/Fallback")]
-	public class FallbackController : ControllerBase
+	public class Result
 	{
-		public FallbackController() { }
-
-		[HttpPost]
-		public void Post()
-		{
-			Zongsoft.Diagnostics.Logger.Debug(GetRequestInfo());
-		}
-
-		private string GetRequestInfo()
-		{
-			var text = new System.Text.StringBuilder();
-
-			text.Append("[" + this.Request.Method + "]");
-			text.AppendLine(this.Request.Path.ToString());
-
-			foreach(var header in this.Request.Headers)
-			{
-				text.AppendLine(header.Key + ":" + string.Join(";", header.Value));
-			}
-
-			if(this.Request.ContentLength > 0)
-			{
-				var reader = new StreamReader(this.Request.Body);
-				text.AppendLine();
-				text.AppendLine(reader.ReadToEnd());
-			}
-
-			return text.ToString();
-		}
+		public ErrorResult Error { get; set; }
 	}
 }

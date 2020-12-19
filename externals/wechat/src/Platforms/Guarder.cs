@@ -30,61 +30,62 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using Microsoft.Extensions.Logging;
 
+using Zongsoft.Caching;
+using Zongsoft.Services;
 using Zongsoft.Configuration.Options;
 using Zongsoft.Externals.Wechat.Options;
-using Zongsoft.Externals.Wechat.Applets.Options;
+using Zongsoft.Externals.Wechat.Platforms.Options;
 
-namespace Zongsoft.Externals.Wechat.Applets
+namespace Zongsoft.Externals.Wechat.Platforms
 {
-	public class Authentication
+	public class Guarder
 	{
-		#region 成员字段
-		private readonly HttpClient _http;
-		private readonly ILogger<Authentication> _logger;
-		#endregion
-
-		#region 构造函数
-		public Authentication(HttpClient http, ILogger<Authentication> logger)
-		{
-			_http = http;
-			_logger = logger;
-
-			_http.BaseAddress = Urls.BaseAddress;
-		}
-		#endregion
-
 		#region 公共属性
-		[Options("/Externals/Wechat/Applet")]
-		public AppletOptions Options { get; set; }
+		[Options("/Externals/Wechat/Platform")]
+		public PlatformOptions Options { get; set; }
+
+		public ICache Cache { get; set; }
 		#endregion
 
-		#region 公共方法
-		public async Task<(LoginResult, ErrorResult)> LoginAsync(string appId, string token)
+		public bool Refresh(string appId)
 		{
-			if(!this.Options.Apps.TryGet(appId, out var app))
-				return default;
-
-			var response = await _http.GetAsync($"/sns/jscode2session?appid={appId}&secret={app.Secret}&js_code={token}&grant_type=authorization_code");
-			return await response.GetResultAsync<LoginResult>();
+			return false;
 		}
-		#endregion
 
-		public struct LoginResult
+		public bool OnTicket(string appId, string ciphertext)
 		{
-			[Serialization.SerializationMember("session_key")]
-			[System.Text.Json.Serialization.JsonPropertyName("session_key")]
-			public string SessionId { get; set; }
+			if(string.IsNullOrEmpty(ciphertext))
+				return false;
 
-			[Serialization.SerializationMember("openid")]
-			[System.Text.Json.Serialization.JsonPropertyName("openid")]
-			public string OpenId { get; set; }
+			if(!this.Options.Apps.TryGet(appId, out var app))
+				return false;
 
-			[Serialization.SerializationMember("unionid")]
-			[System.Text.Json.Serialization.JsonPropertyName("unionid")]
-			public string UnionId { get; set; }
+			var text = CryptographyUtility.Decrypt(ciphertext, app.Key, out _);
+			var ticket = GetTicketValue(text, out _);
+
+			if(string.IsNullOrEmpty(ticket))
+				return false;
+
+			this.Cache.SetValue($"Zongsoft.Wechat.Ticket:{appId}", ticket);
+			return true;
+		}
+
+		private string GetTicketValue(string content, out string type)
+		{
+			type = null;
+
+			if(string.IsNullOrEmpty(content))
+				return null;
+
+			var match = Regex.Match(content, @"<ComponentVerifyTicket>?<value>([^<>])</ComponentVerifyTicket>");
+			if(match.Success)
+				return match.Groups["value"].Value;
+
+			return null;
 		}
 	}
 }

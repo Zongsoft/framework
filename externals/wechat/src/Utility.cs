@@ -59,24 +59,23 @@ namespace Zongsoft.Externals.Wechat
 			return false;
 		}
 
-		public static async System.Threading.Tasks.Task<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, out ErrorResult error)
+		public static async System.Threading.Tasks.Task<(TResult result, ErrorResult error)> GetResultAsync<TResult>(this HttpResponseMessage response)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
 
 			if(response.StatusCode == System.Net.HttpStatusCode.NoContent || response.Content.Headers.ContentLength <= 0)
 			{
-				error = default;
-				return default;
+				return (default(TResult), default(ErrorResult));
 			}
 
 			var content = await response.Content.ReadAsStreamAsync();
-			error = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync<ErrorResult>(content);
+			var error = await Serialization.Serializer.Json.DeserializeAsync<ErrorResult>(content);
 
 			if(response.IsSuccessStatusCode && error.Code == 0)
-				result = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync());
+				return (await Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync()), error);
 
-			return null;
+			return (default, error);
 		}
 
 		public static TimeSpan GetDuration(this DateTime timestamp)

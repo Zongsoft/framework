@@ -45,6 +45,14 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共属性
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool IsFailed { get => this.Code != 0; }
+
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool IsSucceed { get => this.Code == 0; }
+
 		/// <summary>获取或设置错误码。</summary>
 		[Zongsoft.Serialization.SerializationMember("errcode")]
 		[System.Text.Json.Serialization.JsonPropertyName("errcode")]
