@@ -311,8 +311,8 @@ namespace Zongsoft.Common
 				throw new ArgumentOutOfRangeException(nameof(count));
 
 			int length = count < 1 ? text.Length : start + count;
-			int index = -1; //分隔符的位置
-			int tails = 0;  //尾巴空白字符数
+			int index = start - 1; //分隔符的位置
+			int tails = 0;         //尾巴空白字符数
 			string part;
 			T value;
 
