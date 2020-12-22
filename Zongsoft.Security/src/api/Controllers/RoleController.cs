@@ -87,7 +87,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{id}")]
+		[HttpGet("{id:long}")]
 		public Task<IActionResult> Get(uint id)
 		{
 			var role = this.RoleProvider.GetRole(id);
