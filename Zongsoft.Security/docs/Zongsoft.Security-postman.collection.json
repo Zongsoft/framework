@@ -305,9 +305,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Users.Get",
@@ -486,6 +484,52 @@
 							]
 						},
 						"description": "新增用户信息"
+					},
+					"response": []
+				},
+				{
+					"name": "Users.Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Credential {{credentialId}}"
+							},
+							{
+								"key": "x-password",
+								"type": "text",
+								"value": "password"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Identity\":\"13812340001\",\n  \"Password\":null,\n  \"Namespace\":null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{url}}/Security/Users/Register?token=wechat:xxx",
+							"protocol": "http",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"Security",
+								"Users",
+								"Register"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "wechat:xxx"
+								}
+							]
+						},
+						"description": "注册一个用户"
 					},
 					"response": []
 				},
@@ -702,10 +746,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "zongsoft@gmail.com",
-							"options": {
-								"raw": {}
-							}
+							"raw": "zongsoft@gmail.com"
 						},
 						"url": {
 							"raw": "http://{{url}}/Security/Users/{{userId}}/Email",
@@ -736,10 +777,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "13866668888",
-							"options": {
-								"raw": {}
-							}
+							"raw": "13866668888"
 						},
 						"url": {
 							"raw": "http://{{url}}/Security/Users/{{userId}}/Phone",
@@ -1167,6 +1205,33 @@
 					"response": []
 				},
 				{
+					"name": "Users.Ancestors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Credential {{credentialId}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{url}}/Security/Users/{{userId}}/Ancestors",
+							"protocol": "http",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"Security",
+								"Users",
+								"{{userId}}",
+								"Ancestors"
+							]
+						},
+						"description": "获取祖先角色集"
+					},
+					"response": []
+				},
+				{
 					"name": "Users.InRoles",
 					"request": {
 						"method": "GET",
@@ -1317,8 +1382,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Roles",
@@ -1397,10 +1461,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Create\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Update\",\n        \"Granted\": true\n    }\n]",
-									"options": {
-										"raw": {}
-									}
+									"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Delete\",\n        \"Granted\": false\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Create\",\n        \"Granted\": true\n    },\n    {\n    \t\"SchemaId\": \"Asset\",\n        \"ActionId\": \"Update\",\n        \"Granted\": true\n    }\n]"
 								},
 								"url": {
 									"raw": "http://{{url}}/Security/Roles/100/Permissions",
@@ -1546,10 +1607,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]",
-									"options": {
-										"raw": {}
-									}
+									"raw": "[\n    {\n        \"SchemaId\": \"Asset\",\n        \"ActionId\": \"Get\",\n        \"Filter\": \"!Name, !NameEx, !PinYin\"\n    }\n]"
 								},
 								"url": {
 									"raw": "http://{{url}}/Security/Roles/100/Permission.Filters",
@@ -1624,9 +1682,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Roles.Get",
@@ -1844,10 +1900,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "404,404,404",
-							"options": {
-								"raw": {}
-							}
+							"raw": "404,404,404"
 						},
 						"url": {
 							"raw": "http://{{url}}/Security/Roles",
@@ -2000,6 +2053,33 @@
 							]
 						},
 						"description": "获取指定角色的最终授权集。"
+					},
+					"response": []
+				},
+				{
+					"name": "Roles.Ancestors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Credential {{credentialId}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{url}}/Security/Roles/101/Ancestors",
+							"protocol": "http",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"Security",
+								"Roles",
+								"101",
+								"Ancestors"
+							]
+						},
+						"description": "获取祖先角色集"
 					},
 					"response": []
 				},
@@ -2223,8 +2303,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Authentication.Signin",
@@ -2232,7 +2311,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "48aed9a8-2405-4f0d-b5b4-e1cb22a22e4c",
 						"exec": [
 							"tests[\"IsSucceed\"] = responseCode.code >= 200 && responseCode.code <= 299;",
 							"",
@@ -2279,7 +2357,6 @@
 							"",
 							"        if(jsonData.Identity.Administrative)",
 							"            postman.setGlobalVariable(\"administrative\", jsonData.Identity.Administrative);",
-							"",
 							"    }",
 							"}",
 							""
@@ -2301,7 +2378,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Identity\":\"{{identity}}\",\n  \"Password\":\"{{password}}\"\n}",
+					"raw": "{\n    \"Identity\":\"{{identity}}\",\n    \"Password\":\"{{password}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -2309,7 +2386,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Signin/{{scene}}",
+					"raw": "http://{{url}}/Security/Authentication/Signin?scenario={{scene}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2317,8 +2394,13 @@
 					"path": [
 						"Security",
 						"Authentication",
-						"Signin",
-						"{{scene}}"
+						"Signin"
+					],
+					"query": [
+						{
+							"key": "scenario",
+							"value": "{{scene}}"
+						}
 					]
 				},
 				"description": "登录（通过密码）"
@@ -2326,12 +2408,11 @@
 			"response": []
 		},
 		{
-			"name": "Authentication.Signin(secret)",
+			"name": "Authentication.Signin(verifier)",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "a1ba7085-bcf6-4e49-aaee-b936a0cbdd9b",
 						"exec": [
 							"tests[\"IsSucceed\"] = responseCode.code >= 200 && responseCode.code <= 299;",
 							"",
@@ -2378,7 +2459,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{phone}}\",\n  \"Secret\":\"12345\"\n}",
+					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{phone}}\",\n  \"Token\":\"12345\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -2386,7 +2467,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Signin/{{scene}}",
+					"raw": "http://{{url}}/Security/Authentication/Signin/wechat?scenario={{scene}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2395,10 +2476,16 @@
 						"Security",
 						"Authentication",
 						"Signin",
-						"{{scene}}"
+						"wechat"
+					],
+					"query": [
+						{
+							"key": "scenario",
+							"value": "{{scene}}"
+						}
 					]
 				},
-				"description": "登录（通过验证码）"
+				"description": "登录（通过指定的校验器）"
 			},
 			"response": []
 		},
@@ -2457,7 +2544,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "0068bfcd-ada6-4471-b868-4f12f87b8233",
 						"exec": [
 							"tests[\"IsSucceed\"] = responseCode.code >= 200 && responseCode.code <= 299;\r",
 							"\r",
@@ -2535,7 +2621,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "e782c81e-ab77-4556-b6d9-e1431323c11c",
 						"exec": [
 							""
 						],
@@ -2584,6 +2669,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }
