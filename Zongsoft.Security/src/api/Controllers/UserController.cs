@@ -140,6 +140,14 @@ namespace Zongsoft.Security.Web.Controllers
 				(IActionResult)this.NotFound();
 		}
 
+		[AllowAnonymous]
+		[HttpPost("Register")]
+		public IActionResult Register([FromBody]RegisterEntity entity, [FromQuery]string token)
+		{
+			var user = this.UserProvider.Register(entity.Namespace, entity.Identity, token, entity.Password, entity.Parameters);
+			return user == null ? (IActionResult)this.NoContent() : this.Ok(user);
+		}
+
 		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -588,6 +596,16 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 内部结构
+		public struct RegisterEntity
+		{
+			public string FullName { get; set; }
+			public string Identity { get; set; }
+			public string Password { get; set; }
+			public string Namespace { get; set; }
+			public string Description { get; set; }
+			public IDictionary<string, object> Parameters { get; set; }
+		}
+
 		public struct PasswordChangeEntity
 		{
 			public string OldPassword { get; set; }

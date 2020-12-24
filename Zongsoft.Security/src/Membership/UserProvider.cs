@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
@@ -52,7 +53,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 虚拟方法
-		protected override IUser CreateUser()
+		protected override IUser CreateUser(IDictionary<string, object> parameters)
 		{
 			return Model.Build<IUser>();
 		}

@@ -75,8 +75,8 @@ namespace Zongsoft.Security.Web.Controllers
 			};
 		}
 
-		[HttpPost("{scenario:required}")]
-		public Task<IActionResult> SigninAsync(string scenario, [FromBody]AuthenticationRequest request)
+		[HttpPost("{verifier?}")]
+		public Task<IActionResult> SigninAsync(string verifier, [FromBody]AuthenticationRequest request, [FromQuery]string scenario)
 		{
 			if(string.IsNullOrWhiteSpace(scenario))
 				return Task.FromResult((IActionResult)this.BadRequest());
@@ -93,13 +93,13 @@ namespace Zongsoft.Security.Web.Controllers
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			//进行身份验证
-			var result = string.IsNullOrEmpty(request.Secret) ?
+			var result = string.IsNullOrEmpty(verifier) ?
 				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, parameters) :
-				Authentication.Instance.AuthenticateSecret(request.Identity, request.Secret, request.Namespace, scenario, parameters);
+				Authentication.Instance.Authenticate(request.Identity, verifier, request.Token, request.Namespace, scenario, parameters);
 
 			return result.Succeed ?
 				Task.FromResult((IActionResult)this.Ok(result.Transform())) :
-				Task.FromResult((IActionResult)this.BadRequest(new AuthenticationFailure(result)));
+				Task.FromResult((IActionResult)this.StatusCode(403, new AuthenticationFailure(result)));
 		}
 
 		[HttpPost]
@@ -166,7 +166,7 @@ namespace Zongsoft.Security.Web.Controllers
 			#region 公共属性
 			public string Identity { get; set; }
 			public string Password { get; set; }
-			public string Secret { get; set; }
+			public string Token { get; set; }
 			public string Namespace { get; set; }
 			public IDictionary<string, object> Parameters { get; set; }
 			#endregion
