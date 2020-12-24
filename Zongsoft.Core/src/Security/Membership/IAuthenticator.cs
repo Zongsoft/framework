@@ -58,7 +58,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 方法定义
 		/// <summary>
-		/// 验证指定名称的用户是否有效并且和指定的密码是否完全匹配。
+		/// 验证指定标识的身份是否有效并且和指定的密码是否完全匹配。
 		/// </summary>
 		/// <param name="identity">要验证的用户标识，可以是“用户名”、“手机号码”或者“邮箱地址”。</param>
 		/// <param name="password">指定用户的密码。</param>
@@ -67,6 +67,18 @@ namespace Zongsoft.Security.Membership
 		/// <param name="parameters">指定的扩展参数集。</param>
 		/// <returns>如果验证的结果对象。</returns>
 		AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters);
+
+		/// <summary>
+		/// 验证指定标识的身份是否有效。
+		/// </summary>
+		/// <param name="identity">要验证的用户标识，可以是“用户名”、“手机号码”或者“邮箱地址”。</param>
+		/// <param name="verifier">指定的校验器名称。</param>
+		/// <param name="token">指定要校验的标记/令牌。</param>
+		/// <param name="namespace">要验证的用户标识所属的命名空间。</param>
+		/// <param name="scenario">指定的验证应用场景。</param>
+		/// <param name="parameters">指定的扩展参数集。</param>
+		/// <returns>如果验证的结果对象。</returns>
+		AuthenticationResult Authenticate(string identity, string verifier, string token, string @namespace, string scenario, IDictionary<string, object> parameters);
 
 		/// <summary>
 		/// 验证指定名称的用户是否有效并且和指定的验证码是否有效。

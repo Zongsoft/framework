@@ -83,6 +83,12 @@ namespace Zongsoft.Security.Membership
 			return authenticator.Verify(userId, password, out reason);
 		}
 
+		public AuthenticationResult Authenticate(string identity, string verifier, string token, string @namespace, string scenario, IDictionary<string, object> parameters)
+		{
+			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
+			return this.OnAuthenticated(authenticator, scenario, authenticator.Authenticate(identity, verifier, token, @namespace, scenario, parameters));
+		}
+
 		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
 		{
 			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");

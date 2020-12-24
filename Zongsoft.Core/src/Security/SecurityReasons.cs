@@ -43,6 +43,9 @@ namespace Zongsoft.Security
 		/// <summary>禁止验证通过</summary>
 		public static readonly string Forbidden = nameof(Forbidden);
 
+		/// <summary>校验失败</summary>
+		public static readonly string VerifyFaild = nameof(VerifyFaild);
+
 		/// <summary>无效的身份标识</summary>
 		public static readonly string InvalidIdentity = nameof(InvalidIdentity);
 

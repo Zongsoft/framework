@@ -67,7 +67,7 @@ namespace Zongsoft.Security.Membership
 		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
-		#region 验证方法
+		#region 公共方法
 		public bool Verify(uint userId, string password, out string reason)
 		{
 			//获取验证失败的解决器
@@ -158,6 +158,53 @@ namespace Zongsoft.Security.Membership
 
 			//获取指定用户编号对应的用户对象
 			var user = this.DataAccess.Select<IUser>(Mapping.Instance.User, Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
+
+			//激发“Authenticated”事件
+			return this.OnAuthenticated(user, parameters);
+		}
+
+		public AuthenticationResult Authenticate(string identity, string verifier, string token, string @namespace, string scenario, IDictionary<string, object> parameters)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				throw new ArgumentNullException(nameof(identity));
+
+			//激发“Authenticating”事件
+			this.OnAuthenticating(@namespace, identity, scenario, parameters);
+
+			//获取验证失败的解决器
+			var attempter = this.Attempter;
+
+			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
+			if(attempter != null && !attempter.Verify(identity, @namespace))
+				return AuthenticationResult.Fail(SecurityReasons.AccountSuspended);
+
+			//获取指定标识的用户对象
+			var user = this.DataAccess.Select<IUser>(MembershipUtility.GetIdentityCondition(identity, out _) & this.GetNamespace(@namespace)).FirstOrDefault();
+
+			//如果帐户不存在则返回无效账号
+			if(user == null)
+				return AuthenticationResult.Fail(SecurityReasons.InvalidIdentity);
+
+			//如果账户状态异常则返回账号状态异常
+			if(user.Status != UserStatus.Active)
+				return AuthenticationResult.Fail(SecurityReasons.AccountDisabled);
+
+			//获取必须的校验器
+			var authority = this.ServiceProvider.ResolveRequired<IIdentityVerifierProvider>().GetVerifier(verifier) ?? throw new InvalidOperationException("Missing the required authority.");
+
+			if(!authority.Verify(identity, token, parameters))
+			{
+				//通知验证尝试失败
+				if(attempter != null)
+					attempter.Fail(identity, @namespace);
+
+				//验证码校验失败则返回校验失败
+				return AuthenticationResult.Fail(SecurityReasons.VerifyFaild);
+			}
+
+			//通知验证尝试成功，即清空验证失败记录
+			if(attempter != null)
+				attempter.Done(identity, @namespace);
 
 			//激发“Authenticated”事件
 			return this.OnAuthenticated(user, parameters);

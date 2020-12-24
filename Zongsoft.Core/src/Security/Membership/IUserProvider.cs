@@ -194,6 +194,17 @@ namespace Zongsoft.Security.Membership
 		int Create(IEnumerable<TUser> users);
 
 		/// <summary>
+		/// 注册一个用户。
+		/// </summary>
+		/// <param name="namespace">注册用户所属的命名空间。</param>
+		/// <param name="identity">注册的用户标识。</param>
+		/// <param name="token">注册的安全标记。</param>
+		/// <param name="password">指定的用户密码。</param>
+		/// <param name="parameters">指定的其他参数集。</param>
+		/// <returns>返回注册成功的用户对象，如果为空(null)则表示注册失败。</returns>
+		TUser Register(string @namespace, string identity, string token, string password, IDictionary<string, object> parameters = null);
+
+		/// <summary>
 		/// 修改指定编号的用户信息。
 		/// </summary>
 		/// <param name="userId">指定要修改的用户编号。</param>

@@ -73,6 +73,9 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; protected set; }
 
+		[ServiceDependency]
+		public IIdentityVerifierProvider Authorities { get; set; }
+
 		public IDataAccess DataAccess { get; protected set;}
 
 		public IServiceProvider ServiceProvider { get; }
@@ -305,22 +308,6 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		public int Delete(params uint[] ids)
-		{
-			if(ids == null || ids.Length < 1)
-				return 0;
-
-			if(ids.Contains(GetUserId(0)))
-				throw new ArgumentException("You cannot include yourself in the want to delete.");
-
-			EnsureRoles();
-
-			return this.DataAccess.Delete<TUser>(
-				Condition.In(nameof(IUser.UserId), ids) &
-				Condition.NotEqual(nameof(IUser.Name), IUser.Administrator),
-				"Members,Permissions,PermissionFilters");
-		}
-
 		public TUser Create(string identity, string @namespace, UserStatus status = UserStatus.Active, string description = null)
 		{
 			return this.Create(identity, @namespace, null, status, description);
@@ -331,7 +318,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var user = this.CreateUser();
+			var user = this.CreateUser(null);
 
 			user.Namespace = @namespace;
 			user.Status = status;
@@ -371,23 +358,6 @@ namespace Zongsoft.Security.Membership
 			//确认新密码是否符合密码规则
 			this.OnValidatePassword(password);
 
-			//定义新用户要设置的邮箱地址和手机号码
-			string email = null, phone = null;
-
-			//如果新用户的“邮箱地址”不为空并且需要确认校验，则将新用户的“邮箱地址”设为空
-			if(!string.IsNullOrWhiteSpace(user.Email) && this.IsVerifyEmailRequired())
-			{
-				email = user.Email;
-				user.Email = null;
-			}
-
-			//如果新用户的“电话号码”不为空并且需要确认校验，则将新用户的“电话号码”设为空
-			if(!string.IsNullOrWhiteSpace(user.Phone) && this.IsVerifyPhoneRequired())
-			{
-				phone = user.Phone;
-				user.Phone = null;
-			}
-
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
 				if(this.DataAccess.Insert(user) < 1)
@@ -396,14 +366,6 @@ namespace Zongsoft.Security.Membership
 				//有效的密码不能为空或全空格字符串
 				if(!string.IsNullOrWhiteSpace(password))
 					this.SetPassword(user.UserId, password);
-
-				//发送邮箱地址确认校验通知
-				if(!string.IsNullOrEmpty(email))
-					this.OnChangeEmail(user, email);
-
-				//发送电话号码确认校验通知
-				if(!string.IsNullOrEmpty(phone))
-					this.OnChangePhone(user, phone);
 
 				//提交事务
 				transaction.Commit();
@@ -448,6 +410,87 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return count;
+		}
+
+		public TUser Register(string @namespace, string identity, string token, IDictionary<string, object> parameters = null)
+		{
+			return this.Register(@namespace, identity, token, null, parameters);
+		}
+
+		public TUser Register(string @namespace, string identity, string token, string password, IDictionary<string, object> parameters = null)
+		{
+			if(string.IsNullOrEmpty(token))
+				throw new ArgumentNullException(nameof(token));
+
+			if(string.IsNullOrWhiteSpace(identity))
+				throw new ArgumentNullException(nameof(identity));
+
+			var authorities = this.Authorities ?? throw new InvalidOperationException($"Missing the required authority provider.");
+
+			var index = token.IndexOf(':');
+
+			if(index <= 0 || index == token.Length - 1)
+				throw new ArgumentException("Invalid authority argument value.", nameof(token));
+
+			var name = token.Substring(0, index);
+			var type = MembershipUtility.GetIdentityType(identity);
+			var authority = authorities.GetVerifier(name) ?? throw new InvalidOperationException($"The specified '{name}' authority does not exist.");
+			(string key, string value) tuple;
+
+			switch(type)
+			{
+				case UserIdentityType.Name:
+					var text = token.Substring(index + 1);
+					var position = text.IndexOfAny(new char[] { '=', ':' });
+					tuple = (text.Substring(0, position), text.Substring(position + 1));
+					break;
+				case UserIdentityType.Email:
+				case UserIdentityType.Phone:
+					tuple = (identity, token.Substring(index + 1));
+					break;
+				default:
+					tuple = default;
+					break;
+			}
+
+			if(!authority.Verify(tuple.key, tuple.value, parameters))
+				throw new SecurityException(SecurityReasons.VerifyFaild);
+
+			var user = this.CreateUser(parameters);
+			user.Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim();
+
+			switch(type)
+			{
+				case UserIdentityType.Name:
+					user.Name = identity;
+					user.FullName = identity;
+					break;
+				case UserIdentityType.Phone:
+					user.Phone = identity;
+					user.FullName = identity.Mask(3, 4);
+					break;
+				case UserIdentityType.Email:
+					user.Email = identity.Mask(2, 2, 0, identity.IndexOf('@'));
+					break;
+			}
+
+			return this.Create(user, password) ? user : default;
+		}
+
+		public int Delete(params uint[] ids)
+		{
+			if(ids == null || ids.Length < 1)
+				return 0;
+
+			if(ids.Contains(GetUserId(0)))
+				throw new ArgumentException("You cannot include yourself in the want to delete.");
+
+			EnsureRoles();
+
+			return this.DataAccess.Delete<TUser>(
+				Condition.In(nameof(IUser.UserId), ids) &
+				Condition.NotEqual(nameof(IUser.Name), IUser.Administrator),
+				"Members,Permissions,PermissionFilters");
 		}
 
 		public bool Update(uint userId, TUser user)
@@ -746,7 +789,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 抽象方法
-		protected abstract TUser CreateUser();
+		protected abstract TUser CreateUser(IDictionary<string, object> parameters);
 		#endregion
 
 		#region 虚拟方法
