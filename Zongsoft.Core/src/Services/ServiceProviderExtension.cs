@@ -138,9 +138,9 @@ namespace Zongsoft.Services
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			var instance = services.GetService(type);
+			var instances = services.GetServices(type);
 
-			if(instance != null)
+			foreach(var instance in instances)
 			{
 				if(instance is Collections.IMatchable matchable && matchable.Match(parameter))
 					return instance;
@@ -161,17 +161,17 @@ namespace Zongsoft.Services
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			var items = services.GetServices(type);
+			var instances = services.GetServices(type);
 
-			foreach(var item in items)
+			foreach(var instance in instances)
 			{
-				if(item is Collections.IMatchable matchable && matchable.Match(parameter))
-					yield return item;
+				if(instance is Collections.IMatchable matchable && matchable.Match(parameter))
+					yield return instance;
 
-				var matcher = Collections.Matcher.GetMatcher(item.GetType());
+				var matcher = Collections.Matcher.GetMatcher(instance.GetType());
 
-				if(matcher != null && matcher.Match(item, parameter))
-					yield return item;
+				if(matcher != null && matcher.Match(instance, parameter))
+					yield return instance;
 			}
 		}
 		#endregion
