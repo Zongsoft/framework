@@ -137,6 +137,8 @@ namespace Zongsoft.Data
 
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
 
+		IDataServiceValidator IDataService.Validator { get => this.Validator; }
+
 		public IServiceProvider ServiceProvider
 		{
 			get => _serviceProvider;

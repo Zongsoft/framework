@@ -48,6 +48,11 @@ namespace Zongsoft.Data
 		/// 获取数据搜索器对象。
 		/// </summary>
 		IDataSearcher<TModel> Searcher { get; }
+
+		/// <summary>
+		/// 获取数据服务验证器。
+		/// </summary>
+		new IDataServiceValidator<TModel> Validator { get; }
 		#endregion
 
 		#region 查询方法

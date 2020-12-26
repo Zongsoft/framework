@@ -89,6 +89,11 @@ namespace Zongsoft.Data
 		/// 获取数据访问接口。
 		/// </summary>
 		IDataAccess DataAccess { get; }
+
+		/// <summary>
+		/// 获取数据服务验证器。
+		/// </summary>
+		IDataServiceValidator Validator { get; }
 		#endregion
 
 		#region 执行方法
