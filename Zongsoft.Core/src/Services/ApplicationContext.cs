@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Reflection;
 using System.Security.Claims;
@@ -146,7 +147,8 @@ namespace Zongsoft.Services
 					if(hosting == null)
 						return null;
 
-					this.Properties[nameof(this.Environment)] = environment = new ApplicationEnvironment(hosting);
+					var context = this.Services?.GetService<HostBuilderContext>();
+					this.Properties[nameof(this.Environment)] = environment = new ApplicationEnvironment(hosting, context?.Properties);
 				}
 
 				return environment;
@@ -286,12 +288,21 @@ namespace Zongsoft.Services
 		#region 嵌套子类
 		private class ApplicationEnvironment : IApplicationEnvironment
 		{
-			private IDictionary<string, object> _properties;
 			private readonly IHostEnvironment _environment;
+			private readonly IDictionary<string, object> _properties;
 
-			public ApplicationEnvironment(IHostEnvironment environment)
+			public ApplicationEnvironment(IHostEnvironment environment, IEnumerable<KeyValuePair<object, object>> properties = null)
 			{
 				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
+
+				if(properties == null)
+					_properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+				else
+					_properties = new Dictionary<string, object>(
+						properties
+							.Where(p => p.Key is string)
+							.Select(p => new KeyValuePair<string, object>((string)p.Key, p.Value)),
+						StringComparer.OrdinalIgnoreCase);
 			}
 
 			public string Name
@@ -306,13 +317,7 @@ namespace Zongsoft.Services
 
 			public IDictionary<string, object> Properties
 			{
-				get
-				{
-					if(_properties == null)
-						Interlocked.CompareExchange(ref _properties, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-					return _properties;
-				}
+				get => _properties;
 			}
 		}
 		#endregion
