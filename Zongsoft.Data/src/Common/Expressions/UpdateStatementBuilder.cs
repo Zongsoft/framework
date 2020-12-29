@@ -99,7 +99,7 @@ namespace Zongsoft.Data.Common.Expressions
 				//创建当前单值属性的对应的字段标识
 				var field = table.CreateField(member.Token);
 
-				if(member.Token.MemberType == typeof(Operand))
+				if(typeof(Operand).IsAssignableFrom(member.Token.MemberType))
 				{
 					var operand = (Operand)member.Token.GetValue(data);
 					var expression = this.OperandConverter.Convert(context, statement, operand);
