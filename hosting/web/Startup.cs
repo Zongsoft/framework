@@ -59,6 +59,7 @@ namespace Zongsoft.Hosting.Web
 				app.UseDeveloperExceptionPage();
 
 			app.UseCors();
+			app.UseHttpMethodOverride();
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
