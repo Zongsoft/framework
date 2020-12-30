@@ -88,6 +88,8 @@ namespace Zongsoft.Plugins.Hosting
 #endif
 			{
 				_applicationContext.Initialize();
+				_applicationContext.Workbench.Open();
+
 				return Task.CompletedTask;
 			}
 #if !DEBUG
@@ -108,7 +110,7 @@ namespace Zongsoft.Plugins.Hosting
 #endif
 			{
 				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
-				_applicationContext.Workbench.Open();
+				//_applicationContext.Workbench.Open();
 			}
 #if !DEBUG
 			catcch(Exception ex)
