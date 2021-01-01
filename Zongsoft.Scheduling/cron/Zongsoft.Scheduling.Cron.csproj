@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net5.0</TargetFramework>
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Scheduling Cron Library</Product>
 		<Copyright>Copyright(C) Zongsoft Studio 2018-2020. All rights reserved.</Copyright>

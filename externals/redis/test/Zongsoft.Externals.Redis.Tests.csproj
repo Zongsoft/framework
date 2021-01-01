@@ -1,8 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>net5.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -25,7 +23,7 @@
 
   <ItemGroup>
     <Reference Include="Zongsoft.Core">
-      <HintPath>..\..\..\Zongsoft.Core\src\bin\Debug\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+      <HintPath>..\..\..\Zongsoft.Core\src\bin\Debug\net5.0\Zongsoft.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
 

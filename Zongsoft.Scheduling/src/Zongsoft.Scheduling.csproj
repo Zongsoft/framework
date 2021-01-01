@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net5.0</TargetFramework>
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Scheduling Library</Product>
 		<Copyright>Copyright(C) Zongsoft Studio 2018-2020. All rights reserved.</Copyright>
@@ -10,6 +10,7 @@
 		<AssemblyVersion>1.0.2020.0</AssemblyVersion>
 		<FileVersion>1.0.2020.0</FileVersion>
 	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 	  <DocumentationFile>D:\Zongsoft\Framework\Zongsoft.Scheduling\src\Zongsoft.Scheduling.xml</DocumentationFile>
 	</PropertyGroup>
@@ -18,7 +19,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Reference Include="Zongsoft.Core">
-	    <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+	    <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 	<ItemGroup>

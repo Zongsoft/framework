@@ -1,26 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.10" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.10" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Core.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Web">
-			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Web.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Web.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Plugins">
-			<HintPath>..\..\Zongsoft.Plugins\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Plugins.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Plugins\src\bin\$(Configuration)\net5.0\Zongsoft.Plugins.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Plugins.Web">
-			<HintPath>..\..\Zongsoft.Plugins.Web\src\bin\$(Configuration)\netcoreapp3.1\Zongsoft.Plugins.Web.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Plugins.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Plugins.Web.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 </Project>
