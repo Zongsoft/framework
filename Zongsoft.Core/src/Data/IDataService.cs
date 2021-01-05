@@ -60,40 +60,29 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 属性定义
-		/// <summary>
-		/// 获取数据服务的名称，该名称亦为数据访问接口的调用名。
-		/// </summary>
+		/// <summary>获取数据服务的名称，该名称亦为数据访问接口的调用名。</summary>
 		string Name { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否支持删除操作。
-		/// </summary>
+		/// <summary>获取一个值，指示是否支持删除操作。</summary>
 		bool CanDelete { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否支持新增操作。
-		/// </summary>
+		/// <summary>获取一个值，指示是否支持新增操作。</summary>
 		bool CanInsert { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否支持修改操作。
-		/// </summary>
+		/// <summary>获取一个值，指示是否支持修改操作。</summary>
 		bool CanUpdate { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否支持增改操作。
-		/// </summary>
+		/// <summary>获取一个值，指示是否支持增改操作。</summary>
 		bool CanUpsert { get; }
 
-		/// <summary>
-		/// 获取数据访问接口。
-		/// </summary>
+		/// <summary>获取数据访问接口。</summary>
 		IDataAccess DataAccess { get; }
 
-		/// <summary>
-		/// 获取数据服务验证器。
-		/// </summary>
+		/// <summary>获取数据服务验证器。</summary>
 		IDataServiceValidator Validator { get; }
+
+		/// <summary>获取服务提供程序。</summary>
+		IServiceProvider ServiceProvider { get; }
 		#endregion
 
 		#region 执行方法
