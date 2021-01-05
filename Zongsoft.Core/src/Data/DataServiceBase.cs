@@ -89,6 +89,29 @@ namespace Zongsoft.Data
 			//创建数据搜索器
 			_searcher = searcher ?? new DataSearcher<TModel>(this);
 		}
+
+		protected DataServiceBase(IDataService service, IDataSearcher<TModel> searcher = null)
+		{
+			_serviceProvider = service.ServiceProvider;
+			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+
+			//创建数据搜索器
+			_searcher = searcher ?? new DataSearcher<TModel>(this);
+		}
+
+		protected DataServiceBase(string name, IDataService service, IDataSearcher<TModel> searcher = null)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			_name = name.Trim();
+			this.Service = service ?? throw new ArgumentNullException(nameof(service));
+			_serviceProvider = service.ServiceProvider;
+			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+
+			//创建数据搜索器
+			_searcher = searcher ?? new DataSearcher<TModel>(this);
+		}
 		#endregion
 
 		#region 公共属性
@@ -115,13 +138,13 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public virtual bool CanDelete { get => true; }
+		public virtual bool CanDelete { get => this.Service?.CanDelete ?? true; }
 
-		public virtual bool CanInsert { get => true; }
+		public virtual bool CanInsert { get => this.Service?.CanInsert ?? true; }
 
-		public virtual bool CanUpdate { get => true; }
+		public virtual bool CanUpdate { get => this.Service?.CanUpdate ?? true; }
 
-		public virtual bool CanUpsert { get => true; }
+		public virtual bool CanUpsert { get => this.Service?.CanUpsert ?? true; }
 
 		public IDataAccess DataAccess
 		{
@@ -147,6 +170,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护属性
+		protected IDataService Service { get; }
 		protected virtual System.Security.Claims.ClaimsPrincipal Principal
 		{
 			get => Services.ApplicationContext.Current?.Principal;
