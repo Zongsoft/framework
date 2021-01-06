@@ -52,6 +52,14 @@ namespace Zongsoft.Data
 		public IDictionary<string, object> States { get => _states; }
 		public bool HasStates { get => _states != null && _states.Count > 0; }
 		#endregion
+
+		#region 公共方法
+		public bool HasState(string name)
+		{
+			var states = _states;
+			return states != null && states.ContainsKey(name);
+		}
+		#endregion
 	}
 
 	public interface IDataMutateOptions : IDataOptions

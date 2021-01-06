@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -37,5 +36,6 @@ namespace Zongsoft.Data
 	{
 		bool HasStates { get; }
 		IDictionary<string, object> States { get; }
+		bool HasState(string name);
 	}
 }
