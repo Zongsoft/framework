@@ -28,11 +28,30 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
 	public static class DataAccessContextExtension
 	{
+		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataInsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpdateContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+
+		private static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this IDataMutateContextBase context)
+		{
+			if(context == null)
+				throw new ArgumentNullException(nameof(context));
+
+			if(context.Count < 1)
+				return Array.Empty<IDataDictionary<T>>();
+
+			if(context.IsMultiple)
+				return DataDictionary.GetDictionaries<T>((System.Collections.IEnumerable)context.Data);
+
+			return new IDataDictionary<T>[] { DataDictionary.GetDictionary<T>(context.Data) };
+		}
+
 		public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
 		{
 			if(context == null)
