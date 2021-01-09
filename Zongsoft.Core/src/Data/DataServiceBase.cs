@@ -92,6 +92,7 @@ namespace Zongsoft.Data
 
 		protected DataServiceBase(IDataService service, IDataSearcher<TModel> searcher = null)
 		{
+			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_serviceProvider = service.ServiceProvider;
 			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 
