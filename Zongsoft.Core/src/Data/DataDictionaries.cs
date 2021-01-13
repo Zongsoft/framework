@@ -158,22 +158,6 @@ namespace Zongsoft.Data
 				_iterator = iterator;
 			}
 
-			public object Key
-			{
-				get
-				{
-					return _iterator.Current.Key;
-				}
-			}
-
-			public object Value
-			{
-				get
-				{
-					return _iterator.Current.Value;
-				}
-			}
-
 			public DictionaryEntry Entry
 			{
 				get
@@ -183,23 +167,11 @@ namespace Zongsoft.Data
 				}
 			}
 
-			public object Current
-			{
-				get
-				{
-					return _iterator.Current;
-				}
-			}
-
-			public bool MoveNext()
-			{
-				return _iterator.MoveNext();
-			}
-
-			public void Reset()
-			{
-				_iterator.Reset();
-			}
+			public object Key => _iterator.Current.Key;
+			public object Value => _iterator.Current.Value;
+			public object Current => _iterator.Current;
+			public bool MoveNext() => _iterator.MoveNext();
+			public void Reset() => _iterator.Reset();
 		}
 		#endregion
 	}
@@ -232,6 +204,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel<T>()
+		{
+			var model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
+
+			foreach(DictionaryEntry entry in _dictionary)
+				Reflector.TrySetValue(model, entry.Key.ToString(), entry.Value);
+
+			return model;
+		}
+
 		public bool Contains(string name)
 		{
 			return _dictionary.Contains(name);
@@ -624,6 +606,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel() => base.AsModel<T>();
+
 		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
 		{
 			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
@@ -715,6 +699,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel<T>()
+		{
+			var model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
+
+			foreach(var entry in _dictionary)
+				Reflector.TrySetValue(model, entry.Key, entry.Value);
+
+			return model;
+		}
+
 		public bool Contains(string name)
 		{
 			return _dictionary.ContainsKey(name);
@@ -1056,6 +1050,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel() => base.AsModel<T>();
+
 		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
 		{
 			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
@@ -1121,10 +1117,6 @@ namespace Zongsoft.Data
 
 	internal class ObjectDictionary : IDataDictionary
 	{
-		#region 私有常量
-		private const string KEYNOTFOUND_EXCEPTION_MESSAGE = "The specified '{0}' key does not exist in the object dictionary.";
-		#endregion
-
 		#region 成员字段
 		private object _data;
 		private readonly IDictionary<string, MemberInfo> _members;
@@ -1184,6 +1176,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel<T>()
+		{
+			if(_data is T model)
+				return model;
+
+			model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
+
+			foreach(var member in _members)
+				Reflector.TrySetValue(model, member.Key, Reflector.GetValue(member.Value, ref _data));
+
+			return model;
+		}
+
 		public bool Contains(string name)
 		{
 			return _members.ContainsKey(name);
@@ -1289,83 +1294,50 @@ namespace Zongsoft.Data
 		#region 接口实现
 		bool ICollection<KeyValuePair<string, object>>.IsReadOnly
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		ICollection IDictionary.Keys
 		{
-			get
-			{
-				return (ICollection)this.Keys;
-			}
+			get => (ICollection)this.Keys;
 		}
 
 		ICollection IDictionary.Values
 		{
-			get
-			{
-				return (ICollection)this.Values;
-			}
+			get => (ICollection)this.Values;
 		}
 
 		bool IDictionary.IsReadOnly
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		bool IDictionary.IsFixedSize
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		int ICollection.Count
 		{
-			get
-			{
-				return this.Count;
-			}
+			get => this.Count;
 		}
 
 		private readonly object _syncRoot = new object();
 
 		object ICollection.SyncRoot
 		{
-			get
-			{
-				return _syncRoot;
-			}
+			get => _syncRoot;
 		}
 
 		bool ICollection.IsSynchronized
 		{
-			get
-			{
-				return false;
-			}
+			get => false;
 		}
 
 		object IDictionary.this[object key]
 		{
-			get
-			{
-				return key == null ? null : this[key.ToString()];
-			}
-			set
-			{
-				if(key == null)
-					throw new ArgumentNullException(nameof(key));
-
-				this[key.ToString()] = value;
-			}
+			get => key == null ? null : this[key.ToString()];
+			set => this[key.ToString()] = value ?? throw new ArgumentNullException(nameof(key));
 		}
 
 		bool IDictionary.Contains(object key)
@@ -1510,6 +1482,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel() => (T)this.Data;
+
 		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
 		{
 			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
@@ -1615,6 +1589,21 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel<T>()
+		{
+			if(_model is T value)
+				return value;
+
+			var model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
+
+			foreach(var entry in _model.GetChanges())
+			{
+				Reflector.TrySetValue(model, entry.Key, entry.Value);
+			}
+
+			return model;
+		}
+
 		public bool Contains(string name)
 		{
 			return _model.HasChanges(name);
@@ -1940,6 +1929,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public T AsModel() => (T)this.Data;
+
 		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
 		{
 			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));

@@ -34,8 +34,8 @@ namespace Zongsoft.Data
 {
 	public interface IDataDictionary<T> : IDataDictionary
 	{
+		T AsModel();
 		bool Contains<TMember>(Expression<Func<T, TMember>> expression);
-
 		bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value);
 
 		TValue GetValue<TValue>(Expression<Func<T, TValue>> expression);

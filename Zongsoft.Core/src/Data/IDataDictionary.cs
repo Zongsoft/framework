@@ -38,6 +38,8 @@ namespace Zongsoft.Data
 		object Data { get; }
 		bool IsEmpty { get; }
 
+		T AsModel<T>();
+
 		bool Contains(string name);
 
 		bool HasChanges(params string[] names);
