@@ -60,6 +60,12 @@ namespace Zongsoft.Data.Common
 				context.IsMultiple :
 				statement.Schema.Token.IsMultiple;
 
+			if(statement.Schema != null)
+			{
+				isMultiple = statement.Schema.Token.IsMultiple;
+				context.Data = statement.Schema.Token.GetValue(context.Data);
+			}
+
 			if(isMultiple)
 			{
 				if(context.Data == null)
@@ -158,7 +164,7 @@ namespace Zongsoft.Data.Common
 					this.SetLinkedParameters(mutation, context.Data);
 
 					//重新计算当前的操作数据
-					context.Data = mutation.Schema.Token.GetValue(context.Data);
+					//context.Data = mutation.Schema.Token.GetValue(context.Data);
 				}
 			}
 		}
