@@ -633,7 +633,7 @@ namespace Zongsoft.Plugins
 			#endregion
 
 			#region 内部方法
-			internal void SetAssembly(string assemblyName)
+			internal void SetAssembly(string assemblyName, bool optional)
 			{
 				if(string.IsNullOrWhiteSpace(assemblyName))
 					return;
@@ -665,7 +665,12 @@ namespace Zongsoft.Plugins
 				}
 
 				if(!File.Exists(filePath))
-					throw new PluginException(string.Format("The '{0}' assembly file is not exists. in '{1}' plugin file.", assemblyName, _plugin.FilePath));
+				{
+					if(optional)
+						return;
+
+					throw new PluginException(string.Format("The '{0}' assembly file is not exists. in '{1}' plugin file.", assemblyName, _plugin.Name));
+				}
 
 				Assembly result = Assembly.LoadFrom(filePath);
 

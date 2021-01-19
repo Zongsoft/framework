@@ -206,7 +206,10 @@ namespace Zongsoft.Plugins
 
 			do
 			{
-				plugin.Manifest.SetAssembly(reader.GetAttribute("name"));
+				var value = reader.GetAttribute("optional");
+				var optional = !string.IsNullOrEmpty(value) && bool.Parse(value);
+
+				plugin.Manifest.SetAssembly(reader.GetAttribute("name"), optional);
 			} while(reader.ReadToNextSibling("assembly"));
 		}
 

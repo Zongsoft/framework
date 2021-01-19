@@ -86,6 +86,11 @@
 										<xs:documentation xml:lang="zh">插件程序集名称。</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
+								<xs:attribute name="optional" type="xs:boolean" use="optional">
+									<xs:annotation>
+										<xs:documentation xml:lang="zh">指定程序集是否为可选项。</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
 							</xs:complexType>
 						</xs:element>
 					</xs:sequence>
