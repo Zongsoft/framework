@@ -99,6 +99,8 @@ namespace Zongsoft.Data
 		bool Exists<TKey>(TKey key, string filter = null, IDataExistsOptions options = null);
 		bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, string filter = null, IDataExistsOptions options = null);
 		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, IDataExistsOptions options = null);
+		bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string filter = null, IDataExistsOptions options = null);
+		bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string filter = null, IDataExistsOptions options = null);
 		#endregion
 
 		#region 聚合方法
@@ -106,11 +108,15 @@ namespace Zongsoft.Data
 		int Count<TKey>(TKey key, string member = null, string filter = null, IDataAggregateOptions options = null);
 		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, string filter = null, IDataAggregateOptions options = null);
 		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, string filter = null, IDataAggregateOptions options = null);
+		int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, string filter = null, IDataAggregateOptions options = null);
+		int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, string filter = null, IDataAggregateOptions options = null);
 
 		double? Aggregate(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null);
 		double? Aggregate<TKey>(TKey key, DataAggregateFunction method, string member, string filter = null, IDataAggregateOptions options = null);
 		double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction method, string member, string filter = null, IDataAggregateOptions options = null);
 		double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction method, string member, string filter = null, IDataAggregateOptions options = null);
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateFunction method, string member, string filter = null, IDataAggregateOptions options = null);
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateFunction method, string member, string filter = null, IDataAggregateOptions options = null);
 		#endregion
 
 		#region 递增方法
@@ -128,6 +134,10 @@ namespace Zongsoft.Data
 		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null);
 		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null);
 		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null);
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null);
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null);
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null);
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null);
 
 		int Delete(ICondition criteria, IDataDeleteOptions options = null);
 		int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null);
@@ -156,6 +166,10 @@ namespace Zongsoft.Data
 		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDataUpdateOptions options = null);
 		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDataUpdateOptions options = null);
 		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataUpdateOptions options = null);
+		int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataUpdateOptions options = null);
+		int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataUpdateOptions options = null);
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataUpdateOptions options = null);
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataUpdateOptions options = null);
 
 		int Update(object data, IDataUpdateOptions options = null);
 		int Update(object data, string schema, IDataUpdateOptions options = null);
@@ -174,7 +188,6 @@ namespace Zongsoft.Data
 		object Get<TKey>(TKey key, string schema, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
 		object Get<TKey>(TKey key, string schema, Paging paging, string filter = null, params Sorting[] sortings);
 		object Get<TKey>(TKey key, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
-		//object Get<TKey>(TKey key, string schema, Paging paging, IDataSelectOptions options, out IPageable pageable, params Sorting[] sortings);
 
 		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
@@ -183,7 +196,6 @@ namespace Zongsoft.Data
 		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
-		//object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, out IPageable pageable, params Sorting[] sortings);
 
 		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
@@ -192,7 +204,22 @@ namespace Zongsoft.Data
 		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, string filter = null, params Sorting[] sortings);
 		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
-		//object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, out IPageable pageable, params Sorting[] sortings);
+
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
+
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, string filter = null, params Sorting[] sortings);
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, string filter = null, params Sorting[] sortings);
 
 		IEnumerable Select(IDataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable Select(ICondition criteria, params Sorting[] sortings);
