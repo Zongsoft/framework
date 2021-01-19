@@ -63,9 +63,10 @@ namespace Zongsoft.Services
 
 		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name, bool required = false)
 		{
-			var data = services.GetRequiredService<Data.IDataAccessProvider>().GetAccessor(name);
+			if(services.GetRequiredService<Data.IDataAccessProvider>().TryGetAccessor(name, out var data))
+				return data;
 
-			if(data == null && required)
+			if(required)
 			{
 				if(string.IsNullOrEmpty(name))
 					throw new InvalidOperationException($"Unable to acquire the default data accessor.");
@@ -73,7 +74,7 @@ namespace Zongsoft.Services
 					throw new InvalidOperationException($"Unable to acquire the data accessor with the name ‘{name}’.");
 			}
 
-			return data;
+			return null;
 		}
 
 		public static object Resolve(this IServiceProvider services, string name)
