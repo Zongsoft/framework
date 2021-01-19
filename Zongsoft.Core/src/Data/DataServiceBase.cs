@@ -796,12 +796,12 @@ namespace Zongsoft.Data
 
 		public int Update(object data, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, null, null, options);
+			return this.Update(data, (ICondition)null, null, options);
 		}
 
 		public int Update(object data, string schema, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, null, schema, options);
+			return this.Update(data, (ICondition)null, schema, options);
 		}
 
 		public int Update(object data, ICondition criteria, IDataUpdateOptions options = null)
@@ -854,6 +854,11 @@ namespace Zongsoft.Data
 			//执行更新操作
 			return this.OnUpdate(dictionary, criteria, schematic, options);
 		}
+
+		public int Update(object data, Zongsoft.Data.Condition criteria, IDataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, null, options);
+		public int Update(object data, Zongsoft.Data.Condition criteria, string schema, IDataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
+		public int Update(object data, ConditionCollection criteria, IDataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, null, options);
+		public int Update(object data, ConditionCollection criteria, string schema, IDataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
 
 		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
 		{

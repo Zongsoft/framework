@@ -178,6 +178,12 @@ namespace Zongsoft.Data
 
 		int UpdateMany(IEnumerable items, IDataUpdateOptions options = null);
 		int UpdateMany(IEnumerable items, string schema, IDataUpdateOptions options = null);
+
+		/* 注：以下重载方法是用来避免编译器将 ICondition 类型的 criteria 参数映射为 TKey 泛型参数 */
+		int Update(object data, Condition criteria, IDataUpdateOptions options = null);
+		int Update(object data, Condition criteria, string schema, IDataUpdateOptions options = null);
+		int Update(object data, ConditionCollection criteria, IDataUpdateOptions options = null);
+		int Update(object data, ConditionCollection criteria, string schema, IDataUpdateOptions options = null);
 		#endregion
 
 		#region 查询方法
