@@ -60,14 +60,7 @@ namespace Zongsoft.Data
 		public IDataAccess GetAccessor(string name)
 		{
 			if(string.IsNullOrEmpty(name))
-			{
-				var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
-
-				if(connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.Default))
-					throw new InvalidOperationException("Missing the default connection settings.");
-
-				name = connectionSettings.Default;
-			}
+				name = GetDefaultName();
 
 			if(_accesses.TryGet(name, out var accessor))
 				return accessor;
@@ -82,10 +75,37 @@ namespace Zongsoft.Data
 
 			return accessor;
 		}
+
+		public bool TryGetAccessor(string name, out IDataAccess accessor)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = GetDefaultName();
+
+			if(_accesses.TryGet(name, out var result))
+			{
+				accessor = result;
+				return true;
+			}
+
+			accessor = null;
+			return false;
+		}
 		#endregion
 
 		#region 抽象方法
 		protected abstract TDataAccess CreateAccessor(string name);
+		#endregion
+
+		#region 私有方法
+		private static string GetDefaultName()
+		{
+			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
+
+			if(connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.Default))
+				throw new InvalidOperationException("Missing the default connection settings.");
+
+			return connectionSettings.Default;
+		}
 		#endregion
 
 		#region 集合接口
