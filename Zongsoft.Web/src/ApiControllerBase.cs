@@ -100,72 +100,18 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
+		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key?}")]
 		public Task<IActionResult> Count(string key, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string>(key, null, new DataAggregateOptions(filter)).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count(key, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
-		[HttpGet("[action]/{key1:required}-{key2:required}")]
-		public Task<IActionResult> Count(string key1, string key2, [FromQuery]string filter = null)
-		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string>(key1, key2, null, new DataAggregateOptions(filter)).ToString()));
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
-		public Task<IActionResult> Count(string key1, string key2, string key3, [FromQuery]string filter = null)
-		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string>(key1, key2, key3, null, new DataAggregateOptions(filter)).ToString()));
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}")]
-		public Task<IActionResult> Count(string key1, string key2, string key3, string key4, [FromQuery]string filter = null)
-		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string>(key1, key2, key3, key4, null, new DataAggregateOptions(filter)).ToString()));
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}-{key5:required}")]
-		public Task<IActionResult> Count(string key1, string key2, string key3, string key4, string key5, [FromQuery]string filter = null)
-		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string, string>(key1, key2, key3, key4, key5, null, new DataAggregateOptions(filter)).ToString()));
-		}
-
+		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
 		public Task<IActionResult> Exists(string key, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string>(key, new DataExistsOptions(filter)) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}")]
-		public Task<IActionResult> Exists(string key1, string key2, [FromQuery]string filter = null)
-		{
-			return this.DataService.Exists<string, string>(key1, key2, new DataExistsOptions(filter)) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
-		public Task<IActionResult> Exists(string key1, string key2, string key3, [FromQuery]string filter = null)
-		{
-			return this.DataService.Exists<string, string, string>(key1, key2, key3, new DataExistsOptions(filter)) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}")]
-		public Task<IActionResult> Exists(string key1, string key2, string key3, string key4, [FromQuery]string filter = null)
-		{
-			return this.DataService.Exists<string, string, string, string>(key1, key2, key3, key4, new DataExistsOptions(filter)) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
-
-		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}-{key5:required}")]
-		public Task<IActionResult> Exists(string key1, string key2, string key3, string key4, string key5, [FromQuery]string filter = null)
-		{
-			return this.DataService.Exists<string, string, string, string, string>(key1, key2, key3, key4, key5, new DataExistsOptions(filter)) ?
+			return this.DataService.Exists(key, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -187,36 +133,7 @@ namespace Zongsoft.Web
 		[HttpGet("{key?}")]
 		public IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
 		{
-			return this.Paginate
-			(
-				string.IsNullOrWhiteSpace(key) ?
-				this.OnGet(Array.Empty<string>(), filter, page, sortings) :
-				this.OnGet(new[] { key }, filter, page, sortings)
-			);
-		}
-
-		[HttpGet("{key1:required}-{key2:required}")]
-		public IActionResult Get(string key1, string key2, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
-		{
-			return this.Paginate(this.OnGet(new[] { key1, key2 }, filter, page, sortings));
-		}
-
-		[HttpGet("{key1:required}-{key2:required}-{key3:required}")]
-		public IActionResult Get(string key1, string key2, string key3, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
-		{
-			return this.Paginate(this.OnGet(new[] { key1, key2, key3 }, filter, page, sortings));
-		}
-
-		[HttpGet("{key1:required}-{key2:required}-{key3:required}-{key4:required}")]
-		public IActionResult Get(string key1, string key2, string key3, string key4, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
-		{
-			return this.Paginate(this.OnGet(new[] { key1, key2, key3, key4 }, filter, page, sortings));
-		}
-
-		[HttpGet("{key1:required}-{key2:required}-{key3:required}-{key4:required}-{key5:required}")]
-		public IActionResult Get(string key1, string key2, string key3, string key4, string key5, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
-		{
-			return this.Paginate(this.OnGet(new[] { key1, key2, key3, key4, key5 }, filter, page, sortings));
+			return this.Paginate(this.OnGet(key, filter, page, sortings));
 		}
 
 		[HttpDelete("{key?}")]
@@ -241,18 +158,16 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += this.OnDelete(Common.StringExtension.Slice(part, '-').ToArray(), filter);
+							count += this.OnDelete(part, filter);
 
 						transaction.Commit();
 					}
 
-					return count > 0 ? (IActionResult)this.Ok(count) : this.NotFound();
+					return count > 0 ? (IActionResult)this.Content(count.ToString()) : this.NotFound();
 				}
 			}
 
-			return this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray(), filter) > 0 ?
-				(IActionResult)this.NoContent() :
-				(IActionResult)this.NotFound();
+			return this.OnDelete(key, filter) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost]
@@ -301,11 +216,11 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			return this.OnUpsert(model) > 0 ? (IActionResult)this.Ok(model) : this.Conflict();
+			return this.OnUpsert(model) > 0 ? this.Ok(model) : this.Conflict();
 		}
 
-		[HttpPatch("{keys}")]
-		public IActionResult Update(string keys, [FromBody]TModel model)
+		[HttpPatch("{key}")]
+		public IActionResult Update(string key, [FromBody]TModel model)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -314,8 +229,8 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			return this.OnUpdate(model, string.IsNullOrEmpty(keys) ? Array.Empty<string>() : Common.StringExtension.Slice(keys, '-').ToArray()) > 0 ?
-				(IActionResult)this.NoContent() : this.NotFound();
+			return this.OnUpdate(key, model) > 0 ?
+				this.NoContent() : this.NotFound();
 		}
 		#endregion
 
@@ -406,53 +321,25 @@ namespace Zongsoft.Web
 				throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual object OnGet(string[] keys, string filter, Paging page, Sorting[] sortings)
+		protected virtual object OnGet(string key, string filter, Paging page, Sorting[] sortings)
 		{
 			if(page == null)
 				page = Paging.Page(1);
 
-			if(keys == null || keys.Length == 0)
-				return this.DataService.Get<string>(null, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
+			if(string.IsNullOrWhiteSpace(key))
+				return this.DataService.Get(null, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 
-			switch(keys.Length)
-			{
-				case 1:
-					return keys[0].Contains(':') && this.DataService.Searcher != null ?
-						this.DataService.Searcher.Search(keys[0], this.GetSchema(), page, filter, sortings) :
-						this.DataService.Get<string>(keys[0], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-				case 2:
-					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-				case 3:
-					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-				case 4:
-					return this.DataService.Get<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-				case 5:
-					return this.DataService.Get<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-				default:
-					throw new ArgumentException("Too many keys specified.");
-			}
+			return key.Contains(':') && !key.Contains('-') && this.DataService.Searcher != null ?
+			       this.DataService.Searcher.Search(key, this.GetSchema(), page, filter, sortings) :
+			       this.DataService.Get(key, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 		}
 
-		protected virtual int OnDelete(string[] keys, string filter)
+		protected virtual int OnDelete(string key, string filter)
 		{
-			if(keys == null || keys.Length == 0)
+			if(string.IsNullOrWhiteSpace(key))
 				return 0;
 
-			switch(keys.Length)
-			{
-				case 1:
-					return this.DataService.Delete<string>(keys[0], this.GetSchema(), new DataDeleteOptions(filter));
-				case 2:
-					return this.DataService.Delete<string, string>(keys[0], keys[1], this.GetSchema(), new DataDeleteOptions(filter));
-				case 3:
-					return this.DataService.Delete<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), new DataDeleteOptions(filter));
-				case 4:
-					return this.DataService.Delete<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema(), new DataDeleteOptions(filter));
-				case 5:
-					return this.DataService.Delete<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema(), new DataDeleteOptions(filter));
-				default:
-					throw new ArgumentException("Too many keys specified.");
-			}
+			return this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter));
 		}
 
 		protected virtual int OnCreate(TModel model)
@@ -460,26 +347,12 @@ namespace Zongsoft.Web
 			return this.DataService.Insert(model, this.GetSchema());
 		}
 
-		protected virtual int OnUpdate(TModel model, params string[] keys)
+		protected virtual int OnUpdate(string key, TModel model)
 		{
-			if(keys == null || keys.Length == 0)
+			if(string.IsNullOrWhiteSpace(key))
 				return this.DataService.Update(model, this.GetSchema());
-
-			switch(keys.Length)
-			{
-				case 1:
-					return this.DataService.Update<string>(model, keys[0], this.GetSchema());
-				case 2:
-					return this.DataService.Update<string, string>(model, keys[0], keys[1], this.GetSchema());
-				case 3:
-					return this.DataService.Update<string, string, string>(model, keys[0], keys[1], keys[2], this.GetSchema());
-				case 4:
-					return this.DataService.Update<string, string, string, string>(model, keys[0], keys[1], keys[2], keys[3], this.GetSchema());
-				case 5:
-					return this.DataService.Update<string, string, string, string, string>(model, keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema());
-				default:
-					throw new ArgumentException("Too many keys specified.");
-			}
+			else
+				return this.DataService.Update(key, model, this.GetSchema());
 		}
 
 		protected virtual int OnUpsert(TModel model)

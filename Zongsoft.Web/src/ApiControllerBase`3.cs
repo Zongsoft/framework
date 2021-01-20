@@ -62,7 +62,7 @@ namespace Zongsoft.Web
 			bool existed;
 
 			if(conditional == null)
-				existed = this.DataService.Exists(null);
+				existed = this.DataService.Exists((ICondition)null);
 			else
 				existed = this.DataService.Exists(Conditional.ToCondition(conditional), null);
 

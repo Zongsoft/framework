@@ -241,29 +241,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public bool Exists<TKey>(TKey key, IDataExistsOptions options = null)
+		public bool Exists(string key, IDataExistsOptions options = null)
 		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options);
-		}
-
-		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null)
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options);
-		}
-
-		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null)
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options);
-		}
-
-		public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null)
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options);
-		}
-
-		public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null)
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options);
+			return this.Exists(this.OnCondition(DataServiceMethod.Exists(), key, out _), options);
 		}
 
 		public bool Exists(ICondition criteria, IDataExistsOptions options = null)
@@ -289,6 +269,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 聚合方法
+		public int Count(string key, string member = null, IDataAggregateOptions options = null)
+		{
+			return this.Count(this.OnCondition(DataServiceMethod.Count(), key, out _), member, options);
+		}
+
 		public int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null)
 		{
 			//构建数据操作的选项对象
@@ -305,29 +290,9 @@ namespace Zongsoft.Data
 			return (int)(this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0d);
 		}
 
-		public int Count<TKey>(TKey key, string member = null, IDataAggregateOptions options = null)
+		public double? Aggregate(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null)
 		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options);
-		}
-
-		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null)
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options);
-		}
-
-		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null)
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options);
-		}
-
-		public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null)
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options);
-		}
-
-		public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null)
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options);
+			return this.Aggregate(function, member, this.OnCondition(DataServiceMethod.Aggregate(function), key, out _), options);
 		}
 
 		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
@@ -344,31 +309,6 @@ namespace Zongsoft.Data
 
 			//执行聚合操作
 			return this.OnAggregate(new DataAggregate(function, member), criteria, options);
-		}
-
-		public double? Aggregate<TKey>(TKey key, DataAggregateFunction function, string member, IDataAggregateOptions options = null)
-		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
-		}
-
-		public double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction function, string member, IDataAggregateOptions options = null)
-		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
-		}
-
-		public double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction function, string member, IDataAggregateOptions options = null)
-		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
-		}
-
-		public double? Aggregate<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateFunction function, string member, IDataAggregateOptions options = null)
-		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
-		}
-
-		public double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateFunction function, string member, IDataAggregateOptions options = null)
-		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
 		}
 
 		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options)
@@ -416,12 +356,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 删除方法
-		public int Delete<TKey>(TKey key, IDataDeleteOptions options = null)
+		public int Delete(string key, IDataDeleteOptions options = null)
 		{
-			return this.Delete<TKey>(key, null, options);
+			return this.Delete(key, null, options);
 		}
 
-		public int Delete<TKey>(TKey key, string schema, IDataDeleteOptions options = null)
+		public int Delete(string key, string schema, IDataDeleteOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete();
@@ -434,103 +374,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key, out _), options.Filter, options);
-
-			//执行删除操作
-			return this.OnDelete(criteria, this.GetSchema(schema), options);
-		}
-
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null)
-		{
-			return this.Delete<TKey1, TKey2>(key1, key2, null, options);
-		}
-
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null)
-		{
-			//确认是否可以执行该操作
-			this.EnsureDelete();
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataDeleteOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Delete(), options);
-
-			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), options.Filter, options);
-
-			//执行删除操作
-			return this.OnDelete(criteria, this.GetSchema(schema), options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null)
-		{
-			return this.Delete<TKey1, TKey2, TKey3>(key1, key2, key3, null, options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null)
-		{
-			//确认是否可以执行该操作
-			this.EnsureDelete();
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataDeleteOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Delete(), options);
-
-			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), options.Filter, options);
-
-			//执行删除操作
-			return this.OnDelete(criteria, this.GetSchema(schema), options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null)
-		{
-			return this.Delete<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null)
-		{
-			//确认是否可以执行该操作
-			this.EnsureDelete();
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataDeleteOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Delete(), options);
-
-			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), options.Filter, options);
-
-			//执行删除操作
-			return this.OnDelete(criteria, this.GetSchema(schema), options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null)
-		{
-			return this.Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, options);
-		}
-
-		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null)
-		{
-			//确认是否可以执行该操作
-			this.EnsureDelete();
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataDeleteOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Delete(), options);
-
-			//将删除键转换成条件对象，并进行修整
-			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), options.Filter, options);
+			var criteria = this.OnValidate(DataServiceMethod.Delete(), this.OnCondition(DataServiceMethod.Delete(), key, out _), options.Filter, options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -744,54 +588,14 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		public int Update<TKey>(object data, TKey key, IDataUpdateOptions options = null)
+		public int Update(string key, object data, IDataUpdateOptions options = null)
 		{
-			return this.Update<TKey>(data, key, null, options);
+			return this.Update(key, data, null, options);
 		}
 
-		public int Update<TKey>(object data, TKey key, string schema, IDataUpdateOptions options = null)
+		public int Update(string key, object data, string schema, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options);
-		}
-
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDataUpdateOptions options = null)
-		{
-			return this.Update<TKey1, TKey2>(data, key1, key2, null, options);
-		}
-
-		public int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDataUpdateOptions options = null)
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDataUpdateOptions options = null)
-		{
-			return this.Update<TKey1, TKey2, TKey3>(data, key1, key2, key3, null, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataUpdateOptions options = null)
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataUpdateOptions options = null)
-		{
-			return this.Update<TKey1, TKey2, TKey3, TKey4>(data, key1, key2, key3, key4, null, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataUpdateOptions options = null)
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataUpdateOptions options = null)
-		{
-			return this.Update<TKey1, TKey2, TKey3, TKey4, TKey5>(data, key1, key2, key3, key4, key5, null, options);
-		}
-
-		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataUpdateOptions options = null)
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options);
+			return this.Update(data, this.OnCondition(DataServiceMethod.Update(), key, out _), schema, options);
 		}
 
 		public int Update(object data, IDataUpdateOptions options = null)
@@ -914,310 +718,68 @@ namespace Zongsoft.Data
 
 		#region 查询方法
 
-		#region 单例查询
+		#region 键值查询
+		public object Get(string key, params Sorting[] sortings)
+		{
+			return this.Get(key, string.Empty, null, null, sortings);
+		}
+
+		public object Get(string key, IDataSelectOptions options, params Sorting[] sortings)
+		{
+			return this.Get(key, string.Empty, null, options, sortings);
+		}
+
+		public object Get(string key, Paging paging, params Sorting[] sortings)
+		{
+			return this.Get(key, string.Empty, paging, null, sortings);
+		}
+
+		public object Get(string key, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		{
+			return this.Get(key, string.Empty, paging, options, sortings);
+		}
+
+		public object Get(string key, string schema, params Sorting[] sortings)
+		{
+			return this.Get(key, schema, null, null, sortings);
+		}
+
+		public object Get(string key, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		{
+			return this.Get(key, schema, null, options, sortings);
+		}
+
+		public object Get(string key, string schema, Paging paging, params Sorting[] sortings)
+		{
+			return this.Get(key, schema, paging, null, sortings);
+		}
+
+		public object Get(string key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.OnCondition(DataServiceMethod.Get(), key, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+
 		protected virtual TModel OnGet(ICondition criteria, ISchema schema, IDataSelectOptions options)
 		{
 			return this.DataAccess.Select<TModel>(this.Name, criteria, schema, null, options, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx)).FirstOrDefault();
-		}
-		#endregion
-
-		#region 单键查询
-		public object Get<TKey>(TKey key, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, string.Empty, null, null, sortings);
-		}
-
-		public object Get<TKey>(TKey key, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, string.Empty, null, options, sortings);
-		}
-
-		public object Get<TKey>(TKey key, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, string.Empty, paging, null, sortings);
-		}
-
-		public object Get<TKey>(TKey key, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, string.Empty, paging, options, sortings);
-		}
-
-		public object Get<TKey>(TKey key, string schema, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, schema, null, null, sortings);
-		}
-
-		public object Get<TKey>(TKey key, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, schema, null, options, sortings);
-		}
-
-		public object Get<TKey>(TKey key, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey>(key, schema, paging, null, sortings);
-		}
-
-		public object Get<TKey>(TKey key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataSelectOptions();
-
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key, out var singular);
-
-			if(singular)
-			{
-				//进行授权验证
-				this.Authorize(DataServiceMethod.Get(), options);
-
-				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
-
-				//执行单条查询方法
-				return this.OnGet(criteria, this.GetSchema(schema), options);
-			}
-
-			return this.Select(criteria, schema, paging, options, sortings);
-		}
-		#endregion
-
-		#region 双键查询
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, string.Empty, paging, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataSelectOptions();
-
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, out var singular);
-
-			if(singular)
-			{
-				//进行授权验证
-				this.Authorize(DataServiceMethod.Get(), options);
-
-				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
-
-				//执行单条查询方法
-				return this.OnGet(criteria, this.GetSchema(schema), options);
-			}
-
-			return this.Select(criteria, schema, paging, options, sortings);
-		}
-		#endregion
-
-		#region 三键查询
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, string.Empty, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, string.Empty, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, string.Empty, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, string.Empty, paging, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataSelectOptions();
-
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, out var singular);
-
-			if(singular)
-			{
-				//进行授权验证
-				this.Authorize(DataServiceMethod.Get(), options);
-
-				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
-
-				//执行单条查询方法
-				return this.OnGet(criteria, this.GetSchema(schema), options);
-			}
-
-			return this.Select(criteria, schema, paging, options, sortings);
-		}
-		#endregion
-
-		#region 四键查询
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, string.Empty, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, string.Empty, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, string.Empty, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, string.Empty, paging, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataSelectOptions();
-
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, out var singular);
-
-			if(singular)
-			{
-				//进行授权验证
-				this.Authorize(DataServiceMethod.Get(), options);
-
-				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
-
-				//执行单条查询方法
-				return this.OnGet(criteria, this.GetSchema(schema), options);
-			}
-
-			return this.Select(criteria, schema, paging, options, sortings);
-		}
-		#endregion
-
-		#region 五键查询
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, string.Empty, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, string.Empty, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, string.Empty, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, string.Empty, paging, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, options, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, null, sortings);
-		}
-
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataSelectOptions();
-
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, key5, out var singular);
-
-			if(singular)
-			{
-				//进行授权验证
-				this.Authorize(DataServiceMethod.Get(), options);
-
-				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
-
-				//执行单条查询方法
-				return this.OnGet(criteria, this.GetSchema(schema), options);
-			}
-
-			return this.Select(criteria, schema, paging, options, sortings);
 		}
 		#endregion
 
@@ -1639,19 +1201,21 @@ namespace Zongsoft.Data
 
 		#region 条件转换
 		/// <summary>
-		/// 将指定的参数值转换为操作条件。
+		/// 将指定的键值文本转换为操作条件。
 		/// </summary>
 		/// <param name="method">指定的操作方法。</param>
-		/// <param name="values">指定的参数值数组。</param>
+		/// <param name="key">指定的键值文本。</param>
 		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
 		/// <returns>返回对应的操作条件。</returns>
-		protected virtual ICondition OnCondition(DataServiceMethod method, object[] values, out bool singular)
+		protected virtual ICondition OnCondition(DataServiceMethod method, string key, out bool singular)
 		{
 			//设置输出参数默认值
 			singular = false;
 
-			if(values == null || values.Length == 0)
+			if(string.IsNullOrWhiteSpace(key))
 				return null;
+
+			var values = Zongsoft.Common.StringExtension.Slice(key, '-').ToArray();
 
 			//获取当前数据服务对应的主键
 			var primaryKey = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
@@ -1690,70 +1254,9 @@ namespace Zongsoft.Data
 
 			return conditions;
 		}
-
-		/// <summary>
-		/// 将指定的键值文本转换为操作条件。
-		/// </summary>
-		/// <param name="method">指定的操作方法。</param>
-		/// <param name="key">指定的键值文本。</param>
-		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
-		/// <returns>返回对应的操作条件。</returns>
-		protected virtual ICondition OnCondition(DataServiceMethod method, string key, out bool singular)
-		{
-			if(string.IsNullOrWhiteSpace(key))
-			{
-				singular = false;
-				return null;
-			}
-
-			return this.OnCondition(method, Zongsoft.Common.StringExtension.Slice(key, '-').ToArray(), out singular);
-		}
 		#endregion
 
 		#region 私有方法
-		private ICondition ConvertKey(DataServiceMethod method, object[] values, out bool singular)
-		{
-			if(values != null && values.Length > 5)
-				throw new NotSupportedException("Too many key values specified.");
-
-			var criteria = this.OnCondition(method, values ?? Array.Empty<object>(), out singular);
-
-			if(criteria is ConditionCollection conditions && conditions.Count == 1)
-				return conditions[0];
-
-			return criteria;
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey>(DataServiceMethod method, TKey key, out bool singular)
-		{
-			return this.ConvertKey(method, key == null ? Array.Empty<object>() : new object[] { key }, out singular);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2>(DataServiceMethod method, TKey1 key1, TKey2 key2, out bool singular)
-		{
-			return this.ConvertKey(method, new object[] { key1, key2 }, out singular);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2, TKey3>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
-		{
-			return this.ConvertKey(method, new object[] { key1, key2, key3 }, out singular);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, out bool singular)
-		{
-			return this.ConvertKey(method, new object[] { key1, key2, key3, key4 }, out singular);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4, TKey5>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, out bool singular)
-		{
-			return this.ConvertKey(method, new object[] { key1, key2, key3, key4, key5 }, out singular);
-		}
-
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private ISchema GetSchema(string expression, Type type = null)
 		{

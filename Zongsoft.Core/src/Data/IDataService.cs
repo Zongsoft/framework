@@ -94,29 +94,16 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
+		bool Exists(string key, IDataExistsOptions options = null);
 		bool Exists(ICondition criteria, IDataExistsOptions options = null);
-
-		bool Exists<TKey>(TKey key, IDataExistsOptions options = null);
-		bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null);
-		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null);
-		bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null);
-		bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null);
 		#endregion
 
 		#region 聚合方法
+		int Count(string key, string member = null, IDataAggregateOptions options = null);
 		int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey>(TKey key, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null);
 
+		double? Aggregate(DataAggregateFunction method, string member, string key, IDataAggregateOptions options = null);
 		double? Aggregate(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null);
-		double? Aggregate<TKey>(TKey key, DataAggregateFunction method, string member, IDataAggregateOptions options = null);
-		double? Aggregate<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataAggregateFunction method, string member, IDataAggregateOptions options = null);
-		double? Aggregate<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateFunction method, string member, IDataAggregateOptions options = null);
-		double? Aggregate<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateFunction method, string member, IDataAggregateOptions options = null);
-		double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateFunction method, string member, IDataAggregateOptions options = null);
 		#endregion
 
 		#region 递增方法
@@ -128,16 +115,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 删除方法
-		int Delete<TKey>(TKey key, IDataDeleteOptions options = null);
-		int Delete<TKey>(TKey key, string schema, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null);
-		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null);
+		int Delete(string key, IDataDeleteOptions options = null);
+		int Delete(string key, string schema, IDataDeleteOptions options = null);
 
 		int Delete(ICondition criteria, IDataDeleteOptions options = null);
 		int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null);
@@ -160,16 +139,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		int Update<TKey>(object data, TKey key, IDataUpdateOptions options = null);
-		int Update<TKey>(object data, TKey key, string schema, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2>(object data, TKey1 key1, TKey2 key2, string schema, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3>(object data, TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3, TKey4>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataUpdateOptions options = null);
-		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(object data, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataUpdateOptions options = null);
+		int Update(string key, object data, IDataUpdateOptions options = null);
+		int Update(string key, object data, string schema, IDataUpdateOptions options = null);
 
 		int Update(object data, IDataUpdateOptions options = null);
 		int Update(object data, string schema, IDataUpdateOptions options = null);
@@ -187,50 +158,14 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 查询方法
-		object Get<TKey>(TKey key, params Sorting[] sortings);
-		object Get<TKey>(TKey key, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey>(TKey key, Paging paging, params Sorting[] sortings);
-		object Get<TKey>(TKey key, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey>(TKey key, string schema, params Sorting[] sortings);
-		object Get<TKey>(TKey key, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey>(TKey key, string schema, Paging paging, params Sorting[] sortings);
-		object Get<TKey>(TKey key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings);
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		object Get(string key, params Sorting[] sortings);
+		object Get(string key, IDataSelectOptions options, params Sorting[] sortings);
+		object Get(string key, Paging paging, params Sorting[] sortings);
+		object Get(string key, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		object Get(string key, string schema, params Sorting[] sortings);
+		object Get(string key, string schema, IDataSelectOptions options, params Sorting[] sortings);
+		object Get(string key, string schema, Paging paging, params Sorting[] sortings);
+		object Get(string key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
 
 		IEnumerable Select(IDataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable Select(ICondition criteria, params Sorting[] sortings);
