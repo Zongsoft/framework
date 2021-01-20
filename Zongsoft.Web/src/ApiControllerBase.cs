@@ -103,37 +103,37 @@ namespace Zongsoft.Web
 		[HttpGet("[action]/{key?}")]
 		public Task<IActionResult> Count(string key, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string>(key, null, filter).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string>(key, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
 		[HttpGet("[action]/{key1:required}-{key2:required}")]
 		public Task<IActionResult> Count(string key1, string key2, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string>(key1, key2, null, filter).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string>(key1, key2, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
 		public Task<IActionResult> Count(string key1, string key2, string key3, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string>(key1, key2, key3, null, filter).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string>(key1, key2, key3, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}")]
 		public Task<IActionResult> Count(string key1, string key2, string key3, string key4, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string>(key1, key2, key3, key4, null, filter).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string>(key1, key2, key3, key4, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}-{key5:required}")]
 		public Task<IActionResult> Count(string key1, string key2, string key3, string key4, string key5, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string, string>(key1, key2, key3, key4, key5, null, filter).ToString()));
+			return Task.FromResult((IActionResult)this.Content(this.DataService.Count<string, string, string, string, string>(key1, key2, key3, key4, key5, null, new DataAggregateOptions(filter)).ToString()));
 		}
 
 		[HttpGet("[action]/{key:required}")]
 		public Task<IActionResult> Exists(string key, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string>(key, filter) ?
+			return this.DataService.Exists<string>(key, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -141,7 +141,7 @@ namespace Zongsoft.Web
 		[HttpGet("[action]/{key1:required}-{key2:required}")]
 		public Task<IActionResult> Exists(string key1, string key2, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string, string>(key1, key2, filter) ?
+			return this.DataService.Exists<string, string>(key1, key2, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -149,7 +149,7 @@ namespace Zongsoft.Web
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}")]
 		public Task<IActionResult> Exists(string key1, string key2, string key3, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string, string, string>(key1, key2, key3, filter) ?
+			return this.DataService.Exists<string, string, string>(key1, key2, key3, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -157,7 +157,7 @@ namespace Zongsoft.Web
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}")]
 		public Task<IActionResult> Exists(string key1, string key2, string key3, string key4, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string, string, string, string>(key1, key2, key3, key4, filter) ?
+			return this.DataService.Exists<string, string, string, string>(key1, key2, key3, key4, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -165,7 +165,7 @@ namespace Zongsoft.Web
 		[HttpGet("[action]/{key1:required}-{key2:required}-{key3:required}-{key4:required}-{key5:required}")]
 		public Task<IActionResult> Exists(string key1, string key2, string key3, string key4, string key5, [FromQuery]string filter = null)
 		{
-			return this.DataService.Exists<string, string, string, string, string>(key1, key2, key3, key4, key5, filter) ?
+			return this.DataService.Exists<string, string, string, string, string>(key1, key2, key3, key4, key5, new DataExistsOptions(filter)) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -220,7 +220,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpDelete("{key?}")]
-		public async Task<IActionResult> Delete(string key)
+		public async Task<IActionResult> Delete(string key, [FromQuery]string filter = null)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -241,7 +241,7 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += this.OnDelete(Common.StringExtension.Slice(part, '-').ToArray());
+							count += this.OnDelete(Common.StringExtension.Slice(part, '-').ToArray(), filter);
 
 						transaction.Commit();
 					}
@@ -250,7 +250,7 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray()) > 0 ?
+			return this.OnDelete(Common.StringExtension.Slice(key, '-').ToArray(), filter) > 0 ?
 				(IActionResult)this.NoContent() :
 				(IActionResult)this.NotFound();
 		}
@@ -412,28 +412,28 @@ namespace Zongsoft.Web
 				page = Paging.Page(1);
 
 			if(keys == null || keys.Length == 0)
-				return this.DataService.Get<string>(null, this.GetSchema(), page, filter, sortings);
+				return this.DataService.Get<string>(null, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 
 			switch(keys.Length)
 			{
 				case 1:
 					return keys[0].Contains(':') && this.DataService.Searcher != null ?
 						this.DataService.Searcher.Search(keys[0], this.GetSchema(), page, filter, sortings) :
-						this.DataService.Get<string>(keys[0], this.GetSchema(), page, filter, sortings);
+						this.DataService.Get<string>(keys[0], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 				case 2:
-					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), page, filter, sortings);
+					return this.DataService.Get<string, string>(keys[0], keys[1], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 				case 3:
-					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), page, filter, sortings);
+					return this.DataService.Get<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 				case 4:
-					return this.DataService.Get<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema(), page, filter, sortings);
+					return this.DataService.Get<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 				case 5:
-					return this.DataService.Get<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema(), page, filter, sortings);
+					return this.DataService.Get<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema(), page, new DataSelectOptions(filter), sortings);
 				default:
 					throw new ArgumentException("Too many keys specified.");
 			}
 		}
 
-		protected virtual int OnDelete(string[] keys)
+		protected virtual int OnDelete(string[] keys, string filter)
 		{
 			if(keys == null || keys.Length == 0)
 				return 0;
@@ -441,15 +441,15 @@ namespace Zongsoft.Web
 			switch(keys.Length)
 			{
 				case 1:
-					return this.DataService.Delete<string>(keys[0], this.GetSchema());
+					return this.DataService.Delete<string>(keys[0], this.GetSchema(), new DataDeleteOptions(filter));
 				case 2:
-					return this.DataService.Delete<string, string>(keys[0], keys[1], this.GetSchema());
+					return this.DataService.Delete<string, string>(keys[0], keys[1], this.GetSchema(), new DataDeleteOptions(filter));
 				case 3:
-					return this.DataService.Delete<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema());
+					return this.DataService.Delete<string, string, string>(keys[0], keys[1], keys[2], this.GetSchema(), new DataDeleteOptions(filter));
 				case 4:
-					return this.DataService.Delete<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema());
+					return this.DataService.Delete<string, string, string, string>(keys[0], keys[1], keys[2], keys[3], this.GetSchema(), new DataDeleteOptions(filter));
 				case 5:
-					return this.DataService.Delete<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema());
+					return this.DataService.Delete<string, string, string, string, string>(keys[0], keys[1], keys[2], keys[3], keys[4], this.GetSchema(), new DataDeleteOptions(filter));
 				default:
 					throw new ArgumentException("Too many keys specified.");
 			}
