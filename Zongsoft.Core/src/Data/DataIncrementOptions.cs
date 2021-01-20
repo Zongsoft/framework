@@ -35,7 +35,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据递增(递减)操作选项的接口。
 	/// </summary>
-	public interface IDataIncrementOptions : IDataMutateOptions { }
+	public interface IDataIncrementOptions : IDataMutateOptions
+	{
+		/// <summary>获取或设置过滤表达式文本。</summary>
+		string Filter { get; set; }
+	}
 
 	/// <summary>
 	/// 表示数据递增(递减)操作选项的类。
@@ -43,18 +47,27 @@ namespace Zongsoft.Data
 	public class DataIncrementOptions : DataMutateOptions, IDataIncrementOptions
 	{
 		#region 构造函数
-		public DataIncrementOptions() { }
-		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
+		public DataIncrementOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		#endregion
+
+		#region 公共属性
+		/// <inheritdoc />
+		public string Filter { get; set; }
 		#endregion
 
 		#region 静态方法
 		/// <summary>
 		/// 创建一个禁用数据验证器的递增(递减)选项。
 		/// </summary>
+		/// <param name="filter">指定的过滤表达式。</param>
 		/// <returns>返回创建的<see cref="DataIncrementOptions"/>递增(递减)选项对象。</returns>
-		public static DataIncrementOptions SuppressValidator()
+		public static DataIncrementOptions SuppressValidator(string filter = null)
 		{
-			return new DataIncrementOptions() { ValidatorSuppressed = true };
+			return new DataIncrementOptions(filter)
+			{
+				ValidatorSuppressed = true
+			};
 		}
 		#endregion
 	}

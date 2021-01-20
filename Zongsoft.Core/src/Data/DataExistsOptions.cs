@@ -37,6 +37,9 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataExistsOptions : IDataOptions
 	{
+		/// <summary>获取或设置过滤表达式文本。</summary>
+		string Filter { get; set; }
+
 		/// <summary>
 		/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
 		/// </summary>
@@ -49,11 +52,14 @@ namespace Zongsoft.Data
 	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions
 	{
 		#region 构造函数
-		public DataExistsOptions() { }
-		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
+		public DataExistsOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public string Filter { get; set; }
+
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }
 		#endregion
@@ -62,10 +68,14 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 创建一个禁用数据验证器的存在选项。
 		/// </summary>
+		/// <param name="filter">指定的过滤表达式。</param>
 		/// <returns>返回创建的<see cref="DataExistsOptions"/>存在选项对象。</returns>
-		public static DataExistsOptions SuppressValidator()
+		public static DataExistsOptions SuppressValidator(string filter = null)
 		{
-			return new DataExistsOptions() { ValidatorSuppressed = true };
+			return new DataExistsOptions(filter)
+			{
+				ValidatorSuppressed = true
+			};
 		}
 		#endregion
 	}

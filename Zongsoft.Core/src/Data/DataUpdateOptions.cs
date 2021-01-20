@@ -50,6 +50,9 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataUpdateOptions : IDataMutateOptions
 	{
+		/// <summary>获取或设置过滤表达式文本。</summary>
+		string Filter { get; set; }
+
 		/// <summary>获取或设置更新行为。</summary>
 		UpdateBehaviors Behaviors { get; set; }
 	}
@@ -60,14 +63,25 @@ namespace Zongsoft.Data
 	public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	{
 		#region 构造函数
-		public DataUpdateOptions() { }
-		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
+		public DataUpdateOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
 
-		public DataUpdateOptions(UpdateBehaviors behaviors) { this.Behaviors = behaviors; }
-		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> states) : base(states) { this.Behaviors = behaviors; }
+		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> states = null) : base(states)
+		{
+			this.Behaviors = behaviors;
+		}
+
+		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states)
+		{
+			this.Filter = filter;
+			this.Behaviors = behaviors;
+		}
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public string Filter { get; set; }
+
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
 		#endregion
@@ -76,10 +90,28 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 创建一个禁用数据验证器的更新选项。
 		/// </summary>
+		/// <param name="filter">更新过滤表达式。</param>
 		/// <returns>返回创建的<see cref="DataUpdateOptions"/>更新选项对象。</returns>
-		public static DataUpdateOptions SuppressValidator()
+		public static DataUpdateOptions SuppressValidator(string filter = null)
 		{
-			return new DataUpdateOptions() { ValidatorSuppressed = true };
+			return new DataUpdateOptions(filter)
+			{
+				ValidatorSuppressed = true
+			};
+		}
+
+		/// <summary>
+		/// 创建一个禁用数据验证器的更新选项。
+		/// </summary>
+		/// <param name="filter">更新过滤表达式。</param>
+		/// <param name="behaviors">指定的更新操作行为。</param>
+		/// <returns>返回创建的<see cref="DataUpdateOptions"/>更新选项对象。</returns>
+		public static DataUpdateOptions SuppressValidator(UpdateBehaviors behaviors, string filter = null)
+		{
+			return new DataUpdateOptions(behaviors, filter)
+			{
+				ValidatorSuppressed = true
+			};
 		}
 		#endregion
 	}

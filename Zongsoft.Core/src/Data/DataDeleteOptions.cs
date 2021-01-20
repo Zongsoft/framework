@@ -35,7 +35,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据删除操作选项的接口。
 	/// </summary>
-	public interface IDataDeleteOptions : IDataMutateOptions { }
+	public interface IDataDeleteOptions : IDataMutateOptions
+	{
+		/// <summary>获取或设置过滤表达式文本。</summary>
+		string Filter { get; set; }
+	}
 
 	/// <summary>
 	/// 表示数据删除操作选项的类。
@@ -43,18 +47,27 @@ namespace Zongsoft.Data
 	public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 	{
 		#region 构造函数
-		public DataDeleteOptions() { }
-		public DataDeleteOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataDeleteOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
+		public DataDeleteOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		#endregion
+
+		#region 公共属性
+		/// <inheritdoc />
+		public string Filter { get; set; }
 		#endregion
 
 		#region 静态方法
 		/// <summary>
 		/// 创建一个禁用数据验证器的删除选项。
 		/// </summary>
+		/// <param name="filter">删除过滤表达式。</param>
 		/// <returns>返回创建的<see cref="DataDeleteOptions"/>删除选项对象。</returns>
-		public static DataDeleteOptions SuppressValidator()
+		public static DataDeleteOptions SuppressValidator(string filter = null)
 		{
-			return new DataDeleteOptions() { ValidatorSuppressed = true };
+			return new DataDeleteOptions(filter)
+			{
+				ValidatorSuppressed = true
+			};
 		}
 		#endregion
 	}
