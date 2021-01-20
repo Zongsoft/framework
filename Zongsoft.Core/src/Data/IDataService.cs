@@ -95,15 +95,31 @@ namespace Zongsoft.Data
 
 		#region 存在方法
 		bool Exists(string key, IDataExistsOptions options = null);
+		bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+
 		bool Exists(ICondition criteria, IDataExistsOptions options = null);
 		#endregion
 
 		#region 聚合方法
 		int Count(string key, string member = null, IDataAggregateOptions options = null);
+		int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
 		int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
 
-		double? Aggregate(DataAggregateFunction method, string member, string key, IDataAggregateOptions options = null);
-		double? Aggregate(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null);
+		double? Aggregate(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null);
+		double? Aggregate<TKey1>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		double? Aggregate<TKey1, TKey2>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		double? Aggregate<TKey1, TKey2, TKey3>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null);
 		#endregion
 
 		#region 递增方法
@@ -117,6 +133,17 @@ namespace Zongsoft.Data
 		#region 删除方法
 		int Delete(string key, IDataDeleteOptions options = null);
 		int Delete(string key, string schema, IDataDeleteOptions options = null);
+
+		int Delete<TKey1>(TKey1 key1, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		int Delete<TKey1>(TKey1 key1, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
 
 		int Delete(ICondition criteria, IDataDeleteOptions options = null);
 		int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null);
@@ -142,6 +169,17 @@ namespace Zongsoft.Data
 		int Update(string key, object data, IDataUpdateOptions options = null);
 		int Update(string key, object data, string schema, IDataUpdateOptions options = null);
 
+		int Update<TKey1>(TKey1 key1, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		int Update<TKey1>(TKey1 key1, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
+		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+
 		int Update(object data, IDataUpdateOptions options = null);
 		int Update(object data, string schema, IDataUpdateOptions options = null);
 		int Update(object data, ICondition criteria, IDataUpdateOptions options = null);
@@ -149,12 +187,6 @@ namespace Zongsoft.Data
 
 		int UpdateMany(IEnumerable items, IDataUpdateOptions options = null);
 		int UpdateMany(IEnumerable items, string schema, IDataUpdateOptions options = null);
-
-		/* 注：以下重载方法是用来避免编译器将 ICondition 类型的 criteria 参数映射为 TKey 泛型参数 */
-		int Update(object data, Condition criteria, IDataUpdateOptions options = null);
-		int Update(object data, Condition criteria, string schema, IDataUpdateOptions options = null);
-		int Update(object data, ConditionCollection criteria, IDataUpdateOptions options = null);
-		int Update(object data, ConditionCollection criteria, string schema, IDataUpdateOptions options = null);
 		#endregion
 
 		#region 查询方法
