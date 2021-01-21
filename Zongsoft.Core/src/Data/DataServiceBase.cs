@@ -1042,6 +1042,426 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#region 单键查询
+		public object Get<TKey1>(TKey1 key1, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, null, null, null, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, null, null, options, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, null, paging, null, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, null, paging, options, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, string schema, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, schema, null, null, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, string schema, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, schema, null, options, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			return this.Get<TKey1>(key1, schema, paging, null, sortings);
+		}
+
+		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+		#endregion
+
+		#region 双键查询
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, null, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, null, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, null, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, null, paging, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, schema, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+		#endregion
+
+		#region 三键查询
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, paging, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+		#endregion
+
+		#region 四键查询
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, paging, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+		#endregion
+
+		#region 五键查询
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, paging, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, options, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, null, sortings);
+		}
+
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+			where TKey1 : struct, IEquatable<TKey1>
+			where TKey2 : struct, IEquatable<TKey2>
+			where TKey3 : struct, IEquatable<TKey3>
+			where TKey4 : struct, IEquatable<TKey4>
+			where TKey5 : struct, IEquatable<TKey5>
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataSelectOptions();
+
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, key5, out var singular);
+
+			if(singular)
+			{
+				//进行授权验证
+				this.Authorize(DataServiceMethod.Get(), options);
+
+				//修整查询条件
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+
+				//执行单条查询方法
+				return this.OnGet(criteria, this.GetSchema(schema), options);
+			}
+
+			return this.Select(criteria, schema, paging, options, sortings);
+		}
+		#endregion
+
 		#region 常规查询
 		public IEnumerable<TModel> Select(IDataSelectOptions options = null, params Sorting[] sortings)
 		{
@@ -1499,12 +1919,11 @@ namespace Zongsoft.Data
 			//只有传入参数值数量与主键数匹配其结果才为单个项
 			singular = primaryKey.Length == values.Length;
 
-			//如果主键成员只有一个则返回单个条件
 			if(primaryKey.Length == 1)
 			{
 				if(values[0] is string text && text != null && text.Length > 0)
 				{
-					var parts = text.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
+					var parts = Zongsoft.Common.StringExtension.Slice(text, ',').ToArray();
 
 					if(parts.Length > 1)
 					{
@@ -1516,7 +1935,6 @@ namespace Zongsoft.Data
 				return Condition.Equal(primaryKey[0].Name, ConvertValue(values[0], primaryKey[0].Type));
 			}
 
-			//创建返回的条件集（AND组合）
 			var conditions = ConditionCollection.And();
 
 			for(int i = 0; i < values.Length; i++)
@@ -1540,7 +1958,8 @@ namespace Zongsoft.Data
 			return this.OnCondition(method, key, out singular);
 		}
 
-		private ICondition ConvertKey<TKey1>(DataServiceMethod method, TKey1 key1, out bool singular) where TKey1 : struct, IEquatable<TKey1>
+		private ICondition ConvertKey<TKey1>(DataServiceMethod method, TKey1 key1, out bool singular)
+			where TKey1 : struct, IEquatable<TKey1>
 		{
 			return this.OnCondition(method, new object[] { key1 }, out singular);
 		}
