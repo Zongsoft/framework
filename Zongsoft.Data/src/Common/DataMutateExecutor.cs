@@ -56,35 +56,47 @@ namespace Zongsoft.Data.Common
 			var command = context.Session.Build(statement);
 
 			//获取当前操作是否为多数据
-			var isMultiple = statement.Schema == null ?
-				context.IsMultiple :
-				statement.Schema.Token.IsMultiple;
+			var isMultiple = context.IsMultiple;
+
+			//保存当前上下文的数据
+			var data = context.Data;
 
 			if(statement.Schema != null)
 			{
 				isMultiple = statement.Schema.Token.IsMultiple;
 				context.Data = statement.Schema.Token.GetValue(context.Data);
-			}
 
-			if(isMultiple)
-			{
 				if(context.Data == null)
-					return false;
-
-				var continued = false;
-
-				foreach(var item in (IEnumerable)context.Data)
 				{
-					//更新当前操作数据
-					context.Data = item;
-					continued |= this.Mutate(context, statement, command);
+					context.Data = data;
+					return false;
 				}
-
-				return continued;
 			}
-			else
+
+			try
 			{
-				return this.Mutate(context, statement, command);
+				if(isMultiple)
+				{
+					var continued = false;
+
+					foreach(var item in (IEnumerable)context.Data)
+					{
+						//更新当前操作数据
+						context.Data = item;
+						continued |= this.Mutate(context, statement, command);
+					}
+
+					return continued;
+				}
+				else
+				{
+					return this.Mutate(context, statement, command);
+				}
+			}
+			finally
+			{
+				//还原当前上下文的数据
+				context.Data = data;
 			}
 		}
 		#endregion
@@ -162,9 +174,6 @@ namespace Zongsoft.Data.Common
 				{
 					//设置子新增语句中的关联参数值
 					this.SetLinkedParameters(mutation, context.Data);
-
-					//重新计算当前的操作数据
-					//context.Data = mutation.Schema.Token.GetValue(context.Data);
 				}
 			}
 		}
