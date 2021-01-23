@@ -47,6 +47,7 @@ namespace Zongsoft.Serialization
 ""RenewalToken"": ""666"",
 ""Scenario"": ""web"",
 ""Expiration"": ""04:00:00"",
+""Count"":""69"",
 ""User"": {
 	""creation"": ""2020-05-12T23:33:51"",
 	""properties"": {
@@ -64,6 +65,7 @@ namespace Zongsoft.Serialization
 			Assert.NotNull(credential);
 			Assert.Equal("123", credential.CredentialId);
 			Assert.Equal("666", credential.RenewalToken);
+			Assert.Equal(69, credential.Count);
 			Assert.Equal(TimeSpan.FromHours(4), credential.Expiration);
 
 			Assert.NotNull(credential.User);
@@ -77,6 +79,7 @@ namespace Zongsoft.Serialization
 			public string CredentialId { get; set; }
 			public string RenewalToken { get; set; }
 			public TimeSpan Expiration { get; set; }
+			public int Count { get; set; }
 
 			public IUser User { get; set; }
 		}

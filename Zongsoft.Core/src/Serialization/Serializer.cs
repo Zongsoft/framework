@@ -38,7 +38,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Security.AccessControl;
 
 namespace Zongsoft.Serialization
 {
@@ -66,6 +65,7 @@ namespace Zongsoft.Serialization
 			#region 默认配置
 			private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions()
 			{
+				NumberHandling = JsonNumberHandling.AllowReadingFromString,
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
 				IgnoreReadOnlyProperties = false,
@@ -205,11 +205,20 @@ namespace Zongsoft.Serialization
 				if(options is TextSerializationOptions text)
 					return GetOptions(text);
 
+				var ignores = JsonIgnoreCondition.Never;
+
+				if(options.IgnoreNull)
+					ignores = JsonIgnoreCondition.WhenWritingNull;
+				else if(options.IgnoreZero)
+					ignores = JsonIgnoreCondition.WhenWritingDefault;
+
 				return new JsonSerializerOptions()
 				{
 					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = options.MaximumDepth,
+					NumberHandling = JsonNumberHandling.AllowReadingFromString,
+					DefaultIgnoreCondition = ignores,
 					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = false,
 					Converters =
@@ -240,12 +249,21 @@ namespace Zongsoft.Serialization
 						break;
 				}
 
+				var ignores = JsonIgnoreCondition.Never;
+
+				if(options.IgnoreNull)
+					ignores = JsonIgnoreCondition.WhenWritingNull;
+				else if(options.IgnoreZero)
+					ignores = JsonIgnoreCondition.WhenWritingDefault;
+
 				return new JsonSerializerOptions()
 				{
 					Encoder = DefaultOptions.Encoder,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = options.MaximumDepth,
 					WriteIndented = options.Indented,
+					NumberHandling = JsonNumberHandling.AllowReadingFromString,
+					DefaultIgnoreCondition = ignores,
 					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = false,
 					PropertyNamingPolicy = naming,
