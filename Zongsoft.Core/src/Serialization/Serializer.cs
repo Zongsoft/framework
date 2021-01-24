@@ -219,7 +219,6 @@ namespace Zongsoft.Serialization
 					MaxDepth = options.MaximumDepth,
 					NumberHandling = JsonNumberHandling.AllowReadingFromString,
 					DefaultIgnoreCondition = ignores,
-					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = false,
 					Converters =
 					{
@@ -264,7 +263,6 @@ namespace Zongsoft.Serialization
 					WriteIndented = options.Indented,
 					NumberHandling = JsonNumberHandling.AllowReadingFromString,
 					DefaultIgnoreCondition = ignores,
-					IgnoreNullValues = options.IgnoreNull,
 					IgnoreReadOnlyProperties = false,
 					PropertyNamingPolicy = naming,
 					DictionaryKeyPolicy = naming,
@@ -709,7 +707,7 @@ namespace Zongsoft.Serialization
 
 						if(propertyValue == null || Convert.IsDBNull(propertyValue))
 						{
-							if(!options.IgnoreNullValues)
+							if(!options.IgnoreNullValues && options.DefaultIgnoreCondition != JsonIgnoreCondition.WhenWritingNull)
 								writer.WriteNull(key);
 
 							continue;
