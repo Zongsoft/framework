@@ -34,10 +34,6 @@ namespace Zongsoft.Data
 {
 	public struct Range<T> where T : struct, IComparable<T>
 	{
-		#region 单例字段
-		public static readonly Range<T> Empty = new Range<T>();
-		#endregion
-
 		#region 成员字段
 		private T? _minimum;
 		private T? _maximum;

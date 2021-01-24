@@ -42,6 +42,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public static Range<T> Empty<T>() where T : struct, IComparable<T>
+		{
+			return EmptyRange<T>.Value;
+		}
+
 		public static object Create(Type type, object minimum, object maximum)
 		{
 			if(type == null)
@@ -348,6 +353,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套子类
+		private static class EmptyRange<T> where T : struct, IComparable<T>
+		{
+			internal static readonly Range<T> Value = new Range<T>();
+		}
+
 		private struct HasValueProxy
 		{
 			private readonly object _target;
