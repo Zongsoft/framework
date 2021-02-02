@@ -36,7 +36,6 @@ using Zongsoft.Data;
 namespace Zongsoft.Web
 {
 	public class ApiControllerBase<TModel, TConditional, TService> : ApiControllerBase<TModel, TService>
-	                                                                  where TModel : class
 	                                                                  where TConditional : class, IModel
 	                                                                  where TService : class, IDataService<TModel>
 	{
