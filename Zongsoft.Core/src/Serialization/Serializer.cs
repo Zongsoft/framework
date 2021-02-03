@@ -700,8 +700,12 @@ namespace Zongsoft.Serialization
 
 					writer.WriteStartObject();
 
-					foreach(var property in value.GetType().GetTypeInfo().DeclaredProperties)
+					foreach(var property in value.GetType().BaseType.GetTypeInfo().DeclaredProperties)
 					{
+						//如果是只读属性并且忽略只读属性则跳过
+						if(!property.CanWrite && options.IgnoreReadOnlyProperties)
+							continue;
+
 						var key = options.PropertyNamingPolicy == null ? property.Name : options.PropertyNamingPolicy.ConvertName(property.Name);
 						var propertyValue = Reflection.Reflector.GetValue(property, ref value);
 
