@@ -700,7 +700,7 @@ namespace Zongsoft.Serialization
 
 					writer.WriteStartObject();
 
-					foreach(var property in value.GetType().BaseType.GetTypeInfo().DeclaredProperties)
+					foreach(var property in value.GetType().GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance))
 					{
 						//如果是只读属性并且忽略只读属性则跳过
 						if(!property.CanWrite && options.IgnoreReadOnlyProperties)
