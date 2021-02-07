@@ -44,11 +44,8 @@ namespace Zongsoft.Data
 		#region 构造函数
 		private Grouping(ICondition filter, params GroupKey[] keys)
 		{
-			if(keys == null || keys.Length == 0)
-				throw new ArgumentNullException(nameof(keys));
-
-			this.Keys = keys;
 			this.Filter = filter;
+			this.Keys = keys ?? Array.Empty<GroupKey>();
 			_aggregates = new DataAggregateCollection();
 		}
 		#endregion
@@ -152,7 +149,7 @@ namespace Zongsoft.Data
 		public static Grouping Group(ICondition filter, params string[] keys)
 		{
 			if(keys == null || keys.Length < 1)
-				throw new ArgumentNullException(nameof(keys));
+				return new Grouping(filter, null);
 
 			var list = new List<GroupKey>(keys.Length);
 
@@ -219,15 +216,23 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套结构
-		public struct GroupKey
+		public readonly struct GroupKey
 		{
-			public string Name;
-			public string Alias;
+			public readonly string Name;
+			public readonly string Alias;
 
-			public GroupKey(string name, string alias)
+			public GroupKey(string name, string alias = null)
 			{
 				this.Name = name;
 				this.Alias = alias;
+			}
+
+			public override string ToString()
+			{
+				if(string.IsNullOrEmpty(this.Alias))
+					return this.Name;
+				else
+					return this.Name + ":" + this.Alias;
 			}
 		}
 		#endregion
