@@ -20,26 +20,16 @@
 
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="command" type="Command" minOccurs="0" maxOccurs="unbounded">
-								<xs:annotation>
-									<xs:documentation xml:lang="zh">数据命令。</xs:documentation>
-								</xs:annotation>
-
-								<xs:key name="CommandKey">
-									<xs:selector xpath="." />
-									<xs:field xpath="@name" />
-								</xs:key>
-							</xs:element>
-
 							<xs:element name="entity" type="Entity" minOccurs="0" maxOccurs="unbounded">
 								<xs:annotation>
 									<xs:documentation xml:lang="zh">数据实体。</xs:documentation>
 								</xs:annotation>
+							</xs:element>
 
-								<xs:key name="EntityKey">
-									<xs:selector xpath="." />
-									<xs:field xpath="@name" />
-								</xs:key>
+							<xs:element name="command" type="Command" minOccurs="0" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation xml:lang="zh">数据命令。</xs:documentation>
+								</xs:annotation>
 							</xs:element>
 						</xs:sequence>
 
@@ -49,6 +39,16 @@
 							</xs:annotation>
 						</xs:attribute>
 					</xs:complexType>
+
+					<xs:key name="EntityKey">
+						<xs:selector xpath="entity" />
+						<xs:field xpath="@name" />
+					</xs:key>
+
+					<xs:key name="CommandKey">
+						<xs:selector xpath="command" />
+						<xs:field xpath="@name" />
+					</xs:key>
 				</xs:element>
 			</xs:sequence>
 
@@ -74,7 +74,7 @@
 						</xs:annotation>
 					</xs:attribute>
 
-					<xs:attribute name="type" type="xs:string" use="required">
+					<xs:attribute name="type" type="FieldType" use="required">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数类型。</xs:documentation>
 						</xs:annotation>
@@ -92,7 +92,7 @@
 						</xs:annotation>
 					</xs:attribute>
 
-					<xs:attribute name="direction" type="xs:string" use="optional">
+					<xs:attribute name="direction" type="ParameterDirection" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数方向，默认为Input。</xs:documentation>
 						</xs:annotation>
@@ -106,14 +106,18 @@
 				</xs:complexType>
 			</xs:element>
 
-			<xs:element name="text" minOccurs="0" maxOccurs="1">
+			<xs:element name="script" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">命令脚本。</xs:documentation>
 				</xs:annotation>
 
-				<xs:simpleType>
-					<xs:restriction base="xs:string"/>
-				</xs:simpleType>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute name="driver" type="xs:string" use="required" />
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
 			</xs:element>
 		</xs:sequence>
 
@@ -129,9 +133,15 @@
 			</xs:annotation>
 		</xs:attribute>
 
-		<xs:attribute name="type" type="xs:string" use="optional">
+		<xs:attribute name="type" type="CommandType" use="optional">
 			<xs:annotation>
-				<xs:documentation xml:lang="zh">命令类型，默认为存储过程。</xs:documentation>
+				<xs:documentation xml:lang="zh">命令类型。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
+		<xs:attribute name="mutability" type="CommandMutability" use="optional" default="none">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">指示该命令对数据的变化性。</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -552,6 +562,76 @@
 			<xs:enumeration value="xml">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">已分析的 XML 文档或片断的表示形式。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="CommandType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="text">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">命令脚本。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="procedure">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">函数或存储过程。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="CommandMutability">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="none">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">无变化，即只读。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="delete">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">删除。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="insert">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">新增。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="update">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">修改。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="upsert">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">增改，即新增和修改。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ParameterDirection">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="input">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">输入参数。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="output">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">输出参数。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="both">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">双向参数（输入和输出）。</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="return">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">返回参数。</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
