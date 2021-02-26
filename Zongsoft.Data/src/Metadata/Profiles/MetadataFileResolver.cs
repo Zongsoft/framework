@@ -51,6 +51,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_PROPERTY_ELEMENT = "property";
 		private const string XML_COMPLEXPROPERTY_ELEMENT = "complexProperty";
 		private const string XML_COMMAND_ELEMENT = "command";
+		private const string XML_SCRIPT_ELEMENT = "script";
 		private const string XML_PARAMETER_ELEMENT = "parameter";
 		private const string XML_TEXT_ELEMENT = "text";
 		private const string XML_LINK_ELEMENT = "link";
@@ -77,6 +78,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_ACTOR_ATTRIBUTE = "actor";
 		private const string XML_VALUE_ATTRIBUTE = "value";
 		private const string XML_TEXT_ATTRIBUTE = "text";
+		private const string XML_PATH_ATTRIBUTE = "path";
+		private const string XML_DRIVER_ATTRIBUTE = "driver";
+		private const string XML_READONLY_ATTRIBUTE = "readonly";
 		#endregion
 
 		#region 构造函数
@@ -242,7 +246,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 					case XML_PROPERTY_ELEMENT:
 						var property = new MetadataEntitySimplexProperty(entity,
 						                   reader.GetAttribute(XML_NAME_ATTRIBUTE),
-						                   this.GetFieldType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
+						                   this.GetDbType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
 						                   this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
 							Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE) ?? this.GetAttributeValue<string>(reader, XML_FIELD_ATTRIBUTE),
@@ -390,8 +394,14 @@ namespace Zongsoft.Data.Metadata.Profiles
 				reader.GetAttribute(XML_ALIAS_ATTRIBUTE))
 			{
 				Type = this.GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Procedure),
-				Text = this.GetAttributeValue<string>(reader, XML_TEXT_ATTRIBUTE),
+				Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
+				ReadOnly = this.GetAttributeValue<bool>(reader, XML_READONLY_ATTRIBUTE),
 			};
+
+			var path = reader.GetAttribute(XML_PATH_ATTRIBUTE);
+
+			if(!string.IsNullOrWhiteSpace(path))
+				command.Script.Path = path.Trim();
 
 			int depth = reader.Depth;
 
@@ -403,7 +413,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 				switch(reader.LocalName)
 				{
 					case XML_PARAMETER_ELEMENT:
-						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), this.GetAttributeValue<Type>(reader, XML_TYPE_ATTRIBUTE))
+						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), this.GetDbType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 						{
 							Direction = this.GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, System.Data.ParameterDirection.Input),
 							Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
@@ -415,9 +425,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 						command.Parameters.Add(parameter);
 
 						break;
-					case XML_TEXT_ELEMENT:
-						if(reader.NodeType == XmlNodeType.CDATA || reader.NodeType == XmlNodeType.Text)
-							command.Text = reader.Value;
+					case XML_SCRIPT_ELEMENT:
+						if(reader.NodeType == XmlNodeType.CDATA)
+							command.Script.SetScript(reader.GetAttribute(XML_DRIVER_ATTRIBUTE), reader.Value);
 
 						break;
 					default:
@@ -470,7 +480,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 私有方法
-		private System.Data.DbType GetFieldType(string type)
+		private System.Data.DbType GetDbType(string type)
 		{
 			if(string.IsNullOrWhiteSpace(type))
 				return System.Data.DbType.String;
@@ -555,7 +565,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 					return System.Data.DbType.Object;
 			}
 
-			throw new DataException($"Invalid '{type}' type of the property.");
+			throw new DataException($"Invalid '{type}' type of the property or parameter.");
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

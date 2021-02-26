@@ -41,118 +41,64 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private IDataCommand _command;
 		private string _name;
 		private string _alias;
-		private Type _type;
+		private DbType _type;
 		private int _length;
 		private object _value;
 		private ParameterDirection _direction;
 		#endregion
 
 		#region 构造函数
-		public MetadataCommandParameter(IDataCommand command, string name, Type type, ParameterDirection direction = ParameterDirection.Input)
+		public MetadataCommandParameter(IDataCommand command, string name, DbType type, ParameterDirection direction = ParameterDirection.Input)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			_command = command;
 			_name = name.Trim();
-			_type = type ?? throw new ArgumentNullException(nameof(type));
+			_type = type;
 			_direction = direction;
 		}
 		#endregion
 
 		#region 公共属性
-		public IDataCommand Command
-		{
-			get
-			{
-				return _command;
-			}
-		}
+		public IDataCommand Command { get => _command; }
 
-		/// <summary>
-		/// 获取命令参数的名称。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取命令参数的名称。</summary>
+		public string Name { get => _name; }
 
-		/// <summary>
-		/// 获取或设置命令参数的别名。
-		/// </summary>
+		/// <summary>获取或设置命令参数的别名。</summary>
 		public string Alias
 		{
-			get
-			{
-				return _alias;
-			}
-			set
-			{
-				_alias = value;
-			}
+			get => _alias;
+			set => _alias = value;
 		}
 
-		/// <summary>
-		/// 获取命令参数的类型。
-		/// </summary>
-		public Type Type
+		/// <summary>获取命令参数的类型。</summary>
+		public DbType Type
 		{
-			get
-			{
-				return _type;
-			}
-			set
-			{
-				_type = value;
-			}
+			get => _type;
+			set => _type = value;
 		}
 
-		/// <summary>
-		/// 获取或设置命令参数的最大长度。
-		/// </summary>
+		/// <summary>获取或设置命令参数的最大长度。</summary>
 		public int Length
 		{
-			get
-			{
-				return _length;
-			}
-			set
-			{
-				_length = value;
-			}
+			get => _length;
+			set => _length = value;
 		}
 
-		/// <summary>
-		/// 获取或设置命令参数的值。
-		/// </summary>
+		/// <summary>获取或设置命令参数的值。</summary>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
-			set
-			{
-				_value = value;
-			}
+			get => _value;
+			set => _value = value;
 		}
 
-		/// <summary>
-		/// 获取或设置命令参数的传递方向。
-		/// </summary>
+		/// <summary>获取或设置命令参数的传递方向。</summary>
 		public ParameterDirection Direction
 		{
-			get
-			{
-				return _direction;
-			}
-			set
-			{
-				_direction = value;
-			}
+			get => _direction;
+			set => _direction = value;
 		}
 		#endregion
 	}
