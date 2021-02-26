@@ -53,7 +53,6 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_COMMAND_ELEMENT = "command";
 		private const string XML_SCRIPT_ELEMENT = "script";
 		private const string XML_PARAMETER_ELEMENT = "parameter";
-		private const string XML_TEXT_ELEMENT = "text";
 		private const string XML_LINK_ELEMENT = "link";
 		private const string XML_CONSTRAINT_ELEMENT = "constraint";
 		private const string XML_CONSTRAINTS_ELEMENT = "constraints";
@@ -77,10 +76,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_MULTIPLICITY_ATTRIBUTE = "multiplicity";
 		private const string XML_ACTOR_ATTRIBUTE = "actor";
 		private const string XML_VALUE_ATTRIBUTE = "value";
-		private const string XML_TEXT_ATTRIBUTE = "text";
 		private const string XML_PATH_ATTRIBUTE = "path";
 		private const string XML_DRIVER_ATTRIBUTE = "driver";
-		private const string XML_READONLY_ATTRIBUTE = "readonly";
+		private const string XML_MUTABILITY_ATTRIBUTE = "mutability";
 		#endregion
 
 		#region 构造函数
@@ -395,15 +393,11 @@ namespace Zongsoft.Data.Metadata.Profiles
 			{
 				Type = this.GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Procedure),
 				Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
-				ReadOnly = this.GetAttributeValue<bool>(reader, XML_READONLY_ATTRIBUTE),
+				Mutability = this.GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
 			};
 
-			var path = reader.GetAttribute(XML_PATH_ATTRIBUTE);
-
-			if(!string.IsNullOrWhiteSpace(path))
-				command.Script.Path = path.Trim();
-
 			int depth = reader.Depth;
+			var path = reader.GetAttribute(XML_PATH_ATTRIBUTE);
 
 			while(reader.Read() && reader.Depth > depth)
 			{
@@ -415,7 +409,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 					case XML_PARAMETER_ELEMENT:
 						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), this.GetDbType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 						{
-							Direction = this.GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, System.Data.ParameterDirection.Input),
+							Direction = this.GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
 							Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
 							Length = this.GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
 							Value = this.GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE),
@@ -426,8 +420,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 						break;
 					case XML_SCRIPT_ELEMENT:
-						if(reader.NodeType == XmlNodeType.CDATA)
-							command.Script.SetScript(reader.GetAttribute(XML_DRIVER_ATTRIBUTE), reader.Value);
+						var driver = reader.GetAttribute(XML_DRIVER_ATTRIBUTE);
+
+						if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
+							command.Scriptor.SetScript(driver, reader.Value);
 
 						break;
 					default:
@@ -435,6 +431,28 @@ namespace Zongsoft.Data.Metadata.Profiles
 						break;
 				}
 			}
+
+			static System.Data.ParameterDirection GetDirection(string value)
+			{
+				if(string.IsNullOrEmpty(value))
+					return System.Data.ParameterDirection.Input;
+
+				if(Enum.TryParse<System.Data.ParameterDirection>(value, true, out var direction))
+					return direction;
+
+				return (value.ToLowerInvariant()) switch
+				{
+					"both" => System.Data.ParameterDirection.InputOutput,
+					"result" => System.Data.ParameterDirection.ReturnValue,
+					"return" => System.Data.ParameterDirection.ReturnValue,
+					_ => throw new MetadataFileException($"Invalid value '{value}' of '{XML_DIRECTION_ATTRIBUTE}' attribute in '{XML_PARAMETER_ELEMENT}' element."),
+				};
+			}
+
+			if(string.IsNullOrWhiteSpace(path))
+				command.Scriptor.Load(Path.GetDirectoryName(provider.FilePath));
+			else
+				command.Scriptor.Load(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(provider.FilePath), path)));
 
 			return command;
 		}
@@ -594,7 +612,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			return @namespace + "." + role;
 		}
 
-		private T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default(T))
+		private T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default)
 		{
 			string elementName = reader.NodeType == XmlNodeType.Element ? reader.Name : string.Empty;
 
@@ -622,10 +640,30 @@ namespace Zongsoft.Data.Metadata.Profiles
 			return defaultValue;
 		}
 
+		private T GetAttributeValue<T>(XmlReader reader, string name, Func<string, T> converter)
+		{
+			if(reader.MoveToAttribute(name))
+			{
+				//首先获取当前特性的文本值
+				var attributeValue = reader.Value.Trim();
+
+				//将读取器的指针移到当前特性所属的元素
+				reader.MoveToElement();
+
+				if(typeof(T) == typeof(string))
+					return (T)(object)attributeValue;
+
+				return converter(attributeValue);
+			}
+
+			//返回默认值
+			return converter(null);
+		}
+
 		private void ProcessUnrecognizedElement(XmlReader reader, MetadataFile file, object container)
 		{
 			if(reader == null)
-				throw new ArgumentNullException("reader");
+				throw new ArgumentNullException(nameof(reader));
 
 			string elementName = null;
 
@@ -658,7 +696,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			nameTable.Add(XML_COMPLEXPROPERTY_ELEMENT);
 			nameTable.Add(XML_COMMAND_ELEMENT);
 			nameTable.Add(XML_PARAMETER_ELEMENT);
-			nameTable.Add(XML_TEXT_ELEMENT);
+			nameTable.Add(XML_SCRIPT_ELEMENT);
 			nameTable.Add(XML_LINK_ELEMENT);
 			nameTable.Add(XML_CONSTRAINTS_ELEMENT);
 			nameTable.Add(XML_CONSTRAINT_ELEMENT);
@@ -682,7 +720,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 			nameTable.Add(XML_MULTIPLICITY_ATTRIBUTE);
 			nameTable.Add(XML_ACTOR_ATTRIBUTE);
 			nameTable.Add(XML_VALUE_ATTRIBUTE);
-			nameTable.Add(XML_TEXT_ATTRIBUTE);
+			nameTable.Add(XML_PATH_ATTRIBUTE);
+			nameTable.Add(XML_DRIVER_ATTRIBUTE);
+			nameTable.Add(XML_MUTABILITY_ATTRIBUTE);
 
 			return nameTable;
 		}

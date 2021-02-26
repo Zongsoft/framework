@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			this.Alias = alias;
 			_provider = provider ?? throw new ArgumentNullException(nameof(provider));
 			_parameters = new Collections.NamedCollection<IDataCommandParameter>(p => p.Name);
-			this.Script = new MetadataCommandScript();
+			this.Scriptor = new MetadataCommandScriptor(this);
 		}
 		#endregion
 
@@ -80,14 +80,17 @@ namespace Zongsoft.Data.Metadata.Profiles
 		/// <summary>获取或设置数据命令的别名（表名、存储过程名）。</summary>
 		public string Alias { get; set; }
 
-		/// <summary>获取或设置一个值，指示该命令是否为只读操作。</summary>
-		public bool ReadOnly { get; set; }
+		/// <summary>获取或设置数据命令的变化性。</summary>
+		public CommandMutability Mutability { get; set; }
 
 		/// <summary>获取数据命令的参数集合。</summary>
 		public Collections.INamedCollection<IDataCommandParameter> Parameters { get => _parameters; }
 
 		/// <summary>获取数据命令的脚本对象。</summary>
-		public IDataCommandScript Script { get; }
+		public MetadataCommandScriptor Scriptor { get; }
+
+		/// <inheritdoc />
+		IDataCommandScriptor IDataCommand.Scriptor { get => this.Scriptor; }
 		#endregion
 
 		#region 重写方法
