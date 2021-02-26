@@ -32,17 +32,32 @@ using System;
 namespace Zongsoft.Data.Metadata
 {
 	/// <summary>
-	/// 表示数据命令类型的枚举。
+	/// 表示数据命令的脚本元数据类。
 	/// </summary>
-	public enum DataCommandType
+	public interface IDataCommandScript
 	{
-		/// <summary>命令文本</summary>
-		Text,
+		/// <summary>获取或设置脚本文件的相对路径。</summary>
+		string Path { get; set; }
 
-		/// <summary>存储过程或函数</summary>
-		Procedure,
+		/// <summary>
+		/// 获取指定驱动的命令脚本内容。
+		/// </summary>
+		/// <param name="driver">指定要获取的脚本对应的驱动标识名。</param>
+		/// <returns>返回脚本内容文本，如果指定的驱动没有对应的脚本则返回空(null)。</returns>
+		string GetScript(string driver);
 
-		/// <summary>数据库表</summary>
-		Table,
+		/// <summary>
+		/// 设置指定驱动的命令脚本内容。
+		/// </summary>
+		/// <param name="driver">指定要设置的脚本对应的驱动标识名。</param>
+		/// <param name="text">要设置的脚本内容文本。</param>
+		void SetScript(string driver, string text);
+
+		/// <summary>
+		/// 获取指定驱动的命令脚本文件的路径。
+		/// </summary>
+		/// <param name="driver">指定要获取的脚本对应的驱动标识名。</param>
+		/// <returns>返回的脚本文件路径。</returns>
+		string GetScriptFilePath(string driver);
 	}
 }

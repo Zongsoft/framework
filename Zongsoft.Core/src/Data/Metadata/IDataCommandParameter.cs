@@ -37,53 +37,22 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataCommandParameter
 	{
-		/// <summary>
-		/// 获取命令参数的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取命令参数的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取命令参数的别名。
-		/// </summary>
-		string Alias
-		{
-			get;
-		}
+		/// <summary>获取命令参数的别名。</summary>
+		string Alias { get; }
 
-		/// <summary>
-		/// 获取命令参数的类型。
-		/// </summary>
-		Type Type
-		{
-			get;
-		}
+		/// <summary>获取命令参数的类型。</summary>
+		DbType Type { get; }
 
-		/// <summary>
-		/// 获取命令参数的最大长度。
-		/// </summary>
-		int Length
-		{
-			get;
-		}
+		/// <summary>获取命令参数的最大长度。</summary>
+		int Length { get; }
 
-		/// <summary>
-		/// 获取或设置命令参数的值。
-		/// </summary>
-		object Value
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置命令参数的值。</summary>
+		object Value { get; set; }
 
-		/// <summary>
-		/// 获取命令参数的传递方向。
-		/// </summary>
-		ParameterDirection Direction
-		{
-			get;
-		}
+		/// <summary>获取命令参数的传递方向。</summary>
+		ParameterDirection Direction { get; }
 	}
 }

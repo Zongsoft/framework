@@ -37,46 +37,25 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataCommand : IEquatable<IDataCommand>
 	{
-		/// <summary>
-		/// 获取元数据所属的提供程序。
-		/// </summary>
-		IDataMetadataProvider Metadata
-		{
-			get;
-		}
+		/// <summary>获取元数据所属的提供程序。</summary>
+		IDataMetadataProvider Metadata { get; }
 
-		/// <summary>
-		/// 获取数据命令的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取数据命令的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取或设置命令的类型。
-		/// </summary>
-		DataCommandType Type
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置命令的类型。</summary>
+		DataCommandType Type { get; set; }
 
-		/// <summary>
-		/// 获取或设置数据命令的文本（脚本）。
-		/// </summary>
-		string Text
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置数据命令的别名（表名、函数名、存储过程名）。</summary>
+		string Alias { get; set; }
 
-		/// <summary>
-		/// 获取数据命令的参数集合。
-		/// </summary>
-		Collections.INamedCollection<IDataCommandParameter> Parameters
-		{
-			get;
-		}
+		/// <summary>获取或设置一个值，指示命令是否为只读操作。</summary>
+		bool ReadOnly { get; set; }
+
+		/// <summary>获取数据命令的参数集合。</summary>
+		Collections.INamedCollection<IDataCommandParameter> Parameters { get; }
+
+		/// <summary>获取数据命令的脚本对象。</summary>
+		IDataCommandScript Script { get; }
 	}
 }
