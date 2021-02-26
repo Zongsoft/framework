@@ -32,13 +32,10 @@ using System;
 namespace Zongsoft.Data.Metadata
 {
 	/// <summary>
-	/// 表示数据命令的脚本元数据类。
+	/// 提供数据命令内容管理的接口。
 	/// </summary>
-	public interface IDataCommandScript
+	public interface IDataCommandScriptor
 	{
-		/// <summary>获取或设置脚本文件的相对路径。</summary>
-		string Path { get; set; }
-
 		/// <summary>
 		/// 获取指定驱动的命令脚本内容。
 		/// </summary>
@@ -52,12 +49,5 @@ namespace Zongsoft.Data.Metadata
 		/// <param name="driver">指定要设置的脚本对应的驱动标识名。</param>
 		/// <param name="text">要设置的脚本内容文本。</param>
 		void SetScript(string driver, string text);
-
-		/// <summary>
-		/// 获取指定驱动的命令脚本文件的路径。
-		/// </summary>
-		/// <param name="driver">指定要获取的脚本对应的驱动标识名。</param>
-		/// <returns>返回的脚本文件路径。</returns>
-		string GetScriptFilePath(string driver);
 	}
 }

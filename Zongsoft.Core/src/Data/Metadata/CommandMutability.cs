@@ -32,14 +32,24 @@ using System;
 namespace Zongsoft.Data.Metadata
 {
 	/// <summary>
-	/// 表示数据命令类型的枚举。
+	/// 表示数据命令变化性的枚举。
 	/// </summary>
-	public enum DataCommandType
+	[Flags]
+	public enum CommandMutability
 	{
-		/// <summary>命令文本</summary>
-		Text,
+		/// <summary>无变化，即只读。</summary>
+		None = 0,
 
-		/// <summary>函数或存储过程</summary>
-		Procedure,
+		/// <summary>删除。</summary>
+		Delete = 1,
+
+		/// <summary>新增。</summary>
+		Insert = 2,
+
+		/// <summary>更新。</summary>
+		Update = 4,
+
+		/// <summary>增改，即新增和更新。</summary>
+		Upsert = 6,
 	}
 }
