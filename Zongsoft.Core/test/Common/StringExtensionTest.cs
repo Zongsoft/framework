@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Xunit;
@@ -38,6 +39,27 @@ namespace Zongsoft.Common.Tests
 			Assert.False(StringExtension.IsDigits("1 23"));
 			Assert.False(StringExtension.IsDigits("1#23"));
 			Assert.False(StringExtension.IsDigits("$123"));
+		}
+
+		[Fact]
+		public void TestSlice()
+		{
+			var parts = StringExtension.Slice("a - b --  c  ", '-').ToArray();
+
+			Assert.NotEmpty(parts);
+			Assert.Equal(3, parts.Length);
+			Assert.Equal("a", parts[0]);
+			Assert.Equal("b", parts[1]);
+			Assert.Equal("c", parts[2]);
+
+			var hasColon = false;
+			parts = StringExtension.Slice("issue-100-park:10001-1", chr => hasColon ? false : !(hasColon = chr == ':') && chr == '-').ToArray();
+
+			Assert.NotEmpty(parts);
+			Assert.Equal(3, parts.Length);
+			Assert.Equal("issue", parts[0]);
+			Assert.Equal("100", parts[1]);
+			Assert.Equal("park:10001-1", parts[2]);
 		}
 	}
 }
