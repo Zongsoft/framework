@@ -3,9 +3,9 @@
 setlocal EnableDelayedExpansion
 
 SET SourcePathBase=D:\Zongsoft\Framework\
-SET DestinationPath=.\bin\Debug\netcoreapp3.1\plugins\
+SET DestinationPath=.\bin\Debug\net5.0\plugins\
 
-SET BinaryDirectory=bin\Debug\netcoreapp3.1
+SET BinaryDirectory=bin\Debug\net5.0
 
 SET Project_1_Name=Zongsoft.Scheduling.Samples
 SET Project_1_Path=Zongsoft.Scheduling
