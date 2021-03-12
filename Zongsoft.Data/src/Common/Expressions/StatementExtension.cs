@@ -215,6 +215,9 @@ namespace Zongsoft.Data.Common.Expressions
 
 			var field = statement.GetOperandExpression(condition.Field, fieldExpending, out _);
 
+			if(field == null)
+				return null;
+
 			if(condition.Value == null)
 			{
 				return condition.Operator switch
@@ -368,7 +371,10 @@ namespace Zongsoft.Data.Common.Expressions
 			static IExpression GetBinaryExpression(IStatement host, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DbType dbType)
 			{
 				var binary = (Operand.BinaryOperand)opd;
-				return generator(host.GetOperandExpression(binary.Left, fieldExpending, out dbType), host.GetOperandExpression(binary.Right, fieldExpending, out dbType));
+
+				return generator(
+					host.GetOperandExpression(binary.Left, fieldExpending, out dbType),
+					host.GetOperandExpression(binary.Right, fieldExpending, out dbType));
 			}
 		}
 
@@ -382,7 +388,6 @@ namespace Zongsoft.Data.Common.Expressions
 				return source.CreateField(property);
 			}
 
-			dbType = DbType.Object;
 			throw new DataException($"The specified '{name}' field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.");
 		}
 
