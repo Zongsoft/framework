@@ -19,6 +19,10 @@ namespace Zongsoft.Data.Tests
 			Assert.Equal(18, range.Minimum);
 			Assert.Equal(100, range.Maximum);
 
+			range = 127;
+			Assert.Equal(127, range.Minimum);
+			Assert.Equal(127, range.Maximum);
+
 			range = Range<int>.Parse("0 ");
 			Assert.Equal(0, range.Minimum);
 			Assert.Equal(0, range.Maximum);
@@ -250,17 +254,20 @@ namespace Zongsoft.Data.Tests
 		[Fact]
 		public void TestConverter()
 		{
-			const string JSON = @"{""age"":""18~40"",""timestamp"":""2020-6-1~2020-12-31""}";
+			const string JSON = @"{""age"":""18~40"",""weight"":""50"",""timestamp"":""2020-6-1~2020-12-31""}";
 			var data = Serialization.Serializer.Json.Deserialize<TestConditional>(JSON);
 
 			Assert.NotNull(data);
 			Assert.NotNull(data.Age);
+			Assert.NotNull(data.Weight);
 			Assert.NotNull(data.Timestamp);
 
 			Assert.True(data.Birthday.IsEmpty);
 
 			Assert.Equal(18, (int)data.Age.Value.Minimum);
 			Assert.Equal(40, (int)data.Age.Value.Maximum);
+			Assert.Equal(50, (int)data.Weight.Value.Minimum);
+			Assert.Equal(50, (int)data.Weight.Value.Maximum);
 			Assert.Equal(new DateTime(2020, 6, 1), data.Timestamp.Value.Minimum);
 			Assert.Equal(new DateTime(2020, 12, 31), data.Timestamp.Value.Maximum);
 		}
@@ -269,6 +276,7 @@ namespace Zongsoft.Data.Tests
 	public class TestConditional
 	{
 		public Range<byte>? Age { get; set; }
+		public Range<ushort>? Weight { get; set; }
 		public Range<DateTime>? Timestamp { get; set; }
 		public Range<DateTime> Birthday { get; set; }
 	}

@@ -40,6 +40,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
+		public Range(T value)
+		{
+			_minimum = _maximum = value;
+		}
+
 		public Range(T? minimum, T? maximum)
 		{
 			//如果两个参数都有值并且起始值大于截止值，则进行交换赋值
@@ -206,6 +211,10 @@ namespace Zongsoft.Data
 			value = new Range<T>(minimum, maximum);
 			return true;
 		}
+		#endregion
+
+		#region 隐式转换
+		public static implicit operator Range<T>(T value) => new Range<T>(value);
 		#endregion
 
 		#region 私有方法
