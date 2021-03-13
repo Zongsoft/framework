@@ -19,6 +19,14 @@ namespace Zongsoft.Data.Tests
 			Assert.Equal(18, range.Minimum);
 			Assert.Equal(100, range.Maximum);
 
+			range = Range<int>.Parse("0 ");
+			Assert.Equal(0, range.Minimum);
+			Assert.Equal(0, range.Maximum);
+
+			range = Range<int>.Parse("1~1");
+			Assert.Equal(1, range.Minimum);
+			Assert.Equal(1, range.Maximum);
+
 			range = Range<int>.Parse(" 520 ");
 			Assert.Equal(520, range.Minimum);
 			Assert.Equal(520, range.Maximum);
@@ -260,19 +268,8 @@ namespace Zongsoft.Data.Tests
 
 	public class TestConditional
 	{
-		public Range<byte>? Age
-		{
-			get; set;
-		}
-
-		public Range<DateTime>? Timestamp
-		{
-			get; set;
-		}
-
-		public Range<DateTime> Birthday
-		{
-			get; set;
-		}
+		public Range<byte>? Age { get; set; }
+		public Range<DateTime>? Timestamp { get; set; }
+		public Range<DateTime> Birthday { get; set; }
 	}
 }
