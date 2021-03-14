@@ -45,6 +45,20 @@ namespace Zongsoft.Data
 		bool Contains(string name);
 
 		/// <summary>
+		/// 在条件语句中查找指定名称的条件项。
+		/// </summary>
+		/// <param name="name">指定要查找的条件项名称。</param>
+		/// <returns>如果查找成功则返回找到的条件项，否则返回空(null)。</returns>
+		Condition Find(string name);
+
+		/// <summary>
+		/// 在条件语句中查找指定名称的所有条件项。
+		/// </summary>
+		/// <param name="name">指定要查找的条件项名称。</param>
+		/// <returns>返回匹配成功的所有条件项数组，否则返回空(null)或空数组。</returns>
+		Condition[] FindAll(string name);
+
+		/// <summary>
 		/// 在条件语句中查找指定名称的条件项，如果匹配到则回调指定的匹配函数。
 		/// </summary>
 		/// <param name="name">指定要匹配的条件项名称。</param>

@@ -258,6 +258,26 @@ namespace Zongsoft.Data
 			return count;
 		}
 
+		public Condition Find(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			Condition found = null;
+			this.Matches(this, name, condition => { found = condition; return true; });
+			return found;
+		}
+
+		public Condition[] FindAll(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			var conditions = new List<Condition>();
+			this.Matches(this, name, condition => { conditions.Add(condition); return false; });
+			return conditions.ToArray();
+		}
+
 		public bool Match(string name, Action<Condition> matched = null)
 		{
 			if(string.IsNullOrEmpty(name))

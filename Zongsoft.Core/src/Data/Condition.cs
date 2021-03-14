@@ -398,6 +398,16 @@ namespace Zongsoft.Data
 			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase);
 		}
 
+		Condition ICondition.Find(string name)
+		{
+			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? this : null;
+		}
+
+		Condition[] ICondition.FindAll(string name)
+		{
+			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? new[] { this } : Array.Empty<Condition>();
+		}
+
 		bool ICondition.Match(string name, Action<Condition> matched)
 		{
 			if(this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
