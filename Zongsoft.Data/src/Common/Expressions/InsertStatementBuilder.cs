@@ -100,7 +100,9 @@ namespace Zongsoft.Data.Common.Expressions
 							throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the insert operation.");
 
 						var complex = (IDataEntityComplexProperty)schema.Token.Property;
-						var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, context.Data, schema, schema.Children);
+
+						//注：在构建一对多的导航属性的UPSERT语句时不能指定容器数据(即data参数值为空)，因为批量操作语句不支持在构建阶段绑定到具体数据
+						var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, (context.IsMultiple ? null : context.Data), schema, schema.Children);
 
 						//将新建的语句加入到主语句的从属集中
 						foreach(var upsert in upserts)

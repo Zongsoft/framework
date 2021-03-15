@@ -39,7 +39,8 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataUpsertContext context)
 		{
-			return BuildUpserts(context, context.Entity, context.Data, null, context.Schema.Members);
+			//批量操作则不能指定容器数据(即data参数值为空)，因为语句构建阶段无法绑定到具体数据
+			return BuildUpserts(context, context.Entity, (context.IsMultiple ? null : context.Data), null, context.Schema.Members);
 		}
 		#endregion
 
