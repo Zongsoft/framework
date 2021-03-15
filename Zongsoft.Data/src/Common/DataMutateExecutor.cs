@@ -77,16 +77,21 @@ namespace Zongsoft.Data.Common
 			{
 				if(isMultiple)
 				{
-					var continued = false;
-
 					foreach(var item in (IEnumerable)context.Data)
 					{
 						//更新当前操作数据
 						context.Data = item;
-						continued |= this.Mutate(context, statement, command);
+
+						var continued = this.Mutate(context, statement, command);
+
+						if(continued && statement.HasSlaves)
+						{
+							foreach(var slave in statement.Slaves)
+								context.Provider.Executor.Execute(context, slave);
+						}
 					}
 
-					return continued;
+					return false;
 				}
 				else
 				{
