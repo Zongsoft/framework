@@ -1,445 +1,226 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Collections.Generic;
+using Zongsoft.Data;
 
 namespace Zongsoft.Tests
 {
 	public interface IPerson : Zongsoft.Data.IModel
 	{
-		/// <summary>
-		/// 获取或设置人员姓名。
-		/// </summary>
-		string Name
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员姓名。</summary>
+		string Name { get; set; }
 
-		/// <summary>
-		/// 获取或设置人员性别。
-		/// </summary>
-		Gender? Gender
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员性别。</summary>
+		Gender? Gender { get; set; }
 
-		/// <summary>
-		/// 获取或设置人员出生日期。
-		/// </summary>
-		DateTime Birthdate
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员出生日期。</summary>
+		DateTime Birthdate { get; set; }
 
-		/// <summary>
-		/// 获取或设置人员血型。
-		/// </summary>
-		string BloodType
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员血型。</summary>
+		string BloodType { get; set; }
 
-		/// <summary>
-		/// 获取或设置人员的家庭住址。
-		/// </summary>
-		Address HomeAddress
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员的家庭住址。</summary>
+		Address HomeAddress { get; set; }
 	}
 
 	public interface IEmployee : IPerson
 	{
-		/// <summary>
-		/// 获取或设置员工编号。
-		/// </summary>
-		int EmployeeId
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工编号。</summary>
+		int EmployeeId { get; set; }
 
-		/// <summary>
-		/// 获取或设置员工所属的部门。
-		/// </summary>
-		Department Department
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工所属的部门。</summary>
+		Department Department { get; set; }
 
-		/// <summary>
-		/// 获取或设置员工的办公地址。
-		/// </summary>
-		Address OfficeAddress
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工的办公地址。</summary>
+		Address OfficeAddress { get; set; }
 
-		/// <summary>
-		/// 获取或设置员工的月薪。
-		/// </summary>
-		decimal Salary
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工的月薪。</summary>
+		decimal Salary { get; set; }
 	}
 
 	public interface ICustomer : IPerson
 	{
-		/// <summary>
-		/// 获取或设置客户的评级。
-		/// </summary>
-		byte Level
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置客户的评级。</summary>
+		byte Level { get; set; }
 	}
 
 	public interface ISpecialEmployee : IEmployee
 	{
-		int Property01
-		{
-			get;
-			set;
-		}
+		int Property01 { get; set; }
+		int Property02 { get; set; }
+		int Property03 { get; set; }
+		int Property04 { get; set; }
+		int Property05 { get; set; }
+		int Property06 { get; set; }
+		int Property07 { get; set; }
+		int Property08 { get; set; }
+		int Property09 { get; set; }
+		int Property10 { get; set; }
+		int Property11 { get; set; }
+		int Property12 { get; set; }
+		int Property13 { get; set; }
+		int Property14 { get; set; }
+		int Property15 { get; set; }
+		int Property16 { get; set; }
+		int Property17 { get; set; }
+		int Property18 { get; set; }
+		int Property19 { get; set; }
+		int Property20 { get; set; }
+		int Property21 { get; set; }
+		int Property22 { get; set; }
+		int Property23 { get; set; }
+		int Property24 { get; set; }
+		int Property25 { get; set; }
+		int Property26 { get; set; }
+		int Property27 { get; set; }
+		int Property28 { get; set; }
+		int Property29 { get; set; }
+		int Property30 { get; set; }
+		int Property31 { get; set; }
+		int Property32 { get; set; }
+		int Property33 { get; set; }
+		int Property34 { get; set; }
+		int Property35 { get; set; }
+		int Property36 { get; set; }
+		int Property37 { get; set; }
+		int Property38 { get; set; }
+		int Property39 { get; set; }
+		int Property40 { get; set; }
+		int Property41 { get; set; }
+		int Property42 { get; set; }
+		int Property43 { get; set; }
+		int Property44 { get; set; }
+		int Property45 { get; set; }
+		int Property46 { get; set; }
+		int Property47 { get; set; }
+		int Property48 { get; set; }
+		int Property49 { get; set; }
+		int Property50 { get; set; }
+		int Property51 { get; set; }
+		int Property52 { get; set; }
+		int Property53 { get; set; }
+		int Property54 { get; set; }
+		int Property55 { get; set; }
+		int Property56 { get; set; }
+	}
 
-		int Property02
-		{
-			get;
-			set;
-		}
+	public abstract class PersonBase : Zongsoft.Data.IModel
+	{
+		/// <summary>获取或设置人员姓名。</summary>
+		public abstract string Name { get; set; }
 
-		int Property03
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员性别。</summary>
+		public abstract Gender? Gender { get; set; }
 
-		int Property04
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员出生日期。</summary>
+		public abstract DateTime Birthdate { get; set; }
 
-		int Property05
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员血型。</summary>
+		public abstract string BloodType { get; set; }
 
-		int Property06
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置人员的家庭住址。</summary>
+		public abstract Address HomeAddress { get; set; }
 
-		int Property07
-		{
-			get;
-			set;
-		}
+		#region 抽象方法
+		protected abstract int GetCount();
+		protected abstract IDictionary<string, object> GetChanges();
+		protected abstract bool HasChanges(params string[] names);
+		protected abstract bool Reset(string name, out object value);
+		protected abstract void Reset(params string[] names);
+		protected abstract bool TryGetValue(string name, out object value);
+		protected abstract bool TrySetValue(string name, object value);
+		#endregion
 
-		int Property08
-		{
-			get;
-			set;
-		}
+		#region 显式实现
+		int IModel.GetCount() => this.GetCount();
+		IDictionary<string, object> IModel.GetChanges() => this.GetChanges();
+		bool IModel.HasChanges(params string[] names) => this.HasChanges(names);
+		bool IModel.Reset(string name, out object value) => this.Reset(name, out value);
+		void IModel.Reset(params string[] names) => this.Reset(names);
+		bool IModel.TryGetValue(string name, out object value) => this.TryGetValue(name, out value);
+		bool IModel.TrySetValue(string name, object value) => this.TrySetValue(name, value);
+		#endregion
+	}
 
-		int Property09
-		{
-			get;
-			set;
-		}
+	public abstract class EmployeeBase : PersonBase
+	{
+		/// <summary>获取或设置员工编号。</summary>
+		public abstract int EmployeeId { get; set; }
 
-		int Property10
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工所属的部门。</summary>
+		public abstract Department Department { get; set; }
 
-		int Property11
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工的办公地址。</summary>
+		public abstract Address OfficeAddress { get; set; }
 
-		int Property12
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置员工的月薪。</summary>
+		public abstract decimal Salary { get; set; }
+	}
 
-		int Property13
-		{
-			get;
-			set;
-		}
+	public abstract class CustomerBase : PersonBase
+	{
+		/// <summary>获取或设置客户的评级。</summary>
+		public abstract byte Level { get; set; }
+	}
 
-		int Property14
-		{
-			get;
-			set;
-		}
-
-		int Property15
-		{
-			get;
-			set;
-		}
-
-		int Property16
-		{
-			get;
-			set;
-		}
-
-		int Property17
-		{
-			get;
-			set;
-		}
-
-		int Property18
-		{
-			get;
-			set;
-		}
-
-		int Property19
-		{
-			get;
-			set;
-		}
-
-		int Property20
-		{
-			get;
-			set;
-		}
-
-		int Property21
-		{
-			get;
-			set;
-		}
-
-		int Property22
-		{
-			get;
-			set;
-		}
-
-		int Property23
-		{
-			get;
-			set;
-		}
-
-		int Property24
-		{
-			get;
-			set;
-		}
-
-		int Property25
-		{
-			get;
-			set;
-		}
-
-		int Property26
-		{
-			get;
-			set;
-		}
-
-		int Property27
-		{
-			get;
-			set;
-		}
-
-		int Property28
-		{
-			get;
-			set;
-		}
-
-		int Property29
-		{
-			get;
-			set;
-		}
-
-		int Property30
-		{
-			get;
-			set;
-		}
-
-		int Property31
-		{
-			get;
-			set;
-		}
-
-		int Property32
-		{
-			get;
-			set;
-		}
-
-		int Property33
-		{
-			get;
-			set;
-		}
-
-		int Property34
-		{
-			get;
-			set;
-		}
-
-		int Property35
-		{
-			get;
-			set;
-		}
-
-		int Property36
-		{
-			get;
-			set;
-		}
-
-		int Property37
-		{
-			get;
-			set;
-		}
-
-		int Property38
-		{
-			get;
-			set;
-		}
-
-		int Property39
-		{
-			get;
-			set;
-		}
-
-		int Property40
-		{
-			get;
-			set;
-		}
-
-		int Property41
-		{
-			get;
-			set;
-		}
-
-		int Property42
-		{
-			get;
-			set;
-		}
-
-		int Property43
-		{
-			get;
-			set;
-		}
-
-		int Property44
-		{
-			get;
-			set;
-		}
-
-		int Property45
-		{
-			get;
-			set;
-		}
-
-		int Property46
-		{
-			get;
-			set;
-		}
-
-		int Property47
-		{
-			get;
-			set;
-		}
-
-		int Property48
-		{
-			get;
-			set;
-		}
-
-		int Property49
-		{
-			get;
-			set;
-		}
-
-		int Property50
-		{
-			get;
-			set;
-		}
-
-		int Property51
-		{
-			get;
-			set;
-		}
-
-		int Property52
-		{
-			get;
-			set;
-		}
-
-		int Property53
-		{
-			get;
-			set;
-		}
-
-		int Property54
-		{
-			get;
-			set;
-		}
-
-		int Property55
-		{
-			get;
-			set;
-		}
-
-		int Property56
-		{
-			get;
-			set;
-		}
+	public abstract class SpecialEmployeeBase : EmployeeBase
+	{
+		public abstract int Property01 { get; set; }
+		public abstract int Property02 { get; set; }
+		public abstract int Property03 { get; set; }
+		public abstract int Property04 { get; set; }
+		public abstract int Property05 { get; set; }
+		public abstract int Property06 { get; set; }
+		public abstract int Property07 { get; set; }
+		public abstract int Property08 { get; set; }
+		public abstract int Property09 { get; set; }
+		public abstract int Property10 { get; set; }
+		public abstract int Property11 { get; set; }
+		public abstract int Property12 { get; set; }
+		public abstract int Property13 { get; set; }
+		public abstract int Property14 { get; set; }
+		public abstract int Property15 { get; set; }
+		public abstract int Property16 { get; set; }
+		public abstract int Property17 { get; set; }
+		public abstract int Property18 { get; set; }
+		public abstract int Property19 { get; set; }
+		public abstract int Property20 { get; set; }
+		public abstract int Property21 { get; set; }
+		public abstract int Property22 { get; set; }
+		public abstract int Property23 { get; set; }
+		public abstract int Property24 { get; set; }
+		public abstract int Property25 { get; set; }
+		public abstract int Property26 { get; set; }
+		public abstract int Property27 { get; set; }
+		public abstract int Property28 { get; set; }
+		public abstract int Property29 { get; set; }
+		public abstract int Property30 { get; set; }
+		public abstract int Property31 { get; set; }
+		public abstract int Property32 { get; set; }
+		public abstract int Property33 { get; set; }
+		public abstract int Property34 { get; set; }
+		public abstract int Property35 { get; set; }
+		public abstract int Property36 { get; set; }
+		public abstract int Property37 { get; set; }
+		public abstract int Property38 { get; set; }
+		public abstract int Property39 { get; set; }
+		public abstract int Property40 { get; set; }
+		public abstract int Property41 { get; set; }
+		public abstract int Property42 { get; set; }
+		public abstract int Property43 { get; set; }
+		public abstract int Property44 { get; set; }
+		public abstract int Property45 { get; set; }
+		public abstract int Property46 { get; set; }
+		public abstract int Property47 { get; set; }
+		public abstract int Property48 { get; set; }
+		public abstract int Property49 { get; set; }
+		public abstract int Property50 { get; set; }
+		public abstract int Property51 { get; set; }
+		public abstract int Property52 { get; set; }
+		public abstract int Property53 { get; set; }
+		public abstract int Property54 { get; set; }
+		public abstract int Property55 { get; set; }
+		public abstract int Property56 { get; set; }
 	}
 
 	[DefaultValue(Female)]
@@ -458,29 +239,10 @@ namespace Zongsoft.Tests
 
 	public class Address
 	{
-		public string City
-		{
-			get;
-			set;
-		}
-
-		public string Detail
-		{
-			get;
-			set;
-		}
-
-		public string PostalCode
-		{
-			get;
-			set;
-		}
-
-		public int CountryId
-		{
-			get;
-			set;
-		}
+		public string City { get; set; }
+		public string Detail { get; set; }
+		public string PostalCode { get; set; }
+		public int CountryId { get; set; }
 	}
 
 	public class Department
@@ -510,69 +272,36 @@ namespace Zongsoft.Tests
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置企业编号。
-		/// </summary>
-		public int CorporationId
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置企业编号。</summary>
+		public int CorporationId { get; set; }
 
-		/// <summary>
-		/// 获取或设置部门编号。
-		/// </summary>
-		public short DepartmentId
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置部门编号。</summary>
+		public short DepartmentId { get; set; }
 
-		/// <summary>
-		/// 获取或设置部门的名称。
-		/// </summary>
+		/// <summary>获取或设置部门的名称。</summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
-			set
-			{
-				if(string.IsNullOrEmpty(value))
-					throw new ArgumentNullException();
-
-				_name = value;
-			}
+			get => _name;
+			set => _name = string.IsNullOrEmpty(value) ? throw new ArgumentNullException() : value;
 		}
 
-		/// <summary>
-		/// 获取当前部门中指定名称的员工。
-		/// </summary>
+		/// <summary>获取当前部门中指定名称的员工。</summary>
 		/// <param name="name">指定要获取的本部门的员工的姓名。</param>
 		/// <returns>返回的员工对象。</returns>
 		public Employee this[string name]
 		{
-			get
-			{
-				return _employees[name];
-			}
+			get => _employees[name];
 		}
 
-		/// <summary>
-		/// 获取当前部门的员工集合。
-		/// </summary>
+		/// <summary>获取当前部门的员工集合。</summary>
 		public EmployeeCollection Employees
 		{
-			get
-			{
-				return _employees;
-			}
+			get => _employees;
 		}
 		#endregion
 	}
 
-	public class Person : IPerson, INotifyPropertyChanged
+	public class Person : IPerson, INotifyPropertyChanged, ICloneable
 	{
 		#region 静态字段
 		protected static string[] __NAMES__ = new string[] { "Name", "Gender", "Birthdate", "BloodType", "HomeAddress" };
@@ -603,9 +332,7 @@ namespace Zongsoft.Tests
 		#endregion
 
 		#region 构造函数
-		public Person()
-		{
-		}
+		public Person() { }
 
 		public Person(string name)
 		{
@@ -682,6 +409,33 @@ namespace Zongsoft.Tests
 				_MASK_ |= 16;
 				this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HomeAddress)));
 			}
+		}
+		#endregion
+
+		#region 克隆方法
+		object ICloneable.Clone()
+		{
+			return this.Clone();
+		}
+
+		public Person Clone()
+		{
+			var person = new Person();
+			this.Clone(person);
+			return person;
+		}
+
+		public void Clone(Person person)
+		{
+			if(person == null)
+				return;
+
+			person._MASK_ = _MASK_;
+			person._name = _name;
+			person._gender = _gender;
+			person._birthdate = _birthdate;
+			person._bloodType = _bloodType;
+			person._homeAddress = _homeAddress;
 		}
 		#endregion
 
@@ -821,9 +575,7 @@ namespace Zongsoft.Tests
 		#endregion
 
 		#region 构造函数
-		public Employee()
-		{
-		}
+		public Employee() { }
 
 		public Employee(int id, string name) : base(name)
 		{
@@ -832,9 +584,7 @@ namespace Zongsoft.Tests
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置员工编号。
-		/// </summary>
+		/// <summary>获取或设置员工编号。</summary>
 		public int EmployeeId
 		{
 			get => _employeeId;
@@ -849,9 +599,7 @@ namespace Zongsoft.Tests
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置员工所属的部门。
-		/// </summary>
+		/// <summary>获取或设置员工所属的部门。</summary>
 		public Department Department
 		{
 			get => _department;
@@ -866,9 +614,7 @@ namespace Zongsoft.Tests
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置员工的办公地址。
-		/// </summary>
+		/// <summary>获取或设置员工的办公地址。</summary>
 		public Address OfficeAddress
 		{
 			get => _officeAddress;
@@ -883,9 +629,7 @@ namespace Zongsoft.Tests
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置员工的月薪。
-		/// </summary>
+		/// <summary>获取或设置员工的月薪。</summary>
 		public decimal Salary
 		{
 			get => _salary;
@@ -995,19 +739,12 @@ namespace Zongsoft.Tests
 		#endregion
 
 		#region 构造函数
-		public Customer()
-		{
-		}
-
-		public Customer(string name) : base(name)
-		{
-		}
+		public Customer() { }
+		public Customer(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置客户的评级。
-		/// </summary>
+		/// <summary>获取或设置客户的评级。</summary>
 		public byte Level
 		{
 			get => _level;
