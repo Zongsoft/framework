@@ -35,35 +35,33 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Web
 {
-	public class ApiControllerBase<TModel, TConditional, TService> : ApiControllerBase<TModel, TService>
-	                                                                  where TConditional : class, IModel
+	public class ApiControllerBase<TModel, TCriteria, TService> : ApiControllerBase<TModel, TService>
+	                                                                  where TCriteria : class, IModel
 	                                                                  where TService : class, IDataService<TModel>
 	{
 		#region 构造函数
-		protected ApiControllerBase(IServiceProvider serviceProvider) : base(serviceProvider)
-		{
-		}
+		protected ApiControllerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 		#endregion
 
 		#region 公共方法
 		[HttpPost("Count")]
-		public virtual IActionResult Count([FromBody]TConditional conditional)
+		public virtual IActionResult Count([FromBody]TCriteria criteria)
 		{
-			if(conditional == null)
+			if(criteria == null)
 				return this.Content(this.DataService.Count().ToString(), "text/plain");
 			else
-				return this.Content(this.DataService.Count(Conditional.ToCondition(conditional), null, null).ToString(), "text/plain");
+				return this.Content(this.DataService.Count(Criteria.Transform(criteria), null, null).ToString(), "text/plain");
 		}
 
 		[HttpPost("Exists")]
-		public virtual IActionResult Exists([FromBody]TConditional conditional)
+		public virtual IActionResult Exists([FromBody]TCriteria criteria)
 		{
 			bool existed;
 
-			if(conditional == null)
+			if(criteria == null)
 				existed = this.DataService.Exists((ICondition)null);
 			else
-				existed = this.DataService.Exists(Conditional.ToCondition(conditional), null);
+				existed = this.DataService.Exists(Criteria.Transform(criteria), null);
 
 			if(existed)
 				return this.Ok();
@@ -72,9 +70,9 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("Query")]
-		public virtual IActionResult Query([FromBody]TConditional conditional, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
+		public virtual IActionResult Query([FromBody]TCriteria criteria, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
 		{
-			return this.Paginate(this.DataService.Select(Conditional.ToCondition(conditional), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page ?? Paging.Page(1), sortings));
+			return this.Paginate(this.DataService.Select(Criteria.Transform(criteria), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page ?? Paging.Page(1), sortings));
 		}
 		#endregion
 	}
