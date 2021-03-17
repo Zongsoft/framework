@@ -28,23 +28,15 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	[Flags]
-	public enum ConditionalBehaviors
+	/// <summary>
+	/// 表示条件转换器的接口。
+	/// </summary>
+	public interface IConditionConverter
 	{
-		/// <summary>无特性</summary>
-		None = 0,
-
-		/// <summary>忽略值为空(null)的查询项</summary>
-		IgnoreNull = 1,
-
-		/// <summary>忽略值为空字符串或全空白字符串的查询项</summary>
-		IgnoreEmpty = 2,
-
-		/// <summary>忽略值为空或全空白字符串的查询项</summary>
-		IgnoreNullOrEmpty = 3,
+		ICondition Convert(ConditionConverterContext context);
 	}
 }

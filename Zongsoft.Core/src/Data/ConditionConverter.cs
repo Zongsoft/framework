@@ -33,28 +33,25 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class ConditionalConverter : IConditionalConverter
+	public class ConditionConverter : IConditionConverter
 	{
 		#region 私有变量
-		private static IConditionalConverter _default;
+		private static IConditionConverter _default;
 		#endregion
 
 		#region 单例属性
-		public static IConditionalConverter Default
+		public static IConditionConverter Default
 		{
 			get
 			{
 				if(_default == null)
-					System.Threading.Interlocked.CompareExchange(ref _default, new ConditionalConverter(), null);
+					System.Threading.Interlocked.CompareExchange(ref _default, new ConditionConverter(), null);
 
 				return _default;
 			}
 			set
 			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_default = value;
+				_default = value ?? throw new ArgumentNullException();
 			}
 		}
 		#endregion
@@ -64,7 +61,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		public ConditionalConverter()
+		public ConditionConverter()
 		{
 			_wildcard = '%';
 		}
@@ -73,19 +70,13 @@ namespace Zongsoft.Data
 		#region 公共属性
 		public char Wildcard
 		{
-			get
-			{
-				return _wildcard;
-			}
-			set
-			{
-				_wildcard = value;
-			}
+			get => _wildcard;
+			set => _wildcard = value;
 		}
 		#endregion
 
 		#region 公共方法
-		public virtual ICondition Convert(ConditionalConverterContext context)
+		public virtual ICondition Convert(ConditionConverterContext context)
 		{
 			//判断当前属性是否可以忽略
 			if(this.IsIgnorable(context))
@@ -122,9 +113,7 @@ namespace Zongsoft.Data
 			{
 				optor = ConditionOperator.Equal;
 
-				if(context.Type == typeof(string) && context.Value != null)
-					optor = ConditionOperator.Like;
-				else if(typeof(IEnumerable).IsAssignableFrom(context.Type) || Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IEnumerable<>), context.Type))
+				if(typeof(ICollection).IsAssignableFrom(context.Type) || Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(ICollection<>), context.Type))
 					optor = ConditionOperator.In;
 			}
 
@@ -145,12 +134,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护方法
-		protected bool IsIgnorable(ConditionalConverterContext context)
+		protected bool IsIgnorable(ConditionConverterContext context)
 		{
-			if((context.Behaviors & ConditionalBehaviors.IgnoreNull) == ConditionalBehaviors.IgnoreNull && context.Value == null)
+			if((context.Behaviors & ConditionBehaviors.IgnoreNull) == ConditionBehaviors.IgnoreNull && context.Value == null)
 				return true;
 
-			if((context.Behaviors & ConditionalBehaviors.IgnoreEmpty) == ConditionalBehaviors.IgnoreEmpty && context.Type == typeof(string) && string.IsNullOrWhiteSpace((string)context.Value))
+			if((context.Behaviors & ConditionBehaviors.IgnoreEmpty) == ConditionBehaviors.IgnoreEmpty && context.Type == typeof(string) && string.IsNullOrWhiteSpace((string)context.Value))
 				return true;
 
 			if(IsRange(context.Type))

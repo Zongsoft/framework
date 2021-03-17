@@ -1,0 +1,205 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Core library.
+ *
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+
+namespace Zongsoft.Data
+{
+	/// <summary>
+	/// 提供条件转换的静态类。
+	/// </summary>
+	public static class Criteria
+	{
+		#region 静态变量
+		private static readonly ConcurrentDictionary<Type, CriteriaDescriptor> _cache = new ConcurrentDictionary<Type, CriteriaDescriptor>();
+		#endregion
+
+		#region 公共方法
+		public static ICondition Transform(this IModel criteria)
+		{
+			if(criteria == null)
+				return null;
+
+			var changes = criteria.GetChanges();
+
+			if(changes == null || changes.Count == 0)
+				return null;
+
+			var descriptor = _cache.GetOrAdd(criteria.GetType(), type => new CriteriaDescriptor(type));
+
+			return changes.Count == 1 ?
+				GetCondition(criteria, descriptor.Properties[changes.First().Key]) :
+				ConditionCollection.And(changes.Select(p => GetCondition(criteria, descriptor.Properties[p.Key])));
+		}
+
+		public static ICondition Transform(Type modelType, string expression, bool strict) => Transform(modelType, expression, 0, -1, strict);
+
+		public static ICondition Transform(Type modelType, string expression, int start = 0, int count = -1, bool strict = true)
+		{
+			if(modelType == null)
+				throw new ArgumentNullException(nameof(modelType));
+
+			KeyValuePair<string, string>[] members;
+
+			if(strict)
+				members = CriteriaParser.Parse(expression, start, count);
+			else if(!CriteriaParser.TryParse(expression, start, count, out members))
+				return null;
+
+			return Transform(modelType, members, strict);
+		}
+
+		public static ICondition Transform(Type modelType, IEnumerable<KeyValuePair<string, string>> members, bool strict = true)
+		{
+			if(modelType == null)
+				throw new ArgumentNullException(nameof(modelType));
+
+			if(members == null || !members.Any())
+				return null;
+
+			if(!typeof(IModel).IsAssignableFrom(modelType))
+				throw new ArgumentException($"The specified ‘{modelType.FullName}’ type is not a valid criteria type.");
+
+			var instance = (IModel)(modelType.IsAbstract ? Model.Build(modelType) : Activator.CreateInstance(modelType));
+			var descriptor = _cache.GetOrAdd(modelType, type => new CriteriaDescriptor(type));
+			var properties = new List<CriteriaPropertyDescripor>();
+
+			foreach(var pair in members)
+			{
+				if(descriptor.Properties.TryGetValue(pair.Key, out var property))
+				{
+					properties.Add(property);
+					Reflection.Reflector.SetValue(property.PropertyInfo, ref instance, Common.Convert.ConvertValue(pair.Value, property.PropertyType));
+				}
+				else
+				{
+					if(strict)
+						throw new ArgumentException($"The specified ‘{pair.Key}’ condition is undefined in the '{modelType.FullName}' criteria type.");
+				}
+			}
+
+			if(properties.Count == 0)
+				return null;
+
+			return properties.Count == 1 ?
+				GetCondition(instance, properties[0]) :
+				ConditionCollection.And(properties.Select(p => GetCondition(instance, p)));
+		}
+		#endregion
+
+		#region 私有方法
+		private static ICondition GetCondition(IModel criteria, CriteriaPropertyDescripor property)
+		{
+			//如果当前属性值为默认值，则忽略它
+			if(property == null)
+				return null;
+
+			//获取当前属性对应的条件命列表
+			var names = property.Attribute == null || property.Attribute.Names == null || property.Attribute.Names.Length == 0 ?
+				new[] { property.Name } :
+				property.Attribute.Names;
+
+			//创建转换器上下文
+			var context = new ConditionConverterContext(criteria,
+				property.Attribute == null ? ConditionBehaviors.None : property.Attribute.Behaviors,
+				names,
+				property.PropertyType,
+				property.GetValue(criteria),
+				property.Operator);
+
+			//如果当前属性指定了特定的转换器，则使用该转换器来处理
+			if(property.Converter != null)
+				return property.Converter.Convert(context);
+
+			//使用默认转换器进行转换处理
+			return ConditionConverter.Default.Convert(context);
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class CriteriaDescriptor
+		{
+			public readonly Type Type;
+			public readonly IDictionary<string, CriteriaPropertyDescripor> Properties;
+
+			public CriteriaDescriptor(Type type)
+			{
+				this.Type = type;
+
+				var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+				this.Properties = new Dictionary<string, CriteriaPropertyDescripor>(StringComparer.OrdinalIgnoreCase);
+
+				foreach(var property in properties)
+				{
+					if(!property.CanRead)
+						continue;
+
+					var attribute = property.GetCustomAttribute<ConditionAttribute>(true);
+
+					if(attribute != null && attribute.Ignored)
+						continue;
+
+					this.Properties.Add(property.Name, new CriteriaPropertyDescripor(property, attribute));
+
+					foreach(var alias in property.GetCustomAttributes<Zongsoft.ComponentModel.AliasAttribute>(true))
+						this.Properties.Add(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
+				}
+			}
+		}
+
+		private class CriteriaPropertyDescripor
+		{
+			public readonly string Name;
+			public readonly Type PropertyType;
+			public readonly PropertyInfo PropertyInfo;
+			public readonly ConditionAttribute Attribute;
+			public readonly IConditionConverter Converter;
+
+			public CriteriaPropertyDescripor(PropertyInfo property, ConditionAttribute attribute)
+			{
+				this.PropertyInfo = property;
+				this.Attribute = attribute;
+				this.Name = property.Name;
+				this.PropertyType = property.PropertyType;
+
+				if(attribute != null && attribute.ConverterType != null)
+					this.Converter = Activator.CreateInstance(attribute.ConverterType) as IConditionConverter;
+			}
+
+			public ConditionOperator? Operator { get => this.Attribute != null ? this.Attribute.Operator : null; }
+
+			public object GetValue(object target) => Zongsoft.Reflection.Reflector.GetValue(this.PropertyInfo, ref target);
+		}
+		#endregion
+	}
+}
