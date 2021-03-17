@@ -33,6 +33,8 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Zongsoft.Common;
+
 namespace Zongsoft.Data
 {
 	/// <summary>
@@ -94,17 +96,46 @@ namespace Zongsoft.Data
 			var descriptor = _cache.GetOrAdd(modelType, type => new CriteriaDescriptor(type));
 			var properties = new List<CriteriaPropertyDescripor>();
 
-			foreach(var pair in members)
+			foreach(var member in members)
 			{
-				if(descriptor.Properties.TryGetValue(pair.Key, out var property))
+				if(descriptor.Properties.TryGetValue(member.Key, out var property))
 				{
 					properties.Add(property);
-					Reflection.Reflector.SetValue(property.PropertyInfo, ref instance, Common.Convert.ConvertValue(pair.Value, property.PropertyType));
+
+					object propertyValue;
+
+					if(property.PropertyType.IsArray || property.PropertyType.IsCollection())
+					{
+						var elementType = property.PropertyType.GetElementType();
+						var parts = member.Value.Trim('(', ')', '[', ']').Slice(',').Select(p => Common.Convert.ConvertValue(p, elementType)).ToArray();
+
+						if(property.PropertyType.IsArray)
+						{
+							propertyValue = Array.CreateInstance(elementType, parts.Length);
+							Array.Copy(parts, (Array)propertyValue, parts.Length);
+						}
+						else
+						{
+							propertyValue = Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+
+							for(int i = 0; i < parts.Length; i++)
+								((System.Collections.IList)propertyValue).Add(parts[i]);
+						}
+					}
+					else
+					{
+						if(property.PropertyType == typeof(bool) && string.IsNullOrEmpty(member.Value))
+							propertyValue = true;
+						else
+							propertyValue = Common.Convert.ConvertValue(member.Value, property.PropertyType);
+					}
+
+					Reflection.Reflector.SetValue(property.PropertyInfo, ref instance, propertyValue);
 				}
 				else
 				{
 					if(strict)
-						throw new ArgumentException($"The specified ‘{pair.Key}’ condition is undefined in the '{modelType.FullName}' criteria type.");
+						throw new ArgumentException($"The specified ‘{member.Key}’ condition is undefined in the '{modelType.FullName}' criteria type.");
 				}
 			}
 
