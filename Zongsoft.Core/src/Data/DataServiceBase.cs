@@ -63,6 +63,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private string _name;
 		private IDataAccess _dataAccess;
+		private DataServiceAttribute _attribute;
 		private IDataSearcher<TModel> _searcher;
 		private IServiceProvider _serviceProvider;
 		#endregion
@@ -72,6 +73,7 @@ namespace Zongsoft.Data
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
 			_searcher = searcher ?? new DataSearcher<TModel>(this);
@@ -85,6 +87,7 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
 			_searcher = searcher ?? new DataSearcher<TModel>(this);
@@ -95,6 +98,7 @@ namespace Zongsoft.Data
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_serviceProvider = service.ServiceProvider;
 			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
 			_searcher = searcher ?? new DataSearcher<TModel>(this);
@@ -109,6 +113,7 @@ namespace Zongsoft.Data
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_serviceProvider = service.ServiceProvider;
 			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
+			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
 			_searcher = searcher ?? new DataSearcher<TModel>(this);
@@ -146,6 +151,8 @@ namespace Zongsoft.Data
 		public virtual bool CanUpdate { get => this.Service?.CanUpdate ?? true; }
 
 		public virtual bool CanUpsert { get => this.Service?.CanUpsert ?? true; }
+
+		public DataServiceAttribute Attribute { get => _attribute; }
 
 		public IDataAccess DataAccess
 		{
@@ -1888,13 +1895,15 @@ namespace Zongsoft.Data
 		/// <returns>返回对应的操作条件。</returns>
 		protected virtual ICondition OnCondition(DataServiceMethod method, string key, out bool singular)
 		{
-			if(string.IsNullOrWhiteSpace(key))
-			{
-				singular = false;
-				return null;
-			}
+			singular = false;
 
-			return this.OnCondition(method, Zongsoft.Common.StringExtension.Slice(key, '-').ToArray(), out singular);
+			if(string.IsNullOrWhiteSpace(key))
+				return null;
+
+			if(_attribute != null && _attribute.Criteria != null && CriteriaParser.TryParse(key, out var members))
+				return Criteria.Transform(_attribute.Criteria, members, true);
+
+			return this.OnCondition(method, Common.StringExtension.Slice(key, '-').ToArray(), out singular);
 		}
 
 		/// <summary>
