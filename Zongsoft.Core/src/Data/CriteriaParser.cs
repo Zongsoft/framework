@@ -141,7 +141,7 @@ namespace Zongsoft.Data
 		#region 状态处理
 		private static void DoNone(ref CriteriaParserContext context)
 		{
-			if(char.IsLetterOrDigit(context.Character) || context.Character == '_')
+			if(char.IsLetter(context.Character) || context.Character == '_')
 			{
 				context.Reset(State.Key, out _);
 				context.Accept();
