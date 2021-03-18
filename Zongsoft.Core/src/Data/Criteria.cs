@@ -135,7 +135,7 @@ namespace Zongsoft.Data
 				else
 				{
 					if(strict)
-						throw new ArgumentException($"The specified ‘{member.Key}’ condition is undefined in the '{modelType.FullName}' criteria type.");
+						throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{modelType.FullName}' type.");
 				}
 			}
 
