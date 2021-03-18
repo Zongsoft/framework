@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 using Zongsoft.Data;
+using Zongsoft.Common;
 
 namespace Zongsoft.Web.Binders
 {
@@ -54,7 +56,7 @@ namespace Zongsoft.Web.Binders
 			if(string.IsNullOrEmpty(value))
 				return Task.CompletedTask;
 
-			var sortings = SortingAttribute.GetSortings(value);
+			var sortings = value.Slice<Sorting>(',', Sorting.TryParse).ToArray();
 			bindingContext.Result = ModelBindingResult.Success(sortings);
 			return Task.CompletedTask;
 		}
