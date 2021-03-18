@@ -101,39 +101,59 @@ namespace Zongsoft.Web
 
 		#region 公共方法
 		[HttpGet("{key}/[action]")]
-		[HttpGet("[action]/{key?}")]
-		public Task<IActionResult> Count(string key, [FromQuery]string filter = null)
+		[HttpGet("[action]/{key:required}")]
+		public IActionResult Count(string key, [FromQuery]string filter = null)
 		{
-			return Task.FromResult((IActionResult)this.Content(this.DataService.Count(key, null, new DataAggregateOptions(filter)).ToString()));
+			return this.Content(this.DataService.Count(key, null, new DataAggregateOptions(filter)).ToString());
+		}
+
+		[HttpPost("[action]")]
+		public async Task<IActionResult> Count()
+		{
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
+			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel)).ToString());
 		}
 
 		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
-		public Task<IActionResult> Exists(string key, [FromQuery]string filter = null)
+		public IActionResult Exists(string key, [FromQuery]string filter = null)
 		{
 			return this.DataService.Exists(key, new DataExistsOptions(filter)) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.NotFound());
+			       this.NoContent() : this.NotFound();
+		}
+
+		[HttpPost("[action]")]
+		public async Task<IActionResult> Exists()
+		{
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
+			return this.DataService.Exists(Criteria.Transform(criteria as IModel)) ?
+			       this.NoContent() : this.NotFound();
 		}
 
 		[HttpGet("[action]/{**keyword}")]
-		public Task<IActionResult> Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
+		public IActionResult Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
 		{
 			var searcher = this.DataService.Searcher;
 
 			if(searcher == null)
-				return Task.FromResult((IActionResult)this.StatusCode(StatusCodes.Status405MethodNotAllowed));
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			if(string.IsNullOrWhiteSpace(keyword))
-				return Task.FromResult((IActionResult)this.BadRequest("Missing keyword for search."));
+				return this.BadRequest("Missing keyword for search.");
 
-			return Task.FromResult(this.Paginate(searcher.Search(keyword, this.GetSchema(), page ?? Paging.Page(1), filter, sortings)));
+			return this.Paginate(searcher.Search(keyword, this.GetSchema(), page ?? Paging.Page(1), filter, sort));
 		}
 
 		[HttpGet("{key?}")]
-		public IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery(Name = "sorting")][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sortings = null)
+		public IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
 		{
-			return this.Paginate(this.OnGet(key, filter, page, sortings));
+			return this.Paginate(this.OnGet(key, filter, page, sort));
 		}
 
 		[HttpDelete("{key?}")]
@@ -232,6 +252,16 @@ namespace Zongsoft.Web
 			return this.OnUpdate(key, model) > 0 ?
 				this.NoContent() : this.NotFound();
 		}
+
+		[HttpPost("[action]")]
+		public async Task<IActionResult> Query([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		{
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
+			return this.Paginate(this.DataService.Select(Criteria.Transform(criteria as IModel), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page ?? Paging.Page(1), sort));
+		}
 		#endregion
 
 		#region 上传方法
@@ -323,15 +353,7 @@ namespace Zongsoft.Web
 
 		protected virtual object OnGet(string key, string filter, Paging page, Sorting[] sortings)
 		{
-			if(page == null)
-				page = Paging.Page(1);
-
-			if(string.IsNullOrWhiteSpace(key))
-				return this.DataService.Get(null, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
-
-			return key.Contains(':') && !key.Contains('-') && this.DataService.Searcher != null ?
-			       this.DataService.Searcher.Search(key, this.GetSchema(), page, filter, sortings) :
-			       this.DataService.Get(key, this.GetSchema(), page, new DataSelectOptions(filter), sortings);
+			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), new DataSelectOptions(filter), sortings);
 		}
 
 		protected virtual int OnDelete(string key, string filter)
