@@ -50,7 +50,7 @@ namespace Zongsoft.Data
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 		{
 			if(value is string text)
-				return SortingAttribute.GetSortings(text);
+				return Common.StringExtension.Slice<Sorting>(text, ',', Sorting.TryParse).ToArray();
 
 			return base.ConvertFrom(context, culture, value);
 		}

@@ -1681,7 +1681,7 @@ namespace Zongsoft.Data
 
 		protected virtual Sorting[] GetSortings()
 		{
-			var sortings = SortingAttribute.GetSortings(this.GetType());
+			var sortings = _attribute?.GetSortings();
 
 			if(sortings == null || sortings.Length == 0)
 			{

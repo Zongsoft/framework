@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Zongsoft.Data
 {
@@ -36,15 +37,30 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataServiceAttribute() { }
-		public DataServiceAttribute(Type criteria)
+		public DataServiceAttribute(string sortings) => this.Sortings = sortings;
+		public DataServiceAttribute(Type criteria, string sortings = null)
 		{
 			this.Criteria = criteria;
+			this.Sortings = sortings;
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取或设置查询条件实体类型。</summary>
 		public Type Criteria { get; set; }
+
+		/// <summary>获取或设置排序规则。注：成员之间以逗号分隔。</summary>
+		public string Sortings { get; set; }
+		#endregion
+
+		#region 公共方法
+		public Sorting[] GetSortings()
+		{
+			if(string.IsNullOrEmpty(this.Sortings))
+				return null;
+
+			return Common.StringExtension.Slice<Sorting>(this.Sortings, ',', Sorting.TryParse).ToArray();
+		}
 		#endregion
 	}
 }
