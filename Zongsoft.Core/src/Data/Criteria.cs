@@ -124,7 +124,7 @@ namespace Zongsoft.Data
 					}
 					else
 					{
-						if(property.PropertyType == typeof(bool) && string.IsNullOrEmpty(member.Value))
+						if((property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?)) && string.IsNullOrEmpty(member.Value))
 							propertyValue = true;
 						else
 							propertyValue = Common.Convert.ConvertValue(member.Value, property.PropertyType);
