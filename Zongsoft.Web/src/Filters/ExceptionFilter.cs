@@ -45,6 +45,8 @@ namespace Zongsoft.Web.Filters
 	{
 		public void OnException(ExceptionContext context)
 		{
+			ValidationProblemDetails problem;
+
 			switch(context.Exception)
 			{
 				case AuthenticationException authentication:
@@ -60,39 +62,38 @@ namespace Zongsoft.Web.Filters
 					context.Result = new ForbidResult(properties);
 					break;
 				case DataArgumentException argumentException:
-					if(string.IsNullOrWhiteSpace(argumentException.Name))
-						context.Result = argumentException.Value == null ? (IActionResult)new BadRequestResult() : new BadRequestObjectResult(argumentException.Value);
-					else
-						context.Result = new BadRequestObjectResult(new { argumentException.Name, argumentException.Value });
+					if(!string.IsNullOrEmpty(argumentException.Name))
+						context.ModelState.AddModelError(argumentException.Name, argumentException.Message);
+
+					context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState)
+					{
+						Detail = argumentException.Message
+					});
 
 					break;
 				case DataConflictException conflictException:
 					if(!string.IsNullOrEmpty(conflictException.Key))
 						context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
 
-					var problem = new ProblemDetails()
+					problem = new ValidationProblemDetails(context.ModelState)
 					{
-						Status = StatusCodes.Status409Conflict,
-						Type = conflictException.Key,
 						Detail = conflictException.Message,
 					};
 
 					if(conflictException.Fields != null && conflictException.Fields.Length > 0)
-					{
-						context.HttpContext.Response.Headers.Add("X-Conflict-Fields", string.Join(',', conflictException.Fields));
 						problem.Extensions.Add(nameof(DataConflictException.Fields), conflictException.Fields);
-					}
 
 					context.Result = new ConflictObjectResult(problem);
 					break;
 				case DataConstraintException constraintException:
 					if(!string.IsNullOrEmpty(constraintException.Field))
-					{
 						context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
-						context.HttpContext.Response.Headers.Add("X-Constraint-Field", constraintException.Field);
-					}
 
-					context.Result = new BadRequestResult();
+					context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState)
+					{
+						Detail = constraintException.Message
+					});
+
 					break;
 				case NotSupportedException unsupported:
 				case NotImplementedException unimplemented:
