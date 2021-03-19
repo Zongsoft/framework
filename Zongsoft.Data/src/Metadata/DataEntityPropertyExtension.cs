@@ -82,8 +82,8 @@ namespace Zongsoft.Data.Metadata
 		/// </summary>
 		/// <param name="property">指定的导航属性。</param>
 		/// <param name="constraint">指定的导航属性的约束项。</param>
-		/// <returns>返回的约束项值对应关联属性数据类型的常量表达式。</returns>
-		public static ConstantExpression GetConstraintValue(this IDataEntityComplexProperty property, DataAssociationConstraint constraint)
+		/// <returns>返回的约束项值对应关联属性数据类型的表达式。</returns>
+		public static IExpression GetConstraintValue(this IDataEntityComplexProperty property, DataAssociationConstraint constraint)
 		{
 			if(constraint.Value == null)
 				return ConstantExpression.Null;
