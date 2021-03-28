@@ -114,6 +114,16 @@ namespace Zongsoft.Services
 			return services.GetRequiredService(serviceType);
 		}
 
+		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider services)
+		{
+			return services.GetServices<T>();
+		}
+
+		public static IEnumerable<object> ResolveAll(this IServiceProvider services, Type serviceType)
+		{
+			return services.GetServices(serviceType);
+		}
+
 		public static T GetMatchedService<T>(this IServiceProvider services, object parameter)
 		{
 			return (T)GetMatchedService(services, typeof(T), parameter);
