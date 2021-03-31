@@ -639,7 +639,7 @@ namespace Zongsoft.Data
 
 		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, IDataInsertOptions options)
 		{
-			if(data == null || data.Data == null)
+			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
 
 			//执行数据引擎的插入操作
@@ -726,7 +726,7 @@ namespace Zongsoft.Data
 
 		protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, IDataUpsertOptions options)
 		{
-			if(data == null || data.Data == null)
+			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
 
 			//执行数据引擎的复写操作
@@ -932,7 +932,7 @@ namespace Zongsoft.Data
 
 		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
 		{
-			if(data == null || data.Data == null)
+			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
 
 			return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
