@@ -13,28 +13,28 @@
 			<property name="Namespace" type="string" length="50" nullable="false" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
-			<complexProperty name="Children" role="Member" multiplicity="*" immutable="false">
-				<link name="RoleId" role="RoleId" />
+			<complexProperty name="Children" port="Member" multiplicity="*" immutable="false">
+				<link port="RoleId" />
 			</complexProperty>
 
-			<complexProperty name="Members" role="Member" multiplicity="*">
-				<link name="RoleId" role="MemberId" />
+			<complexProperty name="Members" port="Member" multiplicity="*">
+				<link port="MemberId" anchor="RoleId" />
 
 				<constraints>
 					<constraint name="MemberType" value="1" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="Permissions" role="Permission" multiplicity="*" immutable="false">
-				<link name="RoleId" role="MemberId" />
+			<complexProperty name="Permissions" port="Permission" multiplicity="*" immutable="false">
+				<link port="MemberId" anchor="RoleId" />
 
 				<constraints>
 					<constraint name="MemberType" value="1" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="PermissionFilters" role="PermissionFilter" multiplicity="*" immutable="false">
-				<link name="RoleId" role="MemberId" />
+			<complexProperty name="PermissionFilters" port="PermissionFilter" multiplicity="*" immutable="false">
+				<link port="MemberId" anchor="RoleId" />
 
 				<constraints>
 					<constraint name="MemberType" value="1" />
@@ -67,32 +67,32 @@
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
-			<complexProperty name="Roles" role="Member:Role" multiplicity="*">
-				<link name="UserId" role="MemberId" />
+			<complexProperty name="Roles" port="Member:Role" multiplicity="*">
+				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
 					<constraint name="MemberType" value="0" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="Members" role="Member" multiplicity="*">
-				<link name="UserId" role="MemberId" />
+			<complexProperty name="Members" port="Member" multiplicity="*">
+				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
 					<constraint name="MemberType" value="0" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="Permissions" role="Permission" multiplicity="*" immutable="false">
-				<link name="UserId" role="MemberId" />
+			<complexProperty name="Permissions" port="Permission" multiplicity="*" immutable="false">
+				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
 					<constraint name="MemberType" value="0" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="PermissionFilters" role="PermissionFilter" multiplicity="*" immutable="false">
-				<link name="UserId" role="MemberId" />
+			<complexProperty name="PermissionFilters" port="PermissionFilter" multiplicity="*" immutable="false">
+				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
 					<constraint name="MemberType" value="0" />
@@ -111,20 +111,20 @@
 			<property name="MemberId" type="uint" nullable="false" />
 			<property name="MemberType" type="byte" nullable="false" />
 
-			<complexProperty name="Role" role="Role" multiplicity="1">
-				<link name="RoleId" role="RoleId" />
+			<complexProperty name="Role" port="Role" multiplicity="1">
+				<link port="RoleId" />
 			</complexProperty>
 
-			<complexProperty name="MemberRole" role="Role" multiplicity="?">
-				<link name="MemberId" role="RoleId" />
+			<complexProperty name="MemberRole" port="Role" multiplicity="?">
+				<link port="RoleId" anchor="MemberId" />
 
 				<constraints>
 					<constraint name="MemberType" actor="Principal" value="1" />
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="MemberUser" role="User" multiplicity="?">
-				<link name="MemberId" role="UserId" />
+			<complexProperty name="MemberUser" port="User" multiplicity="?">
+				<link port="UserId" anchor="MemberId" />
 
 				<constraints>
 					<constraint name="MemberType" actor="Principal" value="0" />
