@@ -288,15 +288,15 @@
 				</xs:annotation>
 
 				<xs:complexType>
-					<xs:attribute name="name" type="xs:string" use="required">
+					<xs:attribute name="port" type="xs:string" use="required">
 						<xs:annotation>
-							<xs:documentation xml:lang="zh">本主实体的属性名。</xs:documentation>
+							<xs:documentation xml:lang="zh">联接端口，即外键实体的属性名。</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
-					<xs:attribute name="role" type="xs:string" use="required">
+					<xs:attribute name="anchor" type="xs:string" use="optional">
 						<xs:annotation>
-							<xs:documentation xml:lang="zh">外部实体的属性名。</xs:documentation>
+							<xs:documentation xml:lang="zh">本体实体的锚点，可以是导航属性。</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 				</xs:complexType>
@@ -345,7 +345,7 @@
 			</xs:annotation>
 		</xs:attribute>
 
-		<xs:attribute name="role" type="xs:string" use="required">
+		<xs:attribute name="port" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">复合属性(导航属性)的目标。目标通常为实体名，但也可以是实体的复合属性（实体名与复合属性名以冒号间隔）。</xs:documentation>
 			</xs:annotation>
