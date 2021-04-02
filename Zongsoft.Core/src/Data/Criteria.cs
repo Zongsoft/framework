@@ -47,7 +47,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public static ICondition Transform(this IModel criteria)
+		public static ICondition Transform(this IModel criteria, string path = null)
 		{
 			if(criteria == null)
 				return null;
@@ -60,8 +60,8 @@ namespace Zongsoft.Data
 			var descriptor = _cache.GetOrAdd(criteria.GetType(), type => new CriteriaDescriptor(type));
 
 			return changes.Count == 1 ?
-				GetCondition(criteria, descriptor.Properties[changes.First().Key]) :
-				ConditionCollection.And(changes.Select(p => GetCondition(criteria, descriptor.Properties[p.Key])));
+				GetCondition(criteria, descriptor.Properties[changes.First().Key], path) :
+				ConditionCollection.And(changes.Select(p => GetCondition(criteria, descriptor.Properties[p.Key], path)));
 		}
 
 		public static ICondition Transform(Type modelType, string expression, bool strict) => Transform(modelType, expression, 0, -1, strict);
@@ -149,20 +149,33 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private static ICondition GetCondition(IModel criteria, CriteriaPropertyDescripor property)
+		private static ICondition GetCondition(IModel criteria, CriteriaPropertyDescripor property, string path = null)
 		{
 			//如果当前属性值为默认值，则忽略它
 			if(property == null)
 				return null;
 
+			static string[] GetNames(string path, params string[] names)
+			{
+				if(string.IsNullOrEmpty(path))
+					return names;
+
+				var result = new string[names.Length];
+
+				for(int i = 0; i < names.Length; i++)
+					result[i] = path + "." + names[i];
+
+				return result;
+			}
+
 			//获取当前属性对应的条件命列表
 			var names = property.Attribute == null || property.Attribute.Names == null || property.Attribute.Names.Length == 0 ?
-				new[] { property.Name } :
-				property.Attribute.Names;
+				GetNames(path, property.Name) :
+				GetNames(path, property.Attribute.Names);
 
 			//创建转换器上下文
 			var context = new ConditionConverterContext(criteria,
-				property.Attribute == null ? ConditionBehaviors.None : property.Attribute.Behaviors,
+				property.Attribute == null ? ConditionBehaviors.IgnoreNullOrEmpty : property.Attribute.Behaviors,
 				names,
 				property.PropertyType,
 				property.GetValue(criteria),

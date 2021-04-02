@@ -78,6 +78,10 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public virtual ICondition Convert(ConditionConverterContext context)
 		{
+			//如果当前属性类型是模型接口(条件)，则进行嵌套转换
+			if(typeof(IModel).IsAssignableFrom(context.Type))
+				return Criteria.Transform((IModel)context.Value, context.Names[0]);
+
 			//判断当前属性是否可以忽略
 			if(this.IsIgnorable(context))
 				return null;
