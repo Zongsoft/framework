@@ -408,12 +408,22 @@ namespace Zongsoft.Data.Common.Expressions
 
 			foreach(var link in complex.Links)
 			{
-				subquery.Select.Members.Add(subquery.Table.CreateField(link.Foreign));
+				subquery.Select.Members.Add(subquery.Table.CreateField(link.ForeignKey));
 
-				where.Add(Expression.Equal(
-					subquery.Table.CreateField(link.Foreign),
-					source.CreateField(link.Principal)
-				));
+				foreach(var anchor in link.GetAnchors())
+				{
+					if(anchor.IsComplex)
+					{
+						source = host.Join(source, (IDataEntityComplexProperty)anchor);
+					}
+					else
+					{
+						where.Add(Expression.Equal(
+							subquery.Table.CreateField(link.ForeignKey),
+							source.CreateField(anchor)
+						));
+					}
+				}
 			}
 
 			if(complex.HasConstraints())

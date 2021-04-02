@@ -43,12 +43,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 构造函数
-		public MetadataEntityComplexProperty(IDataEntity entity, string name, string role, bool immutable = true) : base(entity, name, immutable)
+		public MetadataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable = true) : base(entity, name, immutable)
 		{
-			if(string.IsNullOrWhiteSpace(role))
-				throw new ArgumentNullException(nameof(role));
+			if(string.IsNullOrWhiteSpace(port))
+				throw new ArgumentNullException(nameof(port));
 
-			this.Role = role.Trim();
+			this.Port = port.Trim();
 		}
 		#endregion
 
@@ -75,63 +75,21 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		public string Role
-		{
-			get;
-		}
-
-		public DataAssociationMultiplicity Multiplicity
-		{
-			get;
-			set;
-		}
-
-		public DataAssociationLink[] Links
-		{
-			get;
-			set;
-		}
-
-		public DataAssociationConstraint[] Constraints
-		{
-			get;
-			set;
-		}
+		public string Port { get; }
+		public DataAssociationMultiplicity Multiplicity { get; set; }
+		public DataAssociationLink[] Links { get; set; }
+		public DataAssociationConstraint[] Constraints { get; set; }
 		#endregion
 
 		#region 重写属性
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为主键。该重写方法始终返回假(False)。
-		/// </summary>
-		public override bool IsPrimaryKey
-		{
-			get
-			{
-				return false;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为主键。该重写方法始终返回假(False)。</summary>
+		public override bool IsPrimaryKey { get => false; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为复合类型。该重写方法始终返回真(True)。
-		/// </summary>
-		public override bool IsComplex
-		{
-			get
-			{
-				return true;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为复合类型。该重写方法始终返回真(True)。</summary>
+		public override bool IsComplex { get => true; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为单值类型。该重写方法始终返回假(False)。
-		/// </summary>
-		public override bool IsSimplex
-		{
-			get
-			{
-				return false;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为单值类型。该重写方法始终返回假(False)。</summary>
+		public override bool IsSimplex { get => false; }
 		#endregion
 
 		#region 重写方法
@@ -147,21 +105,21 @@ namespace Zongsoft.Data.Metadata.Profiles
 				text.Append(link.ToString());
 			}
 
-			return $"{this.Name} -> {this.Role} ({text.ToString()})";
+			return $"{this.Name} -> {this.Port} ({text.ToString()})";
 		}
 		#endregion
 
 		#region 私有方法
 		private void UpdateForeign()
 		{
-			var index = this.Role.IndexOf(':');
+			var index = this.Port.IndexOf(':');
 
 			if(index < 0)
-				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Role);
+				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Port);
 			else
 			{
-				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Role.Substring(0, index));
-				_foreignProperty = _foreign.Properties.Get(this.Role.Substring(index + 1));
+				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Port.Substring(0, index));
+				_foreignProperty = _foreign.Properties.Get(this.Port.Substring(index + 1));
 			}
 		}
 		#endregion

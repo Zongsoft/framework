@@ -264,7 +264,7 @@ namespace Zongsoft.Data.Common
 
 			for(int i = 0; i < links.Length; i++)
 			{
-				if(object.Equals(links[i].Foreign, property))
+				if(object.Equals(links[i].ForeignKey, property))
 					return true;
 			}
 

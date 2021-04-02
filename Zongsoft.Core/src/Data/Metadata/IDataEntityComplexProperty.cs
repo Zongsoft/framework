@@ -37,55 +37,25 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataEntityComplexProperty : IDataEntityProperty
 	{
-		/// <summary>
-		/// 获取关联的外部实体。
-		/// </summary>
-		IDataEntity Foreign
-		{
-			get;
-		}
+		/// <summary>获取关联的外部实体。</summary>
+		IDataEntity Foreign { get; }
 
-		/// <summary>
-		/// 获取关联的外部层级属性，只有多级关联该属性才不为空(null)。
-		/// </summary>
-		IDataEntityProperty ForeignProperty
-		{
-			get;
-		}
+		/// <summary>获取关联的外部层级属性，只有多级关联该属性才不为空(null)。</summary>
+		IDataEntityProperty ForeignProperty { get; }
 
-		/// <summary>
-		/// 获取一个值，指示关联的重复性关系。
-		/// </summary>
-		DataAssociationMultiplicity Multiplicity
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示关联的重复性关系。</summary>
+		DataAssociationMultiplicity Multiplicity { get; }
 
-		/// <summary>
-		/// 获取关联的外部角色，通常是关联的目标实体名，但是也支持多级关联（详情见备注说明）。
-		/// </summary>
+		/// <summary>获取关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
 		/// <remarks>
-		///		<para>多级关联是指关联的目标为指定实体中的导航属性，实体与导航属性之间以分号(:)区隔。</para>
+		///		<para>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(:)区隔。</para>
 		/// </remarks>
-		string Role
-		{
-			get;
-		}
+		string Port { get; }
 
-		/// <summary>
-		/// 获取关联的连接数组。
-		/// </summary>
-		DataAssociationLink[] Links
-		{
-			get;
-		}
+		/// <summary>获取关联的连接数组。</summary>
+		DataAssociationLink[] Links { get; }
 
-		/// <summary>
-		/// 获取关联的约束数组。
-		/// </summary>
-		DataAssociationConstraint[] Constraints
-		{
-			get;
-		}
+		/// <summary>获取关联的约束数组。</summary>
+		DataAssociationConstraint[] Constraints { get; }
 	}
 }

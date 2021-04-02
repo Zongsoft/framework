@@ -101,8 +101,8 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 私有方法
 		private static IDataEntityPropertyCollection GetAssociatedProperties(IDataEntityComplexProperty property, ref ICollection<IDataEntity> ancestors)
 		{
-			var index = property.Role.IndexOf(':');
-			var entityName = index < 0 ? property.Role : property.Role.Substring(0, index);
+			var index = property.Port.IndexOf(':');
+			var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
 
 			if(!property.Entity.Metadata.Manager.Entities.TryGet(entityName, out var entity))
 				throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
@@ -110,7 +110,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(index < 0)
 				return entity.Properties;
 
-			var parts = property.Role.Substring(index + 1).Split('.');
+			var parts = property.Port.Substring(index + 1).Split('.');
 			var properties = entity.Properties;
 
 			foreach(var part in parts)

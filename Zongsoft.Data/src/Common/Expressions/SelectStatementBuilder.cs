@@ -180,17 +180,27 @@ namespace Zongsoft.Data.Common.Expressions
 					//为一对多的导航属性增加必须的链接字段及对应的条件参数
 					foreach(var link in complex.Links)
 					{
-						var principalField = origin.CreateField(link.Principal);
-						principalField.Alias = "$" + member.FullPath + ":" + link.Name;
-						statement.Select.Members.Add(principalField);
+						foreach(var anchor in link.GetAnchors())
+						{
+							if(anchor.IsComplex)
+							{
+								origin = statement.Join(origin, (IDataEntityComplexProperty)anchor);
+							}
+							else
+							{
+								var principalField = origin.CreateField(anchor);
+								principalField.Alias = "$" + member.FullPath + ":" + anchor.Name;
+								statement.Select.Members.Add(principalField);
 
-						var foreignField = slave.Table.CreateField(link.Foreign);
-						foreignField.Alias = null;
-						if(slave.Where == null)
-							slave.Where = Expression.Equal(foreignField, slave.Parameters.Add(link.Name, link.Foreign.Type));
-						else
-							slave.Where = Expression.AndAlso(slave.Where,
-								Expression.Equal(foreignField, slave.Parameters.Add(link.Name, link.Foreign.Type)));
+								var foreignField = slave.Table.CreateField(link.ForeignKey);
+								foreignField.Alias = null;
+								if(slave.Where == null)
+									slave.Where = Expression.Equal(foreignField, slave.Parameters.Add(anchor.Name, link.ForeignKey.Type));
+								else
+									slave.Where = Expression.AndAlso(slave.Where,
+										Expression.Equal(foreignField, slave.Parameters.Add(anchor.Name, link.ForeignKey.Type)));
+							}
+						}
 					}
 
 					//为导航属性增加约束过滤条件

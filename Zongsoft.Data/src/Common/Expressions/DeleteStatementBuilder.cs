@@ -124,18 +124,32 @@ namespace Zongsoft.Data.Common.Expressions
 					continue;
 
 				var complex = (IDataEntityComplexProperty)schema.Token.Property;
-				ISource src = null;
-
-				if(complex.Entity == statement.Entity)
-					src = statement.Table;
-				else
-					src = statement.Join(statement.Table, complex.Entity);
+				ISource src =  complex.Entity == statement.Entity ?
+					statement.Table :
+					statement.Join(statement.Table, complex.Entity);
 
 				foreach(var link in complex.Links)
 				{
-					//某些导航属性可能与主键相同，表定义的字段定义方法（TableDefinition.Field(...)）可避免同名字段的重复定义
-					if(statement.Returning.Table.Field(link.Principal) != null)
-						statement.Returning.Append(src.CreateField(link.Name), ReturningClause.ReturningMode.Deleted);
+					var anchors = link.GetAnchors();
+
+					if(anchors.Length > 1)
+						continue;
+
+					ISource source = statement.Table;
+
+					foreach(var anchor in link.GetAnchors())
+					{
+						if(anchor.IsComplex)
+						{
+							source = statement.Join(source, (IDataEntityComplexProperty)anchor);
+						}
+						else
+						{
+							//某些导航属性可能与主键相同，表定义的字段定义方法（TableDefinition.Field(...)）可避免同名字段的重复定义
+							if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
+								statement.Returning.Append(src.CreateField(anchor.Name), ReturningClause.ReturningMode.Deleted);
+						}
+					}
 				}
 
 				this.BuildSlave(statement, schema);
@@ -151,8 +165,8 @@ namespace Zongsoft.Data.Common.Expressions
 			if(complex.Links.Length == 1)
 			{
 				var select = new SelectStatement(reference);
-				select.Select.Members.Add(reference.CreateField(complex.Links[0].Name));
-				statement.Where = Expression.In(statement.Table.CreateField(complex.Links[0].Role), select);
+				select.Select.Members.Add(reference.CreateField(complex.Links[0].GetAnchors().Last()));
+				statement.Where = Expression.In(statement.Table.CreateField(complex.Links[0].Foreign), select);
 			}
 			else
 			{
@@ -160,10 +174,12 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var link in complex.Links)
 				{
+					var anchor = link.GetAnchors().Last();
+
 					join.Conditions.Add(
 						Expression.Equal(
-							statement.Table.CreateField(link.Role),
-							reference.CreateField(link.Name)));
+							statement.Table.CreateField(link.Foreign),
+							reference.CreateField(anchor.Name)));
 				}
 
 				statement.From.Add(join);

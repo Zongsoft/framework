@@ -193,15 +193,22 @@ namespace Zongsoft.Data.Common
 
 			foreach(var link in complex.Links)
 			{
-				if(!statement.HasParameters || !statement.Parameters.TryGet(link.Foreign.Name, out var parameter))
+				if(!statement.HasParameters || !statement.Parameters.TryGet(link.ForeignKey.Name, out var parameter))
 					continue;
 
-				if(link.Foreign.Sequence == null)
+				if(link.ForeignKey.Sequence == null)
 				{
-					if(Utility.TryGetMemberValue(ref data, link.Principal.Name, out var value))
-						parameter.Value = value;
+					object refer = data;
+
+					foreach(var anchor in link.GetAnchors())
+					{
+						if(Utility.TryGetMemberValue(ref refer, anchor.Name, out var value))
+							refer = value;
+					}
+
+					parameter.Value = refer;
 				}
-				else if(statement.Schema.HasChildren && statement.Schema.Children.TryGet(link.Foreign.Name, out var member))
+				else if(statement.Schema.HasChildren && statement.Schema.Children.TryGet(link.ForeignKey.Name, out var member))
 				{
 					/*
 					 * 如果复合属性的外链字段含序号器(自增)，链接参数值不能直接绑定必须通过执行器动态绑定
@@ -210,14 +217,14 @@ namespace Zongsoft.Data.Common
 
 					parameter.Schema = member;
 
-					if(link.Principal.Entity.Key.Length > 0 && (statement is InsertStatement || statement is UpsertStatement))
+					if(complex.Entity.Key.Length > 0 && (statement is InsertStatement || statement is UpsertStatement))
 					{
 						if(updation == null)
 						{
-							updation = new UpdateStatement(link.Principal.Entity);
+							updation = new UpdateStatement(complex.Entity);
 							statement.Slaves.Add(updation);
 
-							foreach(var key in link.Principal.Entity.Key)
+							foreach(var key in complex.Entity.Key)
 							{
 								var equals = Expression.Equal(
 									updation.Table.CreateField(key),
@@ -230,7 +237,7 @@ namespace Zongsoft.Data.Common
 							}
 						}
 
-						var field = updation.Table.CreateField(link.Principal);
+						var field = updation.Table.CreateField(link.GetAnchors()[0]);
 						var fieldValue = Expression.Parameter(field, new SchemaMember(member.Token));
 						updation.Fields.Add(new FieldValue(field, fieldValue));
 						updation.Parameters.Add(fieldValue);

@@ -164,9 +164,19 @@ namespace Zongsoft.Data.Common.Expressions
 
 					foreach(var link in complex.Links)
 					{
-						conditions.Add(Expression.Equal(
-							selection.Table.CreateField(link.Foreign),
-							statement.Table.CreateField(link.Principal)));
+						ISource src = statement.Table;
+
+						foreach(var anchor in link.GetAnchors())
+						{
+							if(anchor.IsComplex)
+							{
+								src = selection.Join(selection, (IDataEntityComplexProperty)anchor);
+							}
+							else
+								conditions.Add(Expression.Equal(
+									selection.Table.CreateField(link.ForeignKey),
+									src.CreateField(anchor)));
+						}
 					}
 
 					selection.Where = conditions;

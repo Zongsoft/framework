@@ -280,10 +280,26 @@ namespace Zongsoft.Data.Common.Expressions
 
 			foreach(var link in complex.Links)
 			{
-				joining.Conditions.Add(
-					Expression.Equal(
-						target.CreateField(link.Role),
-						source.CreateField(link.Name)));
+				var anchors = link.GetAnchors();
+
+				foreach(var anchor in anchors)
+				{
+					if(anchor.IsComplex)
+					{
+						foreach(var join in Create(source, (IDataEntityComplexProperty)anchor, null, targetFinder, targetCreator))
+						{
+							source = join;
+							yield return join;
+						}
+					}
+					else
+					{
+						joining.Conditions.Add(
+							Expression.Equal(
+								target.CreateField(link.Foreign),
+								source.CreateField(anchor.Name)));
+					}
+				}
 			}
 
 			yield return joining;

@@ -74,6 +74,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_DIRECTION_ATTRIBUTE = "direction";
 		private const string XML_IMMUTABLE_ATTRIBUTE = "immutable";
 		private const string XML_MULTIPLICITY_ATTRIBUTE = "multiplicity";
+		private const string XML_PORT_ATTRIBUTE = "port";
+		private const string XML_ANCHOR_ATTRIBUTE = "anchor";
 		private const string XML_ACTOR_ATTRIBUTE = "actor";
 		private const string XML_VALUE_ATTRIBUTE = "value";
 		private const string XML_PATH_ATTRIBUTE = "path";
@@ -268,7 +270,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 					case XML_COMPLEXPROPERTY_ELEMENT:
 						var complexProperty = new MetadataEntityComplexProperty(entity,
 						                          reader.GetAttribute(XML_NAME_ATTRIBUTE),
-						                          this.GetRoleName(reader.GetAttribute(XML_ROLE_ATTRIBUTE), @namespace),
+						                          this.GetTargetName(reader.GetAttribute(XML_PORT_ATTRIBUTE), @namespace),
 						                          this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
 
 						var multiplicity = reader.GetAttribute(XML_MULTIPLICITY_ATTRIBUTE);
@@ -304,8 +306,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 							{
 								links.Add(
 									new DataAssociationLink(complexProperty,
-										this.GetAttributeValue<string>(reader, XML_NAME_ATTRIBUTE),
-										this.GetAttributeValue<string>(reader, XML_ROLE_ATTRIBUTE)));
+										this.GetAttributeValue<string>(reader, XML_PORT_ATTRIBUTE),
+										this.GetAttributeValue<string>(reader, XML_ANCHOR_ATTRIBUTE)));
 							}
 							else if(reader.LocalName == XML_CONSTRAINTS_ELEMENT)
 							{
@@ -596,20 +598,20 @@ namespace Zongsoft.Data.Metadata.Profiles
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetRoleName(string role, string @namespace)
+		private string GetTargetName(string port, string @namespace)
 		{
-			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(role))
-				return role;
+			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(port))
+				return port;
 
 			var colonIndex = -1;
 
-			for(int i = 0; i < role.Length; i++)
+			for(int i = 0; i < port.Length; i++)
 			{
-				if(role[i] == '.' && i < colonIndex)
-					return role;
+				if(port[i] == '.' && i < colonIndex)
+					return port;
 			}
 
-			return @namespace + "." + role;
+			return @namespace + "." + port;
 		}
 
 		private T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default)
@@ -718,6 +720,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 			nameTable.Add(XML_DIRECTION_ATTRIBUTE);
 			nameTable.Add(XML_IMMUTABLE_ATTRIBUTE);
 			nameTable.Add(XML_MULTIPLICITY_ATTRIBUTE);
+			nameTable.Add(XML_PORT_ATTRIBUTE);
+			nameTable.Add(XML_ANCHOR_ATTRIBUTE);
 			nameTable.Add(XML_ACTOR_ATTRIBUTE);
 			nameTable.Add(XML_VALUE_ATTRIBUTE);
 			nameTable.Add(XML_PATH_ATTRIBUTE);

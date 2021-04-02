@@ -191,17 +191,29 @@ namespace Zongsoft.Data.Common.Expressions
 
 			foreach(var link in complex.Links)
 			{
-				if(statement.Returning.Table.Field(link.Principal) != null)
-					statement.Returning.Append(statement.Table.CreateField(link.Principal), ReturningClause.ReturningMode.Deleted);
+				ISource source = statement.Table;
 
-				var field = selection.Table.CreateField(link.Principal);
-				selection.Select.Members.Add(field);
+				foreach(var anchor in link.GetAnchors())
+				{
+					if(anchor.IsComplex)
+					{
+						source = statement.Join(source, (IDataEntityComplexProperty)anchor);
+					}
+					else
+					{
+						if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
+							statement.Returning.Append(source.CreateField(anchor.Name), ReturningClause.ReturningMode.Deleted);
 
-				if(selection.Where == null)
-					selection.Where = Expression.Equal(field, slave.Table.CreateField(link.Foreign));
-				else
-					selection.Where = Expression.AndAlso(slave.Where,
-					                  Expression.Equal(field, slave.Table.CreateField(link.Foreign)));
+						var field = selection.Table.CreateField(anchor);
+						selection.Select.Members.Add(field);
+
+						if(selection.Where == null)
+							selection.Where = Expression.Equal(field, slave.Table.CreateField(link.ForeignKey));
+						else
+							selection.Where = Expression.AndAlso(slave.Where,
+											  Expression.Equal(field, slave.Table.CreateField(link.ForeignKey)));
+					}
+				}
 			}
 
 			slave.Where = Expression.Exists(selection);
