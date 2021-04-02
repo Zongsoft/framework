@@ -187,7 +187,7 @@ namespace Zongsoft.Data
 
 					if(context.IsWhitespace)
 						context.Reset(State.Suspense, out key);
-					else if(char.IsLetterOrDigit(context.Character) || context.Character == '_')
+					else if(char.IsLetterOrDigit(context.Character) || context.Character == '_' || context.Character == '.')
 						context.Accept();
 					else
 						context.Error($"An illegal character ‘{context.Character}’ is at the {context.Index + 1} character.");

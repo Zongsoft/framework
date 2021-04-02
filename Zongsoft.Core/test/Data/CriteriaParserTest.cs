@@ -33,6 +33,10 @@ namespace Zongsoft.Data.Tests
 			var succeed = CriteriaParser.TryParse(TEXT.AsSpan(), out var result);
 			AssertResult(result, "k1", "v1");
 
+			TEXT = @"k1.k2:v1";
+			succeed = CriteriaParser.TryParse(TEXT.AsSpan(), out result);
+			AssertResult(result, "k1.k2", "v1");
+
 			TEXT = @" k1: v1 +";
 			succeed = CriteriaParser.TryParse(TEXT.AsSpan(), out result);
 			AssertResult(result, "k1", "v1");
