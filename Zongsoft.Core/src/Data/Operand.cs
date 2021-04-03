@@ -227,7 +227,7 @@ namespace Zongsoft.Data
 			#endregion
 		}
 
-		public class ConstantOperand<T> : Operand, IConvertible
+		public class ConstantOperand<T> : Operand, IConvertible, IEquatable<T>, IEquatable<ConstantOperand<T>>
 		{
 			#region 构造函数
 			public ConstantOperand(T value) : base(OperandType.Constant)
@@ -241,10 +241,36 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
+			public bool Equals(T other) => object.Equals(other, this.Value);
+			public bool Equals(ConstantOperand<T> other) => other != null && object.Equals(this.Value, other.Value);
+
+			public override bool Equals(object obj)
 			{
-				return this.Value == null ? "<NULL>" : this.Value.ToString();
+				return obj switch
+				{
+					T value => this.Equals(value),
+					ConstantOperand<T> operand => this.Equals(operand),
+					_ => false,
+				};
 			}
+
+			public override int GetHashCode() => HashCode.Combine(this.Value);
+			public override string ToString() => this.Value == null ? "<NULL>" : this.Value.ToString();
+			#endregion
+
+			#region 符号重写
+			public static implicit operator T(ConstantOperand<T> operand) => operand.Value;
+			public static implicit operator ConstantOperand<T>(T value) => new ConstantOperand<T>(value);
+
+			public static bool operator ==(ConstantOperand<T> a, ConstantOperand<T> b)
+			{
+				if(a == null || a.Value == null)
+					return b == null || b.Value == null;
+				else
+					return b != null && object.Equals(a.Value, b.Value);
+			}
+
+			public static bool operator !=(ConstantOperand<T> a, ConstantOperand<T> b) => !(a == b);
 			#endregion
 
 			#region 类型转换
