@@ -42,11 +42,6 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public static Range<T> Empty<T>() where T : struct, IComparable<T>
-		{
-			return EmptyRange<T>.Value;
-		}
-
 		public static object Create(Type type, object minimum, object maximum)
 		{
 			if(type == null)
@@ -76,25 +71,15 @@ namespace Zongsoft.Data
 			return Activator.CreateInstance(typeof(Range<>).MakeGenericType(type), new object[] { minimum, maximum });
 		}
 
-		public static Range<T> Create<T>(T minimum, T maximum) where T : struct, IComparable<T>
-		{
-			return new Range<T>(minimum, maximum);
-		}
+		public static Range<T> Create<T>(T minimum, T maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
+		public static Range<T> Create<T>(T? minimum, T? maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
 
-		public static Range<T> Create<T>(T? minimum, T? maximum) where T : struct, IComparable<T>
-		{
-			return new Range<T>(minimum, maximum);
-		}
+		public static Range<T> Empty<T>() where T : struct, IComparable<T> => EmptyRange<T>.Value;
+		public static Range<T> Minimum<T>(T minimum) where T : struct, IComparable<T> => new Range<T>(minimum, null);
+		public static Range<T> Maximum<T>(T maximum) where T : struct, IComparable<T> => new Range<T>(null, maximum);
 
-		public static Range<T> Minimum<T>(T minimum) where T : struct, IComparable<T>
-		{
-			return new Range<T>(minimum, null);
-		}
-
-		public static Range<T> Maximum<T>(T maximum) where T : struct, IComparable<T>
-		{
-			return new Range<T>(null, maximum);
-		}
+		public static Range<T> Parse<T>(string text) where T : struct, IComparable<T> => Range<T>.Parse(text);
+		public static bool TryParse<T>(string text, out Range<T> value) where T : struct, IComparable<T> => Range<T>.TryParse(text, out value);
 
 		public static bool IsRange(object target)
 		{
