@@ -32,21 +32,89 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 提供条件操作的扩展方法。
+	/// </summary>
 	public static class ConditionExtension
 	{
-		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> matched)
+		/// <summary>
+		/// 替换条件中指定名称的条件项。
+		/// </summary>
+		/// <param name="criteria">待替换的条件。</param>
+		/// <param name="name">要替换的条件项名称。</param>
+		/// <param name="match">替换处理函数，该函数参数说明：
+		/// 	<list type="number">
+		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
+		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
+		/// 	</list>
+		/// </param>
+		/// <returns>返回替换后的条件。</returns>
+		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> match)
 		{
-			return Replace(criteria, name, 0, matched, out _);
+			return Replace(criteria, name, -1, 0, match, out _);
 		}
 
-		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> matched, out int count)
+		/// <summary>
+		/// 替换条件中指定名称的条件项。
+		/// </summary>
+		/// <param name="criteria">待替换的条件。</param>
+		/// <param name="name">要替换的条件项名称。</param>
+		/// <param name="maxDepth">最大的替换深度，如果为零或负数则表示不限深度。</param>
+		/// <param name="match">替换处理函数，该函数参数说明：
+		/// 	<list type="number">
+		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
+		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
+		/// 	</list>
+		/// </param>
+		/// <returns>返回替换后的条件。</returns>
+		public static ICondition Replace(this ICondition criteria, string name, int maxDepth, Func<Condition, int, ICondition> match)
 		{
-			return Replace(criteria, name, 0, matched, out count);
+			return Replace(criteria, name, maxDepth, 0, match, out _);
 		}
 
-		private static ICondition Replace(this ICondition criteria, string name, int depth, Func<Condition, int, ICondition> matched, out int count)
+		/// <summary>
+		/// 替换条件中指定名称的条件项。
+		/// </summary>
+		/// <param name="criteria">待替换的条件。</param>
+		/// <param name="name">要替换的条件项名称。</param>
+		/// <param name="match">替换处理函数，该函数参数说明：
+		/// 	<list type="number">
+		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
+		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
+		/// 	</list>
+		/// </param>
+		/// <param name="count">输出参数，表示替换成功的数量。</param>
+		/// <returns>返回替换后的条件。</returns>
+		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> match, out int count)
+		{
+			return Replace(criteria, name, -1, 0, match, out count);
+		}
+
+		/// <summary>
+		/// 替换条件中指定名称的条件项。
+		/// </summary>
+		/// <param name="criteria">待替换的条件。</param>
+		/// <param name="name">要替换的条件项名称。</param>
+		/// <param name="maxDepth">最大的替换深度，如果为零或负数则表示不限深度。</param>
+		/// <param name="match">替换处理函数，该函数参数说明：
+		/// 	<list type="number">
+		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
+		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
+		/// 	</list>
+		/// </param>
+		/// <param name="count">输出参数，表示替换成功的数量。</param>
+		/// <returns>返回替换后的条件。</returns>
+		public static ICondition Replace(this ICondition criteria, string name, int maxDepth, Func<Condition, int, ICondition> match, out int count)
+		{
+			return Replace(criteria, name, maxDepth, 0, match, out count);
+		}
+
+		private static ICondition Replace(this ICondition criteria, string name, int maxDepth, int depth, Func<Condition, int, ICondition> match, out int count)
 		{
 			count = 0;
+
+			if(maxDepth > 0 && depth >= maxDepth)
+				return criteria;
 
 			if(criteria == null || string.IsNullOrEmpty(name))
 				return criteria;
@@ -55,9 +123,9 @@ namespace Zongsoft.Data
 			{
 				if(string.Equals(name, condition.Name, StringComparison.OrdinalIgnoreCase))
 				{
-					var replacement = matched(condition, depth);
-					count = object.Equals(condition, replacement) ? 0 : 1;
-					return replacement;
+					var result = match(condition, depth);
+					count = object.Equals(condition, result) ? 0 : 1;
+					return result;
 				}
 
 				return criteria;
@@ -74,7 +142,7 @@ namespace Zongsoft.Data
 						conditions[i],
 						name,
 						conditions[i] is ConditionCollection cs && cs.Combination != conditions.Combination ? depth + 1 : depth,
-						matched,
+						match,
 						out var temp);
 
 					count += temp;
