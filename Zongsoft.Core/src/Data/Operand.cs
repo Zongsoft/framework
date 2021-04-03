@@ -203,7 +203,7 @@ namespace Zongsoft.Data
 			#endregion
 		}
 
-		public class FieldOperand : Operand
+		public class FieldOperand : Operand, IEquatable<FieldOperand>
 		{
 			#region 构造函数
 			public FieldOperand(string name) : base(OperandType.Field)
@@ -220,10 +220,10 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
-			{
-				return this.Name;
-			}
+			public bool Equals(FieldOperand other) => other != null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			public override bool Equals(object obj) => obj is FieldOperand operand && this.Equals(operand);
+			public override int GetHashCode() => this.Name.ToLowerInvariant().GetHashCode();
+			public override string ToString() => this.Name;
 			#endregion
 		}
 
