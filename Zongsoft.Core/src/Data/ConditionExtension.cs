@@ -34,12 +34,17 @@ namespace Zongsoft.Data
 {
 	public static class ConditionExtension
 	{
-		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, ICondition> matched)
+		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> matched)
 		{
-			return Replace(criteria, name, matched, out _);
+			return Replace(criteria, name, 0, matched, out _);
 		}
 
-		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, ICondition> matched, out int count)
+		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> matched, out int count)
+		{
+			return Replace(criteria, name, 0, matched, out count);
+		}
+
+		private static ICondition Replace(this ICondition criteria, string name, int depth, Func<Condition, int, ICondition> matched, out int count)
 		{
 			count = 0;
 
@@ -50,11 +55,12 @@ namespace Zongsoft.Data
 			{
 				if(string.Equals(name, condition.Name, StringComparison.OrdinalIgnoreCase))
 				{
-					count = 1;
-					return matched(condition);
+					var replacement = matched(condition, depth);
+					count = object.Equals(condition, replacement) ? 0 : 1;
+					return replacement;
 				}
-				else
-					return criteria;
+
+				return criteria;
 			}
 
 			if(criteria is ConditionCollection conditions)
@@ -64,7 +70,13 @@ namespace Zongsoft.Data
 
 				for(int i = 0; i < conditions.Count; i++)
 				{
-					conditions[i] = Replace(conditions[i], name, matched, out var temp);
+					conditions[i] = Replace(
+						conditions[i],
+						name,
+						conditions[i] is ConditionCollection cs && cs.Combination != conditions.Combination ? depth + 1 : depth,
+						matched,
+						out var temp);
+
 					count += temp;
 				}
 			}
