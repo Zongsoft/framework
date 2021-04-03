@@ -43,7 +43,7 @@ namespace Zongsoft.Data
 		/// <param name="criteria">待替换的条件。</param>
 		/// <param name="name">要替换的条件项名称。</param>
 		/// <param name="match">替换处理函数，该函数参数说明：
-		/// 	<list type="number">
+		/// 	<list type="bullet">
 		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
@@ -61,7 +61,7 @@ namespace Zongsoft.Data
 		/// <param name="name">要替换的条件项名称。</param>
 		/// <param name="maxDepth">最大的替换深度，如果为零或负数则表示不限深度。</param>
 		/// <param name="match">替换处理函数，该函数参数说明：
-		/// 	<list type="number">
+		/// 	<list type="bullet">
 		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
@@ -78,7 +78,7 @@ namespace Zongsoft.Data
 		/// <param name="criteria">待替换的条件。</param>
 		/// <param name="name">要替换的条件项名称。</param>
 		/// <param name="match">替换处理函数，该函数参数说明：
-		/// 	<list type="number">
+		/// 	<list type="bullet">
 		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
@@ -97,7 +97,7 @@ namespace Zongsoft.Data
 		/// <param name="name">要替换的条件项名称。</param>
 		/// <param name="maxDepth">最大的替换深度，如果为零或负数则表示不限深度。</param>
 		/// <param name="match">替换处理函数，该函数参数说明：
-		/// 	<list type="number">
+		/// 	<list type="bullet">
 		/// 		<item>第1个参数：指定名称的待替换条件项；</item>
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
@@ -141,6 +141,7 @@ namespace Zongsoft.Data
 					conditions[i] = Replace(
 						conditions[i],
 						name,
+						maxDepth,
 						conditions[i] is ConditionCollection cs && cs.Combination != conditions.Combination ? depth + 1 : depth,
 						match,
 						out var temp);
