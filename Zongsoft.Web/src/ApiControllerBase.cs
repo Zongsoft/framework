@@ -212,15 +212,21 @@ namespace Zongsoft.Web
 			{
 				var keys = this.DataService.DataAccess.Metadata.Entities.Get(this.DataService.Name).Key;
 
-				object route = keys.Length switch
-				{
-					1 => new { key = GetModelMemberValue(model, keys[0].Name) },
-					2 => new { key1 = GetModelMemberValue(model, keys[0].Name), key2 = GetModelMemberValue(model, keys[1].Name) },
-					3 => new { key1 = GetModelMemberValue(model, keys[0].Name), key2 = GetModelMemberValue(model, keys[1].Name), key3 = GetModelMemberValue(model, keys[2].Name) },
-					_ => new { key = string.Empty },
-				};
+				if(keys == null || keys.Length == 0)
+					return this.CreatedAtAction(nameof(Get), this.RouteData.Values, model);
 
-				return this.CreatedAtAction(nameof(Get), route, model);
+				var text = new System.Text.StringBuilder(50);
+
+				for(int i = 0; i < keys.Length; i++)
+				{
+					if(text.Length > 0)
+						text.Append('-');
+
+					text.Append(GetModelMemberValue(model, keys[0].Name)?.ToString());
+				}
+
+				this.RouteData.Values["key"] = text.ToString();
+				return this.CreatedAtAction(nameof(Get), this.RouteData.Values, model);
 			}
 
 			return this.Conflict();
