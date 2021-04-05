@@ -43,5 +43,16 @@ namespace Zongsoft.Data.MySql
 		#region 构造函数
 		private MySqlExistStatementVisitor() { }
 		#endregion
+
+		#region 重写方法
+		protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
+		{
+			//调用基类同名方法
+			base.OnVisit(context, statement);
+
+			//限制最多只返回一条记录
+			context.Write(" LIMIT 1");
+		}
+		#endregion
 	}
 }

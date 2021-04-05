@@ -43,5 +43,16 @@ namespace Zongsoft.Data.MsSql
 		#region 构造函数
 		private MsSqlExistStatementVisitor() { }
 		#endregion
+
+		#region 重写方法
+		protected override void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
+		{
+			//调用基类同名方法
+			base.VisitSelectOption(context, clause);
+
+			//限制只返回一条记录
+			context.Write("TOP(1) ");
+		}
+		#endregion
 	}
 }
