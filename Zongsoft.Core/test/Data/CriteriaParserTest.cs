@@ -66,7 +66,7 @@ namespace Zongsoft.Data.Tests
 		[Fact]
 		private void TestParse2()
 		{
-			string TEXT = @"k1:v1+checked";
+			string TEXT = @" +  + k1:v1+++checked + ++ ";
 			var succeed = CriteriaParser.TryParse(TEXT.AsSpan(), out var result);
 			AssertResult(result);
 

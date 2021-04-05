@@ -141,6 +141,9 @@ namespace Zongsoft.Data
 		#region 状态处理
 		private static void DoNone(ref CriteriaParserContext context)
 		{
+			if(context.Character == '+' || context.IsWhitespace)
+				return;
+
 			if(char.IsLetter(context.Character) || context.Character == '_')
 			{
 				context.Reset(State.Key, out _);
@@ -148,8 +151,7 @@ namespace Zongsoft.Data
 			}
 			else
 			{
-				if(!context.IsWhitespace)
-					context.Error($"An illegal character ‘{context.Character}’ is at the {context.Index + 1} character.");
+				context.Error($"An illegal character ‘{context.Character}’ is at the {context.Index + 1} character.");
 			}
 		}
 
