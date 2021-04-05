@@ -63,8 +63,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			context.Write("SELECT ");
 
-			if(clause.IsDistinct)
-				context.Write("DISTINCT ");
+			this.VisitSelectOption(context, clause);
 
 			int index = 0;
 
@@ -75,6 +74,12 @@ namespace Zongsoft.Data.Common.Expressions
 
 				context.Visit(member);
 			}
+		}
+
+		protected virtual void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
+		{
+			if(clause.IsDistinct)
+				context.Write("DISTINCT ");
 		}
 
 		protected virtual void VisitFrom(ExpressionVisitorContext context, ICollection<ISource> sources)
