@@ -64,12 +64,14 @@ namespace Zongsoft.Data
 				ConditionCollection.And(changes.Select(p => GetCondition(criteria, descriptor.Properties[p.Key], path)));
 		}
 
-		public static ICondition Transform(Type modelType, string expression, bool strict) => Transform(modelType, expression, 0, -1, strict);
+		public static ICondition Transform<TCriteria>(string expression, bool strict) => Transform(typeof(TCriteria), expression, 0, -1, strict);
+		public static ICondition Transform(Type criteriaType, string expression, bool strict) => Transform(criteriaType, expression, 0, -1, strict);
 
-		public static ICondition Transform(Type modelType, string expression, int start = 0, int count = -1, bool strict = true)
+		public static ICondition Transform<TCriteria>(string expression, int start = 0, int count = -1, bool strict = true) => Transform(typeof(TCriteria), expression, start, count, strict);
+		public static ICondition Transform(Type criteriaType, string expression, int start = 0, int count = -1, bool strict = true)
 		{
-			if(modelType == null)
-				throw new ArgumentNullException(nameof(modelType));
+			if(criteriaType == null)
+				throw new ArgumentNullException(nameof(criteriaType));
 
 			KeyValuePair<string, string>[] members;
 
@@ -78,22 +80,23 @@ namespace Zongsoft.Data
 			else if(!CriteriaParser.TryParse(expression, start, count, out members))
 				return null;
 
-			return Transform(modelType, members, strict);
+			return Transform(criteriaType, members, strict);
 		}
 
-		public static ICondition Transform(Type modelType, IEnumerable<KeyValuePair<string, string>> members, bool strict = true)
+		public static ICondition Transform<TCriteria>(IEnumerable<KeyValuePair<string, string>> members, bool strict = true) => Transform(typeof(TCriteria), members, strict);
+		public static ICondition Transform(Type criteriaType, IEnumerable<KeyValuePair<string, string>> members, bool strict = true)
 		{
-			if(modelType == null)
-				throw new ArgumentNullException(nameof(modelType));
+			if(criteriaType == null)
+				throw new ArgumentNullException(nameof(criteriaType));
 
 			if(members == null || !members.Any())
 				return null;
 
-			if(!typeof(IModel).IsAssignableFrom(modelType))
-				throw new ArgumentException($"The specified ‘{modelType.FullName}’ type is not a valid criteria type.");
+			if(!typeof(IModel).IsAssignableFrom(criteriaType))
+				throw new ArgumentException($"The specified ‘{criteriaType.FullName}’ type is not a valid criteria type.");
 
-			var instance = (IModel)(modelType.IsAbstract ? Model.Build(modelType) : Activator.CreateInstance(modelType));
-			var descriptor = _cache.GetOrAdd(modelType, type => new CriteriaDescriptor(type));
+			var instance = (IModel)(criteriaType.IsAbstract ? Model.Build(criteriaType) : Activator.CreateInstance(criteriaType));
+			var descriptor = _cache.GetOrAdd(criteriaType, type => new CriteriaDescriptor(type));
 			var properties = new List<CriteriaPropertyDescripor>();
 
 			foreach(var member in members)
@@ -135,7 +138,7 @@ namespace Zongsoft.Data
 				else
 				{
 					if(strict)
-						throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{modelType.FullName}' type.");
+						throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{criteriaType.FullName}' type.");
 				}
 			}
 
