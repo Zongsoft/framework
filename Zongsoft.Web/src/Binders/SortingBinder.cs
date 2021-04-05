@@ -40,7 +40,7 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Web.Binders
 {
-	internal class SortingBinder : IModelBinder
+	public class SortingBinder : IModelBinder
 	{
 		public Task BindModelAsync(ModelBindingContext bindingContext)
 		{
