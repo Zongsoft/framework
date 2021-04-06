@@ -83,7 +83,7 @@ namespace Zongsoft.Data
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
 		/// </param>
-		/// <param name="count">输出参数，表示替换成功的数量。</param>
+		/// <param name="count">输出参数，表示匹配项的数量。</param>
 		/// <returns>返回替换后的条件。</returns>
 		public static ICondition Replace(this ICondition criteria, string name, Func<Condition, int, ICondition> match, out int count)
 		{
@@ -102,7 +102,7 @@ namespace Zongsoft.Data
 		/// 		<item>第2个参数：待替换条件项所处深度(深度值从零开始)。</item>
 		/// 	</list>
 		/// </param>
-		/// <param name="count">输出参数，表示替换成功的数量。</param>
+		/// <param name="count">输出参数，表示匹配项的数量。</param>
 		/// <returns>返回替换后的条件。</returns>
 		public static ICondition Replace(this ICondition criteria, string name, int maxDepth, Func<Condition, int, ICondition> match, out int count)
 		{
@@ -123,9 +123,8 @@ namespace Zongsoft.Data
 			{
 				if(string.Equals(name, condition.Name, StringComparison.OrdinalIgnoreCase))
 				{
-					var result = match(condition, depth);
-					count = object.Equals(condition, result) ? 0 : 1;
-					return result;
+					count = 1;
+					return match(condition, depth);
 				}
 
 				return criteria;
