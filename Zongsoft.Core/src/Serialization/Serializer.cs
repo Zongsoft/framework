@@ -369,6 +369,8 @@ namespace Zongsoft.Serialization
 				{
 					switch(reader.TokenType)
 					{
+						case JsonTokenType.Number:
+							return (T)Data.Range.Create(type, GetValue(ref reader, type.GenericTypeArguments[0]));
 						case JsonTokenType.String:
 							return (T)Common.Convert.ConvertValue(reader.GetString(), type);
 						case JsonTokenType.StartObject:
