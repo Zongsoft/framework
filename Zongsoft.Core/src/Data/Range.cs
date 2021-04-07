@@ -42,13 +42,32 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public static object Create(Type type, object value)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			if(!type.IsValueType)
+				throw new ArgumentException($"The specified '{nameof(type)}' parameter must be a value type.");
+
+			if(type.IsGenericType)
+			{
+				var prototype = type.GetGenericTypeDefinition();
+
+				if(prototype == typeof(Nullable<>) || prototype == typeof(Range<>))
+					type = type.GenericTypeArguments[0];
+			}
+
+			return Activator.CreateInstance(typeof(Range<>).MakeGenericType(type), new object[] { Common.Convert.ConvertValue(value, type) });
+		}
+
 		public static object Create(Type type, object minimum, object maximum)
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
 			if(!type.IsValueType)
-				throw new ArgumentException($"The specified 'type' parameter must be a value type.");
+				throw new ArgumentException($"The specified '{nameof(type)}' parameter must be a value type.");
 
 			if(type.IsGenericType)
 			{
