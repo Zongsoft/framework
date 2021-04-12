@@ -42,7 +42,7 @@ namespace Zongsoft.Data
 			var result = ParseCore(span, start, count);
 
 			if(result.IsFailed(out var message))
-				throw new DataArgumentException("criteria", message);
+				throw new DataArgumentException("$criteria", message);
 
 			return result.Members;
 		}

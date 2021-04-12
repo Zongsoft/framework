@@ -52,7 +52,7 @@ namespace Zongsoft.Data
 
 		protected Collections.INamedCollection<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, Collections.INamedCollection<TMember> members = null)
 		{
-			return this.Parse(expression, mapper, message => throw new DataArgumentException("schema", message), data, members);
+			return this.Parse(expression, mapper, message => throw new DataArgumentException("$schema", message), data, members);
 		}
 
 		private Collections.INamedCollection<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, Collections.INamedCollection<TMember> members = null)
