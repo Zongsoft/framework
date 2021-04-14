@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -178,6 +179,46 @@ namespace Zongsoft.Data
 				return _wildcard + value.ToString().Trim(_wildcard) + _wildcard;
 
 			return value;
+		}
+		#endregion
+
+		#region 嵌套子类
+		public class StringSplitter : ConditionConverter
+		{
+			#region 公共字段
+			public readonly char[] Separators;
+			#endregion
+
+			#region 构造函数
+			public StringSplitter() => this.Separators = new[] { ',', ';', '|' };
+			public StringSplitter(params char[] separators) => this.Separators = separators;
+			#endregion
+
+			#region 重写方法
+			public override ICondition Convert(ConditionConverterContext context)
+			{
+				if(context.Value is string text && !string.IsNullOrEmpty(text))
+				{
+					var values = Common.StringExtension.Slice(text, this.Separators).ToArray();
+
+					if(context.Names.Length == 1)
+						return values.Length == 1 ? Condition.Equal(context.Names[0], values[0]) : Condition.In(context.Names[0], values);
+
+					var criteria = ConditionCollection.Or();
+
+					for(int i = 0; i < context.Names.Length; i++)
+					{
+						criteria.Add(
+							values.Length == 1 ? Condition.Equal(context.Names[i], values[0]) : Condition.In(context.Names[i], values)
+						);
+					}
+
+					return criteria;
+				}
+
+				return base.Convert(context);
+			}
+			#endregion
 		}
 		#endregion
 	}
