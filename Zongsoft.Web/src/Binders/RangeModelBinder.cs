@@ -58,7 +58,7 @@ namespace Zongsoft.Web.Binders
 			var value = context.ValueProvider.GetValue(context.ModelName);
 
 			if(string.IsNullOrEmpty(value.FirstValue))
-				context.Result = ModelBindingResult.Success(Zongsoft.Data.Range.Empty<DateTime>());
+				context.Result = ModelBindingResult.Success(Zongsoft.Data.Range.Empty<T>());
 			else
 			{
 				if(_TryParse_.Invoke(value.FirstValue, out var range))
