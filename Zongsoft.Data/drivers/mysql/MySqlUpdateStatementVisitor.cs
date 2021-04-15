@@ -97,21 +97,18 @@ namespace Zongsoft.Data.MySql
 
 			if(statement.HasFrom)
 			{
-				var expressions = Expression.Block(BlockExpressionDelimiter.Space);
+				var conditions = ConditionExpression.And();
 
 				foreach(var source in statement.From)
 				{
 					if(source is JoinClause join)
-					{
-						expressions.Add(join.Type == JoinType.Inner ? Expression.Literal("AND") : Expression.Literal("OR"));
-						expressions.Add(join.Conditions);
-					}
+						conditions.Add(join.Conditions);
 				}
 
-				if(expressions.Count > 0)
+				if(conditions.Count > 0)
 				{
-					expressions.Insert(0, where);
-					where = expressions;
+					conditions.Add(where);
+					where = conditions;
 				}
 			}
 
