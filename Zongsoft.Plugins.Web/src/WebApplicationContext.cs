@@ -66,7 +66,7 @@ namespace Zongsoft.Web
 		/// <inheritdoc />
 		public override ClaimsPrincipal Principal
 		{
-			get => this.HttpContext.User;
+			get => this.HttpContext?.User;
 		}
 		#endregion
 
