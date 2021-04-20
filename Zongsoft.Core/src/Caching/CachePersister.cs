@@ -28,26 +28,24 @@
  */
 
 using System;
+using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace Zongsoft.Caching
 {
-	public abstract class CachePersister<T>
+	public abstract class CachePersister<T> : IDisposable
 	{
 		#region 成员字段
-		private readonly ConcurrentBag<T> _cache;
+		private Timer _timer;
 		private readonly int _limit;
 		private readonly TimeSpan _duration;
-		private readonly Timer _timer;
+		private readonly ConcurrentBag<T> _cache;
 		#endregion
 
 		#region 构造函数
-		protected CachePersister() : this(TimeSpan.Zero)
-		{
-		}
+		protected CachePersister() : this(TimeSpan.Zero) { }
 
 		protected CachePersister(TimeSpan duration, int limit = 256)
 		{
@@ -89,6 +87,34 @@ namespace Zongsoft.Caching
 		private void OnTick(object state)
 		{
 			this.Flush();
+		}
+		#endregion
+
+		#region 处置方法
+		protected virtual void Dispose(bool disposing)
+		{
+			var timer = Interlocked.Exchange(ref _timer, null);
+
+			if(timer != null)
+			{
+				if(disposing)
+				{
+					timer.Change(Timeout.Infinite, Timeout.Infinite);
+					timer.Dispose();
+
+					//持久化缓存
+					this.Flush();
+
+					//清空缓存
+					_cache?.Clear();
+				}
+			}
+		}
+
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 		#endregion
 
