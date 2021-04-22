@@ -108,7 +108,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			//获取当前路径对应的服务区域
 			var region = this.GetRegion(bucket);
 
-			return StorageServiceCenter.GetInstance(region, false).GetRequestUrl(path.FullPath);
+			return StorageServiceCenter.GetInstance(region, false).GetRequestUrl(path.FullPath, true);
 		}
 		#endregion
 

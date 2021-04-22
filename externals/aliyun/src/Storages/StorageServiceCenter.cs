@@ -53,18 +53,18 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public string GetRequestUrl(string path)
+		public string GetRequestUrl(string path, bool secured = false)
 		{
-			string resourcePath;
-			return this.GetRequestUrl(path, out resourcePath);
+			return this.GetRequestUrl(path, secured, out _);
 		}
 
-		public string GetRequestUrl(string path, out string resourcePath)
+		public string GetRequestUrl(string path, bool secured, out string resourcePath)
 		{
-			string bucketName;
-			this.ResolvePath(path, out bucketName, out resourcePath);
+			this.ResolvePath(path, out var bucketName, out resourcePath);
 
-			return Uri.EscapeUriString(string.Format("http://{0}.{1}/{2}", bucketName.ToLowerInvariant(), this.Path, resourcePath));
+			return secured ?
+				Uri.EscapeUriString(string.Format("https://{0}.{1}/{2}", bucketName, this.Path, resourcePath)) :
+				Uri.EscapeUriString(string.Format("http://{0}.{1}/{2}", bucketName, this.Path, resourcePath));
 		}
 		#endregion
 
