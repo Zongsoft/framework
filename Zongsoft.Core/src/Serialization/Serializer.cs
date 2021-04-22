@@ -620,10 +620,8 @@ namespace Zongsoft.Serialization
 									model.TrySetValue(member.Name, reader.GetDateTime());
 								else if(memberType == typeof(DateTimeOffset))
 									model.TrySetValue(member.Name, reader.GetDateTimeOffset());
-								else if(memberType.IsEnum)
-									model.TrySetValue(member.Name, Enum.Parse(memberType, reader.GetString(), true));
 								else
-									model.TrySetValue(member.Name, Common.Convert.ConvertValue(reader.GetString(), memberType));
+									SetMemberValue(model, member.Name, reader.GetString(), memberType);
 								break;
 							case JsonTokenType.Number:
 								switch(Type.GetTypeCode(memberType))
@@ -862,6 +860,22 @@ namespace Zongsoft.Serialization
 					}
 
 					return null;
+				}
+
+				private static bool SetMemberValue(Data.IModel model, string name, string rawValue, Type memberType)
+				{
+					if(memberType.IsEnum)
+					{
+						if(Enum.TryParse(memberType, rawValue, true, out var value))
+							return model.TrySetValue(name, value);
+					}
+					else
+					{
+						if(Common.Convert.TryConvertValue(rawValue, memberType, out var value))
+							return model.TrySetValue(name, value);
+					}
+
+					throw new JsonException($"Cannot convert the ‘{rawValue}’ value of the ‘{name}’ member to the ‘{memberType.FullName}’ type.");
 				}
 			}
 		}
