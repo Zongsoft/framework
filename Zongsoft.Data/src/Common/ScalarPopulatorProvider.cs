@@ -59,64 +59,54 @@ namespace Zongsoft.Data.Common
 
 		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataReader reader)
 		{
-			//获取指定类型对应的装配器
-			var populator = this.GetPopulator(type);
-
-			if(populator == null)
-			{
-				//如果是可空类型，则获取可空类型的定义元类型
-				if(type.IsValueType && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-				{
-					populator = this.GetPopulator(type.GetGenericArguments()[0]);
-				}
-			}
-
-			return populator;
+			return Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
+				this.GetPopulator(underlyingType, true) :
+				this.GetPopulator(type, false);
 		}
 		#endregion
 
 		#region 私有方法
-		private IDataPopulator GetPopulator(Type type)
+		private IDataPopulator GetPopulator(Type type, bool nullable)
 		{
 			switch(Type.GetTypeCode(type))
 			{
 				case TypeCode.Char:
-					return ScalarPopulator.Char;
+					return nullable ? NullablePopulator.Char : ScalarPopulator.Char;
 				case TypeCode.String:
 					return ScalarPopulator.String;
 				case TypeCode.Boolean:
-					return ScalarPopulator.Boolean;
+					return nullable ? NullablePopulator.Boolean : ScalarPopulator.Boolean;
 				case TypeCode.DateTime:
-					return ScalarPopulator.DateTime;
+					return nullable ? NullablePopulator.DateTime : ScalarPopulator.DateTime;
 				case TypeCode.Byte:
-					return ScalarPopulator.Byte;
+					return nullable ? NullablePopulator.Byte : ScalarPopulator.Byte;
 				case TypeCode.SByte:
-					return ScalarPopulator.SByte;
+					return nullable ? NullablePopulator.SByte : ScalarPopulator.SByte;
 				case TypeCode.Int16:
-					return ScalarPopulator.Int16;
+					return nullable ? NullablePopulator.Int16 : ScalarPopulator.Int16;
 				case TypeCode.Int32:
-					return ScalarPopulator.Int32;
+					return nullable ? NullablePopulator.Int32 : ScalarPopulator.Int32;
 				case TypeCode.Int64:
-					return ScalarPopulator.Int64;
+					return nullable ? NullablePopulator.Int64 : ScalarPopulator.Int64;
 				case TypeCode.UInt16:
-					return ScalarPopulator.UInt16;
+					return nullable ? NullablePopulator.UInt16 : ScalarPopulator.UInt16;
 				case TypeCode.UInt32:
-					return ScalarPopulator.UInt32;
+					return nullable ? NullablePopulator.UInt32 : ScalarPopulator.UInt32;
 				case TypeCode.UInt64:
-					return ScalarPopulator.UInt64;
+					return nullable ? NullablePopulator.UInt64 : ScalarPopulator.UInt64;
 				case TypeCode.Single:
-					return ScalarPopulator.Single;
+					return nullable ? NullablePopulator.Single : ScalarPopulator.Single;
 				case TypeCode.Double:
-					return ScalarPopulator.Double;
+					return nullable ? NullablePopulator.Double : ScalarPopulator.Double;
 				case TypeCode.Decimal:
-					return ScalarPopulator.Decimal;
+					return nullable ? NullablePopulator.Decimal : ScalarPopulator.Decimal;
 			}
 
 			if(type == typeof(Guid))
-				return ScalarPopulator.Guid;
+				return nullable ? NullablePopulator.Guid : ScalarPopulator.Guid;
 
 			if(type == typeof(DateTimeOffset))
-				return ScalarPopulator.DateTimeOffset;
+				return nullable ? NullablePopulator.DateTimeOffset : ScalarPopulator.DateTimeOffset;
 
 			return _converters.GetOrAdd(type, t => new ConverterPopulater(t));
 		}
