@@ -54,7 +54,7 @@ namespace Zongsoft.Data.Common.Expressions
 					if(parameter.Schema == null || parameter.HasValue)
 					{
 						if(parameter.Value is IDataValueBinder binder)
-							dbParameter.Value = binder.Bind(context, data, GetParameterValue(data, parameter.Schema, null));
+							dbParameter.Value = binder.Bind(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null);
 						else
 							dbParameter.Value = parameter.Value;
 
@@ -76,25 +76,39 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private static object GetParameterValue(object data, SchemaMember member, DbType? dbType)
+		private static bool TryGetParameterValue(object data, SchemaMember member, DbType? dbType, out object value)
 		{
+			value = null;
+
 			if(data is IModel model)
 			{
 				if(model.HasChanges(member.Name))
-					return member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
-				else
-					return ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
+				{
+					value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+					return true;
+				}
+
+				return false;
 			}
 
 			if(data is IDataDictionary dictionary)
 			{
 				if(dictionary.HasChanges(member.Name))
-					return member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
-				else
-					return ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
+				{
+					value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+					return true;
+				}
+
+				return false;
 			}
 
-			return member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+			value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+			return true;
+		}
+
+		private static object GetParameterValue(object data, SchemaMember member, DbType? dbType)
+		{
+			return TryGetParameterValue(data, member, dbType, out var value) ? value : ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
 		}
 
 		public static ISource From(this IStatement statement, string memberPath, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
