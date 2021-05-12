@@ -163,14 +163,14 @@ namespace Zongsoft.Data.Common
 
 			//如果需要继续并且有从属语句则尝试绑定从属写操作数据
 			if(continued && statement.HasSlaves)
-				this.Bind(context, statement.Slaves);
+				this.Bind(context.Data, statement.Slaves);
 
 			return continued;
 		}
 
-		private void Bind(IDataMutateContext context, IEnumerable<IStatementBase> statements)
+		private void Bind(object data, IEnumerable<IStatementBase> statements)
 		{
-			if(context.Data == null)
+			if(data == null)
 				return;
 
 			foreach(var statement in statements)
@@ -178,7 +178,7 @@ namespace Zongsoft.Data.Common
 				if(statement is IMutateStatement mutation && mutation.Schema != null)
 				{
 					//设置子新增语句中的关联参数值
-					this.SetLinkedParameters(mutation, context.Data);
+					this.SetLinkedParameters(mutation, data);
 				}
 			}
 		}
