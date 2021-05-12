@@ -99,6 +99,46 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共方法
+		public bool TryGetValue(object target, Type conversionType, out object value)
+		{
+			value = null;
+
+			if(target == null)
+				return false;
+
+			if(target is IDictionary<string, object> generic)
+			{
+				var result = generic.TryGetValue(this.Property.Name, out var propertyValue);
+
+				if(result)
+					value = this.ConvertValue(propertyValue, conversionType);
+
+				return result;
+			}
+
+			if(target is IDictionary classic)
+			{
+				var existed = classic.Contains(this.Property.Name);
+
+				if(existed)
+					value = this.ConvertValue(classic[this.Property.Name], conversionType);
+
+				return existed;
+			}
+
+			if(this.Member != null && this.Member.DeclaringType.IsAssignableFrom(target.GetType()))
+			{
+				var result = Reflection.Reflector.TryGetValue(this.Member, ref target, out var memberValue);
+
+				if(result)
+					value = this.ConvertValue(memberValue, conversionType);
+
+				return result;
+			}
+
+			return false;
+		}
+
 		public object GetValue(object target, Type conversionType = null)
 		{
 			if(target == null)

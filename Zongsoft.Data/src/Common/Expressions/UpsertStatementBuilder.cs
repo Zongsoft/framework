@@ -51,7 +51,20 @@ namespace Zongsoft.Data.Common.Expressions
 
 			//更新当前操作的容器数据
 			if(data != null && owner != null)
-				data = owner.Token.GetValue(data);
+			{
+				/*
+				 * 如果从当前容器数据中获取指定成员值失败，则：
+				 * 1). 容器数据是集合类型，无法确定从集合中的哪个元素来获取指定成员的值，因此设置上下文数据为空；
+				 * 2). 容器数据不是集合类型，则说明指定的成员可能有误或发生了内部错误，因此抛出异常。
+				 */
+
+				if(owner.Token.TryGetValue(data, null, out var value))
+					data = value;
+				else if(Zongsoft.Common.TypeExtension.IsEnumerable(data.GetType()))
+					data = null;
+				else
+					throw new DataException($"Cannot get the specified '{owner.Name}' member from the '{data.GetType().FullName}' type.");
+			}
 
 			foreach(var inherit in inherits)
 			{
