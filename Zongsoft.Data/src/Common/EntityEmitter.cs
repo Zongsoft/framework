@@ -53,6 +53,9 @@ namespace Zongsoft.Data.Common
 		{
 			var fieldType = field.FieldType;
 
+			if(Zongsoft.Common.TypeExtension.IsNullable(fieldType, out var underlyingType))
+				fieldType = underlyingType;
+
 			if(fieldType.IsEnum)
 				fieldType = Enum.GetUnderlyingType(fieldType);
 
@@ -92,6 +95,10 @@ namespace Zongsoft.Data.Common
 				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Ldarg_2);
 				generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(fieldType));
+
+				if(underlyingType != null)
+					generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
+
 				generator.Emit(OpCodes.Stfld, field);
 			}
 			else
@@ -126,6 +133,9 @@ namespace Zongsoft.Data.Common
 		public static Populator GeneratePropertySetter(PropertyInfo property, TypeConverter converter)
 		{
 			var propertyType = property.PropertyType;
+
+			if(Zongsoft.Common.TypeExtension.IsNullable(propertyType, out var underlyingType))
+				propertyType = underlyingType;
 
 			if(propertyType.IsEnum)
 				propertyType = Enum.GetUnderlyingType(propertyType);
@@ -166,6 +176,10 @@ namespace Zongsoft.Data.Common
 				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Ldarg_2);
 				generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(propertyType));
+
+				if(underlyingType != null)
+					generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
+
 				generator.Emit(OpCodes.Callvirt, property.SetMethod);
 			}
 			else
