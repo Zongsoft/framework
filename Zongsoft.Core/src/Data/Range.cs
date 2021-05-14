@@ -100,6 +100,12 @@ namespace Zongsoft.Data
 		public static Range<T> Parse<T>(string text) where T : struct, IComparable<T> => Range<T>.Parse(text);
 		public static bool TryParse<T>(string text, out Range<T> value) where T : struct, IComparable<T> => Range<T>.TryParse(text, out value);
 
+		public static bool In<T>(T value, T? minimum, T? maximum) where T : struct, IComparable<T>
+		{
+			var range = new Range<T>(minimum, maximum);
+			return range.Contains(value);
+		}
+
 		public static bool IsRange(object target)
 		{
 			return target == null ? false : IsRange(target.GetType());
