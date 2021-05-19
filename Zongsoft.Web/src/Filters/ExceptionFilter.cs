@@ -95,6 +95,14 @@ namespace Zongsoft.Web.Filters
 					});
 
 					break;
+				case DataOperationException operationException:
+					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
+					{
+						Status = StatusCodes.Status412PreconditionFailed,
+						Detail = operationException.Message,
+					});
+
+					break;
 				case NotSupportedException unsupported:
 				case NotImplementedException unimplemented:
 					context.Result = new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
