@@ -298,7 +298,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
+							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -319,7 +319,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
+							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -327,8 +327,8 @@ namespace Zongsoft.Security
 			}
 			else if(configure != null)
 			{
-				Reflector.TrySetValue(model, "FullName", identity.Label);
-				Reflector.TrySetValue(model, "Nickname", identity.Label);
+				Reflector.TrySetValue(ref model, "FullName", identity.Label);
+				Reflector.TrySetValue(ref model, "Nickname", identity.Label);
 
 				var property = model.GetType().GetProperty("Properties");
 
@@ -340,7 +340,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, model, out var value) && value is IDictionary<string, object> properties)
+							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -587,25 +587,25 @@ namespace Zongsoft.Security
 			switch(claim.Type)
 			{
 				case ClaimTypes.Name:
-					return Reflector.TrySetValue(target, nameof(Membership.IUser.Name), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Name), claim.Value);
 				case ClaimTypes.NameIdentifier:
-					return uint.TryParse(claim.Value, out var userId) && Reflector.TrySetValue(target, nameof(Membership.IUser.UserId), userId);
+					return uint.TryParse(claim.Value, out var userId) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.UserId), userId);
 				case ClaimNames.Namespace:
-					return Reflector.TrySetValue(target, nameof(Membership.IUser.Namespace), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Namespace), claim.Value);
 				case ClaimNames.Description:
-					return Reflector.TrySetValue(target, nameof(Membership.IUser.Description), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Description), claim.Value);
 				case ClaimTypes.Email:
-					return Reflector.TrySetValue(target, nameof(Membership.IUser.Email), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Email), claim.Value);
 				case ClaimTypes.MobilePhone:
-					return Reflector.TrySetValue(target, nameof(Membership.IUser.Phone), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Phone), claim.Value);
 				case ClaimNames.UserStatus:
-					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && Reflector.TrySetValue(target, nameof(Membership.IUser.Status), status);
+					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Status), status);
 				case ClaimNames.UserStatusTimestamp:
-					return DateTime.TryParse(claim.Value, out var timestamp) && Reflector.TrySetValue(target, nameof(Membership.IUser.StatusTimestamp), timestamp);
+					return DateTime.TryParse(claim.Value, out var timestamp) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.StatusTimestamp), timestamp);
 				case ClaimNames.Creation:
-					return DateTime.TryParse(claim.Value, out var creation) && Reflector.TrySetValue(target, nameof(Membership.IUser.Creation), creation);
+					return DateTime.TryParse(claim.Value, out var creation) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Creation), creation);
 				case ClaimNames.Modification:
-					return DateTime.TryParse(claim.Value, out var modification) && Reflector.TrySetValue(target, nameof(Membership.IUser.Modification), modification);
+					return DateTime.TryParse(claim.Value, out var modification) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Modification), modification);
 			}
 
 			return false;

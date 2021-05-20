@@ -342,7 +342,7 @@ namespace Zongsoft.Data.Common.Expressions
 						GetField(statement, ((Operand.FieldOperand)operand).Name, out dbType) :
 						new FieldIdentifier(((Operand.FieldOperand)operand).Name);
 				case OperandType.Constant:
-					var value = Reflection.Reflector.GetValue(operand, nameof(Operand.ConstantOperand<object>.Value));
+					var value = Reflection.Reflector.GetValue(ref operand, nameof(Operand.ConstantOperand<object>.Value));
 
 					if(value == null || Convert.IsDBNull(value))
 						return Expression.Constant(null);

@@ -671,8 +671,9 @@ namespace Zongsoft.Serialization
 								if(!model.TrySetValue(member.Name, value))
 								{
 									var collectionType = GetImplementedContract(memberType, typeof(ICollection<>));
+									T modelObject = (T)model;
 
-									if(collectionType != null && Reflection.Reflector.TryGetValue(member, (T)model, out var target))
+									if(collectionType != null && Reflection.Reflector.TryGetValue<T>(member, ref modelObject, out var target))
 									{
 										var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
 

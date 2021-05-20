@@ -393,7 +393,7 @@ namespace Zongsoft.Plugins
 						//Reflection.MemberAccess.TryGetMemberType(_value, property.Name, out var propertyType, out _);
 						//Reflection.MemberAccess.TrySetMemberValue(_value, property.Name, property.GetValue(propertyType));
 
-						Reflection.Reflector.SetValue(_value, property.Name, property.GetValue(null));
+						Reflection.Reflector.SetValue(ref _value, property.Name, property.GetValue(null));
 					}
 				}
 			}

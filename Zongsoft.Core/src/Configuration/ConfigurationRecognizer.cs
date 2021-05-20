@@ -100,7 +100,7 @@ namespace Zongsoft.Configuration
 			}
 
 			if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => ConfigurationUtility.GetConverter(_unrecognizedProperty), out var convertedValue))
-				Reflection.Reflector.SetValue(dictionary, "Item", convertedValue, new object[] { configuration.Key });
+				Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, new object[] { configuration.Key });
 		}
 		#endregion
 	}

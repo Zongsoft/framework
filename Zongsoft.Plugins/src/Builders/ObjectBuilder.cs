@@ -159,7 +159,7 @@ namespace Zongsoft.Plugins.Builders
 			//第三步：尝试获取容器对象的默认属性标签
 			var defaultMember = GetDefaultMemberName(containerType);
 
-			if(defaultMember != null && defaultMember.Length > 0 && this.Append(Reflection.Reflector.GetValue(container, defaultMember), child, key))
+			if(defaultMember != null && defaultMember.Length > 0 && this.Append(Reflection.Reflector.GetValue(ref container, defaultMember), child, key))
 				return true;
 
 			//第四步：进行特定方法绑定

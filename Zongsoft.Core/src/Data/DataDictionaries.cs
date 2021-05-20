@@ -209,7 +209,7 @@ namespace Zongsoft.Data
 			var model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
 
 			foreach(DictionaryEntry entry in _dictionary)
-				Reflector.TrySetValue(model, entry.Key.ToString(), entry.Value);
+				Reflector.TrySetValue(ref model, entry.Key.ToString(), entry.Value);
 
 			return model;
 		}
@@ -704,7 +704,7 @@ namespace Zongsoft.Data
 			var model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
 
 			foreach(var entry in _dictionary)
-				Reflector.TrySetValue(model, entry.Key, entry.Value);
+				Reflector.TrySetValue(ref model, entry.Key, entry.Value);
 
 			return model;
 		}
@@ -1184,7 +1184,7 @@ namespace Zongsoft.Data
 			model = typeof(T).IsAbstract || typeof(T).IsInterface ? Model.Build<T>() : System.Activator.CreateInstance<T>();
 
 			foreach(var member in _members)
-				Reflector.TrySetValue(model, member.Key, Reflector.GetValue(member.Value, ref _data));
+				Reflector.TrySetValue(ref model, member.Key, Reflector.GetValue(member.Value, ref _data));
 
 			return model;
 		}
@@ -1598,7 +1598,7 @@ namespace Zongsoft.Data
 
 			foreach(var entry in _model.GetChanges())
 			{
-				Reflector.TrySetValue(model, entry.Key, entry.Value);
+				Reflector.TrySetValue(ref model, entry.Key, entry.Value);
 			}
 
 			return model;

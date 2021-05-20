@@ -408,7 +408,7 @@ namespace Zongsoft.Data
 								}
 								else
 								{
-									if(Reflection.Reflector.GetValue(data, reference.Name) == null && !this.GetRequiredValue(context, reference, out value))
+									if(Reflection.Reflector.GetValue(ref data, reference.Name) == null && !this.GetRequiredValue(context, reference, out value))
 										throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
 								}
 
