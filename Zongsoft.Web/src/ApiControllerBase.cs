@@ -102,13 +102,13 @@ namespace Zongsoft.Web
 		#region 公共方法
 		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
-		public IActionResult Count(string key, [FromQuery]string filter = null)
+		public virtual IActionResult Count(string key, [FromQuery]string filter = null)
 		{
 			return this.Content(this.DataService.Count(key, null, new DataAggregateOptions(filter)).ToString());
 		}
 
 		[HttpPost("[action]")]
-		public async Task<IActionResult> Count()
+		public virtual async Task<IActionResult> Count()
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -119,14 +119,14 @@ namespace Zongsoft.Web
 
 		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
-		public IActionResult Exists(string key, [FromQuery]string filter = null)
+		public virtual IActionResult Exists(string key, [FromQuery]string filter = null)
 		{
 			return this.DataService.Exists(key, new DataExistsOptions(filter)) ?
 			       this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[action]")]
-		public async Task<IActionResult> Exists()
+		public virtual async Task<IActionResult> Exists()
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -137,7 +137,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet("[action]/{**keyword}")]
-		public IActionResult Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual IActionResult Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
 		{
 			var searcher = this.DataService.Searcher;
 
@@ -151,13 +151,13 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet("{key?}")]
-		public IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
 		{
 			return this.Paginate(this.OnGet(key, filter, page, sort));
 		}
 
 		[HttpDelete("{key?}")]
-		public async Task<IActionResult> Delete(string key, [FromQuery]string filter = null)
+		public virtual async Task<IActionResult> Delete(string key, [FromQuery]string filter = null)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -191,7 +191,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost]
-		public IActionResult Create([FromBody]TModel model)
+		public virtual IActionResult Create([FromBody]TModel model)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -200,12 +200,12 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			static object GetModelMemberValue(object target, string member)
+			static object GetModelMemberValue(ref TModel target, string member)
 			{
 				if(target is IModel model)
 					return model.TryGetValue(member, out var value) ? value : null;
 				else
-					return Reflection.Reflector.TryGetValue(target, member, out var value) ? value : null;
+					return Reflection.Reflector.TryGetValue(ref target, member, out var value) ? value : null;
 			}
 
 			if(this.OnCreate(model) > 0)
@@ -222,7 +222,7 @@ namespace Zongsoft.Web
 					if(text.Length > 0)
 						text.Append('-');
 
-					text.Append(GetModelMemberValue(model, keys[0].Name)?.ToString());
+					text.Append(GetModelMemberValue(ref model, keys[0].Name)?.ToString());
 				}
 
 				this.RouteData.Values["key"] = text.ToString();
@@ -233,7 +233,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut]
-		public IActionResult Upsert([FromBody]TModel model)
+		public virtual IActionResult Upsert([FromBody]TModel model)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -246,7 +246,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPatch("{key}")]
-		public IActionResult Update(string key, [FromBody]TModel model)
+		public virtual IActionResult Update(string key, [FromBody]TModel model)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -260,7 +260,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]")]
-		public async Task<IActionResult> Query([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual async Task<IActionResult> Query([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
