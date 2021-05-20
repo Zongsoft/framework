@@ -77,10 +77,24 @@ namespace Zongsoft.Data.Common
 			{
 				if(isMultiple)
 				{
+					//获取当前一对多导航属性的链接成员标记
+					var tokens = GetLinkTokens(data, statement.Schema);
+
 					foreach(var item in (IEnumerable)context.Data)
 					{
 						//更新当前操作数据
 						context.Data = item;
+
+						if(tokens != null && tokens.Length > 0)
+						{
+							var current = item;
+
+							//依次同步当前集合元素中的导航属性值
+							for(int i = 0; i < tokens.Length; i++)
+								tokens[i].SetForeignValue(ref current);
+
+							context.Data = current;
+						}
 
 						var continued = this.Mutate(context, statement, command);
 
@@ -191,8 +205,10 @@ namespace Zongsoft.Data.Common
 			var complex = (IDataEntityComplexProperty)statement.Schema.Token.Property;
 			UpdateStatement updation = null;
 
-			foreach(var link in complex.Links)
+			for(int i = 0; i < complex.Links.Length; i++)
 			{
+				var link = complex.Links[i];
+
 				if(!statement.HasParameters || !statement.Parameters.TryGet(link.ForeignKey.Name, out var parameter))
 					continue;
 
@@ -243,6 +259,51 @@ namespace Zongsoft.Data.Common
 						updation.Parameters.Add(fieldValue);
 					}
 				}
+			}
+		}
+
+		private LinkToken[] GetLinkTokens(object data, SchemaMember member)
+		{
+			if(member == null || member.Token.Property.IsSimplex)
+				return Array.Empty<LinkToken>();
+
+			var complex = (IDataEntityComplexProperty)member.Token.Property;
+			var tokens = new LinkToken[complex.Links.Length];
+
+			for(int i = 0; i < complex.Links.Length; i++)
+			{
+				var link = complex.Links[i];
+				var anchors = link.GetAnchors();
+
+				if(anchors.Length > 1)
+					throw new DataException($"The '{member.FullPath}' multi-level link anchors are not supported in mutate operation.");
+
+				if(Utility.TryGetMemberValue(ref data, anchors[0].Name, out var value))
+					tokens[i] = new LinkToken(link.ForeignKey, value);
+			}
+
+			return tokens;
+		}
+		#endregion
+
+		#region 私有结构
+		private readonly struct LinkToken
+		{
+			public LinkToken(IDataEntitySimplexProperty foreign, object value)
+			{
+				this.ForeignProperty = foreign;
+				this.PrincipalValue = value;
+			}
+
+			public readonly object PrincipalValue;
+			public readonly IDataEntitySimplexProperty ForeignProperty;
+
+			public void SetForeignValue(ref object data)
+			{
+				if(data == null)
+					return;
+
+				Utility.TrySetMemberValue(ref data, this.ForeignProperty.Name, this.PrincipalValue);
 			}
 		}
 		#endregion

@@ -239,6 +239,29 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.TryGetValue(ref target, name, out value);
 		}
 
+		public static bool TrySetMemberValue(ref object target, string name, object value)
+		{
+			if(target == null)
+				return false;
+
+			if(target is IModel model)
+				return model.TrySetValue(name, value);
+
+			if(target is IDictionary<string, object> generic)
+			{
+				generic[name] = value;
+				return true;
+			}
+
+			if(target is IDictionary classic)
+			{
+				classic[name] = value;
+				return true;
+			}
+
+			return Reflection.Reflector.TrySetValue(ref target, name, value);
+		}
+
 		public static bool IsGenerateRequired(ref object data, string name)
 		{
 			//注意：数据为空必须返回真
