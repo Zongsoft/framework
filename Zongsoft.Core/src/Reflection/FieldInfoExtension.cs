@@ -46,6 +46,7 @@ namespace Zongsoft.Reflection
 
 		#region 缓存变量
 		private static readonly ConcurrentDictionary<FieldInfo, FieldToken> _fields = new ConcurrentDictionary<FieldInfo, FieldToken>();
+		private static readonly ConcurrentDictionary<FieldKey, FieldTokenGeneric> _genericProperties = new ConcurrentDictionary<FieldKey, FieldTokenGeneric>();
 		#endregion
 
 		#region 公共方法
@@ -56,7 +57,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			return _fields.GetOrAdd(field, info => new FieldToken(info, GenerateGetter(info))).Getter;
+			return _fields.GetOrAdd(field, info => new FieldToken(GenerateGetter(info), GenerateSetter(info))).Getter;
 		}
 
 		public static Setter GetSetter(this FieldInfo field)
@@ -64,7 +65,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			return _fields.GetOrAdd(field, info => new FieldToken(info, GenerateSetter(info))).Setter;
+			return _fields.GetOrAdd(field, info => new FieldToken(GenerateGetter(info), GenerateSetter(info))).Setter;
 		}
 
 		public static Getter GenerateGetter(this FieldInfo field)
@@ -166,7 +167,11 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			return _fields.GetOrAdd(field, info => new FieldToken(info)).GetGenericGetter<T>();
+			var token = _genericProperties.GetOrAdd(
+				new FieldKey(typeof(T), field),
+				key => new FieldTokenGeneric(GenerateGetter<T>(field), GenerateSetter<T>(field)));
+
+			return (Getter<T>)token.Getter;
 		}
 
 		public static Setter<T> GetSetter<T>(this FieldInfo field)
@@ -174,7 +179,11 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			return _fields.GetOrAdd(field, info => new FieldToken(info)).GetGenericSetter<T>();
+			var token = _genericProperties.GetOrAdd(
+				new FieldKey(typeof(T), field),
+				key => new FieldTokenGeneric(GenerateGetter<T>(field), GenerateSetter<T>(field)));
+
+			return (Setter<T>)token.Setter;
 		}
 
 		public static Getter<T> GenerateGetter<T>(this FieldInfo field)
@@ -257,95 +266,33 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 嵌套子类
+		private readonly struct FieldKey : IEquatable<FieldKey>
+		{
+			public readonly Type Type;
+			public readonly FieldInfo Field;
+
+			public FieldKey(Type type, FieldInfo field)
+			{
+				this.Type = type;
+				this.Field = field;
+			}
+
+			public bool Equals(FieldKey key) => object.ReferenceEquals(this.Type, key.Type) && object.ReferenceEquals(this.Field, key.Field);
+			public override bool Equals(object obj) => obj is FieldKey key && this.Equals(key);
+			public override int GetHashCode() => HashCode.Combine(this.Type, this.Field);
+			public override string ToString() => this.Type.FullName + ":" + this.Field.Name;
+		}
+
 		private class FieldToken
 		{
-			#region 成员字段
-			private FieldInfo _field;
-			private Getter _getter;
-			private Setter _setter;
-			private ConcurrentDictionary<Type, FieldTokenGeneric> _generics;
-			#endregion
+			public readonly Getter Getter;
+			public readonly Setter Setter;
 
-			#region 构造函数
-			public FieldToken(FieldInfo field)
+			public FieldToken(Getter getter, Setter setter)
 			{
-				_field = field;
+				this.Getter = getter;
+				this.Setter = setter;
 			}
-
-			public FieldToken(FieldInfo field, Getter getter)
-			{
-				_field = field;
-				_getter = getter;
-			}
-
-			public FieldToken(FieldInfo field, Setter setter)
-			{
-				_field = field;
-				_setter = setter;
-			}
-			#endregion
-
-			#region 公共属性
-			public Getter Getter
-			{
-				get
-				{
-					if(_getter == null)
-					{
-						lock(this)
-						{
-							if(_getter == null)
-								_getter = GenerateGetter(_field);
-						}
-					}
-
-					return _getter;
-				}
-			}
-
-			public Setter Setter
-			{
-				get
-				{
-					if(_setter == null)
-					{
-						lock(this)
-						{
-							if(_setter == null)
-								_setter = GenerateSetter(_field);
-						}
-					}
-
-					return _setter;
-				}
-			}
-			#endregion
-
-			#region 公共方法
-			public Getter<T> GetGenericGetter<T>()
-			{
-				return (Getter<T>)this.GetGenericInvoker<T>().Getter;
-			}
-
-			public Setter<T> GetGenericSetter<T>()
-			{
-				return (Setter<T>)this.GetGenericInvoker<T>().Setter;
-			}
-
-			private FieldTokenGeneric GetGenericInvoker<T>()
-			{
-				if(_generics == null)
-				{
-					lock(this)
-					{
-						if(_generics == null)
-							_generics = new ConcurrentDictionary<Type, FieldTokenGeneric>();
-					}
-				}
-
-				return _generics.GetOrAdd(typeof(T), _ => new FieldTokenGeneric(GenerateGetter<T>(_field), GenerateSetter<T>(_field)));
-			}
-			#endregion
 		}
 
 		private readonly struct FieldTokenGeneric

@@ -46,6 +46,7 @@ namespace Zongsoft.Reflection
 
 		#region 缓存变量
 		private static readonly ConcurrentDictionary<PropertyInfo, PropertyToken> _properties = new ConcurrentDictionary<PropertyInfo, PropertyToken>();
+		private static readonly ConcurrentDictionary<PropertyKey, PropertyTokenGeneric> _genericProperties = new ConcurrentDictionary<PropertyKey, PropertyTokenGeneric>();
 		#endregion
 
 		#region 公共方法
@@ -56,7 +57,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			return _properties.GetOrAdd(property, info => new PropertyToken(info, GenerateGetter(info))).Getter;
+			return _properties.GetOrAdd(property, info => new PropertyToken(GenerateGetter(info), GenerateSetter(info))).Getter;
 		}
 
 		public static Setter GetSetter(this PropertyInfo property)
@@ -64,7 +65,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			return _properties.GetOrAdd(property, info => new PropertyToken(info, GenerateSetter(info))).Setter;
+			return _properties.GetOrAdd(property, info => new PropertyToken(GenerateGetter(info), GenerateSetter(info))).Setter;
 		}
 
 		public static Getter GenerateGetter(this PropertyInfo property)
@@ -270,7 +271,11 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			return _properties.GetOrAdd(property, info => new PropertyToken(info, GenerateGetter(info))).GetGenericGetter<T>();
+			var token = _genericProperties.GetOrAdd(
+				new PropertyKey(typeof(T), property),
+				key => new PropertyTokenGeneric(GenerateGetter<T>(property), GenerateSetter<T>(property)));
+
+			return (Getter<T>)token.Getter;
 		}
 
 		public static Setter<T> GetSetter<T>(this PropertyInfo property)
@@ -278,7 +283,11 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			return _properties.GetOrAdd(property, info => new PropertyToken(info, GenerateSetter(info))).GetGenericSetter<T>();
+			var token = _genericProperties.GetOrAdd(
+				new PropertyKey(typeof(T), property),
+				key => new PropertyTokenGeneric(GenerateGetter<T>(property), GenerateSetter<T>(property)));
+
+			return (Setter<T>)token.Setter;
 		}
 
 		public static Getter<T> GenerateGetter<T>(this PropertyInfo property)
@@ -459,95 +468,33 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 嵌套子类
-		private class PropertyToken
+		private readonly struct PropertyKey : IEquatable<PropertyKey>
 		{
-			#region 成员字段
-			private PropertyInfo _property;
-			private Getter _getter;
-			private Setter _setter;
-			private ConcurrentDictionary<Type, PropertyTokenGeneric> _generics;
-			#endregion
+			public readonly Type Type;
+			public readonly PropertyInfo Property;
 
-			#region 构造函数
-			public PropertyToken(PropertyInfo property)
+			public PropertyKey(Type type, PropertyInfo property)
 			{
-				_property = property;
+				this.Type = type;
+				this.Property = property;
 			}
 
-			public PropertyToken(PropertyInfo property, Getter getter)
+			public bool Equals(PropertyKey key) => object.ReferenceEquals(this.Type, key.Type) && object.ReferenceEquals(this.Property, key.Property);
+			public override bool Equals(object obj) => obj is PropertyKey key && this.Equals(key);
+			public override int GetHashCode() => HashCode.Combine(this.Type, this.Property);
+			public override string ToString() => this.Type.FullName + ":" + this.Property.Name;
+		}
+
+		private readonly struct PropertyToken
+		{
+			public readonly Getter Getter;
+			public readonly Setter Setter;
+
+			public PropertyToken(Getter getter, Setter setter)
 			{
-				_property = property;
-				_getter = getter;
+				this.Getter = getter;
+				this.Setter = setter;
 			}
-
-			public PropertyToken(PropertyInfo property, Setter setter)
-			{
-				_property = property;
-				_setter = setter;
-			}
-			#endregion
-
-			#region 公共属性
-			public Getter Getter
-			{
-				get
-				{
-					if(_getter == null)
-					{
-						lock(this)
-						{
-							if(_getter == null)
-								_getter = GenerateGetter(_property);
-						}
-					}
-
-					return _getter;
-				}
-			}
-
-			public Setter Setter
-			{
-				get
-				{
-					if(_setter == null)
-					{
-						lock(this)
-						{
-							if(_setter == null)
-								_setter = GenerateSetter(_property);
-						}
-					}
-
-					return _setter;
-				}
-			}
-			#endregion
-
-			#region 公共方法
-			public Getter<T> GetGenericGetter<T>()
-			{
-				return (Getter<T>)this.GetGenericInvoker<T>().Getter;
-			}
-
-			public Setter<T> GetGenericSetter<T>()
-			{
-				return (Setter<T>)this.GetGenericInvoker<T>().Setter;
-			}
-
-			private PropertyTokenGeneric GetGenericInvoker<T>()
-			{
-				if(_generics == null)
-				{
-					lock(this)
-					{
-						if(_generics == null)
-							_generics = new ConcurrentDictionary<Type, PropertyTokenGeneric>();
-					}
-				}
-
-				return _generics.GetOrAdd(typeof(T), _ => new PropertyTokenGeneric(GenerateGetter<T>(_property), GenerateSetter<T>(_property)));
-			}
-			#endregion
 		}
 
 		private readonly struct PropertyTokenGeneric
