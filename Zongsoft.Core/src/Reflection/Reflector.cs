@@ -75,13 +75,20 @@ namespace Zongsoft.Reflection
 	       throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
 		}
 
-		public static object GetValue(object target, string name, params object[] parameters)
+		public static object GetValue(ref object target, string name, params object[] parameters)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			return TryGetValue(target, name, parameters, out var value) ? value :
-			       throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
+			var type = (target as Type) ?? target.GetType();
+			var members = string.IsNullOrEmpty(name) ?
+				type.GetDefaultMembers() :
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+			if(members == null || members.Length == 0)
+				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+
+			return GetValue(members[0], ref target, parameters);
 		}
 
 		public static object GetValue<T>(this FieldInfo field, ref T target)
@@ -129,45 +136,89 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			return TryGetValue<T>(ref target, name, parameters, out var value) ? value :
-			       throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
+			var type = typeof(T);
+			var members = string.IsNullOrEmpty(name) ?
+				type.GetDefaultMembers() :
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+			if(members == null || members.Length == 0)
+				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+
+			return GetValue(members[0], ref target, parameters);
 		}
 
-		public static bool TryGetValue(this MemberInfo member, object target, out object value)
+		public static bool TryGetValue(this FieldInfo field, ref object target, out object value)
 		{
-			return TryGetValue(member, ref target, Array.Empty<object>(), out value);
-		}
-
-		public static bool TryGetValue(this MemberInfo member, object target, object[] parameters, out object value)
-		{
-			if(member == null)
-				throw new ArgumentNullException(nameof(member));
-
-			switch(member.MemberType)
+			if(field != null)
 			{
-				case MemberTypes.Field:
-					value = GetValue((FieldInfo)member, ref target);
-					return true;
-				case MemberTypes.Property:
-					value = GetValue((PropertyInfo)member, ref target, parameters);
-					return true;
+				value = field.GetGetter().Invoke(ref target);
+				return true;
 			}
 
 			value = null;
 			return false;
 		}
 
-		public static bool TryGetValue(object target, string name, out object value)
+		public static bool TryGetValue(this PropertyInfo property, ref object target, out object value)
+		{
+			return TryGetValue(property, ref target, Array.Empty<object>(), out value);
+		}
+
+		public static bool TryGetValue(this PropertyInfo property, ref object target, object[] parameters, out object value)
+		{
+			if(property != null && property.CanRead)
+			{
+				value = property.GetGetter().Invoke(ref target, parameters);
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
+
+		public static bool TryGetValue(this MemberInfo member, ref object target, out object value)
+		{
+			return TryGetValue(member, ref target, Array.Empty<object>(), out value);
+		}
+
+		public static bool TryGetValue(this MemberInfo member, ref object target, object[] parameters, out object value)
+		{
+			value = null;
+
+			if(member == null)
+				return false;
+
+			switch(member.MemberType)
+			{
+				case MemberTypes.Field:
+					value = ((FieldInfo)member).GetGetter().Invoke(ref target);
+					return true;
+				case MemberTypes.Property:
+					var property = (PropertyInfo)member;
+
+					if(property.CanRead)
+					{
+						value = property.GetGetter().Invoke(ref target, parameters);
+						return true;
+					}
+
+					return false;
+			}
+
+			return false;
+		}
+
+		public static bool TryGetValue(ref object target, string name, out object value)
 		{
 			return TryGetValue(ref target, name, Array.Empty<object>(), out value);
 		}
 
-		public static bool TryGetValue(object target, string name, object[] parameters, out object value)
+		public static bool TryGetValue(ref object target, string name, object[] parameters, out object value)
 		{
-			if(target == null)
-				throw new ArgumentNullException(nameof(target));
-
 			value = null;
+
+			if(target == null)
+				return false;
 
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -177,8 +228,36 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				return false;
 
-			value = GetValue(members[0], ref target, parameters);
-			return true;
+			return TryGetValue(members[0], ref target, parameters, out value);
+		}
+
+		public static bool TryGetValue<T>(this FieldInfo field, ref T target, out object value)
+		{
+			if(field != null)
+			{
+				value = field.GetGetter<T>().Invoke(ref target);
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
+
+		public static bool TryGetValue<T>(this PropertyInfo property, ref T target, out object value)
+		{
+			return TryGetValue(property, ref target, Array.Empty<object>(), out value);
+		}
+
+		public static bool TryGetValue<T>(this PropertyInfo property, ref T target, object[] parameters, out object value)
+		{
+			if(property != null && property.CanRead)
+			{
+				value = property.GetGetter<T>().Invoke(ref target, parameters);
+				return true;
+			}
+
+			value = null;
+			return false;
 		}
 
 		public static bool TryGetValue<T>(this MemberInfo member, ref T target, out object value)
@@ -188,20 +267,28 @@ namespace Zongsoft.Reflection
 
 		public static bool TryGetValue<T>(this MemberInfo member, ref T target, object[] parameters, out object value)
 		{
+			value = null;
+
 			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+				return false;
 
 			switch(member.MemberType)
 			{
 				case MemberTypes.Field:
-					value = GetValue<T>((FieldInfo)member, ref target);
+					value = ((FieldInfo)member).GetGetter<T>().Invoke(ref target);
 					return true;
 				case MemberTypes.Property:
-					value = GetValue<T>((PropertyInfo)member, ref target, parameters);
-					return true;
+					var property = (PropertyInfo)member;
+
+					if(property.CanRead)
+					{
+						value = property.GetGetter<T>().Invoke(ref target, parameters);
+						return true;
+					}
+
+					return false;
 			}
 
-			value = null;
 			return false;
 		}
 
@@ -225,8 +312,7 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				return false;
 
-			value = GetValue<T>(members[0], ref target, parameters);
-			return true;
+			return TryGetValue<T>(members[0], ref target, parameters, out value);
 		}
 		#endregion
 
@@ -279,17 +365,24 @@ namespace Zongsoft.Reflection
 
 					break;
 				default:
-					throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
+					throw new NotSupportedException($"The {member.MemberType} of member that is not supported.");
 			}
 		}
 
-		public static void SetValue(object target, string name, object value, params object[] parameters)
+		public static void SetValue(ref object target, string name, object value, params object[] parameters)
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			if(!TrySetValue(target, name, value, parameters))
-				throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
+			var type = (target as Type) ?? target.GetType();
+			var members = string.IsNullOrEmpty(name) ?
+				type.GetDefaultMembers() :
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+			if(members == null || members.Length == 0)
+				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+
+			SetValue(members[0], ref target, value, parameters);
 		}
 
 		public static void SetValue<T>(this FieldInfo field, ref T target, object value)
@@ -319,8 +412,29 @@ namespace Zongsoft.Reflection
 			if(member == null)
 				throw new ArgumentNullException(nameof(member));
 
-			if(!TrySetValue<T>(member, ref target, value, parameters))
-				throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
+			switch(member.MemberType)
+			{
+				case MemberTypes.Field:
+					var field = (FieldInfo)member;
+
+					if(field.IsInitOnly)
+						throw new InvalidOperationException($"The '{field.Name}' field does not support writing.");
+
+					field.GetSetter<T>().Invoke(ref target, value);
+
+					break;
+				case MemberTypes.Property:
+					var property = (PropertyInfo)member;
+
+					if(!property.CanWrite)
+						throw new InvalidOperationException($"The '{property.Name}' property does not support writing.");
+
+					property.GetSetter<T>().Invoke(ref target, value, parameters);
+
+					break;
+				default:
+					throw new NotSupportedException($"The {member.MemberType} of member that is not supported.");
+			}
 		}
 
 		public static void SetValue<T>(ref T target, string name, object value, params object[] parameters)
@@ -328,32 +442,69 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			if(!TrySetValue<T>(ref target, name, value, parameters))
-				throw new ArgumentException($"A member named '{name}' does not exist in the '{target.ToString()}'.");
+			var type = typeof(T);
+			var members = string.IsNullOrEmpty(name) ?
+				type.GetDefaultMembers() :
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+			if(members == null || members.Length == 0)
+				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+
+			SetValue(members[0], ref target, value, parameters);
 		}
 
-		public static bool TrySetValue(this MemberInfo member, object target, object value, params object[] parameters)
+		public static bool TrySetValue(this FieldInfo field, ref object target, object value)
+		{
+			if(field == null || field.IsInitOnly)
+				return false;
+
+			field.GetSetter().Invoke(ref target, value);
+			return true;
+		}
+
+		public static bool TrySetValue(this PropertyInfo property, ref object target, object value, params object[] parameters)
+		{
+			if(property == null || !property.CanWrite)
+				return false;
+
+			property.GetSetter().Invoke(ref target, value, parameters);
+			return true;
+		}
+
+		public static bool TrySetValue(this MemberInfo member, ref object target, object value, params object[] parameters)
 		{
 			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+				return false;
 
 			switch(member.MemberType)
 			{
 				case MemberTypes.Field:
-					SetValue((FieldInfo)member, ref target, value);
+					var field = (FieldInfo)member;
+
+					if(field.IsInitOnly)
+						return false;
+
+					field.GetSetter().Invoke(ref target, value);
+
 					return true;
 				case MemberTypes.Property:
-					SetValue((PropertyInfo)member, ref target, value, parameters);
+					var property = (PropertyInfo)member;
+
+					if(!property.CanWrite)
+						return false;
+
+					property.GetSetter().Invoke(ref target, value, parameters);
+
 					return true;
 			}
 
 			return false;
 		}
 
-		public static bool TrySetValue(object target, string name, object value, params object[] parameters)
+		public static bool TrySetValue(ref object target, string name, object value, params object[] parameters)
 		{
 			if(target == null)
-				throw new ArgumentNullException(nameof(target));
+				return false;
 
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -366,18 +517,48 @@ namespace Zongsoft.Reflection
 			return TrySetValue(members[0], ref target, value, parameters);
 		}
 
+		public static bool TrySetValue<T>(this FieldInfo field, ref T target, object value)
+		{
+			if(field == null || field.IsInitOnly)
+				return false;
+
+			field.GetSetter<T>().Invoke(ref target, value);
+			return true;
+		}
+
+		public static bool TrySetValue<T>(this PropertyInfo property, ref T target, object value, params object[] parameters)
+		{
+			if(property == null || !property.CanWrite)
+				return false;
+
+			property.GetSetter<T>().Invoke(ref target, value, parameters);
+			return true;
+		}
+
 		public static bool TrySetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters)
 		{
 			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+				return false;
 
 			switch(member.MemberType)
 			{
 				case MemberTypes.Field:
-					SetValue<T>((FieldInfo)member, ref target, value);
+					var field = (FieldInfo)member;
+
+					if(field.IsInitOnly)
+						return false;
+
+					field.GetSetter<T>().Invoke(ref target, value);
+
 					return true;
 				case MemberTypes.Property:
-					SetValue<T>((PropertyInfo)member, ref target, value, parameters);
+					var property = (PropertyInfo)member;
+
+					if(!property.CanWrite)
+						return false;
+
+					property.GetSetter<T>().Invoke(ref target, value, parameters);
+
 					return true;
 			}
 
@@ -387,7 +568,7 @@ namespace Zongsoft.Reflection
 		public static bool TrySetValue<T>(ref T target, string name, object value, params object[] parameters)
 		{
 			if(target == null)
-				throw new ArgumentNullException(nameof(target));
+				return false;
 
 			var type = typeof(T);
 			var members = string.IsNullOrEmpty(name) ?
