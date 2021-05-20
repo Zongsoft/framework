@@ -116,6 +116,7 @@ namespace Zongsoft.Reflection
 				true);
 
 			var generator = method.GetILGenerator();
+			var SetValue_Lable = generator.DefineLabel();
 
 			generator.DeclareLocal(field.DeclaringType);
 
@@ -132,19 +133,52 @@ namespace Zongsoft.Reflection
 			else
 				generator.Emit(OpCodes.Ldloc_0);
 
-			generator.Emit(OpCodes.Ldarg_1);
 			if(field.FieldType.IsValueType)
 			{
-				var underlyingType = Nullable.GetUnderlyingType(field.FieldType) ?? field.FieldType;
+				var underlyingType = Nullable.GetUnderlyingType(field.FieldType);
+				var Null_Branch_Label = generator.DefineLabel();
 
-				generator.Emit(OpCodes.Ldtoken, underlyingType);
+				if(underlyingType != null)
+				{
+					//定义一个 Nullable<?> 类型的本地变量
+					generator.DeclareLocal(field.FieldType);
+
+					//if(value==null)
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Brfalse_S, Null_Branch_Label);
+				}
+
+				//else(value!=null)
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Ldtoken, underlyingType ?? field.FieldType);
 				generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
 				generator.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ChangeType), new[] { typeof(object), typeof(Type) }));
-				generator.Emit(OpCodes.Unbox_Any, field.FieldType);
+				generator.Emit(OpCodes.Unbox_Any, underlyingType ?? field.FieldType);
+
+				if(underlyingType != null)
+				{
+					//将基元类型转换为 Nullable<?> 类型
+					generator.Emit(OpCodes.Newobj, field.FieldType.GetConstructor(new[] { underlyingType }));
+					generator.Emit(OpCodes.Br_S, SetValue_Lable);
+
+					//标记当value=null的跳转分支
+					generator.MarkLabel(Null_Branch_Label);
+
+					//if(value==null) (Nullable<?>)null
+					generator.Emit(OpCodes.Ldloca_S, 1);
+					generator.Emit(OpCodes.Initobj, field.FieldType);
+					generator.Emit(OpCodes.Ldloc_1);
+				}
 			}
 			else
+			{
+				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Castclass, field.FieldType);
+			}
 
+			generator.MarkLabel(SetValue_Lable);
+
+			//设置字段值
 			generator.Emit(OpCodes.Stfld, field);
 
 			if(field.DeclaringType.IsValueType)
@@ -236,26 +270,59 @@ namespace Zongsoft.Reflection
 				true);
 
 			var generator = method.GetILGenerator();
+			var SetValue_Lable = generator.DefineLabel();
 
 			generator.Emit(OpCodes.Ldarg_0);
 
 			if(!typeof(T).IsValueType)
 				generator.Emit(OpCodes.Ldind_Ref);
 
-			generator.Emit(OpCodes.Ldarg_1);
-
 			if(field.FieldType.IsValueType)
 			{
-				var underlyingType = Nullable.GetUnderlyingType(field.FieldType) ?? field.FieldType;
+				var underlyingType = Nullable.GetUnderlyingType(field.FieldType);
+				var Null_Branch_Label = generator.DefineLabel();
 
-				generator.Emit(OpCodes.Ldtoken, underlyingType);
+				if(underlyingType != null)
+				{
+					//定义一个 Nullable<?> 类型的本地变量
+					generator.DeclareLocal(field.FieldType);
+
+					//if(value==null)
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Brfalse_S, Null_Branch_Label);
+				}
+
+				//else(value!=null)
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Ldtoken, underlyingType ?? field.FieldType);
 				generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
 				generator.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ChangeType), new[] { typeof(object), typeof(Type) }));
-				generator.Emit(OpCodes.Unbox_Any, field.FieldType);
+				generator.Emit(OpCodes.Unbox_Any, underlyingType ?? field.FieldType);
+
+				if(underlyingType != null)
+				{
+					//将基元类型转换为 Nullable<?> 类型
+					generator.Emit(OpCodes.Newobj, field.FieldType.GetConstructor(new[] { underlyingType }));
+					generator.Emit(OpCodes.Br_S, SetValue_Lable);
+
+					//标记当value=null的跳转分支
+					generator.MarkLabel(Null_Branch_Label);
+
+					//if(value==null) (Nullable<?>)null
+					generator.Emit(OpCodes.Ldloca_S, 0);
+					generator.Emit(OpCodes.Initobj, field.FieldType);
+					generator.Emit(OpCodes.Ldloc_0);
+				}
 			}
 			else
+			{
+				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Castclass, field.FieldType);
+			}
 
+			generator.MarkLabel(SetValue_Lable);
+
+			//设置字段值
 			generator.Emit(OpCodes.Stfld, field);
 			generator.Emit(OpCodes.Ret);
 

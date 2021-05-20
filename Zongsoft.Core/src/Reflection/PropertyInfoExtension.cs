@@ -232,18 +232,52 @@ namespace Zongsoft.Reflection
 				}
 			}
 
-			generator.Emit(OpCodes.Ldarg_1);
+			var SetValue_Lable = generator.DefineLabel();
+
 			if(property.PropertyType.IsValueType)
 			{
-				var underlyingType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+				var underlyingType = Nullable.GetUnderlyingType(property.PropertyType);
+				var Null_Branch_Label = generator.DefineLabel();
 
-				generator.Emit(OpCodes.Ldtoken, underlyingType);
+				if(underlyingType != null)
+				{
+					//定义一个 Nullable<?> 类型的本地变量
+					generator.DeclareLocal(property.PropertyType);
+
+					//if(value==null)
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Brfalse_S, Null_Branch_Label);
+				}
+
+				//else(value!=null)
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Ldtoken, underlyingType ?? property.PropertyType);
 				generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
 				generator.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ChangeType), new[] { typeof(object), typeof(Type) }));
-				generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
+				generator.Emit(OpCodes.Unbox_Any, underlyingType ?? property.PropertyType);
+
+				if(underlyingType != null)
+				{
+					//将基元类型转换为 Nullable<?> 类型
+					generator.Emit(OpCodes.Newobj, property.PropertyType.GetConstructor(new[] { underlyingType }));
+					generator.Emit(OpCodes.Br_S, SetValue_Lable);
+
+					//标记当value=null的跳转分支
+					generator.MarkLabel(Null_Branch_Label);
+
+					//if(value==null) (Nullable<?>)null
+					generator.Emit(OpCodes.Ldloca_S, 1);
+					generator.Emit(OpCodes.Initobj, property.PropertyType);
+					generator.Emit(OpCodes.Ldloc_1);
+				}
 			}
 			else
+			{
+				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Castclass, property.PropertyType);
+			}
+
+			generator.MarkLabel(SetValue_Lable);
 
 			//调用属性的设置方法
 			if(property.DeclaringType.IsValueType || property.SetMethod.IsStatic)
@@ -440,18 +474,52 @@ namespace Zongsoft.Reflection
 				}
 			}
 
-			generator.Emit(OpCodes.Ldarg_1);
+			var SetValue_Lable = generator.DefineLabel();
+
 			if(property.PropertyType.IsValueType)
 			{
-				var underlyingType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+				var underlyingType = Nullable.GetUnderlyingType(property.PropertyType);
+				var Null_Branch_Label = generator.DefineLabel();
 
-				generator.Emit(OpCodes.Ldtoken, underlyingType);
+				if(underlyingType != null)
+				{
+					//定义一个 Nullable<?> 类型的本地变量
+					generator.DeclareLocal(property.PropertyType);
+
+					//if(value==null)
+					generator.Emit(OpCodes.Ldarg_1);
+					generator.Emit(OpCodes.Brfalse_S, Null_Branch_Label);
+				}
+
+				//else(value!=null)
+				generator.Emit(OpCodes.Ldarg_1);
+				generator.Emit(OpCodes.Ldtoken, underlyingType ?? property.PropertyType);
 				generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
 				generator.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ChangeType), new[] { typeof(object), typeof(Type) }));
-				generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
+				generator.Emit(OpCodes.Unbox_Any, underlyingType ?? property.PropertyType);
+
+				if(underlyingType != null)
+				{
+					//将基元类型转换为 Nullable<?> 类型
+					generator.Emit(OpCodes.Newobj, property.PropertyType.GetConstructor(new[] { underlyingType }));
+					generator.Emit(OpCodes.Br_S, SetValue_Lable);
+
+					//标记当value=null的跳转分支
+					generator.MarkLabel(Null_Branch_Label);
+
+					//if(value==null) (Nullable<?>)null
+					generator.Emit(OpCodes.Ldloca_S, 0);
+					generator.Emit(OpCodes.Initobj, property.PropertyType);
+					generator.Emit(OpCodes.Ldloc_0);
+				}
 			}
 			else
+			{
+				generator.Emit(OpCodes.Ldarg_1);
 				generator.Emit(OpCodes.Castclass, property.PropertyType);
+			}
+
+			generator.MarkLabel(SetValue_Lable);
 
 			//调用属性的设置方法
 			if(property.DeclaringType.IsValueType || property.SetMethod.IsStatic)
