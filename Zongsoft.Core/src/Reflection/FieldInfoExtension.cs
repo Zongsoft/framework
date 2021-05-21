@@ -225,7 +225,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			if(!typeof(T).IsAssignableFrom(field.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(field.ReflectedType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
 
 			var method = new DynamicMethod("dynamic:" + typeof(T).FullName + "!Get" + field.Name + "#1",
@@ -256,7 +256,7 @@ namespace Zongsoft.Reflection
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
 
-			if(!typeof(T).IsAssignableFrom(field.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(field.ReflectedType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
 
 			//如果字段为只读则返回空

@@ -329,7 +329,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			if(!typeof(T).IsAssignableFrom(property.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(property.ReflectedType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
 
 			//如果属性不可读则返回空
@@ -411,7 +411,7 @@ namespace Zongsoft.Reflection
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			if(!typeof(T).IsAssignableFrom(property.DeclaringType))
+			if(!typeof(T).IsAssignableFrom(property.ReflectedType))
 				throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
 
 			//如果属性不可写则返回空

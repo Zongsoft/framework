@@ -136,7 +136,7 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			var type = typeof(T);
+			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
 				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
@@ -304,7 +304,7 @@ namespace Zongsoft.Reflection
 
 			value = null;
 
-			var type = typeof(T);
+			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
 				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
@@ -442,7 +442,7 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
 
-			var type = typeof(T);
+			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
 				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
@@ -570,7 +570,7 @@ namespace Zongsoft.Reflection
 			if(target == null)
 				return false;
 
-			var type = typeof(T);
+			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
 				type.GetDefaultMembers() :
 				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
