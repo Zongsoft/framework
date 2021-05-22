@@ -82,6 +82,18 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
+		#region 存在方法
+		public bool Exists(string name)
+		{
+			var cache = this.Cache ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
+
+			//修复秘密名（转换成小写并剔除收尾空格）
+			name = name.ToLowerInvariant().Trim();
+
+			return cache.Exists(name);
+		}
+		#endregion
+
 		#region 生成方法
 		public string Generate(string name, string extra = null)
 		{
