@@ -36,12 +36,18 @@ namespace Zongsoft.Security
 	/// </summary>
 	public interface ISecretor
 	{
+		#region 属性定义
 		/// <summary>获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。</summary>
 		TimeSpan Expiry { get; set; }
 
-		/// <summary>获取或设置重新生成秘密（验证码）的最小间隔时长，如果为零则表示不做限制。</summary>
+		/// <summary>获取或设置重新生成秘密(验证码)的最小间隔时长，如果为零则表示不做限制。</summary>
 		TimeSpan Period { get; set; }
 
+		/// <summary>获取或设置秘密(验证码)发射器。</summary>
+		ITransmitter Transmitter { get; set; }
+		#endregion
+
+		#region 方法定义
 		/// <summary>
 		/// 判断指定名称的秘密（验证码）是否存在。
 		/// </summary>
@@ -92,5 +98,24 @@ namespace Zongsoft.Security
 		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
 		bool Verify(string name, string secret, out string extra);
+		#endregion
+
+		#region 嵌套接口
+		/// <summary>
+		/// 提供秘密（验证码）发送功能的接口。
+		/// </summary>
+		public interface ITransmitter
+		{
+			/// <summary>
+			/// 发送秘密（验证码）到指定的目的。
+			/// </summary>
+			/// <param name="destination">指定的验证码接受目的。</param>
+			/// <param name="template">指定的模板标识。</param>
+			/// <param name="channel">指定的通道标识。</param>
+			/// <param name="extra">指定的附加信息。</param>
+			/// <returns>返回的验证码凭证标识。</returns>
+			string Transmit(string destination, string template, string channel = null, string extra = null);
+		}
+		#endregion
 	}
 }

@@ -63,7 +63,13 @@ namespace Zongsoft.Security.Membership
 
 		[ServiceDependency]
 		public IAttempter Attempter { get; set; }
-		public IDataAccess DataAccess { get; protected set; }
+
+		[ServiceDependency]
+		public ISecretor Secretor { get; set; }
+
+		[ServiceDependency]
+		public IDataAccess DataAccess { get; set; }
+
 		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
@@ -237,7 +243,7 @@ namespace Zongsoft.Security.Membership
 				return AuthenticationResult.Fail(SecurityReasons.AccountDisabled);
 
 			//获取必须的秘密生成器
-			var secretor = this.GetSecretor() ?? throw new InvalidOperationException($"Missing a required secretor.");
+			var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing a required secretor.");
 
 			if(!secretor.Verify(GetSecretKey(identity, @namespace), secret))
 			{
@@ -262,7 +268,7 @@ namespace Zongsoft.Security.Membership
 		public void Secret(string identity, string @namespace = null)
 		{
 			//获取必须的秘密生成器
-			var secretor = this.GetSecretor() ?? throw new InvalidOperationException($"Missing a required secretor.");
+			var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing a required secretor.");
 			var secret = secretor.Generate(GetSecretKey(identity, @namespace));
 
 			switch(MembershipUtility.GetIdentityType(identity))
@@ -286,7 +292,6 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 虚拟方法
-		protected abstract ISecretor GetSecretor();
 		protected virtual uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp)
 		{
 			if(string.IsNullOrWhiteSpace(@namespace))

@@ -28,64 +28,91 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Concurrent;
 
+using Zongsoft.Common;
 using Zongsoft.Caching;
+using Zongsoft.Services;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Security
 {
+	[Service(typeof(ISecretor))]
 	public class Secretor : ISecretor
 	{
 		#region 常量定义
+		private const int DEFAULT_EXPIRY_MINUTES = 10;
+		private const int DEFAULT_PERIOD_SECONDS = 60;
+
 		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		#endregion
 
 		#region 成员字段
 		private TimeSpan _expiry;
 		private TimeSpan _period;
+		private ISecretor.ITransmitter _transmitter;
 		#endregion
 
 		#region 构造函数
-		public Secretor(ICache cache)
+		public Secretor(IServiceProvider serviceProvider)
 		{
+			//设置属性的默认值
+			_expiry = TimeSpan.FromMinutes(DEFAULT_EXPIRY_MINUTES);
+			_period = TimeSpan.FromSeconds(DEFAULT_PERIOD_SECONDS);
+
+			//创建默认发射器
+			this.Transmitter = new DefaultTransmitter(this, serviceProvider);
+		}
+
+		public Secretor(ICache cache, IServiceProvider serviceProvider)
+		{
+			if(cache == null)
+				throw new ArgumentNullException(nameof(cache));
+
 			//设置缓存容器
-			this.Cache = cache ?? throw new ArgumentNullException(nameof(cache));
+			this.Cache = new ServiceAccessor<ICache>(cache);
 
 			//设置属性的默认值
-			_expiry = TimeSpan.FromMinutes(10);
-			_period = TimeSpan.FromSeconds(60);
+			_expiry = TimeSpan.FromMinutes(DEFAULT_EXPIRY_MINUTES);
+			_period = TimeSpan.FromSeconds(DEFAULT_PERIOD_SECONDS);
+
+			//创建默认发射器
+			this.Transmitter = new DefaultTransmitter(this, serviceProvider);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取秘密内容的缓存容器。
-		/// </summary>
-		public ICache Cache { get; }
+		/// <summary>获取秘密内容的缓存容器。</summary>
+		[ServiceDependency]
+		public IServiceAccessor<ICache> Cache { get; set; }
 
-		/// <summary>
-		/// 获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。
-		/// </summary>
+		/// <summary>获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。</summary>
 		public TimeSpan Expiry
 		{
 			get => _expiry;
 			set => _expiry = value > TimeSpan.Zero ? value : _expiry;
 		}
 
-		/// <summary>
-		/// 获取或设置重新生成秘密（验证码）的最小间隔时长（默认为60秒），如果为零则表示不做限制。
-		/// </summary>
+		/// <summary>获取或设置重新生成秘密(验证码)的最小间隔时长（默认为60秒），如果为零则表示不做限制。</summary>
 		public TimeSpan Period
 		{
 			get => _period;
 			set => _period = value;
+		}
+
+		/// <summary>获取秘密(验证码)发射器。</summary>
+		public ISecretor.ITransmitter Transmitter
+		{
+			get => _transmitter;
+			set => _transmitter = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 存在方法
 		public bool Exists(string name)
 		{
-			var cache = this.Cache ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = name.ToLowerInvariant().Trim();
@@ -105,10 +132,7 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			var cache = this.Cache;
-
-			if(cache == null)
-				throw new InvalidOperationException("Missing a required cache for the secret generate operation.");
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret generate operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = name.ToLowerInvariant().Trim();
@@ -149,10 +173,7 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(secret))
 				return false;
 
-			var cache = this.Cache;
-
-			if(cache == null)
-				throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = name.ToLowerInvariant().Trim();
@@ -254,17 +275,78 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
-		#region 静态方法
-		private static readonly ConcurrentDictionary<ICache, ISecretor> _secretors = new ConcurrentDictionary<ICache, ISecretor>();
-
-		public static ISecretor GetSecretor(ICache cache, Func<ICache, ISecretor> factory = null)
+		#region 嵌套子类
+		private class DefaultTransmitter : ISecretor.ITransmitter
 		{
-			if(cache == null)
-				throw new ArgumentNullException(nameof(cache));
+			#region 私有变量
+			private readonly ISecretor _secretor;
+			private readonly ConcurrentDictionary<string, ITransmitter> _transmitters;
+			#endregion
 
-			return factory == null ?
-				_secretors.GetOrAdd(cache, key => new Secretor(key)) :
-				_secretors.GetOrAdd(cache, key => factory(key));
+			#region 构造函数
+			internal DefaultTransmitter(ISecretor secretor, IServiceProvider serviceProvider)
+			{
+				_secretor = secretor ?? throw new ArgumentNullException(nameof(secretor));
+				_transmitters = new ConcurrentDictionary<string, ITransmitter>(StringComparer.OrdinalIgnoreCase);
+
+				this.Initialize(serviceProvider);
+			}
+			#endregion
+
+			#region 公共方法
+			public string Transmit(string destination, string template, string channel = null, string extra = null)
+			{
+				var transmitter = this.GetTransmitter(destination, channel);
+
+				if(transmitter == null)
+					return null;
+
+				var token = Randomizer.GenerateString(16);
+				var secret = _secretor.Generate(token, null, extra);
+
+				//发送验证码到目的地
+				transmitter.Transmit(destination, template, secret, channel);
+
+				return token;
+			}
+			#endregion
+
+			#region 私有方法
+			private void Initialize(IServiceProvider serviceProvider)
+			{
+				var transmitters = serviceProvider.ResolveAll<ITransmitter>();
+
+				if(transmitters == null)
+					return;
+
+				foreach(var transmitter in transmitters)
+				{
+					if(transmitter.Channels != null && transmitter.Channels.Length > 0)
+					{
+						foreach(var channel in transmitter.Channels)
+							_transmitters.TryAdd(channel, transmitter);
+					}
+				}
+			}
+
+			private ITransmitter GetTransmitter(string destination, string channel)
+			{
+				if(string.IsNullOrEmpty(channel))
+				{
+					var transmitters = _transmitters.Values.Distinct();
+
+					foreach(var transmitter in transmitters)
+					{
+						channel = transmitter.GetChannel(destination);
+
+						if(!string.IsNullOrEmpty(channel))
+							return transmitter;
+					}
+				}
+
+				return channel != null && _transmitters.TryGetValue(channel, out var result) ? result : null;
+			}
+			#endregion
 		}
 		#endregion
 	}
