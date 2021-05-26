@@ -43,9 +43,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
-		protected ClaimsPrincipalTransformer()
-		{
-		}
+		protected ClaimsPrincipalTransformer() { }
 		#endregion
 
 		#region 公共方法

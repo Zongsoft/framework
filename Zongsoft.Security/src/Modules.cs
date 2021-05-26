@@ -29,7 +29,7 @@
 
 using System;
 
-[assembly:Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+//[assembly:Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
 
 namespace Zongsoft.Security
 {

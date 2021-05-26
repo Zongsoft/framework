@@ -29,39 +29,42 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Security
 {
-	/// <summary>
-	/// 提供安全理由短语的定义类。
-	/// </summary>
-	public static class SecurityReasons
+	[Service(typeof(IIdentityIssuer), typeof(IIdentityIssuer<string>))]
+	public class SecretIdentityIssuer : IIdentityIssuer<string>
 	{
-		/// <summary>未知的原因</summary>
-		public static readonly string Unknown = nameof(Unknown);
+		public string Name { get => "Secret"; }
 
-		/// <summary>禁止验证通过</summary>
-		public static readonly string Forbidden = nameof(Forbidden);
+		ClaimsIdentity IIdentityIssuer.Issue(Common.InstanceData data, TimeSpan period, IDictionary<string, object> parameters)
+		{
+			return this.Issue(data.GetValue(), period, parameters);
+		}
 
-		/// <summary>校验失败</summary>
-		public static readonly string VerifyFaild = nameof(VerifyFaild);
+		public ClaimsIdentity Issue(string data, TimeSpan period, IDictionary<string, object> parameters)
+		{
+			if(string.IsNullOrEmpty(data))
+				return null;
 
-		/// <summary>无效的身份标识</summary>
-		public static readonly string InvalidIdentity = nameof(InvalidIdentity);
+			var identity = new ClaimsIdentity(this.Name, data.Contains('@') ? ClaimTypes.Email : ClaimTypes.MobilePhone, ClaimTypes.Role);
 
-		/// <summary>无效的密码</summary>
-		public static readonly string InvalidPassword = nameof(InvalidPassword);
+			if(period > TimeSpan.Zero)
+				identity.AddClaim(new Claim(ClaimTypes.Expiration, period.ToString(), period.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, this.Name, this.Name, identity));
 
-		/// <summary>无效的参数。</summary>
-		public static readonly string InvalidArgument = nameof(InvalidArgument);
+			if(parameters != null && parameters.Count > 0)
+			{
+				foreach(var parameter in parameters)
+				{
+					if(parameter.Value != null)
+						identity.AddClaim(new Claim(ClaimTypes.UserData + "#" + parameter.Key, parameter.Value.ToString(), ClaimValueTypes.String));
+				}
+			}
 
-		/// <summary>帐户尚未批准</summary>
-		public static readonly string AccountUnapproved = nameof(AccountUnapproved);
-
-		/// <summary>帐户被暂时挂起（可能因为密码验证失败次数过多）</summary>
-		public static readonly string AccountSuspended = nameof(AccountSuspended);
-
-		/// <summary>帐户已被禁用</summary>
-		public static readonly string AccountDisabled = nameof(AccountDisabled);
+			return identity;
+		}
 	}
 }

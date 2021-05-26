@@ -35,6 +35,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
+using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
@@ -44,6 +45,9 @@ namespace Zongsoft.Security.Web.Controllers
 	[Route("{area}/{controller}/{action}")]
 	public class AuthenticationController : ControllerBase
 	{
+		[ServiceDependency]
+		public Authenticator Authenticator { get; set; }
+
 		#region 公共方法
 		[HttpPost]
 		[Authorize]
@@ -100,6 +104,36 @@ namespace Zongsoft.Security.Web.Controllers
 			return result.Succeed ?
 				Task.FromResult((IActionResult)this.Ok(result.Transform())) :
 				Task.FromResult((IActionResult)this.StatusCode(403, new AuthenticationFailure(result)));
+		}
+
+		[HttpPost("{scheme?}/{token?}")]
+		public IActionResult SigninEx(string scheme, string token, [FromQuery]string scenario)
+		{
+			if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
+				return this.BadRequest();
+
+			static IDictionary<string, object> GetParameters(Microsoft.AspNetCore.Http.IQueryCollection query)
+			{
+				if(query == null || query.Count == 0)
+					return null;
+
+				var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+				foreach(var entry in query)
+					parameters.Add(entry.Key, entry.Value.ToString());
+
+				return parameters;
+			}
+
+			var feature = this.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpBodyControlFeature>();
+			if(feature != null)
+				feature.AllowSynchronousIO = true;
+
+			var result = this.Authenticator.Authenticate(scheme, token, this.Request.Body, scenario, GetParameters(this.Request.Query));
+
+			return result.Succeed ?
+				this.Ok((this.Authenticator.Transformer ?? ClaimsPrincipalTransformer.Default).Transform(result.Value)) :
+				this.StatusCode(403, new { result.Reason, result.Message });
 		}
 
 		[HttpPost]

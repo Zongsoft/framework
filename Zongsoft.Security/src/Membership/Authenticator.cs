@@ -36,7 +36,7 @@ using Zongsoft.Configuration.Options;
 namespace Zongsoft.Security.Membership
 {
 	[Service(typeof(IAuthenticator), typeof(ICredentialProvider))]
-	public partial class Authenticator : AuthenticatorBase
+	public partial class AuthenticatorEx : AuthenticatorBase
 	{
 		#region 公共属性
 		[Options("Security/Membership/Authentication")]

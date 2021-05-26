@@ -38,14 +38,14 @@ using Zongsoft.Services;
 namespace Zongsoft.Security
 {
 	[Service]
-	public class SecretIssuerDirector
+	public class SecretDirector
 	{
 		#region 私有变量
 		private readonly ConcurrentDictionary<string, ISecretIssuer> _issuers;
 		#endregion
 
 		#region 构造函数
-		public SecretIssuerDirector(IServiceProvider serviceProvider)
+		public SecretDirector(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider;
 			_issuers = new ConcurrentDictionary<string, ISecretIssuer>(StringComparer.OrdinalIgnoreCase);

@@ -29,39 +29,41 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
 	/// <summary>
-	/// 提供安全理由短语的定义类。
+	/// 提供身份签发功能的接口。
 	/// </summary>
-	public static class SecurityReasons
+	public interface IIdentityIssuer
 	{
-		/// <summary>未知的原因</summary>
-		public static readonly string Unknown = nameof(Unknown);
+		/// <summary>获取身份签发器名称。</summary>
+		string Name { get; }
 
-		/// <summary>禁止验证通过</summary>
-		public static readonly string Forbidden = nameof(Forbidden);
+		/// <summary>
+		/// 签发身份凭证。
+		/// </summary>
+		/// <param name="data">指定的身份数据。</param>
+		/// <param name="period">签发的凭证有效期。</param>
+		/// <param name="parameters">指定的参数集。</param>
+		/// <returns></returns>
+		ClaimsIdentity Issue(Common.InstanceData data, TimeSpan period, IDictionary<string, object> parameters);
+	}
 
-		/// <summary>校验失败</summary>
-		public static readonly string VerifyFaild = nameof(VerifyFaild);
-
-		/// <summary>无效的身份标识</summary>
-		public static readonly string InvalidIdentity = nameof(InvalidIdentity);
-
-		/// <summary>无效的密码</summary>
-		public static readonly string InvalidPassword = nameof(InvalidPassword);
-
-		/// <summary>无效的参数。</summary>
-		public static readonly string InvalidArgument = nameof(InvalidArgument);
-
-		/// <summary>帐户尚未批准</summary>
-		public static readonly string AccountUnapproved = nameof(AccountUnapproved);
-
-		/// <summary>帐户被暂时挂起（可能因为密码验证失败次数过多）</summary>
-		public static readonly string AccountSuspended = nameof(AccountSuspended);
-
-		/// <summary>帐户已被禁用</summary>
-		public static readonly string AccountDisabled = nameof(AccountDisabled);
+	/// <summary>
+	/// 提供身份签发功能的接口。
+	/// </summary>
+	/// <typeparam name="T">签发数据的类型。</typeparam>
+	public interface IIdentityIssuer<in T> : IIdentityIssuer
+	{
+		/// <summary>
+		/// 签发身份凭证。
+		/// </summary>
+		/// <param name="data">指定类型的身份数据。</param>
+		/// <param name="period">签发的凭证有效期。</param>
+		/// <param name="parameters">指定的参数集。</param>
+		/// <returns></returns>
+		ClaimsIdentity Issue(T data, TimeSpan period, IDictionary<string, object> parameters);
 	}
 }

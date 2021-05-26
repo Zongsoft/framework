@@ -28,11 +28,28 @@
  */
 
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security.Membership
 {
-	public interface IIdentityVerifierProvider
+	public static class DefaultIdentityUtility
 	{
-		IIdentityVerifier GetVerifier(string name);
+		public static T GetValue<T>(this Common.InstanceData data) where T : IIdentity
+		{
+			return data.GetValue(source =>
+			{
+				if(source is T identity)
+					return identity;
+
+				if(source is string text)
+					return Zongsoft.Serialization.Serializer.Json.Deserialize<T>(text);
+
+				if(source is Stream stream)
+					return Zongsoft.Serialization.Serializer.Json.Deserialize<T>(stream);
+
+				throw new InvalidOperationException($"The identity verification data type '{source.GetType().FullName}' is not supported.");
+			});
+		}
 	}
 }

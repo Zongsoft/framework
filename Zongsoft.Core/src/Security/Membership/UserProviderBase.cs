@@ -73,9 +73,6 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; protected set; }
 
-		[ServiceDependency]
-		public IIdentityVerifierProvider Authorities { get; set; }
-
 		public IDataAccess DataAccess { get; protected set;}
 
 		public IServiceProvider ServiceProvider { get; }
@@ -425,8 +422,6 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var authorities = this.Authorities ?? throw new InvalidOperationException($"Missing the required authority provider.");
-
 			var index = token.IndexOf(':');
 
 			if(index <= 0 || index == token.Length - 1)
@@ -434,7 +429,6 @@ namespace Zongsoft.Security.Membership
 
 			var name = token.Substring(0, index);
 			var type = MembershipUtility.GetIdentityType(identity);
-			var authority = authorities.GetVerifier(name) ?? throw new InvalidOperationException($"The specified '{name}' authority does not exist.");
 			(string key, string value) tuple;
 
 			switch(type)
@@ -452,9 +446,6 @@ namespace Zongsoft.Security.Membership
 					tuple = default;
 					break;
 			}
-
-			if(!authority.Verify(tuple.key, tuple.value, parameters))
-				throw new SecurityException(SecurityReasons.VerifyFaild);
 
 			var user = this.CreateUser(parameters);
 			user.Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim();

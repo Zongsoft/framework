@@ -29,37 +29,45 @@
 
 using System;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Common
 {
-	/// <summary>
-	/// 提供身份校验功能的接口。
-	/// </summary>
-	public interface IIdentityVerifier
+	public class InstanceData
 	{
-		/// <summary>获取身份校验器名称。</summary>
-		string Name { get; }
+		#region 私有变量
+		private readonly object _source;
+		private object _value;
+		#endregion
 
-		/// <summary>
-		/// 校验身份。
-		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, Common.InstanceData data);
-	}
+		#region 构造函数
+		public InstanceData(object source)
+		{
+			_source = source ?? throw new ArgumentNullException(nameof(source));
+			_value = default;
+		}
+		#endregion
 
-	/// <summary>
-	/// 提供身份校验功能的接口。
-	/// </summary>
-	/// <typeparam name="T">校验数据的类型。</typeparam>
-	public interface IIdentityVerifier<in T> : IIdentityVerifier
-	{
-		/// <summary>
-		/// 校验身份。
-		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, T data);
+		#region 公共方法
+		public T GetValue<T>(Func<object, T> resolve)
+		{
+			if(resolve == null)
+				throw new ArgumentNullException(nameof(resolve));
+
+			if(_value == null)
+			{
+				lock(this)
+				{
+					if(_value == null)
+					{
+						_value = resolve(_source);
+
+						if(_source is IDisposable disposable)
+							disposable.Dispose();
+					}
+				}
+			}
+
+			return (T)_value;
+		}
+		#endregion
 	}
 }

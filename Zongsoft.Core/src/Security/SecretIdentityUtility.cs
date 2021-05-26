@@ -28,38 +28,35 @@
  */
 
 using System;
+using System.IO;
+using System.Threading.Tasks;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Security
 {
-	/// <summary>
-	/// 提供身份校验功能的接口。
-	/// </summary>
-	public interface IIdentityVerifier
+	public static class SecretIdentityUtility
 	{
-		/// <summary>获取身份校验器名称。</summary>
-		string Name { get; }
+		public static string GetValue(this Common.InstanceData data)
+		{
+			return data.GetValue(source =>
+			{
+				if(source is string text)
+					return text;
 
-		/// <summary>
-		/// 校验身份。
-		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, Common.InstanceData data);
-	}
+				if(source is byte[] bytes)
+					return System.Text.Encoding.UTF8.GetString(bytes);
 
-	/// <summary>
-	/// 提供身份校验功能的接口。
-	/// </summary>
-	/// <typeparam name="T">校验数据的类型。</typeparam>
-	public interface IIdentityVerifier<in T> : IIdentityVerifier
-	{
-		/// <summary>
-		/// 校验身份。
-		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, T data);
+				if(source is Stream stream)
+				{
+					using(var reader = new StreamReader(stream, System.Text.Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
+
+				throw new InvalidOperationException($"The identity verification data type '{source.GetType().FullName}' is not supported.");
+			});
+		}
 	}
 }
