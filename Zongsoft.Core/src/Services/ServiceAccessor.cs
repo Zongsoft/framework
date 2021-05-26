@@ -31,18 +31,46 @@ using System;
 
 namespace Zongsoft.Services
 {
-	/// <summary>
-	/// 表示特定类型的服务提供程序。
-	/// </summary>
-	/// <typeparam name="T">特定的服务类型。</typeparam>
-	public interface IServiceProvider<out T> where T : class
+	public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
 	{
-		/// <summary>
-		/// 获取指定名称的服务。
-		/// </summary>
-		/// <param name="name">指定的要获取的服务名称。</param>
-		/// <returns>返回指定名称的服务，如果为空(null)则表示指定名称的服务不存在。</returns>
-		/// <remarks>对于实现者的要求：当指定名称的服务不存在时，确保返回值为空(null)而不要抛出异常。</remarks>
-		T GetService(string name);
+		#region 构造函数
+		public ServiceAccessor(T value) => this.Value = value;
+
+		public ServiceAccessor(IApplicationModule module)
+		{
+			static T GetValue(string name, IServiceProvider serviceProvider)
+			{
+				if(serviceProvider == null)
+					return default;
+
+				var provider = serviceProvider.Resolve<IServiceProvider<T>>();
+
+				if(provider == null)
+					return serviceProvider.Resolve<T>();
+
+				if(string.IsNullOrEmpty(name))
+					return provider.GetService(string.Empty) ?? serviceProvider.Resolve<T>();
+				else
+					return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.Resolve<T>();
+			}
+
+			if(module == null)
+				module = ApplicationContext.Current;
+
+			if(module != null)
+			{
+				var value = GetValue(module.Name, module.Services);
+
+				if(value == null && module is not IApplicationContext)
+					value = GetValue(null, ApplicationContext.Current.Services);
+
+				this.Value = value;
+			}
+		}
+		#endregion
+
+		#region 公共属性
+		public T Value { get; }
+		#endregion
 	}
 }

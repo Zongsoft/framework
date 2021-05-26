@@ -160,6 +160,12 @@ namespace Zongsoft.Services
 					_ => throw new ArgumentException("Invalid member type."),
 				};
 
+				if(IsServiceAccessor(serviceType, out var accessorType))
+				{
+					_valueFactory = (provider, target) => ActivatorUtilities.CreateInstance(provider, accessorType, new object[] { GetApplicationModule(member.ReflectedType) });
+					return;
+				}
+
 				if(attribute.IsRequired)
 				{
 					if(string.IsNullOrEmpty(attribute.Provider))
@@ -234,6 +240,41 @@ namespace Zongsoft.Services
 					ref target,
 					_valueFactory(provider, target)
 				);
+			}
+
+			private static bool IsServiceAccessor(Type type, out Type accessorType)
+			{
+				accessorType = null;
+
+				if(type.IsValueType)
+					return false;
+
+				if(type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IServiceAccessor<>))
+				{
+					accessorType = typeof(ServiceAccessor<>).MakeGenericType(type.GenericTypeArguments[0]);
+					return true;
+				}
+
+				foreach(var contract in type.GetTypeInfo().ImplementedInterfaces)
+				{
+					if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IServiceAccessor<>))
+					{
+						accessorType = type;
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			private static IApplicationModule GetApplicationModule(Type type)
+			{
+				var moduleName = ServiceModular.GetModuleName(type);
+
+				if(!string.IsNullOrEmpty(moduleName) && ApplicationContext.Current.Modules.TryGet(moduleName, out var module))
+					return module;
+
+				return ApplicationContext.Current;
 			}
 		}
 		#endregion

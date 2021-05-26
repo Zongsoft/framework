@@ -76,6 +76,10 @@ namespace Zongsoft.Services
 		}
 		#endregion
 
+		#region 公共属性
+		public string Name { get => _name; }
+		#endregion
+
 		#region 公共方法
 		public object GetService(Type serviceType)
 		{
