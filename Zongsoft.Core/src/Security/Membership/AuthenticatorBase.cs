@@ -189,6 +189,19 @@ namespace Zongsoft.Security.Membership
 			if(user.Status != UserStatus.Active)
 				return AuthenticationResult.Fail(SecurityReasons.AccountDisabled);
 
+			//获取必须的校验器
+			var authority = this.ServiceProvider.ResolveRequired<IIdentityVerifierProvider>().GetVerifier(verifier) ?? throw new InvalidOperationException("Missing the required authority.");
+
+			if(!authority.Verify(identity, token, parameters))
+			{
+				//通知验证尝试失败
+				if(attempter != null)
+					attempter.Fail(identity, @namespace);
+
+				//验证码校验失败则返回校验失败
+				return AuthenticationResult.Fail(SecurityReasons.VerifyFaild);
+			}
+
 			//通知验证尝试成功，即清空验证失败记录
 			if(attempter != null)
 				attempter.Done(identity, @namespace);

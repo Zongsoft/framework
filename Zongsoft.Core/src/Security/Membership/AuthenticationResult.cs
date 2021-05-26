@@ -105,11 +105,6 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 静态方法
-		public static AuthenticationResult Success(ClaimsPrincipal principal)
-		{
-			return new AuthenticationResult((ClaimsIdentity)principal.Identity, null) { Principal = principal };
-		}
-
 		public static AuthenticationResult Success(ClaimsIdentity identity, IDictionary<string, object> parameters = null)
 		{
 			return new AuthenticationResult(identity ?? throw new ArgumentNullException(nameof(identity)), parameters);

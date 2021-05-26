@@ -35,7 +35,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	partial class AuthenticatorEx : ICredentialProvider
+	partial class Authenticator : ICredentialProvider
 	{
 		#region 事件定义
 		public event EventHandler<CredentialRegisterEventArgs> Registered;
@@ -50,7 +50,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticatorEx(IServiceProvider serviceProvider) : base(serviceProvider)
+		public Authenticator(IServiceProvider serviceProvider) : base(serviceProvider)
 		{
 			_memoryCache = new MemoryCache("Zongsoft.Security.Authenticator");
 

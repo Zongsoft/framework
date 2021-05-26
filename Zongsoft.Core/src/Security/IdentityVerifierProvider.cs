@@ -29,11 +29,29 @@
 
 using System;
 
-namespace Zongsoft.Security.Membership
+using Zongsoft.Services;
+
+namespace Zongsoft.Security
 {
-	public interface IIdentity
+	[Service(typeof(IIdentityVerifierProvider))]
+	public class IdentityVerifierProvider : IIdentityVerifierProvider
 	{
-		public string Identity { get; set; }
-		public string Namespace { get; set; }
+		#region 成员字段
+		private readonly IServiceProvider _serviceProvider;
+		#endregion
+
+		#region 构造函数
+		public IdentityVerifierProvider(IServiceProvider serviceProvider)
+		{
+			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		}
+		#endregion
+
+		#region 公共方法
+		public IIdentityVerifier GetVerifier(string name)
+		{
+			return _serviceProvider.GetMatchedService<IIdentityVerifier>(name);
+		}
+		#endregion
 	}
 }

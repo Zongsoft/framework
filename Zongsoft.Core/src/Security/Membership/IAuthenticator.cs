@@ -50,7 +50,9 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 属性定义
-		/// <summary>获取验证器的方案名。</summary>
+		/// <summary>
+		/// 获取验证器的方案名。
+		/// </summary>
 		string Scheme { get; }
 		#endregion
 
