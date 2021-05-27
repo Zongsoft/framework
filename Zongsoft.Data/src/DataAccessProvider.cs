@@ -29,18 +29,15 @@
 
 using System;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Data
 {
+	[Service(typeof(IServiceProvider<IDataAccess>), typeof(IServiceProvider<DataAccessBase>), typeof(IServiceProvider<DataAccess>))]
 	public class DataAccessProvider : DataAccessProviderBase<DataAccess>
 	{
 		#region 单例字段
 		public static readonly DataAccessProvider Instance = new DataAccessProvider();
-		#endregion
-
-		#region 构造函数
-		private DataAccessProvider()
-		{
-		}
 		#endregion
 
 		#region 重写方法
