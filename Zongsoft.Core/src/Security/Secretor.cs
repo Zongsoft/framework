@@ -122,11 +122,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 生成方法
-		public string Generate(string name, string extra = null)
-		{
-			return this.Generate(name, null, extra);
-		}
-
+		public string Generate(string name, string extra = null) => this.Generate(name, null, extra);
 		public string Generate(string name, string pattern, string extra)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -158,11 +154,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 校验方法
-		public bool Verify(string name, string secret)
-		{
-			return this.Verify(name, secret, out var extra);
-		}
-
+		public bool Verify(string name, string secret) => this.Verify(name, secret, out _);
 		public bool Verify(string name, string secret, out string extra)
 		{
 			extra = null;
