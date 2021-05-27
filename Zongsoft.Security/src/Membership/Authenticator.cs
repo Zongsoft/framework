@@ -44,8 +44,6 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 重写方法
-		protected override ISecretor GetSecretor() => Secretor.GetSecretor(this.Cache);
-
 		protected override void OnAuthenticating(string @namespace, string identity, string scenario, IDictionary<string, object> parameters)
 		{
 			//设置凭证有效期的配置策略

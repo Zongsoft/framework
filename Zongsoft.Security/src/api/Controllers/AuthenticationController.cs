@@ -35,6 +35,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
+using Zongsoft.Services;
 using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
@@ -44,62 +45,45 @@ namespace Zongsoft.Security.Web.Controllers
 	[Route("{area}/{controller}/{action}")]
 	public class AuthenticationController : ControllerBase
 	{
+		#region 公共属性
+		[ServiceDependency]
+		public Authenticator Authenticator { get; set; }
+
+		[ServiceDependency]
+		public ISecretor Secretor { get; set; }
+		#endregion
+
 		#region 公共方法
-		[HttpPost]
-		[Authorize]
-		public async Task<IActionResult> Verify()
-		{
-			var identity = this.User.Identity;
-
-			if(identity == null || !identity.IsAuthenticated)
-				return this.Unauthorized();
-
-			var userId = identity.GetIdentifier<uint>();
-
-			if(userId == 0)
-				return this.Unauthorized();
-
-			var password = await this.Request.ReadAsStringAsync();
-
-			if(Authentication.Instance.Verify(userId, password, out var reason))
-				return this.NoContent();
-
-			//添加失败原因短语到返回头
-			this.Response.Headers.Add("X-Security-Reason", reason);
-
-			return reason switch
-			{
-				nameof(SecurityReasons.InvalidIdentity) => this.NotFound(),
-				nameof(SecurityReasons.InvalidPassword) => this.BadRequest(),
-				_ => this.Forbid(),
-			};
-		}
-
-		[HttpPost("{verifier?}")]
-		public Task<IActionResult> SigninAsync(string verifier, [FromBody]AuthenticationRequest request, [FromQuery]string scenario)
+		[HttpPost("{scheme?}/{token?}")]
+		public IActionResult Signin(string scheme, string token, [FromQuery]string scenario)
 		{
 			if(string.IsNullOrWhiteSpace(scenario))
-				return Task.FromResult((IActionResult)this.BadRequest());
-			if(string.IsNullOrWhiteSpace(request.Identity))
-				return Task.FromResult((IActionResult)this.BadRequest());
+				return this.BadRequest();
+			if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
+				return this.BadRequest();
 
-			var parameters = request.Parameters;
+			static IDictionary<string, object> GetParameters(Microsoft.AspNetCore.Http.IQueryCollection query)
+			{
+				if(query == null || query.Count == 0)
+					return null;
 
-			//处理头部参数
-			this.FillParameters(ref parameters);
+				var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-			//如果参数数超过特定值则返回无效的请求
-			if(parameters != null && parameters.Count > 10)
-				return Task.FromResult((IActionResult)this.BadRequest());
+				foreach(var entry in query)
+					parameters.Add(entry.Key, entry.Value.ToString());
 
-			//进行身份验证
-			var result = string.IsNullOrEmpty(verifier) ?
-				Authentication.Instance.Authenticate(request.Identity, request.Password, request.Namespace, scenario, parameters) :
-				Authentication.Instance.Authenticate(request.Identity, verifier, request.Token, request.Namespace, scenario, parameters);
+				return parameters;
+			}
+
+			var feature = this.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpBodyControlFeature>();
+			if(feature != null)
+				feature.AllowSynchronousIO = true;
+
+			var result = this.Authenticator.Authenticate(scheme, token, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
 			return result.Succeed ?
-				Task.FromResult((IActionResult)this.Ok(result.Transform())) :
-				Task.FromResult((IActionResult)this.StatusCode(403, new AuthenticationFailure(result)));
+				this.Ok(this.Transform(result.Value)) :
+				this.StatusCode(403, new { result.Reason, result.Message });
 		}
 
 		[HttpPost]
@@ -107,7 +91,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public void Signout()
 		{
 			if(this.User is CredentialPrincipal credential)
-				Authentication.Instance.Authority.Unregister(credential.CredentialId);
+				this.Authenticator.Authority.Unregister(credential.CredentialId);
 		}
 
 		[Authorize]
@@ -119,73 +103,30 @@ namespace Zongsoft.Security.Web.Controllers
 
 			if(this.User is CredentialPrincipal credential)
 			{
-				var principal = Authentication.Instance.Authority.Renew(credential.CredentialId, id);
+				var principal = this.Authenticator.Authority.Renew(credential.CredentialId, id);
 
 				return principal == null ?
-					Task.FromResult((IActionResult)this.BadRequest()) :
-					Task.FromResult((IActionResult)this.Ok(ClaimsPrincipalTransformer.Default.Transform(principal)));
+					Task.FromResult((IActionResult)this.NotFound()) :
+					Task.FromResult((IActionResult)this.Ok(this.Transform(principal)));
 			}
 
 			return Task.FromResult((IActionResult)this.Unauthorized());
 		}
 
-		[HttpPost("{identity}")]
-		[HttpPost("{namespace}:{identity:required}")]
-		public Task<IActionResult> Secret(string @namespace, string identity)
+		[HttpPost("{destination}")]
+		public IActionResult Secret(string destination, [FromQuery]string channel)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
-				return Task.FromResult((IActionResult)this.BadRequest());
+			if(string.IsNullOrEmpty(destination))
+				return this.BadRequest();
 
-			Authentication.Instance.Authenticator.Secret(identity, @namespace);
-			return Task.FromResult((IActionResult)this.NoContent());
+			return this.Content(this.Secretor.Transmitter.Transmit(destination, "Authentication", channel));
 		}
 		#endregion
 
 		#region 私有方法
-		private void FillParameters(ref IDictionary<string, object> parameters)
+		private object Transform(System.Security.Claims.ClaimsPrincipal principal)
 		{
-			const string X_PARAMETER_PREFIX = "x-parameter-";
-
-			if(parameters == null)
-				parameters = new Dictionary<string, object>();
-
-			foreach(var header in this.Request.Headers)
-			{
-				if(header.Key.Length > X_PARAMETER_PREFIX.Length &&
-				   header.Key.StartsWith(X_PARAMETER_PREFIX, StringComparison.OrdinalIgnoreCase))
-				{
-					parameters.Add(header.Key.Substring(X_PARAMETER_PREFIX.Length), string.Join("|", header.Value));
-				}
-			}
-		}
-		#endregion
-
-		#region 嵌套子类
-		public struct AuthenticationRequest
-		{
-			#region 公共属性
-			public string Identity { get; set; }
-			public string Password { get; set; }
-			public string Token { get; set; }
-			public string Namespace { get; set; }
-			public IDictionary<string, object> Parameters { get; set; }
-			#endregion
-		}
-
-		public struct AuthenticationFailure
-		{
-			#region 构造函数
-			public AuthenticationFailure(AuthenticationResult result)
-			{
-				this.Reason = result.Reason;
-				this.Message = result.Exception?.Message;
-			}
-			#endregion
-
-			#region 公共属性
-			public string Reason { get; }
-			public string Message { get; }
-			#endregion
+			return (this.Authenticator.Transformer ?? ClaimsPrincipalTransformer.Default).Transform(principal);
 		}
 		#endregion
 	}

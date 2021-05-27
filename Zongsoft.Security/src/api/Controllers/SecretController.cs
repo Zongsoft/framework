@@ -28,13 +28,43 @@
  */
 
 using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
-[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
-namespace Zongsoft.Security
+using Zongsoft.Web;
+using Zongsoft.Services;
+using Zongsoft.Security.Membership;
+
+namespace Zongsoft.Security.Web.Controllers
 {
-	public static class Modules
+	[ApiController]
+	[Area(Modules.Security)]
+	[Route("{area}/{controller}")]
+	public class SecretController : ControllerBase
 	{
-		public const string Security = nameof(Security);
+		[ServiceDependency]
+		public ISecretor Secretor { get; set; }
+
+		[HttpGet("{action}/{token}")]
+		[HttpGet("{token}/{action}")]
+		public IActionResult Exists(string token)
+		{
+			return this.Secretor.Exists(token) ? this.NoContent() : this.NotFound();
+		}
+
+		[HttpPost("{template}/{destination}")]
+		public IActionResult Transmit(string template, string destination, [FromQuery]string channel)
+		{
+			if(string.IsNullOrEmpty(template))
+				return this.BadRequest();
+			if(string.IsNullOrEmpty(destination))
+				return this.BadRequest();
+
+			var token = this.Secretor.Transmitter.Transmit(destination, template, channel);
+			return string.IsNullOrEmpty(token) ? this.NotFound() : this.Content(token);
+		}
 	}
 }

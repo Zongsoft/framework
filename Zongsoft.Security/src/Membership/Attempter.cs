@@ -39,25 +39,12 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 表示用户验证失败的处理器。
 	/// </summary>
-	[Service]
-	public class Attempter
+	[Service(typeof(IAttempter))]
+	public class Attempter : IAttempter
 	{
-		#region 成员字段
-		private ICache _cache;
-		#endregion
-
 		#region 公共属性
-		public ICache Cache
-		{
-			get => _cache ?? (_cache = this.CacheProvider?.GetService(Modules.Security) ?? this.CacheProvider?.GetService(string.Empty));
-			set => _cache = value ?? throw new ArgumentNullException();
-		}
-
 		[ServiceDependency]
-		public IServiceProvider<ICache> CacheProvider
-		{
-			get; set;
-		}
+		public IServiceAccessor<ICache> Cache { get; set; }
 
 		[Options("Security/Membership/Authentication/Attempter")]
 		public Configuration.AttempterOptions Options
@@ -80,7 +67,7 @@ namespace Zongsoft.Security.Membership
 			if(option == null || option.Threshold < 1)
 				return true;
 
-			var cache = this.Cache;
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
 
 			if(cache == null)
 				return true;
@@ -96,7 +83,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="scene">表示验证操作的场景。</param>
 		public void Done(string identity, string @namespace = null)
 		{
-			var cache = this.Cache;
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
 
 			if(cache != null)
 				cache.Remove(GetCacheKey(identity, @namespace));
@@ -110,7 +97,9 @@ namespace Zongsoft.Security.Membership
 		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
 		public bool Fail(string identity, string @namespace = null)
 		{
-			if(!(this.Cache is ISequence sequence))
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
+
+			if(cache is not ISequence sequence)
 				throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
 			//获取验证失败的阈值和锁定时长
@@ -125,7 +114,7 @@ namespace Zongsoft.Security.Membership
 			//如果失败计数器为新增（即递增结果为零或1），或者失败计数器到达限制数；
 			//则更新失败计数器的过期时长为指定的锁定时长。
 			if(attempts == 0 || attempts == 1 || attempts == threshold)
-				this.Cache.SetExpiry(KEY, window);
+				cache.SetExpiry(KEY, window);
 
 			return attempts >= threshold;
 		}
