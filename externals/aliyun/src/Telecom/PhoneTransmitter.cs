@@ -31,21 +31,21 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.Text;
-using Zongsoft.Security;
 using Zongsoft.Services;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
-	[Service(typeof(ISecretIssuer))]
-	public class PhoneSecretIssuer : ISecretIssuer
+	[Service(typeof(ITransmitter))]
+	public class PhoneTransmitter : ITransmitter
 	{
 		#region 常量定义
-		private const string MESSAGE_CHANNEL = "sms";
+		private const string MESSAGE_CHANNEL = "message";
 		private const string VOICE_CHANNEL = "voice";
 		#endregion
 
 		#region 构造函数
-		public PhoneSecretIssuer(IServiceProvider serviceProvider)
+		public PhoneTransmitter(IServiceProvider serviceProvider)
 		{
 			this.Channels = new[] { MESSAGE_CHANNEL, VOICE_CHANNEL };
 			this.Phone = serviceProvider.ResolveRequired<Phone>();
@@ -60,12 +60,15 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 公共方法
 		public string GetChannel(string destination) => TextRegular.Chinese.Cellphone.IsMatch(destination, out _) ? MESSAGE_CHANNEL : null;
 
-		public void Issue(string destination, string template, string secret, string channel = null)
+		public void Transmit(string destination, string template, object data, string channel = null)
 		{
+			if(data == null)
+				throw new ArgumentNullException(nameof(data));
+
 			if(string.IsNullOrEmpty(channel) || string.Equals(channel, MESSAGE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.SendAsync(template, new[] { destination }, new { code = secret }).Wait(TimeSpan.FromSeconds(1));
+				this.Phone.SendAsync(template, new[] { destination }, new { code = data }).Wait(TimeSpan.FromSeconds(1));
 			else if(string.Equals(channel, VOICE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.CallAsync(template, destination, new { code = secret }).Wait(TimeSpan.FromSeconds(1));
+				this.Phone.CallAsync(template, destination, new { code = data }).Wait(TimeSpan.FromSeconds(1));
 			else
 				throw new ArgumentException($"Unsupported ‘{channel}’ channel.", nameof(channel));
 		}
