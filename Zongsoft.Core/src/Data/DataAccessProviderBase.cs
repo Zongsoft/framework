@@ -31,12 +31,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using Zongsoft.Configuration;
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Data
 {
-	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, ICollection<TDataAccess> where TDataAccess : IDataAccess
+	[Service(typeof(IServiceProvider<IDataAccess>))]
+	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, IServiceProvider<TDataAccess>, ICollection<TDataAccess> where TDataAccess : class, IDataAccess
 	{
 		#region 成员字段
 		private readonly Collections.INamedCollection<TDataAccess> _accesses;
@@ -57,6 +58,25 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public TDataAccess GetService(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = GetDefaultName();
+
+			if(_accesses.TryGet(name, out var accessor))
+				return accessor;
+
+			lock(_accesses)
+			{
+				if(_accesses.TryGet(name, out accessor))
+					return accessor;
+
+				_accesses.Add(accessor = this.CreateAccessor(name));
+			}
+
+			return accessor;
+		}
+
 		public IDataAccess GetAccessor(string name)
 		{
 			if(string.IsNullOrEmpty(name))
