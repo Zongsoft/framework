@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Redis
 						return new RedisService(key, RedisServiceSettings.Parse(setting.Value));
 				}
 
-				throw new KeyNotFoundException($"The Redis service with the specified name '{key}' is undefined.");
+				return null;
 			});
 		}
 		#endregion
