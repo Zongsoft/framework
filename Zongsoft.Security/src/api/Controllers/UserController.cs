@@ -135,9 +135,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(ids == null || ids.Length == 0)
 				return this.BadRequest();
 
-			return this.UserProvider.Delete(ids) > 0 ?
-				(IActionResult)this.NoContent() :
-				(IActionResult)this.NotFound();
+			return this.UserProvider.Delete(ids) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[AllowAnonymous]
@@ -145,7 +143,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public IActionResult Register([FromBody]RegisterEntity entity, [FromQuery]string token)
 		{
 			var user = this.UserProvider.Register(entity.Namespace, entity.Identity, token, entity.Password, entity.Parameters);
-			return user == null ? (IActionResult)this.NoContent() : this.Ok(user);
+			return user == null ? this.NoContent() : this.Ok(user);
 		}
 
 		[HttpPost]
@@ -184,7 +182,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetNamespace(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetNamespace(id, content) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Name")]
@@ -196,7 +194,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetName(id, content) ? this.NoContent() : this.NotFound();
 		}
 
 		[Authorize]
@@ -209,7 +207,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetFullName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetFullName(id, content) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Email")]
@@ -221,9 +219,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetEmail(id, content, true) ?
-				(IActionResult)this.RedirectToAction(nameof(Verify), new { id, type = "user.email" }) :
-				(IActionResult)this.NotFound();
+			return this.UserProvider.SetEmail(id, content, true) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Phone")]
@@ -235,9 +231,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetPhone(id, content, true) ?
-				(IActionResult)this.RedirectToAction(nameof(Verify), new { id, type = "user.phone" }) :
-				(IActionResult)this.NotFound();
+			return this.UserProvider.SetPhone(id, content, true) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Description")]
@@ -249,7 +243,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetDescription(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.UserProvider.SetDescription(id, content) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Status/{value}")]

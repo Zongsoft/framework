@@ -115,10 +115,10 @@ namespace Zongsoft.Security.Membership
 		public bool SetEmail(uint userId, string email, bool verifiable = true)
 		{
 			//确认指定的用户编号是否有效
-			userId = GetUserId(userId);
+			userId = GetUserId(userId, out var secured);
 
 			//判断是否邮箱地址是否需要校验
-			if(verifiable)
+			if(verifiable && !secured)
 			{
 				//获取指定编号的用户
 				var user = this.GetUser(userId);
@@ -150,10 +150,10 @@ namespace Zongsoft.Security.Membership
 		public bool SetPhone(uint userId, string phone, bool verifiable = true)
 		{
 			//确认指定的用户编号是否有效
-			userId = GetUserId(userId);
+			userId = GetUserId(userId, out var secured);
 
 			//判断是否电话号码是否需要校验
-			if(verifiable)
+			if(verifiable && !secured)
 			{
 				//获取指定编号的用户
 				var user = this.GetUser(userId);
@@ -1003,6 +1003,27 @@ namespace Zongsoft.Security.Membership
 			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			if(current == userId || ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security }))
+				return userId;
+
+			throw new AuthorizationException($"The current user cannot operate on other user information.");
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private uint GetUserId(uint userId, out bool secured)
+		{
+			/*
+			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
+			 *   1) 指定的用户就是当前用户自己；
+			 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
+			 */
+
+			if(userId == 0)
+				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
+
+			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
+			secured = ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security });
+
+			if(current == userId || secured)
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");
