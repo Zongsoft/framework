@@ -47,64 +47,44 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public DataAggregateCollection Count(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Count, member, alias);
-		}
+		public DataAggregateCollection Count(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Count, member, null, distinct);
+		public DataAggregateCollection Count(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Count, member, alias, distinct);
 
-		public DataAggregateCollection Sum(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Sum, member, alias);
-		}
+		public DataAggregateCollection Sum(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Sum, member, null, distinct);
+		public DataAggregateCollection Sum(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Sum, member, alias, distinct);
 
-		public DataAggregateCollection Average(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Average, member, alias);
-		}
+		public DataAggregateCollection Average(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Average, member, null, distinct);
+		public DataAggregateCollection Average(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Average, member, alias, distinct);
 
-		public DataAggregateCollection Median(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Median, member, alias);
-		}
+		public DataAggregateCollection Median(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Median, member, null, distinct);
+		public DataAggregateCollection Median(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Median, member, alias, distinct);
 
-		public DataAggregateCollection Maximum(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Maximum, member, alias);
-		}
+		public DataAggregateCollection Maximum(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Maximum, member, null, distinct);
+		public DataAggregateCollection Maximum(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Maximum, member, alias, distinct);
 
-		public DataAggregateCollection Minimum(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Minimum, member, alias);
-		}
+		public DataAggregateCollection Minimum(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Minimum, member, null, distinct);
+		public DataAggregateCollection Minimum(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Minimum, member, alias, distinct);
 
-		public DataAggregateCollection Deviation(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Deviation, member, alias);
-		}
+		public DataAggregateCollection Deviation(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Deviation, member, null, distinct);
+		public DataAggregateCollection Deviation(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Deviation, member, alias, distinct);
 
-		public DataAggregateCollection DeviationPopulation(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.DeviationPopulation, member, alias);
-		}
+		public DataAggregateCollection DeviationPopulation(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.DeviationPopulation, member, null, distinct);
+		public DataAggregateCollection DeviationPopulation(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.DeviationPopulation, member, alias, distinct);
 
-		public DataAggregateCollection Variance(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.Variance, member, alias);
-		}
+		public DataAggregateCollection Variance(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Variance, member, null, distinct);
+		public DataAggregateCollection Variance(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Variance, member, alias, distinct);
 
-		public DataAggregateCollection VariancePopulation(string member, string alias = null)
-		{
-			return this.Aggregate(DataAggregateFunction.VariancePopulation, member, alias);
-		}
+		public DataAggregateCollection VariancePopulation(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.VariancePopulation, member, null, distinct);
+		public DataAggregateCollection VariancePopulation(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.VariancePopulation, member, alias, distinct);
 		#endregion
 
 		#region 私有方法
-		private DataAggregateCollection Aggregate(DataAggregateFunction function, string name, string alias = null)
+		private DataAggregateCollection Aggregate(DataAggregateFunction function, string name, string alias, bool distinct = false)
 		{
 			if(string.IsNullOrEmpty(name) && function != DataAggregateFunction.Count)
 				throw new ArgumentNullException(nameof(name));
 
-			_members.Add(new DataAggregate(function, name, alias));
+			_members.Add(new DataAggregate(function, name, alias, distinct));
 
 			return this;
 		}

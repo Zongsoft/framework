@@ -48,7 +48,8 @@ namespace Zongsoft.Data
 		public static FieldOperand Field(string name) => new FieldOperand(name);
 		public static ConstantOperand<T> Constant<T>(T value) => new ConstantOperand<T>(value);
 		public static FunctionOperand Function(string name, params Operand[] arguments) => new FunctionOperand(name, arguments);
-		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter = null) => new AggregateOperand(aggregate, member, filter);
+		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, bool distinct = false) => new AggregateOperand(aggregate, member, null, distinct);
+		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter, bool distinct = false) => new AggregateOperand(aggregate, member, filter, distinct);
 
 		public static string GetSymbol(OperandType type)
 		{
@@ -178,13 +179,14 @@ namespace Zongsoft.Data
 		public class AggregateOperand : Operand
 		{
 			#region 构造函数
-			public AggregateOperand(DataAggregateFunction function, string member, ICondition filter = null) : base(OperandType.Function)
+			public AggregateOperand(DataAggregateFunction function, string member, ICondition filter = null, bool distinct = false) : base(OperandType.Function)
 			{
 				if(string.IsNullOrWhiteSpace(member))
 					throw new ArgumentNullException(nameof(member));
 
 				this.Function = function;
 				this.Member = member;
+				this.Distinct = distinct;
 				this.Filter = filter;
 			}
 			#endregion
@@ -192,6 +194,7 @@ namespace Zongsoft.Data
 			#region 公共属性
 			public new DataAggregateFunction Function { get; }
 			public string Member { get; }
+			public bool Distinct { get; }
 			public ICondition Filter { get; set; }
 			#endregion
 

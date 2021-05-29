@@ -37,28 +37,26 @@ namespace Zongsoft.Data
 	public struct DataAggregate
 	{
 		#region 构造函数
-		public DataAggregate(DataAggregateFunction function, string name, string alias = null)
+		public DataAggregate(DataAggregateFunction function, string name, string alias = null, bool distinct = false)
 		{
 			this.Function = function;
 			this.Name = name;
 			this.Alias = alias;
+			this.Distinct = distinct;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取聚合元素的成员名(字段名或通配符)。
-		/// </summary>
+		/// <summary>获取聚合元素的成员名(字段名或通配符)。</summary>
 		public string Name { get; }
 
-		/// <summary>
-		/// 获取聚合元素的别称。
-		/// </summary>
+		/// <summary>获取聚合元素的别称。</summary>
 		public string Alias { get; }
 
-		/// <summary>
-		/// 获取聚合元素的聚合函数。
-		/// </summary>
+		/// <summary>获取一个值，指示是否开启去重。</summary>
+		public bool Distinct { get; }
+
+		/// <summary>获取聚合元素的聚合函数。</summary>
 		public DataAggregateFunction Function { get; }
 		#endregion
 	}

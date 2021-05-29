@@ -68,63 +68,123 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public Grouping Count(string member, string alias = null)
+		public Grouping Count(string member, bool distinct = false)
 		{
-			_aggregates.Count(member, alias);
+			_aggregates.Count(member, distinct);
 			return this;
 		}
 
-		public Grouping Sum(string member, string alias = null)
+		public Grouping Count(string member, string alias, bool distinct = false)
 		{
-			_aggregates.Sum(member, alias);
+			_aggregates.Count(member, alias, distinct);
 			return this;
 		}
 
-		public Grouping Average(string member, string alias = null)
+		public Grouping Sum(string member, bool distinct = false)
 		{
-			_aggregates.Average(member, alias);
+			_aggregates.Sum(member, distinct);
 			return this;
 		}
 
-		public Grouping Median(string member, string alias = null)
+		public Grouping Sum(string member, string alias, bool distinct = false)
 		{
-			_aggregates.Median(member, alias);
+			_aggregates.Sum(member, alias, distinct);
 			return this;
 		}
 
-		public Grouping Maximum(string member, string alias = null)
+		public Grouping Average(string member, bool distinct = false)
 		{
-			_aggregates.Maximum(member, alias);
+			_aggregates.Average(member, distinct);
 			return this;
 		}
 
-		public Grouping Minimum(string member, string alias = null)
+		public Grouping Average(string member, string alias, bool distinct = false)
 		{
-			_aggregates.Minimum(member, alias);
+			_aggregates.Average(member, alias, distinct);
 			return this;
 		}
 
-		public Grouping Deviation(string member, string alias = null)
+		public Grouping Median(string member, bool distinct = false)
 		{
-			_aggregates.Deviation(member, alias);
+			_aggregates.Median(member, distinct);
 			return this;
 		}
 
-		public Grouping DeviationPopulation(string member, string alias = null)
+		public Grouping Median(string member, string alias, bool distinct = false)
 		{
-			_aggregates.DeviationPopulation(member, alias);
+			_aggregates.Median(member, alias, distinct);
 			return this;
 		}
 
-		public Grouping Variance(string member, string alias = null)
+		public Grouping Maximum(string member, bool distinct = false)
 		{
-			_aggregates.Variance(member, alias);
+			_aggregates.Maximum(member, distinct);
 			return this;
 		}
 
-		public Grouping VariancePopulation(string member, string alias = null)
+		public Grouping Maximum(string member, string alias, bool distinct = false)
 		{
-			_aggregates.VariancePopulation(member, alias);
+			_aggregates.Maximum(member, alias, distinct);
+			return this;
+		}
+
+		public Grouping Minimum(string member, bool distinct = false)
+		{
+			_aggregates.Minimum(member, distinct);
+			return this;
+		}
+
+		public Grouping Minimum(string member, string alias, bool distinct = false)
+		{
+			_aggregates.Minimum(member, alias, distinct);
+			return this;
+		}
+
+		public Grouping Deviation(string member, bool distinct = false)
+		{
+			_aggregates.Deviation(member, distinct);
+			return this;
+		}
+
+		public Grouping Deviation(string member, string alias, bool distinct = false)
+		{
+			_aggregates.Deviation(member, alias, distinct);
+			return this;
+		}
+
+		public Grouping DeviationPopulation(string member, bool distinct = false)
+		{
+			_aggregates.DeviationPopulation(member, distinct);
+			return this;
+		}
+
+		public Grouping DeviationPopulation(string member, string alias, bool distinct = false)
+		{
+			_aggregates.DeviationPopulation(member, alias, distinct);
+			return this;
+		}
+
+		public Grouping Variance(string member, bool distinct = false)
+		{
+			_aggregates.Variance(member, distinct);
+			return this;
+		}
+
+		public Grouping Variance(string member, string alias, bool distinct = false)
+		{
+			_aggregates.Variance(member, alias, distinct);
+			return this;
+		}
+
+		public Grouping VariancePopulation(string member, bool distinct = false)
+		{
+			_aggregates.VariancePopulation(member, distinct);
+			return this;
+		}
+
+		public Grouping VariancePopulation(string member, string alias, bool distinct = false)
+		{
+			_aggregates.VariancePopulation(member, alias, distinct);
 			return this;
 		}
 		#endregion
