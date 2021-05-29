@@ -34,13 +34,15 @@ namespace Zongsoft.Data.Common.Expressions
 	public class AggregateExpression : MethodExpression
 	{
 		#region 构造函数
-		public AggregateExpression(DataAggregateFunction function, params IExpression[] arguments) : base(function.ToString(), MethodType.Function, arguments)
+		public AggregateExpression(DataAggregateFunction function, bool distinct, params IExpression[] arguments) : base(function.ToString(), MethodType.Function, arguments)
 		{
 			this.Function = function;
+			this.Distinct = distinct;
 		}
 		#endregion
 
 		#region 公共属性
+		public bool Distinct { get; }
 		public new DataAggregateFunction Function { get; }
 		#endregion
 
@@ -60,7 +62,7 @@ namespace Zongsoft.Data.Common.Expressions
 					alias = aggregate.Name + aggregate.Function.ToString();
 			}
 
-			return new AggregateExpression(aggregate.Function, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument })
+			return new AggregateExpression(aggregate.Function, aggregate.Distinct, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument })
 			{
 				Alias = alias
 			};

@@ -144,7 +144,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					selection = new SelectStatement(entity);
 					field = selection.Table.CreateField(property);
-					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
+					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, aggregate.Distinct, field));
 
 					break;
 				case 2:
@@ -158,7 +158,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					selection = new SelectStatement(complex.Foreign);
 					field = selection.Table.CreateField(complex.Foreign.Properties.Get(parts[1]));
-					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, field));
+					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, aggregate.Distinct, field));
 
 					var conditions = ConditionExpression.And();
 

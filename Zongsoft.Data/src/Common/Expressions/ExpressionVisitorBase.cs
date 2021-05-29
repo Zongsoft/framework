@@ -337,6 +337,9 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				context.Write("(");
 
+				if(expression is AggregateExpression aggregate && aggregate.Distinct)
+					context.Write("DISTINCT ");
+
 				if(expression.Arguments != null)
 				{
 					var index = 0;
