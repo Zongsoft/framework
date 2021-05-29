@@ -72,10 +72,36 @@ namespace Zongsoft.Data.Common.Expressions
 
 			if(statement.Paging != null && statement.Paging.Enabled)
 			{
-				context.WriteLine("SELECT COUNT(*)");
+				/*
+				 * 注意：有分组子句的分页和没有分组子句的分页查询是不同的。
+				 */
 
-				this.VisitFrom(context, statement.From);
-				this.VisitWhere(context, statement.Where);
+				if(statement.GroupBy == null)
+				{
+					context.WriteLine("SELECT COUNT(*)");
+					this.VisitFrom(context, statement.From);
+					this.VisitWhere(context, statement.Where);
+				}
+				else
+				{
+					context.WriteLine("SELECT COUNT(0) FROM (");
+					context.WriteLine("SELECT ");
+
+					int index = 0;
+
+					foreach(var key in statement.GroupBy.Keys)
+					{
+						if(index++ > 0)
+							context.Write(",");
+
+						context.Visit(key);
+					}
+
+					this.VisitFrom(context, statement.From);
+					this.VisitWhere(context, statement.Where);
+					this.VisitGroupBy(context, statement.GroupBy);
+					context.WriteLine(") AS __wrapping__");
+				}
 			}
 
 			//调用基类同名方法
