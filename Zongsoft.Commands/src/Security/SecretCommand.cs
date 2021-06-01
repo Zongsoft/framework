@@ -51,6 +51,7 @@ namespace Zongsoft.Security.Commands
 
 		#region 公共属性
 		/// <summary>获取或设置验证码提供程序。</summary>
+		[ServiceDependency]
 		public ISecretor Secretor { get; set; }
 		#endregion
 
@@ -63,7 +64,7 @@ namespace Zongsoft.Security.Commands
 					this.Secretor = secretor;
 					break;
 				case ICache cache:
-					this.Secretor = Zongsoft.Security.Secretor.GetSecretor(cache);
+					this.Secretor = new Zongsoft.Security.Secretor(cache, ApplicationContext.Current.Services);
 					break;
 			}
 
