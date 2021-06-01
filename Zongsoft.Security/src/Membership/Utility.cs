@@ -28,13 +28,53 @@
  */
 
 using System;
+using System.IO;
 
-//[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+using Zongsoft.Data;
+using Zongsoft.Common;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security.Membership
 {
-	public static class Modules
-	{
-		public const string Security = nameof(Security);
+    public static class Utility
+    {
+		internal static Condition GetIdentityCondition(string identity)
+		{
+			return GetIdentityCondition(identity, out _);
+		}
+
+		internal static Condition GetIdentityCondition(string identity, out UserIdentityType identityType)
+		{
+			if(string.IsNullOrWhiteSpace(identity))
+				throw new ArgumentNullException(nameof(identity));
+
+			if(identity.Contains("@"))
+			{
+				identityType = UserIdentityType.Email;
+				return Condition.Equal(nameof(IUser.Email), identity);
+			}
+
+			if(identity.IsDigits(out var digits))
+			{
+				identityType = UserIdentityType.Phone;
+				return Condition.Equal(nameof(IUser.Phone), digits);
+			}
+
+			identityType = UserIdentityType.Name;
+			return Condition.Equal(nameof(IUser.Name), identity);
+		}
+
+		internal static UserIdentityType GetIdentityType(string identity)
+		{
+			if(string.IsNullOrEmpty(identity))
+				throw new ArgumentNullException(nameof(identity));
+
+			if(identity.Contains("@"))
+				return UserIdentityType.Email;
+
+			if(identity.IsDigits())
+				return UserIdentityType.Phone;
+
+			return UserIdentityType.Name;
+		}
 	}
 }

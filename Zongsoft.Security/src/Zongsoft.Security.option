@@ -14,7 +14,7 @@
 
 		<authorization roles="security,securities" />
 
-		<authentication period="4:0:0">
+		<authentication period="4:0:0" scheme="User">
 			<attempter threshold="3" window="1:0:0" />
 
 			<expiration>

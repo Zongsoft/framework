@@ -44,26 +44,24 @@ namespace Zongsoft.Security.Membership.Configuration
 		#region 构造函数
 		public AuthenticationOptions()
 		{
+			this.Scheme = string.Empty;
 			this.Period = DefaultPeriod;
 			this.Expiration = new Collections.NamedCollection<ExpirationScenario>(scenario => scenario.Name);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置凭证的默认有效期时长。
-		/// </summary>
+		/// <summary>获取或设置默认的安全方案。</summary>
+		public string Scheme { get; set; }
+
+		/// <summary>获取或设置凭证的默认有效期时长。</summary>
 		[DefaultValue("4:0:0")]
 		public TimeSpan Period { get; set; }
 
-		/// <summary>
-		/// 获取或设置恶意检测器的配置项。
-		/// </summary>
+		/// <summary>获取或设置恶意检测器的配置项。</summary>
 		public AttempterOptions Attempter { get; set; }
 
-		/// <summary>
-		/// 获取凭证过期配置集。
-		/// </summary>
+		/// <summary>获取凭证过期配置集。</summary>
 		public Collections.INamedCollection<ExpirationScenario> Expiration { get; }
 		#endregion
 

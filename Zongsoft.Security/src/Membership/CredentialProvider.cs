@@ -32,10 +32,13 @@ using System.IO;
 
 using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Configuration;
+using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	partial class Authenticator : ICredentialProvider
+	[Service(typeof(ICredentialProvider))]
+	public class CredentialProvider : ICredentialProvider
 	{
 		#region 事件定义
 		public event EventHandler<CredentialRegisterEventArgs> Registered;
@@ -49,7 +52,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public Authenticator(IServiceProvider serviceProvider) : base(serviceProvider)
+		public CredentialProvider(IServiceProvider serviceProvider)
 		{
 			_memoryCache = new MemoryCache("Zongsoft.Security.Authenticator");
 
@@ -59,6 +62,9 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
+		[Options("Security/Membership/Authentication")]
+		public Configuration.AuthenticationOptions Options { get; set; }
+
 		[ServiceDependency]
 		public IServiceAccessor<ICache> Cache { get; set; }
 		#endregion

@@ -119,7 +119,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrEmpty(destination))
 				return this.BadRequest();
 
-			return this.Content(this.Secretor.Transmitter.Transmit(destination, "Authentication", channel));
+			return this.Content(this.Secretor.Transmitter.Transmit(destination, "Authentication", channel, destination));
 		}
 		#endregion
 
