@@ -29,9 +29,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Zongsoft.Text;
 using Zongsoft.Services;
+using Zongsoft.Collections;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
@@ -48,12 +50,13 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		public PhoneTransmitter(IServiceProvider serviceProvider)
 		{
 			this.Channels = new[] { MESSAGE_CHANNEL, VOICE_CHANNEL };
-			this.Phone = serviceProvider.ResolveRequired<Phone>();
 		}
 		#endregion
 
 		#region 公共属性
-		public Phone Phone { get; }
+		[ServiceDependency(IsRequired = true)]
+		public Phone Phone { get; set; }
+
 		public string[] Channels { get; }
 		#endregion
 
@@ -66,9 +69,9 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				throw new ArgumentNullException(nameof(data));
 
 			if(string.IsNullOrEmpty(channel) || string.Equals(channel, MESSAGE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.SendAsync(template, new[] { destination }, new { code = data }).Wait(TimeSpan.FromSeconds(1));
+				this.Phone.SendAsync(template, new[] { destination }, data).Wait(TimeSpan.FromSeconds(1));
 			else if(string.Equals(channel, VOICE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.CallAsync(template, destination, new { code = data }).Wait(TimeSpan.FromSeconds(1));
+				this.Phone.CallAsync(template, destination, data).Wait(TimeSpan.FromSeconds(1));
 			else
 				throw new ArgumentException($"Unsupported ‘{channel}’ channel.", nameof(channel));
 		}

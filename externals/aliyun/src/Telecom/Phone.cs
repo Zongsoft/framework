@@ -33,6 +33,7 @@ using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Threading.Tasks;
 
+using Zongsoft.Text;
 using Zongsoft.Services;
 using Zongsoft.Serialization;
 
@@ -68,6 +69,9 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			get => _options;
 			set => _options = value ?? throw new ArgumentNullException();
 		}
+
+		[ServiceDependency]
+		public IServiceProvider ServiceProvider { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -118,6 +122,12 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 			if(parameter != null)
 			{
+				//尝试进行模板数据格式化
+				if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
+				{
+					parameter = formatter.Format(template.Name, parameter, extra);
+				}
+
 				if(parameter is string || parameter is System.Text.StringBuilder)
 					headers.Add("TtsParam", parameter.ToString());
 				else
@@ -188,6 +198,12 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 			if(parameter != null)
 			{
+				//尝试进行模板数据格式化
+				if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
+				{
+					parameter = formatter.Format(template.Name, parameter, extra);
+				}
+
 				if(parameter is string || parameter is System.Text.StringBuilder)
 					headers.Add("TemplateParam", parameter.ToString());
 				else
