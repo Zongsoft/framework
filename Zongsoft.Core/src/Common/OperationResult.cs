@@ -183,6 +183,13 @@ namespace Zongsoft.Common
 			this.Value = default;
 			_failure = failure;
 		}
+
+		private OperationResult(string reason, string message = null)
+		{
+			this.Value = default;
+			this.Reason = reason;
+			this.Message = message;
+		}
 		#endregion
 
 		#region 公共属性

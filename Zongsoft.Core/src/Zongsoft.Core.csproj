@@ -33,7 +33,6 @@
 		<Folder Include="Reflection\Expressions\" />
 		<Folder Include="Terminals\Commands\" />
 		<Folder Include="Transactions\" />
-		<Folder Include="Text\" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -32,10 +32,36 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
+	/// <summary>
+	/// 提供身份校验功能的接口。
+	/// </summary>
 	public interface IIdentityVerifier
 	{
+		/// <summary>获取身份校验器名称。</summary>
 		string Name { get; }
-		IdentityVerifierResult Issue(string key, string extra, IDictionary<string, object> parameters = null);
-		bool Verify(string key, string token, IDictionary<string, object> parameters = null);
+
+		/// <summary>
+		/// 校验身份。
+		/// </summary>
+		/// <param name="token">指定的校验票据。</param>
+		/// <param name="data">指定的校验数据。</param>
+		/// <param name="ticket">输出参数，表示验证成功后的票据对象（即校验数据的类型对象）。</param>
+		/// <returns>返回的校验结果。</returns>
+		Common.OperationResult Verify(string token, object data, out object ticket);
+	}
+
+	/// <summary>
+	/// 提供身份校验功能的接口。
+	/// </summary>
+	/// <typeparam name="T">校验数据的类型。</typeparam>
+	public interface IIdentityVerifier<in T> : IIdentityVerifier
+	{
+		/// <summary>
+		/// 校验身份。
+		/// </summary>
+		/// <param name="token">指定的校验票据。</param>
+		/// <param name="data">指定的校验数据。</param>
+		/// <returns>返回的校验结果。</returns>
+		Common.OperationResult Verify(string token, T data);
 	}
 }

@@ -34,6 +34,7 @@ namespace Zongsoft.Security
 {
 	public interface IIdentityChallenger
 	{
+		bool CanChallenge(ClaimsPrincipal principal);
 		Common.OperationResult Challenge(ClaimsPrincipal principal);
 	}
 }

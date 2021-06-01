@@ -1,4 +1,4 @@
-﻿/*
+﻿﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,11 +28,42 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
-	public interface IIdentityVerifierProvider
+	/// <summary>
+	/// 提供身份签发功能的接口。
+	/// </summary>
+	public interface IIdentityIssuer
 	{
-		IIdentityVerifier GetVerifier(string name);
+		/// <summary>获取身份签发器名称。</summary>
+		string Name { get; }
+
+		/// <summary>
+		/// 签发身份凭证。
+		/// </summary>
+		/// <param name="data">指定的身份数据。</param>
+		/// <param name="period">签发的凭证有效期。</param>
+		/// <param name="parameters">指定的参数集。</param>
+		/// <returns></returns>
+		ClaimsIdentity Issue(object data, TimeSpan period, IDictionary<string, object> parameters);
+	}
+
+	/// <summary>
+	/// 提供身份签发功能的接口。
+	/// </summary>
+	/// <typeparam name="T">签发数据的类型。</typeparam>
+	public interface IIdentityIssuer<in T> : IIdentityIssuer
+	{
+		/// <summary>
+		/// 签发身份凭证。
+		/// </summary>
+		/// <param name="data">指定类型的身份数据。</param>
+		/// <param name="period">签发的凭证有效期。</param>
+		/// <param name="parameters">指定的参数集。</param>
+		/// <returns></returns>
+		ClaimsIdentity Issue(T data, TimeSpan period, IDictionary<string, object> parameters);
 	}
 }

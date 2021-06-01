@@ -28,28 +28,29 @@
  */
 
 using System;
-using System.Security.Claims;
-using System.Security.Principal;
+using System.IO;
 
 namespace Zongsoft.Security
 {
-	internal static class Anonymous
+	public static class SecretIdentityUtility
 	{
-		public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
-		public static readonly IIdentity Identity = new AnonymousIdentity();
-
-		private class AnonymousPrincipal : ClaimsPrincipal
+		public static string GetTicket(object data)
 		{
-			public AnonymousPrincipal() : base(Anonymous.Identity) { }
-		}
+			if(data is string text)
+				return text;
 
-		private class AnonymousIdentity : IIdentity
-		{
-			public AnonymousIdentity() { }
+			if(data is byte[] bytes)
+				return System.Text.Encoding.UTF8.GetString(bytes);
 
-			public string AuthenticationType => string.Empty;
-			public bool IsAuthenticated => false;
-			public string Name => string.Empty;
+			if(data is Stream stream)
+			{
+				using(var reader = new StreamReader(stream, System.Text.Encoding.UTF8))
+				{
+					return reader.ReadToEnd();
+				}
+			}
+
+			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
 		}
 	}
 }

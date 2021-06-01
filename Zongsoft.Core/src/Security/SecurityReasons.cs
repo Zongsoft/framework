@@ -52,6 +52,9 @@ namespace Zongsoft.Security
 		/// <summary>无效的密码</summary>
 		public static readonly string InvalidPassword = nameof(InvalidPassword);
 
+		/// <summary>无效的参数。</summary>
+		public static readonly string InvalidArgument = nameof(InvalidArgument);
+
 		/// <summary>帐户尚未批准</summary>
 		public static readonly string AccountUnapproved = nameof(AccountUnapproved);
 
