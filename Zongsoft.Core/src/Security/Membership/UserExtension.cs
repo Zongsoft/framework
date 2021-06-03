@@ -29,7 +29,6 @@
 
 using System;
 using System.Security.Claims;
-using System.Security.Principal;
 
 namespace Zongsoft.Security.Membership
 {
@@ -45,31 +44,43 @@ namespace Zongsoft.Security.Membership
 				Label = user.FullName
 			};
 
-			identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(), ClaimValueTypes.UInteger32, issuer, issuer, identity));
-
-			if(!string.IsNullOrEmpty(user.Namespace))
-				identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String, issuer, issuer, identity));
-			if(!string.IsNullOrEmpty(user.Description))
-				identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String, issuer, issuer, identity));
-			if(!string.IsNullOrEmpty(user.Email))
-				identity.AddClaim(new Claim(ClaimTypes.Email, user.Email.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
-			if(!string.IsNullOrEmpty(user.Phone))
-				identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
-
-			identity.AddClaim(new Claim(ClaimNames.UserStatus, user.Status.ToString(), ClaimValueTypes.Integer32, issuer, issuer, identity));
-
-			if(user.StatusTimestamp.HasValue)
-				identity.AddClaim(new Claim(ClaimNames.UserStatusTimestamp, user.StatusTimestamp.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
-
-			identity.AddClaim(new Claim(ClaimNames.Creation, user.Creation.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
-
-			if(user.Modification.HasValue)
-				identity.AddClaim(new Claim(ClaimNames.Modification, user.Modification.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
-
-			if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
-				identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, issuer, issuer, identity));
+			SetClaims(identity, user, expiration);
 
 			return identity;
+		}
+
+		public static void SetClaims(this ClaimsIdentity identity, IUser user, TimeSpan? expiration = null)
+		{
+			if(identity == null || user == null)
+				return;
+
+			if(!string.IsNullOrWhiteSpace(user.FullName))
+				identity.Label = user.FullName;
+
+			identity.AddClaim(new Claim(identity.NameClaimType, user.Name, ClaimValueTypes.String));
+			identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(), ClaimValueTypes.UInteger32));
+
+			if(!string.IsNullOrEmpty(user.Namespace))
+				identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String));
+			if(!string.IsNullOrEmpty(user.Description))
+				identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String));
+			if(!string.IsNullOrEmpty(user.Email))
+				identity.AddClaim(new Claim(ClaimTypes.Email, user.Email.ToString(), ClaimValueTypes.String));
+			if(!string.IsNullOrEmpty(user.Phone))
+				identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone.ToString(), ClaimValueTypes.String));
+
+			identity.AddClaim(new Claim(ClaimNames.UserStatus, user.Status.ToString(), ClaimValueTypes.Integer32));
+
+			if(user.StatusTimestamp.HasValue)
+				identity.AddClaim(new Claim(ClaimNames.UserStatusTimestamp, user.StatusTimestamp.ToString(), ClaimValueTypes.DateTime));
+
+			identity.AddClaim(new Claim(ClaimNames.Creation, user.Creation.ToString(), ClaimValueTypes.DateTime));
+
+			if(user.Modification.HasValue)
+				identity.AddClaim(new Claim(ClaimNames.Modification, user.Modification.ToString(), ClaimValueTypes.DateTime));
+
+			if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
+				identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration));
 		}
 	}
 }
