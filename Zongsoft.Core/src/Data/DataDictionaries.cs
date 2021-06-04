@@ -1282,7 +1282,7 @@ namespace Zongsoft.Data
 			{
 				if(predicate == null || predicate((TValue)Convert.ChangeType(member.GetValue(ref _data), typeof(TValue))))
 				{
-					member.SetValue(ref _data, valueFactory());
+					member.TrySetValue(ref _data, valueFactory());
 					return true;
 				}
 			}
