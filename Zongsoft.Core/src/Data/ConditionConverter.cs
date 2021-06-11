@@ -81,7 +81,28 @@ namespace Zongsoft.Data
 		{
 			//如果当前属性类型是模型接口(条件)，则进行嵌套转换
 			if(typeof(IModel).IsAssignableFrom(context.Type))
+			{
+				if(context.Operator == ConditionOperator.Exists || context.Operator == ConditionOperator.NotExists)
+				{
+					var index = context.Names[0].IndexOf('.');
+					string name, path;
+
+					if(index > 0)
+					{
+						name = context.Names[0].Substring(0, index);
+						path = context.Names[0].Substring(index + 1);
+					}
+					else
+					{
+						name = context.Names[0];
+						path = null;
+					}
+
+					return new Condition(name, Criteria.Transform((IModel)context.Value, path), context.Operator.Value);
+				}
+
 				return Criteria.Transform((IModel)context.Value, context.Names[0]);
+			}
 
 			//判断当前属性是否可以忽略
 			if(this.IsIgnorable(context))
