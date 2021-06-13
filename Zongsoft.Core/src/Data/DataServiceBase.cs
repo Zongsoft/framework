@@ -1683,7 +1683,7 @@ namespace Zongsoft.Data
 		{
 			var sortings = _attribute?.GetSortings();
 
-			if(sortings == null || sortings.Length == 0)
+			if((sortings == null || sortings.Length == 0) && this.Service == null)
 			{
 				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
 
