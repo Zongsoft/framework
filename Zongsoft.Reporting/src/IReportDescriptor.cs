@@ -36,9 +36,6 @@ namespace Zongsoft.Reporting
 	{
 		string Name { get; }
 		string Type { get; }
-		string Icon { get; set; }
-		string Title { get; set; }
-		string Description { get; set; }
 
 		Stream Open();
 	}

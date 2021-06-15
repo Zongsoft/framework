@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Reporting">
+		<providers>
+			<file priority="500" extension=".rdlx" path="~" />
+			<data priority="100" provider="" />
+		</providers>
+	</option>
+</options>

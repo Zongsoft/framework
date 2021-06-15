@@ -9,5 +9,9 @@
 		<assemblies>
 			<assembly name="Zongsoft.Externals.Grapecity" />
 		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Reporting" />
+		</dependencies>
 	</manifest>
 </plugin>

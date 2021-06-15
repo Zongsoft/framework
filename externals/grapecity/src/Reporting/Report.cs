@@ -82,6 +82,15 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			return new Report(new PageReport(reader));
 		}
 
+		public static Report Open(IReportDescriptor descriptor)
+		{
+			if(descriptor == null)
+				throw new ArgumentNullException(nameof(descriptor));
+
+			using var stream = descriptor.Open();
+			return stream == null ? null : Open(stream);
+		}
+
 		public PageReport AsReport() => _report;
 		public T AsReport<T>() where T : class => _report as T;
 

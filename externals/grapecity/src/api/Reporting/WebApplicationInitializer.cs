@@ -53,7 +53,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 				settings.UseCustomStore(name =>
 				{
-					var providers = builder.ApplicationServices.ResolveAll<IReportProvider>().OrderByDescending(p => p.Priority);
+					var providers = builder.ApplicationServices.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
 
 					foreach(var provider in providers)
 					{
@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 						if(descriptor != null)
 						{
-							var report = ReportBuilder.Instance.Build(descriptor);
+							var report = Report.Open(descriptor);
 
 							if(report != null)
 								return report.AsReport<PageReport>();

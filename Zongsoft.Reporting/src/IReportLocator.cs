@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportProvider
+	public interface IReportLocator
 	{
 		int Priority { get; set; }
 
