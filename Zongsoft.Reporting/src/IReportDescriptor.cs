@@ -28,15 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.IO;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportProvider
+	public interface IReportDescriptor
 	{
-		int Priority { get; set; }
+		string Name { get; }
+		string Type { get; }
+		string Icon { get; set; }
+		string Title { get; set; }
+		string Description { get; set; }
 
-		IReportDescriptor GetReport(string name);
-		IEnumerable<IReportDescriptor> GetReports();
+		Stream Open();
 	}
 }

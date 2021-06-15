@@ -28,15 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportProvider
+	public enum ReportParameterType
 	{
-		int Priority { get; set; }
-
-		IReportDescriptor GetReport(string name);
-		IEnumerable<IReportDescriptor> GetReports();
+		String,
+		Boolean,
+		Integer,
+		Float,
+		Date,
+		Time,
+		DateTime,
 	}
 }

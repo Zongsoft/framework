@@ -37,7 +37,7 @@ namespace Zongsoft.Reporting
 		string Name { get; set; }
 		string Label { get; set; }
 		object Value { get; set; }
-		Type ParameterType { get; set; }
+		ReportParameterType ParameterType { get; set; }
 		string Description { get; set; }
 	}
 }

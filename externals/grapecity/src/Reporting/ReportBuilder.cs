@@ -11,32 +11,37 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Reporting library.
+ * This file is part of Zongsoft.Externals.GrapeCity library.
  *
- * The Zongsoft.Reporting is free software: you can redistribute it and/or modify
+ * The Zongsoft.Externals.GrapeCity is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Reporting is distributed in the hope that it will be useful,
+ * The Zongsoft.Externals.GrapeCity is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Reporting library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Externals.GrapeCity library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
-using System.Collections.Generic;
+using System.IO;
 
-namespace Zongsoft.Reporting
+using Zongsoft.Reporting;
+
+namespace Zongsoft.Externals.Grapecity.Reporting
 {
-	public interface IReportProvider
+	public class ReportBuilder : IReportBuilder
 	{
-		int Priority { get; set; }
+		public static readonly ReportBuilder Instance = new ReportBuilder();
 
-		IReportDescriptor GetReport(string name);
-		IEnumerable<IReportDescriptor> GetReports();
+		public IReport Build(IReportDescriptor descriptor)
+		{
+			using var stream = descriptor.Open();
+			return Report.Open(stream);
+		}
 	}
 }

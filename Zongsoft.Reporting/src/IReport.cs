@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Reporting
 {
@@ -39,10 +38,10 @@ namespace Zongsoft.Reporting
 		string Icon { get; set; }
 		string Title { get; set; }
 		string Description { get; set; }
-		KeyedCollection<string, IReportParameter> Parameters { get; }
+		IReportParameterCollection Parameters { get; }
 		IReportDataLocator Locator { get; set; }
 
-		Stream Open();
+		T AsReport<T>() where T : class;
 
 		void Render(Stream stream, IReportRenderOptions options);
 		void RenderToFile(string filePath, IReportRenderOptions options);

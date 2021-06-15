@@ -32,11 +32,12 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportProvider
+	public interface IReportParameterCollection : ICollection<IReportParameter>
 	{
-		int Priority { get; set; }
+		IReportParameter this[string name] { get; }
 
-		IReportDescriptor GetReport(string name);
-		IEnumerable<IReportDescriptor> GetReports();
+		bool Contains(string name);
+		bool Remove(string name);
+		bool TryGetValue(string name, out IReportParameter parameter);
 	}
 }
