@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="GrapeCity.ActiveReports" Version="15.1.3" />
+    <PackageReference Include="GrapeCity.ActiveReports.Aspnetcore.Viewer" Version="15.1.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Zongsoft.Core">
+      <HintPath>..\..\..\Zongsoft.Core\src\bin\Debug\net5.0\Zongsoft.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Zongsoft.Reporting">
+      <HintPath>..\..\..\Zongsoft.Reporting\src\bin\Debug\net5.0\Zongsoft.Reporting.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
