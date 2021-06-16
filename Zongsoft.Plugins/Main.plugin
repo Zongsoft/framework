@@ -7,12 +7,6 @@
         copyright="Copyright (C) 2012-2020 Zongsoft Corporation. All rights reserved."
         description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2020-04-25 by Popeye Zhong.">
 
-	<manifest>
-		<assemblies>
-			<assembly name="Zongsoft.Plugins" />
-		</assemblies>
-	</manifest>
-
 	<builders>
 		<builder name="lazy" type="Zongsoft.Plugins.Builders.LazyBuilder, Zongsoft.Plugins"/>
 		<builder name="expose" type="Zongsoft.Plugins.Builders.ExposeBuilder, Zongsoft.Plugins"/>
