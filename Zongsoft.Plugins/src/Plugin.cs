@@ -31,6 +31,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
@@ -88,37 +89,17 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取插件树对象。
-		/// </summary>
-		public PluginTree PluginTree
-		{
-			get => _pluginTree;
-		}
+		/// <summary>获取插件树对象。</summary>
+		public PluginTree PluginTree { get => _pluginTree;}
 
-		/// <summary>
-		/// 获取插件名。
-		/// </summary>
-		public string Name
-		{
-			get => _name;
-		}
+		/// <summary>获取插件名。</summary>
+		public string Name { get => _name; }
 
-		/// <summary>
-		/// 获取插件的文件路径，该属性值为完全限定路径格式，即包含完整路径和文件名。
-		/// </summary>
-		public string FilePath
-		{
-			get => _filePath;
-		}
+		/// <summary>获取插件的文件路径，该属性值为完全限定路径格式，即包含完整路径和文件名。</summary>
+		public string FilePath { get => _filePath; }
 
-		/// <summary>
-		/// 获取插件清单描述对象。
-		/// </summary>
-		public PluginManifest Manifest
-		{
-			get => _manifest;
-		}
+		/// <summary>获取插件清单描述对象。</summary>
+		public PluginManifest Manifest { get => _manifest; }
 
 		/// <summary>
 		/// 获取当前插件是否为隐藏式插件文件。
@@ -127,30 +108,21 @@ namespace Zongsoft.Plugins
 		///		<para>注意：隐藏式插件不可成为主插件，即对应的<see cref="IsMaster"/>属性始终为假(False)。</para>
 		///		<para>注意：隐藏式插件文件中不能定义依赖项。</para>
 		/// </remarks>
-		public bool IsHidden
-		{
-			get => _isHidden;
-		}
+		public bool IsHidden { get => _isHidden; }
 
-		/// <summary>
-		/// 获取当前插件是否为主插件，即没有依赖项的插件。
-		/// </summary>
+		/// <summary>获取当前插件是否为主插件，即没有依赖项的插件。</summary>
 		public bool IsMaster
 		{
 			get => (!_isHidden) && (this.Manifest.Dependencies == null || this.Manifest.Dependencies.Count < 1);
 		}
 
-		/// <summary>
-		/// 获取当前插件是否为从插件，即含有依赖项的插件。
-		/// </summary>
+		/// <summary>获取当前插件是否为从插件，即含有依赖项的插件。</summary>
 		public bool IsSlave
 		{
 			get => _isHidden || (this.Manifest.Dependencies != null && this.Manifest.Dependencies.Count > 0);
 		}
 
-		/// <summary>
-		/// 获取当前插件的状态。
-		/// </summary>
+		/// <summary>取当前插件的状态。</summary>
 		public PluginStatus Status
 		{
 			get => _status;
@@ -161,51 +133,25 @@ namespace Zongsoft.Plugins
 		/// 获取当前插件的父插件对象。
 		/// </summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
-		public Plugin Parent
-		{
-			get => _parent;
-		}
+		public Plugin Parent { get => _parent; }
 
-		/// <summary>
-		/// 获取一个值，指示当前插件是否具有子插件集。
-		/// </summary>
-		public bool HasChildren
-		{
-			get => _children != null && _children.Count > 0;
-		}
+		/// <summary>获取一个值，指示当前插件是否具有子插件集。</summary>
+		public bool HasChildren { get => _children != null && _children.Count > 0; }
 
 		/// <summary>
 		/// 获取当前插件的子插件集合。
 		/// </summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
-		public PluginCollection Children
-		{
-			get => _children;
-		}
+		public PluginCollection Children { get => _children; }
 
-		/// <summary>
-		/// 获取当前插件中的所有构件对象。
-		/// </summary>
-		public Builtin[] Builtins
-		{
-			get => _builtins.ToArray();
-		}
+		/// <summary>获取当前插件中的所有构件对象。</summary>
+		public Builtin[] Builtins { get => _builtins.ToArray(); }
 
-		/// <summary>
-		/// 获取当前插件的所有构建器集合。
-		/// </summary>
-		public BuilderElementCollection Builders
-		{
-			get => _builders;
-		}
+		/// <summary>获取当前插件的所有构建器集合。</summary>
+		public BuilderElementCollection Builders { get => _builders; }
 
-		/// <summary>
-		/// 获取当前插件的所有解析器元素集合。
-		/// </summary>
-		public FixedElementCollection<IParser> Parsers
-		{
-			get => _parsers;
-		}
+		/// <summary>获取当前插件的所有解析器元素集合。</summary>
+		public FixedElementCollection<IParser> Parsers { get => _parsers; }
 		#endregion
 
 		#region 内部属性
@@ -545,13 +491,15 @@ namespace Zongsoft.Plugins
 			private readonly Plugin _plugin;
 			private readonly List<Assembly> _assemblies;
 			private PluginDependencyCollection _dependencies;
+			private PluginAssemblyLoader _loader;
 			#endregion
 
 			#region 构造函数
-			internal PluginManifest(Plugin owner)
+			internal PluginManifest(Plugin plugin)
 			{
-				_plugin = owner;
+				_plugin = plugin;
 				_assemblies = new List<Assembly>();
+				_loader = new PluginAssemblyLoader(plugin);
 			}
 			#endregion
 
@@ -672,10 +620,90 @@ namespace Zongsoft.Plugins
 					throw new PluginException(string.Format("The '{0}' assembly file is not exists. in '{1}' plugin file.", assemblyName, _plugin.Name));
 				}
 
-				Assembly result = Assembly.LoadFrom(filePath);
+				//var result = Assembly.LoadFrom(filePath);
+				var result = _loader.LoadFromAssemblyPath(filePath);
 
 				if(result != null)
 					_assemblies.Add(result);
+			}
+			#endregion
+		}
+
+		private class PluginAssemblyLoader : AssemblyLoadContext
+		{
+			#region 成员字段
+			private readonly Plugin _plugin;
+			private AssemblyDependencyResolver _resolver;
+			#endregion
+
+			#region 构造函数
+			public PluginAssemblyLoader(Plugin plugin)
+			{
+				_plugin = plugin;
+
+				var assemblyPath = Path.Combine(Path.GetDirectoryName(plugin.FilePath), Path.GetFileNameWithoutExtension(plugin.FilePath) + ".dll");
+
+				if(File.Exists(assemblyPath))
+					_resolver = new AssemblyDependencyResolver(assemblyPath);
+			}
+			#endregion
+
+			#region 重写方法
+			protected override Assembly Load(AssemblyName assemblyName)
+			{
+				if(assemblyName.Name.StartsWith("System") || assemblyName.Name.StartsWith("Microsoft"))
+					return null;
+
+				var assembly = FindAssembly(_plugin, assemblyName);
+
+				if(assembly == null)
+				{
+					if(_resolver == null && _plugin._manifest.Assemblies != null && _plugin._manifest.Assemblies.Length > 0)
+						_resolver = new AssemblyDependencyResolver(_plugin._manifest.Assemblies[0].Location);
+
+					if(_resolver != null)
+					{
+						var filePath = _resolver.ResolveAssemblyToPath(assemblyName);
+
+						if(!string.IsNullOrEmpty(filePath))
+							assembly = this.LoadFromAssemblyPath(filePath);
+					}
+				}
+
+				return assembly;
+			}
+			#endregion
+
+			#region 私有方法
+			private static Assembly FindAssembly(Plugin plugin, AssemblyName assemblyName)
+			{
+				if(plugin.Manifest.Assemblies != null)
+				{
+					var assembly = plugin.Manifest.Assemblies.FirstOrDefault(assembly => MatchAssembly(assembly.GetName(), assemblyName));
+
+					if(assembly != null)
+						return assembly;
+				}
+
+				var dependencies = plugin._manifest.HasDependencies ? plugin.Manifest.Dependencies : null;
+
+				if(dependencies != null && dependencies.Count > 0)
+				{
+					foreach(var dependency in dependencies)
+					{
+						var assembly = FindAssembly(dependency.Plugin, assemblyName);
+
+						if(assembly != null)
+							return assembly;
+					}
+				}
+
+				return (plugin.Parent != null) ? FindAssembly(plugin.Parent, assemblyName) : null;
+			}
+
+			private static bool MatchAssembly(AssemblyName loaded, AssemblyName unloaded)
+			{
+				return string.Equals(loaded.FullName, unloaded.FullName) && loaded.Version >= unloaded.Version;
 			}
 			#endregion
 		}
