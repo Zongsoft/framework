@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Authors>Popeye Zhong</Authors>
+    <Company>Zongsoft Studio</Company>
+    <Description>This is a library about GrapeCity SDK.</Description>
+    <Copyright>Copyright(C) Zongsoft Studio 2020-2021. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/Zongsoft</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="api\**" />
+    <EmbeddedResource Remove="api\**" />
+    <None Remove="api\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GrapeCity.ActiveReports" Version="15.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Zongsoft.Core">
+      <HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Zongsoft.Reporting">
+      <HintPath>..\..\..\Zongsoft.Reporting\src\bin\$(Configuration)\net5.0\Zongsoft.Reporting.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
