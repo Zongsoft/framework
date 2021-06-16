@@ -69,7 +69,24 @@ namespace Zongsoft.Configuration
 			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
 
 			if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
-				return Activator.CreateInstance(Type.GetType(attribute.ConverterTypeName)) as TypeConverter;
+			{
+				var type = Type.GetType(attribute.ConverterTypeName, assemblyName =>
+				{
+					var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+					for(int i = 0; i < assemblies.Length; i++)
+					{
+						var name = assemblies[i].GetName();
+
+						if(string.Equals(assemblyName.FullName, name.FullName) && assemblyName.Version <= name.Version)
+							return assemblies[i];
+					}
+
+					return null;
+				}, null);
+
+				return Activator.CreateInstance(type) as TypeConverter;
+			}
 
 			return null;
 		}
