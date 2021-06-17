@@ -88,7 +88,7 @@ namespace Zongsoft.IO
 		public string FileName { get => _segments != null && _segments.Length > 0 ? _segments[^1] : null; }
 
 		/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
-		public string FullPath { get => GetAnchorString(_anchor, true) + string.Join("/", _segments); }
+		public string FullPath { get => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments)); }
 
 		/// <summary>
 		/// 获取路径的完整URL，该属性值包含<see cref="Scheme"/>和<see cref="FullPath"/>。
@@ -96,7 +96,7 @@ namespace Zongsoft.IO
 		/// <remarks>
 		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
 		/// </remarks>
-		public string Url { get => (string.IsNullOrEmpty(_scheme) ? LocalFileSystem.Instance.Scheme : _scheme) + ":" + this.FullPath; }
+		public string Url { get => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath; }
 
 		/// <summary>
 		/// 获取路径中各节点数组，更多内容请参考备注说明。
@@ -135,6 +135,36 @@ namespace Zongsoft.IO
 		///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
 		/// </remarks>
 		public bool IsDirectory { get => _segments == null || _segments.Length == 0 || string.IsNullOrEmpty(_segments[^1]); }
+		#endregion
+
+		#region 公共方法
+		/// <summary>
+		/// 获取路径的完整URL，包含 <see cref="Scheme"/> 部分。
+		/// </summary>
+		/// <remarks>
+		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
+		/// </remarks>
+		public string GetUrl() => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath;
+
+		/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
+		public string GetFullPath() => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments));
+
+		/// <summary>获取路径的目录地址（注：不含<see cref="Scheme"/>部分）。</summary>
+		public string GetDirectory()
+		{
+			return GetAnchorString(_anchor, true) +
+			(
+				this.IsFile ?
+				_segments == null || _segments.Length < 2 ? null : string.Join('/', _segments, 0, _segments.Length - 1) :
+				_segments == null || _segments.Length < 1 ? null : string.Join('/', _segments)
+			) + '/';
+		}
+
+		/// <summary>获取目录地址URL，包含 <see cref="Scheme"/> 部分。</summary>
+		public string GetDirectoryUrl()
+		{
+			return string.IsNullOrEmpty(_scheme) ? this.GetDirectory() : _scheme + ':' + this.GetDirectory();
+		}
 		#endregion
 
 		#region 重写方法
@@ -180,11 +210,12 @@ namespace Zongsoft.IO
 			if(string.IsNullOrEmpty(text))
 				throw new ArgumentNullException(text);
 
-			//解析路径文本，由特定参数指定解析失败是否抛出异常
-			if(ParseCore(text, true, out string scheme, out string[] segments, out PathAnchor anchor))
-				return new PathToken(scheme, anchor, segments);
+			var (path, message) = ParseCore(text);
 
-			return default;
+			if(path.HasValue)
+				return path.Value;
+
+			throw new PathException(message);
 		}
 
 		/// <summary>
@@ -195,206 +226,19 @@ namespace Zongsoft.IO
 		/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
 		public static bool TryParse(string text, out PathToken path)
 		{
-			if(!string.IsNullOrEmpty(text) && ParseCore(text, false, out var scheme, out var segments, out var anchor))
+			if(!string.IsNullOrEmpty(text))
 			{
-				path = new PathToken(scheme, anchor, segments);
-				return true;
+				var (token, _) = ParseCore(text);
+
+				if(token.HasValue)
+				{
+					path = token.Value;
+					return true;
+				}
 			}
 
 			path = default;
 			return false;
-		}
-
-		/// <summary>
-		/// 解析路径。
-		/// </summary>
-		/// <param name="text">指定要解析的路径文本。</param>
-		/// <param name="throwException">指定无效的路径文本是否激发异常。</param>
-		/// <param name="scheme">返回解析成功的路径对应的文件系统<see cref="IFileSystem.Scheme"/>方案。</param>
-		/// <param name="segments">返回解析成功的路径节点数组，更多信息请参考<see cref="PathToken.Segments"/>属性文档。</param>
-		/// <param name="anchor">返回解析成功的路径锚点。</param>
-		/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
-		private static bool ParseCore(string text, bool throwException, out string scheme, out string[] segments, out PathAnchor anchor)
-		{
-			const int PATH_NONE_STATE = 0;      //状态机：初始态
-			const int PATH_SLASH_STATE = 1;     //状态机：斜杠态（路径分隔符）
-			const int PATH_ANCHOR_STATE = 2;    //状态机：锚点态
-			const int PATH_SEGMENT_STATE = 3;   //状态机：内容态
-
-			scheme = null;
-			segments = null;
-			anchor = PathAnchor.None;
-
-			if(string.IsNullOrEmpty(text))
-			{
-				if(throwException)
-					throw new PathException("The path text is null or empty.");
-
-				return false;
-			}
-
-			var state = 0;
-			var spaces = 0;
-			var part = string.Empty;
-			var parts = new List<string>();
-
-			for(int i = 0; i < text.Length; i++)
-			{
-				var chr = text[i];
-
-				switch(chr)
-				{
-					case ' ':
-						if(state == PATH_ANCHOR_STATE && anchor == PathAnchor.Current)
-						{
-							if(throwException)
-								throw new PathException("");
-
-							return false;
-						}
-
-						if(part.Length > 0)
-							spaces++;
-
-						break;
-					case '\t':
-					case '\n':
-					case '\r':
-						break;
-					case ':':
-						//注意：当首次遇到冒号时，其为Scheme定语；否则即为普通字符
-						if(parts.Count == 0)
-						{
-							if(string.IsNullOrEmpty(part))
-							{
-								if(throwException)
-									throw new PathException("The scheme of path is empty.");
-
-								return false;
-							}
-
-							//设置路径方案
-							scheme = part;
-
-							//重置空格计数器
-							spaces = 0;
-
-							//重置内容文本
-							part = string.Empty;
-
-							//设置当前状态为初始态
-							state = PATH_NONE_STATE;
-						}
-						else
-						{
-							//跳转到默认分支，即做普通字符处理
-							goto default;
-						}
-
-						break;
-					case '.':
-						switch(state)
-						{
-							case PATH_NONE_STATE:
-								anchor = PathAnchor.Current;
-								break;
-							case PATH_ANCHOR_STATE:
-								if(anchor == PathAnchor.Current)
-								{
-									anchor = PathAnchor.Parent;
-								}
-								else
-								{
-									if(throwException)
-										throw new PathException("Invalid anchor of path.");
-
-									return false;
-								}
-
-								break;
-							default:
-								goto TEXT_LABEL;
-						}
-
-						state = PATH_ANCHOR_STATE;
-
-						break;
-					case '/':
-					case '\\':
-						switch(state)
-						{
-							case PATH_NONE_STATE:
-								anchor = PathAnchor.Root;
-								break;
-							case PATH_SLASH_STATE:
-								if(throwException)
-									throw new PathException("Invalid path text, it contains repeated slash character.");
-
-								return false;
-							case PATH_SEGMENT_STATE:
-								if(string.IsNullOrEmpty(part))
-								{
-									if(throwException)
-										throw new PathException("Error occurred, The path parser internal error.");
-
-									return false;
-								}
-
-								parts.Add(part);
-
-								break;
-						}
-
-						spaces = 0;
-						part = string.Empty;
-						state = PATH_SLASH_STATE;
-
-						break;
-					//注意：忽略对“?”、“*”字符的检验处理，因为需要支持对通配符模式路径的链接。
-					//case '?':
-					//case '*':
-					case '"':
-					case '|':
-					case '<':
-					case '>':
-						if(throwException)
-							throw new ArgumentException(string.Format("Invalid path, it contains '{0}' illegal character(s).", chr));
-
-						return false;
-					default:
-					TEXT_LABEL:
-						if(spaces > 0)
-						{
-							part += new string(' ', spaces);
-							spaces = 0;
-						}
-
-						part += chr;
-						state = PATH_SEGMENT_STATE;
-
-						break;
-				}
-			}
-
-			if(state == PATH_SEGMENT_STATE && part.Length > 0)
-				parts.Add(part);
-
-			if(parts.Count == 0 && anchor == PathAnchor.None)
-			{
-				if(throwException)
-					throw new PathException("The path text is all whitespaces.");
-
-				return false;
-			}
-
-			segments = new string[parts.Count + (state == PATH_SLASH_STATE && parts.Count > 0 ? 1 : 0)];
-
-			for(var i = 0; i < parts.Count; i++)
-			{
-				segments[i] = parts[i];
-			}
-
-			return true;
 		}
 
 		/// <summary>
@@ -533,102 +377,120 @@ namespace Zongsoft.IO
 					return string.Empty;
 			}
 		}
+		#endregion
 
+		#region 解析方法
 		private static (PathToken? path, string message) ParseCore(string text)
 		{
-			PathAnchor anchor = PathAnchor.None;
+			PathAnchor anchor = PathAnchor.None, anchorValue;
 			string scheme = null;
 			IList<string> segments = null;
 
 			var context = new PathContext(text.AsSpan());
 
-			for(int i = 0; i < text.Length; i++)
+			while(context.Move())
 			{
-				context.Move(i);
+				if(context.HasError(out var message))
+					return new (null, message);
 
 				switch(context.State)
 				{
-					case PathState.Error:
-						return (null, context.ErrorMessage);
 					case PathState.None:
-						DoNone(context, out anchor, out scheme, out string part);
+						if(DoNone(ref context, out anchorValue))
+							anchor = anchorValue;
 
-						if(!string.IsNullOrEmpty(part))
+						break;
+					case PathState.First:
+						if(DoFirst(ref context, out var first))
+						{
+							if(first.Type == First.FirstType.Scheme)
+							{
+								scheme = first.Text;
+
+								if(first.Letter != '\0')
+								{
+									if(segments == null)
+										segments = new List<string>();
+
+									anchor = PathAnchor.Root;
+									segments.Add(first.Letter.ToString());
+								}
+							}
+							else
+							{
+								if(segments == null)
+									segments = new List<string>();
+
+								segments.Add(first.Text);
+							}
+						}
+
+						break;
+					case PathState.Slash:
+						DoSlash(ref context);
+						break;
+					case PathState.Anchor:
+						if(DoAnchor(ref context, out anchorValue))
+							anchor = anchorValue;
+
+						break;
+					case PathState.Origin:
+						if(DoOrigin(ref context, out anchorValue))
+							anchor = anchorValue;
+
+						break;
+					case PathState.Segment:
+						if(DoSegment(ref context, out var segment))
 						{
 							if(segments == null)
 								segments = new List<string>();
 
-							segments.Add(part);
-						}
-
-						break;
-					case PathState.Anchor:
-						DoAnchor(context, out anchor);
-						break;
-					case PathState.Scheme:
-						DoScheme(context, out anchor);
-						break;
-					case PathState.Segment:
-						DoSegment(context, out var segment);
-
-						if(segment != null && segment.Length > 0)
 							segments.Add(segment);
+						}
 
 						break;
 				}
 			}
 
-			return (new PathToken(scheme, anchor, segments.ToArray()), null);
+			if(context.HasError(out var error))
+				return new(null, error);
+
+			if(context.HasTail(out var tail))
+			{
+				if(segments == null)
+					segments = new List<string>();
+
+				segments.Add(tail.ToString());
+			}
+
+			return (new PathToken(scheme, anchor, segments?.ToArray()), null);
 		}
 
-		private static void DoNone(PathContext context, out PathAnchor anchor, out string scheme, out string segment)
+		private static bool DoNone(ref PathContext context, out PathAnchor anchor)
 		{
-			anchor = PathAnchor.None;
-			scheme = null;
-			segment = null;
-
-			ReadOnlySpan<char> part;
-
 			switch(context.Character)
 			{
 				case '/':
 				case '\\':
-					context.Reset(PathState.Segment, out part);
-
-					if(part.IsEmpty)
-						anchor = PathAnchor.Root;
-					else if(part == ".")
-						anchor = PathAnchor.Current;
-					else if(part == "..")
-						anchor = PathAnchor.Parent;
-					else
-						segment = part.ToString();
-
-					return;
-				case ':':
-					context.Reset(PathState.Scheme, out part);
-
-					if(part.IsEmpty)
-						context.Error($"");
-					else
-						scheme = part.ToString();
-					return;
+					anchor = PathAnchor.Root;
+					context.Reset(PathState.Segment);
+					return true;
 				case '.':
-					part = context.Get();
-
-					if(part.IsEmpty)
-						context.Accept(PathState.Anchor);
-
-					return;
+					anchor = PathAnchor.Current;
+					context.Accept(PathState.Anchor);
+					return true;
 				default:
-					if(!context.IsLetterOrDigit && context.Character != '_' && context.Character != '-')
-						context.Error($"");
+					if(context.IsLetterOrDigit || context.Character == '_')
+						context.Accept(PathState.First);
+					else
+						context.Error($"The first character must be a letter, number or underscore.");
 
-					return;
+					anchor = PathAnchor.None;
+					return false;
 			}
 		}
 
-		private static void DoAnchor(PathContext context, out PathAnchor anchor)
+		private static bool DoAnchor(ref PathContext context, out PathAnchor anchor)
 		{
 			switch(context.Character)
 			{
@@ -637,68 +499,126 @@ namespace Zongsoft.IO
 					context.Accept(PathState.Anchor, out var count);
 
 					if(count > 2)
-						context.Error($"");
+						context.Error($"Invalid path anchor.");
 
-					return;
+					return true;
 				case '/':
 				case '\\':
 					context.Reset(PathState.Segment, out var part);
 					anchor = part.Length switch { 1 => PathAnchor.Current, 2 => PathAnchor.Parent, _ => PathAnchor.None };
-					return;
+					return true;
 				default:
 					anchor = PathAnchor.None;
-					context.Error($"");
-					return;
+					context.Error($"The path separator must be followed by the path anchor.");
+					return false;
 			}
 		}
 
-		private static void DoScheme(PathContext context, out PathAnchor anchor)
+		private static bool DoFirst(ref PathContext context, out First result)
 		{
-			anchor = PathAnchor.None;
+			ReadOnlySpan<char> part;
 
+			switch(context.Character)
+			{
+				case ':':
+					context.TryGet(out part);
+
+					//如果首节只有一个字符则当作本地文件系统的盘符处理
+					if(part.Length == 1)
+						result = new First(LocalFileSystem.Instance.Scheme, First.FirstType.Scheme, part[0]);
+					else
+						result = new First(part.ToString(), First.FirstType.Scheme);
+
+					context.Reset(PathState.Origin);
+					return true;
+				case '/':
+				case '\\':
+					context.Reset(PathState.Segment, out part);
+					result = new First(part.ToString(), First.FirstType.Segment);
+					return true;
+				default:
+					if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-' || context.Character == '.')
+						context.Accept();
+					else
+						context.Error($"The illegal character ‘{context.Character}’ is located at the {context.Index} character in the path.");
+
+					result = default;
+					return false;
+			}
+		}
+
+		private static void DoSlash(ref PathContext context)
+		{
+			if(context.IsWhitespace)
+				return;
+
+			if(context.Character == '/' || context.Character == '\\')
+			{
+				context.Error($"The repeated path separator is at the {context.Index} character.");
+				return;
+			}
+
+			if(context.IsInvalid)
+				context.Error($"The illegal character ‘{context.Character}’ is located at the {context.Index} character in the path.");
+			else
+				context.Accept(PathState.Segment);
+		}
+
+		private static bool DoOrigin(ref PathContext context, out PathAnchor anchor)
+		{
 			switch(context.Character)
 			{
 				case '/':
 				case '\\':
 					anchor = PathAnchor.Root;
 					context.Reset(PathState.Segment);
-					return;
+					return true;
 				case '.':
+					anchor = PathAnchor.Current;
 					context.Accept(PathState.Anchor);
-					return;
+					return false;
 				default:
-					if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
+					if(context.IsInvalid)
+						context.Error($"The illegal character ‘{context.Character}’ is located at the {context.Index} character in the path.");
+					else if(!context.IsWhitespace)
 						context.Accept(PathState.Segment);
-					else
-						context.Error($"");
-					return;
+
+					anchor = PathAnchor.None;
+					return false;
 			}
 		}
 
-		private static void DoSegment(PathContext context, out string segment)
+		private static bool DoSegment(ref PathContext context, out string segment)
 		{
-			segment = null;
-
 			switch(context.Character)
 			{
 				case '/':
 				case '\\':
-					context.Reset(PathState.Segment, out var part);
-
-					if(part.IsEmpty)
-						context.Error($"");
-
+					context.Reset(PathState.Slash, out var part);
 					segment = part.ToString();
-					break;
+					return true;
 				default:
 					if(context.IsInvalid)
-						context.Error($"");
+						context.Error($"The illegal character ‘{context.Character}’ is located at the {context.Index} character in the path.");
 					else
-						context.Accept(PathState.Segment);
-					break;
+						context.Accept();
+
+					segment = null;
+					return false;
 			}
 		}
 		#endregion
+
+		#region 嵌套结构
+		private enum PathState
+		{
+			None,
+			First,
+			Slash,
+			Origin,
+			Anchor,
+			Segment,
+		}
 
 		private ref struct PathContext
 		{
@@ -729,7 +649,6 @@ namespace Zongsoft.IO
 			public PathState State { get => _state; }
 			public int Index { get => _index; }
 			public char Character { get => _character; }
-			public string ErrorMessage { get => _errorMessage; }
 			public bool IsWhitespace { get => char.IsWhiteSpace(_character); }
 			public bool IsLetter { get => char.IsLetter(_character); }
 			public bool IsDigit { get => char.IsDigit(_character); }
@@ -738,29 +657,57 @@ namespace Zongsoft.IO
 			#endregion
 
 			#region 公共方法
-			public bool Move(int index)
+			public bool Move()
 			{
-				if(index >= 0 && index < _text.Length)
+				if(_index < _text.Length)
 				{
-					_index = index;
-					_character = _text[index];
+					_character = _text[_index++];
 					return true;
 				}
 
-				_index = _text.Length;
 				_character = '\0';
 				return false;
 			}
 
 			public void Error(string message)
 			{
-				_state = PathState.Error;
 				_errorMessage = message;
 			}
 
-			public ReadOnlySpan<char> Get()
+			public bool HasError(out string message)
 			{
-				return _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
+				message = _errorMessage;
+				return message != null;
+			}
+
+			public bool HasTail(out ReadOnlySpan<char> value)
+			{
+				if(_state == PathState.Slash)
+				{
+					value = ReadOnlySpan<char>.Empty;
+					return true;
+				}
+
+				if(_count > 0 && (_state == PathState.First || _state == PathState.Segment))
+				{
+					value = _text.Slice(_index - _count - _whitespaces, _count);
+					return true;
+				}
+
+				value = ReadOnlySpan<char>.Empty;
+				return false;
+			}
+
+			public bool TryGet(out ReadOnlySpan<char> value)
+			{
+				if(_count > 0)
+				{
+					value = _text.Slice(_index - _count - _whitespaces - 1, _count);
+					return true;
+				}
+
+				value = ReadOnlySpan<char>.Empty;
+				return false;
 			}
 
 			public void Reset(PathState state)
@@ -772,27 +719,19 @@ namespace Zongsoft.IO
 
 			public void Reset(PathState state, out ReadOnlySpan<char> value)
 			{
-				value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
+				value = _count > 0 ? _text.Slice(_index - _count - _whitespaces - 1, _count) : ReadOnlySpan<char>.Empty;
 
 				_count = 0;
 				_whitespaces = 0;
 				_state = state;
 			}
 
-			public void Reset(out ReadOnlySpan<char> value)
-			{
-				value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
-
-				_count = 0;
-				_whitespaces = 0;
-			}
-
-			public void Accept(PathState state)
+			public void Accept(PathState? state = null)
 			{
 				this.Accept(state, out _);
 			}
 
-			public void Accept(PathState state, out int count)
+			public void Accept(PathState? state, out int count)
 			{
 				if(char.IsWhiteSpace(_character))
 				{
@@ -805,19 +744,33 @@ namespace Zongsoft.IO
 					_whitespaces = 0;
 				}
 
-				_state = state;
+				if(state.HasValue)
+					_state = state.Value;
+
 				count = _count;
 			}
 			#endregion
 		}
 
-		private enum PathState
+		private ref struct First
 		{
-			None,
-			Error,
-			Anchor,
-			Scheme,
-			Segment,
+			public readonly FirstType Type;
+			public readonly string Text;
+			public readonly char Letter;
+
+			public First(string text, FirstType type, char letter = '\0')
+			{
+				this.Text = text;
+				this.Type = type;
+				this.Letter = letter;
+			}
+
+			public enum FirstType
+			{
+				Scheme,
+				Segment,
+			}
 		}
+		#endregion
 	}
 }
