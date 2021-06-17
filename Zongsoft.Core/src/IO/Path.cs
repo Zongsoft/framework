@@ -103,63 +103,23 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取路径的文件系统<see cref="IFileSystem.Scheme"/>方案。
-		/// </summary>
-		public string Scheme
-		{
-			get
-			{
-				return _scheme;
-			}
-		}
+		/// <summary>获取路径的文件系统<see cref="IFileSystem.Scheme"/>方案。</summary>
+		public string Scheme { get => _scheme; }
 
-		/// <summary>
-		/// 获取路径的锚点，即路径的起始点。
-		/// </summary>
-		public PathAnchor Anchor
-		{
-			get
-			{
-				return _anchor;
-			}
-		}
+		/// <summary>获取路径的锚点，即路径的起始点。</summary>
+		public PathAnchor Anchor { get => _anchor; }
 
-		/// <summary>
-		/// 获取路径中的文件名，有关路径中文件名的定义请参考备注说明。
-		/// </summary>
+		/// <summary>获取路径中的文件名，有关路径中文件名的定义请参考备注说明。</summary>
 		/// <remarks>
 		///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
 		/// </remarks>
-		public string FileName
-		{
-			get
-			{
-				return _fileName;
-			}
-		}
+		public string FileName { get => _fileName; }
 
-		/// <summary>
-		/// 获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。
-		/// </summary>
-		public string FullPath
-		{
-			get
-			{
-				return _fullPath;
-			}
-		}
+		/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
+		public string FullPath { get => _fullPath; }
 
-		/// <summary>
-		/// 获取路径中的目录名，目录名不含<see cref="Scheme"/>部分。
-		/// </summary>
-		public string DirectoryName
-		{
-			get
-			{
-				return _directoryName;
-			}
-		}
+		/// <summary>获取路径中的目录名，目录名不含<see cref="Scheme"/>部分。</summary>
+		public string DirectoryName { get => _directoryName; }
 
 		/// <summary>
 		/// 获取路径中的目录URL，该属性值包含<see cref="Scheme"/>和<see cref="DirectoryName"/>。
@@ -167,13 +127,7 @@ namespace Zongsoft.IO
 		/// <remarks>
 		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="DirectoryUrl"/>与<see cref="DirectoryName"/>属性值相同。</para>
 		/// </remarks>
-		public string DirectoryUrl
-		{
-			get
-			{
-				return string.IsNullOrEmpty(_scheme) ? _directoryName : (_scheme + ":" + _directoryName);
-			}
-		}
+		public string DirectoryUrl { get => string.IsNullOrEmpty(_scheme) ? _directoryName : (_scheme + ":" + _directoryName); }
 
 		/// <summary>
 		/// 获取路径的完整URL，该属性值包含<see cref="Scheme"/>和<see cref="FullPath"/>。
@@ -181,13 +135,7 @@ namespace Zongsoft.IO
 		/// <remarks>
 		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
 		/// </remarks>
-		public string Url
-		{
-			get
-			{
-				return string.IsNullOrEmpty(_scheme) ? _fullPath : (_scheme + ":" + _fullPath);
-			}
-		}
+		public string Url { get => string.IsNullOrEmpty(_scheme) ? _fullPath : (_scheme + ":" + _fullPath); }
 
 		/// <summary>
 		/// 获取路径中各节点数组，更多内容请参考备注说明。
@@ -209,13 +157,7 @@ namespace Zongsoft.IO
 		///			<item>非空目录：scheme:../root/directory/</item>
 		///		</list>
 		/// </remarks>
-		public string[] Segments
-		{
-			get
-			{
-				return _segments;
-			}
-		}
+		public string[] Segments { get => _segments; }
 
 		/// <summary>
 		/// 获取一个值，指示当前路径是否为文件路径。如果返回真(True)，即表示<see cref="FileName"/>有值。
@@ -223,13 +165,7 @@ namespace Zongsoft.IO
 		/// <remarks>
 		///		<para>路径如果不是以斜杠(/)结尾，则表示该路径为「文件路径」，文件路径中的<see cref="FileName"/>即为<see cref="Segments"/>数组中最后一个元素的值。</para>
 		/// </remarks>
-		public bool IsFile
-		{
-			get
-			{
-				return !string.IsNullOrEmpty(_fileName);
-			}
-		}
+		public bool IsFile { get => !string.IsNullOrEmpty(_fileName); }
 
 		/// <summary>
 		/// 获取一个值，指示当前路径是否为目录路径。有关「目录路径」定义请参考备注说明。
@@ -237,13 +173,7 @@ namespace Zongsoft.IO
 		/// <remarks>
 		///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
 		/// </remarks>
-		public bool IsDirectory
-		{
-			get
-			{
-				return string.IsNullOrEmpty(_fileName);
-			}
-		}
+		public bool IsDirectory { get => string.IsNullOrEmpty(_fileName); }
 		#endregion
 
 		#region 重写方法
