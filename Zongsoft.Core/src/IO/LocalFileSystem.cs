@@ -48,32 +48,12 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取本地文件目录系统的方案，始终返回“zfs.local”。
-		/// </summary>
-		public string Scheme
-		{
-			get
-			{
-				return "zfs.local";
-			}
-		}
+		/// <summary>获取本地文件目录系统的方案，始终返回“zfs.local”。</summary>
+		public string Scheme { get => "zfs.local"; }
 
-		public IFile File
-		{
-			get
-			{
-				return LocalFileProvider.Instance;
-			}
-		}
+		public IFile File { get => LocalFileProvider.Instance; }
 
-		public IDirectory Directory
-		{
-			get
-			{
-				return LocalDirectoryProvider.Instance;
-			}
-		}
+		public IDirectory Directory { get => LocalDirectoryProvider.Instance; }
 		#endregion
 
 		#region 公共方法
@@ -87,9 +67,6 @@ namespace Zongsoft.IO
 
 		public string GetUrl(Path path)
 		{
-			if(path == null)
-				return null;
-
 			return @"file:///" + GetLocalPath(path);
 		}
 		#endregion
@@ -102,9 +79,6 @@ namespace Zongsoft.IO
 
 		private static string GetLocalPath(Path path)
 		{
-			if(path == null)
-				throw new ArgumentNullException(nameof(path));
-
 			switch(Environment.OSVersion.Platform)
 			{
 				case PlatformID.MacOSX:
@@ -112,23 +86,7 @@ namespace Zongsoft.IO
 					return path.FullPath;
 			}
 
-			var driveName = path.Scheme;
-			var fullPath = path.FullPath;
-
-			if(string.IsNullOrEmpty(driveName))
-			{
-				var parts = fullPath.Split('/');
-
-				if(parts != null && parts.Length > 0)
-				{
-					var index = (string.IsNullOrEmpty(parts[0]) && parts.Length > 1) ? 1 : 0;
-					driveName = parts[index];
-					fullPath = "/" + string.Join("/", parts, index + 1, parts.Length - (index + 1));
-				}
-
-				if(string.IsNullOrWhiteSpace(driveName))
-					throw new PathException(string.Format("The '{0}' path not cantians drive.", path.Url));
-			}
+			var driveName = path.Anchor == PathAnchor.Root && path.HasSegments ? path.Segments[0] : throw new PathException(string.Format("The '{0}' path not cantians drive.", path.Url));
 
 			if(driveName.Length > 1)
 			{
@@ -150,7 +108,10 @@ namespace Zongsoft.IO
 					throw new PathException(string.Format("Not matched drive for '{0}' path.", path.Url));
 			}
 
-			return driveName + ":" + fullPath;
+			if(path.Segments.Length > 1)
+				return driveName + ":/" + string.Join('/', path.Segments, 1, path.Segments.Length - 1);
+			else
+				return driveName + ":/";
 		}
 
 		private static bool MatchDriver(System.IO.DriveInfo drive, string driveName)

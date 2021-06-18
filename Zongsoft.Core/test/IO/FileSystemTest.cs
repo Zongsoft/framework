@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 using Xunit;
 
@@ -13,7 +14,7 @@ namespace Zongsoft.IO.Tests
 			var text = @"zfs.local:/d/temp/sub-dir/[1]123.jpg";
 			var path = Path.Parse(text);
 
-			var directoryUrl = path.Scheme + ":" + path.DirectoryName;
+			var directoryUrl = path.GetDirectoryUrl();
 
 			//创建目录
 			FileSystem.Directory.Create(directoryUrl);
@@ -47,7 +48,7 @@ namespace Zongsoft.IO.Tests
 
 			var count = 0;
 			//使用正则匹配的方式查找文件
-			var infos = LocalFileSystem.Instance.Directory.GetFiles(@"D:\temp", prefix + @"(/\d+/).log");
+			var infos = LocalFileSystem.Instance.Directory.GetFiles(@"D:\temp", prefix + @"(/\d+/).log").ToArray();
 
 			foreach(var info in infos)
 			{
@@ -61,7 +62,7 @@ namespace Zongsoft.IO.Tests
 			count = 0;
 
 			//使用文件系统匹配的方式查找文件
-			infos = LocalFileSystem.Instance.Directory.GetFiles(@"D:\temp", prefix + "*");
+			infos = LocalFileSystem.Instance.Directory.GetFiles(@"D:\temp", prefix + "*").ToArray();
 
 			foreach(var info in infos)
 			{

@@ -37,29 +37,14 @@ namespace Zongsoft.IO
 	/// </summary>
 	public interface IFileSystem
 	{
-		/// <summary>
-		/// 获取文件目录系统的方案名。
-		/// </summary>
-		string Scheme
-		{
-			get;
-		}
+		/// <summary>获取文件目录系统的方案名。</summary>
+		string Scheme { get; }
 
-		/// <summary>
-		/// 获取文件操作服务。
-		/// </summary>
-		IFile File
-		{
-			get;
-		}
+		/// <summary>获取文件操作服务。</summary>
+		IFile File { get; }
 
-		/// <summary>
-		/// 获取目录操作服务。
-		/// </summary>
-		IDirectory Directory
-		{
-			get;
-		}
+		/// <summary>获取目录操作服务。</summary>
+		IDirectory Directory { get; }
 
 		/// <summary>
 		/// 获取本地路径对应的外部访问Url地址。

@@ -125,13 +125,9 @@ namespace Zongsoft.IO
 		#region 私有方法
 		private static IFileSystem GetFileSystem(string text, bool throwException, out Path path)
 		{
-			//设置输出参数的默认值
-			path = null;
-
-			//解析路径文本
-			path = Path.Parse(text, throwException);
-
-			if(path == null)
+			if(throwException)
+				path = Path.Parse(text);
+			else if(!Path.TryParse(text, out path))
 				return null;
 
 			var scheme = path.Scheme;

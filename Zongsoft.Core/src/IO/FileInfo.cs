@@ -33,7 +33,7 @@ using System.Collections.Generic;
 namespace Zongsoft.IO
 {
 	[Serializable]
-	public class FileInfo : PathInfo
+	public class FileInfo : PathInfo, IEquatable<FileInfo>
 	{
 		#region 成员字段
 		private long _size;
@@ -63,61 +63,24 @@ namespace Zongsoft.IO
 		#region 公共属性
 		public long Size
 		{
-			get
-			{
-				return _size;
-			}
-			set
-			{
-				_size = value;
-			}
+			get => _size;
+			set => _size = value;
 		}
 
 		public string Type
 		{
-			get
-			{
-				return _type;
-			}
-			set
-			{
-				_type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-			}
+			get => _type;
+			set => _type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
 		}
 
-		public override bool IsFile
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override bool IsDirectory
-		{
-			get
-			{
-				return false;
-			}
-		}
+		public override bool IsFile { get => true; }
+		public override bool IsDirectory { get => false; }
 		#endregion
 
 		#region 重写方法
-		public override int GetHashCode()
-		{
-			var path = this.Path;
-			return path == null ? 0 : path.GetHashCode();
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			var other = (FileInfo)obj;
-
-			return _size == other._size && string.Equals(this.Path, other.Path);
-		}
+		public bool Equals(FileInfo info) => info != null && _size == info._size && base.Equals(info);
+		public override bool Equals(object obj) => obj is FileInfo info && this.Equals(info);
+		public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _size);
 		#endregion
 	}
 }

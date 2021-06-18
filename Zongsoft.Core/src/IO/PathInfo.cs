@@ -33,7 +33,7 @@ using System.Collections.Generic;
 namespace Zongsoft.IO
 {
 	[Serializable]
-	public class PathInfo
+	public class PathInfo : IEquatable<PathInfo>
 	{
 		#region 成员字段
 		private Path _path;
@@ -44,16 +44,14 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 构造函数
-		protected PathInfo()
-		{
-		}
+		protected PathInfo() { }
 
 		public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException("path");
 
-			_path = Zongsoft.IO.Path.Parse(path);
+			_path = Path.Parse(path);
 			_url = url;
 
 			if(createdTime.HasValue)
@@ -67,9 +65,6 @@ namespace Zongsoft.IO
 
 		public PathInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
 		{
-			if(path == null)
-				throw new ArgumentNullException("path");
-
 			_path = path;
 			_url = url;
 
@@ -98,48 +93,31 @@ namespace Zongsoft.IO
 			{
 				var path = _path;
 
-				if(path == null)
-					return null;
-
 				if(path.IsFile)
 					return path.FileName;
 
-				if(path.IsDirectory)
+				var segments = path.Segments;
+
+				if(segments != null && segments.Length > 0)
 				{
-					var directoryName = path.DirectoryName;
-
-					if(directoryName != null && directoryName.Length > 1)
+					for(int i = segments.Length - 1; i >= 0; i--)
 					{
-						int offset = directoryName.EndsWith("/") ? directoryName.Length - 2 : directoryName.Length - 1;
-						int index = directoryName.LastIndexOf('/', offset);
-
-						if(index >= 0)
-							return directoryName.Substring(index + 1, offset - index) + "/";
+						if(string.IsNullOrEmpty(segments[i]))
+							return segments[i];
 					}
-
-					return directoryName;
 				}
 
-				return string.Empty;
+				return path.Anchor == PathAnchor.Root ? "/" : null;
 			}
 		}
 
 		/// <summary>
 		/// 获取路径信息对应的<see cref="Zongsoft.IO.Path"/>对象。
 		/// </summary>
-		public Zongsoft.IO.Path Path
+		public Path Path
 		{
-			get
-			{
-				return _path;
-			}
-			protected set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_path = value;
-			}
+			get => _path;
+			protected set => _path = value;
 		}
 
 		/// <summary>
@@ -153,12 +131,7 @@ namespace Zongsoft.IO
 				if(_url != null)
 					return _url;
 
-				var path = _path;
-
-				if(path == null)
-					return string.Empty;
-
-				return path.Url;
+				return _path.Url;
 			}
 			set
 			{
@@ -168,60 +141,29 @@ namespace Zongsoft.IO
 
 		public virtual bool IsFile
 		{
-			get
-			{
-				var path = this.Path;
-
-				if(path == null)
-					return false;
-
-				return path.IsFile;
-			}
+			get => _path.IsFile;
 		}
 
 		public virtual bool IsDirectory
 		{
-			get
-			{
-				var path = this.Path;
-
-				if(path == null)
-					return false;
-
-				return path.IsDirectory;
-			}
+			get => _path.IsDirectory;
 		}
 
 		public DateTime CreatedTime
 		{
-			get
-			{
-				return _createdTime;
-			}
-			protected set
-			{
-				_createdTime = value;
-			}
+			get => _createdTime;
+			protected set => _createdTime = value;
 		}
 
 		public DateTime ModifiedTime
 		{
-			get
-			{
-				return _modifiedTime;
-			}
-			protected set
-			{
-				_modifiedTime = value;
-			}
+			get => _modifiedTime;
+			protected set => _modifiedTime = value;
 		}
 
 		public bool HasProperties
 		{
-			get
-			{
-				return _properties != null && _properties.Count > 0;
-			}
+			get => _properties != null && _properties.Count > 0;
 		}
 
 		public IDictionary<string, object> Properties
@@ -237,32 +179,13 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(_path == null)
-				return base.ToString();
+		public bool Equals(PathInfo info) => info != null && _path.Equals(info._path);
 
-			return _path.ToString();
-		}
+		public override bool Equals(object obj) => obj is PathInfo info && this.Equals(info);
 
-		public override int GetHashCode()
-		{
-			if(_path == null)
-				return base.GetHashCode();
+		public override int GetHashCode() => _path.GetHashCode();
 
-			return _path.GetHashCode();
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			if(_path == null)
-				return base.Equals(obj);
-
-			return _path.Equals(((PathInfo)obj).Path);
-		}
+		public override string ToString() => _path.ToString();
 		#endregion
 	}
 }
