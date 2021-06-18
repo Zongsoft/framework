@@ -303,10 +303,19 @@ namespace Zongsoft.Web
 		#region 私有方法
 		private string EnsureBasePath(out string scheme)
 		{
-			if(Zongsoft.IO.Path.TryParse(this.BasePath, out scheme, out string path))
-				return (scheme ?? Zongsoft.IO.FileSystem.Scheme) + ":" + (path ?? "/");
+			if(Zongsoft.IO.Path.TryParse(this.BasePath, out var path))
+			{
+				if(string.IsNullOrEmpty(path.Scheme))
+				{
+					scheme = FileSystem.Scheme;
+					return scheme + ':' + path.FullPath;
+				}
 
-			scheme = Zongsoft.IO.FileSystem.Scheme;
+				scheme = path.Scheme;
+				return path.Url;
+			}
+
+			scheme = FileSystem.Scheme;
 			return scheme + ":/";
 		}
 

@@ -96,7 +96,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 		public string GetUrl(Zongsoft.IO.Path path)
 		{
-			if(path == null || path.Segments.Length == 0)
+			if(!path.HasSegments)
 				return null;
 
 			//确认OSS对象存储配置

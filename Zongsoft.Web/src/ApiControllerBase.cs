@@ -287,7 +287,7 @@ namespace Zongsoft.Web
 			}
 
 			//将上传的文件内容依次写入到指定的目录中
-			var files = _accessor.Write(this.Request, pathInfo.DirectoryUrl, option =>
+			var files = _accessor.Write(this.Request, pathInfo.GetDirectoryUrl(), option =>
 			{
 				if(pathInfo.IsFile)
 					option.FileName = pathInfo.FileName;
@@ -324,7 +324,7 @@ namespace Zongsoft.Web
 				return Enumerable.Empty<T>();
 
 			//将上传的文件内容依次写入到指定的目录中
-			var files = _accessor.Write(this.Request, pathInfo.DirectoryUrl, option =>
+			var files = _accessor.Write(this.Request, pathInfo.GetDirectoryUrl(), option =>
 			{
 				if(limit > 0)
 					option.Cancel = option.Index > limit;
