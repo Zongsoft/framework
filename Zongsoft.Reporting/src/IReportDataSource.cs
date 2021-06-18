@@ -35,6 +35,7 @@ namespace Zongsoft.Reporting
 	public interface IReportDataSource
 	{
 		string Name { get; }
-		IReportDataModel[] Models { get; }
+		string Provider { get; }
+		IDictionary<string, string> Settings { get; }
 	}
 }

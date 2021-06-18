@@ -30,10 +30,16 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Reporting
 {
 	public interface IReportDataModel
 	{
 		string Name { get; }
+		string Schema { get; set; }
+		Paging Paging { get; set; }
+
+		IReportDataSource Source { get; }
 	}
 }

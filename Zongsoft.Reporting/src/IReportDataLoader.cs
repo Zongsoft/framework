@@ -33,6 +33,6 @@ namespace Zongsoft.Reporting
 {
 	public interface IReportDataLoader
 	{
-		IReportData Load(IReport report, IReportDataSource source);
+		object Load(IReport report, IReportDataModel model);
 	}
 }

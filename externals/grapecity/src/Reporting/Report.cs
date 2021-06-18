@@ -31,6 +31,7 @@ using System;
 using System.IO;
 
 using GrapeCity.ActiveReports;
+using GrapeCity.ActiveReports.Document;
 
 using Zongsoft.IO;
 using Zongsoft.Reporting;
@@ -49,6 +50,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		{
 			_report = report ?? throw new ArgumentNullException(nameof(report));
 			report.Document.LocateDataSource += Document_LocateDataSource;
+			report.Document.LocateCredentials += Document_LocateCredentials;
 			this.Parameters = new ReportParameterCollection(report.Report.ReportParameters);
 		}
 		#endregion
@@ -122,8 +124,18 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		#endregion
 
 		#region 事件处理
+		private void Document_LocateCredentials(object sender, LocateCredentialsEventArgs args)
+		{
+		}
+
 		private void Document_LocateDataSource(object sender, LocateDataSourceEventArgs args)
 		{
+			foreach(var dataSource in args.Report.DataSources)
+			{
+				if(dataSource.Name.Equals(args.DataSet.Query.DataSourceName, StringComparison.OrdinalIgnoreCase))
+				{
+				}
+			}
 		}
 		#endregion
 

@@ -50,38 +50,29 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 			builder.UseReporting(settings =>
 			{
 				settings.UseCompression = true;
-
-				settings.UseCustomStore(name =>
-				{
-					//var filePath = System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, "reports", name);
-					//var fileInfo = new System.IO.FileInfo(filePath);
-
-					//if(fileInfo.Exists)
-					//{
-					//	var report = new PageReport(fileInfo);
-					//	return report;
-					//}
-
-					//return null;
-
-					var providers = builder.ApplicationServices.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
-
-					foreach(var provider in providers)
-					{
-						var descriptor = provider.GetReport(name);
-
-						if(descriptor != null)
-						{
-							var report = Report.Open(descriptor);
-
-							if(report != null)
-								return report.AsReport<GrapeCity.ActiveReports.PageReportModel.Report>();
-						}
-					}
-
-					return null;
-				});
+				//settings.UseFileStore(new System.IO.DirectoryInfo(System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, "reports")));
+				settings.UseCustomStore(name => GetReport(builder.ApplicationServices, name));
 			});
+		}
+
+		private static object GetReport(IServiceProvider services, string name)
+		{
+			var providers = services.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
+
+			foreach(var provider in providers)
+			{
+				var descriptor = provider.GetReport(name);
+
+				if(descriptor != null)
+				{
+					var report = Report.Open(descriptor);
+
+					if(report != null)
+						return report.AsReport<PageReport>();
+				}
+			}
+
+			return null;
 		}
 		#endregion
 	}
