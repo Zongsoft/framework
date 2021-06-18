@@ -586,8 +586,7 @@ namespace Zongsoft.Plugins
 				if(string.IsNullOrWhiteSpace(assemblyName))
 					return;
 
-				//首先从当前应用域中查看是否有已加载的程序集名称与指定的程序集名相同，如果将当前插件的程序集引用指向它即可
-				foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+				foreach(var assembly in AssemblyLoadContext.Default.Assemblies)
 				{
 					if(string.Equals(assembly.GetName().Name, assemblyName, StringComparison.OrdinalIgnoreCase))
 					{
@@ -645,6 +644,8 @@ namespace Zongsoft.Plugins
 
 				if(File.Exists(assemblyPath))
 					_resolver = new AssemblyDependencyResolver(assemblyPath);
+
+				Default.Resolving += Default_Resolving;
 			}
 			#endregion
 
@@ -666,11 +667,24 @@ namespace Zongsoft.Plugins
 						var filePath = _resolver.ResolveAssemblyToPath(assemblyName);
 
 						if(!string.IsNullOrEmpty(filePath))
-							assembly = this.LoadFromAssemblyPath(filePath);
+							assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(filePath);
 					}
 				}
 
 				return assembly;
+			}
+
+			private Assembly Default_Resolving(AssemblyLoadContext context, AssemblyName assemblyName)
+			{
+				if(_resolver != null)
+				{
+					var filePath = _resolver.ResolveAssemblyToPath(assemblyName);
+
+					if(!string.IsNullOrEmpty(filePath))
+						return context.LoadFromAssemblyPath(filePath);
+				}
+
+				return null;
 			}
 			#endregion
 
