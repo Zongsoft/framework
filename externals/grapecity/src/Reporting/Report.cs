@@ -59,7 +59,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		public string Title { get => this.Parameters.TryGetValue("Title", out var parameter) && parameter.Value is string title ? title : null; set => throw new NotSupportedException(); }
 		public string Description { get => _report.Report.Description; set => _report.Report.Description = value; }
 		public IReportParameterCollection Parameters { get; }
-		public IReportDataLocator Locator { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public IReportDataLocator Locator { get => null; set => throw new NotImplementedException(); }
 		#endregion
 
 		#region 公共方法
@@ -91,8 +91,15 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			return stream == null ? null : Open(stream);
 		}
 
-		public PageReport AsReport() => _report;
-		public T AsReport<T>() where T : class => _report as T;
+		public T AsReport<T>() where T : class
+		{
+			if(typeof(T) == typeof(PageReport))
+				return _report as T;
+			else if(typeof(T) == typeof(GrapeCity.ActiveReports.PageReportModel.Report))
+				return _report.Report as T;
+
+			return null;
+		}
 
 		public void Export(Stream stream, IReportExportOptions options)
 		{
@@ -123,7 +130,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		#region 释放资源
 		public void Dispose()
 		{
-			Dispose(true);
+			this.Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -59,7 +60,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 				list.AddRange(provider.GetReports());
 			}
 
-			return list.Count > 0 ? this.Ok(list) : this.NoContent();
+			return list.Count > 0 ? this.Ok(list.Select(p => p.Name)) : this.NoContent();
 		}
 	}
 }

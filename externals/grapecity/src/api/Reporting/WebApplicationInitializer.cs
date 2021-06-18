@@ -53,6 +53,17 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 				settings.UseCustomStore(name =>
 				{
+					//var filePath = System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, "reports", name);
+					//var fileInfo = new System.IO.FileInfo(filePath);
+
+					//if(fileInfo.Exists)
+					//{
+					//	var report = new PageReport(fileInfo);
+					//	return report;
+					//}
+
+					//return null;
+
 					var providers = builder.ApplicationServices.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
 
 					foreach(var provider in providers)
@@ -64,7 +75,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 							var report = Report.Open(descriptor);
 
 							if(report != null)
-								return report.AsReport<PageReport>();
+								return report.AsReport<GrapeCity.ActiveReports.PageReportModel.Report>();
 						}
 					}
 

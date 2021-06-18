@@ -78,7 +78,7 @@ namespace Zongsoft.Reporting
 			{
 				for(int i = 0; i < extensions.Length; i++)
 				{
-					var filePath = Zongsoft.IO.Path.Combine(directory, name + extensions[i]);
+					var filePath = Zongsoft.IO.Path.Combine(directory, name.EndsWith(extensions[i], StringComparison.OrdinalIgnoreCase) ? name : name + extensions[i]);
 
 					if(FileSystem.File.Exists(filePath))
 						return _cache[name] = new FileReportDescriptor(filePath);
