@@ -11,20 +11,20 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Externals.GrapeCity library.
+ * This file is part of Zongsoft.Externals.Grapecity library.
  *
- * The Zongsoft.Externals.GrapeCity is free software: you can redistribute it and/or modify
+ * The Zongsoft.Externals.Grapecity is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Externals.GrapeCity is distributed in the hope that it will be useful,
+ * The Zongsoft.Externals.Grapecity is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Externals.GrapeCity library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Externals.Grapecity library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -134,6 +134,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			{
 				if(dataSource.Name.Equals(args.DataSet.Query.DataSourceName, StringComparison.OrdinalIgnoreCase))
 				{
+					var model = new ReportDataSource(dataSource).CreateModel(args.DataSet);
 				}
 			}
 		}

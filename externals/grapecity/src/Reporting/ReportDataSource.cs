@@ -28,39 +28,55 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Mvc;
+using GrapeCity.ActiveReports;
+using GrapeCity.ActiveReports.PageReportModel;
 
-using Zongsoft.Services;
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting.Web
+namespace Zongsoft.Externals.Grapecity.Reporting
 {
-	[ApiController]
-	[Route("Reports")]
-	public class ReportController : ControllerBase
+	public class ReportDataSource : IReportDataSource
 	{
-		private IServiceProvider _serviceProvider;
-
-		public ReportController(IServiceProvider serviceProvider)
+		public ReportDataSource(DataSource source)
 		{
-			_serviceProvider = serviceProvider;
-		}
+			this.Source = source ?? throw new ArgumentNullException(nameof(source));
+			this.Name = source.Name;
+			this.Provider = source.ConnectionProperties.DataProvider;
 
-		[HttpGet]
-		public IActionResult GetReports()
-		{
-			var providers = _serviceProvider.ResolveAll<IReportLocator>();
-			var list = new List<IReportDescriptor>();
+			var connectionString = source.ConnectionProperties.ConnectString.Expression;
 
-			foreach(var provider in providers)
+			if(!string.IsNullOrEmpty(connectionString))
 			{
-				list.AddRange(provider.GetReports());
-			}
+				var parts = Zongsoft.Common.StringExtension.Slice(connectionString, ';');
+				Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-			return list.Count > 0 ? this.Ok(list.Select(p => p.Name)) : this.NoContent();
+				foreach(var part in parts)
+				{
+					if(part != null && part.Length > 0)
+					{
+						var index = part.IndexOf('=');
+
+						if(index > 0)
+						{
+							var key = part.Substring(0, index);
+
+							if(index >= part.Length - 1)
+								Settings.Add(key, null);
+							else
+								Settings.Add(key, part.Substring(index + 1));
+						}
+					}
+				}
+			}
 		}
+
+		public string Name { get; }
+		public string Provider { get; }
+		public DataSource Source { get; }
+		public IDictionary<string, string> Settings { get; }
+
+		public ReportDataModel CreateModel(IDataSet dataSet) => new ReportDataModel(dataSet, this);
 	}
 }

@@ -28,19 +28,21 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
+using Zongsoft.Services;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportDataModel
+	[Service(typeof(IReportDataLocator))]
+	public class ReportDataLocator : IReportDataLocator
 	{
-		string Name { get; }
-		string Schema { get; set; }
-		Paging Paging { get; set; }
+		private IServiceProvider _serviceProvider;
 
-		IReportDataSource Source { get; }
-		IDictionary<string, string> Settings { get; }
+		public IReportDataLoader Locate(IReportDataSource source)
+		{
+			var dataAccess = string.IsNullOrEmpty(source.Name) || source.Name == "_" ? _serviceProvider.GetDataAccess() : _serviceProvider.GetDataAccess(source.Name);
+			return new ReportDataLoader(dataAccess);
+		}
 	}
 }

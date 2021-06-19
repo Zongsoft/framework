@@ -28,39 +28,41 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Mvc;
+using GrapeCity.ActiveReports;
+using GrapeCity.ActiveReports.PageReportModel;
 
-using Zongsoft.Services;
+using Zongsoft.Data;
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting.Web
+namespace Zongsoft.Externals.Grapecity.Reporting
 {
-	[ApiController]
-	[Route("Reports")]
-	public class ReportController : ControllerBase
+	public class ReportDataModel : IReportDataModel
 	{
-		private IServiceProvider _serviceProvider;
-
-		public ReportController(IServiceProvider serviceProvider)
+		#region 构造函数
+		public ReportDataModel(IDataSet dataSet, IReportDataSource source)
 		{
-			_serviceProvider = serviceProvider;
-		}
+			this.Name = dataSet.Name;
+			this.Source = source;
+			this.Schema = dataSet.Query.CommandText;
 
-		[HttpGet]
-		public IActionResult GetReports()
-		{
-			var providers = _serviceProvider.ResolveAll<IReportLocator>();
-			var list = new List<IReportDescriptor>();
-
-			foreach(var provider in providers)
+			if(dataSet.Query.QueryParameters.Count > 0)
 			{
-				list.AddRange(provider.GetReports());
+				foreach(var parameter in dataSet.Query.QueryParameters)
+				{
+					Settings.Add(parameter.Name, parameter.Value.Expression);
+				}
 			}
-
-			return list.Count > 0 ? this.Ok(list.Select(p => p.Name)) : this.NoContent();
 		}
+		#endregion
+
+		#region 公共属性
+		public string Name { get; }
+		public string Schema { get; set; }
+		public Paging Paging { get; set; }
+		public IReportDataSource Source { get; }
+		public IDictionary<string, string> Settings { get; }
+		#endregion
 	}
 }

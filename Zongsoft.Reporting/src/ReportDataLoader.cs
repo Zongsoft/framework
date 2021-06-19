@@ -28,19 +28,30 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
+using Zongsoft.Services;
 
 namespace Zongsoft.Reporting
 {
-	public interface IReportDataModel
+	public class ReportDataLoader : IReportDataLoader
 	{
-		string Name { get; }
-		string Schema { get; set; }
-		Paging Paging { get; set; }
+		#region 构造函数
+		public ReportDataLoader(IDataAccess dataAccess)
+		{
+			this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
+		}
+		#endregion
 
-		IReportDataSource Source { get; }
-		IDictionary<string, string> Settings { get; }
+		#region 公共属性
+		public IDataAccess DataAccess { get; }
+		#endregion
+
+		#region 数据加载
+		public object Load(IReport report, IReportDataModel model)
+		{
+			throw new NotImplementedException();
+		}
+		#endregion
 	}
 }
