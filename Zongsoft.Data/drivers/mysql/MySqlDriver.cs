@@ -67,10 +67,21 @@ namespace Zongsoft.Data.MySql
 				switch(error.Number)
 				{
 					case 1062:
+						/*
+						 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
+						 */
 						if(this.TryGetConflict(error.Message, out var key, out var value))
 							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
 						else
 							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
+					case 1216:
+					case 1452:
+						/*
+						 * 参考文档：
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row_2
+						 */
+						return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
 				}
 			}
 
