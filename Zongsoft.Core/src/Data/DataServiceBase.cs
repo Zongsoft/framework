@@ -253,41 +253,41 @@ namespace Zongsoft.Data
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options);
 		}
 
-		public bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1>
+		public bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options);
 		}
 
 		public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options);
 		}
@@ -320,41 +320,41 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options);
 		}
 
-		public int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1>
+		public int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options);
 		}
 
 		public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options);
 		}
@@ -381,41 +381,41 @@ namespace Zongsoft.Data
 		}
 
 		public double? Aggregate<TKey1>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2, TKey3>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2, TKey3, TKey4>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
 		}
 
 		public double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
 		}
@@ -492,81 +492,81 @@ namespace Zongsoft.Data
 		}
 
 		public int Delete<TKey1>(TKey1 key1, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Delete(key1, null, options);
 		}
 
 		public int Delete<TKey1>(TKey1 key1, string schema, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options);
 		}
 
 		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Delete(key1, key2, null, options);
 		}
 
 		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Delete(key1, key2, key3, null, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Delete(key1, key2, key3, key4, null, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Delete(key1, key2, key3, key4, key5, null, options);
 		}
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options);
 		}
@@ -790,81 +790,81 @@ namespace Zongsoft.Data
 		}
 
 		public int Update<TKey1>(TKey1 key1, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Update(key1, null, data, options);
 		}
 
 		public int Update<TKey1>(TKey1 key1, string schema, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Update(key1, key2, null, data, options);
 		}
 
 		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Update(key1, key2, key3, null, data, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Update(key1, key2, key3, key4, null, data, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Update(key1, key2, key3, key4, key5, null, data, options);
 		}
 
 		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, IDataUpdateOptions options = null)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options);
 		}
@@ -987,12 +987,12 @@ namespace Zongsoft.Data
 		#region 键值查询
 		public object Get(string key, params Sorting[] sortings)
 		{
-			return this.Get(key, string.Empty, null, null, sortings);
+			return this.Get(key, string.Empty, Paging.Disabled, null, sortings);
 		}
 
 		public object Get(string key, IDataSelectOptions options, params Sorting[] sortings)
 		{
-			return this.Get(key, string.Empty, null, options, sortings);
+			return this.Get(key, string.Empty, Paging.Disabled, options, sortings);
 		}
 
 		public object Get(string key, Paging paging, params Sorting[] sortings)
@@ -1007,12 +1007,12 @@ namespace Zongsoft.Data
 
 		public object Get(string key, string schema, params Sorting[] sortings)
 		{
-			return this.Get(key, schema, null, null, sortings);
+			return this.Get(key, schema, Paging.Disabled, null, sortings);
 		}
 
 		public object Get(string key, string schema, IDataSelectOptions options, params Sorting[] sortings)
 		{
-			return this.Get(key, schema, null, options, sortings);
+			return this.Get(key, schema, Paging.Disabled, options, sortings);
 		}
 
 		public object Get(string key, string schema, Paging paging, params Sorting[] sortings)
@@ -1051,49 +1051,49 @@ namespace Zongsoft.Data
 
 		#region 单键查询
 		public object Get<TKey1>(TKey1 key1, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, null, null, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, null, options, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, paging, null, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, paging, options, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, string schema, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, schema, null, null, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, string schema, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, schema, null, options, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, schema, paging, null, sortings);
 		}
 
 		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1119,57 +1119,57 @@ namespace Zongsoft.Data
 
 		#region 双键查询
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, null, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, null, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, null, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, null, paging, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, schema, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1195,65 +1195,65 @@ namespace Zongsoft.Data
 
 		#region 三键查询
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, paging, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1279,73 +1279,73 @@ namespace Zongsoft.Data
 
 		#region 四键查询
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, paging, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1371,81 +1371,81 @@ namespace Zongsoft.Data
 
 		#region 五键查询
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, paging, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, options, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, null, sortings);
 		}
 
 		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1968,41 +1968,41 @@ namespace Zongsoft.Data
 		}
 
 		private ICondition ConvertKey<TKey1>(DataServiceMethod method, TKey1 key1, out bool singular)
-			where TKey1 : struct, IEquatable<TKey1>
+			where TKey1 : IEquatable<TKey1>
 		{
 			return this.OnCondition(method, new object[] { key1 }, out singular);
 		}
 
 		private ICondition ConvertKey<TKey1, TKey2>(DataServiceMethod method, TKey1 key1, TKey2 key2, out bool singular)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
 		{
 			return this.OnCondition(method, new object[] { key1, key2 }, out singular);
 		}
 
 		private ICondition ConvertKey<TKey1, TKey2, TKey3>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
 		{
 			return this.OnCondition(method, new object[] { key1, key2, key3 }, out singular);
 		}
 
 		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, out bool singular)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
 		{
 			return this.OnCondition(method, new object[] { key1, key2, key3, key4 }, out singular);
 		}
 
 		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4, TKey5>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, out bool singular)
-			where TKey1 : struct, IEquatable<TKey1>
-			where TKey2 : struct, IEquatable<TKey2>
-			where TKey3 : struct, IEquatable<TKey3>
-			where TKey4 : struct, IEquatable<TKey4>
-			where TKey5 : struct, IEquatable<TKey5>
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
 		{
 			return this.OnCondition(method, new object[] { key1, key2, key3, key4, key5 }, out singular);
 		}

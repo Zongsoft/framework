@@ -98,30 +98,30 @@ namespace Zongsoft.Data
 
 		#region 存在方法
 		bool Exists(string key, IDataExistsOptions options = null);
-		bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1>;
+		bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 
 		bool Exists(ICondition criteria, IDataExistsOptions options = null);
 		#endregion
 
 		#region 聚合方法
 		int Count(string key, string member = null, IDataAggregateOptions options = null);
-		int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>;
+		int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 		int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
 
 		double? Aggregate(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null);
-		double? Aggregate<TKey1>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		double? Aggregate<TKey1, TKey2>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		double? Aggregate<TKey1, TKey2, TKey3>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		double? Aggregate<TKey1, TKey2, TKey3, TKey4>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		double? Aggregate<TKey1>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>;
+		double? Aggregate<TKey1, TKey2>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		double? Aggregate<TKey1, TKey2, TKey3>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 		double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null);
 		#endregion
 
@@ -137,16 +137,16 @@ namespace Zongsoft.Data
 		int Delete(string key, IDataDeleteOptions options = null);
 		int Delete(string key, string schema, IDataDeleteOptions options = null);
 
-		int Delete<TKey1>(TKey1 key1, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		int Delete<TKey1>(TKey1 key1, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		int Delete<TKey1>(TKey1 key1, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1>;
+		int Delete<TKey1>(TKey1 key1, string schema, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1>;
+		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 
 		int Delete(ICondition criteria, IDataDeleteOptions options = null);
 		int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null);
@@ -172,16 +172,16 @@ namespace Zongsoft.Data
 		int Update(string key, object data, IDataUpdateOptions options = null);
 		int Update(string key, object data, string schema, IDataUpdateOptions options = null);
 
-		int Update<TKey1>(TKey1 key1, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		int Update<TKey1>(TKey1 key1, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1>;
-		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, IDataUpdateOptions options = null) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		int Update<TKey1>(TKey1 key1, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1>;
+		int Update<TKey1>(TKey1 key1, string schema, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1>;
+		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, IDataUpdateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 
 		int Update(object data, IDataUpdateOptions options = null);
 		int Update(object data, string schema, IDataUpdateOptions options = null);
@@ -202,50 +202,50 @@ namespace Zongsoft.Data
 		object Get(string key, string schema, Paging paging, params Sorting[] sortings);
 		object Get(string key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
 
-		object Get<TKey1>(TKey1 key1, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, string schema, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, string schema, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
-		object Get<TKey1>(TKey1 key1, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+		object Get<TKey1>(TKey1 key1, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
 
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
-		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+		object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
 
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
-		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+		object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
 
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
-		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+		object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
 
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
-		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : struct, IEquatable<TKey1> where TKey2 : struct, IEquatable<TKey2> where TKey3 : struct, IEquatable<TKey3> where TKey4 : struct, IEquatable<TKey4> where TKey5 : struct, IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+		object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 
 		IEnumerable Select(IDataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable Select(ICondition criteria, params Sorting[] sortings);
