@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Plugins
@@ -63,6 +65,8 @@ namespace Zongsoft.Plugins
 				//清空所有子节点
 				this.Root.Children.Clear();
 			};
+
+			AssemblyLoadContext.Default.Resolving += Default_Resolving;
 		}
 		#endregion
 
@@ -428,6 +432,47 @@ namespace Zongsoft.Plugins
 		{
 			if(Mounting != null)
 				this.Mounting(this, args);
+		}
+		#endregion
+
+		#region 类库加载
+		private Assembly Default_Resolving(AssemblyLoadContext context, AssemblyName assemblyName)
+		{
+			foreach(var plugin in this.Plugins)
+			{
+				var assembly = LoadAssembly(plugin, assemblyName);
+
+				if(assembly != null)
+					return assembly;
+			}
+
+			return null;
+		}
+
+		private static Assembly LoadAssembly(Plugin plugin, AssemblyName assemblyName)
+		{
+			var resolver = plugin.Manifest.Resolver;
+
+			if(resolver != null)
+			{
+				var filePath = resolver.ResolveAssemblyToPath(assemblyName);
+
+				if(!string.IsNullOrEmpty(filePath))
+					return AssemblyLoadContext.Default.LoadFromAssemblyPath(filePath);
+			}
+
+			if(plugin.HasChildren)
+			{
+				foreach(var child in plugin.Children)
+				{
+					var assembly = LoadAssembly(child, assemblyName);
+
+					if(assembly != null)
+						return assembly;
+				}
+			}
+
+			return null;
 		}
 		#endregion
 

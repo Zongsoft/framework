@@ -492,6 +492,7 @@ namespace Zongsoft.Plugins
 			private readonly List<Assembly> _assemblies;
 			private PluginDependencyCollection _dependencies;
 			private PluginAssemblyLoader _loader;
+			private AssemblyDependencyResolver _resolver;
 			#endregion
 
 			#region 构造函数
@@ -499,68 +500,39 @@ namespace Zongsoft.Plugins
 			{
 				_plugin = plugin;
 				_assemblies = new List<Assembly>();
-				_loader = new PluginAssemblyLoader(plugin);
+				//_loader = new PluginAssemblyLoader(plugin);
+
+				var assemblyPath = Path.Combine(Path.GetDirectoryName(plugin.FilePath), Path.GetFileNameWithoutExtension(plugin.FilePath) + ".dll");
+
+				if(File.Exists(assemblyPath))
+					_resolver = new AssemblyDependencyResolver(assemblyPath);
 			}
 			#endregion
 
 			#region 公共属性
-			/// <summary>
-			/// 获取插件的标题描述文本。
-			/// </summary>
-			public string Title
-			{
-				get;
-				internal set;
-			}
+			/// <summary>获取插件的标题描述文本。</summary>
+			public string Title { get; internal set; }
 
-			/// <summary>
-			/// 获取插件的作者信息。
-			/// </summary>
-			public string Author
-			{
-				get;
-				internal set;
-			}
+			/// <summary>获取插件的作者信息。</summary>
+			public string Author { get; internal set; }
 
-			/// <summary>
-			/// 获取插件的版本信息。
-			/// </summary>
-			public Version Version
-			{
-				get;
-				internal set;
-			}
+			/// <summary>获取插件的版本信息。</summary>
+			public Version Version { get; internal set; }
 
-			/// <summary>
-			/// 获取插件的版权声明。
-			/// </summary>
-			public string Copyright
-			{
-				get;
-				internal set;
-			}
+			/// <summary>获取插件的版权声明。</summary>
+			public string Copyright { get; internal set; }
 
-			/// <summary>
-			/// 获取插件的描述信息。
-			/// </summary>
-			public string Description
-			{
-				get;
-				internal set;
-			}
+			/// <summary>获取插件的描述信息。</summary>
+			public string Description { get; internal set; }
 
-			/// <summary>
-			/// 获取插件的宿主程序集数组。
-			/// </summary>
-			public Assembly[] Assemblies
-			{
-				get => _assemblies.ToArray();
-			}
+			/// <summary>获取插件的宿主程序集数组。</summary>
+			public Assembly[] Assemblies { get => _assemblies.ToArray(); }
 
-			public bool HasDependencies
-			{
-				get => _dependencies != null && _dependencies.Count > 0;
-			}
+			/// <summary>获取依赖程序集的路径解析器。</summary>
+			public AssemblyDependencyResolver Resolver { get => _resolver; }
+
+			/// <summary>获取一个值，指示是否有依赖项。</summary>
+			public bool HasDependencies { get => _dependencies != null && _dependencies.Count > 0; }
 
 			/// <summary>
 			/// 获取插件的依赖项集合。
@@ -603,13 +575,8 @@ namespace Zongsoft.Plugins
 					filePath = Path.Combine(directoryName, assemblyName);
 				}
 
-				if((!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) && (!filePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))
-				{
+				if(!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
 					filePath = filePath + ".dll";
-
-					if(!File.Exists(filePath))
-						filePath = filePath + ".exe";
-				}
 
 				if(!File.Exists(filePath))
 				{
@@ -619,8 +586,12 @@ namespace Zongsoft.Plugins
 					throw new PluginException(string.Format("The '{0}' assembly file is not exists. in '{1}' plugin file.", assemblyName, _plugin.Name));
 				}
 
+				if(_resolver == null)
+					_resolver = new AssemblyDependencyResolver(filePath);
+
 				//var result = Assembly.LoadFrom(filePath);
-				var result = _loader.LoadFromAssemblyPath(filePath);
+				//var result = _loader.LoadFromAssemblyPath(filePath);
+				var result = AssemblyLoadContext.Default.LoadFromAssemblyPath(filePath);
 
 				if(result != null)
 					_assemblies.Add(result);
