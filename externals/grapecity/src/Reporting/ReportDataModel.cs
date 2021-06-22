@@ -49,9 +49,11 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 
 			if(dataSet.Query.QueryParameters.Count > 0)
 			{
+				this.Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
 				foreach(var parameter in dataSet.Query.QueryParameters)
 				{
-					Settings.Add(parameter.Name, parameter.Value.Expression);
+					this.Settings.Add(parameter.Name, parameter.Value.Expression);
 				}
 			}
 		}

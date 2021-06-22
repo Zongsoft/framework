@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -52,6 +53,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 				settings.UseCompression = true;
 				//settings.UseFileStore(new System.IO.DirectoryInfo(System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, "reports")));
 				settings.UseCustomStore(name => GetReport(builder.ApplicationServices, name));
+				settings.ResolveCredentials = GetCredential;
+				settings.LocateDataSource = GetData;
+				settings.SetLocateDataSource(GetData);
 			});
 		}
 
@@ -69,6 +73,60 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 					if(report != null)
 						return report.AsReport<PageReport>();
+				}
+			}
+
+			return null;
+		}
+
+		private static GrapeCity.BI.Data.DataProviders.LoginPasswordCredentials GetCredential(GrapeCity.ActiveReports.PageReportModel.DataSource dataSource, string name)
+		{
+			return new GrapeCity.BI.Data.DataProviders.LoginPasswordCredentials("Credential", "xxx");
+		}
+
+		private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args)
+		{
+			var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
+
+			if(source != null)
+			{
+				var model = source.CreateModel(args.DataSet);
+				var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+
+				if(loader != null)
+				{
+					return loader.Load(null, model);
+				}
+			}
+
+			return null;
+		}
+
+		private static object GetData(GrapeCity.ActiveReports.Web.Viewer.LocateDataSourceArgs args)
+		{
+			var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
+
+			if(source != null)
+			{
+				var model = source.CreateModel(args.DataSet);
+				var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+
+				if(loader != null)
+				{
+					return loader.Load(null, model);
+				}
+			}
+
+			return null;
+		}
+
+		private static ReportDataSource GetDataSource(string name, IEnumerable<GrapeCity.ActiveReports.PageReportModel.DataSource> sources)
+		{
+			foreach(var source in sources)
+			{
+				if(source.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				{
+					return new ReportDataSource(source);
 				}
 			}
 

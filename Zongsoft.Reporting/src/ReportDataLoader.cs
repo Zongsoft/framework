@@ -34,23 +34,40 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Reporting
 {
+	[Service(typeof(IReportDataLoader))]
 	public class ReportDataLoader : IReportDataLoader
 	{
+		private IServiceProvider _serviceProvider;
+
 		#region 构造函数
-		public ReportDataLoader(IDataAccess dataAccess)
+		//public ReportDataLoader(IDataAccess dataAccess)
+		//{
+		//	this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
+		//}
+
+		//public ReportDataLoader(IDataService dataService)
+		//{
+		//	this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+		//}
+
+		public ReportDataLoader(IServiceProvider serviceProvider)
 		{
-			this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
+			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
 		#endregion
 
 		#region 公共属性
 		public IDataAccess DataAccess { get; }
+		public IDataService DataService { get; }
 		#endregion
 
 		#region 数据加载
 		public object Load(IReport report, IReportDataModel model)
 		{
-			throw new NotImplementedException();
+			if(_serviceProvider.Resolve(model.Name) is not IDataService service)
+				return null;
+
+			return service.Select(null, model.Schema, Paging.Page(1));
 		}
 		#endregion
 	}

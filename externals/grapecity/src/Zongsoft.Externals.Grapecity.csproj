@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\.gclicx" Link=".gclicx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="GrapeCity.ActiveReports" Version="15.1.5" />
   </ItemGroup>
 

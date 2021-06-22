@@ -34,6 +34,7 @@ using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Document;
 
 using Zongsoft.IO;
+using Zongsoft.Services;
 using Zongsoft.Reporting;
 
 namespace Zongsoft.Externals.Grapecity.Reporting
@@ -49,9 +50,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		private Report(PageReport report)
 		{
 			_report = report ?? throw new ArgumentNullException(nameof(report));
-			report.Document.LocateDataSource += Document_LocateDataSource;
-			report.Document.LocateCredentials += Document_LocateCredentials;
-			this.Parameters = new ReportParameterCollection(report.Report.ReportParameters);
+			//_report.Document.LocateDataSource += Document_LocateDataSource;
+			//_report.Document.LocateCredentials += Document_LocateCredentials;
+			this.Parameters = new ReportParameterCollection(_report.Report.ReportParameters);
 		}
 		#endregion
 
@@ -126,6 +127,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		#region 事件处理
 		private void Document_LocateCredentials(object sender, LocateCredentialsEventArgs args)
 		{
+			_report.Document.LocateDataSource += Document_LocateDataSource;
 		}
 
 		private void Document_LocateDataSource(object sender, LocateDataSourceEventArgs args)
@@ -135,8 +137,16 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(dataSource.Name.Equals(args.DataSet.Query.DataSourceName, StringComparison.OrdinalIgnoreCase))
 				{
 					var model = new ReportDataSource(dataSource).CreateModel(args.DataSet);
+					var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+
+					if(loader != null)
+						args.Data = loader.Load(this, model);
+
+					break;
 				}
 			}
+
+			_report.Document.LocateCredentials += Document_LocateCredentials;
 		}
 		#endregion
 
@@ -159,7 +169,10 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(report != null)
 				{
 					if(report.Document != null)
+					{
 						report.Document.LocateDataSource -= Document_LocateDataSource;
+						report.Document.LocateCredentials -= Document_LocateCredentials;
+					}
 
 					report.Dispose();
 				}

@@ -42,7 +42,8 @@ namespace Zongsoft.Reporting
 		public IReportDataLoader Locate(IReportDataSource source)
 		{
 			var dataAccess = string.IsNullOrEmpty(source.Name) || source.Name == "_" ? _serviceProvider.GetDataAccess() : _serviceProvider.GetDataAccess(source.Name);
-			return new ReportDataLoader(dataAccess);
+			return null;
+			//return new ReportDataLoader(dataAccess);
 		}
 	}
 }
