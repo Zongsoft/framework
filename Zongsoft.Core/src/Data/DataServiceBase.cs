@@ -150,7 +150,7 @@ namespace Zongsoft.Data
 
 		public virtual bool CanUpdate { get => this.Service?.CanUpdate ?? true; }
 
-		public virtual bool CanUpsert { get => this.Service?.CanUpsert ?? true; }
+		public virtual bool CanUpsert { get => this.Service?.CanUpsert ?? false; }
 
 		public DataServiceAttribute Attribute { get => _attribute; }
 
