@@ -46,6 +46,8 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 类型转换
+		public static double ToDouble(float number) => (double)(decimal)number;
+
 		public static T ConvertValue<T>(object value)
 		{
 			return (T)ConvertValue(value, typeof(T));
