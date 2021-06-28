@@ -71,7 +71,7 @@ namespace Zongsoft.Data
 				var parent = token.Parent;
 
 				if(parent.Token.Property.IsSimplex)
-					throw new DataException($"The specified {parent} schema does not correspond to a complex property, so its child elements cannot be defined.");
+					throw new DataArgumentException("schema", $"The specified {parent} schema does not correspond to a complex property, so its child elements cannot be defined.");
 
 				var complex = (IDataEntityComplexProperty)parent.Token.Property;
 				data.Entity = complex.Foreign;
@@ -99,7 +99,7 @@ namespace Zongsoft.Data
 							                  ((MethodInfo)parent.Token.Member).ReturnType;
 							break;
 						default:
-							throw new DataException($"Invalid kind of '{parent.Token.Member}' member.");
+							throw new DataArgumentException("schema", $"Invalid kind of '{parent.Token.Member}' member.");
 					}
 				}
 			}
@@ -146,7 +146,7 @@ namespace Zongsoft.Data
 					ancestors.Add(current);
 			}
 
-			throw new DataException($"The specified '{token.Name}' property does not exist in the '{data.Entity.Name}' entity.");
+			throw new DataArgumentException("schema", $"The specified '{token.Name}' property does not exist in the '{data.Entity.Name}' entity.");
 		}
 		#endregion
 
