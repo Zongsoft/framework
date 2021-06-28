@@ -918,13 +918,23 @@ namespace Zongsoft.Data
 			}
 
 			//修整过滤条件
-			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.EnsureUpdateCondition(dictionary), options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options.Filter, options);
 
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
 
 			//验证待更新的数据
 			this.OnValidate(DataServiceMethod.Update(), schematic, dictionary, options);
+
+			//如果缺少必须的更新条件则抛出异常
+			if(criteria == null)
+			{
+				//再次从数据中获取主键条件
+				criteria = this.GetUpdateKey(dictionary);
+
+				if(criteria == null)
+					throw new DataOperationException($"The update operation of the specified ‘{this.Name}’ entity missing required conditions.");
+			}
 
 			//执行更新操作
 			return this.OnUpdate(dictionary, criteria, schematic, options);
@@ -2014,24 +2024,32 @@ namespace Zongsoft.Data
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ICondition EnsureUpdateCondition(IDataDictionary dictionary)
+		private ICondition GetUpdateKey(IDataDictionary dictionary)
 		{
 			var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
 
 			if(keys == null || keys.Length == 0)
-				throw new DataException($"The specified '{this.Name}' data entity does not define a primary key and does not support update operation.");
+				return null;
 
-			var requisite = new ICondition[keys.Length];
+			if(keys.Length == 1)
+			{
+				if(dictionary.TryGetValue(keys[0].Name, out var value) && value != null)
+					return Condition.Equal(keys[0].Name, value);
+
+				return null;
+			}
+
+			var criteria = ConditionCollection.And();
 
 			for(int i = 0; i < keys.Length; i++)
 			{
 				if(dictionary.TryGetValue(keys[i].Name, out var value) && value != null)
-					requisite[i] = Condition.Equal(keys[i].Name, value);
+					criteria.Add(Condition.Equal(keys[i].Name, value));
 				else
-					throw new DataException($"No required primary key field value is specified for the update '{this.Name}' entity data.");
+					return null;
 			}
 
-			return requisite.Length > 1 ? ConditionCollection.And(requisite) : requisite[0];
+			return criteria;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
