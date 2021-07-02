@@ -137,13 +137,13 @@ namespace Zongsoft.Security.Membership
 			if(memberType == MemberType.User)
 			{
 				//获取指定编号的用户对象
-				var user = this.DataAccess.Select<IUser>(Mapping.Instance.User, Condition.Equal(nameof(IUser.UserId), memberId)).FirstOrDefault();
+				var user = this.GetUser(memberId);
 				return user == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, user);
 			}
 			else
 			{
 				//获取指定编号的角色对象
-				var role = this.DataAccess.Select<IRole>(Mapping.Instance.Role, Condition.Equal(nameof(IRole.RoleId), memberId)).FirstOrDefault();
+				var role = this.GetRole(memberId);
 				return role == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, role);
 			}
 		}
@@ -155,13 +155,35 @@ namespace Zongsoft.Security.Membership
 
 			return MembershipUtility.InRoles(
 				this.DataAccess,
-				this.DataAccess.Select<IUser>(Condition.Equal(nameof(IUser.UserId), userId), "UserId, Name, Namespace").FirstOrDefault(),
+				this.GetUser(userId, "UserId, Name, Namespace"),
 				roleNames);
 		}
 
 		public bool InRoles(IUserIdentity user, params string[] roleNames)
 		{
 			return MembershipUtility.InRoles(this.DataAccess, user as IUser, roleNames);
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual IUser GetUser(uint userId, string schema = null)
+		{
+			var fetcher = ApplicationContext.Current.Services.Resolve<IUserFetcher>();
+
+			if(fetcher != null)
+				return fetcher.GetUser(userId, schema);
+
+			return this.DataAccess.Select<IUser>(Mapping.Instance.User, Condition.Equal(nameof(IUser.UserId), userId), schema).FirstOrDefault();
+		}
+
+		protected virtual IRole GetRole(uint roleId, string schema = null)
+		{
+			var fetcher = ApplicationContext.Current.Services.Resolve<IRoleFetcher>();
+
+			if(fetcher != null)
+				return fetcher.GetRole(roleId, schema);
+
+			return this.DataAccess.Select<IRole>(Mapping.Instance.Role, Condition.Equal(nameof(IRole.RoleId), roleId), schema).FirstOrDefault();
 		}
 		#endregion
 
