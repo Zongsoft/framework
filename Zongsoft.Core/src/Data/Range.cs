@@ -242,17 +242,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 区段计算
-		public static Range<DateTime> GetToday()
-		{
-			var today = DateTime.Today;
-			return new Range<DateTime>(today, today.AddSeconds((60 * 60 * 24) - 1));
-		}
-
-		public static Range<DateTime> GetYesterday()
-		{
-			var yesterday = DateTime.Today.AddDays(-1);
-			return new Range<DateTime>(yesterday, yesterday.AddSeconds((60 * 60 * 24) - 1));
-		}
+		public static Range<DateTime> GetDay(this DateTime day) => new Range<DateTime>(day.Date, new DateTime(day.Year, day.Month, day.Day, 23, 59, 59, 999));
+		public static Range<DateTime> GetToday() => GetDay(DateTime.Today);
+		public static Range<DateTime> GetYesterday() => GetDay(DateTime.Today.AddDays(-1));
 
 		public static Range<DateTime> GetThisWeek()
 		{
