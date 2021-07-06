@@ -154,7 +154,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取或设置聚合操作的结果。
 		/// </summary>
-		public double? Result { get; set; }
+		public object Result { get; set; }
 
 		/// <summary>
 		/// 获取或设置聚合操作的条件。
@@ -183,6 +183,11 @@ namespace Zongsoft.Data
 			return validator == null ?
 				criteria ?? this.Criteria :
 				validator.Validate(this, criteria ?? this.Criteria);
+		}
+
+		public T? GetValue<T>() where T : struct, IEquatable<T>
+		{
+			return this.Result == null ? null : Zongsoft.Common.Convert.ConvertValue<T>(this.Result);
 		}
 		#endregion
 	}

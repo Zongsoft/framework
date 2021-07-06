@@ -38,9 +38,7 @@ namespace Zongsoft.Data
 	public class DataAggregatedEventArgs : DataAccessEventArgs<DataAggregateContextBase>
 	{
 		#region 构造函数
-		public DataAggregatedEventArgs(DataAggregateContextBase context) : base(context)
-		{
-		}
+		public DataAggregatedEventArgs(DataAggregateContextBase context) : base(context) { }
 		#endregion
 	}
 }

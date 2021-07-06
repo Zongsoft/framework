@@ -38,9 +38,7 @@ namespace Zongsoft.Data
 	public abstract class DataAccessFilterBase : IDataAccessFilter
 	{
 		#region 构造函数
-		protected DataAccessFilterBase()
-		{
-		}
+		protected DataAccessFilterBase() { }
 
 		protected DataAccessFilterBase(string name, params DataAccessMethod[] methods)
 		{
@@ -50,15 +48,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get;
-		}
+		public string Name { get; }
 
-		public DataAccessMethod[] Methods
-		{
-			get;
-		}
+		public DataAccessMethod[] Methods { get; }
 		#endregion
 
 		#region 保护属性
@@ -137,16 +129,6 @@ namespace Zongsoft.Data
 			}
 		}
 
-		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltered(IDataAccessContextBase context)
-		{
-			this.OnFiltered(context);
-		}
-
-		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltering(IDataAccessContextBase context)
-		{
-			this.OnFiltering(context);
-		}
-
 		void Services.IExecutionFilter.OnFiltered(object context)
 		{
 			if(context is IDataAccessContextBase ctx)
@@ -158,80 +140,30 @@ namespace Zongsoft.Data
 			if(context is IDataAccessContextBase ctx)
 				this.OnFiltering(ctx);
 		}
+
+		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltered(IDataAccessContextBase context) => this.OnFiltered(context);
+		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltering(IDataAccessContextBase context) => this.OnFiltering(context);
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnAggregating(DataAggregateContextBase context)
-		{
-		}
-
-		protected virtual void OnAggregated(DataAggregateContextBase context)
-		{
-		}
-
-		protected virtual void OnExecuting(DataExecuteContextBase context)
-		{
-		}
-
-		protected virtual void OnExecuted(DataExecuteContextBase context)
-		{
-		}
-
-		protected virtual void OnExisting(DataExistContextBase context)
-		{
-		}
-
-		protected virtual void OnExisted(DataExistContextBase context)
-		{
-		}
-
-		protected virtual void OnIncrementing(DataIncrementContextBase context)
-		{
-		}
-
-		protected virtual void OnIncremented(DataIncrementContextBase context)
-		{
-		}
-
-		protected virtual void OnSelecting(DataSelectContextBase context)
-		{
-		}
-
-		protected virtual void OnSelected(DataSelectContextBase context)
-		{
-		}
-
-		protected virtual void OnDeleting(DataDeleteContextBase context)
-		{
-		}
-
-		protected virtual void OnDeleted(DataDeleteContextBase context)
-		{
-		}
-
-		protected virtual void OnInserting(DataInsertContextBase context)
-		{
-		}
-
-		protected virtual void OnInserted(DataInsertContextBase context)
-		{
-		}
-
-		protected virtual void OnUpdating(DataUpdateContextBase context)
-		{
-		}
-
-		protected virtual void OnUpdated(DataUpdateContextBase context)
-		{
-		}
-
-		protected virtual void OnUpserting(DataUpsertContextBase context)
-		{
-		}
-
-		protected virtual void OnUpserted(DataUpsertContextBase context)
-		{
-		}
+		protected virtual void OnAggregating(DataAggregateContextBase context) { }
+		protected virtual void OnAggregated(DataAggregateContextBase context) { }
+		protected virtual void OnExecuting(DataExecuteContextBase context) { }
+		protected virtual void OnExecuted(DataExecuteContextBase context) { }
+		protected virtual void OnExisting(DataExistContextBase context) { }
+		protected virtual void OnExisted(DataExistContextBase context) { }
+		protected virtual void OnIncrementing(DataIncrementContextBase context) { }
+		protected virtual void OnIncremented(DataIncrementContextBase context) { }
+		protected virtual void OnSelecting(DataSelectContextBase context) { }
+		protected virtual void OnSelected(DataSelectContextBase context) { }
+		protected virtual void OnDeleting(DataDeleteContextBase context) { }
+		protected virtual void OnDeleted(DataDeleteContextBase context) { }
+		protected virtual void OnInserting(DataInsertContextBase context) { }
+		protected virtual void OnInserted(DataInsertContextBase context) { }
+		protected virtual void OnUpdating(DataUpdateContextBase context) { }
+		protected virtual void OnUpdated(DataUpdateContextBase context) { }
+		protected virtual void OnUpserting(DataUpsertContextBase context) { }
+		protected virtual void OnUpserted(DataUpsertContextBase context) { }
 		#endregion
 	}
 }

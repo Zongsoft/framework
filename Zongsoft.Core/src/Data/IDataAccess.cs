@@ -118,9 +118,11 @@ namespace Zongsoft.Data
 		int Count<T>(ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
 		int Count(string name, ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
 
-		double? Aggregate<T>(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null);
-		double? Aggregate(string name, DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null);
-		double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null);
+		TValue? Aggregate<T, TValue>(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
+
+		TValue? Aggregate<TValue>(string name, DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
 		#endregion
 
 		#region 递增方法

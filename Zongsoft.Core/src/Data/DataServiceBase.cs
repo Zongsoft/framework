@@ -372,55 +372,60 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options.Filter, options);
 
 			//执行聚合操作
-			return (int)(this.OnAggregate(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0d);
+			return this.OnAggregate<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0;
 		}
 
-		public double? Aggregate(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
 		}
 
-		public double? Aggregate<TKey1>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
+			where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
 		}
 
-		public double? Aggregate<TKey1, TKey2>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
+			where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
 		}
 
-		public double? Aggregate<TKey1, TKey2, TKey3>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
+			where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
 		}
 
-		public double? Aggregate<TKey1, TKey2, TKey3, TKey4>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
+			where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
 		}
 
-		public double? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5>
+			where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
+			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
 		}
 
-		public double? Aggregate(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -433,12 +438,12 @@ namespace Zongsoft.Data
 			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options.Filter, options);
 
 			//执行聚合操作
-			return this.OnAggregate(new DataAggregate(function, member), criteria, options);
+			return this.OnAggregate<TValue>(new DataAggregate(function, member), criteria, options);
 		}
 
-		protected virtual double? OnAggregate(DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options)
+		protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 		{
-			return this.DataAccess.Aggregate(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
+			return this.DataAccess.Aggregate<TValue>(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
 		}
 		#endregion
 

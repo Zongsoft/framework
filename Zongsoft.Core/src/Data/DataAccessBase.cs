@@ -315,25 +315,30 @@ namespace Zongsoft.Data
 		#region 聚合方法
 		public int Count<T>(ICondition criteria = null, string member = null, IDataAggregateOptions options = null)
 		{
-			return (int)(this.Aggregate(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0d);
+			return this.Aggregate<int>(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
 		}
 
 		public int Count(string name, ICondition criteria = null, string member = null, IDataAggregateOptions options = null)
 		{
-			return (int)(this.Aggregate(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0d);
+			return this.Aggregate<int>(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
 		}
 
-		public double? Aggregate<T>(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
+		public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
+			return this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
 		}
 
-		public double? Aggregate(string name, DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null)
+		public TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>
 		{
-			return this.Aggregate(name, new DataAggregate(function, member), criteria, options, null, null);
+			return this.Aggregate<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated);
 		}
 
-		public double? Aggregate(string name, DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null)
+		public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
+		{
+			return this.Aggregate<TValue>(name, new DataAggregate(function, member), criteria, options, null, null);
+		}
+
+		public TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -343,11 +348,11 @@ namespace Zongsoft.Data
 
 			//处理数据访问操作前的回调
 			if(aggregating != null && aggregating(context))
-				return context.Result;
+				return context.GetValue<TValue>();
 
 			//激发“Aggregating”事件，如果被中断则返回
 			if(this.OnAggregating(context))
-				return context.Result;
+				return context.GetValue<TValue>();
 
 			//调用数据访问过滤器前事件
 			this.OnFiltering(context);
@@ -365,13 +370,13 @@ namespace Zongsoft.Data
 			if(aggregated != null)
 				aggregated(context);
 
-			var result = context.Result;
+			var value = context.GetValue<TValue>();
 
 			//处置上下文资源
 			context.Dispose();
 
 			//返回最终的结果
-			return result;
+			return value;
 		}
 
 		protected abstract void OnAggregate(DataAggregateContextBase context);
