@@ -349,7 +349,15 @@ namespace Zongsoft.Data.Common.Expressions
 						if(index++ > 0)
 							context.Write(",");
 
+						var parenthesized = argument != null && typeof(IStatementBase).IsAssignableFrom(argument.GetType());
+
+						if(parenthesized)
+							context.Write("(");
+
 						this.OnVisit(context, argument);
+
+						if(parenthesized)
+							context.Write(")");
 					}
 				}
 
