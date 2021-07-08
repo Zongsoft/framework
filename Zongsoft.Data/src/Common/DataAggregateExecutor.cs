@@ -56,7 +56,7 @@ namespace Zongsoft.Data.Common
 			if(result == null || System.Convert.IsDBNull(result))
 				context.Result = null;
 			else
-				context.Result = Zongsoft.Common.Convert.ConvertValue<double>(result);
+				context.Result = result;
 
 			return true;
 		}
