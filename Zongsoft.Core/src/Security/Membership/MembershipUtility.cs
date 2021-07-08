@@ -314,18 +314,14 @@ namespace Zongsoft.Security.Membership
 
 		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IUser user)
 		{
-			if(GetAncestors<IRole>(dataAccess, user, out var flats, out var hierarchies) > 0)
-				return GetAuthorizedTokens(dataAccess, flats, hierarchies, user.UserId, MemberType.User);
-			else
-				return Array.Empty<AuthorizationToken>();
+			GetAncestors<IRole>(dataAccess, user, out var flats, out var hierarchies);
+			return GetAuthorizedTokens(dataAccess, flats, hierarchies, user.UserId, MemberType.User);
 		}
 
 		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, ClaimsIdentity identity)
 		{
-			if(GetAncestors<IRole>(dataAccess, identity, out var flats, out var hierarchies) > 0)
-				return GetAuthorizedTokens(dataAccess, flats, hierarchies, identity.GetIdentifier<uint>(), MemberType.User);
-			else
-				return Array.Empty<AuthorizationToken>();
+			GetAncestors<IRole>(dataAccess, identity, out var flats, out var hierarchies);
+			return GetAuthorizedTokens(dataAccess, flats, hierarchies, identity.GetIdentifier<uint>(), MemberType.User);
 		}
 
 		private static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRole> flats, IList<IEnumerable<IRole>> hierarchies, uint memberId, MemberType memberType)
