@@ -66,6 +66,20 @@ namespace Zongsoft.Data.MySql
 			{
 				switch(error.Number)
 				{
+					case 1406:
+						/*
+						 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_data_too_long
+						 */
+						var index = error.Message.IndexOf('\'');
+
+						if(index >= 0)
+						{
+							var last = error.Message.IndexOf('\'', index + 1);
+							var name = error.Message.Substring(index + 1, last - index);
+							return new DataArgumentException(name, error.Message);
+						}
+
+						break;
 					case 1062:
 						/*
 						 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
