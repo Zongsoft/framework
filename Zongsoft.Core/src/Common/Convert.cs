@@ -197,6 +197,12 @@ namespace Zongsoft.Common
 
 			try
 			{
+				if(value is string text && type == typeof(TimeSpan) && TimeSpanExtension.TryParse(text, out var timespan))
+				{
+					result = timespan;
+					return true;
+				}
+
 				//获取目标类型的转换器
 				var converter = converterFactory?.Invoke() ?? TypeDescriptor.GetConverter(type);
 
