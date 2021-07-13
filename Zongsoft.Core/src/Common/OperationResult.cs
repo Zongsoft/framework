@@ -78,6 +78,13 @@ namespace Zongsoft.Common
 			this.Reason = null;
 			this.Message = null;
 		}
+
+		private OperationResult(string reason, string message)
+		{
+			this.Value = default;
+			this.Reason = string.IsNullOrWhiteSpace(reason) ? "Unknown" : reason;
+			this.Message = message;
+		}
 		#endregion
 
 		#region 公共属性
@@ -99,7 +106,7 @@ namespace Zongsoft.Common
 
 		#region 类型转换
 		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success() : OperationResult.Fail(result.Reason, result.Message);
-		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? OperationResult.Success() : OperationResult.Fail(result.Reason, result.Message);
+		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? OperationResult.Success() : new OperationResult<T>(result.Reason, result.Message);
 		#endregion
 	}
 }
