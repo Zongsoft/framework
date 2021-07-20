@@ -197,7 +197,7 @@ namespace Zongsoft.Data
 				return value;
 
 			if(@operator == ConditionOperator.Like && _wildcard != '\0')
-				return _wildcard + value.ToString().Trim(_wildcard) + _wildcard;
+				return value.ToString().TrimEnd(_wildcard) + _wildcard;
 
 			return value;
 		}
