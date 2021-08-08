@@ -36,6 +36,7 @@ using Microsoft.AspNetCore.Hosting;
 
 using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Aspnetcore.Viewer;
+using GrapeCity.ActiveReports.Aspnetcore.Designer;
 
 using Zongsoft.Services;
 using Zongsoft.Reporting;
@@ -56,6 +57,12 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 				settings.ResolveCredentials = GetCredential;
 				settings.LocateDataSource = GetData;
 				settings.SetLocateDataSource(GetData);
+			});
+
+			builder.UseDesigner(settings =>
+			{
+				settings.Prefix = string.Empty;
+				settings.UseCustomStore(builder.ApplicationServices.Resolve<Designing.ResourceService>());
 			});
 		}
 
