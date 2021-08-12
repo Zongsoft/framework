@@ -246,6 +246,15 @@ namespace Zongsoft.Web
 					break;
 
 				var extensionName = string.IsNullOrEmpty(file.FileName) ? string.Empty : System.IO.Path.GetExtension(file.FileName);
+				var fileType = file.ContentType;
+
+				if(string.Equals(fileType, "application/octet-stream"))
+				{
+					var type = Http.MimeMapper.Default.GetMimeType(extensionName);
+
+					if(!string.IsNullOrEmpty(type))
+						fileType = type;
+				}
 
 				//如果文件名为空，则生成一个以“时间戳-随机数.ext”的默认文件名
 				if(string.IsNullOrWhiteSpace(args.FileName))
@@ -259,7 +268,7 @@ namespace Zongsoft.Web
 				//生成文件信息的描述实体
 				var fileInfo = new Zongsoft.IO.FileInfo(filePath, file.Length, DateTime.Now, null, FileSystem.GetUrl(filePath))
 				{
-					Type = file.ContentType,
+					Type = fileType,
 				};
 
 				//将上传的原始文件名加入到文件描述实体的扩展属性中
