@@ -142,7 +142,6 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 			foreach(var provider in providers)
 			{
-				var descriptors = provider.GetReports();
 				reports.AddRange(provider.GetReports().Select(descriptor => new ReportInfo(descriptor.Name, descriptor.Type)));
 			}
 
