@@ -9,6 +9,14 @@ namespace Zongsoft.IO.Tests
 		[Fact]
 		public void TestParse()
 		{
+			var root = Path.Parse("/");
+			Assert.Equal(PathAnchor.Root, root.Anchor);
+			Assert.Equal("/", root.FullPath);
+			Assert.Equal("/", root.Url);
+			Assert.True(root.IsDirectory);
+			Assert.False(root.IsFile);
+			Assert.False(root.HasSegments);
+
 			var text = @"zfs.local: / data  / images /  1/ year   /   month-day / [1]123.jpg";
 			var path = Path.Parse(text);
 
@@ -36,8 +44,24 @@ namespace Zongsoft.IO.Tests
 			Assert.True(path.IsDirectory);
 			Assert.False(path.IsFile);
 			Assert.Equal("/", path.FullPath);
+			Assert.Equal("/", path.GetDirectory());
 			Assert.Equal("zs:/", path.Url);
+			Assert.Equal("zs:/", path.GetDirectoryUrl());
 			Assert.Null(path.Segments);
+
+			Assert.True(Path.TryParse("zs: / dir1/dir2/ ", out path));
+			Assert.Equal("zs", path.Scheme);
+			Assert.Equal(PathAnchor.Root, path.Anchor);
+			Assert.True(path.IsDirectory);
+			Assert.False(path.IsFile);
+			Assert.Equal("/dir1/dir2/", path.FullPath);
+			Assert.Equal("/dir1/dir2/", path.GetDirectory());
+			Assert.Equal("zs:/dir1/dir2/", path.Url);
+			Assert.Equal("zs:/dir1/dir2/", path.GetDirectoryUrl());
+			Assert.Equal(3, path.Segments.Length);
+			Assert.Equal("dir1", path.Segments[0]);
+			Assert.Equal("dir2", path.Segments[1]);
+			Assert.Equal("", path.Segments[2]);
 
 			Assert.True(Path.TryParse("../directory/", out path));
 			Assert.True(string.IsNullOrEmpty(path.Scheme));

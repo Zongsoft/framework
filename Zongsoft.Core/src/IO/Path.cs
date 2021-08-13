@@ -145,9 +145,9 @@ namespace Zongsoft.IO
 			return GetAnchorString(_anchor, true) +
 			(
 				this.IsFile ?
-				_segments == null || _segments.Length < 2 ? null : string.Join('/', _segments, 0, _segments.Length - 1) :
-				_segments == null || _segments.Length < 1 ? null : string.Join('/', _segments)
-			) + '/';
+				string.Join('/', _segments, 0, _segments.Length - 1) + "/" :
+				(_segments == null ? string.Empty : string.Join('/', _segments))
+			);
 		}
 
 		/// <summary>获取目录地址URL，包含 <see cref="Scheme"/> 部分。</summary>
