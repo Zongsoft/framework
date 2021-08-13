@@ -101,5 +101,59 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 		public string Accent6 { get; set; }
 		public string MajorFontFamily { get; set; }
 		public string MinorFontFamily { get; set; }
+
+		public static ThemeInfo Populate(string id, string title, string content)
+		{
+			if(string.IsNullOrEmpty(id))
+				throw new ArgumentNullException(nameof(id));
+
+			var theme = new ThemeInfo(id, title ?? id);
+
+			if(string.IsNullOrEmpty(content))
+				return theme;
+
+			var pairs = Zongsoft.Common.StringExtension.Slice(content, new[] { ',', '|', ';' });
+
+			foreach(var pair in pairs)
+			{
+				if(string.IsNullOrEmpty(pair))
+					continue;
+
+				var index = pair.IndexOfAny(new[] { ':', '=' });
+
+				if(index > 0 && index < pair.Length - 1)
+				{
+					var key = pair.AsSpan(0, index);
+					var value = pair.AsSpan(index + 1);
+
+					if(key.Equals(nameof(Dark1), StringComparison.OrdinalIgnoreCase))
+						theme.Dark1 = value.ToString();
+					else if(key.Equals(nameof(Dark2), StringComparison.OrdinalIgnoreCase))
+						theme.Dark2 = value.ToString();
+					else if(key.Equals(nameof(Light1), StringComparison.OrdinalIgnoreCase))
+						theme.Light1 = value.ToString();
+					else if(key.Equals(nameof(Light2), StringComparison.OrdinalIgnoreCase))
+						theme.Light2 = value.ToString();
+					else if(key.Equals(nameof(Accent1), StringComparison.OrdinalIgnoreCase))
+						theme.Accent1 = value.ToString();
+					else if(key.Equals(nameof(Accent2), StringComparison.OrdinalIgnoreCase))
+						theme.Accent2 = value.ToString();
+					else if(key.Equals(nameof(Accent3), StringComparison.OrdinalIgnoreCase))
+						theme.Accent3 = value.ToString();
+					else if(key.Equals(nameof(Accent4), StringComparison.OrdinalIgnoreCase))
+						theme.Accent4 = value.ToString();
+					else if(key.Equals(nameof(Accent5), StringComparison.OrdinalIgnoreCase))
+						theme.Accent5 = value.ToString();
+					else if(key.Equals(nameof(Accent6), StringComparison.OrdinalIgnoreCase))
+						theme.Accent6 = value.ToString();
+					else if(key.Equals(nameof(MajorFontFamily), StringComparison.OrdinalIgnoreCase))
+						theme.MajorFontFamily = value.ToString();
+					else if(key.Equals(nameof(MinorFontFamily), StringComparison.OrdinalIgnoreCase))
+						theme.MinorFontFamily = value.ToString();
+				}
+			}
+
+			return theme;
+		}
 	}
 }

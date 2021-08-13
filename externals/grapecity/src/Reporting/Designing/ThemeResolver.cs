@@ -31,6 +31,7 @@ using System;
 using System.IO;
 using System.Xml;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 
 using GrapeCity.ActiveReports;
@@ -43,10 +44,12 @@ using GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities;
 using Zongsoft.IO;
 using Zongsoft.Services;
 using Zongsoft.Reporting;
+using Zongsoft.Reporting.Resources;
 
-namespace Zongsoft.Externals.Grapecity.Reporting
+namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 {
-	public static class ThemeResolver
+	[Service(typeof(IResourceResolver))]
+	public class ThemeResolver : IResourceResolver
 	{
 		#region 常量定义
 		private const string XML_ROOT = "Theme";
@@ -86,8 +89,12 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		private const string XML_CONSTANT_DESCRIPTION_ELEMENT = "Description";
 		#endregion
 
+		#region 公共属性
+		public string Name { get => "Theme"; }
+		#endregion
+
 		#region 公共方法
-		public static Theme Resolve(Stream stream)
+		public Theme Load(Stream stream)
 		{
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
@@ -129,6 +136,118 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 
 			return theme;
 		}
+
+		public IResource Resolve(string name, Stream stream, string title = null, string description = null)
+		{
+			var theme = this.Load(stream);
+
+			if(theme == null)
+				return null;
+
+			var resource = new Zongsoft.Reporting.Resources.Resource(string.IsNullOrEmpty(name) ? "Unnamed" : name, this.Name, title, null, description);
+			StringBuilder builder = null;
+
+			if(theme.Colors != null)
+			{
+				if(builder == null)
+					builder = new StringBuilder();
+
+				builder.Append($"{nameof(IThemeInfo.Dark1)}:{theme.Colors.Dark1};");
+				builder.Append($"{nameof(IThemeInfo.Dark2)}:{theme.Colors.Dark2};");
+				builder.Append($"{nameof(IThemeInfo.Light1)}:{theme.Colors.Light1};");
+				builder.Append($"{nameof(IThemeInfo.Light2)}:{theme.Colors.Light2};");
+				builder.Append($"{nameof(IThemeInfo.Accent1)}:{theme.Colors.Accent1};");
+				builder.Append($"{nameof(IThemeInfo.Accent2)}:{theme.Colors.Accent2};");
+				builder.Append($"{nameof(IThemeInfo.Accent3)}:{theme.Colors.Accent3};");
+				builder.Append($"{nameof(IThemeInfo.Accent4)}:{theme.Colors.Accent4};");
+				builder.Append($"{nameof(IThemeInfo.Accent5)}:{theme.Colors.Accent5};");
+				builder.Append($"{nameof(IThemeInfo.Accent6)}:{theme.Colors.Accent6};");
+
+				if(resource.Dictionary == null)
+					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+
+				resource.Dictionary.Add(ThemeMapper.COLORS_DARK1_KEY, new ResourceEntry(ThemeMapper.COLORS_DARK1_KEY, null, theme.Colors.Dark1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_DARK2_KEY, new ResourceEntry(ThemeMapper.COLORS_DARK2_KEY, null, theme.Colors.Dark2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT1_KEY, new ResourceEntry(ThemeMapper.COLORS_LIGHT1_KEY, null, theme.Colors.Light1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT2_KEY, new ResourceEntry(ThemeMapper.COLORS_LIGHT2_KEY, null, theme.Colors.Light2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT1_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT1_KEY, null, theme.Colors.Accent1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT2_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT2_KEY, null, theme.Colors.Accent2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT3_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT3_KEY, null, theme.Colors.Accent3));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT4_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT4_KEY, null, theme.Colors.Accent4));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT5_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT5_KEY, null, theme.Colors.Accent5));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT6_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT6_KEY, null, theme.Colors.Accent6));
+				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINK_KEY, new ResourceEntry(ThemeMapper.COLORS_HYPERLINK_KEY, null, theme.Colors.Hyperlink));
+				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, new ResourceEntry(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, null, theme.Colors.HyperlinkFollowed));
+			}
+
+			if(theme.Fonts != null && (theme.Fonts.MajorFont != null || theme.Fonts.MinorFont != null))
+			{
+				if(builder == null)
+					builder = new StringBuilder();
+
+				if(theme.Fonts.MajorFont != null)
+					builder.Append($"{nameof(IThemeInfo.MajorFontFamily)}:{theme.Fonts.MajorFont.Family};");
+				if(theme.Fonts.MinorFont != null)
+					builder.Append($"{nameof(IThemeInfo.MinorFontFamily)}:{theme.Fonts.MinorFont.Family};");
+
+				if(resource.Dictionary == null)
+					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+
+				resource.Dictionary.Add(ThemeMapper.FONTS_MAJOR_KEY, new ResourceEntry(ThemeMapper.FONTS_MAJOR_KEY, "String", GetFontText(theme.Fonts.MajorFont)));
+				resource.Dictionary.Add(ThemeMapper.FONTS_MINOR_KEY, new ResourceEntry(ThemeMapper.FONTS_MINOR_KEY, "String", GetFontText(theme.Fonts.MinorFont)));
+			}
+
+			if(builder != null)
+				resource.Extra = builder.ToString();
+
+			if(theme.Images != null && theme.Images.Length > 0)
+			{
+				if(resource.Dictionary == null)
+					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+
+				for(int i = 0; i < theme.Images.Length; i++)
+				{
+					var image = theme.Images[i];
+
+					if(image == null || string.IsNullOrEmpty(image.ImageData))
+						continue;
+
+					var entry = new ResourceEntry(
+						"Images:" + image.Name,
+						image.MIMEType?.Replace('\\', '/'),
+						Convert.FromBase64String(image.ImageData));
+
+					resource.Dictionary.Add(entry.Name, entry);
+				}
+			}
+
+			if(theme.Constants != null && theme.Constants.Length > 0)
+			{
+				if(resource.Dictionary == null)
+					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+
+				for(int i = 0; i < theme.Constants.Length; i++)
+				{
+					var constant = theme.Constants[i];
+
+					if(constant == null || string.IsNullOrEmpty(constant.Value))
+						continue;
+
+					var entry = new ResourceEntry("Constants:" + constant.Key, null, constant.Value);
+					resource.Dictionary.Add(entry.Name, entry);
+				}
+			}
+
+			static string GetFontText(ThemeFont font)
+			{
+				if(font == null)
+					return null;
+
+				return $"{font.Family},{font.Style},{font.Size},{font.Weight}";
+			}
+
+			return resource;
+		}
 		#endregion
 
 		#region 私有方法
@@ -152,6 +271,17 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			}
 		}
 
+		private static string GetElementContent(XmlReader reader)
+		{
+			if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+				return null;
+
+			if(reader.Read() && reader.NodeType == XmlNodeType.Text)
+				return reader.Value;
+
+			return null;
+		}
+
 		private static ThemeColors ResolveColors(XmlReader reader)
 		{
 			var result = new ThemeColors();
@@ -162,43 +292,46 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(reader.Depth <= depth)
 					return result;
 
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
+
 				switch(reader.LocalName)
 				{
 					case XML_COLOR_DARK1_ELEMENT:
-						result.Dark1 = reader.HasValue ? reader.Value : null;
+						result.Dark1 = GetElementContent(reader);
 						break;
 					case XML_COLOR_DARK2_ELEMENT:
-						result.Dark2 = reader.HasValue ? reader.Value : null;
+						result.Dark2 = GetElementContent(reader);
 						break;
 					case XML_COLOR_LIGHT1_ELEMENT:
-						result.Light1 = reader.HasValue ? reader.Value : null;
+						result.Light1 = GetElementContent(reader);
 						break;
 					case XML_COLOR_LIGHT2_ELEMENT:
-						result.Light2 = reader.HasValue ? reader.Value : null;
+						result.Light2 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT1_ELEMENT:
-						result.Accent1 = reader.HasValue ? reader.Value : null;
+						result.Accent1 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT2_ELEMENT:
-						result.Accent2 = reader.HasValue ? reader.Value : null;
+						result.Accent2 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT3_ELEMENT:
-						result.Accent3 = reader.HasValue ? reader.Value : null;
+						result.Accent3 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT4_ELEMENT:
-						result.Accent4 = reader.HasValue ? reader.Value : null;
+						result.Accent4 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT5_ELEMENT:
-						result.Accent5 = reader.HasValue ? reader.Value : null;
+						result.Accent5 = GetElementContent(reader);
 						break;
 					case XML_COLOR_ACCENT6_ELEMENT:
-						result.Accent6 = reader.HasValue ? reader.Value : null;
+						result.Accent6 = GetElementContent(reader);
 						break;
 					case XML_COLOR_HYPERLINK_ELEMENT:
-						result.Hyperlink = reader.HasValue ? reader.Value : null;
+						result.Hyperlink = GetElementContent(reader);
 						break;
 					case XML_COLOR_HYPERLINKFOLLOWED_ELEMENT:
-						result.HyperlinkFollowed = reader.HasValue ? reader.Value : null;
+						result.HyperlinkFollowed = GetElementContent(reader);
 						break;
 				}
 			}
@@ -215,6 +348,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			{
 				if(reader.Depth <= depth)
 					return result;
+
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
 
 				switch(reader.LocalName)
 				{
@@ -240,19 +376,22 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(reader.Depth <= depth)
 					return result;
 
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
+
 				switch(reader.LocalName)
 				{
 					case XML_FONT_FAMILY_ELEMENT:
-						result.Family = reader.HasValue ? reader.Value : null;
+						result.Family = GetElementContent(reader);
 						break;
 					case XML_FONT_STYLE_ELEMENT:
-						result.Style = reader.HasValue ? reader.Value : null;
+						result.Style = GetElementContent(reader);
 						break;
 					case XML_FONT_SIZE_ELEMENT:
-						result.Size = reader.HasValue ? reader.Value : null;
+						result.Size = GetElementContent(reader);
 						break;
 					case XML_FONT_WEIGHT_ELEMENT:
-						result.Weight = reader.HasValue ? reader.Value : null;
+						result.Weight = GetElementContent(reader);
 						break;
 				}
 			}
@@ -269,6 +408,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			{
 				if(reader.Depth <= depth)
 					return list.ToArray();
+
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
 
 				switch(reader.LocalName)
 				{
@@ -295,16 +437,19 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(reader.Depth <= depth)
 					return result;
 
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
+
 				switch(reader.LocalName)
 				{
 					case XML_IMAGE_NAME_ELEMENT:
-						result.Name = reader.HasValue ? reader.Value : null;
+						result.Name = GetElementContent(reader);
 						break;
 					case XML_IMAGE_TYPE_ELEMENT:
-						result.MIMEType = reader.HasValue ? reader.Value : null;
+						result.MIMEType = GetElementContent(reader);
 						break;
 					case XML_IMAGE_DATA_ELEMENT:
-						result.ImageData = reader.HasValue ? reader.Value : null;
+						result.ImageData = GetElementContent(reader);
 						break;
 				}
 			}
@@ -321,6 +466,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			{
 				if(reader.Depth <= depth)
 					return list.ToArray();
+
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
 
 				switch(reader.LocalName)
 				{
@@ -347,13 +495,16 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				if(reader.Depth <= depth)
 					return result;
 
+				if(reader.NodeType != XmlNodeType.Element || reader.IsEmptyElement)
+					continue;
+
 				switch(reader.LocalName)
 				{
 					case XML_CONSTANT_KEY_ELEMENT:
-						result.Key = reader.HasValue ? reader.Value : null;
+						result.Key = GetElementContent(reader);
 						break;
 					case XML_CONSTANT_VALUE_ELEMENT:
-						result.Value = reader.HasValue ? reader.Value : null;
+						result.Value = GetElementContent(reader);
 						break;
 					case XML_CONSTANT_DESCRIPTION_ELEMENT:
 						break;

@@ -65,23 +65,54 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 		public byte[] GetImage(string id, out string mimeType)
 		{
-			mimeType = null;
-			return null;
+			if(string.IsNullOrEmpty(id))
+			{
+				mimeType = null;
+				return null;
+			}
+
+			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IFileLocator>();
+			var stream = locator.Open(id, out var info);
+			mimeType = info.Type;
+			return stream == null ? null : Utility.ReadAll(stream);
 		}
 
 		public IImageInfo[] GetImagesList()
 		{
-			return Array.Empty<IImageInfo>();
+			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IFileLocator>();
+			var files = locator.Find("image/*");
+			var images = new List<ImageInfo>();
+
+			foreach(var file in files)
+			{
+				images.Add(new ImageInfo(file.Name, file.Name, file.Type));
+			}
+
+			return images.ToArray();
 		}
 
 		public Theme GetTheme(string id)
 		{
-			return null;
+			if(string.IsNullOrEmpty(id))
+				return null;
+
+			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IResourceLocator>();
+			var resource = locator.GetResource(id);
+			return ThemeMapper.Map(resource);
 		}
 
 		public IThemeInfo[] GetThemesList()
 		{
-			return Array.Empty<IThemeInfo>();
+			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IResourceLocator>();
+			var resources = locator.GetResources("theme");
+			var themes = new List<ThemeInfo>();
+
+			foreach(var resource in resources)
+			{
+				themes.Add(ThemeInfo.Populate(resource.Name, resource.Title, resource.Extra));
+			}
+
+			return themes.ToArray();
 		}
 
 		public GrapeCity.ActiveReports.PageReportModel.Report GetReport(string id)
