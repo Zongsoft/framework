@@ -28,23 +28,18 @@
  */
 
 using System;
-using System.IO;
+using System.Collections.Generic;
 
 namespace Zongsoft.Reporting
 {
-	public abstract class ReportDescriptorBase : IReportDescriptor
+	public interface IReportResource
 	{
-		protected ReportDescriptorBase(string name, string type, string url = null)
-		{
-			this.Name = name;
-			this.Type = type;
-			this.Url = url;
-		}
+		string Name { get; }
+		string Type { get; }
+		string Title { get; set; }
+		string Extra { get; set; }
+		string Description { get; set; }
 
-		public string Name { get; }
-		public string Type { get; }
-		public string Url { get; set; }
-
-		public abstract Stream Open();
+		IDictionary<string, ReportResourceEntry> Dictionary { get; }
 	}
 }

@@ -31,12 +31,11 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting.Resources
+namespace Zongsoft.Reporting
 {
-	public interface IResourceResolver
+	public interface IReportArchiveLocator
 	{
-		string Name { get; }
-
-		IResource Resolve(string name, Stream stream, string title = null, string description = null);
+		Stream Open(string key, out ReportArchive archive);
+		IEnumerable<ReportArchive> Find(string type);
 	}
 }

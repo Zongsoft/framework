@@ -28,23 +28,13 @@
  */
 
 using System;
-using System.IO;
+using System.Collections.Generic;
 
-namespace Zongsoft.Reporting.Resources
+namespace Zongsoft.Reporting
 {
-	public struct FileInfo
+	public interface IReportResourceLocator
 	{
-		public FileInfo(string key, string name, string type, string path = null)
-		{
-			this.Key = key;
-			this.Name = name;
-			this.Type = type;
-			this.Path = path;
-		}
-
-		public string Key { get; }
-		public string Name { get; }
-		public string Type { get; }
-		public string Path { get; }
+		IReportResource GetResource(string name);
+		IEnumerable<IReportResource> GetResources(string type);
 	}
 }

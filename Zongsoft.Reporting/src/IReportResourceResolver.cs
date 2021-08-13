@@ -28,13 +28,15 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting.Resources
+namespace Zongsoft.Reporting
 {
-	public interface IResourceLocator
+	public interface IReportResourceResolver
 	{
-		IResource GetResource(string name);
-		IEnumerable<IResource> GetResources(string type);
+		string Name { get; }
+
+		IReportResource Resolve(string name, Stream stream, string title = null, string description = null);
 	}
 }

@@ -30,13 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting.Resources
+namespace Zongsoft.Reporting
 {
-	public class Resource : IResource, IEquatable<Resource>
+	public class ReportResource : IReportResource, IEquatable<ReportResource>
 	{
 		#region 构造函数
-		public Resource() { }
-		public Resource(string name, string type, string title = null, string extra = null, string description = null)
+		public ReportResource() { }
+		public ReportResource(string name, string type, string title = null, string extra = null, string description = null)
 		{
 			this.Name = name;
 			this.Type = type;
@@ -53,20 +53,20 @@ namespace Zongsoft.Reporting.Resources
 		public string Extra { get; set; }
 		public string Description { get; set; }
 
-		public IDictionary<string, ResourceEntry> Dictionary { get; set; }
+		public IDictionary<string, ReportResourceEntry> Dictionary { get; set; }
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Resource other) =>
+		public bool Equals(ReportResource other) =>
 			string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &
 			string.Equals(this.Type, other.Type, StringComparison.OrdinalIgnoreCase);
 
-		public override bool Equals(object obj) => obj is Resource info && this.Equals(info);
+		public override bool Equals(object obj) => obj is ReportResource info && this.Equals(info);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Type.ToUpperInvariant());
 		public override string ToString() => $"{this.Name}@{this.Type}";
 
-		public static bool operator ==(Resource left, Resource right) => left.Equals(right);
-		public static bool operator !=(Resource left, Resource right) => !(left == right);
+		public static bool operator ==(ReportResource left, ReportResource right) => left.Equals(right);
+		public static bool operator !=(ReportResource left, ReportResource right) => !(left == right);
 		#endregion
 	}
 }

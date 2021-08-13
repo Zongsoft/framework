@@ -28,12 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Reporting
 {
 	public class ReportRepositoryOptions
 	{
-		public bool Temporary { get; set; }
+		public bool IsTemporary { get; set; }
 	}
 }
