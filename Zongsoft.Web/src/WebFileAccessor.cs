@@ -53,6 +53,7 @@ namespace Zongsoft.Web
 	{
 		#region 常量定义
 		private const string EXTENDED_PROPERTY_PREFIX = "x-zfs-";
+		private const string EXTENDED_PROPERTY_NAME = "Name";
 		private const string EXTENDED_PROPERTY_FILENAME = "FileName";
 
 		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -197,7 +198,7 @@ namespace Zongsoft.Web
 
 			if(request.HasFormContentType)
 			{
-				var form = await request.ReadFormAsync(new FormOptions() {  });
+				var form = await request.ReadFormAsync(new FormOptions() { });
 
 				foreach(var field in form)
 				{
@@ -235,10 +236,10 @@ namespace Zongsoft.Web
 
 			var path = this.GetFilePath(directory);
 
-			for(int i=0; i<form.Files.Count; i++)
+			for(int i = 0; i < form.Files.Count; i++)
 			{
 				var file = form.Files[i];
-				var args = new WebFileAccessorOptions(path, i);
+				var args = new WebFileAccessorOptions(file.Name, path, i) { FileName = file.FileName };
 
 				configure(args);
 
@@ -248,11 +249,9 @@ namespace Zongsoft.Web
 				var extensionName = string.IsNullOrEmpty(file.FileName) ? string.Empty : System.IO.Path.GetExtension(file.FileName);
 				var fileType = file.ContentType;
 
-				if(string.Equals(fileType, "application/octet-stream"))
+				if(string.IsNullOrEmpty(fileType) || string.Equals(fileType, "application/octet-stream"))
 				{
-					var type = Http.MimeMapper.Default.GetMimeType(extensionName);
-
-					if(!string.IsNullOrEmpty(type))
+					if(this.TryGetContentType(extensionName, out var type))
 						fileType = type;
 				}
 
@@ -263,7 +262,7 @@ namespace Zongsoft.Web
 					args.FileName += extensionName;
 
 				//生成文件的完整路径
-				var filePath = Zongsoft.IO.Path.Combine(path,args.FileName);
+				var filePath = Zongsoft.IO.Path.Combine(path, args.FileName);
 
 				//生成文件信息的描述实体
 				var fileInfo = new Zongsoft.IO.FileInfo(filePath, file.Length, DateTime.Now, null, FileSystem.GetUrl(filePath))
@@ -271,7 +270,10 @@ namespace Zongsoft.Web
 					Type = fileType,
 				};
 
-				//将上传的原始文件名加入到文件描述实体的扩展属性中
+				//将上传的表单项标识加入到文件信息的扩展属性中
+				fileInfo.Properties.Add(EXTENDED_PROPERTY_NAME, file.Name);
+
+				//将上传的原始文件名加入到文件信息的扩展属性中
 				fileInfo.Properties.Add(EXTENDED_PROPERTY_FILENAME, file.FileName);
 
 				var headers = file.Headers;
@@ -303,9 +305,15 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
-		protected virtual string GetContentType(string fileName)
+		protected virtual string GetContentType(string fileName, string defaultValue = null)
 		{
-			return _mapping.GetMimeType(fileName) ?? "application/octet-stream";
+			return _mapping.GetMimeType(fileName) ?? (string.IsNullOrEmpty(defaultValue) ? "application/octet-stream" : defaultValue);
+		}
+
+		protected virtual bool TryGetContentType(string fileName, out string contentType)
+		{
+			contentType = _mapping.GetMimeType(fileName);
+			return !string.IsNullOrEmpty(contentType);
 		}
 		#endregion
 
@@ -330,17 +338,18 @@ namespace Zongsoft.Web
 
 		private string GetFilePath(string path)
 		{
-			string basePath = this.EnsureBasePath(out string scheme);
-
 			if(string.IsNullOrWhiteSpace(path))
-				return basePath;
+				return this.EnsureBasePath(out _);
 
 			path = Uri.UnescapeDataString(path).Trim();
 
-			if(path.StartsWith("/"))
-				return scheme + ":" + path;
+			if(!Zongsoft.IO.Path.TryParse(path, out var pathInfo))
+				throw new PathException($"The specified ‘{path}’ is an illegal path.");
+
+			if(string.IsNullOrEmpty(pathInfo.Scheme))
+				return Zongsoft.IO.Path.Combine(this.EnsureBasePath(out _), path);
 			else
-				return Zongsoft.IO.Path.Combine(basePath, path);
+				return path;
 		}
 		#endregion
 	}
