@@ -41,35 +41,92 @@ namespace Zongsoft.Externals.Grapecity.Web.Reporting.Designing
 	[Route("Templates")]
 	public class TemplateController : ControllerBase
 	{
-		private IServiceProvider _serviceProvider;
+		#region 常量定义
+		private const string THUMBNAIL_NAME = "template_thumbnail";
+		#endregion
 
+		#region 成员字段
+		private readonly IServiceProvider _serviceProvider;
+		#endregion
+
+		#region 构造函数
 		public TemplateController(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 		}
+		#endregion
 
+		#region 公共方法
 		[HttpGet("List")]
 		public IActionResult GetTemplates()
 		{
-			return this.NoContent();
+			var providers = _serviceProvider.ResolveAll<IReportArchiveLocator>();
+			var archives = new List<ReportArchive>();
+
+			foreach(var provider in providers)
+			{
+				archives.AddRange(provider.Find("Template"));
+			}
+
+			return archives.Count > 0 ? this.Ok(archives.Select(archive => new { Id = archive.Key, archive.Name })) : this.NoContent();
 		}
 
-		[HttpGet("{name}/Content")]
-		public IActionResult GetTemplateContent(string name)
+		[HttpGet("{key}/Content")]
+		public IActionResult GetTemplateContent(string key)
 		{
-			if(string.IsNullOrEmpty(name))
+			if(string.IsNullOrEmpty(key))
 				return this.BadRequest();
+
+			var report = this.GetReport(key);
+
+			if(report != null)
+			{
+				var thumbnail = report.EmbeddedImages.FirstOrDefault(image => image.Name == THUMBNAIL_NAME);
+
+				if(thumbnail != null)
+					report.EmbeddedImages.Remove(thumbnail);
+
+				return this.File(GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities.ReportConverter.ToJson(report), "application/json");
+			}
 
 			return this.NotFound();
 		}
 
-		[HttpGet("{name}/Thumbnail")]
-		public IActionResult GetTemplateThumbnail(string name)
+		[HttpGet("{key}/Thumbnail")]
+		public IActionResult GetTemplateThumbnail(string key)
 		{
-			if(string.IsNullOrEmpty(name))
+			if(string.IsNullOrEmpty(key))
 				return this.BadRequest();
+
+			var report = this.GetReport(key);
+
+			if(report != null)
+			{
+				var thumbnail = report.EmbeddedImages.FirstOrDefault(image => image.Name == THUMBNAIL_NAME);
+
+				if(thumbnail != null)
+					this.Ok(new { Data = thumbnail.ImageData, thumbnail.MIMEType });
+			}
 
 			return this.NotFound();
 		}
+		#endregion
+
+		#region 私有方法
+		private GrapeCity.ActiveReports.PageReportModel.Report GetReport(string key)
+		{
+			var providers = _serviceProvider.ResolveAll<IReportArchiveLocator>();
+
+			foreach(var provider in providers)
+			{
+				using var stream = provider.Open(key, out var archive);
+
+				if(stream != null)
+					return Grapecity.Reporting.Report.Open(stream)?.AsReport();
+			}
+
+			return null;
+		}
+		#endregion
 	}
 }

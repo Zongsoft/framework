@@ -36,12 +36,8 @@ using GrapeCity.ActiveReports.Document;
 using GrapeCity.ActiveReports.PageReportModel;
 using GrapeCity.ActiveReports.Aspnetcore.Designer;
 using GrapeCity.ActiveReports.Aspnetcore.Designer.Services;
-using GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities;
 
-using Zongsoft.IO;
-using Zongsoft.Services;
 using Zongsoft.Reporting;
-using Zongsoft.Reporting.Resources;
 
 namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 {
@@ -66,7 +62,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 		#endregion
 
 		#region 公共方法
-		public static Theme Map(IResource resource)
+		public static Theme Map(IReportResource resource)
 		{
 			if(resource == null)
 				return null;
@@ -82,7 +78,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 		#endregion
 
 		#region 私有方法
-		private static ThemeColors GetColors(IDictionary<string, ResourceEntry> dictionary)
+		private static ThemeColors GetColors(IDictionary<string, ReportResourceEntry> dictionary)
 		{
 			if(dictionary == null)
 				return null;
@@ -128,7 +124,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			return result;
 		}
 
-		private static ThemeFonts GetFonts(IDictionary<string, ResourceEntry> dictionary)
+		private static ThemeFonts GetFonts(IDictionary<string, ReportResourceEntry> dictionary)
 		{
 			if(dictionary == null)
 				return null;
@@ -171,7 +167,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			}
 		}
 
-		private static ThemeImage[] GetImages(IDictionary<string, ResourceEntry> dictionary)
+		private static ThemeImage[] GetImages(IDictionary<string, ReportResourceEntry> dictionary)
 		{
 			const int NAME_POSITION = 7;
 
@@ -196,7 +192,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			return images.ToArray();
 		}
 
-		private static ThemeConstant[] GetConstants(IDictionary<string, ResourceEntry> dictionary)
+		private static ThemeConstant[] GetConstants(IDictionary<string, ReportResourceEntry> dictionary)
 		{
 			const int NAME_POSITION = 10;
 

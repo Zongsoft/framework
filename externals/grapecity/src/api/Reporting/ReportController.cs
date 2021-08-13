@@ -42,25 +42,31 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 	[Route("Reports")]
 	public class ReportController : ControllerBase
 	{
-		private IServiceProvider _serviceProvider;
+		#region 成员字段
+		private readonly IServiceProvider _serviceProvider;
+		#endregion
 
+		#region 构造函数
 		public ReportController(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 		}
+		#endregion
 
+		#region 公共方法
 		[HttpGet]
 		public IActionResult GetReports()
 		{
 			var providers = _serviceProvider.ResolveAll<IReportLocator>();
-			var list = new List<IReportDescriptor>();
+			var reports = new List<IReportDescriptor>();
 
 			foreach(var provider in providers)
 			{
-				list.AddRange(provider.GetReports());
+				reports.AddRange(provider.GetReports());
 			}
 
-			return list.Count > 0 ? this.Ok(list.Select(p => p.Name)) : this.NoContent();
+			return reports.Count > 0 ? this.Ok(reports.Select(report => report.Name)) : this.NoContent();
 		}
+		#endregion
 	}
 }

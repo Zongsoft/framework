@@ -94,6 +94,11 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			return stream == null ? null : Open(stream);
 		}
 
+		public GrapeCity.ActiveReports.PageReportModel.Report AsReport()
+		{
+			return _report.Report;
+		}
+
 		public T AsReport<T>() where T : class
 		{
 			if(typeof(T) == typeof(PageReport))

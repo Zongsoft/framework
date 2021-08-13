@@ -44,53 +44,30 @@ using Zongsoft.Reporting;
 namespace Zongsoft.Externals.Grapecity.Reporting.Web
 {
 	[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
-	public class WebApplicationInitializer : Zongsoft.Services.IApplicationInitializer<IApplicationBuilder>
+	public class WebApplicationInitializer : IApplicationInitializer<IApplicationBuilder>
 	{
 		#region 初始方法
-		public void Initialize(IApplicationBuilder builder)
+		public void Initialize(IApplicationBuilder app)
 		{
-			builder.UseReporting(settings =>
+			var reportService = app.ApplicationServices.Resolve<Designing.ResourceService>();
+
+			app.UseReporting(settings =>
 			{
 				settings.UseCompression = true;
-				//settings.UseFileStore(new System.IO.DirectoryInfo(System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, "reports")));
-				settings.UseCustomStore(name => GetReport(builder.ApplicationServices, name));
-				settings.ResolveCredentials = GetCredential;
+				settings.UseCustomStore(reportService.GetReport);
 				settings.LocateDataSource = GetData;
 				settings.SetLocateDataSource(GetData);
 			});
 
-			builder.UseDesigner(settings =>
+			app.UseDesigner(settings =>
 			{
 				settings.Prefix = string.Empty;
-				settings.UseCustomStore(builder.ApplicationServices.Resolve<Designing.ResourceService>());
+				settings.UseCustomStore(reportService);
 			});
 		}
+		#endregion
 
-		private static object GetReport(IServiceProvider services, string name)
-		{
-			var providers = services.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
-
-			foreach(var provider in providers)
-			{
-				var descriptor = provider.GetReport(name);
-
-				if(descriptor != null)
-				{
-					var report = Report.Open(descriptor);
-
-					if(report != null)
-						return report.AsReport<PageReport>();
-				}
-			}
-
-			return null;
-		}
-
-		private static GrapeCity.BI.Data.DataProviders.LoginPasswordCredentials GetCredential(GrapeCity.ActiveReports.PageReportModel.DataSource dataSource, string name)
-		{
-			return new GrapeCity.BI.Data.DataProviders.LoginPasswordCredentials("Credential", "xxx");
-		}
-
+		#region 私有方法
 		private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args)
 		{
 			var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);

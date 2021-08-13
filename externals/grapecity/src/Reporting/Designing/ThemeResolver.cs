@@ -44,12 +44,11 @@ using GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities;
 using Zongsoft.IO;
 using Zongsoft.Services;
 using Zongsoft.Reporting;
-using Zongsoft.Reporting.Resources;
 
 namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 {
-	[Service(typeof(IResourceResolver))]
-	public class ThemeResolver : IResourceResolver
+	[Service(typeof(IReportResourceResolver))]
+	public class ThemeResolver : IReportResourceResolver
 	{
 		#region 常量定义
 		private const string XML_ROOT = "Theme";
@@ -94,7 +93,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 		#endregion
 
 		#region 公共方法
-		public Theme Load(Stream stream)
+		public Theme ResolveTheme(Stream stream)
 		{
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
@@ -137,14 +136,14 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			return theme;
 		}
 
-		public IResource Resolve(string name, Stream stream, string title = null, string description = null)
+		public IReportResource Resolve(string name, Stream stream, string title = null, string description = null)
 		{
-			var theme = this.Load(stream);
+			var theme = this.ResolveTheme(stream);
 
 			if(theme == null)
 				return null;
 
-			var resource = new Zongsoft.Reporting.Resources.Resource(string.IsNullOrEmpty(name) ? "Unnamed" : name, this.Name, title, null, description);
+			var resource = new ReportResource(string.IsNullOrEmpty(name) ? "Unnamed" : name, this.Name, title, null, description);
 			StringBuilder builder = null;
 
 			if(theme.Colors != null)
@@ -164,20 +163,20 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 				builder.Append($"{nameof(IThemeInfo.Accent6)}:{theme.Colors.Accent6};");
 
 				if(resource.Dictionary == null)
-					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+					resource.Dictionary = new Dictionary<string, ReportResourceEntry>(StringComparer.OrdinalIgnoreCase);
 
-				resource.Dictionary.Add(ThemeMapper.COLORS_DARK1_KEY, new ResourceEntry(ThemeMapper.COLORS_DARK1_KEY, null, theme.Colors.Dark1));
-				resource.Dictionary.Add(ThemeMapper.COLORS_DARK2_KEY, new ResourceEntry(ThemeMapper.COLORS_DARK2_KEY, null, theme.Colors.Dark2));
-				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT1_KEY, new ResourceEntry(ThemeMapper.COLORS_LIGHT1_KEY, null, theme.Colors.Light1));
-				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT2_KEY, new ResourceEntry(ThemeMapper.COLORS_LIGHT2_KEY, null, theme.Colors.Light2));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT1_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT1_KEY, null, theme.Colors.Accent1));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT2_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT2_KEY, null, theme.Colors.Accent2));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT3_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT3_KEY, null, theme.Colors.Accent3));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT4_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT4_KEY, null, theme.Colors.Accent4));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT5_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT5_KEY, null, theme.Colors.Accent5));
-				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT6_KEY, new ResourceEntry(ThemeMapper.COLORS_ACCENT6_KEY, null, theme.Colors.Accent6));
-				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINK_KEY, new ResourceEntry(ThemeMapper.COLORS_HYPERLINK_KEY, null, theme.Colors.Hyperlink));
-				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, new ResourceEntry(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, null, theme.Colors.HyperlinkFollowed));
+				resource.Dictionary.Add(ThemeMapper.COLORS_DARK1_KEY, new ReportResourceEntry(ThemeMapper.COLORS_DARK1_KEY, null, theme.Colors.Dark1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_DARK2_KEY, new ReportResourceEntry(ThemeMapper.COLORS_DARK2_KEY, null, theme.Colors.Dark2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT1_KEY, new ReportResourceEntry(ThemeMapper.COLORS_LIGHT1_KEY, null, theme.Colors.Light1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_LIGHT2_KEY, new ReportResourceEntry(ThemeMapper.COLORS_LIGHT2_KEY, null, theme.Colors.Light2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT1_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT1_KEY, null, theme.Colors.Accent1));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT2_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT2_KEY, null, theme.Colors.Accent2));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT3_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT3_KEY, null, theme.Colors.Accent3));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT4_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT4_KEY, null, theme.Colors.Accent4));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT5_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT5_KEY, null, theme.Colors.Accent5));
+				resource.Dictionary.Add(ThemeMapper.COLORS_ACCENT6_KEY, new ReportResourceEntry(ThemeMapper.COLORS_ACCENT6_KEY, null, theme.Colors.Accent6));
+				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINK_KEY, new ReportResourceEntry(ThemeMapper.COLORS_HYPERLINK_KEY, null, theme.Colors.Hyperlink));
+				resource.Dictionary.Add(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, new ReportResourceEntry(ThemeMapper.COLORS_HYPERLINKFOLLOWED_KEY, null, theme.Colors.HyperlinkFollowed));
 			}
 
 			if(theme.Fonts != null && (theme.Fonts.MajorFont != null || theme.Fonts.MinorFont != null))
@@ -191,10 +190,10 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 					builder.Append($"{nameof(IThemeInfo.MinorFontFamily)}:{theme.Fonts.MinorFont.Family};");
 
 				if(resource.Dictionary == null)
-					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+					resource.Dictionary = new Dictionary<string, ReportResourceEntry>(StringComparer.OrdinalIgnoreCase);
 
-				resource.Dictionary.Add(ThemeMapper.FONTS_MAJOR_KEY, new ResourceEntry(ThemeMapper.FONTS_MAJOR_KEY, "String", GetFontText(theme.Fonts.MajorFont)));
-				resource.Dictionary.Add(ThemeMapper.FONTS_MINOR_KEY, new ResourceEntry(ThemeMapper.FONTS_MINOR_KEY, "String", GetFontText(theme.Fonts.MinorFont)));
+				resource.Dictionary.Add(ThemeMapper.FONTS_MAJOR_KEY, new ReportResourceEntry(ThemeMapper.FONTS_MAJOR_KEY, null, GetFontText(theme.Fonts.MajorFont)));
+				resource.Dictionary.Add(ThemeMapper.FONTS_MINOR_KEY, new ReportResourceEntry(ThemeMapper.FONTS_MINOR_KEY, null, GetFontText(theme.Fonts.MinorFont)));
 			}
 
 			if(builder != null)
@@ -203,7 +202,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			if(theme.Images != null && theme.Images.Length > 0)
 			{
 				if(resource.Dictionary == null)
-					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+					resource.Dictionary = new Dictionary<string, ReportResourceEntry>(StringComparer.OrdinalIgnoreCase);
 
 				for(int i = 0; i < theme.Images.Length; i++)
 				{
@@ -212,7 +211,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 					if(image == null || string.IsNullOrEmpty(image.ImageData))
 						continue;
 
-					var entry = new ResourceEntry(
+					var entry = new ReportResourceEntry(
 						"Images:" + image.Name,
 						image.MIMEType?.Replace('\\', '/'),
 						Convert.FromBase64String(image.ImageData));
@@ -224,7 +223,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			if(theme.Constants != null && theme.Constants.Length > 0)
 			{
 				if(resource.Dictionary == null)
-					resource.Dictionary = new Dictionary<string, ResourceEntry>(StringComparer.OrdinalIgnoreCase);
+					resource.Dictionary = new Dictionary<string, ReportResourceEntry>(StringComparer.OrdinalIgnoreCase);
 
 				for(int i = 0; i < theme.Constants.Length; i++)
 				{
@@ -233,7 +232,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 					if(constant == null || string.IsNullOrEmpty(constant.Value))
 						continue;
 
-					var entry = new ResourceEntry("Constants:" + constant.Key, null, constant.Value);
+					var entry = new ReportResourceEntry("Constants:" + constant.Key, null, constant.Value);
 					resource.Dictionary.Add(entry.Name, entry);
 				}
 			}

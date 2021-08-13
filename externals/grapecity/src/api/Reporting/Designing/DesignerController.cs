@@ -40,25 +40,31 @@ namespace Zongsoft.Externals.Grapecity.Web.Reporting.Designing
 {
 	public class DesignerController : ControllerBase
 	{
-		private IServiceProvider _serviceProvider;
+		#region 构造函数
+		private readonly IServiceProvider _serviceProvider;
+		#endregion
 
+		#region 构造函数
 		public DesignerController(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 		}
+		#endregion
 
+		#region 公共方法
 		[HttpGet]
 		public IActionResult GetReports()
 		{
 			var providers = _serviceProvider.ResolveAll<IReportLocator>();
-			var list = new List<IReportDescriptor>();
+			var reports = new List<IReportDescriptor>();
 
 			foreach(var provider in providers)
 			{
-				list.AddRange(provider.GetReports());
+				reports.AddRange(provider.GetReports());
 			}
 
-			return list.Count > 0 ? this.Ok(list.Select(p => p.Name)) : this.NoContent();
+			return reports.Count > 0 ? this.Ok(reports.Select(report => report.Name)) : this.NoContent();
 		}
+		#endregion
 	}
 }

@@ -34,6 +34,7 @@ using System.Collections.Generic;
 
 using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Document;
+using GrapeCity.ActiveReports.Rdl.Tools;
 using GrapeCity.ActiveReports.PageReportModel;
 using GrapeCity.ActiveReports.Aspnetcore.Designer;
 using GrapeCity.ActiveReports.Aspnetcore.Designer.Services;
@@ -48,20 +49,19 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 	[Service(typeof(IResourcesService))]
 	public class ResourceService : IResourcesService
 	{
+		#region 成员字段
 		private readonly IServiceProvider _serviceProvider;
+		#endregion
 
+		#region 构造函数
 		public ResourceService(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 		}
+		#endregion
 
-		public Uri GetBaseUri()
-		{
-			if(Uri.TryCreate("/", UriKind.RelativeOrAbsolute, out var url))
-				return url;
-
-			return null;
-		}
+		#region 公共方法
+		public Uri GetBaseUri() => null;
 
 		public byte[] GetImage(string id, out string mimeType)
 		{
@@ -71,7 +71,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 				return null;
 			}
 
-			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IFileLocator>();
+			var locator = _serviceProvider.ResolveRequired<IReportArchiveLocator>();
 			var stream = locator.Open(id, out var info);
 			mimeType = info.Type;
 			return stream == null ? null : Utility.ReadAll(stream);
@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 		public IImageInfo[] GetImagesList()
 		{
-			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IFileLocator>();
+			var locator = _serviceProvider.ResolveRequired<IReportArchiveLocator>();
 			var files = locator.Find("image/*");
 			var images = new List<ImageInfo>();
 
@@ -96,14 +96,14 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 			if(string.IsNullOrEmpty(id))
 				return null;
 
-			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IResourceLocator>();
+			var locator = _serviceProvider.ResolveRequired<IReportResourceLocator>();
 			var resource = locator.GetResource(id);
 			return ThemeMapper.Map(resource);
 		}
 
 		public IThemeInfo[] GetThemesList()
 		{
-			var locator = _serviceProvider.ResolveRequired<Zongsoft.Reporting.Resources.IResourceLocator>();
+			var locator = _serviceProvider.ResolveRequired<IReportResourceLocator>();
 			var resources = locator.GetResources("theme");
 			var themes = new List<ThemeInfo>();
 
@@ -138,7 +138,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 		public IReportInfo[] GetReportsList()
 		{
 			var providers = _serviceProvider.ResolveAll<IReportLocator>().OrderByDescending(p => p.Priority);
-			var reports = new List<IReportInfo>(64);
+			var reports = new List<IReportInfo>();
 
 			foreach(var provider in providers)
 			{
@@ -150,17 +150,26 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 		public string SaveReport(string name, GrapeCity.ActiveReports.PageReportModel.Report report, bool isTemporary = false)
 		{
-			throw new NotImplementedException();
+			var data = ReportConverter.ToXml(report);
+			var type = report.Body.ReportItems.Count > 0 && report.Body.ReportItems[0].GetReportItemTypeName() == "FixedPage" ? "FPL" : "CPL";
+			return name;
 		}
 
 		public string UpdateReport(string id, GrapeCity.ActiveReports.PageReportModel.Report report)
 		{
-			throw new NotImplementedException();
+			return string.Empty;
 		}
 
 		public void DeleteReport(string id)
 		{
-			throw new NotImplementedException();
+			var repositories = _serviceProvider.ResolveAll<IReportRepository>();
+
+			foreach(var repository in repositories)
+			{
+				if(repository.Delete(id))
+					return;
+			}
 		}
+		#endregion
 	}
 }
