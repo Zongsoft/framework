@@ -32,19 +32,19 @@ using System.IO;
 
 namespace Zongsoft.Reporting
 {
-	public class ReportDescriptor : IReportDescriptor
+	public abstract class ReportDescriptorBase : IReportDescriptor
 	{
-		public ReportDescriptor(string name, string type, Stream stream)
+		protected ReportDescriptorBase(string name, string type, string url = null)
 		{
 			this.Name = name;
 			this.Type = type;
-			this.Stream = stream;
+			this.Url = url;
 		}
 
 		public string Name { get; }
 		public string Type { get; }
-		public Stream Stream { get; }
+		public string Url { get; set; }
 
-		public Stream Open() => this.Stream;
+		public abstract Stream Open();
 	}
 }
