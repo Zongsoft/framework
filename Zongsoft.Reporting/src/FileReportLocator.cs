@@ -36,7 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Reporting
 {
-	[Service(typeof(IReportLocator))]
+	//[Service(typeof(IReportLocator))]
 	public class FileReportLocator : IReportLocator
 	{
 		#region 常量定义
@@ -159,6 +159,20 @@ namespace Zongsoft.Reporting
 			this.Name = path.FileName;
 			this.Type = System.IO.Path.GetExtension(path.FileName).Trim('.');
 			this.FilePath = filePath;
+			this.Url = FileSystem.GetUrl(path.Url);
+		}
+
+		public FileReportDescriptor(string name, string type, string filePath)
+		{
+			if(string.IsNullOrEmpty(filePath))
+				throw new ArgumentNullException(nameof(filePath));
+
+			var path = Zongsoft.IO.Path.Parse(filePath);
+
+			this.Name = string.IsNullOrEmpty(name) ? path.FileName : name;
+			this.Type = string.IsNullOrEmpty(type) ? System.IO.Path.GetExtension(path.FileName).Trim('.') : type;
+			this.FilePath = filePath;
+			this.Url = FileSystem.GetUrl(path.Url);
 		}
 
 		public FileReportDescriptor(Zongsoft.IO.FileInfo file)
@@ -169,6 +183,18 @@ namespace Zongsoft.Reporting
 			this.Name = file.Name;
 			this.Type = System.IO.Path.GetExtension(file.Name).Trim('.');
 			this.FilePath = file.Path.FullPath;
+			this.Url = FileSystem.GetUrl(file.Url);
+		}
+
+		public FileReportDescriptor(string name, string type, Zongsoft.IO.FileInfo file)
+		{
+			if(file == null)
+				throw new ArgumentNullException(nameof(file));
+
+			this.Name = string.IsNullOrEmpty(name) ? file.Name : name;
+			this.Type = string.IsNullOrEmpty(type) ? System.IO.Path.GetExtension(file.Name).Trim('.') : type;
+			this.FilePath = file.Path.FullPath;
+			this.Url = FileSystem.GetUrl(file.Url);
 		}
 		#endregion
 
@@ -176,6 +202,7 @@ namespace Zongsoft.Reporting
 		public string Name { get; }
 		public string Type { get; }
 		public string FilePath { get; }
+		public string Url { get; }
 		#endregion
 
 		#region 公共方法
