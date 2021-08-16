@@ -144,11 +144,20 @@ namespace Zongsoft.Data.Metadata.Profiles
 			if(string.IsNullOrWhiteSpace(filePath))
 				filePath = reader.BaseURI;
 
-			if(reader.MoveToContent() == XmlNodeType.Element)
+			try
 			{
-				if(reader.LocalName != XML_SCHEMA_ELEMENT)
-					throw new MetadataFileException(string.Format("The root element must be '<{0}>' in this '{1}' file.", XML_SCHEMA_ELEMENT, filePath));
+				reader.MoveToContent();
 			}
+			catch(Exception ex)
+			{
+				if(ex is MetadataFileException)
+					throw;
+
+				throw new MetadataFileException($"Invalid '{filePath}' mapping file.", ex);
+			}
+
+			if(reader.LocalName != XML_SCHEMA_ELEMENT)
+				throw new MetadataFileException(string.Format("The root element must be '<{0}>' in this '{1}' file.", XML_SCHEMA_ELEMENT, filePath));
 
 			//获取映射文件所属的应用名
 			var applicationName = reader.GetAttribute(XML_NAME_ATTRIBUTE);
