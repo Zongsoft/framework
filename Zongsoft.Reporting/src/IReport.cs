@@ -35,6 +35,7 @@ namespace Zongsoft.Reporting
 	public interface IReport
 	{
 		string Name { get; }
+		string Type { get; }
 		string Icon { get; set; }
 		string Title { get; set; }
 		string Description { get; set; }
@@ -43,6 +44,7 @@ namespace Zongsoft.Reporting
 
 		T AsReport<T>() where T : class;
 
+		void Save(Stream stream);
 		void Render(Stream stream, IReportRenderOptions options);
 		void RenderToFile(string filePath, IReportRenderOptions options);
 

@@ -32,6 +32,7 @@ using System.IO;
 
 using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Document;
+using GrapeCity.ActiveReports.Rdl.Tools;
 
 using Zongsoft.IO;
 using Zongsoft.Services;
@@ -53,11 +54,13 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			//_report.Document.LocateDataSource += Document_LocateDataSource;
 			//_report.Document.LocateCredentials += Document_LocateCredentials;
 			this.Parameters = new ReportParameterCollection(_report.Report.ReportParameters);
+			this.Type = report.Report.Body.ReportItems.Count > 0 && report.Report.Body.ReportItems[0].GetReportItemTypeName() == "FixedPage" ? "FPL" : "CPL";
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name => _report.ReportName;
+		public string Type { get; }
 		public string Icon { get; set; }
 		public string Title { get => this.Parameters.TryGetValue("Title", out var parameter) && parameter.Value is string title ? title : null; set => throw new NotSupportedException(); }
 		public string Description { get => _report.Report.Description; set => _report.Report.Description = value; }
@@ -107,6 +110,17 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				return _report.Report as T;
 
 			return null;
+		}
+
+		public void Save(Stream stream)
+		{
+			if(stream == null)
+				throw new ArgumentNullException(nameof(stream));
+
+			var data = GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities.ReportConverter.ToXml(_report.Report);
+
+			if(data != null && data.Length > 0)
+				stream.Write(data);
 		}
 
 		public void Export(Stream stream, IReportExportOptions options)

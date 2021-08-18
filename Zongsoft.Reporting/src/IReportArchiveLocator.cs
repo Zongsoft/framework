@@ -36,6 +36,6 @@ namespace Zongsoft.Reporting
 	public interface IReportArchiveLocator
 	{
 		Stream Open(string key, out ReportArchive archive);
-		IEnumerable<ReportArchive> Find(string type);
+		IEnumerable<ReportArchive> Find(string type, string contentType = null);
 	}
 }

@@ -36,7 +36,7 @@ namespace Zongsoft.Reporting
 	{
 		int Priority { get; set; }
 
-		IReportDescriptor GetReport(string name);
+		IReportDescriptor GetReport(string key);
 		IEnumerable<IReportDescriptor> GetReports();
 	}
 }

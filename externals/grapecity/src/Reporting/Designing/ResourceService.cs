@@ -150,14 +150,16 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 		public string SaveReport(string name, GrapeCity.ActiveReports.PageReportModel.Report report, bool isTemporary = false)
 		{
+			var service = _serviceProvider.ResolveRequired<IReportRepository>();
 			var data = ReportConverter.ToXml(report);
-			var type = report.Body.ReportItems.Count > 0 && report.Body.ReportItems[0].GetReportItemTypeName() == "FixedPage" ? "FPL" : "CPL";
-			return name;
+			return service.Create(name, report.IsFixedPageReport ? "FPL" : "CPL", data, new ReportRepositoryOptions() { IsTemporary = isTemporary });
 		}
 
 		public string UpdateReport(string id, GrapeCity.ActiveReports.PageReportModel.Report report)
 		{
-			return string.Empty;
+			var service = _serviceProvider.ResolveRequired<IReportRepository>();
+			var data = ReportConverter.ToXml(report);
+			return service.Update(id, report.IsFixedPageReport ? "FPL" : "CPL", data);
 		}
 
 		public void DeleteReport(string id)

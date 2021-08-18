@@ -35,8 +35,9 @@ namespace Zongsoft.Reporting
 	public abstract class ReportDescriptorBase : IReportDescriptor
 	{
 		#region 构造函数
-		protected ReportDescriptorBase(string name, string type, string url = null)
+		protected ReportDescriptorBase(string key, string name, string type, string url = null)
 		{
+			this.Key = key;
 			this.Name = name;
 			this.Type = type;
 			this.Url = url;
@@ -44,6 +45,7 @@ namespace Zongsoft.Reporting
 		#endregion
 
 		#region 公共属性
+		public string Key { get; }
 		public string Name { get; }
 		public string Type { get; }
 		public string Url { get; set; }
@@ -64,19 +66,21 @@ namespace Zongsoft.Reporting
 
 			var path = Zongsoft.IO.Path.Parse(filePath);
 
+			this.Key = HashCode.Combine(path.Url).ToString();
 			this.Name = path.FileName;
 			this.Type = System.IO.Path.GetExtension(path.FileName).Trim('.');
 			this.FilePath = filePath;
 			this.Url = Zongsoft.IO.FileSystem.GetUrl(path.Url);
 		}
 
-		public FileReportDescriptor(string name, string type, string filePath)
+		public FileReportDescriptor(string key, string name, string type, string filePath)
 		{
 			if(string.IsNullOrEmpty(filePath))
 				throw new ArgumentNullException(nameof(filePath));
 
 			var path = Zongsoft.IO.Path.Parse(filePath);
 
+			this.Key = string.IsNullOrEmpty(key) ? path.Url : key;
 			this.Name = string.IsNullOrEmpty(name) ? path.FileName : name;
 			this.Type = string.IsNullOrEmpty(type) ? System.IO.Path.GetExtension(path.FileName).Trim('.') : type;
 			this.FilePath = filePath;
@@ -88,17 +92,19 @@ namespace Zongsoft.Reporting
 			if(file == null)
 				throw new ArgumentNullException(nameof(file));
 
+			this.Key = HashCode.Combine(file.Url).ToString();
 			this.Name = file.Name;
 			this.Type = System.IO.Path.GetExtension(file.Name).Trim('.');
 			this.FilePath = file.Path.FullPath;
 			this.Url = Zongsoft.IO.FileSystem.GetUrl(file.Url);
 		}
 
-		public FileReportDescriptor(string name, string type, Zongsoft.IO.FileInfo file)
+		public FileReportDescriptor(string key, string name, string type, Zongsoft.IO.FileInfo file)
 		{
 			if(file == null)
 				throw new ArgumentNullException(nameof(file));
 
+			this.Key = string.IsNullOrEmpty(key) ? file.Url : key;
 			this.Name = string.IsNullOrEmpty(name) ? file.Name : name;
 			this.Type = string.IsNullOrEmpty(type) ? System.IO.Path.GetExtension(file.Name).Trim('.') : type;
 			this.FilePath = file.Path.FullPath;
@@ -107,6 +113,7 @@ namespace Zongsoft.Reporting
 		#endregion
 
 		#region 公共属性
+		public string Key { get; }
 		public string Name { get; }
 		public string Type { get; }
 		public string FilePath { get; }

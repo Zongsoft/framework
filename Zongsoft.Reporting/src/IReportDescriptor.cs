@@ -34,6 +34,7 @@ namespace Zongsoft.Reporting
 {
 	public interface IReportDescriptor
 	{
+		string Key { get; }
 		string Name { get; }
 		string Type { get; }
 		string Url { get; }
