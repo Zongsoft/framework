@@ -83,25 +83,9 @@ namespace Zongsoft.Data
 			if(typeof(IModel).IsAssignableFrom(context.Type))
 			{
 				if(context.Operator == ConditionOperator.Exists || context.Operator == ConditionOperator.NotExists)
-				{
-					var index = context.Names[0].IndexOf('.');
-					string name, path;
+					return new Condition(context.Names[0], Criteria.Transform((IModel)context.Value, context.Path), context.Operator.Value);
 
-					if(index > 0)
-					{
-						name = context.Names[0].Substring(0, index);
-						path = context.Names[0].Substring(index + 1);
-					}
-					else
-					{
-						name = context.Names[0];
-						path = null;
-					}
-
-					return new Condition(name, Criteria.Transform((IModel)context.Value, path), context.Operator.Value);
-				}
-
-				return Criteria.Transform((IModel)context.Value, context.Names[0]);
+				return Criteria.Transform((IModel)context.Value, context.GetFullName());
 			}
 
 			//判断当前属性是否可以忽略
@@ -114,15 +98,15 @@ namespace Zongsoft.Data
 			{
 				if(context.Names.Length == 1)
 				{
-					result = factory(context.Names[0]);
+					result = factory(context.GetFullName(0));
 					return;
 				}
 
 				var criteria = ConditionCollection.Or();
 
-				foreach(var name in context.Names)
+				for(int i = 0; i < context.Names.Length; i++)
 				{
-					criteria.Add(factory(name));
+					criteria.Add(factory(context.GetFullName(i)));
 				}
 
 				result = criteria;
@@ -145,14 +129,14 @@ namespace Zongsoft.Data
 
 			//如果当前属性只对应一个条件
 			if(context.Names.Length == 1)
-				return new Condition(context.Names[0], this.GetValue(optor, context.Value), optor.Value);
+				return new Condition(context.GetFullName(), this.GetValue(optor, context.Value), optor.Value);
 
 			//当一个属性对应多个条件，则这些条件之间以“或”关系进行组合
 			var conditions = ConditionCollection.Or();
 
-			foreach(var name in context.Names)
+			for(int i = 0; i < context.Names.Length; i++)
 			{
-				conditions.Add(new Condition(name, this.GetValue(optor, context.Value), optor.Value));
+				conditions.Add(new Condition(context.GetFullName(i), this.GetValue(optor, context.Value), optor.Value));
 			}
 
 			return conditions;
@@ -223,14 +207,14 @@ namespace Zongsoft.Data
 					var values = Common.StringExtension.Slice(text, this.Separators).ToArray();
 
 					if(context.Names.Length == 1)
-						return values.Length == 1 ? Condition.Equal(context.Names[0], values[0]) : Condition.In(context.Names[0], values);
+						return values.Length == 1 ? Condition.Equal(context.GetFullName(), values[0]) : Condition.In(context.GetFullName(), values);
 
 					var criteria = ConditionCollection.Or();
 
 					for(int i = 0; i < context.Names.Length; i++)
 					{
 						criteria.Add(
-							values.Length == 1 ? Condition.Equal(context.Names[i], values[0]) : Condition.In(context.Names[i], values)
+							values.Length == 1 ? Condition.Equal(context.GetFullName(i), values[0]) : Condition.In(context.GetFullName(i), values)
 						);
 					}
 

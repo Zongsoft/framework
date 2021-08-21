@@ -37,11 +37,12 @@ namespace Zongsoft.Data
 	public class ConditionConverterContext
 	{
 		#region 构造函数
-		public ConditionConverterContext(IModel criteria, ConditionBehaviors behaviors, string[] names, Type type, object value, ConditionOperator? @operator = null)
+		public ConditionConverterContext(IModel criteria, ConditionBehaviors behaviors, string path, string[] names, Type type, object value, ConditionOperator? @operator = null)
 		{
 			this.Criteria = criteria ?? throw new ArgumentNullException(nameof(criteria));
 			this.Names = names ?? throw new ArgumentNullException(nameof(names));
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
+			this.Path = path;
 			this.Value = value;
 			this.Operator = @operator;
 			this.Behaviors = behaviors;
@@ -58,6 +59,9 @@ namespace Zongsoft.Data
 		/// <summary>获取转换的字段名数组。</summary>
 		public string[] Names { get; }
 
+		/// <summary>获取转换成员的层级路径。</summary>
+		public string Path { get; }
+
 		/// <summary>获取转换的成员类型。</summary>
 		public Type Type { get; }
 
@@ -66,6 +70,26 @@ namespace Zongsoft.Data
 
 		/// <summary>获取转换的条件操作符。</summary>
 		public ConditionOperator? Operator { get; }
+		#endregion
+
+		#region 公共方法
+		public string GetFullName(string name = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = this.Names[0];
+
+			return string.IsNullOrEmpty(this.Path) ? name : this.Path + '.' + name;
+		}
+
+		public string GetFullName(int index)
+		{
+			var names = this.Names;
+
+			if(index < 0 || index >= names.Length)
+				throw new ArgumentOutOfRangeException(nameof(index));
+
+			return string.IsNullOrEmpty(this.Path) ? names[index] : this.Path + '.' + names[index];
+		}
 		#endregion
 	}
 }

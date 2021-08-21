@@ -158,27 +158,15 @@ namespace Zongsoft.Data
 			if(property == null)
 				return null;
 
-			static string[] GetNames(string path, params string[] names)
-			{
-				if(string.IsNullOrEmpty(path))
-					return names;
-
-				var result = new string[names.Length];
-
-				for(int i = 0; i < names.Length; i++)
-					result[i] = path + "." + names[i];
-
-				return result;
-			}
-
-			//获取当前属性对应的条件命列表
+			//获取当前属性对应的条件名数组
 			var names = property.Attribute == null || property.Attribute.Names == null || property.Attribute.Names.Length == 0 ?
-				GetNames(path, property.Name) :
-				GetNames(path, property.Attribute.Names);
+				new[] { property.Name } :
+				property.Attribute.Names;
 
 			//创建转换器上下文
 			var context = new ConditionConverterContext(criteria,
 				property.Attribute == null ? ConditionBehaviors.IgnoreNullOrEmpty : property.Attribute.Behaviors,
+				path,
 				names,
 				property.PropertyType,
 				property.GetValue(criteria),
