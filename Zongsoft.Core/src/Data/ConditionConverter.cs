@@ -83,7 +83,24 @@ namespace Zongsoft.Data
 			if(typeof(IModel).IsAssignableFrom(context.Type))
 			{
 				if(context.Operator == ConditionOperator.Exists || context.Operator == ConditionOperator.NotExists)
-					return new Condition(context.Names[0], Criteria.Transform((IModel)context.Value, context.Path), context.Operator.Value);
+				{
+					var qualifiedName = context.GetFullName();
+					var index = qualifiedName.LastIndexOf('.');
+					string name, path;
+
+					if(index > 0 && index < qualifiedName.Length - 1)
+					{
+						name = qualifiedName.Substring(0, index);
+						path = qualifiedName.Substring(index + 1);
+					}
+					else
+					{
+						name = qualifiedName;
+						path = null;
+					}
+
+					return new Condition(name, Criteria.Transform((IModel)context.Value, path), context.Operator.Value);
+				}
 
 				return Criteria.Transform((IModel)context.Value, context.GetFullName());
 			}
