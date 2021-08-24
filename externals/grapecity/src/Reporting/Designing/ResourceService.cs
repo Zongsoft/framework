@@ -142,7 +142,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 			foreach(var provider in providers)
 			{
-				reports.AddRange(provider.GetReports().Select(descriptor => new ReportInfo(descriptor.Name, descriptor.Type)));
+				reports.AddRange(provider.GetReports().Select(descriptor => new ReportInfo(descriptor.Key, descriptor.Name, descriptor.Type)));
 			}
 
 			return reports.ToArray();
@@ -157,6 +157,12 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 
 		public string UpdateReport(string id, GrapeCity.ActiveReports.PageReportModel.Report report)
 		{
+			if(string.IsNullOrEmpty(id))
+				return null;
+
+			if(id.Length > 5 && id.EndsWith(".rdlx", StringComparison.OrdinalIgnoreCase))
+				id = id.Substring(0, id.Length - 5);
+
 			var service = _serviceProvider.ResolveRequired<IReportRepository>();
 			var data = ReportConverter.ToXml(report);
 			return service.Update(id, report.IsFixedPageReport ? "FPL" : "CPL", data);

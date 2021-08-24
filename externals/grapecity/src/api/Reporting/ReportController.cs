@@ -39,7 +39,7 @@ using Zongsoft.Reporting;
 namespace Zongsoft.Externals.Grapecity.Reporting.Web
 {
 	[ApiController]
-	[Route("Reports")]
+	[Route("Grapecity/Reporting/Reports")]
 	public class ReportController : ControllerBase
 	{
 		#region 成员字段

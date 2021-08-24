@@ -47,12 +47,12 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Designing
 {
 	public class ReportInfo : IReportInfo
 	{
-		public ReportInfo(string name, string type)
+		public ReportInfo(string id, string name, string type)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			this.Id = name;
+			this.Id = id;
 			this.Name = name;
 			this.Type = type;
 		}

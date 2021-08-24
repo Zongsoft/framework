@@ -46,6 +46,10 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 	[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
 	public class WebApplicationInitializer : IApplicationInitializer<IApplicationBuilder>
 	{
+		#region 常量定义
+		private const string ROUTE_PREFIX = "/Grapecity/Reporting";
+		#endregion
+
 		#region 初始方法
 		public void Initialize(IApplicationBuilder app)
 		{
@@ -53,6 +57,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 			app.UseReporting(settings =>
 			{
+				settings.Prefix = ROUTE_PREFIX;
 				settings.UseCompression = true;
 				settings.UseCustomStore(reportService.GetReport);
 				settings.LocateDataSource = GetData;
@@ -61,7 +66,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting.Web
 
 			app.UseDesigner(settings =>
 			{
-				settings.Prefix = string.Empty;
+				settings.Prefix = ROUTE_PREFIX;
 				settings.UseCustomStore(reportService);
 			});
 		}

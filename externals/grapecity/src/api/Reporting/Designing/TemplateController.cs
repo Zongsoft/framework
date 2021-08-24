@@ -38,7 +38,7 @@ using Zongsoft.Reporting;
 
 namespace Zongsoft.Externals.Grapecity.Web.Reporting.Designing
 {
-	[Route("Templates")]
+	[Route("Grapecity/Reporting/Templates")]
 	public class TemplateController : ControllerBase
 	{
 		#region 常量定义
@@ -105,7 +105,7 @@ namespace Zongsoft.Externals.Grapecity.Web.Reporting.Designing
 				var thumbnail = report.EmbeddedImages.FirstOrDefault(image => image.Name == THUMBNAIL_NAME);
 
 				if(thumbnail != null)
-					this.Ok(new { Data = thumbnail.ImageData, thumbnail.MIMEType });
+					return this.Ok(new { Data = thumbnail.ImageData, thumbnail.MIMEType });
 			}
 
 			return this.NotFound();
