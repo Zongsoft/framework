@@ -68,7 +68,10 @@ namespace Zongsoft.Externals.Grapecity.Web.Reporting.Designing
 				archives.AddRange(provider.Find("Template"));
 			}
 
-			return archives.Count > 0 ? this.Ok(archives.Select(archive => new { Id = archive.Key, archive.Name })) : this.NoContent();
+			//注意：不能返回204(NoContent)或无内容的200(OK)，因为那会导致报表设计器JS端的脚本错误
+			return archives.Count > 0 ?
+				this.Ok(archives.Select(archive => new { Id = archive.Key, archive.Name })) :
+				this.Ok(Array.Empty<string>());
 		}
 
 		[HttpGet("{key}/Content")]
