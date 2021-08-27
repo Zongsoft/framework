@@ -34,7 +34,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public abstract class OperandConverter<TContext> where TContext : IDataAccessContext
+	public abstract class OperandConverter<TContext> where TContext : IDataAccessContext, IAliasable
 	{
 		#region 构造函数
 		protected OperandConverter() { }
@@ -170,7 +170,7 @@ namespace Zongsoft.Data.Common.Expressions
 						{
 							if(anchor.IsComplex)
 							{
-								src = selection.Join(selection, (IDataEntityComplexProperty)anchor);
+								src = selection.Join(context.Aliaser, selection, (IDataEntityComplexProperty)anchor);
 							}
 							else
 								conditions.Add(Expression.Equal(
@@ -188,9 +188,9 @@ namespace Zongsoft.Data.Common.Expressions
 			if(aggregate.Filter != null)
 			{
 				if(selection.Where == null)
-					selection.Where = selection.Where(aggregate.Filter.Flatten());
+					selection.Where = selection.Where(aggregate.Filter.Flatten(), context.Aliaser);
 				else
-					selection.Where = ConditionExpression.And(selection.Where, selection.Where(aggregate.Filter.Flatten()));
+					selection.Where = ConditionExpression.And(selection.Where, selection.Where(aggregate.Filter.Flatten(), context.Aliaser));
 			}
 
 			selection.Table.Alias = null;

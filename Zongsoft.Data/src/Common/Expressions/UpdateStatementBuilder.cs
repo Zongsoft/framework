@@ -167,7 +167,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(!member.HasChildren)
 				return;
 
-			var table = this.Join(statement, member);
+			var table = this.Join(context.Aliaser, statement, member);
 
 			foreach(var child in member.Children)
 			{
@@ -197,7 +197,7 @@ namespace Zongsoft.Data.Common.Expressions
 				{
 					if(anchor.IsComplex)
 					{
-						source = statement.Join(source, (IDataEntityComplexProperty)anchor);
+						source = statement.Join(context.Aliaser, source, (IDataEntityComplexProperty)anchor);
 					}
 					else
 					{
@@ -224,7 +224,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private TableIdentifier Join(UpdateStatement statement, SchemaMember schema)
+		private TableIdentifier Join(Aliaser aliaser, UpdateStatement statement, SchemaMember schema)
 		{
 			if(schema == null || schema.Token.Property.IsSimplex)
 				return null;
@@ -239,12 +239,12 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				foreach(var ancestor in schema.Ancestors)
 				{
-					source = statement.Join(source, ancestor, schema.FullPath);
+					source = statement.Join(aliaser, source, ancestor, schema.FullPath);
 				}
 			}
 
 			//第二步：处理模式成员（导航属性）的关联
-			var join = statement.Join(source, schema);
+			var join = statement.Join(aliaser, source, schema);
 			var target = (TableIdentifier)join.Target;
 			statement.Tables.Add(target);
 
@@ -270,12 +270,12 @@ namespace Zongsoft.Data.Common.Expressions
 					statement.Parameters.Add(parameter);
 				}
 
-				criteria.Add(statement.Where(context.Validate()));
+				criteria.Add(statement.Where(context.Validate(), context.Aliaser));
 
 				return criteria.Count > 0 ? criteria : null;
 			}
 
-			return statement.Where(context.Validate());
+			return statement.Where(context.Validate(), context.Aliaser);
 		}
 		#endregion
 

@@ -32,23 +32,8 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class ExistStatementBuilder : IStatementBuilder<DataExistContext>
+	public interface IAliasable
 	{
-		public IEnumerable<IStatementBase> Build(DataExistContext context)
-		{
-			//创建存在语句
-			var statement = new ExistStatement(context.Entity);
-
-			//生成条件子句
-			statement.Where = statement.Where(context.Validate(), context.Aliaser);
-
-			//生成选择成员为主键项
-			foreach(var key in statement.Table.Entity.Key)
-			{
-				statement.Select.Members.Add(statement.Table.CreateField(key));
-			}
-
-			yield return statement;
-		}
+		Aliaser Aliaser { get; }
 	}
 }

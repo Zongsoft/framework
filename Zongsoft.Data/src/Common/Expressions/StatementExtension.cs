@@ -111,12 +111,12 @@ namespace Zongsoft.Data.Common.Expressions
 			return TryGetParameterValue(data, member, dbType, out var value) ? value : ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
 		}
 
-		public static ISource From(this IStatement statement, string memberPath, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
+		public static ISource From(this IStatement statement, string memberPath, Aliaser aliaser, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
 		{
-			return From(statement, statement.Table, memberPath, subqueryFactory, out property);
+			return From(statement, statement.Table, memberPath, aliaser, subqueryFactory, out property);
 		}
 
-		public static ISource From(this IStatement statement, TableIdentifier origin, string memberPath, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
+		public static ISource From(this IStatement statement, TableIdentifier origin, string memberPath, Aliaser aliaser, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
 		{
 			var found = origin.Reduce(memberPath, ctx =>
 			{
@@ -126,7 +126,7 @@ namespace Zongsoft.Data.Common.Expressions
 				{
 					foreach(var ancestor in ctx.Ancestors)
 					{
-						source = statement.Join(source, ancestor, ctx.Path);
+						source = statement.Join(aliaser, source, ancestor, ctx.Path);
 					}
 				}
 
@@ -143,7 +143,7 @@ namespace Zongsoft.Data.Common.Expressions
 						throw new DataException($"The specified '{ctx.FullPath}' member is a one-to-many composite(navigation) property that cannot appear in the sorting and specific condition clauses.");
 					}
 
-					source = statement.Join(source, complex, ctx.FullPath);
+					source = statement.Join(aliaser, source, complex, ctx.FullPath);
 				}
 
 				return source;
@@ -159,21 +159,21 @@ namespace Zongsoft.Data.Common.Expressions
 			return found.Source;
 		}
 
-		public static IExpression Where(this IStatement statement, ICondition criteria, bool fieldExpending = true)
+		public static IExpression Where(this IStatement statement, ICondition criteria, Aliaser aliaser, bool fieldExpending = true)
 		{
 			if(criteria == null)
 				return null;
 
 			if(criteria is Condition c)
-				return GetConditionExpression(statement, c, fieldExpending);
+				return GetConditionExpression(statement, aliaser, c, fieldExpending);
 
 			if(criteria is ConditionCollection cc)
-				return GetConditionExpression(statement, cc, fieldExpending);
+				return GetConditionExpression(statement, aliaser, cc, fieldExpending);
 
 			throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
 		}
 
-		private static ConditionExpression GetConditionExpression(IStatement statement, ConditionCollection conditions, bool fieldExpending)
+		private static ConditionExpression GetConditionExpression(IStatement statement, Aliaser aliaser, ConditionCollection conditions, bool fieldExpending)
 		{
 			if(conditions == null)
 				throw new ArgumentNullException(nameof(conditions));
@@ -185,14 +185,14 @@ namespace Zongsoft.Data.Common.Expressions
 				switch(condition)
 				{
 					case Condition c:
-						var item = GetConditionExpression(statement, c, fieldExpending);
+						var item = GetConditionExpression(statement, aliaser, c, fieldExpending);
 
 						if(item != null)
 							expressions.Add(item);
 
 						break;
 					case ConditionCollection cc:
-						var items = GetConditionExpression(statement, cc, fieldExpending);
+						var items = GetConditionExpression(statement, aliaser, cc, fieldExpending);
 
 						if(items != null && items.Count > 0)
 							expressions.Add(items);
@@ -204,7 +204,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return expressions.Count > 0 ? expressions : null;
 		}
 
-		private static IExpression GetConditionExpression(IStatement statement, Condition condition, bool fieldExpending)
+		private static IExpression GetConditionExpression(IStatement statement, Aliaser aliaser, Condition condition, bool fieldExpending)
 		{
 			if(condition == null)
 				throw new ArgumentNullException(nameof(condition));
@@ -213,7 +213,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				if(condition.Field.Type == OperandType.Field)
 				{
-					var subquery = statement.GetSubquery(condition.Name, condition.Value as ICondition);
+					var subquery = statement.GetSubquery(condition.Name, aliaser, condition.Value as ICondition);
 
 					//设置子查询的返回记录数限定为1，以提升查询性能
 					if(subquery is SelectStatement select)
@@ -227,7 +227,7 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 			}
 
-			var field = statement.GetOperandExpression(condition.Field, fieldExpending, out _);
+			var field = statement.GetOperandExpression(aliaser, condition.Field, fieldExpending, out _);
 
 			if(field == null)
 				return null;
@@ -264,9 +264,9 @@ namespace Zongsoft.Data.Common.Expressions
 
 					throw new DataException($"Illegal range condition value.");
 				case ConditionOperator.Like:
-					return Expression.Like(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.In:
-					var value = GetConditionValue(statement, condition.Value, fieldExpending);
+					var value = GetConditionValue(statement, aliaser, condition.Value, fieldExpending);
 					var count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -277,7 +277,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.In(field, value);
 				case ConditionOperator.NotIn:
-					value = GetConditionValue(statement, condition.Value, fieldExpending);
+					value = GetConditionValue(statement, aliaser, condition.Value, fieldExpending);
 					count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -288,23 +288,23 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.NotIn(field, value);
 				case ConditionOperator.Equal:
-					return Expression.Equal(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.Equal(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.NotEqual:
-					return Expression.NotEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.NotEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.GreaterThan:
-					return Expression.GreaterThan(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.GreaterThan(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.GreaterThanEqual:
-					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.LessThan:
-					return Expression.LessThan(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.LessThan(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				case ConditionOperator.LessThanEqual:
-					return Expression.LessThanOrEqual(field, GetConditionValue(statement, condition.Value, fieldExpending));
+					return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
 				default:
 					throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
 			}
 		}
 
-		private static IExpression GetConditionValue(IStatement statement, object value, bool fieldExpending)
+		private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, object value, bool fieldExpending)
 		{
 			if(value == null)
 				return null;
@@ -313,7 +313,7 @@ namespace Zongsoft.Data.Common.Expressions
 				return expression;
 
 			if(value is Operand operand)
-				return statement.GetOperandExpression(operand, fieldExpending, out _);
+				return statement.GetOperandExpression(aliaser, operand, fieldExpending, out _);
 
 			if(value.GetType().IsArray || (value.GetType() != typeof(string) && value is IEnumerable))
 			{
@@ -328,7 +328,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return statement.Parameters.AddParameter(value);
 		}
 
-		private static IExpression GetOperandExpression(this IStatement statement, Operand operand, bool fieldExpending, out DbType dbType)
+		private static IExpression GetOperandExpression(this IStatement statement, Aliaser aliaser, Operand operand, bool fieldExpending, out DbType dbType)
 		{
 			dbType = DbType.Object;
 
@@ -339,7 +339,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				case OperandType.Field:
 					return fieldExpending ?
-						GetField(statement, ((Operand.FieldOperand)operand).Name, out dbType) :
+						GetField(statement, ((Operand.FieldOperand)operand).Name, aliaser, out dbType) :
 						new FieldIdentifier(((Operand.FieldOperand)operand).Name);
 				case OperandType.Constant:
 					var value = Reflection.Reflector.GetValue(ref operand, nameof(Operand.ConstantOperand<object>.Value));
@@ -359,42 +359,42 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return statement.Parameters.AddParameter(value);
 				case OperandType.Not:
-					return Expression.Not(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
+					return Expression.Not(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
 				case OperandType.Negate:
-					return Expression.Negate(GetOperandExpression(statement, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
+					return Expression.Negate(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
 				case OperandType.Add:
-					return GetBinaryExpression(statement, operand, Expression.Add, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Add, fieldExpending, out dbType);
 				case OperandType.Subtract:
-					return GetBinaryExpression(statement, operand, Expression.Subtract, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Subtract, fieldExpending, out dbType);
 				case OperandType.Multiply:
-					return GetBinaryExpression(statement, operand, Expression.Multiply, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Multiply, fieldExpending, out dbType);
 				case OperandType.Modulo:
-					return GetBinaryExpression(statement, operand, Expression.Modulo, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Modulo, fieldExpending, out dbType);
 				case OperandType.Divide:
-					return GetBinaryExpression(statement, operand, Expression.Divide, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Divide, fieldExpending, out dbType);
 				case OperandType.And:
-					return GetBinaryExpression(statement, operand, Expression.And, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.And, fieldExpending, out dbType);
 				case OperandType.Or:
-					return GetBinaryExpression(statement, operand, Expression.Or, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Or, fieldExpending, out dbType);
 				case OperandType.Xor:
-					return GetBinaryExpression(statement, operand, Expression.Xor, fieldExpending, out dbType);
+					return GetBinaryExpression(statement, aliaser, operand, Expression.Xor, fieldExpending, out dbType);
 				default:
 					throw new DataException($"Unsupported '{operand.Type}' operand type.");
 			}
 
-			static IExpression GetBinaryExpression(IStatement host, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DbType dbType)
+			static IExpression GetBinaryExpression(IStatement host, Aliaser aliaser, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DbType dbType)
 			{
 				var binary = (Operand.BinaryOperand)opd;
 
 				return generator(
-					host.GetOperandExpression(binary.Left, fieldExpending, out dbType),
-					host.GetOperandExpression(binary.Right, fieldExpending, out dbType));
+					host.GetOperandExpression(aliaser, binary.Left, fieldExpending, out dbType),
+					host.GetOperandExpression(aliaser, binary.Right, fieldExpending, out dbType));
 			}
 		}
 
-		private static FieldIdentifier GetField(IStatement host, string name, out DbType dbType)
+		private static FieldIdentifier GetField(IStatement host, string name, Aliaser aliaser, out DbType dbType)
 		{
-			var source = From(host, name, (src, complex) => CreateSubquery(host, src, complex, null), out var property);
+			var source = From(host, name, aliaser, (src, complex) => CreateSubquery(host, aliaser, src, complex, null), out var property);
 
 			if(property.IsSimplex)
 			{
@@ -405,9 +405,9 @@ namespace Zongsoft.Data.Common.Expressions
 			throw new DataException($"The specified '{name}' field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.");
 		}
 
-		private static ISource GetSubquery(this IStatement statement, string name, ICondition filter)
+		private static ISource GetSubquery(this IStatement statement, string name, Aliaser aliaser, ICondition filter)
 		{
-			var subquery = From(statement, name, (src, complex) => CreateSubquery(statement, src, complex, filter), out var property);
+			var subquery = From(statement, name, aliaser, (src, complex) => CreateSubquery(statement, aliaser, src, complex, filter), out var property);
 
 			if(property.IsComplex && ((IDataEntityComplexProperty)property).Multiplicity == DataAssociationMultiplicity.Many)
 				return subquery;
@@ -415,9 +415,9 @@ namespace Zongsoft.Data.Common.Expressions
 			throw new DataException($"The specified '{name}' field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated.");
 		}
 
-		private static ISource CreateSubquery(IStatement host, ISource source, IDataEntityComplexProperty complex, ICondition criteria)
+		private static ISource CreateSubquery(IStatement host, Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, ICondition criteria)
 		{
-			var subquery = host.Subquery(complex.Foreign);
+			var subquery = host.Subquery(new TableIdentifier(complex.Foreign, aliaser.Generate()));
 			var where = ConditionExpression.And();
 
 			foreach(var link in complex.Links)
@@ -428,7 +428,7 @@ namespace Zongsoft.Data.Common.Expressions
 				{
 					if(anchor.IsComplex)
 					{
-						source = host.Join(source, (IDataEntityComplexProperty)anchor);
+						source = host.Join(aliaser, source, (IDataEntityComplexProperty)anchor);
 					}
 					else
 					{
@@ -452,7 +452,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 
 			if(criteria != null)
-				where.Add(Where(subquery, criteria));
+				where.Add(Where(subquery, criteria, aliaser));
 
 			subquery.Where = where;
 			return subquery;

@@ -40,10 +40,6 @@ namespace Zongsoft.Data.Common.Expressions
 	/// </summary>
 	public class Statement : StatementBase, IStatement
 	{
-		#region 私有变量
-		private int _aliasIndex;
-		#endregion
-
 		#region 构造函数
 		protected Statement()
 		{
@@ -70,7 +66,11 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>获取一个值，指示<c>Form</c>属性是否有值。</summary>
 		public bool HasFrom
 		{
-			get => this.From != null && this.From.Count > 0;
+			get
+			{
+				var from = this.From;
+				return from != null && from.Count > 0;
+			}
 		}
 
 		/// <summary>获取一个数据源的集合，可以在<c>Where</c>子句中引用的字段源。</summary>
@@ -81,20 +81,14 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 获取或创建指定源与实体的继承关联子句。
-		/// </summary>
-		/// <param name="source">指定要创建关联子句的源。</param>
-		/// <param name="target">指定要创建关联子句的目标实体。</param>
-		/// <param name="fullPath">指定的 <paramref name="target"/> 参数对应的目标实体关联的成员的完整路径。</param>
-		/// <returns>返回已存在或新创建的继承表关联子句。</returns>
-		public JoinClause Join(ISource source, IDataEntity target, string fullPath = null)
+		/// <inheritdoc />
+		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntity target, string fullPath = null)
 		{
 			var clause = JoinClause.Create(source,
 			                               target,
 			                               fullPath,
 			                               name => this.From.TryGet(name, out var join) ? (JoinClause)join : null,
-			                               entity => this.CreateTableReference(entity));
+			                               entity => new TableIdentifier(entity, aliaser.Generate()));
 
 			if(!this.From.Contains(clause))
 				this.From.Add(clause);
@@ -102,20 +96,14 @@ namespace Zongsoft.Data.Common.Expressions
 			return clause;
 		}
 
-		/// <summary>
-		/// 获取或创建指定导航属性的关联子句。
-		/// </summary>
-		/// <param name="source">指定要创建关联子句的源。</param>
-		/// <param name="complex">指定要创建关联子句对应的导航属性。</param>
-		/// <param name="fullPath">指定的 <paramref name="complex"/> 参数对应的成员完整路径。</param>
-		/// <returns>返回已存在或新创建的导航关联子句。</returns>
-		public JoinClause Join(ISource source, IDataEntityComplexProperty complex, string fullPath = null)
+		/// <inheritdoc />
+		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, string fullPath = null)
 		{
 			var joins = JoinClause.Create(source,
 			                              complex,
 			                              fullPath,
 			                              name => this.From.TryGet(name, out var join) ? (JoinClause)join : null,
-			                              entity => this.CreateTableReference(entity));
+			                              entity => new TableIdentifier(entity, aliaser.Generate()));
 
 			JoinClause last = null;
 
@@ -131,25 +119,13 @@ namespace Zongsoft.Data.Common.Expressions
 			return last;
 		}
 
-		/// <summary>
-		/// 获取或创建导航属性的关联子句。
-		/// </summary>
-		/// <param name="source">指定要创建关联子句的源。</param>
-		/// <param name="schema">指定要创建关联子句对应的数据模式成员。</param>
-		/// <returns>返回已存在或新创建的导航关联子句，如果 <paramref name="schema"/> 参数指定的数据模式成员对应的不是导航属性则返回空(null)。</returns>
-		public JoinClause Join(ISource source, SchemaMember schema)
+		/// <inheritdoc />
+		public JoinClause Join(Aliaser aliaser, ISource source, SchemaMember schema)
 		{
 			if(schema.Token.Property.IsSimplex)
 				return null;
 
-			return this.Join(source, (IDataEntityComplexProperty)schema.Token.Property, schema.FullPath);
-		}
-		#endregion
-
-		#region 保护方法
-		internal protected TableIdentifier CreateTableReference(IDataEntity entity)
-		{
-			return new TableIdentifier(entity, "T" + (++_aliasIndex).ToString());
+			return this.Join(aliaser, source, (IDataEntityComplexProperty)schema.Token.Property, schema.FullPath);
 		}
 		#endregion
 	}

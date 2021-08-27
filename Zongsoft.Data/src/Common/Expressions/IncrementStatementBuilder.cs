@@ -38,7 +38,7 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			var statement = new UpdateStatement(context.Entity);
 
-			var source = statement.From(context.Member, null, out var property);
+			var source = statement.From(context.Member, context.Aliaser, null, out var property);
 			var field = source.CreateField(property);
 			var value = context.Interval > 0 ?
 			            Expression.Add(field, Expression.Constant(context.Interval)) :
@@ -48,7 +48,7 @@ namespace Zongsoft.Data.Common.Expressions
 			statement.Fields.Add(new FieldValue(field, value));
 
 			//构建WHERE子句
-			statement.Where = statement.Where(context.Validate());
+			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			if(context.Source.Features.Support(Feature.Updation.Outputting))
 			{

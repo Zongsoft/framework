@@ -107,40 +107,24 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			return new SubqueryStatement(this, table);
 		}
-
-		public ISelectStatementBase Subquery(IDataEntity entity)
-		{
-			return new SubqueryStatement(this, entity);
-		}
 		#endregion
 
 		#region 嵌套子类
 		private class SubqueryStatement : SelectStatement, ISelectStatementBase
 		{
 			#region 构造函数
-			public SubqueryStatement(IStatementBase host, TableIdentifier table) : base(table)
-			{
-				this.Host = host ?? throw new ArgumentNullException(nameof(host));
-			}
-
-			public SubqueryStatement(IStatementBase host, Metadata.IDataEntity entity) : base(new TableIdentifier(entity))
+			public SubqueryStatement(IStatementBase host, TableIdentifier table) : base(table, string.Empty)
 			{
 				this.Host = host ?? throw new ArgumentNullException(nameof(host));
 			}
 			#endregion
 
 			#region 公共属性
-			public IStatementBase Host
-			{
-				get;
-			}
+			public IStatementBase Host { get; }
 			#endregion
 
 			#region 重写方法
-			protected override ParameterExpressionCollection CreateParameters()
-			{
-				return Host.Parameters;
-			}
+			protected override ParameterExpressionCollection CreateParameters() => Host.Parameters;
 			#endregion
 		}
 		#endregion

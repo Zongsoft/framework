@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Common.Expressions
 			var statement = new DeleteStatement(context.Entity);
 
 			//构建当前实体的继承链的关联集
-			this.Join(statement, statement.Table).ToArray();
+			this.Join(context.Aliaser, statement, statement.Table).ToArray();
 
 			//获取要删除的数据模式（模式不为空）
 			if(!context.Schema.IsEmpty)
@@ -70,12 +70,12 @@ namespace Zongsoft.Data.Common.Expressions
 				//依次生成各个数据成员的关联（包括它的继承链、子元素集）
 				foreach(var schema in context.Schema.Members)
 				{
-					this.Join(statement, statement.Table, schema);
+					this.Join(context.Aliaser, statement, statement.Table, schema);
 				}
 			}
 
 			//生成条件子句
-			statement.Where = statement.Where(context.Validate());
+			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			yield return statement;
 		}
@@ -90,17 +90,17 @@ namespace Zongsoft.Data.Common.Expressions
 			var statement = new DeleteStatement(context.Entity);
 
 			//生成条件子句
-			statement.Where = statement.Where(context.Validate());
+			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			if(!context.Schema.IsEmpty)
-				this.BuildReturning(statement, context.Schema.Members);
+				this.BuildReturning(context.Aliaser, statement, context.Schema.Members);
 
 			yield return statement;
 		}
 		#endregion
 
 		#region 私有方法
-		private void BuildReturning(DeleteStatement statement, IEnumerable<SchemaMember> schemas)
+		private void BuildReturning(Aliaser aliaser, DeleteStatement statement, IEnumerable<SchemaMember> schemas)
 		{
 			statement.Returning = new ReturningClause(TableDefinition.Temporary());
 
@@ -114,7 +114,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			while(super != null)
 			{
-				this.BuildInherit(statement, super);
+				this.BuildInherit(aliaser, statement, super);
 				super = super.GetBaseEntity();
 			}
 
@@ -126,7 +126,7 @@ namespace Zongsoft.Data.Common.Expressions
 				var complex = (IDataEntityComplexProperty)schema.Token.Property;
 				ISource src =  complex.Entity == statement.Entity ?
 					statement.Table :
-					statement.Join(statement.Table, complex.Entity);
+					statement.Join(aliaser, statement.Table, complex.Entity);
 
 				foreach(var link in complex.Links)
 				{
@@ -141,7 +141,7 @@ namespace Zongsoft.Data.Common.Expressions
 					{
 						if(anchor.IsComplex)
 						{
-							source = statement.Join(source, (IDataEntityComplexProperty)anchor);
+							source = statement.Join(aliaser, source, (IDataEntityComplexProperty)anchor);
 						}
 						else
 						{
@@ -152,11 +152,11 @@ namespace Zongsoft.Data.Common.Expressions
 					}
 				}
 
-				this.BuildSlave(statement, schema);
+				this.BuildSlave(aliaser, statement, schema);
 			}
 		}
 
-		private DeleteStatement BuildSlave(DeleteStatement master, SchemaMember schema)
+		private DeleteStatement BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 		{
 			var complex = (IDataEntityComplexProperty)schema.Token.Property;
 			var statement = new DeleteStatement(complex.Foreign);
@@ -189,7 +189,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			if(super != null || schema.HasChildren)
 			{
-				this.BuildReturning(statement, schema.Children);
+				this.BuildReturning(aliaser, statement, schema.Children);
 			}
 			else
 			{
@@ -199,7 +199,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return statement;
 		}
 
-		private DeleteStatement BuildInherit(DeleteStatement master, IDataEntity entity)
+		private DeleteStatement BuildInherit(Aliaser aliaser, DeleteStatement master, IDataEntity entity)
 		{
 			var statement = new DeleteStatement(entity);
 			var reference = master.Returning.Table.Identifier();
@@ -230,7 +230,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return statement;
 		}
 
-		private IEnumerable<JoinClause> Join(DeleteStatement statement, TableIdentifier table, string fullPath = null)
+		private IEnumerable<JoinClause> Join(Aliaser aliaser, DeleteStatement statement, TableIdentifier table, string fullPath = null)
 		{
 			if(table == null || table.Entity == null)
 				yield break;
@@ -242,7 +242,7 @@ namespace Zongsoft.Data.Common.Expressions
 				var clause = JoinClause.Create(table,
 											   fullPath,
 											   name => statement.From.TryGet(name, out var join) ? (JoinClause)join : null,
-											   entity => statement.CreateTableReference(entity));
+											   entity => new TableIdentifier(entity, aliaser.Generate()));
 
 				if(!statement.From.Contains(clause))
 				{
@@ -256,7 +256,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private void Join(DeleteStatement statement, TableIdentifier table, SchemaMember schema)
+		private void Join(Aliaser aliaser, DeleteStatement statement, TableIdentifier table, SchemaMember schema)
 		{
 			if(table == null || schema == null || schema.Token.Property.IsSimplex)
 				return;
@@ -265,12 +265,12 @@ namespace Zongsoft.Data.Common.Expressions
 			if(schema.Token.Property.Immutable)
 				throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the delete operation.");
 
-			var join = statement.Join(table, schema);
+			var join = statement.Join(aliaser, table, schema);
 			var target = (TableIdentifier)join.Target;
 			statement.Tables.Add(target);
 
 			//生成当前导航属性表的继承链关联集
-			var joins = this.Join(statement, target, schema.FullPath);
+			var joins = this.Join(aliaser, statement, target, schema.FullPath);
 
 			if(schema.HasChildren)
 			{
@@ -284,7 +284,7 @@ namespace Zongsoft.Data.Common.Expressions
 							target = (TableIdentifier)join.Target;
 					}
 
-					this.Join(statement, target, child);
+					this.Join(aliaser, statement, target, child);
 				}
 			}
 		}

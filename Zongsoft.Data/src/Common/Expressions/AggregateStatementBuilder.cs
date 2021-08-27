@@ -42,13 +42,13 @@ namespace Zongsoft.Data.Common.Expressions
 			if(string.IsNullOrWhiteSpace(context.Aggregate.Name) || context.Aggregate.Name == "*")
 				argument = Expression.Literal("*");
 			else
-				argument = statement.From(context.Aggregate.Name, null, out var property).CreateField(property);
+				argument = statement.From(context.Aggregate.Name, context.Aliaser, null, out var property).CreateField(property);
 
 			//添加返回的聚合函数成员
 			statement.Select.Members.Add(AggregateExpression.Aggregate(context.Aggregate, argument));
 
 			//生成条件子句
-			statement.Where = statement.Where(context.Validate());
+			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			yield return statement;
 		}

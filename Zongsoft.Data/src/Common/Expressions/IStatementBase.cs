@@ -74,13 +74,6 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <param name="table">指定要创建的子查询的主表。</param>
 		/// <returns>返回创建的子查询语句。</returns>
 		ISelectStatementBase Subquery(TableIdentifier table);
-
-		/// <summary>
-		/// 创建一个子查询语句。
-		/// </summary>
-		/// <param name="entity">指定要创建的子查询的主实体。</param>
-		/// <returns>返回创建的子查询语句。</returns>
-		ISelectStatementBase Subquery(Metadata.IDataEntity entity);
 		#endregion
 	}
 }

@@ -46,7 +46,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			//生成分组子句
 			if(context.Grouping != null)
-				this.GenerateGrouping(statement, context.Grouping);
+				this.GenerateGrouping(context.Aliaser, statement, context.Grouping);
 
 			//生成查询成员
 			if(context.Schema != null && !context.Schema.IsEmpty)
@@ -54,22 +54,22 @@ namespace Zongsoft.Data.Common.Expressions
 				foreach(var member in context.Schema.Members)
 				{
 					//生成数据模式对应的子句
-					this.GenerateSchema(statement, statement.Table, member);
+					this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
 				}
 			}
 
 			//生成条件子句
-			statement.Where = statement.Where(context.Validate());
+			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			//生成排序子句
-			this.GenerateSortings(statement, statement.Table, context.Sortings);
+			this.GenerateSortings(context.Aliaser, statement, statement.Table, context.Sortings);
 
 			yield return statement;
 		}
 		#endregion
 
 		#region 私有方法
-		private void GenerateGrouping(SelectStatement statement, Grouping grouping)
+		private void GenerateGrouping(Aliaser aliaser, SelectStatement statement, Grouping grouping)
 		{
 			if(grouping == null)
 				return;
@@ -81,7 +81,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var key in grouping.Keys)
 				{
-					var source = statement.From(key.Name, null, out var property);
+					var source = statement.From(key.Name, aliaser, null, out var property);
 
 					if(property.IsComplex)
 						throw new DataException($"The grouping key '{property.Name}' can not be a complex property.");
@@ -92,7 +92,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				if(grouping.Filter != null)
 				{
-					statement.GroupBy.Having = statement.Where(grouping.Filter, false);
+					statement.GroupBy.Having = statement.Where(grouping.Filter, aliaser, false);
 				}
 			}
 
@@ -108,7 +108,7 @@ namespace Zongsoft.Data.Common.Expressions
 				}
 				else
 				{
-					var source = statement.From(aggregate.Name, null, out var property);
+					var source = statement.From(aggregate.Name, aliaser, null, out var property);
 
 					if(property.IsComplex)
 						throw new DataException($"The field '{property.Name}' of aggregate function can not be a complex property.");
@@ -122,7 +122,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private void GenerateSortings(SelectStatement statement, TableIdentifier origin, Sorting[] sortings)
+		private void GenerateSortings(Aliaser aliaser, SelectStatement statement, TableIdentifier origin, Sorting[] sortings)
 		{
 			if(sortings == null || sortings.Length == 0)
 				return;
@@ -134,7 +134,7 @@ namespace Zongsoft.Data.Common.Expressions
 				if(string.IsNullOrEmpty(sorting.Name))
 					continue;
 
-				var source = statement.From(origin, sorting.Name, null, out var property);
+				var source = statement.From(origin, sorting.Name, aliaser, null, out var property);
 
 				var simplex = property.IsSimplex ?
 					(IDataEntitySimplexProperty)property :
@@ -147,13 +147,13 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private void GenerateSchema(SelectStatement statement, ISource origin, SchemaMember member)
+		private void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
 		{
 			if(member.Ancestors != null)
 			{
 				foreach(var ancestor in member.Ancestors)
 				{
-					origin = statement.Join(origin, ancestor, member.Path);
+					origin = statement.Join(aliaser, origin, ancestor, member.Path);
 				}
 			}
 
@@ -172,7 +172,7 @@ namespace Zongsoft.Data.Common.Expressions
 						if(complex.ForeignProperty.IsSimplex)
 							slave.Select.Members.Add(slave.Table.CreateField(complex.ForeignProperty));
 						else
-							table = (TableIdentifier)slave.Join(slave.Table, (IDataEntityComplexProperty)complex.ForeignProperty).Target;
+							table = (TableIdentifier)slave.Join(aliaser, slave.Table, (IDataEntityComplexProperty)complex.ForeignProperty).Target;
 					}
 
 					statement.Slaves.Add(slave);
@@ -184,7 +184,7 @@ namespace Zongsoft.Data.Common.Expressions
 						{
 							if(anchor.IsComplex)
 							{
-								origin = statement.Join(origin, (IDataEntityComplexProperty)anchor);
+								origin = statement.Join(aliaser, origin, (IDataEntityComplexProperty)anchor);
 							}
 							else
 							{
@@ -216,13 +216,13 @@ namespace Zongsoft.Data.Common.Expressions
 					}
 
 					if(member.Sortings != null)
-						this.GenerateSortings(slave, table, member.Sortings);
+						this.GenerateSortings(aliaser, slave, table, member.Sortings);
 
 					if(member.HasChildren)
 					{
 						foreach(var child in member.Children)
 						{
-							this.GenerateSchema(slave, table, child);
+							this.GenerateSchema(aliaser, slave, table, child);
 						}
 					}
 
@@ -230,7 +230,7 @@ namespace Zongsoft.Data.Common.Expressions
 				}
 
 				//对于一对一的导航属性，创建其关联子句即可
-				origin = statement.Join(origin, complex, member.FullPath);
+				origin = statement.Join(aliaser, origin, complex, member.FullPath);
 
 				//确保导航属性的外链表的主键都在
 				if(member.HasChildren)
@@ -262,7 +262,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				foreach(var child in member.Children)
 				{
-					this.GenerateSchema(statement, origin, child);
+					this.GenerateSchema(aliaser, statement, origin, child);
 				}
 			}
 		}

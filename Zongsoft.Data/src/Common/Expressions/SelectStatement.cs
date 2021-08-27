@@ -39,17 +39,9 @@ namespace Zongsoft.Data.Common.Expressions
 	public class SelectStatement : SelectStatementBase
 	{
 		#region 构造函数
-		public SelectStatement(string alias = null) : base(alias)
-		{
-		}
-
-		public SelectStatement(ISource source, string alias = null) : base(source, alias)
-		{
-		}
-
-		public SelectStatement(IDataEntity entity, string alias = null) : base(entity, alias)
-		{
-		}
+		public SelectStatement(string alias = null) : base(alias) { }
+		public SelectStatement(ISource source, string alias = null) : base(source, alias) { }
+		public SelectStatement(IDataEntity entity, string alias = null) : base(entity, alias) { }
 		#endregion
 
 		#region 公共属性

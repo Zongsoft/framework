@@ -57,17 +57,20 @@ namespace Zongsoft.Data
 	{
 	}
 
-	public class DataExistContext : DataExistContextBase, IDataAccessContext
+	public class DataExistContext : DataExistContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataExistContext(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, criteria, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -79,17 +82,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext
+	public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataExecuteContext(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -101,17 +107,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext
+	public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataAggregateContext(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, aggregate, criteria, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -123,17 +132,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataIncrementContext : DataIncrementContextBase, IDataMutateContext
+	public class DataIncrementContext : DataIncrementContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataIncrementContext(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, IDataIncrementOptions options = null) : base(dataAccess, name, member, criteria, interval, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -145,17 +157,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataDeleteContext : DataDeleteContextBase, IDataMutateContext
+	public class DataDeleteContext : DataDeleteContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataDeleteContext(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, criteria, schema, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -172,17 +187,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataInsertContext : DataInsertContextBase, IDataMutateContext
+	public class DataInsertContext : DataInsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataInsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -199,17 +217,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext
+	public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataUpdateContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, isMultiple, data, criteria, schema, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -226,17 +247,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext
+	public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataUpsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
@@ -253,17 +277,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataSelectContext : DataSelectContextBase, IDataAccessContext
+	public class DataSelectContext : DataSelectContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
 		public DataSelectContext(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, entityType, grouping, criteria, schema, paging, sortings, options)
 		{
+			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
 
 		#region 公共属性
+		public Common.Expressions.Aliaser Aliaser { get; }
+
 		public IDataSource Source
 		{
 			get => this.Session.Source;
