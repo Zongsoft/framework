@@ -351,6 +351,12 @@
 			</xs:annotation>
 		</xs:attribute>
 
+		<xs:attribute name="behaviors" type="ComplexPropertyBehaviors" use="optional">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">复合属性(导航属性)的特性。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
 		<xs:attribute name="multiplicity" type="Multiplicity" use="optional" default="?">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">多重性设置，默认为一对零或一。</xs:documentation>
@@ -375,6 +381,22 @@
 			<xs:enumeration value="Foreign">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">外链</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ComplexPropertyBehaviors">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="none">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">无</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+
+			<xs:enumeration value="master">
+				<xs:annotation>
+					<xs:documentation xml:lang="zh">主表(主实体)</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
