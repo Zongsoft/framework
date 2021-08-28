@@ -28,37 +28,20 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Data.Metadata
 {
 	/// <summary>
-	/// 表示数据实体复合属性的元数据类。
+	/// 表示数据实体复合属性特性的枚举。
 	/// </summary>
-	public interface IDataEntityComplexProperty : IDataEntityProperty
+	[Flags]
+	public enum DataEntityComplexPropertyBehaviors
 	{
-		/// <summary>获取或设置属性的特性。</summary>
-		DataEntityComplexPropertyBehaviors Behaviors { get; set; }
+		/// <summary>无</summary>
+		None = 0,
 
-		/// <summary>获取关联的外部实体。</summary>
-		IDataEntity Foreign { get; }
-
-		/// <summary>获取关联的外部层级属性，只有多级关联该属性才不为空(null)。</summary>
-		IDataEntityProperty ForeignProperty { get; }
-
-		/// <summary>获取一个值，指示关联的重复性关系。</summary>
-		DataAssociationMultiplicity Multiplicity { get; }
-
-		/// <summary>获取关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
-		/// <remarks>
-		///		<para>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(:)区隔。</para>
-		/// </remarks>
-		string Port { get; }
-
-		/// <summary>获取关联的连接数组。</summary>
-		DataAssociationLink[] Links { get; }
-
-		/// <summary>获取关联的约束数组。</summary>
-		DataAssociationConstraint[] Constraints { get; }
+		/// <summary>主表</summary>
+		Master = 1,
 	}
 }
