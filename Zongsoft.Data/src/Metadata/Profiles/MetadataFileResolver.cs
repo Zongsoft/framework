@@ -80,6 +80,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private const string XML_VALUE_ATTRIBUTE = "value";
 		private const string XML_PATH_ATTRIBUTE = "path";
 		private const string XML_DRIVER_ATTRIBUTE = "driver";
+		private const string XML_BEHAVIORS_ATTRIBUTE = "behaviors";
 		private const string XML_MUTABILITY_ATTRIBUTE = "mutability";
 		#endregion
 
@@ -278,9 +279,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 						break;
 					case XML_COMPLEXPROPERTY_ELEMENT:
 						var complexProperty = new MetadataEntityComplexProperty(entity,
-						                          reader.GetAttribute(XML_NAME_ATTRIBUTE),
-						                          this.GetTargetName(reader.GetAttribute(XML_PORT_ATTRIBUTE), @namespace),
-						                          this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
+							reader.GetAttribute(XML_NAME_ATTRIBUTE),
+							this.GetTargetName(reader.GetAttribute(XML_PORT_ATTRIBUTE), @namespace),
+							this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
+						{
+							Behaviors = this.GetAttributeValue(reader, XML_BEHAVIORS_ATTRIBUTE, DataEntityComplexPropertyBehaviors.None),
+						};
 
 						var multiplicity = reader.GetAttribute(XML_MULTIPLICITY_ATTRIBUTE);
 
@@ -735,6 +739,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			nameTable.Add(XML_VALUE_ATTRIBUTE);
 			nameTable.Add(XML_PATH_ATTRIBUTE);
 			nameTable.Add(XML_DRIVER_ATTRIBUTE);
+			nameTable.Add(XML_BEHAVIORS_ATTRIBUTE);
 			nameTable.Add(XML_MUTABILITY_ATTRIBUTE);
 
 			return nameTable;

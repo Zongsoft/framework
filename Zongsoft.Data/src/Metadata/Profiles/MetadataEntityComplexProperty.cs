@@ -76,6 +76,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		}
 
 		public string Port { get; }
+		public DataEntityComplexPropertyBehaviors Behaviors { get; set; }
 		public DataAssociationMultiplicity Multiplicity { get; set; }
 		public DataAssociationLink[] Links { get; set; }
 		public DataAssociationConstraint[] Constraints { get; set; }
