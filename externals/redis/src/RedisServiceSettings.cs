@@ -52,6 +52,11 @@ namespace Zongsoft.Externals.Redis
 			get => _options.EndPoints;
 		}
 
+		public string User
+		{
+			get => _options.User;
+		}
+
 		public string Password
 		{
 			get => _options.Password;
