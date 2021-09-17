@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<PackageIcon>zongsoft-logo(48x48).png</PackageIcon>
+		<PackageIconUrl></PackageIconUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<Authors>Popeye Zhong</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Mqtt Library</Product>
+		<Description>This is a library about mqtt messaging development.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2021. All rights reserved.</Copyright>
+		<PackageLicenseExpression>http://www.gnu.org/licenses/gpl-3.0.html</PackageLicenseExpression>
+		<ApplicationIcon></ApplicationIcon>
+		<RootNamespace>Zongsoft</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>Zongsoft.Messaging.Mqtt.xml</DocumentationFile>
+		<NoWarn>1701;1702;1591</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Zongsoft.Messaging.Mqtt.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="MQTTnet" Version="3.0.16" />
+	  <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="3.0.16" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+</Project>
