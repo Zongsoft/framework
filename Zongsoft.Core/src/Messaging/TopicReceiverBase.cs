@@ -30,12 +30,12 @@
 using System;
 using System.Collections.Concurrent;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging
 {
-	public class TopicReceiverBase : Communication.IReceiver
+	public class TopicReceiverBase
 	{
 		#region 事件声明
 		public event EventHandler<ChannelFailureEventArgs> Failed;
@@ -43,7 +43,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 成员字段
-		private IExecutionHandler _handler;
+		private IHandler _handler;
 		#endregion
 
 		#region 构造函数
@@ -56,7 +56,7 @@ namespace Zongsoft.Messaging
 		#region 公共属性
 		public ITopic Topic { get; }
 
-		public IExecutionHandler Handler
+		public IHandler Handler
 		{
 			get => _handler;
 			set => _handler = value ?? throw new ArgumentNullException();

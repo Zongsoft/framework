@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Communication
 {
@@ -40,30 +39,9 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 属性定义
-		int ChannelId
-		{
-			get;
-		}
-
-		object Host
-		{
-			get;
-		}
-
-		bool IsIdled
-		{
-			get;
-		}
-
-		DateTime LastSendTime
-		{
-			get;
-		}
-
-		DateTime LastReceivedTime
-		{
-			get;
-		}
+		int ChannelId { get; }
+		object Host { get; }
+		bool IsIdled { get; }
 		#endregion
 
 		#region 方法定义

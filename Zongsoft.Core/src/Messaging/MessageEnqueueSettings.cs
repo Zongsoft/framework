@@ -34,51 +34,19 @@ namespace Zongsoft.Messaging
 {
 	public class MessageEnqueueSettings
 	{
-		#region 成员字段
-		private TimeSpan _delayTimeout;
-		private byte _priority;
-		#endregion
-
 		#region 构造函数
-		public MessageEnqueueSettings() : this(TimeSpan.Zero)
-		{
-		}
-
-		public MessageEnqueueSettings(byte priority) : this(TimeSpan.Zero)
-		{
-		}
-
+		public MessageEnqueueSettings() : this(TimeSpan.Zero) { }
+		public MessageEnqueueSettings(byte priority) : this(TimeSpan.Zero, priority) { }
 		public MessageEnqueueSettings(TimeSpan delayTimeout, byte priority = 6)
 		{
-			_delayTimeout = delayTimeout;
-			_priority = priority;
+			this.DelayTimeout = delayTimeout;
+			this.Priority = priority;
 		}
 		#endregion
 
 		#region 公共属性
-		public TimeSpan DelayTimeout
-		{
-			get
-			{
-				return _delayTimeout;
-			}
-			set
-			{
-				_delayTimeout = value;
-			}
-		}
-
-		public byte Priority
-		{
-			get
-			{
-				return _priority;
-			}
-			set
-			{
-				_priority = value;
-			}
-		}
+		public TimeSpan DelayTimeout { get; set; }
+		public byte Priority { get; set; }
 		#endregion
 	}
 }

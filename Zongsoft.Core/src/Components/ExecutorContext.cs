@@ -30,31 +30,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
-	public class ExecutionContext : IExecutionContext
+	public class ExecutorContext : IExecutorContext
 	{
 		#region 成员字段
-		private IExecutor _executor;
-		private object _data;
-		private object _result;
 		private Exception _exception;
 		private IDictionary<string, object> _parameters;
 		#endregion
 
 		#region 构造函数
-		public ExecutionContext(object data = null, IDictionary<string, object> parameters = null)
+		public ExecutorContext(IExecutor executor, IDictionary<string, object> parameters = null)
 		{
-			_data = data;
-
-			if(parameters != null && parameters.Count > 0)
-				_parameters = new Dictionary<string, object>(parameters);
-		}
-
-		public ExecutionContext(IExecutor executor, object data = null, IDictionary<string, object> parameters = null)
-		{
-			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
-			_data = data;
+			this.Executor = executor ?? throw new ArgumentNullException(nameof(executor));
 
 			if(parameters != null && parameters.Count > 0)
 				_parameters = new Dictionary<string, object>(parameters);
@@ -62,46 +50,11 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取处理本次执行请求的执行器。
-		/// </summary>
-		public virtual IExecutor Executor
-		{
-			get => _executor;
-		}
+		public IExecutor Executor { get; }
 
-		/// <summary>
-		/// 获取处理本次执行请求的数据。
-		/// </summary>
-		public object Data
-		{
-			get => _data;
-		}
+		public bool HasParameters { get => _parameters != null; }
 
-		/// <summary>
-		/// 获取本次执行中发生的异常。
-		/// </summary>
-		public virtual Exception Exception
-		{
-			get => _exception;
-			internal protected set => _exception = value;
-		}
-
-		/// <summary>
-		/// 获取扩展参数集是否有内容。
-		/// </summary>
-		/// <remarks>
-		///		<para>在不确定扩展参数集是否含有内容之前，建议先使用该属性来检测。</para>
-		/// </remarks>
-		public virtual bool HasParameters
-		{
-			get => _parameters != null;
-		}
-
-		/// <summary>
-		/// 获取扩展参数集。
-		/// </summary>
-		public virtual IDictionary<string, object> Parameters
+		public IDictionary<string, object> Parameters
 		{
 			get
 			{
@@ -111,15 +64,11 @@ namespace Zongsoft.Services
 				return _parameters;
 			}
 		}
+		#endregion
 
-		/// <summary>
-		/// 获取或设置本次执行的返回结果。
-		/// </summary>
-		public object Result
-		{
-			get => _result;
-			set => _result = value;
-		}
+		#region 公共方法
+		public void Error(Exception exception) => _exception = exception;
+		public bool HasError(out Exception exception) => (exception = _exception) != null;
 		#endregion
 	}
 }

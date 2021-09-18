@@ -28,21 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Messaging
 {
-	public interface IExecutor
+	public class MessageTopicSubscriptionOptions
 	{
-        IExecutionHandler Handler
-        {
-            get; set;
-        }
-
-        ICollection<IExecutionFilter> Filters { get; }
-
-        void Execute(object context);
-        Task ExecuteAsync(object context);
 	}
 }

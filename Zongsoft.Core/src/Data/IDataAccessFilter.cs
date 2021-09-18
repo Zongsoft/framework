@@ -34,7 +34,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据访问过滤器的接口。
 	/// </summary>
-	public interface IDataAccessFilter : Zongsoft.Services.IExecutionFilter<IDataAccessContextBase>
+	public interface IDataAccessFilter : Components.IExecutionFilter<IDataAccessContextBase>
 	{
 		/// <summary>
 		/// 获取数据过滤器的访问名，如果为空即全局过滤器，表示不限定具体的访问实体或命令。

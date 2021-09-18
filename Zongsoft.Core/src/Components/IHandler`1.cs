@@ -28,33 +28,32 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
-	/// <summary>
-	/// 提供执行处理程序的功能。
-	/// </summary>
-	public interface IExecutionHandler
+	public interface IHandler<in T> : IHandler
 	{
 		/// <summary>
 		/// 确认当前处理程序能否处理本次执行请求。
 		/// </summary>
-		/// <param name="context">当前执行的上下文对象。</param>
+		/// <param name="request">当前处理的请求对象。</param>
 		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
-		bool CanHandle(object context);
+		bool CanHandle(T request);
 
 		/// <summary>
 		/// 同步处理执行请求。
 		/// </summary>
-		/// <param name="context">当前执行的上下文对象。</param>
-		void Handle(object context);
+		/// <param name="request">当前处理的请求对象。</param>
+		bool Handle(T request);
 
-        /// <summary>
-        /// 异步处理执行请求。
-        /// </summary>
-        /// <param name="context">当前执行的上下文对象。</param>
-        /// <returns>返回的异步任务。</returns>
-        Task HandleAsync(object context);
+		/// <summary>
+		/// 异步处理执行请求。
+		/// </summary>
+		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		/// <returns>返回的异步任务。</returns>
+		Task<bool> HandleAsync(T request, CancellationToken cancellation);
 	}
 }

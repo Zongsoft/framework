@@ -28,21 +28,30 @@
  */
 
 using System;
-using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Communication
 {
 	public interface ISender
 	{
-		event EventHandler<ChannelFailureEventArgs> Failed;
-		event EventHandler<SentEventArgs> Sent;
+		void Send(byte[] data, object parameter = null);
+		void Send(byte[] data, int offset, object parameter = null);
+		void Send(byte[] data, int offset, int count, object parameter = null);
+		void Send(string text, Encoding encoding = null, object parameter = null);
+		void Send(ReadOnlySpan<byte> data, object parameter = null);
 
-		void Send(string text, object asyncState = null);
-		void Send(string text, Encoding encoding, object asyncState = null);
-		void Send(Stream stream, object asyncState = null);
-		void Send(byte[] buffer, object asyncState = null);
-		void Send(byte[] buffer, int offset, object asyncState = null);
-		void Send(byte[] buffer, int offset, int count, object asyncState = null);
+		Task SendAsync(byte[] data, CancellationToken cancellation = default) => this.SendAsync(data, null, cancellation);
+		Task SendAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.SendAsync(data, offset, null, cancellation);
+		Task SendAsync(byte[] data, int offset, int count, CancellationToken cancellation = default) => this.SendAsync(data, offset, count, null, cancellation);
+		Task SendAsync(string text, Encoding encoding = null, CancellationToken cancellation = default) => this.SendAsync(text, encoding, null, cancellation);
+		Task SendAsync(string text, Encoding encoding, object parameter, CancellationToken cancellation = default) => this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text), parameter, cancellation);
+		Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default) => this.SendAsync(data, null, cancellation);
+
+		Task SendAsync(byte[] data, object parameter, CancellationToken cancellation = default);
+		Task SendAsync(byte[] data, int offset, object parameter, CancellationToken cancellation = default);
+		Task SendAsync(byte[] data, int offset, int count, object parameter, CancellationToken cancellation = default);
+		Task SendAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation = default);
 	}
 }

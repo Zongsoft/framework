@@ -31,14 +31,12 @@ using System;
 
 namespace Zongsoft.Communication
 {
-	public interface IChannelContext : Zongsoft.Services.IExecutionContext
+	public interface IChannelContext : Components.IExecutorContext
 	{
-		/// <summary>
-		/// 获取当前通讯的<seealso cref="IChannel"/>通道。
-		/// </summary>
-		IChannel Channel
-		{
-			get;
-		}
+		/// <summary>获取或设置通道的数据。</summary>
+		object Data { get; set; }
+
+		/// <summary>获取当前通讯的<seealso cref="IChannel"/>通道。</summary>
+		IChannel Channel { get; }
 	}
 }

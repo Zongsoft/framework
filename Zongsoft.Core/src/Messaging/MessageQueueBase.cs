@@ -34,13 +34,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 
+using Zongsoft.Collections;
+using Zongsoft.Communication;
+
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageQueueBase : Zongsoft.Collections.IQueue
+	public abstract class MessageQueueBase : IQueue
 	{
 		#region 事件定义
-		public event EventHandler<Zongsoft.Collections.DequeuedEventArgs> Dequeued;
-		public event EventHandler<Zongsoft.Collections.EnqueuedEventArgs> Enqueued;
+		public event EventHandler<DequeuedEventArgs> Dequeued;
+		public event EventHandler<EnqueuedEventArgs> Enqueued;
 		#endregion
 
 		#region 成员字段
@@ -58,22 +61,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
-		public virtual string Name
-		{
-			get => _name;
-		}
-
-		public long Count
-		{
-			get => this.GetCount();
-		}
-		#endregion
-
-		#region 保护属性
-		protected virtual int Capacity
-		{
-			get => 0;
-		}
+		public virtual string Name { get => _name; }
 		#endregion
 
 		#region 公共方法
@@ -166,89 +154,33 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 队列实现
-		void Zongsoft.Collections.IQueue.Clear()
-		{
-			this.ClearQueue();
-		}
-
-		Task Zongsoft.Collections.IQueue.ClearAsync(CancellationToken cancellation)
+		int IQueue.Capacity { get => 0; }
+		void IQueue.Clear() => this.ClearQueue();
+		Task IQueue.ClearAsync(CancellationToken cancellation)
 		{
 			cancellation.ThrowIfCancellationRequested();
 			this.ClearQueue();
 			return Task.CompletedTask;
 		}
 
-		void Zongsoft.Collections.IQueue.Enqueue(object item, object settings)
-		{
-			this.Enqueue(item, this.GetEnqueueSettings(settings));
-		}
-
-		void Zongsoft.Collections.IQueue.EnqueueMany<T>(IEnumerable<T> items, object settings)
-		{
-			this.EnqueueMany(items, this.GetEnqueueSettings(settings));
-		}
-
-		Task Zongsoft.Collections.IQueue.EnqueueAsync(object item, object settings, CancellationToken cancellation)
-		{
-			return this.EnqueueAsync(item, this.GetEnqueueSettings(settings), cancellation);
-		}
-
-		Task Zongsoft.Collections.IQueue.EnqueueManyAsync<T>(IEnumerable<T> items, object settings, CancellationToken cancellation)
-		{
-			return this.EnqueueManyAsync(items, this.GetEnqueueSettings(settings), cancellation);
-		}
-
-		object Zongsoft.Collections.IQueue.Dequeue(object settings)
-		{
-			return this.Dequeue(this.GetDequeueSettings(settings));
-		}
-
-		IEnumerable Zongsoft.Collections.IQueue.DequeueMany(int count, object settings)
-		{
-			return this.DequeueMany(count, this.GetDequeueSettings(settings));
-		}
-
-		async Task<object> Zongsoft.Collections.IQueue.DequeueAsync(object settings, CancellationToken cancellation)
-		{
-			return await this.DequeueAsync(this.GetDequeueSettings(settings), cancellation);
-		}
-
-		IAsyncEnumerable<object> Zongsoft.Collections.IQueue.DequeueManyAsync(int count, object settings, CancellationToken cancellation)
-		{
-			return this.DequeueManyAsync(count, this.GetDequeueSettings(settings), cancellation);
-		}
-
-		object Zongsoft.Collections.IQueue.Peek()
-		{
-			return this.Peek();
-		}
-
-		async Task<object> Zongsoft.Collections.IQueue.PeekAsync(CancellationToken cancellation)
-		{
-			return await this.PeekAsync(cancellation);
-		}
+		void IQueue.Enqueue(object item, object settings) => this.Enqueue(item, this.GetEnqueueSettings(settings));
+		void IQueue.EnqueueMany<T>(IEnumerable<T> items, object settings) => this.EnqueueMany(items, this.GetEnqueueSettings(settings));
+		Task IQueue.EnqueueAsync(object item, object settings, CancellationToken cancellation) => this.EnqueueAsync(item, this.GetEnqueueSettings(settings), cancellation);
+		Task IQueue.EnqueueManyAsync<T>(IEnumerable<T> items, object settings, CancellationToken cancellation) => this.EnqueueManyAsync(items, this.GetEnqueueSettings(settings), cancellation);
+		object IQueue.Dequeue(object settings) => this.Dequeue(this.GetDequeueSettings(settings));
+		IEnumerable IQueue.DequeueMany(int count, object settings) => this.DequeueMany(count, this.GetDequeueSettings(settings));
+		async Task<object> IQueue.DequeueAsync(object settings, CancellationToken cancellation) => await this.DequeueAsync(this.GetDequeueSettings(settings), cancellation);
+		IAsyncEnumerable<object> IQueue.DequeueManyAsync(int count, object settings, CancellationToken cancellation) => this.DequeueManyAsync(count, this.GetDequeueSettings(settings), cancellation);
+		object IQueue.Peek() => this.Peek();
+		async Task<object> IQueue.PeekAsync(CancellationToken cancellation) => await this.PeekAsync(cancellation);
 		#endregion
 
 		#region 保护方法
-		protected virtual MessageDequeueSettings GetDequeueSettings(object settings)
-		{
-			return settings as MessageDequeueSettings;
-		}
+		protected virtual MessageDequeueSettings GetDequeueSettings(object settings) => settings as MessageDequeueSettings;
+		protected virtual MessageEnqueueSettings GetEnqueueSettings(object settings) => settings as MessageEnqueueSettings;
 
-		protected virtual MessageEnqueueSettings GetEnqueueSettings(object settings)
-		{
-			return settings as MessageEnqueueSettings;
-		}
-
-		protected virtual void ClearQueue()
-		{
-			throw new NotSupportedException("The message queue does not support the operation.");
-		}
-
-		protected virtual void CopyQueueTo(Array array, int index)
-		{
-			throw new NotSupportedException("The message queue does not support the operation.");
-		}
+		protected virtual void ClearQueue() => throw new NotSupportedException("The message queue does not support the operation.");
+		protected virtual void CopyQueueTo(Array array, int index) => throw new NotSupportedException("The message queue does not support the operation.");
 
 		protected abstract void OnEnqueue(object item, MessageEnqueueSettings settings);
 		protected abstract Task OnEnqueueAsync(object item, MessageEnqueueSettings settings, CancellationToken cancellation);
@@ -259,45 +191,21 @@ namespace Zongsoft.Messaging
 		#region 激发事件
 		protected virtual void OnDequeued(object value, object settings)
 		{
-			this.Dequeued?.Invoke(this, new Collections.DequeuedEventArgs(value, settings, Collections.CollectionRemovedReason.Remove));
+			this.Dequeued?.Invoke(this, new DequeuedEventArgs(value, settings, CollectionRemovedReason.Remove));
 		}
 
 		protected virtual void OnEnqueued(object value, object settings)
 		{
-			this.Enqueued?.Invoke(this, new Collections.EnqueuedEventArgs(value, settings));
+			this.Enqueued?.Invoke(this, new EnqueuedEventArgs(value, settings));
 		}
 		#endregion
 
 		#region 显式实现
-		int Zongsoft.Collections.IQueue.Capacity
-		{
-			get => this.Capacity;
-		}
-
-		int ICollection.Count
-		{
-			get => (int)this.Count;
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get => false;
-		}
-
-		object ICollection.SyncRoot
-		{
-			get => throw new NotSupportedException("The message queue does not support the operation.");
-		}
-
-		void ICollection.CopyTo(Array array, int index)
-		{
-			this.CopyQueueTo(array, index);
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			throw new NotSupportedException("The message queue does not support the operation.");
-		}
+		int ICollection.Count { get => (int)this.GetCount(); }
+		bool ICollection.IsSynchronized { get => false; }
+		object ICollection.SyncRoot { get => throw new NotSupportedException("The message queue does not support the operation."); }
+		void ICollection.CopyTo(Array array, int index) { this.CopyQueueTo(array, index); }
+		IEnumerator IEnumerable.GetEnumerator() { throw new NotSupportedException("The message queue does not support the operation."); }
 		#endregion
 	}
 }

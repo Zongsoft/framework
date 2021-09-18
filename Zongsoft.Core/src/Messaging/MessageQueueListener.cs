@@ -28,28 +28,28 @@
  */
 
 using System;
-using System.IO;
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Collections;
+using Zongsoft.Communication;
+
 namespace Zongsoft.Messaging
 {
 	[DisplayName("${Text.MessageQueueListener.Title}")]
 	[Description("${Text.MessageQueueListener.Description}")]
-	public class MessageQueueListener : Zongsoft.Communication.ListenerBase
+	public class MessageQueueListener<T> : ListenerBase<T>
 	{
 		#region 成员字段
-		private Zongsoft.Collections.IQueue _queue;
+		private IMessageQueue<T> _queue;
+		private MessageQueueReceiver _receiver;
 		#endregion
 
 		#region 构造函数
-		public MessageQueueListener(string name) : base(name)
-		{
-		}
-
-		public MessageQueueListener(Zongsoft.Collections.IQueue queue) : base(nameof(MessageQueueListener))
+		public MessageQueueListener(string name) : base(name) { }
+		public MessageQueueListener(IMessageQueue<T> queue) : base("MessageQueueListener")
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 
@@ -60,12 +60,9 @@ namespace Zongsoft.Messaging
 
 		#region 公共属性
 		[TypeConverter(typeof(QueueConverter))]
-		public Zongsoft.Collections.IQueue Queue
+		public IMessageQueue<T> Queue
 		{
-			get
-			{
-				return _queue;
-			}
+			get => _queue;
 			set
 			{
 				if(this.State == Services.WorkerState.Running)
@@ -77,147 +74,92 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 重写方法
-		protected override Communication.IReceiver CreateReceiver()
-		{
-			return new MessageQueueChannel(1,
-				this.Queue ?? throw new InvalidOperationException("Missing the 'Queue' for the operation."));
-		}
-
 		protected override void OnStart(string[] args)
 		{
-			((MessageQueueChannel)this.Receiver).ReceiveAsync();
+			if(_receiver == null)
+				_receiver = new MessageQueueReceiver(this);
+
+			_receiver.Start();
 		}
 
 		protected override void OnStop(string[] args)
 		{
-			var receiver = this.Receiver;
+			var receiver = Interlocked.Exchange(ref _receiver, null);
 
 			if(receiver != null)
-			{
-				this.Receiver = null;
-
-				if(receiver is IDisposable disposable)
-					disposable.Dispose();
-			}
+				receiver.Dispose();
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class MessageQueueChannel : Zongsoft.Communication.ChannelBase
+		private class MessageQueueReceiver : IDisposable
 		{
 			#region 私有变量
+			private readonly MessageQueueListener<T> _listener;
 			private CancellationTokenSource _cancellation;
 			#endregion
 
 			#region 构造函数
-			public MessageQueueChannel(int channelId, Zongsoft.Collections.IQueue queue) : base(channelId, queue)
+			public MessageQueueReceiver(MessageQueueListener<T> listener)
 			{
+				_listener = listener ?? throw new ArgumentNullException(nameof(listener));
 				_cancellation = new CancellationTokenSource();
 			}
 			#endregion
 
-			#region 公共属性
-			public override bool IsIdled
-			{
-				get
-				{
-					var cancellation = _cancellation;
-					return cancellation != null && !cancellation.IsCancellationRequested;
-				}
-			}
-			#endregion
-
 			#region 收取消息
-			public void ReceiveAsync()
+			public void Start()
 			{
 				var cancellation = _cancellation;
 
 				if(cancellation == null || cancellation.IsCancellationRequested)
 					return;
 
-				Task.Factory.StartNew(this.OnReceive, cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+				Task.Factory.StartNew(this.Receive, cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 			}
 
-			private void OnReceive()
+			private void Receive()
 			{
-				var queue = (Zongsoft.Collections.IQueue)this.Host;
-
-				if(queue == null)
-					return;
-
+				var queue = _listener.Queue;
 				var cancellation = _cancellation;
-				object message = null;
+				var options = new MessageDequeueSettings(TimeSpan.FromSeconds(10));
 
 				while(!cancellation.IsCancellationRequested)
 				{
+					T message;
+					Exception exception = null;
+
 					try
 					{
 						//以同步方式从消息队列中获取一条消息
-						message = queue.Dequeue(new MessageDequeueSettings(TimeSpan.FromSeconds(10)));
+						message = queue.Dequeue(options);
 					}
-					catch
+					catch(Exception ex)
 					{
-						message = null;
+						message = default;
+						exception = ex;
+
+						//错误日志
+						Zongsoft.Diagnostics.Logger.Error(ex);
 					}
 
 					//如果消息获取失败则休息一小会
-					if(message == null)
+					if(exception != null)
 						Thread.Sleep(500);
 					else //以异步方式激发消息接收事件
-						Task.Run(() =>
-						{
-							try
-							{
-								this.OnReceived(message);
-							}
-							catch { }
-						}, cancellation.Token);
+						_listener.OnHandleAsync(message, cancellation.Token);
 				}
 			}
 			#endregion
 
-			#region 发送方法
-			public override void Send(Stream stream, object asyncState = null)
+			#region 释放资源
+			public void Dispose()
 			{
-				var queue = (Zongsoft.Collections.IQueue)this.Host;
-
-				if(queue == null || _cancellation.IsCancellationRequested)
-					return;
-
-				queue.EnqueueAsync(stream).ContinueWith(_ =>
-				{
-					this.OnSent(asyncState);
-				});
+				this.Dispose(true);
+				GC.SuppressFinalize(this);
 			}
 
-			public override void Send(byte[] buffer, int offset, int count, object asyncState = null)
-			{
-				var queue = (Zongsoft.Collections.IQueue)this.Host;
-
-				if(queue == null || _cancellation.IsCancellationRequested)
-					return;
-
-				if(buffer == null)
-					throw new ArgumentNullException(nameof(buffer));
-
-				if(offset < 0 || offset >= buffer.Length - 1)
-					throw new ArgumentOutOfRangeException(nameof(offset));
-
-				if(count < 0 || count > buffer.Length - offset)
-					throw new ArgumentOutOfRangeException(nameof(count));
-
-				var data = new byte[count];
-				Array.Copy(buffer, offset, data, 0, count);
-
-				queue.EnqueueAsync(data).ContinueWith(_ =>
-				{
-					this.OnSent(asyncState);
-				});
-			}
-			#endregion
-
-			#region 关闭处理
-			protected override void OnClose()
+			protected virtual void Dispose(bool disposing)
 			{
 				var cancellation = Interlocked.Exchange(ref _cancellation, null);
 
@@ -226,27 +168,27 @@ namespace Zongsoft.Messaging
 			}
 			#endregion
 		}
-
-		private class QueueConverter : TypeConverter
-		{
-			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-			{
-				return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-			}
-
-			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-			{
-				if(value is string name)
-				{
-					var queueProvider = (Collections.IQueueProvider)Services.ApplicationContext.Current?.Services?.GetService(typeof(Collections.IQueueProvider));
-
-					if(queueProvider != null)
-						return queueProvider.GetQueue(name);
-				}
-
-				return base.ConvertFrom(context, culture, value);
-			}
-		}
 		#endregion
+	}
+
+	internal class QueueConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+		{
+			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		}
+
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			if(value is string name)
+			{
+				var queueProvider = (IQueueProvider)Services.ApplicationContext.Current?.Services?.GetService(typeof(IQueueProvider));
+
+				if(queueProvider != null)
+					return queueProvider.GetQueue(name) as IMessageQueue;
+			}
+
+			return base.ConvertFrom(context, culture, value);
+		}
 	}
 }

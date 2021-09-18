@@ -34,6 +34,7 @@ using System.Collections.Specialized;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Membership
 {
@@ -59,21 +60,11 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取授权器的集合。
-		/// </summary>
-		public ICollection<IAuthorizer> Authorizers
-		{
-			get;
-		}
+		/// <summary>获取授权器的集合。</summary>
+		public ICollection<IAuthorizer> Authorizers { get; }
 
-		/// <summary>
-		/// 获取一个授权的过滤器集合，该过滤器包含对授权的响应处理。
-		/// </summary>
-		public ICollection<IExecutionFilter> Filters
-		{
-			get;
-		}
+		/// <summary>获取一个授权的过滤器集合，该过滤器包含对授权的响应处理。</summary>
+		public ICollection<IExecutionFilter> Filters { get; }
 		#endregion
 
 		#region 事件响应

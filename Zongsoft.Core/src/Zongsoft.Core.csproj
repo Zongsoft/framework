@@ -30,7 +30,6 @@
 		<Folder Include="ComponentModel\" />
 		<Folder Include="Configuration\Profiles\" />
 		<Folder Include="Expressions\Tokenization\" />
-		<Folder Include="Messaging\" />
 		<Folder Include="Reflection\Expressions\" />
 		<Folder Include="Services\Commands\" />
 		<Folder Include="Terminals\Commands\" />

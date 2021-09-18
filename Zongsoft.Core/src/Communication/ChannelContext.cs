@@ -32,20 +32,19 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Communication
 {
-	public class ChannelContext : Zongsoft.Services.ExecutionContext, IChannelContext
+	public class ChannelContext : Components.ExecutorContext, IChannelContext
 	{
 		#region 构造函数
-		public ChannelContext(IChannel channel, Zongsoft.Services.IExecutor executor, object data, IDictionary<string, object> parameters = null) : base(executor, data, parameters)
+		public ChannelContext(IChannel channel, Components.IExecutor executor, object data, IDictionary<string, object> parameters = null) : base(executor, parameters)
 		{
+			this.Data = data;
 			this.Channel = channel;
 		}
 		#endregion
 
 		#region 公共属性
-		public IChannel Channel
-		{
-            get;
-		}
+		public object Data { get; set; }
+		public IChannel Channel { get; }
 		#endregion
 	}
 }

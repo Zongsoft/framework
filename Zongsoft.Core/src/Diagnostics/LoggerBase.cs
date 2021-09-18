@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Diagnostics
 {

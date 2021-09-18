@@ -32,7 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Services
 {
-	public abstract class CommandBase : ICommand, IPredication, Collections.IMatchable, INotifyPropertyChanged
+	public abstract class CommandBase : ICommand, Components.IPredication, Collections.IMatchable, INotifyPropertyChanged
 	{
 		#region 事件定义
 		public event EventHandler EnabledChanged;
@@ -44,7 +44,7 @@ namespace Zongsoft.Services
 		#region 成员字段
 		private string _name;
 		private bool _enabled;
-		private IPredication _predication;
+		private Components.IPredication _predication;
 		#endregion
 
 		#region 构造函数
@@ -95,7 +95,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取或设置当前命令的断言对象，该断言决定当前命令是否可用。
 		/// </summary>
-		public IPredication Predication
+		public Components.IPredication Predication
 		{
 			get
 			{
@@ -319,7 +319,7 @@ namespace Zongsoft.Services
 		/// <remarks>
 		///		<para>本显式实现为调用<see cref="CanExecute"/>虚拟方法。</para>
 		/// </remarks>
-		bool IPredication.Predicate(object parameter)
+		bool Components.IPredication.Predicate(object parameter)
 		{
 			return this.CanExecute(parameter);
 		}

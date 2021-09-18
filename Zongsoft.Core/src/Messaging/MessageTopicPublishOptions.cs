@@ -28,14 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Messaging
 {
-	public interface IExecutor<in TContext> : IExecutor where TContext : IExecutionContext
-    {
-        void Execute(TContext context);
-        Task ExecuteAsync(TContext context);
-    }
+	public class MessageTopicPublishOptions
+	{
+	}
 }

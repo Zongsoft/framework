@@ -28,30 +28,47 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Messaging
 {
-	public interface IExecutionHandler<in TContext> : IExecutionHandler where TContext : IExecutionContext
+	/// <summary>
+	/// 表示消息主题订阅者的接口。
+	/// </summary>
+	/// <typeparam name="TMessage">订阅的消息类型。</typeparam>
+	public interface IMessageTopicSubscriber<TMessage>
 	{
-		/// <summary>
-		/// 确认当前处理程序能否处理本次执行请求。
-		/// </summary>
-		/// <param name="context">当前执行的上下文对象。</param>
-		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
-		bool CanHandle(TContext context);
+		#region 属性定义
+		/// <summary>获取订阅的主题标识。</summary>
+		string Filter { get; }
+
+		/// <summary>获取订阅的主题标签。</summary>
+		string Tags { get; }
+
+		/// <summary>获取当前订阅的主题对象。</summary>
+		IMessageTopic<TMessage>  Topic { get; }
+		#endregion
+
+		#region 方法定义
+		/// <summary>取消当前的订阅。</summary>
+		void Unsubscribe();
+
+		/// <summary>取消当前的订阅。</summary>
+		Task UnsubscribeAsync();
 
 		/// <summary>
-		/// 同步处理执行请求。
+		/// 处理订阅的主题消息。
 		/// </summary>
-		/// <param name="context">当前执行的上下文对象。</param>
-		void Handle(TContext context);
+		/// <param name="message">待处理的主题消息。</param>
+		bool Handle(TMessage message);
 
-        /// <summary>
-        /// 异步处理执行请求。
-        /// </summary>
-        /// <param name="context">当前执行的上下文对象。</param>
-        /// <returns>返回的异步任务。</returns>
-        Task HandleAsync(TContext context);
+		/// <summary>
+		/// 处理订阅的主题消息。
+		/// </summary>
+		/// <param name="message">待处理的主题消息。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		Task<bool> HandleAsync(TMessage message, CancellationToken cancellation = default);
+		#endregion
 	}
 }

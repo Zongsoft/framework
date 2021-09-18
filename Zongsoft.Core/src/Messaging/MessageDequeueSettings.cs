@@ -35,10 +35,7 @@ namespace Zongsoft.Messaging
 	public class MessageDequeueSettings
 	{
 		#region 构造函数
-		public MessageDequeueSettings() : this(TimeSpan.Zero)
-		{
-		}
-
+		public MessageDequeueSettings() : this(TimeSpan.Zero) { }
 		public MessageDequeueSettings(TimeSpan pollingTimeout)
 		{
 			this.PollingTimeout = pollingTimeout;
@@ -46,10 +43,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
-		public TimeSpan PollingTimeout
-		{
-			get; set;
-		}
+		public TimeSpan PollingTimeout { get; set; }
 		#endregion
 	}
 }

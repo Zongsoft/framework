@@ -29,11 +29,11 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Messaging
 {
-	public interface ILogger
+	public interface IMessageTopicOptions
 	{
-		Components.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
+		string Name { get; set; }
+		Configuration.IConnectionSetting ConnectionSettings { get; }
 	}
 }

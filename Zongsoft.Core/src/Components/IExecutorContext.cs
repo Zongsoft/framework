@@ -28,12 +28,35 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Components
 {
-	public interface ILogger
+	public interface IExecutorContext
 	{
-		Components.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
+		/// <summary>获取处理本次执行请求的执行器。</summary>
+		IExecutor Executor { get; }
+
+		/// <summary>获取扩展参数集是否有内容。</summary>
+		/// <remarks>
+		///		<para>在不确定参数集是否含有内容之前，建议先使用该属性来检测。</para>
+		/// </remarks>
+		bool HasParameters { get; }
+
+		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
+		IDictionary<string, object> Parameters { get; }
+
+		/// <summary>
+		/// 设置一个异常。
+		/// </summary>
+		/// <param name="exception">发生的异常对象。</param>
+		public void Error(Exception exception);
+
+		/// <summary>
+		/// 获取一个值，指示本次执行中是否发生了异常。
+		/// </summary>
+		/// <param name="exception">输出参数，不为空则表示发生的异常。</param>
+		/// <returns>返回真(True)表示执行过程有错误，否则返回假(False)。</returns>
+		public bool HasError(out Exception exception);
 	}
 }

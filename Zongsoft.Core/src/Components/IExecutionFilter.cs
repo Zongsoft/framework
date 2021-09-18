@@ -30,11 +30,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
-	public interface IExecutionFilter<in TContext> : IExecutionFilter
+	public interface IExecutionFilter
 	{
-		void OnFiltered(TContext context);
-		void OnFiltering(TContext context);
+		void OnFiltered(object context);
+		void OnFiltering(object context);
 	}
 }

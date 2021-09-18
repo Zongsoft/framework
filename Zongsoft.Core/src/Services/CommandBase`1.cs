@@ -36,7 +36,7 @@ namespace Zongsoft.Services
 	/// 提供实现<see cref="ICommand"/>接口功能的基类，建议需要完成<see cref="ICommand"/>接口功能的实现者从此类继承。
 	/// </summary>
 	/// <typeparam name="TContext">指定命令的执行上下文类型。</typeparam>
-	public abstract class CommandBase<TContext> : CommandBase, ICommand<TContext>, IPredication<TContext> where TContext : CommandContext
+	public abstract class CommandBase<TContext> : CommandBase, ICommand<TContext>, Components.IPredication<TContext> where TContext : CommandContext
 	{
 		#region 构造函数
 		protected CommandBase() : base(null, true)
@@ -114,7 +114,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 显式实现
-		bool IPredication<TContext>.Predicate(TContext context)
+		bool Components.IPredication<TContext>.Predicate(TContext context)
 		{
 			return this.CanExecute(context);
 		}

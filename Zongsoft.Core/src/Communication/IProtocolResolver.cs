@@ -29,18 +29,14 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Communication
 {
-	/// <summary>
-	/// 关于事件处理程序的接口。
-	/// </summary>
-	public interface IEventHandler<TParameter> : IEventHandler
+	public interface IProtocolResolver<T>
 	{
-		/// <summary>
-		/// 进行事件处理的方法。
-		/// </summary>
-		/// <param name="source">事件来源，即事件的激发者。</param>
-		/// <param name="parameter">事件参数。</param>
-		void Handle(object source, TParameter parameter);
+		/// <summary>获取或设置协议名称。</summary>
+		string Name { get; }
+
+		public bool TryResolve(byte[] data, object parameter, out T result) => this.TryResolve(data.AsSpan(), parameter, out result);
+		bool TryResolve(ReadOnlySpan<byte> data, object parameter, out T result);
 	}
 }

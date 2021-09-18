@@ -28,61 +28,29 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageQueueHandlerBase : IExecutionHandler<IExecutionContext>
+	public abstract class MessageQueueHandlerBase<TMessage> : IHandler<TMessage>
 	{
 		#region 构造函数
 		protected MessageQueueHandlerBase() { }
 		#endregion
 
 		#region 公共方法
-		public bool CanHandle(IExecutionContext context)
-		{
-			return context != null && context.Data != null;
-		}
-
-		public void Handle(IExecutionContext context)
-		{
-			var message = context.Data as MessageBase;
-
-			if(message == null || message.Data == null || message.Data.Length == 0)
-				return;
-
-			if(this.OnHandle(message.Data))
-				message.Acknowledge();
-		}
-
-		public Task HandleAsync(IExecutionContext context)
-		{
-			this.Handle(context);
-			return Task.CompletedTask;
-		}
-		#endregion
-
-		#region 抽象方法
-		protected abstract bool OnHandle(byte[] data);
+		public virtual bool CanHandle(TMessage message) => message != null;
+		public virtual bool Handle(TMessage message) => this.HandleAsync(message, CancellationToken.None).GetAwaiter().GetResult();
+		public abstract Task<bool> HandleAsync(TMessage message, CancellationToken cancellation = default);
 		#endregion
 
 		#region 显式实现
-		bool IExecutionHandler.CanHandle(object context)
-		{
-			return this.CanHandle(context as IExecutionContext);
-		}
-
-		void IExecutionHandler.Handle(object context)
-		{
-			this.Handle(context as IExecutionContext);
-		}
-
-		Task IExecutionHandler.HandleAsync(object context)
-		{
-			return this.HandleAsync(context as IExecutionContext);
-		}
+		bool IHandler.CanHandle(object request) => request is TMessage message ? this.CanHandle(message) : false;
+		bool IHandler.Handle(object request) => request is TMessage message ? this.Handle(message) : false;
+		Task<bool> IHandler.HandleAsync(object request, CancellationToken cancellation) => request is TMessage message ? this.HandleAsync(message, cancellation) : Task.FromResult(false);
 		#endregion
 	}
 }

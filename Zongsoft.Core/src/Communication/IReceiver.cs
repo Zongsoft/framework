@@ -28,12 +28,16 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Communication
 {
 	public interface IReceiver
 	{
-		event EventHandler<ChannelFailureEventArgs> Failed;
-		event EventHandler<ReceivedEventArgs> Received;
+		bool Receive(ReadOnlySpan<byte> data, object parameter);
+
+		Task<bool> ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default) => this.ReceiveAsync(data, null, cancellation);
+		Task<bool> ReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation = default);
 	}
 }

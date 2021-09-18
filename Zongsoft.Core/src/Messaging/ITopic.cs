@@ -38,18 +38,10 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface ITopic
 	{
-		/// <summary>
-		/// 获取主题名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取主题名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取主题订阅服务。
-		/// </summary>
-		/// <returns></returns>
+		/// <summary>获取主题订阅服务。</summary>
 		ITopicSubscription GetSubscription();
 
 		/// <summary>

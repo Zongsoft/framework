@@ -28,62 +28,68 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
-	public interface IExecutionContext
+	public abstract class PredicationBase<T> : IPredication<T>, Collections.IMatchable<string>
 	{
-		/// <summary>
-		/// 获取处理本次执行请求的执行器。
-		/// </summary>
-		IExecutor Executor
+		#region 成员字段
+		private string _name;
+		#endregion
+
+		#region 构造函数
+		protected PredicationBase(string name)
 		{
-			get;
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			_name = name.Trim();
+		}
+		#endregion
+
+		#region 公共属性
+		public virtual string Name
+		{
+			get
+			{
+				return _name;
+			}
+		}
+		#endregion
+
+		#region 断言方法
+		public abstract bool Predicate(T parameter);
+
+		bool IPredication.Predicate(object parameter)
+		{
+			return this.Predicate(this.ConvertParameter(parameter));
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual T ConvertParameter(object parameter)
+		{
+			return Zongsoft.Common.Convert.ConvertValue<T>(parameter);
+		}
+		#endregion
+
+		#region 服务匹配
+		public virtual bool Match(string parameter)
+		{
+			return string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
 		}
 
-		/// <summary>
-		/// 获取处理本次执行请求的数据。
-		/// </summary>
-		object Data
+		bool Collections.IMatchable.Match(object parameter)
 		{
-			get;
+			return this.Match(parameter as string);
 		}
+		#endregion
 
-		/// <summary>
-		/// 获取本次执行中发生的异常。
-		/// </summary>
-		Exception Exception
+		#region 重写方法
+		public override string ToString()
 		{
-			get;
+			return string.Format("{0} ({1})", this.Name, this.GetType());
 		}
-
-		/// <summary>
-		/// 获取扩展参数集是否有内容。
-		/// </summary>
-		/// <remarks>
-		///		<para>在不确定参数集是否含有内容之前，建议先使用该属性来检测。</para>
-		/// </remarks>
-		bool HasParameters
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。
-		/// </summary>
-		IDictionary<string, object> Parameters
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取或设置本次执行的返回结果。
-		/// </summary>
-		object Result
-		{
-			get;
-			set;
-		}
+		#endregion
 	}
 }

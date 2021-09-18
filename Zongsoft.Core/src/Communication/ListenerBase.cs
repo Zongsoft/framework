@@ -28,76 +28,36 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Communication
 {
 	/// <summary>
 	/// 提供通讯侦听功能的抽象基类。
 	/// </summary>
-	public abstract class ListenerBase : WorkerBase, IListener, IReceiver
+	public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver
 	{
-		#region 事件定义
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
-		#endregion
-
-		#region 私有变量
-		private readonly object _syncRoot;
-		#endregion
-
 		#region 成员变量
-		private IReceiver _receiver;
-		private IExecutionHandler _handler;
+		private IHandler<T> _handler;
 		#endregion
 
 		#region 构造函数
-		protected ListenerBase(string name) : base(name)
-		{
-			_syncRoot = new object();
-		}
+		protected ListenerBase(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性
 		public virtual bool IsListening
 		{
-			get
-			{
-				return this.State == WorkerState.Running;
-			}
+			get => this.State == WorkerState.Running;
 		}
 
-		public IReceiver Receiver
-		{
-			get
-			{
-				if(_receiver == null)
-				{
-					lock(_syncRoot)
-					{
-						if(_receiver == null)
-						{
-							_receiver = this.CreateReceiver();
+		public virtual IProtocolResolver<T> Resolver { get; }
 
-							//绑定接收器的事件
-							this.BindReceiver(_receiver, null);
-						}
-					}
-				}
-
-				return _receiver;
-			}
-			protected set
-			{
-				//绑定接收器事件(先取消原有接收器的事件，再挂载新接收器事件)
-				this.BindReceiver(value, _receiver);
-
-				_receiver = value;
-			}
-		}
-
-		public IExecutionHandler Handler
+		public IHandler<T> Handler
 		{
 			get => _handler;
 			set => _handler = value ?? throw new ArgumentNullException();
@@ -105,91 +65,41 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IReceiver CreateReceiver()
-		{
-			return this;
-		}
+		protected virtual bool OnReceive(ReadOnlySpan<byte> data, object parameter) => this.TryResolve(data, parameter, out var value) && this.OnHandle(value);
+		protected virtual Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation) => this.TryResolve(data, parameter, out var value) ? this.OnHandleAsync(value, cancellation) : Task.FromResult(false);
+		protected virtual bool OnHandle(T package) => this.Handler.Handle(package);
+		protected virtual Task<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler.HandleAsync(package, cancellation);
+		#endregion
 
-		protected virtual IExecutionContext CreateContext(ReceivedEventArgs args)
+		#region 协议转换
+		protected virtual bool TryResolve(ReadOnlySpan<byte> data, object parameter, out T result)
 		{
-			return new ExecutionContext(args.ReceivedObject);
-		}
+			var resolver = this.Resolver;
 
-		protected virtual void OnFailed(ChannelFailureEventArgs args)
-		{
-			this.Failed?.Invoke(this, args);
-		}
-
-		protected virtual void OnReceived(ReceivedEventArgs args)
-		{
-			var handler = _handler;
-
-			//处理执行逻辑
-			if(handler != null)
+			if(resolver == null)
 			{
-				var context = this.CreateContext(args);
-
-				if(handler.CanHandle(context))
-					handler.Handle(context);
+				result = default;
+				return false;
 			}
 
-			//激发“Received”事件
-			this.Received?.Invoke(this, args);
+			return resolver.TryResolve(data, parameter, out result);
 		}
+		#endregion
+
+		#region 显式实现
+		void IListener<T>.Handle(T package) => this.OnHandle(package);
+		Task IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
+		bool IReceiver.Receive(ReadOnlySpan<byte> data, object parameter) => this.OnReceive(data, parameter);
+		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation) => this.OnReceiveAsync(data, parameter, cancellation);
 		#endregion
 
 		#region 释放资源
 		protected override void Dispose(bool disposing)
 		{
-			//必须确保内部引用的接收器不为当前侦听器本身
-			if(!object.ReferenceEquals(_receiver, this))
-			{
-				if(_receiver != null)
-				{
-					_receiver.Failed -= new EventHandler<ChannelFailureEventArgs>(Receiver_Failed);
-					_receiver.Received -= new EventHandler<ReceivedEventArgs>(Receiver_Received);
-				}
+			var handler = Interlocked.Exchange(ref _handler, null);
 
-				IDisposable disposable = _receiver as IDisposable;
-
-				if(disposable != null)
-					disposable.Dispose();
-			}
-
-			//调用基类同名方法
-			base.Dispose(disposing);
-		}
-		#endregion
-
-		#region 私有方法
-		private void BindReceiver(IReceiver newReceiver, IReceiver oldReceiver)
-		{
-			if(object.ReferenceEquals(newReceiver, oldReceiver))
-				return;
-
-			if(oldReceiver != null && (!object.ReferenceEquals(oldReceiver, this)))
-			{
-				oldReceiver.Failed -= new EventHandler<ChannelFailureEventArgs>(Receiver_Failed);
-				oldReceiver.Received -= new EventHandler<ReceivedEventArgs>(Receiver_Received);
-			}
-
-			if(newReceiver != null && !object.ReferenceEquals(newReceiver, this))
-			{
-				newReceiver.Failed += new EventHandler<ChannelFailureEventArgs>(Receiver_Failed);
-				newReceiver.Received += new EventHandler<ReceivedEventArgs>(Receiver_Received);
-			}
-		}
-
-		private void Receiver_Failed(object sender, ChannelFailureEventArgs e)
-		{
-			//激发“Failed”事件
-			this.OnFailed(e);
-		}
-
-		private void Receiver_Received(object sender, ReceivedEventArgs e)
-		{
-			//激发“Received”事件
-			this.OnReceived(e);
+			if(handler is IDisposable disposable)
+				disposable.Dispose();
 		}
 		#endregion
 	}

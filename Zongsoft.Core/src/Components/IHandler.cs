@@ -28,12 +28,35 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Components
 {
-	public interface ILogger
+	/// <summary>
+	/// 提供处理程序的功能。
+	/// </summary>
+	public interface IHandler
 	{
-		Components.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
+		/// <summary>
+		/// 确认当前处理程序能否处理本次执行请求。
+		/// </summary>
+		/// <param name="request">当前处理的请求对象。</param>
+		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
+		bool CanHandle(object request);
+
+		/// <summary>
+		/// 同步处理执行请求。
+		/// </summary>
+		/// <param name="request">当前处理的请求对象。</param>
+		bool Handle(object request);
+
+		/// <summary>
+		/// 异步处理执行请求。
+		/// </summary>
+		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		/// <returns>返回的异步任务。</returns>
+		Task<bool> HandleAsync(object request, CancellationToken cancellation = default);
 	}
 }

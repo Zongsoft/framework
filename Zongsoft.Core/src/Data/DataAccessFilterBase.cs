@@ -129,20 +129,20 @@ namespace Zongsoft.Data
 			}
 		}
 
-		void Services.IExecutionFilter.OnFiltered(object context)
+		void Components.IExecutionFilter.OnFiltered(object context)
 		{
 			if(context is IDataAccessContextBase ctx)
 				this.OnFiltered(ctx);
 		}
 
-		void Services.IExecutionFilter.OnFiltering(object context)
+		void Components.IExecutionFilter.OnFiltering(object context)
 		{
 			if(context is IDataAccessContextBase ctx)
 				this.OnFiltering(ctx);
 		}
 
-		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltered(IDataAccessContextBase context) => this.OnFiltered(context);
-		void Services.IExecutionFilter<IDataAccessContextBase>.OnFiltering(IDataAccessContextBase context) => this.OnFiltering(context);
+		void Components.IExecutionFilter<IDataAccessContextBase>.OnFiltered(IDataAccessContextBase context) => this.OnFiltered(context);
+		void Components.IExecutionFilter<IDataAccessContextBase>.OnFiltering(IDataAccessContextBase context) => this.OnFiltering(context);
 		#endregion
 
 		#region 虚拟方法

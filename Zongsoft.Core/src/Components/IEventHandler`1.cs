@@ -29,11 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Components
 {
-	public interface ILogger
+	/// <summary>
+	/// 关于事件处理程序的接口。
+	/// </summary>
+	public interface IEventHandler<TParameter> : IEventHandler
 	{
-		Components.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
+		/// <summary>
+		/// 进行事件处理的方法。
+		/// </summary>
+		/// <param name="source">事件来源，即事件的激发者。</param>
+		/// <param name="parameter">事件参数。</param>
+		void Handle(object source, TParameter parameter);
 	}
 }

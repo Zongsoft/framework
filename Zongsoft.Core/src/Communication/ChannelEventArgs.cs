@@ -35,32 +35,15 @@ namespace Zongsoft.Communication
 	[Serializable]
 	public class ChannelEventArgs : EventArgs
 	{
-		#region 成员变量
-		private IChannel _channel;
-		#endregion
-
 		#region 构造函数
 		public ChannelEventArgs(IChannel channel)
 		{
-			if(channel == null)
-				throw new ArgumentNullException("channel");
-
-			_channel = channel;
+			this.Channel = channel ?? throw new ArgumentNullException(nameof(channel)); ;
 		}
 		#endregion
 
 		#region 公共属性
-		public IChannel Channel
-		{
-			get
-			{
-				return _channel;
-			}
-			protected set
-			{
-				_channel = value;
-			}
-		}
+		public IChannel Channel { get; }
 		#endregion
 	}
 }

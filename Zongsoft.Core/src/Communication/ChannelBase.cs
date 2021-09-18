@@ -28,8 +28,9 @@
  */
 
 using System;
-using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Communication
 {
@@ -39,52 +40,24 @@ namespace Zongsoft.Communication
 	public abstract class ChannelBase : IChannel, IReceiver, ISender, IDisposable
 	{
 		#region 事件定义
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
-		public event EventHandler<SentEventArgs> Sent;
 		public event EventHandler<ChannelEventArgs> Closed;
 		public event EventHandler<ChannelEventArgs> Closing;
 		#endregion
 
-		#region 成员字段
-		private int _channelId;
-		private object _host;
-		private DateTime _lastSendTime;
-		private DateTime _lastReceivedTime;
-		#endregion
-
 		#region 构造函数
-		protected ChannelBase(int channelId, object host)
+		protected ChannelBase(object host, int channelId)
 		{
-			_host = host;
-			_channelId = channelId;
-			_lastSendTime = new DateTime(1900, 1, 1);
-			_lastReceivedTime = new DateTime(1900, 1, 1);
+			this.Host = host;
+			this.ChannelId = channelId;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前通道的唯一编号。
-		/// </summary>
-		public int ChannelId
-		{
-			get
-			{
-				return _channelId;
-			}
-		}
+		/// <summary>获取当前通道所属的宿主对象。</summary>
+		public object Host { get; }
 
-		/// <summary>
-		/// 获取当前通道所属的宿主对象。
-		/// </summary>
-		public object Host
-		{
-			get
-			{
-				return _host;
-			}
-		}
+		/// <summary>获取当前通道的唯一编号。</summary>
+		public int ChannelId { get; }
 
 		/// <summary>
 		/// 获取当前通道是否为空闲状态。
@@ -92,110 +65,80 @@ namespace Zongsoft.Communication
 		/// <remarks>
 		///		<para>对子类实现者：应该确保该属性能即时反应当前通道的真实状态。</para>
 		/// </remarks>
-		public abstract bool IsIdled
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取最后一次发送成功的时间。
-		/// </summary>
-		public DateTime LastSendTime
-		{
-			get
-			{
-				return _lastSendTime;
-			}
-			protected set
-			{
-				_lastSendTime = value;
-			}
-		}
-
-		/// <summary>
-		/// 获取最后一次成功接收数据的时间。
-		/// </summary>
-		public DateTime LastReceivedTime
-		{
-			get
-			{
-				return _lastReceivedTime;
-			}
-			protected set
-			{
-				_lastReceivedTime = value;
-			}
-		}
+		public abstract bool IsIdled { get; }
 		#endregion
 
 		#region 发送方法
-		public void Send(string text, object asyncState = null)
+		public void Send(byte[] data, object parameter = null) => this.Send(data, 0, -1, parameter);
+		public void Send(byte[] data, int offset, object parameter = null) => this.Send(data, offset, -1, parameter);
+		public void Send(byte[] data, int offset, int count, object parameter = null)
 		{
-			this.Send(text, null, asyncState);
+			if(data == null || data.Length == 0)
+				return;
+
+			if(offset < 0 || offset >= data.Length - 1)
+				throw new ArgumentOutOfRangeException(nameof(offset));
+
+			if(count < 0)
+				count = data.Length - offset;
+			else if(count > data.Length - offset)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			this.Send(data.AsSpan(offset, count), parameter);
+		}
+		public void Send(string text, Encoding encoding = null, object parameter = null)
+		{
+			if(string.IsNullOrEmpty(text))
+				return;
+
+			this.Send((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), parameter);
 		}
 
-		public virtual void Send(string text, Encoding encoding, object asyncState = null)
+		public Task SendAsync(byte[] data, object parameter, CancellationToken cancellation = default) => this.SendAsync(data, 0, -1, parameter, cancellation);
+		public Task SendAsync(byte[] data, int offset, object parameter, CancellationToken cancellation = default) => this.SendAsync(data, offset, -1, parameter, cancellation);
+		public Task SendAsync(byte[] data, int offset, int count, object parameter, CancellationToken cancellation = default)
 		{
-			if(text == null)
-				throw new ArgumentNullException("text");
+			if(data == null || data.Length == 0)
+				return Task.CompletedTask;
 
-			this.Send((encoding ?? Encoding.UTF8).GetBytes(text), asyncState);
+			if(offset < 0 || offset >= data.Length - 1)
+				throw new ArgumentOutOfRangeException(nameof(offset));
+
+			if(count < 0)
+				count = data.Length - offset;
+			else if(count > data.Length - offset)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			return this.SendAsync(data.AsSpan(offset, count), parameter, cancellation);
+		}
+		public Task SendAsync(string text, Encoding encoding, object parameter, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(text))
+				return Task.CompletedTask;
+
+			return this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), parameter, cancellation);
 		}
 
-		public void Send(byte[] buffer, object asyncState = null)
-		{
-			if(buffer == null)
-				throw new ArgumentNullException("buffer");
+		public abstract void Send(ReadOnlySpan<byte> data,  object parameter = null);
+		public abstract Task SendAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation = default);
+		#endregion
 
-			this.Send(buffer, 0, buffer.Length, asyncState);
-		}
+		#region 接收方法
+		protected abstract bool OnReceive(ReadOnlySpan<byte> data, object parameter);
+		protected abstract Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation);
 
-		public void Send(byte[] buffer, int offset, object asyncState = null)
-		{
-			if(buffer == null)
-				throw new ArgumentNullException("buffer");
-
-			this.Send(buffer, offset, buffer.Length - offset, asyncState);
-		}
-
-		public abstract void Send(Stream stream, object asyncState = null);
-		public abstract void Send(byte[] buffer, int offset, int count, object asyncState = null);
+		bool IReceiver.Receive(ReadOnlySpan<byte> data, object parameter) => this.OnReceive(data, parameter);
+		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation) => this.OnReceiveAsync(data, parameter, cancellation);
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnClosed()
-		{
-			this.Closed?.Invoke(this, new ChannelEventArgs(this));
-		}
-
-		protected virtual void OnClosing()
-		{
-			this.Closing?.Invoke(this, new ChannelEventArgs(this));
-		}
-
-		protected virtual void OnFailed(Exception exception, object asyncState)
-		{
-			this.Failed?.Invoke(this, new ChannelFailureEventArgs(this, exception, asyncState));
-		}
-
-		protected virtual void OnSent(object asyncState)
-		{
-			this.Sent?.Invoke(this, new SentEventArgs(this, asyncState));
-		}
-
-		protected virtual void OnReceived(object receivedObject)
-		{
-			this.Received?.Invoke(this, new ReceivedEventArgs(this, receivedObject));
-		}
+		protected virtual void OnClosed() => this.Closed?.Invoke(this, new ChannelEventArgs(this));
+		protected virtual void OnClosing() => this.Closing?.Invoke(this, new ChannelEventArgs(this));
 		#endregion
 
 		#region 关闭方法
-		/// <summary>
-		/// 当前通道被关闭时候由子类实现。
-		/// </summary>
-		protected virtual void OnClose()
-		{
-		}
+		/// <summary>当前通道被关闭时候由子类实现。</summary>
+		protected virtual void OnClose() { }
 
 		/// <summary>
 		/// 关闭当前通道。

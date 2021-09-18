@@ -30,7 +30,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
 	public class PredicationCollection<T> : System.Collections.ObjectModel.Collection<IPredication<T>>, IPredication<T>
 	{

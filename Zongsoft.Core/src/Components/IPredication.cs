@@ -29,18 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components
 {
 	/// <summary>
-	/// 关于事件处理程序的接口。
+	/// 表示条件判断的接口。
 	/// </summary>
-	public interface IEventHandler
+	public interface IPredication
 	{
 		/// <summary>
-		/// 进行事件处理的方法。
+		/// 确定指定对象是否符合某种条件。
 		/// </summary>
-		/// <param name="source">事件来源，即事件的激发者。</param>
-		/// <param name="parameter">事件参数。</param>
-		void Handle(object source, object parameter);
+		/// <param name="parameter">指定的条件参数对象。</param>
+		/// <returns>如果符合某种条件则返回真(true)，否则返回假(false)。</returns>
+		bool Predicate(object parameter);
 	}
 }
