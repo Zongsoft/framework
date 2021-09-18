@@ -31,9 +31,15 @@ using System;
 
 namespace Zongsoft.Messaging
 {
+	/// <summary>
+	/// 表示消息主题的选项设置。
+	/// </summary>
 	public interface IMessageTopicOptions
 	{
+		/// <summary>获取或设置消息主题的名称。</summary>
 		string Name { get; set; }
-		Configuration.IConnectionSetting ConnectionSettings { get; }
+
+		/// <summary>获取或设置消息主题连接设置。</summary>
+		Configuration.IConnectionSetting ConnectionSettings { get; set; }
 	}
 }

@@ -41,7 +41,7 @@ namespace Zongsoft.Messaging
 		private string _tags;
 		private string _contentType;
 		private string _fallbackUrl;
-		private TopicSubscriptionFallbackBehavior _fallbackBehavior;
+		private MessageSubscriptionFallbackBehavior _fallbackBehavior;
 		#endregion
 
 		#region 构造函数
@@ -124,7 +124,7 @@ namespace Zongsoft.Messaging
 		/// <summary>
 		/// 获取或设置订阅回调失败的重试策略。
 		/// </summary>
-		public TopicSubscriptionFallbackBehavior FallbackBehavior
+		public MessageSubscriptionFallbackBehavior FallbackBehavior
 		{
 			get
 			{

@@ -63,7 +63,7 @@ namespace Zongsoft.Messaging
 		/// <param name="state">指定的自定义状态对象。</param>
 		/// <returns>返回一个值，指示订阅创建是否成功。</returns>
 		/// <remarks>对实现的约定：如果指定名称的主题订阅已经存在，应返回假(False)而不是抛出异常。</remarks>
-		bool Subscribe(string name, string url, TopicSubscriptionFallbackBehavior behavior, object state = null);
+		bool Subscribe(string name, string url, MessageSubscriptionFallbackBehavior behavior, object state = null);
 
 		/// <summary>
 		/// 创建一个主题订阅。
@@ -86,7 +86,7 @@ namespace Zongsoft.Messaging
 		/// <param name="state">指定的自定义状态对象。</param>
 		/// <returns>返回一个值，指示订阅创建是否成功。</returns>
 		/// <remarks>对实现的约定：如果指定名称的主题订阅已经存在，应返回假(False)而不是抛出异常。</remarks>
-		bool Subscribe(string name, string url, string tags, TopicSubscriptionFallbackBehavior behavior, object state = null);
+		bool Subscribe(string name, string url, string tags, MessageSubscriptionFallbackBehavior behavior, object state = null);
 
 		/// <summary>
 		/// 取消指定名称的主题订阅。

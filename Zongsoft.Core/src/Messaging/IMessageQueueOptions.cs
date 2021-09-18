@@ -32,14 +32,14 @@ using System;
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 表示主题回调失败重试策略的枚举。
+	/// 表示消息队列的选项设置。
 	/// </summary>
-	public enum TopicSubscriptionFallbackBehavior
+	public interface IMessageQueueOptions
 	{
-		/// <summary>退避重试</summary>
-		Backoff,
+		/// <summary>获取或设置消息队列的名称。</summary>
+		string Name { get; set; }
 
-		/// <summary>指数衰减</summary>
-		ExponentialDecay,
+		/// <summary>获取或设置消息队列连接设置。</summary>
+		Configuration.IConnectionSetting ConnectionSettings { get; set; }
 	}
 }

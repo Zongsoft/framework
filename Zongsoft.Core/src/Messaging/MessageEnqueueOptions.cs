@@ -28,56 +28,31 @@
  */
 
 using System;
-using System.Collections.Concurrent;
-
-using Zongsoft.Components;
-using Zongsoft.Communication;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging
 {
-	public class TopicReceiverBase
+	public class MessageEnqueueOptions
 	{
-		#region 事件声明
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
-		#endregion
-
-		#region 成员字段
-		private IHandler _handler;
+		#region 单例字段
+		public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions(0);
 		#endregion
 
 		#region 构造函数
-		protected TopicReceiverBase(ITopic topic)
+		public MessageEnqueueOptions(byte priority) : this(TimeSpan.Zero, priority) { }
+		public MessageEnqueueOptions(TimeSpan delay, byte priority = 6)
 		{
-			this.Topic = topic ?? throw new ArgumentNullException(nameof(topic));
+			this.Delay = delay;
+			this.Priority = priority;
 		}
 		#endregion
 
 		#region 公共属性
-		public ITopic Topic { get; }
+		/// <summary>获取或设置入队的延迟时长。</summary>
+		public TimeSpan Delay { get; set; }
 
-		public IHandler Handler
-		{
-			get => _handler;
-			set => _handler = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnFail(Exception exception)
-		{
-			//激发“Failed”事件
-			this.Failed?.Invoke(this, new ChannelFailureEventArgs(null, exception));
-		}
-
-		protected virtual void OnReceive(TopicMessage message)
-		{
-			//激发“Received”事件
-			this.Received?.Invoke(this, new ReceivedEventArgs(null, message));
-
-			if(_handler != null)
-				_handler.HandleAsync(message);
-		}
+		/// <summary>获取或设置消息的优先级。</summary>
+		public byte Priority { get; set; }
 		#endregion
 	}
 }

@@ -28,56 +28,41 @@
  */
 
 using System;
-using System.Collections.Concurrent;
-
-using Zongsoft.Components;
-using Zongsoft.Communication;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
 {
-	public class TopicReceiverBase
+	/// <summary>
+	/// 表示消息订阅者的接口。
+	/// </summary>
+	/// <typeparam name="TMessage">订阅的消息类型。</typeparam>
+	public interface IMessageSubscriber<TMessage>
 	{
-		#region 事件声明
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
+		#region 属性定义
+		/// <summary>获取订阅的消息队列名称。</summary>
+		string Name { get; }
 		#endregion
 
-		#region 成员字段
-		private IHandler _handler;
-		#endregion
+		#region 方法定义
+		/// <summary>取消当前的订阅。</summary>
+		void Unsubscribe();
 
-		#region 构造函数
-		protected TopicReceiverBase(ITopic topic)
-		{
-			this.Topic = topic ?? throw new ArgumentNullException(nameof(topic));
-		}
-		#endregion
+		/// <summary>取消当前的订阅。</summary>
+		Task UnsubscribeAsync();
 
-		#region 公共属性
-		public ITopic Topic { get; }
+		/// <summary>
+		/// 处理订阅的消息。
+		/// </summary>
+		/// <param name="message">待处理的消息。</param>
+		bool Handle(TMessage message);
 
-		public IHandler Handler
-		{
-			get => _handler;
-			set => _handler = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnFail(Exception exception)
-		{
-			//激发“Failed”事件
-			this.Failed?.Invoke(this, new ChannelFailureEventArgs(null, exception));
-		}
-
-		protected virtual void OnReceive(TopicMessage message)
-		{
-			//激发“Received”事件
-			this.Received?.Invoke(this, new ReceivedEventArgs(null, message));
-
-			if(_handler != null)
-				_handler.HandleAsync(message);
-		}
+		/// <summary>
+		/// 处理订阅的消息。
+		/// </summary>
+		/// <param name="message">待处理的消息。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		Task<bool> HandleAsync(TMessage message, CancellationToken cancellation = default);
 		#endregion
 	}
 }

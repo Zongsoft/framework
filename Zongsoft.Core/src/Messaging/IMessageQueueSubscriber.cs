@@ -28,56 +28,20 @@
  */
 
 using System;
-using System.Collections.Concurrent;
-
-using Zongsoft.Components;
-using Zongsoft.Communication;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
 {
-	public class TopicReceiverBase
+	/// <summary>
+	/// 表示消息主题订阅者的接口。
+	/// </summary>
+	/// <typeparam name="TMessage">订阅的消息类型。</typeparam>
+	public interface IMessageQueueSubscriber<TMessage> : IMessageSubscriber<TMessage>
 	{
-		#region 事件声明
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
-		#endregion
-
-		#region 成员字段
-		private IHandler _handler;
-		#endregion
-
-		#region 构造函数
-		protected TopicReceiverBase(ITopic topic)
-		{
-			this.Topic = topic ?? throw new ArgumentNullException(nameof(topic));
-		}
-		#endregion
-
-		#region 公共属性
-		public ITopic Topic { get; }
-
-		public IHandler Handler
-		{
-			get => _handler;
-			set => _handler = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnFail(Exception exception)
-		{
-			//激发“Failed”事件
-			this.Failed?.Invoke(this, new ChannelFailureEventArgs(null, exception));
-		}
-
-		protected virtual void OnReceive(TopicMessage message)
-		{
-			//激发“Received”事件
-			this.Received?.Invoke(this, new ReceivedEventArgs(null, message));
-
-			if(_handler != null)
-				_handler.HandleAsync(message);
-		}
+		#region 属性定义
+		/// <summary>获取当前订阅的消息队列对象。</summary>
+		IMessageQueue<TMessage>  Queue { get; }
 		#endregion
 	}
 }

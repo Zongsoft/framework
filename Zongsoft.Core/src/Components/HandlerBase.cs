@@ -28,56 +28,27 @@
  */
 
 using System;
-using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Components;
-using Zongsoft.Communication;
-
-namespace Zongsoft.Messaging
+namespace Zongsoft.Components
 {
-	public class TopicReceiverBase
+	public abstract class HandlerBase<T> : IHandler<T>, IHandler
 	{
-		#region 事件声明
-		public event EventHandler<ChannelFailureEventArgs> Failed;
-		public event EventHandler<ReceivedEventArgs> Received;
-		#endregion
-
-		#region 成员字段
-		private IHandler _handler;
-		#endregion
-
 		#region 构造函数
-		protected TopicReceiverBase(ITopic topic)
-		{
-			this.Topic = topic ?? throw new ArgumentNullException(nameof(topic));
-		}
+		protected HandlerBase() { }
 		#endregion
 
-		#region 公共属性
-		public ITopic Topic { get; }
-
-		public IHandler Handler
-		{
-			get => _handler;
-			set => _handler = value ?? throw new ArgumentNullException();
-		}
+		#region 公共方法
+		public virtual bool CanHandle(T request) => request != null;
+		public virtual bool Handle(T request) => this.HandleAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+		public abstract Task<bool> HandleAsync(T request, CancellationToken cancellation = default);
 		#endregion
 
-		#region 虚拟方法
-		protected virtual void OnFail(Exception exception)
-		{
-			//激发“Failed”事件
-			this.Failed?.Invoke(this, new ChannelFailureEventArgs(null, exception));
-		}
-
-		protected virtual void OnReceive(TopicMessage message)
-		{
-			//激发“Received”事件
-			this.Received?.Invoke(this, new ReceivedEventArgs(null, message));
-
-			if(_handler != null)
-				_handler.HandleAsync(message);
-		}
+		#region 显式实现
+		bool IHandler.CanHandle(object request) => request is T model ? this.CanHandle(model) : false;
+		bool IHandler.Handle(object request) => request is T model ? this.Handle(model) : false;
+		Task<bool> IHandler.HandleAsync(object request, CancellationToken cancellation) => request is T model ? this.HandleAsync(model, cancellation) : Task.FromResult(false);
 		#endregion
 	}
 }

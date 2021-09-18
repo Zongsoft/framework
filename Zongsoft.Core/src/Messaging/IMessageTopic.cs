@@ -35,29 +35,45 @@ using System.Collections.Generic;
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 提供消息主题相关的功能。
+	/// 提供消息主题基础功能的接口。
 	/// </summary>
-	public interface IMessageTopic<T>
+	public interface IMessageTopic
 	{
 		#region 属性定义
-		/// <summary>获取消息主题的名称。</summary>
+		/// <summary>获取消息队列的名称。</summary>
 		string Name { get; }
 
 		/// <summary>获取或设置消息主题的参数设置。</summary>
 		IMessageTopicOptions Options { get; set; }
-
-		/// <summary>获取消息主题的订阅者集合。</summary>
-		ICollection<IMessageTopicSubscriber<T>> Subscribers { get; }
 		#endregion
 
 		#region 方法定义
-		IMessageTopicSubscriber<T> Subscribe(IMessageTopicSubscriber<T> subscriber, MessageTopicSubscriptionOptions options = null);
-		Task<IMessageTopicSubscriber<T>> SubscribeAsync(IMessageTopicSubscriber<T> subscriber, MessageTopicSubscriptionOptions options = null);
+		void Publish(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null);
+		void Publish(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null);
+		Task PublishAsync(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		Task PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		#endregion
+	}
 
-		void Publish(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null) => this.Publish(data, null, options);
-		void Publish(ReadOnlySpan<byte> data, string tags, MessageTopicPublishOptions options = null);
-		Task PublishAsync(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, null, options, cancellation);
-		Task PublishAsync(ReadOnlySpan<byte> data, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+	/// <summary>
+	/// 提供消息主题相关功能的接口。
+	/// </summary>
+	public interface IMessageTopic<TMessage> : IMessageTopic
+	{
+		#region 属性定义
+		/// <summary>获取消息协议解析器。</summary>
+		Communication.IPacketizer<TMessage> Packetizer { get; }
+
+		/// <summary>获取消息主题的订阅者集合。</summary>
+		ICollection<IMessageTopicSubscriber<TMessage>> Subscribers { get; }
+		#endregion
+
+		#region 方法定义
+		bool Subscribe(IMessageTopicSubscriber<TMessage> subscriber, MessageTopicSubscriptionOptions options = null);
+		Task<bool> SubscribeAsync(IMessageTopicSubscriber<TMessage> subscriber, MessageTopicSubscriptionOptions options = null);
+
+		void Publish(ref TMessage message, MessageTopicPublishOptions options = null);
+		Task PublishAsync(ref TMessage message, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 }

@@ -29,14 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Messaging
 {
-	public interface IProtocolResolver<T>
+	/// <summary>
+	/// 表示消息订阅回调失败重试策略的枚举。
+	/// </summary>
+	public enum MessageSubscriptionFallbackBehavior
 	{
-		/// <summary>获取或设置协议名称。</summary>
-		string Name { get; }
+		/// <summary>退避重试</summary>
+		Backoff,
 
-		public bool TryResolve(byte[] data, object parameter, out T result) => this.TryResolve(data.AsSpan(), parameter, out result);
-		bool TryResolve(ReadOnlySpan<byte> data, object parameter, out T result);
+		/// <summary>指数衰减</summary>
+		ExponentialDecay,
 	}
 }

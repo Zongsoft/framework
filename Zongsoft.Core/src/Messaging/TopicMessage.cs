@@ -33,26 +33,38 @@ using System.Collections.Generic;
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 表示主题回调消息的实体类。
+	/// 表示主题消息的结构。
 	/// </summary>
-	public class TopicMessage
+	public struct TopicMessage
 	{
 		#region 构造函数
-		public TopicMessage() { }
+		public TopicMessage(IMessageTopic topic, byte[] data, string tags = null)
+		{
+			this.Topic = topic;
+			this.Data = data;
+			this.Tags = tags;
+			this.Identifier = null;
+			this.Identity = null;
+			this.Timestamp = DateTime.UtcNow;
+			this.Description = null;
+		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取或设置消息主题。</summary>
+		public IMessageTopic Topic { get; }
+
+		/// <summary>获取或设置消息内容。</summary>
+		public byte[] Data { get; set; }
+
+		/// <summary>获取或设置主题标签。</summary>
+		public string Tags { get; set; }
+
 		/// <summary>获取或设置消息的身份标识。</summary>
 		public string Identity { get; set; }
 
 		/// <summary>获取或设置消息的标识符。</summary>
 		public string Identifier { get; set; }
-
-		/// <summary>获取或设置关联的标签。</summary>
-		public string Tags { get; set; }
-
-		/// <summary>获取或设置消息内容。</summary>
-		public byte[] Data { get; set; }
 
 		/// <summary>获取或设置消息时间戳。</summary>
 		public DateTime Timestamp { get; set; }

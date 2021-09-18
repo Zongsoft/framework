@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,66 +68,16 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 发送方法
-		public void Send(byte[] data, object parameter = null) => this.Send(data, 0, -1, parameter);
-		public void Send(byte[] data, int offset, object parameter = null) => this.Send(data, offset, -1, parameter);
-		public void Send(byte[] data, int offset, int count, object parameter = null)
-		{
-			if(data == null || data.Length == 0)
-				return;
-
-			if(offset < 0 || offset >= data.Length - 1)
-				throw new ArgumentOutOfRangeException(nameof(offset));
-
-			if(count < 0)
-				count = data.Length - offset;
-			else if(count > data.Length - offset)
-				throw new ArgumentOutOfRangeException(nameof(count));
-
-			this.Send(data.AsSpan(offset, count), parameter);
-		}
-		public void Send(string text, Encoding encoding = null, object parameter = null)
-		{
-			if(string.IsNullOrEmpty(text))
-				return;
-
-			this.Send((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), parameter);
-		}
-
-		public Task SendAsync(byte[] data, object parameter, CancellationToken cancellation = default) => this.SendAsync(data, 0, -1, parameter, cancellation);
-		public Task SendAsync(byte[] data, int offset, object parameter, CancellationToken cancellation = default) => this.SendAsync(data, offset, -1, parameter, cancellation);
-		public Task SendAsync(byte[] data, int offset, int count, object parameter, CancellationToken cancellation = default)
-		{
-			if(data == null || data.Length == 0)
-				return Task.CompletedTask;
-
-			if(offset < 0 || offset >= data.Length - 1)
-				throw new ArgumentOutOfRangeException(nameof(offset));
-
-			if(count < 0)
-				count = data.Length - offset;
-			else if(count > data.Length - offset)
-				throw new ArgumentOutOfRangeException(nameof(count));
-
-			return this.SendAsync(data.AsSpan(offset, count), parameter, cancellation);
-		}
-		public Task SendAsync(string text, Encoding encoding, object parameter, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(text))
-				return Task.CompletedTask;
-
-			return this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), parameter, cancellation);
-		}
-
-		public abstract void Send(ReadOnlySpan<byte> data,  object parameter = null);
-		public abstract Task SendAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation = default);
+		public abstract void Send(ReadOnlySpan<byte> data);
+		public abstract Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
 		#endregion
 
 		#region 接收方法
-		protected abstract bool OnReceive(ReadOnlySpan<byte> data, object parameter);
-		protected abstract Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation);
+		protected abstract bool OnReceive(ReadOnlySpan<byte> data);
+		protected abstract Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation);
 
-		bool IReceiver.Receive(ReadOnlySpan<byte> data, object parameter) => this.OnReceive(data, parameter);
-		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation) => this.OnReceiveAsync(data, parameter, cancellation);
+		bool IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
+		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
 		#endregion
 
 		#region 激发事件

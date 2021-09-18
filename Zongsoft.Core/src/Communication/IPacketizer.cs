@@ -28,29 +28,32 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Zongsoft.Components;
-
-namespace Zongsoft.Messaging
+namespace Zongsoft.Communication
 {
-	public abstract class MessageQueueHandlerBase<TMessage> : IHandler<TMessage>
+	/// <summary>
+	/// 提供通讯协议包有关打包与拆包功能的接口。
+	/// </summary>
+	/// <typeparam name="TPackage">通讯协议包的类型。</typeparam>
+	public interface IPacketizer<TPackage>
 	{
-		#region 构造函数
-		protected MessageQueueHandlerBase() { }
-		#endregion
+		/// <summary>获取或设置协议名称。</summary>
+		string Name { get; }
 
-		#region 公共方法
-		public virtual bool CanHandle(TMessage message) => message != null;
-		public virtual bool Handle(TMessage message) => this.HandleAsync(message, CancellationToken.None).GetAwaiter().GetResult();
-		public abstract Task<bool> HandleAsync(TMessage message, CancellationToken cancellation = default);
-		#endregion
+		/// <summary>
+		/// 打包，将通讯包对象序列化成字节流。
+		/// </summary>
+		/// <param name="package">待打包的通讯包对象。</param>
+		/// <param name="data">打包成功的字节数组。</param>
+		/// <returns>如果打包成功则返回真(True)，否则返回假(False)。</returns>
+		bool TryPack(TPackage package, out byte[] data);
 
-		#region 显式实现
-		bool IHandler.CanHandle(object request) => request is TMessage message ? this.CanHandle(message) : false;
-		bool IHandler.Handle(object request) => request is TMessage message ? this.Handle(message) : false;
-		Task<bool> IHandler.HandleAsync(object request, CancellationToken cancellation) => request is TMessage message ? this.HandleAsync(message, cancellation) : Task.FromResult(false);
-		#endregion
+		/// <summary>
+		/// 拆包，将字节流反序列化成通讯包对象。
+		/// </summary>
+		/// <param name="data">待拆包的字节流。</param>
+		/// <param name="result">拆包成功的通讯包对象。</param>
+		/// <returns>如果拆包成功则返回真(True)，否则返回假(False)。</returns>
+		bool TryUnpack(ReadOnlySpan<byte> data, out TPackage result);
 	}
 }

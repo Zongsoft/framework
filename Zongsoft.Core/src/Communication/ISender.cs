@@ -36,22 +36,25 @@ namespace Zongsoft.Communication
 {
 	public interface ISender
 	{
-		void Send(byte[] data, object parameter = null);
-		void Send(byte[] data, int offset, object parameter = null);
-		void Send(byte[] data, int offset, int count, object parameter = null);
-		void Send(string text, Encoding encoding = null, object parameter = null);
-		void Send(ReadOnlySpan<byte> data, object parameter = null);
+		void Send(ReadOnlySpan<byte> data);
+		void Send(byte[] data) => this.Send(data.AsSpan());
+		void Send(byte[] data, int offset) => this.Send(data.AsSpan(offset));
+		void Send(byte[] data, int offset, int count) => this.Send(data.AsSpan(offset, count));
+		void Send(string text, Encoding encoding = null)
+		{
+			if(text != null && text.Length > 0)
+				this.Send((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan());
+		}
 
-		Task SendAsync(byte[] data, CancellationToken cancellation = default) => this.SendAsync(data, null, cancellation);
-		Task SendAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.SendAsync(data, offset, null, cancellation);
-		Task SendAsync(byte[] data, int offset, int count, CancellationToken cancellation = default) => this.SendAsync(data, offset, count, null, cancellation);
-		Task SendAsync(string text, Encoding encoding = null, CancellationToken cancellation = default) => this.SendAsync(text, encoding, null, cancellation);
-		Task SendAsync(string text, Encoding encoding, object parameter, CancellationToken cancellation = default) => this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text), parameter, cancellation);
-		Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default) => this.SendAsync(data, null, cancellation);
-
-		Task SendAsync(byte[] data, object parameter, CancellationToken cancellation = default);
-		Task SendAsync(byte[] data, int offset, object parameter, CancellationToken cancellation = default);
-		Task SendAsync(byte[] data, int offset, int count, object parameter, CancellationToken cancellation = default);
-		Task SendAsync(ReadOnlySpan<byte> data, object parameter, CancellationToken cancellation = default);
+		Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
+		Task SendAsync(byte[] data, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(), cancellation);
+		Task SendAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(offset), cancellation);
+		Task SendAsync(byte[] data, int offset, int count, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(offset, count), cancellation);
+		Task SendAsync(string text, Encoding encoding = null, CancellationToken cancellation = default)
+		{
+			return string.IsNullOrEmpty(text) ?
+				Task.CompletedTask :
+				this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), cancellation);
+		}
 	}
 }
