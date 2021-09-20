@@ -35,5 +35,66 @@ namespace Zongsoft.Configuration
 	public interface IConnectionSetting : ISetting
 	{
 		string Driver { get; set; }
+		IConnectionSettingValues Values { get; }
+	}
+
+	public interface IConnectionSettingValues : IEnumerable<KeyValuePair<string, string>>
+	{
+		#region 通用属性
+		int Count { get; }
+		string this[string key] { get; set; }
+		#endregion
+
+		#region 特定属性
+		string Client { get; set; }
+		string Server { get; set; }
+		ushort Port { get; set; }
+		TimeSpan Timeout { get; set; }
+		string Charset { get; set; }
+		string Encoding { get; set; }
+		string Provider { get; set; }
+		string Database { get; set; }
+		string UserName { get; set; }
+		string Password { get; set; }
+		string Application { get; set; }
+		#endregion
+
+		#region 方法定义
+		void Clear();
+		bool Contains(string key);
+		bool Remove(string key);
+		bool Remove(string key, out string value);
+		bool TryGetValue(string key, out string value);
+		bool TrySetValue(string key, string value);
+		#endregion
+	}
+
+	public interface IConnectionSettingValuesMapper
+	{
+		/// <summary>获取当前连接的驱动标识。</summary>
+		string Driver { get; }
+
+		/// <summary>
+		/// 获取指定键名的映射名。
+		/// </summary>
+		/// <param name="key">指定的键名。</param>
+		/// <returns>返回映射后的键名。</returns>
+		string Map(string key);
+
+		/// <summary>
+		/// 获取指定键名对应的值。
+		/// </summary>
+		/// <param name="key">指定的键名。</param>
+		/// <param name="values">当前连接设置的字典。</param>
+		/// <returns>返回指定键名的值。</returns>
+		string GetValue(string key, IDictionary<string, string> values);
+
+		/// <summary>
+		/// 设置指定键名对应的值。
+		/// </summary>
+		/// <param name="key">指定的键名。</param>
+		/// <param name="value">要设置的内容。</param>
+		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+		bool SetValue(string key, string value);
 	}
 }

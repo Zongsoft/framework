@@ -28,18 +28,37 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	public class ConnectionSetting : Setting, IConnectionSetting
 	{
+		#region 静态字段
+		private static readonly Dictionary<string, IConnectionSettingValuesMapper> _mappers = new Dictionary<string, IConnectionSettingValuesMapper>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 静态属性
+		public static ICollection<IConnectionSettingValuesMapper> Mappers { get; } = new ConnectionSettingValuesMapperCollection();
+		#endregion
+
+		#region 成员字段
+		private readonly ConnectionSettingValues _values;
+		#endregion
+
 		#region 构造函数
 		public ConnectionSetting()
 		{
+			_values = new ConnectionSettingValues(this);
 		}
 
 		public ConnectionSetting(string name, string value) : base(name, value)
 		{
+			_values = new ConnectionSettingValues(this);
+
+			if(!string.IsNullOrEmpty(value))
+				this.OnValueChanged(value);
 		}
 		#endregion
 
@@ -48,6 +67,31 @@ namespace Zongsoft.Configuration
 		{
 			get => this.HasProperties && this.Properties.TryGetValue(nameof(Driver), out var value) ? value : null;
 			set => this.Properties[nameof(Driver)] = value;
+		}
+
+		public IConnectionSettingValues Values { get => _values; }
+		#endregion
+
+		#region 参数解析
+		protected override void OnValueChanged(string value)
+		{
+			if(string.IsNullOrEmpty(value))
+			{
+				_values.Clear();
+				return;
+			}
+
+			foreach(var option in Zongsoft.Common.StringExtension.Slice(value, ';'))
+			{
+				var index = option.IndexOf('=');
+
+				if(index < 0)
+					_values[option] = null;
+				else if(index == option.Length - 1)
+					_values[option[0..^1]] = null;
+				else if(index > 0 && index < option.Length - 1)
+					_values[option.Substring(0, index)] = option[(index + 1)..];
+			}
 		}
 		#endregion
 
@@ -60,6 +104,189 @@ namespace Zongsoft.Configuration
 				return $"[{driver}]" + base.ToString();
 
 			return base.ToString();
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class ConnectionSettingValues : IConnectionSettingValues
+		{
+			#region 成员字段
+			private readonly IConnectionSetting _connectionSetting;
+			private readonly Dictionary<string, string> _dictionary;
+			#endregion
+
+			#region 构造函数
+			public ConnectionSettingValues(IConnectionSetting connectionSetting)
+			{
+				_connectionSetting = connectionSetting;
+				_dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			}
+			#endregion
+
+			#region 通用属性
+			public int Count => _dictionary.Count;
+			public string this[string key]
+			{
+				get => this.GetValue(key);
+				set => this.SetValue(key, value);
+			}
+			#endregion
+
+			#region 特定属性
+			public string Client
+			{
+				get => this.GetValue(nameof(Client));
+				set => this.SetValue(nameof(Client), value);
+			}
+
+			public string Server
+			{
+				get => this.GetValue(nameof(Server));
+				set => this.SetValue(nameof(Server), value);
+			}
+
+			public ushort Port
+			{
+				get => this.GetValue(nameof(Port), (ushort)0);
+				set => this.SetValue(nameof(Port), value.ToString());
+			}
+
+			public TimeSpan Timeout
+			{
+				get => this.GetValue(nameof(Timeout), TimeSpan.Zero);
+				set => this.SetValue(nameof(Timeout), value.ToString());
+			}
+
+			public string Charset
+			{
+				get => this.GetValue(nameof(Charset));
+				set => this.SetValue(nameof(Charset), value);
+			}
+
+			public string Encoding
+			{
+				get => this.GetValue(nameof(Encoding));
+				set => this.SetValue(nameof(Encoding), value);
+			}
+
+			public string Provider
+			{
+				get => this.GetValue(nameof(Provider));
+				set => this.SetValue(nameof(Provider), value);
+			}
+
+			public string Database
+			{
+				get => this.GetValue(nameof(Database));
+				set => this.SetValue(nameof(Database), value);
+			}
+
+			public string UserName
+			{
+				get => this.GetValue(nameof(UserName));
+				set => this.SetValue(nameof(UserName), value);
+			}
+
+			public string Password
+			{
+				get => this.GetValue(nameof(Password));
+				set => this.SetValue(nameof(Password), value);
+			}
+
+			public string Application
+			{
+				get => this.GetValue(nameof(Application));
+				set => this.SetValue(nameof(Application), value);
+			}
+			#endregion
+
+			#region 公共方法
+			public void Clear() => _dictionary.Clear();
+			public bool Contains(string key) => _dictionary.ContainsKey(GetKey(key));
+			public bool Remove(string key) => _dictionary.Remove(GetKey(key));
+			public bool Remove(string key, out string value) => _dictionary.Remove(GetKey(key), out value);
+			public bool TryGetValue(string key, out string value) => _dictionary.TryGetValue(GetKey(key), out value);
+			public bool TrySetValue(string key, string value)
+			{
+				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+					return mapper.SetValue(key, value);
+
+				_dictionary[GetKey(key)] = value;
+				return true;
+			}
+			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
+			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
+			#endregion
+
+			#region 私有方法
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private string GetKey(string name) => _mappers.TryGetValue(_connectionSetting.Driver, out var mapper) ? mapper.Map(name) : name;
+
+			private string GetValue(string name)
+			{
+				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+					return mapper.GetValue(name, _dictionary);
+
+				return _dictionary.TryGetValue(name, out var value) ? value : null;
+			}
+
+			private T GetValue<T>(string name, T defaultValue = default)
+			{
+				string value;
+
+				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+				{
+					value = mapper.GetValue(name, _dictionary);
+					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
+				}
+
+				if(_dictionary.TryGetValue(name, out value))
+					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
+
+				return defaultValue;
+			}
+
+			private bool SetValue(string name, string value)
+			{
+				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+					return mapper.SetValue(name, value);
+
+				_dictionary[name] = value;
+				return true;
+			}
+			#endregion
+		}
+
+		private class ConnectionSettingValuesMapperCollection : ICollection<IConnectionSettingValuesMapper>
+		{
+			public int Count => _mappers.Count;
+			public bool IsReadOnly => false;
+
+			public void Clear() => _mappers.Clear();
+			public bool Contains(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.ContainsKey(item.Driver);
+			public bool Remove(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.Remove(item.Driver);
+			public void Add(IConnectionSettingValuesMapper item)
+			{
+				if(item != null && item.Driver != null)
+					_mappers.TryAdd(item.Driver, item);
+			}
+
+			public void CopyTo(IConnectionSettingValuesMapper[] array, int arrayIndex)
+			{
+				if(array == null || arrayIndex >= array.Length - 1)
+					return;
+
+				var iterator = _mappers.GetEnumerator();
+
+				for(int i = 0; i < array.Length - arrayIndex; i++)
+				{
+					while(iterator.MoveNext())
+						array[arrayIndex + i] = iterator.Current.Value;
+				}
+			}
+
+			public IEnumerator<IConnectionSettingValuesMapper> GetEnumerator() => _mappers.Values.GetEnumerator();
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		}
 		#endregion
 	}
