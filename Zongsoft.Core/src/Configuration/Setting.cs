@@ -33,25 +33,25 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public class Setting : ISetting
+	public class Setting : ISetting, IEquatable<Setting>
 	{
 		#region 成员字段
 		private string _name;
+		private string _value;
 		private IDictionary<string, string> _properties;
 		#endregion
 
 		#region 构造函数
-		public Setting()
-		{
-		}
-
+		public Setting() { }
 		public Setting(string name, string value = null)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
-			this.Value = value;
+
+			if(value != null)
+				_value = value.Trim();
 		}
 		#endregion
 
@@ -73,7 +73,15 @@ namespace Zongsoft.Configuration
 
 		public string Value
 		{
-			get; set;
+			get => _value;
+			set
+			{
+				if(string.Equals(_value, value))
+				{
+					_value = value == null ? null : value.Trim();
+					this.OnValueChanged(_value);
+				}
+			}
 		}
 
 		public bool HasProperties
@@ -93,11 +101,15 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 虚拟方法
+		protected virtual void OnValueChanged(string value) { }
+		#endregion
+
 		#region 重写方法
-		public override string ToString()
-		{
-			return $"{this.Name}={this.Value}";
-		}
+		public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase) && string.Equals(_value, setting._value);
+		public override bool Equals(object obj) => obj is Setting setting && this.Equals(setting);
+		public override int GetHashCode() => HashCode.Combine(_name, _value);
+		public override string ToString() => $"{this.Name}={this.Value}";
 		#endregion
 	}
 }
