@@ -32,7 +32,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 using Zongsoft.Communication;
 
 using MQTTnet;
@@ -46,6 +48,7 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
+	[Service(typeof(IMessageTopic<TopicMessage>))]
 	public class MqttQueue : IMessageTopic<TopicMessage>, IAsyncDisposable
 	{
 		#region 工厂字段
@@ -64,6 +67,7 @@ namespace Zongsoft.Messaging.Mqtt
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
+			this.Options = GetOptions(this.Name);
 			_client = Factory.CreateManagedMqttClient();
 			_subscribers = new Dictionary<string, MqttSubscriber>();
 
@@ -188,6 +192,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 		#region 私有方法
 		private static string GetSubscriberKey(string topic, string tags) => string.IsNullOrEmpty(tags) ? topic : topic + ':' + tags;
+		private static IMessageTopicOptions GetOptions(string name) => ApplicationContext.Current?.Configuration.GetOption<IMessageTopicOptions>("/Messaging/Mqtt/" + name);
 		#endregion
 
 		#region 处置方法

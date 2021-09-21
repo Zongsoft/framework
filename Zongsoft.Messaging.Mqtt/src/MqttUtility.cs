@@ -44,7 +44,7 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public static class MqttUtility
+	internal static class MqttUtility
 	{
 		public static MqttQualityOfServiceLevel ToQoS(this MessageReliability reliability) => reliability switch
 		{

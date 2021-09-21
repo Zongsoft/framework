@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.Mqtt"
+        title="Zongsoft.Messaging.Mqtt Plugin"
+        author="Zongsoft Corporation"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2021-09-21" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Messaging.Mqtt" />
+		</assemblies>
+	</manifest>
+</plugin>
