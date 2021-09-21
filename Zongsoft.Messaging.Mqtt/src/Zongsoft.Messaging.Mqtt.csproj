@@ -13,7 +13,7 @@
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2021. All rights reserved.</Copyright>
 		<PackageLicenseExpression>http://www.gnu.org/licenses/gpl-3.0.html</PackageLicenseExpression>
 		<ApplicationIcon></ApplicationIcon>
-		<RootNamespace>Zongsoft</RootNamespace>
+		<RootNamespace>Zongsoft.Messaging.Mqtt</RootNamespace>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
