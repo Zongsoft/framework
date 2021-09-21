@@ -48,10 +48,15 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 方法定义
-		void Publish(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null);
-		void Publish(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null);
-		Task PublishAsync(ReadOnlySpan<byte> data, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
-		Task PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		bool Subscribe(string topic, MessageTopicSubscriptionOptions options = null) => this.Subscribe(topic, null, options);
+		bool Subscribe(string topic, string tags, MessageTopicSubscriptionOptions options = null);
+		Task<bool> SubscribeAsync(string topic, MessageTopicSubscriptionOptions options = null) => this.SubscribeAsync(topic, null, options);
+		Task<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null);
+
+		void Publish(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null) => this.Publish(data, topic, null, options);
+		void Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null);
+		Task PublishAsync(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
+		Task PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 
@@ -60,20 +65,19 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface IMessageTopic<TMessage> : IMessageTopic
 	{
-		#region 属性定义
-		/// <summary>获取消息协议解析器。</summary>
-		Communication.IPacketizer<TMessage> Packetizer { get; }
-
-		/// <summary>获取消息主题的订阅者集合。</summary>
-		ICollection<IMessageTopicSubscriber<TMessage>> Subscribers { get; }
-		#endregion
-
 		#region 方法定义
-		bool Subscribe(IMessageTopicSubscriber<TMessage> subscriber, MessageTopicSubscriptionOptions options = null);
-		Task<bool> SubscribeAsync(IMessageTopicSubscriber<TMessage> subscriber, MessageTopicSubscriptionOptions options = null);
+		/// <summary>
+		/// 处理订阅的消息。
+		/// </summary>
+		/// <param name="message">待处理的消息。</param>
+		bool Handle(ref TMessage message);
 
-		void Publish(ref TMessage message, MessageTopicPublishOptions options = null);
-		Task PublishAsync(ref TMessage message, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		/// <summary>
+		/// 处理订阅的消息。
+		/// </summary>
+		/// <param name="message">待处理的消息。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		Task<bool> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
 		#endregion
 	}
 }

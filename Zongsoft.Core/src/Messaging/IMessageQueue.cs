@@ -109,8 +109,8 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 订阅方法
-		bool Subscribe(IMessageQueueSubscriber<TMessage> subscriber, MessageQueueSubscriptionOptions options = null);
-		Task<bool> SubscribeAsync(IMessageQueueSubscriber<TMessage> subscriber, MessageQueueSubscriptionOptions options = null);
+		bool Subscribe(Func<TMessage, bool> handler, MessageQueueSubscriptionOptions options = null);
+		Task<bool> SubscribeAsync(Func<TMessage, bool> handler, MessageQueueSubscriptionOptions options = null);
 		#endregion
 
 		#region 入队方法

@@ -28,28 +28,22 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 表示消息订阅者的接口。
+	/// 表示消息可靠性的枚举。
 	/// </summary>
-	/// <typeparam name="TMessage">订阅的消息类型。</typeparam>
-	public interface IMessageSubscriber<TMessage>
+	public enum MessageReliability
 	{
-		#region 属性定义
-		/// <summary>获取订阅的消息队列名称。</summary>
-		string Name { get; }
-		#endregion
+		/// <summary>最多一次</summary>
+		MostOnce = 0,
 
-		#region 方法定义
-		/// <summary>取消当前的订阅。</summary>
-		void Unsubscribe();
+		/// <summary>至少一次</summary>
+		LeastOnce = 1,
 
-		/// <summary>取消当前的订阅。</summary>
-		Task UnsubscribeAsync();
-		#endregion
+		/// <summary>精确一次</summary>
+		ExactlyOnce = 2
 	}
 }

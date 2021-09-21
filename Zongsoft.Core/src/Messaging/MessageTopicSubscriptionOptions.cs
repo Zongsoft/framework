@@ -33,6 +33,9 @@ namespace Zongsoft.Messaging
 {
 	public class MessageTopicSubscriptionOptions
 	{
+		/// <summary>获取或设置订阅消息回调的可靠性。</summary>
+		public MessageReliability Reliability { get; set; }
+
 		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
 		public MessageSubscriptionFallbackBehavior FallbackBehavior { get; set; }
 	}

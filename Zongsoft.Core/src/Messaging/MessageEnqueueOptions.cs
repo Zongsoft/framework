@@ -53,6 +53,9 @@ namespace Zongsoft.Messaging
 
 		/// <summary>获取或设置消息的优先级。</summary>
 		public byte Priority { get; set; }
+
+		/// <summary>获取或设置消息的可靠性。</summary>
+		public MessageReliability Reliability { get; set; }
 		#endregion
 	}
 }

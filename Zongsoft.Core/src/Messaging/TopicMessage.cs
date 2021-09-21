@@ -38,7 +38,7 @@ namespace Zongsoft.Messaging
 	public struct TopicMessage
 	{
 		#region 构造函数
-		public TopicMessage(IMessageTopic topic, byte[] data, string tags = null)
+		public TopicMessage(string topic, byte[] data, string tags = null)
 		{
 			this.Topic = topic;
 			this.Data = data;
@@ -52,7 +52,7 @@ namespace Zongsoft.Messaging
 
 		#region 公共属性
 		/// <summary>获取或设置消息主题。</summary>
-		public IMessageTopic Topic { get; }
+		public string Topic { get; }
 
 		/// <summary>获取或设置消息内容。</summary>
 		public byte[] Data { get; set; }
