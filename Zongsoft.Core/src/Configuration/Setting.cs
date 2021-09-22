@@ -76,7 +76,7 @@ namespace Zongsoft.Configuration
 			get => _value;
 			set
 			{
-				if(string.Equals(_value, value))
+				if(!string.Equals(_value, value))
 				{
 					_value = value == null ? null : value.Trim();
 					this.OnValueChanged(_value);
