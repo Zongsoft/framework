@@ -221,10 +221,7 @@ namespace Zongsoft.Configuration
 			return null;
 		}
 
-		protected override string GetKeyForItem(Certificate item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(Certificate item) => item.Name;
 	}
 
 	[Configuration(nameof(Buckets))]
@@ -257,9 +254,7 @@ namespace Zongsoft.Configuration
 
 	public class Voices : Dictionary<string, Template>
 	{
-		public Voices() : base(StringComparer.OrdinalIgnoreCase)
-		{
-		}
+		public Voices() : base(StringComparer.OrdinalIgnoreCase) { }
 
 		[TypeConverter(typeof(NumbersConverter))]
 		public string[] Numbers { get; set; }
@@ -296,10 +291,7 @@ namespace Zongsoft.Configuration
 
 	public class Notifications : Zongsoft.Collections.NamedCollectionBase<App>
 	{
-		protected override string GetKeyForItem(App item)
-		{
-			return item.Key;
-		}
+		protected override string GetKeyForItem(App item) => item.Key;
 	}
 
 	public class Template

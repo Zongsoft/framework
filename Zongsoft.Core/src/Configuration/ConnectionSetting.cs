@@ -36,11 +36,19 @@ namespace Zongsoft.Configuration
 	public class ConnectionSetting : Setting, IConnectionSetting
 	{
 		#region 静态字段
-		private static readonly Dictionary<string, IConnectionSettingValuesMapper> _mappers = new Dictionary<string, IConnectionSettingValuesMapper>(StringComparer.OrdinalIgnoreCase);
+		private static readonly Dictionary<string, IConnectionSettingValuesMapper> _mappers;
+		#endregion
+
+		#region 静态构造
+		static ConnectionSetting()
+		{
+			_mappers = new Dictionary<string, IConnectionSettingValuesMapper>(StringComparer.OrdinalIgnoreCase);
+			Mappers = new ConnectionSettingValuesMapperCollection();
+		}
 		#endregion
 
 		#region 静态属性
-		public static ICollection<IConnectionSettingValuesMapper> Mappers { get; } = new ConnectionSettingValuesMapperCollection();
+		public static ICollection<IConnectionSettingValuesMapper> Mappers { get; }
 		#endregion
 
 		#region 成员字段
@@ -86,7 +94,7 @@ namespace Zongsoft.Configuration
 				var index = option.IndexOf('=');
 
 				if(index < 0)
-					_values[option] = null;
+					_values[string.Empty] = option;
 				else if(index == option.Length - 1)
 					_values[option[0..^1]] = null;
 				else if(index > 0 && index < option.Length - 1)
@@ -193,6 +201,12 @@ namespace Zongsoft.Configuration
 				set => this.SetValue(nameof(Password), value);
 			}
 
+			public string Instance
+			{
+				get => this.GetValue(nameof(Instance));
+				set => this.SetValue(nameof(Instance), value);
+			}
+
 			public string Application
 			{
 				get => this.GetValue(nameof(Application));
@@ -205,15 +219,6 @@ namespace Zongsoft.Configuration
 			public bool Contains(string key) => _dictionary.ContainsKey(GetKey(key));
 			public bool Remove(string key) => _dictionary.Remove(GetKey(key));
 			public bool Remove(string key, out string value) => _dictionary.Remove(GetKey(key), out value);
-			public bool TryGetValue(string key, out string value) => _dictionary.TryGetValue(GetKey(key), out value);
-			public bool TrySetValue(string key, string value)
-			{
-				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
-					return mapper.SetValue(key, value);
-
-				_dictionary[GetKey(key)] = value;
-				return true;
-			}
 			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
 			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
 			#endregion
@@ -234,7 +239,7 @@ namespace Zongsoft.Configuration
 			{
 				string value;
 
-				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+				if(_connectionSetting.Driver != null && _mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
 				{
 					value = mapper.GetValue(name, _dictionary);
 					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
@@ -248,8 +253,11 @@ namespace Zongsoft.Configuration
 
 			private bool SetValue(string name, string value)
 			{
-				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
-					return mapper.SetValue(name, value);
+				if(_connectionSetting.Driver != null && _mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+				{
+					if(!mapper.Validate(name, value))
+						return false;
+				}
 
 				_dictionary[name] = value;
 				return true;
@@ -259,9 +267,12 @@ namespace Zongsoft.Configuration
 
 		private class ConnectionSettingValuesMapperCollection : ICollection<IConnectionSettingValuesMapper>
 		{
+			#region 公共属性
 			public int Count => _mappers.Count;
 			public bool IsReadOnly => false;
+			#endregion
 
+			#region 公共方法
 			public void Clear() => _mappers.Clear();
 			public bool Contains(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.ContainsKey(item.Driver);
 			public bool Remove(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.Remove(item.Driver);
@@ -284,9 +295,17 @@ namespace Zongsoft.Configuration
 						array[arrayIndex + i] = iterator.Current.Value;
 				}
 			}
+			#endregion
 
-			public IEnumerator<IConnectionSettingValuesMapper> GetEnumerator() => _mappers.Values.GetEnumerator();
-			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			#region 枚举遍历
+			public IEnumerator<IConnectionSettingValuesMapper> GetEnumerator()
+			{
+				foreach(var mapper in _mappers)
+					yield return mapper.Value;
+			}
+
+			IEnumerator IEnumerable.GetEnumerator() => _mappers.Values.GetEnumerator();
+			#endregion
 		}
 		#endregion
 	}
