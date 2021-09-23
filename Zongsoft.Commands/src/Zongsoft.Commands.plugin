@@ -61,6 +61,7 @@
 				<object name="Out" type="Zongsoft.Messaging.Commands.QueueOutCommand, Zongsoft.Commands" />
 				<object name="Clear" type="Zongsoft.Messaging.Commands.QueueClearCommand, Zongsoft.Commands" />
 				<object name="Count" type="Zongsoft.Messaging.Commands.QueueCountCommand, Zongsoft.Commands" />
+				<object name="Subscribe" type="Zongsoft.Messaging.Commands.QueueSubscribeCommand, Zongsoft.Commands" />
 			</object>
 		</object>
 	</extension>
