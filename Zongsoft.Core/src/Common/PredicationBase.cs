@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Common
 {
 	public abstract class PredicationBase<T> : IPredication<T>, Collections.IMatchable<string>
 	{

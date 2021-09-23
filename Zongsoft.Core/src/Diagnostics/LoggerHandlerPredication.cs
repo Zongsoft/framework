@@ -32,7 +32,7 @@ using System.Linq;
 
 namespace Zongsoft.Diagnostics
 {
-	public class LoggerHandlerPredication : Components.IPredication<LogEntry>
+	public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 	{
 		#region 成员字段
 		private string _source;
@@ -160,7 +160,7 @@ namespace Zongsoft.Diagnostics
 			return true;
 		}
 
-		bool Components.IPredication.Predicate(object parameter)
+		bool Common.IPredication.Predicate(object parameter)
 		{
 			return this.Predicate(parameter as LogEntry);
 		}

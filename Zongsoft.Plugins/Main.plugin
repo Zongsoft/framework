@@ -22,7 +22,7 @@
 		<parser name="opt" type="Zongsoft.Configuration.OptionParser, Zongsoft.Plugins" />
 		<parser name="cmd" type="Zongsoft.Services.CommandParser, Zongsoft.Plugins" />
 		<parser name="srv" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
-		<parser name="predicate" type="Zongsoft.Services.PredicateParser, Zongsoft.Plugins" />
+		<parser name="predicate" type="Zongsoft.Plugins.Parsers.PredicateParser, Zongsoft.Plugins" />
 	</parsers>
 
 	<!-- 挂载工作台下的必须的组件 -->
@@ -51,5 +51,10 @@
 				</object>
 			</object>
 		</object>
+	</extension>
+
+	<!-- 挂载连接设置映射器集 -->
+	<extension path="/Workbench/Configuration/ConnectionSettings">
+		<object name="Mappers" value="{static:Zongsoft.Configuration.ConnectionSetting.Mappers, Zongsoft.Core}" />
 	</extension>
 </plugin>

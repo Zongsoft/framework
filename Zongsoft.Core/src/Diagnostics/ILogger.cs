@@ -33,7 +33,7 @@ namespace Zongsoft.Diagnostics
 {
 	public interface ILogger
 	{
-		Components.IPredication<LogEntry> Predication { get; }
+		Common.IPredication<LogEntry> Predication { get; }
 		void Log(LogEntry entry);
 	}
 }

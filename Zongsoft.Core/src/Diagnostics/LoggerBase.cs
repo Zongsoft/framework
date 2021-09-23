@@ -29,8 +29,6 @@
 
 using System;
 
-using Zongsoft.Components;
-
 namespace Zongsoft.Diagnostics
 {
 	public abstract class LoggerBase<T> : ILogger<T>
@@ -40,7 +38,7 @@ namespace Zongsoft.Diagnostics
 		public ILogFormatter<T> Formatter { get; protected set; }
 
 		/// <summary>获取或设置日志断言。</summary>
-		public IPredication<LogEntry> Predication { get; protected set; }
+		public Common.IPredication<LogEntry> Predication { get; protected set; }
 		#endregion
 
 		#region 公共方法

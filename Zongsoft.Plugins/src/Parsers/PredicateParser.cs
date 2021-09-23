@@ -31,10 +31,10 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-using Zongsoft.Plugins;
-using Zongsoft.Plugins.Parsers;
+using Zongsoft.Common;
+using Zongsoft.Services;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Plugins.Parsers
 {
 	public class PredicateParser : Parser
 	{
