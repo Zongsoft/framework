@@ -32,6 +32,7 @@ using System.Linq;
 using System.ComponentModel;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Commands
 {
@@ -87,7 +88,11 @@ namespace Zongsoft.Messaging.Commands
 						this.Queue = queue;
 						this.Topic = null;
 
-						return queue; ;
+						//打印队列信息
+						context.Output.WriteLine(CommandOutletColor.Green, queue.Name);
+						PrintConnectionSetting(context.Output, queue.ConnectionSetting?.Values);
+
+						return queue;
 					}
 				}
 			}
@@ -111,6 +116,10 @@ namespace Zongsoft.Messaging.Commands
 						this.Topic = topic;
 						this.Queue = null;
 
+						//打印队列信息
+						context.Output.WriteLine(CommandOutletColor.Green, topic.Name);
+						PrintConnectionSetting(context.Output, topic.ConnectionSetting?.Values);
+
 						return topic; ;
 					}
 				}
@@ -119,7 +128,46 @@ namespace Zongsoft.Messaging.Commands
 			if(this.Queue == null && this.Topic == null)
 				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
 
+			if(this.Queue != null)
+			{
+				//打印队列信息
+				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.Name);
+				PrintConnectionSetting(context.Output, this.Queue.ConnectionSetting?.Values);
+
+				return this.Queue;
+			}
+
+			if(this.Topic != null)
+			{
+				//打印队列信息
+				context.Output.WriteLine(CommandOutletColor.Green, this.Topic.Name);
+				PrintConnectionSetting(context.Output, this.Topic.ConnectionSetting?.Values);
+
+				return this.Topic;
+			}
+
 			return null;
+		}
+
+		private static void PrintConnectionSetting(ICommandOutlet output, IConnectionSettingValues values)
+		{
+			if(values == null)
+				return;
+
+			var content = CommandOutletContent
+				.Create(CommandOutletColor.DarkYellow, nameof(values.Server))
+				.Append(CommandOutletColor.DarkGray, "=")
+				.Append(CommandOutletColor.DarkGreen, values.Server)
+				.Append(CommandOutletColor.DarkMagenta, ",")
+				.Append(CommandOutletColor.DarkYellow, nameof(values.Instance))
+				.Append(CommandOutletColor.DarkGray, "=")
+				.Append(CommandOutletColor.DarkGreen, values.Instance)
+				.Append(CommandOutletColor.DarkMagenta, ",")
+				.Append(CommandOutletColor.DarkYellow, nameof(values.Client))
+				.Append(CommandOutletColor.DarkGray, "=")
+				.Append(CommandOutletColor.DarkGreen, values.Client);
+
+			output.WriteLine(content);
 		}
 		#endregion
 	}
