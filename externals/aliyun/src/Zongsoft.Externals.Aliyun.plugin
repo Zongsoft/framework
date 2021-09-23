@@ -12,6 +12,11 @@
 		</assemblies>
 	</manifest>
 
+	<!-- 挂载连接设置映射器 -->
+	<extension path="/Workbench/Configuration/ConnectionSettings/Mappers">
+		<object name="Aliyun_Mqtt" type="Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettingValuesMapper, Zongsoft.Externals.Aliyun" />
+	</extension>
+
 	<extension path="/Workbench/FileSystem">
 		<object name="AliyunOSS" value="{srv:~}" />
 	</extension>

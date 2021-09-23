@@ -29,12 +29,11 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
+using System.Text.RegularExpressions;
+
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -120,7 +119,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				};
 		}
 
-		public static TopicInfo ResolveTopicInfo(Stream stream)
+		public static MessageTopicInfo ResolveTopicInfo(Stream stream)
 		{
 			if(stream == null)
 				return null;
@@ -137,7 +136,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				if(reader.MoveToContent() != XmlNodeType.Element)
 					return null;
 
-				var info = new TopicInfo();
+				var info = new MessageTopicInfo();
 
 				while(reader.Read())
 				{
@@ -169,6 +168,44 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 				return info;
 			}
+		}
+
+		internal static Options.MessagingOptions GetOptions()
+		{
+			return ApplicationContext.Current?.Configuration.GetOption<Options.MessagingOptions>("Externals/Aliyun/Messaging");
+		}
+
+		internal static string GetMessageResponseId(Stream stream)
+		{
+			if(stream == null)
+				return null;
+
+			var settings = new XmlReaderSettings()
+			{
+				IgnoreComments = true,
+				IgnoreProcessingInstructions = true,
+				IgnoreWhitespace = true,
+			};
+
+			using(var reader = XmlReader.Create(stream, settings))
+			{
+				if(reader.MoveToContent() != XmlNodeType.Element)
+					return null;
+
+				while(reader.Read())
+				{
+					if(reader.NodeType != XmlNodeType.Element)
+						continue;
+
+					switch(reader.LocalName)
+					{
+						case "MessageId":
+							return reader.Value;
+					}
+				}
+			}
+
+			return null;
 		}
 	}
 }

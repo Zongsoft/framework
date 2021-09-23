@@ -32,11 +32,30 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class TopicEmailState
+	/// <summary>
+	/// 表示主题信息的实体类。
+	/// </summary>
+	public class MessageTopicInfo
 	{
-	}
+		/// <summary>获取或设置主题的名称。</summary>
+		public string Name { get; set; }
 
-	public class TopicSmsState
-	{
+		/// <summary>获取或设置主题的创建时间。</summary>
+		public DateTime CreatedTime { get; set; }
+
+		/// <summary>获取或设置主题的最后修改时间。</summary>
+		public DateTime? ModifiedTime { get; set; }
+
+		/// <summary>获取或设置主题中消息的最大长度，单位：byte。</summary>
+		public int MaximumMessageSize { get; set; }
+
+		/// <summary>获取或设置主题中消息的最大保持时长。</summary>
+		public TimeSpan MessageRetentionPeriod { get; set; }
+
+		/// <summary>获取或设置当前主题中的消息数量。</summary>
+		public int MessageCount { get; set; }
+
+		/// <summary>获取或设置一个值，指示主题队列是否启用了日志记录。</summary>
+		public bool LoggingEnabled { get; set; }
 	}
 }

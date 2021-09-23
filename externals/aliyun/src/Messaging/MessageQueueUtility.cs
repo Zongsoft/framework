@@ -28,63 +28,44 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-
-using Zongsoft.Messaging;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class TopicSubscription : Zongsoft.Messaging.ITopicSubscription
+	internal static class MessageQueueUtility
 	{
-		#region 成员字段
-		private readonly Topic _topic;
-		#endregion
-
-		#region 构造函数
-		public TopicSubscription(Topic topic)
+		internal static ICertificate GetCertificate(string name)
 		{
-			_topic = topic ?? throw new ArgumentNullException(nameof(topic));
-		}
-		#endregion
+			var options = MessageUtility.GetOptions();
+			var certificate = string.Empty;
 
-		#region 公共属性
-		public Topic Topic
-		{
-			get => _topic;
-		}
-		#endregion
+			if(options.Queues.TryGet(name, out var option))
+				certificate = option.Certificate;
 
-		#region 公共方法
-		public Zongsoft.Messaging.TopicSubscription Get(string name)
-		{
-			throw new NotImplementedException();
+			if(string.IsNullOrWhiteSpace(certificate))
+				certificate = options.Queues.Certificate;
+
+			if(string.IsNullOrWhiteSpace(certificate))
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
+
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
 		}
 
-		public bool Subscribe(string name, string url, object state = null)
+		internal static string GetRequestUrl(string queueName, params string[] parts)
 		{
-			throw new NotImplementedException();
-		}
+			var options = MessageUtility.GetOptions();
+			var region = options.Queues.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 
-		public bool Subscribe(string name, string url, TopicSubscriptionFallbackBehavior behavior, object state = null)
-		{
-			throw new NotImplementedException();
-		}
+			if(options.Queues.TryGet(queueName, out var option) && option.Region.HasValue)
+				region = option.Region.Value;
 
-		public bool Subscribe(string name, string url, string tags, object state = null)
-		{
-			throw new NotImplementedException();
-		}
+			var center = ServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);
 
-		public bool Subscribe(string name, string url, string tags, TopicSubscriptionFallbackBehavior behavior, object state = null)
-		{
-			throw new NotImplementedException();
-		}
+			var path = parts == null ? string.Empty : string.Join("/", parts);
 
-		public bool Unsubscribe(string name)
-		{
-			throw new NotImplementedException();
+			if(string.IsNullOrEmpty(path))
+				return string.Format("http://{0}.{1}/queues/{2}", options.Name, center.Path, queueName);
+			else
+				return string.Format("http://{0}.{1}/queues/{2}/{3}", options.Name, center.Path, queueName, path);
 		}
-		#endregion
 	}
 }

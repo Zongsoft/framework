@@ -32,45 +32,51 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Zongsoft.Services;
+using Zongsoft.Messaging;
+using Zongsoft.Components;
+
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class MessageQueue : Zongsoft.Messaging.MessageQueueBase
+	[Service(typeof(IMessageQueue<Message>))]
+	public class MessageQueue : IMessageQueue<Message>
 	{
 		#region 常量定义
 		private static readonly Regex COUNT_REGEX = new Regex(@"\<(?'tag'(ActiveMessages|InactiveMessages|DelayMessages))\>\s*(?<value>[^<>\s]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
 		#region 成员字段
-		private readonly HttpClient _http;
-		private readonly MessageQueueProvider _provider;
+		private HttpClient _http;
 		#endregion
 
 		#region 构造函数
-		internal MessageQueue(MessageQueueProvider provider, string name) : base(name)
+		internal MessageQueue(string name)
 		{
-			_provider = provider ?? throw new ArgumentNullException(nameof(provider));
-			_http = new HttpClient(new HttpClientHandler(_provider.GetCertificate(name), MessageQueueAuthenticator.Instance));
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
+			_http = new HttpClient(new HttpClientHandler(MessageQueueUtility.GetCertificate(name), MessageAuthenticator.Instance));
 		}
+		#endregion
+
+		#region 公共属性
+		public string Name { get; }
+		public IMessageQueueOptions Options { get; set; }
+		public IHandler<Message> Handler { get; set; }
 		#endregion
 
 		#region 内部属性
-		internal HttpClient Http
-		{
-			get => _http;
-		}
+		internal HttpClient Http { get => _http; }
 		#endregion
 
-		#region 重写方法
-		public override long GetCount()
-		{
-			return this.GetCountAsync().GetAwaiter().GetResult();
-		}
+		public long GetCount() => this.GetCountAsync().GetAwaiter().GetResult();
 
-		public override async Task<long> GetCountAsync()
+		public async Task<long> GetCountAsync(CancellationToken cancellation = default)
 		{
 			var response = await _http.GetAsync(this.GetRequestUrl());
 
@@ -98,82 +104,36 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return total;
 		}
 
-		public override async Task EnqueueManyAsync<T>(IEnumerable<T> items, Zongsoft.Messaging.MessageEnqueueSettings settings = null, CancellationToken cancellation = default)
+		public void Clear()
 		{
-			if(items == null)
-				return;
-
-			var count = 0;
-
-			foreach(var item in items)
-			{
-				var content = this.SerializeContent(item);
-
-				if(content == null)
-					continue;
-
-				byte priority = 8;
-				TimeSpan? duration = null;
-
-				if(settings != null)
-				{
-					priority = settings.Priority;
-					duration = settings.DelayTimeout;
-				}
-
-				if(duration.HasValue && duration.Value.TotalDays > 7)
-					throw new ArgumentOutOfRangeException("settings", "The duration must less than 7 days.");
-
-				var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
-					System.Convert.ToBase64String(content) +
-					"</MessageBody><DelaySeconds>" +
-					(duration.HasValue ? duration.Value.TotalSeconds.ToString() : "0") +
-					"</DelaySeconds><Priority>" + priority.ToString() + "</Priority></Message>";
-
-				var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"));
-				request.Content = new StringContent(text, Encoding.UTF8, "text/xml");
-				request.Headers.Add("x-mns-version", "2015-06-06");
-
-				var response = await _http.SendAsync(request);
-
-				if(!response.IsSuccessStatusCode)
-				{
-					Zongsoft.Diagnostics.Logger.Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
-					return;
-				}
-
-				count++;
-			}
-
-			return;
+			throw new NotImplementedException();
 		}
 
-		protected override void OnEnqueue(object item, Zongsoft.Messaging.MessageEnqueueSettings settings)
+		public Task ClearAsync(CancellationToken cancellation = default)
 		{
-			this.OnEnqueueAsync(item, settings).GetAwaiter().GetResult();
+			throw new NotImplementedException();
 		}
 
-		protected override async Task OnEnqueueAsync(object item, Zongsoft.Messaging.MessageEnqueueSettings settings, CancellationToken cancellation = default)
+		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options).GetAwaiter().GetResult();
+
+		public Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
+
+		public async Task<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
-			var content = this.SerializeContent(item);
-
-			if(content == null)
-				return;
-
 			byte priority = 8;
 			TimeSpan? duration = null;
 
-			if(settings != null)
+			if(options != null)
 			{
-				priority = settings.Priority;
-				duration = settings.DelayTimeout;
+				priority = options.Priority;
+				duration = options.Delay;
 			}
 
 			if(duration.HasValue && duration.Value.TotalDays > 7)
-				throw new ArgumentOutOfRangeException("settings", "The duration must less than 7 days.");
+				throw new ArgumentOutOfRangeException("options", "The duration must less than 7 days.");
 
 			var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
-				System.Convert.ToBase64String(content) +
+				System.Convert.ToBase64String(data) +
 				"</MessageBody><DelaySeconds>" +
 				(duration.HasValue ? duration.Value.TotalSeconds.ToString() : "0") +
 				"</DelaySeconds><Priority>" + priority.ToString() + "</Priority></Message>";
@@ -189,37 +149,26 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(!response.IsSuccessStatusCode)
 			{
 				Zongsoft.Diagnostics.Logger.Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
-				return;
+				return null;
 			}
+
+			return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync());
 		}
 
-		protected override Zongsoft.Messaging.MessageBase OnDequeue(Zongsoft.Messaging.MessageDequeueSettings settings)
+		public Message Dequeue(MessageDequeueOptions options = null) => this.DequeueAsync(options).GetAwaiter().GetResult();
+
+		public Task<Message> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
 		{
-			if(settings == null)
-				return Utility.ExecuteTask(() => this.DequeueOrPeekAsync(0));
-			else
-				return Utility.ExecuteTask(() => this.DequeueOrPeekAsync((int)settings.PollingTimeout.TotalSeconds));
+			if(options == null)
+				options = MessageDequeueOptions.Default;
+
+			return this.DequeueOrPeekAsync((int)options.Timeout.TotalSeconds);
 		}
 
-		protected override Task<Zongsoft.Messaging.MessageBase> OnDequeueAsync(Zongsoft.Messaging.MessageDequeueSettings settings, CancellationToken cancellation)
-		{
-			if(settings == null)
-				return this.DequeueOrPeekAsync(0);
-			else
-				return this.DequeueOrPeekAsync((int)settings.PollingTimeout.TotalSeconds);
-		}
+		public Message Peek() => this.PeekAsync().GetAwaiter().GetResult();
+		public Task<Message> PeekAsync(CancellationToken cancellation = default) => this.DequeueOrPeekAsync(-1);
 
-		public override Zongsoft.Messaging.MessageBase Peek()
-		{
-			return this.DequeueOrPeekAsync(-1).GetAwaiter().GetResult();
-		}
-
-		public override Task<Zongsoft.Messaging.MessageBase> PeekAsync(CancellationToken cancellation = default)
-		{
-			return this.DequeueOrPeekAsync(-1);
-		}
-
-		private async Task<Zongsoft.Messaging.MessageBase> DequeueOrPeekAsync(int waitSeconds)
+		private async Task<Message> DequeueOrPeekAsync(int waitSeconds)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (waitSeconds >= 0 ? "?waitseconds=" + waitSeconds.ToString() : "?peekonly=true"));
 			request.Headers.Add("x-mns-version", "2015-06-06");
@@ -245,7 +194,17 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			return null;
 		}
-		#endregion
+
+		public bool Handle(ref Message message) => this.Handler?.Handle(message) ?? false;
+
+		public Task<bool> HandleAsync(ref Message message, CancellationToken cancellation = default)
+		{
+			var handler = this.Handler;
+
+			return handler == null ?
+				Task.FromResult(false) :
+				handler.HandleAsync(message, cancellation);
+		}
 
 		#region 虚拟方法
 		protected virtual byte[] SerializeContent(object item)
@@ -282,7 +241,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 内部方法
 		internal string GetRequestUrl(params string[] parts)
 		{
-			return _provider.GetRequestUrl(this.Name, parts);
+			return MessageQueueUtility.GetRequestUrl(this.Name, parts);
 		}
 		#endregion
 	}

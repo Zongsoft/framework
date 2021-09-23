@@ -28,76 +28,30 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Net.Http;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	/// <summary>
-	/// 表示主题信息的实体类。
-	/// </summary>
-	public class TopicInfo
+	internal class MessageAuthenticator : HttpAuthenticator
 	{
-		/// <summary>
-		/// 获取或设置主题的名称。
-		/// </summary>
-		public string Name
+		#region 单例字段
+		public static MessageAuthenticator Instance = new MessageAuthenticator("MNS");
+		#endregion
+
+		#region 私有构造
+		private MessageAuthenticator(string name) : base(name, HttpSignatureMode.Header) { }
+		#endregion
+
+		#region 重写方法
+		protected override bool IsCanonicalizedHeader(string name)
 		{
-			get;
-			set;
+			return name.StartsWith("x-mns-");
 		}
 
-		/// <summary>
-		/// 获取或设置主题的创建时间。
-		/// </summary>
-		public DateTime CreatedTime
+		protected override string CanonicalizeResource(HttpRequestMessage request)
 		{
-			get;
-			set;
+			return request.RequestUri.PathAndQuery;
 		}
-
-		/// <summary>
-		/// 获取或设置主题的最后修改时间。
-		/// </summary>
-		public DateTime? ModifiedTime
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置主题中消息的最大长度，单位：byte。
-		/// </summary>
-		public int MaximumMessageSize
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置主题中消息的最大保持时长。
-		/// </summary>
-		public TimeSpan MessageRetentionPeriod
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置当前主题中的消息数量。
-		/// </summary>
-		public int MessageCount
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// 获取或设置一个值，指示主题队列是否启用了日志记录。
-		/// </summary>
-		public bool LoggingEnabled
-		{
-			get;
-			set;
-		}
+		#endregion
 	}
 }
