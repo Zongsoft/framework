@@ -52,24 +52,16 @@
 		</object>
 
 		<object name="Messaging">
-			<messaging.command>
-				<object name="Messaging" type="Zongsoft.Messaging.Commands.ListenerCommand, Zongsoft.Commands" />
-			</messaging.command>
+			<object name="Queue">
+				<queue.command>
+					<object name="Queue" type="Zongsoft.Messaging.Commands.QueueCommand, Zongsoft.Commands" />
+				</queue.command>
 
-			<object name="Start" type="Zongsoft.Messaging.Commands.ListenerStartCommand, Zongsoft.Commands" />
-			<object name="Stop" type="Zongsoft.Messaging.Commands.ListenerStopCommand, Zongsoft.Commands" />
-		</object>
-
-		<object name="Queue">
-			<queue.command>
-				<object name="Queue" type="Zongsoft.Collections.Commands.QueueCommand, Zongsoft.Commands" />
-			</queue.command>
-
-			<object name="In" type="Zongsoft.Collections.Commands.QueueInCommand, Zongsoft.Commands" />
-			<object name="Out" type="Zongsoft.Collections.Commands.QueueOutCommand, Zongsoft.Commands" />
-			<object name="Peek" type="Zongsoft.Collections.Commands.QueuePeekCommand, Zongsoft.Commands" />
-			<object name="Clear" type="Zongsoft.Collections.Commands.QueueClearCommand, Zongsoft.Commands" />
-			<object name="Count" type="Zongsoft.Collections.Commands.QueueCountCommand, Zongsoft.Commands" />
+				<object name="In" type="Zongsoft.Messaging.Commands.QueueInCommand, Zongsoft.Commands" />
+				<object name="Out" type="Zongsoft.Messaging.Commands.QueueOutCommand, Zongsoft.Commands" />
+				<object name="Clear" type="Zongsoft.Messaging.Commands.QueueClearCommand, Zongsoft.Commands" />
+				<object name="Count" type="Zongsoft.Messaging.Commands.QueueCountCommand, Zongsoft.Commands" />
+			</object>
 		</object>
 	</extension>
 </plugin>

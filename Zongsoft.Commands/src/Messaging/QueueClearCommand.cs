@@ -32,40 +32,30 @@ using System.ComponentModel;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Collections.Commands
+namespace Zongsoft.Messaging.Commands
 {
-	[DisplayName("Text.QueueCountCommand.Name")]
-	[Description("Text.QueueCountCommand.Description")]
-	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
-	public class QueueCountCommand : CommandBase<CommandContext>
+	[DisplayName("Text.QueueClearCommand.Name")]
+	[Description("Text.QueueClearCommand.Description")]
+	public class QueueClearCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public QueueCountCommand() : this("Count")
-		{
-		}
-
-		public QueueCountCommand(string name) : base(name)
-		{
-		}
+		public QueueClearCommand() : this("Clear") { }
+		public QueueClearCommand(string name) : base(name) { }
 		#endregion
 
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var result = 0;
-			var queues = QueueCommandHelper.GetQueues(context.CommandNode, context.Expression.Options.GetValue<string>("queues"));
+			var queue = context.CommandNode.FindQueue();
 
-			foreach(var queue in queues)
+			//显示执行成功的信息
+			if(queue != null)
 			{
-				var count = queue.Count;
-
-				if(count > 0)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_QueueCountCommand_Message, queue.Name, count));
-				else
-					context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_QueueIsEmpty, queue.Name));
+				queue.Clear();
+				context.Output.WriteLine(Properties.Resources.Text_CommandExecuteSucceed);
 			}
 
-			return result;
+			return null;
 		}
 		#endregion
 	}

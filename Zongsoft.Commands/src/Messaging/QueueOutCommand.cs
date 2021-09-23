@@ -29,40 +29,58 @@
 
 using System;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Messaging;
+using Zongsoft.Serialization;
 
-namespace Zongsoft.Collections.Commands
+namespace Zongsoft.Messaging.Commands
 {
-	[DisplayName("Text.QueueClearCommand.Name")]
-	[Description("Text.QueueClearCommand.Description")]
-	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
-	public class QueueClearCommand : CommandBase<CommandContext>
+	[DisplayName("Text.QueueOutCommand.Name")]
+	[Description("Text.QueueOutCommand.Description")]
+	[CommandOption("count", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Count")]
+	public class QueueOutCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public QueueClearCommand() : this("Clear")
-		{
-		}
-
-		public QueueClearCommand(string name) : base(name)
-		{
-		}
+		public QueueOutCommand() : this("Out") { }
+		public QueueOutCommand(string name) : base(name) { }
 		#endregion
 
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var queues = QueueCommandHelper.GetQueues(context.CommandNode, context.Expression.Options.GetValue<string>("queues"));
+			int count = context.Expression.Options.GetValue<int>("count");
 
-			foreach(var queue in queues)
+			if(count < 1)
+				throw new CommandOptionValueException("count", count);
+
+			var queue = context.CommandNode.FindQueue();
+			IList<object> result = null;
+
+			if(queue == null)
+				return null;
+
+			if(count > 1)
+				result = new List<object>(count);
+
+			for(int i = 0; i < count; i++)
 			{
-				queue.Clear();
+				var message = queue.Dequeue();
+
+				if(message == null)
+					continue;
+
+				context.Output.WriteLine(Serializer.Json.Serialize(message));
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_QueueOutCommand_Message, i + 1, count, queue.Name));
+
+				if(result == null)
+					return message;
+				else
+					result.Add(message);
 			}
 
-			//显示执行成功的信息
-			context.Output.WriteLine(Properties.Resources.Text_CommandExecuteSucceed);
-
-			return null;
+			return result;
 		}
 		#endregion
 	}

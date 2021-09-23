@@ -28,84 +28,98 @@
  */
 
 using System;
+using System.Linq;
 using System.ComponentModel;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Collections.Commands
+namespace Zongsoft.Messaging.Commands
 {
 	[DisplayName("Text.QueueCommand.Name")]
 	[Description("Text.QueueCommand.Description")]
-	[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
+	[CommandOption("queue", typeof(string), Description = "Text.QueueCommand.Options.Queue")]
+	[CommandOption("topic", typeof(string), Description = "Text.QueueCommand.Options.Topic")]
 	public class QueueCommand : CommandBase<CommandContext>
 	{
 		#region 成员字段
-		private IQueue _queue;
-		private IQueueProvider _queueProvider;
-
-		private System.IServiceProvider _serviceProvider;
+		private readonly IServiceProvider _serviceProvider;
 		#endregion
 
 		#region 构造函数
 		public QueueCommand(IServiceProvider serviceProvider) : base("Queue")
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
-			_queue = (IQueue)serviceProvider.GetService(typeof(IQueue));
-			_queueProvider = (IQueueProvider)serviceProvider.GetService(typeof(IQueueProvider));
 		}
 
 		public QueueCommand(IServiceProvider serviceProvider, string name) : base(name)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
-			_queue = (IQueue)serviceProvider.GetService(typeof(IQueue));
-			_queueProvider = (IQueueProvider)serviceProvider.GetService(typeof(IQueueProvider));
+			this.Queue = serviceProvider.ResolveAll<IMessageQueue>().FirstOrDefault(queue => queue.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 		}
 		#endregion
 
 		#region 公共属性
-		public IQueue Queue
-		{
-			get => _queue;
-			set => _queue = value ?? throw new ArgumentNullException();
-		}
-
-		public IQueueProvider QueueProvider
-		{
-			get => _queueProvider;
-			set => _queueProvider = value ?? throw new ArgumentNullException();
-		}
+		public IMessageQueue Queue { get; set; }
+		public IMessageTopic Topic { get; set; }
 		#endregion
 
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			if(context.Expression.Options.TryGetValue("name", out string name))
+			string name;
+
+			if(context.Expression.Options.TryGetValue("queue", out name))
 			{
-				var parts = name.Split('@');
+				if(string.IsNullOrEmpty(name))
+					return this.Queue;
 
-				if(parts.Length == 2)
-					_queueProvider = _serviceProvider.GetMatchedService<IQueueProvider>(parts[1]);
-				else
-					_queueProvider = (IQueueProvider)_serviceProvider.GetService(typeof(IQueueProvider));
+				var providers = _serviceProvider.ResolveAll<IMessageQueueProvider>();
 
-				if(_queueProvider == null)
-					throw new CommandException(Properties.Resources.Text_QueueCommand_MissingQueueProvider);
-
-				_queue = _queueProvider.GetQueue(parts[0]);
-
-				if(_queue == null)
+				if(providers == null)
 					throw new CommandException(string.Format(Properties.Resources.Text_QueueCommand_NotFoundQueue, name));
+
+				foreach(var provider in providers)
+				{
+					var queue = provider.GetQueue(name);
+
+					if(queue != null)
+					{
+						this.Queue = queue;
+						this.Topic = null;
+
+						return queue; ;
+					}
+				}
 			}
 
-			if(_queue == null)
+			if(context.Expression.Options.TryGetValue("topic", out name))
+			{
+				if(string.IsNullOrEmpty(name))
+					return this.Topic;
+
+				var providers = _serviceProvider.ResolveAll<IMessageTopicProvider>();
+
+				if(providers == null)
+					throw new CommandException(string.Format(Properties.Resources.Text_QueueCommand_NotFoundQueue, name));
+
+				foreach(var provider in providers)
+				{
+					var topic = provider.GetTopic(name);
+
+					if(topic != null)
+					{
+						this.Topic = topic;
+						this.Queue = null;
+
+						return topic; ;
+					}
+				}
+			}
+
+			if(this.Queue == null && this.Topic == null)
 				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
 
-			//打印队列信息
-			context.Output.WriteLine(string.Format(Properties.Resources.Text_QueueCommand_Message, _queue.Name, _queue.Count, _queue.GetType().FullName, _queue.ToString()));
-
-			return _queue;
+			return null;
 		}
 		#endregion
 	}

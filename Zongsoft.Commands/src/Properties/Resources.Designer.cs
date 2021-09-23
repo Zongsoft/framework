@@ -47,8 +47,8 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性
-        ///   重写当前线程的 CurrentUICulture 属性。
+        ///   重写当前线程的 CurrentUICulture 属性，对
+        ///   使用此强类型资源类的所有资源查找执行重写。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -467,7 +467,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 从队列提供程序中没有找到指定名称为”{0}“的队列。 的本地化字符串。
+        ///   查找类似 从队列提供程序中没有找到指定名称为“{0}”的队列。 的本地化字符串。
         /// </summary>
         internal static string Text_QueueCommand_NotFoundQueue {
             get {
@@ -487,9 +487,9 @@ namespace Zongsoft.Properties {
         /// <summary>
         ///   查找类似 消息队列名称。 的本地化字符串。
         /// </summary>
-        internal static string Text_QueueCommand_Options_Name {
+        internal static string Text_QueueCommand_Options_Queue {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Options.Name", resourceCulture);
+                return ResourceManager.GetString("Text.QueueCommand.Options.Queue", resourceCulture);
             }
         }
         
@@ -508,6 +508,15 @@ namespace Zongsoft.Properties {
         internal static string Text_QueueCommand_Options_Round {
             get {
                 return ResourceManager.GetString("Text.QueueCommand.Options.Round", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 主题消息队列的名称。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueCommand_Options_Topic {
+            get {
+                return ResourceManager.GetString("Text.QueueCommand.Options.Topic", resourceCulture);
             }
         }
         

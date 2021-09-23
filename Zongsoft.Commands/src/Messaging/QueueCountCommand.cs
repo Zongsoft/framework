@@ -28,56 +28,41 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Collections.Commands
+namespace Zongsoft.Messaging.Commands
 {
-	internal static class QueueCommandHelper
+	[DisplayName("Text.QueueCountCommand.Name")]
+	[Description("Text.QueueCountCommand.Description")]
+	[CommandOption("queues", Type = typeof(string), Description = "Text.QueueCommand.Options.Queues")]
+	public class QueueCountCommand : CommandBase<CommandContext>
 	{
-		public static ICollection<IQueue> GetQueues(CommandTreeNode node, string names)
+		#region 构造函数
+		public QueueCountCommand() : this("Count") { }
+		public QueueCountCommand(string name) : base(name) { }
+		#endregion
+
+		#region 执行方法
+		protected override object OnExecute(CommandContext context)
 		{
-			var result = new List<IQueue>();
-			IQueue queue;
+			var queue = context.CommandNode.FindQueue();
 
-			if(string.IsNullOrWhiteSpace(names))
+			if(queue != null)
 			{
-				queue = FindQueue(node);
+				var count = queue.GetCount();
 
-				if(queue == null)
-					throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
+				if(count > 0)
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_QueueCountCommand_Message, queue.Name, count));
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_QueueIsEmpty, queue.Name));
 
-				result.Add(queue);
-			}
-			else
-			{
-				foreach(var name in names.Split(',', ';'))
-				{
-					if(!string.IsNullOrWhiteSpace(name))
-					{
-						queue = FindQueue(node, name);
-
-						if(queue == null)
-							throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, $"Queue[{name}]"));
-
-						result.Add(queue);
-					}
-				}
+				return count;
 			}
 
-			return result;
+			return 0;
 		}
-
-		private static IQueue FindQueue(CommandTreeNode node, string name = null)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is QueueCommand queueCommand)
-				return name == null ? queueCommand.Queue : queueCommand.QueueProvider.GetQueue(name);
-
-			return FindQueue(node.Parent, name);
-		}
+		#endregion
 	}
 }

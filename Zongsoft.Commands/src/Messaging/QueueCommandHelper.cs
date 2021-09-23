@@ -31,63 +31,31 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
-using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.Commands
 {
-	public class ListenerCommand : CommandBase<CommandContext>
+	internal static class QueueCommandHelper
 	{
-		#region 成员字段
-		private IListener _listener;
-		#endregion
-
-		#region 构造函数
-		public ListenerCommand() : base("Listener")
-		{
-		}
-
-		public ListenerCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 公共属性
-		public IListener Server
-		{
-			get
-			{
-				return _listener;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_listener = value;
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			return _listener;
-		}
-		#endregion
-
-		#region 静态方法
-		internal static IListener GetListener(CommandTreeNode node)
+		public static IMessageQueue FindQueue(this CommandTreeNode node)
 		{
 			if(node == null)
 				return null;
 
-			var command = node.Command as ListenerCommand;
+			if(node.Command is QueueCommand queueCommand)
+				return queueCommand.Queue;
 
-			if(command != null)
-				return command.Server;
-
-			return GetListener(node.Parent);
+			return FindQueue(node.Parent);
 		}
-		#endregion
+
+		public static IMessageTopic FindTopic(this CommandTreeNode node)
+		{
+			if(node == null)
+				return null;
+
+			if(node.Command is QueueCommand queueCommand)
+				return queueCommand.Topic;
+
+			return FindTopic(node.Parent);
+		}
 	}
 }

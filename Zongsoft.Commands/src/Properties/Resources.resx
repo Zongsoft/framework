@@ -254,12 +254,12 @@
     <value>队列命令</value>
   </data>
   <data name="Text.QueueCommand.NotFoundQueue" xml:space="preserve">
-    <value>从队列提供程序中没有找到指定名称为”{0}“的队列。</value>
+    <value>从队列提供程序中没有找到指定名称为“{0}”的队列。</value>
   </data>
   <data name="Text.QueueCommand.Options.Count" xml:space="preserve">
     <value>出队或者提取的项目个数。</value>
   </data>
-  <data name="Text.QueueCommand.Options.Name" xml:space="preserve">
+  <data name="Text.QueueCommand.Options.Queue" xml:space="preserve">
     <value>消息队列名称。</value>
   </data>
   <data name="Text.QueueCommand.Options.Queues" xml:space="preserve">
@@ -267,6 +267,9 @@
   </data>
   <data name="Text.QueueCommand.Options.Round" xml:space="preserve">
     <value>出队或入队操作循环执行的次数，默认值为1。如果在出队命令中该参数为负数则表示直至将队列出空为止。</value>
+  </data>
+  <data name="Text.QueueCommand.Options.Topic" xml:space="preserve">
+    <value>主题消息队列的名称。</value>
   </data>
   <data name="Text.QueueCountCommand.Description" xml:space="preserve">
     <value>返回指定队列的元素个数。</value>
