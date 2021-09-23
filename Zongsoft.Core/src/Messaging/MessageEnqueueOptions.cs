@@ -39,11 +39,13 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 构造函数
-		public MessageEnqueueOptions(byte priority) : this(TimeSpan.Zero, priority) { }
-		public MessageEnqueueOptions(TimeSpan delay, byte priority = 6)
+		public MessageEnqueueOptions(byte priority) : this(MessageReliability.MostOnce, priority) { }
+		public MessageEnqueueOptions(MessageReliability reliability, byte priority = 6) : this(TimeSpan.Zero, reliability, priority) { }
+		public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 6)
 		{
 			this.Delay = delay;
 			this.Priority = priority;
+			this.Reliability = reliability;
 		}
 		#endregion
 

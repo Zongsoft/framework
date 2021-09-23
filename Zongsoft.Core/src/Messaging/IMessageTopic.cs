@@ -42,9 +42,6 @@ namespace Zongsoft.Messaging
 		#region 属性定义
 		/// <summary>获取消息队列的名称。</summary>
 		string Name { get; }
-
-		/// <summary>获取或设置消息主题的参数设置。</summary>
-		IMessageTopicOptions Options { get; set; }
 		#endregion
 
 		#region 方法定义
@@ -53,10 +50,10 @@ namespace Zongsoft.Messaging
 		Task<bool> SubscribeAsync(string topic, MessageTopicSubscriptionOptions options = null) => this.SubscribeAsync(topic, null, options);
 		Task<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null);
 
-		void Publish(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null) => this.Publish(data, topic, null, options);
-		void Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null);
-		Task PublishAsync(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
-		Task PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		string Publish(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null) => this.Publish(data, topic, null, options);
+		string Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null);
+		Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
+		Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 

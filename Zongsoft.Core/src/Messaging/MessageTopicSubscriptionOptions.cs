@@ -33,10 +33,23 @@ namespace Zongsoft.Messaging
 {
 	public class MessageTopicSubscriptionOptions
 	{
+		#region 单例字段
+		public static readonly MessageTopicSubscriptionOptions Default = new MessageTopicSubscriptionOptions(MessageReliability.MostOnce);
+		#endregion
+
+		#region 构造函数
+		public MessageTopicSubscriptionOptions(MessageReliability reliability = MessageReliability.MostOnce)
+		{
+			this.Reliability = reliability;
+		}
+		#endregion
+
+		#region 公共属性
 		/// <summary>获取或设置订阅消息回调的可靠性。</summary>
 		public MessageReliability Reliability { get; set; }
 
 		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
 		public MessageSubscriptionFallbackBehavior FallbackBehavior { get; set; }
+		#endregion
 	}
 }

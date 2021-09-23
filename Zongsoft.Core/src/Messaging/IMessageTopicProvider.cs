@@ -31,22 +31,8 @@ using System;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageTopicPublishOptions
+	public interface IMessageTopicProvider
 	{
-		#region 单例字段
-		public static readonly MessageTopicPublishOptions Default = new MessageTopicPublishOptions(MessageReliability.MostOnce);
-		#endregion
-
-		#region 构造函数
-		public MessageTopicPublishOptions(MessageReliability reliability = MessageReliability.MostOnce)
-		{
-			this.Reliability = reliability;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置消息的可靠性。</summary>
-		public MessageReliability Reliability { get; set; }
-		#endregion
+		IMessageTopic GetTopic(string name);
 	}
 }

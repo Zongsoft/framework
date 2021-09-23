@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Messaging
 {
@@ -42,9 +41,6 @@ namespace Zongsoft.Messaging
 		#region 属性定义
 		/// <summary>获取消息队列的名称。</summary>
 		string Name { get; }
-
-		/// <summary>获取或设置消息队列的参数设置。</summary>
-		IMessageQueueOptions Options { get; set; }
 		#endregion
 
 		#region 长度方法
@@ -82,7 +78,8 @@ namespace Zongsoft.Messaging
 		/// </summary>
 		/// <param name="data">要入队的数据。</param>
 		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
-		void Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null);
+		/// <returns>返回入队成功的消息标识。</returns>
+		string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null);
 
 		/// <summary>
 		/// 将消息添加到队列的结尾处。
@@ -91,7 +88,7 @@ namespace Zongsoft.Messaging
 		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
+		Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 
@@ -100,35 +97,19 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface IMessageQueue<TMessage> : IMessageQueue
 	{
-		#region 公共属性
-		/// <summary>获取消息协议解析器。</summary>
-		Communication.IPacketizer<TMessage> Packetizer { get; }
-
-		/// <summary>获取消息队列的订阅者集合。</summary>
-		ICollection<IMessageQueueSubscriber<TMessage>> Subscribers { get; }
-		#endregion
-
-		#region 订阅方法
-		bool Subscribe(Func<TMessage, bool> handler, MessageQueueSubscriptionOptions options = null);
-		Task<bool> SubscribeAsync(Func<TMessage, bool> handler, MessageQueueSubscriptionOptions options = null);
-		#endregion
-
-		#region 入队方法
+		#region 处理方法
 		/// <summary>
-		/// 将消息添加到队列的结尾处。
+		/// 处理队列消息。
 		/// </summary>
-		/// <param name="message">要入队的消息。</param>
-		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
-		void Enqueue(ref TMessage message, MessageEnqueueOptions options = null);
+		/// <param name="message">待处理的消息。</param>
+		bool Handle(ref TMessage message);
 
 		/// <summary>
-		/// 将消息添加到队列的结尾处。
+		/// 处理队列消息。
 		/// </summary>
-		/// <param name="message">要入队的消息。</param>
-		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务对象。</returns>
-		Task EnqueueAsync(ref TMessage message, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
+		/// <param name="message">待处理的消息。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		Task<bool> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
 		#endregion
 
 		#region 出队方法
@@ -137,7 +118,7 @@ namespace Zongsoft.Messaging
 		/// </summary>
 		/// <param name="options">指定出队的一些选项参数，具体内容请参考特定实现者的规范。</param>
 		/// <returns>返回从队列的开头处移除的消息。</returns>
-		ref TMessage Dequeue(MessageDequeueOptions options = null);
+		TMessage Dequeue(MessageDequeueOptions options = null);
 
 		/// <summary>
 		/// 移除并返回位于队列开始处的消息。
@@ -148,19 +129,7 @@ namespace Zongsoft.Messaging
 		Task<TMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default);
 		#endregion
 
-		#region 获取方法
-		/// <summary>返回位于队列开始处的消息但不将其移除。</summary>
-		/// <returns>返回位于队列开头处的消息。</returns>
-		ref TMessage Peek();
-
-		/// <summary>返回位于队列开始处的消息但不将其移除。</summary>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务消息。</returns>
-		Task<TMessage> PeekAsync(CancellationToken cancellation = default);
-		#endregion
-
 		#region 默认实现
-		Task EnqueueAsync(ref TMessage message, CancellationToken cancellation) => this.EnqueueAsync(ref message, null, cancellation);
 		Task<TMessage> DequeueAsync(CancellationToken cancellation) => this.DequeueAsync(null, cancellation);
 		#endregion
 	}

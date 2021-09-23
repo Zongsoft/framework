@@ -28,12 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Messaging
 {
-	public interface IQueueProvider
+	public interface IMessageQueueProvider
 	{
-		IQueue GetQueue(string name);
+		IMessageQueue GetQueue(string name);
 	}
 }
