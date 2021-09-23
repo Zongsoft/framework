@@ -43,6 +43,11 @@ namespace Zongsoft.Messaging
 		string Name { get; }
 		#endregion
 
+		#region 订阅方法
+		bool Subscribe(MessageQueueSubscriptionOptions options = null);
+		Task<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null);
+		#endregion
+
 		#region 长度方法
 		/// <summary>
 		/// 获取队列的元素数量。
