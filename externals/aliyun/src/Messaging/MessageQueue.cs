@@ -114,6 +114,16 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			throw new NotImplementedException();
 		}
 
+		public bool Subscribe(MessageQueueSubscriptionOptions options = null)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Task<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null)
+		{
+			throw new NotImplementedException();
+		}
+
 		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options).GetAwaiter().GetResult();
 
 		public Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
