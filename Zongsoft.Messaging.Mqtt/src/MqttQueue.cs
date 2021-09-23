@@ -197,6 +197,18 @@ namespace Zongsoft.Messaging.Mqtt
 		private static string GetSubscriberKey(string topic, string tags) => string.IsNullOrEmpty(tags) ? topic : topic + ':' + tags;
 		#endregion
 
+		#region 重写方法
+		public override string ToString()
+		{
+			var setting = this.ConnectionSetting;
+
+			if(setting == null)
+				return this.Name;
+
+			return $"{this.Name}{Environment.NewLine}Server={setting.Values.Server};Instance={setting.Values.Instance};Client={setting.Values.Client}";
+		}
+		#endregion
+
 		#region 处置方法
 		public async ValueTask DisposeAsync()
 		{

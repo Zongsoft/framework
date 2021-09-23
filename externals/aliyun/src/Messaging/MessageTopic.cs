@@ -35,6 +35,7 @@ using System.Threading.Tasks;
 
 using Zongsoft.Services;
 using Zongsoft.Messaging;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -65,6 +66,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		}
 
 		public string Name { get; }
+
+		public IConnectionSetting ConnectionSetting { get; set; }
 
 		public bool Handle(ref MessageTopic message)
 		{

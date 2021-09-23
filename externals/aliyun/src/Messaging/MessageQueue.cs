@@ -39,6 +39,7 @@ using System.Text.RegularExpressions;
 using Zongsoft.Services;
 using Zongsoft.Messaging;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -67,6 +68,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 公共属性
 		public string Name { get; }
 		public IMessageQueueOptions Options { get; set; }
+		public IConnectionSetting ConnectionSetting { get; set; }
 		public IHandler<Message> Handler { get; set; }
 		#endregion
 
