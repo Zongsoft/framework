@@ -54,12 +54,12 @@ namespace Zongsoft.Messaging.Mqtt
 			_ => MqttQualityOfServiceLevel.AtMostOnce,
 		};
 
-		public static IMqttClientOptions GetOptions(IMessageTopicOptions options = null)
+		public static IMqttClientOptions GetOptions(Zongsoft.Configuration.IConnectionSetting setting = null)
 		{
-			if(options == null)
-				throw new ArgumentNullException(nameof(options));
+			if(setting == null)
+				throw new ArgumentNullException(nameof(setting));
 
-			var clientId = options.ConnectionSettings.Values.Client;
+			var clientId = setting.Values.Client;
 
 			//确保ClientId不为空
 			if(string.IsNullOrWhiteSpace(clientId))
@@ -67,12 +67,12 @@ namespace Zongsoft.Messaging.Mqtt
 
 			return new MqttClientOptionsBuilder()
 				.WithClientId(clientId)
-				.WithTcpServer(options.ConnectionSettings.Values.Server)
-				.WithCredentials(options.ConnectionSettings.Values.UserName, options.ConnectionSettings.Values.Password)
+				.WithTcpServer(setting.Values.Server)
+				.WithCredentials(setting.Values.UserName, setting.Values.Password)
 				.Build();
 		}
 
-		public async static Task EnsureStart(this IManagedMqttClient client, IMessageTopicOptions options = null)
+		public async static Task EnsureStart(this IManagedMqttClient client, Zongsoft.Configuration.IConnectionSetting setting = null)
 		{
 			if(client == null)
 				throw new ArgumentNullException(nameof(client));
@@ -82,7 +82,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 			var mqttOptions = new ManagedMqttClientOptionsBuilder()
 				.WithAutoReconnectDelay(TimeSpan.FromSeconds(10))
-				.WithClientOptions(GetOptions(options))
+				.WithClientOptions(GetOptions(setting))
 				.Build();
 
 			await client.StartAsync(mqttOptions);

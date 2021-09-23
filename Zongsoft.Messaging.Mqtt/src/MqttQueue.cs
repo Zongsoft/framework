@@ -48,7 +48,6 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	[Service(typeof(IMessageTopic<TopicMessage>))]
 	public class MqttQueue : IMessageTopic<TopicMessage>, IAsyncDisposable
 	{
 		#region 工厂字段
@@ -61,13 +60,14 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 构造函数
-		public MqttQueue(string name)
+		public MqttQueue(string name, IConnectionSetting connectionSetting)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
-			this.Options = GetOptions(this.Name);
+			this.ConnectionSetting = connectionSetting;
+
 			_client = Factory.CreateManagedMqttClient();
 			_subscribers = new Dictionary<string, MqttSubscriber>();
 
@@ -77,7 +77,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 		#region 公共属性
 		public string Name { get; }
-		public IMessageTopicOptions Options { get; set; }
+		public IConnectionSetting ConnectionSetting { get; set; }
 		public IHandler<TopicMessage> Handler { get; set; }
 		public ICollection<MqttSubscriber> Subscribers { get => _subscribers.Values; }
 		#endregion
@@ -96,7 +96,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
 			{
-				_client.EnsureStart(this.Options).GetAwaiter().GetResult();
+				_client.EnsureStart(this.ConnectionSetting).GetAwaiter().GetResult();
 				return true;
 			}
 
@@ -116,7 +116,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
 			{
-				await _client.EnsureStart(this.Options);
+				await _client.EnsureStart(this.ConnectionSetting);
 				return true;
 			}
 
@@ -154,7 +154,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 发布方法
-		public void Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null)
+		public string Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null)
 		{
 			var message = new MqttApplicationMessage()
 			{
@@ -163,36 +163,38 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			var result = _client.EnsureStart(this.Options)
+			var result = _client.EnsureStart(this.ConnectionSetting)
 				.ContinueWith
 				(
 					(task, arg) => _client.PublishAsync((MqttApplicationMessage)arg),
 					message
-				).GetAwaiter().GetResult();
+				).GetAwaiter().GetResult().Result;
+
+			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
-		public Task PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		{
+			return this.PublishAsync(data.ToArray(), topic, tags, options, cancellation);
+		}
+
+		public async Task<string> PublishAsync(byte[] data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			var message = new MqttApplicationMessage()
 			{
 				Topic = topic,
-				Payload = data.ToArray(),
+				Payload = data,
 				QualityOfServiceLevel = options == null ? MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			return _client.EnsureStart()
-				.ContinueWith
-				(
-					(task, arg) => _client.PublishAsync((MqttApplicationMessage)arg),
-					message,
-					cancellation
-				);
+			await _client.EnsureStart();
+			var result = await _client.PublishAsync(message);
+			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 		#endregion
 
 		#region 私有方法
 		private static string GetSubscriberKey(string topic, string tags) => string.IsNullOrEmpty(tags) ? topic : topic + ':' + tags;
-		private static IMessageTopicOptions GetOptions(string name) => ApplicationContext.Current?.Configuration.GetOption<IMessageTopicOptions>("/Messaging/Mqtt/" + name);
 		#endregion
 
 		#region 处置方法
