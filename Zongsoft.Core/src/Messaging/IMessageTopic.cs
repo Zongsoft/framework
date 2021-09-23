@@ -42,6 +42,9 @@ namespace Zongsoft.Messaging
 		#region 属性定义
 		/// <summary>获取消息队列的名称。</summary>
 		string Name { get; }
+
+		/// <summary>获取或设置消息队列的连接设置。</summary>
+		Configuration.IConnectionSetting ConnectionSetting { get; set; }
 		#endregion
 
 		#region 方法定义
