@@ -44,6 +44,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 公共属性
+		public string Name => "Mqtt";
 		public int Count => _queues.Count;
 		#endregion
 
