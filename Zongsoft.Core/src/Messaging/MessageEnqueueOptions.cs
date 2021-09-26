@@ -35,15 +35,16 @@ namespace Zongsoft.Messaging
 	public class MessageEnqueueOptions
 	{
 		#region 单例字段
-		public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions(0);
+		public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions();
 		#endregion
 
 		#region 构造函数
-		public MessageEnqueueOptions(byte priority) : this(MessageReliability.MostOnce, priority) { }
-		public MessageEnqueueOptions(MessageReliability reliability, byte priority = 6) : this(TimeSpan.Zero, reliability, priority) { }
-		public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 6)
+		public MessageEnqueueOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
+		public MessageEnqueueOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
+		public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
 		{
 			this.Delay = delay;
+			this.Expiry = TimeSpan.Zero;
 			this.Priority = priority;
 			this.Reliability = reliability;
 		}
@@ -52,6 +53,9 @@ namespace Zongsoft.Messaging
 		#region 公共属性
 		/// <summary>获取或设置入队的延迟时长。</summary>
 		public TimeSpan Delay { get; set; }
+
+		/// <summary>获取或设置消息的有效期。</summary>
+		public TimeSpan Expiry { get; set; }
 
 		/// <summary>获取或设置消息的优先级。</summary>
 		public byte Priority { get; set; }

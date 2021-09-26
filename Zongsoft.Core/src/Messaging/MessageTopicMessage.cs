@@ -1,0 +1,149 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Core library.
+ *
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Zongsoft.Messaging
+{
+	/// <summary>
+	/// 表示主题消息的结构。
+	/// </summary>
+	public struct MessageTopicMessage
+	{
+		#region 成员字段
+		private readonly Delegate _acknowledger;
+		#endregion
+
+		#region 构造函数
+		public MessageTopicMessage(string topic, byte[] data) : this(null, topic, data, null, (Delegate)null) { }
+
+		public MessageTopicMessage(string topic, byte[] data, Action acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, Action<TimeSpan> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, string tags, Action acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+
+		public MessageTopicMessage(string topic, byte[] data, Func<CancellationToken, Task> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, string tags, Func<CancellationToken, Task> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+
+		public MessageTopicMessage(string identifier, string topic, byte[] data) : this(identifier, topic, data, null, (Delegate)null) { }
+
+		public MessageTopicMessage(string identifier, string topic, byte[] data, Action acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, Action<TimeSpan> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Action acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+
+		public MessageTopicMessage(string identifier, string topic, byte[] data, Func<CancellationToken, Task> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Func<CancellationToken, Task> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+
+		private MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Delegate acknowledger)
+		{
+			this.Topic = topic;
+			this.Data = data;
+			this.Tags = tags;
+			this.Identifier = identifier;
+			this.Identity = null;
+			this.Timestamp = DateTime.UtcNow;
+			_acknowledger = acknowledger;
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取或设置消息主题。</summary>
+		public string Topic { get; }
+
+		/// <summary>获取或设置消息内容。</summary>
+		public byte[] Data { get; set; }
+
+		/// <summary>获取或设置主题标签。</summary>
+		public string Tags { get; set; }
+
+		/// <summary>获取或设置消息的身份标识。</summary>
+		public string Identity { get; set; }
+
+		/// <summary>获取或设置消息的标识符。</summary>
+		public string Identifier { get; set; }
+
+		/// <summary>获取或设置消息时间戳。</summary>
+		public DateTime Timestamp { get; set; }
+		#endregion
+
+		#region 公共方法
+		public void Acknowledge() => this.Acknowledge(TimeSpan.Zero);
+		public void Acknowledge(TimeSpan delay)
+		{
+			var acknowledger = _acknowledger;
+
+			if(acknowledger == null)
+				return;
+
+			if(acknowledger.Method.ReturnType == null || acknowledger.Method.ReturnType == typeof(void))
+			{
+				if(acknowledger.Method.GetParameters().Length == 0)
+					acknowledger.DynamicInvoke();
+				else
+					acknowledger.DynamicInvoke(delay);
+			}
+			else
+			{
+				if(acknowledger.Method.GetParameters().Length == 1)
+					((Task)acknowledger.DynamicInvoke(CancellationToken.None)).GetAwaiter().GetResult();
+				else
+					((Task)acknowledger.DynamicInvoke(delay, CancellationToken.None)).GetAwaiter().GetResult();
+			}
+		}
+
+		public Task AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
+		public Task AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
+		{
+			var acknowledger = _acknowledger;
+
+			if(acknowledger == null)
+				return Task.CompletedTask;
+
+			if(_acknowledger.Method.ReturnType == null || _acknowledger.Method.ReturnType == typeof(void))
+			{
+				if(acknowledger.Method.GetParameters().Length == 0)
+					acknowledger.DynamicInvoke();
+				else
+					acknowledger.DynamicInvoke(delay);
+
+				return Task.CompletedTask;
+			}
+
+			return acknowledger.Method.GetParameters().Length == 1 ? (Task)_acknowledger.DynamicInvoke(cancellation) : (Task)_acknowledger.DynamicInvoke(delay, cancellation);
+		}
+		#endregion
+	}
+}

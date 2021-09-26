@@ -49,7 +49,7 @@ namespace Zongsoft.Messaging
 		public MessageReliability Reliability { get; set; }
 
 		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
-		public MessageSubscriptionFallbackBehavior FallbackBehavior { get; set; }
+		public MessageFallbackBehavior FallbackBehavior { get; set; }
 		#endregion
 	}
 }

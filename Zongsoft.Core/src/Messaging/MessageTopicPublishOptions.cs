@@ -34,17 +34,31 @@ namespace Zongsoft.Messaging
 	public class MessageTopicPublishOptions
 	{
 		#region 单例字段
-		public static readonly MessageTopicPublishOptions Default = new MessageTopicPublishOptions(MessageReliability.MostOnce);
+		public static readonly MessageTopicPublishOptions Default = new MessageTopicPublishOptions();
 		#endregion
 
 		#region 构造函数
-		public MessageTopicPublishOptions(MessageReliability reliability = MessageReliability.MostOnce)
+		public MessageTopicPublishOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
+		public MessageTopicPublishOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
+		public MessageTopicPublishOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
 		{
+			this.Delay = delay;
+			this.Expiry = TimeSpan.Zero;
+			this.Priority = priority;
 			this.Reliability = reliability;
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取或设置入队的延迟时长。</summary>
+		public TimeSpan Delay { get; set; }
+
+		/// <summary>获取或设置消息的有效期。</summary>
+		public TimeSpan Expiry { get; set; }
+
+		/// <summary>获取或设置消息的优先级。</summary>
+		public byte Priority { get; set; }
+
 		/// <summary>获取或设置消息的可靠性。</summary>
 		public MessageReliability Reliability { get; set; }
 		#endregion
