@@ -33,6 +33,7 @@ namespace Zongsoft.Messaging
 {
 	public interface IMessageTopicProvider
 	{
+		string Name { get; }
 		IMessageTopic GetTopic(string name);
 	}
 }

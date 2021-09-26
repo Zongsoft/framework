@@ -33,6 +33,7 @@ namespace Zongsoft.Messaging
 {
 	public interface IMessageQueueProvider
 	{
+		string Name { get; }
 		IMessageQueue GetQueue(string name);
 	}
 }
