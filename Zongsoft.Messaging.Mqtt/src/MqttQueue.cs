@@ -48,7 +48,7 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttQueue : IMessageTopic<TopicMessage>, IAsyncDisposable
+	public class MqttQueue : IMessageTopic<MessageTopicMessage>, IAsyncDisposable
 	{
 		#region 工厂字段
 		private static readonly MqttFactory Factory = new MqttFactory();
@@ -78,7 +78,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 公共属性
 		public string Name { get; }
 		public IConnectionSetting ConnectionSetting { get; set; }
-		public IHandler<TopicMessage> Handler { get; set; }
+		public IHandler<MessageTopicMessage> Handler { get; set; }
 		public ICollection<MqttSubscriber> Subscribers { get => _subscribers.Values; }
 		#endregion
 
@@ -129,7 +129,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 处理方法
 		private void OnHandle(MqttApplicationMessageReceivedEventArgs args)
 		{
-			var message = new TopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload)
+			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => args.AcknowledgeAsync(cancellation))
 			{
 				Identity = args.ClientId
 			};
@@ -140,7 +140,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 		private async Task OnHandleAsync(MqttApplicationMessageReceivedEventArgs args)
 		{
-			var message = new TopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload)
+			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => args.AcknowledgeAsync(cancellation))
 			{
 				Identity = args.ClientId
 			};
@@ -149,8 +149,8 @@ namespace Zongsoft.Messaging.Mqtt
 				await args.AcknowledgeAsync(CancellationToken.None);
 		}
 
-		public virtual bool Handle(ref TopicMessage message) => this.Handler?.Handle(message) ?? false;
-		public virtual Task<bool> HandleAsync(ref TopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
+		public virtual bool Handle(ref MessageTopicMessage message) => this.Handler?.Handle(message) ?? false;
+		public virtual Task<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
 		#endregion
 
 		#region 发布方法
@@ -214,6 +214,9 @@ namespace Zongsoft.Messaging.Mqtt
 		{
 			await _client.StopAsync();
 		}
+		#endregion
+
+		#region 应答器类
 		#endregion
 	}
 }

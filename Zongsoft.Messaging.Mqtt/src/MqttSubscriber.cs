@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttSubscriber : IMessageTopicSubscriber<TopicMessage>, IEquatable<MqttSubscriber>
+	public class MqttSubscriber : IMessageTopicSubscriber<MessageTopicMessage>, IEquatable<MqttSubscriber>
 	{
 		#region 成员字段
 		private readonly MqttQueue _queue;
@@ -67,8 +67,8 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 显式实现
-		string IMessageSubscriber<TopicMessage>.Name => _queue.Name;
-		IMessageTopic<TopicMessage> IMessageTopicSubscriber<TopicMessage>.Topic => _queue;
+		string IMessageSubscriber<MessageTopicMessage>.Name => _queue.Name;
+		IMessageTopic<MessageTopicMessage> IMessageTopicSubscriber<MessageTopicMessage>.Topic => _queue;
 		#endregion
 	}
 }
