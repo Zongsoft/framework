@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Messaging;
@@ -35,21 +37,44 @@ using Zongsoft.Messaging;
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
 	[Service(typeof(IMessageQueueProvider))]
-	public class MessageQueueProvider : IMessageQueueProvider
+	public class MessageQueueProvider : IMessageQueueProvider, IEnumerable<MessageQueue>
 	{
-		public string Name => "Aliyun.Queue";
+		#region 成员字段
+		private readonly Dictionary<string, MessageQueue> _queues = new Dictionary<string, MessageQueue>(StringComparer.OrdinalIgnoreCase);
+		#endregion
 
+		#region 公共属性
+		public string Name => "Aliyun.Queue";
+		public int Count => _queues.Count;
+		#endregion
+
+		#region 公共方法
 		public IMessageQueue GetQueue(string name)
 		{
 			if(string.IsNullOrEmpty(name))
 				return null;
 
-			var options = MessageUtility.GetOptions();
+			if(_queues.TryGetValue(name, out var queue) && queue != null)
+				return queue;
 
-			if(options != null && options.Queues.TryGet(name, out var option))
-				return new MessageQueue(option.Name);
+			lock(_queues)
+			{
+				if(_queues.TryGetValue(name, out queue) && queue != null)
+					return queue;
 
-			return null;
+				var options = MessageUtility.GetOptions();
+
+				if(options != null && options.Queues.TryGet(name, out var option))
+					_queues.Add(option.Name, queue = new MessageQueue(option.Name));
+
+				return queue;
+			}
 		}
+		#endregion
+
+		#region 遍历枚举
+		public IEnumerator<MessageQueue> GetEnumerator() => _queues.Values.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _queues.Values.GetEnumerator();
+		#endregion
 	}
 }
