@@ -33,13 +33,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Services;
 using Zongsoft.Messaging;
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class MessageTopic : IMessageTopic<MessageTopic>, IDisposable
+	public class MessageTopic : IMessageTopic<MessageTopicMessage>, IDisposable
 	{
 		#region 常量定义
 		private readonly string MESSAGE_SEND_URL;
@@ -48,14 +48,17 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		private const string MESSAGE_CONTENT_FULLY_TEMPLATE = @"<?xml version=""1.0"" encoding=""utf-8""?><Message xmlns=""http://mns.aliyuncs.com/doc/v1/""><MessageBody>{0}</MessageBody><MessageTag>{1}</MessageTag><MessageAttributes>{2}</MessageAttributes></Message>";
 		#endregion
 
+		#region 成员字段
 		private HttpClient _http;
+		#endregion
 
+		#region 构造函数
 		public MessageTopic(string name)
 		{
-			if(string.IsNullOrEmpty(name))
+			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
+			this.Name = name.Trim();
 
 			//初始化相关操作的URL常量
 			MESSAGE_SEND_URL = MessageTopicUtility.GetRequestUrl(name, "messages");
@@ -64,21 +67,27 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			_http = new HttpClient(new HttpClientHandler(certificate, MessageAuthenticator.Instance));
 			_http.DefaultRequestHeaders.Add("x-mns-version", "2015-06-06");
 		}
+		#endregion
 
+		#region 公共属性
 		public string Name { get; }
-
+		public IHandler<MessageTopicMessage> Handler { get; set; }
 		public IConnectionSetting ConnectionSetting { get; set; }
+		#endregion
 
-		public bool Handle(ref MessageTopic message)
+		#region 公共方法
+		public bool Handle(ref MessageTopicMessage message)
 		{
-			throw new NotImplementedException();
+			return this.Handler?.Handle(message) ?? false;
 		}
 
-		public Task<bool> HandleAsync(ref MessageTopic message, CancellationToken cancellation = default)
+		public Task<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
+			return this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
 		}
+		#endregion
 
+		#region 公共方法
 		public bool Subscribe(string topic, string tags, MessageTopicSubscriptionOptions options = null)
 		{
 			throw new NotSupportedException();
@@ -128,6 +137,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			var content = await response.Content.ReadAsStreamAsync(cancellation);
 			return MessageUtility.GetMessageResponseId(content);
 		}
+		#endregion
 
 		#region 私有方法
 		private static HttpContent CreateMessageRequest(ReadOnlySpan<byte> data, string tags)

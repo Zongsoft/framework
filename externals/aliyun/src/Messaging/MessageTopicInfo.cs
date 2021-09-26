@@ -37,6 +37,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 	/// </summary>
 	public class MessageTopicInfo
 	{
+		#region 公共属性
 		/// <summary>获取或设置主题的名称。</summary>
 		public string Name { get; set; }
 
@@ -57,5 +58,6 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 		/// <summary>获取或设置一个值，指示主题队列是否启用了日志记录。</summary>
 		public bool LoggingEnabled { get; set; }
+		#endregion
 	}
 }

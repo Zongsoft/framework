@@ -33,6 +33,7 @@ using System.Xml;
 using System.Text.RegularExpressions;
 
 using Zongsoft.Services;
+using Zongsoft.Messaging;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
@@ -46,10 +47,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		private static readonly Regex _error_regex = new Regex(@"\<(?'tag'(Code|Message))\>\s*(?<value>[^<>]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
-		public static Message ResolveMessage(MessageQueue queue, Stream stream)
+		public static MessageQueueMessage ResolveMessage(MessageQueue queue, Stream stream)
 		{
 			if(stream == null)
-				return null;
+				return new MessageQueueMessage(queue, null);
 
 			string id = null, ackId = null, md5 = null, body = null;
 			DateTime? expires = null, enqueuedTime = null, dequeuedTime = null;
@@ -66,7 +67,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			using(var reader = XmlReader.Create(stream, settings))
 			{
 				if(reader.MoveToContent() != XmlNodeType.Element)
-					return null;
+					return new MessageQueueMessage(queue, null);
 
 				while(reader.Read())
 				{
@@ -106,17 +107,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
-			if(string.IsNullOrWhiteSpace(id))
-				return null;
-
-			return new Message(queue, id,
-				string.IsNullOrWhiteSpace(body) ? null : System.Convert.FromBase64String(body),
-				string.IsNullOrWhiteSpace(md5) ? null : Zongsoft.Common.Convert.FromHexString(md5),
-				expires, enqueuedTime, dequeuedTime, dequeuedCount)
-				{
-					InnerAcknowledgementId = ackId,
-					InnerPriority = priority,
-				};
+			return new MessageQueueMessage(
+				queue,
+				id,
+				string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body),
+				(delay, cancellation) => queue.AcknowledgeAsync(ackId, delay, cancellation));
 		}
 
 		public static MessageTopicInfo ResolveTopicInfo(Stream stream)

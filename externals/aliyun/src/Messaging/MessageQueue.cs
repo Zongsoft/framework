@@ -28,26 +28,23 @@
  */
 
 using System;
-using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Zongsoft.Services;
 using Zongsoft.Messaging;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	[Service(typeof(IMessageQueue<Message>))]
-	public class MessageQueue : IMessageQueue<Message>
+	public class MessageQueue : IMessageQueue<MessageQueueMessage>
 	{
 		#region 常量定义
 		private static readonly Regex COUNT_REGEX = new Regex(@"\<(?'tag'(ActiveMessages|InactiveMessages|DelayMessages))\>\s*(?<value>[^<>\s]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
+		private static readonly Regex DELAY_REGEX = new Regex(@"\<(?'tag'(ReceiptHandle|NextVisibleTime))\>\s*(?<value>[^<>\s]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
 		#region 成员字段
@@ -55,29 +52,37 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 构造函数
-		internal MessageQueue(string name)
+		public MessageQueue(string name)
 		{
-			if(string.IsNullOrEmpty(name))
+			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
-			_http = new HttpClient(new HttpClientHandler(MessageQueueUtility.GetCertificate(name), MessageAuthenticator.Instance));
+
+			var certificate = MessageQueueUtility.GetCertificate(name);
+			_http = new HttpClient(new HttpClientHandler(certificate, MessageAuthenticator.Instance));
+			_http.DefaultRequestHeaders.Add("x-mns-version", "2015-06-06");
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
-		public IMessageQueueOptions Options { get; set; }
+		public IHandler<MessageQueueMessage> Handler { get; set; }
 		public IConnectionSetting ConnectionSetting { get; set; }
-		public IHandler<Message> Handler { get; set; }
 		#endregion
 
-		#region 内部属性
-		internal HttpClient Http { get => _http; }
+		#region 订阅方法
+		public bool Subscribe(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
+		public Task<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
 		#endregion
 
+		#region 处理方法
+		public bool Handle(ref MessageQueueMessage message) => this.Handler?.Handle(message) ?? false;
+		public Task<bool> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
+		#endregion
+
+		#region 队列方法
 		public long GetCount() => this.GetCountAsync().GetAwaiter().GetResult();
-
 		public async Task<long> GetCountAsync(CancellationToken cancellation = default)
 		{
 			var response = await _http.GetAsync(this.GetRequestUrl());
@@ -106,97 +111,28 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return total;
 		}
 
-		public void Clear()
+		public void Clear() => throw new NotSupportedException();
+		public Task ClearAsync(CancellationToken cancellation = default) => throw new NotSupportedException();
+
+		public MessageQueueMessage Dequeue(MessageDequeueOptions options = null) => this.DequeueAsync(options, CancellationToken.None).GetAwaiter().GetResult();
+		public async Task<MessageQueueMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
-		}
-
-		public Task ClearAsync(CancellationToken cancellation = default)
-		{
-			throw new NotImplementedException();
-		}
-
-		public bool Subscribe(MessageQueueSubscriptionOptions options = null)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options).GetAwaiter().GetResult();
-
-		public Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
-
-		public async Task<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
-		{
-			byte priority = 8;
-			TimeSpan? duration = null;
-
-			if(options != null)
-			{
-				priority = options.Priority;
-				duration = options.Delay;
-			}
-
-			if(duration.HasValue && duration.Value.TotalDays > 7)
-				throw new ArgumentOutOfRangeException("options", "The duration must less than 7 days.");
-
-			var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
-				System.Convert.ToBase64String(data) +
-				"</MessageBody><DelaySeconds>" +
-				(duration.HasValue ? duration.Value.TotalSeconds.ToString() : "0") +
-				"</DelaySeconds><Priority>" + priority.ToString() + "</Priority></Message>";
-
-			var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"))
-			{
-				Content = new StringContent(text, Encoding.UTF8, "text/xml")
-			};
+			var waitSeconds = (long)Math.Ceiling(options.Timeout.TotalSeconds);
+			var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (options != null && options.Timeout >= TimeSpan.Zero ? "?waitseconds=" + waitSeconds.ToString() : string.Empty));
 			request.Headers.Add("x-mns-version", "2015-06-06");
-
-			var response = await _http.SendAsync(request);
-
-			if(!response.IsSuccessStatusCode)
-			{
-				Zongsoft.Diagnostics.Logger.Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
-				return null;
-			}
-
-			return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync());
-		}
-
-		public Message Dequeue(MessageDequeueOptions options = null) => this.DequeueAsync(options).GetAwaiter().GetResult();
-
-		public Task<Message> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
-		{
-			if(options == null)
-				options = MessageDequeueOptions.Default;
-
-			return this.DequeueOrPeekAsync((int)options.Timeout.TotalSeconds);
-		}
-
-		public Message Peek() => this.PeekAsync().GetAwaiter().GetResult();
-		public Task<Message> PeekAsync(CancellationToken cancellation = default) => this.DequeueOrPeekAsync(-1);
-
-		private async Task<Message> DequeueOrPeekAsync(int waitSeconds)
-		{
-			var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (waitSeconds >= 0 ? "?waitseconds=" + waitSeconds.ToString() : "?peekonly=true"));
-			request.Headers.Add("x-mns-version", "2015-06-06");
-			var response = await _http.SendAsync(request);
+			var response = await _http.SendAsync(request, cancellation);
 
 			if(response.IsSuccessStatusCode)
-				return MessageUtility.ResolveMessage(this, await response.Content.ReadAsStreamAsync());
+				return MessageUtility.ResolveMessage(this, await response.Content.ReadAsStreamAsync(cancellation));
 
-			var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync());
+			var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync(cancellation));
 
 			if(exception != null)
 			{
 				switch(exception.Code)
 				{
 					case MessageUtility.MessageNotExist:
-						return null;
+						return new MessageQueueMessage(this, null);
 					case MessageUtility.QueueNotExist:
 						throw exception;
 					default:
@@ -204,49 +140,93 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
-			return null;
+			return new MessageQueueMessage(this, null);
 		}
 
-		public bool Handle(ref Message message) => this.Handler?.Handle(message) ?? false;
-
-		public Task<bool> HandleAsync(ref Message message, CancellationToken cancellation = default)
+		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
+		public Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
+		public async Task<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
-			var handler = this.Handler;
+			if(options == null)
+				options = MessageEnqueueOptions.Default;
 
-			return handler == null ?
-				Task.FromResult(false) :
-				handler.HandleAsync(message, cancellation);
-		}
+			if(options.Delay.TotalDays > 7)
+				options.Delay = TimeSpan.FromDays(7);
 
-		#region 虚拟方法
-		protected virtual byte[] SerializeContent(object item)
-		{
-			if(item == null)
+			var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
+				System.Convert.ToBase64String(data) +
+				"</MessageBody><DelaySeconds>" +
+				options.Delay.TotalSeconds.ToString() +
+				"</DelaySeconds><Priority>" + options.Priority.ToString() + "</Priority></Message>";
+
+			var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"))
+			{
+				Content = new StringContent(text, Encoding.UTF8, "text/xml")
+			};
+			request.Headers.Add("x-mns-version", "2015-06-06");
+
+			var response = await _http.SendAsync(request, cancellation);
+
+			if(!response.IsSuccessStatusCode)
+			{
+				Zongsoft.Diagnostics.Logger.Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
 				return null;
-
-			if(item.GetType() == typeof(byte[]))
-				return (byte[])item;
-
-			if(item is string)
-				return Encoding.UTF8.GetBytes((string)item);
-
-			if(Common.TypeExtension.IsScalarType(item.GetType()))
-				return Encoding.UTF8.GetBytes(item.ToString());
-
-			if(item is Stream stream)
-			{
-				var buffer = new byte[stream.Length - stream.Position];
-				stream.Read(buffer, 0, buffer.Length);
-				return buffer;
 			}
 
-			using(var memory = new MemoryStream())
+			return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync(cancellation));
+		}
+		#endregion
+
+		#region 应答方法
+		public async Task AcknowledgeAsync(string acknowledgementId, TimeSpan delay, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(acknowledgementId))
+				return;
+
+			if(delay <= TimeSpan.Zero)
 			{
-				Zongsoft.Serialization.Serializer.Json.Serialize(memory, item);
-				return memory.ToArray();
+				var request = new HttpRequestMessage(HttpMethod.Delete, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId));
+				request.Headers.Add("x-mns-version", "2015-06-06");
+				await _http.SendAsync(request, cancellation);
+				return;
 			}
 
-			throw new NotSupportedException(string.Format("The '{0}' content of message can not serialize.", item.GetType()));
+			await this.DelayAsync(acknowledgementId, delay, cancellation);
+		}
+
+		public async Task DelayAsync(string acknowledgementId, TimeSpan duration, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(acknowledgementId))
+				return;
+
+			var request = new HttpRequestMessage(HttpMethod.Put, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId) + "&VisibilityTimeout=" + duration.TotalSeconds.ToString());
+			request.Headers.Add("x-mns-version", "2015-06-06");
+			var response = await _http.SendAsync(request, cancellation);
+
+			if(!response.IsSuccessStatusCode)
+			{
+				var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync(cancellation));
+
+				if(exception != null)
+					throw exception;
+
+				response.EnsureSuccessStatusCode();
+			}
+
+			var matches = DELAY_REGEX.Matches(await response.Content.ReadAsStringAsync(cancellation));
+
+			foreach(Match match in matches)
+			{
+				switch(match.Groups["tag"].Value)
+				{
+					case "ReceiptHandle":
+						acknowledgementId = match.Groups["value"].Value;
+						break;
+					case "NextVisibleTime":
+						var expiration = Utility.GetDateTimeFromEpoch(match.Groups["value"].Value);
+						break;
+				}
+			}
 		}
 		#endregion
 
