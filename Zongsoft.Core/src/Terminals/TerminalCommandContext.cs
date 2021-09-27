@@ -37,13 +37,8 @@ namespace Zongsoft.Terminals
 	public class TerminalCommandContext : Zongsoft.Services.CommandContext
 	{
 		#region 构造函数
-		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties)
-		{
-		}
-
-		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, commandNode, parameter, extendedProperties)
-		{
-		}
+		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties) { }
+		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, commandNode, parameter, extendedProperties) { }
 		#endregion
 
 		#region 公共属性

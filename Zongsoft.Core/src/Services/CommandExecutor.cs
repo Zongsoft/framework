@@ -268,6 +268,10 @@ namespace Zongsoft.Services
 				//创建命令执行上下文
 				var context = this.CreateCommandContext(session, entry.Item1, entry.Item2, parameter);
 
+				//如果命令上下文为空或命令空则直接返回
+				if(context == null || context.Command == null)
+					return null;
+
 				//执行当前命令
 				parameter = this.OnExecuteCommand(context);
 
@@ -305,7 +309,7 @@ namespace Zongsoft.Services
 
 		protected virtual CommandContext CreateCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter)
 		{
-			return new CommandContext(session, expression, node, parameter);
+			return node == null || node.Command == null ? null : new CommandContext(session, expression, node, parameter);
 		}
 
 		protected virtual CommandExpression OnParse(string text)

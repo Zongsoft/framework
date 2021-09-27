@@ -184,7 +184,7 @@ namespace Zongsoft.Terminals
 		#region 重写方法
 		protected override CommandContext CreateCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter)
 		{
-			return new TerminalCommandContext(session, expression, node, parameter);
+			return node == null || node.Command == null ? null : new TerminalCommandContext(session, expression, node, parameter);
 		}
 
 		protected override void OnExecuted(CommandExecutorExecutedEventArgs args)

@@ -50,11 +50,8 @@ namespace Zongsoft.Services
 		#region 构造函数
 		public CommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null)
 		{
-			if(command == null)
-				throw new ArgumentNullException("command");
-
 			_session = session;
-			_command = command;
+			_command = command ?? throw new ArgumentNullException(nameof(command));
 			_parameter = parameter;
 			_expression = expression;
 
@@ -65,10 +62,10 @@ namespace Zongsoft.Services
 		public CommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null)
 		{
 			if(commandNode == null)
-				throw new ArgumentNullException("commandNode");
+				throw new ArgumentNullException(nameof(commandNode));
 
 			if(commandNode.Command == null)
-				throw new ArgumentException(string.Format("The Command property of '{0}' command-node is null.", commandNode.FullPath));
+				throw new ArgumentException($"The Command property of '{commandNode.FullPath}' command-node is null.");
 
 			_session = session;
 			_commandNode = commandNode;
