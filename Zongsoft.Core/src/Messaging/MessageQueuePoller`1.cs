@@ -70,7 +70,11 @@ namespace Zongsoft.Messaging
 		#region 公共属性
 		/// <summary>获取或设置轮询的队列。</summary>
 		[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
-		public IMessageQueue<TMessage> Queue { get; set; }
+		public IMessageQueue<TMessage> Queue
+		{
+			get => _queue;
+			set => _queue = value ?? throw new ArgumentNullException();
+		}
 		#endregion
 
 		#region 公共方法
@@ -119,7 +123,7 @@ namespace Zongsoft.Messaging
 				}
 
 				//如果消息获取失败则休息一小会
-				if(exception != null)
+				if(exception != null || message == null || (message is MessageQueueMessage qm && qm.IsEmpty))
 					Thread.Sleep(settings.Interval);
 				else
 					OnHandle(_handler, message, _cancellation.Token);
