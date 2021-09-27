@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -38,35 +39,34 @@ namespace Zongsoft.Messaging
 	public static class MessageQueueExtension
 	{
 		private static Dictionary<Type, Delegate> _dequeues = new Dictionary<Type, Delegate>();
-		private static MethodInfo DequeueMethodInfo = typeof(IMessageQueue<>).GetMethod("Dequeue", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
 		public static object Dequeue(this IMessageQueue queue, MessageDequeueOptions options = null)
 		{
 			if(queue == null)
 				throw new ArgumentNullException(nameof(queue));
 
-			var type = queue.GetType();
+			var queueType = queue.GetType().GetTypeInfo();
 
-			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IMessageQueue<>))
+			if(!_dequeues.TryGetValue(queueType, out var invoker))
 			{
-				var messageType = type.GenericTypeArguments[0];
+				var contract = queueType.ImplementedInterfaces.FirstOrDefault(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IMessageQueue<>));
 
-				if(!_dequeues.TryGetValue(messageType, out var invoker))
+				if(contract == null)
+					return null;
+
+				var messageType = contract.GenericTypeArguments[0];
+
+				lock(_dequeues)
 				{
-					lock(_dequeues)
+					if(!_dequeues.TryGetValue(messageType, out invoker))
 					{
-						if(!_dequeues.TryGetValue(messageType, out invoker))
-						{
-							invoker = DequeueMethodInfo.MakeGenericMethod(messageType).CreateDelegate(GetMethodType(messageType), queue);
-							_dequeues.Add(messageType, invoker);
-						}
+						invoker = contract.GetMethod("Dequeue", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).CreateDelegate(GetMethodType(messageType), queue);
+						_dequeues.Add(queueType, invoker);
 					}
 				}
-
-				return invoker.DynamicInvoke(options);
 			}
 
-			return null;
+			return invoker == null ? null : invoker.DynamicInvoke(options);
 		}
 
 		private static Type GetMethodType(Type resultType)
