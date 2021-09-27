@@ -11,7 +11,7 @@
 		<FileVersion>1.0.2020.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="Cronos" Version="0.7.0" />
+	  <PackageReference Include="Cronos" Version="0.7.1" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\src\Zongsoft.Scheduling.csproj" />
