@@ -62,6 +62,15 @@
 				<object name="Clear" type="Zongsoft.Messaging.Commands.QueueClearCommand, Zongsoft.Commands" />
 				<object name="Count" type="Zongsoft.Messaging.Commands.QueueCountCommand, Zongsoft.Commands" />
 				<object name="Subscribe" type="Zongsoft.Messaging.Commands.QueueSubscribeCommand, Zongsoft.Commands" />
+
+				<object name="Poller">
+					<poller.command>
+						<object name="Poller" type="Zongsoft.Messaging.Commands.QueuePollerCommand, Zongsoft.Commands" />
+					</poller.command>
+	
+					<object name="Start" type="Zongsoft.Messaging.Commands.QueuePollerStartCommand, Zongsoft.Commands" />
+					<object name="Stop" type="Zongsoft.Messaging.Commands.QueuePollerStopCommand, Zongsoft.Commands" />
+				</object>
 			</object>
 		</object>
 	</extension>

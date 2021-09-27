@@ -59,9 +59,6 @@ namespace Zongsoft.Messaging.Commands
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			if(context.Expression.Options.TryGetValue<string>("topic", out var value))
-				this.Topic = value == "*" ? null : value;
-
 			var queue = context.CommandNode.FindQueue();
 
 			if(queue != null)
@@ -69,6 +66,9 @@ namespace Zongsoft.Messaging.Commands
 				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
 				return this.ExecuteCore(queue.Name, context, data => queue.Enqueue(data, options));
 			}
+
+			if(context.Expression.Options.TryGetValue<string>("topic", out var value))
+				this.Topic = value == "*" ? null : value;
 
 			if(string.IsNullOrEmpty(this.Topic))
 				throw new CommandOptionMissingException("topic");
