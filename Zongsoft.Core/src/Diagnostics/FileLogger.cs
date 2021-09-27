@@ -228,7 +228,7 @@ namespace Zongsoft.Diagnostics
 						maximum = number;
 
 						if(info.Size < this.Limit)
-							result = info.Path.Url;
+							result = info.Url;
 					}
 				}
 			}
