@@ -62,12 +62,12 @@ namespace Zongsoft.IO
 			if(string.IsNullOrEmpty(path))
 				return null;
 
-			return @"file:///" + GetLocalPath(path);
+			return GetLocalPath(path);
 		}
 
 		public string GetUrl(Path path)
 		{
-			return @"file:///" + GetLocalPath(path);
+			return GetLocalPath(path);
 		}
 		#endregion
 
