@@ -38,6 +38,10 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public struct MessageTopicMessage
 	{
+		#region 静态字段
+		public static readonly MessageTopicMessage Empty = new MessageTopicMessage();
+		#endregion
+
 		#region 成员字段
 		private readonly Delegate _acknowledger;
 		#endregion
@@ -97,6 +101,11 @@ namespace Zongsoft.Messaging
 
 		/// <summary>获取或设置消息时间戳。</summary>
 		public DateTime Timestamp { get; set; }
+
+		/// <summary>获取一个值，指示消息包是否为空包。</summary>
+		[Serialization.SerializationMember(Ignored = true)]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool IsEmpty { get => this.Data == null; }
 		#endregion
 
 		#region 公共方法
