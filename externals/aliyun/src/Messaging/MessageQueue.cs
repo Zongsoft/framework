@@ -135,7 +135,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				switch(exception.Code)
 				{
 					case MessageUtility.MessageNotExist:
-						return new MessageQueueMessage(this, null);
+						return MessageQueueMessage.Empty;
 					case MessageUtility.QueueNotExist:
 						throw exception;
 					default:
@@ -143,7 +143,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
-			return new MessageQueueMessage(this, null);
+			return MessageQueueMessage.Empty;
 		}
 
 		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
