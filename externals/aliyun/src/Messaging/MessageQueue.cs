@@ -117,6 +117,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		public MessageQueueMessage Dequeue(MessageDequeueOptions options = null) => this.DequeueAsync(options, CancellationToken.None).GetAwaiter().GetResult();
 		public async Task<MessageQueueMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
 		{
+			if(options == null)
+				options = MessageDequeueOptions.Default;
+
 			var waitSeconds = (long)Math.Ceiling(options.Timeout.TotalSeconds);
 			var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (options != null && options.Timeout >= TimeSpan.Zero ? "?waitseconds=" + waitSeconds.ToString() : string.Empty));
 			request.Headers.Add("x-mns-version", "2015-06-06");
@@ -149,6 +152,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		{
 			if(options == null)
 				options = MessageEnqueueOptions.Default;
+
+			if(options.Priority < 1)
+				options.Priority = 1;
+			else if(options.Priority > 16)
+				options.Priority = 16;
 
 			if(options.Delay.TotalDays > 7)
 				options.Delay = TimeSpan.FromDays(7);
