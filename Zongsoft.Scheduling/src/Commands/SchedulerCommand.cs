@@ -103,5 +103,18 @@ namespace Zongsoft.Scheduling.Commands
 			return content;
 		}
 		#endregion
+
+		#region 私有方法
+		private static CommandOutletColor GetStateColor(WorkerState state)
+		{
+			return state switch
+			{
+				WorkerState.Pausing or WorkerState.Paused => CommandOutletColor.Yellow,
+				WorkerState.Resuming or WorkerState.Starting => CommandOutletColor.DarkCyan,
+				WorkerState.Stopped or WorkerState.Stopping => CommandOutletColor.DarkGray,
+				_ => CommandOutletColor.Green,
+			};
+		}
+		#endregion
 	}
 }
