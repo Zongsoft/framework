@@ -39,22 +39,18 @@ namespace Zongsoft.Communication
 	public abstract class ChannelBase : IChannel, IReceiver, ISender, IDisposable
 	{
 		#region 事件定义
-		public event EventHandler<ChannelEventArgs> Closed;
-		public event EventHandler<ChannelEventArgs> Closing;
+		public event EventHandler Closed;
+		public event EventHandler Closing;
 		#endregion
 
 		#region 构造函数
-		protected ChannelBase(object host, int channelId)
+		protected ChannelBase(int channelId)
 		{
-			this.Host = host;
 			this.ChannelId = channelId;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取当前通道所属的宿主对象。</summary>
-		public object Host { get; }
-
 		/// <summary>获取当前通道的唯一编号。</summary>
 		public int ChannelId { get; }
 
@@ -73,16 +69,16 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 接收方法
-		protected abstract bool OnReceive(ReadOnlySpan<byte> data);
-		protected abstract Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation);
+		protected abstract void OnReceive(ReadOnlySpan<byte> data);
+		protected abstract Task OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation);
 
-		bool IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
-		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+		void IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
+		Task IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnClosed() => this.Closed?.Invoke(this, new ChannelEventArgs(this));
-		protected virtual void OnClosing() => this.Closing?.Invoke(this, new ChannelEventArgs(this));
+		protected virtual void OnClosed() => this.Closed?.Invoke(this, EventArgs.Empty);
+		protected virtual void OnClosing() => this.Closing?.Invoke(this, EventArgs.Empty);
 		#endregion
 
 		#region 关闭方法

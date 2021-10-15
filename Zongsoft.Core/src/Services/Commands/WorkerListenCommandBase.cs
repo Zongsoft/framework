@@ -32,8 +32,7 @@ using System.Threading;
 
 namespace Zongsoft.Services.Commands
 {
-	[Obsolete("Please use the WorkerListenCommand<TWorker> class.")]
-	public class WorkerListenCommand : CommandBase<CommandContext>
+	public abstract class WorkerListenCommandBase<TWorker> : CommandBase<CommandContext> where TWorker : class, IWorker
 	{
 		#region 私有变量
 		private CommandContext _context;
@@ -41,13 +40,13 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 构造函数
-		public WorkerListenCommand() : base("Listen")
+		protected WorkerListenCommandBase() : base("Listen")
 		{
 			//创建信号量，默认为堵塞状态
 			_semaphore = new AutoResetEvent(false);
 		}
 
-		public WorkerListenCommand(string name) : base(name)
+		protected WorkerListenCommandBase(string name) : base(name)
 		{
 			//创建信号量，默认为堵塞状态
 			_semaphore = new AutoResetEvent(false);
@@ -69,7 +68,7 @@ namespace Zongsoft.Services.Commands
 				throw new NotSupportedException("The listen command must be run in terminal executor.");
 
 			//向上查找工作者命令对象，如果找到则获取其对应的工作者对象
-			var worker = context.CommandNode.Find<WorkerCommandBase>(true)?.Worker;
+			var worker = this.Find(context);
 
 			//如果指定的工作器查找失败，则抛出异常
 			if(worker == null)
@@ -108,17 +107,23 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnListening(CommandContext context, IWorker worker)
+		protected virtual TWorker Find(CommandContext context)
+		{
+			var found = context.CommandNode.Find(node => node.Command is WorkerCommandBase command && command.Worker is TWorker, true);
+			return found == null ? null : ((WorkerCommandBase)found.Command).Worker as TWorker;
+		}
+
+		protected virtual void OnListening(CommandContext context, TWorker worker)
 		{
 			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_WorkerListenCommand_Welcome, worker.Name));
 			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.Text_WorkerListenCommand_Prompt + Environment.NewLine);
 		}
 
-		protected virtual void OnListened(CommandContext context, IWorker worker)
+		protected virtual void OnListened(CommandContext context, TWorker worker)
 		{
 		}
 
-		protected virtual void OnStateChanged(IWorker worker, WorkerStateChangedEventArgs args)
+		protected virtual void OnStateChanged(TWorker worker, WorkerStateChangedEventArgs args)
 		{
 			_context.Output.WriteLine(WorkerInfoCommand.GetInfo(worker));
 		}
@@ -127,7 +132,7 @@ namespace Zongsoft.Services.Commands
 		#region 事件处理
 		private void Worker_StateChanged(object sender, WorkerStateChangedEventArgs e)
 		{
-			this.OnStateChanged((IWorker)sender, e);
+			this.OnStateChanged((TWorker)sender, e);
 		}
 
 		private void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs e)

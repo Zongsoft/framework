@@ -76,7 +76,7 @@ namespace Zongsoft.Services.Commands
 		internal static CommandOutletContent GetInfo(IWorker worker)
 		{
 			//构建状态内容部分
-			var content = CommandOutletContent.Create(WorkerCommandBase.GetStateColor(worker.State), $"[{worker.State}]");
+			var content = CommandOutletContent.Create(Utility.GetStateColor(worker.State), $"[{worker.State}]");
 
 			//构建可用内容部分
 			if(!worker.Enabled)
@@ -87,7 +87,18 @@ namespace Zongsoft.Services.Commands
 			}
 
 			//构建名称内容部分
-			return content.Append(" " + worker.Name);
+			content.Append(" " + worker.Name);
+
+			//获取描述信息注解
+			var attribute = (System.ComponentModel.DescriptionAttribute)Attribute.GetCustomAttribute(worker.GetType(), typeof(System.ComponentModel.DescriptionAttribute), true);
+
+			if(attribute != null && !string.IsNullOrWhiteSpace(attribute.Description))
+			{
+				content.AppendLine();
+				content.Append(attribute.Description);
+			}
+
+			return content;
 		}
 		#endregion
 	}

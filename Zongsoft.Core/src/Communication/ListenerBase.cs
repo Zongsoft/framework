@@ -61,8 +61,8 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool OnReceive(ReadOnlySpan<byte> data) => this.OnDeserialize(data, out var value) && this.OnHandle(value);
-		protected virtual Task<bool> OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnDeserialize(data, out var value) ? this.OnHandleAsync(value, cancellation) : Task.FromResult(false);
+		protected virtual void OnReceive(ReadOnlySpan<byte> data) { if(this.OnDeserialize(data, out var value)) this.OnHandle(value); }
+		protected virtual Task OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnDeserialize(data, out var value) ? this.OnHandleAsync(value, cancellation) : Task.CompletedTask;
 		protected virtual bool OnHandle(T package) => this.Handler.Handle(package);
 		protected virtual Task<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler.HandleAsync(package, cancellation);
 		#endregion
@@ -82,8 +82,8 @@ namespace Zongsoft.Communication
 		#region 显式实现
 		void IListener<T>.Handle(T package) => this.OnHandle(package);
 		Task IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
-		bool IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
-		Task<bool> IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+		void IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
+		Task IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
 		#endregion
 
 		#region 释放资源

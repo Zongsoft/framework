@@ -32,8 +32,7 @@ using System.Threading;
 
 namespace Zongsoft.Services.Commands
 {
-	[Obsolete("Please use the WorkerListenCommand<TWorker> class.")]
-	public class WorkerListenCommand : CommandBase<CommandContext>
+	public abstract class HostListenCommandBase<THost> : CommandBase<CommandContext> where THost : class
 	{
 		#region 私有变量
 		private CommandContext _context;
@@ -41,13 +40,13 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 构造函数
-		public WorkerListenCommand() : base("Listen")
+		protected HostListenCommandBase() : base("Listen")
 		{
 			//创建信号量，默认为堵塞状态
 			_semaphore = new AutoResetEvent(false);
 		}
 
-		public WorkerListenCommand(string name) : base(name)
+		protected HostListenCommandBase(string name) : base(name)
 		{
 			//创建信号量，默认为堵塞状态
 			_semaphore = new AutoResetEvent(false);
@@ -68,12 +67,12 @@ namespace Zongsoft.Services.Commands
 			if(terminal == null)
 				throw new NotSupportedException("The listen command must be run in terminal executor.");
 
-			//向上查找工作者命令对象，如果找到则获取其对应的工作者对象
-			var worker = context.CommandNode.Find<WorkerCommandBase>(true)?.Worker;
+			//查找依赖的宿主对象
+			var host = this.Find(context);
 
-			//如果指定的工作器查找失败，则抛出异常
-			if(worker == null)
-				throw new CommandException("Missing required worker of depends on.");
+			//如果宿主查找失败，则抛出异常
+			if(host == null)
+				throw new CommandException("Missing required host of depends on.");
 
 			//保持当前命令执行上下文
 			_context = context;
@@ -81,55 +80,40 @@ namespace Zongsoft.Services.Commands
 			//挂载当前终端的中断事件
 			terminal.Aborting += this.Terminal_Aborting;
 
-			//挂载工作器的状态变更事件
-			worker.StateChanged += this.Worker_StateChanged;
-
 			//调用侦听开始方法
-			this.OnListening(context, worker);
+			this.OnListening(context, host);
 
 			//等待信号量
 			_semaphore.WaitOne();
-
-			//注销工作器的状态变更事件
-			worker.StateChanged -= this.Worker_StateChanged;
 
 			//注销当前终端的中断事件
 			terminal.Aborting -= this.Terminal_Aborting;
 
 			//调用侦听结束方法
-			this.OnListened(context, worker);
+			this.OnListened(context, host);
 
 			//将当前命令执行上下文置空
 			_context = null;
 
 			//返回执行成功的工作者
-			return worker;
+			return host;
 		}
 		#endregion
 
-		#region 虚拟方法
-		protected virtual void OnListening(CommandContext context, IWorker worker)
+		#region 查找方法
+		protected virtual THost Find(CommandContext context)
 		{
-			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_WorkerListenCommand_Welcome, worker.Name));
-			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.Text_WorkerListenCommand_Prompt + Environment.NewLine);
+			var found = context.CommandNode.Find(node => node.Command is HostCommandBase<THost> command && command.Host != null, true);
+			return found == null ? null : ((HostCommandBase<THost>)found.Command).Host as THost;
 		}
+		#endregion
 
-		protected virtual void OnListened(CommandContext context, IWorker worker)
-		{
-		}
-
-		protected virtual void OnStateChanged(IWorker worker, WorkerStateChangedEventArgs args)
-		{
-			_context.Output.WriteLine(WorkerInfoCommand.GetInfo(worker));
-		}
+		#region 抽象方法
+		protected abstract void OnListening(CommandContext context, THost host);
+		protected abstract void OnListened(CommandContext context, THost host);
 		#endregion
 
 		#region 事件处理
-		private void Worker_StateChanged(object sender, WorkerStateChangedEventArgs e)
-		{
-			this.OnStateChanged((IWorker)sender, e);
-		}
-
 		private void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 			//阻止命令执行器被关闭

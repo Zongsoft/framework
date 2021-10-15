@@ -34,13 +34,12 @@ namespace Zongsoft.Communication
 	public interface IChannel : IDisposable
 	{
 		#region 事件定义
-		event EventHandler<ChannelEventArgs> Closed;
-		event EventHandler<ChannelEventArgs> Closing;
+		event EventHandler Closed;
+		event EventHandler Closing;
 		#endregion
 
 		#region 属性定义
 		int ChannelId { get; }
-		object Host { get; }
 		bool IsIdled { get; }
 		#endregion
 

@@ -39,12 +39,12 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 构造函数
-		protected WorkerCommandBase(string name, IServiceProvider serviceProvider) : base(name)
+		protected WorkerCommandBase(string name, IServiceProvider serviceProvider = null) : base(name)
 		{
 			this.ServiceProvider = serviceProvider;
 		}
 
-		protected WorkerCommandBase(string name, bool enabled, IServiceProvider serviceProvider) : base(name, enabled)
+		protected WorkerCommandBase(string name, bool enabled, IServiceProvider serviceProvider = null) : base(name, enabled)
 		{
 			this.ServiceProvider = serviceProvider;
 		}
@@ -86,26 +86,6 @@ namespace Zongsoft.Services.Commands
 
 			//始终返回关联的工作者对象
 			return _worker;
-		}
-		#endregion
-
-		#region 静态方法
-		public static CommandOutletColor GetStateColor(WorkerState state)
-		{
-			switch(state)
-			{
-				case WorkerState.Pausing:
-				case WorkerState.Paused:
-					return CommandOutletColor.Yellow;
-				case WorkerState.Resuming:
-				case WorkerState.Starting:
-					return CommandOutletColor.DarkCyan;
-				case WorkerState.Stopped:
-				case WorkerState.Stopping:
-					return CommandOutletColor.DarkGray;
-				default:
-					return CommandOutletColor.Green;
-			}
 		}
 		#endregion
 	}

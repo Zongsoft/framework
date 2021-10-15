@@ -35,7 +35,7 @@ namespace Zongsoft.Communication
 {
 	public interface IReceiver
 	{
-		bool Receive(ReadOnlySpan<byte> data);
-		Task<bool> ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
+		void Receive(ReadOnlySpan<byte> data);
+		Task ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
 	}
 }

@@ -34,11 +34,29 @@ namespace Zongsoft.Services.Commands
 {
 	internal static class Utility
 	{
+		public static CommandOutletColor GetStateColor(WorkerState state)
+		{
+			switch(state)
+			{
+				case WorkerState.Pausing:
+				case WorkerState.Paused:
+					return CommandOutletColor.Yellow;
+				case WorkerState.Resuming:
+				case WorkerState.Starting:
+					return CommandOutletColor.DarkCyan;
+				case WorkerState.Stopped:
+				case WorkerState.Stopping:
+					return CommandOutletColor.DarkGray;
+				default:
+					return CommandOutletColor.Green;
+			}
+		}
+
 		public static CommandOutletContent GetWorkerActionContent(IWorker worker, string message, CommandOutletColor? color = null)
 		{
 			var content = CommandOutletContent.Create(CommandOutletColor.DarkCyan, worker.Name)
 				.Append(CommandOutletColor.DarkGray, "(")
-				.Append(WorkerCommandBase.GetStateColor(worker.State), worker.State.ToString())
+				.Append(GetStateColor(worker.State), worker.State.ToString())
 				.Append(CommandOutletColor.DarkGray, ") ");
 
 			if(color == null)

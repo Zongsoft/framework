@@ -28,36 +28,64 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Services.Commands
 {
-	[Serializable]
-	public class ChannelAsyncEventArgs : ChannelEventArgs
+	public abstract class HostCommandBase<THost> : CommandBase<CommandContext> where THost : class
 	{
-		#region 成员变量
-		private object _asyncState;
+		#region 成员字段
+		private THost _host;
 		#endregion
 
 		#region 构造函数
-		public ChannelAsyncEventArgs(IChannel channel) : base(channel)
+		protected HostCommandBase(string name, IServiceProvider serviceProvider = null) : base(name)
 		{
-			_asyncState = null;
+			this.ServiceProvider = serviceProvider;
 		}
 
-		public ChannelAsyncEventArgs(IChannel channel, object asyncState) : base(channel)
+		protected HostCommandBase(string name, bool enabled, IServiceProvider serviceProvider = null) : base(name, enabled)
 		{
-			_asyncState = asyncState;
+			this.ServiceProvider = serviceProvider;
 		}
 		#endregion
 
-		#region 公共属性
-		public object AsyncState
+		#region 保护属性
+		internal protected THost Host
 		{
 			get
 			{
-				return _asyncState;
+				return _host;
 			}
+			set
+			{
+				if(value == null)
+					throw new ArgumentNullException();
+
+				//如果引用相等则不用处理
+				if(object.ReferenceEquals(value, _host))
+					return;
+
+				//更新新的工作器
+				_host = value;
+
+				//激发“PropertyChanged”事件
+				this.OnPropertyChanged(nameof(Host));
+			}
+		}
+
+		protected IServiceProvider ServiceProvider { get; set; }
+		#endregion
+
+		#region 重写方法
+		protected override object OnExecute(CommandContext context)
+		{
+			//如果传入的参数对象是一个工作者，则将其设为关联者
+			if(context.Parameter is THost host)
+				this.Host = host;
+
+			//始终返回关联的工作者对象
+			return _host;
 		}
 		#endregion
 	}
