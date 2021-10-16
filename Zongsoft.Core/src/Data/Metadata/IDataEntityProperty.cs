@@ -38,57 +38,27 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataEntityProperty : IEquatable<IDataEntityProperty>
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取所属的数据实体。
-		/// </summary>
-		IDataEntity Entity
-		{
-			get;
-		}
+		/// <summary>获取所属的数据实体。</summary>
+		IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取数据实体属性的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取数据实体属性的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为不可变属性，默认为假(False)。
-		/// </summary>
+		/// <summary>获取一个值，指示数据实体属性是否为不可变属性，默认为假(False)。</summary>
 		/// <remarks>
 		/// 	<para>对于不可变简单属性：不能被修改(Update, Upsert)，但是新增(Insert)时可以设置其内容。</para>
 		/// 	<para>对于不可变复合属性：不支持任何写操作(Delete, Insert, Update, Upsert)。</para>
 		/// </remarks>
-		bool Immutable
-		{
-			get;
-		}
+		bool Immutable { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为主键。
-		/// </summary>
-		bool IsPrimaryKey
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为主键。</summary>
+		bool IsPrimaryKey { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为单值类型。
-		/// </summary>
-		bool IsSimplex
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为单值类型。</summary>
+		bool IsSimplex { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为复合类型。
-		/// </summary>
-		bool IsComplex
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为复合类型。</summary>
+		bool IsComplex { get; }
 		#endregion
 	}
 }

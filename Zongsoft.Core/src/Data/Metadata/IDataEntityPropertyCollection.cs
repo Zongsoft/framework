@@ -34,9 +34,6 @@ namespace Zongsoft.Data.Metadata
 {
 	public interface IDataEntityPropertyCollection : Zongsoft.Collections.INamedCollection<IDataEntityProperty>
 	{
-		IDataEntity Entity
-		{
-			get;
-		}
+		IDataEntity Entity { get; }
 	}
 }

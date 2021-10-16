@@ -37,25 +37,13 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataMetadataManager : IDataMetadataContainer
 	{
-		/// <summary>
-		/// 获取当前应用的元数据加载器。
-		/// </summary>
-		IDataMetadataLoader Loader
-		{
-			get;
-		}
+		/// <summary>获取当前应用的元数据加载器。</summary>
+		IDataMetadataLoader Loader { get; }
 
-		/// <summary>
-		/// 获取元数据提供程序集合。
-		/// </summary>
-		ICollection<IDataMetadataProvider> Providers
-		{
-			get;
-		}
+		/// <summary>获取元数据提供程序集合。</summary>
+		ICollection<IDataMetadataProvider> Providers { get; }
 
-		/// <summary>
-		/// 重新加载所有元数据。
-		/// </summary>
+		/// <summary>重新加载所有元数据。</summary>
 		void Reload();
 	}
 }

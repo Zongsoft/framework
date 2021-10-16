@@ -36,60 +36,25 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataEntityPropertySequence
 	{
-		/// <summary>
-		/// 获取序号所属的数据属性元素。
-		/// </summary>
-		IDataEntitySimplexProperty Property
-		{
-			get;
-		}
+		/// <summary>获取序号所属的数据属性元素。</summary>
+		IDataEntitySimplexProperty Property { get; }
 
-		/// <summary>
-		/// 获取序号器的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取序号器的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取或设置序号器的种子数。
-		/// </summary>
-		int Seed
-		{
-			get; set;
-		}
+		/// <summary>获取或设置序号器的种子数。</summary>
+		int Seed { get; set; }
 
-		/// <summary>
-		/// 获取或设置序号器的递增量，默认为1。
-		/// </summary>
-		int Interval
-		{
-			get; set;
-		}
+		/// <summary>获取或设置序号器的递增量，默认为1。</summary>
+		int Interval { get; set; }
 
-		/// <summary>
-		/// 获取一个值，指示是否采用数据库内置序号方案。
-		/// </summary>
-		bool IsBuiltin
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示是否采用数据库内置序号方案。</summary>
+		bool IsBuiltin { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否采用外置序号器方案。
-		/// </summary>
-		bool IsExternal
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示是否采用外置序号器方案。</summary>
+		bool IsExternal { get; }
 
-		/// <summary>
-		/// 获取序号的引用的属性数组。
-		/// </summary>
-		IDataEntitySimplexProperty[] References
-		{
-			get;
-		}
+		/// <summary>获取序号的引用的属性数组。</summary>
+		IDataEntitySimplexProperty[] References { get; }
 	}
 }

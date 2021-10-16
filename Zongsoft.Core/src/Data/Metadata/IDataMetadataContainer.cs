@@ -38,29 +38,14 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataMetadataContainer
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取元数据容器所属的应用名。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取元数据容器所属的应用名。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取元数据容器中的数据实体定义集。
-		/// </summary>
-		Collections.IReadOnlyNamedCollection<IDataEntity> Entities
-		{
-			get;
-		}
+		/// <summary>获取元数据容器中的数据实体定义集。</summary>
+		Collections.IReadOnlyNamedCollection<IDataEntity> Entities { get; }
 
-		/// <summary>
-		/// 获取元数据容器中的数据命令定义集。
-		/// </summary>
-		Collections.IReadOnlyNamedCollection<IDataCommand> Commands
-		{
-			get;
-		}
+		/// <summary>获取元数据容器中的数据命令定义集。</summary>
+		Collections.IReadOnlyNamedCollection<IDataCommand> Commands { get; }
 		#endregion
 	}
 }

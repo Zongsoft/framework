@@ -38,30 +38,14 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataMetadataProvider : IDataMetadataContainer
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取元数据提供程序所属的管理器。
-		/// </summary>
-		IDataMetadataManager Manager
-		{
-			get;
-			set;
-		}
+		/// <summary>获取元数据提供程序所属的管理器。</summary>
+		IDataMetadataManager Manager { get; set; }
 
-		/// <summary>
-		/// 获取元数据提供程序中的数据实体定义集。
-		/// </summary>
-		new Collections.INamedCollection<IDataEntity> Entities
-		{
-			get;
-		}
+		/// <summary>获取元数据提供程序中的数据实体定义集。</summary>
+		new Collections.INamedCollection<IDataEntity> Entities { get; }
 
-		/// <summary>
-		/// 获取元数据提供程序中的数据命令定义集。
-		/// </summary>
-		new Collections.INamedCollection<IDataCommand> Commands
-		{
-			get;
-		}
+		/// <summary>获取元数据提供程序中的数据命令定义集。</summary>
+		new Collections.INamedCollection<IDataCommand> Commands { get; }
 		#endregion
 	}
 }

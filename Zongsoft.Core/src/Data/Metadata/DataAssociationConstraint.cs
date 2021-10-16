@@ -46,29 +46,14 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取关联约束的目标成员名。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取关联约束的目标成员名。</summary>
+		public string Name { get; }
 
-		/// <summary>
-		/// 获取关联约束的主体(即约束目标)。
-		/// </summary>
-		public DataAssociationConstraintActor Actor
-		{
-			get;
-		}
+		/// <summary>获取关联约束的主体(即约束目标)。</summary>
+		public DataAssociationConstraintActor Actor { get; }
 
-		/// <summary>
-		/// 获取关联约束的目标值。
-		/// </summary>
-		public object Value
-		{
-			get;
-		}
+		/// <summary>获取关联约束的目标值。</summary>
+		public object Value { get; }
 		#endregion
 
 		#region 重写方法
