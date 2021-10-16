@@ -38,72 +38,35 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataEntity : IEquatable<IDataEntity>
 	{
 		#region 属性声明
-		/// <summary>
-		/// 获取元数据所属的提供程序。
-		/// </summary>
-		IDataMetadataProvider Metadata
-		{
-			get;
-		}
+		/// <summary>获取元数据所属的提供程序。</summary>
+		IDataMetadataProvider Metadata { get; }
 
-		/// <summary>
-		/// 获取数据实体的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取所属命名空间。</summary>
+		string Namespace { get; }
 
-		/// <summary>
-		/// 获取数据实体映射的别名（表名）。
-		/// </summary>
-		string Alias
-		{
-			get;
-		}
+		/// <summary>获取数据实体的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取数据实体继承的父实体名。
-		/// </summary>
-		string BaseName
-		{
-			get;
-		}
+		/// <summary>获取数据实体映射的别名（表名）。</summary>
+		string Alias { get; }
 
-		/// <summary>
-		/// 获取数据实体的主键属性数组。
-		/// </summary>
-		IDataEntitySimplexProperty[] Key
-		{
-			get;
-		}
+		/// <summary>获取数据实体继承的父实体名。</summary>
+		string BaseName { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否为不可变实体，默认为否(False)。
-		/// </summary>
+		/// <summary>获取数据实体的主键属性数组。</summary>
+		IDataEntitySimplexProperty[] Key { get; }
+
+		/// <summary>获取一个值，指示是否为不可变实体，默认为否(False)。</summary>
 		/// <remarks>
 		/// 	<para>不可变实体只支持新增和删除操作。</para>
 		/// </remarks>
-		bool Immutable
-		{
-			get;
-		}
+		bool Immutable { get; }
 
-		/// <summary>
-		/// 获取一个值，指示该实体定义中是否含有序号属性。
-		/// </summary>
-		bool HasSequences
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示该实体定义中是否含有序号属性。</summary>
+		bool HasSequences { get; }
 
-		/// <summary>
-		/// 获取数据实体的属性元数据集合。
-		/// </summary>
-		IDataEntityPropertyCollection Properties
-		{
-			get;
-		}
+		/// <summary>获取数据实体的属性元数据集合。</summary>
+		IDataEntityPropertyCollection Properties { get; }
 		#endregion
 
 		#region 方法定义

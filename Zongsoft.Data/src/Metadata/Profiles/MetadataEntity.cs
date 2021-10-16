@@ -43,11 +43,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 构造函数
-		public MetadataEntity(IDataMetadataProvider metadata, string name, string baseName, bool immutable = false)
+		public MetadataEntity(IDataMetadataProvider metadata, string @namespace, string name, string baseName, bool immutable = false)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
+			this.Namespace = @namespace;
 			this.Name = name.Trim();
 			this.BaseName = baseName;
 			this.Immutable = immutable;
@@ -57,54 +58,28 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据实体所属的提供程序。
-		/// </summary>
-		public IDataMetadataProvider Metadata
-		{
-			get;
-		}
+		/// <summary>获取数据实体所属的提供程序。</summary>
+		public IDataMetadataProvider Metadata { get; }
 
-		/// <summary>
-		/// 获取数据实体的名称。
-		/// </summary>
+		/// <summary>获取所属命名空间。</summary>
+		public string Namespace { get; }
+
+		/// <summary>获取数据实体的名称。</summary>
 		public string Name { get; }
 
-		/// <summary>
-		/// 获取或设置数据实体的别名。
-		/// </summary>
-		public string Alias
-		{
-			get; set;
-		}
+		/// <summary>获取或设置数据实体的别名。</summary>
+		public string Alias { get; set; }
 
-		/// <summary>
-		/// 获取或设置数据实体继承的父实体名。
-		/// </summary>
-		public string BaseName
-		{
-			get; set;
-		}
+		/// <summary>获取或设置数据实体继承的父实体名。</summary>
+		public string BaseName { get; set; }
 
-		/// <summary>
-		/// 获取或设置数据实体的主键属性数组。
-		/// </summary>
-		public IDataEntitySimplexProperty[] Key
-		{
-			get; set;
-		}
+		/// <summary>获取或设置数据实体的主键属性数组。</summary>
+		public IDataEntitySimplexProperty[] Key { get; set; }
 
-		/// <summary>
-		/// 获取或设置一个值，指示是否为不可变实体。
-		/// </summary>
-		public bool Immutable
-		{
-			get; set;
-		}
+		/// <summary>获取或设置一个值，指示是否为不可变实体。</summary>
+		public bool Immutable { get; set; }
 
-		/// <summary>
-		/// 获取一个值，指示该实体定义中是否含有序号属性。
-		/// </summary>
+		/// <summary>获取一个值，指示该实体定义中是否含有序号属性。</summary>
 		public bool HasSequences
 		{
 			get
@@ -124,9 +99,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		/// <summary>
-		/// 获取数据实体的属性元数据集合。
-		/// </summary>
+		/// <summary>获取数据实体的属性元数据集合。</summary>
 		public IDataEntityPropertyCollection Properties { get; }
 		#endregion
 

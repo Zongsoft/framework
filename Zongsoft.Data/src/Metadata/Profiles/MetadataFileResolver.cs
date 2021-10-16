@@ -222,7 +222,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		private IDataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 		{
 			//创建实体元素对象
-			var entity = new MetadataEntity(provider,
+			var entity = new MetadataEntity(provider, @namespace,
 				this.GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
 				this.GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
 				this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
@@ -280,7 +280,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 					case XML_COMPLEXPROPERTY_ELEMENT:
 						var complexProperty = new MetadataEntityComplexProperty(entity,
 							reader.GetAttribute(XML_NAME_ATTRIBUTE),
-							this.GetTargetName(reader.GetAttribute(XML_PORT_ATTRIBUTE), @namespace),
+							reader.GetAttribute(XML_PORT_ATTRIBUTE),
 							this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
 							Behaviors = this.GetAttributeValue(reader, XML_BEHAVIORS_ATTRIBUTE, DataEntityComplexPropertyBehaviors.None),
