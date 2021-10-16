@@ -113,15 +113,31 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 私有方法
 		private void UpdateForeign()
 		{
-			var index = this.Port.IndexOf(':');
+			var port = this.Port;
+			var index = port.IndexOf(':');
 
 			if(index < 0)
-				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Port);
+			{
+				_foreign = this.GetEntity(port);
+			}
 			else
 			{
-				_foreign = this.Entity.Metadata.Manager.Entities.Get(this.Port.Substring(0, index));
-				_foreignProperty = _foreign.Properties.Get(this.Port.Substring(index + 1));
+				_foreign = this.GetEntity(port.Substring(0, index));
+
+				if(_foreign != null)
+					_foreignProperty = _foreign.Properties.Get(port.Substring(index + 1));
 			}
+		}
+
+		private IDataEntity GetEntity(string name)
+		{
+			if(name.Contains('.'))
+				return this.Entity.Metadata.Manager.Entities.Get(name);
+
+			if(this.Entity.Metadata.Entities.TryGet(this.Entity.Namespace + '.' + name, out var entity))
+				return entity;
+
+			return this.Entity.Metadata.Manager.Entities.Get(name);
 		}
 		#endregion
 	}
