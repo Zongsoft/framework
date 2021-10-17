@@ -32,7 +32,7 @@ using System;
 using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Net
+namespace Zongsoft.Communication.Net.Commands
 {
 	public class TcpClientSendCommand : CommandBase<CommandContext>
 	{

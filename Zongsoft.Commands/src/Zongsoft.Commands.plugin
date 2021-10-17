@@ -64,9 +64,9 @@
 			</object>
 
 			<object name="TcpClient">
-				<tcpserver.command>
+				<tcpclient.command>
 					<object name="TcpClient" type="Zongsoft.Communication.Net.Commands.TcpClientCommand, Zongsoft.Commands" />
-				</tcpserver.command>
+				</tcpclient.command>
 
 				<object name="Send" type="Zongsoft.Communication.Net.Commands.TcpClientSendCommand, Zongsoft.Commands" />
 				<object name="Info" type="Zongsoft.Communication.Net.Commands.TcpClientInfoCommand, Zongsoft.Commands" />
