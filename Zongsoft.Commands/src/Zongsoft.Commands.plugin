@@ -51,29 +51,6 @@
 			<object name="Get" type="Zongsoft.Configuration.Commands.ConfigurationGetCommand, Zongsoft.Commands" />
 		</object>
 
-		<object name="Net">
-			<object name="TcpServer">
-				<tcpserver.command>
-					<object name="TcpServer" type="Zongsoft.Communication.Net.Commands.TcpServerCommand, Zongsoft.Commands" />
-				</tcpserver.command>
-
-				<object name="Start" type="Zongsoft.Services.Commands.WorkerStartCommand, Zongsoft.Core" />
-				<object name="Stop" type="Zongsoft.Services.Commands.WorkerStopCommand, Zongsoft.Core" />
-				<object name="Info" type="Zongsoft.Communication.Net.Commands.TcpServerInfoCommand, Zongsoft.Commands" />
-				<object name="Listen" type="Zongsoft.Communication.Net.Commands.TcpServerListenCommand, Zongsoft.Commands" />
-			</object>
-
-			<object name="TcpClient">
-				<tcpclient.command>
-					<object name="TcpClient" type="Zongsoft.Communication.Net.Commands.TcpClientCommand, Zongsoft.Commands" />
-				</tcpclient.command>
-
-				<object name="Send" type="Zongsoft.Communication.Net.Commands.TcpClientSendCommand, Zongsoft.Commands" />
-				<object name="Info" type="Zongsoft.Communication.Net.Commands.TcpClientInfoCommand, Zongsoft.Commands" />
-				<object name="Listen" type="Zongsoft.Communication.Net.Commands.TcpClientListenCommand, Zongsoft.Commands" />
-			</object>
-		</object>
-
 		<object name="Messaging">
 			<object name="Queue">
 				<queue.command>

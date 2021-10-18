@@ -11,32 +11,33 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Commands library.
+ * This file is part of Zongsoft.Net library.
  *
- * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * The Zongsoft.Net is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * The Zongsoft.Net is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Net library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Communication.Net.Commands
+namespace Zongsoft.Net.Commands
 {
-	internal class TcpListenHandler : IHandler<string>
+	internal class TcpListenHandler : IHandler<ReadOnlySequence<byte>>
 	{
 		#region 成员字段
 		private readonly CommandContext _context;
@@ -50,12 +51,12 @@ namespace Zongsoft.Communication.Net.Commands
 		#endregion
 
 		#region 公共属性
-		public bool CanHandle(string request) => true;
+		public bool CanHandle(ReadOnlySequence<byte> request) => true;
 		public bool CanHandle(object request) => true;
 		#endregion
 
 		#region 公共方法
-		public bool Handle(string request)
+		public bool Handle(ReadOnlySequence<byte> request)
 		{
 			_context.Output.WriteLine(request);
 			return true;
@@ -67,7 +68,7 @@ namespace Zongsoft.Communication.Net.Commands
 			return true;
 		}
 
-		public Task<bool> HandleAsync(string request, CancellationToken cancellation) => Task.FromResult(this.Handle(request));
+		public Task<bool> HandleAsync(ReadOnlySequence<byte> request, CancellationToken cancellation) => Task.FromResult(this.Handle(request));
 		public Task<bool> HandleAsync(object request, CancellationToken cancellation = default) => Task.FromResult(this.Handle(request));
 		#endregion
 	}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Net"
+        title="Zongsoft Net Plugin"
+        author="Popeye Zhong(9555843@qq.com)"
+        version="4.4.0.1611"
+        copyright="Copyright (C) 2010-2016 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2012-06-09 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Net" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Net">
+			<object name="TcpServer">
+				<tcpserver.command>
+					<object name="TcpServer" type="Zongsoft.Net.Commands.TcpServerCommand, Zongsoft.Net" />
+				</tcpserver.command>
+
+				<object name="Start" type="Zongsoft.Services.Commands.WorkerStartCommand, Zongsoft.Core" />
+				<object name="Stop" type="Zongsoft.Services.Commands.WorkerStopCommand, Zongsoft.Core" />
+				<object name="Info" type="Zongsoft.Net.Commands.TcpServerInfoCommand, Zongsoft.Net" />
+				<object name="Listen" type="Zongsoft.Net.Commands.TcpServerListenCommand, Zongsoft.Net" />
+			</object>
+
+			<object name="TcpClient">
+				<tcpclient.command>
+					<object name="TcpClient" type="Zongsoft.Net.Commands.TcpClientCommand, Zongsoft.Net" />
+				</tcpclient.command>
+
+				<object name="Send" type="Zongsoft.Net.Commands.TcpClientSendCommand, Zongsoft.Net" />
+				<object name="Info" type="Zongsoft.Net.Commands.TcpClientInfoCommand, Zongsoft.Net" />
+				<object name="Listen" type="Zongsoft.Net.Commands.TcpClientListenCommand, Zongsoft.Net" />
+			</object>
+		</object>
+	</extension>
+</plugin>

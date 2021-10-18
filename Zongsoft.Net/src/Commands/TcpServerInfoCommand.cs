@@ -11,20 +11,20 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Commands library.
+ * This file is part of Zongsoft.Net library.
  *
- * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * The Zongsoft.Net is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * The Zongsoft.Net is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Net library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -32,7 +32,7 @@ using System;
 using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Communication.Net.Commands
+namespace Zongsoft.Net.Commands
 {
 	public class TcpServerInfoCommand : Services.Commands.WorkerInfoCommand
 	{
@@ -49,14 +49,18 @@ namespace Zongsoft.Communication.Net.Commands
 
 			if(worker is TcpServer<string> server)
 			{
+				var index = 0;
+
 				foreach(var channel in server.Channels)
 				{
 					var content = CommandOutletContent
-						.Create(CommandOutletColor.DarkYellow, $"#{channel.ChannelId:0000}")
-						.Append(CommandOutletColor.DarkGray, " | ")
-						.Append(CommandOutletColor.DarkGreen, channel.Socket.RemoteEndPoint.ToString())
-						.Append(CommandOutletColor.DarkGray, " | ")
-						.Append(CommandOutletColor.DarkGreen, channel.Socket.LocalEndPoint.ToString());
+					.Create(CommandOutletColor.DarkMagenta, $"#{++index} ")
+					.Append(CommandOutletColor.DarkYellow, $"[{channel.Address}]")
+					.Append(CommandOutletColor.DarkGray, "(")
+					.Append(CommandOutletColor.DarkGreen, channel.TotalBytesSent.ToString())
+					.Append(CommandOutletColor.DarkGray, " | ")
+					.Append(CommandOutletColor.DarkGreen, channel.TotalBytesReceived.ToString())
+					.Append(CommandOutletColor.DarkGray, ")");
 
 					context.Output.WriteLine(content);
 				}

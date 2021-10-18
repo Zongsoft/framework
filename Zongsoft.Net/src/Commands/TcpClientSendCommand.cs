@@ -11,38 +11,45 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Commands library.
+ * This file is part of Zongsoft.Net library.
  *
- * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * The Zongsoft.Net is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * The Zongsoft.Net is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Net library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Communication.Net.Commands
+using Zongsoft.Services;
+using Zongsoft.Components;
+
+namespace Zongsoft.Net.Commands
 {
-	[DisplayName("Text.TcpServerCommand.Name")]
-	[Description("Text.TcpServerCommand.Description")]
-	public class TcpServerCommand : Zongsoft.Services.Commands.WorkerCommandBase
+	public class TcpClientSendCommand : CommandBase<CommandContext>
 	{
-		#region 构造函数
-		public TcpServerCommand() : this("TcpServer") { }
-		public TcpServerCommand(string name) : base(name) => this.Server = new TcpServer<string>(64);
-		#endregion
+		public TcpClientSendCommand() : this("Send") { }
+		public TcpClientSendCommand(string name) : base(name) { }
 
-		#region 公共属性
-		public TcpServer<string> Server { get => this.Worker as TcpServer<string>; set => this.Worker = value; }
-		#endregion
+		protected override object OnExecute(CommandContext context)
+		{
+			var client = context.CommandNode.Find<TcpClientCommand>(true)?.Client;
+
+			if(client == null)
+				return null;
+
+			foreach(var argment in context.Expression.Arguments)
+				client.Send(System.Text.Encoding.UTF8.GetBytes(argment));
+
+			return context.Expression.Arguments;
+		}
 	}
 }

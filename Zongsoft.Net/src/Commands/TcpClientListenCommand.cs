@@ -11,34 +11,35 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Commands library.
+ * This file is part of Zongsoft.Net library.
  *
- * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * The Zongsoft.Net is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * The Zongsoft.Net is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Net library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Buffers;
 
 using Zongsoft.Components;
 using Zongsoft.Services;
 using Zongsoft.Services.Commands;
 
-namespace Zongsoft.Communication.Net.Commands
+namespace Zongsoft.Net.Commands
 {
-	public class TcpClientListenCommand : HostListenCommandBase<TcpClient<string>>
+	public class TcpClientListenCommand : HostListenCommandBase<TcpClient>
 	{
 		#region 私有变量
-		private IHandler<string> _handler;
+		private IHandler<ReadOnlySequence<byte>> _handler;
 		#endregion
 
 		#region 构造函数
@@ -47,7 +48,7 @@ namespace Zongsoft.Communication.Net.Commands
 		#endregion
 
 		#region 重写方法
-		protected override void OnListening(CommandContext context, TcpClient<string> host)
+		protected override void OnListening(CommandContext context, TcpClient host)
 		{
 			//保存原处理器
 			_handler = host.Handler;
@@ -56,7 +57,7 @@ namespace Zongsoft.Communication.Net.Commands
 			host.Handler = new TcpListenHandler(context);
 		}
 
-		protected override void OnListened(CommandContext context, TcpClient<string> host)
+		protected override void OnListened(CommandContext context, TcpClient host)
 		{
 			//还原处理器
 			host.Handler = _handler;

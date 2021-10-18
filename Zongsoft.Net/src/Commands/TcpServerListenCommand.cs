@@ -11,33 +11,34 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Commands library.
+ * This file is part of Zongsoft.Net library.
  *
- * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * The Zongsoft.Net is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * The Zongsoft.Net is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Net library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Buffers;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Communication.Net.Commands
+namespace Zongsoft.Net.Commands
 {
-	public class TcpServerListenCommand : Zongsoft.Services.Commands.WorkerListenCommandBase<TcpServer<string>>
+	public class TcpServerListenCommand : Zongsoft.Services.Commands.WorkerListenCommandBase<TcpServer>
 	{
 		#region 私有变量
-		private IHandler<string> _handler;
+		private IHandler<ReadOnlySequence<byte>> _handler;
 		#endregion
 
 		#region 构造函数
@@ -46,7 +47,7 @@ namespace Zongsoft.Communication.Net.Commands
 		#endregion
 
 		#region 重写方法
-		protected override void OnListening(CommandContext context, TcpServer<string> worker)
+		protected override void OnListening(CommandContext context, TcpServer worker)
 		{
 			//通过基类方法打印入口信息
 			base.OnListening(context, worker);
@@ -58,7 +59,7 @@ namespace Zongsoft.Communication.Net.Commands
 			worker.Handler = new TcpListenHandler(context);
 		}
 
-		protected override void OnListened(CommandContext context, TcpServer<string> worker)
+		protected override void OnListened(CommandContext context, TcpServer worker)
 		{
 			//还原处理器
 			worker.Handler = _handler;
