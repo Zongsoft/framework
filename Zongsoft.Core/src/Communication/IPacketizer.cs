@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Buffers;
 
 namespace Zongsoft.Communication
 {
@@ -41,19 +42,18 @@ namespace Zongsoft.Communication
 		string Name { get; }
 
 		/// <summary>
-		/// 打包，将通讯包对象序列化成字节流。
+		/// 打包，将通讯包对象序列化到发送缓存。
 		/// </summary>
-		/// <param name="package">待打包的通讯包对象。</param>
-		/// <param name="data">打包成功的字节数组。</param>
-		/// <returns>如果打包成功则返回真(True)，否则返回假(False)。</returns>
-		bool TryPack(TPackage package, out byte[] data);
+		/// <param name="writer">缓存写入器。</param>
+		/// <param name="data">待打包的字节流。</param>
+		void Pack(IBufferWriter<byte> writer, ReadOnlySequence<byte> data);
 
 		/// <summary>
 		/// 拆包，将字节流反序列化成通讯包对象。
 		/// </summary>
 		/// <param name="data">待拆包的字节流。</param>
-		/// <param name="result">拆包成功的通讯包对象。</param>
-		/// <returns>如果拆包成功则返回真(True)，否则返回假(False)。</returns>
-		bool TryUnpack(ReadOnlySpan<byte> data, out TPackage result);
+		/// <param name="payload">拆包成功的通讯包负载。</param>
+		/// <returns>如果拆包完成则返回真(True)，否则返回假(False)。</returns>
+		bool Unpack(ref ReadOnlySequence<byte> data, out TPackage payload);
 	}
 }

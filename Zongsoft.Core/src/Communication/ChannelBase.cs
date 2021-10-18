@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -64,16 +65,16 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 发送方法
-		public abstract void Send(ReadOnlySpan<byte> data);
-		public abstract Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
+		public abstract void Send(in ReadOnlySequence<byte> data);
+		public abstract Task SendAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation = default);
 		#endregion
 
 		#region 接收方法
-		protected abstract void OnReceive(ReadOnlySpan<byte> data);
-		protected abstract Task OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation);
+		protected abstract void OnReceive(in ReadOnlySequence<byte> data);
+		protected abstract Task OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation);
 
-		void IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
-		Task IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+		void IReceiver.Receive(in ReadOnlySequence<byte> data) => this.OnReceive(in data);
+		Task IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(in data, cancellation);
 		#endregion
 
 		#region 激发事件

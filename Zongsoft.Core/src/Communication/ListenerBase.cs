@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,38 +53,33 @@ namespace Zongsoft.Communication
 		#region 公共属性
 		public virtual bool IsListening { get => this.State == WorkerState.Running; }
 		public virtual IPacketizer<T> Packetizer { get; }
-
-		public IHandler<T> Handler
-		{
-			get => _handler;
-			set => _handler = value ?? throw new ArgumentNullException();
-		}
+		public IHandler<T> Handler { get => _handler; set => _handler = value; }
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnReceive(ReadOnlySpan<byte> data) { if(this.OnDeserialize(data, out var value)) this.OnHandle(value); }
-		protected virtual Task OnReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnDeserialize(data, out var value) ? this.OnHandleAsync(value, cancellation) : Task.CompletedTask;
-		protected virtual bool OnHandle(T package) => this.Handler.Handle(package);
-		protected virtual Task<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler.HandleAsync(package, cancellation);
+		protected virtual void OnReceive(in ReadOnlySequence<byte> data) { var message = data; if(this.OnDeserialize(ref message, out var value)) this.OnHandle(value); }
+		protected virtual Task OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) { var message = data; return this.OnDeserialize(ref message, out var value) ? this.OnHandleAsync(value, cancellation) : Task.CompletedTask; }
+		protected virtual bool OnHandle(T package) => this.Handler?.Handle(package) ?? false;
+		protected virtual Task<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(package, cancellation) ?? Task.FromResult(false);
 		#endregion
 
 		#region 协议转换
-		protected virtual bool OnDeserialize(ReadOnlySpan<byte> data, out T result)
+		protected virtual bool OnDeserialize(ref ReadOnlySequence<byte> data, out T result)
 		{
 			var packetizer = this.Packetizer;
 
 			if(packetizer == null)
 				throw new InvalidOperationException("Missing the required packetizer for the receive operation.");
 
-			return packetizer.TryUnpack(data, out result);
+			return packetizer.Unpack(ref data, out result);
 		}
 		#endregion
 
 		#region 显式实现
 		void IListener<T>.Handle(T package) => this.OnHandle(package);
 		Task IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
-		void IReceiver.Receive(ReadOnlySpan<byte> data) => this.OnReceive(data);
-		Task IReceiver.ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+		void IReceiver.Receive(in ReadOnlySequence<byte> data) => this.OnReceive(data);
+		Task IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
 		#endregion
 
 		#region 释放资源

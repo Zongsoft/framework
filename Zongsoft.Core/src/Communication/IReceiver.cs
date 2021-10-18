@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,7 +36,7 @@ namespace Zongsoft.Communication
 {
 	public interface IReceiver
 	{
-		void Receive(ReadOnlySpan<byte> data);
-		Task ReceiveAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
+		void Receive(in ReadOnlySequence<byte> data);
+		Task ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation = default);
 	}
 }

@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Text;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,25 +36,7 @@ namespace Zongsoft.Communication
 {
 	public interface ISender
 	{
-		void Send(ReadOnlySpan<byte> data);
-		void Send(byte[] data) => this.Send(data.AsSpan());
-		void Send(byte[] data, int offset) => this.Send(data.AsSpan(offset));
-		void Send(byte[] data, int offset, int count) => this.Send(data.AsSpan(offset, count));
-		void Send(string text, Encoding encoding = null)
-		{
-			if(text != null && text.Length > 0)
-				this.Send((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan());
-		}
-
-		Task SendAsync(ReadOnlySpan<byte> data, CancellationToken cancellation = default);
-		Task SendAsync(byte[] data, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(), cancellation);
-		Task SendAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(offset), cancellation);
-		Task SendAsync(byte[] data, int offset, int count, CancellationToken cancellation = default) => this.SendAsync(data.AsSpan(offset, count), cancellation);
-		Task SendAsync(string text, Encoding encoding = null, CancellationToken cancellation = default)
-		{
-			return string.IsNullOrEmpty(text) ?
-				Task.CompletedTask :
-				this.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text).AsSpan(), cancellation);
-		}
+		void Send(in ReadOnlySequence<byte> data);
+		Task SendAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation = default);
 	}
 }
