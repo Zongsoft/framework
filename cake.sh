@@ -6,6 +6,7 @@ CAKE_ARGS="--verbosity=verbose"
 
 PROJECT_CORE="Zongsoft.Core/build.cake"
 PROJECT_DATA="Zongsoft.Data/build.cake"
+PROJECT_NET="Zongsoft.Net/build.cake"
 PROJECT_WEB="Zongsoft.Web/build.cake"
 PROJECT_PLUGINS="Zongsoft.Plugins/build.cake"
 PROJECT_PLUGINS_WEB="Zongsoft.Plugins.Web/build.cake"
@@ -22,6 +23,7 @@ dotnet tool restore
 
 dotnet cake $PROJECT_CORE $CAKE_ARGS "$@"
 dotnet cake $PROJECT_DATA $CAKE_ARGS "$@"
+dotnet cake $PROJECT_NET $CAKE_ARGS "$@"
 dotnet cake $PROJECT_WEB $CAKE_ARGS "$@"
 dotnet cake $PROJECT_PLUGINS $CAKE_ARGS "$@"
 dotnet cake $PROJECT_PLUGINS_WEB $CAKE_ARGS "$@"
