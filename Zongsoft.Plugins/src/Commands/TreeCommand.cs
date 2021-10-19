@@ -78,12 +78,13 @@ namespace Zongsoft.Plugins.Commands
 				}
 			}
 
-			this.WritePluginTree(context.Output, node, context.Expression.Options.GetValue<int>("maxDepth"), 0, 0, context.Expression.Options.Contains("fullPath"));
+			this.WritePluginTree(context.Output, node, context.Expression.Options.GetValue<int>("depth"), 0, 0, context.Expression.Options.Contains("qualified"));
 			return node;
 		}
 		#endregion
 
-		public void WritePluginTree(ICommandOutlet output, PluginTreeNode node, int maxDepth, int depth, int index, bool isFullPath)
+		#region 打印信息
+		private void WritePluginTree(ICommandOutlet output, PluginTreeNode node, int maxDepth, int depth, int index, bool qualified)
 		{
 			if(node == null)
 				return;
@@ -95,7 +96,7 @@ namespace Zongsoft.Plugins.Commands
 				output.Write(CommandOutletColor.DarkMagenta, indent + "[{0}.{1}] ", depth, index);
 			}
 
-			output.Write(isFullPath ? node.FullPath : node.Name);
+			output.Write(qualified ? node.FullPath : node.Name);
 			output.Write(CommandOutletColor.DarkGray, " [{0}]", node.NodeType);
 
 			if(node.Plugin == null)
@@ -115,8 +116,9 @@ namespace Zongsoft.Plugins.Commands
 
 			for(int i = 0; i < node.Children.Count; i++)
 			{
-				WritePluginTree(output, node.Children[i], maxDepth, depth + 1, i + 1, isFullPath);
+				WritePluginTree(output, node.Children[i], maxDepth, depth + 1, i + 1, qualified);
 			}
 		}
+		#endregion
 	}
 }

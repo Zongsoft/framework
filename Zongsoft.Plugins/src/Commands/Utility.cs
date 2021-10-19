@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Zongsoft.Services;
 
@@ -89,8 +91,15 @@ namespace Zongsoft.Plugins.Commands
 			object value = node.UnwrapValue(obtainMode);
 			if(value != null)
 			{
+				var json = JsonSerializer.Serialize(value, new JsonSerializerOptions()
+				{
+					MaxDepth = maxDepth,
+					WriteIndented = true,
+					ReferenceHandler = ReferenceHandler.Preserve,
+				});
+
 				output.WriteLine();
-				output.WriteLine(Serialization.Serializer.Json.Serialize(value));
+				output.WriteLine(json);
 			}
 		}
 	}

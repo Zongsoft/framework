@@ -114,9 +114,26 @@ namespace Zongsoft.Commands
 			if(assembly == null)
 				return;
 
-			context.Output.WriteLine("{0}", assembly.FullName);
-			context.Output.Write(CommandOutletColor.DarkYellow, "{0}", assembly.Location);
-			context.Output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", File.GetLastWriteTime(assembly.Location));
+			if(assembly.IsDynamic)
+			{
+				context.Output.Write("{0}", assembly.FullName);
+				context.Output.WriteLine(CommandOutletColor.DarkMagenta, "(Dynamic)");
+
+				int index = 0;
+
+				foreach(var type in assembly.DefinedTypes)
+				{
+					context.Output.Write(CommandOutletColor.DarkCyan, $"#{++index:00} ");
+					context.Output.Write(CommandOutletColor.DarkYellow, type.FullName);
+					context.Output.WriteLine(CommandOutletColor.DarkGray, $" [{type.Attributes}]");
+				}
+			}
+			else
+			{
+				context.Output.WriteLine("{0}", assembly.FullName);
+				context.Output.Write(CommandOutletColor.DarkYellow, "{0}", assembly.Location);
+				context.Output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", File.GetLastWriteTime(assembly.Location));
+			}
 		}
 		#endregion
 

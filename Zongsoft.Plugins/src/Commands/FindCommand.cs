@@ -72,7 +72,7 @@ namespace Zongsoft.Plugins.Commands
 
 				Utility.PrintPluginNode(context.Output, result[i],
 							context.Expression.Options.GetValue<ObtainMode>("obtain"),
-							context.Expression.Options.GetValue<int>("maxDepth"));
+							context.Expression.Options.GetValue<int>("depth"));
 			}
 
 			if(result.Length == 1)
