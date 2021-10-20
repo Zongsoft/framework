@@ -37,29 +37,100 @@ namespace Zongsoft.Communication
 {
 	public static class SendExtension
 	{
-		public static void Send(this ISender sender, byte[] data) => sender.Send(new ReadOnlySequence<byte>(data));
-		public static void Send(this ISender sender, byte[] data, int offset) => sender.Send(new ReadOnlySequence<byte>(data, offset, data.Length - offset));
-		public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.Send(new ReadOnlySequence<byte>(data, offset, count));
+		public static void Send(this ISender sender, byte[] data) => sender.Send(data.AsSpan());
+		public static void Send(this ISender sender, byte[] data, int offset) => sender.Send(data.AsSpan(offset));
+		public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.Send(data.AsSpan(offset, count));
 		public static void Send(this ISender sender, string text, Encoding encoding = null)
 		{
 			if(sender == null)
 				throw new ArgumentNullException(nameof(sender));
 
-			if(text != null && text.Length > 0)
-				sender.Send((encoding ?? Encoding.UTF8).GetBytes(text));
+			if(string.IsNullOrEmpty(text))
+				return;
+
+			if(encoding == null)
+				encoding = Encoding.UTF8;
+
+			var count = encoding.GetByteCount(text);
+			var buffer = ArrayPool<byte>.Shared.Rent(count);
+
+			try
+			{
+				encoding.GetBytes(text, 0, text.Length, buffer, 0);
+				sender.Send(buffer.AsSpan());
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(buffer);
+			}
+		}
+		public static void Send(this ISender sender, IMemoryOwner<byte> data)
+		{
+			if(data == null)
+				throw new ArgumentNullException(nameof(data));
+
+			try
+			{
+				sender.Send(data.Memory.Span);
+			}
+			finally { data.Dispose(); }
 		}
 
-		public static Task SendAsync(this ISender sender, byte[] data, CancellationToken cancellation = default) => sender.SendAsync(new ReadOnlySequence<byte>(data), cancellation);
-		public static Task SendAsync(this ISender sender, byte[] data, int offset, CancellationToken cancellation = default) => sender.SendAsync(new ReadOnlySequence<byte>(data, offset, data.Length - offset), cancellation);
-		public static Task SendAsync(this ISender sender, byte[] data, int offset, int count, CancellationToken cancellation = default) => sender.SendAsync(new ReadOnlySequence<byte>(data, offset, count), cancellation);
-		public static Task SendAsync(this ISender sender, string text, Encoding encoding = null, CancellationToken cancellation = default)
+		public static ValueTask SendAsync(this ISender sender, byte[] data, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(), cancellation);
+		public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(offset), cancellation);
+		public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, int count, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(offset, count), cancellation);
+		public static async ValueTask SendAsync(this ISender sender, string text, Encoding encoding = null, CancellationToken cancellation = default)
 		{
 			if(sender == null)
 				throw new ArgumentNullException(nameof(sender));
 
-			return string.IsNullOrEmpty(text) ?
-				Task.CompletedTask :
-				sender.SendAsync((encoding ?? Encoding.UTF8).GetBytes(text), cancellation);
+			if(string.IsNullOrEmpty(text))
+				return;
+
+			if(encoding == null)
+				encoding = Encoding.UTF8;
+
+			var count = encoding.GetByteCount(text);
+			var buffer = ArrayPool<byte>.Shared.Rent(count);
+
+			try
+			{
+				encoding.GetBytes(text, 0, text.Length, buffer, 0);
+				await sender.SendAsync(buffer, cancellation);
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(buffer);
+			}
+		}
+		public static ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
+		{
+			async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
+			{
+				using(mmemory)
+				{
+					await write;
+				}
+			}
+
+			if(data == null)
+				throw new ArgumentNullException(nameof(data));
+
+			try
+			{
+				var result = sender.SendAsync(data.Memory, cancellation);
+
+				if(result.IsCompletedSuccessfully)
+					return default;
+
+				var final = Awaited(data, result);
+				data = null;
+				return final;
+			}
+			finally
+			{
+				using(data) { }
+			}
 		}
 	}
 }

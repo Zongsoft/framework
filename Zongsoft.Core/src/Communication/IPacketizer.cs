@@ -29,6 +29,8 @@
 
 using System;
 using System.Buffers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Communication
 {
@@ -38,22 +40,20 @@ namespace Zongsoft.Communication
 	/// <typeparam name="TPackage">通讯协议包的类型。</typeparam>
 	public interface IPacketizer<TPackage>
 	{
-		/// <summary>获取或设置协议名称。</summary>
-		string Name { get; }
-
 		/// <summary>
 		/// 打包，将通讯包对象序列化到发送缓存。
 		/// </summary>
 		/// <param name="writer">缓存写入器。</param>
-		/// <param name="data">待打包的字节流。</param>
-		void Pack(IBufferWriter<byte> writer, ReadOnlySequence<byte> data);
+		/// <param name="package">待打包的通讯包。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		ValueTask PackAsync(IBufferWriter<byte> writer, in TPackage package, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 拆包，将字节流反序列化成通讯包对象。
 		/// </summary>
 		/// <param name="data">待拆包的字节流。</param>
-		/// <param name="payload">拆包成功的通讯包负载。</param>
+		/// <param name="package">拆包成功的通讯包。</param>
 		/// <returns>如果拆包完成则返回真(True)，否则返回假(False)。</returns>
-		bool Unpack(ref ReadOnlySequence<byte> data, out TPackage payload);
+		bool Unpack(ref ReadOnlySequence<byte> data, out TPackage package);
 	}
 }
