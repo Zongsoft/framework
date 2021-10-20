@@ -67,8 +67,20 @@ namespace Zongsoft.Net
 
 		#region 公共属性
 		public IPEndPoint Address { get; set; }
-		public new IPacketizer<T> Packetizer { get => _packetizer; }
+		public override IPacketizer<T> Packetizer { get => _packetizer; }
 		public TcpServerChannelManager<T> Channels { get => _channels; }
+		#endregion
+
+		#region 接受方法
+		public Task AcceptAsync(IDuplexPipe transport, IPEndPoint address, CancellationToken cancellation = default)
+		{
+			if(transport == null)
+				throw new ArgumentNullException(nameof(transport));
+
+			var channel = new TcpServerChannel<T>(_channels, transport, address);
+			_channels.Add(channel);
+			return channel.ReceiveAsync(cancellation);
+		}
 		#endregion
 
 		#region 重写方法
@@ -145,14 +157,14 @@ namespace Zongsoft.Net
 		protected override Task OnClientConnectedAsync(in ClientConnection client)
 		{
 			var channel = new TcpServerChannel<T>(this, client.Transport, client.RemoteEndPoint as IPEndPoint);
-			return channel.AcceptAsync(CancellationToken.None);
+			return channel.ReceiveAsync(CancellationToken.None);
 		}
 		#endregion
 
 		#region 数据处理
-		internal void Pack(PipeWriter writer, in ReadOnlyMemory<byte> data) => this.Server.Packetizer.Pack(writer, new ReadOnlySequence<byte>(data));
+		internal ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation) => this.Server.Packetizer.PackAsync(writer, package, cancellation);
 		internal bool Unpack(ref ReadOnlySequence<byte> data, out T package) => this.Server.Packetizer.Unpack(ref data, out package);
-		internal Task<bool> HandleAsync(in T package, CancellationToken cancellation) => this.Server.Handler.HandleAsync(package, cancellation);
+		internal Task<bool> HandleAsync(in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(package, cancellation) ?? Task.FromResult(false);
 		#endregion
 
 		#region 内部方法
@@ -184,29 +196,28 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 构造函数
-		public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe pipe, IPEndPoint address) : base(pipe, address)
+		public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe transport, IPEndPoint address) : base(transport, address)
 		{
 			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
 		}
 		#endregion
 
-		#region 开始接收
-		public Task AcceptAsync(CancellationToken cancellationToken) => this.StartReceiveLoopAsync(cancellationToken);
+		#region 开启接收
+		public Task ReceiveAsync(CancellationToken cancellationToken = default) => this.StartReceiveLoopAsync(cancellationToken);
 		#endregion
 
 		#region 发送方法
-		public ValueTask SendAsync(IMemoryOwner<byte> data, CancellationToken cancellation = default) => this.WriteAsync(data, cancellation);
-		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => this.WriteAsync(data, cancellation);
+		public ValueTask SendAsync(in T package, CancellationToken cancellation = default) => this.WriteAsync(package, cancellation);
 		#endregion
 
 		#region 接收数据
-		protected override ValueTask PackAsync(PipeWriter writer, in ReadOnlyMemory<byte> data, CancellationToken cancellation)
+		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation)
 		{
-			_manager.Pack(writer, data);
+			_manager.PackAsync(writer, package, cancellation);
 			return ValueTask.CompletedTask;
 		}
 
-		protected override bool TryUnpack(ref ReadOnlySequence<byte> data, out T package)
+		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package)
 		{
 			return _manager.Unpack(ref data, out package);
 		}

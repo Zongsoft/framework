@@ -28,11 +28,9 @@
  */
 
 using System;
-using System.IO;
 using System.Net;
 using System.IO.Pipelines;
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,36 +65,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送数据
-		protected ValueTask WriteAsync(IMemoryOwner<byte> memory, CancellationToken cancellation = default)
-		{
-			async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
-			{
-				using(mmemory)
-				{
-					await write;
-				}
-			}
-
-			try
-			{
-				var result = WriteAsync(memory.Memory, cancellation);
-				if(result.IsCompletedSuccessfully)
-					return default;
-
-				var final = Awaited(memory, result);
-				memory = null; // prevent dispose
-				return final;
-			}
-			finally
-			{
-				using(memory) { }
-			}
-		}
-
-		/// <summary>
-		/// Note: it is assumed that the calling subclass has dealt with synchronization
-		/// </summary>
-		protected ValueTask WriteAsync(ReadOnlyMemory<byte> payload, CancellationToken cancellation = default)
+		protected ValueTask WriteAsync(T package, CancellationToken cancellation = default)
 		{
 			async ValueTask AwaitFlushAndRelease(ValueTask flush, PipeWriter writer)
 			{
@@ -106,7 +75,7 @@ namespace Zongsoft.Net
 
 			// try to get the conch; if not, switch to async
 			if(!_singleWriter.Wait(0))
-				return WriteAsyncSlowPath(payload, cancellation);
+				return WriteAsyncSlowPath(package, cancellation);
 
 			bool release = true;
 
@@ -117,7 +86,7 @@ namespace Zongsoft.Net
 				//this.WriteHeader(writer, payload.Length);
 				//var result = writer.WriteAsync(payload, cancellation); // includes a flush
 
-				var result = this.PackAsync(writer, payload, cancellation);
+				var result = this.PackAsync(writer, package, cancellation);
 
 				if(result.IsCompletedSuccessfully)
 				{
@@ -134,7 +103,7 @@ namespace Zongsoft.Net
 			}
 		}
 
-		private async ValueTask WriteAsyncSlowPath(ReadOnlyMemory<byte> payload, CancellationToken cancellation)
+		private async ValueTask WriteAsyncSlowPath(T package, CancellationToken cancellation)
 		{
 			await _singleWriter.WaitAsync();
 
@@ -145,25 +114,18 @@ namespace Zongsoft.Net
 				//WriteHeader(writer, payload.Length);
 				//await writer.WriteAsync(payload, cancellation);
 
-				await this.PackAsync(writer, payload, cancellation);
+				await this.PackAsync(writer, package, cancellation);
 			}
 			finally
 			{
 				_singleWriter.Release();
 			}
 		}
-
-		private void WriteHeader(PipeWriter writer, int length)
-		{
-			var span = writer.GetSpan(4);
-			BinaryPrimitives.WriteInt32LittleEndian(span, length);
-			writer.Advance(4);
-		}
 		#endregion
 
 		#region 协议解析
-		protected abstract ValueTask PackAsync(PipeWriter writer, in ReadOnlyMemory<byte> data, CancellationToken cancellation);
-		protected abstract bool TryUnpack(ref ReadOnlySequence<byte> data, out T package);
+		protected abstract ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation);
+		protected abstract bool Unpack(ref ReadOnlySequence<byte> data, out T package);
 		#endregion
 
 		#region 接收消息
@@ -186,11 +148,8 @@ namespace Zongsoft.Net
 
 					var buffer = readResult.Buffer;
 
-					// handle as many frames from the data as we can
-					// (note: an alternative strategy is handle one frame
-					// and release via AdvanceTo as soon as possible)
 					makingProgress = false;
-					while(this.TryUnpack(ref buffer, out var payload))
+					while(this.Unpack(ref buffer, out var payload))
 					{
 						makingProgress = true;
 						await this.OnReceiveAsync(in payload);
@@ -228,17 +187,16 @@ namespace Zongsoft.Net
 		public void Dispose() => this.Close();
 		public void Close(Exception exception = null)
 		{
-			var pipe = Interlocked.Exchange(ref _transport, null);
+			var transport = Interlocked.Exchange(ref _transport, null);
 
-			if(pipe != null)
+			if(transport != null)
 			{
-				//burn the pipe to the ground
-				try { pipe.Input.Complete(exception); } catch { }
-				try { pipe.Input.CancelPendingRead(); } catch { }
-				try { pipe.Output.Complete(exception); } catch { }
-				try { pipe.Output.CancelPendingFlush(); } catch { }
+				try { transport.Input.Complete(exception); } catch { }
+				try { transport.Input.CancelPendingRead(); } catch { }
+				try { transport.Output.Complete(exception); } catch { }
+				try { transport.Output.CancelPendingFlush(); } catch { }
 
-				if(pipe is IDisposable disposable)
+				if(transport is IDisposable disposable)
 					try { disposable.Dispose(); } catch { }
 			}
 

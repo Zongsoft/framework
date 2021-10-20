@@ -93,19 +93,11 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送方法
-		public void Send(IMemoryOwner<byte> data) => this.SendAsync(data).ConfigureAwait(false);
-		public void Send(ReadOnlyMemory<byte> data) => this.SendAsync(data).ConfigureAwait(false);
-
-		public async ValueTask SendAsync(IMemoryOwner<byte> data, CancellationToken cancellation = default)
+		public void Send(in T package) => this.SendAsync(package).ConfigureAwait(false);
+		public async ValueTask SendAsync(T package, CancellationToken cancellation = default)
 		{
 			await this.ConnectAsync();
-			await _channel.SendAsync(data, cancellation);
-		}
-
-		public async ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-		{
-			await this.ConnectAsync();
-			await _channel.SendAsync(data, cancellation);
+			await _channel.SendAsync(package, cancellation);
 		}
 		#endregion
 
@@ -143,18 +135,16 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送方法
-		public ValueTask SendAsync(IMemoryOwner<byte> data, CancellationToken cancellation = default) => this.WriteAsync(data, cancellation);
-		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => this.WriteAsync(data, cancellation);
+		public ValueTask SendAsync(in T package, CancellationToken cancellation = default) => this.WriteAsync(package, cancellation);
 		#endregion
 
 		#region 接收数据
-		protected override ValueTask PackAsync(PipeWriter writer, in ReadOnlyMemory<byte> data, CancellationToken cancellation)
+		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation)
 		{
-			_client.Packetizer.Pack(writer, new ReadOnlySequence<byte>(data));
-			return ValueTask.CompletedTask;
+			return _client.Packetizer.PackAsync(writer, package, cancellation);
 		}
 
-		protected override bool TryUnpack(ref ReadOnlySequence<byte> data, out T package)
+		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package)
 		{
 			return _client.Packetizer.Unpack(ref data, out package);
 		}

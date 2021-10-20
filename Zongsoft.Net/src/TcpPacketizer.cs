@@ -50,31 +50,37 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 打包方法
-		public void Pack(IBufferWriter<byte> writer, ReadOnlySequence<byte> data)
+		public ValueTask PackAsync(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package, CancellationToken cancellation = default)
 		{
 			var span = writer.GetSpan(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32LittleEndian(span, (int)data.Length);
+			BinaryPrimitives.WriteInt32LittleEndian(span, (int)package.Length);
 			writer.Advance(HEAD_SIZE);
-			writer.Write(data.FirstSpan);
+			writer.Write(package.FirstSpan);
+			return ValueTask.CompletedTask;
 		}
 
-		public ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> data, CancellationToken cancellation)
+		public ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
 		{
 			var span = writer.GetSpan(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32LittleEndian(span, (int)data.Length);
+			BinaryPrimitives.WriteInt32LittleEndian(span, (int)package.Length);
 			writer.Advance(HEAD_SIZE);
-			return writer.WriteAsync(data.First, cancellation);
+			return writer.WriteAsync(package.First, cancellation);
 		}
 		#endregion
 
 		#region 解包方法
-		public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> result)
+		public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> package)
 		{
 			if(input.Length < HEAD_SIZE)
 			{
-				result = default;
+				package = default;
 				return false;
 			}
+
+			var bytes = new[] { (byte)'$', (byte)'$', (byte)'$' };
+
+			var reader = new SequenceReader<byte>(input);
+			reader.TryReadTo(out ReadOnlySequence<byte> output, bytes.AsSpan());
 
 			int length;
 			if(input.First.Length >= HEAD_SIZE)
@@ -91,14 +97,14 @@ namespace Zongsoft.Net
 			// do we have the "length" bytes?
 			if(input.Length < length + HEAD_SIZE)
 			{
-				result = default;
+				package = default;
 				return false;
 			}
 
-			result = input.Slice(HEAD_SIZE, length);
-			input = input.Slice(result.End);
+			package = input.Slice(HEAD_SIZE, length);
+			input = input.Slice(package.End);
 
-			this.OnUnpacked(result);
+			this.OnUnpacked(package);
 
 			return true;
 		}
