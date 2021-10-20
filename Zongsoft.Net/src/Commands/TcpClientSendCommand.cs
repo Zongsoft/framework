@@ -47,7 +47,7 @@ namespace Zongsoft.Net.Commands
 				return null;
 
 			foreach(var argment in context.Expression.Arguments)
-				client.Send(System.Text.Encoding.UTF8.GetBytes(argment));
+				client.Send(new System.Buffers.ReadOnlySequence<byte>(System.Text.Encoding.UTF8.GetBytes(argment)));
 
 			return context.Expression.Arguments;
 		}
