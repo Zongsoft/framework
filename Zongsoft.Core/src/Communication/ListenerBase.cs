@@ -40,7 +40,7 @@ namespace Zongsoft.Communication
 	/// <summary>
 	/// 提供通讯侦听功能的抽象基类。
 	/// </summary>
-	public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver
+	public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHandleable<T>, IHandleable
 	{
 		#region 成员变量
 		private IHandler<T> _handler;
@@ -54,6 +54,7 @@ namespace Zongsoft.Communication
 		public virtual bool IsListening { get => this.State == WorkerState.Running; }
 		public virtual IPacketizer<T> Packetizer { get; }
 		public IHandler<T> Handler { get => _handler; set => _handler = value; }
+		IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
 		#endregion
 
 		#region 虚拟方法
