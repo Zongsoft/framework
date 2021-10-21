@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Text;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace Zongsoft.Common
 {
@@ -86,6 +89,317 @@ namespace Zongsoft.Common
 			var buffer = ArrayPool<T>.Shared.Rent(length);
 			source.CopyTo(buffer);
 			return new ArrayPoolOwner<T>(buffer, length);
+		}
+		#endregion
+
+		#region 字符处理
+		public static IMemoryOwner<char> Decode(this ReadOnlyMemory<byte> data, Encoding encoding = null)
+		{
+			if(data.IsEmpty)
+				return Empty<char>();
+
+			if(encoding == null)
+				encoding = Encoding.UTF8;
+
+			if(!MemoryMarshal.TryGetArray(data, out var blob))
+				throw new InvalidOperationException();
+
+			var count = encoding.GetCharCount(blob.Array, blob.Offset, blob.Count);
+			var buffer = ArrayPool<char>.Shared.Rent(count);
+			encoding.GetChars(blob.Array, blob.Offset, blob.Count, buffer, 0);
+			return new ArrayPoolOwner<char>(buffer, count);
+		}
+
+		public static IMemoryOwner<byte> Encode(this string text, Encoding encoding = null)
+		{
+			if(string.IsNullOrEmpty(text))
+				return Empty<byte>();
+
+			if(encoding == null)
+				encoding = Encoding.UTF8;
+
+			var count = encoding.GetByteCount(text);
+			var buffer = ArrayPool<byte>.Shared.Rent(count);
+			encoding.GetBytes(text, 0, text.Length, buffer, 0);
+			return new ArrayPoolOwner<byte>(buffer, count);
+		}
+		#endregion
+
+		#region 大端读数
+		public static bool TryGetInt16BigEndian(this ReadOnlySequence<byte> buffer, out short value)
+		{
+			const int SIZE = sizeof(short);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt16BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt16BigEndian(local, out value);
+		}
+		public static bool TryGetInt32BigEndian(this ReadOnlySequence<byte> buffer, out int value)
+		{
+			const int SIZE = sizeof(int);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt32BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt32BigEndian(local, out value);
+		}
+		public static bool TryGetInt64BigEndian(this ReadOnlySequence<byte> buffer, out long value)
+		{
+			const int SIZE = sizeof(long);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt64BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt64BigEndian(local, out value);
+		}
+		public static bool TryGetUInt16BigEndian(this ReadOnlySequence<byte> buffer, out ushort value)
+		{
+			const int SIZE = sizeof(ushort);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt16BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt16BigEndian(local, out value);
+		}
+		public static bool TryGetUInt32BigEndian(this ReadOnlySequence<byte> buffer, out uint value)
+		{
+			const int SIZE = sizeof(uint);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt32BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt32BigEndian(local, out value);
+		}
+		public static bool TryGetUInt64BigEndian(this ReadOnlySequence<byte> buffer, out ulong value)
+		{
+			const int SIZE = sizeof(ulong);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt64BigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt64BigEndian(local, out value);
+		}
+		public static bool TryGetSingleBigEndian(this ReadOnlySequence<byte> buffer, out float value)
+		{
+			const int SIZE = sizeof(float);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadSingleBigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadSingleBigEndian(local, out value);
+		}
+		public static bool TryGetDoubleBigEndian(this ReadOnlySequence<byte> buffer, out double value)
+		{
+			const int SIZE = sizeof(double);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadDoubleBigEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadDoubleBigEndian(local, out value);
+		}
+		#endregion
+
+		#region 小端读数
+		public static bool TryGetInt16LittleEndian(this ReadOnlySequence<byte> buffer, out short value)
+		{
+			const int SIZE = sizeof(short);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt16LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt16LittleEndian(local, out value);
+		}
+		public static bool TryGetInt32LittleEndian(this ReadOnlySequence<byte> buffer, out int value)
+		{
+			const int SIZE = sizeof(int);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt32LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt32LittleEndian(local, out value);
+		}
+		public static bool TryGetInt64LittleEndian(this ReadOnlySequence<byte> buffer, out long value)
+		{
+			const int SIZE = sizeof(long);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadInt64LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadInt64LittleEndian(local, out value);
+		}
+		public static bool TryGetUInt16LittleEndian(this ReadOnlySequence<byte> buffer, out ushort value)
+		{
+			const int SIZE = sizeof(ushort);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt16LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt16LittleEndian(local, out value);
+		}
+		public static bool TryGetUInt32LittleEndian(this ReadOnlySequence<byte> buffer, out uint value)
+		{
+			const int SIZE = sizeof(uint);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt32LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt32LittleEndian(local, out value);
+		}
+		public static bool TryGetUInt64LittleEndian(this ReadOnlySequence<byte> buffer, out ulong value)
+		{
+			const int SIZE = sizeof(ulong);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadUInt64LittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadUInt64LittleEndian(local, out value);
+		}
+		public static bool TryGetSingleLittleEndian(this ReadOnlySequence<byte> buffer, out float value)
+		{
+			const int SIZE = sizeof(float);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadSingleLittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadSingleLittleEndian(local, out value);
+		}
+		public static bool TryGetDoubleLittleEndian(this ReadOnlySequence<byte> buffer, out double value)
+		{
+			const int SIZE = sizeof(double);
+
+			if(buffer.Length < SIZE)
+			{
+				value = 0;
+				return false;
+			}
+
+			if(buffer.First.Length >= SIZE)
+				return BinaryPrimitives.TryReadDoubleLittleEndian(buffer.FirstSpan, out value);
+
+			Span<byte> local = stackalloc byte[SIZE];
+			buffer.Slice(0, SIZE).CopyTo(local);
+			return BinaryPrimitives.TryReadDoubleLittleEndian(local, out value);
 		}
 		#endregion
 
