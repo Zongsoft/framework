@@ -65,8 +65,8 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 发送方法
-		public abstract void Send(in ReadOnlySpan<byte> data);
-		public abstract ValueTask SendAsync(in ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
+		public abstract void Send(ReadOnlySpan<byte> data);
+		public abstract ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
 		#endregion
 
 		#region 接收方法

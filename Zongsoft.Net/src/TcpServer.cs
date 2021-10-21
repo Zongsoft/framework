@@ -45,26 +45,47 @@ namespace Zongsoft.Net
 {
 	public static class TcpServer
 	{
-		public static readonly TcpServer<IMemoryOwner<byte>> Raw = new TcpServer<IMemoryOwner<byte>>("TcpServer.Raw", RawPacketizer.Instance);
+		public static readonly TcpServer<IMemoryOwner<byte>> Headless = new HeadlessServer();
+		public static readonly TcpServer<ReadOnlySequence<byte>> Headed = new HeadedServer();
 
-		internal class RawPacketizer : IPacketizer<IMemoryOwner<byte>>
+		private class HeadlessServer : TcpServer<IMemoryOwner<byte>>, ISender
 		{
-			public static readonly RawPacketizer Instance = new RawPacketizer();
-
-			private RawPacketizer() { }
-
-			public ValueTask PackAsync(IBufferWriter<byte> writer, in IMemoryOwner<byte> package, CancellationToken cancellation = default)
+			public HeadlessServer() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 			{
-				if(package != null)
-					writer.Write(package.Memory.Span);
+				var task = base.BroadcastAsync(data, cancellation);
 
-				return ValueTask.CompletedTask;
+				if(task.IsCompletedSuccessfully)
+					return ValueTask.CompletedTask;
+
+				return new ValueTask(task.AsTask());
+			}
+		}
+
+		private class HeadedServer : TcpServer<ReadOnlySequence<byte>>, ISender
+		{
+			public HeadedServer() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+			{
+				var task = base.BroadcastAsync(data, cancellation);
+
+				if(task.IsCompletedSuccessfully)
+					return ValueTask.CompletedTask;
+
+				return new ValueTask(task.AsTask());
 			}
 
-			public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
+			internal protected override TcpServerChannel<ReadOnlySequence<byte>> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new SizedChannel(this.Channels, transport, address);
+
+			private class SizedChannel : TcpServerChannel<ReadOnlySequence<byte>>
 			{
-				package = Zongsoft.Common.Buffer.Lease(data);
-				return true;
+				public SizedChannel(TcpServerChannelManager<ReadOnlySequence<byte>> manager, IDuplexPipe transport, IPEndPoint address) : base(manager, transport, address) { }
+				protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
+				{
+					return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
+				}
 			}
 		}
 	}
@@ -102,7 +123,7 @@ namespace Zongsoft.Net
 			return channel.ReceiveAsync(cancellation);
 		}
 
-		protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new TcpServerChannel<T>(_channels, transport, address);
+		internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new TcpServerChannel<T>(_channels, transport, address);
 		#endregion
 
 		#region 广播方法
@@ -115,6 +136,23 @@ namespace Zongsoft.Net
 				try
 				{
 					await client.SendAsync(package, cancellation);
+					count++;
+				}
+				catch { }
+			}
+
+			return count;
+		}
+
+		protected async ValueTask<int> BroadcastAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		{
+			int count = 0;
+
+			foreach(var client in _channels)
+			{
+				try
+				{
+					await client.SendAsync(data, cancellation);
 					count++;
 				}
 				catch { }
@@ -197,7 +235,7 @@ namespace Zongsoft.Net
 		#region 连接受理
 		protected override Task OnClientConnectedAsync(in ClientConnection client)
 		{
-			var channel = new TcpServerChannel<T>(this, client.Transport, client.RemoteEndPoint as IPEndPoint);
+			var channel = this.Server.CreateChannel(client.Transport, client.RemoteEndPoint as IPEndPoint);
 			return channel.ReceiveAsync(CancellationToken.None);
 		}
 		#endregion
@@ -261,7 +299,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收数据
-		protected sealed override ValueTask OnReceiveAsync(in T payload)
+		protected sealed override ValueTask OnReceiveAsync(in T package)
 		{
 			static void DisposeOnCompletion(Task task, in T message)
 			{
@@ -270,14 +308,14 @@ namespace Zongsoft.Net
 
 			try
 			{
-				var pendingAction = _manager.HandleAsync(payload, CancellationToken.None);
+				var pendingAction = _manager.HandleAsync(package, CancellationToken.None);
 
 				if(!pendingAction.IsCompletedSuccessfully )
-					DisposeOnCompletion(pendingAction, in payload);
+					DisposeOnCompletion(pendingAction, in package);
 			}
 			finally
 			{
-				if(payload is IDisposable disposable)
+				if(package is IDisposable disposable)
 					disposable.Dispose();
 			}
 
@@ -295,6 +333,10 @@ namespace Zongsoft.Net
 			_manager.Remove(this);
 			return ValueTask.CompletedTask;
 		}
+		#endregion
+
+		#region 发送方法
+		internal ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 		#endregion
 
 		#region 重写方法

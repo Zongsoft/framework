@@ -34,31 +34,45 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Components;
 using Zongsoft.Communication;
 
 using Pipelines.Sockets.Unofficial;
 
 namespace Zongsoft.Net
 {
-	public class TcpClient : TcpClient<ReadOnlySequence<byte>>
+	public static class TcpClient
 	{
-		public TcpClient() : base(TcpPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+		public static readonly TcpClient<IMemoryOwner<byte>> Headless = new HeadlessClient();
+		public static readonly TcpClient<ReadOnlySequence<byte>> Headed = new SizedClient();
 
-		public ValueTask SendAsync(string text, CancellationToken cancellation = default) => this.SendAsync(text, null, cancellation);
-		public async ValueTask SendAsync(string text, System.Text.Encoding encoding, CancellationToken cancellation = default)
+		private class HeadlessClient : TcpClient<IMemoryOwner<byte>>, ISender
 		{
-			await this.ConnectAsync();
-			var buffer = Zongsoft.Common.Buffer.Encode(text, encoding);
+			public HeadlessClient() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
+		}
 
-			try
+		private class SizedClient : TcpClient<ReadOnlySequence<byte>>, ISender
+		{
+			public SizedClient() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
+
+			protected override TcpClientChannel<ReadOnlySequence<byte>> CreateChannel(SocketConnection connection, EndPoint address) => new SizedChannel(this, connection, address);
+
+			private class SizedChannel : TcpClientChannel<ReadOnlySequence<byte>>
 			{
-				await this.SendAsync(new ReadOnlySequence<byte>(buffer.Memory), cancellation);
+				public SizedChannel(TcpClient<ReadOnlySequence<byte>> client, SocketConnection connection, EndPoint address) : base(client, connection, address) { }
+				protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
+				{
+					return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
+				}
 			}
-			finally { buffer?.Dispose(); }
 		}
 	}
 
-	public class TcpClient<T>
+	public class TcpClient<T> : IHandleable<T>
 	{
 		#region 成员字段
 		private TcpClientChannel<T> _channel;
@@ -73,10 +87,11 @@ namespace Zongsoft.Net
 
 		#region 公共属性
 		public EndPoint Address { get; set; }
-		public Components.IHandler<T> Handler { get; set; }
+		public IHandler<T> Handler { get; set; }
 		public IPacketizer<T> Packetizer { get; }
 		public long TotalBytesSent { get => _channel?.TotalBytesSent ?? 0; }
 		public long TotalBytesReceived { get => _channel?.TotalBytesReceived ?? 0; }
+		IHandler IHandleable.Handler { get => this.Handler; set => this.Handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
 		#endregion
 
 		#region 连接方法
@@ -93,7 +108,7 @@ namespace Zongsoft.Net
 				_channel.Dispose();
 			}
 
-			_channel = new TcpClientChannel<T>(this, await SocketConnection.ConnectAsync(address), address);
+			_channel = this.CreateChannel(await SocketConnection.ConnectAsync(address), address);
 		}
 
 		public void Disconnect()
@@ -103,6 +118,8 @@ namespace Zongsoft.Net
 			if(channel != null && !channel.IsClosed)
 				channel.Close();
 		}
+
+		protected virtual TcpClientChannel<T> CreateChannel(SocketConnection connection, EndPoint address) => new TcpClientChannel<T>(this, connection, address);
 		#endregion
 
 		#region 发送方法
@@ -111,6 +128,11 @@ namespace Zongsoft.Net
 		{
 			await this.ConnectAsync();
 			await _channel.SendAsync(package, cancellation);
+		}
+		protected async ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		{
+			await this.ConnectAsync();
+			await _channel.SendAsync(data, cancellation);
 		}
 		#endregion
 
@@ -160,7 +182,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收数据
-		protected sealed override ValueTask OnReceiveAsync(in T payload)
+		protected sealed override ValueTask OnReceiveAsync(in T package)
 		{
 			static void DisposeOnCompletion(Task task, in T message)
 			{
@@ -169,19 +191,23 @@ namespace Zongsoft.Net
 
 			try
 			{
-				var pendingAction = _client.OnHandleAsync(payload, CancellationToken.None);
+				var pendingAction = _client.OnHandleAsync(package, CancellationToken.None);
 
 				if(!pendingAction.IsCompletedSuccessfully)
-					DisposeOnCompletion(pendingAction, in payload);
+					DisposeOnCompletion(pendingAction, in package);
 			}
 			finally
 			{
-				if(payload is IDisposable disposable)
+				if(package is IDisposable disposable)
 					disposable.Dispose();
 			}
 
 			return default;
 		}
+		#endregion
+
+		#region 发送方法
+		internal ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 		#endregion
 	}
 }

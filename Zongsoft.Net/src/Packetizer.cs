@@ -35,18 +35,39 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Net
 {
-	public class TcpPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
+	internal class HeadlessPacketizer : Zongsoft.Communication.IPacketizer<IMemoryOwner<byte>>
+	{
+		public static readonly HeadlessPacketizer Instance = new HeadlessPacketizer();
+
+		private HeadlessPacketizer() { }
+
+		public ValueTask PackAsync(IBufferWriter<byte> writer, in IMemoryOwner<byte> package, CancellationToken cancellation = default)
+		{
+			if(package != null)
+				writer.Write(package.Memory.Span);
+
+			return ValueTask.CompletedTask;
+		}
+
+		public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
+		{
+			package = Zongsoft.Common.Buffer.Lease(data);
+			return true;
+		}
+	}
+
+	internal class HeadedPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
 	{
 		#region 常量定义
 		private const int HEAD_SIZE = 4;
 		#endregion
 
 		#region 单例字段
-		public static readonly TcpPacketizer Instance = new TcpPacketizer();
+		public static readonly HeadedPacketizer Instance = new HeadedPacketizer();
 		#endregion
 
 		#region 公共属性
-		public string Name { get => nameof(TcpPacketizer); }
+		public string Name { get => nameof(HeadedPacketizer); }
 		#endregion
 
 		#region 打包方法

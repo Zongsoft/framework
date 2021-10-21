@@ -110,6 +110,54 @@ namespace Zongsoft.Net
 				_singleWriter.Release();
 			}
 		}
+
+		protected ValueTask SendAsync(in ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		{
+			async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
+			{
+				try { await flush; }
+				finally { _singleWriter.Release(); }
+			}
+
+			if(!_singleWriter.Wait(0, cancellation))
+				return SendSlowAsync(data, cancellation);
+
+			bool release = true;
+
+			try
+			{
+				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
+				var result = writer.WriteAsync(data, cancellation);
+
+				if(result.IsCompletedSuccessfully)
+					return default;
+
+				release = false;
+				return AwaitFlushAndRelease(result);
+			}
+			finally
+			{
+				if(release)
+					_singleWriter.Release();
+			}
+		}
+
+		private async ValueTask SendSlowAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation)
+		{
+			await _singleWriter.WaitAsync();
+
+			try
+			{
+				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
+				await writer.WriteAsync(data, cancellation);
+			}
+			finally
+			{
+				_singleWriter.Release();
+			}
+		}
+
+		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
 		#endregion
 
 		#region 协议解析
@@ -138,10 +186,10 @@ namespace Zongsoft.Net
 					var buffer = result.Buffer;
 
 					unpacked = false;
-					while(this.Unpack(ref buffer, out var payload))
+					while(this.Unpack(ref buffer, out var package))
 					{
 						unpacked = true;
-						await this.OnReceiveAsync(in payload);
+						await this.OnReceiveAsync(in package);
 					}
 
 					reader.AdvanceTo(buffer.Start, buffer.End);
@@ -162,7 +210,7 @@ namespace Zongsoft.Net
 			}
 		}
 
-		protected abstract ValueTask OnReceiveAsync(in T payload);
+		protected abstract ValueTask OnReceiveAsync(in T package);
 
 		protected virtual ValueTask OnStartAsync() => default;
 		protected virtual ValueTask OnFinalAsync() => default;
