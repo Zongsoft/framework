@@ -65,36 +65,29 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送数据
-		protected ValueTask WriteAsync(T package, CancellationToken cancellation = default)
+		public ValueTask SendAsync(in T package, CancellationToken cancellation = default)
 		{
-			async ValueTask AwaitFlushAndRelease(ValueTask flush, PipeWriter writer)
+			async ValueTask AwaitFlushAndRelease(ValueTask flush)
 			{
 				try { await flush; }
 				finally { _singleWriter.Release(); }
 			}
 
-			// try to get the conch; if not, switch to async
-			if(!_singleWriter.Wait(0))
-				return WriteAsyncSlowPath(package, cancellation);
+			if(!_singleWriter.Wait(0, cancellation))
+				return SendSlowAsync(package, cancellation);
 
 			bool release = true;
 
 			try
 			{
 				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
-
-				//this.WriteHeader(writer, payload.Length);
-				//var result = writer.WriteAsync(payload, cancellation); // includes a flush
-
 				var result = this.PackAsync(writer, package, cancellation);
 
 				if(result.IsCompletedSuccessfully)
-				{
-					return default; // sync fast path
-				}
+					return default;
 
 				release = false;
-				return AwaitFlushAndRelease(result, writer);
+				return AwaitFlushAndRelease(result);
 			}
 			finally
 			{
@@ -103,17 +96,13 @@ namespace Zongsoft.Net
 			}
 		}
 
-		private async ValueTask WriteAsyncSlowPath(T package, CancellationToken cancellation)
+		private async ValueTask SendSlowAsync(T package, CancellationToken cancellation)
 		{
-			await _singleWriter.WaitAsync();
+			await _singleWriter.WaitAsync(cancellation);
 
 			try
 			{
 				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
-
-				//WriteHeader(writer, payload.Length);
-				//await writer.WriteAsync(payload, cancellation);
-
 				await this.PackAsync(writer, package, cancellation);
 			}
 			finally
@@ -129,39 +118,35 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收消息
-		protected async Task StartReceiveLoopAsync(CancellationToken cancellationToken = default)
+		protected async Task ReceiveAsync(CancellationToken cancellationToken = default)
 		{
 			var reader = _transport?.Input ?? throw new ObjectDisposedException(ToString());
 
 			try
 			{
-				await this.OnStartReceiveLoopAsync();
-				bool makingProgress = false;
+				await this.OnStartAsync();
+				bool unpacked = false;
 
 				while(!cancellationToken.IsCancellationRequested)
 				{
-					if(!(makingProgress && reader.TryRead(out var readResult)))
-						readResult = await reader.ReadAsync(cancellationToken);
+					if(!(unpacked && reader.TryRead(out var result)))
+						result = await reader.ReadAsync(cancellationToken);
 
-					if(readResult.IsCanceled)
+					if(result.IsCanceled)
 						break;
 
-					var buffer = readResult.Buffer;
+					var buffer = result.Buffer;
 
-					makingProgress = false;
+					unpacked = false;
 					while(this.Unpack(ref buffer, out var payload))
 					{
-						makingProgress = true;
+						unpacked = true;
 						await this.OnReceiveAsync(in payload);
 					}
 
-					// record that we comsumed up to the (now updated) buffer.Start,
-					// and tried to look at everything - hence buffer.End
 					reader.AdvanceTo(buffer.Start, buffer.End);
 
-					// exit the loop electively, or because we've consumed everything
-					// that we can usefully consume
-					if(!makingProgress && readResult.IsCompleted)
+					if(!unpacked && result.IsCompleted)
 						break;
 				}
 
@@ -173,14 +158,14 @@ namespace Zongsoft.Net
 			}
 			finally
 			{
-				try { await this.OnEndReceiveLoopAsync(); } catch { }
+				try { await this.OnFinalAsync(); } catch { }
 			}
 		}
 
 		protected abstract ValueTask OnReceiveAsync(in T payload);
 
-		protected virtual ValueTask OnStartReceiveLoopAsync() => default;
-		protected virtual ValueTask OnEndReceiveLoopAsync() => default;
+		protected virtual ValueTask OnStartAsync() => default;
+		protected virtual ValueTask OnFinalAsync() => default;
 		#endregion
 
 		#region 关闭方法

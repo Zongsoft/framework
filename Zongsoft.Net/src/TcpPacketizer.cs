@@ -52,49 +52,45 @@ namespace Zongsoft.Net
 		#region 打包方法
 		public ValueTask PackAsync(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package, CancellationToken cancellation = default)
 		{
-			var span = writer.GetSpan(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32LittleEndian(span, (int)package.Length);
+			var header = writer.GetSpan(HEAD_SIZE);
+			BinaryPrimitives.WriteInt32BigEndian(header, (int)package.Length);
 			writer.Advance(HEAD_SIZE);
-			writer.Write(package.FirstSpan);
+
+			foreach(var segment in package)
+				writer.Write(segment.Span);
+
 			return ValueTask.CompletedTask;
 		}
 
-		public ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
+		public async ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
 		{
-			var span = writer.GetSpan(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32LittleEndian(span, (int)package.Length);
+			var header = writer.GetMemory(HEAD_SIZE);
+			BinaryPrimitives.WriteInt32BigEndian(header.Span, (int)package.Length);
 			writer.Advance(HEAD_SIZE);
-			return writer.WriteAsync(package.First, cancellation);
+
+			System.IO.Pipelines.FlushResult result = default;
+
+			foreach(var segment in package)
+			{
+				result = await writer.WriteAsync(segment, cancellation);
+
+				if(result.IsCanceled)
+					return result;
+			}
+
+			return result;
 		}
 		#endregion
 
 		#region 解包方法
 		public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> package)
 		{
-			if(input.Length < HEAD_SIZE)
+			if(!Zongsoft.Common.Buffer.TryGetUInt32BigEndian(input, out var length))
 			{
 				package = default;
 				return false;
 			}
 
-			var bytes = new[] { (byte)'$', (byte)'$', (byte)'$' };
-
-			var reader = new SequenceReader<byte>(input);
-			reader.TryReadTo(out ReadOnlySequence<byte> output, bytes.AsSpan());
-
-			int length;
-			if(input.First.Length >= HEAD_SIZE)
-			{
-				length = UnpackHeader(input.First.Span, out _);
-			}
-			else
-			{
-				Span<byte> local = stackalloc byte[HEAD_SIZE];
-				input.Slice(0, HEAD_SIZE).CopyTo(local);
-				length = UnpackHeader(local, out _);
-			}
-
-			// do we have the "length" bytes?
 			if(input.Length < length + HEAD_SIZE)
 			{
 				package = default;

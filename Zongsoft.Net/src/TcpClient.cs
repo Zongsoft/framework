@@ -30,19 +30,32 @@
 using System;
 using System.Net;
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Communication;
 
 using Pipelines.Sockets.Unofficial;
-using System.IO.Pipelines;
 
 namespace Zongsoft.Net
 {
 	public class TcpClient : TcpClient<ReadOnlySequence<byte>>
 	{
 		public TcpClient() : base(TcpPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+
+		public ValueTask SendAsync(string text, CancellationToken cancellation = default) => this.SendAsync(text, null, cancellation);
+		public async ValueTask SendAsync(string text, System.Text.Encoding encoding, CancellationToken cancellation = default)
+		{
+			await this.ConnectAsync();
+			var buffer = Zongsoft.Common.Buffer.Encode(text, encoding);
+
+			try
+			{
+				await this.SendAsync(new ReadOnlySequence<byte>(buffer.Memory), cancellation);
+			}
+			finally { buffer?.Dispose(); }
+		}
 	}
 
 	public class TcpClient<T>
@@ -125,7 +138,7 @@ namespace Zongsoft.Net
 		{
 			_client = client ?? throw new ArgumentNullException(nameof(client));
 
-			this.StartReceiveLoopAsync()
+			this.ReceiveAsync()
 				.ContinueWith(task => GC.KeepAlive(task.Exception), TaskContinuationOptions.OnlyOnFaulted);
 		}
 		#endregion
@@ -134,11 +147,7 @@ namespace Zongsoft.Net
 		public TcpClient<T> Client { get => _client; }
 		#endregion
 
-		#region 发送方法
-		public ValueTask SendAsync(in T package, CancellationToken cancellation = default) => this.WriteAsync(package, cancellation);
-		#endregion
-
-		#region 接收数据
+		#region 协议解析
 		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation)
 		{
 			return _client.Packetizer.PackAsync(writer, package, cancellation);
@@ -148,12 +157,14 @@ namespace Zongsoft.Net
 		{
 			return _client.Packetizer.Unpack(ref data, out package);
 		}
+		#endregion
 
+		#region 接收数据
 		protected sealed override ValueTask OnReceiveAsync(in T payload)
 		{
 			static void DisposeOnCompletion(Task task, in T message)
 			{
-				task.ContinueWith((t, s) => ((IMemoryOwner<byte>)s)?.Dispose(), message);
+				task.ContinueWith((t, m) => ((IMemoryOwner<byte>)m)?.Dispose(), message);
 			}
 
 			try
