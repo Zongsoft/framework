@@ -103,7 +103,7 @@ namespace Zongsoft.Net
 		public TcpServer(string name, IPacketizer<T> packetizer) : base(name)
 		{
 			_packetizer = packetizer ?? throw new ArgumentNullException(nameof(packetizer));
-			_channels = new TcpServerChannelManager<T>(this);
+			_channels = this.CreateChannels();
 		}
 		#endregion
 
@@ -123,8 +123,6 @@ namespace Zongsoft.Net
 			_channels.Add(channel);
 			return channel.ReceiveAsync(cancellation);
 		}
-
-		internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new TcpServerChannel<T>(_channels, transport, address);
 		#endregion
 
 		#region 广播方法
@@ -161,6 +159,11 @@ namespace Zongsoft.Net
 
 			return count;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual TcpServerChannelManager<T> CreateChannels() => new TcpServerChannelManager<T>(this);
+		internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new TcpServerChannel<T>(_channels, transport, address);
 		#endregion
 
 		#region 重写方法
