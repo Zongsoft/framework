@@ -57,7 +57,10 @@ namespace Zongsoft.Net
 				var task = base.BroadcastAsync(data, cancellation);
 
 				if(task.IsCompletedSuccessfully)
+				{
+					task.GetAwaiter().GetResult();
 					return ValueTask.CompletedTask;
+				}
 
 				return new ValueTask(task.AsTask());
 			}
@@ -72,7 +75,10 @@ namespace Zongsoft.Net
 				var task = base.BroadcastAsync(data, cancellation);
 
 				if(task.IsCompletedSuccessfully)
+				{
+					task.GetAwaiter().GetResult();
 					return ValueTask.CompletedTask;
+				}
 
 				return new ValueTask(task.AsTask());
 			}
@@ -279,6 +285,10 @@ namespace Zongsoft.Net
 		{
 			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
 		}
+		#endregion
+
+		#region 保护属性
+		protected TcpServerChannelManager<T> Manager { get => _manager; }
 		#endregion
 
 		#region 开启接收
