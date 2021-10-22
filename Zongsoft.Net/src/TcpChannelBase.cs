@@ -41,7 +41,8 @@ namespace Zongsoft.Net
 	public abstract class TcpChannelBase<T> : IDisposable
 	{
 		#region 私有变量
-		private readonly SemaphoreSlim _singleWriter = new SemaphoreSlim(1);
+		private bool _initialized;
+		private readonly SemaphoreSlim _singleWriter;
 		#endregion
 
 		#region 成员字段
@@ -53,6 +54,7 @@ namespace Zongsoft.Net
 		{
 			_transport = transport;
 			this.Address = address;
+			_singleWriter = new SemaphoreSlim(1);
 		}
 		#endregion
 
@@ -62,6 +64,26 @@ namespace Zongsoft.Net
 		public long TotalBytesSent { get => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesSent : 0; }
 		public long TotalBytesReceived { get => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesReceived : 0; }
 		protected IDuplexPipe Transport { get => _transport; }
+		#endregion
+
+		#region 初始化器
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private void Initialize(in T package)
+		{
+			if(_initialized)
+				return;
+
+			lock(this)
+			{
+				if(Volatile.Read(ref _initialized))
+					return;
+
+				if(this.OnInitialize(package))
+					Volatile.Write(ref _initialized, true);
+			}
+		}
+
+		protected virtual bool OnInitialize(in T package) => true;
 		#endregion
 
 		#region 发送数据
@@ -189,6 +211,10 @@ namespace Zongsoft.Net
 					while(this.Unpack(ref buffer, out var package))
 					{
 						unpacked = true;
+
+						if(!_initialized)
+							this.Initialize(package);
+
 						await this.OnReceiveAsync(in package);
 					}
 
