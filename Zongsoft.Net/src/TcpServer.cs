@@ -33,13 +33,8 @@ using System.Buffers;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Zongsoft.Communication;
-
-using Pipelines.Sockets.Unofficial;
 
 namespace Zongsoft.Net
 {
@@ -216,144 +211,6 @@ namespace Zongsoft.Net
 			if(channels != null)
 				channels.Dispose();
 		}
-		#endregion
-	}
-
-	public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>, IDisposable
-	{
-		#region 成员字段
-		private readonly ConcurrentBag<TcpServerChannel<T>> _channels;
-		#endregion
-
-		#region 构造函数
-		public TcpServerChannelManager(TcpServer<T> server)
-		{
-			this.Server = server ?? throw new ArgumentNullException(nameof(server));
-			_channels = new ConcurrentBag<TcpServerChannel<T>>();
-		}
-		#endregion
-
-		#region 公共属性
-		public TcpServer<T> Server { get; }
-		public int Count => _channels.Count;
-		#endregion
-
-		#region 连接受理
-		protected override Task OnClientConnectedAsync(in ClientConnection client)
-		{
-			var channel = this.Server.CreateChannel(client.Transport, client.RemoteEndPoint as IPEndPoint);
-			return channel.ReceiveAsync(CancellationToken.None);
-		}
-		#endregion
-
-		#region 数据处理
-		internal ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation) => this.Server.Packetizer.PackAsync(writer, package, cancellation);
-		internal bool Unpack(ref ReadOnlySequence<byte> data, out T package) => this.Server.Packetizer.Unpack(ref data, out package);
-		internal Task<bool> HandleAsync(in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(package, cancellation) ?? Task.FromResult(false);
-		#endregion
-
-		#region 内部方法
-		internal void Add(TcpServerChannel<T> channel) { if(channel != null) _channels.Add(channel); }
-		internal bool Remove(TcpServerChannel<T> channel) => channel != null && _channels.TryTake(out _);
-		#endregion
-
-		#region 枚举遍历
-		public IEnumerator<TcpServerChannel<T>> GetEnumerator() => _channels.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _channels.GetEnumerator();
-		#endregion
-
-		#region 处置方法
-		protected override void Dispose(bool disposing)
-		{
-			foreach(var channel in _channels)
-				channel.Dispose();
-
-			_channels.Clear();
-			base.Dispose(disposing);
-		}
-		#endregion
-	}
-
-	public class TcpServerChannel<T> : TcpChannelBase<T>, IEquatable<TcpServerChannel<T>>
-	{
-		#region 成员字段
-		private readonly TcpServerChannelManager<T> _manager;
-		#endregion
-
-		#region 构造函数
-		public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe transport, IPEndPoint address) : base(transport, address)
-		{
-			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
-		}
-		#endregion
-
-		#region 保护属性
-		protected TcpServerChannelManager<T> Manager { get => _manager; }
-		#endregion
-
-		#region 开启接收
-		public Task ReceiveAsync(CancellationToken cancellationToken = default) => this.ReceiveAsync(cancellationToken);
-		#endregion
-
-		#region 协议解析
-		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation)
-		{
-			_manager.PackAsync(writer, package, cancellation);
-			return ValueTask.CompletedTask;
-		}
-
-		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package)
-		{
-			return _manager.Unpack(ref data, out package);
-		}
-		#endregion
-
-		#region 接收数据
-		protected sealed override ValueTask OnReceiveAsync(in T package)
-		{
-			static void DisposeOnCompletion(Task task, in T message)
-			{
-				task.ContinueWith((t, m) => ((IMemoryOwner<byte>)m)?.Dispose(), message);
-			}
-
-			try
-			{
-				var pendingAction = _manager.HandleAsync(package, CancellationToken.None);
-
-				if(!pendingAction.IsCompletedSuccessfully )
-					DisposeOnCompletion(pendingAction, in package);
-			}
-			finally
-			{
-				if(package is IDisposable disposable)
-					disposable.Dispose();
-			}
-
-			return default;
-		}
-
-		protected override ValueTask OnStartAsync()
-		{
-			_manager.Add(this);
-			return ValueTask.CompletedTask;
-		}
-
-		protected override ValueTask OnFinalAsync()
-		{
-			_manager.Remove(this);
-			return ValueTask.CompletedTask;
-		}
-		#endregion
-
-		#region 发送方法
-		internal ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
-		#endregion
-
-		#region 重写方法
-		public bool Equals(TcpServerChannel<T> channel) => channel != null && this.Address.Equals(channel.Address);
-		public override bool Equals(object obj) => obj is TcpServerChannel<T> channel && this.Equals(channel);
-		public override int GetHashCode() => this.Address.GetHashCode();
-		public override string ToString() => this.Address.ToString();
 		#endregion
 	}
 }
