@@ -246,6 +246,7 @@ namespace Zongsoft.Net
 		public void Dispose() => this.Close();
 		public void Close(Exception exception = null)
 		{
+			Volatile.Write(ref _initialized, false);
 			var transport = Interlocked.Exchange(ref _transport, null);
 
 			if(transport != null)
