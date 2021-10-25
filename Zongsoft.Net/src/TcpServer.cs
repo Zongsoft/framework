@@ -120,7 +120,6 @@ namespace Zongsoft.Net
 				throw new ArgumentNullException(nameof(transport));
 
 			var channel = this.CreateChannel(transport, address);
-			_channels.Add(channel);
 			return channel.ReceiveAsync(cancellation);
 		}
 		#endregion
