@@ -54,7 +54,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 开启接收
-		public Task ReceiveAsync(CancellationToken cancellationToken = default) => this.ReceiveAsync(cancellationToken);
+		public new Task ReceiveAsync(CancellationToken cancellationToken = default) => base.ReceiveAsync(cancellationToken);
 		#endregion
 
 		#region 协议解析
