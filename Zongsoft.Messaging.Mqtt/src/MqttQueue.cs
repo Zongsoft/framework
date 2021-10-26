@@ -215,8 +215,5 @@ namespace Zongsoft.Messaging.Mqtt
 			await _client.StopAsync();
 		}
 		#endregion
-
-		#region 应答器类
-		#endregion
 	}
 }
