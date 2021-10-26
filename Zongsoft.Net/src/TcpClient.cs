@@ -72,7 +72,7 @@ namespace Zongsoft.Net
 		}
 	}
 
-	public class TcpClient<T> : IHandleable<T>
+	public class TcpClient<T> : IHandleable<T>, ISender<T>
 	{
 		#region 成员字段
 		private TcpClientChannel<T> _channel;

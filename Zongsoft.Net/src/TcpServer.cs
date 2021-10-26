@@ -91,7 +91,7 @@ namespace Zongsoft.Net
 		}
 	}
 
-	public class TcpServer<T> : ListenerBase<T>
+	public class TcpServer<T> : ListenerBase<T>, ISender<T>
 	{
 		#region 成员字段
 		private IPacketizer<T> _packetizer;
@@ -129,11 +129,11 @@ namespace Zongsoft.Net
 		{
 			int count = 0;
 
-			foreach(var client in _channels)
+			foreach(var channel in _channels)
 			{
 				try
 				{
-					await client.SendAsync(package, cancellation);
+					await channel.SendAsync(package, cancellation);
 					count++;
 				}
 				catch { }
@@ -146,17 +146,29 @@ namespace Zongsoft.Net
 		{
 			int count = 0;
 
-			foreach(var client in _channels)
+			foreach(var channel in _channels)
 			{
 				try
 				{
-					await client.SendAsync(data, cancellation);
+					await channel.SendAsync(data, cancellation);
 					count++;
 				}
 				catch { }
 			}
 
 			return count;
+		}
+
+		async ValueTask ISender<T>.SendAsync(T package, CancellationToken cancellation)
+		{
+			foreach(var channel in _channels)
+			{
+				try
+				{
+					await channel.SendAsync(package, cancellation);
+				}
+				catch { }
+			}
 		}
 		#endregion
 

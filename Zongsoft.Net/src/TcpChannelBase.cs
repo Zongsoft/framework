@@ -38,7 +38,7 @@ using Pipelines.Sockets.Unofficial;
 
 namespace Zongsoft.Net
 {
-	public abstract class TcpChannelBase<T> : IDisposable, Zongsoft.Communication.IChannel, Zongsoft.Communication.ISender
+	public abstract class TcpChannelBase<T> : IDisposable, Zongsoft.Communication.IChannel, Zongsoft.Communication.ISender, Zongsoft.Communication.ISender<T>
 	{
 		#region 事件定义
 		public event EventHandler Closed;
@@ -91,7 +91,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送数据
-		public ValueTask SendAsync(in T package, CancellationToken cancellation = default)
+		public ValueTask SendAsync(T package, CancellationToken cancellation = default)
 		{
 			async ValueTask AwaitFlushAndRelease(ValueTask flush)
 			{
