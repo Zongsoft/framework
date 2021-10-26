@@ -71,11 +71,13 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收数据
+		protected override void OnReceiving() => _manager.Add(this);
 		protected sealed override ValueTask OnReceiveAsync(in T package)
 		{
 			static void DisposeOnCompletion(Task task, in T message)
 			{
-				task.ContinueWith((t, m) => ((IMemoryOwner<byte>)m)?.Dispose(), message);
+				if(message is IDisposable disposable)
+					task.ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), disposable);
 			}
 
 			try
@@ -93,22 +95,14 @@ namespace Zongsoft.Net
 
 			return default;
 		}
-
-		protected override ValueTask OnStartAsync()
-		{
-			_manager.Add(this);
-			return ValueTask.CompletedTask;
-		}
-
-		protected override ValueTask OnFinalAsync()
-		{
-			_manager.Remove(this);
-			return ValueTask.CompletedTask;
-		}
 		#endregion
 
 		#region 发送方法
 		internal ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
+		#endregion
+
+		#region 关闭处理
+		protected override void OnClosed() => _manager.Remove(this);
 		#endregion
 
 		#region 重写方法

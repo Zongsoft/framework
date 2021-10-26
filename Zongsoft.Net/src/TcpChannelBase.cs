@@ -38,8 +38,12 @@ using Pipelines.Sockets.Unofficial;
 
 namespace Zongsoft.Net
 {
-	public abstract class TcpChannelBase<T> : IDisposable
+	public abstract class TcpChannelBase<T> : IDisposable, Zongsoft.Communication.IChannel, Zongsoft.Communication.ISender
 	{
+		#region 事件定义
+		public event EventHandler Closed;
+		#endregion
+
 		#region 私有变量
 		private bool _initialized;
 		private readonly SemaphoreSlim _singleWriter;
@@ -180,6 +184,9 @@ namespace Zongsoft.Net
 		}
 
 		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
+
+		void Zongsoft.Communication.ISender.Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray(), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+		ValueTask Zongsoft.Communication.ISender.SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation) => this.SendAsync(data, cancellation);
 		#endregion
 
 		#region 协议解析
@@ -194,7 +201,9 @@ namespace Zongsoft.Net
 
 			try
 			{
-				await this.OnStartAsync();
+				//开启异步接收
+				this.OnReceiving();
+
 				bool unpacked = false;
 
 				while(!cancellationToken.IsCancellationRequested)
@@ -232,18 +241,19 @@ namespace Zongsoft.Net
 			}
 			finally
 			{
-				try { await this.OnFinalAsync(); } catch { }
+				try { this.Close(); } catch { }
 			}
 		}
 
 		protected abstract ValueTask OnReceiveAsync(in T package);
 
-		protected virtual ValueTask OnStartAsync() => default;
-		protected virtual ValueTask OnFinalAsync() => default;
+		protected virtual void OnReceiving() { }
 		#endregion
 
 		#region 关闭方法
+		protected virtual void OnClosed() => this.Closed?.Invoke(this, EventArgs.Empty);
 		public void Dispose() => this.Close();
+		void Zongsoft.Communication.IChannel.Close() => this.Close();
 		public void Close(Exception exception = null)
 		{
 			Volatile.Write(ref _initialized, false);
@@ -261,6 +271,9 @@ namespace Zongsoft.Net
 			}
 
 			try { _singleWriter.Dispose(); } catch { }
+
+			if(transport != null)
+				this.OnClosed();
 		}
 		#endregion
 	}
