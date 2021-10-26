@@ -35,12 +35,10 @@ namespace Zongsoft.Communication
 	{
 		#region 事件定义
 		event EventHandler Closed;
-		event EventHandler Closing;
 		#endregion
 
 		#region 属性定义
-		int ChannelId { get; }
-		bool IsIdled { get; }
+		bool IsClosed { get; }
 		#endregion
 
 		#region 方法定义

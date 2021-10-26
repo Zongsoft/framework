@@ -55,13 +55,8 @@ namespace Zongsoft.Communication
 		/// <summary>获取当前通道的唯一编号。</summary>
 		public int ChannelId { get; }
 
-		/// <summary>
-		/// 获取当前通道是否为空闲状态。
-		/// </summary>
-		/// <remarks>
-		///		<para>对子类实现者：应该确保该属性能即时反应当前通道的真实状态。</para>
-		/// </remarks>
-		public abstract bool IsIdled { get; }
+		/// <summary>获取当前通道是否已经关闭。</summary>
+		public abstract bool IsClosed { get; }
 		#endregion
 
 		#region 发送方法
@@ -91,14 +86,12 @@ namespace Zongsoft.Communication
 		/// </summary>
 		/// <remarks>
 		///		<para>注意：该方法不允许线程重入，即在多线程调用中，本方法内部会以同步机制运行。</para>
-		///		<para>如果当前通道是空闲的(即<seealso cref="IsIdled"/>属性为真)，则该方法不执行任何操作。</para>
+		///		<para>如果当前通道是已关闭的(即<seealso cref="IsClosed"/>属性为真)，则该方法不执行任何操作。</para>
 		/// </remarks>
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
 		public void Close()
 		{
-			//如果当前通道是空闲的，则无需关闭。
-			//注意：该判断可避免关闭方法被多线程重入。
-			if(this.IsIdled)
+			if(this.IsClosed)
 				return;
 
 			//激发“Closing”关闭前事件
