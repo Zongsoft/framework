@@ -5,6 +5,7 @@ SET DestinationDirectory=.\bin\%Edition%\net5.0\plugins
 
 SET Packages=%USERPROFILE%\.nuget\packages
 
+copy /Y %Packages%\pipelines.sockets.unofficial\2.2.0\lib\net5.0\*.dll                         %DestinationDirectory%\zongsoft\net\
 copy /Y %Packages%\mqttnet\3.0.16\lib\net5.0\*.dll                                             %DestinationDirectory%\zongsoft\messaging\mqtt\
 copy /Y %Packages%\mqttnet.extensions.managedclient\3.0.16\lib\net5.0\*.dll                    %DestinationDirectory%\zongsoft\messaging\mqtt\
 
