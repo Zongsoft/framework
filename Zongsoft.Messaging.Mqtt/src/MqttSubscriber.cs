@@ -56,7 +56,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 		#region 公共方法
 		public void Unsubscribe() => _queue.UnsubscribeAsync(this.Filter).GetAwaiter().GetResult();
-		public Task UnsubscribeAsync() => _queue.UnsubscribeAsync(this.Filter);
+		public ValueTask UnsubscribeAsync() => _queue.UnsubscribeAsync(this.Filter);
 		#endregion
 
 		#region 重写方法

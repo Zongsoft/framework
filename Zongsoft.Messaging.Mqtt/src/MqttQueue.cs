@@ -83,27 +83,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 订阅方法
-		public bool Subscribe(string topic, string tags, MessageTopicSubscriptionOptions options = null)
-		{
-			if(!string.IsNullOrEmpty(tags))
-				throw new ArgumentException($"The tags is not supported.");
-
-			_client.SubscribeAsync(new MqttTopicFilter()
-			{
-				Topic = topic,
-				QualityOfServiceLevel = options.Reliability.ToQoS(),
-			}).GetAwaiter().GetResult();
-
-			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
-			{
-				_client.EnsureStart(this.ConnectionSetting).GetAwaiter().GetResult();
-				return true;
-			}
-
-			return false;
-		}
-
-		public async Task<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
+		public async ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
 		{
 			if(!string.IsNullOrEmpty(tags))
 				throw new ArgumentException($"The tags is not supported.");
@@ -123,24 +103,13 @@ namespace Zongsoft.Messaging.Mqtt
 			return false;
 		}
 
-		internal Task UnsubscribeAsync(string topic) => _subscribers.Remove(topic) ? _client.UnsubscribeAsync(topic) : Task.CompletedTask;
+		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.Remove(topic) ? new ValueTask(_client.UnsubscribeAsync(topic)) : ValueTask.CompletedTask;
 		#endregion
 
 		#region 处理方法
-		private void OnHandle(MqttApplicationMessageReceivedEventArgs args)
-		{
-			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => args.AcknowledgeAsync(cancellation))
-			{
-				Identity = args.ClientId
-			};
-
-			if(this.Handle(ref message))
-				args.AcknowledgeAsync(CancellationToken.None).GetAwaiter().GetResult();
-		}
-
 		private async Task OnHandleAsync(MqttApplicationMessageReceivedEventArgs args)
 		{
-			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => args.AcknowledgeAsync(cancellation))
+			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
 			{
 				Identity = args.ClientId
 			};
@@ -149,8 +118,7 @@ namespace Zongsoft.Messaging.Mqtt
 				await args.AcknowledgeAsync(CancellationToken.None);
 		}
 
-		public virtual bool Handle(ref MessageTopicMessage message) => this.Handler?.Handle(message) ?? false;
-		public virtual Task<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
+		public virtual ValueTask<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(this, message, cancellation) ?? ValueTask.FromResult(false);
 		#endregion
 
 		#region 发布方法
@@ -173,12 +141,12 @@ namespace Zongsoft.Messaging.Mqtt
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
-		public Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), topic, tags, options, cancellation);
 		}
 
-		public async Task<string> PublishAsync(byte[] data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public async ValueTask<string> PublishAsync(byte[] data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			var message = new MqttApplicationMessage()
 			{
