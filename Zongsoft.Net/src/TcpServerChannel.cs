@@ -74,15 +74,15 @@ namespace Zongsoft.Net
 		protected override void OnReceiving() => _manager.Add(this);
 		protected sealed override ValueTask OnReceiveAsync(in T package)
 		{
-			static void DisposeOnCompletion(Task task, in T message)
+			static void DisposeOnCompletion(ValueTask<bool> task, in T message)
 			{
-				if(message is IDisposable disposable)
-					task.ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), disposable);
+				if(message is IDisposable)
+					task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
 			}
 
 			try
 			{
-				var pendingAction = _manager.HandleAsync(package, CancellationToken.None);
+				var pendingAction = _manager.HandleAsync(this, package, CancellationToken.None);
 
 				if(!pendingAction.IsCompletedSuccessfully)
 					DisposeOnCompletion(pendingAction, in package);

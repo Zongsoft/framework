@@ -137,14 +137,12 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收处理
-		internal Task OnHandleAsync(in T payload, CancellationToken cancellation = default)
+		internal async ValueTask OnHandleAsync(T payload, CancellationToken cancellation = default)
 		{
 			var handler = this.Handler;
 
 			if(handler != null)
-				return handler.HandleAsync(payload, cancellation);
-
-			return Task.CompletedTask;
+				await handler.HandleAsync(this, payload, cancellation);
 		}
 		#endregion
 	}

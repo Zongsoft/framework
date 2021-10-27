@@ -185,7 +185,6 @@ namespace Zongsoft.Net
 
 		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
 
-		void Zongsoft.Communication.ISender.Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray(), CancellationToken.None).AsTask().GetAwaiter().GetResult();
 		ValueTask Zongsoft.Communication.ISender.SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation) => this.SendAsync(data, cancellation);
 		#endregion
 

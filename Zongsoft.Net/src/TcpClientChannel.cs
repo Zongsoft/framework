@@ -73,9 +73,10 @@ namespace Zongsoft.Net
 		#region 接收数据
 		protected sealed override ValueTask OnReceiveAsync(in T package)
 		{
-			static void DisposeOnCompletion(Task task, in T message)
+			static void DisposeOnCompletion(ValueTask task, in T message)
 			{
-				task.ContinueWith((t, m) => ((IMemoryOwner<byte>)m)?.Dispose(), message);
+				if(message is IDisposable)
+					task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
 			}
 
 			try
