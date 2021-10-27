@@ -46,7 +46,7 @@ namespace Zongsoft.Messaging.Commands
 			var queue = context.CommandNode.FindQueue();
 
 			if(queue != null)
-				return queue.Subscribe() ? 1 : 0;
+				return queue.SubscribeAsync().GetAwaiter().GetResult() ? 1 : 0;
 
 			var topic = context.CommandNode.FindTopic();
 
@@ -62,9 +62,9 @@ namespace Zongsoft.Messaging.Commands
 					var index = argument.IndexOf(':');
 
 					if(index > 0 && index < argument.Length)
-						count += topic.Subscribe(argument.Substring(0, index), argument.Substring(index + 1)) ? 1 : 0;
+						count += topic.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1)).GetAwaiter().GetResult() ? 1 : 0;
 					else
-						count += topic.Subscribe(argument) ? 1 : 0;
+						count += topic.SubscribeAsync(argument).GetAwaiter().GetResult() ? 1 : 0;
 				}
 
 				return count;

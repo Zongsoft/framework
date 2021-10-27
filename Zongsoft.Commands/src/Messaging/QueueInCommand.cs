@@ -64,7 +64,7 @@ namespace Zongsoft.Messaging.Commands
 			if(queue != null)
 			{
 				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
-				return this.ExecuteCore(queue.Name, context, data => queue.Enqueue(data, options));
+				return this.ExecuteCore(queue.Name, context, data => queue.EnqueueAsync(data, options).GetAwaiter().GetResult());
 			}
 
 			if(context.Expression.Options.TryGetValue<string>("topic", out var value))
@@ -88,7 +88,7 @@ namespace Zongsoft.Messaging.Commands
 				context.Output.WriteLine(CommandOutletColor.DarkGray, new string('-', topic.Name.Length + this.Topic.Length + 1));
 
 				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageTopicPublishOptions(reliability) : MessageTopicPublishOptions.Default;
-				return this.ExecuteCore(topic.Name, context, data => topic.Publish(data, this.Topic, context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null, options));
+				return this.ExecuteCore(topic.Name, context, data => topic.PublishAsync(data, this.Topic, context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null, options).GetAwaiter().GetResult());
 			}
 
 			return null;

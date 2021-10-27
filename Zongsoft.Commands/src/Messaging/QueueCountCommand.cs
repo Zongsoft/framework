@@ -51,7 +51,7 @@ namespace Zongsoft.Messaging.Commands
 
 			if(queue != null)
 			{
-				var count = queue.GetCount();
+				var count = queue.GetCountAsync().GetAwaiter().GetResult();
 
 				if(count > 0)
 					context.Output.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_QueueCountCommand_Message, queue.Name, count));

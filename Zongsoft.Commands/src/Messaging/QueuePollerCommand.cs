@@ -78,10 +78,10 @@ namespace Zongsoft.Messaging.Commands
 		#region 处理器类
 		public class QueueHandler : HandlerBase<MessageQueueMessage>
 		{
-			public override Task<bool> HandleAsync(MessageQueueMessage request, CancellationToken cancellation = default)
+			public override ValueTask<bool> HandleAsync(object caller, MessageQueueMessage request, CancellationToken cancellation = default)
 			{
 				Console.WriteLine(Zongsoft.Serialization.Serializer.Json.Serialize(request));
-				return Task.FromResult(true);
+				return ValueTask.FromResult(true);
 			}
 		}
 		#endregion

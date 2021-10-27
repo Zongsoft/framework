@@ -51,7 +51,7 @@ namespace Zongsoft.Messaging.Commands
 			//显示执行成功的信息
 			if(queue != null)
 			{
-				queue.Clear();
+				queue.ClearAsync().GetAwaiter().GetResult();
 				context.Output.WriteLine(Properties.Resources.Text_CommandExecuteSucceed);
 			}
 
