@@ -141,7 +141,7 @@ namespace Zongsoft.Messaging.Mqtt
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
-		public ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), topic, tags, options, cancellation);
 		}

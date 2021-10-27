@@ -88,7 +88,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			throw new NotSupportedException();
 		}
 
-		public ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), 0, data.Length, topic, tags, options, cancellation);
 		}

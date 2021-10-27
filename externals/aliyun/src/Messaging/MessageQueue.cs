@@ -143,8 +143,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return MessageQueueMessage.Empty;
 		}
 
-		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
-		public ValueTask<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
+		public string Enqueue(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
+		public ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
 		public async ValueTask<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
 			if(options == null)

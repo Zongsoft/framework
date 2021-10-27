@@ -76,7 +76,7 @@ namespace Zongsoft.Messaging
 		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
-		ValueTask<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
+		ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 
