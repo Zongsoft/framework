@@ -73,17 +73,16 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 		#region 订阅方法
 		public bool Subscribe(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
-		public Task<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
+		public ValueTask<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
 		#endregion
 
 		#region 处理方法
-		public bool Handle(ref MessageQueueMessage message) => this.Handler?.Handle(message) ?? false;
-		public Task<bool> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
+		public ValueTask<bool> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(false);
 		#endregion
 
 		#region 队列方法
 		public long GetCount() => this.GetCountAsync().GetAwaiter().GetResult();
-		public async Task<long> GetCountAsync(CancellationToken cancellation = default)
+		public async ValueTask<long> GetCountAsync(CancellationToken cancellation = default)
 		{
 			var response = await _http.GetAsync(this.GetRequestUrl());
 
@@ -111,11 +110,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return total;
 		}
 
-		public void Clear() => throw new NotSupportedException();
-		public Task ClearAsync(CancellationToken cancellation = default) => throw new NotSupportedException();
+		public ValueTask ClearAsync(CancellationToken cancellation = default) => throw new NotSupportedException();
 
-		public MessageQueueMessage Dequeue(MessageDequeueOptions options = null) => this.DequeueAsync(options, CancellationToken.None).GetAwaiter().GetResult();
-		public async Task<MessageQueueMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
+		public async ValueTask<MessageQueueMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
 		{
 			if(options == null)
 				options = MessageDequeueOptions.Default;
@@ -147,8 +144,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		}
 
 		public string Enqueue(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
-		public Task<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
-		public async Task<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> EnqueueAsync(ReadOnlySpan<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
+		public async ValueTask<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
 			if(options == null)
 				options = MessageEnqueueOptions.Default;
@@ -186,7 +183,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 应答方法
-		public async Task AcknowledgeAsync(string acknowledgementId, TimeSpan delay, CancellationToken cancellation = default)
+		public async ValueTask AcknowledgeAsync(string acknowledgementId, TimeSpan delay, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(acknowledgementId))
 				return;
@@ -202,7 +199,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			await this.DelayAsync(acknowledgementId, delay, cancellation);
 		}
 
-		public async Task DelayAsync(string acknowledgementId, TimeSpan duration, CancellationToken cancellation = default)
+		public async ValueTask DelayAsync(string acknowledgementId, TimeSpan duration, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(acknowledgementId))
 				return;

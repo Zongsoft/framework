@@ -76,44 +76,24 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 公共方法
-		public bool Handle(ref MessageTopicMessage message)
+		public ValueTask<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
 		{
-			return this.Handler?.Handle(message) ?? false;
-		}
-
-		public Task<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
-		{
-			return this.Handler?.HandleAsync(message, cancellation) ?? Task.FromResult(false);
+			return this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(false);
 		}
 		#endregion
 
 		#region 公共方法
-		public bool Subscribe(string topic, string tags, MessageTopicSubscriptionOptions options = null)
+		public ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
 		{
 			throw new NotSupportedException();
 		}
 
-		public Task<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
-		{
-			throw new NotSupportedException();
-		}
-
-		public string Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null)
-		{
-			var response = _http.Send(new HttpRequestMessage(HttpMethod.Post, MESSAGE_SEND_URL)
-			{
-				Content = CreateMessageRequest(data, tags),
-			});
-			var content = response.Content.ReadAsStream();
-			return MessageUtility.GetMessageResponseId(content);
-		}
-
-		public Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), 0, data.Length, topic, tags, options, cancellation);
 		}
 
-		public async Task<string> PublishAsync(byte[] data, int offset, int count, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public async ValueTask<string> PublishAsync(byte[] data, int offset, int count, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			if(data == null || data.Length == 0)
 				return null;
