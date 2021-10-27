@@ -60,16 +60,12 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 发送方法
-		public abstract void Send(ReadOnlySpan<byte> data);
 		public abstract ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
 		#endregion
 
 		#region 接收方法
-		protected abstract void OnReceive(in ReadOnlySequence<byte> data);
-		protected abstract Task OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation);
-
-		void IReceiver.Receive(in ReadOnlySequence<byte> data) => this.OnReceive(in data);
-		Task IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(in data, cancellation);
+		protected abstract ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation);
+		ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(in data, cancellation);
 		#endregion
 
 		#region 激发事件

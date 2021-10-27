@@ -35,6 +35,6 @@ namespace Zongsoft.Components
 	public interface IExecutor<in TContext> : IExecutor
     {
         void Execute(TContext context);
-        Task ExecuteAsync(TContext context);
+        ValueTask ExecuteAsync(TContext context);
     }
 }

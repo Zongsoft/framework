@@ -36,7 +36,6 @@ namespace Zongsoft.Communication
 {
 	public interface ISender
 	{
-		void Send(ReadOnlySpan<byte> data);
 		ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
 	}
 }

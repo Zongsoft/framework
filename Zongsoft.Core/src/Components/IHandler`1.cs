@@ -43,17 +43,12 @@ namespace Zongsoft.Components
 		bool CanHandle(T request);
 
 		/// <summary>
-		/// 同步处理执行请求。
-		/// </summary>
-		/// <param name="request">当前处理的请求对象。</param>
-		bool Handle(T request);
-
-		/// <summary>
 		/// 异步处理执行请求。
 		/// </summary>
+		/// <param name="caller">处理程序的调用者。</param>
 		/// <param name="request">当前处理的请求对象。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		Task<bool> HandleAsync(T request, CancellationToken cancellation);
+		ValueTask<bool> HandleAsync(object caller, T request, CancellationToken cancellation);
 	}
 }

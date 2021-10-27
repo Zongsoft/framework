@@ -50,14 +50,14 @@ namespace Zongsoft.Messaging
 		public MessageQueueMessage(IMessageQueue queue, byte[] data) : this(queue, null, data, (Delegate)null) { }
 		public MessageQueueMessage(IMessageQueue queue, byte[] data, Action acknowledger) : this(queue, null, data, acknowledger) { }
 		public MessageQueueMessage(IMessageQueue queue, byte[] data, Action<TimeSpan> acknowledger) : this(queue, null, data, acknowledger) { }
-		public MessageQueueMessage(IMessageQueue queue, byte[] data, Func<CancellationToken, Task> acknowledger) : this(queue, null, data, acknowledger) { }
-		public MessageQueueMessage(IMessageQueue queue, byte[] data, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(queue, null, data, acknowledger) { }
+		public MessageQueueMessage(IMessageQueue queue, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(queue, null, data, acknowledger) { }
+		public MessageQueueMessage(IMessageQueue queue, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(queue, null, data, acknowledger) { }
 
 		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data) : this(queue, identifier, data, (Delegate)null) { }
 		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Action acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
 		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Action<TimeSpan> acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
-		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Func<CancellationToken, Task> acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
-		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Func<TimeSpan, CancellationToken, Task> acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
+		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
+		public MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(queue, identifier, data, (Delegate)acknowledger) { }
 
 		private MessageQueueMessage(IMessageQueue queue, string identifier, byte[] data, Delegate acknowledger)
 		{
@@ -119,13 +119,13 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		public Task AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
-		public Task AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
+		public ValueTask AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
+		public ValueTask AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
 		{
 			var acknowledger = _acknowledger;
 
 			if(acknowledger == null)
-				return Task.CompletedTask;
+				return ValueTask.CompletedTask;
 
 			if(_acknowledger.Method.ReturnType == null || _acknowledger.Method.ReturnType == typeof(void))
 			{
@@ -134,10 +134,10 @@ namespace Zongsoft.Messaging
 				else
 					acknowledger.DynamicInvoke(delay);
 
-				return Task.CompletedTask;
+				return ValueTask.CompletedTask;
 			}
 
-			return acknowledger.Method.GetParameters().Length == 1 ? (Task)_acknowledger.DynamicInvoke(cancellation) : (Task)_acknowledger.DynamicInvoke(delay, cancellation);
+			return acknowledger.Method.GetParameters().Length == 1 ? (ValueTask)_acknowledger.DynamicInvoke(cancellation) : (ValueTask)_acknowledger.DynamicInvoke(delay, cancellation);
 		}
 		#endregion
 	}

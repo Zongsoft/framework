@@ -45,13 +45,7 @@ namespace Zongsoft.Communication
 		/// 处理请求。
 		/// </summary>
 		/// <param name="package">处理的请求包。</param>
-		void Handle(T package);
-
-		/// <summary>
-		/// 处理请求。
-		/// </summary>
-		/// <param name="package">处理的请求包。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
-		Task HandleAsync(T package, CancellationToken cancellation = default);
+		ValueTask HandleAsync(T package, CancellationToken cancellation = default);
 	}
 }

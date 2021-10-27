@@ -46,10 +46,7 @@ namespace Zongsoft.Messaging
 
 		#region 方法定义
 		/// <summary>取消当前的订阅。</summary>
-		void Unsubscribe();
-
-		/// <summary>取消当前的订阅。</summary>
-		Task UnsubscribeAsync();
+		ValueTask UnsubscribeAsync();
 		#endregion
 	}
 }

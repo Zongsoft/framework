@@ -50,7 +50,7 @@ namespace Zongsoft.Messaging
 				if(handler == null)
 					return;
 
-				if(handler.Handle(message))
+				if(handler.HandleAsync(this, message).GetAwaiter().GetResult())
 					message.Acknowledge();
 			});
 		}

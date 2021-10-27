@@ -58,10 +58,21 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnReceive(in ReadOnlySequence<byte> data) { var message = data; if(this.OnDeserialize(ref message, out var value)) this.OnHandle(value); }
-		protected virtual Task OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) { var message = data; return this.OnDeserialize(ref message, out var value) ? this.OnHandleAsync(value, cancellation) : Task.CompletedTask; }
-		protected virtual bool OnHandle(T package) => this.Handler?.Handle(package) ?? false;
-		protected virtual Task<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(package, cancellation) ?? Task.FromResult(false);
+		protected virtual ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation)
+		{
+			var message = data;
+
+			if(this.OnDeserialize(ref message, out var value))
+			{
+				var task = this.OnHandleAsync(value, cancellation);
+
+				if(!task.IsCompletedSuccessfully)
+					return new ValueTask(task.AsTask());
+			}
+
+			return ValueTask.CompletedTask;
+		}
+		protected virtual ValueTask<bool> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(this, package, cancellation) ?? ValueTask.FromResult(false);
 		#endregion
 
 		#region 协议转换
@@ -77,10 +88,12 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 显式实现
-		void IListener<T>.Handle(T package) => this.OnHandle(package);
-		Task IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
-		void IReceiver.Receive(in ReadOnlySequence<byte> data) => this.OnReceive(data);
-		Task IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+		ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation)
+		{
+			var task = this.OnHandleAsync(package, cancellation);
+			return task.IsCompletedSuccessfully ? ValueTask.CompletedTask : new ValueTask(task.AsTask());
+		}
+		ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
 		#endregion
 
 		#region 释放资源

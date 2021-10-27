@@ -48,15 +48,11 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 方法定义
-		bool Subscribe(string topic, MessageTopicSubscriptionOptions options = null) => this.Subscribe(topic, null, options);
-		bool Subscribe(string topic, string tags, MessageTopicSubscriptionOptions options = null);
-		Task<bool> SubscribeAsync(string topic, MessageTopicSubscriptionOptions options = null) => this.SubscribeAsync(topic, null, options);
-		Task<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null);
+		ValueTask<bool> SubscribeAsync(string topic, MessageTopicSubscriptionOptions options = null) => this.SubscribeAsync(topic, null, options);
+		ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null);
 
-		string Publish(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null) => this.Publish(data, topic, null, options);
-		string Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null);
-		Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
-		Task<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
+		ValueTask<string> PublishAsync(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 
@@ -70,14 +66,8 @@ namespace Zongsoft.Messaging
 		/// 处理订阅的消息。
 		/// </summary>
 		/// <param name="message">待处理的消息。</param>
-		bool Handle(ref TMessage message);
-
-		/// <summary>
-		/// 处理订阅的消息。
-		/// </summary>
-		/// <param name="message">待处理的消息。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
-		Task<bool> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
+		ValueTask<bool> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
 		#endregion
 	}
 }

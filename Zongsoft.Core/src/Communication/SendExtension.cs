@@ -37,9 +37,9 @@ namespace Zongsoft.Communication
 {
 	public static class SendExtension
 	{
-		public static void Send(this ISender sender, byte[] data) => sender.Send(data.AsSpan());
-		public static void Send(this ISender sender, byte[] data, int offset) => sender.Send(data.AsSpan(offset));
-		public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.Send(data.AsSpan(offset, count));
+		public static void Send(this ISender sender, byte[] data) => sender.SendAsync(data).GetAwaiter().GetResult();
+		public static void Send(this ISender sender, byte[] data, int offset) => sender.SendAsync(data.AsMemory(offset)).GetAwaiter().GetResult();
+		public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.SendAsync(data.AsMemory(offset, count)).GetAwaiter().GetResult();
 		public static void Send(this ISender sender, string text, Encoding encoding = null)
 		{
 			if(sender == null)
@@ -57,7 +57,7 @@ namespace Zongsoft.Communication
 			try
 			{
 				encoding.GetBytes(text, 0, text.Length, buffer, 0);
-				sender.Send(buffer.AsSpan());
+				sender.SendAsync(buffer).GetAwaiter().GetResult();
 			}
 			finally
 			{
@@ -71,7 +71,7 @@ namespace Zongsoft.Communication
 
 			try
 			{
-				sender.Send(data.Memory.Span);
+				sender.SendAsync(data.Memory).GetAwaiter().GetResult();
 			}
 			finally { data.Dispose(); }
 		}

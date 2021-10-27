@@ -111,7 +111,7 @@ namespace Zongsoft.Messaging
 				try
 				{
 					//以同步方式从消息队列中获取一条消息
-					message = _queue.Dequeue(settings.Options);
+					message = _queue.DequeueAsync(settings.Options).GetAwaiter().GetResult();
 				}
 				catch(Exception ex)
 				{

@@ -41,14 +41,13 @@ namespace Zongsoft.Components
 
 		#region 公共方法
 		public virtual bool CanHandle(T request) => request != null;
-		public virtual bool Handle(T request) => this.HandleAsync(request, CancellationToken.None).GetAwaiter().GetResult();
-		public abstract Task<bool> HandleAsync(T request, CancellationToken cancellation = default);
+		public virtual bool Handle(object caller, T request) => this.HandleAsync(caller, request, CancellationToken.None).GetAwaiter().GetResult();
+		public abstract ValueTask<bool> HandleAsync(object caller, T request, CancellationToken cancellation = default);
 		#endregion
 
 		#region 显式实现
 		bool IHandler.CanHandle(object request) => request is T model ? this.CanHandle(model) : false;
-		bool IHandler.Handle(object request) => request is T model ? this.Handle(model) : false;
-		Task<bool> IHandler.HandleAsync(object request, CancellationToken cancellation) => request is T model ? this.HandleAsync(model, cancellation) : Task.FromResult(false);
+		ValueTask<bool> IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => request is T model ? this.HandleAsync(caller, model, cancellation) : ValueTask.FromResult(false);
 		#endregion
 	}
 }

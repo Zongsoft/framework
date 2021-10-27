@@ -40,6 +40,6 @@ namespace Zongsoft.Components
         ICollection<IExecutionFilter> Filters { get; }
 
         bool Execute(object context);
-        Task<bool> ExecuteAsync(object context, CancellationToken cancellation = default);
+        ValueTask<bool> ExecuteAsync(object context, CancellationToken cancellation = default);
 	}
 }
