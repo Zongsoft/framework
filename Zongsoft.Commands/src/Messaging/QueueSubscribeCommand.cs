@@ -59,10 +59,10 @@ namespace Zongsoft.Messaging.Commands
 
 				foreach(var argument in context.Expression.Arguments)
 				{
-					var index = argument.IndexOf(':');
+					var index = argument.IndexOfAny(new[] { ':', '?' });
 
 					if(index > 0 && index < argument.Length)
-						count += topic.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1)).GetAwaiter().GetResult() ? 1 : 0;
+						count += topic.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)).GetAwaiter().GetResult() ? 1 : 0;
 					else
 						count += topic.SubscribeAsync(argument).GetAwaiter().GetResult() ? 1 : 0;
 				}

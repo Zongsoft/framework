@@ -88,7 +88,9 @@ namespace Zongsoft.Messaging.Commands
 				context.Output.WriteLine(CommandOutletColor.DarkGray, new string('-', topic.Name.Length + this.Topic.Length + 1));
 
 				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageTopicPublishOptions(reliability) : MessageTopicPublishOptions.Default;
-				return this.ExecuteCore(topic.Name, context, data => topic.PublishAsync(data, this.Topic, context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null, options).GetAwaiter().GetResult());
+				var tags = context.Expression.Options.TryGetValue<string>("tags", out value) ? value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
+
+				return this.ExecuteCore(topic.Name, context, data => topic.PublishAsync(data, this.Topic, tags, options).GetAwaiter().GetResult());
 			}
 
 			return null;
