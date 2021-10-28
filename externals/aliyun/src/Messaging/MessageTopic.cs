@@ -28,10 +28,12 @@
  */
 
 using System;
-using System.Net.Http;
+using System.Linq;
 using System.Text;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Messaging;
 using Zongsoft.Components;
@@ -84,17 +86,17 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 公共方法
-		public ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
+		public ValueTask<bool> SubscribeAsync(string topic, IEnumerable<string> tags, MessageTopicSubscriptionOptions options = null)
 		{
 			throw new NotSupportedException();
 		}
 
-		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), 0, data.Length, topic, tags, options, cancellation);
 		}
 
-		public async ValueTask<string> PublishAsync(byte[] data, int offset, int count, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public async ValueTask<string> PublishAsync(byte[] data, int offset, int count, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			if(data == null || data.Length == 0)
 				return null;
@@ -121,11 +123,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 私有方法
-		private static HttpContent CreateMessageRequest(ReadOnlySpan<byte> data, string tags)
+		private static HttpContent CreateMessageRequest(ReadOnlySpan<byte> data, IEnumerable<string> tags)
 		{
 			var content = System.Convert.ToBase64String(data);
 
-			if(string.IsNullOrWhiteSpace(tags))
+			if(tags == null || !tags.Any())
 				content = string.Format(MESSAGE_CONTENT_NOTAG_TEMPLATE, content);
 			else
 				content = string.Format(MESSAGE_CONTENT_FULLY_TEMPLATE, content, tags);
@@ -133,11 +135,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return new StringContent(content, Encoding.UTF8, "application/xml");
 		}
 
-		private static HttpContent CreateMessageRequest(byte[] data, int offset, int count, string tags)
+		private static HttpContent CreateMessageRequest(byte[] data, int offset, int count, IEnumerable<string> tags)
 		{
 			var content = System.Convert.ToBase64String(data, offset, count);
 
-			if(string.IsNullOrWhiteSpace(tags))
+			if(tags == null || !tags.Any())
 				content = string.Format(MESSAGE_CONTENT_NOTAG_TEMPLATE, content);
 			else
 				content = string.Format(MESSAGE_CONTENT_FULLY_TEMPLATE, content, tags);

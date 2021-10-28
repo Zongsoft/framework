@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -84,9 +85,9 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 订阅方法
-		public async ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null)
+		public async ValueTask<bool> SubscribeAsync(string topic, IEnumerable<string> tags, MessageTopicSubscriptionOptions options = null)
 		{
-			if(!string.IsNullOrEmpty(tags))
+			if(tags != null && tags.Any())
 				throw new ArgumentException($"The tags is not supported.");
 
 			await _client.SubscribeAsync(new MqttTopicFilter()
@@ -123,7 +124,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 发布方法
-		public string Publish(ReadOnlySpan<byte> data, string topic, string tags, MessageTopicPublishOptions options = null)
+		public string Publish(ReadOnlySpan<byte> data, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null)
 		{
 			var message = new MqttApplicationMessage()
 			{
@@ -142,12 +143,12 @@ namespace Zongsoft.Messaging.Mqtt
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
-		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, IEnumerable<string> tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			return this.PublishAsync(data.ToArray(), topic, tags, options, cancellation);
 		}
 
-		public async ValueTask<string> PublishAsync(byte[] data, string topic, string tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public async ValueTask<string> PublishAsync(byte[] data, string topic, IEnumerable<string> tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
 		{
 			var message = new MqttApplicationMessage()
 			{
@@ -163,7 +164,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 私有方法
-		private static string GetSubscriberKey(string topic, string tags) => string.IsNullOrEmpty(tags) ? topic : topic + ':' + tags;
+		private static string GetSubscriberKey(string topic, IEnumerable<string> tags) => tags != null && tags.Any() ? topic + ':' + string.Join(',', tags) : topic;
 		#endregion
 
 		#region 重写方法

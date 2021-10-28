@@ -28,8 +28,10 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging.Mqtt
 {
@@ -40,18 +42,18 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 构造函数
-		public MqttSubscriber(MqttQueue queue, string filter, string tags = null)
+		public MqttSubscriber(MqttQueue queue, string filter, IEnumerable<string> tags = null)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			this.Filter = filter;
-			this.Tags = tags;
+			this.Tags = tags == null ? null : tags.ToArray();
 		}
 		#endregion
 
 		#region 公共属性
 		public MqttQueue Queue { get => _queue; }
 		public string Filter { get; }
-		public string Tags { get; }
+		public string[] Tags { get; }
 		#endregion
 
 		#region 公共方法
@@ -63,7 +65,7 @@ namespace Zongsoft.Messaging.Mqtt
 		public bool Equals(MqttSubscriber other) => string.Equals(this.Filter, other.Filter) && string.Equals(this.Tags, other.Tags);
 		public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
 		public override int GetHashCode() => HashCode.Combine(this.Filter, this.Tags);
-		public override string ToString() => string.IsNullOrEmpty(this.Tags) ? $"{this.Filter}" : $"{this.Filter}:{this.Tags}";
+		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Filter}:{string.Join(',', this.Tags)}" : this.Filter;
 		#endregion
 
 		#region 显式实现
