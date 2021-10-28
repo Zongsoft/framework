@@ -28,13 +28,11 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Messaging.Options
 {
-	public class TopicOptionsCollection : KeyedCollection<string, TopicOptions>
+	public class TopicOptionsCollection : Collections.NamedCollectionBase<TopicOptions>
 	{
-		public TopicOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
 		protected override string GetKeyForItem(TopicOptions item) => item.Name;
 	}
 }

@@ -31,23 +31,77 @@ using System;
 using System.Linq;
 using System.Globalization;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging.Options
 {
 	public class TopicSubscriptionOptions
 	{
+		#region 公共属性
 		public MessageReliability Reliability { get; set; }
 		public MessageFallbackBehavior Fallback { get; set; }
-		public TopicSubscriptionFilterCollection Filters { get; set; }
+
+		[TypeConverter(typeof(FilterCollectionConverter))]
+		[Zongsoft.Configuration.ConfigurationProperty("filter")]
+		public ICollection<TopicSubscriptionFilter> Filters { get; set; }
+		#endregion
+
+		#region 嵌套子类
+		private class FilterCollectionConverter : TypeConverter
+		{
+			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? Zongsoft.Common.StringExtension.Slice(text, ';').Select(part => TopicSubscriptionFilter.Parse(part)) : base.ConvertFrom(context, culture, value);
+			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is IEnumerable<TopicSubscriptionFilter> filters ? string.Join<TopicSubscriptionFilter>(';', filters) : base.ConvertTo(context, culture, value, destinationType);
+		}
+		#endregion
 	}
 
 	public class TopicSubscriptionFilter
 	{
-		public string Key { get; set; }
+		#region 构造函数
+		public TopicSubscriptionFilter() { }
+		public TopicSubscriptionFilter(string topic, params string[] tags)
+		{
+			this.Topic = topic;
+			this.Tags = tags;
+		}
+		#endregion
+
+		#region 公共属性
+		public string Topic { get; set; }
 
 		[TypeConverter(typeof(StringArrayConverter))]
 		public string[] Tags { get; set; }
+		#endregion
 
+		#region 重写方法
+		public override string ToString()
+		{
+			var tags = this.Tags;
+			return tags == null || tags.Length == 0 ? this.Topic : this.Topic + '?' + string.Join(',', tags);
+		}
+		#endregion
+
+		#region 解析方法
+		public static TopicSubscriptionFilter Parse(string text)
+		{
+			if(text != null && text.Length > 0)
+			{
+				var index = text.IndexOfAny(new[] { ':', '?', '!', '|' });
+
+				if(index > 0 && index < text.Length - 1)
+				{
+					var tags = Zongsoft.Common.StringExtension.Slice(text.Substring(index + 1), ',').ToArray();
+					return new TopicSubscriptionFilter(text.Substring(0, index), tags);
+				}
+			}
+
+			return new TopicSubscriptionFilter(text);
+		}
+		#endregion
+
+		#region 嵌套子类
 		private class StringArrayConverter : TypeConverter
 		{
 			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
@@ -55,11 +109,6 @@ namespace Zongsoft.Messaging.Options
 			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? Zongsoft.Common.StringExtension.Slice(text, ';').ToArray() : base.ConvertFrom(context, culture, value);
 			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is string[] array ? string.Join(';', array) : base.ConvertTo(context, culture, value, destinationType);
 		}
-	}
-
-	public class TopicSubscriptionFilterCollection : System.Collections.ObjectModel.KeyedCollection<string, TopicSubscriptionFilter>
-	{
-		public TopicSubscriptionFilterCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(TopicSubscriptionFilter item) => item.Key;
+		#endregion
 	}
 }
