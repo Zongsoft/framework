@@ -91,7 +91,7 @@ namespace Zongsoft.Messaging
 
 			if(options != null && options.TryGet(this.Queue.Name, out var option) && option.Subscription != null)
 			{
-				filters = option.Subscription.Filters;
+				filters = option.Subscription.Filters ?? Array.Empty<Options.TopicSubscriptionFilter>();
 				return new MessageTopicSubscriptionOptions(option.Subscription.Reliability, option.Subscription.Fallback);
 			}
 
