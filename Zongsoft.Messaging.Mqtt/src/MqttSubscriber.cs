@@ -67,7 +67,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 显式实现
-		string IMessageSubscriber<MessageTopicMessage>.Name => _queue.Name;
+		string IMessageSubscriber.Name => _queue.Name;
 		IMessageTopic<MessageTopicMessage> IMessageTopicSubscriber<MessageTopicMessage>.Topic => _queue;
 		#endregion
 	}

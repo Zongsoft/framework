@@ -80,6 +80,7 @@ namespace Zongsoft.Messaging.Mqtt
 		public IConnectionSetting ConnectionSetting { get; set; }
 		public IHandler<MessageTopicMessage> Handler { get; set; }
 		public ICollection<MqttSubscriber> Subscribers { get => _subscribers.Values; }
+		IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => this.Subscribers;
 		#endregion
 
 		#region 订阅方法
