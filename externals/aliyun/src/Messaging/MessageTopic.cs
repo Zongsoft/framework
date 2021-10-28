@@ -73,6 +73,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		public string Name { get; }
 		public IHandler<MessageTopicMessage> Handler { get; set; }
 		public IConnectionSetting ConnectionSetting { get; set; }
+		System.Collections.Generic.IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => Array.Empty<IMessageSubscriber>();
 		#endregion
 
 		#region 公共方法
