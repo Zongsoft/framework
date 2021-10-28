@@ -37,7 +37,7 @@ namespace Zongsoft.Messaging
 	/// 表示消息主题订阅者的接口。
 	/// </summary>
 	/// <typeparam name="TMessage">订阅的消息类型。</typeparam>
-	public interface IMessageTopicSubscriber<TMessage> : IMessageSubscriber<TMessage>
+	public interface IMessageTopicSubscriber<TMessage> : IMessageSubscriber
 	{
 		#region 属性定义
 		/// <summary>获取订阅的主题标识。</summary>

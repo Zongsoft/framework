@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging
 {
@@ -44,6 +45,9 @@ namespace Zongsoft.Messaging
 
 		/// <summary>获取或设置消息队列的连接设置。</summary>
 		Configuration.IConnectionSetting ConnectionSetting { get; set; }
+
+		/// <summary>获取订阅者集合。</summary>
+		IEnumerable<IMessageSubscriber> Subscribers { get; }
 		#endregion
 
 		#region 订阅方法
