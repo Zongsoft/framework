@@ -52,8 +52,18 @@ namespace Zongsoft.Messaging
 
 				if(index > 0 && index < text.Length - 1)
 				{
-					return services.Resolve(text.Substring(index + 1)) is IMessageTopicProvider provider ?
-						provider.GetTopic(text.Substring(0, index)) : null;
+					var container = text.Substring(index + 1);
+
+					foreach(var provider in services.ResolveAll<IMessageTopicProvider>())
+					{
+						if(provider is Collections.IMatchable<string> matchable && matchable.Match(container))
+							return provider.GetTopic(text.Substring(0, index));
+
+						if(string.Equals(container, provider.Name, StringComparison.OrdinalIgnoreCase))
+							return provider.GetTopic(text.Substring(0, index));
+					}
+
+					return null;
 				}
 
 				return services.Resolve(text) as IMessageTopic;
