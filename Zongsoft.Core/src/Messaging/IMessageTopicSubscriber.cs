@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
 {
@@ -43,8 +41,8 @@ namespace Zongsoft.Messaging
 		/// <summary>获取订阅的主题标识。</summary>
 		string Filter { get; }
 
-		/// <summary>获取订阅的主题标签。</summary>
-		string Tags { get; }
+		/// <summary>获取订阅的主题标签集。</summary>
+		string[] Tags { get; }
 
 		/// <summary>获取当前订阅的消息主题对象。</summary>
 		IMessageTopic<TMessage>  Topic { get; }

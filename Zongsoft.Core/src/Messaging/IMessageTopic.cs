@@ -52,10 +52,10 @@ namespace Zongsoft.Messaging
 
 		#region 方法定义
 		ValueTask<bool> SubscribeAsync(string topic, MessageTopicSubscriptionOptions options = null) => this.SubscribeAsync(topic, null, options);
-		ValueTask<bool> SubscribeAsync(string topic, string tags, MessageTopicSubscriptionOptions options = null);
+		ValueTask<bool> SubscribeAsync(string topic, IEnumerable<string> tags, MessageTopicSubscriptionOptions options = null);
 
 		ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, MessageTopicPublishOptions options = null, CancellationToken cancellation = default) => this.PublishAsync(data, topic, null, options, cancellation);
-		ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, string tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
+		ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default);
 		#endregion
 	}
 

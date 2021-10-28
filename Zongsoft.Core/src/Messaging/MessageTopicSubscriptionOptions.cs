@@ -38,9 +38,10 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 构造函数
-		public MessageTopicSubscriptionOptions(MessageReliability reliability = MessageReliability.MostOnce)
+		public MessageTopicSubscriptionOptions(MessageReliability reliability = MessageReliability.MostOnce, MessageFallbackBehavior fallbackBehavior = MessageFallbackBehavior.Backoff)
 		{
 			this.Reliability = reliability;
+			this.FallbackBehavior = fallbackBehavior;
 		}
 		#endregion
 
