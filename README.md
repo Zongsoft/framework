@@ -34,3 +34,19 @@
 ├── [Zongsoft.Security]
 └── [Zongsoft.Web]
 ```
+
+## 开始
+### 安装Cake
+```
+dotnet tool install Cake.Tool -g
+```
+### 运行Cake
+Windows执行
+```
+.\cake.ps1
+```
+
+Linux执行
+```
+.\cake.sh
+```
