@@ -93,9 +93,13 @@ namespace Zongsoft.Net
 		#region 发送数据
 		public ValueTask SendAsync(T package, CancellationToken cancellation = default)
 		{
-			async ValueTask AwaitFlushAndRelease(ValueTask flush)
+			async ValueTask AwaitFlushAndRelease(ValueTask flush, PipeWriter writer, CancellationToken cancellation)
 			{
-				try { await flush; }
+				try
+				{
+					await flush;
+					await writer.FlushAsync(cancellation);
+				}
 				finally { _singleWriter.Release(); }
 			}
 
@@ -110,10 +114,13 @@ namespace Zongsoft.Net
 				var result = this.PackAsync(writer, package, cancellation);
 
 				if(result.IsCompletedSuccessfully)
+				{
+					writer.FlushAsync(cancellation);
 					return default;
+				}
 
 				release = false;
-				return AwaitFlushAndRelease(result);
+				return AwaitFlushAndRelease(result, writer, cancellation);
 			}
 			finally
 			{
