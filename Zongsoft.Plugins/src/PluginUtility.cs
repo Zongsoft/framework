@@ -717,6 +717,10 @@ namespace Zongsoft.Plugins
 			if(target == null || builtin == null)
 				return;
 
+			//使用服务注入器进行注入处理
+			ServiceInjector.Inject(FindServiceProvider(builtin), target);
+			return;
+
 			//查找指定目标对象需要注入的属性和字段集(支持对非公共成员的注入)
 			var members = target.GetType()
 			                    .FindMembers(MemberTypes.Field | MemberTypes.Property,
