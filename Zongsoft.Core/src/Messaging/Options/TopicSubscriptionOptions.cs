@@ -41,19 +41,8 @@ namespace Zongsoft.Messaging.Options
 		public MessageReliability Reliability { get; set; }
 		public MessageFallbackBehavior Fallback { get; set; }
 
-		[TypeConverter(typeof(FilterCollectionConverter))]
-		[Zongsoft.Configuration.ConfigurationProperty("filter")]
+		[Zongsoft.Configuration.ConfigurationProperty("")]
 		public ICollection<TopicSubscriptionFilter> Filters { get; set; }
-		#endregion
-
-		#region 嵌套子类
-		private class FilterCollectionConverter : TypeConverter
-		{
-			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
-			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
-			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? Zongsoft.Common.StringExtension.Slice(text, ';').Select(part => TopicSubscriptionFilter.Parse(part)) : base.ConvertFrom(context, culture, value);
-			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is IEnumerable<TopicSubscriptionFilter> filters ? string.Join<TopicSubscriptionFilter>(';', filters) : base.ConvertTo(context, culture, value, destinationType);
-		}
 		#endregion
 	}
 
@@ -71,7 +60,7 @@ namespace Zongsoft.Messaging.Options
 		#region 公共属性
 		public string Topic { get; set; }
 
-		[TypeConverter(typeof(StringArrayConverter))]
+		[TypeConverter(typeof(TagsConverter))]
 		public string[] Tags { get; set; }
 		#endregion
 
@@ -102,12 +91,12 @@ namespace Zongsoft.Messaging.Options
 		#endregion
 
 		#region 嵌套子类
-		private class StringArrayConverter : TypeConverter
+		private class TagsConverter : TypeConverter
 		{
 			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
 			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
-			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? Zongsoft.Common.StringExtension.Slice(text, ';').ToArray() : base.ConvertFrom(context, culture, value);
-			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is string[] array ? string.Join(';', array) : base.ConvertTo(context, culture, value, destinationType);
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : base.ConvertFrom(context, culture, value);
+			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is string[] array ? string.Join(',', array) : base.ConvertTo(context, culture, value, destinationType);
 		}
 		#endregion
 	}
