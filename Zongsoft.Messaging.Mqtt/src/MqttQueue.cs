@@ -157,7 +157,7 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			await _client.EnsureStart();
+			await _client.EnsureStart(this.ConnectionSetting);
 			var result = await _client.PublishAsync(message);
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
