@@ -77,6 +77,7 @@ namespace Zongsoft.Configuration.Xml
 			using(var reader = XmlReader.Create(stream, settings))
 			{
 				var pathStack = new Stack<string>();
+				var indexStack = new Stack<int>();
 
 				SkipUntilRootElement(reader);
 
@@ -91,6 +92,9 @@ namespace Zongsoft.Configuration.Xml
 					switch(reader.NodeType)
 					{
 						case XmlNodeType.Element:
+							if(indexStack.Count < reader.Depth)
+								indexStack.Push(0);
+
 							if(reader.Depth == 1)
 							{
 								//确保配置元素必须位于<option>节点之内
@@ -116,6 +120,7 @@ namespace Zongsoft.Configuration.Xml
 
 								for(int i = 0; i < reader.AttributeCount; i++)
 								{
+									var index = 0;
 									reader.MoveToAttribute(i);
 
 									if(!string.IsNullOrEmpty(reader.NamespaceURI))
@@ -129,7 +134,15 @@ namespace Zongsoft.Configuration.Xml
 											throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationKeyValue, reader.Value, GetLineInfo(reader)));
 
 										pathStack.Pop();
-										pathStack.Push(reader.Value);
+
+										if(string.IsNullOrWhiteSpace(reader.Value) || reader.Value == "#")
+										{
+											index = indexStack.Pop() + 1;
+											pathStack.Push($"#{index}");
+											indexStack.Push(index);
+										}
+										else
+											pathStack.Push(reader.Value);
 
 										pathStack.Push(reader.LocalName.Substring(elementName.Length + 1));
 									}
@@ -145,7 +158,11 @@ namespace Zongsoft.Configuration.Xml
 									if(data.ContainsKey(key))
 										throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(reader)));
 
-									data[key] = reader.Value;
+									if(index > 0)
+										data[key] = index.ToString();
+									else
+										data[key] = reader.Value;
+
 									pathStack.Pop();
 								}
 
@@ -168,6 +185,9 @@ namespace Zongsoft.Configuration.Xml
 
 								pathStack.Pop();
 							}
+
+							if(indexStack.Count > 0)
+								indexStack.Pop();
 
 							break;
 						case XmlNodeType.CDATA:
