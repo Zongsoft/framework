@@ -45,9 +45,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 构造函数
-		protected ConfigurationResolver()
-		{
-		}
+		protected ConfigurationResolver() { }
 		#endregion
 
 		#region 公共属性
@@ -114,14 +112,14 @@ namespace Zongsoft.Configuration
 					}
 					else
 					{
-						if(!this.ResolveCollection(instance, section, options))
+						if(!this.ResolveCollection(instance, section, properties, options))
 							this.OnUnrecognize(instance, properties, section, options);
 					}
 				}
 			}
 		}
 
-		private bool ResolveCollection(object instance, IConfigurationSection configuration, ConfigurationBinderOptions options)
+		private bool ResolveCollection(object instance, IConfigurationSection configuration, IDictionary<string, PropertyToken> properties, ConfigurationBinderOptions options)
 		{
 			var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
 
@@ -314,6 +312,9 @@ namespace Zongsoft.Configuration
 
 			if(unrecognizedProperty == null)
 			{
+				if(configuration.Value == null && this.ResolveDefaultProperty(target, FindDefaultProperty(properties.Values), properties, configuration, options))
+					return;
+
 				if(options!.UnrecognizedError)
 					throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
 
@@ -327,19 +328,8 @@ namespace Zongsoft.Configuration
 				//如果指定的未识别属性名被注解为空或星号，则表示它是一个默认集合属性
 				if(attribute != null && (string.IsNullOrEmpty(attribute.Name) || attribute.Name == "*"))
 				{
-					var token = properties[unrecognizedProperty.Name];
-					var value = token.GetValue(target);
-
-					if(value == null)
-					{
-						value = this.CreateInstance(unrecognizedProperty.PropertyType);
-
-						if(!token.SetValue(target, value))
-							throw new ConfigurationException($"The default collection property {unrecognizedProperty.Name} of '{target.GetType().FullName}' type is null and it cannot be set.");
-					}
-
 					//解析默认集合成功则返回，否则抛出异常
-					if(this.ResolveCollection(value, configuration, options))
+					if(this.ResolveDefaultProperty(target, properties[unrecognizedProperty.Name], properties, configuration, options))
 						return;
 
 					throw new ConfigurationException($"The {unrecognizedProperty.Name} property of type '{target.GetType().FullName}' is annotated as the default collection, but the binding for this property fails.");
@@ -355,6 +345,40 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 私有方法
+		private bool ResolveDefaultProperty(object instance, PropertyToken property, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
+		{
+			if(property == null)
+				return false;
+
+			var value = property.GetValue(instance);
+
+			if(value == null)
+			{
+				if(!property.CanWrite)
+					return false;
+
+				value = this.CreateInstance(property.PropertyType);
+
+				if(!property.SetValue(instance, value))
+					throw new ConfigurationException($"The default collection property {property.Name} of '{instance.GetType().FullName}' type is null and it cannot be set.");
+			}
+
+			return this.ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);
+		}
+
+		private static PropertyToken FindDefaultProperty(IEnumerable<PropertyToken> properties)
+		{
+			foreach(var property in properties)
+			{
+				if(string.IsNullOrEmpty(property.Alias) || property.Alias == "*")
+					return property;
+			}
+
+			return null;
+		}
+		#endregion
+
 		#region 内部结构
 		protected class PropertyToken : IEquatable<PropertyToken>
 		{
@@ -367,6 +391,13 @@ namespace Zongsoft.Configuration
 			{
 				this.Property = property;
 				this.Converter = ConfigurationUtility.GetConverter(property);
+
+				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
+
+				if(attribute == null)
+					this.Alias = property.Name;
+				else
+					this.Alias = attribute.Name;
 			}
 			#endregion
 
@@ -377,6 +408,7 @@ namespace Zongsoft.Configuration
 
 			#region 公共属性
 			public string Name => this.Property.Name;
+			public string Alias { get; }
 			public bool CanRead => this.Property.CanRead;
 			public bool CanWrite => this.Property.CanWrite;
 			public Type PropertyType => this.Property.PropertyType;
