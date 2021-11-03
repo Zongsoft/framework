@@ -28,48 +28,26 @@
  */
 
 using System;
-using System.Linq;
 using System.ComponentModel;
-using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Configuration;
-using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageTopicWatcher : WorkerBase
+	public class MessageQueueGuarder : WorkerBase
 	{
 		#region 公共属性
-		[TypeConverter(typeof(MessageTopicConverter))]
-		public IMessageTopic Queue { get; set; }
+		[TypeConverter(typeof(MessageQueueConverter))]
+		public IMessageQueue Queue { get; set; }
 
-		[Options("/Messaging/Topics")]
-		public Options.TopicOptionsCollection Options { get; set; }
+		public Options.QueueOptionsCollection Options { get; set; }
 		#endregion
 
 		#region 启停方法
 		protected override void OnStart(string[] args)
 		{
 			var queue = this.Queue ?? throw new InvalidOperationException($"Missing the required message queue.");
-			var options = this.GetSubscriptionOptions(out var filters);
-
-			foreach(var filter in filters)
-			{
-				queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
-			}
-
-			if(args != null && args.Length > 0)
-			{
-				for(int i = 0; i < args.Length; i++)
-				{
-					var filter = Zongsoft.Messaging.Options.TopicSubscriptionFilter.Parse(args[i]);
-
-					if(!string.IsNullOrEmpty(filter.Topic))
-						queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
-				}
-			}
+			queue.SubscribeAsync(GetSubscriptionOptions());
 		}
 
 		protected override void OnStop(string[] args)
@@ -85,17 +63,13 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 私有方法
-		private MessageTopicSubscriptionOptions GetSubscriptionOptions(out IEnumerable<Options.TopicSubscriptionFilter> filters)
+		private MessageQueueSubscriptionOptions GetSubscriptionOptions()
 		{
 			var options = this.Options;
 
 			if(options != null && options.TryGet(this.Queue.Name, out var option) && option.Subscription != null)
-			{
-				filters = option.Subscription.Filters ?? Array.Empty<Options.TopicSubscriptionFilter>();
-				return new MessageTopicSubscriptionOptions(option.Subscription.Reliability, option.Subscription.Fallback);
-			}
+				return new MessageQueueSubscriptionOptions(option.Subscription.Reliability, option.Subscription.Fallback);
 
-			filters = Array.Empty<Options.TopicSubscriptionFilter>();
 			return null;
 		}
 		#endregion
