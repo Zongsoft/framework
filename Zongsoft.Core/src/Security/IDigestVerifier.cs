@@ -36,6 +36,9 @@ namespace Zongsoft.Security
 	/// </summary>
 	public interface IDigestVerifier
 	{
+		/// <summary>获取校验器名称。</summary>
+		string Name { get; }
+
 		/// <summary>
 		/// 校验指定的数据摘要。
 		/// </summary>
