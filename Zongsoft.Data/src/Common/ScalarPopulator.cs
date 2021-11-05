@@ -54,6 +54,9 @@ namespace Zongsoft.Data.Common
 		public static readonly IDataPopulator Single = new ValuePopulator<float>();
 		public static readonly IDataPopulator Double = new ValuePopulator<double>();
 		public static readonly IDataPopulator Decimal = new ValuePopulator<decimal>();
+
+		public static readonly IDataPopulator Bytes = new ValuePopulator<byte[]>();
+		public static readonly IDataPopulator Chars = new ValuePopulator<char[]>();
 		#endregion
 
 		#region 嵌套子类
@@ -86,6 +89,9 @@ namespace Zongsoft.Data.Common
 		public static readonly IDataPopulator Single = new ValuePopulator<float>();
 		public static readonly IDataPopulator Double = new ValuePopulator<double>();
 		public static readonly IDataPopulator Decimal = new ValuePopulator<decimal>();
+
+		public static readonly IDataPopulator Bytes = new ValuePopulator<byte[]>();
+		public static readonly IDataPopulator Chars = new ValuePopulator<char[]>();
 		#endregion
 
 		#region 嵌套子类

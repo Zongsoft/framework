@@ -108,6 +108,12 @@ namespace Zongsoft.Data.Common
 			if(type == typeof(DateTimeOffset))
 				return nullable ? NullablePopulator.DateTimeOffset : ScalarPopulator.DateTimeOffset;
 
+			if(type == typeof(byte[]))
+				return nullable ? NullablePopulator.Bytes : ScalarPopulator.Bytes;
+
+			if(type == typeof(char[]))
+				return nullable ? NullablePopulator.Chars : ScalarPopulator.Chars;
+
 			return _converters.GetOrAdd(type, t => new ConverterPopulater(t));
 		}
 		#endregion
