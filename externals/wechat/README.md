@@ -24,3 +24,30 @@
   5. 用户授权完成，微信推送回调，在回调中获取授权绑定信息
    > 通过 https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/authorization_info.html 获取授权者的 `authorizer_appid`, `authorizer_access_token`, `authorizer_refresh_token`
   6. 定时更新授权者的访问凭证
+
+
+## 引用
+
+- 普通商户文档中心
+  > https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/pages/index.shtml
+
+- 服务商文档中心
+  > https://pay.weixin.qq.com/wiki/doc/apiv3_partner/pages/index.shtml
+
+- Gitbook
+  > https://wechatpay-api.gitbook.io/wechatpay-api-v3
+
+- API 证书
+  > https://kf.qq.com/faq/161222NneAJf161222U7fARv.html
+
+
+## 工具
+
+- 微信支付：接口验证脚本(Postman)
+  > https://github.com/wechatpay-apiv3/wechatpay-postman-script
+
+- 微信支付：签名/验签/加密/解密工具下载
+  > https://pay.weixin.qq.com/wiki/doc/apiv3/wechatpay/download/Product_5.zip
+
+- 微信支付：证书工具下载
+  > https://wx.gtimg.com/mch/files/WXCertUtil.exe
