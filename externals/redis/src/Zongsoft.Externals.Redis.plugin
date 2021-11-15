@@ -41,5 +41,14 @@
 		<object name="Remove" type="Zongsoft.Externals.Redis.Commands.RedisRemoveCommand, Zongsoft.Externals.Redis" />
 		<object name="Increment" type="Zongsoft.Externals.Redis.Commands.RedisIncrementCommand, Zongsoft.Externals.Redis" />
 		<object name="Decrement" type="Zongsoft.Externals.Redis.Commands.RedisDecrementCommand, Zongsoft.Externals.Redis" />
+
+		<object name="Lock">
+			<lock.command>
+				<object type="Zongsoft.Externals.Redis.Commands.RedisLockCommand, Zongsoft.Externals.Redis" />
+			</lock.command>
+
+			<object name="Acquire" type="Zongsoft.Externals.Redis.Commands.RedisLockAcquireCommand, Zongsoft.Externals.Redis" />
+			<object name="Release" type="Zongsoft.Externals.Redis.Commands.RedisLockReleaseCommand, Zongsoft.Externals.Redis" />
+		</object>
 	</extension>
 </plugin>

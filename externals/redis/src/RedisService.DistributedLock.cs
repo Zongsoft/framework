@@ -40,7 +40,11 @@ namespace Zongsoft.Externals.Redis
    public partial class RedisService : IDistributedLockManager
 	{
 		#region 常量定义
-		private const string RELEASE_SCRIPT = @"if redis.call('get', KEYS[1])==ARGV[1] then redis.call('del', KEYS[1]) else return 0 end";
+		private const string RELEASE_SCRIPT = @"if redis.call('get', KEYS[1])==ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+		#endregion
+
+		#region 公共属性
+		public IDistributedLockNormalizer Normalizer { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -54,10 +58,11 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			var token = Guid.NewGuid().ToByteArray();
+			var normalizer = this.Normalizer ??= DistributedLockNormalizer.Randon;
+			var token = normalizer.Normalize();
 
 			return await _database.StringSetAsync(key, token, duration, When.NotExists) ?
-				new DistributedLock(this, key, token, DateTime.UtcNow.Add(duration)) : null;
+				new DistributedLock(this, key, token.ToArray(), DateTime.UtcNow.Add(duration)) : null;
 		}
 
 		public async ValueTask<bool> ReleaseAsync(string key, ReadOnlyMemory<byte> token, CancellationToken cancellation = default)
