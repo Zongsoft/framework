@@ -107,5 +107,9 @@ namespace Zongsoft.Distributing
 			return default;
 		}
 		#endregion
+
+		#region 重写方法
+		public override string ToString() => $"{this.Key}@{this.Expiry}";
+		#endregion
 	}
 }

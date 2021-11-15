@@ -38,6 +38,9 @@ namespace Zongsoft.Distributing
 	/// </summary>
 	public interface IDistributedLockManager
 	{
+		/// <summary>获取或设置分布式锁的令牌规范器。</summary>
+		IDistributedLockNormalizer Normalizer { get; set; }
+
 		/// <summary>
 		/// 获取一个指定标识的分布式锁。
 		/// </summary>
