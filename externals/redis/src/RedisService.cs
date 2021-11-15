@@ -44,7 +44,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis
 {
-	public class RedisService : ICache, ISequence, IDisposable
+	public partial class RedisService : ICache, ISequence, IDisposable
 	{
 		#region 常量定义
 		private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";

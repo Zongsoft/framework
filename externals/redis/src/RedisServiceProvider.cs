@@ -34,12 +34,13 @@ using System.Collections.Concurrent;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Distributing;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis
 {
-	[Service(typeof(IServiceProvider<ICache>), typeof(IServiceProvider<ISequence>))]
-	public class RedisServiceProvider : IServiceProvider<ICache>, IServiceProvider<ISequence>
+	[Service(typeof(IServiceProvider<ICache>), typeof(IServiceProvider<ISequence>), typeof(IServiceProvider<IDistributedLockManager>))]
+	public class RedisServiceProvider : IServiceProvider<ICache>, IServiceProvider<ISequence>, IServiceProvider<IDistributedLockManager>
 	{
 		#region 静态字段
 		private static readonly ConcurrentDictionary<string, RedisService> _services = new ConcurrentDictionary<string, RedisService>(StringComparer.OrdinalIgnoreCase);
@@ -67,15 +68,9 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 显式实现
-		ICache IServiceProvider<ICache>.GetService(string name)
-		{
-			return this.GetRedis(name);
-		}
-
-		ISequence IServiceProvider<ISequence>.GetService(string name)
-		{
-			return this.GetRedis(name);
-		}
+		ICache IServiceProvider<ICache>.GetService(string name) => this.GetRedis(name);
+		ISequence IServiceProvider<ISequence>.GetService(string name) => this.GetRedis(name);
+		IDistributedLockManager IServiceProvider<IDistributedLockManager>.GetService(string name) => this.GetRedis(name);
 		#endregion
 	}
 }
