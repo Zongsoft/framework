@@ -57,38 +57,70 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public static T Build<T>()
+		public static TModel Build<TModel>()
 		{
-			return (T)GetCreator(typeof(T))();
+			return (TModel)GetCreator(typeof(TModel))();
 		}
 
-		public static T Build<T>(Action<T> map)
+		public static TModel Build<TModel>(Action<TModel> map)
 		{
-			var entity = (T)GetCreator(typeof(T))();
+			var entity = (TModel)GetCreator(typeof(TModel))();
 			map?.Invoke(entity);
 			return entity;
 		}
 
-		public static IEnumerable<T> Build<T>(int count, Action<T, int> map = null)
+		public static TModel Build<TModel, TState>(Action<TModel, TState> map, in TState state)
+		{
+			var entity = (TModel)GetCreator(typeof(TModel))();
+			map?.Invoke(entity, state);
+			return entity;
+		}
+
+		public static IEnumerable<TModel> Build<TModel>(int count, Action<TModel, int> map = null)
 		{
 			if(count < 1)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			var creator = GetCreator(typeof(T));
+			var creator = GetCreator(typeof(TModel));
 
 			if(map == null)
 			{
 				for(int i = 0; i < count; i++)
 				{
-					yield return (T)creator();
+					yield return (TModel)creator();
 				}
 			}
 			else
 			{
 				for(int i = 0; i < count; i++)
 				{
-					var entity = (T)creator();
+					var entity = (TModel)creator();
 					map(entity, i);
+					yield return entity;
+				}
+			}
+		}
+
+		public static IEnumerable<TModel> Build<TModel, TState>(int count, Action<TModel, TState, int> map, TState state)
+		{
+			if(count < 1)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			var creator = GetCreator(typeof(TModel));
+
+			if(map == null)
+			{
+				for(int i = 0; i < count; i++)
+				{
+					yield return (TModel)creator();
+				}
+			}
+			else
+			{
+				for(int i = 0; i < count; i++)
+				{
+					var entity = (TModel)creator();
+					map(entity, state, i);
 					yield return entity;
 				}
 			}
@@ -103,6 +135,13 @@ namespace Zongsoft.Data
 		{
 			var entity = GetCreator(type)();
 			map?.Invoke(entity);
+			return entity;
+		}
+
+		public static object Build<TState>(Type type, Action<object, TState> map, in TState state)
+		{
+			var entity = GetCreator(type)();
+			map?.Invoke(entity, state);
 			return entity;
 		}
 
@@ -126,6 +165,31 @@ namespace Zongsoft.Data
 				{
 					var entity = creator();
 					map(entity, i);
+					yield return entity;
+				}
+			}
+		}
+
+		public static IEnumerable Build<TState>(Type type, int count, Action<object, TState, int> map, TState state)
+		{
+			if(count < 1)
+				throw new ArgumentOutOfRangeException(nameof(count));
+
+			var creator = GetCreator(type);
+
+			if(map == null)
+			{
+				for(int i = 0; i < count; i++)
+				{
+					yield return creator();
+				}
+			}
+			else
+			{
+				for(int i = 0; i < count; i++)
+				{
+					var entity = creator();
+					map(entity, state, i);
 					yield return entity;
 				}
 			}
