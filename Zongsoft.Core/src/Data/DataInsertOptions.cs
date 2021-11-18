@@ -35,7 +35,11 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据新增操作选项的接口。
 	/// </summary>
-	public interface IDataInsertOptions : IDataMutateOptions { }
+	public interface IDataInsertOptions : IDataMutateOptions
+	{
+		/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
+		bool SequenceForced { get; set; }
+	}
 
 	/// <summary>
 	/// 表示数据新增操作选项的类。
@@ -47,15 +51,23 @@ namespace Zongsoft.Data
 		public DataInsertOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
 		#endregion
 
+		#region 公共属性
+		/// <inheritdoc />
+		public bool SequenceForced { get; set; }
+		#endregion
+
 		#region 静态方法
+		/// <summary>
+		/// 创建一个强制应用序号器的新增选项。
+		/// </summary>
+		/// <returns>返回创建的<see cref="DataInsertOptions"/>新增选项对象。</returns>
+		public static DataInsertOptions ForceSequence() => new DataInsertOptions() { SequenceForced = true };
+
 		/// <summary>
 		/// 创建一个禁用数据验证器的新增选项。
 		/// </summary>
 		/// <returns>返回创建的<see cref="DataInsertOptions"/>新增选项对象。</returns>
-		public static DataInsertOptions SuppressValidator()
-		{
-			return new DataInsertOptions() { ValidatorSuppressed = true };
-		}
+		public static DataInsertOptions SuppressValidator(bool sequenceForced = false) => new DataInsertOptions() { ValidatorSuppressed = true, SequenceForced = sequenceForced };
 		#endregion
 	}
 }
