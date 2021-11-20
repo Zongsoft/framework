@@ -32,12 +32,11 @@ using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security
 {
 	[Service(typeof(IIdentityVerifier))]
-	public class SecretVerifier : IIdentityVerifier, IMatchable<string>
+	public class SecretVerifier : IIdentityVerifier, IMatchable
 	{
 		#region 常量定义
 		private const string KEY_SECRET = "verifier.secret";
@@ -161,8 +160,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 匹配方法
-		bool IMatchable<string>.Match(string parameter) => this.Name.Equals(parameter, StringComparison.OrdinalIgnoreCase);
-		bool IMatchable.Match(object parameter) => this.Name.Equals(parameter as string, StringComparison.OrdinalIgnoreCase);
+		bool IMatchable.Match(object parameter) => parameter != null && string.Equals(this.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
 		#endregion
 	}
 }

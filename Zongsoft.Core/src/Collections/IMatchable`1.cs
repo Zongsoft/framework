@@ -31,6 +31,7 @@ using System;
 
 namespace Zongsoft.Collections
 {
+	[Obsolete]
 	public interface IMatchable<T> : IMatchable
 	{
 		bool Match(T parameter);

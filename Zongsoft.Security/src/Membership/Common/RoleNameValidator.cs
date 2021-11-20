@@ -33,12 +33,11 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Membership.Common
 {
 	[Service(typeof(IValidator<string>))]
-	public class RoleNameValidator : IValidator<string>, IMatchable<string>
+	public class RoleNameValidator : IValidator<string>, IMatchable
 	{
 		#region 验证方法
 		public bool Validate(string data, object parameter, Action<string> failure = null)

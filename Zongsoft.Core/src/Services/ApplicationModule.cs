@@ -38,7 +38,7 @@ using Zongsoft.ComponentModel;
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Schemas))]
-	public class ApplicationModule : IApplicationModule, IMatchable<string>, IDisposable
+	public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	{
 		#region 成员字段
 		private readonly object _syncRoot = new object();
@@ -114,19 +114,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 匹配方法
-		bool IMatchable.Match(object parameter)
-		{
-			return parameter switch
-			{
-				string text => this.Name.Equals(text, StringComparison.OrdinalIgnoreCase),
-				_ => false,
-			};
-		}
-
-		bool IMatchable<string>.Match(string parameter)
-		{
-			return this.Name.Equals(parameter, StringComparison.OrdinalIgnoreCase);
-		}
+		bool IMatchable.Match(object parameter) => parameter != null && string.Equals(this.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
 		#endregion
 
 		#region 处置方法

@@ -34,6 +34,7 @@ namespace Zongsoft.Collections
 	/// <summary>
 	/// 提供一种特定于类型的通用匹配方法，某些同类型的类通过实现此接口对其进行更进一步的匹配。
 	/// </summary>
+	[Obsolete]
 	public interface IMatchable
 	{
 		/// <summary>

@@ -33,8 +33,6 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Collections;
-using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership.Common
 {
@@ -42,7 +40,7 @@ namespace Zongsoft.Security.Membership.Common
 	/// 提供密码有效性验证的验证器类。
 	/// </summary>
 	[Service(typeof(IValidator<string>))]
-	public class PasswordValidator : IValidator<string>, IMatchable<string>
+	public class PasswordValidator : IValidator<string>, IMatchable
 	{
 		#region 常量定义
 		private const int PASSWORD_STRENGTH_DIGIT = 1;

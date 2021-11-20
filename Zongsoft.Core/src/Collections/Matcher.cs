@@ -32,7 +32,8 @@ using System.Reflection;
 
 namespace Zongsoft.Collections
 {
-	public class Matcher : IMatcher
+    [Obsolete]
+    public class Matcher : IMatcher
 	{
 		#region 单例字段
 		public static readonly Matcher Default = new Matcher();

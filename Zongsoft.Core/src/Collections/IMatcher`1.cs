@@ -32,6 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
+	[Obsolete]
 	public interface IMatcher<T> : IMatcher
 	{
 		bool Match(object target, T parameter);

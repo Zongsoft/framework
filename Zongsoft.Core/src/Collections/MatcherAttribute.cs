@@ -28,11 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
-	[AttributeUsage(AttributeTargets.Class)]
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
 	public class MatcherAttribute : Attribute
 	{
 		#region 构造函数
@@ -42,19 +41,6 @@ namespace Zongsoft.Collections
 				throw new ArgumentNullException(nameof(type));
 
 			if(!typeof(IMatcher).IsAssignableFrom(type))
-				throw new ArgumentException("The type is not a IMatcher.");
-
-			this.MatcherType = type;
-		}
-
-		public MatcherAttribute(string typeName)
-		{
-			if(string.IsNullOrWhiteSpace(typeName))
-				throw new ArgumentNullException(nameof(typeName));
-
-			var type = Type.GetType(typeName, false);
-
-			if(type == null || !typeof(IMatcher).IsAssignableFrom(type))
 				throw new ArgumentException("The type is not a IMatcher.");
 
 			this.MatcherType = type;
