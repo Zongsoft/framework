@@ -105,13 +105,7 @@ namespace Zongsoft.Text
 		#endregion
 
 		#region 显式实现
-		bool Zongsoft.Collections.IMatchable.Match(object parameter)
-		{
-			if(parameter == null)
-				return false;
-
-			return this.Match(parameter as string);
-		}
+		bool Services.IMatchable.Match(object parameter) => parameter != null && this.Match(parameter.ToString());
 		#endregion
 
 		#region 嵌套子类

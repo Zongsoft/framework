@@ -52,18 +52,8 @@ namespace Zongsoft.Messaging
 
 				if(index > 0 && index < text.Length - 1)
 				{
-					var container = text.Substring(index + 1);
-
-					foreach(var provider in services.ResolveAll<IMessageQueueProvider>())
-					{
-						if(provider is Collections.IMatchable<string> matchable && matchable.Match(container))
-							return provider.GetQueue(text.Substring(0, index));
-
-						if(string.Equals(container, provider.Name, StringComparison.OrdinalIgnoreCase))
-							return provider.GetQueue(text.Substring(0, index));
-					}
-
-					return null;
+					var provider = services.Resolve<IMessageQueueProvider>(text.Substring(index + 1));
+					return provider?.GetQueue(text.Substring(0, index));
 				}
 
 				return services.Resolve(text) as IMessageQueue;

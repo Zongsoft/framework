@@ -32,7 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Services
 {
-	public abstract class CommandBase : ICommand, Common.IPredication, Collections.IMatchable, INotifyPropertyChanged
+	public abstract class CommandBase : ICommand, IMatchable, Common.IPredication, INotifyPropertyChanged
 	{
 		#region 事件定义
 		public event EventHandler EnabledChanged;
@@ -147,16 +147,7 @@ namespace Zongsoft.Services
 		/// </summary>
 		/// <param name="parameter">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
 		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
-		protected virtual bool IsMatch(object parameter)
-		{
-			if(parameter == null)
-				return true;
-
-			if(parameter is string)
-				return string.Equals((string)parameter, _name, StringComparison.OrdinalIgnoreCase);
-
-			return false;
-		}
+		protected virtual bool IsMatch(object parameter) => parameter != null && string.Equals(_name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
 
 		protected virtual void OnEnabledChanged(EventArgs e)
 		{
@@ -301,15 +292,8 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 显式实现
-		bool ICommand.CanExecute(object parameter)
-		{
-			return this.CanExecute(parameter);
-		}
-
-		object ICommand.Execute(object parameter)
-		{
-			return this.Execute(parameter);
-		}
+		bool ICommand.CanExecute(object parameter) => this.CanExecute(parameter);
+		object ICommand.Execute(object parameter) => this.Execute(parameter);
 
 		/// <summary>
 		/// 判断命令是否可被执行。
@@ -319,10 +303,7 @@ namespace Zongsoft.Services
 		/// <remarks>
 		///		<para>本显式实现为调用<see cref="CanExecute"/>虚拟方法。</para>
 		/// </remarks>
-		bool Common.IPredication.Predicate(object parameter)
-		{
-			return this.CanExecute(parameter);
-		}
+		bool Common.IPredication.Predicate(object parameter) => this.CanExecute(parameter);
 
 		/// <summary>
 		/// 判断命令是否为指定要匹配的名称。
@@ -330,10 +311,7 @@ namespace Zongsoft.Services
 		/// <param name="parameter">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
 		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
 		/// <remarks>该显式实现为调用<see cref="IsMatch"/>虚拟方法。</remarks>
-		bool Collections.IMatchable.Match(object parameter)
-		{
-			return this.IsMatch(parameter);
-		}
+		bool IMatchable.Match(object parameter) => this.IsMatch(parameter);
 		#endregion
 	}
 }

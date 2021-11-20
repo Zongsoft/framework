@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Common
 {
-	public abstract class PredicationBase<T> : IPredication<T>, Collections.IMatchable<string>
+	public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 	{
 		#region 成员字段
 		private string _name;
@@ -74,15 +74,8 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 服务匹配
-		public virtual bool Match(string parameter)
-		{
-			return string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
-		}
-
-		bool Collections.IMatchable.Match(object parameter)
-		{
-			return this.Match(parameter as string);
-		}
+		public virtual bool Match(string parameter) => string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
+		bool Services.IMatchable.Match(object parameter) => parameter != null && this.Match(parameter.ToString());
 		#endregion
 
 		#region 重写方法
