@@ -307,7 +307,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = this.ServiceProvider?.GetMatchedService<IValidator<string>>("role.name");
+			var validator = this.ServiceProvider.Resolve<IValidator<string>>("role.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("rolename.illegality", message));

@@ -48,10 +48,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 公共方法
-		public IIdentityVerifier GetVerifier(string name)
-		{
-			return _serviceProvider.GetMatchedService<IIdentityVerifier>(name);
-		}
+		public IIdentityVerifier GetVerifier(string name) => _serviceProvider.Resolve<IIdentityVerifier>(name);
 		#endregion
 	}
 }

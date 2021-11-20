@@ -956,7 +956,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidateName(string name)
 		{
-			var validator = this.ServiceProvider?.GetMatchedService<IValidator<string>>("user.name");
+			var validator = this.ServiceProvider?.Resolve<IValidator<string>>("user.name");
 
 			if(validator != null)
 				validator.Validate(name, message => throw new SecurityException("username.illegality", message));
@@ -964,7 +964,7 @@ namespace Zongsoft.Security.Membership
 
 		protected virtual void OnValidatePassword(string password)
 		{
-			var validator = this.ServiceProvider?.GetMatchedService<IValidator<string>>("password");
+			var validator = this.ServiceProvider?.Resolve<IValidator<string>>("password");
 
 			if(validator != null)
 				validator.Validate(password, message => throw new SecurityException("password.illegality", message));

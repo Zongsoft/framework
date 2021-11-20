@@ -140,7 +140,7 @@ namespace Zongsoft.Services
 					if(result != null && context.MemberType != null && context.MemberType.IsAssignableFrom(result.GetType()))
 						return result;
 
-					return provider.GetMatchedService(context.MemberType, (string)mode);
+					return provider.Resolve(context.MemberType, (string)mode);
 				}
 
 				if(mode is Type)

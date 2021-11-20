@@ -76,7 +76,7 @@ namespace Zongsoft.Security.Membership
 
 		protected override void OnValidatePassword(string password)
 		{
-			var validator = this.ServiceProvider?.GetMatchedService<IValidator<string>>("password");
+			var validator = this.ServiceProvider?.Resolve<IValidator<string>>("password");
 
 			if(validator != null)
 				validator.Validate(password, this.Options, message => throw new SecurityException("password.illegality", message));
