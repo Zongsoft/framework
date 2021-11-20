@@ -31,6 +31,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Reflection;
+using System.Linq.Expressions;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -39,10 +41,11 @@ namespace Zongsoft.Services
 	public static class ServiceProviderExtension
 	{
 		#region 私有变量
+		private static readonly ConcurrentDictionary<Type, ServiceMatcher> _matches = new ConcurrentDictionary<Type, ServiceMatcher>();
 		private static readonly ConcurrentDictionary<string, Type> _naming = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
-		#region 内部方法
+		#region 注册方法
 		internal static bool Register(string name, Type serviceType)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -55,15 +58,15 @@ namespace Zongsoft.Services
 		}
 		#endregion
 
-		#region 公共方法
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, bool required = false)
+		#region 解析方法
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider serviceProvider, bool required = false)
 		{
-			return GetDataAccess(services, null, required);
+			return GetDataAccess(serviceProvider, null, required);
 		}
 
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider services, string name, bool required = false)
+		public static Data.IDataAccess GetDataAccess(this IServiceProvider serviceProvider, string name, bool required = false)
 		{
-			if(services.GetRequiredService<Data.IDataAccessProvider>().TryGetAccessor(name, out var data))
+			if(serviceProvider.GetRequiredService<Data.IDataAccessProvider>().TryGetAccessor(name, out var data))
 				return data;
 
 			if(required)
@@ -77,61 +80,61 @@ namespace Zongsoft.Services
 			return null;
 		}
 
-		public static object Resolve(this IServiceProvider services, string name)
+		public static object Resolve(this IServiceProvider serviceProvider, string name)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(_naming.TryGetValue(name, out var type))
-				return services.GetService(type);
+				return serviceProvider.GetService(type);
 
 			return null;
 		}
 
-		public static object ResolveRequired(this IServiceProvider services, string name)
+		public static object ResolveRequired(this IServiceProvider serviceProvider, string name)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(_naming.TryGetValue(name, out var type))
-				return services.GetRequiredService(type);
+				return serviceProvider.GetRequiredService(type);
 
 			throw new InvalidOperationException($"The service named '{name}' does not exist.");
 		}
 
-		public static T Resolve<T>(this IServiceProvider services)
+		public static T Resolve<T>(this IServiceProvider serviceProvider, object parameter = null)
 		{
-			return services.GetService<T>();
+			return parameter == null ? serviceProvider.GetService<T>() : serviceProvider.MatchService<T>(parameter);
 		}
 
-		public static T ResolveRequired<T>(this IServiceProvider services)
+		public static T ResolveRequired<T>(this IServiceProvider serviceProvider, object parameter = null)
 		{
-			return services.GetRequiredService<T>();
+			return parameter == null ? serviceProvider.GetRequiredService<T>() : serviceProvider.MatchService<T>(parameter) ?? throw new InvalidOperationException($"No service for type '{typeof(T)}' has been registered.");
 		}
 
-		public static object ResolveRequired(this IServiceProvider services, Type serviceType)
+		public static object Resolve(this IServiceProvider serviceProvider, Type serviceType, object parameter = null)
 		{
-			return services.GetRequiredService(serviceType);
+			return parameter == null ? serviceProvider.GetService(serviceType) : serviceProvider.MatchService(serviceType, parameter);
 		}
 
-		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider services)
+		public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter)
 		{
-			return services.GetServices<T>();
+			return parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 		}
 
-		public static IEnumerable<object> ResolveAll(this IServiceProvider services, Type serviceType)
+		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider) => serviceProvider.GetServices<T>();
+		public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType) => serviceProvider.GetServices(serviceType);
+
+		[Obsolete]
+		public static T GetMatchedService<T>(this IServiceProvider serviceProvider, object parameter)
 		{
-			return services.GetServices(serviceType);
+			return (T)GetMatchedService(serviceProvider, typeof(T), parameter);
 		}
 
-		public static T GetMatchedService<T>(this IServiceProvider services, object parameter)
+		[Obsolete]
+		public static IEnumerable<T> GetMatchedServices<T>(this IServiceProvider serviceProvider, object parameter)
 		{
-			return (T)GetMatchedService(services, typeof(T), parameter);
-		}
-
-		public static IEnumerable<T> GetMatchedServices<T>(this IServiceProvider services, object parameter)
-		{
-			var result = GetMatchedServices(services, typeof(T), parameter);
+			var result = GetMatchedServices(serviceProvider, typeof(T), parameter);
 
 			if(result == null)
 				yield break;
@@ -142,14 +145,15 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public static object GetMatchedService(this IServiceProvider services, Type type, object parameter)
+		[Obsolete]
+		public static object GetMatchedService(this IServiceProvider serviceProvider, Type type, object parameter)
 		{
-			if(services == null)
-				throw new ArgumentNullException(nameof(services));
+			if(serviceProvider == null)
+				throw new ArgumentNullException(nameof(serviceProvider));
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			var instances = services.GetServices(type);
+			var instances = serviceProvider.GetServices(type);
 
 			foreach(var instance in instances)
 			{
@@ -165,14 +169,15 @@ namespace Zongsoft.Services
 			return null;
 		}
 
-		public static IEnumerable GetMatchedServices(this IServiceProvider services, Type type, object parameter)
+		[Obsolete]
+		public static IEnumerable GetMatchedServices(this IServiceProvider serviceProvider, Type type, object parameter)
 		{
-			if(services == null)
-				throw new ArgumentNullException(nameof(services));
+			if(serviceProvider == null)
+				throw new ArgumentNullException(nameof(serviceProvider));
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			var instances = services.GetServices(type);
+			var instances = serviceProvider.GetServices(type);
 
 			foreach(var instance in instances)
 			{
@@ -184,6 +189,178 @@ namespace Zongsoft.Services
 				if(matcher != null && matcher.Match(instance, parameter))
 					yield return instance;
 			}
+		}
+		#endregion
+
+		#region 服务匹配
+		private static T MatchService<T>(this IServiceProvider serviceProvider, object parameter)
+		{
+			var services = serviceProvider.GetServices<T>();
+
+			foreach(var service in services)
+			{
+				if(service is IMatcher<Type> matcher)
+				{
+					if(matcher.Match(typeof(T), parameter))
+						return service;
+				}
+				else if(typeof(IMatchable).IsAssignableFrom(typeof(T)))
+				{
+					if(((IMatchable)service).Match(parameter))
+						return service;
+				}
+				else
+				{
+					if(_matches.TryGetValue(typeof(T), out var match))
+					{
+						if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+							return service;
+					}
+					else
+					{
+						//动态编译名称匹配方法
+						match = _matches.GetOrAdd(typeof(T), type => Compile(type));
+
+						if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+							return service;
+					}
+				}
+			}
+
+			return default;
+		}
+
+		private static object MatchService(this IServiceProvider serviceProvider, Type serviceType, object parameter)
+		{
+			var services = serviceProvider.GetServices(serviceType);
+
+			foreach(var service in services)
+			{
+				if(service is IMatcher<Type> matcher)
+				{
+					if(matcher.Match(serviceType, parameter))
+						return service;
+				}
+				else if(typeof(IMatchable).IsAssignableFrom(serviceType))
+				{
+					if(((IMatchable)service).Match(parameter))
+						return service;
+				}
+				else
+				{
+					if(_matches.TryGetValue(serviceType, out var match))
+					{
+						if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+							return service;
+					}
+					else
+					{
+						//动态编译名称匹配方法
+						match = _matches.GetOrAdd(serviceType, type => Compile(type));
+
+						if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+							return service;
+					}
+				}
+			}
+
+			return default;
+		}
+		#endregion
+
+		#region 动态编译
+		private static readonly MethodInfo StringEqualsMethod = typeof(string).GetMethod(nameof(string.Equals), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string), typeof(string), typeof(StringComparison) }, null);
+		private static readonly MethodInfo ObjectToStringMethod = typeof(object).GetMethod(nameof(object.ToString), BindingFlags.Public | BindingFlags.Instance);
+
+		private static ServiceMatcher Compile(Type serviceType)
+		{
+			return new ServiceMatcher()
+			{
+				GenericMethod = CompileGeneric(serviceType),
+				ClassicMethod = CompileClassic(serviceType),
+			};
+		}
+
+		/*
+		 * 为指定的服务类型生成名称匹配方法，如果指定的服务类型没有定义“Name”属性则返回空。
+		 * 生成的动态方法如下所示：
+		 * 
+		 * bool Match(XXXXXX service, object parameter)
+		 * {
+		 *     return parameter != null && string.Equals(service.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+		 * }
+		 */
+		private static Delegate CompileGeneric(Type serviceType)
+		{
+			var property = serviceType.GetProperty("Name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+			if(property == null || !property.CanRead)
+				return null;
+
+			var serviceParameter = Expression.Parameter(serviceType, "service");
+			var parameterParameter = Expression.Parameter(typeof(object), "parameter");
+			var parameterNullCheck = Expression.NotEqual(parameterParameter, Expression.Constant(null));
+			var parameterToString = Expression.Call(parameterParameter, ObjectToStringMethod);
+
+			var equalsCall = Expression.Call(StringEqualsMethod,
+				Expression.Property(serviceParameter, property),
+				parameterToString,
+				Expression.Constant(StringComparison.OrdinalIgnoreCase));
+
+			var functionType = typeof(Func<,,>).MakeGenericType(serviceType, typeof(object), typeof(bool));
+
+			return Expression.Lambda(
+				functionType,
+				Expression.Block(typeof(bool), Expression.AndAlso(parameterNullCheck, equalsCall)),
+				serviceParameter,
+				parameterParameter).Compile();
+		}
+
+		/*
+		 * 为指定的服务类型生成名称匹配方法，如果指定的服务类型没有定义“Name”属性则返回空。
+		 * 生成的动态方法如下所示：
+		 * 
+		 * bool Match(object service, object parameter)
+		 * {
+		 *     return parameter != null && string.Equals(((XXXXX)service).Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+		 * }
+		 */
+		private static Delegate CompileClassic(Type serviceType)
+		{
+			var property = serviceType.GetProperty("Name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+			if(property == null || !property.CanRead)
+				return null;
+
+			var serviceParameter = Expression.Parameter(typeof(object), "service");
+			var parameterParameter = Expression.Parameter(typeof(object), "parameter");
+			var parameterNullCheck = Expression.NotEqual(parameterParameter, Expression.Constant(null));
+			var parameterToString = Expression.Call(parameterParameter, ObjectToStringMethod);
+
+			var equalsCall = Expression.Call(StringEqualsMethod,
+				Expression.Property(Expression.Convert(serviceParameter, serviceType), property),
+				parameterToString,
+				Expression.Constant(StringComparison.OrdinalIgnoreCase));
+
+			var functionType = typeof(Func<object, object, bool>);
+
+			return Expression.Lambda(
+				functionType,
+				Expression.Block(typeof(bool), Expression.AndAlso(parameterNullCheck, equalsCall)),
+				serviceParameter,
+				parameterParameter).Compile();
+		}
+
+		private struct ServiceMatcher
+		{
+			public ServiceMatcher(Delegate genericMethod, Delegate classicMethod)
+			{
+				this.GenericMethod = genericMethod;
+				this.ClassicMethod = classicMethod;
+			}
+
+			public Delegate GenericMethod;
+			public Delegate ClassicMethod;
 		}
 		#endregion
 	}
