@@ -122,73 +122,14 @@ namespace Zongsoft.Services
 			return parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 		}
 
-		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider) => serviceProvider.GetServices<T>();
-		public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType) => serviceProvider.GetServices(serviceType);
-
-		[Obsolete]
-		public static T GetMatchedService<T>(this IServiceProvider serviceProvider, object parameter)
+		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null)
 		{
-			return (T)GetMatchedService(serviceProvider, typeof(T), parameter);
+			return parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
 		}
 
-		[Obsolete]
-		public static IEnumerable<T> GetMatchedServices<T>(this IServiceProvider serviceProvider, object parameter)
+		public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType, object parameter = null)
 		{
-			var result = GetMatchedServices(serviceProvider, typeof(T), parameter);
-
-			if(result == null)
-				yield break;
-
-			foreach(var item in result)
-			{
-				yield return (T)item;
-			}
-		}
-
-		[Obsolete]
-		public static object GetMatchedService(this IServiceProvider serviceProvider, Type type, object parameter)
-		{
-			if(serviceProvider == null)
-				throw new ArgumentNullException(nameof(serviceProvider));
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			var instances = serviceProvider.GetServices(type);
-
-			foreach(var instance in instances)
-			{
-				if(instance is Collections.IMatchable matchable && matchable.Match(parameter))
-					return instance;
-
-				var matcher = Collections.Matcher.GetMatcher(instance.GetType());
-
-				if(matcher != null && matcher.Match(instance, parameter))
-					return instance;
-			}
-
-			return null;
-		}
-
-		[Obsolete]
-		public static IEnumerable GetMatchedServices(this IServiceProvider serviceProvider, Type type, object parameter)
-		{
-			if(serviceProvider == null)
-				throw new ArgumentNullException(nameof(serviceProvider));
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			var instances = serviceProvider.GetServices(type);
-
-			foreach(var instance in instances)
-			{
-				if(instance is Collections.IMatchable matchable && matchable.Match(parameter))
-					yield return instance;
-
-				var matcher = Collections.Matcher.GetMatcher(instance.GetType());
-
-				if(matcher != null && matcher.Match(instance, parameter))
-					yield return instance;
-			}
+			return parameter == null ? serviceProvider.GetServices(serviceType) : serviceProvider.MatchServices(serviceType, parameter);
 		}
 		#endregion
 
@@ -230,6 +171,41 @@ namespace Zongsoft.Services
 			return default;
 		}
 
+		private static IEnumerable<T> MatchServices<T>(this IServiceProvider serviceProvider, object parameter)
+		{
+			var services = serviceProvider.GetServices<T>();
+
+			foreach(var service in services)
+			{
+				if(service is IMatcher<Type> matcher)
+				{
+					if(matcher.Match(typeof(T), parameter))
+						yield return service;
+				}
+				else if(typeof(IMatchable).IsAssignableFrom(typeof(T)))
+				{
+					if(((IMatchable)service).Match(parameter))
+						yield return service;
+				}
+				else
+				{
+					if(_matches.TryGetValue(typeof(T), out var match))
+					{
+						if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+							yield return service;
+					}
+					else
+					{
+						//动态编译名称匹配方法
+						match = _matches.GetOrAdd(typeof(T), type => Compile(type));
+
+						if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+							yield return service;
+					}
+				}
+			}
+		}
+
 		private static object MatchService(this IServiceProvider serviceProvider, Type serviceType, object parameter)
 		{
 			var services = serviceProvider.GetServices(serviceType);
@@ -266,6 +242,41 @@ namespace Zongsoft.Services
 
 			return default;
 		}
+
+		private static IEnumerable<object> MatchServices(this IServiceProvider serviceProvider, Type serviceType, object parameter)
+		{
+			var services = serviceProvider.GetServices(serviceType);
+
+			foreach(var service in services)
+			{
+				if(service is IMatcher<Type> matcher)
+				{
+					if(matcher.Match(serviceType, parameter))
+						yield return service;
+				}
+				else if(typeof(IMatchable).IsAssignableFrom(serviceType))
+				{
+					if(((IMatchable)service).Match(parameter))
+						yield return service;
+				}
+				else
+				{
+					if(_matches.TryGetValue(serviceType, out var match))
+					{
+						if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+							yield return service;
+					}
+					else
+					{
+						//动态编译名称匹配方法
+						match = _matches.GetOrAdd(serviceType, type => Compile(type));
+
+						if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+							yield return service;
+					}
+				}
+			}
+		}
 		#endregion
 
 		#region 动态编译
@@ -285,7 +296,7 @@ namespace Zongsoft.Services
 		 * 为指定的服务类型生成名称匹配方法，如果指定的服务类型没有定义“Name”属性则返回空。
 		 * 生成的动态方法如下所示：
 		 * 
-		 * bool Match(XXXXXX service, object parameter)
+		 * bool Match(XXXXX service, object parameter)
 		 * {
 		 *     return parameter != null && string.Equals(service.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
 		 * }
@@ -294,7 +305,7 @@ namespace Zongsoft.Services
 		{
 			var property = serviceType.GetProperty("Name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
-			if(property == null || !property.CanRead)
+			if(property == null || property.PropertyType != typeof(string) || !property.CanRead)
 				return null;
 
 			var serviceParameter = Expression.Parameter(serviceType, "service");
@@ -329,7 +340,7 @@ namespace Zongsoft.Services
 		{
 			var property = serviceType.GetProperty("Name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
-			if(property == null || !property.CanRead)
+			if(property == null || property.PropertyType != typeof(string) || !property.CanRead)
 				return null;
 
 			var serviceParameter = Expression.Parameter(typeof(object), "service");
