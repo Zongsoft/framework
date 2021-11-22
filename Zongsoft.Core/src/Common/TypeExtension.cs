@@ -201,6 +201,25 @@ namespace Zongsoft.Common
 			return interfaceType.Namespace + "." + interfaceType.Name + "." + memberName;
 		}
 
+		public static bool IsGenericDefinition(this Type type, params Type[] definitionTypes)
+		{
+			if(type == null || definitionTypes == null || definitionTypes.Length == 0)
+				return false;
+
+			if(type.IsGenericType)
+			{
+				var definitionType = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
+
+				for(var i = 0; i < definitionTypes.Length; i++)
+				{
+					if(definitionTypes[i].IsGenericTypeDefinition && definitionType == definitionTypes[i])
+						return true;
+				}
+			}
+
+			return false;
+		}
+
 		public static bool IsEnumerable(this Type type)
 		{
 			return typeof(IEnumerable).IsAssignableFrom(type) || IsAssignableFrom(typeof(IEnumerable<>), type);
