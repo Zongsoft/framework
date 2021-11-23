@@ -201,6 +201,17 @@ namespace Zongsoft.Common
 			return interfaceType.Namespace + "." + interfaceType.Name + "." + memberName;
 		}
 
+		public static bool IsGenericDefinition(this Type type, Type definitionType)
+		{
+			if(type == null || definitionType == null)
+				return false;
+
+			if(type.IsGenericType)
+				return definitionType.IsGenericTypeDefinition && (type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition()) == definitionType;
+
+			return false;
+		}
+
 		public static bool IsGenericDefinition(this Type type, params Type[] definitionTypes)
 		{
 			if(type == null || definitionTypes == null || definitionTypes.Length == 0)
@@ -213,6 +224,25 @@ namespace Zongsoft.Common
 				for(var i = 0; i < definitionTypes.Length; i++)
 				{
 					if(definitionTypes[i].IsGenericTypeDefinition && definitionType == definitionTypes[i])
+						return true;
+				}
+			}
+
+			return false;
+		}
+
+		public static bool IsGenericDefinition(this Type type, IEnumerable<Type> definitionTypes)
+		{
+			if(type == null || definitionTypes == null)
+				return false;
+
+			if(type.IsGenericType)
+			{
+				var definitionType = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
+
+				foreach(var definition in definitionTypes)
+				{
+					if(definition.IsGenericTypeDefinition && definitionType == definition)
 						return true;
 				}
 			}
