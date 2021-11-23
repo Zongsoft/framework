@@ -84,6 +84,7 @@ namespace Zongsoft.Commands
 				Typed = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
 				Indented = context.Expression.Options.GetValue<bool>(KEY_INDENTED_OPTION),
 				NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
+				IncludeFields = true,
 			};
 
 			var json = Serializer.Json.Serialize(graph, options);
