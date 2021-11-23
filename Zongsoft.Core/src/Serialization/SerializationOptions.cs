@@ -62,6 +62,9 @@ namespace Zongsoft.Serialization
 		/// 获取或设置一个值，指示是否忽略零。
 		/// </summary>
 		public bool IgnoreZero { get; set; }
+
+		/// <summary>获取或设置一个值，指示是否包含字段。</summary>
+		public bool IncludeFields { get; set; }
 		#endregion
 
 		#region 公共方法

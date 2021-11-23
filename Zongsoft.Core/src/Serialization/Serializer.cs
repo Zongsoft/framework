@@ -220,6 +220,7 @@ namespace Zongsoft.Serialization
 					NumberHandling = JsonNumberHandling.AllowReadingFromString,
 					DefaultIgnoreCondition = ignores,
 					IgnoreReadOnlyProperties = false,
+					IncludeFields = options.IncludeFields,
 					Converters =
 					{
 						new JsonTimeSpanConverter(),
@@ -266,6 +267,7 @@ namespace Zongsoft.Serialization
 					IgnoreReadOnlyProperties = false,
 					PropertyNamingPolicy = naming,
 					DictionaryKeyPolicy = naming,
+					IncludeFields = options.IncludeFields,
 					Converters =
 					{
 						new JsonTimeSpanConverter(),
@@ -806,7 +808,7 @@ namespace Zongsoft.Serialization
 						return false;
 
 					var converter = TypeDescriptor.GetConverter(property) ??
-					                TypeDescriptor.GetConverter(value.GetType());
+									TypeDescriptor.GetConverter(value.GetType());
 
 					if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(typeof(string)))
 					{
