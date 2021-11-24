@@ -20,6 +20,15 @@
 		<object name="Json" type="Zongsoft.Commands.JsonCommand, Zongsoft.Commands" />
 		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
 
+		<object name="RSA">
+			<rsa.command>
+				<object name="RSA" type="Zongsoft.Security.Commands.RSACommand, Zongsoft.Commands" />
+			</rsa.command>
+
+			<object name="Export" type="Zongsoft.Security.Commands.RSAExportCommand, Zongsoft.Commands" />
+			<object name="Import" type="Zongsoft.Security.Commands.RSAImportCommand, Zongsoft.Commands" />
+		</object>
+
 		<object name="Secret">
 			<secret.command>
 				<object name="Secret" type="Zongsoft.Security.Commands.SecretCommand, Zongsoft.Commands" />

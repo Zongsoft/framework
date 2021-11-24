@@ -1,0 +1,73 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Commands library.
+ *
+ * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Security.Cryptography;
+
+using Zongsoft.Services;
+
+namespace Zongsoft.Security.Commands
+{
+	[CommandOption(SIZE_OPTION, typeof(int))]
+	public class RSACommand : CommandBase<CommandContext>
+	{
+		#region 常量定义
+		private const string SIZE_OPTION = "size";
+		#endregion
+
+		#region 构造函数
+		public RSACommand() : base("RSA") { }
+		public RSACommand(string name) : base(name) { }
+		#endregion
+
+		#region 公共属性
+		public RSA RSA { get; set; }
+		#endregion
+
+		#region 重写方法
+		protected override object OnExecute(CommandContext context)
+		{
+			return this.RSA = context.Expression.Options.TryGetValue<int>(SIZE_OPTION, out var size) && size > 0 ? RSA.Create(size) : RSA.Create();
+		}
+		#endregion
+
+		#region 内部方法
+		internal static RSA FindRSA(CommandTreeNode node)
+		{
+			if(node == null)
+				return null;
+
+			if(node.Command is RSACommand command)
+				return command.RSA ??= RSA.Create();
+
+			return FindRSA(node.Parent);
+		}
+		#endregion
+	}
+}
