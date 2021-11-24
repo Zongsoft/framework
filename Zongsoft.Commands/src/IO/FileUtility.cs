@@ -98,15 +98,12 @@ namespace Zongsoft.IO.Commands
 				throw;
 			}
 
-			switch(streams.Count)
+			return streams.Count switch
 			{
-				case 0:
-					return null;
-				case 1:
-					return streams[0];
-				default:
-					return streams.ToArray();
-			}
+				0 => null,
+				1 => streams[0],
+				_ => streams.ToArray(),
+			};
 		}
 
 		public static void Save(object output, object parameter, Encoding encoding = null)
@@ -130,7 +127,7 @@ namespace Zongsoft.IO.Commands
 
 		private static void WriteToStream(Stream destination, object parameter, Encoding encoding = null)
 		{
-			encoding = encoding ?? Encoding.UTF8;
+			encoding ??= Encoding.UTF8;
 
 			switch(parameter)
 			{
@@ -142,6 +139,12 @@ namespace Zongsoft.IO.Commands
 					break;
 				case BinaryReader binaryReader:
 					binaryReader.CopyTo(destination);
+					break;
+				case Memory<byte> memory:
+					destination.Write(memory.Span);
+					break;
+				case ReadOnlyMemory<byte> memory:
+					destination.Write(memory.Span);
 					break;
 				case IEnumerable<byte> bytes:
 					if(bytes.GetType().IsArray)
