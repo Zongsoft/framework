@@ -38,25 +38,20 @@ namespace Zongsoft.Data
 	public interface ISchema
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取数据模式的名称（对应数据访问操作的实体名）。
-		/// </summary>
+		/// <summary>获取数据模式的名称（对应数据访问操作的实体名）。</summary>
 		string Name { get; }
 
-		/// <summary>
-		/// 获取数据模式的原始表达式文本。
-		/// </summary>
+		/// <summary>获取数据模式的原始表达式文本。</summary>
 		string Text { get; }
 
-		/// <summary>
-		/// 获取数据模式的实体类型（对应数据访问操作关联的数据实体元素类型）。
-		/// </summary>
+		/// <summary>获取数据模式的实体类型（对应数据访问操作关联的数据实体元素类型）。</summary>
 		Type ModelType { get; }
 
-		/// <summary>
-		/// 获取一个值，指示没有任何元素（即空模式）。
-		/// </summary>
+		/// <summary>获取一个值，指示没有任何元素（即空模式）。</summary>
 		bool IsEmpty { get; }
+
+		/// <summary>获取或设置一个值，指示是否只读模式。</summary>
+		bool IsReadOnly { get; set; }
 		#endregion
 
 		#region 方法定义

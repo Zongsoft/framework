@@ -35,7 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class DataServiceBase<TModel> : IDataService<TModel>
+	public partial class DataServiceBase<TModel> : IDataService<TModel>
 	{
 		#region 事件定义
 		public event EventHandler<DataGettedEventArgs<TModel>> Getted;
@@ -612,7 +612,7 @@ namespace Zongsoft.Data
 		#region 插入方法
 		public int Insert(object data, IDataInsertOptions options = null)
 		{
-			return this.Insert(data, null, options);
+			return this.Insert(data, string.Empty, options);
 		}
 
 		public int Insert(object data, string schema, IDataInsertOptions options = null)
@@ -653,7 +653,7 @@ namespace Zongsoft.Data
 
 		public int InsertMany(IEnumerable items, IDataInsertOptions options = null)
 		{
-			return this.InsertMany(items, null, options);
+			return this.InsertMany(items, string.Empty, options);
 		}
 
 		public int InsertMany(IEnumerable items, string schema, IDataInsertOptions options = null)
@@ -699,7 +699,7 @@ namespace Zongsoft.Data
 		#region 增改方法
 		public int Upsert(object data, IDataUpsertOptions options = null)
 		{
-			return this.Upsert(data, null, options);
+			return this.Upsert(data, string.Empty, options);
 		}
 
 		public int Upsert(object data, string schema, IDataUpsertOptions options = null)
@@ -740,7 +740,7 @@ namespace Zongsoft.Data
 
 		public int UpsertMany(IEnumerable items, IDataUpsertOptions options = null)
 		{
-			return this.UpsertMany(items, null, options);
+			return this.UpsertMany(items, string.Empty, options);
 		}
 
 		public int UpsertMany(IEnumerable items, string schema, IDataUpsertOptions options = null)
@@ -876,7 +876,7 @@ namespace Zongsoft.Data
 
 		public int Update(object data, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, (ICondition)null, null, options);
+			return this.Update(data, null, string.Empty, options);
 		}
 
 		public int Update(object data, string schema, IDataUpdateOptions options = null)
@@ -886,7 +886,7 @@ namespace Zongsoft.Data
 
 		public int Update(object data, ICondition criteria, IDataUpdateOptions options = null)
 		{
-			return this.Update(data, criteria, null, options);
+			return this.Update(data, criteria, string.Empty, options);
 		}
 
 		public int Update(object data, ICondition criteria, string schema, IDataUpdateOptions options = null)
@@ -955,7 +955,7 @@ namespace Zongsoft.Data
 
 		public int UpdateMany(IEnumerable items, IDataUpdateOptions options = null)
 		{
-			return this.UpdateMany(items, null, options);
+			return this.UpdateMany(items, string.Empty, options);
 		}
 
 		public int UpdateMany(IEnumerable items, string schema, IDataUpdateOptions options = null)
@@ -2023,9 +2023,14 @@ namespace Zongsoft.Data
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private ISchema GetSchema(string expression, Type type = null)
+		private ISchema GetSchema(string expression, Type type = null, bool immutable = false)
 		{
-			return this.DataAccess.Schema.Parse(this.Name, expression, type ?? typeof(TModel));
+			var schema = this.DataAccess.Schema.Parse(this.Name, expression, type ?? typeof(TModel));
+
+			if(schema != null)
+				schema.IsReadOnly = immutable;
+
+			return schema;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

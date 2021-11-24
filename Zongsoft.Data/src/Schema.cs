@@ -52,22 +52,18 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public string Name { get => this.Entity.Name; }
-
 		public string Text { get; }
-
 		public Metadata.IDataEntity Entity { get; }
-
 		public Type ModelType { get; }
-
+		public bool IsReadOnly { get; set; }
 		public bool IsEmpty { get => _members == null || _members.Count == 0; }
-
 		public Collections.INamedCollection<SchemaMember> Members { get => _members; }
 		#endregion
 
 		#region 公共方法
 		public void Clear()
 		{
-			if(_members != null)
+			if(!this.IsReadOnly && _members != null)
 				_members.Clear();
 		}
 
@@ -124,7 +120,7 @@ namespace Zongsoft.Data
 
 		public ISchema<SchemaMember> Include(string path)
 		{
-			if(string.IsNullOrEmpty(path))
+			if(this.IsReadOnly || string.IsNullOrEmpty(path))
 				return this;
 
 			var count = 0;
@@ -160,7 +156,7 @@ namespace Zongsoft.Data
 			//设置输出参数默认值
 			member = null;
 
-			if(string.IsNullOrEmpty(path))
+			if(this.IsReadOnly || string.IsNullOrEmpty(path))
 				return false;
 
 			bool Remove(SchemaMember owner, string name, out SchemaMember removedMember)
@@ -216,22 +212,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 显式实现
-		SchemaMemberBase ISchema.Find(string path)
-		{
-			return this.Find(path);
-		}
-
-		ISchema ISchema.Include(string path)
-		{
-			return this.Include(path);
-		}
-
-		ISchema ISchema.Exclude(string path)
-		{
-			this.Exclude(path, out _);
-			return this;
-		}
-
+		SchemaMemberBase ISchema.Find(string path) => this.Find(path);
+		ISchema ISchema.Include(string path) => this.Include(path);
+		ISchema ISchema.Exclude(string path) => this.Exclude(path);
 		bool ISchema.Exclude(string path, out SchemaMemberBase member)
 		{
 			member = null;
