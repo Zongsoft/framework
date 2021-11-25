@@ -115,10 +115,7 @@ namespace Zongsoft.IO
 			if(Zongsoft.Text.TextRegular.Uri.Url.Match(virtualPath))
 				return virtualPath;
 
-			Path path;
-			var fs = GetFileSystem(virtualPath, false, out path);
-
-			return fs == null ? null : fs.GetUrl(path);
+			return GetFileSystem(virtualPath, false, out Path path)?.GetUrl(path);
 		}
 		#endregion
 
@@ -135,6 +132,9 @@ namespace Zongsoft.IO
 			//如果路径模式为空则使用默认文件系统方案
 			if(string.IsNullOrEmpty(scheme))
 			{
+				if(path.Anchor == PathAnchor.Application)
+					return LocalFileSystem.Instance;
+
 				scheme = FileSystem.Scheme;
 
 				//如果文件系统模式为空则返回本地文件方案
