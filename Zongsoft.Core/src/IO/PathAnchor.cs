@@ -47,5 +47,8 @@ namespace Zongsoft.IO
 
 		/// <summary>从根节点开始</summary>
 		Root,
+
+		/// <summary>从应用目录开始</summary>
+		Application,
 	}
 }

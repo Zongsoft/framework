@@ -362,6 +362,8 @@ namespace Zongsoft.IO
 					return slashed ? "./" : ".";
 				case PathAnchor.Parent:
 					return slashed ? "../" : "..";
+				case PathAnchor.Application:
+					return (Services.ApplicationContext.Current?.ApplicationPath ?? "~") + (slashed ? "/" : null);
 				default:
 					return string.Empty;
 			}
@@ -465,6 +467,10 @@ namespace Zongsoft.IO
 					anchor = PathAnchor.Current;
 					context.Accept(PathState.Anchor);
 					return true;
+				case '~':
+					anchor = PathAnchor.Application;
+					context.Accept(PathState.Anchor);
+					return true;
 				default:
 					if(context.IsLetterOrDigit || context.Character == '_')
 						context.Accept(PathState.First);
@@ -491,7 +497,19 @@ namespace Zongsoft.IO
 				case '/':
 				case '\\':
 					context.Reset(PathState.Segment, out var part);
-					anchor = part.Length switch { 1 => PathAnchor.Current, 2 => PathAnchor.Parent, _ => PathAnchor.None };
+
+					anchor = part.Length switch
+					{
+						1 => part[0] switch
+						{
+							'.' => PathAnchor.Current,
+							'~' => PathAnchor.Application,
+							_ => PathAnchor.None,
+						},
+						2 => PathAnchor.Parent,
+						_ => PathAnchor.None,
+					};
+
 					return true;
 				default:
 					anchor = PathAnchor.None;
