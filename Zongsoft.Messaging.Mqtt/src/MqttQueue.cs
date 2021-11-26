@@ -46,6 +46,7 @@ using MQTTnet.Client.Publishing;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Disconnecting;
 using MQTTnet.Extensions.ManagedClient;
+using MQTTnet.Protocol;
 
 namespace Zongsoft.Messaging.Mqtt
 {
@@ -89,11 +90,12 @@ namespace Zongsoft.Messaging.Mqtt
 		{
 			if(tags != null && tags.Any())
 				throw new ArgumentException($"The tags is not supported.");
+			var qos = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS();
 
 			await _client.SubscribeAsync(new MqttTopicFilter()
 			{
 				Topic = topic,
-				QualityOfServiceLevel = options.Reliability.ToQoS(),
+				QualityOfServiceLevel = qos,
 			});
 
 			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
