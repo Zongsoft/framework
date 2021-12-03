@@ -32,6 +32,80 @@ using System;
 namespace Zongsoft.Common
 {
 	/// <summary>
+	/// 表示操作失败的结构。
+	/// </summary>
+	public struct OperationResultFailure
+	{
+		#region 构造函数
+		public OperationResultFailure(int code, string message = null) : this(code, null, message) { }
+		public OperationResultFailure(string reason, string message = null) : this(-1, reason, message) { }
+		public OperationResultFailure(int code, string reason, string message = null)
+		{
+			this.Code = code;
+			this.Reason = reason;
+			this.Message = message;
+			this.Exception = null;
+		}
+
+		public OperationResultFailure(Exception exception)
+		{
+			if(exception == null)
+				throw new ArgumentNullException(nameof(exception));
+
+			this.Code = -1;
+			this.Reason = GetReason(exception);
+			this.Message = exception.Message;
+			this.Exception = exception;
+		}
+		public OperationResultFailure(int code, Exception exception) : this(code, null, exception) { }
+		public OperationResultFailure(string reason, Exception exception) : this(-1, reason, exception) { }
+		public OperationResultFailure(int code, string reason, Exception exception)
+		{
+			if(exception == null)
+			{
+				this.Code = code;
+				this.Reason = reason;
+				this.Message = null;
+				this.Exception = null;
+			}
+			else
+			{
+				this.Code = code;
+				this.Reason = string.IsNullOrEmpty(reason) ? GetReason(exception) : reason;
+				this.Message = exception.Message;
+				this.Exception = exception;
+			}
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取失败的代号。</summary>
+		public int Code { get; }
+
+		/// <summary>获取失败的原因短语。</summary>
+		public string Reason { get; }
+
+		/// <summary>获取或设置失败的消息内容。</summary>
+		public string Message { get; set; }
+
+		/// <summary>获取或设置失败的异常对象。</summary>
+		public Exception Exception { get; set; }
+		#endregion
+
+		#region 重写方法
+		public override string ToString()
+		{
+			return string.IsNullOrEmpty(this.Reason) ? $"[{this.Code}]{this.Message}" : $"[{this.Reason}#{this.Code}]{this.Message}";
+		}
+		#endregion
+
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetReason(Exception exception) => (exception == null || exception.GetType() == typeof(Exception)) ? "Unknown" : exception.GetType().Name.TrimEnd(nameof(Exception));
+		#endregion
+	}
+
+	/// <summary>
 	/// 表示操作结果的结构。
 	/// </summary>
 	public struct OperationResult
