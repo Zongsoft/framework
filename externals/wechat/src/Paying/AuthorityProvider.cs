@@ -28,17 +28,34 @@
  */
 
 using System;
-using System.Text;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class AccountProvider
+	public class AuthorityProvider
 	{
-		public static IAccount GetAccount(string name)
+		private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
+
+		public static IAuthority GetAuthority(string name)
 		{
-			var options = Utility.GetOptions<Options.AccountOptions>($"/Externals/Wechat/Paying/Account/{name}");
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			if(_authorities.TryGetValue(name, out var authority) && authority != null)
+				return authority;
+
+			lock(_authorities)
+			{
+				if(_authorities.TryGetValue(name, out authority))
+					return authority;
+
+				return _authorities.TryAdd(name, authority = CreateAuthority(name)) ? authority : _authorities[name];
+			}
+		}
+
+		private static IAuthority CreateAuthority(string name)
+		{
+			var options = Utility.GetOptions<Options.AccountOptions>($"/Externals/Wechat/Paying/Authority/{name}");
 			if(options == null)
 				return null;
 
@@ -50,7 +67,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				certificate.Issuer = new CertificateIssuer(options.AccountCode, options.Name);
 
 			var app = options.Apps.GetDefault();
-			return app == null ? null : new Account(options.Name, options.AccountCode, app.Name, app.Secret, certificate);
+			return app == null ? null : new Authority(options.Name, options.AccountCode, app.Name, app.Secret, certificate);
 		}
 	}
 }

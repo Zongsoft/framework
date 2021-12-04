@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public interface IAccount : IEquatable<IAccount>
+	public interface IAuthority : IEquatable<IAuthority>
 	{
 		string Name { get; }
 		string Code { get; }

@@ -32,7 +32,7 @@ using System.IO;
 
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
 	public class CertificateProvider : ICertificateProvider<Certificate>
 	{

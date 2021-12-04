@@ -28,16 +28,53 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Zongsoft.Security;
+using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class CertificateVerifier : ICertificateVerifier<Certificate>
+	public class DirectorProvider : IServiceProvider<Director>
 	{
-		public bool Verify(Certificate certificate, ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
+		#region 单例字段
+		public static readonly DirectorProvider Instance = new DirectorProvider();
+		#endregion
+
+		#region 私有变量
+		private readonly IDictionary<string, Director> _directors = new Dictionary<string, Director>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 私有构造
+		private DirectorProvider() { }
+		#endregion
+
+		#region 公共方法
+		public Director GetDirector(string name)
 		{
-			throw new NotImplementedException();
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			if(_directors.TryGetValue(name, out var director))
+				return director;
+
+			lock(_directors)
+			{
+				if(_directors.TryGetValue(name, out director))
+					return director;
+
+				return _directors.TryAdd(name, director = CreateDirector(name)) ? director : _directors[name];
+			}
+
+			static Director CreateDirector(string name)
+			{
+				var authority = AuthorityProvider.GetAuthority(name);
+				return authority == null ? null : new Director(authority);
+			}
 		}
+		#endregion
+
+		#region 显式实现
+		Director IServiceProvider<Director>.GetService(string name) => this.GetDirector(name);
+		#endregion
 	}
 }

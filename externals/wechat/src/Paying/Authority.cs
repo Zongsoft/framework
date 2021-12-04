@@ -31,23 +31,39 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class Account : IAccount
+	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
 	{
-		public Account(string name, string code, string appId, string appSecret, Certificate certificate)
+		#region 构造函数
+		public Authority(string name, string code, string appId, string appSecret, Certificate certificate)
 		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(string.IsNullOrEmpty(code))
+				throw new ArgumentNullException(nameof(code));
+
 			this.Name = name;
 			this.Code = code;
 			this.AppId = appId;
 			this.AppSecret = appSecret;
 			this.Certificate = certificate;
 		}
+		#endregion
 
+		#region 公共属性
 		public string Name { get; }
 		public string Code { get; }
 		public string AppId { get; }
 		public string AppSecret { get; }
 		public Certificate Certificate { get; }
+		#endregion
 
-		public bool Equals(IAccount other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
+		#region 重写方法
+		public bool Equals(Authority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
+		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
+		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
+		public override string ToString() => string.IsNullOrEmpty(this.AppId) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.AppId}";
+		#endregion
 	}
 }

@@ -36,30 +36,30 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public static class AccountExtension
+	public static class AuthorityExtension
 	{
-		private static readonly IDictionary<IAccount, HttpClient> _clients = new Dictionary<IAccount, HttpClient>();
+		private static readonly IDictionary<IAuthority, HttpClient> _clients = new Dictionary<IAuthority, HttpClient>();
 
-		public static HttpClient GetHttpClient(this IAccount account)
+		internal static HttpClient GetHttpClient(this IAuthority authority)
 		{
-			if(account == null)
-				throw new ArgumentNullException(nameof(account));
+			if(authority == null)
+				throw new ArgumentNullException(nameof(authority));
 
-			if(_clients.TryGetValue(account, out var client) && client != null)
+			if(_clients.TryGetValue(authority, out var client) && client != null)
 				return client;
 
 			lock(_clients)
 			{
-				if(_clients.TryGetValue(account, out client))
+				if(_clients.TryGetValue(authority, out client))
 					return client;
 
-				return _clients.TryAdd(account, client = CreateHttpClient(account)) ? client : _clients[account];
+				return _clients.TryAdd(authority, client = CreateHttpClient(authority)) ? client : _clients[authority];
 			}
 		}
 
-		private static HttpClient CreateHttpClient(IAccount account)
+		private static HttpClient CreateHttpClient(IAuthority authority)
 		{
-			var client = new HttpClient(new PaymentHttpMessageHandler(account));
+			var client = new HttpClient(new PaymentHttpMessageHandler(authority));
 			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/pay/");
 			client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
 			return client;
@@ -67,11 +67,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		private class PaymentHttpMessageHandler : DelegatingHandler
 		{
-			private readonly IAccount _account;
+			private readonly IAuthority _authority;
 
-			public PaymentHttpMessageHandler(IAccount account)
+			public PaymentHttpMessageHandler(IAuthority authority)
 			{
-				_account = account ?? throw new ArgumentNullException(nameof(account));
+				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
 				this.InnerHandler = new HttpClientHandler();
 			}
 
@@ -83,12 +83,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(method == HttpMethod.Put || method == HttpMethod.Post || method == HttpMethod.Patch)
 					content = await request.Content.ReadAsStringAsync(cancellation);
 
-				var value = Signature(_account, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
+				var value = Signature(_authority, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
 				request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", value);
 				return await base.SendAsync(request, cancellation);
 			}
 
-			private static string Signature(IAccount account, string method, string url, string content)
+			private static string Signature(IAuthority account, string method, string url, string content)
 			{
 				var nonce = Guid.NewGuid().ToString("N");
 				var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();

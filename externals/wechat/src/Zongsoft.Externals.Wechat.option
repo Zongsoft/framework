@@ -36,10 +36,10 @@
 	</option>
 
 	<option path="/Externals/Wechat/Paying">
-		<account account.name="automao.saas" code="12345678" secret="xxxxxx" fallbackUrl="">
+		<authority authority.name="automao.saas" code="12345678" secret="xxxxxx" fallbackUrl="">
 			<apps default="AppId">
 				<app app.name="AppId" secret="AppSecret" />
 			</apps>
-		</account>
+		</authority>
 	</option>
 </options>

@@ -32,7 +32,7 @@ using System.Security.Cryptography;
 
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
 	public class Certificate : ICertificate, IEquatable<Certificate>, IDisposable
 	{
