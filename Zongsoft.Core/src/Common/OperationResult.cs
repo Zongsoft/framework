@@ -108,34 +108,41 @@ namespace Zongsoft.Common
 	/// <summary>
 	/// 表示操作结果的结构。
 	/// </summary>
-	public struct OperationResult
+	public readonly struct OperationResult
 	{
+		#region 成员字段
+		private readonly OperationResultFailure? _failure;
+		#endregion
+
 		#region 私有构造
-		private OperationResult(string reason, string message = null)
+		private OperationResult(OperationResultFailure failure)
 		{
-			this.Reason = reason;
-			this.Message = message;
+			_failure = failure;
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取一个值，指示结果是否成功。</summary>
-		public bool Succeed { get => string.IsNullOrEmpty(this.Reason); }
+		public bool Succeed { get => _failure == null; }
 
 		/// <summary>获取一个值，指示结果是否失败。</summary>
-		public bool Failed { get => !string.IsNullOrEmpty(this.Reason); }
+		public bool Failed { get => _failure.HasValue; }
 
-		/// <summary>获取操作失败的原因短语。</summary>
-		public string Reason { get; }
-
-		/// <summary>获取操作失败的消息描述。</summary>
-		public string Message { get; set; }
+		/// <summary>获取操作失败的结构。</summary>
+		public OperationResultFailure Failure { get => _failure.HasValue ? _failure.Value : default; }
 		#endregion
 
 		#region 静态方法
 		public static OperationResult Success() => new OperationResult();
 		public static OperationResult<T> Success<T>(T value) => new OperationResult<T>(value);
-		public static OperationResult Fail(string reason, string message = null) => new OperationResult(string.IsNullOrWhiteSpace(reason) ? "Unknown" : reason, message);
+		public static OperationResult Fail(Exception exception = null) => new OperationResult(new OperationResultFailure(exception));
+		public static OperationResult Fail(OperationResultFailure failure) => new OperationResult(failure);
+		public static OperationResult Fail(int code, string message = null) => new OperationResult(new OperationResultFailure(code, message));
+		public static OperationResult Fail(string reason, string message = null) => new OperationResult(new OperationResultFailure(reason, message));
+		public static OperationResult Fail(int code, string reason, string message = null) => new OperationResult(new OperationResultFailure(code, reason, message));
+		public static OperationResult Fail(int code, Exception exception = null) => new OperationResult(new OperationResultFailure(code, exception));
+		public static OperationResult Fail(string reason, Exception exception = null) => new OperationResult(new OperationResultFailure(reason, exception));
+		public static OperationResult Fail(int code, string reason, Exception exception = null) => new OperationResult(new OperationResultFailure(code, reason, exception));
 		#endregion
 	}
 
@@ -143,44 +150,43 @@ namespace Zongsoft.Common
 	/// 表示操作结果的结构。
 	/// </summary>
 	/// <typeparam name="T">结果值的类型。</typeparam>
-	public struct OperationResult<T>
+	public readonly struct OperationResult<T>
 	{
+		#region 成员字段
+		private readonly OperationResultFailure? _failure;
+		#endregion
+
 		#region 私有构造
 		internal OperationResult(T value)
 		{
 			this.Value = value;
-			this.Reason = null;
-			this.Message = null;
+			_failure = null;
 		}
 
-		private OperationResult(string reason, string message)
+		private OperationResult(OperationResultFailure failure)
 		{
 			this.Value = default;
-			this.Reason = string.IsNullOrWhiteSpace(reason) ? "Unknown" : reason;
-			this.Message = message;
+			_failure = failure;
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取一个值，指示结果是否成功。</summary>
-		public bool Succeed { get => string.IsNullOrEmpty(this.Reason); }
+		public bool Succeed { get => _failure == null; }
 
 		/// <summary>获取一个值，指示结果是否失败。</summary>
-		public bool Failed { get => !string.IsNullOrEmpty(this.Reason); }
+		public bool Failed { get => _failure.HasValue; }
 
 		/// <summary>获取操作成功的结果值。</summary>
 		public T Value { get; }
 
-		/// <summary>获取操作失败的原因短语。</summary>
-		public string Reason { get; }
-
-		/// <summary>获取操作失败的消息描述。</summary>
-		public string Message { get; set; }
+		/// <summary>获取操作失败的结构。</summary>
+		public OperationResultFailure Failure { get => _failure.HasValue ? _failure.Value : default; }
 		#endregion
 
 		#region 类型转换
-		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success() : OperationResult.Fail(result.Reason, result.Message);
-		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? new OperationResult<T>(default) : new OperationResult<T>(result.Reason, result.Message);
+		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success() : OperationResult.Fail(result.Failure);
+		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? new OperationResult<T>(default(T)) : new OperationResult<T>(result.Failure);
 		#endregion
 	}
 }
