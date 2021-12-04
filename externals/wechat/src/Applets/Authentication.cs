@@ -29,10 +29,13 @@
 
 using System;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
+using Zongsoft.Common;
 using Zongsoft.Configuration.Options;
 using Zongsoft.Externals.Wechat.Options;
 using Zongsoft.Externals.Wechat.Applets.Options;
@@ -51,7 +54,6 @@ namespace Zongsoft.Externals.Wechat.Applets
 		{
 			_http = http;
 			_logger = logger;
-
 			_http.BaseAddress = Urls.BaseAddress;
 		}
 		#endregion
@@ -62,9 +64,9 @@ namespace Zongsoft.Externals.Wechat.Applets
 		#endregion
 
 		#region 公共方法
-		public async Task<(LoginResult, ErrorResult)> LoginAsync(string appId, string token)
+		public async Task<OperationResult<LoginResult>> LoginAsync(string appId, string token)
 		{
-			if(!this.Options.Apps.TryGet(appId, out var app))
+			if(!this.Options.Apps.TryGetValue(appId, out var app))
 				return default;
 
 			var response = await _http.GetAsync($"/sns/jscode2session?appid={appId}&secret={app.Secret}&js_code={token}&grant_type=authorization_code");
@@ -75,15 +77,15 @@ namespace Zongsoft.Externals.Wechat.Applets
 		public struct LoginResult
 		{
 			[Serialization.SerializationMember("session_key")]
-			[System.Text.Json.Serialization.JsonPropertyName("session_key")]
+			[JsonPropertyName("session_key")]
 			public string SessionId { get; set; }
 
 			[Serialization.SerializationMember("openid")]
-			[System.Text.Json.Serialization.JsonPropertyName("openid")]
+			[JsonPropertyName("openid")]
 			public string OpenId { get; set; }
 
 			[Serialization.SerializationMember("unionid")]
-			[System.Text.Json.Serialization.JsonPropertyName("unionid")]
+			[JsonPropertyName("unionid")]
 			public string UnionId { get; set; }
 		}
 	}

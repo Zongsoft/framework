@@ -28,21 +28,41 @@
  */
 
 using System;
+using System.ComponentModel;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	public interface IResult
+	/// <summary>
+	/// 表示支付状态的枚举。
+	/// </summary>
+	public enum PaymentStatus
 	{
-		#region 公共属性
-		/// <summary>获取或设置错误码。</summary>
-		[Zongsoft.Serialization.SerializationMember("errcode")]
-		[System.Text.Json.Serialization.JsonPropertyName("errcode")]
-		public int ErrorCode { get; set; }
+		/// <summary>未支付</summary>
+		[Zongsoft.ComponentModel.Alias("NotPay")]
+		None,
 
-		/// <summary>获取或设置错误消息。</summary>
-		[Zongsoft.Serialization.SerializationMember("errmsg")]
-		[System.Text.Json.Serialization.JsonPropertyName("errmsg")]
-		public string ErrorMessage { get; set; }
-		#endregion
+		/// <summary>支付成功</summary>
+		[Zongsoft.ComponentModel.Alias("Success")]
+		Succeed,
+
+		/// <summary>转入退款</summary>
+		[Zongsoft.ComponentModel.Alias("Refund")]
+		Refund,
+
+		/// <summary>已关闭</summary>
+		[Zongsoft.ComponentModel.Alias("Closed")]
+		Cancelled,
+
+		/// <summary>已撤销（仅付款码支付会返回）</summary>
+		[Zongsoft.ComponentModel.Alias("Revoked")]
+		Revoked,
+
+		/// <summary>用户支付中（仅付款码支付会返回）</summary>
+		[Zongsoft.ComponentModel.Alias("UserPaying")]
+		Paying,
+
+		/// <summary>支付失败（仅付款码支付会返回）</summary>
+		[Zongsoft.ComponentModel.Alias("PayError")]
+		Failed,
 	}
 }

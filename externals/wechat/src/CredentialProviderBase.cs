@@ -132,35 +132,35 @@ namespace Zongsoft.Externals.Wechat
 		private async Task<Token> GetRemoteCredentialAsync(string appId, string secret, int retries = 3)
 		{
 			var response = await _http.GetAsync(Urls.GetAccessToken("client_credential", appId, secret));
-			var (result, error) = await response.GetResultAsync<CredentialToken>();
+			var result = await response.GetResultAsync<CredentialToken>();
 
-			if(error.IsSucceed)
-				return result;
+			if(result.Succeed)
+				return result.Value;
 
-			if(error.Code == ErrorCodes.Busy && retries > 0)
+			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
 				return await this.GetRemoteCredentialAsync(appId, secret, retries - 1);
 			}
 
-			throw new WechatException(error.Code, error.Message);
+			throw new WechatException(result.Failure.Code, result.Failure.Message);
 		}
 
 		private async Task<Token> GetRemoteTicketAsync(string credentialId, int retries = 3)
 		{
 			var response = await _http.GetAsync(Urls.GetTicketUrl(credentialId, "jsapi"));
-			var (result, error) = await response.GetResultAsync<TicketToken>();
+			var result = await response.GetResultAsync<TicketToken>();
 
-			if(error.IsSucceed)
-				return result;
+			if(result.Succeed)
+				return result.Value;
 
-			if(error.Code == ErrorCodes.Busy && retries > 0)
+			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
 				return await this.GetRemoteTicketAsync(credentialId, retries - 1);
 			}
 
-			throw new WechatException(error.Code, error.Message);
+			throw new WechatException(result.Failure.Code, result.Failure.Message);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

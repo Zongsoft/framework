@@ -28,17 +28,22 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Wechat.Options
 {
-	public class AppOptionsCollection : Collections.NamedCollectionBase<AppOptions>
+	public class AppOptionsCollection : KeyedCollection<string, AppOptions>
 	{
 		#region 公共属性
 		public string Default { get; set; }
 		#endregion
 
+		#region 构造函数
+		public AppOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+		#endregion
+
 		#region 公共方法
-		public AppOptions GetDefault() => this.Default != null && this.TryGetItem(this.Default, out var app) ? app : null;
+		public AppOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
 		#endregion
 
 		#region 重写方法

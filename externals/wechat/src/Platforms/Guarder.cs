@@ -61,10 +61,10 @@ namespace Zongsoft.Externals.Wechat.Platforms
 			if(string.IsNullOrEmpty(ciphertext))
 				return false;
 
-			if(!this.Options.Apps.TryGet(appId, out var app))
+			if(!this.Options.Apps.TryGetValue(appId, out var app))
 				return false;
 
-			var text = CryptographyUtility.Decrypt(ciphertext, app.Key, out _);
+			var text = CryptographyUtility.Decrypt(ciphertext, app.Password, out _);
 			var ticket = GetTicketValue(text, out _);
 
 			if(string.IsNullOrEmpty(ticket))

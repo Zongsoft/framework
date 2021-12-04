@@ -28,49 +28,26 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
-	/// </summary>
-	public struct ErrorResult
+	public class Account : IAccount
 	{
-		#region 构造函数
-		public ErrorResult(int code, string message)
+		public Account(string name, string code, string appId, string appSecret, Certificate certificate)
 		{
+			this.Name = name;
 			this.Code = code;
-			this.Message = message;
+			this.AppId = appId;
+			this.AppSecret = appSecret;
+			this.Certificate = certificate;
 		}
-		#endregion
 
-		#region 公共属性
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsFailed { get => this.Code != 0; }
+		public string Name { get; }
+		public string Code { get; }
+		public string AppId { get; }
+		public string AppSecret { get; }
+		public Certificate Certificate { get; }
 
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsSucceed { get => this.Code == 0; }
-
-		/// <summary>获取或设置错误码。</summary>
-		[Serialization.SerializationMember("errcode")]
-		[JsonPropertyName("errcode")]
-		public int Code { get; set; }
-
-		/// <summary>获取或设置错误消息。</summary>
-		[Serialization.SerializationMember("errmsg")]
-		[JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
-		#endregion
+		public bool Equals(IAccount other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
 	}
 }

@@ -28,49 +28,35 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.ComponentModel;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
 	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
+	/// 表示支付方式的枚举。
 	/// </summary>
-	public struct ErrorResult
+	public enum PaymentKind
 	{
-		#region 构造函数
-		public ErrorResult(int code, string message)
-		{
-			this.Code = code;
-			this.Message = message;
-		}
-		#endregion
+		/// <summary>公众号支付</summary>
+		[Zongsoft.ComponentModel.Alias("JSAPI")]
+		Web,
 
-		#region 公共属性
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsFailed { get => this.Code != 0; }
+		/// <summary>扫码支付</summary>
+		Native,
 
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsSucceed { get => this.Code == 0; }
+		/// <summary>APP支付</summary>
+		App,
 
-		/// <summary>获取或设置错误码。</summary>
-		[Serialization.SerializationMember("errcode")]
-		[JsonPropertyName("errcode")]
-		public int Code { get; set; }
+		/// <summary>付款码支付</summary>
+		[Zongsoft.ComponentModel.Alias("MICROPAY")]
+		Paycode,
 
-		/// <summary>获取或设置错误消息。</summary>
-		[Serialization.SerializationMember("errmsg")]
-		[JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
+		/// <summary>H5支付</summary>
+		[Zongsoft.ComponentModel.Alias("MWEB")]
+		Mobile,
 
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
-		#endregion
+		/// <summary>刷脸支付</summary>
+		[Zongsoft.ComponentModel.Alias("FACEPAY")]
+		Facepay,
 	}
 }

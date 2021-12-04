@@ -28,49 +28,29 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
-	/// </summary>
-	public struct ErrorResult
+	public class AccountProvider
 	{
-		#region 构造函数
-		public ErrorResult(int code, string message)
+		public static IAccount GetAccount(string name)
 		{
-			this.Code = code;
-			this.Message = message;
+			var options = Utility.GetOptions<Options.AccountOptions>($"/Externals/Wechat/Paying/Account/{name}");
+			if(options == null)
+				return null;
+
+			var certificate = CertificateProvider.Default.GetCertificate(options.AccountCode);
+			if(certificate == null)
+				return null;
+
+			if(certificate.Issuer == null || string.IsNullOrEmpty(certificate.Issuer.Identifier))
+				certificate.Issuer = new CertificateIssuer(options.AccountCode, options.Name);
+
+			var app = options.Apps.GetDefault();
+			return app == null ? null : new Account(options.Name, options.AccountCode, app.Name, app.Secret, certificate);
 		}
-		#endregion
-
-		#region 公共属性
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsFailed { get => this.Code != 0; }
-
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsSucceed { get => this.Code == 0; }
-
-		/// <summary>获取或设置错误码。</summary>
-		[Serialization.SerializationMember("errcode")]
-		[JsonPropertyName("errcode")]
-		public int Code { get; set; }
-
-		/// <summary>获取或设置错误消息。</summary>
-		[Serialization.SerializationMember("errmsg")]
-		[JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
-		#endregion
 	}
 }

@@ -47,7 +47,7 @@ namespace Zongsoft.Externals.Wechat.Options
 		public string Nonce { get; set; }
 
 		/// <summary>获取或设置第三方平台应用对称加解密的密钥，即微信开放平台的<c>symmetric_key</c>或<c>AESEncodingKey</c>。</summary>
-		public string Key { get; set; }
+		public string Password { get; set; }
 		#endregion
 	}
 }

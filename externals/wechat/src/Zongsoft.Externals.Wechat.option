@@ -20,4 +20,26 @@
 			</apps>
 		</channel>
 	</option>
+
+	<option path="/Externals/Wechat">
+		<applet>
+			<apps default="AppId">
+				<app app.name="AppId" secret="AppSecret" />
+			</apps>
+		</applet>
+
+		<channels>
+			<channel name="" code="" secret="">
+				<app app.name="AppId" secret="" />
+			</channel>
+		</channels>
+	</option>
+
+	<option path="/Externals/Wechat/Paying">
+		<account account.name="automao.saas" code="12345678" secret="xxxxxx" fallbackUrl="">
+			<apps default="AppId">
+				<app app.name="AppId" secret="AppSecret" />
+			</apps>
+		</account>
+	</option>
 </options>

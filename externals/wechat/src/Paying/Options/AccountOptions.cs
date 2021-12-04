@@ -28,49 +28,39 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat
+using Zongsoft.Configuration;
+using Zongsoft.Externals.Wechat.Options;
+
+namespace Zongsoft.Externals.Wechat.Paying.Options
 {
 	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
+	/// 表示微信支付账户的选项类。
 	/// </summary>
-	public struct ErrorResult
+	public class AccountOptions
 	{
 		#region 构造函数
-		public ErrorResult(int code, string message)
+		public AccountOptions()
 		{
-			this.Code = code;
-			this.Message = message;
+			this.Apps = new AppOptionsCollection();
 		}
 		#endregion
 
 		#region 公共属性
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsFailed { get => this.Code != 0; }
+		/// <summary>获取或设置账户名称。</summary>
+		public string Name { get; set; }
 
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsSucceed { get => this.Code == 0; }
+		/// <summary>获取或设置账户号码。</summary>
+		[ConfigurationProperty("code")]
+		public string AccountCode { get; set; }
 
-		/// <summary>获取或设置错误码。</summary>
-		[Serialization.SerializationMember("errcode")]
-		[JsonPropertyName("errcode")]
-		public int Code { get; set; }
+		/// <summary>获取或设置账户密钥。</summary>
+		[ConfigurationProperty("secret")]
+		public string Secret { get; set; }
 
-		/// <summary>获取或设置错误消息。</summary>
-		[Serialization.SerializationMember("errmsg")]
-		[JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
+		/// <summary>获取微信小程序应用设置选项集。</summary>
+		public AppOptionsCollection Apps { get; }
 		#endregion
 	}
 }

@@ -29,10 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat
+using Zongsoft.Security;
+
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class Result
+	public class CertificateVerifier : ICertificateVerifier<Certificate>
 	{
-		public ErrorResult Error { get; set; }
+		public bool Verify(Certificate certificate, ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

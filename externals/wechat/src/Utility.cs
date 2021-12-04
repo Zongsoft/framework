@@ -29,11 +29,22 @@
 
 using System;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
+
+using Zongsoft.Common;
 
 namespace Zongsoft.Externals.Wechat
 {
 	internal static class Utility
 	{
+		public static TOptions GetOptions<TOptions>(string path)
+		{
+			var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
+			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
+		}
+
 		public static bool TryGetJson<T>(this HttpResponseMessage response, out T data)
 		{
 			data = default;
@@ -59,23 +70,29 @@ namespace Zongsoft.Externals.Wechat
 			return false;
 		}
 
-		public static async System.Threading.Tasks.Task<(TResult result, ErrorResult error)> GetResultAsync<TResult>(this HttpResponseMessage response)
+		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
 
-			if(response.StatusCode == System.Net.HttpStatusCode.NoContent || response.Content.Headers.ContentLength <= 0)
+			if(response.IsSuccessStatusCode)
 			{
-				return (default(TResult), default(ErrorResult));
+				if(response.Content.Headers.ContentLength <= 0)
+					return OperationResult.Success();
+			}
+			else
+			{
+				if(response.Content.Headers.ContentLength <= 0)
+					return OperationResult.Fail(response.StatusCode.ToString(), response.ReasonPhrase);
 			}
 
 			var content = await response.Content.ReadAsStreamAsync();
 			var error = await Serialization.Serializer.Json.DeserializeAsync<ErrorResult>(content);
 
 			if(response.IsSuccessStatusCode && error.Code == 0)
-				return (await Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync()), error);
-
-			return (default, error);
+				return OperationResult.Success(await Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync()));
+			else
+				return OperationResult.Fail(error.Code, error.Message);
 		}
 
 		public static TimeSpan GetDuration(this DateTime timestamp)

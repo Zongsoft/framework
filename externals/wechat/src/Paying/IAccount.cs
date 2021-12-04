@@ -28,49 +28,15 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	/// <summary>
-	/// 表示微信平台API返回的错误消息的结构。
-	/// </summary>
-	public struct ErrorResult
+	public interface IAccount : IEquatable<IAccount>
 	{
-		#region 构造函数
-		public ErrorResult(int code, string message)
-		{
-			this.Code = code;
-			this.Message = message;
-		}
-		#endregion
-
-		#region 公共属性
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsFailed { get => this.Code != 0; }
-
-		[Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		public bool IsSucceed { get => this.Code == 0; }
-
-		/// <summary>获取或设置错误码。</summary>
-		[Serialization.SerializationMember("errcode")]
-		[JsonPropertyName("errcode")]
-		public int Code { get; set; }
-
-		/// <summary>获取或设置错误消息。</summary>
-		[Serialization.SerializationMember("errmsg")]
-		[JsonPropertyName("errmsg")]
-		public string Message { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
-		#endregion
+		string Name { get; }
+		string Code { get; }
+		string AppId { get; }
+		string AppSecret { get; }
+		Certificate Certificate { get; }
 	}
 }
