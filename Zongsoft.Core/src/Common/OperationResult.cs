@@ -140,9 +140,9 @@ namespace Zongsoft.Common
 		public static OperationResult Fail(int code, string message = null) => new OperationResult(new OperationResultFailure(code, message));
 		public static OperationResult Fail(string reason, string message = null) => new OperationResult(new OperationResultFailure(reason, message));
 		public static OperationResult Fail(int code, string reason, string message = null) => new OperationResult(new OperationResultFailure(code, reason, message));
-		public static OperationResult Fail(int code, Exception exception = null) => new OperationResult(new OperationResultFailure(code, exception));
-		public static OperationResult Fail(string reason, Exception exception = null) => new OperationResult(new OperationResultFailure(reason, exception));
-		public static OperationResult Fail(int code, string reason, Exception exception = null) => new OperationResult(new OperationResultFailure(code, reason, exception));
+		public static OperationResult Fail(int code, Exception exception) => new OperationResult(new OperationResultFailure(code, exception));
+		public static OperationResult Fail(string reason, Exception exception) => new OperationResult(new OperationResultFailure(reason, exception));
+		public static OperationResult Fail(int code, string reason, Exception exception) => new OperationResult(new OperationResultFailure(code, reason, exception));
 		#endregion
 	}
 
