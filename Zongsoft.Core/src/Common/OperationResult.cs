@@ -103,6 +103,10 @@ namespace Zongsoft.Common
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetReason(Exception exception) => (exception == null || exception.GetType() == typeof(Exception)) ? "Unknown" : exception.GetType().Name.TrimEnd(nameof(Exception));
 		#endregion
+
+		#region 重写符号
+		public static implicit operator OperationResult(OperationResultFailure failure) => OperationResult.Fail(failure);
+		#endregion
 	}
 
 	/// <summary>
