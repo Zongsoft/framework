@@ -61,13 +61,13 @@ namespace Zongsoft.Security.Commands
 				case RSAKeyType.All:
 					return rsa.ToXmlString(true);
 				case RSAKeyType.Public:
-					return rsa.ExportRSAPublicKey();
+					return rsa.ExportSubjectPublicKeyInfo();
 				case RSAKeyType.Private:
 					return context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
 						rsa.ExportPkcs8PrivateKey() :
 						rsa.ExportRSAPrivateKey();
 				default:
-					return rsa.ExportRSAPublicKey();
+					return rsa.ExportSubjectPublicKeyInfo();
 			}
 		}
 		#endregion
