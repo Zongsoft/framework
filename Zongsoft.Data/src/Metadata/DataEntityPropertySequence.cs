@@ -313,8 +313,9 @@ namespace Zongsoft.Data.Metadata
 					{
 						if(_destination == null)
 						{
-							if(_host.Entity.Metadata.Manager.Entities.TryGet(_destinationEntity, out var entity) &&
-							   entity.Properties.TryGet(_destinationProperty, out var property) && property.IsSimplex)
+							var entity = _host.Entity.GetEntity(_destinationEntity);
+
+							if(entity != null && entity.Properties.TryGet(_destinationProperty, out var property) && property.IsSimplex)
 							{
 								_destination = ((IDataEntitySimplexProperty)property).Sequence ??
 									throw new DataException($"The '{_destinationEntity}:{_destinationProperty}' sequence referenced by the '{_host.Entity.Name}:{_host.Name}' property does not exist.");
