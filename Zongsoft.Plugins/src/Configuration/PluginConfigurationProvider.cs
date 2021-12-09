@@ -38,7 +38,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration
 {
-	public class PluginConfigurationProvider : IConfigurationProvider, IDisposable
+	public class PluginConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
 	{
 		#region 成员字段
 		private readonly PluginConfigurationSource _source;
@@ -58,6 +58,10 @@ namespace Zongsoft.Configuration
 			_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
 			_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
 		}
+		#endregion
+
+		#region 公共属性
+		public IEnumerable<IConfigurationProvider> Providers { get => _providers.Values; }
 		#endregion
 
 		#region 公共方法
