@@ -55,11 +55,16 @@ namespace Zongsoft.Externals.Wechat.Paying
 			internal PaymentService(IAuthority authority)
 			{
 				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
+				this.Request = new RequestBuilder(_authority);
 			}
 			#endregion
 
+			#region 公共属性
+			public RequestBuilder Request { get; }
+			#endregion
+
 			#region 公共方法
-			public async Task<OperationResult<string>> PayAsync(Request request, Scenario scenario, CancellationToken cancellation = default)
+			public async Task<OperationResult<string>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
@@ -162,10 +167,39 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public string Code { get; set; }
 			}
 
-			public abstract class Request
+			public class RequestBuilder
+			{
+				private readonly IAuthority _authority;
+				public RequestBuilder(IAuthority authority) => _authority = authority;
+
+				public PaymentRequest Create(string payer, uint merchantId, string appId = null)
+				{
+					return new PaymentRequest.BrokerRequest()
+					{
+						MerchantId = uint.Parse(_authority.Code),
+						AppId = _authority.Applet.Name,
+						SubMerchantId = merchantId,
+						SubAppId = appId,
+						Payer = new PaymentRequest.BrokerRequest.PayerInfo() { OpenId = payer },
+					};
+				}
+
+				public PaymentRequest.TicketRequest Ticket(string ticket, uint merchantId, string appId = null)
+				{
+					return new PaymentRequest.TicketRequest.BrokerTicketRequest(ticket)
+					{
+						MerchantId = uint.Parse(_authority.Code),
+						AppId = _authority.Applet.Name,
+						SubMerchantId = merchantId,
+						SubAppId = appId,
+					};
+				}
+			}
+
+			public abstract class PaymentRequest
 			{
 				#region 构造函数
-				protected Request() { }
+				protected PaymentRequest() { }
 				#endregion
 
 				#region 公共属性
@@ -273,24 +307,247 @@ namespace Zongsoft.Externals.Wechat.Paying
 				}
 				#endregion
 
-				#region 静态方法
-				public static DirectRequest Direct()
+				#region 嵌套子类
+				public sealed class DirectRequest : PaymentRequest
 				{
-					return new DirectRequest()
+					#region 构造函数
+					public DirectRequest(string payer, uint merchantId, string appId)
 					{
-					};
+						this.MerchantId = merchantId;
+						this.AppId = appId;
+						this.Payer = new PayerInfo(payer);
+					}
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("payer")]
+					public PayerInfo Payer { get; set; }
+					#endregion
+
+					#region 嵌套结构
+					public struct PayerInfo
+					{
+						public PayerInfo(string openId) => this.OpenId = openId;
+
+						[JsonPropertyName("openid")]
+						public string OpenId { get; set; }
+					}
+					#endregion
 				}
 
-				public static BrokerRequest Create()
+				public sealed class BrokerRequest : PaymentRequest
 				{
-					return new BrokerRequest()
+					#region 公共属性
+					[JsonPropertyName("sp_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("sp_appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("sub_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint SubMerchantId { get; set; }
+
+					[JsonPropertyName("sub_appid")]
+					public string SubAppId { get; set; }
+
+					[JsonPropertyName("payer")]
+					public PayerInfo Payer { get; set; }
+					#endregion
+
+					#region 嵌套结构
+					public struct PayerInfo
 					{
-					};
+						public PayerInfo(string openId)
+						{
+							this.OpenId = openId;
+							this.SubOpenId = null;
+						}
+
+						[JsonPropertyName("sp_openid")]
+						public string OpenId { get; set; }
+
+						[JsonPropertyName("sub_openid")]
+						public string SubOpenId { get; set; }
+					}
+					#endregion
+				}
+
+				public abstract class TicketRequest : PaymentRequest
+				{
+					#region 构造函数
+					protected TicketRequest(string ticketId) => this.TicketId = ticketId;
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("auth_code")]
+					public string TicketId { get; set; }
+					#endregion
+
+					#region 嵌套子类
+					public sealed class DirectTicketRequest : TicketRequest
+					{
+						#region 构造函数
+						public DirectTicketRequest(string ticket, uint merchantId, string appId) : base(ticket)
+						{
+							this.MerchantId = merchantId;
+							this.AppId = appId;
+						}
+						#endregion
+
+						#region 公共属性
+						[JsonPropertyName("mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint MerchantId { get; set; }
+
+						[JsonPropertyName("appid")]
+						public string AppId { get; set; }
+						#endregion
+					}
+
+					public sealed class BrokerTicketRequest : TicketRequest
+					{
+						#region 构造函数
+						public BrokerTicketRequest(string ticket) : base(ticket) { }
+						#endregion
+
+						#region 公共属性
+						[JsonPropertyName("sp_mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint MerchantId { get; set; }
+
+						[JsonPropertyName("sp_appid")]
+						public string AppId { get; set; }
+
+						[JsonPropertyName("sub_mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint SubMerchantId { get; set; }
+
+						[JsonPropertyName("sub_appid")]
+						public string SubAppId { get; set; }
+						#endregion
+					}
+
+					#endregion
+				}
+				#endregion
+			}
+
+			public abstract class PaymentOrder
+			{
+				#region 构造函数
+				protected PaymentOrder() { }
+				#endregion
+
+				#region 公共属性
+				[JsonPropertyName("transaction_id")]
+				public string OrderId { get; set; }
+
+				[JsonPropertyName("trade_type")]
+				public PaymentKind Kind { get; set; }
+
+				[JsonPropertyName("trade_state")]
+				public PaymentStatus Status { get; set; }
+
+				[JsonPropertyName("trade_state_desc")]
+				public string StatusDescription { get; set; }
+
+				[JsonPropertyName("bank_type")]
+				public string BankType { get; set; }
+
+				[JsonPropertyName("out_trade_no")]
+				public string VoucherCode { get; set; }
+
+				[JsonPropertyName("success_time")]
+				public DateTime? PaidTime { get; set; }
+
+				[JsonPropertyName("attach")]
+				public string Extra { get; set; }
+
+				[JsonPropertyName("amount")]
+				public AmountInfo Amount { get; set; }
+
+				[JsonPropertyName("scene_info")]
+				public PlaceInfo Place { get; set; }
+
+				[JsonPropertyName("promotion_detail")]
+				public PromotionInfo[] Promotions { get; set; }
+				#endregion
+
+				#region 嵌套结构
+				public struct AmountInfo
+				{
+					[JsonPropertyName("total")]
+					public int Value { get; set; }
+
+					[JsonPropertyName("currency")]
+					public string Currency { get; set; }
+
+					[JsonPropertyName("payer_total")]
+					public int PaidValue { get; set; }
+				}
+
+				public struct PromotionInfo
+				{
+					[JsonPropertyName("coupon_id")]
+					public string CouponId { get; set; }
+
+					[JsonPropertyName("name")]
+					public string CouponName { get; set; }
+
+					[JsonPropertyName("type")]
+					public string CouponType { get; set; }
+
+					[JsonPropertyName("scope")]
+					public string CouponScope { get; set; }
+
+					[JsonPropertyName("amount")]
+					public int Amount { get; set; }
+
+					[JsonPropertyName("goods_detail")]
+					public OrderDetailInfo[] Details { get; set; }
+				}
+
+				public struct OrderDetailInfo
+				{
+					[JsonPropertyName("goods_id")]
+					public string ItemCode { get; set; }
+
+					[JsonPropertyName("goods_remark")]
+					public string ItemName { get; set; }
+
+					[JsonPropertyName("quantity")]
+					public int Quantity { get; set; }
+
+					[JsonPropertyName("unit_price")]
+					public int UnitPrice { get; set; }
+
+					[JsonPropertyName("discount_amount")]
+					public int Discount { get; set; }
+				}
+
+				public struct PlaceInfo
+				{
+					public PlaceInfo(string deviceId)
+					{
+						this.DeviceId = deviceId;
+					}
+
+					[JsonPropertyName("device_id")]
+					public string DeviceId { get; set; }
 				}
 				#endregion
 
 				#region 嵌套子类
-				public sealed class DirectRequest : Request
+				public sealed class Direct : PaymentOrder
 				{
 					#region 公共属性
 					[JsonPropertyName("mchid")]
@@ -307,13 +564,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 					#region 嵌套结构
 					public struct PayerInfo
 					{
+						public PayerInfo(string openId) => this.OpenId = openId;
+
 						[JsonPropertyName("openid")]
 						public string OpenId { get; set; }
 					}
 					#endregion
 				}
 
-				public sealed class BrokerRequest : Request
+				public sealed class Broker : PaymentOrder
 				{
 					#region 公共属性
 					[JsonPropertyName("sp_mchid")]

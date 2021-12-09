@@ -28,39 +28,34 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-using Zongsoft.Configuration;
-using Zongsoft.Externals.Wechat.Options;
-
-namespace Zongsoft.Externals.Wechat.Paying.Options
+namespace Zongsoft.Externals.Wechat
 {
-	/// <summary>
-	/// 表示微信支付账户的选项类。
-	/// </summary>
-	public class AccountOptions
+	public readonly struct Applet : IEquatable<Applet>
 	{
 		#region 构造函数
-		public AccountOptions()
+		public Applet(string name, string secret = null)
 		{
-			this.Apps = new AppOptionsCollection();
+			this.Name = name;
+			this.Secret = secret;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置账户名称。</summary>
-		public string Name { get; set; }
+		public string Name { get; }
+		public string Secret { get; }
+		#endregion
 
-		/// <summary>获取或设置账户号码。</summary>
-		[ConfigurationProperty("code")]
-		public string AccountCode { get; set; }
+		#region 重写方法
+		public bool Equals(Applet other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is Applet other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Name);
+		public override string ToString() => string.IsNullOrEmpty(this.Secret) ? this.Name : $"{this.Name}:{this.Secret}";
+		#endregion
 
-		/// <summary>获取或设置账户密钥。</summary>
-		[ConfigurationProperty("secret")]
-		public string Secret { get; set; }
-
-		/// <summary>获取微信小程序应用设置选项集。</summary>
-		public AppOptionsCollection Apps { get; }
+		#region 符号重写
+		public static bool operator ==(Applet left, Applet right) => left.Equals(right);
+		public static bool operator !=(Applet left, Applet right) => !(left == right);
 		#endregion
 	}
 }

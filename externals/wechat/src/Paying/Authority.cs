@@ -34,7 +34,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
 	{
 		#region 构造函数
-		public Authority(string name, string code, string appId, string appSecret, Certificate certificate)
+		public Authority(string name, string code, string secret, Applet applet, Certificate certificate)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -44,8 +44,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			this.Name = name;
 			this.Code = code;
-			this.AppId = appId;
-			this.AppSecret = appSecret;
+			this.Secret = secret;
+			this.Applet = applet;
 			this.Certificate = certificate;
 		}
 		#endregion
@@ -53,8 +53,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#region 公共属性
 		public string Name { get; }
 		public string Code { get; }
-		public string AppId { get; }
-		public string AppSecret { get; }
+		public string Secret { get; }
+		public Applet Applet { get; }
 		public Certificate Certificate { get; }
 		#endregion
 
@@ -63,7 +63,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
 		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
-		public override string ToString() => string.IsNullOrEmpty(this.AppId) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.AppId}";
+		public override string ToString() => string.IsNullOrEmpty(this.Applet.Name) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.Applet}";
 		#endregion
 	}
 }
