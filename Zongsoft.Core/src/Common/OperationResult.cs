@@ -38,7 +38,7 @@ namespace Zongsoft.Common
 	{
 		#region 构造函数
 		public OperationResultFailure(int code, string message = null) : this(code, null, message) { }
-		public OperationResultFailure(string reason, string message = null) : this(-1, reason, message) { }
+		public OperationResultFailure(string reason, string message = null) : this(0, reason, message) { }
 		public OperationResultFailure(int code, string reason, string message = null)
 		{
 			this.Code = code;
@@ -52,13 +52,13 @@ namespace Zongsoft.Common
 			if(exception == null)
 				throw new ArgumentNullException(nameof(exception));
 
-			this.Code = -1;
+			this.Code = 0;
 			this.Reason = GetReason(exception);
 			this.Message = exception.Message;
 			this.Exception = exception;
 		}
 		public OperationResultFailure(int code, Exception exception) : this(code, null, exception) { }
-		public OperationResultFailure(string reason, Exception exception) : this(-1, reason, exception) { }
+		public OperationResultFailure(string reason, Exception exception) : this(0, reason, exception) { }
 		public OperationResultFailure(int code, string reason, Exception exception)
 		{
 			if(exception == null)
@@ -95,7 +95,10 @@ namespace Zongsoft.Common
 		#region 重写方法
 		public override string ToString()
 		{
-			return string.IsNullOrEmpty(this.Reason) ? $"[{this.Code}]{this.Message}" : $"[{this.Reason}#{this.Code}]{this.Message}";
+			if(this.Code == 0)
+				return string.IsNullOrEmpty(this.Reason) ? this.Message : $"[{this.Reason}]{this.Message}";
+			else
+				return string.IsNullOrEmpty(this.Reason) ? $"[{this.Code}]{this.Message}" : $"[{this.Reason}#{this.Code}]{this.Message}";
 		}
 		#endregion
 
