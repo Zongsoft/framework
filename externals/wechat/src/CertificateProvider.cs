@@ -82,7 +82,7 @@ namespace Zongsoft.Externals.Wechat
 			{
 				if(file == null)
 					file = files[i];
-				else if(files[i].LastWriteTimeUtc > file.LastWriteTimeUtc)
+				else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
 					file = files[i];
 			}
 
@@ -155,7 +155,16 @@ namespace Zongsoft.Externals.Wechat
 
 			return null;
 
-			static Certificate CreateCertificate(FileInfo file, byte[] privateKey) => new Certificate(Path.GetFileNameWithoutExtension(file.Name), file.Name, "RSA", privateKey);
+			static Certificate CreateCertificate(FileInfo file, byte[] privateKey)
+			{
+				var code = Path.GetFileNameWithoutExtension(file.Name);
+				var index = code.IndexOf('-');
+
+				if(index > 0 && index < code.Length - 1)
+					code = code.Substring(index + 1);
+
+				return new Certificate(code, file.Name, "RSA", privateKey);
+			}
 		}
 		#endregion
 	}

@@ -29,6 +29,7 @@
 
 using System;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
@@ -45,32 +46,7 @@ namespace Zongsoft.Externals.Wechat
 			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
 		}
 
-		public static bool TryGetJson<T>(this HttpResponseMessage response, out T data)
-		{
-			data = default;
-
-			if(response == null)
-				return false;
-
-			if(string.Equals(response.Content.Headers.ContentType.MediaType, "application/json", StringComparison.OrdinalIgnoreCase) ||
-			   string.Equals(response.Content.Headers.ContentType.MediaType, "text/json", StringComparison.OrdinalIgnoreCase))
-			{
-				var content = response.Content.ReadAsStringAsync()
-				                      .ConfigureAwait(false)
-				                      .GetAwaiter()
-				                      .GetResult();
-
-				if(content != null && content.Length > 0)
-				{
-					data = Zongsoft.Serialization.Serializer.Json.Deserialize<T>(content);
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response)
+		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
@@ -79,20 +55,18 @@ namespace Zongsoft.Externals.Wechat
 			{
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Success();
+
+				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Default, cancellation);
+				return OperationResult.Success(result);
 			}
 			else
 			{
 				if(response.Content.Headers.ContentLength <= 0)
-					return OperationResult.Fail(response.StatusCode.ToString(), response.ReasonPhrase);
-			}
+					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
-			var content = await response.Content.ReadAsStreamAsync();
-			var error = await Serialization.Serializer.Json.DeserializeAsync<ErrorResult>(content);
-
-			if(response.IsSuccessStatusCode && error.Code == 0)
-				return OperationResult.Success(await Serialization.Serializer.Json.DeserializeAsync<TResult>(await response.Content.ReadAsStreamAsync()));
-			else
+				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Default, cancellation);
 				return OperationResult.Fail(error.Code, error.Message);
+			}
 		}
 
 		public static TimeSpan GetDuration(this DateTime timestamp)

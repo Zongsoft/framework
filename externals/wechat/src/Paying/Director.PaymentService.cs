@@ -70,7 +70,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(request));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl(request.GetType().Name, "transactions", scenario), request, cancellation);
+				var response = await client.PostAsJsonAsync(GetUrl(request.GetType().Name, "transactions", scenario), request, Json.Default, cancellation);
 
 				if(response.IsSuccessStatusCode)
 				{
@@ -87,7 +87,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(voucher));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl(null, $"transactions/out-trade-no/{voucher}/close", scenario), new { mchid = _authority.Code }, cancellation);
+				var response = await client.PostAsJsonAsync(GetUrl(null, $"transactions/out-trade-no/{voucher}/close", scenario), new { mchid = _authority.Code }, Json.Default, cancellation);
 
 				if(response.IsSuccessStatusCode)
 					return OperationResult.Success();
@@ -101,7 +101,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(voucher));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl("Broker", $"transactions/out-trade-no/{voucher}/close", scenario), new { sp_mchid = _authority.Code, sub_mchid = subsidiary }, cancellation);
+				var response = await client.PostAsJsonAsync(GetUrl("Broker", $"transactions/out-trade-no/{voucher}/close", scenario), new { sp_mchid = _authority.Code, sub_mchid = subsidiary }, Json.Default, cancellation);
 
 				if(response.IsSuccessStatusCode)
 					return OperationResult.Success();
