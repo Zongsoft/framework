@@ -212,11 +212,36 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 嵌套结构
 				public struct AmountInfo
 				{
+					#region 构造函数
+					public AmountInfo(int value, string currency = null)
+					{
+						this.Value = value;
+						this.Currency = currency;
+					}
+
+					public AmountInfo(decimal value, string currency = null)
+					{
+						this.Value = (int)(value * 100);
+						this.Currency = currency;
+					}
+					#endregion
+
+					#region 公共属性
 					[JsonPropertyName("total")]
 					public int Value { get; set; }
 
 					[JsonPropertyName("currency")]
 					public string Currency { get; set; }
+					#endregion
+
+					#region 重写方法
+					public override string ToString() => string.IsNullOrEmpty(this.Currency) ? this.Value.ToString() : $"{this.Currency}:{this.Value}";
+					#endregion
+
+					#region 符号重写
+					public static implicit operator AmountInfo (int value) => new AmountInfo(value);
+					public static implicit operator AmountInfo (decimal value) => new AmountInfo(value);
+					#endregion
 				}
 
 				public struct SettlementInfo
