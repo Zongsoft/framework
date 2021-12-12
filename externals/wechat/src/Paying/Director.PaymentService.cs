@@ -88,11 +88,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.PostAsJsonAsync(GetUrl(null, $"transactions/out-trade-no/{voucher}/close", scenario), new { mchid = _authority.Code }, Json.Default, cancellation);
-
-				if(response.IsSuccessStatusCode)
-					return OperationResult.Success();
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync(cancellation);
 			}
 
 			public async Task<OperationResult> Cancel(string subsidiary, string voucher, Scenario scenario, CancellationToken cancellation = default)
@@ -102,11 +98,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.PostAsJsonAsync(GetUrl("Broker", $"transactions/out-trade-no/{voucher}/close", scenario), new { sp_mchid = _authority.Code, sub_mchid = subsidiary }, Json.Default, cancellation);
-
-				if(response.IsSuccessStatusCode)
-					return OperationResult.Success();
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync(cancellation);
 			}
 
 			public async Task<OperationResult<T>> GetAsync<T>(string voucher, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
@@ -116,14 +108,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.GetAsync(GetUrl(typeof(T).Name, $"transactions/out-trade-no/{voucher}", scenario), cancellation);
-
-				if(response.IsSuccessStatusCode)
-				{
-					var result = await response.Content.ReadFromJsonAsync<T>(null, cancellation);
-					return OperationResult.Success(result);
-				}
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync<T>(cancellation);
 			}
 
 			public async Task<OperationResult<T>> GetCompletedAsync<T>(string id, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
@@ -133,14 +118,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.GetAsync(GetUrl(typeof(T).Name, $"transactions/id/{id}", scenario), cancellation);
-
-				if(response.IsSuccessStatusCode)
-				{
-					var result = await response.Content.ReadFromJsonAsync<T>(null, cancellation);
-					return OperationResult.Success(result);
-				}
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync<T>();
 			}
 			#endregion
 
