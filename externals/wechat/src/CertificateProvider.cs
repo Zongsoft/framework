@@ -36,19 +36,23 @@ namespace Zongsoft.Externals.Wechat
 {
 	public class CertificateProvider : ICertificateProvider<Certificate>
 	{
-		#region 单例字段
-		public static readonly CertificateProvider Default = new CertificateProvider();
-		#endregion
-
 		#region 构造函数
-		public CertificateProvider()
+		public CertificateProvider(DirectoryInfo directory)
 		{
-			this.DirectoryPath = Path.Combine(this.GetType().Assembly.Location, "certificates");
+			this.Directory = directory ?? throw new ArgumentNullException(nameof(directory));
+		}
+
+		public CertificateProvider(string path)
+		{
+			if(string.IsNullOrEmpty(path))
+				throw new ArgumentNullException(nameof(path));
+
+			this.Directory = new DirectoryInfo(path);
 		}
 		#endregion
 
 		#region 公共属性
-		public string DirectoryPath { get; set; }
+		public DirectoryInfo Directory { get; }
 		#endregion
 
 		#region 获取证书
@@ -58,60 +62,63 @@ namespace Zongsoft.Externals.Wechat
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
-			var directory = Path.Combine(this.DirectoryPath, key);
-			if(!Directory.Exists(directory))
+			var directory = this.Directory;
+			if(directory == null || !directory.Exists)
 				return null;
 
-			var files = Directory.GetFiles(directory);
-			var filePath = string.Empty;
-			var latest = DateTime.MinValue;
+			var directories = directory.GetDirectories(key);
+
+			if(directories != null && directories.Length > 0)
+				directory = directories[0];
+
+			var files = directory.GetFiles(key + "*");
+
+			if(files == null || files.Length == 0)
+				files = directory.GetFiles();
+
+			FileInfo file = null;
 
 			for(int i = 0; i < files.Length; i++)
 			{
-				var timestamp = File.GetLastWriteTimeUtc(files[i]);
-
-				if(timestamp > latest)
-				{
-					latest = timestamp;
-					filePath = files[i];
-				}
+				if(file == null)
+					file = files[i];
+				else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
+					file = files[i];
 			}
 
-			return ResolveFile(filePath);
+			return ResolveFile(file);
 		}
 		#endregion
 
 		#region 私有方法
-		private static Certificate ResolveFile(string filePath)
+		private static Certificate ResolveFile(FileInfo file)
 		{
-			if(string.IsNullOrEmpty(filePath))
+			if(file == null || !file.Exists)
 				return null;
 
-			var extension = Path.GetExtension(filePath);
-
-			if(string.IsNullOrEmpty(extension))
+			if(string.IsNullOrEmpty(file.Extension))
 				return null;
 
-			switch(extension.ToLowerInvariant())
+			switch(file.Extension.ToLowerInvariant())
 			{
 				case ".bin":
 				case ".key":
-					using(var stream = File.OpenRead(filePath))
+					using(var stream = file.OpenRead())
 					{
 						using var memory = new MemoryStream((int)stream.Length);
 						stream.CopyTo(memory);
-						return CreateCertificate(filePath, memory.ToArray());
+						return CreateCertificate(file, memory.ToArray());
 					}
 				case ".txt":
 				case ".base64":
-					using(var stream = File.OpenRead(filePath))
+					using(var stream = file.OpenRead())
 					{
 						using var reader = new StreamReader(stream);
 						var data = Convert.FromBase64String(reader.ReadToEnd());
-						return CreateCertificate(filePath, data);
+						return CreateCertificate(file, data);
 					}
 				case ".pem":
-					using(var stream = File.OpenRead(filePath))
+					using(var stream = file.OpenRead())
 					{
 						using var reader = new StreamReader(stream);
 						var text = new System.Text.StringBuilder((int)stream.Length);
@@ -121,11 +128,11 @@ namespace Zongsoft.Externals.Wechat
 						{
 							line = reader.ReadLine();
 
+							if(string.IsNullOrWhiteSpace(line))
+								continue;
+
 							if(line.StartsWith("-----BEGIN "))
-							{
-								text.Append(line);
 								break;
-							}
 						}while(line != null && !line.StartsWith("-----END "));
 
 						while(!reader.EndOfStream)
@@ -142,13 +149,22 @@ namespace Zongsoft.Externals.Wechat
 							return null;
 
 						var data = Convert.FromBase64String(text.ToString());
-						return CreateCertificate(filePath, data);
+						return CreateCertificate(file, data);
 					}
 			}
 
 			return null;
 
-			static Certificate CreateCertificate(string filePath, byte[] privateKey) => new Certificate(Path.GetFileNameWithoutExtension(filePath), Path.GetFileName(filePath), "RSA", privateKey);
+			static Certificate CreateCertificate(FileInfo file, byte[] privateKey)
+			{
+				var code = Path.GetFileNameWithoutExtension(file.Name);
+				var index = code.IndexOf('-');
+
+				if(index > 0 && index < code.Length - 1)
+					code = code.Substring(index + 1);
+
+				return new Certificate(code, file.Name, "RSA", privateKey);
+			}
 		}
 		#endregion
 	}

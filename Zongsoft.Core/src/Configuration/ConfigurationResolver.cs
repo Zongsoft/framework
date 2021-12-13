@@ -89,6 +89,9 @@ namespace Zongsoft.Configuration
 				{
 					if(properties.TryGetValue(section.Key, out var property))
 					{
+						if(SetPathInfo(instance, property, section))
+							return;
+
 						if(property.SetValue(instance, section.Value))
 							return;
 
@@ -376,6 +379,56 @@ namespace Zongsoft.Configuration
 			}
 
 			return null;
+		}
+
+		private static bool SetPathInfo(object instance, PropertyToken property, IConfigurationSection entry)
+		{
+			if(property.PropertyType == typeof(System.IO.FileInfo))
+			{
+				var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+
+				if(fileProvider != null)
+				{
+					var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
+					return property.SetValue(instance, new System.IO.FileInfo(path.PhysicalPath));
+				}
+			}
+			else if(property.PropertyType == typeof(System.IO.DirectoryInfo))
+			{
+				var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+
+				if(fileProvider != null)
+				{
+					var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
+					return property.SetValue(instance, new System.IO.DirectoryInfo(path.PhysicalPath));
+				}
+			}
+
+			return false;
+
+			static FileConfigurationProvider GetFileProvider(IEnumerable<IConfigurationProvider> providers, IConfigurationSection section)
+			{
+				if(providers == null)
+					return null;
+
+				foreach(var provider in providers)
+				{
+					if(provider is FileConfigurationProvider fileConfiguration)
+					{
+						if(provider.TryGet(section.Path, out var value) && string.Equals(value, section.Value))
+							return fileConfiguration;
+					}
+					else if(provider is ICompositeConfigurationProvider composite)
+					{
+						var found = GetFileProvider(composite.Providers, section);
+
+						if(found != null)
+							return found;
+					}
+				}
+
+				return null;
+			}
 		}
 		#endregion
 

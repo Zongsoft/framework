@@ -56,7 +56,7 @@ namespace Zongsoft.Services
 		/// <summary>
 		/// 获取当前应用程序的应用配置。
 		/// </summary>
-		IConfiguration Configuration { get; }
+		IConfigurationRoot Configuration { get; }
 
 		/// <summary>
 		/// 获取当前应用程序的环境信息。

@@ -118,26 +118,15 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			if(index < 0)
 			{
-				_foreign = this.GetEntity(port);
+				_foreign = this.Entity.GetEntity(port);
 			}
 			else
 			{
-				_foreign = this.GetEntity(port.Substring(0, index));
+				_foreign = this.Entity.GetEntity(port.Substring(0, index));
 
 				if(_foreign != null)
 					_foreignProperty = _foreign.Properties.Get(port.Substring(index + 1));
 			}
-		}
-
-		private IDataEntity GetEntity(string name)
-		{
-			if(name.Contains('.'))
-				return this.Entity.Metadata.Manager.Entities.Get(name);
-
-			if(this.Entity.Metadata.Entities.TryGet(this.Entity.Namespace + '.' + name, out var entity))
-				return entity;
-
-			return this.Entity.Metadata.Manager.Entities.Get(name);
 		}
 		#endregion
 	}

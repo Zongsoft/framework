@@ -21,22 +21,8 @@
 		</channel>
 	</option>
 
-	<option path="/Externals/Wechat">
-		<applet>
-			<apps default="AppId">
-				<app app.name="AppId" secret="AppSecret" />
-			</apps>
-		</applet>
-
-		<channels>
-			<channel name="" code="" secret="">
-				<app app.name="AppId" secret="" />
-			</channel>
-		</channels>
-	</option>
-
 	<option path="/Externals/Wechat/Paying">
-		<authority authority.name="automao.saas" code="12345678" secret="xxxxxx" fallbackUrl="">
+		<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx" fallbackUrl="http://api.automao.cn/externals/wechat/fallback/payment">
 			<apps default="AppId">
 				<app app.name="AppId" secret="AppSecret" />
 			</apps>

@@ -36,7 +36,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration
 {
-	public class CompositeConfigurationProvider : IConfigurationProvider, IDisposable
+	public class CompositeConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
 	{
 		#region 私有变量
 		private IConfigurationProvider[] _providers;
@@ -58,6 +58,10 @@ namespace Zongsoft.Configuration
 
 			_reloadToken = new CompositeChangeToken(providers.Select(p => p.GetReloadToken()).ToArray());
 		}
+		#endregion
+
+		#region 公共属性
+		public IEnumerable<IConfigurationProvider> Providers { get => _providers; }
 		#endregion
 
 		#region 公共方法

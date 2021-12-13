@@ -103,9 +103,7 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			var index = property.Port.IndexOf(':');
 			var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
-
-			if(!property.Entity.Metadata.Manager.Entities.TryGet(entityName, out var entity))
-				throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
+			var entity = property.Entity.GetEntity(entityName) ?? throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
 
 			if(index < 0)
 				return entity.Properties;

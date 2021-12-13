@@ -28,39 +28,16 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-using Zongsoft.Configuration;
-using Zongsoft.Externals.Wechat.Options;
-
-namespace Zongsoft.Externals.Wechat.Paying.Options
+namespace Zongsoft.Externals.Wechat
 {
-	/// <summary>
-	/// 表示微信支付账户的选项类。
-	/// </summary>
-	public class AccountOptions
+	public static class Json
 	{
-		#region 构造函数
-		public AccountOptions()
+		public static readonly JsonSerializerOptions Default = new JsonSerializerOptions(JsonSerializerDefaults.Web)
 		{
-			this.Apps = new AppOptionsCollection();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置账户名称。</summary>
-		public string Name { get; set; }
-
-		/// <summary>获取或设置账户号码。</summary>
-		[ConfigurationProperty("code")]
-		public string AccountCode { get; set; }
-
-		/// <summary>获取或设置账户密钥。</summary>
-		[ConfigurationProperty("secret")]
-		public string Secret { get; set; }
-
-		/// <summary>获取微信小程序应用设置选项集。</summary>
-		public AppOptionsCollection Apps { get; }
-		#endregion
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+		};
 	}
 }

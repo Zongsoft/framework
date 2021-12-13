@@ -28,42 +28,58 @@
  */
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
+	public struct FailureResult
 	{
 		#region 构造函数
-		public Authority(string name, string code, string secret, Applet applet, Certificate certificate)
+		public FailureResult(string code, string message)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(string.IsNullOrEmpty(code))
-				throw new ArgumentNullException(nameof(code));
-
-			this.Name = name;
 			this.Code = code;
-			this.Secret = secret;
-			this.Applet = applet;
-			this.Certificate = certificate;
+			this.Message = message;
+			this.Detail = null;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name { get; }
-		public string Code { get; }
-		public string Secret { get; }
-		public Applet Applet { get; }
-		public Certificate Certificate { get; }
+		/// <summary>获取或设置错误码。</summary>
+		[Serialization.SerializationMember("code")]
+		[JsonPropertyName("code")]
+		public string Code { get; set; }
+
+		/// <summary>获取或设置错误消息。</summary>
+		[Serialization.SerializationMember("message")]
+		[JsonPropertyName("message")]
+		public string Message { get; set; }
+
+		/// <summary>获取或设置详细信息。</summary>
+		[Serialization.SerializationMember("detail")]
+		[JsonPropertyName("detail")]
+		public FailureDetail? Detail { get; set; }
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Authority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
-		public override string ToString() => string.IsNullOrEmpty(this.Applet.Name) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.Applet}";
+		public override string ToString()
+		{
+			return "[" + this.Code.ToString() + "] " + this.Message;
+		}
+		#endregion
+
+		#region 嵌套结构
+		public struct FailureDetail
+		{
+			public string Field { get; set; }
+			public string Value { get; set; }
+			public string Issue { get; set; }
+			public string Location { get; set; }
+
+			public override string ToString() => string.IsNullOrEmpty(this.Location) ?
+				$"{this.Field}={this.Value}" :
+				$"{this.Location}:{this.Field}={this.Value}";
+		}
 		#endregion
 	}
 }

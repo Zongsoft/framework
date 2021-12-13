@@ -126,9 +126,9 @@ namespace Zongsoft.Services
 			get => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
 		}
 
-		public virtual IConfiguration Configuration
+		public virtual IConfigurationRoot Configuration
 		{
-			get => this.Services?.GetService<IConfiguration>();
+			get => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
 		}
 
 		public virtual IApplicationEnvironment Environment

@@ -55,19 +55,21 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		private static IAuthority CreateAuthority(string name)
 		{
-			var options = Utility.GetOptions<Options.AccountOptions>($"/Externals/Wechat/Paying/Authority/{name}");
+			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Paying/{name}");
 			if(options == null)
 				return null;
 
-			var certificate = CertificateProvider.Default.GetCertificate(options.AccountCode);
+			var provider = new CertificateProvider(options.Directory);
+			var certificate = provider.GetCertificate(options.Code);
+
 			if(certificate == null)
 				return null;
 
 			if(certificate.Issuer == null || string.IsNullOrEmpty(certificate.Issuer.Identifier))
-				certificate.Issuer = new CertificateIssuer(options.AccountCode, options.Name);
+				certificate.Issuer = new CertificateIssuer(options.Code, options.Name);
 
 			var app = options.Apps.GetDefault();
-			return app == null ? null : new Authority(options.Name, options.AccountCode, app.Name, app.Secret, certificate);
+			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Applet(app.Name, app.Secret), certificate);
 		}
 	}
 }

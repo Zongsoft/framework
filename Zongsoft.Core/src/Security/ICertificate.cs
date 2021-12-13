@@ -66,8 +66,8 @@ namespace Zongsoft.Security
 		#region 构造函数
 		public CertificateValidity(DateTime start, DateTime final)
 		{
-			this.Start = start;
-			this.Final = final;
+			this.Start = start.ToUniversalTime();
+			this.Final = final.ToUniversalTime();
 		}
 		#endregion
 
@@ -77,6 +77,14 @@ namespace Zongsoft.Security
 
 		/// <summary>过期时间。</summary>
 		public DateTime Final;
+		#endregion
+
+		#region 公共方法
+		public bool IsValidate(DateTime? timestamp = null)
+		{
+			var time = timestamp == null ? DateTime.UtcNow : timestamp.Value.ToUniversalTime();
+			return this.Start <= time && this.Final >= time;
+		}
 		#endregion
 
 		#region 重写方法

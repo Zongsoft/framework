@@ -61,6 +61,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		{
 			var client = new HttpClient(new PaymentHttpMessageHandler(authority));
 			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/pay/");
+			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
 			return client;
 		}
@@ -88,14 +89,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await base.SendAsync(request, cancellation);
 			}
 
-			private static string Signature(IAuthority account, string method, string url, string content)
+			private static string Signature(IAuthority authority, string method, string url, string content)
 			{
 				var nonce = Guid.NewGuid().ToString("N");
 				var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 				var message = $"{method}\n{url}\n{timestamp}\n{nonce}\n{content}\n";
-				var signature = System.Convert.ToBase64String(account.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
+				var signature = System.Convert.ToBase64String(authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
 
-				return $"mchid=\"{account.Certificate.Subject.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{account.Certificate.Name}\",signature=\"{signature}\"";
+				return $"mchid=\"{authority.Code}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{authority.Certificate.Code}\",signature=\"{signature}\"";
 			}
 		}
 	}

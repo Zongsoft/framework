@@ -32,18 +32,26 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 
 using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	internal static class Utility
+	public static class HttpUtility
 	{
-		public static TOptions GetOptions<TOptions>(string path)
+		public static async Task<OperationResult> GetResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
-			var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
-			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
+			if(response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			if(response.IsSuccessStatusCode)
+				return OperationResult.Success();
+
+			if(response.Content.Headers.ContentLength <= 0)
+				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
+
+			var failure = await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation);
+			return OperationResult.Fail(failure.Code, failure.Message);
 		}
 
 		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
@@ -64,14 +72,9 @@ namespace Zongsoft.Externals.Wechat
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
-				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Default, cancellation);
-				return OperationResult.Fail(error.Code, error.Message);
+				var failure = await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation);
+				return OperationResult.Fail(failure.Code, failure.Message);
 			}
-		}
-
-		public static TimeSpan GetDuration(this DateTime timestamp)
-		{
-			return timestamp.Kind == DateTimeKind.Utc ? timestamp - DateTime.UtcNow : timestamp - DateTime.Now;
 		}
 	}
 }

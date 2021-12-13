@@ -55,17 +55,22 @@ namespace Zongsoft.Externals.Wechat.Paying
 			internal PaymentService(IAuthority authority)
 			{
 				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
+				this.Request = new RequestBuilder(_authority);
 			}
 			#endregion
 
+			#region 公共属性
+			public RequestBuilder Request { get; }
+			#endregion
+
 			#region 公共方法
-			public async Task<OperationResult<string>> PayAsync(Request request, Scenario scenario, CancellationToken cancellation = default)
+			public async Task<OperationResult<string>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl(request.GetType().Name, "transactions", scenario), request, cancellation);
+				var response = await client.PostAsJsonAsync(GetUrl(request.GetType().Name, "transactions", scenario), request, Json.Default, cancellation);
 
 				if(response.IsSuccessStatusCode)
 				{
@@ -82,12 +87,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(voucher));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl(null, $"transactions/out-trade-no/{voucher}/close", scenario), new { mchid = _authority.Code }, cancellation);
-
-				if(response.IsSuccessStatusCode)
-					return OperationResult.Success();
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				var response = await client.PostAsJsonAsync(GetUrl(null, $"transactions/out-trade-no/{voucher}/close", scenario), new { mchid = _authority.Code }, Json.Default, cancellation);
+				return await response.GetResultAsync(cancellation);
 			}
 
 			public async Task<OperationResult> Cancel(string subsidiary, string voucher, Scenario scenario, CancellationToken cancellation = default)
@@ -96,12 +97,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(voucher));
 
 				var client = _authority.GetHttpClient();
-				var response = await client.PostAsJsonAsync(GetUrl("Broker", $"transactions/out-trade-no/{voucher}/close", scenario), new { sp_mchid = _authority.Code, sub_mchid = subsidiary }, cancellation);
-
-				if(response.IsSuccessStatusCode)
-					return OperationResult.Success();
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				var response = await client.PostAsJsonAsync(GetUrl("Broker", $"transactions/out-trade-no/{voucher}/close", scenario), new { sp_mchid = _authority.Code, sub_mchid = subsidiary }, Json.Default, cancellation);
+				return await response.GetResultAsync(cancellation);
 			}
 
 			public async Task<OperationResult<T>> GetAsync<T>(string voucher, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
@@ -111,14 +108,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.GetAsync(GetUrl(typeof(T).Name, $"transactions/out-trade-no/{voucher}", scenario), cancellation);
-
-				if(response.IsSuccessStatusCode)
-				{
-					var result = await response.Content.ReadFromJsonAsync<T>(null, cancellation);
-					return OperationResult.Success(result);
-				}
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync<T>(cancellation);
 			}
 
 			public async Task<OperationResult<T>> GetCompletedAsync<T>(string id, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
@@ -128,14 +118,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var client = _authority.GetHttpClient();
 				var response = await client.GetAsync(GetUrl(typeof(T).Name, $"transactions/id/{id}", scenario), cancellation);
-
-				if(response.IsSuccessStatusCode)
-				{
-					var result = await response.Content.ReadFromJsonAsync<T>(null, cancellation);
-					return OperationResult.Success(result);
-				}
-
-				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync(cancellation));
+				return await response.GetResultAsync<T>();
 			}
 			#endregion
 
@@ -162,10 +145,39 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public string Code { get; set; }
 			}
 
-			public abstract class Request
+			public class RequestBuilder
+			{
+				private readonly IAuthority _authority;
+				public RequestBuilder(IAuthority authority) => _authority = authority;
+
+				public PaymentRequest Create(string payer, uint merchantId, string appId = null)
+				{
+					return new PaymentRequest.BrokerRequest()
+					{
+						MerchantId = uint.Parse(_authority.Code),
+						AppId = _authority.Applet.Name,
+						SubMerchantId = merchantId,
+						SubAppId = appId,
+						Payer = new PaymentRequest.BrokerRequest.PayerInfo() { OpenId = payer },
+					};
+				}
+
+				public PaymentRequest.TicketRequest Ticket(string ticket, uint merchantId, string appId = null)
+				{
+					return new PaymentRequest.TicketRequest.BrokerTicketRequest(ticket)
+					{
+						MerchantId = uint.Parse(_authority.Code),
+						AppId = _authority.Applet.Name,
+						SubMerchantId = merchantId,
+						SubAppId = appId,
+					};
+				}
+			}
+
+			public abstract class PaymentRequest
 			{
 				#region 构造函数
-				protected Request() { }
+				protected PaymentRequest() { }
 				#endregion
 
 				#region 公共属性
@@ -200,11 +212,36 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 嵌套结构
 				public struct AmountInfo
 				{
+					#region 构造函数
+					public AmountInfo(int value, string currency = null)
+					{
+						this.Value = value;
+						this.Currency = currency;
+					}
+
+					public AmountInfo(decimal value, string currency = null)
+					{
+						this.Value = (int)(value * 100);
+						this.Currency = currency;
+					}
+					#endregion
+
+					#region 公共属性
 					[JsonPropertyName("total")]
 					public int Value { get; set; }
 
 					[JsonPropertyName("currency")]
 					public string Currency { get; set; }
+					#endregion
+
+					#region 重写方法
+					public override string ToString() => string.IsNullOrEmpty(this.Currency) ? this.Value.ToString() : $"{this.Currency}:{this.Value}";
+					#endregion
+
+					#region 符号重写
+					public static implicit operator AmountInfo (int value) => new AmountInfo(value);
+					public static implicit operator AmountInfo (decimal value) => new AmountInfo(value);
+					#endregion
 				}
 
 				public struct SettlementInfo
@@ -273,24 +310,247 @@ namespace Zongsoft.Externals.Wechat.Paying
 				}
 				#endregion
 
-				#region 静态方法
-				public static DirectRequest Direct()
+				#region 嵌套子类
+				public sealed class DirectRequest : PaymentRequest
 				{
-					return new DirectRequest()
+					#region 构造函数
+					public DirectRequest(string payer, uint merchantId, string appId)
 					{
-					};
+						this.MerchantId = merchantId;
+						this.AppId = appId;
+						this.Payer = new PayerInfo(payer);
+					}
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("payer")]
+					public PayerInfo Payer { get; set; }
+					#endregion
+
+					#region 嵌套结构
+					public struct PayerInfo
+					{
+						public PayerInfo(string openId) => this.OpenId = openId;
+
+						[JsonPropertyName("openid")]
+						public string OpenId { get; set; }
+					}
+					#endregion
 				}
 
-				public static BrokerRequest Create()
+				public sealed class BrokerRequest : PaymentRequest
 				{
-					return new BrokerRequest()
+					#region 公共属性
+					[JsonPropertyName("sp_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("sp_appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("sub_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint SubMerchantId { get; set; }
+
+					[JsonPropertyName("sub_appid")]
+					public string SubAppId { get; set; }
+
+					[JsonPropertyName("payer")]
+					public PayerInfo Payer { get; set; }
+					#endregion
+
+					#region 嵌套结构
+					public struct PayerInfo
 					{
-					};
+						public PayerInfo(string openId)
+						{
+							this.OpenId = openId;
+							this.SubOpenId = null;
+						}
+
+						[JsonPropertyName("sp_openid")]
+						public string OpenId { get; set; }
+
+						[JsonPropertyName("sub_openid")]
+						public string SubOpenId { get; set; }
+					}
+					#endregion
+				}
+
+				public abstract class TicketRequest : PaymentRequest
+				{
+					#region 构造函数
+					protected TicketRequest(string ticketId) => this.TicketId = ticketId;
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("auth_code")]
+					public string TicketId { get; set; }
+					#endregion
+
+					#region 嵌套子类
+					public sealed class DirectTicketRequest : TicketRequest
+					{
+						#region 构造函数
+						public DirectTicketRequest(string ticket, uint merchantId, string appId) : base(ticket)
+						{
+							this.MerchantId = merchantId;
+							this.AppId = appId;
+						}
+						#endregion
+
+						#region 公共属性
+						[JsonPropertyName("mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint MerchantId { get; set; }
+
+						[JsonPropertyName("appid")]
+						public string AppId { get; set; }
+						#endregion
+					}
+
+					public sealed class BrokerTicketRequest : TicketRequest
+					{
+						#region 构造函数
+						public BrokerTicketRequest(string ticket) : base(ticket) { }
+						#endregion
+
+						#region 公共属性
+						[JsonPropertyName("sp_mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint MerchantId { get; set; }
+
+						[JsonPropertyName("sp_appid")]
+						public string AppId { get; set; }
+
+						[JsonPropertyName("sub_mchid")]
+						[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+						public uint SubMerchantId { get; set; }
+
+						[JsonPropertyName("sub_appid")]
+						public string SubAppId { get; set; }
+						#endregion
+					}
+
+					#endregion
+				}
+				#endregion
+			}
+
+			public abstract class PaymentOrder
+			{
+				#region 构造函数
+				protected PaymentOrder() { }
+				#endregion
+
+				#region 公共属性
+				[JsonPropertyName("transaction_id")]
+				public string OrderId { get; set; }
+
+				[JsonPropertyName("trade_type")]
+				public PaymentKind Kind { get; set; }
+
+				[JsonPropertyName("trade_state")]
+				public PaymentStatus Status { get; set; }
+
+				[JsonPropertyName("trade_state_desc")]
+				public string StatusDescription { get; set; }
+
+				[JsonPropertyName("bank_type")]
+				public string BankType { get; set; }
+
+				[JsonPropertyName("out_trade_no")]
+				public string VoucherCode { get; set; }
+
+				[JsonPropertyName("success_time")]
+				public DateTime? PaidTime { get; set; }
+
+				[JsonPropertyName("attach")]
+				public string Extra { get; set; }
+
+				[JsonPropertyName("amount")]
+				public AmountInfo Amount { get; set; }
+
+				[JsonPropertyName("scene_info")]
+				public PlaceInfo Place { get; set; }
+
+				[JsonPropertyName("promotion_detail")]
+				public PromotionInfo[] Promotions { get; set; }
+				#endregion
+
+				#region 嵌套结构
+				public struct AmountInfo
+				{
+					[JsonPropertyName("total")]
+					public int Value { get; set; }
+
+					[JsonPropertyName("currency")]
+					public string Currency { get; set; }
+
+					[JsonPropertyName("payer_total")]
+					public int PaidValue { get; set; }
+				}
+
+				public struct PromotionInfo
+				{
+					[JsonPropertyName("coupon_id")]
+					public string CouponId { get; set; }
+
+					[JsonPropertyName("name")]
+					public string CouponName { get; set; }
+
+					[JsonPropertyName("type")]
+					public string CouponType { get; set; }
+
+					[JsonPropertyName("scope")]
+					public string CouponScope { get; set; }
+
+					[JsonPropertyName("amount")]
+					public int Amount { get; set; }
+
+					[JsonPropertyName("goods_detail")]
+					public OrderDetailInfo[] Details { get; set; }
+				}
+
+				public struct OrderDetailInfo
+				{
+					[JsonPropertyName("goods_id")]
+					public string ItemCode { get; set; }
+
+					[JsonPropertyName("goods_remark")]
+					public string ItemName { get; set; }
+
+					[JsonPropertyName("quantity")]
+					public int Quantity { get; set; }
+
+					[JsonPropertyName("unit_price")]
+					public int UnitPrice { get; set; }
+
+					[JsonPropertyName("discount_amount")]
+					public int Discount { get; set; }
+				}
+
+				public struct PlaceInfo
+				{
+					public PlaceInfo(string deviceId)
+					{
+						this.DeviceId = deviceId;
+					}
+
+					[JsonPropertyName("device_id")]
+					public string DeviceId { get; set; }
 				}
 				#endregion
 
 				#region 嵌套子类
-				public sealed class DirectRequest : Request
+				public sealed class Direct : PaymentOrder
 				{
 					#region 公共属性
 					[JsonPropertyName("mchid")]
@@ -307,13 +567,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 					#region 嵌套结构
 					public struct PayerInfo
 					{
+						public PayerInfo(string openId) => this.OpenId = openId;
+
 						[JsonPropertyName("openid")]
 						public string OpenId { get; set; }
 					}
 					#endregion
 				}
 
-				public sealed class BrokerRequest : Request
+				public sealed class Broker : PaymentOrder
 				{
 					#region 公共属性
 					[JsonPropertyName("sp_mchid")]

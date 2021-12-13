@@ -11,32 +11,31 @@
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Externals.WeChat library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Externals.WeChat is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Externals.WeChat is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Externals.WeChat library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat.Paying
+using Microsoft.Extensions.Configuration;
+
+namespace Zongsoft.Configuration
 {
-	public interface IAuthority : IEquatable<IAuthority>
+	public interface ICompositeConfigurationProvider : IConfigurationProvider
 	{
-		string Name { get; }
-		string Code { get; }
-		Applet Applet { get; }
-		string Secret { get; }
-		Certificate Certificate { get; }
+		public IEnumerable<IConfigurationProvider> Providers { get; }
 	}
 }
