@@ -66,6 +66,8 @@ namespace Zongsoft.Security.Commands
 					return context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
 						rsa.ExportPkcs8PrivateKey() :
 						rsa.ExportRSAPrivateKey();
+				case RSAKeyType.Subject:
+					return rsa.ExportSubjectPublicKeyInfo();
 				default:
 					return rsa.ExportRSAPublicKey();
 			}

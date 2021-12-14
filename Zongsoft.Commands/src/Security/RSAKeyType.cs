@@ -45,5 +45,8 @@ namespace Zongsoft.Security
 
 		/// <summary>私钥</summary>
 		Private,
+
+		/// <summary>主体与公钥</summary>
+		Subject,
 	}
 }
