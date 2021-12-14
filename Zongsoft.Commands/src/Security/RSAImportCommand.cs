@@ -65,7 +65,10 @@ namespace Zongsoft.Security.Commands
 				case RSAKeyType.Public:
 					if(TryGetInput(context.Parameter, out var publicKey))
 						rsa.ImportRSAPublicKey(publicKey, out _);
-
+					break;
+				case RSAKeyType.Subject:
+					if(TryGetInput(context.Parameter, out var subject))
+						rsa.ImportSubjectPublicKeyInfo(subject, out _);
 					break;
 				case RSAKeyType.Private:
 					if(TryGetInput(context.Parameter, out var privateKey))
