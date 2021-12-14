@@ -34,23 +34,23 @@ namespace Zongsoft.Externals.Wechat
 	public readonly struct Applet : IEquatable<Applet>
 	{
 		#region 构造函数
-		public Applet(string name, string secret = null)
+		public Applet(string code, string secret = null)
 		{
-			this.Name = name;
+			this.Code = code;
 			this.Secret = secret;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name { get; }
+		public string Code { get; }
 		public string Secret { get; }
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Applet other) => string.Equals(this.Name, other.Name);
+		public bool Equals(Applet other) => string.Equals(this.Code, other.Code);
 		public override bool Equals(object obj) => obj is Applet other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name);
-		public override string ToString() => string.IsNullOrEmpty(this.Secret) ? this.Name : $"{this.Name}:{this.Secret}";
+		public override int GetHashCode() => HashCode.Combine(this.Code);
+		public override string ToString() => string.IsNullOrEmpty(this.Secret) ? this.Code : $"{this.Code}:{this.Secret}";
 		#endregion
 
 		#region 符号重写

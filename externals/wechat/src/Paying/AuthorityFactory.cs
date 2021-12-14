@@ -30,51 +30,51 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
-
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class DirectorProvider : IServiceProvider<Director>
+	public class AuthorityFactory
 	{
-		#region 单例字段
-		public static readonly DirectorProvider Instance = new DirectorProvider();
-		#endregion
+		private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
 
-		#region 私有变量
-		private readonly IDictionary<string, Director> _directors = new Dictionary<string, Director>(StringComparer.OrdinalIgnoreCase);
-		#endregion
-
-		#region 私有构造
-		private DirectorProvider() { }
-		#endregion
-
-		#region 公共方法
-		public Director GetDirector(string name)
+		public static IAuthority GetAuthority(string name)
 		{
 			if(string.IsNullOrEmpty(name))
 				return null;
 
-			if(_directors.TryGetValue(name, out var director))
-				return director;
+			if(_authorities.TryGetValue(name, out var authority) && authority != null)
+				return authority;
 
-			lock(_directors)
+			lock(_authorities)
 			{
-				if(_directors.TryGetValue(name, out director))
-					return director;
+				if(_authorities.TryGetValue(name, out authority))
+					return authority;
 
-				return _directors.TryAdd(name, director = CreateDirector(name)) ? director : _directors[name];
-			}
+				authority = CreateAuthority(name);
 
-			static Director CreateDirector(string name)
-			{
-				var authority = AuthorityProvider.GetAuthority(name);
-				return authority == null ? null : new Director(authority);
+				if(authority == null)
+					return null;
+
+				return _authorities.TryAdd(name, authority) ? authority : _authorities[name];
 			}
 		}
-		#endregion
 
-		#region 显式实现
-		Director IServiceProvider<Director>.GetService(string name) => this.GetDirector(name);
-		#endregion
+		private static IAuthority CreateAuthority(string name)
+		{
+			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Paying/{name}");
+			if(options == null)
+				return null;
+
+			CertificateManager.Instance.Providers.Add(new CertificateProvider(options.Directory));
+			var certificate = CertificateManager.Instance.GetCertificate(options.Code);
+
+			if(certificate == null)
+				return null;
+
+			if(certificate.Issuer == null || string.IsNullOrEmpty(certificate.Issuer.Identifier))
+				certificate.Issuer = new CertificateIssuer(options.Code, options.Name);
+
+			var app = options.Apps.GetDefault();
+			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Applet(app.Name, app.Secret), certificate);
+		}
 	}
 }

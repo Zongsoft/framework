@@ -29,37 +29,29 @@
 
 using System;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public static class AuthorityExtension
+	public static class HttpClientFactory
 	{
-		private static readonly IDictionary<IAuthority, HttpClient> _clients = new Dictionary<IAuthority, HttpClient>();
+		private static readonly ConcurrentDictionary<Certificate, HttpClient> _clients = new ConcurrentDictionary<Certificate, HttpClient>();
 
-		internal static HttpClient GetHttpClient(this IAuthority authority)
+		public static HttpClient GetHttpClient(Certificate certificate)
 		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
+			if(certificate == null)
+				throw new ArgumentNullException(nameof(certificate));
 
-			if(_clients.TryGetValue(authority, out var client) && client != null)
-				return client;
-
-			lock(_clients)
-			{
-				if(_clients.TryGetValue(authority, out client))
-					return client;
-
-				return _clients.TryAdd(authority, client = CreateHttpClient(authority)) ? client : _clients[authority];
-			}
+			return _clients.GetOrAdd(certificate, key => CreateHttpClient(key));
 		}
 
-		private static HttpClient CreateHttpClient(IAuthority authority)
+		private static HttpClient CreateHttpClient(Certificate certificate)
 		{
-			var client = new HttpClient(new PaymentHttpMessageHandler(authority));
+			var client = new HttpClient(new PaymentHttpMessageHandler(certificate));
 			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/pay/");
 			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
@@ -68,11 +60,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		private class PaymentHttpMessageHandler : DelegatingHandler
 		{
-			private readonly IAuthority _authority;
+			private readonly Certificate _certificate;
 
-			public PaymentHttpMessageHandler(IAuthority authority)
+			public PaymentHttpMessageHandler(Certificate certificate)
 			{
-				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
+				_certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
 				this.InnerHandler = new HttpClientHandler();
 			}
 
@@ -84,19 +76,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(method == HttpMethod.Put || method == HttpMethod.Post || method == HttpMethod.Patch)
 					content = await request.Content.ReadAsStringAsync(cancellation);
 
-				var value = Signature(_authority, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
+				var value = Signature(_certificate, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
 				request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", value);
 				return await base.SendAsync(request, cancellation);
 			}
 
-			private static string Signature(IAuthority authority, string method, string url, string content)
+			private static string Signature(Certificate certificate, string method, string url, string content)
 			{
 				var nonce = Guid.NewGuid().ToString("N");
 				var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 				var message = $"{method}\n{url}\n{timestamp}\n{nonce}\n{content}\n";
-				var signature = System.Convert.ToBase64String(authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
+				var signature = System.Convert.ToBase64String(certificate.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
 
-				return $"mchid=\"{authority.Code}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{authority.Certificate.Code}\",signature=\"{signature}\"";
+				return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Code}\",signature=\"{signature}\"";
 			}
 		}
 	}

@@ -22,7 +22,9 @@
 	</option>
 
 	<option path="/Externals/Wechat/Paying">
-		<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx" fallbackUrl="http://api.automao.cn/externals/wechat/fallback/payment">
+		<fallback url="http://api.automao.cn/externals/wechat/fallback/payment" />
+
+		<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx">
 			<apps default="AppId">
 				<app app.name="AppId" secret="AppSecret" />
 			</apps>

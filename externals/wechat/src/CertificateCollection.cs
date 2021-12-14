@@ -28,16 +28,17 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public static class Json
+	public class CertificateCollection<TCertificate> : KeyedCollection<string, TCertificate> where TCertificate : ICertificate
 	{
-		public static readonly JsonSerializerOptions Default = new JsonSerializerOptions()
-		{
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-		};
+		public CertificateCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+		public CertificateCollection(IEqualityComparer<string> comparer) : base(comparer) { }
+		protected override string GetKeyForItem(TCertificate item) => item.Code;
 	}
 }

@@ -30,6 +30,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,6 +40,32 @@ namespace Zongsoft.Externals.Wechat.Paying
 {
 	public static class HttpUtility
 	{
+		public static async Task<OperationResult> GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
+		{
+			var response = await client.GetAsync(url, cancellation);
+			return await GetResultAsync(response, cancellation);
+		}
+
+		public static async Task<OperationResult<TResult>> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
+		{
+			var response = await client.GetAsync(url, cancellation);
+			return await GetResultAsync<TResult>(response, cancellation);
+		}
+
+		public static async Task<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+		{
+			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
+			var response = await client.PostAsync(url, content, cancellation);
+			return await GetResultAsync(response, cancellation);
+		}
+
+		public static async Task<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+		{
+			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
+			var response = await client.PostAsync(url, content, cancellation);
+			return await GetResultAsync<TResult>(response, cancellation);
+		}
+
 		public static async Task<OperationResult> GetResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)

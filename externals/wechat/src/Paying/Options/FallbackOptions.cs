@@ -29,21 +29,14 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying.Options
 {
-	public partial class Director
+	/// <summary>
+	/// 表示微信支付反馈的配置项。
+	/// </summary>
+	public class FallbackOptions
 	{
-		#region 构造函数
-		public Director(IAuthority authority)
-		{
-			this.Authority = authority ?? throw new ArgumentNullException(nameof(authority));
-			this.Payment = new PaymentService(authority);
-		}
-		#endregion
-
-		#region 公共属性
-		public IAuthority Authority { get; }
-		public PaymentService Payment { get; }
-		#endregion
+		/// <summary>获取或设置通知地址。</summary>
+		public string Url { get; set; }
 	}
 }

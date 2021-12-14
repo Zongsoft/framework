@@ -34,7 +34,7 @@ using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class CertificateProvider : ICertificateProvider<Certificate>
+	public class CertificateProvider : ICertificateProvider<Certificate>, IEquatable<CertificateProvider>
 	{
 		#region 构造函数
 		public CertificateProvider(DirectoryInfo directory)
@@ -52,26 +52,26 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共属性
+		public string Name { get => "Wechat"; }
 		public DirectoryInfo Directory { get; }
 		#endregion
 
 		#region 获取证书
-		Certificate ICertificateProvider<Certificate>.GetCertificate(object parameter) => parameter == null ? null : this.GetCertificate(parameter.ToString());
-		public Certificate GetCertificate(string key)
+		public Certificate GetCertificate(string subject, string format = null)
 		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
+			if(string.IsNullOrEmpty(subject))
+				throw new ArgumentNullException(nameof(subject));
 
 			var directory = this.Directory;
 			if(directory == null || !directory.Exists)
 				return null;
 
-			var directories = directory.GetDirectories(key);
+			var directories = directory.GetDirectories(subject);
 
 			if(directories != null && directories.Length > 0)
 				directory = directories[0];
 
-			var files = directory.GetFiles(key + "*");
+			var files = directory.GetFiles(subject + "*");
 
 			if(files == null || files.Length == 0)
 				files = directory.GetFiles();
@@ -166,6 +166,13 @@ namespace Zongsoft.Externals.Wechat
 				return new Certificate(code, file.Name, "RSA", privateKey);
 			}
 		}
+		#endregion
+
+		#region 重写方法
+		public bool Equals(CertificateProvider other) => string.Equals(this.Directory.FullName, other.Directory.FullName, Environment.OSVersion.Platform == PlatformID.Unix ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is CertificateProvider other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Directory.FullName);
+		public override string ToString() => this.Directory.FullName;
 		#endregion
 	}
 }
