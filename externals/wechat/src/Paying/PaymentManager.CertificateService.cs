@@ -43,14 +43,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		public class CertificateService
 		{
+			#region 私有变量
 			private readonly IAuthority _authority;
 			private Certificate _certificate;
+			#endregion
 
+			#region 构造函数
 			public CertificateService(IAuthority authority)
 			{
 				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
 			}
+			#endregion
 
+			#region 公共方法
 			public async Task<ICertificate> GetCertificateAsync(CancellationToken cancellation = default)
 			{
 				if(_certificate != null && _certificate.Validity.IsValidate(DateTime.UtcNow) && _certificate.Validity.Final > DateTime.UtcNow.AddHours(36))
@@ -91,7 +96,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 					Validity = new CertificateValidity(latest.Value.Effective, latest.Value.Expiration),
 				};
 			}
+			#endregion
 
+			#region 私有方法
 			private static byte[] GetCertificatePublicKey(IAuthority authority, CertificateResult.CertificateData data)
 			{
 				return CryptographyHelper.Decrypt1(
@@ -100,7 +107,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 					Encoding.UTF8.GetBytes(data.AssociatedData),
 					Convert.FromBase64String(data.Ciphertext));
 			}
+			#endregion
 
+			#region 嵌套结构
 			private struct CertificateResult
 			{
 				[JsonPropertyName("data")]
@@ -136,6 +145,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string Ciphertext { get; set; }
 				}
 			}
+			#endregion
 		}
 	}
 }

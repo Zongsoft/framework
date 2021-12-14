@@ -28,14 +28,18 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public class AuthorityFactory
+	public static class AuthorityFactory
 	{
+		#region 静态字段
 		private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
+		#endregion
 
+		#region 获取机构
 		public static IAuthority GetAuthority(string name)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -64,8 +68,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(options == null)
 				return null;
 
-			CertificateManager.Instance.Providers.Add(new CertificateProvider(options.Directory));
-			var certificate = CertificateManager.Instance.GetCertificate(options.Code);
+			var certificate = GetCertificate(options.Directory, options.Code);
 
 			if(certificate == null)
 				return null;
@@ -76,5 +79,115 @@ namespace Zongsoft.Externals.Wechat.Paying
 			var app = options.Apps.GetDefault();
 			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Applet(app.Name, app.Secret), certificate);
 		}
+		#endregion
+
+		#region 获取证书
+		internal static Certificate GetCertificate(DirectoryInfo directory, string subject)
+		{
+			if(string.IsNullOrEmpty(subject))
+				throw new ArgumentNullException(nameof(subject));
+
+			if(directory == null || !directory.Exists)
+				return null;
+
+			var directories = directory.GetDirectories(subject);
+
+			if(directories != null && directories.Length > 0)
+				directory = directories[0];
+
+			var files = directory.GetFiles(subject + "*");
+
+			if(files == null || files.Length == 0)
+				files = directory.GetFiles();
+
+			FileInfo file = null;
+
+			for(int i = 0; i < files.Length; i++)
+			{
+				if(file == null)
+					file = files[i];
+				else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
+					file = files[i];
+			}
+
+			return ResolveFile(file);
+		}
+
+		private static Certificate ResolveFile(FileInfo file)
+		{
+			if(file == null || !file.Exists)
+				return null;
+
+			if(string.IsNullOrEmpty(file.Extension))
+				return null;
+
+			switch(file.Extension.ToLowerInvariant())
+			{
+				case ".bin":
+				case ".key":
+					using(var stream = file.OpenRead())
+					{
+						using var memory = new MemoryStream((int)stream.Length);
+						stream.CopyTo(memory);
+						return CreateCertificate(file, memory.ToArray());
+					}
+				case ".txt":
+				case ".base64":
+					using(var stream = file.OpenRead())
+					{
+						using var reader = new StreamReader(stream);
+						var data = Convert.FromBase64String(reader.ReadToEnd());
+						return CreateCertificate(file, data);
+					}
+				case ".pem":
+					using(var stream = file.OpenRead())
+					{
+						using var reader = new StreamReader(stream);
+						var text = new System.Text.StringBuilder((int)stream.Length);
+						var line = string.Empty;
+
+						do
+						{
+							line = reader.ReadLine();
+
+							if(string.IsNullOrWhiteSpace(line))
+								continue;
+
+							if(line.StartsWith("-----BEGIN "))
+								break;
+						} while(line != null && !line.StartsWith("-----END "));
+
+						while(!reader.EndOfStream)
+						{
+							line = reader.ReadLine();
+
+							if(line == null || line.StartsWith("-----END "))
+								break;
+
+							text.Append(line);
+						}
+
+						if(text.Length == 0)
+							return null;
+
+						var data = Convert.FromBase64String(text.ToString());
+						return CreateCertificate(file, data);
+					}
+			}
+
+			return null;
+
+			static Certificate CreateCertificate(FileInfo file, byte[] privateKey)
+			{
+				var code = Path.GetFileNameWithoutExtension(file.Name);
+				var index = code.IndexOf('-');
+
+				if(index > 0 && index < code.Length - 1)
+					code = code.Substring(index + 1);
+
+				return new Certificate(code, file.Name, "RSA", privateKey);
+			}
+		}
+		#endregion
 	}
 }

@@ -188,7 +188,7 @@ namespace Zongsoft.Externals.Wechat
 			#region 公共属性
 			[Zongsoft.Serialization.SerializationMember("expires_in")]
 			[System.Text.Json.Serialization.JsonPropertyName("expires_in")]
-			[System.ComponentModel.TypeConverter(typeof(ExpiryConverter))]
+			[System.ComponentModel.TypeConverter(typeof(TimestampConverter))]
 			public DateTime Expiry { get; set; }
 
 			[Zongsoft.Serialization.SerializationMember(Ignored = true)]

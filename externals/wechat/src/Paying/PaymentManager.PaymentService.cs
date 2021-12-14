@@ -61,16 +61,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public async Task<OperationResult<string>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+			public virtual async Task<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
+				if(request is PaymentRequest.TicketRequest ticketRequest)
+					return await this.PayTicketAsync(ticketRequest, cancellation);
+
 				var result = await this.Client.PostAsync<PaymentRequest, PayResult>(this.GetUrl("transactions", scenario), request, cancellation);
-				return result.Succeed ? OperationResult.Success(result.Value.Code) : (OperationResult)result.Failure;
+				return result.Succeed ? OperationResult.Success((result.Value.Code, (string)null)) : (OperationResult)result.Failure;
 			}
 
-			public async Task<OperationResult> CancelAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+			public virtual async Task<OperationResult> CancelAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
@@ -78,7 +81,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close", scenario), this.GetCancellation(), cancellation);
 			}
 
-			public async Task<OperationResult<T>> GetAsync<T>(string voucher, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
+			public abstract Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default);
+			public abstract Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default);
+			#endregion
+
+			#region 保护方法
+			protected async Task<OperationResult<T>> GetAsync<T>(string voucher, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
@@ -86,12 +94,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}", scenario), cancellation);
 			}
 
-			public async Task<OperationResult<T>> GetCompletedAsync<T>(string id, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
+			protected async Task<OperationResult<T>> GetCompletedAsync<T>(string key, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
 			{
-				if(string.IsNullOrEmpty(id))
-					throw new ArgumentNullException(nameof(id));
+				if(string.IsNullOrEmpty(key))
+					throw new ArgumentNullException(nameof(key));
 
-				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{id}", scenario), cancellation);
+				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}", scenario), cancellation);
+			}
+
+			protected Task<OperationResult<(string identifier, string payer)>> PayTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
+			{
+				throw new NotImplementedException();
 			}
 			#endregion
 
@@ -281,8 +294,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共属性
+				public abstract AuthorityToken Merchant { get; }
+				public virtual AuthorityToken? Subsidiary { get; }
+				public abstract string Payer { get; }
+
 				[JsonPropertyName("transaction_id")]
-				public string OrderId { get; set; }
+				public string Key { get; set; }
 
 				[JsonPropertyName("trade_type")]
 				public PaymentKind Kind { get; set; }
@@ -413,6 +430,18 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
+				public override async Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+				{
+					var result = await base.GetAsync<DirectOrder>(voucher, scenario, cancellation);
+					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+				}
+
+				public override async Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default)
+				{
+					var result = await base.GetCompletedAsync<DirectOrder>(key, scenario, cancellation);
+					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+				}
+
 				protected override string GetUrl(string path, Scenario scenario)
 				{
 					return scenario switch
@@ -482,6 +511,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						[JsonPropertyName("openid")]
 						public string OpenId { get; set; }
+
+						public override string ToString() => this.OpenId;
 					}
 					#endregion
 				}
@@ -510,6 +541,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				public sealed class DirectOrder : PaymentOrder
 				{
+					#region 重写属性
+					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
+					public override string Payer { get => this.PayerToken.ToString(); }
+					#endregion
+
 					#region 公共属性
 					[JsonPropertyName("mchid")]
 					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
@@ -519,7 +555,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string AppId { get; set; }
 
 					[JsonPropertyName("payer")]
-					public PayerInfo Payer { get; set; }
+					public PayerInfo PayerToken { get; set; }
 					#endregion
 
 					#region 嵌套结构
@@ -529,6 +565,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						[JsonPropertyName("openid")]
 						public string OpenId { get; set; }
+
+						public override string ToString() => this.OpenId;
 					}
 					#endregion
 				}
@@ -569,6 +607,18 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
+				public override async Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+				{
+					var result = await base.GetAsync<BrokerOrder>(voucher, scenario, cancellation);
+					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+				}
+
+				public override async Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default)
+				{
+					var result = await base.GetCompletedAsync<BrokerOrder>(key, scenario, cancellation);
+					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+				}
+
 				protected override string GetUrl(string path, Scenario scenario)
 				{
 					return scenario switch
@@ -660,6 +710,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						[JsonPropertyName("sub_openid")]
 						public string SubOpenId { get; set; }
+
+						public override string ToString()
+						{
+							if(string.IsNullOrEmpty(this.OpenId))
+								return string.IsNullOrEmpty(this.SubOpenId) ? string.Empty : this.SubOpenId;
+							else
+								return string.IsNullOrEmpty(this.SubOpenId) ? this.OpenId : $"{this.OpenId}:{this.SubOpenId}";
+						}
 					}
 					#endregion
 				}
@@ -696,6 +754,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				public sealed class BrokerOrder : PaymentOrder
 				{
+					#region 重写属性
+					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
+					public override AuthorityToken? Subsidiary { get => new AuthorityToken(this.SubMerchantId.ToString(), this.SubAppId); }
+					public override string Payer { get => this.PayerToken.ToString(); }
+					#endregion
+
 					#region 公共属性
 					[JsonPropertyName("sp_mchid")]
 					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
@@ -712,7 +776,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string SubAppId { get; set; }
 
 					[JsonPropertyName("payer")]
-					public PayerInfo Payer { get; set; }
+					public PayerInfo PayerToken { get; set; }
 					#endregion
 
 					#region 嵌套结构
@@ -723,6 +787,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						[JsonPropertyName("sub_openid")]
 						public string SubOpenId { get; set; }
+
+						public override string ToString()
+						{
+							if(string.IsNullOrEmpty(this.OpenId))
+								return string.IsNullOrEmpty(this.SubOpenId) ? string.Empty : this.SubOpenId;
+							else
+								return string.IsNullOrEmpty(this.SubOpenId) ? this.OpenId : $"{this.OpenId}:{this.SubOpenId}";
+						}
 					}
 					#endregion
 				}

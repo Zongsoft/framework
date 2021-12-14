@@ -33,7 +33,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class ExpiryConverter : TypeConverter
+	public class TimestampConverter : TypeConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 		{
@@ -42,8 +42,8 @@ namespace Zongsoft.Externals.Wechat
 
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 		{
-			if(Zongsoft.Common.Convert.TryConvertValue<int>(value, out var number))
-				return DateTime.UtcNow.AddSeconds(number);
+			if(Zongsoft.Common.Convert.TryConvertValue<long>(value, out var number))
+				return DateTimeOffset.FromUnixTimeSeconds(number).DateTime;
 
 			return base.ConvertFrom(context, culture, value);
 		}

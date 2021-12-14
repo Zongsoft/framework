@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Net.Http;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat.Paying
@@ -52,7 +50,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				throw new ArgumentNullException(nameof(authority));
 
 			if(string.IsNullOrEmpty(authority.Code) || authority.Certificate == null)
-				throw new ArgumentException();
+				throw new ArgumentException("Invalid authority of the wechat.");
+
+			if(authority.Certificate == null || string.IsNullOrEmpty(authority.Certificate.Code) || authority.Certificate.PrivateKey == null)
+				throw new ArgumentException($"Invalid certificate of the '{authority.Code}' wechat authority.");
 
 			return _services.GetOrAdd(authority.Code, (key, authority) =>
 			{
@@ -70,7 +71,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				throw new ArgumentNullException(nameof(authority));
 
 			if(string.IsNullOrEmpty(authority.Code))
-				throw new ArgumentException();
+				throw new ArgumentException("Invalid authority of the wechat.");
 
 			var master = AuthorityFactory.GetAuthority(name) ??
 				throw new InvalidOperationException($"The specified '{name}' authority does not exist.");
