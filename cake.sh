@@ -17,6 +17,7 @@ PROJECT_REPORTING="Zongsoft.Reporting/build.cake"
 PROJECT_MESSAGING_MQTT="Zongsoft.Messaging.Mqtt/build.cake"
 PROJECT_ALIYUN="externals/aliyun/build.cake"
 PROJECT_REDIS="externals/redis/build.cake"
+PROJECT_WECHAT="externals/wechat/build.cake"
 PROJECT_GRAPECITY="externals/grapecity/build.cake"
 
 dotnet tool restore
@@ -34,4 +35,5 @@ dotnet cake $PROJECT_REPORTING $CAKE_ARGS "$@"
 dotnet cake $PROJECT_MESSAGING_MQTT $CAKE_ARGS "$@"
 dotnet cake $PROJECT_ALIYUN $CAKE_ARGS "$@"
 dotnet cake $PROJECT_REDIS $CAKE_ARGS "$@"
+dotnet cake $PROJECT_WECHAT $CAKE_ARGS "$@"
 dotnet cake $PROJECT_GRAPECITY $CAKE_ARGS "$@"

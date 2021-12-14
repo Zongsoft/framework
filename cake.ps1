@@ -11,6 +11,7 @@
 [string]$project_messaging_mqtt = 'Zongsoft.Messaging.Mqtt/build.cake'
 [string]$project_aliyun         = 'externals/aliyun/build.cake'
 [string]$project_redis          = 'externals/redis/build.cake'
+[string]$project_wechat         = 'externals/wechat/build.cake'
 [string]$project_grapecity      = 'externals/grapecity/build.cake'
 
 [string]$CAKE_ARGS = '--verbosity=verbose'
@@ -53,6 +54,9 @@ dotnet cake $project_aliyun $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_redis $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_redis $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_wechat $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_wechat $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_grapecity $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_grapecity $CAKE_ARGS $ARGS
