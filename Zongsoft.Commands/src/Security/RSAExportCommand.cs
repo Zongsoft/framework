@@ -69,7 +69,7 @@ namespace Zongsoft.Security.Commands
 				case RSAKeyType.Subject:
 					return rsa.ExportSubjectPublicKeyInfo();
 				default:
-					return rsa.ExportRSAPublicKey();
+					return rsa.ExportSubjectPublicKeyInfo();
 			}
 		}
 		#endregion
