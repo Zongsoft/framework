@@ -39,9 +39,9 @@ namespace Zongsoft.Plugins.Hosting
 	{
 		#region 构造函数
 		public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
-        {
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
-        }
+		{
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
+		}
 		#endregion
 
 		#region 公共属性

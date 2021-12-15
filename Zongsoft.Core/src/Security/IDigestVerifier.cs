@@ -42,7 +42,7 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 校验指定的数据摘要。
 		/// </summary>
-		/// <param name="identifier">数据标识符。</param>
+		/// <param name="identifier">校验项标识符。</param>
 		/// <param name="digest">待验证的数据摘要。</param>
 		/// <param name="data">待验证的数据内容。</param>
 		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
