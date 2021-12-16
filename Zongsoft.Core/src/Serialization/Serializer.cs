@@ -188,6 +188,9 @@ namespace Zongsoft.Serialization
 				{
 					await JsonSerializer.SerializeAsync(stream, graph, GetOptions(options), cancellationToken);
 
+					if(stream.CanSeek)
+						stream.Position = 0;
+
 					using(var reader = new StreamReader(stream, Encoding.UTF8, false))
 					{
 						return await reader.ReadToEndAsync();
