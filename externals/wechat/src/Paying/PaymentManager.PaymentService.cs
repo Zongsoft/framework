@@ -61,6 +61,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
+			public byte[] Signature(string identifier, out string applet, out string nonce, out long timestamp)
+			{
+				applet = _authority.Applet.Code;
+				nonce = Guid.NewGuid().ToString("N");
+				timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+
+				if(string.IsNullOrEmpty(applet) || _authority.Certificate == null)
+					return null;
+
+				var plaintext = $"{applet}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
+				return _authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
+			}
+
 			public virtual async Task<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
@@ -576,14 +589,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 			{
 				#region 成员字段
 				private HttpClient _client;
-				private readonly IAuthority _master;
+				private readonly IAuthority _subsidiary;
 				#endregion
 
 				#region 构造函数
-				public BrokerPaymentService(IAuthority master, IAuthority authority) : base(authority)
+				public BrokerPaymentService(IAuthority master, IAuthority subsidiary) : base(master)
 				{
-					_master = master ?? throw new ArgumentNullException(nameof(master));
-					this.Request = new BrokerBuilder(master, authority);
+					_subsidiary = subsidiary ?? throw new ArgumentNullException(nameof(subsidiary));
+					this.Request = new BrokerBuilder(master, subsidiary);
 				}
 				#endregion
 
@@ -598,7 +611,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						lock(this)
 						{
 							if(_client == null)
-								_client = HttpClientFactory.GetHttpClient(_master.Certificate);
+								_client = HttpClientFactory.GetHttpClient(_authority.Certificate);
 						}
 
 						return _client;
@@ -630,19 +643,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 					};
 				}
 
-				protected override object GetCancellation() => new { sp_mchid = _master.Code, sub_mchid = _authority.Code };
+				protected override object GetCancellation() => new { sp_mchid = _authority.Code, sub_mchid = _subsidiary.Code };
 				#endregion
 
 				private sealed class BrokerBuilder : RequestBuilder
 				{
 					private readonly IAuthority _master;
-					private readonly IAuthority _authority;
+					private readonly IAuthority _subsidiary;
 
-					public BrokerBuilder(IAuthority master, IAuthority authority) { _master = master; _authority = authority; }
+					public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
 
 					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
 					{
-						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_authority.Code), _authority.Applet.Code)
+						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(),
@@ -651,7 +664,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
-						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_authority.Code), _authority.Applet.Code)
+						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(),
