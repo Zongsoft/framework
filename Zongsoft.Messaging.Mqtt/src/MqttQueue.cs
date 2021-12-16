@@ -33,10 +33,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
-using Zongsoft.Communication;
 
 using MQTTnet;
 using MQTTnet.Client;
@@ -118,11 +117,11 @@ namespace Zongsoft.Messaging.Mqtt
 				Identity = args.ClientId
 			};
 
-			if(await this.HandleAsync(ref message))
+			if((await this.HandleAsync(ref message)).Succeed)
 				await args.AcknowledgeAsync(CancellationToken.None);
 		}
 
-		public virtual ValueTask<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(this, message, cancellation) ?? ValueTask.FromResult(false);
+		public virtual ValueTask<OperationResult> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(this, message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
 		#endregion
 
 		#region 发布方法

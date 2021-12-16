@@ -52,6 +52,6 @@ namespace Zongsoft.Components
 		/// <param name="request">当前处理的请求对象。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask<bool> HandleAsync(object caller, object request, CancellationToken cancellation = default);
+		ValueTask<Common.OperationResult> HandleAsync(object caller, object request, CancellationToken cancellation = default);
 	}
 }

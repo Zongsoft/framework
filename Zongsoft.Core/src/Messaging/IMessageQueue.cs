@@ -32,6 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
+
 namespace Zongsoft.Messaging
 {
 	/// <summary>
@@ -95,7 +97,7 @@ namespace Zongsoft.Messaging
 		/// </summary>
 		/// <param name="message">待处理的消息。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
-		ValueTask<bool> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
+		ValueTask<OperationResult> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
 		#endregion
 
 		#region 出队方法

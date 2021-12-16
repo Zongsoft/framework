@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Zongsoft.Common;
 using Zongsoft.Messaging;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
@@ -78,7 +79,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 处理方法
-		public ValueTask<bool> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(false);
+		public ValueTask<OperationResult> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
 		#endregion
 
 		#region 队列方法

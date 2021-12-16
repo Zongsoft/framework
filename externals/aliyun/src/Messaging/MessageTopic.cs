@@ -35,6 +35,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Messaging;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
@@ -75,13 +76,13 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		public string Name { get; }
 		public IHandler<MessageTopicMessage> Handler { get; set; }
 		public IConnectionSetting ConnectionSetting { get; set; }
-		System.Collections.Generic.IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => Array.Empty<IMessageSubscriber>();
+		IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => Array.Empty<IMessageSubscriber>();
 		#endregion
 
 		#region 公共方法
-		public ValueTask<bool> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
+		public ValueTask<OperationResult> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
 		{
-			return this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(false);
+			return this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
 		}
 		#endregion
 

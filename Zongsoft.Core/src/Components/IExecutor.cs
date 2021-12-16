@@ -39,7 +39,7 @@ namespace Zongsoft.Components
         IHandler Handler { get; set; }
         ICollection<IExecutionFilter> Filters { get; }
 
-        bool Execute(object context);
-        ValueTask<bool> ExecuteAsync(object context, CancellationToken cancellation = default);
+        Common.OperationResult Execute(object context);
+        ValueTask<Common.OperationResult> ExecuteAsync(object context, CancellationToken cancellation = default);
 	}
 }

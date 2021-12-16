@@ -33,21 +33,22 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components
 {
-	public abstract class HandlerBase<T> : IHandler<T>, IHandler
+	public interface IHandler<in TRequest, TResult> : IHandler
 	{
-		#region 构造函数
-		protected HandlerBase() { }
-		#endregion
+		/// <summary>
+		/// 确认当前处理程序能否处理本次执行请求。
+		/// </summary>
+		/// <param name="request">当前处理的请求对象。</param>
+		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
+		bool CanHandle(TRequest request);
 
-		#region 公共方法
-		public virtual bool CanHandle(T request) => request != null;
-		public virtual bool Handle(object caller, T request) => this.HandleAsync(caller, request, CancellationToken.None).GetAwaiter().GetResult();
-		public abstract ValueTask<bool> HandleAsync(object caller, T request, CancellationToken cancellation = default);
-		#endregion
-
-		#region 显式实现
-		bool IHandler.CanHandle(object request) => request is T model ? this.CanHandle(model) : false;
-		ValueTask<bool> IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => request is T model ? this.HandleAsync(caller, model, cancellation) : ValueTask.FromResult(false);
-		#endregion
+		/// <summary>
+		/// 异步处理执行请求。
+		/// </summary>
+		/// <param name="caller">处理程序的调用者。</param>
+		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		/// <returns>返回的异步任务。</returns>
+		ValueTask<Common.OperationResult<TResult>> HandleAsync(object caller, TRequest request, CancellationToken cancellation);
 	}
 }
