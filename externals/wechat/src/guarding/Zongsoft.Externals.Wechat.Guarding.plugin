@@ -16,4 +16,8 @@
 			<dependency name="Zongsoft.Externals.Wechat" />
 		</dependencies>
 	</manifest>
+
+	<extension path="/Externals/Wechat/Fallback">
+		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Guarding.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Wechat.Guarding}" />
+	</extension>
 </plugin>

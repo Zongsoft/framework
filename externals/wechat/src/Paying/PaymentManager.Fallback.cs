@@ -28,52 +28,55 @@
  */
 
 using System;
-using System.IO;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-using Microsoft.AspNetCore.Mvc;
+using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat.Controllers
+namespace Zongsoft.Externals.Wechat.Paying
 {
-	[ApiController]
-	[Route("Externals/Wechat/Fallback")]
-	public class FallbackController : ControllerBase
+	public partial class PaymentManager
 	{
-		public FallbackController() { }
-
-		[HttpPost("{name}")]
-		public async Task<IActionResult> HandleAsync(string name)
+		public class Fallback
 		{
-			Zongsoft.Diagnostics.Logger.Debug(GetRequestInfo(name));
-
-			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name);
-
-			if(result.Succeed)
-				return result.Value == null ? this.NoContent() : this.Ok(result);
-
-			return this.NotFound();
-		}
-
-		private string GetRequestInfo(string name)
-		{
-			var text = new System.Text.StringBuilder();
-
-			text.Append("[" + this.Request.Method + "]");
-			text.AppendLine(this.Request.Path.ToString());
-
-			foreach(var header in this.Request.Headers)
+			#region 嵌套子类
+			private class ResponseWrapper
 			{
-				text.AppendLine(header.Key + ":" + string.Join(";", header.Value));
-			}
+				[JsonPropertyName("id")]
+				public string Identifier { get; set; }
 
-			if(this.Request.ContentLength > 0)
-			{
-				var reader = new StreamReader(this.Request.Body);
-				text.AppendLine();
-				text.AppendLine(reader.ReadToEnd());
-			}
+				[JsonPropertyName("create_time")]
+				public DateTime Timestamp { get; set; }
 
-			return text.ToString();
+				[JsonPropertyName("event_type")]
+				public string Status { get; set; }
+
+				[JsonPropertyName("summary")]
+				public string Description { get; set; }
+
+				[JsonPropertyName("resource_type")]
+				public string ResourceType { get; set; }
+
+				[JsonPropertyName("resource")]
+				public ResourceInfo Resource { get; set; }
+
+				public struct ResourceInfo
+				{
+					[JsonPropertyName("original_type")]
+					public string Source { get; set; }
+					[JsonPropertyName("algorithm")]
+					public string Algorithm { get; set; }
+					[JsonPropertyName("nonce")]
+					public string Nonce { get; set; }
+					[JsonPropertyName("associated_data")]
+					public string AssociatedData { get; set; }
+					[JsonPropertyName("ciphertext")]
+					public string Ciphertext { get; set; }
+				}
+			}
+			#endregion
 		}
 	}
 }
