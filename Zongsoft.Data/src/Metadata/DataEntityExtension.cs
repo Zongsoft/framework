@@ -230,6 +230,9 @@ namespace Zongsoft.Data.Metadata
 
 			private MemberInfo FindMember(Type type, string name)
 			{
+				if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
+					type = underlyingType;
+
 				var members = type.GetMember(name, MemberTypes.Field | MemberTypes.Property, BindingFlags.Public | BindingFlags.Instance);
 
 				if(members != null && members.Length > 0)
