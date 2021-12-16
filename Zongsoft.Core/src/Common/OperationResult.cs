@@ -118,17 +118,28 @@ namespace Zongsoft.Common
 	public readonly struct OperationResult
 	{
 		#region 成员字段
+		private readonly object _value;
 		private readonly OperationResultFailure? _failure;
 		#endregion
 
 		#region 私有构造
+		private OperationResult(object value)
+		{
+			_value = value;
+			_failure = null;
+		}
+
 		private OperationResult(OperationResultFailure failure)
 		{
+			_value = null;
 			_failure = failure;
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取操作成功的结果值。</summary>
+		public object Value { get => _value; }
+
 		/// <summary>获取一个值，指示结果是否成功。</summary>
 		public bool Succeed { get => _failure == null; }
 
@@ -140,7 +151,7 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 静态方法
-		public static OperationResult Success() => new OperationResult();
+		public static OperationResult Success(object value = null) => new OperationResult(value);
 		public static OperationResult<T> Success<T>(T value) => new OperationResult<T>(value);
 		public static OperationResult Fail(Exception exception = null) => new OperationResult(new OperationResultFailure(exception));
 		public static OperationResult Fail(OperationResultFailure failure) => new OperationResult(failure);
@@ -192,7 +203,7 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 类型转换
-		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success() : OperationResult.Fail(result.Failure);
+		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success(result.Value) : OperationResult.Fail(result.Failure);
 		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? new OperationResult<T>(default(T)) : new OperationResult<T>(result.Failure);
 		#endregion
 	}
