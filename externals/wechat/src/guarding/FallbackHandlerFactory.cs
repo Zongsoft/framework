@@ -55,19 +55,19 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, string caller, CancellationToken cancellation = default)
 		{
 			if(name != null && Handlers.TryGetValue(name, out var handler) && handler != null)
 			{
 				if(context.Request.HasFormContentType)
 					return await handler.HandleAsync(
-						Handlers,
+						caller,
 						context.Request.Form == null || context.Request.Form.Count == 0 ? null : new Dictionary<string, string>(context.Request.Form.Select(entry => new KeyValuePair<string, string>(entry.Key, entry.Value)), StringComparer.OrdinalIgnoreCase),
 						cancellation);
 
 				Type requestType = _cache.GetOrAdd(handler.GetType(), type => GetHandlerRequestType(type));
 				if(requestType == null)
-					return await handler.HandleAsync(Handlers, context.Request.Body, cancellation);
+					return await handler.HandleAsync(caller, context.Request.Body, cancellation);
 
 				object request = null;
 				var converter = TypeDescriptor.GetConverter(requestType);
@@ -89,7 +89,7 @@ namespace Zongsoft.Externals.Wechat
 						request = context.Request.Body;
 				}
 
-				return await handler.HandleAsync(Handlers, request, cancellation);
+				return await handler.HandleAsync(caller, request, cancellation);
 			}
 
 			return OperationResult.Fail("NotFound");

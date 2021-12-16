@@ -28,24 +28,66 @@
  */
 
 using System;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
+using Zongsoft.Services;
 using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public abstract class PaymentFallbackHandlerBase : HandlerBase<PaymentFallbackHandlerBase.Message>
+	public abstract class PaymentHandlerBase : HandlerBase<PaymentHandlerBase.Message>
 	{
+		private IEnumerable<IServiceProvider<IAuthority>> _providers;
+
+		protected PaymentHandlerBase(IServiceProvider serviceProvider)
+		{
+			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		}
+
+		protected IServiceProvider ServiceProvider { get; }
+
 		public override ValueTask<OperationResult> HandleAsync(object caller, Message request, CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
+			if(caller is string key && key != null)
+			{
+				var authority = GetAuthority(key);
+
+				if(authority != null && authority.Secret != null)
+				{
+					var resource = request.Resource;
+					var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
+					var payload = JsonSerializer.Deserialize<PaymentManager.PaymentService.PaymentOrder>(data);
+					return this.OnHandleAsync(caller, payload, cancellation);
+				}
+			}
+
+			return ValueTask.FromResult(OperationResult.Fail());
 		}
 
 		protected abstract ValueTask<OperationResult> OnHandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder request, CancellationToken cancellation);
+
+		private IAuthority GetAuthority(string key)
+		{
+			var authority = AuthorityFactory.GetAuthority(key);
+
+			if(authority != null)
+				return authority;
+
+			foreach(var provider in _providers ??= this.ServiceProvider.ResolveAll<IServiceProvider<IAuthority>>())
+			{
+				authority = provider.GetService(key);
+
+				if(authority != null)
+					return authority;
+			}
+
+			return null;
+		}
 
 		#region 嵌套子类
 		public class Message

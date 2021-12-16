@@ -46,6 +46,14 @@ namespace Zongsoft.Externals.Wechat
 		private static readonly IAeadCipher _cipher1 = new GcmBlockCipher(new AesEngine());
 		private static readonly IBufferedCipher _cipher2 = CipherUtilities.GetCipher(ALGORITHM);
 
+		public static byte[] Decrypt1(string key, string nonce, string associatedData, string ciphertext) => Decrypt1
+		(
+			Encoding.UTF8.GetBytes(key),
+			Encoding.UTF8.GetBytes(nonce),
+			Encoding.UTF8.GetBytes(associatedData),
+			Convert.FromBase64String(ciphertext)
+		);
+
 		public static byte[] Decrypt1(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
 		{
 			var cipher = _cipher1;
@@ -58,6 +66,14 @@ namespace Zongsoft.Externals.Wechat
 
 			return plaintext;
 		}
+
+		public static byte[] Decrypt2(string key, string nonce, string associatedData, string ciphertext) => Decrypt2
+		(
+			Encoding.UTF8.GetBytes(key),
+			Encoding.UTF8.GetBytes(nonce),
+			Encoding.UTF8.GetBytes(associatedData),
+			Convert.FromBase64String(ciphertext)
+		);
 
 		public static byte[] Decrypt2(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
 		{

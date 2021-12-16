@@ -41,12 +41,12 @@ namespace Zongsoft.Externals.Wechat.Controllers
 	{
 		public FallbackController() { }
 
-		[HttpPost("{name}")]
-		public async Task<IActionResult> HandleAsync(string name)
+		[HttpPost("{name}/{key?}")]
+		public async Task<IActionResult> HandleAsync(string name, string key = null)
 		{
 			Zongsoft.Diagnostics.Logger.Debug(GetRequestInfo(name));
 
-			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name);
+			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key);
 
 			if(result.Succeed)
 				return result.Value == null ? this.NoContent() : this.Ok(result);
@@ -59,7 +59,15 @@ namespace Zongsoft.Externals.Wechat.Controllers
 			var text = new System.Text.StringBuilder();
 
 			text.Append("[" + this.Request.Method + "]");
-			text.AppendLine(this.Request.Path.ToString());
+			text.Append(this.Request.Path.ToString());
+
+			if(this.Request.QueryString.HasValue)
+			{
+				text.Append("?");
+				text.Append(this.Request.QueryString);
+			}
+
+			text.AppendLine();
 
 			foreach(var header in this.Request.Headers)
 			{

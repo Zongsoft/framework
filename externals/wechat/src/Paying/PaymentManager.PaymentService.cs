@@ -140,7 +140,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string ticket, string description = null) => this.Ticket(voucher, amount, null, ticket, description);
 				public abstract PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null);
 
-				internal static string GetFallback() => Utility.GetOptions<Options.FallbackOptions>("/Externals/Wechat/Paying/Fallback")?.Url;
+				internal static string GetFallback(string key)
+				{
+					var url = Utility.GetOptions<Options.FallbackOptions>($"/Externals/Wechat/Paying/Fallback")?.Url;
+
+					if(string.IsNullOrWhiteSpace(url))
+						return null;
+
+					return string.Format(url, key);
+				}
 			}
 
 			public abstract class PaymentRequest
@@ -479,7 +487,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Applet.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(),
+							FallbackUrl = GetFallback(_authority.Code),
 						};
 					}
 
@@ -488,7 +496,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Applet.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(),
+							FallbackUrl = GetFallback(_authority.Code),
 						};
 					}
 				}
@@ -658,7 +666,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(),
+							FallbackUrl = GetFallback(_master.Name),
 						};
 					}
 
@@ -667,7 +675,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(),
+							FallbackUrl = GetFallback(_master.Name),
 						};
 					}
 				}
