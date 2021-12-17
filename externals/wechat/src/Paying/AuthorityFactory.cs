@@ -65,7 +65,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 		private static IAuthority CreateAuthority(string name)
 		{
 			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Paying/{name}");
-			if(options == null)
+
+			if(options == null || string.IsNullOrEmpty(options.Code))
 				return null;
 
 			var certificate = GetCertificate(options.Directory, options.Code);
