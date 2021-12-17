@@ -51,10 +51,21 @@ namespace Zongsoft.Data.Common.Expressions
 			//生成查询成员
 			if(context.Schema != null && !context.Schema.IsEmpty)
 			{
-				foreach(var member in context.Schema.Members)
+				if(context.Grouping == null)
 				{
-					//生成数据模式对应的子句
-					this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
+					foreach(var member in context.Schema.Members)
+					{
+						//生成数据模式对应的子句
+						this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
+					}
+				}
+				else
+				{
+					foreach(var member in context.Schema.Members)
+					{
+						if(member.Token.Property.IsComplex)
+							this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
+					}
 				}
 			}
 
