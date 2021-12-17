@@ -49,12 +49,9 @@ namespace Zongsoft.Common
 
 		public OperationResultFailure(Exception exception)
 		{
-			if(exception == null)
-				throw new ArgumentNullException(nameof(exception));
-
 			this.Code = 0;
 			this.Reason = GetReason(exception);
-			this.Message = exception.Message;
+			this.Message = exception?.Message;
 			this.Exception = exception;
 		}
 		public OperationResultFailure(int code, Exception exception) : this(code, null, exception) { }
