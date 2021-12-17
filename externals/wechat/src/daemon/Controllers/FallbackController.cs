@@ -30,10 +30,12 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat.Controllers
+namespace Zongsoft.Externals.Wechat.Daemon.Controllers
 {
 	[ApiController]
 	[Route("Externals/Wechat/Fallback")]
@@ -44,18 +46,26 @@ namespace Zongsoft.Externals.Wechat.Controllers
 		[HttpPost("{name}/{key?}")]
 		public async Task<IActionResult> HandleAsync(string name, string key = null)
 		{
-			Zongsoft.Diagnostics.Logger.Debug(GetRequestInfo(name));
+			Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync(name));
 
 			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key);
 
 			if(result.Succeed)
 				return result.Value == null ? this.NoContent() : this.Ok(result);
 
-			return this.NotFound();
+			return result.Failure.Reason switch
+			{
+				FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
+				FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
+				FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
+				_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, result.Failure),
+			};
 		}
 
-		private string GetRequestInfo(string name)
+		private async ValueTask<string> GetRequestInfoAsync(string name)
 		{
+			this.Request.EnableBuffering();
+
 			var text = new System.Text.StringBuilder();
 
 			text.Append("[" + this.Request.Method + "]");
@@ -78,8 +88,10 @@ namespace Zongsoft.Externals.Wechat.Controllers
 			{
 				var reader = new StreamReader(this.Request.Body);
 				text.AppendLine();
-				text.AppendLine(reader.ReadToEnd());
+				text.AppendLine(await reader.ReadToEndAsync());
 			}
+
+			this.Request.Body.Position = 0;
 
 			return text.ToString();
 		}

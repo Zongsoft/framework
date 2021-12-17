@@ -42,10 +42,16 @@ using Zongsoft.Components;
 
 using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat.Daemon
 {
 	public static class FallbackHandlerFactory
 	{
+		#region 常量定义
+		internal const string ERROR_NOTFOUND = "NotFound";
+		internal const string ERROR_UNSUPPORTED = "Unsupported";
+		internal const string ERROR_CANNOTHANDLE = "CannotHandle";
+		#endregion
+
 		#region 私有变量
 		private static readonly ConcurrentDictionary<Type, Type> _cache = new ConcurrentDictionary<Type, Type>();
 		#endregion
@@ -72,7 +78,7 @@ namespace Zongsoft.Externals.Wechat
 				object request = null;
 				var converter = TypeDescriptor.GetConverter(requestType);
 
-				if(converter != null || converter.GetType() != typeof(TypeConverter))
+				if(converter != null && converter.GetType() != typeof(TypeConverter))
 				{
 					if(converter.CanConvertFrom(typeof(HttpRequest)))
 						request = converter.ConvertFrom(context.Request);
@@ -80,19 +86,23 @@ namespace Zongsoft.Externals.Wechat
 						request = converter.ConvertFrom(context);
 					else if(converter.CanConvertFrom(typeof(Stream)))
 						request = converter.ConvertFrom(context.Request.Body);
+					else
+						return OperationResult.Fail(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
 				}
-				else
+				else if(context.Request.ContentLength > 0)
 				{
-					if(context.Request.ContentType.EndsWith("json", StringComparison.OrdinalIgnoreCase))
+					if(context.Request.ContentType != null && context.Request.ContentType.EndsWith("json", StringComparison.OrdinalIgnoreCase))
 						request = await JsonSerializer.DeserializeAsync(context.Request.Body, requestType, null, cancellation);
 					else
 						request = context.Request.Body;
 				}
 
-				return await handler.HandleAsync(caller, request, cancellation);
+				return handler.CanHandle(request) ?
+					await handler.HandleAsync(caller, request, cancellation) :
+					OperationResult.Fail(ERROR_CANNOTHANDLE);
 			}
 
-			return OperationResult.Fail("NotFound");
+			return OperationResult.Fail(ERROR_NOTFOUND);
 		}
 		#endregion
 

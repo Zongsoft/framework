@@ -57,13 +57,16 @@ namespace Zongsoft.Externals.Wechat.Paying
 			{
 				var authority = GetAuthority(key);
 
-				if(authority != null && authority.Secret != null)
-				{
-					var resource = request.Resource;
-					var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
-					var payload = JsonSerializer.Deserialize<PaymentManager.PaymentService.PaymentOrder>(data);
-					return this.OnHandleAsync(caller, payload, cancellation);
-				}
+				if(authority == null)
+					return ValueTask.FromResult(OperationResult.Fail("AuthorityNotFound", $"Didn't find the '{key}' authority or it has no certificate."));
+
+				if(string.IsNullOrEmpty(authority.Secret))
+					return ValueTask.FromResult(OperationResult.Fail("MissingSecret", $"The specified '{key}' authority has no secret key."));
+
+				var resource = request.Resource;
+				var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
+				var payload = JsonSerializer.Deserialize<PaymentManager.PaymentService.PaymentOrder>(data);
+				return this.OnHandleAsync(caller, payload, cancellation);
 			}
 
 			return ValueTask.FromResult(OperationResult.Fail());

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
-<plugin name="Zongsoft.Externals.Wechat.Guarding"
-        title="Zongsoft.Externals.Wechat.Guarding Plugin"
+<plugin name="Zongsoft.Externals.Wechat.Daemon"
+        title="Zongsoft.Externals.Wechat.Daemon Plugin"
         version="1.0"
         author="Popeye Zhong(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2020. All rights reserved."
@@ -9,7 +9,7 @@
 
 	<manifest>
 		<assemblies>
-			<assembly name="Zongsoft.Externals.Wechat.Guarding" />
+			<assembly name="Zongsoft.Externals.Wechat.Daemon" />
 		</assemblies>
 
 		<dependencies>
@@ -17,7 +17,7 @@
 		</dependencies>
 	</manifest>
 
-	<extension path="/Externals/Wechat/Fallback">
-		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Guarding.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Wechat.Guarding}" />
+	<extension path="/Workbench/Externals/Wechat/Fallback">
+		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Daemon.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Wechat.Daemon}" />
 	</extension>
 </plugin>
