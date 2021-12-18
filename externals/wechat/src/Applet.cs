@@ -44,6 +44,8 @@ namespace Zongsoft.Externals.Wechat
 		#region 公共属性
 		public string Code { get; }
 		public string Secret { get; }
+
+		public bool IsEmpty { get => string.IsNullOrEmpty(this.Code); }
 		#endregion
 
 		#region 重写方法

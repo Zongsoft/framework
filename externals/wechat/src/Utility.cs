@@ -32,7 +32,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 
 using Zongsoft.Common;
 
@@ -69,9 +68,9 @@ namespace Zongsoft.Externals.Wechat
 			}
 		}
 
-		public static TimeSpan GetDuration(this DateTime timestamp)
+		public static TimeSpan GetPeriod(this DateTime expiry)
 		{
-			return timestamp.Kind == DateTimeKind.Utc ? timestamp - DateTime.UtcNow : timestamp - DateTime.Now;
+			return expiry.Kind == DateTimeKind.Utc ? expiry - DateTime.UtcNow : expiry - DateTime.Now;
 		}
 	}
 }

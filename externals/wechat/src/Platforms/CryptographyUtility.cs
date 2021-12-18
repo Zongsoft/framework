@@ -83,8 +83,7 @@ namespace Zongsoft.Externals.Wechat.Platforms
             var key = Convert.FromBase64String(encodingAESKey + "=");
             var iv = new byte[16];
             Array.Copy(key, iv, 16);
-            var Randcode = CreateRandCode(16);
-            var bRand = Encoding.UTF8.GetBytes(Randcode);
+            var bRand = Zongsoft.Common.Randomizer.Generate(16);
             var bAppid = Encoding.UTF8.GetBytes(appId);
             var btmpMsg = Encoding.UTF8.GetBytes(plaintext);
             var bMsgLen = BitConverter.GetBytes(HostToNetworkOrder(btmpMsg.Length));
@@ -100,25 +99,6 @@ namespace Zongsoft.Externals.Wechat.Platforms
 		#endregion
 
 		#region 私有方法
-		private static string CreateRandCode(int codeLen)
-        {
-            string codeSerial = "2,3,4,5,6,7,a,c,d,e,f,h,i,j,k,m,n,p,r,s,t,A,C,D,E,F,G,H,J,K,M,N,P,Q,R,S,U,V,W,X,Y,Z";
-            if(codeLen == 0)
-            {
-                codeLen = 16;
-            }
-            string[] arr = codeSerial.Split(',');
-            string code = "";
-            int randValue = -1;
-            Random rand = new Random(unchecked((int)DateTime.Now.Ticks));
-            for(int i = 0; i < codeLen; i++)
-            {
-                randValue = rand.Next(0, arr.Length - 1);
-                code += arr[randValue];
-            }
-            return code;
-        }
-
         private static string AES_Encrypt(string Input, byte[] iv, byte[] key)
         {
             var aes = new RijndaelManaged();
