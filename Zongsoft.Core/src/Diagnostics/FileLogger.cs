@@ -89,11 +89,30 @@ namespace Zongsoft.Diagnostics
 			if(string.IsNullOrWhiteSpace(filePath))
 				throw new InvalidOperationException("Unspecified path of the log file.");
 
-			//将日志实体加入内存队列中
-			_queue.Enqueue(entry);
+			if(entry.Level >= LogLevel.Error)
+			{
+				this.LogFile(filePath, entry);
+			}
+			else
+			{
+				//将日志实体加入内存队列中
+				_queue.Enqueue(entry);
 
-			//从线程池拉出一个后台线程进行具体的日志记录操作
-			ThreadPool.QueueUserWorkItem(this.LogFile, filePath);
+				//从线程池拉出一个后台线程进行具体的日志记录操作
+				ThreadPool.QueueUserWorkItem(this.LogFile, filePath);
+			}
+		}
+
+		private void LogFile(string filePath, LogEntry entry)
+		{
+			lock(_syncRoot)
+			{
+				//以写模式打开日志文件
+				using var stream = new FileStream((string)filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+
+				//将当前日志信息写入日志文件流
+				this.WriteLog(entry, stream);
+			}
 		}
 
 		private void LogFile(object filePath)
@@ -152,7 +171,7 @@ namespace Zongsoft.Diagnostics
 
 			if(filePath[0] == '/' || filePath[0] == '\\')
 			{
-				filePath = Path.Combine(Path.GetPathRoot(Services.ApplicationContext.Current.ApplicationPath), filePath.Substring(1));
+				filePath = Path.Combine(Path.GetPathRoot(GetApplicationDirectory()), filePath.Substring(1));
 
 				if(!Directory.Exists(Path.GetDirectoryName(filePath)))
 					Directory.CreateDirectory(Path.GetDirectoryName(filePath));
@@ -163,9 +182,9 @@ namespace Zongsoft.Diagnostics
 			string directoryPath;
 
 			if(filePath.StartsWith("~/") || filePath.StartsWith("~\\"))
-				directoryPath = Services.ApplicationContext.Current.EnsureDirectory(Path.GetDirectoryName(filePath.Substring(2)));
+				directoryPath = EnsureApplicationDirectory(Path.GetDirectoryName(filePath.Substring(2)));
 			else
-				directoryPath = Services.ApplicationContext.Current.EnsureDirectory(Path.GetDirectoryName(filePath));
+				directoryPath = EnsureApplicationDirectory(Path.GetDirectoryName(filePath));
 
 			return Path.Combine(directoryPath, Path.GetFileName(filePath));
 		}
@@ -178,6 +197,35 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 私有方法
+		private static string GetApplicationDirectory()
+		{
+			var direcotry = Services.ApplicationContext.Current?.ApplicationPath;
+
+			if(string.IsNullOrEmpty(direcotry))
+				return AppContext.BaseDirectory;
+
+			return direcotry;
+		}
+
+		private static string EnsureApplicationDirectory(string relativePath)
+		{
+			if(string.IsNullOrEmpty(relativePath))
+				return GetApplicationDirectory();
+
+			var path = GetApplicationDirectory();
+			var parts = relativePath.Split('/', '\\');
+
+			for(int i = 0; i < parts.Length; i++)
+			{
+				path = Path.Combine(path, parts[i]);
+
+				if(!Directory.Exists(path))
+					Directory.CreateDirectory(path);
+			}
+
+			return path;
+		}
+
 		private string ResolveSequence(LogEntry entry)
 		{
 			const string PATTERN = @"(?<no>\d+)";
