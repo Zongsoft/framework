@@ -183,6 +183,7 @@ namespace Zongsoft.Plugins
 			catch(Exception ex)
 			{
 				Zongsoft.Diagnostics.Logger.Error(ex);
+				throw;
 			}
 		}
 
