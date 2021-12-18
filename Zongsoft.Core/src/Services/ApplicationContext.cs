@@ -99,7 +99,7 @@ namespace Zongsoft.Services
 		/// </summary>
 		public static IApplicationContext Current
 		{
-			get => _current ?? throw new InvalidOperationException("The current application is not initialized.");
+			get => _current;
 		}
 		#endregion
 
