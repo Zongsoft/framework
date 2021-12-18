@@ -156,22 +156,40 @@ namespace Zongsoft.Configuration
 
 			var filePath = Path.GetDirectoryName(plugin.FilePath);
 			var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
+			List<IConfigurationProvider> providers = null;
 
-			var composite = new CompositeConfigurationProvider(new[]
+			var optionFile = Path.Combine(filePath, $"{fileName}.option");
+			if(File.Exists(optionFile))
 			{
-				new Zongsoft.Configuration.Xml.XmlConfigurationSource()
+				if(providers == null)
+					providers = new List<IConfigurationProvider>(2);
+
+				providers.Add(new Xml.XmlConfigurationSource()
 				{
-					Path = Path.Combine(filePath, $"{fileName}.option"),
+					Path = optionFile,
 					Optional = true,
 					ReloadOnChange = true,
-				}.Build(null),
-				new Zongsoft.Configuration.Xml.XmlConfigurationSource()
+				}.Build(null));
+			}
+
+			optionFile = Path.Combine(filePath, $"{fileName}.{_source.Options.EnvironmentName.ToLowerInvariant()}.option");
+			if(File.Exists(optionFile))
+			{
+				if(providers == null)
+					providers = new List<IConfigurationProvider>(2);
+
+				providers.Add(new Xml.XmlConfigurationSource()
 				{
-					Path = Path.Combine(filePath, $"{fileName}.{_source.Options.EnvironmentName.ToLowerInvariant()}.option"),
+					Path = optionFile,
 					Optional = true,
 					ReloadOnChange = true,
-				}.Build(null),
-			});
+				}.Build(null));
+			}
+
+			if(providers == null || providers.Count == 0)
+				return false;
+
+			var composite = new CompositeConfigurationProvider(providers);
 
 			//加载配置文件
 			composite.Load();
