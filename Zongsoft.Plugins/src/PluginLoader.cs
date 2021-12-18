@@ -159,24 +159,31 @@ namespace Zongsoft.Plugins
 			if(options == null)
 				throw new ArgumentNullException(nameof(options));
 
-			//激发“Loading”事件
-			this.OnLoading(new PluginLoadEventArgs(options));
-
 			//如果指定的目录路径不存在则激发“Failure”事件，并退出
 			if(!Directory.Exists(options.PluginsPath))
 				throw new DirectoryNotFoundException($"The '{options.PluginsPath}' plugins directory is not exists.");
 
-			//清空插件列表
-			_plugins.Clear();
+			try
+			{
+				//激发“Loading”事件
+				this.OnLoading(new PluginLoadEventArgs(options));
 
-			//预加载插件目录下的所有插件文件
-			this.PreloadPluginFiles(options.PluginsPath, null, options);
+				//清空插件列表
+				_plugins.Clear();
 
-			//正式加载所有插件
-			this.LoadPlugins(_plugins, options);
+				//预加载插件目录下的所有插件文件
+				this.PreloadPluginFiles(options.PluginsPath, null, options);
 
-			//激发“Loaded”事件
-			this.OnLoaded(new PluginLoadEventArgs(options));
+				//正式加载所有插件
+				this.LoadPlugins(_plugins, options);
+
+				//激发“Loaded”事件
+				this.OnLoaded(new PluginLoadEventArgs(options));
+			}
+			catch(Exception ex)
+			{
+				Zongsoft.Diagnostics.Logger.Error(ex);
+			}
 		}
 
 		/// <summary>
