@@ -35,7 +35,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication
 {
-	public static class SendExtension
+	public static class SenderExtension
 	{
 		public static void Send(this ISender sender, byte[] data) => sender.SendAsync(data).GetAwaiter().GetResult();
 		public static void Send(this ISender sender, byte[] data, int offset) => sender.SendAsync(data.AsMemory(offset)).GetAwaiter().GetResult();

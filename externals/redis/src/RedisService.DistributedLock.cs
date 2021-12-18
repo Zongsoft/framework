@@ -37,7 +37,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis
 {
-   public partial class RedisService : IDistributedLockManager
+	public partial class RedisService : IDistributedLockManager
 	{
 		#region 常量定义
 		private const string RELEASE_SCRIPT = @"if redis.call('get', KEYS[1])==ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";

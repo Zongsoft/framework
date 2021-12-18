@@ -87,11 +87,7 @@ namespace Zongsoft.Distributing
 				return;
 
 			await AwaitUnlock(task);
-
-			static async ValueTask<bool> AwaitUnlock(ValueTask<bool> task)
-			{
-				return await task;
-			}
+			static async ValueTask<bool> AwaitUnlock(ValueTask<bool> task) => await task;
 		}
 
 		public ValueTask<bool> UnlockAsync(CancellationToken cancellation = default)
