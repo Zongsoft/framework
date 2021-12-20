@@ -36,21 +36,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Distributing;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class CredentialManager
+	public static class CredentialManager
 	{
 		#region 成员字段
-		private HttpClient _http;
-		private readonly Dictionary<string, Token> _localCache;
+		private static readonly HttpClient _http;
+		private static readonly Dictionary<string, Token> _localCache;
+
+		private static ICache _cache;
+		private static IDistributedLockManager _locker;
 		#endregion
 
-		#region 构造函数
-		public CredentialManager()
+		#region 静态函数
+		static CredentialManager()
 		{
 			_http = new HttpClient();
 			_http.BaseAddress = new Uri("https://api.weixin.qq.com");
@@ -62,25 +66,42 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共属性
-		public HttpClient Http { get => _http; }
-		public ICache Cache { get; set; }
-		public IDistributedLockManager Locker { get; set; }
+		public static ICache Cache
+		{
+			get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<ICache>>()?.GetService(null);
+			set => _cache = value;
+		}
+
+		public static IDistributedLockManager Locker
+		{
+			get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedLockManager>>()?.GetService(null);
+			set => _locker = value;
+		}
+		#endregion
+
+		#region 内部属性
+		internal static HttpClient Http { get => _http; }
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<string> GetCredentialAsync(Applet applet, CancellationToken cancellation = default)
+		public static async ValueTask<string> GetCredentialAsync(Account account, CancellationToken cancellation = default)
 		{
-			if(applet.IsEmpty)
-				throw new ArgumentNullException(nameof(applet));
+			if(account.IsEmpty)
+				throw new ArgumentNullException(nameof(account));
 
-			var key = GetCredentalKey(applet.Code);
+			var key = GetCredentalKey(account.Code);
 
 			//首先从本地内存缓存中获取凭证标记，如果获取成功并且凭证未过期则返回该凭证号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
 				return token.Key;
 
+			var cache = Cache;
+
+			if(cache == null)
+				return null;
+
 			//从外部缓存中获取凭证标记
-			(var credentialId, var expiry) = await this.Cache.GetValueExpiryAsync<string>(key, cancellation);
+			(var credentialId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 			if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
 			{
@@ -89,16 +110,21 @@ namespace Zongsoft.Externals.Wechat
 			}
 
 			//获取分布式锁
-			using var locker = await this.Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
+			using var locker = await Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
 
 			if(locker != null)
 			{
-				token = await this.AcquireCredentialAsync(applet.Code, applet.Secret);
+				var result = await AcquireCredentialAsync(account.Code, account.Secret);
 
-				if(this.Cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-					_localCache[key] = token;
+				if(result.Succeed)
+				{
+					token = result.Value;
 
-				return token.Key;
+					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
+						_localCache[key] = token;
+
+					return token.Key;
+				}
 			}
 			else
 			{
@@ -106,7 +132,7 @@ namespace Zongsoft.Externals.Wechat
 				for(int i = 0; i < 3; i++)
 				{
 					await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-					(credentialId, expiry) = await this.Cache.GetValueExpiryAsync<string>(key, cancellation);
+					(credentialId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 					if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
 					{
@@ -119,19 +145,24 @@ namespace Zongsoft.Externals.Wechat
 			return null;
 		}
 
-		public async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(Applet applet, string type = "jsapi", CancellationToken cancellation = default)
+		public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(Account account, string type = "jsapi", CancellationToken cancellation = default)
 		{
-			if(applet.IsEmpty)
-				throw new ArgumentNullException(nameof(applet));
+			if(account.IsEmpty)
+				throw new ArgumentNullException(nameof(account));
 
-			var key = GetTicketKey(applet.Code);
+			var key = GetTicketKey(account.Code);
 
 			//首先从本地内存缓存中获取票据标记，如果获取成功并且票据未过期则返回该票据号
 			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
 				return (token.Key, token.Expiry.GetPeriod());
 
+			var cache = Cache;
+
+			if(cache == null)
+				return (null, TimeSpan.Zero);
+
 			//从外部缓存中获取票据标记
-			(var ticketId, var expiry) = await this.Cache.GetValueExpiryAsync<string>(key, cancellation);
+			(var ticketId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 			if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
 			{
@@ -140,16 +171,21 @@ namespace Zongsoft.Externals.Wechat
 			}
 
 			//获取分布式锁
-			using var locker = await this.Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
+			using var locker = await Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
 
 			if(locker != null)
 			{
-				token = await this.AcquireTicketAsync(await this.GetCredentialAsync(applet, cancellation), type);
+				var result = await AcquireTicketAsync(await GetCredentialAsync(account, cancellation), type);
 
-				if(this.Cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-					_localCache[key] = token;
+				if(result.Succeed)
+				{
+					token = result.Value;
 
-				return (token.Key, token.Expiry.GetPeriod());
+					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
+						_localCache[key] = token;
+
+					return (token.Key, token.Expiry.GetPeriod());
+				}
 			}
 			else
 			{
@@ -157,7 +193,7 @@ namespace Zongsoft.Externals.Wechat
 				for(int i = 0; i < 3; i++)
 				{
 					await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-					(ticketId, expiry) = await this.Cache.GetValueExpiryAsync<string>(key, cancellation);
+					(ticketId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 					if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
 					{
@@ -172,38 +208,42 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 私有方法
-		private async ValueTask<Token> AcquireCredentialAsync(string appId, string secret, int retries = 3)
+		private static async ValueTask<OperationResult<Token>> AcquireCredentialAsync(string appId, string secret, int retries = 3)
 		{
 			var response = await _http.GetAsync($"/cgi-bin/token?grant_type=client_credential&appid={appId}&secret={secret}");
 			var result = await response.GetResultAsync<CredentialToken>();
 
 			if(result.Succeed)
-				return result.Value;
+				return result.Value.ErrorCode == 0 ?
+					OperationResult.Success((Token)result.Value) :
+					OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
 
 			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
-				return await this.AcquireCredentialAsync(appId, secret, retries - 1);
+				return await AcquireCredentialAsync(appId, secret, retries - 1);
 			}
 
-			throw new WechatException(result.Failure.Code, result.Failure.Message);
+			return (OperationResult)result.Failure;
 		}
 
-		private async ValueTask<Token> AcquireTicketAsync(string credentialId, string type, int retries = 3)
+		private static async ValueTask<OperationResult<Token>> AcquireTicketAsync(string credentialId, string type, int retries = 3)
 		{
 			var response = await _http.GetAsync($"/cgi-bin/ticket/getticket?access_token={credentialId}&type={type}");
 			var result = await response.GetResultAsync<TicketToken>();
 
 			if(result.Succeed)
-				return result.Value;
+				return result.Value.ErrorCode == 0 ?
+					OperationResult.Success((Token)result.Value) :
+					OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
 
 			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
-				return await this.AcquireTicketAsync(credentialId, type, retries - 1);
+				return await AcquireTicketAsync(credentialId, type, retries - 1);
 			}
 
-			throw new WechatException(result.Failure.Code, result.Failure.Message);
+			return (OperationResult)result.Failure;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -214,7 +254,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 嵌套子类
-		public abstract class Token
+		private abstract class Token
 		{
 			#region 私有变量
 			private TimeSpan _period;
@@ -226,6 +266,14 @@ namespace Zongsoft.Externals.Wechat
 			#endregion
 
 			#region 公共属性
+			[JsonPropertyName("errcode")]
+			[Serialization.SerializationMember("errcode")]
+			public int ErrorCode { get; set; }
+
+			[JsonPropertyName("errmsg")]
+			[Serialization.SerializationMember("errmsg")]
+			public string Message { get; set; }
+
 			[Zongsoft.Serialization.SerializationMember("expires_in")]
 			[JsonPropertyName("expires_in")]
 			[JsonConverter(typeof(TimeSpanConverter))]
@@ -284,7 +332,7 @@ namespace Zongsoft.Externals.Wechat
 			#endregion
 		}
 
-		public class CredentialToken : Token
+		private class CredentialToken : Token
 		{
 			#region 构造函数
 			public CredentialToken(string credentialId, TimeSpan period)
@@ -305,7 +353,7 @@ namespace Zongsoft.Externals.Wechat
 			#endregion
 		}
 
-		public class TicketToken : Token
+		private class TicketToken : Token
 		{
 			#region 构造函数
 			public TicketToken(string ticketId, TimeSpan period)

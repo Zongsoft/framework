@@ -78,7 +78,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				certificate.Issuer = new CertificateIssuer(options.Code, options.Name);
 
 			var app = options.Apps.GetDefault();
-			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Applet(app.Name, app.Secret), certificate);
+			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Account(app.Name, app.Secret), certificate);
 		}
 		#endregion
 

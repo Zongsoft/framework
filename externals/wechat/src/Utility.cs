@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Wechat
 			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
 		}
 
-		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
@@ -55,7 +55,10 @@ namespace Zongsoft.Externals.Wechat
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Success();
 
-				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Default, cancellation);
+				//var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Default, cancellation);
+				var text = await response.Content.ReadAsStringAsync(cancellation);
+				var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text);
+
 				return OperationResult.Success(result);
 			}
 			else

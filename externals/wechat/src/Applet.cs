@@ -28,36 +28,89 @@
  */
 
 using System;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Zongsoft.Common;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public readonly struct Applet : IEquatable<Applet>
+	public class Applet
 	{
+		#region 静态变量
+		private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
+		#endregion
+
 		#region 构造函数
-		public Applet(string code, string secret = null)
+		public Applet(Account account)
 		{
-			this.Code = code;
-			this.Secret = secret;
+			if(account.IsEmpty)
+				throw new ArgumentNullException(nameof(account));
+
+			this.Account = account;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Code { get; }
-		public string Secret { get; }
-
-		public bool IsEmpty { get => string.IsNullOrEmpty(this.Code); }
+		public Account Account { get; }
 		#endregion
 
-		#region 重写方法
-		public bool Equals(Applet other) => string.Equals(this.Code, other.Code);
-		public override bool Equals(object obj) => obj is Applet other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Code);
-		public override string ToString() => string.IsNullOrEmpty(this.Secret) ? this.Code : $"{this.Code}:{this.Secret}";
+		#region 获取凭证
+		public ValueTask<string> GetCredentialAsync(CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, cancellation);
 		#endregion
 
-		#region 符号重写
-		public static bool operator ==(Applet left, Applet right) => left.Equals(right);
-		public static bool operator !=(Applet left, Applet right) => !(left == right);
+		#region 登录方法
+		public async ValueTask<OperationResult<LoginResult>> LoginAsync(string token, CancellationToken cancellation = default)
+		{
+			var response = await CredentialManager.Http.GetAsync($"/sns/jscode2session?appid={this.Account.Code}&secret={this.Account.Secret}&js_code={token}&grant_type=authorization_code", cancellation);
+			var result = await response.GetResultAsync<LoginResultWrapper>(cancellation);
+
+			return result.Succeed && result.Value.ErrorCode == 0 ?
+				OperationResult.Success(new LoginResult(result.Value.OpenId, result.Value.Secret, result.Value.UnionId)) :
+				OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
+		}
+		#endregion
+
+		#region 嵌套结构
+		public readonly struct LoginResult
+		{
+			public LoginResult(string identifier, string secret, string uniqueId)
+			{
+				this.Identifier = identifier;
+				this.Secret = secret;
+				this.UniqueId = uniqueId;
+			}
+
+			public string Secret { get; }
+			public string Identifier { get; }
+			public string UniqueId { get; }
+		}
+
+		private struct LoginResultWrapper
+		{
+			[JsonPropertyName("errcode")]
+			[Serialization.SerializationMember("errcode")]
+			public int ErrorCode { get; set; }
+
+			[JsonPropertyName("errmsg")]
+			[Serialization.SerializationMember("errmsg")]
+			public string Message { get; set; }
+
+			[JsonPropertyName("session_key")]
+			[Serialization.SerializationMember("session_key")]
+			public string Secret { get; set; }
+
+			[JsonPropertyName("openid")]
+			[Serialization.SerializationMember("openid")]
+			public string OpenId { get; set; }
+
+			[JsonPropertyName("unionid")]
+			[Serialization.SerializationMember("unionid")]
+			public string UnionId { get; set; }
+		}
 		#endregion
 	}
 }

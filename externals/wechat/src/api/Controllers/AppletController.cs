@@ -28,15 +28,42 @@
  */
 
 using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Externals.Wechat.Paying
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
+
+using Zongsoft.Services;
+
+namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
-	public interface IAuthority : IEquatable<IAuthority>
+	[ApiController]
+	[Route("Externals/Wechat/Applets")]
+	public class AppletController : ControllerBase
 	{
-		string Name { get; }
-		string Code { get; }
-		string Secret { get; }
-		Account Account { get; }
-		Certificate Certificate { get; }
+		[HttpPost("{key}/{action}")]
+		public async ValueTask<IActionResult> Login(string key)
+		{
+			if(string.IsNullOrEmpty(key))
+				return this.BadRequest();
+
+			var applet = this.GetApplet(key);
+			if(applet == null)
+				return this.NotFound();
+
+			var content = await this.Request.ReadAsStringAsync();
+			var result = await applet.LoginAsync(content);
+
+			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.Identifier }) : this.NotFound(result.Failure);
+		}
+
+		private Applet GetApplet(string key)
+		{
+			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
+			return account.IsEmpty ? null : new Applet(account);
+		}
 	}
 }

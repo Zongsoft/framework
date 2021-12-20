@@ -29,12 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
-	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
+	/// <summary>
+	/// 表示机构描述符的类。
+	/// </summary>
+	public class AuthorityDescriptor : IEquatable<AuthorityDescriptor>
 	{
 		#region 构造函数
-		public Authority(string name, string code, string secret, Account account, Certificate certificate)
+		public AuthorityDescriptor(string name, string code, string secret, Account account, Certificate certificate)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -59,11 +62,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Authority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
+		public bool Equals(AuthorityDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
+		public override bool Equals(object obj) => obj is AuthorityDescriptor other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
 		public override string ToString() => string.IsNullOrEmpty(this.Account.Code) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.Account}";
+		#endregion
+
+		#region 符号重写
+		public static bool operator ==(AuthorityDescriptor left, AuthorityDescriptor right) => left.Equals(right);
+		public static bool operator !=(AuthorityDescriptor left, AuthorityDescriptor right) => !(left == right);
 		#endregion
 	}
 }

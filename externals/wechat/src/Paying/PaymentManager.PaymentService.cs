@@ -63,7 +63,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#region 公共方法
 			public byte[] Signature(string identifier, out string applet, out string nonce, out long timestamp)
 			{
-				applet = _authority.Applet.Code;
+				applet = _authority.Account.Code;
 				nonce = Guid.NewGuid().ToString("N");
 				timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 
@@ -484,7 +484,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
 					{
-						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Applet.Code)
+						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Account.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(_authority.Code),
@@ -493,7 +493,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
-						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Applet.Code)
+						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Account.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(_authority.Code),
@@ -663,7 +663,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
 					{
-						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
+						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(_master.Name),
@@ -672,7 +672,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
-						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Applet.Code, uint.Parse(_subsidiary.Code), _subsidiary.Applet.Code)
+						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code)
 						{
 							Description = description,
 							FallbackUrl = GetFallback(_master.Name),

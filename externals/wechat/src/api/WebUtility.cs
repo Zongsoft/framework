@@ -28,39 +28,42 @@
  */
 
 using System;
+using System.IO;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 
-namespace Zongsoft.Externals.Wechat.Controllers
+namespace Zongsoft.Externals.Wechat.Web
 {
-	[Route("Credentials")]
-	public class CredentialController : ControllerBase
+	internal static class WebUtility
 	{
-		#region 成员字段
-		private ICredentialProvider _provider;
-		#endregion
-
-		#region 公共属性
-		public ICredentialProvider Provider
+		public static async ValueTask<string> ReadAsStringAsync(this HttpRequest request, CancellationToken cancellation = default)
 		{
-			get => _provider;
-			set => _provider = value ?? throw new ArgumentNullException();
-		}
-		#endregion
+			if(request == null)
+				throw new ArgumentNullException(nameof(request));
 
-		#region 公共方法
-		[HttpGet("{id}")]
-		public async Task<object> Get(string id)
-		{
-			return this.Content(await _provider.GetCredentialAsync(id));
-		}
+			if(cancellation.IsCancellationRequested)
+				return null;
 
-		[HttpGet("{id}/Ticket")]
-		public async Task<object> GetTicket(string id)
-		{
-			return this.Content(await _provider.GetTicketAsync(id));
+			MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType);
+
+			var encoding = mediaType?.Encoding;
+			if(encoding == null || encoding == Encoding.UTF7)
+				encoding = Encoding.UTF8;
+
+			using(var reader = new StreamReader(
+				request.Body,
+				encoding,
+				detectEncodingFromByteOrderMarks: true,
+				bufferSize: 1024,
+				leaveOpen: true))
+			{
+				return await reader.ReadToEndAsync();
+			}
 		}
-		#endregion
 	}
 }

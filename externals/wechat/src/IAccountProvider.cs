@@ -29,14 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
-	public interface IAuthority : IEquatable<IAuthority>
+	public interface IAccountProvider
 	{
-		string Name { get; }
-		string Code { get; }
-		string Secret { get; }
-		Account Account { get; }
-		Certificate Certificate { get; }
+		Account GetAccount(string key);
 	}
 }

@@ -29,14 +29,35 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
-	public interface IAuthority : IEquatable<IAuthority>
+	public readonly struct Account : IEquatable<Account>
 	{
-		string Name { get; }
-		string Code { get; }
-		string Secret { get; }
-		Account Account { get; }
-		Certificate Certificate { get; }
+		#region 构造函数
+		public Account(string code, string secret = null)
+		{
+			this.Code = code;
+			this.Secret = secret;
+		}
+		#endregion
+
+		#region 公共属性
+		public string Code { get; }
+		public string Secret { get; }
+
+		public bool IsEmpty { get => string.IsNullOrEmpty(this.Code); }
+		#endregion
+
+		#region 重写方法
+		public bool Equals(Account other) => string.Equals(this.Code, other.Code);
+		public override bool Equals(object obj) => obj is Account other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Code);
+		public override string ToString() => string.IsNullOrEmpty(this.Secret) ? this.Code : $"{this.Code}:{this.Secret}";
+		#endregion
+
+		#region 符号重写
+		public static bool operator ==(Account left, Account right) => left.Equals(right);
+		public static bool operator !=(Account left, Account right) => !(left == right);
+		#endregion
 	}
 }
