@@ -57,7 +57,10 @@ namespace Zongsoft.Data.Common
 
 		public IDataPopulator GetPopulator(IDataEntity entity, Type type, IDataReader reader)
 		{
-			var members = EntityMemberProvider.Instance.GetMembers(type);
+			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
+				EntityMemberProvider.Instance.GetMembers(underlying) :
+				EntityMemberProvider.Instance.GetMembers(type);
+
 			var tokens = new List<EntityPopulator.PopulateToken>(reader.FieldCount);
 
 			for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
@@ -73,7 +76,7 @@ namespace Zongsoft.Data.Common
 				this.FillTokens(entity, members, tokens, name, ordinal);
 			}
 
-			return new EntityPopulator(type, tokens);
+			return new EntityPopulator(underlying ?? type, tokens);
 		}
 		#endregion
 

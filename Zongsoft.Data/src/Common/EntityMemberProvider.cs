@@ -31,7 +31,6 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.ComponentModel;
 
 namespace Zongsoft.Data.Common
 {
