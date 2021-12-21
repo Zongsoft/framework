@@ -214,9 +214,7 @@ namespace Zongsoft.Externals.Wechat
 			var result = await response.GetResultAsync<CredentialToken>();
 
 			if(result.Succeed)
-				return result.Value.ErrorCode == 0 ?
-					OperationResult.Success((Token)result.Value) :
-					OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
+				return OperationResult.Success((Token)result.Value);
 
 			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
@@ -233,9 +231,7 @@ namespace Zongsoft.Externals.Wechat
 			var result = await response.GetResultAsync<TicketToken>();
 
 			if(result.Succeed)
-				return result.Value.ErrorCode == 0 ?
-					OperationResult.Success((Token)result.Value) :
-					OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
+				return OperationResult.Success((Token)result.Value);
 
 			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
 			{
@@ -266,14 +262,6 @@ namespace Zongsoft.Externals.Wechat
 			#endregion
 
 			#region 公共属性
-			[JsonPropertyName("errcode")]
-			[Serialization.SerializationMember("errcode")]
-			public int ErrorCode { get; set; }
-
-			[JsonPropertyName("errmsg")]
-			[Serialization.SerializationMember("errmsg")]
-			public string Message { get; set; }
-
 			[Zongsoft.Serialization.SerializationMember("expires_in")]
 			[JsonPropertyName("expires_in")]
 			[JsonConverter(typeof(TimeSpanConverter))]

@@ -30,6 +30,8 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,6 +47,11 @@ namespace Zongsoft.Externals.Wechat
 			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
 		}
 
+		public static TimeSpan GetPeriod(this DateTime expiry)
+		{
+			return expiry.Kind == DateTimeKind.Utc ? expiry - DateTime.UtcNow : expiry - DateTime.Now;
+		}
+
 		public static async ValueTask<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
@@ -55,11 +62,14 @@ namespace Zongsoft.Externals.Wechat
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Success();
 
-				//var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Default, cancellation);
 				var text = await response.Content.ReadAsStringAsync(cancellation);
-				var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text);
 
-				return OperationResult.Success(result);
+				//首先判断返回内容是否为错误信息
+				var error = JsonSerializer.Deserialize<ErrorResult>(text, Json.Default);
+				if(error.IsFailed)
+					return OperationResult.Fail(error.Code, error.Message);
+
+				return OperationResult.Success(JsonSerializer.Deserialize<TResult>(text, Json.Default));
 			}
 			else
 			{
@@ -71,9 +81,39 @@ namespace Zongsoft.Externals.Wechat
 			}
 		}
 
-		public static TimeSpan GetPeriod(this DateTime expiry)
+		private struct ErrorResult
 		{
-			return expiry.Kind == DateTimeKind.Utc ? expiry - DateTime.UtcNow : expiry - DateTime.Now;
+			#region 构造函数
+			public ErrorResult(int code, string message)
+			{
+				this.Code = code;
+				this.Message = message;
+			}
+			#endregion
+
+			#region 公共属性
+			[JsonIgnore]
+			[Serialization.SerializationMember(Ignored = true)]
+			public bool IsFailed { get => this.Code != 0; }
+
+			[JsonIgnore]
+			[Serialization.SerializationMember(Ignored = true)]
+			public bool IsSucceed { get => this.Code == 0; }
+
+			/// <summary>获取或设置错误码。</summary>
+			[JsonPropertyName("errcode")]
+			[Serialization.SerializationMember("errcode")]
+			public int Code { get; set; }
+
+			/// <summary>获取或设置错误消息。</summary>
+			[JsonPropertyName("errmsg")]
+			[Serialization.SerializationMember("errmsg")]
+			public string Message { get; set; }
+			#endregion
+
+			#region 重写方法
+			public override string ToString() => $"[{this.Code}] {this.Message}";
+			#endregion
 		}
 	}
 }

@@ -102,4 +102,30 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return account.IsEmpty ? null : new Channel(account);
 		}
 	}
+
+	[ApiController]
+	[Route("Externals/Wechat/Channels/{key}/Authentication")]
+	public class ChannelAuthenticationController : ControllerBase
+	{
+		[HttpPost("{token}")]
+		public async ValueTask<IActionResult> AuthenticateAsync(string key, string token)
+		{
+			if(string.IsNullOrEmpty(token))
+				return this.BadRequest();
+
+			var channel = this.GetChannel(key);
+
+			if(channel == null)
+				return this.NotFound();
+
+			var result = await channel.Authentication.AuthenticateAsync(token);
+			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
+		}
+
+		private Channel GetChannel(string key)
+		{
+			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
+			return account.IsEmpty ? null : new Channel(account);
+		}
+	}
 }

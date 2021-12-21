@@ -33,10 +33,11 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public static class Json
+	internal static class Json
 	{
 		public static readonly JsonSerializerOptions Default = new JsonSerializerOptions()
 		{
+			IncludeFields = true,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 		};
 	}

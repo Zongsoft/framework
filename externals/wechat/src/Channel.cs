@@ -46,7 +46,10 @@ namespace Zongsoft.Externals.Wechat
 		private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
 		#endregion
 
+		#region 成员字段
 		private volatile UserManager _users;
+		private volatile ChannelAuthentication _authentication;
+		#endregion
 
 		#region 构造函数
 		public Channel(Account account)
@@ -60,6 +63,7 @@ namespace Zongsoft.Externals.Wechat
 
 		#region 公共属性
 		public Account Account { get; }
+
 		public UserManager Users
 		{
 			get
@@ -68,6 +72,17 @@ namespace Zongsoft.Externals.Wechat
 					Interlocked.CompareExchange(ref _users, new UserManager(this.Account), null);
 
 				return _users;
+			}
+		}
+
+		public ChannelAuthentication Authentication
+		{
+			get
+			{
+				if(_authentication == null)
+					Interlocked.CompareExchange(ref _authentication, new ChannelAuthentication(this.Account), null);
+
+				return _authentication;
 			}
 		}
 		#endregion
@@ -128,12 +143,12 @@ namespace Zongsoft.Externals.Wechat
 				var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/get?access_token={credential}&next_openid={cursor}", cancellation);
 				var result = await response.GetResultAsync<IdentifierResult>(cancellation);
 
-				return result.Succeed && result.Value.ErrorCode == 0 ?
+				return result.Succeed ?
 						(result.Value.Bookmark, result.Value.Data.Values) :
 						(null, Array.Empty<string>());
 			}
 
-			public async ValueTask<OperationResult<Info>> GetInfoAsync(string identifier, CancellationToken cancellation = default)
+			public async ValueTask<OperationResult<UserInfo>> GetInfoAsync(string identifier, CancellationToken cancellation = default)
 			{
 				var credential = await CredentialManager.GetCredentialAsync(this.Account, cancellation);
 
@@ -141,10 +156,10 @@ namespace Zongsoft.Externals.Wechat
 					return default;
 
 				var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={identifier}", cancellation);
-				var result = await response.GetResultAsync<InfoResultWrapper>(cancellation);
+				var result = await response.GetResultAsync<UserInfoWrapper>(cancellation);
 
-				return result.Succeed && result.Value.ErrorCode == 0 ?
-						OperationResult.Success(new Info(result.Value)) :
+				return result.Succeed ?
+						OperationResult.Success(new UserInfo(result.Value)) :
 						(OperationResult)result.Failure;
 			}
 			#endregion
@@ -152,14 +167,6 @@ namespace Zongsoft.Externals.Wechat
 			#region 嵌套结构
 			private struct IdentifierResult
 			{
-				[JsonPropertyName("errcode")]
-				[Serialization.SerializationMember("errcode")]
-				public int ErrorCode { get; set; }
-
-				[JsonPropertyName("errmsg")]
-				[Serialization.SerializationMember("errmsg")]
-				public string Message { get; set; }
-
 				[JsonPropertyName("total")]
 				[Serialization.SerializationMember("total")]
 				public int Total { get; set; }
@@ -184,16 +191,8 @@ namespace Zongsoft.Externals.Wechat
 				}
 			}
 
-			internal struct InfoResultWrapper
+			internal struct UserInfoWrapper
 			{
-				[JsonPropertyName("errcode")]
-				[Serialization.SerializationMember("errcode")]
-				public int ErrorCode { get; set; }
-
-				[JsonPropertyName("errmsg")]
-				[Serialization.SerializationMember("errmsg")]
-				public string Message { get; set; }
-
 				[JsonPropertyName("subscribe")]
 				[Serialization.SerializationMember("subscribe")]
 				public int SubscribeId { get; set; }
@@ -220,7 +219,7 @@ namespace Zongsoft.Externals.Wechat
 
 				[JsonPropertyName("unionid")]
 				[Serialization.SerializationMember("unionid")]
-				public string UniqueId { get; set; }
+				public string UnionId { get; set; }
 
 				[JsonPropertyName("remark")]
 				[Serialization.SerializationMember("remark")]
@@ -248,16 +247,16 @@ namespace Zongsoft.Externals.Wechat
 
 			}
 
-			public struct Info
+			public struct UserInfo
 			{
-				internal Info(InfoResultWrapper info)
+				internal UserInfo(UserInfoWrapper info)
 				{
 					this.Subscription = new SubscriptionInfo(info.SubscribeId, info.SubscribedTime, info.SubscribedScene);
 					this.Identifier = info.Identifier;
 					this.Nickname = info.Nickname;
 					this.Language = info.Language;
 					this.Avatar = info.Avatar;
-					this.UniqueId = info.UniqueId;
+					this.UnionId = info.UnionId;
 					this.GroupId = info.GroupId;
 					this.Tags = info.Tags;
 					this.Description = info.Description;
@@ -269,7 +268,7 @@ namespace Zongsoft.Externals.Wechat
 				public string Nickname { get; }
 				public string Language { get; }
 				public string Avatar { get; }
-				public string UniqueId { get; }
+				public string UnionId { get; }
 				public int GroupId { get; }
 				public uint[] Tags { get; }
 				public SubscriptionInfo Subscription { get; }

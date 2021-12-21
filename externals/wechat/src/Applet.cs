@@ -68,37 +68,29 @@ namespace Zongsoft.Externals.Wechat
 			var response = await CredentialManager.Http.GetAsync($"/sns/jscode2session?appid={this.Account.Code}&secret={this.Account.Secret}&js_code={token}&grant_type=authorization_code", cancellation);
 			var result = await response.GetResultAsync<LoginResultWrapper>(cancellation);
 
-			return result.Succeed && result.Value.ErrorCode == 0 ?
+			return result.Succeed ?
 				OperationResult.Success(new LoginResult(result.Value.OpenId, result.Value.Secret, result.Value.UnionId)) :
-				OperationResult.Fail(result.Value.ErrorCode, result.Value.Message);
+				(OperationResult)result.Failure;
 		}
 		#endregion
 
 		#region 嵌套结构
 		public readonly struct LoginResult
 		{
-			public LoginResult(string identifier, string secret, string uniqueId)
+			public LoginResult(string identifier, string secret, string unionId)
 			{
 				this.Identifier = identifier;
 				this.Secret = secret;
-				this.UniqueId = uniqueId;
+				this.UnionId = unionId;
 			}
 
 			public string Secret { get; }
 			public string Identifier { get; }
-			public string UniqueId { get; }
+			public string UnionId { get; }
 		}
 
 		private struct LoginResultWrapper
 		{
-			[JsonPropertyName("errcode")]
-			[Serialization.SerializationMember("errcode")]
-			public int ErrorCode { get; set; }
-
-			[JsonPropertyName("errmsg")]
-			[Serialization.SerializationMember("errmsg")]
-			public string Message { get; set; }
-
 			[JsonPropertyName("session_key")]
 			[Serialization.SerializationMember("session_key")]
 			public string Secret { get; set; }
