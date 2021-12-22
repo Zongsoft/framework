@@ -31,7 +31,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
 	public static class AuthorityFactory
 	{
@@ -64,7 +64,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		private static IAuthority CreateAuthority(string name)
 		{
-			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Paying/{name}");
+			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}");
 
 			if(options == null || string.IsNullOrEmpty(options.Code))
 				return null;

@@ -28,15 +28,26 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Wechat.Paying.Options
+namespace Zongsoft.Externals.Wechat.Options
 {
-	/// <summary>
-	/// 表示微信支付反馈的配置项。
-	/// </summary>
-	public class FallbackOptions
+	public class AuthorityOptionsCollection : KeyedCollection<string, AuthorityOptions>
 	{
-		/// <summary>获取或设置通知地址。</summary>
-		public string Url { get; set; }
+		#region 公共属性
+		public string Default { get; set; }
+		#endregion
+
+		#region 构造函数
+		public AuthorityOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+		#endregion
+
+		#region 公共方法
+		public AuthorityOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var authority) ? authority : (this.Count > 0 ? this[0] : null);
+		#endregion
+
+		#region 重写方法
+		protected override string GetKeyForItem(AuthorityOptions item) => item.Name;
+		#endregion
 	}
 }

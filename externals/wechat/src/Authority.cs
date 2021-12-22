@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
 	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
 	{
