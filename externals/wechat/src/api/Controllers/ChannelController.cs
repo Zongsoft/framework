@@ -77,8 +77,19 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			});
 		}
 
-		[HttpGet("{key}/Users/{identifier?}")]
-		public async ValueTask<IActionResult> Get(string key, string identifier = null, [FromQuery] string bookmark = null)
+		private Channel GetChannel(string key)
+		{
+			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
+			return account.IsEmpty ? null : new Channel(account);
+		}
+	}
+
+	[ApiController]
+	[Route("Externals/Wechat/Channels/{key}/Users")]
+	public class ChannelUserController : ControllerBase
+	{
+		[HttpGet("{identifier?}")]
+		public async ValueTask<IActionResult> Get(string key, string identifier = null, [FromQuery]string bookmark = null)
 		{
 			var channel = this.GetChannel(key);
 

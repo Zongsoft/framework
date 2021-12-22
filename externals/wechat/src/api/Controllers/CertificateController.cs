@@ -41,48 +41,13 @@ using Zongsoft.Services;
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
 	[ApiController]
-	[Route("Externals/Wechat/Applets")]
-	public class AppletController : ControllerBase
+	[Route("Externals/Wechat/Certificates")]
+	public class CertificateController : ControllerBase
 	{
-		[HttpPost("{key}/{action}/{token}")]
-		public async ValueTask<IActionResult> Login(string key, string token)
+		[HttpGet("{name?}")]
+		public async ValueTask<IActionResult> GetCertificate(string name = null)
 		{
-			if(string.IsNullOrEmpty(key))
-				return this.BadRequest();
-
-			if(string.IsNullOrEmpty(token))
-				return this.BadRequest();
-
-			var applet = this.GetApplet(key);
-			if(applet == null)
-				return this.NotFound();
-
-			var result = await applet.LoginAsync(token);
-			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.Identifier }) : this.NotFound(result.Failure);
-		}
-
-		[HttpGet("{key}/Phone/{token}")]
-		[HttpGet("{key}/PhoneNumber/{token}")]
-		public async ValueTask<IActionResult> GetPhoneNumber(string key, string token)
-		{
-			if(string.IsNullOrEmpty(key))
-				return this.BadRequest();
-
-			if(string.IsNullOrEmpty(token))
-				return this.BadRequest();
-
-			var applet = this.GetApplet(key);
-			if(applet == null)
-				return this.NotFound();
-
-			var result = await applet.GetPhoneNumberAsync(token);
-			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
-		}
-
-		private Applet GetApplet(string key)
-		{
-			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
-			return account.IsEmpty ? null : new Applet(account);
+			return this.NotFound();
 		}
 	}
 }

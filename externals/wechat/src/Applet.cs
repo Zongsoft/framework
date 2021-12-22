@@ -31,6 +31,8 @@ using System;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -74,6 +76,19 @@ namespace Zongsoft.Externals.Wechat
 		}
 		#endregion
 
+		#region 手机号码
+		public async ValueTask<OperationResult<string>> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
+		{
+			var credential = await CredentialManager.GetCredentialAsync(this.Account, cancellation);
+			var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
+			var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
+
+			return result.Succeed ?
+				OperationResult.Success(result.Value.Phone.PhoneNumber) :
+				(OperationResult)result.Failure;
+		}
+		#endregion
+
 		#region 嵌套结构
 		public readonly struct LoginResult
 		{
@@ -102,6 +117,24 @@ namespace Zongsoft.Externals.Wechat
 			[JsonPropertyName("unionid")]
 			[Serialization.SerializationMember("unionid")]
 			public string UnionId { get; set; }
+		}
+
+		private struct PhoneInfoWrapper
+		{
+			[JsonPropertyName("phone_info")]
+			[Serialization.SerializationMember("phone_info")]
+			public PhoneInfo Phone;
+
+			public struct PhoneInfo
+			{
+				[JsonPropertyName("phoneNumber")]
+				[Serialization.SerializationMember("phoneNumber")]
+				public string PhoneNumber;
+
+				[JsonPropertyName("countryCode")]
+				[Serialization.SerializationMember("countryCode")]
+				public string CountryCode;
+			}
 		}
 		#endregion
 	}
