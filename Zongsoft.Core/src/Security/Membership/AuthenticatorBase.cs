@@ -38,10 +38,6 @@ namespace Zongsoft.Security.Membership
 {
 	public abstract class AuthenticatorBase
 	{
-		#region 静态变量
-		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1);
-		#endregion
-
 		#region 构造函数
 		protected AuthenticatorBase(IServiceProvider serviceProvider)
 		{
@@ -76,7 +72,7 @@ namespace Zongsoft.Security.Membership
 			var result = this.OnAuthenticate(scheme, token, data, scenario, parameters);
 
 			if(result.Failed)
-				return OperationResult.Fail(result.Reason, result.Message);
+				return (OperationResult)result.Failure;
 
 			//生成安全主体
 			var principal = CreateCredential(result.Value, scenario);
@@ -96,7 +92,7 @@ namespace Zongsoft.Security.Membership
 
 					//质询失败则返回失败
 					if(result.Failed)
-						return OperationResult.Fail(result.Reason, result.Message);
+						return (OperationResult)result.Failure;
 				}
 			}
 
@@ -118,8 +114,8 @@ namespace Zongsoft.Security.Membership
 		protected virtual CredentialPrincipal CreateCredential(ClaimsIdentity identity, string scenario)
 		{
 			return new CredentialPrincipal(
-				((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Randomizer.GenerateString(8),
-				((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8),
+				((ulong)(DateTime.UtcNow - Timestamp.Millennium.Epoch).TotalSeconds).ToString() + Randomizer.GenerateString(8),
+				((ulong)(DateTime.UtcNow - Timestamp.Millennium.Epoch).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8),
 				scenario,
 				identity);
 		}

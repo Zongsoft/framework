@@ -83,7 +83,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 			return result.Succeed ?
 				this.Ok(this.Transform(result.Value)) :
-				this.StatusCode(403, new { result.Reason, result.Message });
+				this.StatusCode(403, result.Failure);
 		}
 
 		[HttpPost]

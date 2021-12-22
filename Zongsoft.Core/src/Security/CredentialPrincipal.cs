@@ -89,7 +89,7 @@ namespace Zongsoft.Security
 		/// <summary>获取凭证编号。</summary>
 		public string CredentialId { get; }
 
-		/// <summary>获取续约标识。</summary>
+		/// <summary>获取续约令牌。</summary>
 		public string RenewalToken { get; }
 
 		/// <summary>获取场景名称。</summary>

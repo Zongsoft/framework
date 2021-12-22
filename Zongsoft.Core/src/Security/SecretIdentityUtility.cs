@@ -42,12 +42,13 @@ namespace Zongsoft.Security
 			if(data is byte[] bytes)
 				return System.Text.Encoding.UTF8.GetString(bytes);
 
+			if(data is MemoryStream memory)
+				return System.Text.Encoding.UTF8.GetString(memory.ToArray());
+
 			if(data is Stream stream)
 			{
-				using(var reader = new StreamReader(stream, System.Text.Encoding.UTF8))
-				{
-					return reader.ReadToEnd();
-				}
+				using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+				return reader.ReadToEnd();
 			}
 
 			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
