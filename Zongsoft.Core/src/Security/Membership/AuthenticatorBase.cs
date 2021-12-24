@@ -38,6 +38,14 @@ namespace Zongsoft.Security.Membership
 {
 	public abstract class AuthenticatorBase
 	{
+		#region 事件定义
+		/// <summary>表示验证完成的事件。</summary>
+		event EventHandler<AuthenticatedEventArgs> Authenticated;
+
+		/// <summary>表示验证开始的事件。</summary>
+		event EventHandler<AuthenticatingEventArgs> Authenticating;
+		#endregion
+
 		#region 构造函数
 		protected AuthenticatorBase(IServiceProvider serviceProvider)
 		{
@@ -119,6 +127,11 @@ namespace Zongsoft.Security.Membership
 				scenario,
 				identity);
 		}
+		#endregion
+
+		#region 激发事件
+		protected virtual void OnAuthenticated(AuthenticatedEventArgs args) => this.Authenticated?.Invoke(this, args);
+		protected virtual void OnAuthenticating(AuthenticatingEventArgs args) => this.Authenticating?.Invoke(this, args);
 		#endregion
 	}
 }

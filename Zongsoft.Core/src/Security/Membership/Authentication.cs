@@ -36,21 +36,13 @@ namespace Zongsoft.Security.Membership
 	/// 提供身份验证的平台类。
 	/// </summary>
 	[System.Reflection.DefaultMember(nameof(Authenticator))]
-	public class Authentication
+	public static class Authentication
 	{
-		#region 静态变量
-		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1);
-		#endregion
-
-		#region 单例字段
-		public static readonly Authentication Instance = new Authentication();
-		#endregion
-
-		#region 构造函数
-		private Authentication()
+		#region 静态构造
+		static Authentication()
 		{
-			this.Challengers = new List<IAuthenticationChallenger>();
-			this.Transformers = new Collections.NamedCollection<IClaimsIdentityTransformer>(transformer => transformer.Name);
+			Challengers = new List<IAuthenticationChallenger>();
+			Transformers = new Collections.NamedCollection<IClaimsIdentityTransformer>(transformer => transformer.Name);
 		}
 		#endregion
 
@@ -58,88 +50,29 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 获取或设置凭证主体的提供程序。
 		/// </summary>
-		public ICredentialProvider Authority { get; set; }
+		public static ICredentialProvider Authority { get; set; }
 
 		/// <summary>
 		/// 获取或设置身份验证器。
 		/// </summary>
-		public IAuthenticator Authenticator { get; set; }
+		public static AuthenticatorBase Authenticator { get; set; }
 
 		/// <summary>
 		/// 获取一个身份验证验证器集合。
 		/// </summary>
-		public ICollection<IAuthenticationChallenger> Challengers { get; }
+		public static ICollection<IAuthenticationChallenger> Challengers { get; }
 
 		/// <summary>
 		/// 获取一个身份转换器集合。
 		/// </summary>
-		public Collections.INamedCollection<IClaimsIdentityTransformer> Transformers { get; }
+		public static Collections.INamedCollection<IClaimsIdentityTransformer> Transformers { get; }
 		#endregion
 
 		#region 公共方法
-		public bool Verify(uint userId, string password, out string reason)
+		public static Common.OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
-			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return authenticator.Verify(userId, password, out reason);
-		}
-
-		public AuthenticationResult Authenticate(string identity, string verifier, string token, string @namespace, string scenario, IDictionary<string, object> parameters)
-		{
-			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return this.OnAuthenticated(authenticator, scenario, authenticator.Authenticate(identity, verifier, token, @namespace, scenario, parameters));
-		}
-
-		public AuthenticationResult Authenticate(string identity, string password, string @namespace, string scenario, IDictionary<string, object> parameters)
-		{
-			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return this.OnAuthenticated(authenticator, scenario, authenticator.Authenticate(identity, password, @namespace, scenario, parameters));
-		}
-
-		public AuthenticationResult AuthenticateSecret(string identity, string secret, string @namespace, string scenario, IDictionary<string, object> parameters)
-		{
-			var authenticator = this.Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return this.OnAuthenticated(authenticator, scenario, authenticator.AuthenticateSecret(identity, secret, @namespace, scenario, parameters));
-		}
-		#endregion
-
-		#region 私有方法
-		private AuthenticationResult OnAuthenticated(IAuthenticator authenticator, string scenario, AuthenticationResult result)
-		{
-			if(result == null)
-				return null;
-
-			if(result.Succeed)
-				result.Principal = new CredentialPrincipal(GenerateId(out var token), token, scenario, result.Identity);
-
-			var context = new AuthenticationContext(authenticator.Scheme, scenario, result);
-
-			foreach(var challenger in this.Challengers)
-			{
-				challenger.Challenge(context);
-			}
-
-			if(context.Succeed)
-			{
-				authenticator.OnChallenged(context);
-
-				if(context.Principal is CredentialPrincipal principal)
-					this.Authority.Register(principal);
-			}
-
-			return context.Result;
-		}
-		#endregion
-
-		#region 静态方法
-		public static string GenerateId()
-		{
-			return ((ulong)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString() + Common.Randomizer.GenerateString(8);
-		}
-
-		public static string GenerateId(out string token)
-		{
-			token = ((ulong)(DateTime.UtcNow - EPOCH).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Common.Randomizer.GenerateString(8);
-			return GenerateId();
+			var authenticator = Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
+			return authenticator.Authenticate(scheme, key, data, scenario, parameters);
 		}
 		#endregion
 	}

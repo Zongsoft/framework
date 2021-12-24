@@ -98,7 +98,7 @@ namespace Zongsoft.Security
 
 		protected virtual object TransformIdentity(string name, ClaimsIdentity identity)
 		{
-			var transformers = Membership.Authentication.Instance.Transformers;
+			var transformers = Membership.Authentication.Transformers;
 
 			if(transformers != null && transformers.TryGet(name ?? string.Empty, out var transformer))
 				return transformer.Transform(identity);
