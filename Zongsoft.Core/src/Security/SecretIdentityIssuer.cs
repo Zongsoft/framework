@@ -40,22 +40,22 @@ namespace Zongsoft.Security
 	{
 		public string Name { get => "Secret"; }
 
-		ClaimsIdentity IIdentityIssuer.Issue(object data, TimeSpan period, IDictionary<string, object> parameters)
+		ClaimsIdentity IIdentityIssuer.Issue(object token, TimeSpan period, IDictionary<string, object> parameters)
 		{
-			return this.Issue(SecretIdentityUtility.GetTicket(data), period, parameters);
+			return this.Issue(SecretIdentityUtility.GetTicket(token), period, parameters);
 		}
 
-		public ClaimsIdentity Issue(string data, TimeSpan period, IDictionary<string, object> parameters)
+		public ClaimsIdentity Issue(string token, TimeSpan period, IDictionary<string, object> parameters)
 		{
-			if(string.IsNullOrEmpty(data))
+			if(string.IsNullOrEmpty(token))
 				return null;
 
 			var identity = new ClaimsIdentity(this.Name);
 
-			if(data.Contains('@'))
-				identity.AddClaim(ClaimTypes.Email, data, ClaimValueTypes.Email, this.Name);
+			if(token.Contains('@'))
+				identity.AddClaim(ClaimTypes.Email, token, ClaimValueTypes.Email, this.Name);
 			else
-				identity.AddClaim(ClaimTypes.MobilePhone, data, ClaimValueTypes.String, this.Name);
+				identity.AddClaim(ClaimTypes.MobilePhone, token, ClaimValueTypes.String, this.Name);
 
 			if(period > TimeSpan.Zero)
 				identity.AddClaim(new Claim(ClaimTypes.Expiration, period.ToString(), period.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, this.Name, this.Name, identity));

@@ -33,7 +33,7 @@ namespace Zongsoft.Security.Membership
 {
 	public interface IIdentityTicket
 	{
-		string Identity { get; set; }
 		string Namespace { get; set; }
+		string Identity { get; set; }
 	}
 }

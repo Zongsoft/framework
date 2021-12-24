@@ -55,12 +55,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 身份验证
-		protected override OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string token, object data, string scenario, IDictionary<string, object> parameters)
+		protected override OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
 			var suiter = this.GetSuiter(scheme);
 
 			//校验身份
-			var result = suiter.Verifier.Verify(token, data, out var ticket);
+			var result = suiter.Verifier.Verify(key, data);
 
 			if(result.Failed)
 				return result;
@@ -73,7 +73,7 @@ namespace Zongsoft.Security.Membership
 				period = option.Period;
 
 			//签发身份
-			var identity = suiter.Issuer.Issue(ticket, period, parameters);
+			var identity = suiter.Issuer.Issue(result.Value, period, parameters);
 
 			if(identity == null)
 				return OperationResult.Fail(SecurityReasons.InvalidIdentity);

@@ -66,10 +66,10 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public OperationResult<CredentialPrincipal> Authenticate(string scheme, string token, object data, string scenario, IDictionary<string, object> parameters)
+		public OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
 			//进行身份验证
-			var result = this.OnAuthenticate(scheme, token, data, scenario, parameters);
+			var result = this.OnAuthenticate(scheme, key, data, scenario, parameters);
 
 			if(result.Failed)
 				return (OperationResult)result.Failure;
@@ -105,7 +105,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 抽象方法
-		protected abstract OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string token, object data, string scenario, IDictionary<string, object> parameters);
+		protected abstract OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters);
 		#endregion
 
 		#region 虚拟方法

@@ -54,8 +54,8 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpPost("{scheme?}/{token?}")]
-		public IActionResult Signin(string scheme, string token, [FromQuery]string scenario)
+		[HttpPost("{scheme?}/{key?}")]
+		public IActionResult Signin(string scheme, string key, [FromQuery]string scenario)
 		{
 			if(string.IsNullOrWhiteSpace(scenario))
 				return this.BadRequest();
@@ -79,7 +79,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(feature != null)
 				feature.AllowSynchronousIO = true;
 
-			var result = this.Authenticator.Authenticate(scheme, token, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			var result = this.Authenticator.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
 			return result.Succeed ?
 				this.Ok(this.Transform(result.Value)) :

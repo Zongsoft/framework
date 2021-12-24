@@ -52,23 +52,26 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 校验方法
-		OperationResult IIdentityVerifier.Verify(string token, object data, out object ticket)
+		OperationResult IIdentityVerifier.Verify(string key, object data)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(token, (string)(ticket = SecretIdentityUtility.GetTicket(data)));
+			return this.Verify(key, SecretIdentityUtility.GetTicket(data));
 		}
 
-		public OperationResult Verify(string token, string data)
+		public OperationResult Verify(string key, string data)
 		{
-			var index = token.IndexOf(':');
+			if(string.IsNullOrEmpty(data))
+				return OperationResult.Fail("InvalidToken");
 
-			if(index <= 0 || index >= token.Length - 1)
+			var index = data.IndexOfAny(new[] { ':', '=' });
+
+			if(index <= 0 || index >= data.Length - 1)
 				return OperationResult.Fail(SecurityReasons.InvalidArgument, $"Illegal identity verification token format.");
 
-			var key = token.Substring(0, index);
-			var secret = token.Substring(index + 1);
+			var phone = data.Substring(0, index);
+			var secret = data.Substring(index + 1);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
@@ -90,8 +93,8 @@ namespace Zongsoft.Security
 			if(attempter != null)
 				attempter.Done(key);
 
-			return string.IsNullOrEmpty(extra) || string.IsNullOrEmpty(data) || string.Equals(extra, data, StringComparison.OrdinalIgnoreCase) ?
-				OperationResult.Success() :
+			return string.IsNullOrEmpty(extra) || string.IsNullOrEmpty(phone) || string.Equals(extra, phone, StringComparison.OrdinalIgnoreCase) ?
+				OperationResult.Success(phone) :
 				OperationResult.Fail(SecurityReasons.VerifyFaild, $"Identity verification data is inconsistent.");
 		}
 		#endregion

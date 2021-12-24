@@ -35,7 +35,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class IdentityVerifierBase : IIdentityVerifier<IIdentityTicket>
+	public abstract class IdentityVerifierBase : IIdentityVerifier<IdentityVerifierBase.UserTicket>
 	{
 		#region 构造函数
 		protected IdentityVerifierBase(string name, IServiceProvider serviceProvider)
@@ -58,18 +58,23 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		OperationResult IIdentityVerifier.Verify(string token, object data, out object ticket)
+		OperationResult IIdentityVerifier.Verify(string key, object data)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(token, (IIdentityTicket)(ticket = IdentityUtility.GetTicket<UserTicket>(data)));
+			return this.Verify(key, IdentityUtility.GetTicket<UserTicket>(data));
 		}
 
-		public OperationResult Verify(string token, IIdentityTicket data)
+		public OperationResult Verify(string key, UserTicket data)
 		{
-			if(data == null || string.IsNullOrWhiteSpace(data.Identity))
-				return OperationResult.Fail(SecurityReasons.InvalidIdentity, "Missing identity.");
+			if(string.IsNullOrWhiteSpace(data.Identity))
+			{
+				if(string.IsNullOrEmpty(key))
+					return OperationResult.Fail(SecurityReasons.InvalidIdentity, "Missing identity.");
+
+				data.Identity = key;
+			}
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
@@ -89,10 +94,8 @@ namespace Zongsoft.Security.Membership
 			if(status != UserStatus.Active)
 				return OperationResult.Fail(SecurityReasons.AccountDisabled);
 
-			var password = (data is UserTicket identity) ? identity.Password : token;
-
 			//密码校验失败则返回密码验证失败
-			if(!PasswordUtility.VerifyPassword(password, storedPassword, storedPasswordSalt, "SHA1"))
+			if(!PasswordUtility.VerifyPassword(data.Password, storedPassword, storedPasswordSalt, "SHA1"))
 			{
 				//通知验证尝试失败
 				if(attempter != null)
@@ -105,7 +108,7 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done(data.Identity, data.Namespace);
 
-			return OperationResult.Success();
+			return OperationResult.Success(new UserTicket(data.Namespace, data.Identity));
 		}
 		#endregion
 
@@ -114,13 +117,19 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 嵌套结构
-		private class UserTicket : IIdentityTicket
+		public struct UserTicket : IIdentityTicket
 		{
-			public string Identity { get; set; }
+			public UserTicket(string @namespace, string identity, string password = null)
+			{
+				this.Namespace = @namespace;
+				this.Identity = identity;
+				this.Password = password;
+			}
+
 			public string Namespace { get; set; }
+			public string Identity { get; set; }
 			public string Password { get; set; }
 		}
 		#endregion
 	}
-
 }

@@ -44,11 +44,11 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 签发身份凭证。
 		/// </summary>
-		/// <param name="data">指定的身份数据。</param>
+		/// <param name="token">指定的身份令牌。</param>
 		/// <param name="period">签发的凭证有效期。</param>
 		/// <param name="parameters">指定的参数集。</param>
 		/// <returns></returns>
-		ClaimsIdentity Issue(object data, TimeSpan period, IDictionary<string, object> parameters);
+		ClaimsIdentity Issue(object token, TimeSpan period, IDictionary<string, object> parameters);
 	}
 
 	/// <summary>
@@ -60,10 +60,10 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 签发身份凭证。
 		/// </summary>
-		/// <param name="data">指定类型的身份数据。</param>
+		/// <param name="token">指定类型的身份令牌。</param>
 		/// <param name="period">签发的凭证有效期。</param>
 		/// <param name="parameters">指定的参数集。</param>
 		/// <returns></returns>
-		ClaimsIdentity Issue(T data, TimeSpan period, IDictionary<string, object> parameters);
+		ClaimsIdentity Issue(T token, TimeSpan period, IDictionary<string, object> parameters);
 	}
 }

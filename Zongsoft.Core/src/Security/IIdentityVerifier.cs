@@ -43,11 +43,10 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 校验身份。
 		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
+		/// <param name="key">指定的校验键值。</param>
 		/// <param name="data">指定的校验数据。</param>
-		/// <param name="ticket">输出参数，表示验证成功后的票据对象（即校验数据的类型对象）。</param>
 		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, object data, out object ticket);
+		Common.OperationResult Verify(string key, object data);
 	}
 
 	/// <summary>
@@ -59,9 +58,9 @@ namespace Zongsoft.Security
 		/// <summary>
 		/// 校验身份。
 		/// </summary>
-		/// <param name="token">指定的校验票据。</param>
+		/// <param name="key">指定的校验键值。</param>
 		/// <param name="data">指定的校验数据。</param>
 		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string token, T data);
+		Common.OperationResult Verify(string key, T data);
 	}
 }
