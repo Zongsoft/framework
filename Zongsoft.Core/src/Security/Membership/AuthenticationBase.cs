@@ -36,18 +36,15 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class AuthenticatorBase
+	public abstract class AuthenticationBase : IAuthentication
 	{
 		#region 事件定义
-		/// <summary>表示验证完成的事件。</summary>
-		event EventHandler<AuthenticatedEventArgs> Authenticated;
-
-		/// <summary>表示验证开始的事件。</summary>
-		event EventHandler<AuthenticatingEventArgs> Authenticating;
+		public event EventHandler<AuthenticatedEventArgs> Authenticated;
+		public event EventHandler<AuthenticatingEventArgs> Authenticating;
 		#endregion
 
 		#region 构造函数
-		protected AuthenticatorBase(IServiceProvider serviceProvider)
+		protected AuthenticationBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
@@ -55,19 +52,11 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		/// <summary>获取当前验证器的标识。</summary>
-		public virtual string Scheme { get => "Zongsoft.Authenticator"; }
+		public virtual string Scheme { get => "Zongsoft.Authentication"; }
 
 		/// <summary>获取或设置验证失败阻止器。</summary>
 		[ServiceDependency(Mapping.Security)]
 		public IAttempter Attempter { get; set; }
-
-		/// <summary>获取或设置凭证提供程序。</summary>
-		[ServiceDependency(Mapping.Security, IsRequired = true)]
-		public ICredentialProvider Authority { get; set; }
-
-		/// <summary>获取或设置安全主体转换器。</summary>
-		[ServiceDependency]
-		public IClaimsPrincipalTransformer Transformer { get; set; }
 
 		/// <summary>获取服务提供程序。</summary>
 		public IServiceProvider ServiceProvider { get; }
@@ -76,6 +65,9 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
+			//激发“Authenticating”事件
+			this.OnAuthenticating(new AuthenticatingEventArgs(this, data, scenario, parameters));
+
 			//进行身份验证
 			var result = this.OnAuthenticate(scheme, key, data, scenario, parameters);
 
@@ -104,8 +96,8 @@ namespace Zongsoft.Security.Membership
 				}
 			}
 
-			//注册凭证
-			this.Authority.Register(principal);
+			//通知验证完成
+			this.OnAuthenticated(principal, scenario, parameters);
 
 			//返回成功
 			return OperationResult.Success(principal);
@@ -117,16 +109,17 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IEnumerable<IIdentityChallenger> GetChallengers() => this.ServiceProvider.ResolveAll<IIdentityChallenger>();
-
-		protected virtual CredentialPrincipal CreateCredential(ClaimsIdentity identity, string scenario)
+		protected virtual void OnAuthenticated(CredentialPrincipal principal, string scenario, IDictionary<string, object> parameters)
 		{
-			return new CredentialPrincipal(
-				((ulong)(DateTime.UtcNow - Timestamp.Millennium.Epoch).TotalSeconds).ToString() + Randomizer.GenerateString(8),
-				((ulong)(DateTime.UtcNow - Timestamp.Millennium.Epoch).TotalDays).ToString() + Environment.TickCount64.ToString("X") + Randomizer.GenerateString(8),
-				scenario,
-				identity);
+			//注册凭证
+			Authentication.Authority.Register(principal);
+
+			//激发“Authenticated”事件
+			this.OnAuthenticated(new AuthenticatedEventArgs(this, principal, scenario, parameters));
 		}
+
+		protected virtual IEnumerable<IIdentityChallenger> GetChallengers() => this.ServiceProvider.ResolveAll<IIdentityChallenger>();
+		protected virtual CredentialPrincipal CreateCredential(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(scenario, identity);
 		#endregion
 
 		#region 激发事件

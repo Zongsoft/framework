@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.IO;
+using System.Text;
 using System.Security.Claims;
 using System.Collections.Generic;
 
@@ -36,6 +38,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
+	[Service(typeof(IAuthenticator))]
 	public class SecretAuthenticator : IAuthenticator<string, string>
 	{
 		#region 公共属性
@@ -54,7 +57,7 @@ namespace Zongsoft.Security.Membership
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, SecretIdentityUtility.GetTicket(data));
+			return this.Verify(key, GetTicket(data));
 		}
 
 		public OperationResult<string> Verify(string key, string data)
@@ -127,6 +130,25 @@ namespace Zongsoft.Security.Membership
 			}
 
 			return identity;
+		}
+		#endregion
+
+		#region 私有方法
+		private static string GetTicket(object data)
+		{
+			if(data is string text)
+				return text;
+
+			if(data is byte[] bytes)
+				return Encoding.UTF8.GetString(bytes);
+
+			if(data is Stream stream)
+			{
+				using var reader = new StreamReader(stream, Encoding.UTF8);
+				return reader.ReadToEnd();
+			}
+
+			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
 		}
 		#endregion
 	}

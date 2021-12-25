@@ -47,9 +47,6 @@ namespace Zongsoft.Security.Web.Controllers
 	{
 		#region 公共属性
 		[ServiceDependency]
-		public Authenticator Authenticator { get; set; }
-
-		[ServiceDependency]
 		public ISecretor Secretor { get; set; }
 		#endregion
 
@@ -79,7 +76,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(feature != null)
 				feature.AllowSynchronousIO = true;
 
-			var result = this.Authenticator.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			var result = Authentication.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
 			return result.Succeed ?
 				this.Ok(this.Transform(result.Value)) :
@@ -91,7 +88,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public void Signout()
 		{
 			if(this.User is CredentialPrincipal credential)
-				this.Authenticator.Authority.Unregister(credential.CredentialId);
+				Authentication.Authority?.Unregister(credential.CredentialId);
 		}
 
 		[Authorize]
@@ -103,7 +100,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 			if(this.User is CredentialPrincipal credential)
 			{
-				var principal = this.Authenticator.Authority.Renew(credential.CredentialId, id);
+				var principal = Authentication.Authority.Renew(credential.CredentialId, id);
 
 				return principal == null ?
 					Task.FromResult((IActionResult)this.NotFound()) :
@@ -126,7 +123,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#region 私有方法
 		private object Transform(System.Security.Claims.ClaimsPrincipal principal)
 		{
-			return (this.Authenticator.Transformer ?? ClaimsPrincipalTransformer.Default).Transform(principal);
+			return ClaimsPrincipalTransformer.Default.Transform(principal);
 		}
 		#endregion
 	}

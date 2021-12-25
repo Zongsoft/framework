@@ -30,37 +30,40 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security
+using Zongsoft.Common;
+using Zongsoft.Services;
+
+namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 提供身份校验功能的接口。
+	/// 表示提供身份验证功能的接口。
 	/// </summary>
-	public interface IIdentityVerifier
+	public interface IAuthentication
 	{
-		/// <summary>获取身份校验器名称。</summary>
-		string Name { get; }
+		#region 事件定义
+		/// <summary>表示验证完成的事件。</summary>
+		event EventHandler<AuthenticatedEventArgs> Authenticated;
 
-		/// <summary>
-		/// 校验身份。
-		/// </summary>
-		/// <param name="key">指定的校验键值。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string key, object data);
-	}
+		/// <summary>表示验证开始的事件。</summary>
+		event EventHandler<AuthenticatingEventArgs> Authenticating;
+		#endregion
 
-	/// <summary>
-	/// 提供身份校验功能的接口。
-	/// </summary>
-	/// <typeparam name="T">校验数据的类型。</typeparam>
-	public interface IIdentityVerifier<in T> : IIdentityVerifier
-	{
+		#region 属性定义
+		/// <summary>获取验证的标识。</summary>
+		string Scheme { get; }
+		#endregion
+
+		#region 方法定义
 		/// <summary>
-		/// 校验身份。
+		/// 身份验证。
 		/// </summary>
-		/// <param name="key">指定的校验键值。</param>
-		/// <param name="data">指定的校验数据。</param>
-		/// <returns>返回的校验结果。</returns>
-		Common.OperationResult Verify(string key, T data);
+		/// <param name="scheme">指定的身份验证方案。</param>
+		/// <param name="key">待验证的凭证标识。</param>
+		/// <param name="data">待验证的凭证数据。</param>
+		/// <param name="scenario">身份验证的场景。</param>
+		/// <param name="parameters">身份验证的扩展参数。</param>
+		/// <returns>返回的凭证主体。</returns>
+		OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters);
+		#endregion
 	}
 }

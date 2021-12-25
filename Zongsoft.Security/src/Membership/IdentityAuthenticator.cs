@@ -35,13 +35,9 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IIdentityVerifier))]
-	public class UserIdentityVerifier : IdentityVerifierBase
+	[Service(typeof(IAuthenticator))]
+	public class IdentityAuthenticator : IdentityAuthenticatorBase
 	{
-		#region 构造函数
-		public UserIdentityVerifier(IServiceProvider serviceProvider) : base("User", serviceProvider) { }
-		#endregion
-
 		#region 重写方法
 		protected override uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp)
 		{
@@ -77,6 +73,21 @@ namespace Zongsoft.Security.Membership
 
 			return user.UserId;
 		}
+
+		protected override IUser GetUser(IIdentityTicket ticket)
+		{
+			ICondition criteria = Utility.GetIdentityCondition(ticket.Identity);
+
+			if(ticket.Namespace != "*" && ticket.Namespace != "?")
+			{
+				if(string.IsNullOrEmpty(ticket.Namespace))
+					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), null));
+				else
+					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), ticket.Namespace));
+			}
+
+			return this.DataAccess.Value.Select<User>(criteria).FirstOrDefault();
+		}
 		#endregion
 
 		#region 嵌套结构
@@ -89,7 +100,22 @@ namespace Zongsoft.Security.Membership
 			public UserStatus Status;
 			public DateTime? StatusTimestamp;
 		}
+
+		[Model("Security.User")]
+		private abstract class User : IUser, IUserIdentity
+		{
+			public abstract uint UserId { get; set; }
+			public abstract string Name { get; set; }
+			public abstract string FullName { get; set; }
+			public abstract string Namespace { get; set; }
+			public abstract string Email { get; set; }
+			public abstract string Phone { get; set; }
+			public abstract UserStatus Status { get; set; }
+			public abstract DateTime? StatusTimestamp { get; set; }
+			public abstract DateTime Creation { get; set; }
+			public abstract DateTime? Modification { get; set; }
+			public abstract string Description { get; set; }
+		}
 		#endregion
 	}
-
 }

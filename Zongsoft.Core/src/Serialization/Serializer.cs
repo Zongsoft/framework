@@ -87,11 +87,7 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 反序列化
-			public object Deserialize(Stream stream, SerializationOptions options = null)
-			{
-				throw new NotImplementedException();
-			}
-
+			public object Deserialize(Stream stream, SerializationOptions options = null) => throw new NotSupportedException();
 			public object Deserialize(Stream stream, Type type, SerializationOptions options = null)
 			{
 				using(var reader = new StreamReader(stream, Encoding.UTF8))
@@ -100,6 +96,9 @@ namespace Zongsoft.Serialization
 				}
 			}
 
+			public object Deserialize(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => throw new NotSupportedException();
+			public object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null) => JsonSerializer.Deserialize(buffer, type, GetOptions(options));
+
 			public T Deserialize<T>(Stream stream, SerializationOptions options = null)
 			{
 				using(var reader = new StreamReader(stream, Encoding.UTF8))
@@ -107,6 +106,7 @@ namespace Zongsoft.Serialization
 					return JsonSerializer.Deserialize<T>(reader.ReadToEnd(), GetOptions(options));
 				}
 			}
+			public T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => JsonSerializer.Deserialize<T>(buffer, GetOptions(options));
 
 			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{

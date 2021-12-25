@@ -38,13 +38,9 @@ using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service]
-	public class Authenticator : AuthenticatorBase
+	[Service(typeof(IAuthentication))]
+	public class Authenticator : AuthenticationBase
 	{
-		#region 私有变量
-		private readonly ConcurrentDictionary<string, AuthenticatorSuiter> _cache = new ConcurrentDictionary<string, AuthenticatorSuiter>(StringComparer.OrdinalIgnoreCase);
-		#endregion
-
 		#region 构造函数
 		public Authenticator(IServiceProvider serviceProvider) : base(serviceProvider) { }
 		#endregion
@@ -57,10 +53,13 @@ namespace Zongsoft.Security.Membership
 		#region 身份验证
 		protected override OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
-			var suiter = this.GetSuiter(scheme);
+			var authenticator = this.ServiceProvider.Resolve<IAuthenticator>(scheme);
+
+			if(authenticator == null)
+				return OperationResult.Fail("InvalidAuthenticator");
 
 			//校验身份
-			var result = suiter.Verifier.Verify(key, data);
+			var result = authenticator.Verify(key, data);
 
 			if(result.Failed)
 				return result;
@@ -73,55 +72,12 @@ namespace Zongsoft.Security.Membership
 				period = option.Period;
 
 			//签发身份
-			var identity = suiter.Issuer.Issue(result.Value, period, parameters);
+			var identity = authenticator.Issue(result.Value, period, parameters);
 
 			if(identity == null)
 				return OperationResult.Fail(SecurityReasons.InvalidIdentity);
 
 			return OperationResult.Success(identity);
-		}
-		#endregion
-
-		#region 私有方法
-		private AuthenticatorSuiter GetSuiter(string scheme)
-		{
-			if(_cache.IsEmpty)
-			{
-				var verifiers = this.ServiceProvider.ResolveAll<IIdentityVerifier>();
-
-				foreach(var verifier in verifiers)
-					_cache.TryAdd(verifier.Name, new AuthenticatorSuiter(verifier));
-
-				var issuers = this.ServiceProvider.ResolveAll<IIdentityIssuer>();
-
-				foreach(var issuer in issuers)
-					_cache.AddOrUpdate(issuer.Name, _ => new AuthenticatorSuiter(issuer), (_, value) => new AuthenticatorSuiter(issuer, value.Verifier));
-			}
-
-			if(string.IsNullOrEmpty(scheme))
-				scheme = this.Options.Scheme ?? string.Empty;
-
-			return _cache.TryGetValue(scheme, out var token) ? token : throw new SecurityException($"Invalid '{scheme}' authentication scheme.");
-		}
-		#endregion
-
-		#region 嵌套结构
-		private readonly struct AuthenticatorSuiter
-		{
-			public AuthenticatorSuiter(IIdentityVerifier verifier, IIdentityIssuer issuer = null)
-			{
-				this.Verifier = verifier;
-				this.Issuer = issuer;
-			}
-
-			public AuthenticatorSuiter(IIdentityIssuer issuer, IIdentityVerifier verifier = null)
-			{
-				this.Issuer = issuer;
-				this.Verifier = verifier;
-			}
-
-			public readonly IIdentityVerifier Verifier;
-			public readonly IIdentityIssuer Issuer;
 		}
 		#endregion
 	}

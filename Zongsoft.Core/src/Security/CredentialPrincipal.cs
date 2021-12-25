@@ -42,6 +42,22 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
+		public CredentialPrincipal(string scenario, ClaimsIdentity identity) : base(identity)
+		{
+			var (credentialId, renewalToken) = GenerateIdentifier();
+			this.CredentialId = credentialId;
+			this.RenewalToken = renewalToken;
+			this.Scenario = scenario;
+		}
+
+		public CredentialPrincipal(string scenario, IEnumerable<ClaimsIdentity> identities) : base(identities)
+		{
+			var (credentialId, renewalToken) = GenerateIdentifier();
+			this.CredentialId = credentialId;
+			this.RenewalToken = renewalToken;
+			this.Scenario = scenario;
+		}
+
 		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity) : base(identity)
 		{
 			this.CredentialId = credentialId;
@@ -100,6 +116,12 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 公共方法
+		public override CredentialPrincipal Clone()
+		{
+			var (credentialId, renewalToken) = GenerateIdentifier();
+			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Expiration);
+		}
+
 		public CredentialPrincipal Clone(string credentialId, string renewalToken)
 		{
 			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Expiration);
@@ -151,6 +173,14 @@ namespace Zongsoft.Security
 
 			base.WriteTo(writer, userData);
 		}
+		#endregion
+
+		#region 私有方法
+		private static (string credentialId, string renewalToken) GenerateIdentifier() =>
+		(
+			$"{(ulong)(DateTime.UtcNow - Zongsoft.Common.Timestamp.Millennium.Epoch).TotalSeconds}{Zongsoft.Common.Randomizer.GenerateString(8)}",
+			$"{(ulong)(DateTime.UtcNow - Zongsoft.Common.Timestamp.Millennium.Epoch).TotalDays}{Environment.TickCount64:X}{Zongsoft.Common.Randomizer.GenerateString(8)}"
+		);
 		#endregion
 	}
 }

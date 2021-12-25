@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Security.Membership
 {
@@ -42,30 +43,22 @@ namespace Zongsoft.Security.Membership
 		static Authentication()
 		{
 			Challengers = new List<IAuthenticationChallenger>();
-			Transformers = new Collections.NamedCollection<IClaimsIdentityTransformer>(transformer => transformer.Name);
+			Transformers = new TransformerCollection();
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置凭证主体的提供程序。
-		/// </summary>
+		/// <summary>获取或设置凭证主体的提供程序。</summary>
 		public static ICredentialProvider Authority { get; set; }
 
-		/// <summary>
-		/// 获取或设置身份验证器。
-		/// </summary>
-		public static AuthenticatorBase Authenticator { get; set; }
+		/// <summary>获取或设置身份验证器。</summary>
+		public static IAuthentication Authenticator { get; set; }
 
-		/// <summary>
-		/// 获取一个身份验证验证器集合。
-		/// </summary>
+		/// <summary>获取一个身份验证验证器集合。</summary>
 		public static ICollection<IAuthenticationChallenger> Challengers { get; }
 
-		/// <summary>
-		/// 获取一个身份转换器集合。
-		/// </summary>
-		public static Collections.INamedCollection<IClaimsIdentityTransformer> Transformers { get; }
+		/// <summary>获取一个身份转换器集合。</summary>
+		public static KeyedCollection<string, IClaimsIdentityTransformer> Transformers { get; }
 		#endregion
 
 		#region 公共方法
@@ -73,6 +66,14 @@ namespace Zongsoft.Security.Membership
 		{
 			var authenticator = Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
 			return authenticator.Authenticate(scheme, key, data, scenario, parameters);
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class TransformerCollection : KeyedCollection<string, IClaimsIdentityTransformer>
+		{
+			public TransformerCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+			protected override string GetKeyForItem(IClaimsIdentityTransformer transformer) => transformer.Name;
 		}
 		#endregion
 	}

@@ -43,9 +43,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
-		protected ClaimsPrincipalTransformer()
-		{
-		}
+		protected ClaimsPrincipalTransformer() { }
 		#endregion
 
 		#region 公共方法
@@ -100,7 +98,7 @@ namespace Zongsoft.Security
 		{
 			var transformers = Membership.Authentication.Transformers;
 
-			if(transformers != null && transformers.TryGet(name ?? string.Empty, out var transformer))
+			if(transformers != null && transformers.TryGetValue(name ?? string.Empty, out var transformer))
 				return transformer.Transform(identity);
 			else
 				return identity.AsModel<Membership.IUser>();

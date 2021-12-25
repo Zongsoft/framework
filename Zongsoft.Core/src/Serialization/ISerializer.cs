@@ -57,6 +57,23 @@ namespace Zongsoft.Serialization
 		object Deserialize(Stream stream, Type type, SerializationOptions options = null);
 
 		/// <summary>
+		/// 反序列化指定<paramref name="buffer"/>包含的对象。
+		/// </summary>
+		/// <param name="buffer">待反序列化的缓存区。</param>
+		/// <param name="options">反序列化的设置。</param>
+		/// <returns>反序列化的结果。</returns>
+		object Deserialize(ReadOnlySpan<byte> buffer, SerializationOptions options = null);
+
+		/// <summary>
+		/// 反序列化指定<paramref name="buffer"/>包含的对象。
+		/// </summary>
+		/// <param name="buffer">待反序列化的缓存区。</param>
+		/// <param name="type">反序列化的结果类型。</param>
+		/// <param name="options">反序列化的设置。</param>
+		/// <returns>反序列化的结果。</returns>
+		object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null);
+
+		/// <summary>
 		/// 反序列化指定<paramref name="stream"/>包含的对象。
 		/// </summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
@@ -64,6 +81,15 @@ namespace Zongsoft.Serialization
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		T Deserialize<T>(Stream stream, SerializationOptions options = null);
+
+		/// <summary>
+		/// 反序列化指定<paramref name="buffer"/>包含的对象。
+		/// </summary>
+		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
+		/// <param name="buffer">待反序列化的缓存区。</param>
+		/// <param name="options">反序列化的设置。</param>
+		/// <returns>反序列化的结果。</returns>
+		T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null);
 
 		/// <summary>
 		/// 反序列化指定<paramref name="stream"/>包含的对象。

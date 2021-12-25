@@ -40,10 +40,11 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticatedEventArgs(IAuthenticator authenticator, ClaimsIdentity identity, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public AuthenticatedEventArgs(IAuthentication authentication, ClaimsPrincipal principal, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-			this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+			this.Authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
+			this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
+			this.Scenario = scenario;
 
 			if(parameters != null)
 				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
@@ -51,35 +52,29 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取激发的验证器对象。
-		/// </summary>
-		public IAuthenticator Authenticator { get; }
+		/// <summary>获取激发的身份验证对象。</summary>
+		public IAuthentication Authentication { get; }
 
-		/// <summary>
-		/// 获取身份验证的用户身份。
-		/// </summary>
-		public ClaimsIdentity Identity { get; }
+		/// <summary>获取身份验证的用户身份。</summary>
+		public ClaimsPrincipal Principal { get; }
 
-		/// <summary>
-		/// 获取身份验证是否通过。
-		/// </summary>
+		/// <summary>获取身份验证的应用场景。</summary>
+		public string Scenario { get; }
+
+		/// <summary>获取身份验证是否通过。</summary>
 		public bool IsAuthenticated
 		{
-			get => Identity != null && Identity.IsAuthenticated && !string.IsNullOrEmpty(Identity.Name);
+			get => Principal != null && this.Principal.Identity != null &&
+				Principal.Identity.IsAuthenticated && !string.IsNullOrEmpty(Principal.Identity.Name);
 		}
 
-		/// <summary>
-		/// 获取一个值，指示扩展参数集是否有内容。
-		/// </summary>
+		/// <summary>获取一个值，指示扩展参数集是否有内容。</summary>
 		public bool HasParameters
 		{
 			get => _parameters != null && _parameters.Count > 0;
 		}
 
-		/// <summary>
-		/// 获取验证结果的扩展参数集。
-		/// </summary>
+		/// <summary>获取验证结果的扩展参数集。</summary>
 		public IDictionary<string, object> Parameters
 		{
 			get
@@ -100,11 +95,10 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticatingEventArgs(IAuthenticator authenticator, string @namespace, string identity, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public AuthenticatingEventArgs(IAuthentication authentication, object ticket, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			this.Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
-			this.Namespace = @namespace;
-			this.Identity = identity;
+			this.Authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
+			this.Ticket = ticket;
 			this.Scenario = scenario;
 
 			if(parameters != null)
@@ -113,37 +107,22 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取激发的验证器对象。
-		/// </summary>
-		public IAuthenticator Authenticator { get; }
+		/// <summary>获取激发的身份验证对象。</summary>
+		public IAuthentication Authentication { get; }
 
-		/// <summary>
-		/// 获取身份验证的身份标识。
-		/// </summary>
-		public string Identity { get; }
+		/// <summary>获取待验证的票证对象。</summary>
+		public object Ticket { get; }
 
-		/// <summary>
-		/// 获取身份验证的命名空间。
-		/// </summary>
-		public string Namespace { get; }
-
-		/// <summary>
-		/// 获取身份验证的应用场景。
-		/// </summary>
+		/// <summary>获取身份验证的应用场景。</summary>
 		public string Scenario { get; }
 
-		/// <summary>
-		/// 获取一个值，指示扩展参数集是否有内容。
-		/// </summary>
+		/// <summary>获取一个值，指示扩展参数集是否有内容。</summary>
 		public bool HasParameters
 		{
 			get => _parameters != null && _parameters.Count > 0;
 		}
 
-		/// <summary>
-		/// 获取验证结果的扩展参数集。
-		/// </summary>
+		/// <summary>获取验证结果的扩展参数集。</summary>
 		public IDictionary<string, object> Parameters
 		{
 			get

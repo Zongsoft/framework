@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.IO;
 using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Security.Membership
 {
@@ -61,7 +63,7 @@ namespace Zongsoft.Security.Membership
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, IdentityUtility.GetTicket<Ticket>(data));
+			return this.Verify(key, GetTicket(data));
 		}
 
 		public OperationResult<IIdentityTicket> Verify(string key, Ticket data)
@@ -135,6 +137,21 @@ namespace Zongsoft.Security.Membership
 		protected abstract uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp);
 		protected abstract IUser GetUser(IIdentityTicket ticket);
 		protected virtual ClaimsIdentity Identity(IUser user, TimeSpan period) => user.Identity(this.Name, this.Name, period);
+		#endregion
+
+		#region 私有方法
+		private static Ticket GetTicket(object data)
+		{
+			return data switch
+			{
+				string text => Serializer.Json.Deserialize<Ticket>(text),
+				byte[] array => Serializer.Json.Deserialize<Ticket>(array),
+				Stream stream => Serializer.Json.Deserialize<Ticket>(stream),
+				Memory<byte> memory => Serializer.Json.Deserialize<Ticket>(memory.Span),
+				ReadOnlyMemory<byte> memory => Serializer.Json.Deserialize<Ticket>(memory.Span),
+				_ => throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported."),
+			};
+		}
 		#endregion
 
 		#region 嵌套结构
