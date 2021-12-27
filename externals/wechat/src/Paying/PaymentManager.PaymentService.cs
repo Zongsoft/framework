@@ -142,7 +142,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				internal static string GetFallback(string key)
 				{
-					var url = Utility.GetOptions<Options.FallbackOptions>($"/Externals/Wechat/Paying/Fallback")?.Url;
+					var url = Utility.GetOptions<Options.FallbackOptions>($"/Externals/Wechat/Fallback")?.Url;
 
 					if(string.IsNullOrWhiteSpace(url))
 						return null;
