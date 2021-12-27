@@ -18,25 +18,20 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Security
 {
-	public abstract class IdentityChallengerBase<TEntity> : IIdentityChallenger
+	public abstract class ChallengerBase<TEntity> : IChallenger
 	{
 		#region 构造函数
-		protected IdentityChallengerBase() { }
+		protected ChallengerBase() { }
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanChallenge(ClaimsPrincipal principal) => true;
-
-		public OperationResult Challenge(ClaimsPrincipal principal)
+		public OperationResult Challenge(ClaimsPrincipal principal, string scenario)
 		{
 			//通知质询开始
 			var result = this.OnChallenging(principal);
 
 			if(result.Failed)
 				return result;
-
-			//获取当前主体的场景
-			var scenario = principal is CredentialPrincipal credential ? credential.Scenario : null;
 
 			//依次验证主体身份
 			foreach(var identity in principal.Identities)

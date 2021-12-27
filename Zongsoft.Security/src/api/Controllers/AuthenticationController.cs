@@ -76,7 +76,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(feature != null)
 				feature.AllowSynchronousIO = true;
 
-			var result = Authentication.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			var result = Authentication.Instance.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
 			return result.Succeed ?
 				this.Ok(this.Transform(result.Value)) :
@@ -88,7 +88,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public void Signout()
 		{
 			if(this.User is CredentialPrincipal credential)
-				Authentication.Authority?.Unregister(credential.CredentialId);
+				Authentication.Instance.Authority?.Unregister(credential.CredentialId);
 		}
 
 		[Authorize]
@@ -100,7 +100,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 			if(this.User is CredentialPrincipal credential)
 			{
-				var principal = Authentication.Authority.Renew(credential.CredentialId, id);
+				var principal = Authentication.Instance.Authority.Renew(credential.CredentialId, id);
 
 				return principal == null ?
 					Task.FromResult((IActionResult)this.NotFound()) :

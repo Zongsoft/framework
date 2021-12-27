@@ -28,53 +28,174 @@
  */
 
 using System;
+using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+
+using Zongsoft.Common;
+using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
 	/// 提供身份验证的平台类。
 	/// </summary>
-	[System.Reflection.DefaultMember(nameof(Authenticator))]
-	public static class Authentication
+	[System.Reflection.DefaultMember(nameof(Authenticators))]
+	public class Authentication : IAuthentication
 	{
-		#region 静态构造
-		static Authentication()
+		#region 单例字段
+		private static Authentication _instance = new Authentication();
+		#endregion
+
+		#region 事件定义
+		public event EventHandler<AuthenticatedEventArgs> Authenticated;
+		public event EventHandler<AuthenticatingEventArgs> Authenticating;
+		#endregion
+
+		#region 成员字段
+		private ICredentialProvider _authority;
+		private IClaimsPrincipalTransformer _transformer;
+		#endregion
+
+		#region 构造函数
+		protected Authentication()
 		{
-			Challengers = new List<IAuthenticationChallenger>();
-			Transformers = new TransformerCollection();
+			_transformer = ClaimsPrincipalTransformer.Default;
+		}
+		#endregion
+
+		#region 单例属性
+		public static Authentication Instance
+		{
+			get => _instance;
+			set => _instance = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取当前验证器的标识。</summary>
+		public virtual string Scheme { get => "Zongsoft.Authentication"; }
+
 		/// <summary>获取或设置凭证主体的提供程序。</summary>
-		public static ICredentialProvider Authority { get; set; }
+		public ICredentialProvider Authority
+		{
+			get => _authority??= ApplicationContext.Current?.Services.Resolve<ICredentialProvider>();
+			set => _authority = value ?? throw new ArgumentNullException();
+		}
 
-		/// <summary>获取或设置身份验证器。</summary>
-		public static IAuthentication Authenticator { get; set; }
+		/// <summary>获取或设置主体转换器。</summary>
+		public IClaimsPrincipalTransformer Transformer
+		{
+			get => _transformer;
+			set => _transformer = value ?? throw new ArgumentNullException();
+		}
 
-		/// <summary>获取一个身份验证验证器集合。</summary>
-		public static ICollection<IAuthenticationChallenger> Challengers { get; }
+		/// <summary>获取一个身份验证器集合。</summary>
+		public KeyedCollection<string, IAuthenticator> Authenticators { get; }
 
-		/// <summary>获取一个身份转换器集合。</summary>
-		public static KeyedCollection<string, IClaimsIdentityTransformer> Transformers { get; }
+		/// <summary>获取一个身份验证质询器集合。</summary>
+		public ICollection<IChallenger> Challengers { get; }
+
+		/// <summary>获取或设置验证失败阻止器。</summary>
+		public IAttempter Attempter { get; set; }
 		#endregion
 
 		#region 公共方法
-		public static Common.OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
+		public OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
-			var authenticator = Authenticator ?? throw new InvalidOperationException("Missing the required authenticator.");
-			return authenticator.Authenticate(scheme, key, data, scenario, parameters);
+			//激发“Authenticating”事件
+			this.OnAuthenticating(new AuthenticatingEventArgs(this, data, scenario, parameters));
+
+			//进行身份验证
+			var result = this.OnAuthenticate(scheme, key, data, scenario, parameters);
+
+			if(result.Failed)
+				return (OperationResult)result.Failure;
+
+			//生成安全主体
+			var principal = CreateCredential(result.Value, scenario);
+
+			//获取安全质询器
+			var challengers = this.GetChallengers();
+
+			if(challengers != null)
+			{
+				foreach(var challenger in challengers)
+				{
+					result = challenger.Challenge(principal, scenario);
+
+					//质询失败则返回失败
+					if(result.Failed)
+						return (OperationResult)result.Failure;
+				}
+			}
+
+			//通知验证完成
+			this.OnAuthenticated(principal, scenario, parameters);
+
+			//返回成功
+			return OperationResult.Success(principal);
 		}
 		#endregion
 
-		#region 嵌套子类
-		private class TransformerCollection : KeyedCollection<string, IClaimsIdentityTransformer>
+		#region 抽象方法
+		protected virtual OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
 		{
-			public TransformerCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-			protected override string GetKeyForItem(IClaimsIdentityTransformer transformer) => transformer.Name;
+			var authenticator = this.GetAuthenticator(scheme, key, data, scenario);
+
+			if(authenticator == null)
+				return OperationResult.Fail("InvalidAuthenticator");
+
+			//校验身份
+			var result = authenticator.Verify(key, data, scenario);
+
+			if(result.Failed)
+				return result;
+
+			//签发身份
+			var identity = authenticator.Issue(result.Value, scenario, parameters);
+
+			if(identity == null)
+				return OperationResult.Fail(SecurityReasons.InvalidIdentity);
+
+			return OperationResult.Success(identity);
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual IAuthenticator GetAuthenticator(string scheme, string key, object data, string scenario)
+		{
+			var authenticators = Authenticators;
+
+			if(authenticators != null && authenticators.Count > 0)
+				return authenticators.TryGetValue(scheme, out var authenticator) ? authenticator : null;
+
+			return ApplicationContext.Current?.Services.Resolve<IAuthenticator>(scheme);
+		}
+
+		protected virtual void OnAuthenticated(CredentialPrincipal principal, string scenario, IDictionary<string, object> parameters)
+		{
+			var authority = this.Authority ?? throw new AuthenticationException("NoAuthority", $"Missing the required credential provider.");
+
+			//注册凭证
+			authority.Register(principal);
+
+			//激发“Authenticated”事件
+			this.OnAuthenticated(new AuthenticatedEventArgs(this, principal, scenario, parameters));
+		}
+
+		protected virtual IEnumerable<IChallenger> GetChallengers()
+		{
+			var challengers = Challengers;
+			return challengers != null && challengers.Count > 0 ? challengers : ApplicationContext.Current?.Services.ResolveAll<IChallenger>() ?? Array.Empty<IChallenger>();
+		}
+
+		protected virtual CredentialPrincipal CreateCredential(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(scenario, identity);
+		#endregion
+
+		#region 激发事件
+		protected virtual void OnAuthenticated(AuthenticatedEventArgs args) => this.Authenticated?.Invoke(this, args);
+		protected virtual void OnAuthenticating(AuthenticatingEventArgs args) => this.Authenticating?.Invoke(this, args);
 		#endregion
 	}
 }

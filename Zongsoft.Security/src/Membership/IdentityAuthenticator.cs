@@ -32,12 +32,18 @@ using System.Linq;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
+using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
 	[Service(typeof(IAuthenticator))]
 	public class IdentityAuthenticator : IdentityAuthenticatorBase
 	{
+		#region 公共属性
+		[Options("Security/Membership/Authentication")]
+		public Configuration.AuthenticationOptions Options { get; set; }
+		#endregion
+
 		#region 重写方法
 		protected override uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp)
 		{
@@ -46,15 +52,10 @@ namespace Zongsoft.Security.Membership
 
 			ICondition criteria = Utility.GetIdentityCondition(identity);
 
-			if(@namespace != "*" && @namespace != "?")
-			{
-				if(string.IsNullOrEmpty(@namespace))
-					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), null));
-				else
-					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), @namespace));
-			}
+			if(@namespace != "*" && @namespace != "?" && Mapping.Instance.Namespace != null)
+				criteria = criteria.And(Mapping.Instance.Namespace.GetCondition(Mapping.Instance.User, @namespace));
 
-			var user = this.DataAccess.Value.Select<UserSecret>(criteria).FirstOrDefault();
+			var user = this.ServiceProvider.GetDataAccess().Select<UserSecret>(Mapping.Instance.User, criteria).FirstOrDefault();
 
 			if(user.UserId == 0)
 			{
@@ -78,20 +79,25 @@ namespace Zongsoft.Security.Membership
 		{
 			ICondition criteria = Utility.GetIdentityCondition(ticket.Identity);
 
-			if(ticket.Namespace != "*" && ticket.Namespace != "?")
-			{
-				if(string.IsNullOrEmpty(ticket.Namespace))
-					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), null));
-				else
-					criteria = criteria.And(Condition.Equal(nameof(IUser.Namespace), ticket.Namespace));
-			}
+			if(ticket.Namespace != "*" && ticket.Namespace != "?" && Mapping.Instance.Namespace != null)
+				criteria = criteria.And(Mapping.Instance.Namespace.GetCondition(Mapping.Instance.User, ticket.Namespace));
 
-			return this.DataAccess.Value.Select<User>(criteria).FirstOrDefault();
+			return this.ServiceProvider.GetDataAccess().Select<User>(Mapping.Instance.User, criteria).FirstOrDefault();
+		}
+
+		protected override TimeSpan GetPeriod(string scenario)
+		{
+			var period = TimeSpan.Zero;
+
+			//获取指定场景对应的凭证有效期
+			if(this.Options != null && this.Options.Expiration.TryGet(scenario, out var option))
+				period = option.Period;
+
+			return period > TimeSpan.Zero ? period : TimeSpan.FromHours(4);
 		}
 		#endregion
 
 		#region 嵌套结构
-		[Model("Security.User")]
 		private struct UserSecret
 		{
 			public uint UserId;
@@ -101,20 +107,19 @@ namespace Zongsoft.Security.Membership
 			public DateTime? StatusTimestamp;
 		}
 
-		[Model("Security.User")]
-		private abstract class User : IUser, IUserIdentity
+		private class User : IUser, IUserIdentity
 		{
-			public abstract uint UserId { get; set; }
-			public abstract string Name { get; set; }
-			public abstract string FullName { get; set; }
-			public abstract string Namespace { get; set; }
-			public abstract string Email { get; set; }
-			public abstract string Phone { get; set; }
-			public abstract UserStatus Status { get; set; }
-			public abstract DateTime? StatusTimestamp { get; set; }
-			public abstract DateTime Creation { get; set; }
-			public abstract DateTime? Modification { get; set; }
-			public abstract string Description { get; set; }
+			public uint UserId { get; set; }
+			public string Name { get; set; }
+			public string FullName { get; set; }
+			public string Namespace { get; set; }
+			public string Email { get; set; }
+			public string Phone { get; set; }
+			public UserStatus Status { get; set; }
+			public DateTime? StatusTimestamp { get; set; }
+			public DateTime Creation { get; set; }
+			public DateTime? Modification { get; set; }
+			public string Description { get; set; }
 		}
 		#endregion
 	}

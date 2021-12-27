@@ -34,6 +34,8 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Security
 {
 	public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
@@ -96,12 +98,15 @@ namespace Zongsoft.Security
 
 		protected virtual object TransformIdentity(string name, ClaimsIdentity identity)
 		{
-			var transformers = Membership.Authentication.Transformers;
+			var transformers = ApplicationContext.Current?.Services.ResolveAll<IClaimsIdentityTransformer>(name);
 
-			if(transformers != null && transformers.TryGetValue(name ?? string.Empty, out var transformer))
-				return transformer.Transform(identity);
-			else
-				return identity.AsModel<Membership.IUser>();
+			foreach(var transformer in transformers)
+			{
+				if(transformer.CanTransform(identity))
+					return transformer.Transform(identity);
+			}
+
+			return identity.AsModel<Membership.IUser>();
 		}
 		#endregion
 	}

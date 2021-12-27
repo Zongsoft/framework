@@ -28,19 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Security.Claims;
 
-namespace Zongsoft.Security.Membership
+namespace Zongsoft.Security
 {
-	/// <summary>
-	/// 表示身份验证质询器的接口。
-	/// </summary>
-	public interface IAuthenticationChallenger
+	public interface IChallenger
 	{
-		/// <summary>
-		/// 身份验证确认方法。
-		/// </summary>
-		/// <param name="context">身份验证上下文对象。</param>
-		void Challenge(AuthenticationContext context);
+		Common.OperationResult Challenge(ClaimsPrincipal principal, string scenario);
 	}
 }

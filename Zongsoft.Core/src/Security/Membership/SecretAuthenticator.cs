@@ -52,15 +52,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		OperationResult IAuthenticator.Verify(string key, object data)
+		OperationResult IAuthenticator.Verify(string key, object data, string scenario)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, GetTicket(data));
+			return this.Verify(key, GetTicket(data), scenario);
 		}
 
-		public OperationResult<string> Verify(string key, string data)
+		public OperationResult<string> Verify(string key, string data, string scenario)
 		{
 			if(string.IsNullOrEmpty(data))
 				return OperationResult.Fail("InvalidToken");
@@ -100,12 +100,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 身份签发
-		ClaimsIdentity IAuthenticator.Issue(object token, TimeSpan period, IDictionary<string, object> parameters)
+		ClaimsIdentity IAuthenticator.Issue(object token, string scenario, IDictionary<string, object> parameters)
 		{
-			return token == null ? null : this.Issue(token.ToString(), period, parameters);
+			return token == null ? null : this.Issue(token.ToString(), scenario, parameters);
 		}
 
-		public ClaimsIdentity Issue(string token, TimeSpan period, IDictionary<string, object> parameters)
+		public ClaimsIdentity Issue(string token, string scenario, IDictionary<string, object> parameters)
 		{
 			if(string.IsNullOrEmpty(token))
 				return null;
@@ -116,6 +116,8 @@ namespace Zongsoft.Security.Membership
 				identity.AddClaim(ClaimTypes.Email, token, ClaimValueTypes.Email, this.Name);
 			else
 				identity.AddClaim(ClaimTypes.MobilePhone, token, ClaimValueTypes.String, this.Name);
+
+			var period = this.GetPeriod(scenario);
 
 			if(period > TimeSpan.Zero)
 				identity.AddClaim(new Claim(ClaimTypes.Expiration, period.ToString(), period.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, this.Name, this.Name, identity));
@@ -131,6 +133,10 @@ namespace Zongsoft.Security.Membership
 
 			return identity;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(2);
 		#endregion
 
 		#region 私有方法

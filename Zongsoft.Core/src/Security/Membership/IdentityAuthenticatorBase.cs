@@ -51,22 +51,20 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; set; }
 
-		[ServiceDependency(IsRequired = true)]
-		public IServiceAccessor<IDataAccess> DataAccess { get; set; }
-
-		public IServiceProvider ServiceProvider { get; }
+		[ServiceDependency]
+		public IServiceProvider ServiceProvider { get; set; }
 		#endregion
 
 		#region 校验方法
-		OperationResult IAuthenticator.Verify(string key, object data)
+		OperationResult IAuthenticator.Verify(string key, object data, string scenario)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, GetTicket(data));
+			return this.Verify(key, GetTicket(data), scenario);
 		}
 
-		public OperationResult<IIdentityTicket> Verify(string key, Ticket data)
+		public OperationResult<IIdentityTicket> Verify(string key, Ticket data, string scenario)
 		{
 			if(string.IsNullOrWhiteSpace(data.Identity))
 			{
@@ -113,12 +111,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 身份签发
-		ClaimsIdentity IAuthenticator.Issue(object data, TimeSpan period, IDictionary<string, object> parameters)
+		ClaimsIdentity IAuthenticator.Issue(object data, string scenario, IDictionary<string, object> parameters)
 		{
-			return this.Issue(data as IIdentityTicket, period, parameters);
+			return this.Issue(data as IIdentityTicket, scenario, parameters);
 		}
 
-		public ClaimsIdentity Issue(IIdentityTicket data, TimeSpan period, IDictionary<string, object> parameters)
+		public ClaimsIdentity Issue(IIdentityTicket data, string scenario, IDictionary<string, object> parameters)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
@@ -129,14 +127,15 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				return null;
 
-			return this.Identity(user, period);
+			return this.Identity(user, scenario);
 		}
 		#endregion
 
 		#region 虚拟方法
 		protected abstract uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp);
 		protected abstract IUser GetUser(IIdentityTicket ticket);
-		protected virtual ClaimsIdentity Identity(IUser user, TimeSpan period) => user.Identity(this.Name, this.Name, period);
+		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(4);
+		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
 		#endregion
 
 		#region 私有方法

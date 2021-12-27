@@ -48,11 +48,9 @@
 	<!-- 挂载验证和授权集成模块 -->
 	<extension path="/Workbench/Security">
 		<object name="Authentication"
-		        authority="{srv:~@Security}"
-		        authenticator="{srv:~@Security}"
 		        value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
+			<expose name="Authenticators" value="{path:../@Authenticators}" />
 			<expose name="Challengers" value="{path:../@Challengers}" />
-			<expose name="Transformers" value="{path:../@Transformers}" />
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">

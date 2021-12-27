@@ -38,9 +38,11 @@ namespace Zongsoft.Security
 	public interface IClaimsIdentityTransformer
 	{
 		/// <summary>
-		/// 获取一个值，表示身份标识的类型名。
+		/// 确认是否支持对指定的身份标识进行转换。
 		/// </summary>
-		string Name { get; }
+		/// <param name="identity">指定要转换的 <see cref="ClaimsIdentity"/> 身份标识对象。</param>
+		/// <returns>如果能转换则返回真(True)，否则返回假(False)。</returns>
+		bool CanTransform(ClaimsIdentity identity);
 
 		/// <summary>
 		/// 转换方法。
