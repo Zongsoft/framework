@@ -39,7 +39,7 @@ namespace Zongsoft.Web.Security
 		#region 公共属性
 		public Zongsoft.Security.ICredentialProvider Authority
 		{
-			get => Zongsoft.Security.Membership.Authentication.Authority;
+			get => Zongsoft.Security.Membership.Authentication.Instance.Authority;
 		}
 		#endregion
 	}
