@@ -200,8 +200,9 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 类型转换
-		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success((object)result.Value) : OperationResult.Fail(result.Failure);
+		public static implicit operator OperationResult<T> (OperationResultFailure failure) => new OperationResult<T>(failure);
 		public static implicit operator OperationResult<T> (OperationResult result) => result.Succeed ? new OperationResult<T>(default(T)) : new OperationResult<T>(result.Failure);
+		public static implicit operator OperationResult (OperationResult<T> result) => result.Succeed ? OperationResult.Success((object)result.Value) : OperationResult.Fail(result.Failure);
 		#endregion
 	}
 }
