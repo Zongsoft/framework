@@ -41,7 +41,7 @@ namespace Zongsoft.Security.Membership
 	/// 提供身份验证的平台类。
 	/// </summary>
 	[System.Reflection.DefaultMember(nameof(Authenticators))]
-	public class Authentication : IAuthentication
+	public class Authentication
 	{
 		#region 单例字段
 		private static Authentication _instance = new Authentication();

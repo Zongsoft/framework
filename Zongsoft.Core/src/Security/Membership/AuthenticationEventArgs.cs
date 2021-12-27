@@ -40,7 +40,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticatedEventArgs(IAuthentication authentication, ClaimsPrincipal principal, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public AuthenticatedEventArgs(Authentication authentication, ClaimsPrincipal principal, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
 			this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
@@ -53,7 +53,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		/// <summary>获取激发的身份验证对象。</summary>
-		public IAuthentication Authentication { get; }
+		public Authentication Authentication { get; }
 
 		/// <summary>获取身份验证的用户身份。</summary>
 		public ClaimsPrincipal Principal { get; }
@@ -95,7 +95,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public AuthenticatingEventArgs(IAuthentication authentication, object ticket, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public AuthenticatingEventArgs(Authentication authentication, object ticket, string scenario, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Authentication = authentication ?? throw new ArgumentNullException(nameof(authentication));
 			this.Ticket = ticket;
@@ -108,7 +108,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		/// <summary>获取激发的身份验证对象。</summary>
-		public IAuthentication Authentication { get; }
+		public Authentication Authentication { get; }
 
 		/// <summary>获取待验证的票证对象。</summary>
 		public object Ticket { get; }
