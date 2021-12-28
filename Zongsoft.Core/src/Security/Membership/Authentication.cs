@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -101,13 +103,13 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public OperationResult<CredentialPrincipal> Authenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
+		public async ValueTask<OperationResult<CredentialPrincipal>> AuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			//激发“Authenticating”事件
 			this.OnAuthenticating(new AuthenticatingEventArgs(this, data, scenario, parameters));
 
 			//进行身份验证
-			var result = this.OnAuthenticate(scheme, key, data, scenario, parameters);
+			var result = await this.OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
 
 			if(result.Failed)
 				return (OperationResult)result.Failure;
@@ -139,7 +141,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 抽象方法
-		protected virtual OperationResult<ClaimsIdentity> OnAuthenticate(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters)
+		protected async virtual ValueTask<OperationResult<ClaimsIdentity>> OnAuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			var authenticator = this.GetAuthenticator(scheme, key, data, scenario);
 
@@ -147,13 +149,13 @@ namespace Zongsoft.Security.Membership
 				return OperationResult.Fail("InvalidAuthenticator");
 
 			//校验身份
-			var result = authenticator.Verify(key, data, scenario);
+			var result = await authenticator.VerifyAsync(key, data, scenario);
 
 			if(result.Failed)
 				return result;
 
 			//签发身份
-			var identity = authenticator.Issue(result.Value, scenario, parameters);
+			var identity = await authenticator.IssueAsync(result.Value, scenario, parameters);
 
 			if(identity == null)
 				return OperationResult.Fail(SecurityReasons.InvalidIdentity);

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -52,7 +53,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 公共方法
 		[HttpPost("{scheme?}/{key?}")]
-		public IActionResult Signin(string scheme, string key, [FromQuery]string scenario)
+		public async ValueTask<IActionResult> Signin(string scheme, string key, [FromQuery]string scenario)
 		{
 			if(string.IsNullOrWhiteSpace(scenario))
 				return this.BadRequest();
@@ -76,7 +77,7 @@ namespace Zongsoft.Security.Web.Controllers
 			if(feature != null)
 				feature.AllowSynchronousIO = true;
 
-			var result = Authentication.Instance.Authenticate(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			var result = await Authentication.Instance.AuthenticateAsync(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
 			return result.Succeed ?
 				this.Ok(this.Transform(result.Value)) :

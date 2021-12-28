@@ -30,6 +30,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
@@ -52,15 +54,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		OperationResult IAuthenticator.Verify(string key, object data, string scenario)
+		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, GetTicket(data), scenario);
+			return await this.VerifyAsync(key, GetTicket(data), scenario, cancellation);
 		}
 
-		public OperationResult<string> Verify(string key, string data, string scenario)
+		public async ValueTask<OperationResult<string>> VerifyAsync(string key, string data, string scenario, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
 				return OperationResult.Fail("InvalidToken");
@@ -100,12 +102,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 身份签发
-		ClaimsIdentity IAuthenticator.Issue(object token, string scenario, IDictionary<string, object> parameters)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
-			return token == null ? null : this.Issue(token.ToString(), scenario, parameters);
+			return token == null ? ValueTask.FromResult<ClaimsIdentity>(null) : this.IssueAsync(token.ToString(), scenario, parameters, cancellation);
 		}
 
-		public ClaimsIdentity Issue(string token, string scenario, IDictionary<string, object> parameters)
+		public async ValueTask<ClaimsIdentity> IssueAsync(string token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(token))
 				return null;

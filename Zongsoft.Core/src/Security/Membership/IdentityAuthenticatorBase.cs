@@ -29,10 +29,11 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
-using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Serialization;
@@ -56,15 +57,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		OperationResult IAuthenticator.Verify(string key, object data, string scenario)
+		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return this.Verify(key, GetTicket(data), scenario);
+			return await this.VerifyAsync(key, GetTicket(data), scenario, cancellation);
 		}
 
-		public OperationResult<IIdentityTicket> Verify(string key, Ticket data, string scenario)
+		public async ValueTask<OperationResult<IIdentityTicket>> VerifyAsync(string key, Ticket data, string scenario, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(data.Identity))
 			{
@@ -111,12 +112,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 身份签发
-		ClaimsIdentity IAuthenticator.Issue(object data, string scenario, IDictionary<string, object> parameters)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
-			return this.Issue(data as IIdentityTicket, scenario, parameters);
+			return this.IssueAsync(data as IIdentityTicket, scenario, parameters, cancellation);
 		}
 
-		public ClaimsIdentity Issue(IIdentityTicket data, string scenario, IDictionary<string, object> parameters)
+		public ValueTask<ClaimsIdentity> IssueAsync(IIdentityTicket data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
@@ -125,9 +126,9 @@ namespace Zongsoft.Security.Membership
 			var user = this.GetUser(data);
 
 			if(user == null)
-				return null;
+				return ValueTask.FromResult<ClaimsIdentity>(null);
 
-			return this.Identity(user, scenario);
+			return ValueTask.FromResult(this.Identity(user, scenario));
 		}
 		#endregion
 
