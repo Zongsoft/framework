@@ -36,28 +36,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-using Zongsoft.Services;
-
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
 	[ApiController]
 	[Route("Externals/Wechat/Channels")]
 	public class ChannelController : ControllerBase
 	{
-		[HttpGet("{key}/Credential")]
-		public async ValueTask<IActionResult> GetCredential(string key)
-		{
-			var channel = this.GetChannel(key);
-			return channel == null ? this.NotFound() : this.Ok(await channel.GetCredentialAsync());
-		}
-
 		[HttpPost("{key}/{action}")]
 		public async ValueTask<IActionResult> Postmark(string key)
 		{
 			if(string.IsNullOrEmpty(key))
 				return this.BadRequest();
 
-			var channel = this.GetChannel(key);
+			var channel = ChannelManager.GetChannel(key, this.HttpContext.RequestServices);
 			if(channel == null)
 				return this.NotFound();
 
@@ -76,11 +67,32 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				Value = value,
 			});
 		}
+	}
 
-		private Channel GetChannel(string key)
+	[ApiController]
+	[Route("Externals/Wechat/Channels/{key}/Credential")]
+	public class ChannelCredentialController : ControllerBase
+	{
+		[HttpGet]
+		public async ValueTask<IActionResult> GetCredential(string key)
 		{
-			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
-			return account.IsEmpty ? null : new Channel(account);
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
+			if(applet == null)
+				return this.NotFound();
+
+			var credential = await applet.GetCredentialAsync(false);
+			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
+		}
+
+		[HttpPost("[action]")]
+		public async ValueTask<IActionResult> Refresh(string key)
+		{
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
+			if(applet == null)
+				return this.NotFound();
+
+			var credential = await applet.GetCredentialAsync(true);
+			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 	}
 
@@ -91,7 +103,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpGet("{identifier?}")]
 		public async ValueTask<IActionResult> Get(string key, string identifier = null, [FromQuery]string bookmark = null)
 		{
-			var channel = this.GetChannel(key);
+			var channel = ChannelManager.GetChannel(key, this.HttpContext.RequestServices);
 
 			if(channel == null)
 				return this.NotFound();
@@ -104,13 +116,11 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			}
 
 			var info = await channel.Users.GetInfoAsync(identifier);
-			return info.Succeed ? this.Ok(info.Value) : this.NotFound(info.Failure);
-		}
 
-		private Channel GetChannel(string key)
-		{
-			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
-			return account.IsEmpty ? null : new Channel(account);
+			if(info.Succeed)
+				return string.IsNullOrEmpty(info.Value.Identifier) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
+
+			return this.NotFound(info.Failure);
 		}
 	}
 
@@ -124,19 +134,13 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			var channel = this.GetChannel(key);
+			var channel = ChannelManager.GetChannel(key, this.HttpContext.RequestServices);
 
 			if(channel == null)
 				return this.NotFound();
 
 			var result = await channel.Authentication.AuthenticateAsync(token);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
-		}
-
-		private Channel GetChannel(string key)
-		{
-			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
-			return account.IsEmpty ? null : new Channel(account);
 		}
 	}
 }

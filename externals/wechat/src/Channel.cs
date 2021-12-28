@@ -88,13 +88,13 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 获取凭证
-		public ValueTask<string> GetCredentialAsync(CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, cancellation);
+		public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
 		#endregion
 
 		#region 计算邮戳
-		public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url)
+		public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url, CancellationToken cancellation = default)
 		{
-			var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi");
+			var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi", false, cancellation);
 
 			if(string.IsNullOrEmpty(result.ticket))
 				return default;
@@ -128,7 +128,7 @@ namespace Zongsoft.Externals.Wechat
 			#region 公共方法
 			public async ValueTask<(string bookmark, string[] identifiers)> GetIdentifiersAsync(string cursor, CancellationToken cancellation = default)
 			{
-				var credential = await CredentialManager.GetCredentialAsync(this.Account, cancellation);
+				var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 
 				if(string.IsNullOrEmpty(credential))
 					return default;
@@ -143,7 +143,7 @@ namespace Zongsoft.Externals.Wechat
 
 			public async ValueTask<OperationResult<UserInfo>> GetInfoAsync(string identifier, CancellationToken cancellation = default)
 			{
-				var credential = await CredentialManager.GetCredentialAsync(this.Account, cancellation);
+				var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 
 				if(string.IsNullOrEmpty(credential))
 					return default;

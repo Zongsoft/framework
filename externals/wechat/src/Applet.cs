@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 获取凭证
-		public ValueTask<string> GetCredentialAsync(CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, cancellation);
+		public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
 		#endregion
 
 		#region 登录方法
@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.Wechat
 		#region 手机号码
 		public async ValueTask<OperationResult<string>> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
 		{
-			var credential = await CredentialManager.GetCredentialAsync(this.Account, cancellation);
+			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 			var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
 			var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
 

@@ -36,24 +36,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-using Zongsoft.Services;
-
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
 	[ApiController]
 	[Route("Externals/Wechat/Applets")]
 	public class AppletController : ControllerBase
 	{
-		[HttpPost("{key}/{action}/{token}")]
-		public async ValueTask<IActionResult> Login(string key, string token)
+		[HttpPost("{key}/{action}")]
+		public async ValueTask<IActionResult> Login(string key)
 		{
 			if(string.IsNullOrEmpty(key))
 				return this.BadRequest();
 
+			var token = await this.Request.ReadAsStringAsync();
+
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			var applet = this.GetApplet(key);
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
 			if(applet == null)
 				return this.NotFound();
 
@@ -71,18 +71,39 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			var applet = this.GetApplet(key);
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
 			if(applet == null)
 				return this.NotFound();
 
 			var result = await applet.GetPhoneNumberAsync(token);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
 		}
+	}
 
-		private Applet GetApplet(string key)
+	[ApiController]
+	[Route("Externals/Wechat/Applets/{key}/Credential")]
+	public class AppletCredentialController : ControllerBase
+	{
+		[HttpGet]
+		public async ValueTask<IActionResult> GetCredential(string key)
 		{
-			var account = this.HttpContext.RequestServices.ResolveRequired<IAccountProvider>().GetAccount(key);
-			return account.IsEmpty ? null : new Applet(account);
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
+			if(applet == null)
+				return this.NotFound();
+
+			var credential = await applet.GetCredentialAsync(false);
+			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
+		}
+
+		[HttpPost("[action]")]
+		public async ValueTask<IActionResult> Refresh(string key)
+		{
+			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
+			if(applet == null)
+				return this.NotFound();
+
+			var credential = await applet.GetCredentialAsync(true);
+			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 	}
 }
