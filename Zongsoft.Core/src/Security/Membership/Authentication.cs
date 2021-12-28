@@ -170,9 +170,9 @@ namespace Zongsoft.Security.Membership
 			var authenticators = Authenticators;
 
 			if(authenticators != null && authenticators.Count > 0)
-				return authenticators.TryGetValue(scheme, out var authenticator) ? authenticator : null;
+				return authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
 
-			return ApplicationContext.Current?.Services.Resolve<IAuthenticator>(scheme);
+			return ApplicationContext.Current?.Services.Resolve<IAuthenticator>(scheme ?? string.Empty);
 		}
 
 		protected virtual void OnAuthenticated(CredentialPrincipal principal, string scenario, IDictionary<string, object> parameters)
