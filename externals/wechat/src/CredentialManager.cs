@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Wechat
 			}
 
 			//获取分布式锁
-			using var locker = await Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
+			using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
 
 			if(locker != null)
 			{
@@ -171,7 +171,7 @@ namespace Zongsoft.Externals.Wechat
 			}
 
 			//获取分布式锁
-			using var locker = await Locker.AcquireAsync(key, TimeSpan.FromSeconds(5), cancellation);
+			using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
 
 			if(locker != null)
 			{
@@ -227,6 +227,9 @@ namespace Zongsoft.Externals.Wechat
 
 		private static async ValueTask<OperationResult<Token>> AcquireTicketAsync(string credentialId, string type, int retries = 3)
 		{
+			if(string.IsNullOrEmpty(credentialId))
+				return OperationResult.Fail("MissingCredential", $"Missing the access token of the Wechat.");
+
 			var response = await _http.GetAsync($"/cgi-bin/ticket/getticket?access_token={credentialId}&type={type}");
 			var result = await response.GetResultAsync<TicketToken>();
 
