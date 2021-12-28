@@ -92,26 +92,19 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 计算邮戳
-		public byte[] Postmark(string url, out string nonce, out long timestamp, out TimeSpan period)
+		public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url)
 		{
-			var task = CredentialManager.GetTicketAsync(this.Account, "jsapi");
-			var result = task.IsCompletedSuccessfully ? task.Result : task.ConfigureAwait(false).GetAwaiter().GetResult();
+			var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi");
 
 			if(string.IsNullOrEmpty(result.ticket))
-			{
-				nonce = null;
-				timestamp = 0;
-				period = TimeSpan.Zero;
+				return default;
 
-				return null;
-			}
-
-			nonce = Zongsoft.Common.Randomizer.GenerateString(16);
-			timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-			period = result.period;
+			var nonce = Randomizer.GenerateString(16);
+			var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			var period = result.period;
 
 			var text = $"jsapi_ticket={result.ticket}&noncestr={nonce}&timestamp={timestamp}&url={url}";
-			return SHA1.ComputeHash(Encoding.UTF8.GetBytes(text));
+			return (SHA1.ComputeHash(Encoding.UTF8.GetBytes(text)), nonce, timestamp, period);
 		}
 		#endregion
 

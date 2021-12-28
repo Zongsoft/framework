@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var content = await this.Request.ReadAsStringAsync();
-			var value = channel.Postmark(content, out var nonce, out var timestamp, out var period);
+			var (value, nonce, timestamp, period) = await channel.PostmarkAsync(content);
 
 			if(value == null || value.Length == 0)
 				return this.NotFound();
