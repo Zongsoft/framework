@@ -147,7 +147,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(string.IsNullOrWhiteSpace(url))
 						return null;
 
-					return string.Format(url, key);
+					return string.Format(url, "payment", key);
 				}
 			}
 

@@ -28,27 +28,26 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-using Zongsoft.Externals.Wechat.Options;
-
-namespace Zongsoft.Externals.Wechat.Applets.Options
+namespace Zongsoft.Externals.Wechat.Options
 {
-	/// <summary>
-	/// 表示微信小程序的选项类。
-	/// </summary>
-	public class AppletOptions
+	public class ChannelOptionsCollection : KeyedCollection<string, ChannelOptions>
 	{
-		#region 构造函数
-		public AppletOptions()
-		{
-			this.Apps = new AppOptionsCollection();
-		}
+		#region 公共属性
+		public string Default { get; set; }
 		#endregion
 
-		#region 公共属性
-		/// <summary>获取微信小程序应用设置选项集。</summary>
-		public AppOptionsCollection Apps { get; }
+		#region 构造函数
+		public ChannelOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+		#endregion
+
+		#region 公共方法
+		public ChannelOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var channel) ? channel : (this.Count > 0 ? this[0] : null);
+		#endregion
+
+		#region 重写方法
+		protected override string GetKeyForItem(ChannelOptions item) => item.Name;
 		#endregion
 	}
 }

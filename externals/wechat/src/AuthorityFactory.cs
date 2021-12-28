@@ -42,8 +42,8 @@ namespace Zongsoft.Externals.Wechat
 		#region 获取机构
 		public static IAuthority GetAuthority(string name)
 		{
-			if(string.IsNullOrEmpty(name))
-				return null;
+			if(name == null)
+				name = string.Empty;
 
 			if(_authorities.TryGetValue(name, out var authority) && authority != null)
 				return authority;
@@ -58,13 +58,18 @@ namespace Zongsoft.Externals.Wechat
 				if(authority == null)
 					return null;
 
-				return _authorities.TryAdd(name, authority) ? authority : _authorities[name];
+				if(string.IsNullOrEmpty(name))
+					_authorities.TryAdd(string.Empty, authority);
+
+				return _authorities.TryAdd(authority.Name, authority) ? authority : _authorities[authority.Name];
 			}
 		}
 
 		private static IAuthority CreateAuthority(string name)
 		{
-			var options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}");
+			var options = string.IsNullOrEmpty(name) ?
+				Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() :
+				Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}");
 
 			if(options == null || string.IsNullOrEmpty(options.Code))
 				return null;
