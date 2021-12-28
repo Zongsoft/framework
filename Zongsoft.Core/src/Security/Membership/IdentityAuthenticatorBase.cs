@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Membership
 	public abstract class IdentityAuthenticatorBase : IAuthenticator<IdentityAuthenticatorBase.Ticket, IIdentityTicket>
 	{
 		#region 构造函数
-		protected IdentityAuthenticatorBase() { }
+		protected IdentityAuthenticatorBase() => this.Name = string.Empty;
 		#endregion
 
 		#region 公共属性
