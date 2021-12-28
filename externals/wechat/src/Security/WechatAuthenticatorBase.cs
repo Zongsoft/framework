@@ -75,6 +75,8 @@ namespace Zongsoft.Externals.Wechat.Security
 
 						var channel = new Channel(new Account(options.Name, options.Secret));
 						return await GetChannelToken(channel, key, ticket.Token, cancellation);
+					default:
+						return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
 				}
 			}
 			else
@@ -90,10 +92,10 @@ namespace Zongsoft.Externals.Wechat.Security
 					case "channel":
 						var channel = new Channel(account);
 						return await GetChannelToken(channel, key, ticket.Token, cancellation);
+					default:
+						return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
 				}
 			}
-
-			throw new NotImplementedException();
 		}
 		#endregion
 
