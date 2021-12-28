@@ -84,7 +84,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<string> GetCredentialAsync(Account account, CancellationToken cancellation = default)
+		public static async ValueTask<string> GetCredentialAsync(Account account, bool refresh, CancellationToken cancellation = default)
 		{
 			if(account.IsEmpty)
 				throw new ArgumentNullException(nameof(account));
@@ -92,21 +92,27 @@ namespace Zongsoft.Externals.Wechat
 			var key = GetCredentalKey(account.Code);
 
 			//首先从本地内存缓存中获取凭证标记，如果获取成功并且凭证未过期则返回该凭证号
-			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
+			if(!refresh && _localCache.TryGetValue(key, out var token) && !token.IsExpired)
 				return token.Key;
 
 			var cache = Cache;
 
 			if(cache == null)
+			{
+				Zongsoft.Diagnostics.Logger.Error("Missing the required distributed cache in the credential manager.");
 				return null;
+			}
 
 			//从外部缓存中获取凭证标记
-			(var credentialId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-			if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
+			if(!refresh)
 			{
-				_localCache[key] = new CredentialToken(credentialId, expiry.Value);
-				return credentialId;
+				(var credentialId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
+
+				if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
+				{
+					_localCache[key] = new CredentialToken(credentialId, expiry.Value);
+					return credentialId;
+				}
 			}
 
 			//获取分布式锁
@@ -125,6 +131,8 @@ namespace Zongsoft.Externals.Wechat
 
 					return token.Key;
 				}
+
+				Zongsoft.Diagnostics.Logger.Error(result.Failure.Message, result.Failure);
 			}
 			else
 			{
@@ -132,20 +140,22 @@ namespace Zongsoft.Externals.Wechat
 				for(int i = 0; i < 3; i++)
 				{
 					await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-					(credentialId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
+					var (credentialId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 					if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
 					{
-						_localCache[key] = new CredentialToken(credentialId, expiry.Value);
+						_localCache.TryAdd(key, new CredentialToken(credentialId, expiry.Value));
 						return credentialId;
 					}
 				}
+
+				Zongsoft.Diagnostics.Logger.Error("Attempts to acquires credential of the Wechat failed.");
 			}
 
 			return null;
 		}
 
-		public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(Account account, string type = "jsapi", CancellationToken cancellation = default)
+		public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(Account account, string type, bool refresh, CancellationToken cancellation = default)
 		{
 			if(account.IsEmpty)
 				throw new ArgumentNullException(nameof(account));
@@ -153,21 +163,27 @@ namespace Zongsoft.Externals.Wechat
 			var key = GetTicketKey(account.Code);
 
 			//首先从本地内存缓存中获取票据标记，如果获取成功并且票据未过期则返回该票据号
-			if(_localCache.TryGetValue(key, out var token) && !token.IsExpired)
+			if(!refresh && _localCache.TryGetValue(key, out var token) && !token.IsExpired)
 				return (token.Key, token.Expiry.GetPeriod());
 
 			var cache = Cache;
 
 			if(cache == null)
-				return (null, TimeSpan.Zero);
-
-			//从外部缓存中获取票据标记
-			(var ticketId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-			if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
 			{
-				_localCache[key] = new TicketToken(ticketId, expiry.Value);
-				return (ticketId, expiry.Value);
+				Zongsoft.Diagnostics.Logger.Error("Missing the required distributed cache in the credential manager.");
+				return default;
+			}
+
+			if(!refresh)
+			{
+				//从外部缓存中获取票据标记
+				(var ticketId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
+
+				if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
+				{
+					_localCache[key] = new TicketToken(ticketId, expiry.Value);
+					return (ticketId, expiry.Value);
+				}
 			}
 
 			//获取分布式锁
@@ -175,7 +191,12 @@ namespace Zongsoft.Externals.Wechat
 
 			if(locker != null)
 			{
-				var result = await AcquireTicketAsync(await GetCredentialAsync(account, cancellation), type);
+				var credential = await GetCredentialAsync(account, refresh, cancellation);
+
+				if(string.IsNullOrEmpty(credential))
+					return default;
+
+				var result = await AcquireTicketAsync(credential, type);
 
 				if(result.Succeed)
 				{
@@ -186,14 +207,16 @@ namespace Zongsoft.Externals.Wechat
 
 					return (token.Key, token.Expiry.GetPeriod());
 				}
+
+				Zongsoft.Diagnostics.Logger.Error(result.Failure.Message, result.Failure);
 			}
 			else
 			{
-				//尝试再次从外部缓存获取凭证
+				//尝试再次从外部缓存票据标记
 				for(int i = 0; i < 3; i++)
 				{
 					await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-					(ticketId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
+					var (ticketId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
 
 					if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
 					{
@@ -201,6 +224,8 @@ namespace Zongsoft.Externals.Wechat
 						return (ticketId, expiry.Value);
 					}
 				}
+
+				Zongsoft.Diagnostics.Logger.Error("Attempts to acquires ticket of the Wechat failed.");
 			}
 
 			return (null, TimeSpan.Zero);
