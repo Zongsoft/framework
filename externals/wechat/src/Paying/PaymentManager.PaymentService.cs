@@ -74,7 +74,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return _authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
 			}
 
-			public virtual async Task<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+			public virtual async ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
@@ -86,33 +86,33 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return result.Succeed ? OperationResult.Success((result.Value.Code, (string)null)) : (OperationResult)result.Failure;
 			}
 
-			public virtual async Task<OperationResult> CancelAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+			public virtual async ValueTask<OperationResult> CancelAsync(string voucher, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
 
-				return await this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close", scenario), this.GetCancellation(), cancellation);
+				return await this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close"), this.GetCancellation(), cancellation);
 			}
 
-			public abstract Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default);
-			public abstract Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default);
+			public abstract ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default);
+			public abstract ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default);
 			#endregion
 
 			#region 保护方法
-			protected async Task<OperationResult<T>> GetAsync<T>(string voucher, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
+			protected async Task<OperationResult<T>> GetAsync<T>(string voucher, CancellationToken cancellation = default) where T : PaymentOrder
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
 
-				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}", scenario), cancellation);
+				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}"), cancellation);
 			}
 
-			protected async Task<OperationResult<T>> GetCompletedAsync<T>(string key, Scenario scenario, CancellationToken cancellation = default) where T : PaymentOrder
+			protected async Task<OperationResult<T>> GetCompletedAsync<T>(string key, CancellationToken cancellation = default) where T : PaymentOrder
 			{
 				if(string.IsNullOrEmpty(key))
 					throw new ArgumentNullException(nameof(key));
 
-				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}", scenario), cancellation);
+				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}"), cancellation);
 			}
 
 			protected Task<OperationResult<(string identifier, string payer)>> PayTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
@@ -122,7 +122,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 抽象方法
-			protected abstract string GetUrl(string path, Scenario scenario);
+			protected abstract string GetUrl(string path, Scenario? scenario = null);
 			protected abstract object GetCancellation();
 			#endregion
 
@@ -451,20 +451,23 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
-				public override async Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
-					var result = await base.GetAsync<DirectOrder>(voucher, scenario, cancellation);
+					var result = await base.GetAsync<DirectOrder>(voucher, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
 				}
 
-				public override async Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default)
 				{
-					var result = await base.GetCompletedAsync<DirectOrder>(key, scenario, cancellation);
+					var result = await base.GetCompletedAsync<DirectOrder>(key, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
 				}
 
-				protected override string GetUrl(string path, Scenario scenario)
+				protected override string GetUrl(string path, Scenario? scenario)
 				{
+					if(scenario == null)
+						return path;
+
 					return scenario switch
 					{
 						Scenario.App => $"{path}/app",
@@ -628,20 +631,23 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
-				public override async Task<OperationResult<PaymentOrder>> GetAsync(string voucher, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
-					var result = await base.GetAsync<BrokerOrder>(voucher, scenario, cancellation);
+					var result = await base.GetAsync<BrokerOrder>(voucher, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
 				}
 
-				public override async Task<OperationResult<PaymentOrder>> GetCompletedAsync(string key, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default)
 				{
-					var result = await base.GetCompletedAsync<BrokerOrder>(key, scenario, cancellation);
+					var result = await base.GetCompletedAsync<BrokerOrder>(key, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
 				}
 
-				protected override string GetUrl(string path, Scenario scenario)
+				protected override string GetUrl(string path, Scenario? scenario)
 				{
+					if(scenario == null)
+						return path;
+
 					return scenario switch
 					{
 						Scenario.App => $"partner/{path}/app",
