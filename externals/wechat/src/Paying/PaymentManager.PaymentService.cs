@@ -140,14 +140,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string ticket, string description = null) => this.Ticket(voucher, amount, null, ticket, description);
 				public abstract PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null);
 
-				internal static string GetFallback(string key)
+				internal static string GetFallback(string key, string format)
 				{
 					var url = Utility.GetOptions<Options.FallbackOptions>($"/Externals/Wechat/Fallback")?.Url;
 
 					if(string.IsNullOrWhiteSpace(url))
 						return null;
 
-					return string.Format(url, "payment", key);
+					return string.Format(url, "payment", string.IsNullOrEmpty(format) ? key : $"{key}:{format}");
 				}
 			}
 
@@ -420,6 +420,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			internal class DirectPaymentService : PaymentService
 			{
+				#region 常量定义
+				/// <summary>表示直连商户数据格式的标识。</summary>
+				internal const string FORMAT = "direct";
+				#endregion
+
 				#region 成员字段
 				private HttpClient _client;
 				#endregion
@@ -490,7 +495,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Account.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(_authority.Code),
+							FallbackUrl = GetFallback(_authority.Code, FORMAT),
 						};
 					}
 
@@ -499,7 +504,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Account.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(_authority.Code),
+							FallbackUrl = GetFallback(_authority.Code, FORMAT),
 						};
 					}
 				}
@@ -598,6 +603,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			internal class BrokerPaymentService : PaymentService
 			{
+				#region 常量定义
+				/// <summary>表示服务商数据格式的标识。</summary>
+				internal const string FORMAT = "broker";
+				#endregion
+
 				#region 成员字段
 				private HttpClient _client;
 				private readonly IAuthority _subsidiary;
@@ -672,7 +682,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(_master.Name),
+							FallbackUrl = GetFallback(_master.Name, FORMAT),
 						};
 					}
 
@@ -681,7 +691,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code)
 						{
 							Description = description,
-							FallbackUrl = GetFallback(_master.Name),
+							FallbackUrl = GetFallback(_master.Name, FORMAT),
 						};
 					}
 				}
