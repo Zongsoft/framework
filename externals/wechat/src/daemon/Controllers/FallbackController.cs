@@ -41,12 +41,10 @@ namespace Zongsoft.Externals.Wechat.Daemon.Controllers
 	[Route("Externals/Wechat/Fallback")]
 	public class FallbackController : ControllerBase
 	{
-		public FallbackController() { }
-
 		[HttpPost("{name}/{key?}")]
 		public async Task<IActionResult> HandleAsync(string name, string key = null)
 		{
-			Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync(name));
+			Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
 
 			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key);
 
@@ -62,7 +60,7 @@ namespace Zongsoft.Externals.Wechat.Daemon.Controllers
 			};
 		}
 
-		private async ValueTask<string> GetRequestInfoAsync(string name)
+		private async ValueTask<string> GetRequestInfoAsync()
 		{
 			this.Request.EnableBuffering();
 

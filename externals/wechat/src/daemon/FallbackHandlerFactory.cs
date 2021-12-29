@@ -32,10 +32,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.ComponentModel;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
@@ -61,19 +61,19 @@ namespace Zongsoft.Externals.Wechat.Daemon
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, string caller, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, string key, CancellationToken cancellation = default)
 		{
 			if(name != null && Handlers.TryGetValue(name, out var handler) && handler != null)
 			{
 				if(context.Request.HasFormContentType)
 					return await handler.HandleAsync(
-						caller,
+						key,
 						context.Request.Form == null || context.Request.Form.Count == 0 ? null : new Dictionary<string, string>(context.Request.Form.Select(entry => new KeyValuePair<string, string>(entry.Key, entry.Value)), StringComparer.OrdinalIgnoreCase),
 						cancellation);
 
 				Type requestType = _cache.GetOrAdd(handler.GetType(), type => GetHandlerRequestType(type));
 				if(requestType == null)
-					return await handler.HandleAsync(caller, context.Request.Body, cancellation);
+					return await handler.HandleAsync(key, context.Request.Body, cancellation);
 
 				object request = null;
 				var converter = TypeDescriptor.GetConverter(requestType);
@@ -98,7 +98,7 @@ namespace Zongsoft.Externals.Wechat.Daemon
 				}
 
 				return handler.CanHandle(request) ?
-					await handler.HandleAsync(caller, request, cancellation) :
+					await handler.HandleAsync(key, request, cancellation) :
 					OperationResult.Fail(ERROR_CANNOTHANDLE);
 			}
 
