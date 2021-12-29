@@ -40,7 +40,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 获取机构
-		public static IAuthority GetAuthority(string name)
+		public static IAuthority GetAuthority(string name = null)
 		{
 			if(name == null)
 				name = string.Empty;
