@@ -42,19 +42,27 @@ namespace Zongsoft.Externals.Wechat.Paying
 {
 	public abstract class PaymentHandlerBase : HandlerBase<PaymentHandlerBase.Message>
 	{
+		#region 私有变量
 		private IEnumerable<IServiceProvider<IAuthority>> _providers;
+		#endregion
 
+		#region 构造函数
 		protected PaymentHandlerBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
+		#endregion
 
+		#region 保护属性
 		protected IServiceProvider ServiceProvider { get; }
+		#endregion
 
+		#region 重写方法
 		public override ValueTask<OperationResult> HandleAsync(object caller, Message request, CancellationToken cancellation = default)
 		{
-			if(caller is string key && key != null)
+			if(caller is string text && text != null)
 			{
+				var (key, format) = Resolve(text);
 				var authority = GetAuthority(key);
 
 				if(authority == null)
@@ -65,15 +73,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var resource = request.Resource;
 				var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
-				var payload = JsonSerializer.Deserialize<PaymentManager.PaymentService.PaymentOrder>(data);
-				return this.OnHandleAsync(caller, payload, cancellation);
+				var payload = JsonSerializer.Deserialize(data, GetModelType(format), Json.Default);
+				return this.OnHandleAsync(caller, (PaymentManager.PaymentService.PaymentOrder)payload, cancellation);
 			}
 
 			return ValueTask.FromResult(OperationResult.Fail());
 		}
+		#endregion
 
+		#region 抽象方法
 		protected abstract ValueTask<OperationResult> OnHandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder request, CancellationToken cancellation);
+		#endregion
 
+		#region 私有方法
 		private IAuthority GetAuthority(string key)
 		{
 			var authority = AuthorityFactory.GetAuthority(key);
@@ -91,6 +103,34 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			return null;
 		}
+
+		private static (string authority, string format) Resolve(ReadOnlySpan<char> key)
+		{
+			if(key.IsEmpty)
+				return default;
+
+			var index = key.LastIndexOf(':');
+
+			switch(index)
+			{
+				case < 0:
+					return (key.ToString(), null);
+				case 0:
+					return (null, key[1..].ToString());
+				case > 0:
+					return index == key.Length - 1 ?
+						(key.Slice(0, index).ToString(), null) :
+						(key.Slice(0, index).ToString(), key[(index + 1)..].ToString());
+			}
+		}
+
+		private static Type GetModelType(string format)
+		{
+			return string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+				typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
+				typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
+		}
+		#endregion
 
 		#region 嵌套子类
 		public class Message
