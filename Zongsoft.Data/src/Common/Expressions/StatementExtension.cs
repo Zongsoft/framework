@@ -80,6 +80,9 @@ namespace Zongsoft.Data.Common.Expressions
 		{
 			value = null;
 
+			//尝试递归解析当前成员对应的所属数据
+			data = Recursive(data, member);
+
 			if(data is IModel model)
 			{
 				if(model.HasChanges(member.Name))
@@ -104,6 +107,31 @@ namespace Zongsoft.Data.Common.Expressions
 
 			value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
 			return true;
+
+			static object Recursive(object data, SchemaMember member)
+			{
+				if(data == null || member == null || member.Parent == null)
+					return data;
+
+				var stack = new Stack<SchemaMember>();
+
+				while(member.Parent != null)
+				{
+					stack.Push(member.Parent);
+					member = member.Parent;
+				}
+
+				while(stack.Count > 0)
+				{
+					member = stack.Pop();
+					data = member.Token.GetValue(data);
+
+					if(data == null)
+						return null;
+				}
+
+				return data;
+			}
 		}
 
 		private static object GetParameterValue(object data, SchemaMember member, DbType? dbType)
