@@ -255,7 +255,7 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
 			}
 
-			var field = statement.GetOperandExpression(aliaser, condition.Field, fieldExpending, out _);
+			var field = statement.GetOperandExpression(aliaser, condition.Field, fieldExpending, out var dbType);
 
 			if(field == null)
 				return null;
@@ -292,9 +292,9 @@ namespace Zongsoft.Data.Common.Expressions
 
 					throw new DataException($"Illegal range condition value.");
 				case ConditionOperator.Like:
-					return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.In:
-					var value = GetConditionValue(statement, aliaser, condition.Value, fieldExpending);
+					var value = GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending);
 					var count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -305,7 +305,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.In(field, value);
 				case ConditionOperator.NotIn:
-					value = GetConditionValue(statement, aliaser, condition.Value, fieldExpending);
+					value = GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending);
 					count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -316,23 +316,23 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.NotIn(field, value);
 				case ConditionOperator.Equal:
-					return Expression.Equal(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.Equal(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.NotEqual:
-					return Expression.NotEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.NotEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.GreaterThan:
-					return Expression.GreaterThan(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.GreaterThan(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.GreaterThanEqual:
-					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.LessThan:
-					return Expression.LessThan(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.LessThan(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.LessThanEqual:
-					return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, fieldExpending));
+					return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
 				default:
 					throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
 			}
 		}
 
-		private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, object value, bool fieldExpending)
+		private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, object value, DbType dbType, bool fieldExpending)
 		{
 			if(value == null)
 				return null;
@@ -348,12 +348,12 @@ namespace Zongsoft.Data.Common.Expressions
 				var collection = new ExpressionCollection();
 
 				foreach(var item in (IEnumerable)value)
-					collection.Add(statement.Parameters.AddParameter(item));
+					collection.Add(statement.Parameters.AddParameter(item, dbType));
 
 				return collection;
 			}
 
-			return statement.Parameters.AddParameter(value);
+			return statement.Parameters.AddParameter(value, dbType);
 		}
 
 		private static IExpression GetOperandExpression(this IStatement statement, Aliaser aliaser, Operand operand, bool fieldExpending, out DbType dbType)
@@ -486,9 +486,9 @@ namespace Zongsoft.Data.Common.Expressions
 			return subquery;
 		}
 
-		private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value)
+		private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value, DbType? dbType = null)
 		{
-			var parameter = Expression.Parameter(value);
+			var parameter = dbType.HasValue ? Expression.Parameter(dbType.Value, value) : Expression.Parameter(value);
 			parameters.Add(parameter);
 			return parameter;
 		}
