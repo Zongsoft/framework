@@ -72,8 +72,11 @@ namespace Zongsoft.Data.MySql
 						case JoinClause join:
 							if(join.Target is TableIdentifier target)
 							{
-								context.Write(",");
-								context.Visit(target);
+								if(!tables.Contains(target))
+								{
+									context.Write(",");
+									context.Visit(target);
+								}
 							}
 							else
 							{
