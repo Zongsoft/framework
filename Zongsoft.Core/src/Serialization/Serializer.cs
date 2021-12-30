@@ -75,7 +75,7 @@ namespace Zongsoft.Serialization
 					new JsonStringEnumConverter(),
 					new ModelConverterFactory(),
 					new RangeConverterFactory(),
-					new NullableConverterFactory(),
+					//new NullableConverterFactory(),
 				},
 			};
 			#endregion
@@ -230,7 +230,7 @@ namespace Zongsoft.Serialization
 						new JsonStringEnumConverter(),
 						new ModelConverterFactory(),
 						new RangeConverterFactory(),
-						new NullableConverterFactory(),
+						//new NullableConverterFactory(),
 					},
 				};
 			}
@@ -277,7 +277,7 @@ namespace Zongsoft.Serialization
 						new JsonStringEnumConverter(naming),
 						new ModelConverterFactory(),
 						new RangeConverterFactory(),
-						new NullableConverterFactory(),
+						//new NullableConverterFactory(),
 					},
 				};
 			}
@@ -555,7 +555,11 @@ namespace Zongsoft.Serialization
 							writer.WriteStringValue((Guid)Convert.ChangeType(value, typeof(Guid)));
 							break;
 						default:
-							writer.WriteStringValue(Common.Convert.ConvertValue<string>(value));
+							if(value.GetType().IsEnum)
+								writer.WriteStringValue(options.PropertyNamingPolicy.ConvertName(value.ToString()));
+							else
+								writer.WriteStringValue(Common.Convert.ConvertValue<string>(value));
+
 							break;
 					}
 				}
