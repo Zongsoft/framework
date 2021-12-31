@@ -40,33 +40,33 @@ namespace Zongsoft.Externals.Wechat.Paying
 {
 	public static class HttpUtility
 	{
-		public static async Task<OperationResult> GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult> GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
 		{
 			var response = await client.GetAsync(url, cancellation);
 			return await GetResultAsync(response, cancellation);
 		}
 
-		public static async Task<OperationResult<TResult>> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<TResult>> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
 		{
 			var response = await client.GetAsync(url, cancellation);
 			return await GetResultAsync<TResult>(response, cancellation);
 		}
 
-		public static async Task<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
 			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync(response, cancellation);
 		}
 
-		public static async Task<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
 			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync<TResult>(response, cancellation);
 		}
 
-		public static async Task<OperationResult> GetResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult> GetResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
@@ -81,7 +81,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			return OperationResult.Fail(failure.Code, failure.Message);
 		}
 
-		public static async Task<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<TResult>> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
