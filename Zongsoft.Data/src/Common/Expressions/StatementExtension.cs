@@ -110,7 +110,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			static object Recursive(object data, SchemaMember member)
 			{
-				if(data == null || member == null || member.Parent == null)
+				if(data == null || member == null || member.Parent == null || member.Parent.Token.IsMultiple)
 					return data;
 
 				var stack = new Stack<SchemaMember>();
