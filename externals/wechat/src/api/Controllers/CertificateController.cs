@@ -29,7 +29,7 @@
 
 using System;
 using System.IO;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
@@ -45,9 +45,10 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class CertificateController : ControllerBase
 	{
 		[HttpGet("{name?}")]
-		public async ValueTask<IActionResult> GetCertificate(string name = null)
+		public async ValueTask<IActionResult> GetCertificateAsync(string name = null, CancellationToken cancellation = default)
 		{
-			return this.NotFound();
+			var certificate = await Paying.PaymentManager.Get(name, null).Certificate.GetCertificateAsync(cancellation);
+			return certificate == null ? this.NotFound() : this.Ok(certificate);
 		}
 	}
 }

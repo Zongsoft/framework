@@ -56,7 +56,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public async Task<ICertificate> GetCertificateAsync(CancellationToken cancellation = default)
+			public async ValueTask<ICertificate> GetCertificateAsync(CancellationToken cancellation = default)
 			{
 				if(_certificate != null && _certificate.Validity.IsValidate(DateTime.UtcNow) && _certificate.Validity.Final > DateTime.UtcNow.AddHours(36))
 					return _certificate;
