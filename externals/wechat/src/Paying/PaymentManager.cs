@@ -40,7 +40,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		#region 公共属性
 		public PaymentService Payment { get; private set; }
-		public RefundService Refund { get; private set; }
+		public RefundService Refundment { get; private set; }
 		public CertificateService Certificate { get; private set; }
 		#endregion
 
@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return new PaymentManager()
 				{
 					Payment = new PaymentService.DirectPaymentService(authority),
-					Refund = new RefundService.DirectRefundService(authority),
+					Refundment = new RefundService.DirectRefundService(authority),
 					Certificate = new CertificateService(authority),
 				};
 			}, authority);
@@ -83,7 +83,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return new PaymentManager()
 				{
 					Payment = new PaymentService.BrokerPaymentService(state.master, state.authority),
-					Refund = new RefundService.BrokerRefundService(state.master, state.authority),
+					Refundment = new RefundService.BrokerRefundService(state.master, state.authority),
 					Certificate = new CertificateService(authority),
 				};
 			}, new { master, authority });
