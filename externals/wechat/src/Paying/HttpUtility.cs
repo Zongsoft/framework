@@ -77,7 +77,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(response.Content.Headers.ContentLength <= 0)
 				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
-			var failure = await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation);
+			var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
+				await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation) :
+				new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
+
 			return OperationResult.Fail(failure.Code, failure.Message);
 		}
 
@@ -99,7 +102,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
-				var failure = await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation);
+				var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
+					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation) :
+					new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
+
 				return OperationResult.Fail(failure.Code, failure.Message);
 			}
 		}

@@ -39,14 +39,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 {
 	public partial class PaymentManager
 	{
-		public abstract class RefundService
+		public abstract class RefundmentService
 		{
 			#region 私有变量
 			private readonly IAuthority _authority;
 			#endregion
 
 			#region 构造函数
-			protected RefundService(IAuthority authority)
+			protected RefundmentService(IAuthority authority)
 			{
 				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
 			}
@@ -61,15 +61,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public ValueTask<OperationResult<RefundOrder>> RefundAsync(RefundRequest request, CancellationToken cancellation = default)
+			public ValueTask<OperationResult<RefundmentOrder>> RefundAsync(RefundmentRequest request, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
-				return this.Client.PostAsync<RefundRequest, RefundOrder>("refund/domestic/refunds", request, cancellation);
+				return this.Client.PostAsync<RefundmentRequest, RefundmentOrder>("refund/domestic/refunds", request, cancellation);
 			}
 
-			public ValueTask<OperationResult<RefundOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
+			public ValueTask<OperationResult<RefundmentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
@@ -80,7 +80,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(!string.IsNullOrEmpty(argument))
 					url += "?" + argument;
 
-				return this.Client.GetAsync<RefundOrder>(url, cancellation);
+				return this.Client.GetAsync<RefundmentOrder>(url, cancellation);
 			}
 			#endregion
 
@@ -91,8 +91,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#region 模型类型
 			public abstract class RequestBuilder
 			{
-				public RefundRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string description = null) => this.Create(paymentId, voucher, amount, paidAmount, null, description);
-				public abstract RefundRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null);
+				public RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string description = null) => this.Create(paymentId, voucher, amount, paidAmount, null, description);
+				public abstract RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null);
 
 				internal static string GetFallback(string key, string format)
 				{
@@ -105,10 +105,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				}
 			}
 
-			public class RefundRequest
+			public class RefundmentRequest
 			{
 				#region 构造函数
-				public RefundRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency = null, string description = null)
+				public RefundmentRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency = null, string description = null)
 				{
 					this.PaymentId = paymentId;
 					this.VoucherCode = voucher;
@@ -145,14 +145,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						this.Value = value;
 						this.PaidAmount = paidAmount;
-						this.Currency = currency;
+						this.Currency = string.IsNullOrEmpty(currency) ? "CNY" : currency;
 					}
 
 					public AmountInfo(decimal value, decimal paidAmount, string currency = null)
 					{
 						this.Value = (int)(value * 100);
 						this.PaidAmount = (int)(paidAmount * 100);
-						this.Currency = currency;
+						this.Currency = string.IsNullOrEmpty(currency) ? "CNY" : currency;
 					}
 					#endregion
 
@@ -192,10 +192,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 			}
 
-			public class RefundOrder
+			public class RefundmentOrder
 			{
 				#region 构造函数
-				public RefundOrder() { }
+				public RefundmentOrder() { }
 				#endregion
 
 				#region 公共属性
@@ -223,14 +223,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				[JsonPropertyName("status")]
 				public string Status { get; set; }
 
-				[JsonPropertyName("bank_type")]
-				public string BankType { get; set; }
-
-				[JsonPropertyName("out_trade_no")]
-				public string VoucherCode { get; set; }
-
 				[JsonPropertyName("create_time")]
-				public DateTime? CreatedTime { get; set; }
+				public DateTime CreatedTime { get; set; }
 
 				[JsonPropertyName("success_time")]
 				public DateTime? RefundedTime { get; set; }
@@ -344,7 +338,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			}
 			#endregion
 
-			internal class DirectRefundService : RefundService
+			internal class DirectRefundmentService : RefundmentService
 			{
 				#region 常量定义
 				/// <summary>表示直连商户数据格式的标识。</summary>
@@ -356,7 +350,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 构造函数
-				public DirectRefundService(IAuthority authority) : base(authority)
+				public DirectRefundmentService(IAuthority authority) : base(authority)
 				{
 					this.Request = new DirectBuilder(authority);
 				}
@@ -391,7 +385,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					private readonly IAuthority _authority;
 					public DirectBuilder(IAuthority authority) => _authority = authority;
 
-					public override RefundRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
+					public override RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
 					{
 						return new DirectRequest(paymentId, voucher, amount, paidAmount, currency, uint.Parse(_authority.Code), description)
 						{
@@ -400,7 +394,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					}
 				}
 
-				private sealed class DirectRequest : RefundRequest
+				private sealed class DirectRequest : RefundmentRequest
 				{
 					#region 构造函数
 					internal DirectRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentId, voucher, amount, paidAmount, null, merchantId, description) { }
@@ -419,7 +413,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 			}
 
-			internal class BrokerRefundService : RefundService
+			internal class BrokerRefundmentService : RefundmentService
 			{
 				#region 常量定义
 				/// <summary>表示服务商数据格式的标识。</summary>
@@ -432,7 +426,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 构造函数
-				public BrokerRefundService(IAuthority master, IAuthority subsidiary) : base(master)
+				public BrokerRefundmentService(IAuthority master, IAuthority subsidiary) : base(master)
 				{
 					_subsidiary = subsidiary ?? throw new ArgumentNullException(nameof(subsidiary));
 					this.Request = new BrokerBuilder(master, subsidiary);
@@ -470,7 +464,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
 
-					public override RefundRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
+					public override RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
 					{
 						return new BrokerRequest(paymentId, voucher, amount, paidAmount, currency, uint.Parse(_subsidiary.Code), description)
 						{
@@ -479,7 +473,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					}
 				}
 
-				private sealed class BrokerRequest : RefundRequest
+				private sealed class BrokerRequest : RefundmentRequest
 				{
 					#region 构造函数
 					internal BrokerRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentId, voucher, amount, paidAmount, null, merchantId, description) { }

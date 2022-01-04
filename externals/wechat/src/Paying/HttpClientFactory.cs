@@ -52,7 +52,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		private static HttpClient CreateHttpClient(Certificate certificate)
 		{
 			var client = new HttpClient(new PaymentHttpMessageHandler(certificate));
-			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/pay/");
+			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/");
 			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
 			return client;

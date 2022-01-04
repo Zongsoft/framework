@@ -474,14 +474,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				protected override string GetUrl(string path, Scenario? scenario)
 				{
 					if(scenario == null)
-						return path;
+						return $"pay/{path}";
 
 					return scenario switch
 					{
-						Scenario.App => $"{path}/app",
-						Scenario.Web => $"{path}/jsapi",
-						Scenario.Native => $"{path}/native",
-						_ => $"{path}/jsapi",
+						Scenario.App => $"pay/{path}/app",
+						Scenario.Web => $"pay/{path}/jsapi",
+						Scenario.Native => $"pay/{path}/native",
+						_ => $"pay/{path}/jsapi",
 					};
 				}
 
@@ -657,14 +657,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				protected override string GetUrl(string path, Scenario? scenario)
 				{
 					if(scenario == null)
-						return $"partner/{path}";
+						return $"pay/partner/{path}";
 
 					return scenario switch
 					{
-						Scenario.App => $"partner/{path}/app",
-						Scenario.Web => $"partner/{path}/jsapi",
-						Scenario.Native => $"partner/{path}/native",
-						_ => $"partner/{path}/jsapi",
+						Scenario.App => $"pay/partner/{path}/app",
+						Scenario.Web => $"pay/partner/{path}/jsapi",
+						Scenario.Native => $"pay/partner/{path}/native",
+						_ => $"pay/partner/{path}/jsapi",
 					};
 				}
 

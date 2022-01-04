@@ -76,18 +76,21 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public ValueTask<OperationResult<string>> RegisterAsync(Registration request, CancellationToken cancellation = default)
+			public async ValueTask<OperationResult<string>> RegisterAsync(Registration request, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
+				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments", request, cancellation);
+				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId) : result.Failure;
 			}
 
-			public ValueTask<OperationResult<object>> GetAsync(string key, CancellationToken cancellation = default)
+			public ValueTask<OperationResult<Applyment>> GetAsync(string key, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(key))
 					throw new ArgumentNullException(nameof(key));
 
+				return this.Client.GetAsync<Applyment>($"ecommerce/applyments/out-request-no/{key}", cancellation);
 			}
 			#endregion
 
@@ -236,6 +239,73 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string BankCode { get; set; }
 				}
 				#endregion
+			}
+
+			private struct RegistrationResult
+			{
+				[JsonPropertyName("applyment_id")]
+				public string ApplymentId { get; set; }
+			}
+
+			public class Applyment
+			{
+				[JsonPropertyName("applyment_id")]
+				public string ApplymentId { get; set; }
+				[JsonPropertyName("sub_mchid")]
+				public string MerchantId { get; set; }
+				[JsonPropertyName("applyment_state")]
+				public string Status { get; set; }
+				[JsonPropertyName("applyment_state_desc")]
+				public string StatusDescription { get; set; }
+				[JsonPropertyName("sign_state")]
+				public string SignStatus { get; set; }
+				[JsonPropertyName("sign_url")]
+				public string SignUrl { get; set; }
+				[JsonPropertyName("legal_validation_url")]
+				public string ValidationUrl { get; set; }
+				[JsonPropertyName("account_validation")]
+				public AccountInfo Account { get; set; }
+				[JsonPropertyName("audit_detail")]
+				public RejectionInfo[] Rejects { get; set; }
+
+				public struct RejectionInfo
+				{
+					[JsonPropertyName("param_name")]
+					public string Name { get; set; }
+
+					[JsonPropertyName("reject_reason")]
+					public string Reason { get; set; }
+				}
+
+				public struct AccountInfo
+				{
+					[JsonPropertyName("pay_amount")]
+					public int Amount { get; set; }
+
+					[JsonPropertyName("account_no")]
+					public string Code { get; set; }
+
+					[JsonPropertyName("account_name")]
+					public string Name { get; set; }
+
+					[JsonPropertyName("deadline")]
+					public DateTime Deadline { get; set; }
+
+					[JsonPropertyName("destination_account_number")]
+					public string ReceiverCode { get; set; }
+
+					[JsonPropertyName("destination_account_name")]
+					public string ReceiverName { get; set; }
+
+					[JsonPropertyName("destination_account_bank")]
+					public string ReceiverBank { get; set; }
+
+					[JsonPropertyName("city")]
+					public string ReceiverCity { get; set; }
+
+					[JsonPropertyName("remark")]
+					public string Remark { get; set; }
+				}
 			}
 			#endregion
 		}
