@@ -280,6 +280,8 @@ namespace Zongsoft.Data.Common
 
 				if(Utility.TryGetMemberValue(ref data, anchors[0].Name, out var value))
 					tokens[i] = new LinkToken(link.ForeignKey, value);
+				else
+					tokens[i] = new LinkToken(link.ForeignKey, null);
 			}
 
 			return tokens;
@@ -303,7 +305,8 @@ namespace Zongsoft.Data.Common
 				if(data == null)
 					return;
 
-				Utility.TrySetMemberValue(ref data, this.ForeignProperty.Name, this.PrincipalValue);
+				if(this.PrincipalValue == null && this.ForeignProperty.Nullable)
+					Utility.TrySetMemberValue(ref data, this.ForeignProperty.Name, this.PrincipalValue);
 			}
 		}
 		#endregion
