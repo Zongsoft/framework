@@ -38,7 +38,7 @@ namespace Zongsoft.Data
 		protected int Insert(object data, ISchema schema, IDataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureInsert(options);
 
 			if(data == null)
 				return 0;
@@ -65,7 +65,7 @@ namespace Zongsoft.Data
 		protected int InsertMany(IEnumerable items, ISchema schema, IDataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureInsert(options);
 
 			if(items == null)
 				return 0;
@@ -97,7 +97,7 @@ namespace Zongsoft.Data
 		protected int Upsert(object data, ISchema schema, IDataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpsert();
+			this.EnsureUpsert(options);
 
 			if(data == null)
 				return 0;
@@ -124,7 +124,7 @@ namespace Zongsoft.Data
 		protected int UpsertMany(IEnumerable items, ISchema schema, IDataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpsert();
+			this.EnsureUpsert(options);
 
 			if(items == null)
 				return 0;
@@ -156,7 +156,7 @@ namespace Zongsoft.Data
 		protected int Update(object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpdate();
+			this.EnsureUpdate(options);
 
 			if(data == null)
 				return 0;
@@ -212,7 +212,7 @@ namespace Zongsoft.Data
 		protected int UpdateMany(IEnumerable items, ISchema schema, IDataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpdate();
+			this.EnsureUpdate(options);
 
 			if(items == null)
 				return 0;

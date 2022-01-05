@@ -584,7 +584,7 @@ namespace Zongsoft.Data
 		public int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureDelete();
+			this.EnsureDelete(options);
 
 			//构建数据操作的选项对象
 			if(options == null)
@@ -618,7 +618,7 @@ namespace Zongsoft.Data
 		public int Insert(object data, string schema, IDataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureInsert(options);
 
 			if(data == null)
 				return 0;
@@ -659,7 +659,7 @@ namespace Zongsoft.Data
 		public int InsertMany(IEnumerable items, string schema, IDataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureInsert();
+			this.EnsureInsert(options);
 
 			if(items == null)
 				return 0;
@@ -705,7 +705,7 @@ namespace Zongsoft.Data
 		public int Upsert(object data, string schema, IDataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpsert();
+			this.EnsureUpsert(options);
 
 			if(data == null)
 				return 0;
@@ -746,7 +746,7 @@ namespace Zongsoft.Data
 		public int UpsertMany(IEnumerable items, string schema, IDataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpsert();
+			this.EnsureUpsert(options);
 
 			if(items == null)
 				return 0;
@@ -892,7 +892,7 @@ namespace Zongsoft.Data
 		public int Update(object data, ICondition criteria, string schema, IDataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpdate();
+			this.EnsureUpdate(options);
 
 			if(data == null)
 				return 0;
@@ -961,7 +961,7 @@ namespace Zongsoft.Data
 		public int UpdateMany(IEnumerable items, string schema, IDataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
-			this.EnsureUpdate();
+			this.EnsureUpdate(options);
 
 			if(items == null)
 				return 0;
@@ -2063,30 +2063,30 @@ namespace Zongsoft.Data
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void EnsureDelete()
+		private void EnsureDelete(IDataDeleteOptions options)
 		{
-			if(!this.CanDelete)
+			if(!this.CanDelete && !Options.Allowed(options))
 				throw new InvalidOperationException("The delete operation is not allowed.");
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void EnsureInsert()
+		private void EnsureInsert(IDataInsertOptions options)
 		{
-			if(!this.CanInsert)
+			if(!this.CanInsert && !Options.Allowed(options))
 				throw new InvalidOperationException("The insert operation is not allowed.");
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void EnsureUpdate()
+		private void EnsureUpdate(IDataUpdateOptions options)
 		{
-			if(!this.CanUpdate)
+			if(!this.CanUpdate && !Options.Allowed(options))
 				throw new InvalidOperationException("The update operation is not allowed.");
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void EnsureUpsert()
+		private void EnsureUpsert(IDataUpsertOptions options)
 		{
-			if(!(this.CanInsert && this.CanUpdate && this.CanUpsert))
+			if(!(this.CanInsert && this.CanUpdate && this.CanUpsert) && !Options.Allowed(options))
 				throw new InvalidOperationException("The upsert operation is not allowed.");
 		}
 
