@@ -322,7 +322,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public abstract string Payer { get; }
 
 				[JsonPropertyName("transaction_id")]
-				public string Key { get; set; }
+				public string SerialId { get; set; }
 
 				[JsonPropertyName("trade_type")]
 				public string Kind { get; set; }

@@ -91,8 +91,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#region 模型类型
 			public abstract class RequestBuilder
 			{
-				public RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string description = null) => this.Create(paymentId, voucher, amount, paidAmount, null, description);
-				public abstract RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null);
+				public RefundmentRequest Create(string paymentKey, string voucher, decimal amount, decimal paidAmount, string description = null) => this.Create(paymentKey, voucher, amount, paidAmount, null, description);
+				public abstract RefundmentRequest Create(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, string description = null);
 
 				internal static string GetFallback(string key, string format)
 				{
@@ -108,9 +108,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 			public class RefundmentRequest
 			{
 				#region 构造函数
-				public RefundmentRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency = null, string description = null)
+				public RefundmentRequest(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency = null, string description = null)
 				{
-					this.PaymentId = paymentId;
+					this.PaymentKey = paymentKey;
 					this.VoucherCode = voucher;
 					this.Amount = new AmountInfo(amount, paidAmount, currency);
 					this.Description = description;
@@ -118,8 +118,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共属性
-				[JsonPropertyName("transaction_id")]
-				public string PaymentId { get; set; }
+				[JsonPropertyName("out_trade_no")]
+				public string PaymentKey { get; set; }
 
 				[JsonPropertyName("out_refund_no")]
 				public string VoucherCode { get; set; }
@@ -203,7 +203,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public virtual AuthorityToken? Subsidiary { get; }
 
 				[JsonPropertyName("transaction_id")]
-				public string PaymentId { get; set; }
+				public string PaymentSerialId { get; set; }
 
 				[JsonPropertyName("out_trade_no")]
 				public string PaymentVoucherCode { get; set; }
@@ -385,9 +385,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 					private readonly IAuthority _authority;
 					public DirectBuilder(IAuthority authority) => _authority = authority;
 
-					public override RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
+					public override RefundmentRequest Create(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
 					{
-						return new DirectRequest(paymentId, voucher, amount, paidAmount, currency, uint.Parse(_authority.Code), description)
+						return new DirectRequest(paymentKey, voucher, amount, paidAmount, currency, uint.Parse(_authority.Code), description)
 						{
 							FallbackUrl = GetFallback(_authority.Code, FORMAT),
 						};
@@ -397,8 +397,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				private sealed class DirectRequest : RefundmentRequest
 				{
 					#region 构造函数
-					internal DirectRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentId, voucher, amount, paidAmount, null, merchantId, description) { }
-					internal DirectRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, uint merchantId, string description = null) : base(paymentId, voucher, amount, paidAmount, currency, description)
+					internal DirectRequest(string paymentKey, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentKey, voucher, amount, paidAmount, null, merchantId, description) { }
+					internal DirectRequest(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, uint merchantId, string description = null) : base(paymentKey, voucher, amount, paidAmount, currency, description)
 					{
 						this.MerchantId = merchantId;
 					}
@@ -464,9 +464,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
 
-					public override RefundmentRequest Create(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
+					public override RefundmentRequest Create(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
 					{
-						return new BrokerRequest(paymentId, voucher, amount, paidAmount, currency, uint.Parse(_subsidiary.Code), description)
+						return new BrokerRequest(paymentKey, voucher, amount, paidAmount, currency, uint.Parse(_subsidiary.Code), description)
 						{
 							FallbackUrl = GetFallback(_master.Name, FORMAT),
 						};
@@ -476,8 +476,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				private sealed class BrokerRequest : RefundmentRequest
 				{
 					#region 构造函数
-					internal BrokerRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentId, voucher, amount, paidAmount, null, merchantId, description) { }
-					internal BrokerRequest(string paymentId, string voucher, decimal amount, decimal paidAmount, string currency, uint merchantId, string description = null) : base(paymentId, voucher, amount, paidAmount, currency, description)
+					internal BrokerRequest(string paymentKey, string voucher, decimal amount, decimal paidAmount, uint merchantId, string description = null) : this(paymentKey, voucher, amount, paidAmount, null, merchantId, description) { }
+					internal BrokerRequest(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, uint merchantId, string description = null) : base(paymentKey, voucher, amount, paidAmount, currency, description)
 					{
 						this.MerchantId = merchantId;
 					}
