@@ -1064,61 +1064,7 @@
 						},
 						"description": "修改用户密码问题和答案"
 					},
-					"response": [
-						{
-							"name": "Users.Password.Answers",
-							"originalRequest": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Credential {{credentialId}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n\t\"Password\":\"{{password}}\",\n\t\"Questions\":[\"曾就读的小学名？\", \"曾就读的中学名？\", \"第一只宠物名？\"],\n\t\"Answers\":[\"小学\", \"中学\", \"你大爷\"]\n}",
-									"options": {
-										"raw": {
-											"language": "text"
-										}
-									}
-								},
-								"url": {
-									"raw": "http://{{url}}/Security/Users/{{userId}}/Password.Answers",
-									"protocol": "http",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"Security",
-										"Users",
-										"{{userId}}",
-										"Password.Answers"
-									]
-								}
-							},
-							"status": "Unauthorized",
-							"code": 401,
-							"_postman_previewlanguage": "plain",
-							"header": [
-								{
-									"key": "Transfer-Encoding",
-									"value": "chunked"
-								},
-								{
-									"key": "Server",
-									"value": "Microsoft-IIS/10.0"
-								},
-								{
-									"key": "Date",
-									"value": "Fri, 22 May 2020 02:35:01 GMT"
-								}
-							],
-							"cookie": [],
-							"body": ""
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Users.Password.Forget",
@@ -2408,7 +2354,7 @@
 			"response": []
 		},
 		{
-			"name": "Authentication.Signin(verifier)",
+			"name": "Authentication.Signin(secret)",
 			"event": [
 				{
 					"listen": "test",
@@ -2437,10 +2383,28 @@
 							"    if(jsonData.CredentialId)",
 							"    {",
 							"        postman.setGlobalVariable(\"credentialId\", jsonData.CredentialId);",
-							"        postman.setGlobalVariable(\"userId\", jsonData.User.UserId);",
-							"        postman.setGlobalVariable(\"tenantId\", jsonData.User.TenantId);",
-							"        postman.setGlobalVariable(\"phone\", jsonData.User.Phone);",
-							"        postman.setGlobalVariable(\"email\", jsonData.User.Email);",
+							"        postman.setGlobalVariable(\"renewalToken\", jsonData.RenewalToken);",
+							"        postman.setGlobalVariable(\"userId\", jsonData.Identity.UserId);",
+							"        postman.setGlobalVariable(\"phone\", jsonData.Identity.Phone);",
+							"        postman.setGlobalVariable(\"email\", jsonData.Identity.Email);",
+							"",
+							"        if(jsonData.Identity.SiteId)",
+							"            postman.setGlobalVariable(\"siteId\", jsonData.Identity.SiteId);",
+							"",
+							"        if(jsonData.Identity.TenantId)",
+							"        {",
+							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);",
+							"            postman.setGlobalVariable(\"branchId\", jsonData.Identity.BranchId);",
+							"        }",
+							"",
+							"        if(jsonData.Identity.VendorId)",
+							"            postman.setGlobalVariable(\"vendorId\", jsonData.Identity.VendorId);",
+							"",
+							"        if(jsonData.Identity.DomainId)",
+							"            postman.setGlobalVariable(\"domainId\", jsonData.Identity.DomainId);",
+							"",
+							"        if(jsonData.Identity.Administrative)",
+							"            postman.setGlobalVariable(\"administrative\", jsonData.Identity.Administrative);",
 							"    }",
 							"}",
 							""
@@ -2459,15 +2423,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"Namespace\":\"{{namespace}}\",\n  \"Identity\":\"{{phone}}\",\n  \"Token\":\"12345\"\n}",
+					"raw": "18971599002",
 					"options": {
 						"raw": {
-							"language": "json"
+							"language": "text"
 						}
 					}
 				},
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Signin/wechat?scenario={{scene}}",
+					"raw": "http://{{url}}/Security/Authentication/Signin/Secret/1T24MJSKV30P6SNX:974716?scenario={{scene}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2476,7 +2440,8 @@
 						"Security",
 						"Authentication",
 						"Signin",
-						"wechat"
+						"Secret",
+						"1T24MJSKV30P6SNX:974716"
 					],
 					"query": [
 						{
@@ -2485,7 +2450,111 @@
 						}
 					]
 				},
-				"description": "登录（通过指定的校验器）"
+				"description": "登录（通过验证码）"
+			},
+			"response": []
+		},
+		{
+			"name": "Authentication.Signin(wechat)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"tests[\"IsSucceed\"] = responseCode.code >= 200 && responseCode.code <= 299;",
+							"",
+							"function convert(data) {",
+							"    return Object.keys(data).reduce((acc, key) => {",
+							"        const uppper = key[0].toLocaleUpperCase() + key.slice(1)",
+							"",
+							"        return Object.assign(acc, {",
+							"            [uppper]:",
+							"            data[key] instanceof Object",
+							"                ? convert(data[key])",
+							"                : data[key]",
+							"        })",
+							"",
+							"    }, Object.create(null))",
+							"}",
+							"",
+							"if(tests[\"IsSucceed\"])",
+							"{",
+							"    var jsonData = convert(JSON.parse(responseBody));",
+							"",
+							"    if(jsonData.CredentialId)",
+							"    {",
+							"        postman.setGlobalVariable(\"credentialId\", jsonData.CredentialId);",
+							"        postman.setGlobalVariable(\"renewalToken\", jsonData.RenewalToken);",
+							"        postman.setGlobalVariable(\"userId\", jsonData.Identity.UserId);",
+							"        postman.setGlobalVariable(\"phone\", jsonData.Identity.Phone);",
+							"        postman.setGlobalVariable(\"email\", jsonData.Identity.Email);",
+							"",
+							"        if(jsonData.Identity.SiteId)",
+							"            postman.setGlobalVariable(\"siteId\", jsonData.Identity.SiteId);",
+							"",
+							"        if(jsonData.Identity.TenantId)",
+							"        {",
+							"            postman.setGlobalVariable(\"tenantId\", jsonData.Identity.TenantId);",
+							"            postman.setGlobalVariable(\"branchId\", jsonData.Identity.BranchId);",
+							"        }",
+							"",
+							"        if(jsonData.Identity.VendorId)",
+							"            postman.setGlobalVariable(\"vendorId\", jsonData.Identity.VendorId);",
+							"",
+							"        if(jsonData.Identity.DomainId)",
+							"            postman.setGlobalVariable(\"domainId\", jsonData.Identity.DomainId);",
+							"",
+							"        if(jsonData.Identity.Administrative)",
+							"            postman.setGlobalVariable(\"administrative\", jsonData.Identity.Administrative);",
+							"    }",
+							"}",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-json-behaviors",
+						"value": "ignores:null,empty; casing:camel"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "channel:081BeEGa1ThMnC026YHa1OA4M21BeEGb",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{url}}/Security/Authentication/Signin/wechat/machine:10001?scenario={{scene}}",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Authentication",
+						"Signin",
+						"wechat",
+						"machine:10001"
+					],
+					"query": [
+						{
+							"key": "scenario",
+							"value": "{{scene}}"
+						}
+					]
+				},
+				"description": "登录（通过微信）"
 			},
 			"response": []
 		},
@@ -2522,7 +2591,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Secret/{{namespace}}:{{phone}}",
+					"raw": "http://{{url}}/Security/Authentication/Secret/{{phone}}?channel=message",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
@@ -2531,7 +2600,13 @@
 						"Security",
 						"Authentication",
 						"Secret",
-						"{{namespace}}:{{phone}}"
+						"{{phone}}"
+					],
+					"query": [
+						{
+							"key": "channel",
+							"value": "message"
+						}
 					]
 				},
 				"description": "获取一个验证码"
@@ -2616,56 +2691,53 @@
 			"response": []
 		},
 		{
-			"name": "Authentication.Verify",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disabledSystemHeaders": {}
-			},
+			"name": "Secret.Issue",
 			"request": {
 				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Credential {{credentialId}}",
-						"type": "text"
-					},
-					{
-						"key": "x-json-behaviors",
-						"value": "ignores:null,empty; casing:camel"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{{password}}",
-					"options": {
-						"raw": {
-							"language": "text"
-						}
-					}
-				},
+				"header": [],
 				"url": {
-					"raw": "http://{{url}}/Security/Authentication/Verify",
+					"raw": "http://{{url}}/Security/Secret/Authentication/{{phone}}",
 					"protocol": "http",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"Security",
+						"Secret",
 						"Authentication",
-						"Verify"
+						"{{phone}}"
+					],
+					"query": [
+						{
+							"key": "channel",
+							"value": "message",
+							"disabled": true
+						}
 					]
 				},
-				"description": "身份确认"
+				"description": "获取一个验证码"
+			},
+			"response": []
+		},
+		{
+			"name": "Secret.Exists",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{url}}/Security/Secret/Exists/1T24MJSKV30P6SNX",
+					"protocol": "http",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"Security",
+						"Secret",
+						"Exists",
+						"1T24MJSKV30P6SNX"
+					]
+				},
+				"description": "获取一个验证码"
 			},
 			"response": []
 		}
