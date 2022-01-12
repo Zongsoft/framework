@@ -179,6 +179,8 @@ namespace Zongsoft.Data
 
 		#region 保护属性
 		protected IDataService Service { get; }
+
+		/// <summary>获取当前应用程序的安全主体。</summary>
 		protected virtual System.Security.Claims.ClaimsPrincipal Principal
 		{
 			get => Services.ApplicationContext.Current?.Principal;
@@ -1716,12 +1718,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 校验方法
+		/// <summary>
+		/// 进行条件验证，适用于<c>Select</c>，<c>Update</c>，<c>Upsert</c>，<c>Delete</c>等方法。
+		/// </summary>
+		/// <param name="method">方法的类型。</param>
+		/// <param name="criteria">查询条件。</param>
+		/// <param name="filter">暂时保留。</param>
+		/// <param name="options">执行方法的可选项。</param>
+		/// <returns></returns>
 		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, string filter, IDataOptions options)
 		{
 			var validator = this.Validator;
 			return validator == null ? criteria : validator.Validate(method, criteria, filter, options);
 		}
 
+		/// <summary>
+		/// 进行数据验证，适用于<c>Insert</c>，<c>Update</c>，<c>Upsert</c>等方法。
+		/// </summary>
+		/// <param name="method">方法的类型。</param>
+		/// <param name="schema">schema。</param>
+		/// <param name="data">数据。</param>
+		/// <param name="options">执行方法的可选项。</param>
 		protected virtual void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options)
 		{
 			this.Validator?.Validate(method, schema, data, options);
