@@ -229,6 +229,13 @@ namespace Zongsoft.Data
 
 				if(attribute != null && attribute.ConverterType != null)
 					this.Converter = Activator.CreateInstance(attribute.ConverterType) as IConditionConverter;
+				else
+				{
+					var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+					if(propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Complex<>))
+						this.Converter = (IConditionConverter)Activator.CreateInstance(typeof(ComplexConverter<>).MakeGenericType(propertyType.GenericTypeArguments[0]));
+				}
 			}
 
 			public ConditionOperator? Operator { get => this.Attribute != null ? this.Attribute.Operator : null; }
