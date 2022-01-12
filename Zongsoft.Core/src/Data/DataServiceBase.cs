@@ -1725,7 +1725,7 @@ namespace Zongsoft.Data
 		/// <param name="criteria">查询条件。</param>
 		/// <param name="filter">暂时保留。</param>
 		/// <param name="options">执行方法的可选项。</param>
-		/// <returns></returns>
+		/// <returns>处理后的条件。</returns>
 		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, string filter, IDataOptions options)
 		{
 			var validator = this.Validator;
@@ -1736,8 +1736,8 @@ namespace Zongsoft.Data
 		/// 进行数据验证，适用于<c>Insert</c>，<c>Update</c>，<c>Upsert</c>等方法。
 		/// </summary>
 		/// <param name="method">方法的类型。</param>
-		/// <param name="schema">schema。</param>
-		/// <param name="data">数据。</param>
+		/// <param name="schema">数据模式。</param>
+		/// <param name="data">待验证的数据。</param>
 		/// <param name="options">执行方法的可选项。</param>
 		protected virtual void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options)
 		{
