@@ -73,9 +73,11 @@ namespace Zongsoft.Security
 
 		#region 公共字段
 		/// <summary>生效时间。</summary>
+		[System.Text.Json.Serialization.JsonInclude]
 		public DateTime Start;
 
 		/// <summary>过期时间。</summary>
+		[System.Text.Json.Serialization.JsonInclude]
 		public DateTime Final;
 		#endregion
 
