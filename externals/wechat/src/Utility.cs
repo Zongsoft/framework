@@ -65,18 +65,18 @@ namespace Zongsoft.Externals.Wechat
 				var text = await response.Content.ReadAsStringAsync(cancellation);
 
 				//首先判断返回内容是否为错误信息
-				var error = JsonSerializer.Deserialize<ErrorResult>(text, Json.Default);
+				var error = JsonSerializer.Deserialize<ErrorResult>(text, Json.Options);
 				if(error.IsFailed)
 					return OperationResult.Fail(error.Code, error.Message);
 
-				return OperationResult.Success(JsonSerializer.Deserialize<TResult>(text, Json.Default));
+				return OperationResult.Success(JsonSerializer.Deserialize<TResult>(text, Json.Options));
 			}
 			else
 			{
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
-				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Default, cancellation);
+				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Options, cancellation);
 				return OperationResult.Fail(error.Code, error.Message);
 			}
 		}

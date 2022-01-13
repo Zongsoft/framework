@@ -73,7 +73,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var resource = request.Resource;
 				var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
-				var payload = JsonSerializer.Deserialize(data, GetModelType(format), Json.Default);
+				var payload = JsonSerializer.Deserialize(data, GetModelType(format), Json.Options);
 				return this.OnHandleAsync(caller, (PaymentManager.PaymentService.PaymentOrder)payload, cancellation);
 			}
 

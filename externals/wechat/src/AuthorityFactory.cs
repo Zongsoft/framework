@@ -88,7 +88,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 获取证书
-		internal static Certificate GetCertificate(DirectoryInfo directory, string subject)
+		private static Certificate GetCertificate(DirectoryInfo directory, string subject)
 		{
 			if(string.IsNullOrEmpty(subject))
 				throw new ArgumentNullException(nameof(subject));

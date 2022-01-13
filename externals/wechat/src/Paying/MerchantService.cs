@@ -81,7 +81,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
-				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments", request, cancellation);
+				//获取微信支付平台的数字证书
+				var certificate = await _authority.GetCertificateAsync(cancellation);
+
+				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments/", request, certificate, cancellation);
 				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId) : result.Failure;
 			}
 
@@ -102,6 +105,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public string RequestId { get; set; }
 
 				[JsonPropertyName("organization_type")]
+				[JsonNumberHandling(JsonNumberHandling.WriteAsString)]
 				public int MerchantKind { get; set; }
 
 				[JsonPropertyName("merchant_shortname")]
@@ -174,13 +178,19 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public struct IdentityCardInfo
 				{
 					[JsonPropertyName("id_card_name")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string Name { get; set; }
+
 					[JsonPropertyName("id_card_number")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string Code { get; set; }
+
 					[JsonPropertyName("id_card_valid_time")]
 					public DateTime? Expration { get; set; }
+
 					[JsonPropertyName("id_card_copy")]
 					public string PhotoA { get; set; }
+
 					[JsonPropertyName("id_card_national")]
 					public string PhotoB { get; set; }
 				}
@@ -210,31 +220,50 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public struct ContactInfo
 				{
 					[JsonPropertyName("contact_type")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString)]
 					public int ContactKind { get; set; }
+
 					[JsonPropertyName("contact_name")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string Name { get; set; }
+
 					[JsonPropertyName("contact_id_card_number")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string IdentityNo { get; set; }
+
 					[JsonPropertyName("mobile_phone")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string Phone { get; set; }
+
 					[JsonPropertyName("contact_email")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string Email { get; set; }
 				}
 
 				public struct BankAccountInfo
 				{
 					[JsonPropertyName("bank_account_type")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString)]
 					public int AccountKind { get; set; }
+
 					[JsonPropertyName("account_name")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string AccountName { get; set; }
+
 					[JsonPropertyName("account_number")]
+					[JsonConverter(typeof(Json.CryptographyConverter))]
 					public string AccountCode { get; set; }
+
 					[JsonPropertyName("bank_address_code")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString)]
 					public int AddressId { get; set; }
+
 					[JsonPropertyName("account_bank")]
 					public string BankAbbr { get; set; }
+
 					[JsonPropertyName("bank_name")]
 					public string BankName { get; set; }
+
 					[JsonPropertyName("bank_branch_id")]
 					public string BankCode { get; set; }
 				}

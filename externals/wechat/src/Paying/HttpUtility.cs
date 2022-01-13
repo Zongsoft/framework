@@ -54,14 +54,24 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		public static async ValueTask<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
-			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
+			var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync(response, cancellation);
 		}
 
-		public static async ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+		public static ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
-			var content = JsonContent.Create(request, request.GetType(), null, Json.Default);
+			return PostAsync<TRequest, TResult>(client, url, request, null, cancellation);
+		}
+
+		public static async ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, Certificate certificate, CancellationToken cancellation = default)
+		{
+			//var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Json.Options);
+			var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
+
+			if(certificate != null)
+				content.Headers.Add("Wechatpay-Serial", certificate.Code);
+
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync<TResult>(response, cancellation);
 		}
@@ -78,7 +88,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
 			var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
-				await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation) :
+				await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
 				new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
 
 			return OperationResult.Fail(failure.Code, failure.Message);
@@ -94,7 +104,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Success();
 
-				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Default, cancellation);
+				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
 				return OperationResult.Success(result);
 			}
 			else
@@ -103,7 +113,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
 
 				var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
-					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Default, cancellation) :
+					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
 					new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
 
 				return OperationResult.Fail(failure.Code, failure.Message);

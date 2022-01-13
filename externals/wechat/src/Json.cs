@@ -35,10 +35,31 @@ namespace Zongsoft.Externals.Wechat
 {
 	internal static class Json
 	{
-		public static readonly JsonSerializerOptions Default = new JsonSerializerOptions()
+		public static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
 		{
 			IncludeFields = true,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 		};
+
+		internal class CryptographyConverter : JsonConverter<string>
+		{
+			private Lazy<Certificate> _certificate;
+
+			public CryptographyConverter()
+			{
+				_certificate = new Lazy<Certificate>(() => AuthorityFactory.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
+			}
+
+			public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+			{
+				return reader.GetString();
+			}
+
+			public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+			{
+				writer.WriteBase64StringValue(_certificate.Value.Encrypt(value));
+			}
+		}
 	}
 }
