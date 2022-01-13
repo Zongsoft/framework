@@ -28,7 +28,9 @@
  */
 
 using System;
+using System.Text;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 using Zongsoft.Security;
 
@@ -49,12 +51,20 @@ namespace Zongsoft.Externals.Wechat
 			this.PublicKey = publicKey;
 			this.PrivateKey = privateKey;
 
-			_rsa = RSA.Create();
+			if(string.Equals(format, "RSA", StringComparison.OrdinalIgnoreCase))
+			{
+				_rsa = RSA.Create();
 
-			if(publicKey != null)
-				_rsa.ImportRSAPublicKey(publicKey, out _);
-			if(privateKey != null)
-				_rsa.ImportPkcs8PrivateKey(privateKey, out _);
+				if(publicKey != null)
+					_rsa.ImportRSAPublicKey(publicKey, out _);
+				if(privateKey != null)
+					_rsa.ImportPkcs8PrivateKey(privateKey, out _);
+			}
+			else if(string.Equals(format, "X509", StringComparison.OrdinalIgnoreCase))
+			{
+				var x509 = new X509Certificate2(this.PublicKey);
+				_rsa = (RSA)x509.PublicKey.Key;
+			}
 		}
 		#endregion
 
@@ -74,12 +84,40 @@ namespace Zongsoft.Externals.Wechat
 		#region 签名方法
 		public byte[] Signature(ReadOnlySpan<byte> data)
 		{
-			var rsa = _rsa;
-
-			if(rsa == null)
-				throw new ObjectDisposedException(nameof(Certificate));
-
+			var rsa = _rsa ?? throw new ObjectDisposedException(nameof(Certificate));
 			return rsa.SignData(data.ToArray(), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+		}
+		#endregion
+
+		#region 加密方法
+		public byte[] Encrypt(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return null;
+
+			return this.Encrypt(Encoding.UTF8.GetBytes(text));
+		}
+
+		public byte[] Encrypt(byte[] data)
+		{
+			var rsa = _rsa ?? throw new ObjectDisposedException(nameof(Certificate));
+			return rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA1);
+		}
+		#endregion
+
+		#region 解密方法
+		public byte[] Decrypt(string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return null;
+
+			return this.Decrypt(Encoding.UTF8.GetBytes(text));
+		}
+
+		public byte[] Decrypt(byte[] data)
+		{
+			var rsa = _rsa ?? throw new ObjectDisposedException(nameof(Certificate));
+			return rsa.Decrypt(data, RSAEncryptionPadding.OaepSHA1);
 		}
 		#endregion
 

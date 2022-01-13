@@ -28,15 +28,11 @@
  */
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
-
-using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
@@ -44,10 +40,10 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	[Route("Externals/Wechat/Certificates")]
 	public class CertificateController : ControllerBase
 	{
-		[HttpGet("{name?}")]
-		public async ValueTask<IActionResult> GetCertificateAsync(string name = null, CancellationToken cancellation = default)
+		[HttpGet("{code?}")]
+		public async ValueTask<IActionResult> GetCertificateAsync(string code = null, CancellationToken cancellation = default)
 		{
-			var certificate = await Paying.PaymentManager.Get(name, null).Certificate.GetCertificateAsync(cancellation);
+			var certificate = await AuthorityFactory.GetAuthority().GetCertificateAsync(code, cancellation);
 			return certificate == null ? this.NotFound() : this.Ok(certificate);
 		}
 	}
