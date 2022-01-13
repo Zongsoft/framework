@@ -32,6 +32,9 @@ using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 表示数据的异常基类。
+	/// </summary>
 	public class DataException : Exception
 	{
 		#region 构造函数

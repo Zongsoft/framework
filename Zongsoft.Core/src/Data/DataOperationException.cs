@@ -31,6 +31,9 @@ using System;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 表示数据操作无效的异常类。
+	/// </summary>
 	public class DataOperationException : DataException
 	{
 		public DataOperationException() { }
