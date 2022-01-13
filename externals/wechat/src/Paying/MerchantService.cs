@@ -158,7 +158,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("business_license_copy")]
 					public string Photo { get; set; }
 					[JsonPropertyName("business_time")]
-					public string Expiration { get; set; }
+					public DateTime? Expiration { get; set; }
 				}
 
 				public struct OrganizationLicenseInfo
@@ -168,7 +168,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("organization_copy")]
 					public string Photo { get; set; }
 					[JsonPropertyName("organization_time")]
-					public string Expiration { get; set; }
+					public DateTime? Expiration { get; set; }
 				}
 
 				public struct IdentityCardInfo
@@ -178,7 +178,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("id_card_number")]
 					public string Code { get; set; }
 					[JsonPropertyName("id_card_valid_time")]
-					public DateTime Expration { get; set; }
+					public DateTime? Expration { get; set; }
 					[JsonPropertyName("id_card_copy")]
 					public string PhotoA { get; set; }
 					[JsonPropertyName("id_card_national")]
@@ -192,7 +192,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("id_doc_number")]
 					public string Code { get; set; }
 					[JsonPropertyName("doc_period_end")]
-					public DateTime Expration { get; set; }
+					public DateTime? Expration { get; set; }
 					[JsonPropertyName("id_doc_copy")]
 					public string Photo { get; set; }
 				}
