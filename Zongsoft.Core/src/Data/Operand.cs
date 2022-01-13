@@ -31,6 +31,9 @@ using System;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 操作元(Operand element)
+	/// </summary>
 	public abstract class Operand
 	{
 		#region 构造函数

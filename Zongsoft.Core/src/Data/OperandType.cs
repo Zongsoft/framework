@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 表示操作数类型的枚举。
+	/// 表示操作元类型的枚举。
 	/// </summary>
 	public enum OperandType
 	{
