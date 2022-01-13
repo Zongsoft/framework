@@ -73,96 +73,210 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
+		/// <summary>
+		/// 创建一个用于相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Equal(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.Equal);
 		}
 
+		/// <summary>
+		/// 创建一个用于相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Equal(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.Equal);
 		}
 
+		/// <summary>
+		/// 创建一个用于相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Equal(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.Equal);
 		}
 
+		/// <summary>
+		/// 创建一个用于不相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition NotEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.NotEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于不相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition NotEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.NotEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于不相等比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition NotEqual(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.NotEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThan(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThan(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThan(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.GreaterThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于等于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThanEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于等于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThanEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.GreaterThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于大于等于比较的过滤条件设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition GreaterThanEqual(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.GreaterThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThan(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThan(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThan(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.LessThan);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于等于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThanEqual(string name, object value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于等于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThanEqual(string name, Operand value)
 		{
 			return new Condition(name, value, ConditionOperator.LessThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于小于等于比较的过滤条件的设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">类型为字段值的操作元。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition LessThanEqual(Operand field, Operand value)
 		{
 			return new Condition(field, value, ConditionOperator.LessThanEqual);
 		}
 
+		/// <summary>
+		/// 创建一个用于模糊匹配的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Like(string name, string value)
 		{
 			if(string.IsNullOrEmpty(value))
@@ -171,6 +285,12 @@ namespace Zongsoft.Data
 				return new Condition(name, value, ConditionOperator.Like);
 		}
 
+		/// <summary>
+		/// 创建一个用于模糊匹配的过滤条件的设置项。
+		/// </summary>
+		/// <param name="field">类型为字段名的操作元。</param>
+		/// <param name="value">字段值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Like(Operand field, string value)
 		{
 			if(string.IsNullOrEmpty(value))
@@ -179,16 +299,39 @@ namespace Zongsoft.Data
 				return new Condition(field, value, ConditionOperator.Like);
 		}
 
+		/// <summary>
+		/// 创建一个用于范围匹配的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于表示范围的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="range">表示范围的对象。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Between<T>(string name, Range<T> range) where T : struct, IComparable<T>
 		{
 			return range.ToCondition(name);
 		}
 
+		/// <summary>
+		/// 创建一个用于范围匹配的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于表示范围的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="minimum">最小值。</param>
+		/// <param name="maximum">最大值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Between<T>(string name, T minimum, T maximum) where T : struct, IComparable<T>
 		{
 			return (new Range<T>(minimum, maximum)).ToCondition(name);
 		}
 
+		/// <summary>
+		/// 创建一个用于范围匹配的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于表示范围的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="minimum">最小值。</param>
+		/// <param name="maximum">最大值。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Between<T>(string name, T? minimum, T? maximum) where T : struct, IComparable<T>
 		{
 			if(minimum == null && maximum == null)
@@ -197,6 +340,14 @@ namespace Zongsoft.Data
 			return (new Range<T>(minimum, maximum)).ToCondition(name);
 		}
 
+		/// <summary>
+		/// 创建一个用于匹配多个值的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于匹配的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="values">用于匹配的集合。</param>
+		/// <returns>返回构建成功的条件项。</returns>
+		/// <exception cref="ArgumentNullException">参数空异常。</exception>
 		public static Condition In<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
 		{
 			if(values == null)
@@ -205,6 +356,14 @@ namespace Zongsoft.Data
 			return new Condition(name, values, ConditionOperator.In);
 		}
 
+		/// <summary>
+		/// 创建一个用于匹配多个值的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于匹配的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="values">用于匹配的集合。</param>
+		/// <returns>返回构建成功的条件项。</returns>
+		/// <exception cref="ArgumentNullException">参数空异常。</exception>
 		public static Condition In<T>(string name, params T[] values) where T : IEquatable<T>
 		{
 			if(values == null)
@@ -213,6 +372,14 @@ namespace Zongsoft.Data
 			return new Condition(name, values, ConditionOperator.In);
 		}
 
+		/// <summary>
+		/// 创建一个用于排除多个值的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于排除的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="values">用于排除的集合。</param>
+		/// <returns>返回构建成功的条件项。</returns>
+		/// <exception cref="ArgumentNullException">参数空异常。</exception>
 		public static Condition NotIn<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
 		{
 			if(values == null)
@@ -221,6 +388,14 @@ namespace Zongsoft.Data
 			return new Condition(name, values, ConditionOperator.NotIn);
 		}
 
+		/// <summary>
+		/// 创建一个用于排除多个值的过滤条件的设置项。
+		/// </summary>
+		/// <typeparam name="T">用于排除的泛型。</typeparam>
+		/// <param name="name">字段名。</param>
+		/// <param name="values">用于排除的集合。</param>
+		/// <returns>返回构建成功的条件项。</returns>
+		/// <exception cref="ArgumentNullException">参数空异常。</exception>
 		public static Condition NotIn<T>(string name, params T[] values) where T : IEquatable<T>
 		{
 			if(values == null)
@@ -229,11 +404,23 @@ namespace Zongsoft.Data
 			return new Condition(name, values, ConditionOperator.NotIn);
 		}
 
+		/// <summary>
+		/// 创建一个用于表示存在于子查询结果的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="filter">子查询的过滤条件。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition Exists(string name, ICondition filter = null)
 		{
 			return new Condition(name, filter, ConditionOperator.Exists);
 		}
 
+		/// <summary>
+		/// 创建一个用于表示不存在于子查询结果的过滤条件的设置项。
+		/// </summary>
+		/// <param name="name">字段名。</param>
+		/// <param name="filter">子查询的过滤条件。</param>
+		/// <returns>返回构建成功的条件项。</returns>
 		public static Condition NotExists(string name, ICondition filter = null)
 		{
 			return new Condition(name, filter, ConditionOperator.NotExists);
