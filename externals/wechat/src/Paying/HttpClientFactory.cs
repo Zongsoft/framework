@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						foreach(var form in forms)
 						{
-							if(form.Headers.ContentDisposition.Name == "meta" && form.Headers.ContentType.MediaType.EndsWith("json"))
+							if(form.Headers.ContentDisposition.Name == "\"meta\"" && form.Headers.ContentType.MediaType.EndsWith("json"))
 							{
 								content = await form.ReadAsStringAsync(cancellation);
 								break;
