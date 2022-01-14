@@ -29,8 +29,10 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
@@ -89,18 +91,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 			await fileStream.CopyToAsync(stream);
 			var data = stream.ToArray();
 
-			stream.Position = 0;
-
 			var client = HttpClientFactory.GetHttpClient(authority.Certificate);
-
-			var form = new MultipartFormDataContent();
 			var fileName = System.IO.Path.GetFileName(filePath);
+
+			string boundary = Guid.NewGuid().ToString();
+			var form = new MultipartFormDataContent(boundary);
+			form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary); //目的是去除boundary的双引号
+
 			var digest = _sha256.ComputeHash(data);
-
-			stream.Position = 0;
-
-			form.Add(JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) }), "meta");
-			form.Add(new ByteArrayContent(data), "file", fileName);
+			var json = JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) });
+			form.Add(json, "\"meta\""); //需要加上双引号
+			form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //需要加上双引号
 
 			var response = await client.PostAsync(url, form, cancellation);
 			var result = await response.GetResultAsync<UploaderResult>(cancellation);
