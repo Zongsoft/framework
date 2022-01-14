@@ -74,7 +74,21 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var content = string.Empty;
 
 				if(method == HttpMethod.Put || method == HttpMethod.Post || method == HttpMethod.Patch)
-					content = await request.Content.ReadAsStringAsync(cancellation);
+				{
+					if(request.Content is MultipartContent forms)
+					{
+						foreach(var form in forms)
+						{
+							if(form.Headers.ContentDisposition.Name == "meta" && form.Headers.ContentType.MediaType.EndsWith("json"))
+							{
+								content = await form.ReadAsStringAsync(cancellation);
+								break;
+							}
+						}
+					}
+					else
+						content = await request.Content.ReadAsStringAsync(cancellation);
+				}
 
 				var value = Signature(_certificate, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
 				request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", value);
