@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
@@ -86,22 +85,28 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(string.IsNullOrEmpty(filePath))
 				throw new ArgumentNullException(nameof(filePath));
 
-			var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-			var stream = new MemoryStream();
-			await fileStream.CopyToAsync(stream);
-			var data = stream.ToArray();
+			byte[] data;
+
+			using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
+			{
+				using var stream = new MemoryStream();
+				await fileStream.CopyToAsync(stream);
+				data = stream.ToArray();
+			}
 
 			var client = HttpClientFactory.GetHttpClient(authority.Certificate);
 			var fileName = System.IO.Path.GetFileName(filePath);
 
-			string boundary = Guid.NewGuid().ToString();
+			string boundary = Guid.NewGuid().ToString("N");
 			var form = new MultipartFormDataContent(boundary);
-			form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary); //目的是去除boundary的双引号
+
+			//注意：.NET默认会为boundary值加上双引号，这会导致微信服务器处理异常，故而必须手动指定一个不带双引号的boundary值
+			form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary);
 
 			var digest = _sha256.ComputeHash(data);
 			var json = JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) });
-			form.Add(json, "\"meta\""); //需要加上双引号
-			form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //需要加上双引号
+			form.Add(json, "\"meta\""); //注意：必须加上双引号
+			form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //注意：必须加上双引号
 
 			var response = await client.PostAsync(url, form, cancellation);
 			var result = await response.GetResultAsync<UploaderResult>(cancellation);
