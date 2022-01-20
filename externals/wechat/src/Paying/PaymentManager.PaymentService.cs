@@ -319,7 +319,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 公共属性
 				public abstract AuthorityToken Merchant { get; }
 				public virtual AuthorityToken? Subsidiary { get; }
-				public abstract string Payer { get; }
+				public abstract string PayerToken { get; }
 
 				[JsonPropertyName("transaction_id")]
 				public string SerialId { get; set; }
@@ -573,7 +573,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				{
 					#region 重写属性
 					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
-					public override string Payer { get => this.PayerToken.ToString(); }
+					public override string PayerToken { get => this.Payer.ToString(); }
 					#endregion
 
 					#region 公共属性
@@ -585,7 +585,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string AppId { get; set; }
 
 					[JsonPropertyName("payer")]
-					public PayerInfo PayerToken { get; set; }
+					public PayerInfo Payer { get; set; }
 					#endregion
 
 					#region 嵌套结构
@@ -793,7 +793,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					#region 重写属性
 					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
 					public override AuthorityToken? Subsidiary { get => new AuthorityToken(this.SubMerchantId.ToString(), this.SubAppId); }
-					public override string Payer { get => this.PayerToken.ToString(); }
+					public override string PayerToken { get => this.Payer.ToString(); }
 					#endregion
 
 					#region 公共属性
@@ -812,7 +812,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string SubAppId { get; set; }
 
 					[JsonPropertyName("payer")]
-					public PayerInfo PayerToken { get; set; }
+					public PayerInfo Payer { get; set; }
 					#endregion
 
 					#region 嵌套结构
