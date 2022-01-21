@@ -104,6 +104,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(response.Content.Headers.ContentLength <= 0)
 					return OperationResult.Success();
 
+				//var text = await response.Content.ReadAsStringAsync(cancellation);
+				//var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text, Json.Options);
 				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
 				return OperationResult.Success(result);
 			}

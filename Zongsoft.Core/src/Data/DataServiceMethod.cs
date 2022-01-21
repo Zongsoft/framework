@@ -100,7 +100,7 @@ namespace Zongsoft.Data
 		public bool IsGet { get => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get); }
 
 		/// <summary>
-		/// 获取一个值，指示当前方法是否为读取方法(Select/Exists/Aggregate)。
+		/// 获取一个值，指示当前方法是否为读取方法(Get/Select/Exists/Aggregate)。
 		/// </summary>
 		public bool IsReading
 		{
@@ -110,7 +110,7 @@ namespace Zongsoft.Data
 		}
 
 		/// <summary>
-		/// 获取一个值，指示当前方法是否为修改方法(Incremnet/Decrement/Delete/Insert/Update/Upsert)。
+		/// 获取一个值，指示当前方法是否为修改方法(Delete/Insert/Update/Upsert)。
 		/// </summary>
 		public bool IsWriting
 		{
@@ -123,28 +123,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public bool Equals(DataServiceMethod method)
-		{
-			return this.Kind == method.Kind && string.Equals(this.Name, method.Name);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != typeof(DataServiceMethod))
-				return false;
-
-			return this.Equals((DataServiceMethod)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(Name);
-		}
-
-		public override string ToString()
-		{
-			return this.Name;
-		}
+		public bool Equals(DataServiceMethod method) => this.Kind == method.Kind && string.Equals(this.Name, method.Name);
+		public override bool Equals(object obj) => obj is DataServiceMethod method && this.Equals(method);
+		public override int GetHashCode() => HashCode.Combine(Name);
+		public override string ToString() => this.Name;
 		#endregion
 	}
 }

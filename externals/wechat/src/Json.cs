@@ -38,6 +38,7 @@ namespace Zongsoft.Externals.Wechat
 		public static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
 		{
 			IncludeFields = true,
+			NumberHandling = JsonNumberHandling.AllowReadingFromString,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 		};
