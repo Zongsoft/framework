@@ -44,14 +44,13 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 属性定义
-		/// <summary>
-		/// 获取数据搜索器对象。
-		/// </summary>
+		/// <summary>获取数据搜索器对象。</summary>
 		IDataSearcher<TModel> Searcher { get; }
 
-		/// <summary>
-		/// 获取数据服务验证器。
-		/// </summary>
+		/// <summary>获取数据服务授权验证器。</summary>
+		IDataServiceAuthorizer<TModel> Authorizer { get; }
+
+		/// <summary>获取数据服务操作验证器。</summary>
 		new IDataServiceValidator<TModel> Validator { get; }
 		#endregion
 

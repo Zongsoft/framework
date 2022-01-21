@@ -75,6 +75,9 @@ namespace Zongsoft.Data
 		/// <summary>获取一个值，指示是否支持增改操作。</summary>
 		bool CanUpsert { get; }
 
+		/// <summary>获取当前服务的安全主体。</summary>
+		System.Security.Claims.ClaimsPrincipal Principal { get; }
+
 		/// <summary>获取数据服务注解。</summary>
 		DataServiceAttribute Attribute { get; }
 

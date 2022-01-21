@@ -38,12 +38,24 @@ namespace Zongsoft.Data
 	public interface IDataServiceValidator<TModel> : IDataServiceValidator
 	{
 		/// <summary>
+		/// 验证指定数据服务方法的过滤条件。
+		/// </summary>
+		/// <param name="service">指定的数据服务对象。</param>
+		/// <param name="method">待验证数据服务方法。</param>
+		/// <param name="criteria">待验证的数据过滤条件。</param>
+		/// <param name="filter">待验证的数据过滤表达式。</param>
+		/// <param name="options">待验证方法的选项参数。</param>
+		/// <returns>返回验证后的过滤条件。</returns>
+		ICondition Validate(IDataService<TModel> service, DataServiceMethod method, ICondition criteria, string filter, IDataOptions options);
+
+		/// <summary>
 		/// 验证指定数据服务方法的写入数据。
 		/// </summary>
+		/// <param name="service">指定的数据服务对象。</param>
 		/// <param name="method">待验证的数据服务方法。</param>
 		/// <param name="schema">待验证的数据模式。</param>
 		/// <param name="data">待验证的写入数据。</param>
 		/// <param name="options">待验证方法的选项参数。</param>
-		void Validate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options);
+		void Validate(IDataService<TModel> service, DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options);
 	}
 }

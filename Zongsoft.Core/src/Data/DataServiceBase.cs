@@ -69,17 +69,29 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected DataServiceBase(IServiceProvider serviceProvider, IDataSearcher<TModel> searcher = null)
+		protected DataServiceBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
-			_searcher = searcher ?? new DataSearcher<TModel>(this);
+			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, IDataSearcher<TModel> searcher = null)
+		protected DataServiceBase(IServiceProvider serviceProvider, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider)
+		{
+			this.Validator = validator;
+			this.Authorizer = authorizer;
+		}
+
+		protected DataServiceBase(IServiceProvider serviceProvider, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(serviceProvider)
+		{
+			this.Authorizer = authorizer;
+			this.Validator = validator;
+		}
+
+		protected DataServiceBase(string name, IServiceProvider serviceProvider)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -90,33 +102,65 @@ namespace Zongsoft.Data
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
-			_searcher = searcher ?? new DataSearcher<TModel>(this);
+			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(IDataService service, IDataSearcher<TModel> searcher = null)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider)
+		{
+			this.Validator = validator;
+			this.Authorizer = authorizer;
+		}
+
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, serviceProvider)
+		{
+			this.Authorizer = authorizer;
+			this.Validator = validator;
+		}
+
+		protected DataServiceBase(IDataService service)
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
-			_serviceProvider = service.ServiceProvider;
-			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
-			_searcher = searcher ?? new DataSearcher<TModel>(this);
+			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(string name, IDataService service, IDataSearcher<TModel> searcher = null)
+		protected DataServiceBase(IDataService service, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service)
+		{
+			this.Validator = validator;
+			this.Authorizer = authorizer;
+		}
+
+		protected DataServiceBase(IDataService service, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(service)
+		{
+			this.Authorizer = authorizer;
+			this.Validator = validator;
+		}
+
+		protected DataServiceBase(string name, IDataService service)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
-			_serviceProvider = service.ServiceProvider;
-			_dataAccess = (IDataAccess)_serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)_serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 
 			//创建数据搜索器
-			_searcher = searcher ?? new DataSearcher<TModel>(this);
+			_searcher = new DataSearcher<TModel>(this);
+		}
+
+		protected DataServiceBase(string name, IDataService service, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service)
+		{
+			this.Validator = validator;
+			this.Authorizer = authorizer;
+		}
+
+		protected DataServiceBase(string name, IDataService service, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, service)
+		{
+			this.Authorizer = authorizer;
+			this.Validator = validator;
 		}
 		#endregion
 
@@ -156,7 +200,7 @@ namespace Zongsoft.Data
 
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess;
+			get => _dataAccess ?? this.Service?.DataAccess;
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
@@ -166,40 +210,42 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
+		public virtual System.Security.Claims.ClaimsPrincipal Principal
+		{
+			get => Services.ApplicationContext.Current?.Principal;
+		}
+
+		public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
+
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
 
-		IDataServiceValidator IDataService.Validator { get => this.Validator; }
+		IDataServiceValidator IDataService.Validator { get => this.Validator ?? this.Service?.Validator; }
 
 		public IServiceProvider ServiceProvider
 		{
-			get => _serviceProvider;
+			get => _serviceProvider ?? this.Service?.ServiceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
 		#region 保护属性
 		protected IDataService Service { get; }
-
-		/// <summary>获取当前应用程序的安全主体。</summary>
-		protected virtual System.Security.Claims.ClaimsPrincipal Principal
-		{
-			get => Services.ApplicationContext.Current?.Principal;
-		}
 		#endregion
 
 		#region 授权验证
 		protected virtual void Authorize(DataServiceMethod method, IDataOptions options)
 		{
-			var validator = this.Validator;
+			var authorizer = this.Authorizer;
 
-			if(validator != null)
+			if(authorizer != null)
 			{
-				validator.Authorize(method, options);
-				return;
+				authorizer.Authorize(this, method, options);
 			}
-
-			if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
-				throw new Security.Membership.AuthorizationException();
+			else
+			{
+				if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
+					throw new Security.Membership.AuthorizationException();
+			}
 		}
 		#endregion
 
@@ -1729,7 +1775,7 @@ namespace Zongsoft.Data
 		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, string filter, IDataOptions options)
 		{
 			var validator = this.Validator;
-			return validator == null ? criteria : validator.Validate(method, criteria, filter, options);
+			return validator == null ? criteria : validator.Validate(this, method, criteria, filter, options);
 		}
 
 		/// <summary>
@@ -1741,7 +1787,7 @@ namespace Zongsoft.Data
 		/// <param name="options">执行方法的可选项。</param>
 		protected virtual void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options)
 		{
-			this.Validator?.Validate(method, schema, data, options);
+			this.Validator?.Validate(this, method, schema, data, options);
 		}
 		#endregion
 
@@ -2160,10 +2206,74 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#region 静态方法
+		/// <summary>
+		/// 创建一个匿名用户的数据服务授权验证器。
+		/// </summary>
+		/// <param name="isReadOnly">指定一个值，指示是否只允许读取操作。</param>
+		/// <returns>返回创建的数据服务授权验证器。</returns>
+		public static IDataServiceAuthorizer<TModel> Anonymous(bool isReadOnly) =>
+			isReadOnly ? AnonymousAuthorizer.ReadOnly : AnonymousAuthorizer.Default;
+
+		/// <summary>
+		/// 创建一个匿名用户的数据服务授权验证器。
+		/// </summary>
+		/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
+		/// <returns>返回创建的数据服务授权验证器。</returns>
+		public static IDataServiceAuthorizer<TModel> Anonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
+			authorize == null ? AnonymousAuthorizer.Default : new AnonymousAuthorizer(authorize);
+
+		/// <summary>
+		/// 创建一个非匿名用户的数据服务授权验证器。
+		/// </summary>
+		/// <param name="isReadOnly">指定一个值，指示是否只允许读取操作。</param>
+		/// <returns>返回创建的数据服务授权验证器。</returns>
+		public static IDataServiceAuthorizer<TModel> Nonanonymous(bool isReadOnly) =>
+			isReadOnly ? NonanonymousAuthorizer.ReadOnly : NonanonymousAuthorizer.Default;
+
+		/// <summary>
+		/// 创建一个非匿名用户的数据服务授权验证器。
+		/// </summary>
+		/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
+		/// <returns>返回创建的数据服务授权验证器。</returns>
+		public static IDataServiceAuthorizer<TModel> Nonanonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
+			authorize == null ? NonanonymousAuthorizer.Default : new NonanonymousAuthorizer(authorize);
+		#endregion
+
 		#region 嵌套子类
 		public sealed class Condition : Zongsoft.Data.Condition.Builder<TModel>
 		{
 			private Condition() { }
+		}
+
+		private class AnonymousAuthorizer : IDataServiceAuthorizer<TModel>
+		{
+			public static readonly AnonymousAuthorizer Default = new AnonymousAuthorizer(null);
+			public static readonly AnonymousAuthorizer ReadOnly = new AnonymousAuthorizer((service, method, options) => method.IsReading);
+
+			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize;
+			public AnonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) => _authorize = authorize;
+
+			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
+			{
+				if(_authorize != null && !_authorize(service, method, options))
+					throw new Security.Membership.AuthorizationException();
+			}
+		}
+
+		private class NonanonymousAuthorizer : IDataServiceAuthorizer<TModel>
+		{
+			public static readonly NonanonymousAuthorizer Default = new NonanonymousAuthorizer(null);
+			public static readonly NonanonymousAuthorizer ReadOnly = new NonanonymousAuthorizer((service, method, options) => method.IsReading);
+
+			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize;
+			public NonanonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) => _authorize = authorize;
+
+			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
+			{
+				if(Zongsoft.Security.ClaimsPrincipalExtension.IsAnonymous(service.Principal) || (_authorize != null && !_authorize(service, method, options)))
+					throw new Security.Membership.AuthorizationException();
+			}
 		}
 		#endregion
 	}
