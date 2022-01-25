@@ -133,10 +133,13 @@ namespace Zongsoft.Data
 		#region 重写方法
 		public override string ToString()
 		{
+			if(_totalCount > 0)
+				return $"{_pageIndex}/{this.PageCount}({_totalCount})";
+
 			if(_pageSize < 1)
-				return $"{_pageIndex.ToString()}/{this.PageCount.ToString()}";
+				return $"{_pageIndex}/{this.PageCount}";
 			else
-				return $"{_pageIndex.ToString()}/{this.PageCount.ToString()}({_pageSize.ToString()})";
+				return $"{_pageIndex}/{this.PageCount}[{_pageSize}]";
 		}
 		#endregion
 
