@@ -31,12 +31,18 @@ using System;
 
 namespace Zongsoft.Data
 {
-	/// <summary>
-	/// 表示数据访问过滤器的接口。
-	/// </summary>
-	public interface IDataAccessFilter<in TContext> where TContext : IDataAccessContextBase
+	[AttributeUsage(AttributeTargets.Class)]
+	public class DataAccessFilterAttribute : Attribute
 	{
-		void OnFiltered(TContext context);
-		void OnFiltering(TContext context);
+		#region 构造函数
+		public DataAccessFilterAttribute(params string[] names)
+		{
+			this.Names = names;
+		}
+		#endregion
+
+		#region 公共属性
+		public string[] Names { get; }
+		#endregion
 	}
 }

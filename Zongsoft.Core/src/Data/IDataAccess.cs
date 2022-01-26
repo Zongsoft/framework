@@ -98,7 +98,7 @@ namespace Zongsoft.Data
 		/// <summary>
 		/// 获取数据访问的过滤器集合。
 		/// </summary>
-		ICollection<IDataAccessFilter> Filters { get; }
+		ICollection<object> Filters { get; }
 		#endregion
 
 		#region 执行方法

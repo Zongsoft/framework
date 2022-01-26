@@ -28,403 +28,433 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data
 {
-	public class DataAccessFilterCollection : ICollection<IDataAccessFilter>
+	public class DataAccessFilterCollection : ICollection<object>
 	{
 		#region 私有变量
-		private readonly ISet<IDataAccessFilter> _items;
-		private readonly IDictionary<DataAccessMethod, ICollection<IDataAccessFilter>> _globals;
-		private readonly IDictionary<string, FilterToken> _tokens;
+		private readonly FilterDescriptor _global;
+		private readonly HashSet<object> _items;
+		private readonly ConcurrentDictionary<string, FilterDescriptor> _filters;
 		#endregion
 
 		#region 构造函数
 		public DataAccessFilterCollection()
 		{
-			_items = new HashSet<IDataAccessFilter>();
-			_globals = new Dictionary<DataAccessMethod, ICollection<IDataAccessFilter>>();
-			_tokens = new Dictionary<string, FilterToken>(StringComparer.OrdinalIgnoreCase);
+			_global = new FilterDescriptor();
+			_items = new HashSet<object>();
+			_filters = new ConcurrentDictionary<string, FilterDescriptor>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
 		public int Count { get => _items.Count; }
-
 		public bool IsReadOnly { get => false; }
 		#endregion
 
 		#region 公共方法
 		public void InvokeFiltering(IDataAccessContextBase context)
 		{
-			if(_globals != null && _globals.Count > 0)
-			{
-				if(_globals.TryGetValue(context.Method, out var filters) && filters != null && filters.Count > 0)
-				{
-					foreach(var filter in filters)
-						filter.OnFiltering(context);
-				}
-			}
+			_global.OnFiltering(context);
 
-			if(_tokens != null && _tokens.Count > 0)
-			{
-				if(_tokens.TryGetValue(context.Name, out var token) && token.TryGetFilters(context.Method, out var filters))
-				{
-					foreach(var filter in filters)
-						filter.OnFiltering(context);
-				}
-			}
+			if(_filters != null && _filters.TryGetValue(context.Name, out var descriptor))
+				descriptor.OnFiltering(context);
 		}
 
 		public void InvokeFiltered(IDataAccessContextBase context)
 		{
-			if(_tokens != null && _tokens.Count > 0)
-			{
-				if(_tokens.TryGetValue(context.Name, out var token) && token.TryGetFilters(context.Method, out var filters))
-				{
-					foreach(var filter in filters)
-						filter.OnFiltered(context);
-				}
-			}
+			_global.OnFiltered(context);
 
-			if(_globals != null && _globals.Count > 0)
-			{
-				if(_globals.TryGetValue(context.Method, out var filters) && filters != null && filters.Count > 0)
-				{
-					foreach(var filter in filters)
-						filter.OnFiltered(context);
-				}
-			}
+			if(_filters != null && _filters.TryGetValue(context.Name, out var descriptor))
+				descriptor.OnFiltered(context);
 		}
 
-		public void Add(IDataAccessFilter item)
+		public bool Add(object instance)
 		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+			if(instance == null)
+				return false;
 
-			if(!_items.Add(item))
-				return;
+			if(_items.Contains(instance))
+				return false;
 
-			if(string.IsNullOrWhiteSpace(item.Name))
+			var attribute = instance.GetType().GetCustomAttribute<DataAccessFilterAttribute>();
+
+			if(attribute == null || attribute.Names == null || attribute.Names.Length == 0)
+				return _global.Add(instance) && _items.Add(instance);
+
+			var count = 0;
+
+			for(int i = 0; i < attribute.Names.Length; i++)
 			{
-				foreach(var method in item.Methods)
-				{
-					if(_globals.TryGetValue(method, out var filters))
-						filters.Add(item);
-					else
-						_globals.Add(method, new List<IDataAccessFilter>(new[] { item }));
-				}
+				var name = attribute.Names[i];
+
+				if(string.IsNullOrWhiteSpace(name))
+					continue;
+
+				var descriptor = _filters.GetOrAdd(name, _ => new FilterDescriptor());
+				count += descriptor.Add(instance) ? 1 : 0;
 			}
-			else
-			{
-				if(_tokens.TryGetValue(item.Name, out var token))
-					token.Add(item);
-				else
-					_tokens.Add(item.Name, new FilterToken(item));
-			}
+
+			return count > 0 && _items.Add(instance);
 		}
 
 		public void Clear()
 		{
 			_items.Clear();
-			_globals.Clear();
-			_tokens.Clear();
+			_global.Clear();
+			_filters.Clear();
 		}
 
-		public bool Remove(IDataAccessFilter item)
+		public bool Remove(object instance)
 		{
-			if(item == null)
+			if(instance == null)
 				return false;
 
-			if(!_items.Remove(item))
+			if(!_items.Remove(instance))
 				return false;
 
-			if(string.IsNullOrWhiteSpace(item.Name))
+			var attribute = instance.GetType().GetCustomAttribute<DataAccessFilterAttribute>(true);
+
+			if(attribute == null || attribute.Names == null || attribute.Names.Length == 0)
+				return _global.Remove(instance);
+
+			var count = 0;
+
+			for(int i = 0; i < attribute.Names.Length; i++)
 			{
-				if(item.Methods == null || item.Methods.Length == 0)
-				{
-					foreach(var global in _globals.Values)
-					{
-						global.Remove(item);
-					}
-				}
-				else
-				{
-					for(int i = 0; i < item.Methods.Length; i++)
-					{
-						if(_globals.TryGetValue(item.Methods[i], out var global))
-						{
-							global.Remove(item);
-						}
-					}
-				}
-			}
-			else
-			{
-				if(_tokens.TryGetValue(item.Name, out var token))
-				{
-					token.Remove(item);
-					return true;
-				}
+				var name = attribute.Names[i];
+
+				if(string.IsNullOrWhiteSpace(name))
+					continue;
+
+				if(_filters.TryGetValue(name, out var descriptor))
+					count += descriptor.Remove(instance) ? 1 : 0;
 			}
 
-			return false;
+			return count > 0;
 		}
 
-		public bool Contains(IDataAccessFilter item)
-		{
-			if(item == null)
-				return false;
-
-			return _items.Contains(item);
-		}
-
-		void ICollection<IDataAccessFilter>.CopyTo(IDataAccessFilter[] array, int arrayIndex)
-		{
-			if(array == null)
-				throw new ArgumentNullException(nameof(array));
-
-			_items.CopyTo(array, arrayIndex);
-		}
+		public bool Contains(object instance) => instance != null && _items.Contains(instance);
+		void ICollection<object>.Add(object item) => this.Add(item);
+		void ICollection<object>.CopyTo(object[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
 		#endregion
 
 		#region 遍历枚举
-		public IEnumerator<IDataAccessFilter> GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
+		public IEnumerator<object> GetEnumerator() => _items.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 
 		#region 嵌套子类
-		private class FilterToken
+		private class FilterDescriptor
 		{
 			#region 成员字段
-			private ICollection<IDataAccessFilter> _exists;
-			private ICollection<IDataAccessFilter> _selects;
-			private ICollection<IDataAccessFilter> _deletes;
-			private ICollection<IDataAccessFilter> _inserts;
-			private ICollection<IDataAccessFilter> _updates;
-			private ICollection<IDataAccessFilter> _upserts;
-			private ICollection<IDataAccessFilter> _executes;
-			private ICollection<IDataAccessFilter> _aggregates;
-			private ICollection<IDataAccessFilter> _increments;
+			private ICollection<IDataAccessFilter<DataExistContextBase>> _exists;
+			private ICollection<IDataAccessFilter<DataSelectContextBase>> _selects;
+			private ICollection<IDataAccessFilter<DataDeleteContextBase>> _deletes;
+			private ICollection<IDataAccessFilter<DataInsertContextBase>> _inserts;
+			private ICollection<IDataAccessFilter<DataUpdateContextBase>> _updates;
+			private ICollection<IDataAccessFilter<DataUpsertContextBase>> _upserts;
+			private ICollection<IDataAccessFilter<DataExecuteContextBase>> _executes;
+			private ICollection<IDataAccessFilter<DataAggregateContextBase>> _aggregates;
 			#endregion
 
 			#region 构造函数
-			public FilterToken(IDataAccessFilter filter)
-			{
-				this.Add(filter);
-			}
-			#endregion
-
-			#region 私有属性
-			private ICollection<IDataAccessFilter> Exists
-			{
-				get => this.EnsureFilters(ref _exists);
-			}
-
-			private ICollection<IDataAccessFilter> Selects
-			{
-				get => this.EnsureFilters(ref _selects);
-			}
-
-			private ICollection<IDataAccessFilter> Deletes
-			{
-				get => this.EnsureFilters(ref _deletes);
-			}
-
-			private ICollection<IDataAccessFilter> Inserts
-			{
-				get => this.EnsureFilters(ref _inserts);
-			}
-
-			private ICollection<IDataAccessFilter> Updates
-			{
-				get => this.EnsureFilters(ref _updates);
-			}
-
-			private ICollection<IDataAccessFilter> Upserts
-			{
-				get => this.EnsureFilters(ref _upserts);
-			}
-
-			private ICollection<IDataAccessFilter> Executes
-			{
-				get => this.EnsureFilters(ref _executes);
-			}
-
-			private ICollection<IDataAccessFilter> Aggregates
-			{
-				get => this.EnsureFilters(ref _aggregates);
-			}
-
-			private ICollection<IDataAccessFilter> Increments
-			{
-				get => this.EnsureFilters(ref _increments);
-			}
+			public FilterDescriptor() { }
+			public FilterDescriptor(object filter) => this.Add(filter);
 			#endregion
 
 			#region 公共方法
-			public void Add(IDataAccessFilter filter)
+			public bool Add(object instance)
 			{
-				if(filter.Methods == null || filter.Methods.Length == 0)
+				if(instance == null)
+					return false;
+
+				var contracts = instance.GetType().GetInterfaces();
+
+				foreach(var contract in contracts)
 				{
-					this.Aggregates.Add(filter);
-					this.Exists.Add(filter);
-					this.Selects.Add(filter);
-					this.Deletes.Add(filter);
-					this.Inserts.Add(filter);
-					this.Updates.Add(filter);
-					this.Upserts.Add(filter);
-					this.Executes.Add(filter);
-					this.Increments.Add(filter);
-				}
-				else
-				{
-					for(int i = 0; i < filter.Methods.Length; i++)
+					if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IDataAccessFilter<>))
 					{
-						switch(filter.Methods[i])
+						var type = contract.GetGenericArguments()[0];
+
+						if(type == typeof(DataExistContextBase))
 						{
-							case DataAccessMethod.Aggregate:
-								this.Aggregates.Add(filter);
-								break;
-							case DataAccessMethod.Exists:
-								this.Exists.Add(filter);
-								break;
-							case DataAccessMethod.Select:
-								this.Selects.Add(filter);
-								break;
-							case DataAccessMethod.Delete:
-								this.Deletes.Add(filter);
-								break;
-							case DataAccessMethod.Insert:
-								this.Inserts.Add(filter);
-								break;
-							case DataAccessMethod.Update:
-								this.Updates.Add(filter);
-								break;
-							case DataAccessMethod.Upsert:
-								this.Upserts.Add(filter);
-								break;
-							case DataAccessMethod.Execute:
-								this.Executes.Add(filter);
-								break;
-							case DataAccessMethod.Increment:
-								this.Increments.Add(filter);
-								break;
+							EnsureFilters(ref _exists);
+							_exists.Add((IDataAccessFilter<DataExistContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataSelectContextBase))
+						{
+							EnsureFilters(ref _selects);
+							_selects.Add((IDataAccessFilter<DataSelectContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataDeleteContextBase))
+						{
+							EnsureFilters(ref _deletes);
+							_deletes.Add((IDataAccessFilter<DataDeleteContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataInsertContextBase))
+						{
+							EnsureFilters(ref _inserts);
+							_inserts.Add((IDataAccessFilter<DataInsertContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataUpsertContextBase))
+						{
+							EnsureFilters(ref _upserts);
+							_upserts.Add((IDataAccessFilter<DataUpsertContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataUpdateContextBase))
+						{
+							EnsureFilters(ref _updates);
+							_updates.Add((IDataAccessFilter<DataUpdateContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataExecuteContextBase))
+						{
+							EnsureFilters(ref _executes);
+							_executes.Add((IDataAccessFilter<DataExecuteContextBase>)instance);
+							return true;
+						}
+						else if(type == typeof(DataAggregateContextBase))
+						{
+							EnsureFilters(ref _aggregates);
+							_aggregates.Add((IDataAccessFilter<DataAggregateContextBase>)instance);
+							return true;
 						}
 					}
 				}
+
+				return false;
 			}
 
-			public void Remove(IDataAccessFilter filter)
+			public bool Remove(object instance)
 			{
-				if(filter.Methods == null || filter.Methods.Length == 0)
+				if(instance == null)
+					return false;
+
+				var count = 0;
+				var contracts = instance.GetType().GetInterfaces();
+
+				for(int i = 0; i < contracts.Length; i++)
 				{
-					_exists?.Remove(filter);
-					_selects?.Remove(filter);
-					_deletes?.Remove(filter);
-					_inserts?.Remove(filter);
-					_updates?.Remove(filter);
-					_upserts?.Remove(filter);
-					_executes?.Remove(filter);
-					_aggregates?.Remove(filter);
-					_increments?.Remove(filter);
-				}
-				else
-				{
-					for(int i = 0; i < filter.Methods.Length; i++)
+					var contract = contracts[i];
+
+					if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IDataAccessFilter<>))
 					{
-						switch(filter.Methods[i])
-						{
-							case DataAccessMethod.Exists:
-								_exists?.Remove(filter);
-								break;
-							case DataAccessMethod.Select:
-								_selects?.Remove(filter);
-								break;
-							case DataAccessMethod.Delete:
-								_deletes?.Remove(filter);
-								break;
-							case DataAccessMethod.Insert:
-								_inserts?.Remove(filter);
-								break;
-							case DataAccessMethod.Update:
-								_updates?.Remove(filter);
-								break;
-							case DataAccessMethod.Upsert:
-								_upserts?.Remove(filter);
-								break;
-							case DataAccessMethod.Execute:
-								_executes?.Remove(filter);
-								break;
-							case DataAccessMethod.Aggregate:
-								_aggregates?.Remove(filter);
-								break;
-							case DataAccessMethod.Increment:
-								_increments?.Remove(filter);
-								break;
-						}
+						var type = contract.GetGenericArguments()[0];
+
+						if(type == typeof(DataExistContextBase))
+							count += (_exists?.Remove((IDataAccessFilter<DataExistContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataSelectContextBase))
+							count += (_selects?.Remove((IDataAccessFilter<DataSelectContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataDeleteContextBase))
+							count += (_deletes?.Remove((IDataAccessFilter<DataDeleteContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataInsertContextBase))
+							count += (_inserts?.Remove((IDataAccessFilter<DataInsertContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataUpsertContextBase))
+							count += (_upserts?.Remove((IDataAccessFilter<DataUpsertContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataUpdateContextBase))
+							count += (_updates?.Remove((IDataAccessFilter<DataUpdateContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataExecuteContextBase))
+							count += (_executes?.Remove((IDataAccessFilter<DataExecuteContextBase>)instance) ?? false) ? 1 : 0;
+						else if(type == typeof(DataAggregateContextBase))
+							count += (_aggregates?.Remove((IDataAccessFilter<DataAggregateContextBase>)instance) ?? false) ? 1 : 0;
 					}
 				}
+
+				return count > 0;
 			}
 
-			public bool TryGetFilters(DataAccessMethod method, out ICollection<IDataAccessFilter> filters)
+			public void Clear()
 			{
-				filters = null;
+				_exists?.Clear();
+				_selects?.Clear();
+				_deletes?.Clear();
+				_inserts?.Clear();
+				_updates?.Clear();
+				_upserts?.Clear();
+				_executes?.Clear();
+				_aggregates?.Clear();
+			}
 
-				switch(method)
+			public void OnFiltering(IDataAccessContextBase context)
+			{
+				switch(context)
 				{
-					case DataAccessMethod.Exists:
-						filters = _exists;
+					case DataExistContextBase existing:
+						var exists = _exists;
+						if(exists != null)
+						{
+							foreach(var filter in exists)
+								filter.OnFiltering(existing);
+						}
+
 						break;
-					case DataAccessMethod.Select:
-						filters = _selects;
+					case DataSelectContextBase selection:
+						var selects = _selects;
+						if(selects != null)
+						{
+							foreach(var filter in selects)
+								filter.OnFiltering(selection);
+						}
+
 						break;
-					case DataAccessMethod.Delete:
-						filters = _deletes;
+					case DataDeleteContextBase deletion:
+						var deletes = _deletes;
+						if(deletes != null)
+						{
+							foreach(var filter in deletes)
+								filter.OnFiltering(deletion);
+						}
+
 						break;
-					case DataAccessMethod.Insert:
-						filters = _inserts;
+					case DataInsertContextBase insertion:
+						var inserts = _inserts;
+						if(inserts != null)
+						{
+							foreach(var filter in inserts)
+								filter.OnFiltering(insertion);
+						}
+
 						break;
-					case DataAccessMethod.Update:
-						filters = _updates;
+					case DataUpdateContextBase updation:
+						var updates = _updates;
+						if(updates != null)
+						{
+							foreach(var filter in updates)
+								filter.OnFiltering(updation);
+						}
+
 						break;
-					case DataAccessMethod.Upsert:
-						filters = _upserts;
+					case DataUpsertContextBase upsertion:
+						var upserts = _upserts;
+						if(upserts != null)
+						{
+							foreach(var filter in upserts)
+								filter.OnFiltering(upsertion);
+						}
+
 						break;
-					case DataAccessMethod.Execute:
-						filters = _executes;
+					case DataExecuteContextBase execution:
+						var executes = _executes;
+						if(executes != null)
+						{
+							foreach(var filter in executes)
+								filter.OnFiltering(execution);
+						}
+
 						break;
-					case DataAccessMethod.Aggregate:
-						filters = _aggregates;
-						break;
-					case DataAccessMethod.Increment:
-						filters = _increments;
+					case DataAggregateContextBase aggregation:
+						var aggregates = _aggregates;
+						if(aggregates != null)
+						{
+							foreach(var filter in aggregates)
+								filter.OnFiltering(aggregation);
+						}
+
 						break;
 				}
+			}
 
-				return filters != null && filters.Count > 0;
+			public void OnFiltered(IDataAccessContextBase context)
+			{
+				switch(context)
+				{
+					case DataExistContextBase existing:
+						var exists = _exists;
+						if(exists != null)
+						{
+							foreach(var filter in exists)
+								filter.OnFiltered(existing);
+						}
+
+						break;
+					case DataSelectContextBase selection:
+						var selects = _selects;
+						if(selects != null)
+						{
+							foreach(var filter in selects)
+								filter.OnFiltered(selection);
+						}
+
+						break;
+					case DataDeleteContextBase deletion:
+						var deletes = _deletes;
+						if(deletes != null)
+						{
+							foreach(var filter in deletes)
+								filter.OnFiltered(deletion);
+						}
+
+						break;
+					case DataInsertContextBase insertion:
+						var inserts = _inserts;
+						if(inserts != null)
+						{
+							foreach(var filter in inserts)
+								filter.OnFiltered(insertion);
+						}
+
+						break;
+					case DataUpdateContextBase updation:
+						var updates = _updates;
+						if(updates != null)
+						{
+							foreach(var filter in updates)
+								filter.OnFiltered(updation);
+						}
+
+						break;
+					case DataUpsertContextBase upsertion:
+						var upserts = _upserts;
+						if(upserts != null)
+						{
+							foreach(var filter in upserts)
+								filter.OnFiltered(upsertion);
+						}
+
+						break;
+					case DataExecuteContextBase execution:
+						var executes = _executes;
+						if(executes != null)
+						{
+							foreach(var filter in executes)
+								filter.OnFiltered(execution);
+						}
+
+						break;
+					case DataAggregateContextBase aggregation:
+						var aggregates = _aggregates;
+						if(aggregates != null)
+						{
+							foreach(var filter in aggregates)
+								filter.OnFiltered(aggregation);
+						}
+
+						break;
+				}
 			}
 			#endregion
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private ICollection<IDataAccessFilter> EnsureFilters(ref ICollection<IDataAccessFilter> filters)
+			private ICollection<IDataAccessFilter<TContext>> EnsureFilters<TContext>(ref ICollection<IDataAccessFilter<TContext>> filters) where TContext : IDataAccessContextBase
 			{
 				if(filters == null)
 				{
 					lock(this)
 					{
 						if(filters == null)
-							filters = new List<IDataAccessFilter>();
+							filters = new List<IDataAccessFilter<TContext>>();
 					}
 				}
 

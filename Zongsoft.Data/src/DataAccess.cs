@@ -46,11 +46,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		public DataAccess(string name) : base(name)
-		{
-		}
-
-		public DataAccess(string name, IEnumerable<IDataAccessFilter> filters) : base(name)
+		public DataAccess(string name) : base(name) { }
+		public DataAccess(string name, IEnumerable<object> filters) : base(name)
 		{
 			if(filters != null)
 			{

@@ -86,54 +86,38 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问的应用（子系统/业务模块）名。
-		/// </summary>
+		/// <summary>获取数据访问的应用（子系统/业务模块）名。</summary>
 		public string Name
 		{
 			get => _name;
 			set => _name = value ?? string.Empty;
 		}
 
-		/// <summary>
-		/// 获取数据访问名称映射器。
-		/// </summary>
+		/// <summary>获取数据访问名称映射器。</summary>
 		public IDataAccessNaming Naming { get => _naming; }
 
-		/// <summary>
-		/// 获取数据模式解析器。
-		/// </summary>
+		/// <summary>获取数据模式解析器。</summary>
 		public ISchemaParser Schema { get => _schema ?? (_schema = this.CreateSchema()); }
 
-		/// <summary>
-		/// 获取或设置数据序号生成器。
-		/// </summary>
+		/// <summary>获取或设置数据序号生成器。</summary>
 		public Common.ISequence Sequence
 		{
 			get => _sequence ?? (_sequence = this.CreateSequence());
 			set => _sequence = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取或设置数据序号生成器提供程序。
-		/// </summary>
+		/// <summary>获取或设置数据序号生成器提供程序。</summary>
 		[Services.ServiceDependency]
 		public Services.IServiceProvider<Common.ISequence> SequenceProvider { get; set; }
 
-		/// <summary>
-		/// 获取数据访问器的元数据容器。
-		/// </summary>
+		/// <summary>获取数据访问器的元数据容器。</summary>
 		public abstract Metadata.IDataMetadataContainer Metadata { get; }
 
-		/// <summary>
-		/// 获取或设置数据访问的验证器。
-		/// </summary>
+		/// <summary>获取或设置数据访问的验证器。</summary>
 		public IDataValidator Validator { get; set; }
 
-		/// <summary>
-		/// 获取数据访问过滤器集合。
-		/// </summary>
-		public ICollection<IDataAccessFilter> Filters { get => _filters; }
+		/// <summary>获取数据访问过滤器集合。</summary>
+		public ICollection<object> Filters { get => _filters; }
 		#endregion
 
 		#region 执行方法
