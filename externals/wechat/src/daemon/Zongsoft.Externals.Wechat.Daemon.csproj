@@ -1,16 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net5.0</TargetFramework>
 		<Authors>Popeye Zhong</Authors>
 		<Company>Zongsoft Studio</Company>
 		<Description>This is a library about Wechat Daemon.</Description>
 		<Copyright>Copyright(C) Zongsoft Studio 2015-2020. All rights reserved.</Copyright>
 		<PackageProjectUrl>https://github.com/Zongsoft</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>
