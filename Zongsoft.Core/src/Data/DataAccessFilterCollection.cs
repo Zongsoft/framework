@@ -174,6 +174,7 @@ namespace Zongsoft.Data
 				if(instance == null)
 					return false;
 
+				var count = 0;
 				var contracts = instance.GetType().GetInterfaces();
 
 				foreach(var contract in contracts)
@@ -186,54 +187,54 @@ namespace Zongsoft.Data
 						{
 							EnsureFilters(ref _exists);
 							_exists.Add((IDataAccessFilter<DataExistContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataSelectContextBase))
 						{
 							EnsureFilters(ref _selects);
 							_selects.Add((IDataAccessFilter<DataSelectContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataDeleteContextBase))
 						{
 							EnsureFilters(ref _deletes);
 							_deletes.Add((IDataAccessFilter<DataDeleteContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataInsertContextBase))
 						{
 							EnsureFilters(ref _inserts);
 							_inserts.Add((IDataAccessFilter<DataInsertContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataUpsertContextBase))
 						{
 							EnsureFilters(ref _upserts);
 							_upserts.Add((IDataAccessFilter<DataUpsertContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataUpdateContextBase))
 						{
 							EnsureFilters(ref _updates);
 							_updates.Add((IDataAccessFilter<DataUpdateContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataExecuteContextBase))
 						{
 							EnsureFilters(ref _executes);
 							_executes.Add((IDataAccessFilter<DataExecuteContextBase>)instance);
-							return true;
+							count++;
 						}
 						else if(type == typeof(DataAggregateContextBase))
 						{
 							EnsureFilters(ref _aggregates);
 							_aggregates.Add((IDataAccessFilter<DataAggregateContextBase>)instance);
-							return true;
+							count++;
 						}
 					}
 				}
 
-				return false;
+				return count > 0;
 			}
 
 			public bool Remove(object instance)
