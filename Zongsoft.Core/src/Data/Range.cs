@@ -90,6 +90,11 @@ namespace Zongsoft.Data
 			return Activator.CreateInstance(typeof(Range<>).MakeGenericType(type), new object[] { minimum, maximum });
 		}
 
+		public static Range<uint> Create(Zongsoft.Common.HierarchyVector32 vector)
+		{
+			return vector.IsZero ? default : new Range<uint>(vector.Minimum, vector.Maximum);
+		}
+
 		public static Range<T> Create<T>(T minimum, T maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
 		public static Range<T> Create<T>(T? minimum, T? maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
 
