@@ -46,6 +46,10 @@ namespace Zongsoft.Externals.Wechat
 		private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
 		#endregion
 
+		#region 成员字段
+		private volatile UserProvider _users;
+		#endregion
+
 		#region 构造函数
 		public Applet(Account account)
 		{
@@ -58,6 +62,17 @@ namespace Zongsoft.Externals.Wechat
 
 		#region 公共属性
 		public Account Account { get; }
+
+		public UserProvider Users
+		{
+			get
+			{
+				if(_users == null)
+					Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
+
+				return _users;
+			}
+		}
 		#endregion
 
 		#region 获取凭证

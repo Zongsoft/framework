@@ -68,13 +68,13 @@ namespace Zongsoft.Externals.Wechat
 		#region 公共属性
 		public static ICache Cache
 		{
-			get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<ICache>>()?.GetService(null);
+			get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<ICache>>()?.GetService(GetCacheName());
 			set => _cache = value;
 		}
 
 		public static IDistributedLockManager Locker
 		{
-			get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedLockManager>>()?.GetService(null);
+			get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedLockManager>>()?.GetService(GetCacheName());
 			set => _locker = value;
 		}
 		#endregion
@@ -275,6 +275,9 @@ namespace Zongsoft.Externals.Wechat
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetTicketKey(string appId) => $"Zongsoft.Wechat.Ticket:{appId}";
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetCacheName() => Utility.GetOptions<Options.CachingOptions>("/Externals/Wechat/Caching")?.Name;
 		#endregion
 
 		#region 嵌套子类

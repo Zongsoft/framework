@@ -42,12 +42,10 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	[Route("Externals/Wechat/Applets")]
 	public class AppletController : ControllerBase
 	{
+		[HttpPost("{action}")]
 		[HttpPost("{key}/{action}")]
 		public async ValueTask<IActionResult> Login(string key)
 		{
-			if(string.IsNullOrEmpty(key))
-				return this.BadRequest();
-
 			var token = await this.Request.ReadAsStringAsync();
 
 			if(string.IsNullOrEmpty(token))
@@ -61,13 +59,12 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.Identifier }) : this.NotFound(result.Failure);
 		}
 
+		[HttpGet("Phone/{token}")]
+		[HttpGet("PhoneNumber/{token}")]
 		[HttpGet("{key}/Phone/{token}")]
 		[HttpGet("{key}/PhoneNumber/{token}")]
 		public async ValueTask<IActionResult> GetPhoneNumber(string key, string token)
 		{
-			if(string.IsNullOrEmpty(key))
-				return this.BadRequest();
-
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
@@ -81,10 +78,11 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	}
 
 	[ApiController]
-	[Route("Externals/Wechat/Applets/{key}/Credential")]
+	[Route("Externals/Wechat/Applets")]
 	public class AppletCredentialController : ControllerBase
 	{
-		[HttpGet]
+		[HttpGet("Credential")]
+		[HttpGet("{key}/Credential")]
 		public async ValueTask<IActionResult> GetCredential(string key)
 		{
 			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
@@ -95,7 +93,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 
-		[HttpPost("[action]")]
+		[HttpPost("Credential/[action]")]
+		[HttpPost("{key}/Credential/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key)
 		{
 			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);

@@ -61,40 +61,28 @@ namespace Zongsoft.Externals.Wechat.Security
 			if(ticket.IsEmpty)
 				return OperationResult.Fail("InvalidTicket");
 
-			var index = key.IndexOf(':');
-
-			if(index <= 0)
+			switch(ticket.Scheme?.ToLowerInvariant())
 			{
-				switch(ticket.Scheme?.ToLowerInvariant())
-				{
-					case "channel":
-						var options = Utility.GetOptions<Options.ChannelOptions>($"/Externals/Wechat/Channels/{key}");
+				case "applet":
+					var applet = AppletManager.GetApplet(key, this.ServiceProvider);
 
-						if(options == null || string.IsNullOrEmpty(options.Name))
-							return OperationResult.Fail("ChannelNotFound", $"The specified '{key}' channel does not exist.");
+					if(applet == null)
+						return key != null && key.Contains(':') ?
+							OperationResult.Fail("NotFound", $"The specified '{key}' applet does not exist.") :
+							OperationResult.Fail("NotFound", $"The specified '{key}' account does not exist.");
 
-						var channel = new Channel(new Account(options.Name, options.Secret));
-						return await GetChannelToken(channel, key, ticket.Token, cancellation);
-					default:
-						return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
-				}
-			}
-			else
-			{
-				var provider = this.ServiceProvider.ResolveRequired<IAccountProvider>();
-				var account = provider.GetAccount(key);
+					return await GetAppletToken(applet, key, ticket.Token, cancellation);
+				case "channel":
+					var channel = ChannelManager.GetChannel(key, this.ServiceProvider);
 
-				if(account.IsEmpty)
-					return OperationResult.Fail("AccountNotFound", $"The specified '{key}' account does not exist.");
+					if(channel == null)
+						return key != null && key.Contains(':') ?
+							OperationResult.Fail("NotFound", $"The specified '{key}' channel does not exist.") :
+							OperationResult.Fail("NotFound", $"The specified '{key}' account does not exist.");
 
-				switch(ticket.Scheme?.ToLowerInvariant())
-				{
-					case "channel":
-						var channel = new Channel(account);
-						return await GetChannelToken(channel, key, ticket.Token, cancellation);
-					default:
-						return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
-				}
+					return await GetChannelToken(channel, key, ticket.Token, cancellation);
+				default:
+					return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
 			}
 		}
 		#endregion
@@ -113,6 +101,24 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 私有方法
+		private static async ValueTask<OperationResult<Token>> GetAppletToken(Applet applet, string key, string code, CancellationToken cancellation = default)
+		{
+			var result = await applet.LoginAsync(code, cancellation);
+
+			if(result.Failed)
+				return result.Failure;
+
+			var identifier = result.Value.Identifier;
+			var info = await applet.Users.GetInfoAsync(identifier);
+
+			if(info.Succeed)
+				return string.IsNullOrEmpty(info.Value.UnionId) ?
+					OperationResult.Success(new Token(applet.Account, key, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Token(applet.Account, key, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
+
+			return OperationResult.Success(new Token(applet.Account, key, identifier));
+		}
+
 		private static async ValueTask<OperationResult<Token>> GetChannelToken(Channel channel, string key, string code, CancellationToken cancellation = default)
 		{
 			var result = await channel.Authentication.AuthenticateAsync(code, cancellation);

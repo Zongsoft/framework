@@ -12,6 +12,7 @@
 	</option>
 
 	<option path="/Externals/Wechat">
+		<caching name="wechat" />
 		<fallback url="http://api.automao.cn/externals/wechat/fallback/{0}/{1}" />
 
 		<authorities default="automao.saas">
