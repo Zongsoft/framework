@@ -39,6 +39,9 @@ namespace Zongsoft.Serialization
 	/// </summary>
 	public interface ISerializer
 	{
+		/// <summary>获取默认的序列化选项。</summary>
+		SerializationOptions Options { get; }
+
 		/// <summary>
 		/// 反序列化指定<paramref name="stream"/>包含的对象。
 		/// </summary>

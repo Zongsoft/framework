@@ -69,6 +69,7 @@ namespace Zongsoft.Serialization
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
 				IgnoreReadOnlyProperties = false,
+				IncludeFields = true,
 				Converters =
 				{
 					new JsonTimeSpanConverter(),
@@ -84,7 +85,16 @@ namespace Zongsoft.Serialization
 			#region 构造函数
 			private JsonSerializerWrapper()
 			{
+				this.Options = new TextSerializationOptions()
+				{
+					IncludeFields = true,
+				};
 			}
+			#endregion
+
+			#region 公共属性
+			public TextSerializationOptions Options { get; }
+			SerializationOptions ISerializer.Options { get => this.Options; }
 			#endregion
 
 			#region 反序列化

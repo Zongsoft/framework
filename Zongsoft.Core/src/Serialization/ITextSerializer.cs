@@ -35,6 +35,8 @@ namespace Zongsoft.Serialization
 {
     public interface ITextSerializer : ISerializer
     {
+        new TextSerializationOptions Options { get; }
+
         string Serialize(object graph, TextSerializationOptions options = null);
         Task<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default);
 
