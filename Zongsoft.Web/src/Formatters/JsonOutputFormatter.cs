@@ -43,19 +43,24 @@ namespace Zongsoft.Web.Formatters
 	public class JsonOutputFormatter : TextOutputFormatter
 	{
 		#region 成员字段
-		private Serialization.TextSerializationOptions _options;
+		private readonly Serialization.TextSerializationOptions _options;
 		#endregion
 
 		#region 构造函数
-		public JsonOutputFormatter()
+		public JsonOutputFormatter(Serialization.TextSerializationOptions options = null)
 		{
+			_options = options ?? Serialization.Serializer.Json.Options;
+
 			SupportedEncodings.Add(Encoding.UTF8);
 			SupportedEncodings.Add(Encoding.Unicode);
-
 			SupportedMediaTypes.Add("application/json");
 			SupportedMediaTypes.Add("text/json");
 			SupportedMediaTypes.Add("application/*+json");
 		}
+		#endregion
+
+		#region 公共属性
+		public Serialization.TextSerializationOptions Options { get => _options; }
 		#endregion
 
 		#region 重写方法
@@ -95,10 +100,10 @@ namespace Zongsoft.Web.Formatters
 		#region 私有方法
 		private Stream GetWriteStream(HttpContext context, Encoding encoding, out Serialization.TextSerializationOptions options)
 		{
-			options = null;
+			options = _options;
 
 			if(context.Request.Headers.TryGetValue("x-json-behaviors", out var behaviors))
-				options = GetSerializationOptions(behaviors);
+				options = GetSerializationOptions(behaviors, _options);
 
 			if(encoding.CodePage == Encoding.UTF8.CodePage)
 				return context.Response.Body;
@@ -106,7 +111,7 @@ namespace Zongsoft.Web.Formatters
 			return new TranscodingWriteStream(context.Response.Body, encoding);
 		}
 
-		private static Serialization.TextSerializationOptions GetSerializationOptions(string behaviors)
+		private static Serialization.TextSerializationOptions GetSerializationOptions(string behaviors, Serialization.TextSerializationOptions defaultOptions)
 		{
 			if(string.IsNullOrEmpty(behaviors))
 				return null;
@@ -114,7 +119,14 @@ namespace Zongsoft.Web.Formatters
 			var parts = Common.StringExtension.Slice(behaviors, ';');
 			var options = new Serialization.TextSerializationOptions()
 			{
-				Indented = parts.Contains("Indented", StringComparer.OrdinalIgnoreCase),
+				Indented = parts.Contains("Indented", StringComparer.OrdinalIgnoreCase) || defaultOptions.Indented,
+				IgnoreNull = defaultOptions.IgnoreNull,
+				IgnoreZero = defaultOptions.IgnoreZero,
+				IgnoreEmpty = defaultOptions.IgnoreEmpty,
+				IncludeFields = defaultOptions.IncludeFields,
+				MaximumDepth = defaultOptions.MaximumDepth,
+				NamingConvention = defaultOptions.NamingConvention,
+				Typed = defaultOptions.Typed,
 			};
 
 			foreach(var part in parts)

@@ -39,18 +39,22 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Logging;
 
 namespace Zongsoft.Web.Formatters
 {
 	public class JsonInputFormatter : TextInputFormatter, IInputFormatterExceptionPolicy
 	{
+		#region 成员字段
+		private readonly Serialization.TextSerializationOptions _options;
+		#endregion
+
 		#region 构造函数
-		public JsonInputFormatter()
+		public JsonInputFormatter(Serialization.TextSerializationOptions options = null)
 		{
+			_options = options ?? Serialization.Serializer.Json.Options;
+
 			SupportedEncodings.Add(UTF8EncodingWithoutBOM);
 			SupportedEncodings.Add(UTF16EncodingLittleEndian);
-
 			SupportedMediaTypes.Add("application/json");
 			SupportedMediaTypes.Add("text/jsona");
 			SupportedMediaTypes.Add("application/*+json");
@@ -58,6 +62,7 @@ namespace Zongsoft.Web.Formatters
 		#endregion
 
 		#region 公共属性
+		public Serialization.TextSerializationOptions Options { get => _options; }
 		InputFormatterExceptionPolicy IInputFormatterExceptionPolicy.ExceptionPolicy => InputFormatterExceptionPolicy.MalformedInputExceptions;
 		#endregion
 
@@ -77,7 +82,7 @@ namespace Zongsoft.Web.Formatters
 
 			try
 			{
-				model = await Serialization.Serializer.Json.DeserializeAsync(inputStream, context.ModelType);
+				model = await Serialization.Serializer.Json.DeserializeAsync(inputStream, context.ModelType, _options);
 			}
 			catch(JsonException exception)
 			{
