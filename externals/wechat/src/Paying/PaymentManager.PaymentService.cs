@@ -32,6 +32,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 
@@ -96,6 +97,28 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			public abstract ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default);
 			public abstract ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default);
+
+			/// <summary>
+			/// 验证人脸识别设备的识别请求。
+			/// </summary>
+			/// <returns>返回人脸识别验证凭证。</returns>
+			public async ValueTask<OperationResult<string>> AuthenticateAsync(string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
+			{
+				if(string.IsNullOrEmpty(data))
+					return OperationResult.Fail("Argument", $"Missing the required data of the recognition authenticate.");
+
+				var request = this.GetAuthenticationRequest(data, device, store, title, extra);
+
+				if(!request.ContainsKey("sign"))
+					request.TryAdd("sign", Utility.Postmark(request, _authority.Secret));
+
+				var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://payapp.weixin.qq.com/face/get_wxpayface_authinfo", request.CreateXmlContent(), cancellation);
+				var result = await response.GetXmlContentAsync(cancellation);
+
+				return result != null && result.TryGetValue("authinfo", out var value) && value != null ?
+					OperationResult.Success(value) :
+					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+			}
 			#endregion
 
 			#region 保护方法
@@ -115,9 +138,57 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
 			}
 
-			protected ValueTask<OperationResult<(string identifier, string payer)>> PayTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
+			protected async ValueTask<OperationResult<(string identifier, string payer)>> PayTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
 			{
-				throw new NotImplementedException();
+				var dictionary = this.GetTicketRequest(request);
+
+				if(!dictionary.ContainsKey("sign"))
+					dictionary.TryAdd("sign", Utility.Postmark(dictionary, _authority.Secret));
+
+				var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://api.mch.weixin.qq.com/pay/micropay", dictionary.CreateXmlContent(), cancellation);
+				var result = await response.GetXmlContentAsync(cancellation);
+
+				return result != null && result.TryGetValue("transaction_id", out var id) && id != null ?
+					OperationResult.Success((id, result["openid"])) :
+					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+			}
+
+			protected virtual IDictionary<string, object> GetTicketRequest(PaymentRequest.TicketRequest request)
+			{
+				return new SortedDictionary<string, object>()
+				{
+					{ "appid", _authority.Account.Code },
+					{ "mch_id", _authority.Code },
+					{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
+					{ "out_trade_no", request.VoucherCode },
+					{ "sign_type", "MD5" },
+					{ "nonce_str", Guid.NewGuid().ToString("N") },
+					{ "auth_code", request.TicketId },
+					{ "attach", string.IsNullOrEmpty(request.Extra) ? null : request.Extra },
+					{ "device_info", request.Place.DeviceId },
+					{ "spbill_create_ip", request.Place.DeviceIp },
+					{ "total_fee", request.Amount.Value },
+					{ "fee_type", request.Amount.Currency },
+					{ "body", request.Description },
+				};
+			}
+
+			protected virtual IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
+			{
+				return new SortedDictionary<string, object>()
+				{
+					{ "appid", _authority.Account.Code },
+					{ "mch_id", _authority.Code },
+					{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
+					{ "version", "1" },
+					{ "sign_type", "MD5" },
+					{ "nonce_str", Guid.NewGuid().ToString("N") },
+					{ "device_id", device },
+					{ "store_id", store },
+					{ "store_name", title },
+					{ "rawdata", data },
+					{ "attach", string.IsNullOrEmpty(extra) ? null : extra },
+				};
 			}
 			#endregion
 
@@ -669,6 +740,32 @@ namespace Zongsoft.Externals.Wechat.Paying
 				}
 
 				protected override object GetCancellation() => new { sp_mchid = _authority.Code, sub_mchid = _subsidiary.Code };
+
+				protected override IDictionary<string, object> GetTicketRequest(PaymentRequest.TicketRequest request)
+				{
+					var dictionary = base.GetTicketRequest(request);
+
+					if(dictionary != null)
+					{
+						dictionary["sub_mch_id"] = _subsidiary.Code;
+						dictionary["sub_appid"] = _subsidiary.Account.Code;
+					}
+
+					return dictionary;
+				}
+
+				protected override IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
+				{
+					var request = base.GetAuthenticationRequest(data, device, store, title, extra);
+
+					if(request != null)
+					{
+						request["sub_mch_id"] = _subsidiary.Code;
+						request["sub_appid"] = _subsidiary.Account.Code;
+					}
+
+					return request;
+				}
 				#endregion
 
 				private sealed class BrokerBuilder : RequestBuilder

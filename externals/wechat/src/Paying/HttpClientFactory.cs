@@ -105,5 +105,18 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Code}\",signature=\"{signature}\"";
 			}
 		}
+
+		public static class Xml
+		{
+			public static readonly HttpClient Client;
+
+			static Xml()
+			{
+				Client = new HttpClient();
+				Client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/pay/");
+				Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+				Client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
+			}
+		}
 	}
 }

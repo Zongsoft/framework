@@ -28,12 +28,15 @@
  */
 
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using Zongsoft.Common;
 
@@ -41,6 +44,8 @@ namespace Zongsoft.Externals.Wechat
 {
 	internal static class Utility
 	{
+		private static readonly MD5 _md5 = MD5.Create();
+
 		public static TOptions GetOptions<TOptions>(string path)
 		{
 			var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
@@ -79,6 +84,37 @@ namespace Zongsoft.Externals.Wechat
 				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Options, cancellation);
 				return OperationResult.Fail(error.Code, error.Message);
 			}
+		}
+
+		public static string Postmark(IEnumerable<KeyValuePair<string, object>> data, string password, HashAlgorithm algorithm = null)
+		{
+			if(string.IsNullOrEmpty(password))
+				throw new ArgumentNullException(nameof(password));
+
+			if(data == null)
+				return null;
+
+			var text = new System.Text.StringBuilder();
+			var source = (IEnumerable<KeyValuePair<string, object>>)((data is SortedDictionary<string, object> sorts) ? sorts : data.OrderBy(p => p.Key));
+
+			foreach(var entry in source)
+			{
+				if(entry.Value == null)
+					continue;
+
+				if(text.Length > 0)
+					text.Append('&');
+
+				text.Append($"{entry.Key}={entry.Value}");
+			}
+
+			if(text.Length > 0)
+				text.Append('&');
+
+			text.Append($"key={password}");
+
+			var result = (algorithm ?? _md5).ComputeHash(System.Text.Encoding.UTF8.GetBytes(text.ToString()));
+			return System.Convert.ToHexString(result);
 		}
 
 		private struct ErrorResult
