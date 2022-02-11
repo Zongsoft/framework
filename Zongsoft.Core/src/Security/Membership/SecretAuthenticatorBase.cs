@@ -40,9 +40,12 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IAuthenticator))]
-	public class SecretAuthenticator : IAuthenticator<string, string>
+	public abstract class SecretAuthenticatorBase : IAuthenticator<string, string>
 	{
+		#region 构造函数
+		protected SecretAuthenticatorBase() { }
+		#endregion
+
 		#region 公共属性
 		public string Name => "Secret";
 
@@ -72,7 +75,7 @@ namespace Zongsoft.Security.Membership
 			if(index <= 0 || index >= data.Length - 1)
 				return OperationResult.Fail(SecurityReasons.InvalidArgument, $"Illegal identity verification token format.");
 
-			var phone = data.Substring(0, index);
+			var identifier = data.Substring(0, index);
 			var secret = data.Substring(index + 1);
 
 			//获取验证失败的解决器
@@ -95,50 +98,37 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done(key);
 
-			return string.IsNullOrEmpty(extra) || string.IsNullOrEmpty(phone) || string.Equals(extra, phone, StringComparison.OrdinalIgnoreCase) ?
-				OperationResult.Success(phone) :
+			return (string.IsNullOrEmpty(extra) && string.IsNullOrEmpty(identifier)) || string.Equals(identifier, extra, StringComparison.OrdinalIgnoreCase) ?
+				OperationResult.Success(extra) :
 				OperationResult.Fail(SecurityReasons.VerifyFaild, $"Identity verification data is inconsistent.");
 		}
 		#endregion
 
 		#region 身份签发
-		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identifier, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
-			return token == null ? ValueTask.FromResult<ClaimsIdentity>(null) : this.IssueAsync(token.ToString(), scenario, parameters, cancellation);
+			return identifier == null ? ValueTask.FromResult<ClaimsIdentity>(null) : this.IssueAsync(identifier.ToString(), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<ClaimsIdentity> IssueAsync(string token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask<ClaimsIdentity> IssueAsync(string identifier, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
-			if(string.IsNullOrEmpty(token))
-				return null;
+			if(string.IsNullOrEmpty(identifier))
+				throw new ArgumentNullException(nameof(identifier));
 
-			var identity = new ClaimsIdentity(this.Name);
+			//从数据库中获取指定身份的用户对象
+			var user = this.GetUser(identifier);
 
-			if(token.Contains('@'))
-				identity.AddClaim(ClaimTypes.Email, token, ClaimValueTypes.Email, this.Name);
-			else
-				identity.AddClaim(ClaimTypes.MobilePhone, token, ClaimValueTypes.String, this.Name);
+			if(user == null)
+				return ValueTask.FromResult<ClaimsIdentity>(null);
 
-			var period = this.GetPeriod(scenario);
-
-			if(period > TimeSpan.Zero)
-				identity.AddClaim(new Claim(ClaimTypes.Expiration, period.ToString(), period.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, this.Name, this.Name, identity));
-
-			if(parameters != null && parameters.Count > 0)
-			{
-				foreach(var parameter in parameters)
-				{
-					if(parameter.Value != null)
-						identity.AddClaim(new Claim(ClaimTypes.UserData + "#" + parameter.Key, parameter.Value.ToString(), ClaimValueTypes.String));
-				}
-			}
-
-			return identity;
+			return ValueTask.FromResult(this.Identity(user, scenario));
 		}
 		#endregion
 
 		#region 虚拟方法
 		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(2);
+		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
+		protected abstract IUser GetUser(string identifier);
 		#endregion
 
 		#region 私有方法
