@@ -54,6 +54,8 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共属性
+		public string Name { get => "Phone"; }
+
 		[ServiceDependency(IsRequired = true)]
 		public Phone Phone { get; set; }
 
@@ -61,8 +63,6 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共方法
-		public string GetChannel(string destination) => TextRegular.Chinese.Cellphone.IsMatch(destination, out _) ? MESSAGE_CHANNEL : null;
-
 		public void Transmit(string destination, string template, object data, string channel = null)
 		{
 			if(data == null)

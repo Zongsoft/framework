@@ -36,15 +36,11 @@ namespace Zongsoft.Communication
 	/// </summary>
 	public interface ITransmitter
 	{
+		/// <summary>获取发送器名称。</summary>
+		string Name { get; }
+
 		/// <summary>获取支持的发送通道标识集。</summary>
 		string[] Channels { get; }
-
-		/// <summary>
-		/// 获取默认的通道标识。
-		/// </summary>
-		/// <param name="destination">指定的目的标识。</param>
-		/// <returns>返回指定目的对应的默认通道。</returns>
-		string GetChannel(string destination);
 
 		/// <summary>
 		/// 发送模板信息到指定的接收者。
