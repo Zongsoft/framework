@@ -44,7 +44,7 @@ namespace Zongsoft.Security
 		TimeSpan Period { get; set; }
 
 		/// <summary>获取或设置秘密(验证码)发射器。</summary>
-		ITransmitter Transmitter { get; set; }
+		SecretTransmitter Transmitter { get; set; }
 		#endregion
 
 		#region 方法定义
@@ -83,11 +83,29 @@ namespace Zongsoft.Security
 		string Generate(string name, string pattern, string extra);
 
 		/// <summary>
+		/// 验证指定名称的秘密（验证码）是否正确并删除它。
+		/// </summary>
+		/// <param name="name">指定的验证码名称。</param>
+		/// <param name="secret">指定待确认的验证码。</param>
+		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
+		bool Remove(string name, string secret);
+
+		/// <summary>
+		/// 验证指定名称的秘密（验证码）是否正确并删除它。
+		/// </summary>
+		/// <param name="name">指定的验证码名称。</param>
+		/// <param name="secret">指定待确认的验证码。</param>
+		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
+		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
+		bool Remove(string name, string secret, out string extra);
+
+		/// <summary>
 		/// 验证指定名称的秘密（验证码）是否正确。
 		/// </summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
+		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="Remove(string, string)"/>方法。</remarks>
 		bool Verify(string name, string secret);
 
 		/// <summary>
@@ -97,24 +115,26 @@ namespace Zongsoft.Security
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
+		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="Remove(string, string, out string)"/>方法。</remarks>
 		bool Verify(string name, string secret, out string extra);
 		#endregion
 
 		#region 嵌套接口
 		/// <summary>
-		/// 提供秘密（验证码）发送功能的接口。
+		/// 提供秘密（验证码）发送功能的类。
 		/// </summary>
-		public interface ITransmitter
+		public abstract class SecretTransmitter
 		{
 			/// <summary>
 			/// 发送秘密（验证码）到指定的目的。
 			/// </summary>
+			/// <param name="scheme">指定的发送方案。</param>
 			/// <param name="destination">指定的验证码接受目的。</param>
 			/// <param name="template">指定的模板标识。</param>
 			/// <param name="channel">指定的通道标识。</param>
 			/// <param name="extra">指定的附加信息。</param>
 			/// <returns>返回的验证码凭证标识。</returns>
-			string Transmit(string destination, string template, string channel = null, string extra = null);
+			public abstract string Transmit(string scheme, string destination, string template, string channel = null, string extra = null);
 		}
 		#endregion
 	}

@@ -29,7 +29,7 @@
 
 using System;
 using System.Linq;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
@@ -51,7 +51,7 @@ namespace Zongsoft.Security
 		#region 成员字段
 		private TimeSpan _expiry;
 		private TimeSpan _period;
-		private ISecretor.ITransmitter _transmitter;
+		private ISecretor.SecretTransmitter _transmitter;
 		#endregion
 
 		#region 构造函数
@@ -102,7 +102,7 @@ namespace Zongsoft.Security
 		}
 
 		/// <summary>获取秘密(验证码)发射器。</summary>
-		public ISecretor.ITransmitter Transmitter
+		public ISecretor.SecretTransmitter Transmitter
 		{
 			get => _transmitter;
 			set => _transmitter = value ?? throw new ArgumentNullException();
@@ -118,6 +118,37 @@ namespace Zongsoft.Security
 			name = name.ToLowerInvariant().Trim();
 
 			return cache.Exists(name);
+		}
+
+		public bool Remove(string name, string secret) => this.Remove(name, secret, out _);
+		public bool Remove(string name, string secret, out string extra)
+		{
+			extra = null;
+
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(string.IsNullOrEmpty(secret))
+				return false;
+
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
+
+			//修复秘密名（转换成小写并剔除收尾空格）
+			name = name.ToLowerInvariant().Trim();
+
+			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
+			if(cache.TryGetValue(name, out string cacheValue) &&
+			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
+			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
+			{
+				cache.Remove(name);
+
+				//返回校验成功
+				return true;
+			}
+
+			//返回校验失败
+			return false;
 		}
 		#endregion
 
@@ -268,38 +299,38 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 嵌套子类
-		private class DefaultTransmitter : ISecretor.ITransmitter
+		private class DefaultTransmitter : ISecretor.SecretTransmitter
 		{
 			#region 私有变量
 			private readonly ISecretor _secretor;
-			private readonly ConcurrentDictionary<string, ITransmitter> _transmitters;
+			private readonly Dictionary<string, ITransmitter> _transmitters;
 			#endregion
 
 			#region 构造函数
 			internal DefaultTransmitter(ISecretor secretor, IServiceProvider serviceProvider)
 			{
 				_secretor = secretor ?? throw new ArgumentNullException(nameof(secretor));
-				_transmitters = new ConcurrentDictionary<string, ITransmitter>(StringComparer.OrdinalIgnoreCase);
+				_transmitters = new Dictionary<string, ITransmitter>(StringComparer.OrdinalIgnoreCase);
 
 				this.Initialize(serviceProvider);
 			}
 			#endregion
 
 			#region 公共方法
-			public string Transmit(string destination, string template, string channel = null, string extra = null)
+			public override string Transmit(string scheme, string destination, string template, string channel = null, string extra = null)
 			{
-				var transmitter = this.GetTransmitter(destination, channel);
+				if(scheme != null && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
+				{
+					var token = Randomizer.GenerateString(16);
+					var value = _secretor.Generate(token, null, extra);
 
-				if(transmitter == null)
-					return null;
+					//发送验证码到目的地
+					transmitter.Transmit(destination, template, new SecretTemplateData(value), channel);
 
-				var token = Randomizer.GenerateString(16);
-				var secret = _secretor.Generate(token, null, extra);
+					return token;
+				}
 
-				//发送验证码到目的地
-				transmitter.Transmit(destination, template, secret, channel);
-
-				return token;
+				return null;
 			}
 			#endregion
 
@@ -312,33 +343,15 @@ namespace Zongsoft.Security
 					return;
 
 				foreach(var transmitter in transmitters)
-				{
-					if(transmitter.Channels != null && transmitter.Channels.Length > 0)
-					{
-						foreach(var channel in transmitter.Channels)
-							_transmitters.TryAdd(channel, transmitter);
-					}
-				}
-			}
-
-			private ITransmitter GetTransmitter(string destination, string channel)
-			{
-				if(string.IsNullOrEmpty(channel))
-				{
-					var transmitters = _transmitters.Values.Distinct();
-
-					foreach(var transmitter in transmitters)
-					{
-						channel = transmitter.GetChannel(destination);
-
-						if(!string.IsNullOrEmpty(channel))
-							return transmitter;
-					}
-				}
-
-				return channel != null && _transmitters.TryGetValue(channel, out var result) ? result : null;
+					_transmitters.TryAdd(transmitter.Name, transmitter);
 			}
 			#endregion
+
+			private struct SecretTemplateData
+			{
+				public SecretTemplateData(string code) => this.Code = code;
+				public string Code { get; }
+			}
 		}
 		#endregion
 	}
