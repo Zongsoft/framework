@@ -111,13 +111,21 @@ namespace Zongsoft.Security.Web.Controllers
 			return Task.FromResult((IActionResult)this.Unauthorized());
 		}
 
-		[HttpPost("{destination}")]
-		public IActionResult Secret(string destination, [FromQuery]string channel)
+		[HttpPost("{scheme}:{destination}")]
+		public IActionResult Secret(string scheme, string destination, [FromQuery]string channel = null)
 		{
-			if(string.IsNullOrEmpty(destination))
+			if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
 				return this.BadRequest();
 
-			return this.Content(this.Secretor.Transmitter.Transmit(destination, "Authentication", channel, destination));
+			for(int i = 0; i < destination.Length; i++)
+			{
+				var chr = destination[i];
+
+				if(chr == ',' || chr == ';' || chr == '|' || chr == '/' || chr == '\\')
+					return this.BadRequest($"The specified destination parameter contains illegal characters.");
+			}
+
+			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", channel, destination));
 		}
 		#endregion
 
