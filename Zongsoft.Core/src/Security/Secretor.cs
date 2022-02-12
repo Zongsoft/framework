@@ -303,13 +303,15 @@ namespace Zongsoft.Security
 		{
 			#region 私有变量
 			private readonly ISecretor _secretor;
-			private readonly Dictionary<string, ITransmitter> _transmitters;
+			private readonly IDictionary<string, ICaptcha> _captchas;
+			private readonly IDictionary<string, ITransmitter> _transmitters;
 			#endregion
 
 			#region 构造函数
 			internal DefaultTransmitter(ISecretor secretor, IServiceProvider serviceProvider)
 			{
 				_secretor = secretor ?? throw new ArgumentNullException(nameof(secretor));
+				_captchas = new Dictionary<string, ICaptcha>(StringComparer.OrdinalIgnoreCase);
 				_transmitters = new Dictionary<string, ITransmitter>(StringComparer.OrdinalIgnoreCase);
 
 				this.Initialize(serviceProvider);
@@ -317,10 +319,19 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 公共方法
-			public override string Transmit(string scheme, string destination, string template, string channel = null, string extra = null)
+			public override string Transmit(string scheme, string destination, string template, CaptchaToken captcha, string channel = null, string extra = null)
 			{
 				if(scheme != null && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
+					if(!captcha.IsEmpty)
+					{
+						if(!_captchas.TryGetValue(captcha.Scheme, out var verifier))
+							throw new SecurityException("Captcha", $"The specified '{captcha.Scheme}' CAPTCHA is invalid.");
+
+						if(!verifier.Verify(captcha.Value, out _))
+							throw new SecurityException("Captcha", $"The '{verifier.Scheme}' CAPTCHA failed.");
+					}
+
 					var token = Randomizer.GenerateString(16);
 					var value = _secretor.Generate(token, null, extra);
 
@@ -337,21 +348,29 @@ namespace Zongsoft.Security
 			#region 私有方法
 			private void Initialize(IServiceProvider serviceProvider)
 			{
+				var captchas = serviceProvider.ResolveAll<ICaptcha>();
+				if(captchas != null)
+				{
+					foreach(var captcha in captchas)
+						_captchas.TryAdd(captcha.Scheme, captcha);
+				}
+
 				var transmitters = serviceProvider.ResolveAll<ITransmitter>();
-
-				if(transmitters == null)
-					return;
-
-				foreach(var transmitter in transmitters)
-					_transmitters.TryAdd(transmitter.Name, transmitter);
+				if(transmitters != null)
+				{
+					foreach(var transmitter in transmitters)
+						_transmitters.TryAdd(transmitter.Name, transmitter);
+				}
 			}
 			#endregion
 
+			#region 嵌套结构
 			private struct SecretTemplateData
 			{
 				public SecretTemplateData(string code) => this.Code = code;
 				public string Code { get; }
 			}
+			#endregion
 		}
 		#endregion
 	}

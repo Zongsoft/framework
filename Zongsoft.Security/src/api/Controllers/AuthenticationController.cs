@@ -125,7 +125,14 @@ namespace Zongsoft.Security.Web.Controllers
 					return this.BadRequest($"The specified destination parameter contains illegal characters.");
 			}
 
-			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", channel, destination));
+			CaptchaToken captcha = default;
+			if(this.Request.Headers.TryGetValue("X-Security-Captcha", out var value))
+			{
+				if(!CaptchaToken.TryParse(value.ToString(), out captcha))
+					return this.BadRequest($"Invalid CAPTCHA format.");
+			}
+
+			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", captcha, channel, destination));
 		}
 		#endregion
 

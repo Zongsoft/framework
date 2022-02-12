@@ -131,10 +131,11 @@ namespace Zongsoft.Security
 			/// <param name="scheme">指定的发送方案。</param>
 			/// <param name="destination">指定的验证码接受目的。</param>
 			/// <param name="template">指定的模板标识。</param>
+			/// <param name="captcha">指定的人机识别参数。</param>
 			/// <param name="channel">指定的通道标识。</param>
 			/// <param name="extra">指定的附加信息。</param>
 			/// <returns>返回的验证码凭证标识。</returns>
-			public abstract string Transmit(string scheme, string destination, string template, string channel = null, string extra = null);
+			public abstract string Transmit(string scheme, string destination, string template, CaptchaToken captcha, string channel = null, string extra = null);
 		}
 		#endregion
 	}
