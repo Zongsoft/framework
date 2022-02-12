@@ -32,8 +32,9 @@ using System;
 namespace Zongsoft.Security
 {
 	/// <summary>
-	/// 表示人机识别的实体结构。
+	/// 表示人机识别的模型结构。
 	/// </summary>
+	[Obsolete]
 	public struct Captcha
 	{
 		#region 构造函数
@@ -50,7 +51,7 @@ namespace Zongsoft.Security
 		/// <summary>获取或设置人机识别程序的标识。</summary>
 		public string Scheme { get; set; }
 
-		/// <summary>获取或设置人机识别的会话标识。</summary>
+		/// <summary>获取或设置人机识别的会话令牌。</summary>
 		public string Token { get; set; }
 
 		/// <summary>获取或设置人机识别的数据信息。</summary>
@@ -74,10 +75,10 @@ namespace Zongsoft.Security
 
 		#region 解析方法
 		/// <summary>
-		/// 从字符串文本解析<see cref="Captcha"/>实例。
+		/// 从字符串文本解析<see cref="Captcha"/>模型。
 		/// </summary>
 		/// <param name="text">待解析的字符串，其格式为：<c>scheme:token=data?extra</c>。</param>
-		/// <returns>返回解析成功的<see cref="Captcha"/>实例，如果失败则抛出异常。</returns>
+		/// <returns>返回解析成功的<see cref="Captcha"/>模型，如果失败则抛出异常。</returns>
 		public static Captcha Parse(string text)
 		{
 			if(string.IsNullOrEmpty(text))
@@ -92,10 +93,10 @@ namespace Zongsoft.Security
 		}
 
 		/// <summary>
-		/// 尝试从字符串文本解析<see cref="Captcha"/>实例。
+		/// 尝试从字符串文本解析<see cref="Captcha"/>模型。
 		/// </summary>
 		/// <param name="text">待解析的字符串，其格式为：<c>scheme:token=data?extra</c>。</param>
-		/// <param name="result">输出参数，表示解析成功后的<see cref="Captcha"/>实例。</param>
+		/// <param name="result">输出参数，表示解析成功后的<see cref="Captcha"/>模型。</param>
 		/// <returns>返回一个值，指示是否解析成功。</returns>
 		public static bool TryParse(string text, out Captcha result)
 		{

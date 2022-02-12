@@ -56,20 +56,16 @@ namespace Zongsoft.Security
 		/// <summary>获取人机识别程序的标识。</summary>
 		string Scheme { get; }
 
-		/// <summary>
-		/// 发起人机识别。
-		/// </summary>
+		/// <summary>发起人机识别。</summary>
+		/// <param name="data">指定的签发数据。</param>
 		/// <param name="extra">指定的附加信息。</param>
-		/// <returns>返回的识别会话标识值，如果为空(null)则表示发起失败。</returns>
-		string Issue(string extra = null);
+		/// <returns>返回的签发结果，如果为空(null)则表示发起失败。</returns>
+		object Issue(object data, string extra = null);
 
-		/// <summary>
-		/// 验证人机识别。
-		/// </summary>
-		/// <param name="token">指定的识别会话标识。</param>
-		/// <param name="data">指定识别的数据信息。</param>
-		/// <param name="extra">指定的附加信息。</param>
+		/// <summary>验证人机识别。</summary>
+		/// <param name="data">指定识别的数据。</param>
+		/// <param name="extra">输出参数，签发的附加信息。</param>
 		/// <returns>返回一个值，指示是否验证成功。</returns>
-		bool Verify(string token, string data, string extra = null);
+		bool Verify(object data, out string extra);
 	}
 }
