@@ -128,7 +128,9 @@ namespace Zongsoft.Security.Web.Controllers
 			CaptchaToken captcha = default;
 			if(this.Request.Headers.TryGetValue("X-Security-Captcha", out var value))
 			{
-				if(!CaptchaToken.TryParse(value.ToString(), out captcha))
+				var text = value.ToString();
+
+				if(!string.IsNullOrEmpty(text) && !CaptchaToken.TryParse(text, out captcha))
 					return this.BadRequest($"Invalid CAPTCHA format.");
 			}
 
