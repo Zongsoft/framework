@@ -43,6 +43,6 @@ namespace Zongsoft.Services
 		/// <param name="name">指定的要获取的服务名称。</param>
 		/// <returns>返回指定名称的服务，如果为空(null)则表示指定名称的服务不存在。</returns>
 		/// <remarks>对于实现者的要求：当指定名称的服务不存在时，确保返回值为空(null)而不要抛出异常。</remarks>
-		T GetService(string name);
+		T GetService(string name = null);
 	}
 }
