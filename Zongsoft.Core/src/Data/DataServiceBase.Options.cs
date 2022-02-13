@@ -108,7 +108,12 @@ namespace Zongsoft.Data
 				#endregion
 
 				#region 静态方法
-				public static Insertion Allow(bool validatorSuppressed = false) => new Insertion(true) { ValidatorSuppressed = validatorSuppressed };
+				public static Insertion Allow(bool validatorSuppressed = false, bool sequenceForced = false) =>
+				new Insertion(true)
+				{
+					ValidatorSuppressed = validatorSuppressed,
+					SequenceForced = sequenceForced,
+				};
 				#endregion
 			}
 
