@@ -52,7 +52,7 @@ namespace Zongsoft.Data
 				#endregion
 
 				#region 静态方法
-				public static Deletion Allow() => new Deletion(true);
+				public static Deletion Allow(bool validatorSuppressed = false) => new Deletion(true) { ValidatorSuppressed = validatorSuppressed };
 				#endregion
 			}
 
@@ -72,6 +72,7 @@ namespace Zongsoft.Data
 
 				#region 静态方法
 				public static Updation Allow(UpdateBehaviors behaviors = UpdateBehaviors.None) => new Updation(true, behaviors);
+				public static Updation Allow(bool validatorSuppressed, UpdateBehaviors behaviors = UpdateBehaviors.None) => new Updation(true, behaviors) { ValidatorSuppressed = validatorSuppressed };
 				#endregion
 			}
 
@@ -89,7 +90,7 @@ namespace Zongsoft.Data
 				#endregion
 
 				#region 静态方法
-				public static Upsertion Allow() => new Upsertion(true);
+				public static Upsertion Allow(bool validatorSuppressed = false) => new Upsertion(true) { ValidatorSuppressed = validatorSuppressed };
 				#endregion
 			}
 
@@ -107,7 +108,7 @@ namespace Zongsoft.Data
 				#endregion
 
 				#region 静态方法
-				public static Insertion Allow() => new Insertion(true);
+				public static Insertion Allow(bool validatorSuppressed = false) => new Insertion(true) { ValidatorSuppressed = validatorSuppressed };
 				#endregion
 			}
 
