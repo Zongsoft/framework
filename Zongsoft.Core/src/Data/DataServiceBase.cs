@@ -188,7 +188,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public virtual bool CanDelete { get => this.Service?.CanDelete ?? true; }
+		public virtual bool CanDelete { get => this.Service?.CanDelete ?? false; }
 
 		public virtual bool CanInsert { get => this.Service?.CanInsert ?? true; }
 
