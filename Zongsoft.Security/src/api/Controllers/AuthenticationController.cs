@@ -137,11 +137,23 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination));
 		}
 
-		[HttpPost("Verify/{token}")]
-		public IActionResult Verify(string token, string secret)
+		[HttpPost("{token}")]
+		public async ValueTask<IActionResult> VerifyAsync(string token, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
+			if(this.Request.ContentLength < 1)
+				return this.BadRequest();
+
+			string secret;
+
+			using(var reader = new System.IO.StreamReader(this.Request.Body))
+			{
+				secret = await reader.ReadToEndAsync();
+
+				if(string.IsNullOrEmpty(secret))
+					return this.BadRequest();
+			}
 
 			return this.Secretor.Verify(token, secret) ? this.NoContent() : this.BadRequest();
 		}
