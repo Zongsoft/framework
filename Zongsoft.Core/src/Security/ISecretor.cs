@@ -56,6 +56,14 @@ namespace Zongsoft.Security
 		bool Exists(string name);
 
 		/// <summary>
+		/// 判断指定名称的秘密（验证码）是否存在。
+		/// </summary>
+		/// <param name="name">指定的验证码名称。</param>
+		/// <param name="duration">输出参数，如果指定名称的秘密存在则输出其生成的时长。</param>
+		/// <returns>返回一个值，指示指定名称的验证码是否存在（有效）。</returns>
+		bool Exists(string name, out TimeSpan duration);
+
+		/// <summary>
 		/// 生成一个指定名称的秘密（验证码）。
 		/// </summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号），调用者应确保该名称全局唯一。</param>

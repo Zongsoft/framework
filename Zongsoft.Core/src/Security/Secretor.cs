@@ -44,8 +44,6 @@ namespace Zongsoft.Security
 		#region 常量定义
 		private const int DEFAULT_EXPIRY_MINUTES = 10;
 		private const int DEFAULT_PERIOD_SECONDS = 60;
-
-		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		#endregion
 
 		#region 成员字段
@@ -112,12 +110,37 @@ namespace Zongsoft.Security
 		#region 存在方法
 		public bool Exists(string name)
 		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = name.ToLowerInvariant().Trim();
 
 			return cache.Exists(name);
+		}
+
+		public bool Exists(string name, out TimeSpan duration)
+		{
+			duration = TimeSpan.Zero;
+
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
+
+			//修复秘密名（转换成小写并剔除收尾空格）
+			name = name.ToLowerInvariant().Trim();
+
+			//从缓存内容解析出对应的缓存值和发出时间
+			if(cache.TryGetValue(name, out string cacheValue) && this.Unpack(cacheValue, out var _, out var timestamp, out _))
+			{
+				duration = DateTime.UtcNow - timestamp;
+				return true;
+			}
+
+			return false;
 		}
 
 		public bool Remove(string name, string secret) => this.Remove(name, secret, out _);
@@ -169,9 +192,9 @@ namespace Zongsoft.Security
 			{
 				//尚未验证：则必须确保在最小时间间隔之后才能重新生成
 				if(_period > TimeSpan.Zero &&
-				   this.Unpack(text, out var cachedSecret, out var timestamp, out var cachedExtra) &&
+				   this.Unpack(text, out _, out var timestamp, out _) &&
 				   DateTime.UtcNow - timestamp < _period)
-					throw new InvalidOperationException(Properties.Resources.Text_SecretGenerateTooFrequently_Message);
+					throw new SecurityException("Secret", Properties.Resources.Text_SecretGenerateTooFrequently_Message);
 			}
 
 			//根据指定的模式生成或获取秘密（验证码）
@@ -247,19 +270,19 @@ namespace Zongsoft.Security
 
 		protected virtual string Pack(string secret, string extra)
 		{
-			var timestamp = (ulong)(DateTime.UtcNow - EPOCH).TotalSeconds;
+			var timestamp = Timestamp.Millennium.Now;
 
 			if(string.IsNullOrEmpty(extra))
-				return secret + "|" + timestamp.ToString();
+				return $"{secret}|{timestamp}";
 			else
-				return secret + "|" + timestamp.ToString() + "|" + extra;
+				return $"{secret}|{timestamp}|{extra}";
 		}
 
 		protected virtual bool Unpack(string text, out string secret, out DateTime timestamp, out string extra)
 		{
 			secret = null;
 			extra = null;
-			timestamp = EPOCH;
+			timestamp = Timestamp.Millennium.Epoch;
 
 			if(string.IsNullOrEmpty(text))
 				return false;
@@ -279,7 +302,7 @@ namespace Zongsoft.Security
 							break;
 						case 1:
 							if(ulong.TryParse(text.Substring(last, i - last), out number))
-								timestamp = EPOCH.AddSeconds(number);
+								timestamp = Timestamp.Millennium.Epoch.AddSeconds(number);
 
 							if(i < text.Length - 1)
 								extra = text.Substring(i + 1);
@@ -292,7 +315,7 @@ namespace Zongsoft.Security
 			}
 
 			if(last < text.Length && ulong.TryParse(text.Substring(last), out number))
-				timestamp = EPOCH.AddSeconds(number);
+				timestamp = Timestamp.Millennium.Epoch.AddSeconds(number);
 
 			return !string.IsNullOrEmpty(secret);
 		}
@@ -301,6 +324,10 @@ namespace Zongsoft.Security
 		#region 嵌套子类
 		private class DefaultTransmitter : ISecretor.SecretTransmitter
 		{
+			#region 静态变量
+			private static readonly System.Security.Cryptography.HashAlgorithm _hasher = System.Security.Cryptography.MD5.Create();
+			#endregion
+
 			#region 私有变量
 			private readonly ISecretor _secretor;
 			private readonly IDictionary<string, ICaptcha> _captchas;
@@ -321,7 +348,7 @@ namespace Zongsoft.Security
 			#region 公共方法
 			public override string Transmit(string scheme, string destination, string template, CaptchaToken captcha, string channel = null, string extra = null)
 			{
-				if(scheme != null && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
+				if(!string.IsNullOrEmpty(scheme) && !string.IsNullOrEmpty(destination) && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
 					if(!captcha.IsEmpty)
 					{
@@ -332,7 +359,7 @@ namespace Zongsoft.Security
 							throw new SecurityException("Captcha", $"The '{verifier.Scheme}' CAPTCHA failed.");
 					}
 
-					var token = Randomizer.GenerateString(16);
+					var token = GetKey(scheme, destination, template, channel);
 					var value = _secretor.Generate(token, null, extra);
 
 					//发送验证码到目的地
@@ -361,6 +388,16 @@ namespace Zongsoft.Security
 					foreach(var transmitter in transmitters)
 						_transmitters.TryAdd(transmitter.Name, transmitter);
 				}
+			}
+
+			private static string GetKey(string scheme, string destination, string template, string channel)
+			{
+				if(string.IsNullOrEmpty(destination) && string.IsNullOrEmpty(template))
+					return null;
+
+				var key = string.IsNullOrEmpty(channel) ? $"{scheme}:{destination}@{template}" : $"{scheme}.{channel}:{destination}@{template}";
+				var hash = _hasher.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key.ToLowerInvariant()));
+				return System.Convert.ToBase64String(hash);
 			}
 			#endregion
 
