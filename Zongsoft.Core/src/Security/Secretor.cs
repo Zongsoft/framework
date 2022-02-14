@@ -397,7 +397,7 @@ namespace Zongsoft.Security
 
 				var key = string.IsNullOrEmpty(channel) ? $"{scheme}:{destination}@{template}" : $"{scheme}.{channel}:{destination}@{template}";
 				var hash = _hasher.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key.ToLowerInvariant()));
-				return System.Convert.ToBase64String(hash);
+				return System.Convert.ToHexString(hash);
 			}
 			#endregion
 
