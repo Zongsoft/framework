@@ -50,16 +50,24 @@ namespace Zongsoft.Web.Filters
 			switch(context.Exception)
 			{
 				case AuthenticationException authentication:
-					context.HttpContext.Response.Headers.Add("X-Security-Reason", authentication.Reason.ToString());
-					context.Result = new UnauthorizedResult();
+					context.HttpContext.Response.Headers.Add("X-Security-Error", authentication.Reason.ToString());
+					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
+					{
+						Title = authentication.Reason,
+						Detail = authentication.Message,
+						Status = StatusCodes.Status401Unauthorized,
+					});
+
 					break;
 				case SecurityException securityException:
-					var properties = new AuthenticationProperties();
+					context.HttpContext.Response.Headers.Add("X-Security-Error", securityException.Reason.ToString());
+					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
+					{
+						Title = securityException.Reason,
+						Detail = securityException.Message,
+						Status = StatusCodes.Status403Forbidden,
+					});
 
-					properties.Items.Add(nameof(SecurityException.Reason), securityException.Reason);
-					properties.Parameters.Add(nameof(SecurityException.Reason), securityException.Reason);
-
-					context.Result = new ForbidResult(properties);
 					break;
 				case DataArgumentException argumentException:
 					if(!string.IsNullOrEmpty(argumentException.Name))
@@ -89,8 +97,9 @@ namespace Zongsoft.Web.Filters
 					if(!string.IsNullOrEmpty(constraintException.Field))
 						context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
 
-					context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState)
+					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
 					{
+						Status = StatusCodes.Status409Conflict,
 						Detail = constraintException.Message
 					});
 
