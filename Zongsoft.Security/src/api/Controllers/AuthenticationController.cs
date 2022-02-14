@@ -112,7 +112,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPost("{scheme}:{destination}")]
-		public IActionResult Secret(string scheme, string destination, [FromQuery]string channel = null)
+		public IActionResult Secret(string scheme, string destination, [FromQuery]string scenario, [FromQuery]string channel = null)
 		{
 			if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
 				return this.BadRequest();
@@ -134,7 +134,16 @@ namespace Zongsoft.Security.Web.Controllers
 					return this.BadRequest($"Invalid CAPTCHA format.");
 			}
 
-			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", captcha, channel, destination));
+			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination));
+		}
+
+		[HttpPost("Verify/{token}")]
+		public IActionResult Verify(string token, string secret)
+		{
+			if(string.IsNullOrEmpty(token))
+				return this.BadRequest();
+
+			return this.Secretor.Verify(token, secret) ? this.NoContent() : this.BadRequest();
 		}
 		#endregion
 

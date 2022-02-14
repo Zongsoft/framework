@@ -194,7 +194,7 @@ namespace Zongsoft.Security
 				if(_period > TimeSpan.Zero &&
 				   this.Unpack(text, out _, out var timestamp, out _) &&
 				   DateTime.UtcNow - timestamp < _period)
-					throw new SecurityException("Secret", Properties.Resources.Text_SecretGenerateTooFrequently_Message);
+					throw new SecurityException("Secret.TooFrequently", Properties.Resources.Text_SecretGenerateTooFrequently_Message);
 			}
 
 			//根据指定的模式生成或获取秘密（验证码）
@@ -346,7 +346,7 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 公共方法
-			public override string Transmit(string scheme, string destination, string template, CaptchaToken captcha, string channel = null, string extra = null)
+			public override string Transmit(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel = null, string extra = null)
 			{
 				if(!string.IsNullOrEmpty(scheme) && !string.IsNullOrEmpty(destination) && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
@@ -359,7 +359,7 @@ namespace Zongsoft.Security
 							throw new SecurityException("Captcha", $"The '{verifier.Scheme}' CAPTCHA failed.");
 					}
 
-					var token = GetKey(scheme, destination, template, channel);
+					var token = GetKey(scheme, destination, template, scenario, channel);
 					var value = _secretor.Generate(token, null, extra);
 
 					//发送验证码到目的地
@@ -390,12 +390,12 @@ namespace Zongsoft.Security
 				}
 			}
 
-			private static string GetKey(string scheme, string destination, string template, string channel)
+			private static string GetKey(string scheme, string destination, string template, string scenario, string channel)
 			{
 				if(string.IsNullOrEmpty(destination) && string.IsNullOrEmpty(template))
 					return null;
 
-				var key = string.IsNullOrEmpty(channel) ? $"{scheme}:{destination}@{template}" : $"{scheme}.{channel}:{destination}@{template}";
+				var key = string.IsNullOrEmpty(channel) ? $"{scheme}:{destination}@{template}?{scenario}" : $"{scheme}.{channel}:{destination}@{template}?{scenario}";
 				var hash = _hasher.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key.ToLowerInvariant()));
 				return System.Convert.ToHexString(hash);
 			}
