@@ -188,15 +188,11 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public virtual bool CanDelete { get => this.Service?.CanDelete ?? false; }
-
-		public virtual bool CanInsert { get => this.Service?.CanInsert ?? true; }
-
-		public virtual bool CanUpdate { get => this.Service?.CanUpdate ?? true; }
-
-		public virtual bool CanUpsert { get => this.Service != null && this.CanInsert && this.CanUpdate; }
-
 		public DataServiceAttribute Attribute { get => _attribute; }
+		public virtual bool CanDelete { get => this.Service != null; }
+		public virtual bool CanInsert { get => this.Service?.CanInsert ?? true; }
+		public virtual bool CanUpdate { get => this.Service?.CanUpdate ?? true; }
+		public virtual bool CanUpsert { get => this.Service != null && this.CanInsert && this.CanUpdate; }
 
 		public IDataAccess DataAccess
 		{
