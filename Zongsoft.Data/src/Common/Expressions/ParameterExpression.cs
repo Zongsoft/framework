@@ -102,64 +102,31 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取参数名称。
-		/// </summary>
+		/// <summary>获取参数名称。</summary>
 		/// <remarks>
 		///		<para>如果参数名为空或问号(?)表示该参数名由集合定义，当该参数被加入到语句的参数集中，该名称将被更改为特定序号的名字。可参考<see cref="StatementBase.Parameters"/>属性的集合。</para>
 		/// </remarks>
-		public string Name
-		{
-			get;
-			internal set;
-		}
+		public string Name { get; internal set; }
 
-		/// <summary>
-		/// 获取参数对应的字段标识，可能为空。
-		/// </summary>
-		public FieldIdentifier Field
-		{
-			get;
-		}
+		/// <summary>获取参数对应的字段标识，可能为空。</summary>
+		public FieldIdentifier Field { get; }
 
-		/// <summary>
-		/// 获取或设置参数对应的模式成员，可能为空。
-		/// </summary>
-		public SchemaMember Schema
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置参数对应的模式成员，可能为空。</summary>
+		public SchemaMember Schema { get; set; }
 
-		/// <summary>
-		/// 获取参数的方向。
-		/// </summary>
-		public ParameterDirection Direction
-		{
-			get;
-		}
+		/// <summary>获取参数的方向。</summary>
+		public ParameterDirection Direction { get; }
 
-		/// <summary>
-		/// 获取或设置参数的数据类型。
-		/// </summary>
-		public DbType DbType
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置参数的数据类型。</summary>
+		public DbType DbType { get; set; }
 
-		/// <summary>
-		/// 获取或设置参数值。
-		/// </summary>
+		/// <summary>获取或设置参数值。</summary>
 		/// <remarks>
-		///		<para>注意：设置该属性值会导致<see cref="HasValue"/>属性为真。</para>
+		///		<para>注意：设置该属性值会导致<see cref="IsChanged"/>属性为真。</para>
 		/// </remarks>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
+			get => _value;
 			set
 			{
 				_value = value;
@@ -176,22 +143,16 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		/// <summary>
-		/// 获取一个值，指示<see cref="Value"/>属性是否被设置过。
-		/// </summary>
-		public bool HasValue
-		{
-			get => _hasValue;
-		}
+		/// <summary>获取一个值，指示<see cref="Value"/>属性是否被设置过。</summary>
+		public bool IsChanged { get => _hasValue; }
 		#endregion
 
 		#region 重写方法
 		public override string ToString()
 		{
-			if(this.HasValue)
-				return $"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}";
-			else
-				return $"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
+			return this.IsChanged ?
+				$"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}" :
+				$"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
 		}
 		#endregion
 	}

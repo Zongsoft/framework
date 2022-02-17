@@ -51,7 +51,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				if(dbParameter.Direction == ParameterDirection.Input || dbParameter.Direction == ParameterDirection.InputOutput)
 				{
-					if(parameter.Schema == null || parameter.HasValue)
+					if(parameter.Schema == null || parameter.IsChanged)
 					{
 						if(parameter.Value is IDataValueBinder binder)
 							dbParameter.Value = binder.Bind(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null);
@@ -63,7 +63,7 @@ namespace Zongsoft.Data.Common.Expressions
 						 * 说明该参数值是数据提供程序或导航连接所得，因此必须将其值写回对应的数据项中。
 						 */
 						if(parameter.Schema != null)
-							parameter.Schema.Token.SetValue(data, parameter.HasValue && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
 					}
 					else if(data != null)
 					{
