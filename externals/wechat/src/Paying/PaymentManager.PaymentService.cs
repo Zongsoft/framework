@@ -115,9 +115,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://payapp.weixin.qq.com/face/get_wxpayface_authinfo", request.CreateXmlContent(), cancellation);
 				var result = await response.GetXmlContentAsync(cancellation);
 
-				return result != null && result.TryGetValue("authinfo", out var value) && value != null ?
-					OperationResult.Success(value) :
-					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+				return OperationResult.Success(Serialization.Serializer.Json.Serialize(result));
 			}
 			#endregion
 
