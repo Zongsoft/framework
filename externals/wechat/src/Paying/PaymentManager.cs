@@ -49,11 +49,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
 
-			if(string.IsNullOrEmpty(authority.Code) || authority.Certificate == null)
+			if(string.IsNullOrEmpty(authority.Code))
 				throw new ArgumentException("Invalid authority of the wechat.");
 
-			if(authority.Certificate == null || string.IsNullOrEmpty(authority.Certificate.Code) || authority.Certificate.PrivateKey == null)
-				throw new ArgumentException($"Invalid certificate of the '{authority.Code}' wechat authority.");
+			if(authority.Account.IsEmpty)
+				throw new ArgumentException($"Missing the required app of the '{authority.Code}' wechat merchant.");
 
 			return _services.GetOrAdd(authority.Code, (key, authority) =>
 			{

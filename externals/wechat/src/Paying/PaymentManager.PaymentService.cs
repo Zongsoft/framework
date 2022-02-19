@@ -80,9 +80,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
-				if(request is PaymentRequest.TicketRequest ticketRequest)
-					return await this.PayTicketAsync(ticketRequest, cancellation);
-
 				var result = await this.Client.PostAsync<PaymentRequest, PayResult>(this.GetUrl("transactions", scenario), request, cancellation);
 				return result.Succeed ? OperationResult.Success((result.Value.Code, (string)null)) : (OperationResult)result.Failure;
 			}
@@ -98,9 +95,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			public abstract ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default);
 			public abstract ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default);
 
-			/// <summary>
-			/// 验证人脸识别设备的识别请求。
-			/// </summary>
+			/// <summary>初始化人脸识别设备的验证请求。</summary>
 			/// <returns>返回人脸识别验证凭证。</returns>
 			public async ValueTask<OperationResult> AuthenticateAsync(string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
 			{
@@ -144,41 +139,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(key));
 
 				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
-			}
-
-			protected async ValueTask<OperationResult<(string identifier, string payer)>> PayTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
-			{
-				var dictionary = this.GetTicketRequest(request);
-
-				if(!dictionary.ContainsKey("sign"))
-					dictionary.TryAdd("sign", Utility.Postmark(dictionary, _authority.Secret));
-
-				var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://api.mch.weixin.qq.com/pay/micropay", dictionary.CreateXmlContent(), cancellation);
-				var result = await response.GetXmlContentAsync(cancellation);
-
-				return result != null && result.TryGetValue("transaction_id", out var id) && id != null ?
-					OperationResult.Success((id, result["openid"])) :
-					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
-			}
-
-			protected virtual IDictionary<string, object> GetTicketRequest(PaymentRequest.TicketRequest request)
-			{
-				return new SortedDictionary<string, object>()
-				{
-					{ "appid", _authority.Account.Code },
-					{ "mch_id", _authority.Code },
-					{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
-					{ "out_trade_no", request.VoucherCode },
-					{ "sign_type", "MD5" },
-					{ "nonce_str", Guid.NewGuid().ToString("N") },
-					{ "auth_code", request.TicketId },
-					{ "attach", string.IsNullOrEmpty(request.Extra) ? null : request.Extra },
-					{ "device_info", request.Place.DeviceId },
-					{ "spbill_create_ip", request.Place.DeviceIp },
-					{ "total_fee", request.Amount.Value },
-					{ "fee_type", request.Amount.Currency },
-					{ "body", request.Description },
-				};
 			}
 
 			protected virtual IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
@@ -500,6 +460,82 @@ namespace Zongsoft.Externals.Wechat.Paying
 			}
 			#endregion
 
+			protected class CompatibilityBase<TService> where TService : PaymentService
+			{
+				#region 成员字段
+				private readonly TService _service;
+				#endregion
+
+				#region 构造函数
+				protected CompatibilityBase(TService service) => _service = service;
+				#endregion
+
+				#region 公共属性
+				protected TService Service { get => _service; }
+				#endregion
+
+				#region 公共方法
+				public ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				{
+					var dictionary = this.GetRequest(request, scenario);
+
+					if(!dictionary.ContainsKey("sign"))
+						dictionary.TryAdd("sign", Utility.Postmark(dictionary, _service._authority.Secret));
+
+					var url = request is PaymentRequest.TicketRequest ?
+						@"https://api.mch.weixin.qq.com/pay/micropay" :
+						@"https://api.mch.weixin.qq.com/pay/unifiedorder";
+
+					return this.PayAsync(url, dictionary, cancellation);
+				}
+
+				private async ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(string url, IDictionary<string, object> data, CancellationToken cancellation = default)
+				{
+					if(!data.ContainsKey("sign"))
+						data.TryAdd("sign", Utility.Postmark(data, _service._authority.Secret));
+
+					var response = await HttpClientFactory.Xml.Client.PostAsync(url, data.CreateXmlContent(), cancellation);
+					var result = await response.GetXmlContentAsync(cancellation);
+
+					return result != null && result.TryGetValue("transaction_id", out var id) && id != null ?
+						OperationResult.Success((id, result["openid"])) :
+						OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+				}
+
+				protected virtual IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
+				{
+					var dictionary = new SortedDictionary<string, object>
+					{
+						{ "appid", _service._authority.Account.Code },
+						{ "mch_id", _service._authority.Code },
+						{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
+						{ "out_trade_no", request.VoucherCode },
+						{ "sign_type", "MD5" },
+						{ "nonce_str", Guid.NewGuid().ToString("N") },
+						{ "attach", string.IsNullOrEmpty(request.Extra) ? null : request.Extra },
+						{ "device_info", request.Place.DeviceId },
+						{ "spbill_create_ip", request.Place.DeviceIp },
+						{ "total_fee", request.Amount.Value },
+						{ "fee_type", request.Amount.Currency },
+						{ "body", request.Description },
+					};
+
+					if(request is PaymentRequest.TicketRequest ticket)
+						dictionary["auth_code"] = ticket.TicketId;
+					else
+						dictionary["trade_type"] = scenario switch
+						{
+							Scenario.Native => "NATIVE",
+							Scenario.App => "APP",
+							Scenario.Web => "JSAPI",
+							_ => "JSAPI",
+						};
+
+					return dictionary;
+				}
+				#endregion
+			}
+
 			internal class DirectPaymentService : PaymentService
 			{
 				#region 常量定义
@@ -509,11 +545,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				#region 成员字段
 				private HttpClient _client;
+				private readonly Compatibility _compatibility;
 				#endregion
 
 				#region 构造函数
 				public DirectPaymentService(IAuthority authority) : base(authority)
 				{
+					_compatibility = new Compatibility(this);
 					this.Request = new DirectBuilder(authority);
 				}
 				#endregion
@@ -538,6 +576,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
+				public override ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				{
+					if(_authority.Certificate == null || request is PaymentRequest.TicketRequest)
+						return _compatibility.PayAsync(request, scenario, cancellation);
+
+					return base.PayAsync(request, scenario, cancellation);
+				}
+
 				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
 					var result = await base.GetAsync<DirectOrder>(voucher, $"mchid={_authority.Code}", cancellation);
@@ -566,6 +612,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				protected override object GetCancellation() => new { mchid = _authority.Code };
 				#endregion
+
+				private sealed class Compatibility : CompatibilityBase<DirectPaymentService>
+				{
+					public Compatibility(DirectPaymentService service) : base(service) { }
+				}
 
 				private sealed class DirectBuilder : RequestBuilder
 				{
@@ -691,11 +742,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 成员字段
 				private HttpClient _client;
 				private readonly IAuthority _subsidiary;
+				private readonly Compatibility _compatibility;
 				#endregion
 
 				#region 构造函数
 				public BrokerPaymentService(IAuthority master, IAuthority subsidiary) : base(master)
 				{
+					_compatibility = new Compatibility(this);
 					_subsidiary = subsidiary ?? throw new ArgumentNullException(nameof(subsidiary));
 					this.Request = new BrokerBuilder(master, subsidiary);
 				}
@@ -721,6 +774,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
+				public override ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				{
+					if(_authority.Certificate == null || request is PaymentRequest.TicketRequest)
+						return _compatibility.PayAsync(request, scenario, cancellation);
+
+					return base.PayAsync(request, scenario, cancellation);
+				}
+
 				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
 					var result = await base.GetAsync<BrokerOrder>(voucher, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
@@ -749,19 +810,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				protected override object GetCancellation() => new { sp_mchid = _authority.Code, sub_mchid = _subsidiary.Code };
 
-				protected override IDictionary<string, object> GetTicketRequest(PaymentRequest.TicketRequest request)
-				{
-					var dictionary = base.GetTicketRequest(request);
-
-					if(dictionary != null)
-					{
-						dictionary["sub_mch_id"] = _subsidiary.Code;
-						dictionary["sub_appid"] = _subsidiary.Account.Code;
-					}
-
-					return dictionary;
-				}
-
 				protected override IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
 				{
 					var request = base.GetAuthenticationRequest(data, device, store, title, extra);
@@ -775,6 +823,24 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return request;
 				}
 				#endregion
+
+				private sealed class Compatibility : CompatibilityBase<BrokerPaymentService>
+				{
+					public Compatibility(BrokerPaymentService service) : base(service) { }
+
+					protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
+					{
+						var dictionary = base.GetRequest(request, scenario);
+
+						if(dictionary != null)
+						{
+							dictionary["sub_mch_id"] = this.Service._subsidiary.Code;
+							dictionary["sub_appid"] = this.Service._subsidiary.Account.Code;
+						}
+
+						return dictionary;
+					}
+				}
 
 				private sealed class BrokerBuilder : RequestBuilder
 				{
