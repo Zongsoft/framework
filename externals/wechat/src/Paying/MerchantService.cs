@@ -85,7 +85,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var certificate = await _authority.GetCertificateAsync(cancellation);
 
 				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments/", request, certificate, cancellation);
-				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId) : result.Failure;
+				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId.ToString()) : result.Failure;
 			}
 
 			public ValueTask<OperationResult<Applyment>> GetAsync(string key, CancellationToken cancellation = default)
@@ -273,7 +273,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			private struct RegistrationResult
 			{
 				[JsonPropertyName("applyment_id")]
-				public string ApplymentId { get; set; }
+				public long ApplymentId { get; set; }
 			}
 
 			public class Applyment
