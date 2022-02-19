@@ -102,7 +102,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			/// 验证人脸识别设备的识别请求。
 			/// </summary>
 			/// <returns>返回人脸识别验证凭证。</returns>
-			public async ValueTask<OperationResult<string>> AuthenticateAsync(string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
+			public async ValueTask<OperationResult> AuthenticateAsync(string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(data))
 					return OperationResult.Fail("Argument", $"Missing the required data of the recognition authenticate.");
@@ -116,7 +116,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var result = await response.GetXmlContentAsync(cancellation);
 
 				return result != null && result.TryGetValue("authinfo", out var value) && value != null ?
-					OperationResult.Success(value) :
+					OperationResult.Success(new
+					{
+						Value = value,
+						AppId = result.TryGetValue("appid", out var appId) ? (string)appId : string.Empty,
+						MerchantId = result.TryGetValue("mch_id", out var merchantId) ? (string)merchantId : string.Empty,
+						SubAppId = result.TryGetValue("sub_appid", out var subAppId) ? (string)subAppId : string.Empty,
+						SubMerchantId = result.TryGetValue("sub_mch_id", out var subMerchantId) ? (string)subMerchantId : string.Empty,
+						Expires = result.TryGetValue("expires_in", out var expires) ? (string)expires : string.Empty,
+					}) :
 					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
 			}
 			#endregion
