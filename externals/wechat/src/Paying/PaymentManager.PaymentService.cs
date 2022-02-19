@@ -179,6 +179,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				public PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string ticket, string description = null) => this.Ticket(voucher, amount, null, ticket, description);
 				public abstract PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null);
+				internal abstract string GetFallback();
 
 				internal static string GetFallback(string key, string format)
 				{
@@ -523,6 +524,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(request is PaymentRequest.TicketRequest ticket)
 						dictionary["auth_code"] = ticket.TicketId;
 					else
+					{
+						dictionary["notify_url"] = this.Service.Request.GetFallback();
 						dictionary["trade_type"] = scenario switch
 						{
 							Scenario.Native => "NATIVE",
@@ -530,6 +533,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 							Scenario.Web => "JSAPI",
 							_ => "JSAPI",
 						};
+					}
 
 					return dictionary;
 				}
@@ -623,11 +627,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 					private readonly IAuthority _authority;
 					public DirectBuilder(IAuthority authority) => _authority = authority;
 
+					internal override string GetFallback() => GetFallback(_authority.Code, FORMAT);
+
 					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
 					{
 						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Account.Code, description)
 						{
-							FallbackUrl = GetFallback(_authority.Code, FORMAT),
+							FallbackUrl = this.GetFallback(),
 						};
 					}
 
@@ -635,7 +641,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Account.Code, description)
 						{
-							FallbackUrl = GetFallback(_authority.Code, FORMAT),
+							FallbackUrl = this.GetFallback(),
 						};
 					}
 				}
@@ -849,11 +855,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
 
+					internal override string GetFallback() => GetFallback(_master.Name, FORMAT);
+
 					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
 					{
 						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code, description)
 						{
-							FallbackUrl = GetFallback(_master.Name, FORMAT),
+							FallbackUrl = this.GetFallback(),
 						};
 					}
 
@@ -861,7 +869,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code, description)
 						{
-							FallbackUrl = GetFallback(_master.Name, FORMAT),
+							FallbackUrl = this.GetFallback(),
 						};
 					}
 				}
