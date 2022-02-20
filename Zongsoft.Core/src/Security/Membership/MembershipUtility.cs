@@ -277,9 +277,10 @@ namespace Zongsoft.Security.Membership
 				Condition.Equal(nameof(Member.MemberId), memberId) &
 				Condition.Equal(nameof(Member.MemberType), memberType) &
 				filter,
-				"Role{*}")
-				.Where(m => m.Role != null)
-				.Select(m => m.Role), RoleComparer<TRole>.Instance);
+				"Role{*}"
+			)
+			.Where(m => m.Role != null)
+			.Select(m => m.Role), RoleComparer<TRole>.Instance);
 
 			if(roles.Count > 0)
 			{
@@ -292,9 +293,12 @@ namespace Zongsoft.Security.Membership
 						Condition.In(nameof(Member.MemberId), intersection) &
 						Condition.Equal(nameof(Member.MemberType), MemberType.Role) &
 						filter,
-						"Role{*}", DataSelectOptions.Distinct())
-						.Where(m => m.Role != null)
-						.Select(m => m.Role).ToArray();
+						"Role{*}",
+						DataSelectOptions.Distinct()
+					)
+					.Where(m => m.Role != null)
+					.Select(m => m.Role)
+					.ToArray();
 
 					intersection = parents.Except(roles, RoleComparer<TRole>.Instance).Select(p => p.RoleId).ToArray();
 					roles.UnionWith(parents);
