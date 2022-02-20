@@ -55,15 +55,15 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 查询方法
-		new IEnumerable<TModel> Select(IDataSelectOptions options = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(DataSelectOptions options = null, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, IDataSelectOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
 		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
 		#endregion
 	}
 }

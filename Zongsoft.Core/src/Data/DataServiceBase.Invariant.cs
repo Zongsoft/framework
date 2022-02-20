@@ -35,7 +35,7 @@ namespace Zongsoft.Data
 	public partial class DataServiceBase<TModel>
 	{
 		#region 插入方法
-		protected int Insert(object data, ISchema schema, IDataInsertOptions options = null)
+		protected int Insert(object data, ISchema schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert(options);
@@ -62,7 +62,7 @@ namespace Zongsoft.Data
 			return this.OnInsert(dictionary, schema, options);
 		}
 
-		protected int InsertMany(IEnumerable items, ISchema schema, IDataInsertOptions options = null)
+		protected int InsertMany(IEnumerable items, ISchema schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert(options);
@@ -94,7 +94,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 增改方法
-		protected int Upsert(object data, ISchema schema, IDataUpsertOptions options = null)
+		protected int Upsert(object data, ISchema schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
@@ -121,7 +121,7 @@ namespace Zongsoft.Data
 			return this.OnUpsert(dictionary, schema, options);
 		}
 
-		protected int UpsertMany(IEnumerable items, ISchema schema, IDataUpsertOptions options = null)
+		protected int UpsertMany(IEnumerable items, ISchema schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
@@ -153,7 +153,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		protected int Update(object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null)
+		protected int Update(object data, ICondition criteria, ISchema schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpdate(options);
@@ -209,7 +209,7 @@ namespace Zongsoft.Data
 			return this.OnUpdate(dictionary, criteria, schema, options);
 		}
 
-		protected int UpdateMany(IEnumerable items, ISchema schema, IDataUpdateOptions options = null)
+		protected int UpdateMany(IEnumerable items, ISchema schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpdate(options);

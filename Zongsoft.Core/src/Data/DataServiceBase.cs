@@ -246,12 +246,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 执行方法
-		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, IDataExecuteOptions options = null)
+		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null)
 		{
 			return this.Execute<T>(name, inParameters, out _, options);
 		}
 
-		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null)
+		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -263,17 +263,17 @@ namespace Zongsoft.Data
 			return this.OnExecute<T>(name, inParameters, out outParameters, options);
 		}
 
-		protected virtual IEnumerable<T> OnExecute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options)
+		protected virtual IEnumerable<T> OnExecute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options)
 		{
 			return this.DataAccess.Execute<T>(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 		}
 
-		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, IDataExecuteOptions options = null)
+		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null)
 		{
 			return this.ExecuteScalar(name, inParameters, out _, options);
 		}
 
-		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null)
+		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -285,31 +285,31 @@ namespace Zongsoft.Data
 			return this.OnExecuteScalar(name, inParameters, out outParameters, options);
 		}
 
-		protected virtual object OnExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options)
+		protected virtual object OnExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options)
 		{
 			return this.DataAccess.ExecuteScalar(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 		}
 		#endregion
 
 		#region 存在方法
-		public bool Exists(string key, IDataExistsOptions options = null)
+		public bool Exists(string key, DataExistsOptions options = null)
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options);
 		}
 
-		public bool Exists<TKey1>(TKey1 key1, IDataExistsOptions options = null) where TKey1 : IEquatable<TKey1>
+		public bool Exists<TKey1>(TKey1 key1, DataExistsOptions options = null) where TKey1 : IEquatable<TKey1>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options);
 		}
 
-		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataExistsOptions options = null)
+		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options);
 		}
 
-		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataExistsOptions options = null)
+		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -317,7 +317,7 @@ namespace Zongsoft.Data
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options);
 		}
 
-		public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataExistsOptions options = null)
+		public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -326,7 +326,7 @@ namespace Zongsoft.Data
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options);
 		}
 
-		public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataExistsOptions options = null)
+		public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -336,7 +336,7 @@ namespace Zongsoft.Data
 			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options);
 		}
 
-		public bool Exists(ICondition criteria, IDataExistsOptions options = null)
+		public bool Exists(ICondition criteria, DataExistsOptions options = null)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -352,31 +352,31 @@ namespace Zongsoft.Data
 			return this.OnExists(criteria, options);
 		}
 
-		protected virtual bool OnExists(ICondition criteria, IDataExistsOptions options)
+		protected virtual bool OnExists(ICondition criteria, DataExistsOptions options)
 		{
 			return this.DataAccess.Exists(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
 		}
 		#endregion
 
 		#region 聚合方法
-		public int Count(string key, string member = null, IDataAggregateOptions options = null)
+		public int Count(string key, string member = null, DataAggregateOptions options = null)
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options);
 		}
 
-		public int Count<TKey1>(TKey1 key1, string member = null, IDataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>
+		public int Count<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options);
 		}
 
-		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, IDataAggregateOptions options = null)
+		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options);
 		}
 
-		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, IDataAggregateOptions options = null)
+		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -384,7 +384,7 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options);
 		}
 
-		public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, IDataAggregateOptions options = null)
+		public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -393,7 +393,7 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options);
 		}
 
-		public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, IDataAggregateOptions options = null)
+		public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -403,7 +403,7 @@ namespace Zongsoft.Data
 			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options);
 		}
 
-		public int Count(ICondition criteria = null, string member = null, IDataAggregateOptions options = null)
+		public int Count(ICondition criteria = null, string member = null, DataAggregateOptions options = null)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -419,19 +419,19 @@ namespace Zongsoft.Data
 			return this.OnAggregate<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0;
 		}
 
-		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
 		}
 
-		public TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TValue : struct, IEquatable<TValue>
 		{
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
 		}
 
-		public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TValue : struct, IEquatable<TValue>
@@ -439,7 +439,7 @@ namespace Zongsoft.Data
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
 		}
 
-		public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -448,7 +448,7 @@ namespace Zongsoft.Data
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
 		}
 
-		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -458,7 +458,7 @@ namespace Zongsoft.Data
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
 		}
 
-		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataAggregateOptions options = null)
+		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -469,7 +469,7 @@ namespace Zongsoft.Data
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
 		}
 
-		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -485,29 +485,29 @@ namespace Zongsoft.Data
 			return this.OnAggregate<TValue>(new DataAggregate(function, member), criteria, options);
 		}
 
-		protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) where TValue : struct, IEquatable<TValue>
+		protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 		{
 			return this.DataAccess.Aggregate<TValue>(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
 		}
 		#endregion
 
 		#region 递增方法
-		public long Decrement(string member, ICondition criteria, IDataIncrementOptions options)
+		public long Decrement(string member, ICondition criteria, DataIncrementOptions options)
 		{
 			return this.Decrement(member, criteria, 1, options);
 		}
 
-		public long Decrement(string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null)
+		public long Decrement(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null)
 		{
 			return this.Increment(member, criteria, -interval, options);
 		}
 
-		public long Increment(string member, ICondition criteria, IDataIncrementOptions options)
+		public long Increment(string member, ICondition criteria, DataIncrementOptions options)
 		{
 			return this.Increment(member, criteria, 1, options);
 		}
 
-		public long Increment(string member, ICondition criteria, int interval = 1, IDataIncrementOptions options = null)
+		public long Increment(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -523,50 +523,50 @@ namespace Zongsoft.Data
 			return this.OnIncrement(member, criteria, interval, options);
 		}
 
-		protected virtual long OnIncrement(string member, ICondition criteria, int interval, IDataIncrementOptions options)
+		protected virtual long OnIncrement(string member, ICondition criteria, int interval, DataIncrementOptions options)
 		{
 			return this.DataAccess.Increment(this.Name, member, criteria, interval, options, ctx => this.OnIncrementing(ctx), ctx => this.OnIncremented(ctx));
 		}
 		#endregion
 
 		#region 删除方法
-		public int Delete(string key, IDataDeleteOptions options = null)
+		public int Delete(string key, DataDeleteOptions options = null)
 		{
 			return this.Delete(key, null, options);
 		}
 
-		public int Delete(string key, string schema, IDataDeleteOptions options = null)
+		public int Delete(string key, string schema, DataDeleteOptions options = null)
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options);
 		}
 
-		public int Delete<TKey1>(TKey1 key1, IDataDeleteOptions options = null)
+		public int Delete<TKey1>(TKey1 key1, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Delete(key1, null, options);
 		}
 
-		public int Delete<TKey1>(TKey1 key1, string schema, IDataDeleteOptions options = null)
+		public int Delete<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options);
 		}
 
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Delete(key1, key2, null, options);
 		}
 
-		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -574,7 +574,7 @@ namespace Zongsoft.Data
 			return this.Delete(key1, key2, key3, null, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -582,7 +582,7 @@ namespace Zongsoft.Data
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -591,7 +591,7 @@ namespace Zongsoft.Data
 			return this.Delete(key1, key2, key3, key4, null, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -600,7 +600,7 @@ namespace Zongsoft.Data
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -610,7 +610,7 @@ namespace Zongsoft.Data
 			return this.Delete(key1, key2, key3, key4, key5, null, options);
 		}
 
-		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataDeleteOptions options = null)
+		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -620,12 +620,12 @@ namespace Zongsoft.Data
 			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options);
 		}
 
-		public int Delete(ICondition criteria, IDataDeleteOptions options = null)
+		public int Delete(ICondition criteria, DataDeleteOptions options = null)
 		{
 			return this.Delete(criteria, null, options);
 		}
 
-		public int Delete(ICondition criteria, string schema, IDataDeleteOptions options = null)
+		public int Delete(ICondition criteria, string schema, DataDeleteOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureDelete(options);
@@ -644,7 +644,7 @@ namespace Zongsoft.Data
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
 		}
 
-		protected virtual int OnDelete(ICondition criteria, ISchema schema, IDataDeleteOptions options)
+		protected virtual int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
 		{
 			if(criteria == null)
 				throw new NotSupportedException("The criteria cann't is null on delete operation.");
@@ -654,12 +654,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 插入方法
-		public int Insert(object data, IDataInsertOptions options = null)
+		public int Insert(object data, DataInsertOptions options = null)
 		{
 			return this.Insert(data, string.Empty, options);
 		}
 
-		public int Insert(object data, string schema, IDataInsertOptions options = null)
+		public int Insert(object data, string schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert(options);
@@ -686,7 +686,7 @@ namespace Zongsoft.Data
 			return this.OnInsert(dictionary, schematic, options);
 		}
 
-		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, IDataInsertOptions options)
+		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
 		{
 			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
@@ -695,12 +695,12 @@ namespace Zongsoft.Data
 			return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 		}
 
-		public int InsertMany(IEnumerable items, IDataInsertOptions options = null)
+		public int InsertMany(IEnumerable items, DataInsertOptions options = null)
 		{
 			return this.InsertMany(items, string.Empty, options);
 		}
 
-		public int InsertMany(IEnumerable items, string schema, IDataInsertOptions options = null)
+		public int InsertMany(IEnumerable items, string schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureInsert(options);
@@ -730,7 +730,7 @@ namespace Zongsoft.Data
 			return this.OnInsertMany(dictionares, schematic, options);
 		}
 
-		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataInsertOptions options)
+		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options)
 		{
 			if(items == null)
 				return 0;
@@ -741,12 +741,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 增改方法
-		public int Upsert(object data, IDataUpsertOptions options = null)
+		public int Upsert(object data, DataUpsertOptions options = null)
 		{
 			return this.Upsert(data, string.Empty, options);
 		}
 
-		public int Upsert(object data, string schema, IDataUpsertOptions options = null)
+		public int Upsert(object data, string schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
@@ -773,7 +773,7 @@ namespace Zongsoft.Data
 			return this.OnUpsert(dictionary, schematic, options);
 		}
 
-		protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, IDataUpsertOptions options)
+		protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, DataUpsertOptions options)
 		{
 			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
@@ -782,12 +782,12 @@ namespace Zongsoft.Data
 			return this.DataAccess.Upsert(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
 		}
 
-		public int UpsertMany(IEnumerable items, IDataUpsertOptions options = null)
+		public int UpsertMany(IEnumerable items, DataUpsertOptions options = null)
 		{
 			return this.UpsertMany(items, string.Empty, options);
 		}
 
-		public int UpsertMany(IEnumerable items, string schema, IDataUpsertOptions options = null)
+		public int UpsertMany(IEnumerable items, string schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
@@ -817,7 +817,7 @@ namespace Zongsoft.Data
 			return this.OnUpsertMany(dictionares, schematic, options);
 		}
 
-		protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataUpsertOptions options)
+		protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options)
 		{
 			if(items == null)
 				return 0;
@@ -828,43 +828,43 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		public int Update(string key, object data, IDataUpdateOptions options = null)
+		public int Update(string key, object data, DataUpdateOptions options = null)
 		{
 			return this.Update(key, data, null, options);
 		}
 
-		public int Update(string key, object data, string schema, IDataUpdateOptions options = null)
+		public int Update(string key, object data, string schema, DataUpdateOptions options = null)
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options);
 		}
 
-		public int Update<TKey1>(TKey1 key1, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Update(key1, null, data, options);
 		}
 
-		public int Update<TKey1>(TKey1 key1, string schema, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, out _), schema, options);
 		}
 
-		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Update(key1, key2, null, data, options);
 		}
 
-		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -872,7 +872,7 @@ namespace Zongsoft.Data
 			return this.Update(key1, key2, key3, null, data, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -880,7 +880,7 @@ namespace Zongsoft.Data
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -889,7 +889,7 @@ namespace Zongsoft.Data
 			return this.Update(key1, key2, key3, key4, null, data, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -898,7 +898,7 @@ namespace Zongsoft.Data
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -908,7 +908,7 @@ namespace Zongsoft.Data
 			return this.Update(key1, key2, key3, key4, key5, null, data, options);
 		}
 
-		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, IDataUpdateOptions options = null)
+		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -918,22 +918,22 @@ namespace Zongsoft.Data
 			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options);
 		}
 
-		public int Update(object data, IDataUpdateOptions options = null)
+		public int Update(object data, DataUpdateOptions options = null)
 		{
 			return this.Update(data, null, string.Empty, options);
 		}
 
-		public int Update(object data, string schema, IDataUpdateOptions options = null)
+		public int Update(object data, string schema, DataUpdateOptions options = null)
 		{
 			return this.Update(data, (ICondition)null, schema, options);
 		}
 
-		public int Update(object data, ICondition criteria, IDataUpdateOptions options = null)
+		public int Update(object data, ICondition criteria, DataUpdateOptions options = null)
 		{
 			return this.Update(data, criteria, string.Empty, options);
 		}
 
-		public int Update(object data, ICondition criteria, string schema, IDataUpdateOptions options = null)
+		public int Update(object data, ICondition criteria, string schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpdate(options);
@@ -989,7 +989,7 @@ namespace Zongsoft.Data
 			return this.OnUpdate(dictionary, criteria, schematic, options);
 		}
 
-		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
+		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options)
 		{
 			if(data == null || data.Data == null || !data.HasChanges())
 				return 0;
@@ -997,12 +997,12 @@ namespace Zongsoft.Data
 			return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
 		}
 
-		public int UpdateMany(IEnumerable items, IDataUpdateOptions options = null)
+		public int UpdateMany(IEnumerable items, DataUpdateOptions options = null)
 		{
 			return this.UpdateMany(items, string.Empty, options);
 		}
 
-		public int UpdateMany(IEnumerable items, string schema, IDataUpdateOptions options = null)
+		public int UpdateMany(IEnumerable items, string schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpdate(options);
@@ -1032,7 +1032,7 @@ namespace Zongsoft.Data
 			return this.OnUpdateMany(dictionares, schematic, options);
 		}
 
-		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, IDataUpdateOptions options)
+		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpdateOptions options)
 		{
 			if(items == null)
 				return 0;
@@ -1049,7 +1049,7 @@ namespace Zongsoft.Data
 			return this.Get(key, string.Empty, Paging.Disabled, null, sortings);
 		}
 
-		public object Get(string key, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get(string key, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Get(key, string.Empty, Paging.Disabled, options, sortings);
 		}
@@ -1059,7 +1059,7 @@ namespace Zongsoft.Data
 			return this.Get(key, string.Empty, paging, null, sortings);
 		}
 
-		public object Get(string key, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get(string key, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Get(key, string.Empty, paging, options, sortings);
 		}
@@ -1069,7 +1069,7 @@ namespace Zongsoft.Data
 			return this.Get(key, schema, Paging.Disabled, null, sortings);
 		}
 
-		public object Get(string key, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get(string key, string schema, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Get(key, schema, Paging.Disabled, options, sortings);
 		}
@@ -1079,7 +1079,7 @@ namespace Zongsoft.Data
 			return this.Get(key, schema, paging, null, sortings);
 		}
 
-		public object Get(string key, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get(string key, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1102,7 +1102,7 @@ namespace Zongsoft.Data
 			return this.Select(criteria, schema, paging, options, sortings);
 		}
 
-		protected virtual TModel OnGet(ICondition criteria, ISchema schema, IDataSelectOptions options)
+		protected virtual TModel OnGet(ICondition criteria, ISchema schema, DataSelectOptions options)
 		{
 			return this.DataAccess.Select<TModel>(this.Name, criteria, schema, null, options, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx)).FirstOrDefault();
 		}
@@ -1115,7 +1115,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1>(key1, null, null, null, sortings);
 		}
 
-		public object Get<TKey1>(TKey1 key1, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1>(TKey1 key1, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, null, options, sortings);
@@ -1127,7 +1127,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1>(key1, null, paging, null, sortings);
 		}
 
-		public object Get<TKey1>(TKey1 key1, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1>(TKey1 key1, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, null, paging, options, sortings);
@@ -1139,7 +1139,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1>(key1, schema, null, null, sortings);
 		}
 
-		public object Get<TKey1>(TKey1 key1, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1>(TKey1 key1, string schema, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 		{
 			return this.Get<TKey1>(key1, schema, null, options, sortings);
@@ -1151,7 +1151,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1>(key1, schema, paging, null, sortings);
 		}
 
-		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1>(TKey1 key1, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 		{
 			//构建数据操作的选项对象
@@ -1184,7 +1184,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2>(key1, key2, null, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
@@ -1198,7 +1198,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2>(key1, key2, null, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
@@ -1212,7 +1212,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2>(key1, key2, schema, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
@@ -1226,7 +1226,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2>(key1, key2, schema, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 		{
@@ -1261,7 +1261,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1277,7 +1277,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, null, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1293,7 +1293,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1309,7 +1309,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1346,7 +1346,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1364,7 +1364,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, null, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1382,7 +1382,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1400,7 +1400,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1439,7 +1439,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1459,7 +1459,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, null, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1479,7 +1479,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, null, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1499,7 +1499,7 @@ namespace Zongsoft.Data
 			return this.Get<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, null, sortings);
 		}
 
-		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public object Get<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
@@ -1529,7 +1529,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 常规查询
-		public IEnumerable<TModel> Select(IDataSelectOptions options = null, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(DataSelectOptions options = null, params Sorting[] sortings)
 		{
 			return this.Select(null, string.Empty, null, options, sortings);
 		}
@@ -1539,7 +1539,7 @@ namespace Zongsoft.Data
 			return this.Select(criteria, string.Empty, null, null, sortings);
 		}
 
-		public IEnumerable<TModel> Select(ICondition criteria, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, null, options, sortings);
 		}
@@ -1549,7 +1549,7 @@ namespace Zongsoft.Data
 			return this.Select(criteria, string.Empty, paging, null, sortings);
 		}
 
-		public IEnumerable<TModel> Select(ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select(criteria, string.Empty, paging, options, sortings);
 		}
@@ -1559,7 +1559,7 @@ namespace Zongsoft.Data
 			return this.Select(criteria, schema, null, null, sortings);
 		}
 
-		public IEnumerable<TModel> Select(ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select(criteria, schema, null, options, sortings);
 		}
@@ -1569,7 +1569,7 @@ namespace Zongsoft.Data
 			return this.Select(criteria, schema, paging, null, sortings);
 		}
 
-		public IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1585,7 +1585,7 @@ namespace Zongsoft.Data
 			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
 		}
 
-		protected virtual IEnumerable<TModel> OnSelect(ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options)
+		protected virtual IEnumerable<TModel> OnSelect(ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, DataSelectOptions options)
 		{
 			//如果没有指定排序设置则应用默认排序规则
 			if(sortings == null || sortings.Length == 0)
@@ -1601,7 +1601,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, null, string.Empty, null, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select<T>(grouping, null, string.Empty, null, options, sortings);
 		}
@@ -1611,7 +1611,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, null, string.Empty, paging, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select<T>(grouping, null, string.Empty, paging, options, sortings);
 		}
@@ -1621,7 +1621,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, null, schema, null, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, string schema, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select<T>(grouping, null, schema, null, options, sortings);
 		}
@@ -1631,7 +1631,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, null, schema, paging, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select<T>(grouping, null, schema, paging, options, sortings);
 		}
@@ -1646,7 +1646,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, criteria, schema, null, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings)
 		{
 			return this.Select<T>(grouping, criteria, schema, null, options, sortings);
 		}
@@ -1656,7 +1656,7 @@ namespace Zongsoft.Data
 			return this.Select<T>(grouping, criteria, schema, paging, null, sortings);
 		}
 
-		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
+		public IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
 		{
 			//构建数据操作的选项对象
 			if(options == null)
@@ -1672,57 +1672,22 @@ namespace Zongsoft.Data
 			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
 		}
 
-		protected virtual IEnumerable<T> OnSelect<T>(Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options)
+		protected virtual IEnumerable<T> OnSelect<T>(Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, DataSelectOptions options)
 		{
 			return this.DataAccess.Select<T>(this.Name, grouping, criteria, schema, paging, options, sortings, ctx => this.OnSelecting(ctx), ctx => this.OnSelected(ctx));
 		}
 		#endregion
 
 		#region 显式实现
-		IEnumerable IDataService.Select(IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select(options, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, params Sorting[] sortings)
-		{
-			return this.Select(criteria, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select(criteria, options, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, string schema, params Sorting[] sortings)
-		{
-			return this.Select(criteria, schema, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select(criteria, schema, options, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select(criteria, schema, paging, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select(criteria, schema, paging, options, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select(criteria, paging, sortings);
-		}
-
-		IEnumerable IDataService.Select(ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select(criteria, paging, options, sortings);
-		}
+		IEnumerable IDataService.Select(DataSelectOptions options, params Sorting[] sortings) => this.Select(options, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, params Sorting[] sortings) => this.Select(criteria, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, DataSelectOptions options, params Sorting[] sortings) => this.Select(criteria, options, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, string schema, params Sorting[] sortings) => this.Select(criteria, schema, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings) => this.Select(criteria, schema, options, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings) => this.Select(criteria, schema, paging, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) => this.Select(criteria, schema, paging, options, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, Paging paging, params Sorting[] sortings) => this.Select(criteria, paging, sortings);
+		IEnumerable IDataService.Select(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings) => this.Select(criteria, paging, options, sortings);
 		#endregion
 
 		#endregion

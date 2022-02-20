@@ -76,7 +76,7 @@ namespace Zongsoft.Data
 			return this.DataService.Count(
 				criteria,
 				string.Empty,
-				options as IDataAggregateOptions);
+				options as DataAggregateOptions);
 		}
 		#endregion
 
@@ -88,7 +88,7 @@ namespace Zongsoft.Data
 
 		protected virtual bool OnExists(ICondition criteria, IDataOptions options = null)
 		{
-			return this.DataService.Exists(criteria, options as IDataExistsOptions);
+			return this.DataService.Exists(criteria, options as DataExistsOptions);
 		}
 		#endregion
 
@@ -139,7 +139,7 @@ namespace Zongsoft.Data
 				criteria,
 				schema,
 				paging,
-				options as IDataSelectOptions,
+				options as DataSelectOptions,
 				sortings);
 		}
 		#endregion

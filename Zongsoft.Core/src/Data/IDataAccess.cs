@@ -102,212 +102,212 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 执行方法
-		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, IDataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
-		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
+		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
+		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
 
-		object ExecuteScalar(string name, IDictionary<string, object> inParameters, IDataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
-		object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, IDataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
+		object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
+		object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
 		#endregion
 
 		#region 存在方法
-		bool Exists<T>(ICondition criteria, IDataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
-		bool Exists(string name, ICondition criteria, IDataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
+		bool Exists<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
+		bool Exists(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
 		#endregion
 
 		#region 聚合方法
-		int Count<T>(ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
-		int Count(string name, ICondition criteria = null, string member = null, IDataAggregateOptions options = null);
+		int Count<T>(ICondition criteria = null, string member = null, DataAggregateOptions options = null);
+		int Count(string name, ICondition criteria = null, string member = null, DataAggregateOptions options = null);
 
-		TValue? Aggregate<T, TValue>(DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
-		TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<T, TValue>(DataAggregateFunction method, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
 
-		TValue? Aggregate<TValue>(string name, DataAggregateFunction method, string member, ICondition criteria = null, IDataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
-		TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, IDataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<TValue>(string name, DataAggregateFunction method, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+		TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
 		#endregion
 
 		#region 递增方法
 		long Increment<T>(string member, ICondition criteria);
-		long Increment<T>(string member, ICondition criteria, IDataIncrementOptions options);
+		long Increment<T>(string member, ICondition criteria, DataIncrementOptions options);
 		long Increment<T>(string member, ICondition criteria, int interval);
-		long Increment<T>(string member, ICondition criteria, int interval, IDataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
+		long Increment<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
 
 		long Increment(string name, string member, ICondition criteria);
-		long Increment(string name, string member, ICondition criteria, IDataIncrementOptions options);
+		long Increment(string name, string member, ICondition criteria, DataIncrementOptions options);
 		long Increment(string name, string member, ICondition criteria, int interval);
-		long Increment(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
+		long Increment(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
 
 		long Decrement<T>(string member, ICondition criteria);
-		long Decrement<T>(string member, ICondition criteria, IDataIncrementOptions options);
+		long Decrement<T>(string member, ICondition criteria, DataIncrementOptions options);
 		long Decrement<T>(string member, ICondition criteria, int interval);
-		long Decrement<T>(string member, ICondition criteria, int interval, IDataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
+		long Decrement<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
 
 		long Decrement(string name, string member, ICondition criteria);
-		long Decrement(string name, string member, ICondition criteria, IDataIncrementOptions options);
+		long Decrement(string name, string member, ICondition criteria, DataIncrementOptions options);
 		long Decrement(string name, string member, ICondition criteria, int interval);
-		long Decrement(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
+		long Decrement(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
 		#endregion
 
 		#region 删除方法
 		int Delete<T>(ICondition criteria, string schema = null);
-		int Delete<T>(ICondition criteria, IDataDeleteOptions options);
-		int Delete<T>(ICondition criteria, string schema, IDataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete<T>(ICondition criteria, DataDeleteOptions options);
+		int Delete<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 
 		int Delete(string name, ICondition criteria, string schema = null);
-		int Delete(string name, ICondition criteria, IDataDeleteOptions options);
-		int Delete(string name, ICondition criteria, string schema, IDataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
-		int Delete(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete(string name, ICondition criteria, DataDeleteOptions options);
+		int Delete(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
+		int Delete(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 		#endregion
 
 		#region 插入方法
 		int Insert<T>(T data);
-		int Insert<T>(T data, IDataInsertOptions options);
+		int Insert<T>(T data, DataInsertOptions options);
 		int Insert<T>(T data, string schema);
-		int Insert<T>(T data, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int Insert<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
 		int Insert<T>(object data);
-		int Insert<T>(object data, IDataInsertOptions options);
+		int Insert<T>(object data, DataInsertOptions options);
 		int Insert<T>(object data, string schema);
-		int Insert<T>(object data, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int Insert<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
 		int Insert(string name, object data);
-		int Insert(string name, object data, IDataInsertOptions options);
+		int Insert(string name, object data, DataInsertOptions options);
 		int Insert(string name, object data, string schema);
-		int Insert(string name, object data, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
-		int Insert(string name, object data, ISchema schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int Insert(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int Insert(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
 		int InsertMany<T>(IEnumerable<T> items);
-		int InsertMany<T>(IEnumerable<T> items, IDataInsertOptions options);
+		int InsertMany<T>(IEnumerable<T> items, DataInsertOptions options);
 		int InsertMany<T>(IEnumerable<T> items, string schema);
-		int InsertMany<T>(IEnumerable<T> items, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int InsertMany<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
 		int InsertMany<T>(IEnumerable items);
-		int InsertMany<T>(IEnumerable items, IDataInsertOptions options);
+		int InsertMany<T>(IEnumerable items, DataInsertOptions options);
 		int InsertMany<T>(IEnumerable items, string schema);
-		int InsertMany<T>(IEnumerable items, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int InsertMany<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
 		int InsertMany(string name, IEnumerable items);
-		int InsertMany(string name, IEnumerable items, IDataInsertOptions options);
+		int InsertMany(string name, IEnumerable items, DataInsertOptions options);
 		int InsertMany(string name, IEnumerable items, string schema);
-		int InsertMany(string name, IEnumerable items, string schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
-		int InsertMany(string name, IEnumerable items, ISchema schema, IDataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int InsertMany(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
+		int InsertMany(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 		#endregion
 
 		#region 增改方法
 		int Upsert<T>(T data);
-		int Upsert<T>(T data, IDataUpsertOptions options);
+		int Upsert<T>(T data, DataUpsertOptions options);
 		int Upsert<T>(T data, string schema);
-		int Upsert<T>(T data, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int Upsert<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
 		int Upsert<T>(object data);
-		int Upsert<T>(object data, IDataUpsertOptions options);
+		int Upsert<T>(object data, DataUpsertOptions options);
 		int Upsert<T>(object data, string schema);
-		int Upsert<T>(object data, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int Upsert<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
 		int Upsert(string name, object data);
-		int Upsert(string name, object data, IDataUpsertOptions options);
+		int Upsert(string name, object data, DataUpsertOptions options);
 		int Upsert(string name, object data, string schema);
-		int Upsert(string name, object data, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
-		int Upsert(string name, object data, ISchema schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int Upsert(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int Upsert(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
 		int UpsertMany<T>(IEnumerable<T> items);
-		int UpsertMany<T>(IEnumerable<T> items, IDataUpsertOptions options);
+		int UpsertMany<T>(IEnumerable<T> items, DataUpsertOptions options);
 		int UpsertMany<T>(IEnumerable<T> items, string schema);
-		int UpsertMany<T>(IEnumerable<T> items, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int UpsertMany<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
 		int UpsertMany<T>(IEnumerable items);
-		int UpsertMany<T>(IEnumerable items, IDataUpsertOptions options);
+		int UpsertMany<T>(IEnumerable items, DataUpsertOptions options);
 		int UpsertMany<T>(IEnumerable items, string schema);
-		int UpsertMany<T>(IEnumerable items, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int UpsertMany<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
 		int UpsertMany(string name, IEnumerable items);
-		int UpsertMany(string name, IEnumerable items, IDataUpsertOptions options);
+		int UpsertMany(string name, IEnumerable items, DataUpsertOptions options);
 		int UpsertMany(string name, IEnumerable items, string schema);
-		int UpsertMany(string name, IEnumerable items, string schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
-		int UpsertMany(string name, IEnumerable items, ISchema schema, IDataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int UpsertMany(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
+		int UpsertMany(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 		#endregion
 
 		#region 更新方法
 		int Update<T>(T data);
-		int Update<T>(T data, IDataUpdateOptions options);
+		int Update<T>(T data, DataUpdateOptions options);
 		int Update<T>(T data, string schema);
-		int Update<T>(T data, string schema, IDataUpdateOptions options);
+		int Update<T>(T data, string schema, DataUpdateOptions options);
 		int Update<T>(T data, ICondition criteria);
-		int Update<T>(T data, ICondition criteria, IDataUpdateOptions options);
+		int Update<T>(T data, ICondition criteria, DataUpdateOptions options);
 		int Update<T>(T data, ICondition criteria, string schema);
-		int Update<T>(T data, ICondition criteria, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int Update<T>(object data);
-		int Update<T>(object data, IDataUpdateOptions options);
+		int Update<T>(object data, DataUpdateOptions options);
 		int Update<T>(object data, string schema);
-		int Update<T>(object data, string schema, IDataUpdateOptions options);
+		int Update<T>(object data, string schema, DataUpdateOptions options);
 		int Update<T>(object data, ICondition criteria);
-		int Update<T>(object data, ICondition criteria, IDataUpdateOptions options);
+		int Update<T>(object data, ICondition criteria, DataUpdateOptions options);
 		int Update<T>(object data, ICondition criteria, string schema);
-		int Update<T>(object data, ICondition criteria, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int Update(string name, object data);
-		int Update(string name, object data, IDataUpdateOptions options);
+		int Update(string name, object data, DataUpdateOptions options);
 		int Update(string name, object data, string schema);
-		int Update(string name, object data, string schema, IDataUpdateOptions options);
+		int Update(string name, object data, string schema, DataUpdateOptions options);
 		int Update(string name, object data, ICondition criteria);
-		int Update(string name, object data, ICondition criteria, IDataUpdateOptions options);
+		int Update(string name, object data, ICondition criteria, DataUpdateOptions options);
 		int Update(string name, object data, ICondition criteria, string schema);
-		int Update(string name, object data, ICondition criteria, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-		int Update(string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int Update(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int UpdateMany<T>(IEnumerable<T> items);
-		int UpdateMany<T>(IEnumerable<T> items, IDataUpdateOptions options);
+		int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options);
 		int UpdateMany<T>(IEnumerable<T> items, string schema);
-		int UpdateMany<T>(IEnumerable<T> items, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int UpdateMany<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int UpdateMany<T>(IEnumerable items);
-		int UpdateMany<T>(IEnumerable items, IDataUpdateOptions options);
+		int UpdateMany<T>(IEnumerable items, DataUpdateOptions options);
 		int UpdateMany<T>(IEnumerable items, string schema);
-		int UpdateMany<T>(IEnumerable items, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int UpdateMany<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
 		int UpdateMany(string name, IEnumerable items);
-		int UpdateMany(string name, IEnumerable items, IDataUpdateOptions options);
+		int UpdateMany(string name, IEnumerable items, DataUpdateOptions options);
 		int UpdateMany(string name, IEnumerable items, string schema);
-		int UpdateMany(string name, IEnumerable items, string schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-		int UpdateMany(string name, IEnumerable items, ISchema schema, IDataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
+		int UpdateMany(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 		#endregion
 
 		#region 查询方法
-		IEnumerable<T> Select<T>(IDataSelectOptions options = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(DataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(ICondition criteria, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition criteria, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(ICondition criteria, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(ICondition criteria, string schema, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, IDataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 
-		IEnumerable<T> Select<T>(string name, IDataSelectOptions options = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, DataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, ICondition criteria, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDataSelectOptions options, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, IDataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
-		IEnumerable<T> Select<T>(string name, ICondition criteria, ISchema schema, Paging paging, IDataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 
 		IEnumerable<T> Select<T>(string name, Grouping grouping, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, IDataSelectOptions options, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, Paging paging, IDataSelectOptions options = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, DataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, Paging paging, IDataSelectOptions options = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, DataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, Paging paging, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, IDataSelectOptions options, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDataSelectOptions options = null, params Sorting[] sortings);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, IDataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
-		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, IDataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
+		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 		#endregion
 	}
 }
