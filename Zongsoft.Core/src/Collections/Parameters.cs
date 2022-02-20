@@ -93,6 +93,18 @@ namespace Zongsoft.Collections
 			_dictionary[name] = value;
 		}
 
+		public void SetValue(IEnumerable<KeyValuePair<string, object>> parameters)
+		{
+			if(parameters == null)
+				return;
+
+			if(_dictionary == null)
+				System.Threading.Interlocked.CompareExchange(ref _dictionary, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+			foreach(var parameter in parameters)
+				_dictionary[parameter.Key] = parameter.Value;
+		}
+
 		public bool Remove(string name) => name != null && _dictionary != null && _dictionary.Remove(name);
 		public bool Remove(string name, out object value)
 		{
