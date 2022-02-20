@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
@@ -51,76 +50,29 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问的名称。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取数据访问的名称。</summary>
+		public string Name { get; }
 
-		/// <summary>
-		/// 获取数据访问的方法。
-		/// </summary>
-		public DataAccessMethod Method
-		{
-			get;
-		}
+		/// <summary>获取数据访问的方法。</summary>
+		public DataAccessMethod Method { get; }
 
-		/// <summary>
-		/// 获取当前上下文关联的数据访问器。
-		/// </summary>
-		public IDataAccess DataAccess
-		{
-			get;
-		}
+		/// <summary>获取当前上下文关联的数据访问器。</summary>
+		public IDataAccess DataAccess { get; }
 
-		/// <summary>
-		/// 获取当前上下文关联的用户主体。
-		/// </summary>
-		public System.Security.Claims.ClaimsPrincipal Principal
-		{
-			get => Services.ApplicationContext.Current?.Principal;
-		}
+		/// <summary>获取当前上下文关联的用户主体。</summary>
+		public System.Security.Claims.ClaimsPrincipal Principal { get => Services.ApplicationContext.Current?.Principal; }
 
-		/// <summary>
-		/// 获取当前数据访问操作的选项对象。
-		/// </summary>
+		/// <summary>获取当前数据访问操作的选项对象。</summary>
 		public TOptions Options { get; }
-
-		/// <summary>
-		/// 获取一个值，指示当前上下文是否含有附加的状态数据。
-		/// </summary>
-		public bool HasStates
-		{
-			get => this.Options.HasStates;
-		}
-
-		/// <summary>
-		/// 获取当前上下文的附加状态数据集。
-		/// </summary>
-		public IDictionary<string, object> States
-		{
-			get => this.Options.States;
-		}
 		#endregion
 
 		#region 处置方法
-		public void Dispose()
-		{
-			this.Dispose(true);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-		}
+		public void Dispose() => this.Dispose(true);
+		protected virtual void Dispose(bool disposing) { }
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return $"[{this.Method.ToString()}] {this.Name}";
-		}
+		public override string ToString() => $"[{this.Method}] {this.Name}";
 		#endregion
 	}
 }

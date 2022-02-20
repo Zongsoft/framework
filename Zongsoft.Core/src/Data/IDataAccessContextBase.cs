@@ -45,12 +45,6 @@ namespace Zongsoft.Data
 
 		/// <summary>获取当前上下文关联的数据访问器。</summary>
 		IDataAccess DataAccess { get; }
-
-		/// <summary>获取一个值，指示当前上下文是否含有附加的状态数据。</summary>
-		bool HasStates { get; }
-
-		/// <summary>获取当前上下文的附加状态数据集。</summary>
-		IDictionary<string, object> States { get; }
 	}
 
 	/// <summary>
