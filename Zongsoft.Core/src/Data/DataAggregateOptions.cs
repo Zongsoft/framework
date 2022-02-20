@@ -52,8 +52,10 @@ namespace Zongsoft.Data
 	public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions
 	{
 		#region 构造函数
-		public DataAggregateOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
-		public DataAggregateOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		public DataAggregateOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataAggregateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataAggregateOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
+		public DataAggregateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
@@ -65,17 +67,45 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个禁用数据验证器的聚合选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的聚合选项构建器。</summary>
 		/// <param name="filter">指定的过滤表达式。</param>
-		/// <returns>返回创建的<see cref="DataAggregateOptions"/>聚合选项对象。</returns>
-		public static DataAggregateOptions SuppressValidator(string filter = null)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(string filter = null) => new(filter)
 		{
-			return new DataAggregateOptions(filter)
-			{
-				ValidatorSuppressed = true
-			};
+			ValidatorSuppressed = true
+		};
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataOptionsBuilder<DataAggregateOptions>
+		{
+			#region 成员字段
+			private string _filter;
+			#endregion
+
+			#region 构造函数
+			public Builder(string filter = null) => _filter = filter;
+			#endregion
+
+			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
+			public bool ValidatorSuppressed { get; set; }
+			#endregion
+
+			#region 设置方法
+			public Builder Filter(string filter) { _filter = filter; return this; }
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataAggregateOptions Build() => new DataAggregateOptions(_filter, this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataAggregateOptions(Builder builder) => builder.Build();
+			#endregion
 		}
 		#endregion
 	}

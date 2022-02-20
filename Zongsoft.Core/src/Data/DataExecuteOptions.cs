@@ -44,7 +44,29 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataExecuteOptions() { }
-		public DataExecuteOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataExecuteOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataExecuteOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataOptionsBuilder<DataExecuteOptions>
+		{
+			#region 构造函数
+			public Builder() { }
+			#endregion
+
+			#region 设置方法
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataExecuteOptions Build() => new DataExecuteOptions(this.Parameters);
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataExecuteOptions(Builder builder) => builder.Build();
+			#endregion
+		}
 		#endregion
 	}
 }

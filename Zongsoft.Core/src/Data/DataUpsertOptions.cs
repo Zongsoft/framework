@@ -44,17 +44,36 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataUpsertOptions() { }
-		public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataUpsertOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个禁用数据验证器的增改选项。
-		/// </summary>
-		/// <returns>返回创建的<see cref="DataUpsertOptions"/>增改选项对象。</returns>
-		public static DataUpsertOptions SuppressValidator()
+		/// <summary>创建一个禁用数据验证器的增改选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator() => new() { ValidatorSuppressed = true };
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataMutateOptionsBuilder<DataUpsertOptions>
 		{
-			return new DataUpsertOptions() { ValidatorSuppressed = true };
+			#region 构造函数
+			public Builder() { }
+			#endregion
+
+			#region 设置方法
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataUpsertOptions Build() => new DataUpsertOptions(this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataUpsertOptions(Builder builder) => builder.Build();
+			#endregion
 		}
 		#endregion
 	}

@@ -63,15 +63,21 @@ namespace Zongsoft.Data
 	public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	{
 		#region 构造函数
-		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
-		public DataUpdateOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		public DataUpdateOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataUpdateOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
+		public DataUpdateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 
-		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> states = null) : base(states)
+		public DataUpdateOptions(UpdateBehaviors behaviors, in Collections.Parameters parameters) : base(parameters) => this.Behaviors = behaviors;
+		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Behaviors = behaviors;
+
+		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, in Collections.Parameters parameters) : base(parameters)
 		{
+			this.Filter = filter;
 			this.Behaviors = behaviors;
 		}
 
-		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states)
+		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters)
 		{
 			this.Filter = filter;
 			this.Behaviors = behaviors;
@@ -87,31 +93,52 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个禁用数据验证器的更新选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的更新选项构建器。</summary>
 		/// <param name="filter">更新过滤表达式。</param>
-		/// <returns>返回创建的<see cref="DataUpdateOptions"/>更新选项对象。</returns>
-		public static DataUpdateOptions SuppressValidator(string filter = null)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(string filter = null) => new(filter)
 		{
-			return new DataUpdateOptions(filter)
-			{
-				ValidatorSuppressed = true
-			};
-		}
+			ValidatorSuppressed = true
+		};
 
-		/// <summary>
-		/// 创建一个禁用数据验证器的更新选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的更新选项构建器。</summary>
 		/// <param name="filter">更新过滤表达式。</param>
 		/// <param name="behaviors">指定的更新操作行为。</param>
-		/// <returns>返回创建的<see cref="DataUpdateOptions"/>更新选项对象。</returns>
-		public static DataUpdateOptions SuppressValidator(UpdateBehaviors behaviors, string filter = null)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(UpdateBehaviors behaviors, string filter = null) => new(behaviors, filter)
 		{
-			return new DataUpdateOptions(behaviors, filter)
-			{
-				ValidatorSuppressed = true
-			};
+			ValidatorSuppressed = true
+		};
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataMutateOptionsBuilder<DataUpdateOptions>
+		{
+			#region 成员字段
+			private string _filter;
+			private UpdateBehaviors _behaviors;
+			#endregion
+
+			#region 构造函数
+			public Builder(string filter = null) => _filter = filter;
+			public Builder(UpdateBehaviors behaviors, string filter = null) { _behaviors = behaviors; _filter = filter; }
+			#endregion
+
+			#region 设置方法
+			public Builder Filter(string filter) { _filter = filter; return this; }
+			public Builder Behaviors(UpdateBehaviors behaviors) { _behaviors = behaviors; return this; }
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataUpdateOptions Build() => new DataUpdateOptions(_behaviors, _filter, this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataUpdateOptions(Builder builder) => builder.Build();
+			#endregion
 		}
 		#endregion
 	}

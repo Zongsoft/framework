@@ -52,8 +52,10 @@ namespace Zongsoft.Data
 	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions
 	{
 		#region 构造函数
-		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
-		public DataExistsOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		public DataExistsOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataExistsOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
+		public DataExistsOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
@@ -65,17 +67,45 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个禁用数据验证器的存在选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的存在选项构建器。</summary>
 		/// <param name="filter">指定的过滤表达式。</param>
-		/// <returns>返回创建的<see cref="DataExistsOptions"/>存在选项对象。</returns>
-		public static DataExistsOptions SuppressValidator(string filter = null)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(string filter = null) => new(filter)
 		{
-			return new DataExistsOptions(filter)
-			{
-				ValidatorSuppressed = true
-			};
+			ValidatorSuppressed = true
+		};
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataOptionsBuilder<DataExistsOptions>
+		{
+			#region 成员字段
+			private string _filter;
+			#endregion
+
+			#region 构造函数
+			public Builder(string filter = null) => _filter = filter;
+			#endregion
+
+			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
+			public bool ValidatorSuppressed { get; set; }
+			#endregion
+
+			#region 设置方法
+			public Builder Filter(string filter) { _filter = filter; return this; }
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataExistsOptions Build() => new DataExistsOptions(_filter, this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataExistsOptions(Builder builder) => builder.Build();
+			#endregion
 		}
 		#endregion
 	}

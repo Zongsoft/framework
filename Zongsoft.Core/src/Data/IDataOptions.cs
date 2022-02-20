@@ -28,14 +28,19 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
 	public interface IDataOptions
 	{
-		bool HasStates { get; }
-		IDictionary<string, object> States { get; }
-		bool HasState(string name);
+		/// <summary>获取操作选项的自定义参数集。</summary>
+		Collections.Parameters Parameters { get; }
+	}
+
+	public interface IDataOptionsBuilder<out TOptions> where TOptions : IDataOptions
+	{
+		/// <summary>构建数据操作选项。</summary>
+		/// <returns>返回构建成功的数据操作选项。</returns>
+		TOptions Build();
 	}
 }

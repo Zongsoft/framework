@@ -34,39 +34,28 @@ namespace Zongsoft.Data
 {
 	public abstract class DataOptionsBase : IDataOptions
 	{
-		#region 成员字段
-		private readonly IDictionary<string, object> _states;
-		#endregion
-
 		#region 构造函数
-		protected DataOptionsBase() { _states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase); }
-		protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> states)
-		{
-			_states = states == null ?
-				new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) :
-				new Dictionary<string, object>(states, StringComparer.OrdinalIgnoreCase);
-		}
+		protected DataOptionsBase() { }
+		protected DataOptionsBase(in Collections.Parameters parameters) => this.Parameters = parameters;
+		protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameters = new Collections.Parameters(parameters);
 		#endregion
 
 		#region 公共属性
-		public IDictionary<string, object> States { get => _states; }
-		public bool HasStates { get => _states != null && _states.Count > 0; }
+		public Collections.Parameters Parameters { get; }
 		#endregion
+	}
 
-		#region 公共方法
-		public bool HasState(string name)
-		{
-			var states = _states;
-			return states != null && states.ContainsKey(name);
-		}
-		#endregion
+	public abstract class DataOptionsBuilder<TOptions> : IDataOptionsBuilder<TOptions> where TOptions : IDataOptions
+	{
+		public Collections.Parameters Parameters { get; }
+
+		public abstract TOptions Build();
+		public static implicit operator TOptions(DataOptionsBuilder<TOptions> builder) => builder.Build();
 	}
 
 	public interface IDataMutateOptions : IDataOptions
 	{
-		/// <summary>
-		/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
-		/// </summary>
+		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 		bool ValidatorSuppressed { get; set; }
 	}
 
@@ -74,10 +63,17 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		protected DataMutateOptions() { }
-		protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		protected DataMutateOptions(in Collections.Parameters parameters) : base(parameters) { }
+		protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
 		/// <inheritdoc />
+		public bool ValidatorSuppressed { get; set; }
+	}
+
+	public abstract class DataMutateOptionsBuilder<TOptions> : DataOptionsBuilder<TOptions> where TOptions : IDataMutateOptions
+	{
+		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 		public bool ValidatorSuppressed { get; set; }
 	}
 }

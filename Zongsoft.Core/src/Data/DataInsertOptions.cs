@@ -48,7 +48,8 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataInsertOptions() { }
-		public DataInsertOptions(IEnumerable<KeyValuePair<string, object>> states) : base(states) { }
+		public DataInsertOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataInsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
 		#region 公共属性
@@ -57,17 +58,47 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个禁用序号器的新增选项。
-		/// </summary>
-		/// <returns>返回创建的<see cref="DataInsertOptions"/>新增选项对象。</returns>
-		public static DataInsertOptions SuppressSequence() => new DataInsertOptions() { SequenceSuppressed = true };
+		/// <summary>创建一个禁用序号器的新增选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressSequence() => new() { SequenceSuppressed = true };
 
-		/// <summary>
-		/// 创建一个禁用数据验证器的新增选项。
-		/// </summary>
-		/// <returns>返回创建的<see cref="DataInsertOptions"/>新增选项对象。</returns>
-		public static DataInsertOptions SuppressValidator(bool sequenceSuppressed = false) => new DataInsertOptions() { ValidatorSuppressed = true, SequenceSuppressed = sequenceSuppressed };
+		/// <summary>创建一个禁用数据验证器的新增选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator() => new() { ValidatorSuppressed = true };
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataMutateOptionsBuilder<DataInsertOptions>
+		{
+			#region 构造函数
+			public Builder() { }
+			#endregion
+
+			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
+			public bool SequenceSuppressed { get; set; }
+			#endregion
+
+			#region 设置方法
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder SuppressSequence() { this.SequenceSuppressed = true; return this; }
+			public Builder UnsuppressSequence() { this.SequenceSuppressed = false; return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataInsertOptions Build() => new DataInsertOptions(this.Parameters)
+			{
+				SequenceSuppressed = this.SequenceSuppressed,
+				ValidatorSuppressed = this.ValidatorSuppressed,
+			};
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataInsertOptions(Builder builder) => builder.Build();
+			#endregion
+		}
 		#endregion
 	}
 }

@@ -58,8 +58,10 @@ namespace Zongsoft.Data
 	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 	{
 		#region 构造函数
-		public DataSelectOptions(IEnumerable<KeyValuePair<string, object>> states = null) : base(states) { }
-		public DataSelectOptions(string filter, IEnumerable<KeyValuePair<string, object>> states = null) : base(states) => this.Filter = filter;
+		public DataSelectOptions(in Collections.Parameters parameters) : base(parameters) { }
+		public DataSelectOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataSelectOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
+		public DataSelectOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
@@ -77,69 +79,93 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个去重的查询选项。
-		/// </summary>
+		/// <summary>创建一个去重的查询选项构建器。</summary>
 		/// <param name="filter">查询过滤表达式。</param>
-		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions Distinct(string filter = null) => new DataSelectOptions(filter) { IsDistinct = true };
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder Distinct(string filter = null) => new(filter) { IsDistinct = true };
 
-		/// <summary>
-		/// 创建一个禁用延迟加载的查询选项。
-		/// </summary>
+		/// <summary>创建一个禁用延迟加载的查询选项构建器。</summary>
 		/// <param name="distinct">指示是否进行去重查询。</param>
-		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions SuppressLazy(bool distinct = false)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressLazy(bool distinct = false) => new()
 		{
-			return new DataSelectOptions()
-			{
-				IsDistinct = distinct,
-				LazySuppressed = true,
-			};
-		}
+			IsDistinct = distinct,
+			LazySuppressed = true,
+		};
 
-		/// <summary>
-		/// 创建一个禁用延迟加载的查询选项。
-		/// </summary>
+		/// <summary>创建一个禁用延迟加载的查询选项构建器。</summary>
 		/// <param name="filter">查询过滤表达式。</param>
 		/// <param name="distinct">指示是否进行去重查询。</param>
-		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions SuppressLazy(string filter, bool distinct = false)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressLazy(string filter, bool distinct = false) => new(filter)
 		{
-			return new DataSelectOptions(filter)
-			{
-				IsDistinct = distinct,
-				LazySuppressed = true,
-			};
-		}
+			IsDistinct = distinct,
+			LazySuppressed = true,
+		};
 
-		/// <summary>
-		/// 创建一个禁用数据验证器的查询选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的查询选项构建器。</summary>
 		/// <param name="distinct">指示是否进行去重查询。</param>
-		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions SuppressValidator(bool distinct = false)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(bool distinct = false) => new()
 		{
-			return new DataSelectOptions()
-			{
-				IsDistinct = distinct,
-				ValidatorSuppressed = true,
-			};
-		}
+			IsDistinct = distinct,
+			ValidatorSuppressed = true,
+		};
 
-		/// <summary>
-		/// 创建一个禁用数据验证器的查询选项。
-		/// </summary>
+		/// <summary>创建一个禁用数据验证器的查询选项构建器。</summary>
 		/// <param name="filter">查询过滤表达式。</param>
 		/// <param name="distinct">指示是否进行去重查询。</param>
-		/// <returns>返回创建的<see cref="DataSelectOptions"/>查询选项对象。</returns>
-		public static DataSelectOptions SuppressValidator(string filter, bool distinct = false)
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressValidator(string filter, bool distinct = false) => new(filter)
 		{
-			return new DataSelectOptions(filter)
+			IsDistinct = distinct,
+			ValidatorSuppressed = true,
+		};
+		#endregion
+
+		#region 嵌套子类
+		public class Builder : DataOptionsBuilder<DataSelectOptions>
+		{
+			#region 成员字段
+			private string _filter;
+			#endregion
+
+			#region 构造函数
+			public Builder(string filter = null) => _filter = filter;
+			#endregion
+
+			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否进行去重查询。</summary>
+			public bool IsDistinct { get; set; }
+			/// <summary>获取或设置一个值，指示是否禁用对子集的延迟加载。</summary>
+			public bool LazySuppressed { get; set; }
+			/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
+			public bool ValidatorSuppressed { get; set; }
+			#endregion
+
+			#region 设置方法
+			public Builder Filter(string filter) { _filter = filter; return this; }
+			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
+			public Builder Distinct() { this.IsDistinct = true; return this; }
+			public Builder Distinct(bool value) { this.IsDistinct = value; return this; }
+			public Builder SuppressLazy() { this.LazySuppressed = true; return this; }
+			public Builder UnsuppressLazy() { this.LazySuppressed = false; return this; }
+			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			#endregion
+
+			#region 构建方法
+			public override DataSelectOptions Build() => new DataSelectOptions(_filter, this.Parameters)
 			{
-				IsDistinct = distinct,
-				ValidatorSuppressed = true,
+				IsDistinct = this.IsDistinct,
+				LazySuppressed = this.LazySuppressed,
+				ValidatorSuppressed = this.ValidatorSuppressed,
 			};
+			#endregion
+
+			#region 类型转换
+			public static implicit operator DataSelectOptions(Builder builder) => builder.Build();
+			#endregion
 		}
 		#endregion
 	}
