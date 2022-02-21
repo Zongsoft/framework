@@ -279,7 +279,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			public class Applyment
 			{
 				[JsonPropertyName("applyment_id")]
-				public string ApplymentId { get; set; }
+				public long ApplymentId { get; set; }
 				[JsonPropertyName("sub_mchid")]
 				public string MerchantId { get; set; }
 				[JsonPropertyName("applyment_state")]
