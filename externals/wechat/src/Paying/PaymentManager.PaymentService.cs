@@ -118,7 +118,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						MerchantId = result.TryGetValue("mch_id", out var merchantId) ? (string)merchantId : string.Empty,
 						SubAppId = result.TryGetValue("sub_appid", out var subAppId) ? (string)subAppId : string.Empty,
 						SubMerchantId = result.TryGetValue("sub_mch_id", out var subMerchantId) ? (string)subMerchantId : string.Empty,
-						Expires = result.TryGetValue("expires_in", out var expires) ? (string)expires : string.Empty,
+						Expires = result.TryGetValue("expires_in", out var expires) && int.TryParse(expires, out var seconds) ? seconds : 0,
 					}) :
 					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
 			}
