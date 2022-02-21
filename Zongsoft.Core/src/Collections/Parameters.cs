@@ -28,36 +28,40 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
-	public class Parameters : IEnumerable<KeyValuePair<string, object>>
+	public struct Parameters : IEnumerable<KeyValuePair<string, object>>
 	{
 		#region 成员字段
 		private Dictionary<string, object> _dictionary;
 		#endregion
 
 		#region 构造函数
-		public Parameters() { }
 		public Parameters(Parameters parameters)
 		{
 			var dictionary = parameters._dictionary;
 
 			if(dictionary != null && dictionary.Count > 0)
 				_dictionary = new Dictionary<string, object>(dictionary, StringComparer.OrdinalIgnoreCase);
+			else
+				_dictionary = null;
 		}
+
 		public Parameters(IEnumerable<KeyValuePair<string, object>> parameters)
 		{
-			if(parameters != null)
+			if(parameters != null && parameters.Any())
 				_dictionary = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+			else
+				_dictionary = null;
 		}
 		#endregion
 
 		#region 公共属性
 		public int Count { get => _dictionary.Count; }
-
 		public object this[string name]
 		{
 			get => _dictionary?[name];
@@ -95,7 +99,7 @@ namespace Zongsoft.Collections
 
 		public void SetValue(IEnumerable<KeyValuePair<string, object>> parameters)
 		{
-			if(parameters == null)
+			if(parameters == null || !parameters.Any())
 				return;
 
 			if(_dictionary == null)
@@ -116,13 +120,13 @@ namespace Zongsoft.Collections
 		#region 枚举遍历
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			var states = _dictionary;
+			var dictionary = _dictionary;
 
-			if(states == null)
+			if(dictionary == null)
 				yield break;
 
-			foreach(var state in states)
-				yield return state;
+			foreach(var entry in dictionary)
+				yield return entry;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
