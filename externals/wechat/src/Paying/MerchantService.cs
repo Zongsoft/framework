@@ -297,6 +297,22 @@ namespace Zongsoft.Externals.Wechat.Paying
 				[JsonPropertyName("audit_detail")]
 				public RejectionInfo[] Rejects { get; set; }
 
+				public string GetRejection()
+				{
+					var rejects = this.Rejects;
+					if(rejects == null || rejects.Length == 0)
+						return null;
+
+					var text = new System.Text.StringBuilder();
+
+					for(int i = 0; i < rejects.Length; i++)
+					{
+						text.AppendLine($"{rejects[i].Name}:{rejects[i].Reason}");
+					}
+
+					return text.ToString();
+				}
+
 				public struct RejectionInfo
 				{
 					[JsonPropertyName("param_name")]
