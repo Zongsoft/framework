@@ -62,5 +62,26 @@ namespace Zongsoft.Externals.Wechat
 				writer.WriteBase64StringValue(_certificate.Value.Encrypt(value));
 			}
 		}
+
+		internal class DateConverter : JsonConverter<DateTime?>
+		{
+			public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				var raw = reader.GetString();
+
+				if(raw != null && raw.Length > 0 && DateTime.TryParse(raw, out var date))
+					return date;
+
+				return null;
+			}
+
+			public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+			{
+				if(value == null)
+					writer.WriteStringValue("长期");
+				else
+					writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd"));
+			}
+		}
 	}
 }
