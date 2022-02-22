@@ -47,9 +47,8 @@ namespace Zongsoft.Data.Common.Expressions
 			if(statement.Returning != null && statement.Returning.Table != null)
 				context.Visit(statement.Returning.Table);
 
-			context.Write("INSERT INTO ");
+			this.VisitInsert(context, statement);
 			context.Visit(statement.Table);
-
 			this.VisitFields(context, statement, statement.Fields);
 			this.VisitValues(context, statement, statement.Values, statement.Fields.Count);
 
@@ -58,6 +57,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
+		protected virtual void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
+		{
+			context.Write("INSERT INTO ");
+		}
+
 		protected virtual void VisitFields(ExpressionVisitorContext context, InsertStatement statement, ICollection<FieldIdentifier> fields)
 		{
 			int index = 0;

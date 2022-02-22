@@ -46,8 +46,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(statement.Returning != null && statement.Returning.Table != null)
 				context.Visit(statement.Returning.Table);
 
-			context.Write("DELETE ");
-
+			this.VisitDelete(context, statement);
 			this.VisitTables(context, statement, statement.Tables);
 			this.VisitFrom(context, statement, statement.From);
 			this.VisitWhere(context, statement, statement.Where);
@@ -57,6 +56,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
+		protected virtual void VisitDelete(ExpressionVisitorContext context, DeleteStatement statement)
+		{
+			context.Write("DELETE ");
+		}
+
 		protected virtual void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables)
 		{
 			for(int i = 0; i < tables.Count; i++)

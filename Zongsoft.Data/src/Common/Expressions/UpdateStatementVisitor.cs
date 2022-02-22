@@ -50,7 +50,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(statement.Returning != null && statement.Returning.Table != null)
 				context.Visit(statement.Returning.Table);
 
-			context.Write("UPDATE ");
+			this.VisitUpdate(context, statement);
 			this.VisitTables(context, statement, statement.Tables);
 
 			context.WriteLine(" SET");
@@ -64,6 +64,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
+		protected virtual void VisitUpdate(ExpressionVisitorContext context, UpdateStatement statement)
+		{
+			context.Write("UPDATE ");
+		}
+
 		protected virtual void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 		{
 			for(int i = 0; i < tables.Count; i++)
