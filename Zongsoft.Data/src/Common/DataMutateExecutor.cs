@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Common
 				throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
 
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 
 			//获取当前操作是否为多数据
 			var isMultiple = context.IsMultiple;

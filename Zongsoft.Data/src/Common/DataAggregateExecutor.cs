@@ -48,7 +48,7 @@ namespace Zongsoft.Data.Common
 		protected virtual bool OnExecute(DataAggregateContext context, AggregateStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 
 			//执行命令
 			var result = command.ExecuteScalar();

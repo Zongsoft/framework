@@ -61,7 +61,7 @@ namespace Zongsoft.Data.Common
 		protected virtual bool OnExecute(DataSelectContext context, SelectStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 			context.Result = CreateResults(context.ModelType, context, statement, command, null);
 
 			return false;
@@ -70,7 +70,7 @@ namespace Zongsoft.Data.Common
 		protected virtual bool OnExecute(DataInsertContext context, SelectStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
@@ -100,7 +100,7 @@ namespace Zongsoft.Data.Common
 		protected virtual bool OnExecute(DataUpsertContext context, SelectStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
@@ -130,7 +130,7 @@ namespace Zongsoft.Data.Common
 		protected virtual bool OnExecute(DataIncrementContext context, SelectStatement statement)
 		{
 			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(statement);
+			var command = context.Session.Build(context, statement);
 
 			//执行命令
 			context.Result = Zongsoft.Common.Convert.ConvertValue<long>(command.ExecuteScalar());
@@ -263,7 +263,7 @@ namespace Zongsoft.Data.Common
 										continue;
 
 									//生成子查询语句对应的命令
-									var command = _context.Session.Build(slave);
+									var command = _context.Session.Build(_context, slave);
 
 									foreach(var parameter in token.Parameters)
 									{
