@@ -53,7 +53,6 @@ namespace Zongsoft.Data.MySql
 			var index = 0;
 
 			context.Write("INSERT INTO ");
-			//visitor.Visit(statement.Table);
 			context.Write(context.Dialect.GetIdentifier(statement.Table));
 			context.Write(" (");
 
@@ -62,7 +61,6 @@ namespace Zongsoft.Data.MySql
 				if(index++ > 0)
 					context.Write(",");
 
-				//visitor.Visit(field);
 				context.Write(context.Dialect.GetIdentifier(field.Name));
 			}
 
