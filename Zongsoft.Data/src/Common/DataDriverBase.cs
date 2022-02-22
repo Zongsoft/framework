@@ -67,7 +67,7 @@ namespace Zongsoft.Data.Common
 			return this.CreateCommand(null, CommandType.Text);
 		}
 
-		public virtual DbCommand CreateCommand(Expressions.IStatementBase statement)
+		public virtual DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement)
 		{
 			if(statement == null)
 				throw new ArgumentNullException(nameof(statement));

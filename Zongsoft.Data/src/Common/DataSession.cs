@@ -136,11 +136,12 @@ namespace Zongsoft.Data.Common
 		/// <summary>
 		/// 创建语句对应的 <see cref="DbCommand"/> 数据命令。
 		/// </summary>
+		/// <param name="context">指定的数据访问上下文。</param>
 		/// <param name="statement">指定要创建命令的语句。</param>
 		/// <returns>返回创建的数据命令对象。</returns>
-		public DbCommand Build(Expressions.IStatementBase statement)
+		public DbCommand Build(IDataAccessContextBase context, Expressions.IStatementBase statement)
 		{
-			return new SessionCommand(this, _source.Driver.CreateCommand(statement));
+			return new SessionCommand(this, _source.Driver.CreateCommand(context, statement));
 		}
 
 		/// <summary>

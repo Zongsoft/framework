@@ -263,7 +263,7 @@ namespace Zongsoft.Data.Common
 						continued = _aggregate.Execute(context, aggregate);
 						break;
 					default:
-						continued = context.Session.Build(statement).ExecuteNonQuery() > 0;
+						continued = context.Session.Build(context, statement).ExecuteNonQuery() > 0;
 						break;
 				}
 
