@@ -57,16 +57,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public virtual Exception OnError(Exception exception)
-		{
-			return exception;
-		}
-
-		public virtual DbCommand CreateCommand()
-		{
-			return this.CreateCommand(null, CommandType.Text);
-		}
-
+		public virtual Exception OnError(Exception exception) => exception;
+		public virtual DbConnection CreateConnection() => this.CreateConnection(string.Empty);
+		public abstract DbConnection CreateConnection(string connectionString);
+		public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);
+		public abstract DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
 		public virtual DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement)
 		{
 			if(statement == null)
@@ -99,15 +94,6 @@ namespace Zongsoft.Data.Common
 
 			return command;
 		}
-
-		public abstract DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
-
-		public virtual DbConnection CreateConnection()
-		{
-			return this.CreateConnection(string.Empty);
-		}
-
-		public abstract DbConnection CreateConnection(string connectionString);
 		#endregion
 
 		#region 保护方法
