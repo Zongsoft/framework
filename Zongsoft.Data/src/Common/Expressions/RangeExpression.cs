@@ -47,17 +47,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共方法
-		public string Accept(IExpressionVisitor visitor)
-		{
-			return visitor.Visit(this);
-		}
+		public string Accept(IExpressionVisitor visitor) => visitor.Visit(this);
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return $"{Minimum} ~ {Maximum}";
-		}
+		public override string ToString() => $"{Minimum} ~ {Maximum}";
 		#endregion
 	}
 }
