@@ -69,6 +69,10 @@ namespace Zongsoft.Data
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder Parameter(params KeyValuePair<string, object>[] parameters) => new(parameters);
 
+		/// <summary>创建一个忽略数据库约束的新增选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder IgnoreConstraint() => new() { ConstraintIgnored = true };
+
 		/// <summary>创建一个禁用序号器的新增选项构建器。</summary>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder SuppressSequence() => new() { SequenceSuppressed = true };
@@ -93,6 +97,8 @@ namespace Zongsoft.Data
 			#region 设置方法
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
+			public Builder IgnoreConstraint() { this.ConstraintIgnored = true; return this; }
+			public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
 			public Builder SuppressSequence() { this.SequenceSuppressed = true; return this; }
 			public Builder UnsuppressSequence() { this.SequenceSuppressed = false; return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
@@ -102,6 +108,7 @@ namespace Zongsoft.Data
 			#region 构建方法
 			public override DataInsertOptions Build() => new DataInsertOptions(this.Parameters)
 			{
+				ConstraintIgnored = this.ConstraintIgnored,
 				SequenceSuppressed = this.SequenceSuppressed,
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};

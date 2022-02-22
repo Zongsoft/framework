@@ -70,13 +70,14 @@ namespace Zongsoft.Data
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder Parameter(params KeyValuePair<string, object>[] parameters) => new(parameters);
 
+		/// <summary>创建一个忽略数据库约束的删除选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder IgnoreConstraint() => new() { ConstraintIgnored = true };
+
 		/// <summary>创建一个禁用数据验证器的删除选项构建器。</summary>
 		/// <param name="filter">删除过滤表达式。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(string filter = null) => new(filter)
-		{
-			ValidatorSuppressed = true
-		};
+		public static Builder SuppressValidator(string filter = null) => new(filter) { ValidatorSuppressed = true };
 		#endregion
 
 		#region 嵌套子类
@@ -95,12 +96,18 @@ namespace Zongsoft.Data
 			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
+			public Builder IgnoreConstraint() { this.ConstraintIgnored = true; return this; }
+			public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
 			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 			#endregion
 
 			#region 构建方法
-			public override DataDeleteOptions Build() => new DataDeleteOptions(_filter, this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			public override DataDeleteOptions Build() => new DataDeleteOptions(_filter, this.Parameters)
+			{
+				ConstraintIgnored = this.ConstraintIgnored,
+				ValidatorSuppressed = this.ValidatorSuppressed,
+			};
 			#endregion
 
 			#region 类型转换
