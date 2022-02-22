@@ -67,23 +67,35 @@ namespace Zongsoft.Externals.Wechat
 
 		private static IAuthority CreateAuthority(string name)
 		{
-			var options = string.IsNullOrEmpty(name) ?
-				Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() :
-				Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}");
+			Options.AuthorityOptions options;
 
-			if(options == null || string.IsNullOrEmpty(options.Code))
-				return null;
+			if(string.IsNullOrEmpty(name))
+			{
+				options = Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() ??
+					throw new WechatException("The configuration section for the default authority was not found.");
+			}
+			else
+			{
+				options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}") ??
+					throw new WechatException($"The configuration section for the '{name}' authority was not found.");
+			}
+
+			if(string.IsNullOrEmpty(options.Code))
+				throw new WechatException($"Invalid configuration section for the '{name}' authority.");
 
 			var certificate = GetCertificate(options.Directory, options.Code);
 
 			if(certificate == null)
-				return null;
+				throw new WechatException($"No certificate found for '{options.Code}({options.Name})' authority.");
 
 			if(certificate.Issuer == null || string.IsNullOrEmpty(certificate.Issuer.Identifier))
 				certificate.Issuer = new CertificateIssuer(options.Code, options.Name);
 
 			var app = options.Apps.GetDefault();
-			return app == null ? null : new Authority(options.Name, options.Code, options.Secret, new Account(app.Name, app.Secret), certificate);
+			if(app == null)
+				throw new WechatException($"Missing the required app configuration section for the '{name}' authority.");
+
+			return new Authority(options.Name, options.Code, options.Secret, new Account(app.Name, app.Secret), certificate);
 		}
 		#endregion
 
