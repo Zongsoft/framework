@@ -35,13 +35,12 @@ namespace Zongsoft.Security
 {
 	internal static class Anonymous
 	{
-		public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
 		public static readonly IIdentity Identity = new AnonymousIdentity();
+		public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
 
 		private class AnonymousPrincipal : ClaimsPrincipal
 		{
 			public AnonymousPrincipal() : base(Anonymous.Identity) { }
-			public override IIdentity Identity { get => Anonymous.Identity; }
 		}
 
 		private class AnonymousIdentity : IIdentity
