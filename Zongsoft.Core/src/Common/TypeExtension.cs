@@ -346,12 +346,11 @@ namespace Zongsoft.Common
 				   code == TypeCode.Decimal || code == TypeCode.Char;
 		}
 
+		public static bool IsNullable(this Type type) => type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+
 		public static bool IsNullable(this Type type, out Type underlyingType)
 		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+			if(type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
 			{
 				underlyingType = Nullable.GetUnderlyingType(type);
 				return true;
@@ -404,7 +403,7 @@ namespace Zongsoft.Common
 			if(type == typeof(DBNull))
 				return DBNull.Value;
 
-			if(type == null || type.IsClass || type.IsInterface || type == typeof(Nullable<>) || TypeExtension.IsAssignableFrom(typeof(Nullable<>), type))
+			if(type == null || type.IsClass || type.IsInterface || type.IsNullable())
 				return null;
 
 			if(type.IsEnum)
@@ -425,7 +424,26 @@ namespace Zongsoft.Common
 					return System.Convert.ChangeType(values.GetValue(0), type);
 			}
 
-			return System.Activator.CreateInstance(type);
+			return Type.GetTypeCode(type) switch
+			{
+				TypeCode.Boolean => false,
+				TypeCode.Char => '\0',
+				TypeCode.Byte => (byte)0,
+				TypeCode.SByte => (sbyte)0,
+				TypeCode.Int16 => (short)0,
+				TypeCode.Int32 => 0,
+				TypeCode.Int64 => 0L,
+				TypeCode.UInt16 => (ushort)0,
+				TypeCode.UInt32 => 0U,
+				TypeCode.UInt64 => 0UL,
+				TypeCode.Single => 0f,
+				TypeCode.Double => 0d,
+				TypeCode.Decimal => 0m,
+				TypeCode.DateTime => DateTime.MinValue,
+				TypeCode.DBNull => DBNull.Value,
+				TypeCode.String => null,
+				_ => Activator.CreateInstance(type),
+			};
 		}
 
 		public static MethodInfo GetMethod(this Type type, string name, Type[] parameterTypes)
