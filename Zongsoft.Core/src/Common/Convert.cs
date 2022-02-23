@@ -173,20 +173,12 @@ namespace Zongsoft.Common
 			//处理待转换值为空的情况
 			if(value == null || System.Convert.IsDBNull(value))
 			{
-				if(conversionType == typeof(DBNull))
-					result = DBNull.Value;
-				else if(conversionType.IsGenericType && conversionType.GetGenericTypeDefinition() == typeof(Nullable<>))
-					result = null;
-				else
-					result = conversionType.IsValueType ? Activator.CreateInstance(conversionType) : null;
-
+				result = conversionType.GetDefaultValue();
 				return true;
 			}
 
-			Type type = conversionType;
-
-			if(conversionType.IsGenericType && (!conversionType.IsGenericTypeDefinition) && conversionType.GetGenericTypeDefinition() == typeof(Nullable<>))
-				type = conversionType.GetGenericArguments()[0];
+			//处理可空类型的情况（即处理可空类型的基元类型）
+			var type = conversionType.IsNullable(out var underlyingType) ? underlyingType : conversionType;
 
 			//处理类型兼容的情况
 			if(type == value.GetType() || type.IsAssignableFrom(value.GetType()))
