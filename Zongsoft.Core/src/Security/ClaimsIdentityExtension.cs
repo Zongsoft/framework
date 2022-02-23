@@ -146,7 +146,7 @@ namespace Zongsoft.Security
 		public static T GetIdentifier<T>(this ClaimsIdentity identity)
 		{
 			var claim = identity?.FindFirst(ClaimTypes.NameIdentifier);
-			return claim == null || claim.Value == null ? default : Common.Convert.ConvertValue<T>(claim.Value);
+			return claim == null || string.IsNullOrEmpty(claim.Value) ? default : Common.Convert.ConvertValue<T>(claim.Value);
 		}
 
 		public static string GetEmail(this IIdentity identity)

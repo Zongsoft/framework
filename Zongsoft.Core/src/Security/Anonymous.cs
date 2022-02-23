@@ -41,6 +41,7 @@ namespace Zongsoft.Security
 		private class AnonymousPrincipal : ClaimsPrincipal
 		{
 			public AnonymousPrincipal() : base(Anonymous.Identity) { }
+			public override IIdentity Identity { get => Anonymous.Identity; }
 		}
 
 		private class AnonymousIdentity : IIdentity
