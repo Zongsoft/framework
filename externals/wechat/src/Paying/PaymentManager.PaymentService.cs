@@ -509,7 +509,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						{ "appid", _service._authority.Account.Code },
 						{ "mch_id", _service._authority.Code },
-						{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
 						{ "out_trade_no", request.VoucherCode },
 						{ "sign_type", "MD5" },
 						{ "nonce_str", Guid.NewGuid().ToString("N") },
