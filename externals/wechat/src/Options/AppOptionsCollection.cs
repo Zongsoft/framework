@@ -44,6 +44,27 @@ namespace Zongsoft.Externals.Wechat.Options
 
 		#region 公共方法
 		public AppOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
+		public bool TryGetDefault(out AppOptions result)
+		{
+			result = this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
+			return result != null;
+		}
+
+		public bool TryGetOption(string key, out AppOptions result)
+		{
+			if(string.IsNullOrEmpty(key))
+			{
+				key = this.Default;
+
+				if(string.IsNullOrEmpty(key))
+				{
+					result = null;
+					return false;
+				}
+			}
+
+			return this.TryGetValue(key, out result);
+		}
 		#endregion
 
 		#region 重写方法

@@ -40,7 +40,7 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Externals.Wechat.Security
 {
-	public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<WechatAuthenticatorBase.Ticket, WechatAuthenticatorBase.Token>
+	public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<string, WechatAuthenticatorBase.Identity>
 	{
 		#region 构造函数
 		protected WechatAuthenticatorBase(IServiceProvider serviceProvider)
@@ -55,53 +55,39 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 身份校验
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation) => await this.VerifyAsync(key, Ticket.GetTicket(data), scenario, cancellation);
-		public async ValueTask<OperationResult<Token>> VerifyAsync(string key, Ticket ticket, string scenario, CancellationToken cancellation = default)
+		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, cancellation);
+		public async ValueTask<OperationResult<Identity>> VerifyAsync(string key, string secret, string scenario, CancellationToken cancellation = default)
 		{
-			if(ticket.IsEmpty)
+			if(string.IsNullOrEmpty(secret))
 				return OperationResult.Fail("InvalidTicket");
 
-			switch(ticket.Scheme?.ToLowerInvariant())
+			if(!Account.TryParse(key, out var account))
+				return OperationResult.Fail("InvalidKey", $"The specified ‘{key}’ key is not recognized.");
+
+			return account.Type switch
 			{
-				case "applet":
-					var applet = AppletManager.GetApplet(key, this.ServiceProvider);
-
-					if(applet == null)
-						return key != null && key.Contains(':') ?
-							OperationResult.Fail("NotFound", $"The specified '{key}' applet does not exist.") :
-							OperationResult.Fail("NotFound", $"The specified '{key}' account does not exist.");
-
-					return await GetAppletToken(applet, key, ticket.Token, cancellation);
-				case "channel":
-					var channel = ChannelManager.GetChannel(key, this.ServiceProvider);
-
-					if(channel == null)
-						return key != null && key.Contains(':') ?
-							OperationResult.Fail("NotFound", $"The specified '{key}' channel does not exist.") :
-							OperationResult.Fail("NotFound", $"The specified '{key}' account does not exist.");
-
-					return await GetChannelToken(channel, key, ticket.Token, cancellation);
-				default:
-					return OperationResult.Fail("InvalidTicket", $"The specified ‘{ticket.Scheme}’ ticket scheme is not recognized.");
-			}
+				AccountType.Applet => await GetAppletToken(AppletManager.GetApplet(account), secret, cancellation),
+				AccountType.Channel => await GetChannelToken(ChannelManager.GetChannel(account), secret, cancellation),
+				_ => OperationResult.Fail(),
+			};
 		}
 		#endregion
 
 		#region 身份签发
-		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => this.IssueAsync((Token)token, scenario, parameters);
-		public ValueTask<ClaimsIdentity> IssueAsync(Token token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters);
+		public ValueTask<ClaimsIdentity> IssueAsync(Identity identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
-			if(string.IsNullOrEmpty(token.Identifier))
+			if(string.IsNullOrEmpty(identity.OpenId))
 				return ValueTask.FromResult<ClaimsIdentity>(null);
 
-			return this.OnIssueAsync(token, scenario, parameters, cancellation);
+			return this.OnIssueAsync(identity, scenario, parameters, cancellation);
 		}
 
-		protected abstract ValueTask<ClaimsIdentity> OnIssueAsync(Token token, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask<ClaimsIdentity> OnIssueAsync(Identity identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 私有方法
-		private static async ValueTask<OperationResult<Token>> GetAppletToken(Applet applet, string key, string code, CancellationToken cancellation = default)
+		private static async ValueTask<OperationResult<Identity>> GetAppletToken(Applet applet, string code, CancellationToken cancellation = default)
 		{
 			var result = await applet.LoginAsync(code, cancellation);
 
@@ -113,13 +99,13 @@ namespace Zongsoft.Externals.Wechat.Security
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Token(applet.Account, key, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
-					OperationResult.Success(new Token(applet.Account, key, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
+					OperationResult.Success(new Identity(applet.Account, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Identity(applet.Account, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
 
-			return OperationResult.Success(new Token(applet.Account, key, identifier));
+			return OperationResult.Success(new Identity(applet.Account, identifier));
 		}
 
-		private static async ValueTask<OperationResult<Token>> GetChannelToken(Channel channel, string key, string code, CancellationToken cancellation = default)
+		private static async ValueTask<OperationResult<Identity>> GetChannelToken(Channel channel, string code, CancellationToken cancellation = default)
 		{
 			var result = await channel.Authentication.AuthenticateAsync(code, cancellation);
 
@@ -131,92 +117,68 @@ namespace Zongsoft.Externals.Wechat.Security
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Token(channel.Account, key, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
-					OperationResult.Success(new Token(channel.Account, key, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
+					OperationResult.Success(new Identity(channel.Account, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Identity(channel.Account, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
 
-			return OperationResult.Success(new Token(channel.Account, key, identifier));
+			return OperationResult.Success(new Identity(channel.Account, identifier));
+		}
+
+		private static async ValueTask<string> GetSecretAsync(object data, CancellationToken cancellation = default)
+		{
+			var text = data as string;
+
+			if(text == null)
+			{
+				if(data is byte[] bytes)
+					text = System.Text.Encoding.UTF8.GetString(bytes);
+				else if(data is System.IO.Stream stream)
+				{
+					using var reader = new System.IO.StreamReader(stream, System.Text.Encoding.UTF8);
+					text = await reader.ReadToEndAsync();
+				}
+				else
+					throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
+			}
+
+			return text;
 		}
 		#endregion
 
 		#region 嵌套结构
-		public struct Ticket
+		public struct Identity
 		{
-			public Ticket(string scheme, string token)
-			{
-				this.Scheme = scheme;
-				this.Token = token;
-			}
-
-			public string Scheme;
-			public string Token;
-
-			public bool IsEmpty { get => string.IsNullOrWhiteSpace(this.Token); }
-
-			public static Ticket GetTicket(object data)
-			{
-				var text = data as string;
-
-				if(text == null)
-				{
-					if(data is byte[] bytes)
-						text = System.Text.Encoding.UTF8.GetString(bytes);
-					else if(data is System.IO.Stream stream)
-					{
-						using var reader = new System.IO.StreamReader(stream, System.Text.Encoding.UTF8);
-						text = reader.ReadToEnd();
-					}
-				}
-
-				if(string.IsNullOrEmpty(text))
-					throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
-
-				var index = text.IndexOf(':');
-
-				if(index > 0 && index < text.Length - 1)
-					return new Ticket(text.Substring(0, index), text.Substring(index + 1));
-
-				return new Ticket(null, text);
-			}
-		}
-
-		public struct Token
-		{
-			public Token(in Account account, string key, string identifier)
+			public Identity(in Account account, string openId)
 			{
 				this.Account = account;
-				this.Key = key;
-				this.Identifier = identifier;
+				this.OpenId = openId;
 				this.UnionId = null;
 				this.Nickname = null;
 				this.Avatar = null;
 				this.Description = null;
 			}
 
-			public Token(in Account account, string key, string identifier, string nickname, string avatar, string description = null)
+			public Identity(in Account account, string openId, string nickname, string avatar, string description = null)
 			{
 				this.Account = account;
-				this.Key = key;
-				this.Identifier = identifier;
+				this.OpenId = openId;
 				this.UnionId = null;
 				this.Nickname = nickname;
 				this.Avatar = avatar;
 				this.Description = description;
 			}
 
-			public Token(in Account account, string key, string identifier, string unionId, string nickname, string avatar, string description = null)
+			public Identity(in Account account, string openId, string unionId, string nickname, string avatar, string description = null)
 			{
 				this.Account = account;
-				this.Key = key;
-				this.Identifier = identifier;
+				this.OpenId = openId;
 				this.UnionId = unionId;
 				this.Nickname = nickname;
 				this.Avatar = avatar;
 				this.Description = description;
 			}
 
-			public readonly string Key;
 			public readonly Account Account;
-			public readonly string Identifier;
+			public readonly string OpenId;
 			public readonly string UnionId;
 			public readonly string Nickname;
 			public readonly string Avatar;

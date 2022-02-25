@@ -11,4 +11,9 @@
 			<assembly name="Zongsoft.Externals.Wechat" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Wechat">
+		<object name="Applets" value="{type:Zongsoft.Externals.Wechat.AppletManager, Zongsoft.Externals.Wechat}" />
+		<object name="Channels" value="{type:Zongsoft.Externals.Wechat.ChannelManager, Zongsoft.Externals.Wechat}" />
+	</extension>
 </plugin>

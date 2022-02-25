@@ -18,7 +18,8 @@
 		<authorities default="automao.saas">
 			<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx">
 				<apps default="AppId">
-					<app app.name="AppId" secret="AppSecret" />
+					<app name="AppId" type="applet" />
+					<app name="AppId" type="channel" />
 				</apps>
 			</authority>
 		</authorities>

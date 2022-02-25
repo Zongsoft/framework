@@ -91,11 +91,7 @@ namespace Zongsoft.Externals.Wechat
 			if(certificate.Issuer == null || string.IsNullOrEmpty(certificate.Issuer.Identifier))
 				certificate.Issuer = new CertificateIssuer(options.Code, options.Name);
 
-			var app = options.Apps.GetDefault();
-			if(app == null)
-				throw new WechatException($"Missing the required app configuration section for the '{name}' authority.");
-
-			return new Authority(options.Name, options.Code, options.Secret, new Account(app.Name, app.Secret), certificate);
+			return new Authority(options.Name, options.Code, options.Secret, certificate, new AccountCollection(options.Apps));
 		}
 		#endregion
 
