@@ -28,43 +28,44 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
+	public class AccountCollection : KeyedCollection<string, Account>
 	{
 		#region 构造函数
-		public Authority(string name, string code, string secret, Certificate certificate, AccountCollection accounts = null)
+		public AccountCollection(Account @default)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+			this.Default = @default;
+		}
 
-			if(string.IsNullOrEmpty(code))
-				throw new ArgumentNullException(nameof(code));
+		internal AccountCollection(Options.AppOptionsCollection options) : base()
+		{
+			if(options != null && options.Count > 0)
+			{
+				var applets = Utility.GetOptions<Options.AppletOptionsCollection>($"/Externals/Wechat/Applets");
+				var channels = Utility.GetOptions<Options.ChannelOptionsCollection>($"/Externals/Wechat/Channels");
 
-			this.Name = name;
-			this.Code = code;
-			this.Secret = secret;
-			this.Certificate = certificate;
-			this.Accounts = accounts ?? new AccountCollection(null);
+				foreach(var option in options)
+				{
+					if(option.Type == AccountType.Applet)
+						this.Add(applets.TryGetValue(option.Name, out var applet) ? Account.Applet(applet.Name, applet.Secret) : throw new WechatException($"The configured '{option.Name}' WeChat applet is not defined."));
+					else
+						this.Add(channels.TryGetValue(option.Name, out var channel) ? Account.Channel(channel.Name, channel.Secret) : throw new WechatException($"The configured '{option.Name}' WeChat channel is not defined."));
+				}
+
+				this.Default = options.Default != null && this.TryGetValue(options.Default, out var account) ? account : (this.Count > 0 ? this[0] : default);
+			}
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name { get; }
-		public string Code { get; }
-		public string Secret { get; }
-		public Certificate Certificate { get; }
-		public AccountCollection Accounts { get; }
+		public Account Default { get; }
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Authority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
-		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
-		public override string ToString() => $"{this.Code}({this.Name})";
+		protected override string GetKeyForItem(Account item) => item.Code;
 		#endregion
 	}
 }

@@ -28,47 +28,108 @@
  */
 
 using System;
-using System.Collections.Generic;
-
-using Zongsoft.Services;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat
 {
-	public class ChannelManager
+	public static class ChannelManager
 	{
-		public static Channel GetChannel(string key, IServiceProvider serviceProvider = null)
+		#region 静态字段
+		private static readonly ConcurrentDictionary<string, Channel> _channels = new ConcurrentDictionary<string, Channel>();
+		#endregion
+
+		#region 公共属性
+		public static IAccountProvider Provider { get; set; }
+		#endregion
+
+		#region 公共方法
+		public static Channel GetChannel(string code)
 		{
-			Account account = default;
+			Initialize();
 
-			if(key != null && key.IndexOf(':') > 0)
+			return _channels.GetOrAdd(code ?? string.Empty, key =>
 			{
-				if(serviceProvider == null)
-					serviceProvider = ApplicationContext.Current.Services;
+				var provider = Provider;
+				if(provider == null)
+					throw new WechatException($"The specified '{key}' WeChat channel does not exist.");
 
-				if(serviceProvider != null)
-					account = serviceProvider.ResolveRequired<IAccountProvider>().GetAccount(key);
-			}
-			else
-			{
-				var options = Utility.GetOptions<Options.AppOptionsCollection>($"/Externals/Wechat/Channels");
-
-				if(options == null || options.Count == 0)
-					return null;
-
-				if(string.IsNullOrEmpty(key))
-				{
-					var app = options.GetDefault();
-
-					if(app != null)
-						account = new Account(app.Name, app.Secret);
-				}
-				else if(options.TryGetValue(key, out var app))
-				{
-					account = new Account(app.Name, app.Secret);
-				}
-			}
-
-			return account.IsEmpty ? null : new Channel(account);
+				return new Channel(provider.GetAccount(key, AccountType.Channel));
+			});
 		}
+
+		public static Channel GetChannel(this Account account)
+		{
+			if(account.IsEmpty)
+				throw new ArgumentNullException(nameof(account));
+
+			if(account.Type != AccountType.Channel)
+				throw new ArgumentException($"The specified '{account.Code}' account is not a WeChat channel.");
+
+			return GetChannel(account.Code);
+		}
+
+		public static bool TryGetChannel(string code, out Channel result)
+		{
+			Initialize();
+
+			if(_channels.TryGetValue(code, out result))
+				return true;
+
+			var provider = Provider;
+
+			if(provider != null)
+			{
+				var account = provider.GetAccount(code, AccountType.Channel);
+
+				lock(_channels)
+				{
+					if(_channels.TryGetValue(code, out result))
+						return true;
+
+					result = _channels[code] = new Channel(account);
+				}
+			}
+
+			return result != null;
+		}
+
+		public static bool TryGetChannel(this Account account, out Channel result)
+		{
+			result = null;
+
+			if(account.IsEmpty || account.Type != AccountType.Channel)
+				return false;
+
+			return TryGetChannel(account.Code, out result);
+		}
+		#endregion
+
+		#region 私有方法
+		private volatile static int _initialized;
+		private static void Initialize()
+		{
+			if(_initialized != 0)
+				return;
+
+			var initialized = Interlocked.CompareExchange(ref _initialized, 1, 0);
+			if(initialized == 1)
+				return;
+
+			var options = Utility.GetOptions<Options.ChannelOptionsCollection>($"/Externals/Wechat/Channels");
+			if(options == null || options.Count == 0)
+				return;
+
+			foreach(var option in options)
+			{
+				_channels.TryAdd(option.Name, new Channel(Account.Channel(option.Name, option.Secret)));
+			}
+
+			//设置默认公众号
+			var @default = options.GetDefault();
+			if(@default != null && _channels.TryGetValue(@default.Name, out var applet))
+				_channels.TryAdd(string.Empty, applet);
+		}
+		#endregion
 	}
 }

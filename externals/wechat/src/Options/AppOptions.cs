@@ -37,17 +37,11 @@ namespace Zongsoft.Externals.Wechat.Options
 	public class AppOptions
 	{
 		#region 公共属性
-		/// <summary>获取或设置第三方平台应用标识，即微信开放平台的<c>component_appid</c>。</summary>
+		/// <summary>获取或设置微信应用标识。</summary>
 		public string Name { get; set; }
 
-		/// <summary>获取或设置第三方平台应用口令，即微信开放平台的<c>component_appsecret</c>。</summary>
-		public string Secret { get; set; }
-
-		/// <summary>获取或设置第三方平台应用标记，即微信开放平台的“消息校验Token”。</summary>
-		public string Nonce { get; set; }
-
-		/// <summary>获取或设置第三方平台应用对称加解密的密钥，即微信开放平台的<c>symmetric_key</c>或<c>AESEncodingKey</c>。</summary>
-		public string Password { get; set; }
+		/// <summary>获取或设置微信应用的类型。</summary>
+		public AccountType Type { get; set; }
 		#endregion
 	}
 }

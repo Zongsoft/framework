@@ -33,6 +33,6 @@ namespace Zongsoft.Externals.Wechat
 {
 	public interface IAccountProvider
 	{
-		Account GetAccount(string key);
+		Account GetAccount(string code, AccountType type);
 	}
 }

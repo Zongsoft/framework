@@ -43,16 +43,15 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class AppletController : ControllerBase
 	{
 		[HttpPost("{action}")]
-		[HttpPost("{key}/{action}")]
-		public async ValueTask<IActionResult> Login(string key)
+		[HttpPost("{id}/{action}")]
+		public async ValueTask<IActionResult> Login(string id)
 		{
 			var token = await this.Request.ReadAsStringAsync();
 
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
-			if(applet == null)
+			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
 
 			var result = await applet.LoginAsync(token);
@@ -61,19 +60,44 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 
 		[HttpGet("Phone/{token}")]
 		[HttpGet("PhoneNumber/{token}")]
-		[HttpGet("{key}/Phone/{token}")]
-		[HttpGet("{key}/PhoneNumber/{token}")]
-		public async ValueTask<IActionResult> GetPhoneNumber(string key, string token)
+		[HttpGet("{id}/Phone/{token}")]
+		[HttpGet("{id}/PhoneNumber/{token}")]
+		public async ValueTask<IActionResult> GetPhoneNumber(string id, string token)
 		{
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
-			if(applet == null)
+			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
 
 			var result = await applet.GetPhoneNumberAsync(token);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
+		}
+	}
+
+	[ApiController]
+	[Route("Externals/Wechat/Applets/{id}/Users")]
+	public class AppletUserController : ControllerBase
+	{
+		[HttpGet("{identifier?}")]
+		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null)
+		{
+			if(!AppletManager.TryGetApplet(id, out var applet))
+				return this.NotFound();
+
+			if(string.IsNullOrEmpty(identifier))
+			{
+				var result = await applet.Users.GetIdentifiersAsync(bookmark);
+				this.Response.Headers["X-Bookmark"] = result.bookmark;
+				return result.identifiers == null || result.identifiers.Length == 0 ? this.NoContent() : this.Ok(result.identifiers);
+			}
+
+			var info = await applet.Users.GetInfoAsync(identifier);
+
+			if(info.Succeed)
+				return string.IsNullOrEmpty(info.Value.Identifier) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
+
+			return this.NotFound(info.Failure);
 		}
 	}
 
@@ -85,8 +109,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpGet("{key}/Credential")]
 		public async ValueTask<IActionResult> GetCredential(string key)
 		{
-			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
-			if(applet == null)
+			if(!AppletManager.TryGetApplet(key, out var applet))
 				return this.NotFound();
 
 			var credential = await applet.GetCredentialAsync(false);
@@ -97,8 +120,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpPost("{key}/Credential/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key)
 		{
-			var applet = AppletManager.GetApplet(key, this.HttpContext.RequestServices);
-			if(applet == null)
+			if(!AppletManager.TryGetApplet(key, out var applet))
 				return this.NotFound();
 
 			var credential = await applet.GetCredentialAsync(true);

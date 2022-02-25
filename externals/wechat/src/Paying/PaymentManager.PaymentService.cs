@@ -62,16 +62,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public byte[] Signature(string identifier, out string applet, out string nonce, out long timestamp)
+			public byte[] Signature(string appId, string identifier, out string nonce, out long timestamp)
 			{
-				applet = _authority.Account.Code;
 				nonce = Guid.NewGuid().ToString("N");
 				timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-				if(string.IsNullOrEmpty(applet) || _authority.Certificate == null)
+				if(string.IsNullOrEmpty(appId) || _authority.Certificate == null)
 					return null;
 
-				var plaintext = $"{applet}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
+				var plaintext = $"{appId}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
 				return _authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
 			}
 
@@ -97,12 +96,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			/// <summary>初始化人脸识别设备的验证请求。</summary>
 			/// <returns>返回人脸识别验证凭证。</returns>
-			public async ValueTask<OperationResult> AuthenticateAsync(string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
+			public async ValueTask<OperationResult> AuthenticateAsync(string applet, string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(data))
 					return OperationResult.Fail("Argument", $"Missing the required data of the recognition authenticate.");
 
-				var request = this.GetAuthenticationRequest(data, device, store, title, extra);
+				var request = this.GetAuthenticationRequest(applet, data, device, store, title, extra);
 
 				if(!request.ContainsKey("sign"))
 					request.TryAdd("sign", Utility.Postmark(request, _authority.Secret));
@@ -141,11 +140,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
 			}
 
-			protected virtual IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
+			protected virtual IDictionary<string, object> GetAuthenticationRequest(string appId, string data, string device, string store, string title, string extra = null)
 			{
 				return new SortedDictionary<string, object>()
 				{
-					{ "appid", _authority.Account.Code },
+					{ "appid", string.IsNullOrEmpty(appId) ? _authority.Accounts.Default.Code : appId },
 					{ "mch_id", _authority.Code },
 					{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
 					{ "version", "1" },
@@ -174,11 +173,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			public abstract class RequestBuilder
 			{
-				public PaymentRequest Create(string voucher, decimal amount, string payer, string description = null) => this.Create(voucher, amount, null, payer, description);
-				public abstract PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null);
+				public PaymentRequest Create(string appId, string voucher, decimal amount, string payer, string description = null) => this.Create(appId, voucher, amount, null, payer, description);
+				public abstract PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null);
 
-				public PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string ticket, string description = null) => this.Ticket(voucher, amount, null, ticket, description);
-				public abstract PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null);
+				public PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string ticket, string description = null) => this.Ticket(appId, voucher, amount, null, ticket, description);
+				public abstract PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null);
 				internal abstract string GetFallback();
 
 				internal static string GetFallback(string key, string format)
@@ -507,7 +506,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 				{
 					var dictionary = new SortedDictionary<string, object>
 					{
-						{ "appid", _service._authority.Account.Code },
 						{ "mch_id", _service._authority.Code },
 						{ "out_trade_no", request.VoucherCode },
 						{ "sign_type", "MD5" },
@@ -619,6 +617,20 @@ namespace Zongsoft.Externals.Wechat.Paying
 				private sealed class Compatibility : CompatibilityBase<DirectPaymentService>
 				{
 					public Compatibility(DirectPaymentService service) : base(service) { }
+
+					protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
+					{
+						var dictionary = base.GetRequest(request, scenario);
+
+						if(dictionary != null)
+						{
+							dictionary["appid"] = request is DirectRequest directRequest && !string.IsNullOrEmpty(directRequest.AppId) ?
+								directRequest.AppId :
+								this.Service._authority.Accounts?.Default.Code;
+						}
+
+						return dictionary;
+					}
 				}
 
 				private sealed class DirectBuilder : RequestBuilder
@@ -628,17 +640,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					internal override string GetFallback() => GetFallback(_authority.Code, FORMAT);
 
-					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
+					public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 					{
-						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), _authority.Account.Code, description)
+						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), appId, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};
 					}
 
-					public override PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null)
+					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
-						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), _authority.Account.Code, description)
+						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), appId, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};
@@ -815,14 +827,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				protected override object GetCancellation() => new { sp_mchid = _authority.Code, sub_mchid = _subsidiary.Code };
 
-				protected override IDictionary<string, object> GetAuthenticationRequest(string data, string device, string store, string title, string extra = null)
+				protected override IDictionary<string, object> GetAuthenticationRequest(string appId, string data, string device, string store, string title, string extra = null)
 				{
-					var request = base.GetAuthenticationRequest(data, device, store, title, extra);
+					var request = base.GetAuthenticationRequest(appId, data, device, store, title, extra);
 
 					if(request != null)
 					{
 						request["sub_mch_id"] = _subsidiary.Code;
-						request["sub_appid"] = _subsidiary.Account.Code;
+						request["sub_appid"] = _subsidiary.Accounts.Default.Code;
 					}
 
 					return request;
@@ -840,7 +852,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						if(dictionary != null)
 						{
 							dictionary["sub_mch_id"] = this.Service._subsidiary.Code;
-							dictionary["sub_appid"] = this.Service._subsidiary.Account.Code;
+							dictionary["sub_appid"] = this.Service._subsidiary.Accounts?.Default.Code;
 						}
 
 						return dictionary;
@@ -856,17 +868,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					internal override string GetFallback() => GetFallback(_master.Name, FORMAT);
 
-					public override PaymentRequest Create(string voucher, decimal amount, string currency, string payer, string description = null)
+					public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 					{
-						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code, description)
+						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};
 					}
 
-					public override PaymentRequest.TicketRequest Ticket(string voucher, decimal amount, string currency, string ticket, string description = null)
+					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
-						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), _master.Account.Code, uint.Parse(_subsidiary.Code), _subsidiary.Account.Code, description)
+						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};

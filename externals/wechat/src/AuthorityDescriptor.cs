@@ -37,7 +37,7 @@ namespace Zongsoft.Externals.Wechat
 	public class AuthorityDescriptor : IEquatable<AuthorityDescriptor>
 	{
 		#region 构造函数
-		public AuthorityDescriptor(string name, string code, string secret, Account account, Certificate certificate)
+		public AuthorityDescriptor(string name, string code, string secret, Certificate certificate)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -48,7 +48,6 @@ namespace Zongsoft.Externals.Wechat
 			this.Name = name;
 			this.Code = code;
 			this.Secret = secret;
-			this.Account = account;
 			this.Certificate = certificate;
 		}
 		#endregion
@@ -57,7 +56,6 @@ namespace Zongsoft.Externals.Wechat
 		public string Name { get; }
 		public string Code { get; }
 		public string Secret { get; }
-		public Account Account { get; }
 		public Certificate Certificate { get; }
 		#endregion
 
@@ -65,7 +63,7 @@ namespace Zongsoft.Externals.Wechat
 		public bool Equals(AuthorityDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
 		public override bool Equals(object obj) => obj is AuthorityDescriptor other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
-		public override string ToString() => string.IsNullOrEmpty(this.Account.Code) ? $"{this.Name}#{this.Code}" : $"{this.Name}#{this.Code}:{this.Account}";
+		public override string ToString() => $"{this.Name}#{this.Code}";
 		#endregion
 
 		#region 符号重写

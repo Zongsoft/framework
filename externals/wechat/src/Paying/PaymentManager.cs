@@ -52,9 +52,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(string.IsNullOrEmpty(authority.Code))
 				throw new ArgumentException("Invalid authority of the wechat.");
 
-			if(authority.Account.IsEmpty)
-				throw new ArgumentException($"Missing the required app of the '{authority.Code}' wechat merchant.");
-
 			return _services.GetOrAdd(authority.Code, (key, authority) =>
 			{
 				return new PaymentManager()
@@ -65,26 +62,32 @@ namespace Zongsoft.Externals.Wechat.Paying
 			}, authority);
 		}
 
-		public static PaymentManager Get(string name, IAuthority authority)
+		public static PaymentManager Get(string master, IAuthority subsidiary)
 		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
+			if(subsidiary == null)
+				throw new ArgumentNullException(nameof(subsidiary));
 
-			if(string.IsNullOrEmpty(authority.Code))
+			if(string.IsNullOrEmpty(subsidiary.Code))
 				throw new ArgumentException("Invalid authority of the wechat.");
 
-			var master = AuthorityFactory.GetAuthority(name) ??
-				throw new InvalidOperationException($"The specified '{name}' authority does not exist.");
+			var authority = AuthorityFactory.GetAuthority(master) ??
+				throw new InvalidOperationException($"The specified '{master}' authority does not exist.");
 
-			return _services.GetOrAdd(name + ':' + authority.Code, (key, state) =>
+			return _services.GetOrAdd(master + ':' + subsidiary.Code, (key, state) =>
 			{
 				return new PaymentManager()
 				{
-					Payment = new PaymentService.BrokerPaymentService(state.master, state.authority),
-					Refundment = new RefundmentService.BrokerRefundmentService(state.master, state.authority),
+					Payment = new PaymentService.BrokerPaymentService(state.authority, state.subsidiary),
+					Refundment = new RefundmentService.BrokerRefundmentService(state.authority, state.subsidiary),
 				};
-			}, new { master, authority });
+			}, new { authority, subsidiary });
 		}
 		#endregion
+	}
+
+	public static class PaymentManagerExtension
+	{
+		public static PaymentManager GetPayment(this IAuthority authority) => PaymentManager.Get(authority);
+		public static PaymentManager GetPayment(this IAuthority subsidiary, string master) => PaymentManager.Get(master, subsidiary);
 	}
 }

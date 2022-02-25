@@ -28,27 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-using Zongsoft.Externals.Wechat.Options;
-
-namespace Zongsoft.Externals.Wechat.Platforms.Options
+namespace Zongsoft.Externals.Wechat
 {
 	/// <summary>
-	/// 表示微信开放平台的选项类。
+	/// 表示应用账户类型的枚举。
 	/// </summary>
-	public class PlatformOptions
+	public enum AccountType
 	{
-		#region 构造函数
-		public PlatformOptions()
-		{
-			this.Apps = new AppOptionsCollection();
-		}
-		#endregion
+		/// <summary>小程序</summary>
+		Applet,
 
-		#region 公共属性
-		/// <summary>获取微信开放平台第三方应用设置选项集。</summary>
-		public AppOptionsCollection Apps { get; }
-		#endregion
+		/// <summary>公众号</summary>
+		Channel,
 	}
 }

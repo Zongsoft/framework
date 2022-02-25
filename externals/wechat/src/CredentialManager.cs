@@ -84,7 +84,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<string> GetCredentialAsync(Account account, bool refresh, CancellationToken cancellation = default)
+		public static async ValueTask<string> GetCredentialAsync(this Account account, bool refresh, CancellationToken cancellation = default)
 		{
 			if(account.IsEmpty)
 				throw new ArgumentNullException(nameof(account));
@@ -155,7 +155,7 @@ namespace Zongsoft.Externals.Wechat
 			return null;
 		}
 
-		public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(Account account, string type, bool refresh, CancellationToken cancellation = default)
+		public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(this Account account, string type, bool refresh, CancellationToken cancellation = default)
 		{
 			if(account.IsEmpty)
 				throw new ArgumentNullException(nameof(account));
