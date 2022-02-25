@@ -38,39 +38,25 @@ namespace Zongsoft.Data.Common.Expressions
 	public interface IStatementBase : IExpression
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取语句对应的主表。
-		/// </summary>
+		/// <summary>获取语句对应的主表。</summary>
 		TableIdentifier Table { get; }
 
-		/// <summary>
-		/// 获取一个值，指示当前语句是否有依附于自己的从属语句。
-		/// </summary>
+		/// <summary>获取一个值，指示当前语句是否有依附于自己的从属语句。</summary>
 		bool HasSlaves { get; }
 
-		/// <summary>
-		/// 获取依附于当前语句的从属语句集合。
-		/// </summary>
-		/// <remarks>
-		///		<para>对于只是获取从属语句的使用者，应先使用<see cref="HasSlaves"/>属性进行判断成功后再使用该属性，这样可避免创建不必要的集合对象。</para>
-		/// </remarks>
+		/// <summary>获取依附于当前语句的从属语句集合。</summary>
+		/// <remarks>对于只是获取从属语句的使用者，应先使用<see cref="HasSlaves"/>属性进行判断成功后再使用该属性，这样可避免创建不必要的集合对象。</remarks>
 		ICollection<IStatementBase> Slaves { get; }
 
-		/// <summary>
-		/// 获取一个值，指示当前语句是否包含任何参数（即<see cref="Parameters"/>属性不为空并且有内容）。
-		/// </summary>
+		/// <summary>获取一个值，指示当前语句是否包含任何参数（即<see cref="Parameters"/>属性不为空并且有内容）。</summary>
 		bool HasParameters { get; }
 
-		/// <summary>
-		/// 获取当前语句的参数集。
-		/// </summary>
+		/// <summary>获取当前语句的参数集。</summary>
 		ParameterExpressionCollection Parameters { get; }
 		#endregion
 
 		#region 方法定义
-		/// <summary>
-		/// 创建一个子查询语句。
-		/// </summary>
+		/// <summary>创建一个子查询语句。</summary>
 		/// <param name="table">指定要创建的子查询的主表。</param>
 		/// <returns>返回创建的子查询语句。</returns>
 		ISelectStatementBase Subquery(TableIdentifier table);

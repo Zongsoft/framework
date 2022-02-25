@@ -46,13 +46,8 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取一个表标识的集合，表示要删除的表。
-		/// </summary>
-		public IList<TableIdentifier> Tables
-		{
-			get;
-		}
+		/// <summary>获取一个表标识的集合，表示要删除的表。</summary>
+		public IList<TableIdentifier> Tables { get; }
 		#endregion
 	}
 }

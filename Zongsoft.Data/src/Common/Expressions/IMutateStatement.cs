@@ -37,20 +37,10 @@ namespace Zongsoft.Data.Common.Expressions
 	/// </summary>
 	public interface IMutateStatement : IStatementBase
 	{
-		/// <summary>
-		/// 获取或设置写入语句对应的模式成员。
-		/// </summary>
-		SchemaMember Schema
-		{
-			get; set;
-		}
+		/// <summary>获取或设置写入语句对应的模式成员。</summary>
+		SchemaMember Schema { get; set; }
 
-		/// <summary>
-		/// 获取或设置写入语句的输出子句。
-		/// </summary>
-		ReturningClause Returning
-		{
-			get; set;
-		}
+		/// <summary>获取或设置写入语句的输出子句。</summary>
+		ReturningClause Returning { get; set; }
 	}
 }

@@ -48,21 +48,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取写入语句对应的模式成员。
-		/// </summary>
-		public SchemaMember Schema
-		{
-			get; set;
-		}
+		/// <summary>获取写入语句对应的模式成员。</summary>
+		public SchemaMember Schema { get; set; }
 
-		/// <summary>
-		/// 获取或设置写入语句的输出子句。
-		/// </summary>
-		public ReturningClause Returning
-		{
-			get; set;
-		}
+		/// <summary>获取或设置写入语句的输出子句。</summary>
+		public ReturningClause Returning { get; set; }
 		#endregion
 	}
 }
