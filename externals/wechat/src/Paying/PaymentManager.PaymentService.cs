@@ -54,6 +54,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共属性
+			public IAuthority Authority { get => _authority; }
 			public RequestBuilder Request { get; protected set; }
 			#endregion
 
@@ -62,13 +63,27 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public byte[] Signature(string appId, string identifier, out string nonce, out long timestamp)
+			public byte[] Signature(string appId, string identifier, out string applet, out string nonce, out long timestamp)
 			{
+				if(_authority.Certificate == null)
+					throw new WechatException($"The '{_authority.Code}' WeChat authority has no credential.");
+
 				nonce = Guid.NewGuid().ToString("N");
 				timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-				if(string.IsNullOrEmpty(appId) || _authority.Certificate == null)
-					return null;
+				if(string.IsNullOrEmpty(appId))
+				{
+					appId = _authority.Accounts.Default.Code;
+
+					if(string.IsNullOrEmpty(appId))
+						throw new WechatException($"The AppId parameter is not specified, the '{_authority.Code}' WeChat authority has no default account defined.");
+				}
+				else if(_authority.Accounts.TryGetValue(appId, out var account))
+					appId = account.Code;
+				else
+					throw new WechatException($"The specified '{appId}' AppId is undefined in the '{_authority.Code}' WeChat authority.");
+
+				applet = appId;
 
 				var plaintext = $"{appId}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
 				return _authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));

@@ -64,6 +64,10 @@ namespace Zongsoft.Externals.Wechat
 		public Account Default { get; }
 		#endregion
 
+		#region 公共方法
+		public Account Get(string code) => string.IsNullOrEmpty(code) ? this.Default : this.TryGetValue(code, out var account) ? account : default;
+		#endregion
+
 		#region 重写方法
 		protected override string GetKeyForItem(Account item) => item.Code;
 		#endregion
