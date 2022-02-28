@@ -28,12 +28,15 @@
  */
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Globalization;
 using System.ComponentModel;
 
 namespace Zongsoft.IO
 {
 	[TypeConverter(typeof(LocationTypeConverter))]
+	[JsonConverter(typeof(LocationJsonConverter))]
 	public readonly struct PathLocation : IEquatable<PathLocation>
 	{
 		#region 构造函数
@@ -75,6 +78,32 @@ namespace Zongsoft.IO
 			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
 			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is PathLocation location ? location.Path : null;
 			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => new PathLocation(value as string);
+		}
+
+		private class LocationJsonConverter : JsonConverter<PathLocation>
+		{
+			public override PathLocation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				if(reader.TokenType == JsonTokenType.Null)
+					return default;
+				if(reader.TokenType == JsonTokenType.String)
+					return new PathLocation(reader.GetString());
+
+				return JsonSerializer.Deserialize<PathLocation>(ref reader, options);
+			}
+
+			public override void Write(Utf8JsonWriter writer, PathLocation value, JsonSerializerOptions options)
+			{
+				if(value.IsEmpty)
+					writer.WriteNullValue();
+				else
+				{
+					writer.WriteStartObject();
+					writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Path)) ?? nameof(Path), value.Path);
+					writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Url)) ?? nameof(Url), value.Url);
+					writer.WriteEndObject();
+				}
+			}
 		}
 		#endregion
 	}
