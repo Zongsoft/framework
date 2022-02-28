@@ -159,10 +159,28 @@ namespace Zongsoft.Data.Common
 			if(member == null)
 				return null;
 
+			if(_converters.TryGetValue(member, out var converter))
+				return converter;
+
 			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
 
 			if(attribute == null)
-				return null;
+			{
+				switch(member)
+				{
+					case FieldInfo field:
+						attribute = field.FieldType.GetCustomAttribute<TypeConverterAttribute>();
+						break;
+					case PropertyInfo property:
+						attribute = property.PropertyType.GetCustomAttribute<TypeConverterAttribute>();
+						break;
+					default:
+						return null;
+				}
+
+				if(attribute == null)
+					return null;
+			}
 
 			var type = Type.GetType(attribute.ConverterTypeName);
 

@@ -45,6 +45,7 @@ namespace Zongsoft.Data.Common
 		private static readonly MethodInfo __IsDBNull__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull), new Type[] { typeof(int) });
 		private static readonly MethodInfo __GetValueRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), new Type[] { typeof(int) });
 		private static readonly MethodInfo __GetValueExtension__ = typeof(DataRecordExtension).GetMethod(nameof(DataRecordExtension.GetValue), new Type[] { typeof(IDataRecord), typeof(int) });
+		private static readonly MethodInfo __ConvertTo__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertTo), new Type[] { typeof(object), typeof(Type) });
 		private static readonly MethodInfo __ConvertFrom__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertFrom), new Type[] { typeof(object) });
 		#endregion
 
@@ -110,8 +111,14 @@ namespace Zongsoft.Data.Common
 				generator.Emit(OpCodes.Ldarg_2);
 				generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
 
-				//local_0.FieldX = converter(...)
+				//local_0.FieldX = (TField)converter(...)
 				generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
+
+				if(field.FieldType.IsValueType)
+					generator.Emit(OpCodes.Unbox_Any, field.FieldType);
+				else
+					generator.Emit(OpCodes.Castclass, field.FieldType);
+
 				generator.Emit(OpCodes.Stfld, field);
 			}
 
@@ -191,8 +198,22 @@ namespace Zongsoft.Data.Common
 				generator.Emit(OpCodes.Ldarg_2);
 				generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
 
-				//local_0.PropertyX = converter(...)
+				//local_0.PropertyX = (TProperty)converter(...)
 				generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
+
+				/*
+				 * 注：如果需要采用ConvertTo方法进行转换则采用下面代码
+				 * 
+				generator.Emit(OpCodes.Ldtoken, property.PropertyType);
+				generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
+				generator.Emit(OpCodes.Callvirt, __ConvertTo__);
+				*/
+
+				if(property.PropertyType.IsValueType)
+					generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
+				else
+					generator.Emit(OpCodes.Castclass, property.PropertyType);
+
 				generator.Emit(OpCodes.Callvirt, property.SetMethod);
 			}
 

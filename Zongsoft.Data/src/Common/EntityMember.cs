@@ -37,6 +37,7 @@ namespace Zongsoft.Data.Common
 	public struct EntityMember
 	{
 		#region 私有变量
+		private readonly MemberInfo _member;
 		private readonly Action<object, object> _setter;
 		private readonly EntityEmitter.Populator _populate;
 		#endregion
@@ -50,6 +51,8 @@ namespace Zongsoft.Data.Common
 		#region 构造函数
 		public EntityMember(FieldInfo field, TypeConverter converter, EntityEmitter.Populator populate)
 		{
+			_member = field ?? throw new ArgumentNullException(nameof(field));
+
 			this.Name = field.Name;
 			this.Type = field.FieldType;
 			this.Converter = converter;
@@ -60,6 +63,8 @@ namespace Zongsoft.Data.Common
 
 		public EntityMember(PropertyInfo property, TypeConverter converter, EntityEmitter.Populator populate)
 		{
+			_member = property ?? throw new ArgumentNullException(nameof(property));
+
 			this.Name = property.Name;
 			this.Type = property.PropertyType;
 			this.Converter = converter;
@@ -78,6 +83,20 @@ namespace Zongsoft.Data.Common
 		public void SetValue(object entity, object value)
 		{
 			_setter.Invoke(entity, value);
+		}
+		#endregion
+
+		#region 内部方法
+		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(Utility.FromDbType(dbType));
+		internal void EnsureConvertFrom(Type type)
+		{
+			var converter = this.Converter;
+
+			if(converter == null)
+				return;
+
+			if(converter != null && !converter.CanConvertFrom(type))
+				throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
 		}
 		#endregion
 

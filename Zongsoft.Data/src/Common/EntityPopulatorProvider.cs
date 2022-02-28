@@ -123,6 +123,9 @@ namespace Zongsoft.Data.Common
 					}
 				}
 
+				if(entity.Properties.TryGet(member.Name, out var property) && property is IDataEntitySimplexProperty simplex)
+					member.EnsureConvertFrom(simplex.Type);
+
 				tokens.Add(new EntityPopulator.PopulateToken(entity, member, ordinal));
 			}
 		}
