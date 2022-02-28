@@ -47,6 +47,9 @@ namespace Zongsoft.IO
 		#region 公共属性
 		public string Path { get; }
 		public string Url { get; }
+
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsEmpty { get => string.IsNullOrEmpty(this.Path); }
 		#endregion
 
