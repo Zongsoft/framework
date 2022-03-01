@@ -72,7 +72,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 		public struct FailureDetail
 		{
 			public string Field { get; set; }
-			public string Value { get; set; }
+			[JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+			public int Value { get; set; }
 			public string Issue { get; set; }
 			public string Location { get; set; }
 
