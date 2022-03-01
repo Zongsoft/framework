@@ -107,15 +107,15 @@ namespace Zongsoft.Externals.Wechat
 		#region 嵌套结构
 		public readonly struct LoginResult
 		{
-			public LoginResult(string identifier, string secret, string unionId)
+			public LoginResult(string openId, string secret, string unionId)
 			{
-				this.Identifier = identifier;
+				this.OpenId = openId;
 				this.Secret = secret;
 				this.UnionId = unionId;
 			}
 
 			public string Secret { get; }
-			public string Identifier { get; }
+			public string OpenId { get; }
 			public string UnionId { get; }
 		}
 

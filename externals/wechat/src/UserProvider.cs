@@ -69,14 +69,14 @@ namespace Zongsoft.Externals.Wechat
 					(null, Array.Empty<string>());
 		}
 
-		public async ValueTask<OperationResult<UserInfo>> GetInfoAsync(string identifier, CancellationToken cancellation = default)
+		public async ValueTask<OperationResult<UserInfo>> GetInfoAsync(string openId, CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 
 			if(string.IsNullOrEmpty(credential))
 				return default;
 
-			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={identifier}", cancellation);
+			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={openId}", cancellation);
 			var result = await response.GetResultAsync<UserInfoWrapper>(cancellation);
 
 			return result.Succeed ?
@@ -120,7 +120,7 @@ namespace Zongsoft.Externals.Wechat
 
 			[JsonPropertyName("openid")]
 			[Serialization.SerializationMember("openid")]
-			public string Identifier { get; set; }
+			public string OpenId { get; set; }
 
 			[JsonPropertyName("nickname")]
 			[Serialization.SerializationMember("nickname")]
@@ -173,7 +173,7 @@ namespace Zongsoft.Externals.Wechat
 			internal UserInfo(UserInfoWrapper info)
 			{
 				this.Subscription = new SubscriptionInfo(info.SubscribeId, info.SubscribedTime, info.SubscribedScene);
-				this.Identifier = info.Identifier;
+				this.OpenId = info.OpenId;
 				this.Nickname = info.Nickname;
 				this.Language = info.Language;
 				this.Avatar = info.Avatar;
@@ -185,7 +185,7 @@ namespace Zongsoft.Externals.Wechat
 				this.QRCodeSceneDescription = info.QRCodeSceneDescription;
 			}
 
-			public string Identifier { get; }
+			public string OpenId { get; }
 			public string Nickname { get; }
 			public string Language { get; }
 			public string Avatar { get; }

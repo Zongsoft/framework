@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var result = await applet.LoginAsync(token);
-			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.Identifier }) : this.NotFound(result.Failure);
+			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.OpenId }) : this.NotFound(result.Failure);
 		}
 
 		[HttpGet("Phone/{token}")]
@@ -95,7 +95,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			var info = await applet.Users.GetInfoAsync(identifier);
 
 			if(info.Succeed)
-				return string.IsNullOrEmpty(info.Value.Identifier) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
+				return string.IsNullOrEmpty(info.Value.OpenId) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
 
 			return this.NotFound(info.Failure);
 		}

@@ -94,15 +94,16 @@ namespace Zongsoft.Externals.Wechat.Security
 			if(result.Failed)
 				return result.Failure;
 
-			var identifier = result.Value.Identifier;
-			var info = await applet.Users.GetInfoAsync(identifier);
+			var openId = result.Value.OpenId;
+			var unionId = result.Value.UnionId;
+			var info = await applet.Users.GetInfoAsync(openId);
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Identity(applet.Account, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
-					OperationResult.Success(new Identity(applet.Account, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
+					OperationResult.Success(new Identity(applet.Account, openId, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Identity(applet.Account, openId, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
 
-			return OperationResult.Success(new Identity(applet.Account, identifier));
+			return OperationResult.Success(new Identity(applet.Account, openId, unionId));
 		}
 
 		private static async ValueTask<OperationResult<Identity>> GetChannelToken(Channel channel, string code, CancellationToken cancellation = default)
@@ -112,15 +113,16 @@ namespace Zongsoft.Externals.Wechat.Security
 			if(result.Failed)
 				return result.Failure;
 
-			var identifier = result.Value.Identifier;
-			var info = await channel.Users.GetInfoAsync(identifier);
+			var openId = result.Value.OpenId;
+			var unionId = result.Value.UnionId;
+			var info = await channel.Users.GetInfoAsync(openId);
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Identity(channel.Account, identifier, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
-					OperationResult.Success(new Identity(channel.Account, identifier, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
+					OperationResult.Success(new Identity(channel.Account, openId, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Identity(channel.Account, openId, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
 
-			return OperationResult.Success(new Identity(channel.Account, identifier));
+			return OperationResult.Success(new Identity(channel.Account, openId, unionId));
 		}
 
 		private static async ValueTask<string> GetSecretAsync(object data, CancellationToken cancellation = default)
@@ -147,11 +149,11 @@ namespace Zongsoft.Externals.Wechat.Security
 		#region 嵌套结构
 		public struct Identity
 		{
-			public Identity(in Account account, string openId)
+			public Identity(in Account account, string openId, string unionId)
 			{
 				this.Account = account;
 				this.OpenId = openId;
-				this.UnionId = null;
+				this.UnionId = unionId;
 				this.Nickname = null;
 				this.Avatar = null;
 				this.Description = null;

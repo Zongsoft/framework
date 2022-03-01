@@ -113,7 +113,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			var info = await channel.Users.GetInfoAsync(identifier);
 
 			if(info.Succeed)
-				return string.IsNullOrEmpty(info.Value.Identifier) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
+				return string.IsNullOrEmpty(info.Value.OpenId) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
 
 			return this.NotFound(info.Failure);
 		}

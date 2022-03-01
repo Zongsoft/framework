@@ -66,23 +66,25 @@ namespace Zongsoft.Externals.Wechat
 				return (OperationResult)result.Failure;
 
 			var credentialId = Randomizer.GenerateString(16);
-			return OperationResult.Success(new Credential(credentialId, result.Value.Identifier, TimeSpan.FromSeconds(result.Value.Period), result.Value.Permission));
+			return OperationResult.Success(new Credential(credentialId, result.Value.OpenId, result.Value.UnionId, TimeSpan.FromSeconds(result.Value.Period), result.Value.Permission));
 		}
 		#endregion
 
 		#region 嵌套结构
 		public readonly struct Credential
 		{
-			public Credential(string credentialId, string identifier, TimeSpan period, string permission)
+			public Credential(string credentialId, string openId, string unionId, TimeSpan period, string permission)
 			{
 				this.CredentialId = string.IsNullOrEmpty(credentialId) ? Randomizer.GenerateString(16) : credentialId;
-				this.Identifier = identifier;
+				this.OpenId = openId;
+				this.UnionId = unionId;
 				this.Period = period;
 				this.Permission = permission;
 			}
 
 			public readonly string CredentialId { get; }
-			public readonly string Identifier { get; }
+			public readonly string OpenId { get; }
+			public readonly string UnionId { get; }
 			public readonly TimeSpan Period { get; }
 			public readonly string Permission { get; }
 		}
@@ -103,7 +105,11 @@ namespace Zongsoft.Externals.Wechat
 
 			[JsonPropertyName("openid")]
 			[Serialization.SerializationMember("openid")]
-			public string Identifier;
+			public string OpenId;
+
+			[JsonPropertyName("unionid")]
+			[Serialization.SerializationMember("unionid")]
+			public string UnionId;
 
 			[JsonPropertyName("scope")]
 			[Serialization.SerializationMember("scope")]
