@@ -140,6 +140,26 @@ namespace Zongsoft.Externals.Wechat
 					return false;
 			}
 
+			if(index < text.Length - 1)
+			{
+				switch(state)
+				{
+					case State.Type:
+						if(!Enum.TryParse(text.Slice(index + 1).Trim().ToString(), true, out type))
+							return false;
+						break;
+					case State.Code:
+						code = text.Slice(index + 1).ToString();
+						break;
+					case State.Secret:
+						secret = text.Slice(index + 1).ToString();
+						break;
+					case State.Description:
+						description = text.Slice(index + 1).ToString();
+						break;
+				}
+			}
+
 			result = new Account(type, code, secret, description);
 			return true;
 
@@ -150,7 +170,7 @@ namespace Zongsoft.Externals.Wechat
 				if(index < 1)
 					return false;
 
-				return Enum.TryParse<AccountType>(text.Slice(index).Trim().ToString(), true, out type);
+				return Enum.TryParse<AccountType>(text.Slice(0, index).Trim().ToString(), true, out type);
 			}
 		}
 
