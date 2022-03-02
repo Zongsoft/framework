@@ -639,9 +639,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						if(dictionary != null)
 						{
-							dictionary["appid"] = request is DirectRequest directRequest && !string.IsNullOrEmpty(directRequest.AppId) ?
-								directRequest.AppId :
-								this.Service._authority.Accounts?.Default.Code;
+							switch(request)
+							{
+								case DirectRequest directRequest:
+									dictionary["appid"] = directRequest.AppId;
+									break;
+								case DirectTicketRequest ticketRequest:
+									dictionary["appid"] = ticketRequest.AppId;
+									break;
+							}
 						}
 
 						return dictionary;
@@ -657,6 +663,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 					{
+						if(string.IsNullOrEmpty(appId))
+							appId = _authority.Accounts.Default.Code;
+
 						return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), appId, description)
 						{
 							FallbackUrl = this.GetFallback(),
@@ -665,6 +674,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
+						if(string.IsNullOrEmpty(appId))
+							appId = _authority.Accounts.Default.Code;
+
 						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), appId, description)
 						{
 							FallbackUrl = this.GetFallback(),
@@ -866,6 +878,16 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						if(dictionary != null)
 						{
+							switch(request)
+							{
+								case BrokerRequest brokerRequest:
+									dictionary["appid"] = brokerRequest.AppId;
+									break;
+								case BrokerTicketRequest ticketRequest:
+									dictionary["appid"] = ticketRequest.AppId;
+									break;
+							}
+
 							dictionary["sub_mch_id"] = this.Service._subsidiary.Code;
 							dictionary["sub_appid"] = this.Service._subsidiary.Accounts?.Default.Code;
 						}
@@ -885,6 +907,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 					{
+						if(string.IsNullOrEmpty(appId))
+							appId = _master.Accounts.Default.Code;
+
 						return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
 						{
 							FallbackUrl = this.GetFallback(),
@@ -893,6 +918,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
+						if(string.IsNullOrEmpty(appId))
+							appId = _master.Accounts.Default.Code;
+
 						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
 						{
 							FallbackUrl = this.GetFallback(),
