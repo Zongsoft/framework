@@ -55,9 +55,6 @@ namespace Zongsoft.Data
 
 	public interface IDataMutateOptions : IDataOptions
 	{
-		/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
-		bool ConstraintIgnored { get; set; }
-
 		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 		bool ValidatorSuppressed { get; set; }
 	}
@@ -70,15 +67,11 @@ namespace Zongsoft.Data
 		protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
-		public bool ConstraintIgnored { get; set; }
 		public bool ValidatorSuppressed { get; set; }
 	}
 
 	public abstract class DataMutateOptionsBuilder<TOptions> : DataOptionsBuilder<TOptions> where TOptions : IDataMutateOptions
 	{
-		/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
-		public bool ConstraintIgnored { get; set; }
-
 		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 		public bool ValidatorSuppressed { get; set; }
 	}

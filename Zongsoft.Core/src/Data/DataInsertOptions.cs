@@ -37,6 +37,9 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataInsertOptions : IDataMutateOptions
 	{
+		/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
+		bool ConstraintIgnored { get; set; }
+
 		/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
 		bool SequenceSuppressed { get; set; }
 	}
@@ -53,6 +56,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public bool ConstraintIgnored { get; set; }
 		/// <inheritdoc />
 		public bool SequenceSuppressed { get; set; }
 		#endregion
@@ -90,6 +95,9 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
+			public bool ConstraintIgnored { get; set; }
+
 			/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
 			public bool SequenceSuppressed { get; set; }
 			#endregion

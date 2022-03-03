@@ -35,7 +35,14 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据增改操作选项的接口。
 	/// </summary>
-	public interface IDataUpsertOptions : IDataMutateOptions { }
+	public interface IDataUpsertOptions : IDataMutateOptions
+	{
+		/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
+		bool ConstraintIgnored { get; set; }
+
+		/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
+		bool SequenceSuppressed { get; set; }
+	}
 
 	/// <summary>
 	/// 表示数据增改操作选项的类。
@@ -46,6 +53,13 @@ namespace Zongsoft.Data
 		public DataUpsertOptions() { }
 		public DataUpsertOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
+		#endregion
+
+		#region 公共属性
+		/// <inheritdoc />
+		public bool ConstraintIgnored { get; set; }
+		/// <inheritdoc />
+		public bool SequenceSuppressed { get; set; }
 		#endregion
 
 		#region 静态方法
@@ -64,6 +78,10 @@ namespace Zongsoft.Data
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder IgnoreConstraint() => new() { ConstraintIgnored = true };
 
+		/// <summary>创建一个禁用序号器的增改选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressSequence() => new() { SequenceSuppressed = true };
+
 		/// <summary>创建一个禁用数据验证器的增改选项构建器。</summary>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder SuppressValidator() => new() { ValidatorSuppressed = true };
@@ -76,11 +94,21 @@ namespace Zongsoft.Data
 			public Builder(params KeyValuePair<string, object>[] parameters) => this.Parameter(parameters);
 			#endregion
 
+			#region 公共属性
+			/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
+			public bool ConstraintIgnored { get; set; }
+
+			/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
+			public bool SequenceSuppressed { get; set; }
+			#endregion
+
 			#region 设置方法
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder IgnoreConstraint() { this.ConstraintIgnored = true; return this; }
 			public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
+			public Builder SuppressSequence() { this.SequenceSuppressed = true; return this; }
+			public Builder UnsuppressSequence() { this.SequenceSuppressed = false; return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
 			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 			#endregion
@@ -89,6 +117,7 @@ namespace Zongsoft.Data
 			public override DataUpsertOptions Build() => new DataUpsertOptions(this.Parameters)
 			{
 				ConstraintIgnored = this.ConstraintIgnored,
+				SequenceSuppressed = this.SequenceSuppressed,
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};
 			#endregion
