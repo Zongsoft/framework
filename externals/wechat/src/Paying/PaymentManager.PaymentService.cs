@@ -191,8 +191,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public PaymentRequest Create(string appId, string voucher, decimal amount, string payer, string description = null) => this.Create(appId, voucher, amount, null, payer, description);
 				public abstract PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null);
 
-				public PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string ticket, string description = null) => this.Ticket(appId, voucher, amount, null, ticket, description);
-				public abstract PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null);
+				public PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string ticket, string description = null) => this.Ticket(handler, appId, voucher, amount, null, ticket, description);
+				public abstract PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticket, string description = null);
 				internal abstract string GetFallback();
 
 				internal static string GetFallback(string key, string format)
@@ -352,13 +352,26 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public abstract class TicketRequest : PaymentRequest
 				{
 					#region 构造函数
-					protected TicketRequest(string voucher, decimal amount, string ticketId, string description = null) : base(voucher, amount, null, description) => this.TicketId = ticketId;
-					protected TicketRequest(string voucher, decimal amount, string currency, string ticketId, string description = null) : base(voucher, amount, currency, description) => this.TicketId = ticketId;
+					protected TicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticketId, string description = null) : base(voucher, amount, null, description)
+					{
+						this.Handler = handler ?? throw new ArgumentNullException(nameof(handler));
+						this.TicketId = ticketId;
+					}
+
+					protected TicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticketId, string description = null) : base(voucher, amount, currency, description)
+					{
+						this.Handler = handler ?? throw new ArgumentNullException(nameof(handler));
+						this.TicketId = ticketId;
+					}
 					#endregion
 
 					#region 公共属性
 					[JsonPropertyName("auth_code")]
 					public string TicketId { get; set; }
+
+					[JsonIgnore]
+					[Serialization.SerializationMember(Ignored = true)]
+					public PaymentHandlerBase Handler { get; }
 					#endregion
 				}
 				#endregion
@@ -475,7 +488,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			}
 			#endregion
 
-			protected class CompatibilityBase<TService> where TService : PaymentService
+			protected abstract class CompatibilityBase<TService> where TService : PaymentService
 			{
 				#region 成员字段
 				private readonly TService _service;
@@ -490,7 +503,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共方法
-				public ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				public async ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 				{
 					var dictionary = this.GetRequest(request, scenario);
 
@@ -501,22 +514,30 @@ namespace Zongsoft.Externals.Wechat.Paying
 						@"https://api.mch.weixin.qq.com/pay/micropay" :
 						@"https://api.mch.weixin.qq.com/pay/unifiedorder";
 
-					return this.PayAsync(url, dictionary, cancellation);
+					var response = await HttpClientFactory.Xml.Client.PostAsync(url, dictionary.CreateXmlContent(), cancellation);
+					var content = await response.GetXmlContentAsync(cancellation);
+
+					if(content == null || !content.TryGetValue("transaction_id", out var id) || id == null)
+						return OperationResult.Fail(content.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", content.TryGetValue("return_msg", out var message) ? message : null);
+
+					//注意：因为微信的支付码（含刷脸）支付是无回调，因此必须立即进行支付完成处理
+					if(request is PaymentRequest.TicketRequest ticketRequest)
+					{
+						//将返回的数据组装成支付单实体
+						var order = this.GetOrder(content);
+
+						//从后台线程中进行支付回调处理
+						ThreadPool.QueueUserWorkItem(async state =>
+							await state.Handler.HandleAsync(state.Order.Merchant.Identifier, state.Order, CancellationToken.None),
+							(ticketRequest.Handler, Order:order),
+							false);
+					}
+
+					return OperationResult.Success((id, content["openid"]));
 				}
+				#endregion
 
-				private async ValueTask<OperationResult<(string identifier, string payer)>> PayAsync(string url, IDictionary<string, object> data, CancellationToken cancellation = default)
-				{
-					if(!data.ContainsKey("sign"))
-						data.TryAdd("sign", Utility.Postmark(data, _service._authority.Secret));
-
-					var response = await HttpClientFactory.Xml.Client.PostAsync(url, data.CreateXmlContent(), cancellation);
-					var result = await response.GetXmlContentAsync(cancellation);
-
-					return result != null && result.TryGetValue("transaction_id", out var id) && id != null ?
-						OperationResult.Success((id, result["openid"])) :
-						OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
-				}
-
+				#region 虚拟方法
 				protected virtual IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
 				{
 					var dictionary = new SortedDictionary<string, object>
@@ -548,6 +569,49 @@ namespace Zongsoft.Externals.Wechat.Paying
 					}
 
 					return dictionary;
+				}
+
+				protected abstract PaymentOrder CreateOrder(IDictionary<string, string> data);
+				#endregion
+
+				#region 私有方法
+				private PaymentOrder GetOrder(IDictionary<string, string> data)
+				{
+					var order = this.CreateOrder(data);
+					if(order == null)
+						return null;
+
+					if(data.TryGetValue("transaction_id", out var id))
+						order.SerialId = id;
+					if(data.TryGetValue("trade_type", out var kind))
+						order.Kind = kind;
+					if(data.TryGetValue("bank_type", out var bankType))
+						order.BankType = bankType;
+					if(data.TryGetValue("out_trade_no", out var voucherCode))
+						order.VoucherCode = voucherCode;
+					if(data.TryGetValue("attach", out var extra))
+						order.Extra = extra;
+					if(data.TryGetValue("time_end", out var finalTime) && DateTime.TryParseExact(finalTime, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var paidTime))
+						order.PaidTime = paidTime;
+					if(data.TryGetValue("result_code", out var status))
+						order.Status = status;
+					if(data.TryGetValue("err_code", out var errCode))
+						order.StatusDescription = data.TryGetValue("err_code_des", out var errMessage) ? $"[{errCode}]{errMessage}" : errCode;
+
+					if(data.TryGetValue("total_fee", out var total))
+					{
+						data.TryGetValue("fee_type", out var currency);
+						data.TryGetValue("cash_fee", out var cash);
+
+						order.Amount = new PaymentOrder.AmountInfo()
+						{
+							Value = int.TryParse(total, out var totalValue) ? totalValue : 0,
+							PaidValue = int.TryParse(cash, out var cashValue) ? cashValue : 0,
+							Currency = currency,
+						};
+					}
+
+					return order;
 				}
 				#endregion
 			}
@@ -652,6 +716,20 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						return dictionary;
 					}
+
+					protected override PaymentOrder CreateOrder(IDictionary<string, string> data)
+					{
+						var order = new DirectOrder();
+
+						if(data.TryGetValue("mch_id", out var value) && uint.TryParse(value, out var merchantId))
+							order.MerchantId = merchantId;
+						if(data.TryGetValue("appid", out var appId))
+							order.AppId = appId;
+						if(data.TryGetValue("openid", out var openId))
+							order.Payer = new DirectOrder.PayerInfo(openId);
+
+						return order;
+					}
 				}
 
 				private sealed class DirectBuilder : RequestBuilder
@@ -672,12 +750,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 						};
 					}
 
-					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
+					public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
 						if(string.IsNullOrEmpty(appId))
 							appId = _authority.Accounts.Default.Code;
 
-						return new DirectTicketRequest(voucher, amount, currency, ticket, uint.Parse(_authority.Code), appId, description)
+						return new DirectTicketRequest(handler, voucher, amount, currency, ticket, uint.Parse(_authority.Code), appId, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};
@@ -724,8 +802,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public sealed class DirectTicketRequest : PaymentRequest.TicketRequest
 				{
 					#region 构造函数
-					internal DirectTicketRequest(string voucher, decimal amount, string ticket, uint merchantId, string appId, string description = null) : this(voucher, amount, null, ticket, merchantId, appId, description) { }
-					internal DirectTicketRequest(string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, string description = null) : base(voucher, amount, currency, ticket, description)
+					internal DirectTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticket, uint merchantId, string appId, string description = null) : this(handler, voucher, amount, null, ticket, merchantId, appId, description) { }
+					internal DirectTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, string description = null) : base(handler, voucher, amount, currency, ticket, description)
 					{
 						this.MerchantId = merchantId;
 						this.AppId = appId;
@@ -894,6 +972,29 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 						return dictionary;
 					}
+
+					protected override PaymentOrder CreateOrder(IDictionary<string, string> data)
+					{
+						var order = new BrokerOrder();
+
+						if(data.TryGetValue("mch_id", out var value) && uint.TryParse(value, out var merchantId))
+							order.MerchantId = merchantId;
+						if(data.TryGetValue("sub_mch_id", out value) && uint.TryParse(value, out var subMerchantId))
+							order.SubMerchantId = subMerchantId;
+						if(data.TryGetValue("appid", out var appId))
+							order.AppId = appId;
+						if(data.TryGetValue("sub_appid", out var subAppId))
+							order.SubAppId = subAppId;
+						if(data.TryGetValue("openid", out var openId))
+						{
+							if(data.TryGetValue("sub_openid", out var subOpenId))
+								order.Payer = new BrokerOrder.PayerInfo(openId, subOpenId);
+							else
+								order.Payer = new BrokerOrder.PayerInfo(openId, null);
+						}
+
+						return order;
+					}
 				}
 
 				private sealed class BrokerBuilder : RequestBuilder
@@ -916,12 +1017,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 						};
 					}
 
-					public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
+					public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticket, string description = null)
 					{
 						if(string.IsNullOrEmpty(appId))
 							appId = _master.Accounts.Default.Code;
 
-						return new BrokerTicketRequest(voucher, amount, currency, ticket, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
+						return new BrokerTicketRequest(handler, voucher, amount, currency, ticket, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
 						{
 							FallbackUrl = this.GetFallback(),
 						};
@@ -994,8 +1095,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public sealed class BrokerTicketRequest : PaymentRequest.TicketRequest
 				{
 					#region 构造函数
-					internal BrokerTicketRequest(string voucher, decimal amount, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : this(voucher, amount, null, ticket, merchantId, appId, subMerchantId, subAppId, description) { }
-					internal BrokerTicketRequest(string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : base(voucher, amount, currency, ticket, description)
+					internal BrokerTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : this(handler, voucher, amount, null, ticket, merchantId, appId, subMerchantId, subAppId, description) { }
+					internal BrokerTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : base(handler, voucher, amount, currency, ticket, description)
 					{
 						this.MerchantId = merchantId;
 						this.AppId = appId;
@@ -1051,6 +1152,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 					#region 嵌套结构
 					public struct PayerInfo
 					{
+						public PayerInfo(string openId, string subOpenId = null)
+						{
+							this.OpenId = openId;
+							this.SubOpenId = subOpenId;
+						}
+
 						[JsonPropertyName("sp_openid")]
 						public string OpenId { get; set; }
 

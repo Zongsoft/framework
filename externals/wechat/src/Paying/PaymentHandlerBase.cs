@@ -79,6 +79,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			return ValueTask.FromResult(OperationResult.Fail());
 		}
+
+		internal ValueTask<OperationResult> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder request, CancellationToken cancellation = default) => this.OnHandleAsync(caller, request, cancellation);
 		#endregion
 
 		#region 抽象方法

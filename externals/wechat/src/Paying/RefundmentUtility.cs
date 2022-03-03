@@ -36,6 +36,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		public static RefundmentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
 		{
+			"FAIL" => RefundmentStatus.Failed,
 			"ABNORMAL" => RefundmentStatus.Failed,
 			"SUCCESS" => RefundmentStatus.Succeed,
 			"CLOSED" => RefundmentStatus.Cancelled,

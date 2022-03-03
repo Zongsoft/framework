@@ -47,6 +47,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		public static PaymentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
 		{
+			"FAIL" => PaymentStatus.Failed,
 			"NOTPAY" => PaymentStatus.None,
 			"SUCCESS" => PaymentStatus.Succeed,
 			"REFUND" => PaymentStatus.Refund,
