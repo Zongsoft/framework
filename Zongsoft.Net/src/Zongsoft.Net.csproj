@@ -1,30 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<Company>Zongsoft Studio</Company>
+		<Version>5.1.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Product>Zongsoft Net Library</Product>
-		<Copyright>Copyright(C) Zongsoft Studio 2018-2020. All rights reserved.</Copyright>
-		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Net</PackageProjectUrl>
+		<Copyright>Copyright(C) Zongsoft Studio 2018-2022. All rights reserved.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageLicenseExpression>http://www.gnu.org/licenses/agpl-3.0.txt</PackageLicenseExpression>
-		<AssemblyVersion>1.0.2020.0</AssemblyVersion>
-		<FileVersion>1.0.2020.0</FileVersion>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<PackageIconUrl>..\..\..\Guidelines\zongsoft-logo(48x48).png</PackageIconUrl>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DocumentationFile></DocumentationFile>
 	</PropertyGroup>
+
 	<ItemGroup>
 		<None Remove="Zongsoft.Net.xml" />
 	</ItemGroup>
+
 	<ItemGroup>
 	  <PackageReference Include="Pipelines.Sockets.Unofficial" Version="2.2.0" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
+
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
 			<DesignTime>True</DesignTime>
@@ -32,6 +40,7 @@
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>
+
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">
 			<Generator>ResXFileCodeGenerator</Generator>

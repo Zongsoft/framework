@@ -1,22 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Version>5.1.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Plugins Web Development Library</Product>
+		<Description>This is a framework about plugin web application development.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<PackageIconUrl>..\..\..\Guidelines\zongsoft-logo(48x48).png</PackageIconUrl>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Zongsoft.Core">
-      <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Zongsoft.Plugins">
-      <HintPath>..\..\Zongsoft.Plugins\src\bin\$(Configuration)\net5.0\Zongsoft.Plugins.dll</HintPath>
-    </Reference>
-    <Reference Include="Zongsoft.Web">
-      <HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Web.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Plugins">
+			<HintPath>..\..\Zongsoft.Plugins\src\bin\$(Configuration)\net5.0\Zongsoft.Plugins.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web">
+			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Web.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 </Project>

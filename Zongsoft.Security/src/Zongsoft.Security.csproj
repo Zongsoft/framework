@@ -1,37 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Version>5.1.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Security Library</Product>
+		<Description>This is a class library about security development.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
+		<RootNamespace>Zongsoft.Security</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<PackageIconUrl>..\..\..\Guidelines\zongsoft-logo(48x48).png</PackageIconUrl>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="api\**" />
-    <EmbeddedResource Remove="api\**" />
-    <None Remove="api\**" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>D:\Zongsoft\Framework\Zongsoft.Plugins\src\Zongsoft.Plugins.xml</DocumentationFile>
+		<NoWarn>1701;1702;1591</NoWarn>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Reference Include="Zongsoft.Core">
-      <HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Zongsoft.Security.xml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="api\**" />
+		<EmbeddedResource Remove="api\**" />
+		<None Remove="api\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
 </Project>

@@ -359,3 +359,10 @@ externals/grapecity/src/api/Properties/launchSettings.json
 externals/grapecity/.gclicx
 Zongsoft.Messaging.Mqtt/src/Zongsoft.Messaging.Mqtt.xml
 hosting/terminal/[Tt]erminal.lnk
+externals/aliyun/src/Zongsoft.Externals.Aliyun.xml
+externals/grapecity/src/Zongsoft.Externals.Grapecity.xml
+externals/redis/src/Zongsoft.Externals.Redis.xml
+externals/wechat/src/api/Zongsoft.Externals.Wechat.xml
+externals/wechat/src/daemon/Zongsoft.Externals.Wechat.xml
+externals/wechat/src/Zongsoft.Externals.Wechat.xml
+Zongsoft.Web/src/Zongsoft.Web.xml
