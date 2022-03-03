@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var result = await applet.LoginAsync(token);
-			return result.Succeed ? this.Ok(new { Applet = applet.Account.Code, result.Value.OpenId }) : this.NotFound(result.Failure);
+			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
 		}
 
 		[HttpGet("Phone/{token}")]
