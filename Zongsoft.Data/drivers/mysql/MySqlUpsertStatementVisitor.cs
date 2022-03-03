@@ -52,7 +52,11 @@ namespace Zongsoft.Data.MySql
 
 			var index = 0;
 
-			context.Write("INSERT INTO ");
+			if(statement.Options.ConstraintIgnored)
+				context.Write("INSERT IGNORE INTO ");
+			else
+				context.Write("INSERT INTO ");
+
 			context.Write(context.Dialect.GetIdentifier(statement.Table));
 			context.Write(" (");
 

@@ -44,21 +44,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取一个表标识的集合，表示要修改的表。
-		/// </summary>
-		public IList<TableIdentifier> Tables
-		{
-			get;
-		}
+		/// <summary>获取一个表标识的集合，表示要修改的表。</summary>
+		public IList<TableIdentifier> Tables { get; }
 
-		/// <summary>
-		/// 获取更新字段/值的集合。
-		/// </summary>
-		public ICollection<FieldValue> Fields
-		{
-			get;
-		}
+		/// <summary>获取更新字段/值的集合。</summary>
+		public ICollection<FieldValue> Fields { get; }
 		#endregion
 	}
 }

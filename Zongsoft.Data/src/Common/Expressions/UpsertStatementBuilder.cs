@@ -71,6 +71,9 @@ namespace Zongsoft.Data.Common.Expressions
 				var statement = new UpsertStatement(inherit, owner);
 				var sequences = new List<IDataEntitySimplexProperty>();
 
+				if(context is DataUpsertContextBase ctx)
+					statement.Options.Apply(ctx.Options);
+
 				foreach(var schema in schemas)
 				{
 					if(!inherit.Properties.Contains(schema.Name))

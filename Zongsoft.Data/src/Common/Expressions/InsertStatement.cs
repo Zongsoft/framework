@@ -42,34 +42,46 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Schema = schema;
 			this.Fields = new List<FieldIdentifier>();
 			this.Values = new List<IExpression>();
+			this.Options = new InsertStatementOptions();
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取插入语句对应的序号字段值（如果有的话）的查询语句。
-		/// </summary>
+		/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
 		public SelectStatement Sequence { get; set; }
 
-		/// <summary>
-		/// 获取或设置插入语句对应的模式成员。
-		/// </summary>
+		/// <summary>获取或设置插入语句对应的模式成员。</summary>
 		public SchemaMember Schema { get; set; }
 
-		/// <summary>
-		/// 获取新增或更新字段集合。
-		/// </summary>
+		/// <summary>获取新增或更新字段集合。</summary>
 		public IList<FieldIdentifier> Fields { get; }
 
-		/// <summary>
-		/// 获取新增或更新字段值集合。
-		/// </summary>
+		/// <summary>获取新增或更新字段值集合。</summary>
 		public IList<IExpression> Values { get; }
 
-		/// <summary>
-		/// 获取或设置输出子句。
-		/// </summary>
+		/// <summary>获取或设置输出子句。</summary>
 		public ReturningClause Returning { get; set; }
+
+		/// <summary>获取插入语句的选项。</summary>
+		public InsertStatementOptions Options { get; }
+		#endregion
+	}
+
+	public class InsertStatementOptions
+	{
+		#region 公共属性
+		/// <summary>获取或设置一个值，指示是否忽略插入数据导致的数据库约束（主键、唯一索引、外键约束等）冲突。</summary>
+		public bool ConstraintIgnored { get; set; }
+		#endregion
+
+		#region 公共方法
+		public void Apply(IDataInsertOptions options)
+		{
+			if(options == null)
+				return;
+
+			this.ConstraintIgnored = options.ConstraintIgnored;
+		}
 		#endregion
 	}
 }

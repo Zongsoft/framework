@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,6 +43,16 @@ namespace Zongsoft.Data.MySql
 
 		#region 构造函数
 		private MySqlInsertStatementVisitor() { }
+		#endregion
+
+		#region 重写方法
+		protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
+		{
+			if(statement.Options.ConstraintIgnored)
+				context.Write("INSERT IGNORE INTO ");
+			else
+				context.Write("INSERT INTO ");
+		}
 		#endregion
 	}
 }

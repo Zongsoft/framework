@@ -42,6 +42,7 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Fields = new List<FieldIdentifier>();
 			this.Values = new List<IExpression>();
 			this.Updation = new List<FieldValue>();
+			this.Options = new UpsertStatementOptions();
 		}
 		#endregion
 
@@ -57,6 +58,27 @@ namespace Zongsoft.Data.Common.Expressions
 
 		/// <summary>获取更新字段/值的集合。</summary>
 		public ICollection<FieldValue> Updation { get; }
+
+		/// <summary>获取插入语句的选项。</summary>
+		public UpsertStatementOptions Options { get; }
+		#endregion
+	}
+
+	public class UpsertStatementOptions
+	{
+		#region 公共属性
+		/// <summary>获取或设置一个值，指示是否忽略插入数据导致的数据库约束（主键、唯一索引、外键约束等）冲突。</summary>
+		public bool ConstraintIgnored { get; set; }
+		#endregion
+
+		#region 公共方法
+		public void Apply(IDataUpsertOptions options)
+		{
+			if(options == null)
+				return;
+
+			this.ConstraintIgnored = options.ConstraintIgnored;
+		}
 		#endregion
 	}
 }

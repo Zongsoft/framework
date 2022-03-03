@@ -52,6 +52,9 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				var statement = new InsertStatement(inherit, owner);
 
+				if(context is DataInsertContextBase ctx)
+					statement.Options.Apply(ctx.Options);
+
 				foreach(var schema in schemas)
 				{
 					if(!inherit.Properties.Contains(schema.Name))

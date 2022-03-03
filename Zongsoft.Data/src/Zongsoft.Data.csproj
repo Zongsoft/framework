@@ -1,19 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<PackageIcon>zongsoft-logo(48x48).png</PackageIcon>
-		<PackageIconUrl></PackageIconUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-		<Authors>Popeye Zhong</Authors>
+		<Version>5.1.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Data Library</Product>
 		<Description>This is an Object/Relational Mapping(ORM) data engine.</Description>
-		<Copyright>Copyright(C) Zongsoft Studio 2010-2020. All rights reserved.</Copyright>
-		<PackageLicenseExpression>http://www.gnu.org/licenses/gpl-3.0.html</PackageLicenseExpression>
-		<ApplicationIcon></ApplicationIcon>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Data</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<PackageIconUrl>..\..\..\Guidelines\zongsoft-logo(48x48).png</PackageIconUrl>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
