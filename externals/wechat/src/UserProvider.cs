@@ -77,10 +77,10 @@ namespace Zongsoft.Externals.Wechat
 				return default;
 
 			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={openId}", cancellation);
-			var result = await response.GetResultAsync<UserInfoWrapper>(cancellation);
+			var result = await response.GetResultAsync<UserInfoResult>(cancellation);
 
 			return result.Succeed ?
-					OperationResult.Success(new UserInfo(result.Value)) :
+					OperationResult.Success(result.Value.ToInfo()) :
 					(OperationResult)result.Failure;
 		}
 		#endregion
@@ -112,8 +112,9 @@ namespace Zongsoft.Externals.Wechat
 			}
 		}
 
-		internal struct UserInfoWrapper
+		private struct UserInfoResult
 		{
+			#region 公共属性
 			[JsonPropertyName("subscribe")]
 			[Serialization.SerializationMember("subscribe")]
 			public int SubscribeId { get; set; }
@@ -165,38 +166,40 @@ namespace Zongsoft.Externals.Wechat
 			[JsonPropertyName("qr_scene_str")]
 			[Serialization.SerializationMember("qr_scene_str")]
 			public string QRCodeSceneDescription { get; set; }
+			#endregion
 
+			#region 公共方法
+			public UserInfo ToInfo() => new UserInfo()
+			{
+				Subscription = new UserInfo.SubscriptionInfo(this.SubscribeId, this.SubscribedTime, this.SubscribedScene),
+				OpenId = this.OpenId,
+				Nickname = this.Nickname,
+				Language = this.Language,
+				Avatar = this.Avatar,
+				UnionId = this.UnionId,
+				GroupId = this.GroupId,
+				Tags = this.Tags,
+				Description = this.Description,
+				QRCodeScene = this.QRCodeScene,
+				QRCodeSceneDescription = this.QRCodeSceneDescription,
+			};
+			#endregion
 		}
 
 		public struct UserInfo
 		{
-			internal UserInfo(UserInfoWrapper info)
-			{
-				this.Subscription = new SubscriptionInfo(info.SubscribeId, info.SubscribedTime, info.SubscribedScene);
-				this.OpenId = info.OpenId;
-				this.Nickname = info.Nickname;
-				this.Language = info.Language;
-				this.Avatar = info.Avatar;
-				this.UnionId = info.UnionId;
-				this.GroupId = info.GroupId;
-				this.Tags = info.Tags;
-				this.Description = info.Description;
-				this.QRCodeScene = info.QRCodeScene;
-				this.QRCodeSceneDescription = info.QRCodeSceneDescription;
-			}
+			public string OpenId { get; init; }
+			public string Nickname { get; init; }
+			public string Language { get; init; }
+			public string Avatar { get; init; }
+			public string UnionId { get; init; }
+			public int GroupId { get; init; }
+			public uint[] Tags { get; init; }
+			public SubscriptionInfo Subscription { get; init; }
+			public string Description { get; init; }
 
-			public string OpenId { get; }
-			public string Nickname { get; }
-			public string Language { get; }
-			public string Avatar { get; }
-			public string UnionId { get; }
-			public int GroupId { get; }
-			public uint[] Tags { get; }
-			public SubscriptionInfo Subscription { get; }
-			public string Description { get; }
-
-			public int QRCodeScene { get; }
-			public string QRCodeSceneDescription { get; }
+			public int QRCodeScene { get; init; }
+			public string QRCodeSceneDescription { get; init; }
 
 			public struct SubscriptionInfo
 			{
