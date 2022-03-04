@@ -61,7 +61,8 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 公共属性
-		public int Count { get => _dictionary.Count; }
+		public int Count { get => _dictionary == null ? 0 : _dictionary.Count; }
+		public bool IsEmpty { get => _dictionary == null || _dictionary.Count == 0; }
 		public object this[string name]
 		{
 			get => _dictionary?[name];
