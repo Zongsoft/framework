@@ -72,7 +72,7 @@ namespace Zongsoft.Externals.Wechat.Daemon
 						cancellation);
 
 				Type requestType = _cache.GetOrAdd(handler.GetType(), type => GetHandlerRequestType(type));
-				if(requestType == null)
+				if(requestType == null || requestType == typeof(Stream) || requestType == typeof(object))
 					return await handler.HandleAsync(key, context.Request.Body, cancellation);
 
 				object request = null;

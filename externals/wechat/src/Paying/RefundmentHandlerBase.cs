@@ -28,27 +28,16 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Collections.Generic;
-
-using Zongsoft.Common;
-using Zongsoft.Services;
-using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder>
+	public abstract class RefundmentHandlerBase : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder>
 	{
-		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
-
-		internal ValueTask<OperationResult> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder order, CancellationToken cancellation = default) => this.OnHandleAsync(caller, order, cancellation);
+		protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
 		protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
-			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
+			string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+			typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
+			typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
 	}
 }

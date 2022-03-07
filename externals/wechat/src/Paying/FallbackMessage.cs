@@ -28,27 +28,43 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Collections.Generic;
-
-using Zongsoft.Common;
-using Zongsoft.Services;
-using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
-	public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder>
+	public class FallbackMessage
 	{
-		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+		[JsonPropertyName("id")]
+		public string Identifier { get; set; }
 
-		internal ValueTask<OperationResult> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder order, CancellationToken cancellation = default) => this.OnHandleAsync(caller, order, cancellation);
+		[JsonPropertyName("create_time")]
+		public DateTime Timestamp { get; set; }
 
-		protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
-			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
+		[JsonPropertyName("event_type")]
+		public string Status { get; set; }
+
+		[JsonPropertyName("summary")]
+		public string Description { get; set; }
+
+		[JsonPropertyName("resource_type")]
+		public string ResourceType { get; set; }
+
+		[JsonPropertyName("resource")]
+		public ResourceInfo Resource { get; set; }
+
+		public struct ResourceInfo
+		{
+			[JsonPropertyName("original_type")]
+			public string Source { get; set; }
+			[JsonPropertyName("algorithm")]
+			public string Algorithm { get; set; }
+			[JsonPropertyName("nonce")]
+			public string Nonce { get; set; }
+			[JsonPropertyName("associated_data")]
+			public string AssociatedData { get; set; }
+			[JsonPropertyName("ciphertext")]
+			public string Ciphertext { get; set; }
+		}
 	}
 }
