@@ -1004,7 +1004,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
 
-					internal override string GetFallback() => GetFallback(_master.Name, FORMAT);
+					internal override string GetFallback() => GetFallback(_master.Code, FORMAT);
 
 					public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 					{
