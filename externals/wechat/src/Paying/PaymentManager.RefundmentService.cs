@@ -101,7 +101,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(string.IsNullOrWhiteSpace(url))
 						return null;
 
-					return string.Format(url, "refund", string.IsNullOrEmpty(format) ? key : $"{key}:{format}");
+					return string.Format(url, "refundment", string.IsNullOrEmpty(format) ? key : $"{key}:{format}");
 				}
 			}
 
@@ -194,6 +194,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			public class RefundmentOrder
 			{
+				#region 成员字段
+				private string _status;
+				#endregion
+
 				#region 构造函数
 				public RefundmentOrder() { }
 				#endregion
@@ -221,7 +225,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public string Channel { get; set; }
 
 				[JsonPropertyName("status")]
-				public string Status { get; set; }
+				public string Status { get => string.IsNullOrEmpty(_status) ? this.RefundStatus : _status; set => _status = value; }
+
+				[JsonPropertyName("refund_status")]
+				public string RefundStatus { get; set; }
 
 				[JsonPropertyName("create_time")]
 				public DateTime CreatedTime { get; set; }
@@ -410,6 +417,22 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public uint MerchantId { get; set; }
 					#endregion
 				}
+
+				public sealed class DirectOrder : RefundmentOrder
+				{
+					#region 重写属性
+					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("appid")]
+					public string AppId { get; set; }
+					#endregion
+				}
 				#endregion
 			}
 
@@ -468,7 +491,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						return new BrokerRequest(paymentKey, voucher, amount, paidAmount, currency, uint.Parse(_subsidiary.Code), description)
 						{
-							FallbackUrl = GetFallback(_master.Name, FORMAT),
+							FallbackUrl = GetFallback(_master.Code, FORMAT),
 						};
 					}
 				}
@@ -487,6 +510,30 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("sub_mchid")]
 					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
 					public uint MerchantId { get; set; }
+					#endregion
+				}
+
+				public sealed class BrokerOrder : RefundmentOrder
+				{
+					#region 重写属性
+					public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
+					public override AuthorityToken? Subsidiary { get => new AuthorityToken(this.SubMerchantId.ToString(), this.SubAppId); }
+					#endregion
+
+					#region 公共属性
+					[JsonPropertyName("sp_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+
+					[JsonPropertyName("sp_appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("sub_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint SubMerchantId { get; set; }
+
+					[JsonPropertyName("sub_appid")]
+					public string SubAppId { get; set; }
 					#endregion
 				}
 				#endregion
