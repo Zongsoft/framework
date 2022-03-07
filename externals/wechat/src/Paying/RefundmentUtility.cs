@@ -39,6 +39,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			"FAIL" => RefundmentStatus.Failed,
 			"ABNORMAL" => RefundmentStatus.Failed,
 			"SUCCESS" => RefundmentStatus.Succeed,
+			"CLOSE" => RefundmentStatus.Cancelled,
 			"CLOSED" => RefundmentStatus.Cancelled,
 			"PROCESSING" => RefundmentStatus.Processing,
 			_ => RefundmentStatus.Processing,
