@@ -114,7 +114,7 @@ namespace Zongsoft.Externals.Wechat.Security
 				return result.Failure;
 
 			var openId = result.Value.OpenId;
-			var unionId = string.IsNullOrEmpty(result.Value.UnionId) ? result.Value.User.UnionId : result.Value.OpenId;
+			var unionId = string.IsNullOrEmpty(result.Value.UnionId) ? result.Value.User.OpenId : result.Value.UnionId;
 
 			return string.IsNullOrEmpty(unionId) ?
 				OperationResult.Success(new Identity(channel.Account, openId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description)) :
