@@ -37,6 +37,6 @@ namespace Zongsoft.Externals.Wechat
 		string Code { get; }
 		string Secret { get; }
 		Certificate Certificate { get; }
-		public AccountCollection Accounts { get; }
+		AccountCollection Accounts { get; }
 	}
 }
