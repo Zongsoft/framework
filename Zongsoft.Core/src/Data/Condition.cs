@@ -428,7 +428,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 符号重写
-		public static ConditionCollection operator &(Condition a, Condition b)
+		public static ConditionCollection operator &(ICondition a, Condition b) => And(a, b);
+		public static ConditionCollection operator |(ICondition a, Condition b) => Or(a, b);
+
+		private static ConditionCollection And(ICondition a, ICondition b)
 		{
 			if(a == null)
 			{
@@ -446,7 +449,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public static ConditionCollection operator |(Condition a, Condition b)
+		private static ConditionCollection Or(ICondition a, ICondition b)
 		{
 			if(a == null)
 			{
@@ -529,10 +532,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private bool IsNull(object value)
-		{
-			return value == null || System.Convert.IsDBNull(value);
-		}
+		private bool IsNull(object value) => value == null || System.Convert.IsDBNull(value);
 
 		private string GetValueText(object value)
 		{
@@ -580,20 +580,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 显式实现
-		bool ICondition.Contains(string name)
-		{
-			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase);
-		}
-
-		Condition ICondition.Find(string name)
-		{
-			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? this : null;
-		}
-
-		Condition[] ICondition.FindAll(string name)
-		{
-			return this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? new[] { this } : Array.Empty<Condition>();
-		}
+		bool ICondition.Contains(string name) => this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase);
+		Condition ICondition.Find(string name) => this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? this : null;
+		Condition[] ICondition.FindAll(string name) => this.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase) ? new[] { this } : Array.Empty<Condition>();
 
 		bool ICondition.Match(string name, Action<Condition> matched)
 		{
@@ -622,228 +611,56 @@ namespace Zongsoft.Data
 		public class Builder<T>
 		{
 			#region 构造函数
-			protected Builder()
-			{
-			}
+			protected Builder() { }
 			#endregion
 
 			#region 文本版本
-			public static Condition Equal(string name, object value)
-			{
-				return Condition.Equal(name, value);
-			}
-
-			public static Condition Equal(string name, Operand value)
-			{
-				return Condition.Equal(name, value);
-			}
-
-			public static Condition Equal(Operand field, Operand value)
-			{
-				return Condition.Equal(field, value);
-			}
-
-			public static Condition NotEqual(string name, object value)
-			{
-				return Condition.NotEqual(name, value);
-			}
-
-			public static Condition NotEqual(string name, Operand value)
-			{
-				return Condition.NotEqual(name, value);
-			}
-
-			public static Condition NotEqual(Operand field, Operand value)
-			{
-				return Condition.NotEqual(field, value);
-			}
-
-			public static Condition GreaterThan(string name, object value)
-			{
-				return Condition.GreaterThan(name, value);
-			}
-
-			public static Condition GreaterThan(string name, Operand value)
-			{
-				return Condition.GreaterThan(name, value);
-			}
-
-			public static Condition GreaterThan(Operand field, Operand value)
-			{
-				return Condition.GreaterThan(field, value);
-			}
-
-			public static Condition GreaterThanEqual(string name, object value)
-			{
-				return Condition.GreaterThanEqual(name, value);
-			}
-
-			public static Condition GreaterThanEqual(string name, Operand value)
-			{
-				return Condition.GreaterThanEqual(name, value);
-			}
-
-			public static Condition GreaterThanEqual(Operand field, Operand value)
-			{
-				return Condition.GreaterThanEqual(field, value);
-			}
-
-			public static Condition LessThan(string name, object value)
-			{
-				return Condition.LessThan(name, value);
-			}
-
-			public static Condition LessThan(string name, Operand value)
-			{
-				return Condition.LessThan(name, value);
-			}
-
-			public static Condition LessThan(Operand field, Operand value)
-			{
-				return Condition.LessThan(field, value);
-			}
-
-			public static Condition LessThanEqual(string name, object value)
-			{
-				return Condition.LessThanEqual(name, value);
-			}
-
-			public static Condition LessThanEqual(string name, Operand value)
-			{
-				return Condition.LessThanEqual(name, value);
-			}
-
-			public static Condition LessThanEqual(Operand field, Operand value)
-			{
-				return Condition.LessThanEqual(field, value);
-			}
-
-			public static Condition Like(string name, string value)
-			{
-				return Condition.Like(name, value);
-			}
-
-			public static Condition Like(Operand field, string value)
-			{
-				return Condition.Like(field, value);
-			}
-
-			public static Condition Between<TValue>(string name, Range<TValue> range) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between<TValue>(name, range);
-			}
-
-			public static Condition Between<TValue>(string name, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between<TValue>(name, minimum, maximum);
-			}
-
-			public static Condition Between<TValue>(string name, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between<TValue>(name, minimum, maximum);
-			}
-
-			public static Condition In<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue>
-			{
-				return Condition.In<TValue>(name, values);
-			}
-
-			public static Condition In<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue>
-			{
-				return Condition.In<TValue>(name, values);
-			}
-
-			public static Condition NotIn<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue>
-			{
-				return Condition.NotIn<TValue>(name, values);
-			}
-
-			public static Condition NotIn<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue>
-			{
-				return Condition.NotIn<TValue>(name, values);
-			}
-
-			public static Condition Exists(string name, ICondition filter = null)
-			{
-				return Condition.Exists(name, filter);
-			}
-
-			public static Condition NotExists(string name, ICondition filter = null)
-			{
-				return Condition.NotExists(name, filter);
-			}
+			public static Condition Equal(string name, object value) => Condition.Equal(name, value);
+			public static Condition Equal(string name, Operand value) => Condition.Equal(name, value);
+			public static Condition Equal(Operand field, Operand value) => Condition.Equal(field, value);
+			public static Condition NotEqual(string name, object value) => Condition.NotEqual(name, value);
+			public static Condition NotEqual(string name, Operand value) => Condition.NotEqual(name, value);
+			public static Condition NotEqual(Operand field, Operand value) => Condition.NotEqual(field, value);
+			public static Condition GreaterThan(string name, object value) => Condition.GreaterThan(name, value);
+			public static Condition GreaterThan(string name, Operand value) => Condition.GreaterThan(name, value);
+			public static Condition GreaterThan(Operand field, Operand value) => Condition.GreaterThan(field, value);
+			public static Condition GreaterThanEqual(string name, object value) => Condition.GreaterThanEqual(name, value);
+			public static Condition GreaterThanEqual(string name, Operand value) => Condition.GreaterThanEqual(name, value);
+			public static Condition GreaterThanEqual(Operand field, Operand value) => Condition.GreaterThanEqual(field, value);
+			public static Condition LessThan(string name, object value) => Condition.LessThan(name, value);
+			public static Condition LessThan(string name, Operand value) => Condition.LessThan(name, value);
+			public static Condition LessThan(Operand field, Operand value) => Condition.LessThan(field, value);
+			public static Condition LessThanEqual(string name, object value) => Condition.LessThanEqual(name, value);
+			public static Condition LessThanEqual(string name, Operand value) => Condition.LessThanEqual(name, value);
+			public static Condition LessThanEqual(Operand field, Operand value) => Condition.LessThanEqual(field, value);
+			public static Condition Like(string name, string value) => Condition.Like(name, value);
+			public static Condition Like(Operand field, string value) => Condition.Like(field, value);
+			public static Condition Between<TValue>(string name, Range<TValue> range) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, range);
+			public static Condition Between<TValue>(string name, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, minimum, maximum);
+			public static Condition Between<TValue>(string name, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, minimum, maximum);
+			public static Condition In<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.In<TValue>(name, values);
+			public static Condition In<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue> => Condition.In<TValue>(name, values);
+			public static Condition NotIn<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.NotIn<TValue>(name, values);
+			public static Condition NotIn<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue> => Condition.NotIn<TValue>(name, values);
+			public static Condition Exists(string name, ICondition filter = null) => Condition.Exists(name, filter);
+			public static Condition NotExists(string name, ICondition filter = null) => Condition.NotExists(name, filter);
 			#endregion
 
 			#region 表达式版本
-			public static Condition Equal<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.Equal(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition NotEqual<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.NotEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition GreaterThan<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.GreaterThan(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition GreaterThanEqual<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.GreaterThanEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition LessThan<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.LessThan(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition LessThanEqual<TValue>(Expression<Func<T, TValue>> member, TValue value)
-			{
-				return Condition.LessThanEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition Like(Expression<Func<T, string>> member, string value)
-			{
-				return Condition.Like(Reflection.ExpressionUtility.GetMemberName(member), value);
-			}
-
-			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, Range<TValue> range) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between<TValue>(Reflection.ExpressionUtility.GetMemberName(member), range);
-			}
-
-			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
-			}
-
-			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue>
-			{
-				return Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
-			}
-
-			public static Condition In<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue>
-			{
-				return Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
-			}
-
-			public static Condition In<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue>
-			{
-				return Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
-			}
-
-			public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue>
-			{
-				return Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
-			}
-
-			public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue>
-			{
-				return Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
-			}
+			public static Condition Equal<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.Equal(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition NotEqual<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.NotEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition GreaterThan<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.GreaterThan(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition GreaterThanEqual<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.GreaterThanEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition LessThan<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.LessThan(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition LessThanEqual<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.LessThanEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition Like(Expression<Func<T, string>> member, string value) => Condition.Like(Reflection.ExpressionUtility.GetMemberName(member), value);
+			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, Range<TValue> range) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(Reflection.ExpressionUtility.GetMemberName(member), range);
+			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue> => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
+			public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue> => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
+			public static Condition In<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue> => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
+			public static Condition In<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
+			public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue> => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
+			public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
 			#endregion
 		}
 		#endregion

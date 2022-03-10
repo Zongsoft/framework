@@ -45,7 +45,7 @@ namespace Zongsoft.Data
 			_conditionCombination = conditionCombination;
 		}
 
-		internal ConditionCollection(ConditionCombination conditionCombination, Condition condition)
+		internal ConditionCollection(ConditionCombination conditionCombination, ICondition condition)
 		{
 			_conditionCombination = conditionCombination;
 
@@ -53,7 +53,7 @@ namespace Zongsoft.Data
 				this.Add(condition);
 		}
 
-		internal ConditionCollection(ConditionCombination conditionCombination, Condition a, Condition b)
+		internal ConditionCollection(ConditionCombination conditionCombination, ICondition a, ICondition b)
 		{
 			_conditionCombination = conditionCombination;
 
@@ -122,7 +122,7 @@ namespace Zongsoft.Data
 			return conditions;
 		}
 
-		public static ConditionCollection operator &(Condition condition, ConditionCollection conditions)
+		public static ConditionCollection operator &(ICondition condition, ConditionCollection conditions)
 		{
 			return And(condition, conditions);
 		}
@@ -143,7 +143,7 @@ namespace Zongsoft.Data
 			return And(left, right);
 		}
 
-		public static ConditionCollection operator |(Condition condition, ConditionCollection conditions)
+		public static ConditionCollection operator |(ICondition condition, ConditionCollection conditions)
 		{
 			return Or(condition, conditions);
 		}
