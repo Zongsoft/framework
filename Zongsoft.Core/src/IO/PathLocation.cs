@@ -67,7 +67,7 @@ namespace Zongsoft.IO
 		public static bool operator ==(PathLocation left, PathLocation right) => left.Equals(right);
 		public static bool operator !=(PathLocation left, PathLocation right) => !(left == right);
 
-		public static explicit operator string(PathLocation location) => location.Path;
+		public static implicit operator string(PathLocation location) => location.Path;
 		public static explicit operator PathLocation(string path) => new PathLocation(path);
 		#endregion
 
