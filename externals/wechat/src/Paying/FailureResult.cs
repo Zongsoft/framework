@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Buffers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -72,14 +74,32 @@ namespace Zongsoft.Externals.Wechat.Paying
 		public struct FailureDetail
 		{
 			public string Field { get; set; }
-			[JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-			public int Value { get; set; }
+			[JsonConverter(typeof(FailureDetailValueConverter))]
+			public string Value { get; set; }
 			public string Issue { get; set; }
 			public string Location { get; set; }
 
 			public override string ToString() => string.IsNullOrEmpty(this.Location) ?
 				$"{this.Field}={this.Value}" :
 				$"{this.Location}:{this.Field}={this.Value}";
+		}
+
+		private class FailureDetailValueConverter : JsonConverter<string>
+		{
+			public override bool CanConvert(Type type) => true;
+
+			public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+				reader.TokenType == JsonTokenType.String ?
+					reader.GetString() :
+					reader.HasValueSequence ? Encoding.UTF8.GetString(reader.ValueSequence.ToArray()) : Encoding.UTF8.GetString(reader.ValueSpan);
+
+			public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+			{
+				if(value == null)
+					writer.WriteNullValue();
+				else
+					writer.WriteStringValue(value);
+			}
 		}
 		#endregion
 	}
