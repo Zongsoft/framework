@@ -99,6 +99,8 @@ namespace Zongsoft.IO
 		public string Url { get => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath; }
 
 		/// <summary>获取一个值，指示是否含有<see cref="Segments"/>路径节。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
 		public bool HasSegments { get => _segments != null && _segments.Length > 0; }
 
 		/// <summary>
@@ -108,6 +110,8 @@ namespace Zongsoft.IO
 		///		<para>如果当前路径是一个「文件路径」，即<see cref="IsFile"/>属性为真(True)，则该数组的最后一个元素内容就是<see cref="FileName"/>的值，亦文件路径的<see cref="Segments"/>不可能为空数组，因为它至少包含一个为文件名的元素。</para>
 		///		<para>如果当前路径是一个「目录路径」，即<see cref="IsDirectory"/>属性为真(True)，并且不是空目录，则该数组的最后一个元素值为空(null)或空字符串("")。所谓“空目录”的示例如下：</para>
 		/// </remarks>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
 		public string[] Segments { get => _segments; }
 
 		/// <summary>
