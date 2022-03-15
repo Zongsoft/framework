@@ -49,7 +49,7 @@ namespace Zongsoft.IO
 		public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			_path = Path.Parse(path);
 			_url = url;
@@ -102,7 +102,7 @@ namespace Zongsoft.IO
 				{
 					for(int i = segments.Length - 1; i >= 0; i--)
 					{
-						if(string.IsNullOrEmpty(segments[i]))
+						if(!string.IsNullOrEmpty(segments[i]))
 							return segments[i];
 					}
 				}
@@ -161,6 +161,8 @@ namespace Zongsoft.IO
 			protected set => _modifiedTime = value;
 		}
 
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
 		public bool HasProperties
 		{
 			get => _properties != null && _properties.Count > 0;
