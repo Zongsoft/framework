@@ -192,7 +192,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			}
 
 			string baseName, resourcePath;
-			var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=%2F&max-keys=21";
+			var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?list-type=2&prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=%2F&max-keys=21";
 			var response = await _http.GetAsync(url);
 
 			//确保返回的内容是成功

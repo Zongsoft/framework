@@ -173,7 +173,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return false;
 
 			var url = resolver.ServiceCenter.GetRequestUrl(_name) + string.Format("?prefix={0}&delimiter=%2F&marker={1}&max-keys=21", Uri.EscapeDataString(_pattern), _marker);
-
 			var response = resolver.Client.GetAsync(url).Result;
 
 			if(response == null || (!response.IsSuccessStatusCode))

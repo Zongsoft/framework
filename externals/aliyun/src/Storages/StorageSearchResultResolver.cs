@@ -60,29 +60,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共属性
-		public HttpClient Client
-		{
-			get
-			{
-				return _client;
-			}
-		}
-
-		public StorageServiceCenter ServiceCenter
-		{
-			get
-			{
-				return _serviceCenter;
-			}
-		}
-
-		internal Func<string, string> UrlThunk
-		{
-			get
-			{
-				return _getUrl;
-			}
-		}
+		public HttpClient Client { get => _client; }
+		public StorageServiceCenter ServiceCenter { get => _serviceCenter; }
+		internal Func<string, string> UrlThunk { get => _getUrl; }
 		#endregion
 
 		#region 解析方法
@@ -98,7 +78,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return null;
 
 			StorageSearchResult result = null;
-			var contentStream = await response.Content.ReadAsStreamAsync();
+			//var contentStream = await response.Content.ReadAsStreamAsync();
+			var contentText = await response.Content.ReadAsStringAsync();
+			var contentStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(contentText));
 
 			this.ResolveCore(contentStream, (bucketName, pattern, marker) =>
 			{
@@ -259,7 +241,10 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			var client = System.Threading.Interlocked.Exchange(ref _client, null);
 
 			if(client != null)
-				client.Dispose();
+			{
+				_getUrl = null;
+				_serviceCenter = null;
+			}
 		}
 		#endregion
 	}
