@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class ConditionCollection : System.Collections.ObjectModel.Collection<ICondition>, ICondition
+	public class ConditionCollection : System.Collections.ObjectModel.Collection<ICondition>, ICondition, IEquatable<ConditionCollection>
 	{
 		#region 成员字段
 		private ConditionCombination _conditionCombination;
@@ -353,6 +353,50 @@ namespace Zongsoft.Data
 				base.SetItem(index, item);
 		}
 
+		public bool Equals(ConditionCollection other)
+		{
+			if(other is null)
+				return this.Count == 0;
+
+			if(this.Combination == other.Combination && this.Count == other.Count)
+			{
+				for(int i = 0; i < this.Count; i++)
+				{
+					var a = this[i];
+					var b = other[i];
+
+					if(a is null)
+					{
+						if(b is null)
+							continue;
+						else
+							return false;
+					}
+					else
+					{
+						if(b is null || a.GetType() != b.GetType())
+							return false;
+						if(!a.Equals(b))
+							return false;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		public override bool Equals(object obj) => obj is ConditionCollection other && this.Equals(other);
+		public override int GetHashCode()
+		{
+			if(this.Count == 0)
+				return this.Combination.GetHashCode();
+
+			var code = 0;
+			for(int i = 0; i < this.Count; i++)
+				code = HashCode.Combine(code, this[i]);
+
+			return HashCode.Combine(this.Combination, code);
+		}
 		public override string ToString()
 		{
 			var combiner = _conditionCombination.ToString().ToUpperInvariant();
@@ -372,6 +416,11 @@ namespace Zongsoft.Data
 
 			return "(" + text.ToString() + ")";
 		}
+		#endregion
+
+		#region 符号重载
+		public static bool operator ==(ConditionCollection a, ConditionCollection b) => object.Equals(a, b);
+		public static bool operator !=(ConditionCollection a, ConditionCollection b) => !(a == b);
 		#endregion
 
 		#region 私有方法

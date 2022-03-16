@@ -471,7 +471,7 @@ namespace Zongsoft.Data
 		#region 重写方法
 		public bool Equals(Condition other)
 		{
-			if(other == null)
+			if(other is null)
 				return false;
 
 			return this.Operator == other.Operator &&
@@ -481,7 +481,7 @@ namespace Zongsoft.Data
 
 		public override bool Equals(object obj)
 		{
-			return obj != null && this.Equals(obj as Condition);
+			return obj is Condition other && this.Equals(other);
 		}
 
 		public override int GetHashCode()
@@ -499,44 +499,36 @@ namespace Zongsoft.Data
 			var value = this.Value;
 			var text = this.GetValueText(value);
 
-			switch(this.Operator)
+			return this.Operator switch
 			{
-				case ConditionOperator.Equal:
-					return this.IsNull(value) ? $"{this.Field} IS NULL" : $"{this.Field} == {text}";
-				case ConditionOperator.NotEqual:
-					return this.IsNull(value) ? $"{this.Field} IS NOT NULL" : $"{this.Field} != {text}";
-				case ConditionOperator.GreaterThan:
-					return $"{this.Field} > {text}";
-				case ConditionOperator.GreaterThanEqual:
-					return $"{this.Field} >= {text}";
-				case ConditionOperator.LessThan:
-					return $"{this.Field} < {text}";
-				case ConditionOperator.LessThanEqual:
-					return $"{this.Field} <= {text}";
-				case ConditionOperator.Like:
-					return $"{this.Field} LIKE {text}";
-				case ConditionOperator.Between:
-					return $"{this.Field} BETWEEN ({text})";
-				case ConditionOperator.In:
-					return $"{this.Field} IN [{text}]";
-				case ConditionOperator.NotIn:
-					return $"{this.Field} NOT IN [{text}]";
-				case ConditionOperator.Exists:
-					return $"{this.Field} EXISTS ({value})";
-				case ConditionOperator.NotExists:
-					return $"{this.Field} NOT EXISTS ({value})";
-				default:
-					return $"{this.Field} {this.Operator} {text}";
-			}
+				ConditionOperator.Equal => IsNull(value) ? $"{this.Field} IS NULL" : $"{this.Field} == {text}",
+				ConditionOperator.NotEqual => IsNull(value) ? $"{this.Field} IS NOT NULL" : $"{this.Field} != {text}",
+				ConditionOperator.GreaterThan => $"{this.Field} > {text}",
+				ConditionOperator.GreaterThanEqual => $"{this.Field} >= {text}",
+				ConditionOperator.LessThan => $"{this.Field} < {text}",
+				ConditionOperator.LessThanEqual => $"{this.Field} <= {text}",
+				ConditionOperator.Like => $"{this.Field} LIKE {text}",
+				ConditionOperator.Between => $"{this.Field} BETWEEN ({text})",
+				ConditionOperator.In => $"{this.Field} IN [{text}]",
+				ConditionOperator.NotIn => $"{this.Field} NOT IN [{text}]",
+				ConditionOperator.Exists => $"{this.Field} EXISTS ({value})",
+				ConditionOperator.NotExists => $"{this.Field} NOT EXISTS ({value})",
+				_ => $"{this.Field} {this.Operator} {text}",
+			};
 		}
 		#endregion
 
+		#region 符号重载
+		public static bool operator ==(Condition a, Condition b) => object.Equals(a, b);
+		public static bool operator !=(Condition a, Condition b) => !(a == b);
+		#endregion
+
 		#region 私有方法
-		private bool IsNull(object value) => value == null || System.Convert.IsDBNull(value);
+		private static bool IsNull(object value) => value is null || System.Convert.IsDBNull(value);
 
 		private string GetValueText(object value)
 		{
-			if(this.IsNull(value))
+			if(IsNull(value))
 				return "NULL";
 
 			switch(Type.GetTypeCode(value.GetType()))

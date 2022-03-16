@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 操作元(Operand element)
+	/// 表示操作元的基类。
 	/// </summary>
 	public abstract class Operand
 	{
@@ -109,7 +109,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套子类
-		public class BinaryOperand : Operand
+		public class BinaryOperand : Operand, IEquatable<Operand>, IEquatable<BinaryOperand>
 		{
 			#region 构造函数
 			public BinaryOperand(OperandType type, Operand left, Operand right) : base(type)
@@ -125,14 +125,28 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
+			public bool Equals(BinaryOperand other)
 			{
-				return $"{this.Left} {GetSymbol(this.Type)} {this.Right}";
+				if(other is null)
+					return false;
+
+				return
+					(
+						(this.Left is null && other.Left is null) || (this.Left is not null && this.Left.Equals(other.Left))
+					) &&
+					(
+						(this.Right is null && other.Right is null) || (this.Right is not null && this.Right.Equals(other.Right))
+					);
 			}
+
+			public bool Equals(Operand other) => other is BinaryOperand binary && this.Equals(binary);
+			public override bool Equals(object obj) => obj is BinaryOperand other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.Left, this.Right);
+			public override string ToString() => $"{this.Left} {GetSymbol(this.Type)} {this.Right}";
 			#endregion
 		}
 
-		public class UnaryOperand : Operand
+		public class UnaryOperand : Operand, IEquatable<Operand>, IEquatable<UnaryOperand>
 		{
 			#region 构造函数
 			public UnaryOperand(OperandType type, Operand operand) : base(type)
@@ -146,14 +160,23 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
+			public bool Equals(UnaryOperand other)
 			{
-				return $"{GetSymbol(this.Type)}{this.Operand}";
+				return other is not null && this.Type == other.Type &&
+				(
+					(this.Operand is null && other.Operand is null) ||
+					(this.Operand is not null && this.Operand.Equals(other.Operand))
+				);
 			}
+
+			public bool Equals(Operand other) => other is UnaryOperand unary && this.Equals(unary);
+			public override bool Equals(object obj) => obj is UnaryOperand other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.Type, this.Operand);
+			public override string ToString() => $"{GetSymbol(this.Type)}{this.Operand}";
 			#endregion
 		}
 
-		public class FunctionOperand : Operand
+		public class FunctionOperand : Operand, IEquatable<Operand>, IEquatable<FunctionOperand>
 		{
 			#region 构造函数
 			public FunctionOperand(string name, params Operand[] arguments) : base(OperandType.Function)
@@ -162,7 +185,7 @@ namespace Zongsoft.Data
 					throw new ArgumentNullException(nameof(name));
 
 				this.Name = name.ToUpperInvariant();
-				this.Arguments = arguments;
+				this.Arguments = arguments ?? Array.Empty<Operand>();
 			}
 			#endregion
 
@@ -172,14 +195,61 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
+			public bool Equals(FunctionOperand other)
 			{
-				return this.Arguments == null || this.Arguments.Length == 0 ? $"{this.Name}()" : $"{this.Name}(...)";
+				if(other != null && string.Equals(this.Name, other.Name))
+				{
+					if((this.Arguments == null || this.Arguments.Length == 0) && (other.Arguments == null || other.Arguments.Length == 0))
+						return true;
+
+					if(this.Arguments.Length != other.Arguments.Length)
+						return false;
+
+					for(int i = 0; i < this.Arguments.Length; i++)
+					{
+						var a = this.Arguments[i];
+						var b = other.Arguments[i];
+
+						if(a is null)
+						{
+							if(b is null)
+								continue;
+							else
+								return false;
+						}
+						else
+						{
+							if(b is null || a.GetType() != b.GetType())
+								return false;
+							if(!a.Equals(b))
+								return false;
+						}
+					}
+
+					return true;
+				}
+
+				return false;
 			}
+
+			public bool Equals(Operand operand) => operand is FunctionOperand other && this.Equals(other);
+			public override bool Equals(object obj) => obj is FunctionOperand other && this.Equals(other);
+			public override int GetHashCode()
+			{
+				if(this.Arguments == null || this.Arguments.Length == 0)
+					return HashCode.Combine(this.Name);
+
+				int code = 0;
+				for(int i = 0; i < this.Arguments.Length; i++)
+					code = HashCode.Combine(code, this.Arguments[i]);
+
+				return HashCode.Combine(this.Name, code);
+			}
+			public override string ToString() => this.Arguments == null || this.Arguments.Length == 0 ? $"{this.Name}()" : $"{this.Name}(...)";
 			#endregion
 		}
 
-		public class AggregateOperand : Operand
+		public class AggregateOperand : Operand, IEquatable<Operand>, IEquatable<AggregateOperand>
 		{
 			#region 构造函数
 			public AggregateOperand(DataAggregateFunction function, string member, ICondition filter = null, bool distinct = false) : base(OperandType.Function)
@@ -188,7 +258,7 @@ namespace Zongsoft.Data
 					throw new ArgumentNullException(nameof(member));
 
 				this.Function = function;
-				this.Member = member;
+				this.Member = member ?? string.Empty;
 				this.Distinct = distinct;
 				this.Filter = filter;
 			}
@@ -202,14 +272,29 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
+			public bool Equals(AggregateOperand other)
 			{
-				return $"{this.Function}({this.Member})";
+				return other != null &&
+					this.Function == other.Function &&
+					this.Distinct == other.Distinct &&
+					(
+						(string.IsNullOrEmpty(this.Member) && string.IsNullOrEmpty(other.Member)) ||
+						string.Equals(this.Member, other.Member, StringComparison.OrdinalIgnoreCase)
+					)&&
+					(
+						(this.Filter is null && other.Filter is null) ||
+						(this.Filter is not null && this.Filter.Equals(other.Filter))
+					);
 			}
+
+			public bool Equals(Operand operand) => operand is AggregateOperand aggregate && this.Equals(aggregate);
+			public override bool Equals(object obj) => obj is AggregateOperand aggregate && this.Equals(aggregate);
+			public override int GetHashCode() => HashCode.Combine(this.Function, this.Member, this.Distinct, this.Filter);
+			public override string ToString() => $"{this.Function}({this.Member})";
 			#endregion
 		}
 
-		public class FieldOperand : Operand, IEquatable<FieldOperand>
+		public class FieldOperand : Operand, IEquatable<Operand>, IEquatable<FieldOperand>
 		{
 			#region 构造函数
 			public FieldOperand(string name) : base(OperandType.Field)
@@ -226,14 +311,15 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public bool Equals(FieldOperand other) => other != null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			public bool Equals(FieldOperand other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			public bool Equals(Operand other) => other is FieldOperand field && this.Equals(field);
 			public override bool Equals(object obj) => obj is FieldOperand operand && this.Equals(operand);
 			public override int GetHashCode() => this.Name.ToLowerInvariant().GetHashCode();
 			public override string ToString() => this.Name;
 			#endregion
 		}
 
-		public class ConstantOperand<T> : Operand, IConvertible, IEquatable<T>, IEquatable<ConstantOperand<T>>
+		public class ConstantOperand<T> : Operand, IConvertible, IEquatable<Operand>, IEquatable<ConstantOperand<T>>
 		{
 			#region 构造函数
 			public ConstantOperand(T value) : base(OperandType.Constant)
@@ -247,19 +333,16 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public bool Equals(T other) => object.Equals(other, this.Value);
-			public bool Equals(ConstantOperand<T> other) => other != null && object.Equals(this.Value, other.Value);
-
-			public override bool Equals(object obj)
+			public override bool Equals(object obj) => obj switch
 			{
-				return obj switch
-				{
-					T value => this.Equals(value),
-					ConstantOperand<T> operand => this.Equals(operand),
-					_ => false,
-				};
-			}
+				T value => this.Equals(value),
+				ConstantOperand<T> operand => this.Equals(operand),
+				_ => false,
+			};
 
+			public bool Equals(T other) => object.Equals(other, this.Value);
+			public bool Equals(Operand other) => other is ConstantOperand<T> constant && this.Equals(constant);
+			public bool Equals(ConstantOperand<T> other) => other is not null && object.Equals(this.Value, other.Value);
 			public override int GetHashCode() => HashCode.Combine(this.Value);
 			public override string ToString() => this.Value == null ? "<NULL>" : this.Value.ToString();
 			#endregion
@@ -270,105 +353,34 @@ namespace Zongsoft.Data
 
 			public static bool operator ==(ConstantOperand<T> a, ConstantOperand<T> b)
 			{
-				if(a == null || a.Value == null)
-					return b == null || b.Value == null;
+				if(a is null || a.Value is null)
+					return b is null || b.Value is null;
 				else
-					return b != null && object.Equals(a.Value, b.Value);
+					return b is not null && object.Equals(a.Value, b.Value);
 			}
 
 			public static bool operator !=(ConstantOperand<T> a, ConstantOperand<T> b) => !(a == b);
 			#endregion
 
 			#region 类型转换
-			public char ToChar(IFormatProvider provider)
-			{
-				return this.Value == null ? '\0' : (char)Convert.ChangeType(this.Value, TypeCode.Char, provider);
-			}
-
-			public bool ToBoolean(IFormatProvider provider)
-			{
-				return this.Value != null && (bool)Convert.ChangeType(this.Value, TypeCode.Boolean, provider);
-			}
-
-			public byte ToByte(IFormatProvider provider)
-			{
-				return this.Value == null ? (byte)0 : (byte)Convert.ChangeType(this.Value, TypeCode.Byte, provider);
-			}
-
-			public sbyte ToSByte(IFormatProvider provider)
-			{
-				return this.Value == null ? (sbyte)0 : (sbyte)Convert.ChangeType(this.Value, TypeCode.SByte, provider);
-			}
-
-			public short ToInt16(IFormatProvider provider)
-			{
-				return this.Value == null ? (short)0 : (short)Convert.ChangeType(this.Value, TypeCode.Int16, provider);
-			}
-
-			public int ToInt32(IFormatProvider provider)
-			{
-				return this.Value == null ? 0 : (int)Convert.ChangeType(this.Value, TypeCode.Int32, provider);
-			}
-
-			public long ToInt64(IFormatProvider provider)
-			{
-				return this.Value == null ? 0L : (long)Convert.ChangeType(this.Value, TypeCode.Int64, provider);
-			}
-
-			public ushort ToUInt16(IFormatProvider provider)
-			{
-				return this.Value == null ? (ushort)0 : (ushort)Convert.ChangeType(this.Value, TypeCode.UInt16, provider);
-			}
-
-			public uint ToUInt32(IFormatProvider provider)
-			{
-				return this.Value == null ? 0u : (uint)Convert.ChangeType(this.Value, TypeCode.UInt32, provider);
-			}
-
-			public ulong ToUInt64(IFormatProvider provider)
-			{
-				return this.Value == null ? 0 : (ulong)Convert.ChangeType(this.Value, TypeCode.UInt64, provider);
-			}
-
-			public decimal ToDecimal(IFormatProvider provider)
-			{
-				return this.Value == null ? 0m : (decimal)Convert.ChangeType(this.Value, TypeCode.Decimal, provider);
-			}
-
-			public double ToDouble(IFormatProvider provider)
-			{
-				return this.Value == null ? 0d : (double)Convert.ChangeType(this.Value, TypeCode.Double, provider);
-			}
-
-			public float ToSingle(IFormatProvider provider)
-			{
-				return this.Value == null ? 0f : (float)Convert.ChangeType(this.Value, TypeCode.Single, provider);
-			}
-
-			public DateTime ToDateTime(IFormatProvider provider)
-			{
-				return this.Value == null ? DateTime.MinValue : (DateTime)Convert.ChangeType(this.Value, TypeCode.DateTime, provider);
-			}
-
-			public string ToString(IFormatProvider provider)
-			{
-				return this.Value == null ? null : (string)Convert.ChangeType(this.Value, TypeCode.String, provider);
-			}
-
-			public object ToObject()
-			{
-				return this.Value;
-			}
-
-			public TypeCode GetTypeCode()
-			{
-				return this.Value == null ? TypeCode.Object : System.Type.GetTypeCode(this.Value.GetType());
-			}
-
-			public object ToType(Type conversionType, IFormatProvider provider)
-			{
-				return Convert.ChangeType(this.Value, conversionType, provider);
-			}
+			public char ToChar(IFormatProvider provider) => this.Value == null ? '\0' : (char)Convert.ChangeType(this.Value, TypeCode.Char, provider);
+			public bool ToBoolean(IFormatProvider provider) => this.Value != null && (bool)Convert.ChangeType(this.Value, TypeCode.Boolean, provider);
+			public byte ToByte(IFormatProvider provider) => this.Value == null ? (byte)0 : (byte)Convert.ChangeType(this.Value, TypeCode.Byte, provider);
+			public sbyte ToSByte(IFormatProvider provider) => this.Value == null ? (sbyte)0 : (sbyte)Convert.ChangeType(this.Value, TypeCode.SByte, provider);
+			public short ToInt16(IFormatProvider provider) => this.Value == null ? (short)0 : (short)Convert.ChangeType(this.Value, TypeCode.Int16, provider);
+			public int ToInt32(IFormatProvider provider) => this.Value == null ? 0 : (int)Convert.ChangeType(this.Value, TypeCode.Int32, provider);
+			public long ToInt64(IFormatProvider provider) => this.Value == null ? 0L : (long)Convert.ChangeType(this.Value, TypeCode.Int64, provider);
+			public ushort ToUInt16(IFormatProvider provider) => this.Value == null ? (ushort)0 : (ushort)Convert.ChangeType(this.Value, TypeCode.UInt16, provider);
+			public uint ToUInt32(IFormatProvider provider) => this.Value == null ? 0u : (uint)Convert.ChangeType(this.Value, TypeCode.UInt32, provider);
+			public ulong ToUInt64(IFormatProvider provider) => this.Value == null ? 0 : (ulong)Convert.ChangeType(this.Value, TypeCode.UInt64, provider);
+			public decimal ToDecimal(IFormatProvider provider) => this.Value == null ? 0m : (decimal)Convert.ChangeType(this.Value, TypeCode.Decimal, provider);
+			public double ToDouble(IFormatProvider provider) => this.Value == null ? 0d : (double)Convert.ChangeType(this.Value, TypeCode.Double, provider);
+			public float ToSingle(IFormatProvider provider) => this.Value == null ? 0f : (float)Convert.ChangeType(this.Value, TypeCode.Single, provider);
+			public DateTime ToDateTime(IFormatProvider provider) => this.Value == null ? DateTime.MinValue : (DateTime)Convert.ChangeType(this.Value, TypeCode.DateTime, provider);
+			public string ToString(IFormatProvider provider) => this.Value == null ? null : (string)Convert.ChangeType(this.Value, TypeCode.String, provider);
+			public object ToObject() => this.Value;
+			public TypeCode GetTypeCode() => this.Value == null ? TypeCode.Object : System.Type.GetTypeCode(this.Value.GetType());
+			public object ToType(Type conversionType, IFormatProvider provider) => Convert.ChangeType(this.Value, conversionType, provider);
 			#endregion
 		}
 		#endregion
