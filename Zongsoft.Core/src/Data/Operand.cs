@@ -130,6 +130,9 @@ namespace Zongsoft.Data
 				if(other is null)
 					return false;
 
+				if(object.ReferenceEquals(this, other))
+					return true;
+
 				return
 					(
 						(this.Left is null && other.Left is null) || (this.Left is not null && this.Left.Equals(other.Left))
@@ -162,6 +165,9 @@ namespace Zongsoft.Data
 			#region 重写方法
 			public bool Equals(UnaryOperand other)
 			{
+				if(object.ReferenceEquals(this, other))
+					return true;
+
 				return other is not null && this.Type == other.Type &&
 				(
 					(this.Operand is null && other.Operand is null) ||
@@ -197,6 +203,9 @@ namespace Zongsoft.Data
 			#region 重写方法
 			public bool Equals(FunctionOperand other)
 			{
+				if(object.ReferenceEquals(this, other))
+					return true;
+
 				if(other != null && string.Equals(this.Name, other.Name))
 				{
 					if((this.Arguments == null || this.Arguments.Length == 0) && (other.Arguments == null || other.Arguments.Length == 0))
@@ -274,6 +283,9 @@ namespace Zongsoft.Data
 			#region 重写方法
 			public bool Equals(AggregateOperand other)
 			{
+				if(object.ReferenceEquals(this, other))
+					return true;
+
 				return other != null &&
 					this.Function == other.Function &&
 					this.Distinct == other.Distinct &&
@@ -311,7 +323,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 重写方法
-			public bool Equals(FieldOperand other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			public bool Equals(FieldOperand other) => object.ReferenceEquals(this, other) ? true : other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 			public bool Equals(Operand other) => other is FieldOperand field && this.Equals(field);
 			public override bool Equals(object obj) => obj is FieldOperand operand && this.Equals(operand);
 			public override int GetHashCode() => this.Name.ToLowerInvariant().GetHashCode();
@@ -341,7 +353,7 @@ namespace Zongsoft.Data
 			};
 
 			public bool Equals(T other) => object.Equals(other, this.Value);
-			public bool Equals(Operand other) => other is ConstantOperand<T> constant && this.Equals(constant);
+			public bool Equals(Operand other) => object.ReferenceEquals(this, other) ? true : other is ConstantOperand<T> constant && this.Equals(constant);
 			public bool Equals(ConstantOperand<T> other) => other is not null && object.Equals(this.Value, other.Value);
 			public override int GetHashCode() => HashCode.Combine(this.Value);
 			public override string ToString() => this.Value == null ? "<NULL>" : this.Value.ToString();

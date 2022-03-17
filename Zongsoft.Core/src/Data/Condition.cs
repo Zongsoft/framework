@@ -474,6 +474,9 @@ namespace Zongsoft.Data
 			if(other is null)
 				return false;
 
+			if(object.ReferenceEquals(this, other))
+				return true;
+
 			return this.Operator == other.Operator &&
 				object.Equals(this.Field, other.Field) &&
 				object.Equals(this.Value, other.Value);

@@ -358,6 +358,9 @@ namespace Zongsoft.Data
 			if(other is null)
 				return this.Count == 0;
 
+			if(object.ReferenceEquals(this, other))
+				return true;
+
 			if(this.Combination == other.Combination && this.Count == other.Count)
 			{
 				for(int i = 0; i < this.Count; i++)
