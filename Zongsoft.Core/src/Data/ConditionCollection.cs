@@ -380,6 +380,8 @@ namespace Zongsoft.Data
 							return false;
 					}
 				}
+
+				return true;
 			}
 
 			return false;
