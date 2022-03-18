@@ -1,0 +1,79 @@
+@startuml
+skinparam actorStyle awesome
+skinparam roundcorner 10
+
+hide empty description
+
+title "**条件解析**流程图"
+header "条件解析"
+
+state Array {
+}
+
+state Range {
+}
+
+state String {
+}
+
+state Number {
+}
+
+state Asterisk #LightGray;line:Green;line.dashed;text:Red
+state Exclamation #LightGray;line:Green;line.dashed;text:Red
+state Gutter #LightGray;line:Green;line.dashed
+
+[*] --> Field : [A-Za-z_]
+Field --> Field : \w+
+Field --> Gutter : \s
+Field --> Asterisk : *
+Field --> Equal : =
+Field --> Greater : >
+Field --> Less : <
+Field --> Exclamation : !
+Gutter --> Gutter : \s
+Gutter --> Asterisk : *
+Gutter --> Equal : =
+Gutter --> Greater : >
+Greater --> GreaterEqual : =
+Gutter --> Less : <
+Less --> LessEqual : =
+Less --> NotEqual : >
+Gutter --> Exclamation : !
+Gutter --> Between : (BETWEEN)
+Gutter --> Like : (LIKE)
+Gutter --> Exists : (EXISTS)
+Gutter --> Not : (NOT)
+Asterisk --> Like : =
+Exclamation --> NotEqual : =
+
+Not --> In : (IN)
+Not --> Exists : (EXISTS)
+
+In --> Array : (|[
+Like --> String : ['"]
+Equal --> String : ['"]
+Equal --> Number : [0-9]
+NotEqual --> String : ['"]
+NotEqual --> Number : [0-9]
+Greater --> String : ['"]
+Greater --> Number : [0-9]
+GreaterEqual --> String : ['"]
+GreaterEqual --> Number : [0-9]
+Less --> String : ['"]
+Less --> Number : [0-9]
+LessEqual --> String : ['"]
+LessEqual --> Number : [0-9]
+
+Between --> Range : (
+
+Range -> None : \s
+String -> None : \s
+Number -> None : \s
+
+None -> [*] : EOF
+None -> Combinator : (AND|OR)
+Combinator -> Prelusion : \s
+Prelusion -> Field : [A-Za-z_]
+
+@enduml
