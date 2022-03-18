@@ -287,6 +287,12 @@ namespace Zongsoft.Data
 			return new Range<DateTime>(firstday, new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
 		}
 
+		public static Range<DateTime> GetDay(int year, int month, int day)
+		{
+			var date = new DateTime(year, month, day);
+			return new Range<DateTime>(date, new DateTime(year, month, day, 23, 59, 59, 999));
+		}
+
 		public static Range<DateTime> GetAgo(int number, char unit)
 		{
 			var now = DateTime.Now;

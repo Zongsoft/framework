@@ -507,6 +507,14 @@ namespace Zongsoft.Data
 						return new DateTimeRangeParserResult($"The Month range function has too many parameters.");
 
 					return new DateTimeRangeParserResult(Range.GetMonth(arguments[0].Value, arguments[1].Value));
+				case "day":
+					if(arguments == null || arguments.Count < 3)
+						return new DateTimeRangeParserResult($"The Day range function is missing required parameters.");
+
+					if(arguments.Count > 3)
+						return new DateTimeRangeParserResult($"The Day range function has too many parameters.");
+
+					return new DateTimeRangeParserResult(Range.GetDay(arguments[0].Value, arguments[1].Value, arguments[2].Value));
 				default:
 					return new DateTimeRangeParserResult($"Invalid datetime range function name: {name}.");
 			}
