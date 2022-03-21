@@ -455,8 +455,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 				if(Enum.TryParse<System.Data.ParameterDirection>(value, true, out var direction))
 					return direction;
 
-				return (value.ToLowerInvariant()) switch
+				return value.ToLowerInvariant() switch
 				{
+					"in" => System.Data.ParameterDirection.Input,
+					"out" => System.Data.ParameterDirection.Output,
 					"both" => System.Data.ParameterDirection.InputOutput,
 					"result" => System.Data.ParameterDirection.ReturnValue,
 					"return" => System.Data.ParameterDirection.ReturnValue,
