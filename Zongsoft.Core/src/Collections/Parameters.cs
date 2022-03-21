@@ -34,13 +34,15 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
-	public struct Parameters : IEnumerable<KeyValuePair<string, object>>
+	public class Parameters : IEnumerable<KeyValuePair<string, object>>
 	{
 		#region 成员字段
 		private Dictionary<string, object> _dictionary;
 		#endregion
 
 		#region 构造函数
+		public Parameters() { }
+
 		public Parameters(Parameters parameters)
 		{
 			var dictionary = parameters._dictionary;
@@ -119,6 +121,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
 			var dictionary = _dictionary;
@@ -129,8 +132,6 @@ namespace Zongsoft.Collections
 			foreach(var entry in dictionary)
 				yield return entry;
 		}
-
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 	}
 }

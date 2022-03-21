@@ -35,7 +35,7 @@ namespace Zongsoft.Data
 	public abstract class DataOptionsBase : IDataOptions
 	{
 		#region 构造函数
-		protected DataOptionsBase() { }
+		protected DataOptionsBase() => this.Parameters = new Collections.Parameters();
 		protected DataOptionsBase(in Collections.Parameters parameters) => this.Parameters = parameters;
 		protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameters = new Collections.Parameters(parameters);
 		#endregion
@@ -47,6 +47,7 @@ namespace Zongsoft.Data
 
 	public abstract class DataOptionsBuilder<TOptions> : IDataOptionsBuilder<TOptions> where TOptions : IDataOptions
 	{
+		protected DataOptionsBuilder() => this.Parameters = new Collections.Parameters();
 		public Collections.Parameters Parameters { get; }
 
 		public abstract TOptions Build();
