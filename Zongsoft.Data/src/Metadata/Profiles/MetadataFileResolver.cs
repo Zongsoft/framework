@@ -85,9 +85,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 构造函数
-		protected MetadataFileResolver()
-		{
-		}
+		protected MetadataFileResolver() { }
 		#endregion
 
 		#region 静态属性
@@ -194,14 +192,14 @@ namespace Zongsoft.Data.Metadata.Profiles
 					switch(reader.LocalName)
 					{
 						case XML_ENTITY_ELEMENT:
-							var entity = this.ResolveEntity(reader, file, @namespace, () => this.ProcessUnrecognizedElement(reader, file, @namespace));
+							var entity = ResolveEntity(reader, file, @namespace, () => this.ProcessUnrecognizedElement(reader, file, @namespace));
 
 							if(entity != null)
 								file.Entities.Add(entity);
 
 							break;
 						case XML_COMMAND_ELEMENT:
-							var command = this.ResolveCommand(reader, file, @namespace, () => this.ProcessUnrecognizedElement(reader, file, @namespace));
+							var command = ResolveCommand(reader, file, @namespace, () => this.ProcessUnrecognizedElement(reader, file, @namespace));
 
 							if(command != null)
 								file.Commands.Add(command);
@@ -219,13 +217,13 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 解析方法
-		private IDataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
+		private static IDataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 		{
 			//创建实体元素对象
 			var entity = new MetadataEntity(provider, @namespace,
-				this.GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
-				this.GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
-				this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
+				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
+				GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
+				GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
 
 			//设置其他属性
 			entity.Alias = reader.GetAttribute(XML_ALIAS_ATTRIBUTE) ?? reader.GetAttribute(XML_TABLE_ATTRIBUTE);
@@ -256,22 +254,22 @@ namespace Zongsoft.Data.Metadata.Profiles
 					case XML_PROPERTY_ELEMENT:
 						var property = new MetadataEntitySimplexProperty(entity,
 						                   reader.GetAttribute(XML_NAME_ATTRIBUTE),
-						                   this.GetDbType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
-						                   this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
+										   GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
+										   GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
-							Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE) ?? this.GetAttributeValue<string>(reader, XML_FIELD_ATTRIBUTE),
-							Length = this.GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
-							Precision = this.GetAttributeValue<byte>(reader, XML_PRECISION_ATTRIBUTE),
-							Scale = this.GetAttributeValue<byte>(reader, XML_SCALE_ATTRIBUTE),
-							Nullable = this.GetAttributeValue<bool>(reader, XML_NULLABLE_ATTRIBUTE, true),
-							Sortable = this.GetAttributeValue<bool>(reader, XML_SORTABLE_ATTRIBUTE, false),
+							Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE) ?? GetAttributeValue<string>(reader, XML_FIELD_ATTRIBUTE),
+							Length = GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
+							Precision = GetAttributeValue<byte>(reader, XML_PRECISION_ATTRIBUTE),
+							Scale = GetAttributeValue<byte>(reader, XML_SCALE_ATTRIBUTE),
+							Nullable = GetAttributeValue(reader, XML_NULLABLE_ATTRIBUTE, true),
+							Sortable = GetAttributeValue(reader, XML_SORTABLE_ATTRIBUTE, false),
 						};
 
 						//设置默认值的字面量
-						property.SetDefaultValue(this.GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE));
+						property.SetDefaultValue(GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE));
 
 						//设置序号器元数据信息
-						property.SetSequence(this.GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
+						property.SetSequence(GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
 
 						//将解析成功的属性元素加入到实体的属性集合
 						entity.Properties.Add(property);
@@ -281,9 +279,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 						var complexProperty = new MetadataEntityComplexProperty(entity,
 							reader.GetAttribute(XML_NAME_ATTRIBUTE),
 							reader.GetAttribute(XML_PORT_ATTRIBUTE),
-							this.GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
+							GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
-							Behaviors = this.GetAttributeValue(reader, XML_BEHAVIORS_ATTRIBUTE, DataEntityComplexPropertyBehaviors.None),
+							Behaviors = GetAttributeValue(reader, XML_BEHAVIORS_ATTRIBUTE, DataEntityComplexPropertyBehaviors.None),
 						};
 
 						var multiplicity = reader.GetAttribute(XML_MULTIPLICITY_ATTRIBUTE);
@@ -319,8 +317,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 							{
 								links.Add(
 									new DataAssociationLink(complexProperty,
-										this.GetAttributeValue<string>(reader, XML_PORT_ATTRIBUTE),
-										this.GetAttributeValue<string>(reader, XML_ANCHOR_ATTRIBUTE)));
+										GetAttributeValue<string>(reader, XML_PORT_ATTRIBUTE),
+										GetAttributeValue<string>(reader, XML_ANCHOR_ATTRIBUTE)));
 							}
 							else if(reader.LocalName == XML_CONSTRAINTS_ELEMENT)
 							{
@@ -338,12 +336,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 									{
 										constraints.Add(
 											new DataAssociationConstraint(
-												this.GetAttributeValue<string>(reader, XML_NAME_ATTRIBUTE),
-												this.GetAttributeValue(reader, XML_ACTOR_ATTRIBUTE,
+												GetAttributeValue<string>(reader, XML_NAME_ATTRIBUTE),
+												GetAttributeValue(reader, XML_ACTOR_ATTRIBUTE,
 													complexProperty.Multiplicity == DataAssociationMultiplicity.Many ?
 													DataAssociationConstraintActor.Foreign :
 													DataAssociationConstraintActor.Principal),
-												this.GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE)));
+												GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE)));
 									}
 									else
 									{
@@ -399,16 +397,16 @@ namespace Zongsoft.Data.Metadata.Profiles
 			return entity;
 		}
 
-		private IDataCommand ResolveCommand(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
+		private static IDataCommand ResolveCommand(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 		{
 			//创建命令元素对象
 			var command = new MetadataCommand(provider,
-				this.GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
+				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
 				reader.GetAttribute(XML_ALIAS_ATTRIBUTE))
 			{
-				Type = this.GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Procedure),
-				Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
-				Mutability = this.GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
+				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Procedure),
+				Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
+				Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
 			};
 
 			int depth = reader.Depth;
@@ -422,12 +420,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 				switch(reader.LocalName)
 				{
 					case XML_PARAMETER_ELEMENT:
-						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), this.GetDbType(this.GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
+						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 						{
-							Direction = this.GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
-							Alias = this.GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
-							Length = this.GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
-							Value = this.GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE),
+							Direction = GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
+							Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
+							Length = GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
+							Value = GetAttributeValue<object>(reader, XML_VALUE_ATTRIBUTE),
 						};
 
 						//将解析成功的命令参数元素加入到命令的参数集合
@@ -478,8 +476,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 虚拟方法
 		protected virtual XmlReader CreateReader(Func<XmlReaderSettings, XmlParserContext, XmlReader> createThunk)
 		{
-			var nameTable = this.CreateXmlNameTable();
-
+			var nameTable = CreateXmlNameTable();
 			var settings = new XmlReaderSettings()
 			{
 				CloseInput = false,
@@ -489,122 +486,55 @@ namespace Zongsoft.Data.Metadata.Profiles
 				ValidationType = ValidationType.None,
 			};
 
-			/* 如果需要启用数据映射文件的XMLSchema验证则打开下面代码 */
-			//settings.Schemas = new System.Xml.Schema.XmlSchemaSet(nameTable);
-			//settings.Schemas.Add(XML_NAMESPACE_URI, @"/Zongsoft/Zongsoft.Data/Zongsoft.Data.xsd");
-			//settings.ValidationType = ValidationType.Schema;
-			//settings.ValidationEventHandler += XmlSchema_ValidationEventHandler;
-
 			var namespaceManager = new XmlNamespaceManager(nameTable);
 			namespaceManager.AddNamespace(string.Empty, XML_NAMESPACE_URI);
 
 			return createThunk(settings, new XmlParserContext(nameTable, namespaceManager, XML_SCHEMA_ELEMENT, XmlSpace.None));
 		}
 
-		protected virtual bool OnUnrecognizedElement(XmlReader reader, MetadataFile file, object container)
-		{
-			return false;
-		}
-		#endregion
-
-		#region 事件处理
-		private void XmlSchema_ValidationEventHandler(object sender, System.Xml.Schema.ValidationEventArgs e)
-		{
-			throw new MetadataFileException(e.Message, e.Exception);
-		}
+		protected virtual bool OnUnrecognizedElement(XmlReader reader, MetadataFile file, object container) => false;
 		#endregion
 
 		#region 私有方法
-		private System.Data.DbType GetDbType(string type)
+		private static System.Data.DbType GetDbType(string type)
 		{
 			if(string.IsNullOrWhiteSpace(type))
 				return System.Data.DbType.String;
 
-			switch(type.ToLowerInvariant())
+			return type.ToLowerInvariant() switch
 			{
-				case "string":
-				case "nvarchar":
-					return System.Data.DbType.String;
-				case "nchar":
-				case "stringfixed":
-				case "stringfixedlength":
-					return System.Data.DbType.StringFixedLength;
-				case "varchar":
-				case "ansistring":
-					return System.Data.DbType.AnsiString;
-				case "char":
-				case "ansistringfixed":
-				case "ansistringfixedlength":
-					return System.Data.DbType.AnsiStringFixedLength;
-				case "short":
-				case "int16":
-				case "smallint":
-					return System.Data.DbType.Int16;
-				case "int":
-				case "int32":
-				case "integer":
-					return System.Data.DbType.Int32;
-				case "long":
-				case "int64":
-				case "bigint":
-					return System.Data.DbType.Int64;
-				case "ushort":
-				case "uint16":
-					return System.Data.DbType.UInt16;
-				case "uint":
-				case "uint32":
-					return System.Data.DbType.UInt32;
-				case "ulong":
-				case "uint64":
-					return System.Data.DbType.UInt64;
-				case "byte":
-				case "tiny":
-				case "tinyint":
-					return System.Data.DbType.Byte;
-				case "sbyte":
-					return System.Data.DbType.SByte;
-				case "binary":
-				case "byte[]":
-				case "varbinary":
-					return System.Data.DbType.Binary;
-				case "bool":
-				case "boolean":
-					return System.Data.DbType.Boolean;
-				case "money":
-				case "currency":
-					return System.Data.DbType.Currency;
-				case "decimal":
-					return System.Data.DbType.Decimal;
-				case "double":
-					return System.Data.DbType.Double;
-				case "float":
-				case "single":
-					return System.Data.DbType.Single;
-				case "date":
-					return System.Data.DbType.Date;
-				case "time":
-					return System.Data.DbType.Time;
-				case "datetime":
-				case "timestamp":
-					return System.Data.DbType.DateTime;
-				case "datetimeoffset":
-					return System.Data.DbType.DateTimeOffset;
-				case "guid":
-				case "uuid":
-					return System.Data.DbType.Guid;
-				case "xml":
-					return System.Data.DbType.Xml;
-				case "varnumeric":
-					return System.Data.DbType.VarNumeric;
-				case "object":
-					return System.Data.DbType.Object;
-			}
-
-			throw new DataException($"Invalid '{type}' type of the property or parameter.");
+				"string" or "nvarchar" => System.Data.DbType.String,
+				"nchar" or "stringfixed" or "stringfixedlength" => System.Data.DbType.StringFixedLength,
+				"varchar" or "ansistring" => System.Data.DbType.AnsiString,
+				"char" or "ansistringfixed" or "ansistringfixedlength" => System.Data.DbType.AnsiStringFixedLength,
+				"short" or "int16" or "smallint" => System.Data.DbType.Int16,
+				"int" or "int32" or "integer" => System.Data.DbType.Int32,
+				"long" or "int64" or "bigint" => System.Data.DbType.Int64,
+				"ushort" or "uint16" => System.Data.DbType.UInt16,
+				"uint" or "uint32" => System.Data.DbType.UInt32,
+				"ulong" or "uint64" => System.Data.DbType.UInt64,
+				"byte" or "tiny" or "tinyint" => System.Data.DbType.Byte,
+				"sbyte" => System.Data.DbType.SByte,
+				"binary" or "byte[]" or "varbinary" => System.Data.DbType.Binary,
+				"bool" or "boolean" => System.Data.DbType.Boolean,
+				"money" or "currency" => System.Data.DbType.Currency,
+				"decimal" => System.Data.DbType.Decimal,
+				"double" => System.Data.DbType.Double,
+				"float" or "single" => System.Data.DbType.Single,
+				"date" => System.Data.DbType.Date,
+				"time" => System.Data.DbType.Time,
+				"datetime" or "timestamp" => System.Data.DbType.DateTime,
+				"datetimeoffset" => System.Data.DbType.DateTimeOffset,
+				"guid" or "uuid" => System.Data.DbType.Guid,
+				"xml" => System.Data.DbType.Xml,
+				"varnumeric" => System.Data.DbType.VarNumeric,
+				"object" => System.Data.DbType.Object,
+				_ => throw new DataException($"Invalid '{type}' type of the property or parameter."),
+			};
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetFullName(string name, string @namespace)
+		private static string GetFullName(string name, string @namespace)
 		{
 			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(name) || name.Contains("."))
 				return name;
@@ -612,24 +542,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			return @namespace + "." + name;
 		}
 
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetTargetName(string port, string @namespace)
-		{
-			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(port))
-				return port;
-
-			var colonIndex = -1;
-
-			for(int i = 0; i < port.Length; i++)
-			{
-				if(port[i] == '.' && i < colonIndex)
-					return port;
-			}
-
-			return @namespace + "." + port;
-		}
-
-		private T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default)
+		private static T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default)
 		{
 			string elementName = reader.NodeType == XmlNodeType.Element ? reader.Name : string.Empty;
 
@@ -657,7 +570,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			return defaultValue;
 		}
 
-		private T GetAttributeValue<T>(XmlReader reader, string name, Func<string, T> converter)
+		private static T GetAttributeValue<T>(XmlReader reader, string name, Func<string, T> converter)
 		{
 			if(reader.MoveToAttribute(name))
 			{
@@ -695,12 +608,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 				if(string.IsNullOrWhiteSpace(elementName))
 					throw new MetadataFileException(string.Format("Contains unrecognized element(s) in the '{0}' file.", filePath));
-
-				throw new MetadataFileException(string.Format("Found a unrecognized '{0}' element in the '{1}' file.", elementName, filePath));
+				else
+					throw new MetadataFileException(string.Format("Found a unrecognized '{0}' element in the '{1}' file.", elementName, filePath));
 			}
 		}
 
-		private XmlNameTable CreateXmlNameTable()
+		private static XmlNameTable CreateXmlNameTable()
 		{
 			var nameTable = new NameTable();
 

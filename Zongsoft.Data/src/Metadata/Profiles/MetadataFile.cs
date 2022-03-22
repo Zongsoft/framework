@@ -38,11 +38,11 @@ namespace Zongsoft.Data.Metadata.Profiles
 	public class MetadataFile : IDataMetadataProvider
 	{
 		#region 成员字段
-		private string _name;
-		private string _filePath;
+		private readonly string _name;
+		private readonly string _filePath;
 		private IDataMetadataManager _manager;
-		private INamedCollection<IDataEntity> _entities;
-		private INamedCollection<IDataCommand> _commands;
+		private readonly INamedCollection<IDataEntity> _entities;
+		private readonly INamedCollection<IDataCommand> _commands;
 		#endregion
 
 		#region 构造函数
@@ -58,108 +58,36 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取映射文件所属的应用名。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取映射文件所属的应用名。</summary>
+		public string Name { get => _name; }
 
-		/// <summary>
-		/// 获取映射文件的完整路径。
-		/// </summary>
-		public string FilePath
-		{
-			get
-			{
-				return _filePath;
-			}
-		}
+		/// <summary>获取映射文件的完整路径。</summary>
+		public string FilePath { get => _filePath; }
 
-		/// <summary>
-		/// 获取映射文件所属的元数据管理器。
-		/// </summary>
-		public IDataMetadataManager Manager
-		{
-			get
-			{
-				return _manager;
-			}
-			set
-			{
-				_manager = value;
-			}
-		}
+		/// <summary>获取映射文件所属的元数据管理器。</summary>
+		public IDataMetadataManager Manager { get => _manager; set => _manager = value; }
 
-		/// <summary>
-		/// 获取映射文件中的实体元素集。
-		/// </summary>
-		public INamedCollection<IDataEntity> Entities
-		{
-			get
-			{
-				return _entities;
-			}
-		}
+		/// <summary>获取映射文件中的实体元素集。</summary>
+		public INamedCollection<IDataEntity> Entities { get => _entities; }
 
-		/// <summary>
-		/// 获取映射文件中的命令元素集。
-		/// </summary>
-		public INamedCollection<IDataCommand> Commands
-		{
-			get
-			{
-				return _commands;
-			}
-		}
+		/// <summary>获取映射文件中的命令元素集。</summary>
+		public INamedCollection<IDataCommand> Commands { get => _commands; }
 		#endregion
 
 		#region 显式实现
-		IReadOnlyNamedCollection<IDataEntity> IDataMetadataContainer.Entities
-		{
-			get => (IReadOnlyNamedCollection<IDataEntity>)_entities;
-		}
-
-		IReadOnlyNamedCollection<IDataCommand> IDataMetadataContainer.Commands
-		{
-			get => (IReadOnlyNamedCollection<IDataCommand>)_commands;
-		}
+		IReadOnlyNamedCollection<IDataEntity> IDataMetadataContainer.Entities => (IReadOnlyNamedCollection<IDataEntity>)_entities;
+		IReadOnlyNamedCollection<IDataCommand> IDataMetadataContainer.Commands => (IReadOnlyNamedCollection<IDataCommand>)_commands;
 		#endregion
 
 		#region 加载方法
-		public static MetadataFile Load(string filePath, string name = null)
-		{
-			return MetadataFileResolver.Default.Resolve(filePath, name);
-		}
-
-		public static MetadataFile Load(Stream stream, string name = null)
-		{
-			return MetadataFileResolver.Default.Resolve(stream, name);
-		}
-
-		public static MetadataFile Load(TextReader reader, string name = null)
-		{
-			return MetadataFileResolver.Default.Resolve(reader, name);
-		}
-
-		public static MetadataFile Load(XmlReader reader, string name = null)
-		{
-			return MetadataFileResolver.Default.Resolve(reader, name);
-		}
+		public static MetadataFile Load(string filePath, string name = null) => MetadataFileResolver.Default.Resolve(filePath, name);
+		public static MetadataFile Load(Stream stream, string name = null) => MetadataFileResolver.Default.Resolve(stream, name);
+		public static MetadataFile Load(TextReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
+		public static MetadataFile Load(XmlReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(_name))
-				return _filePath;
-			else
-				return $"{_name} ({_filePath})";
-		}
+		public override string ToString() => string.IsNullOrEmpty(_name) ? _filePath : $"{_name}({_filePath})";
 		#endregion
 	}
 }
