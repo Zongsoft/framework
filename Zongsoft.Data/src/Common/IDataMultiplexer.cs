@@ -37,25 +37,13 @@ namespace Zongsoft.Data.Common
 	/// </summary>
 	public interface IDataMultiplexer : IEnumerable<IDataSource>
 	{
-		/// <summary>
-		/// 获取数据源提供程序。
-		/// </summary>
-		IDataSourceProvider Provider
-		{
-			get;
-		}
+		/// <summary>获取数据源提供程序。</summary>
+		IDataSourceProvider Provider { get; }
 
-		/// <summary>
-		/// 获取数据源选择程序。
-		/// </summary>
-		IDataSourceSelector Selector
-		{
-			get;
-		}
+		/// <summary>获取数据源选择程序。</summary>
+		IDataSourceSelector Selector { get; }
 
-		/// <summary>
-		/// 根据当前数据访问上下文选取合适的数据源。
-		/// </summary>
+		/// <summary>根据当前数据访问上下文选取合适的数据源。</summary>
 		/// <param name="context">指定的数据访问上下文。</param>
 		/// <returns>返回对应的数据源。</returns>
 		IDataSource GetSource(IDataAccessContextBase context);

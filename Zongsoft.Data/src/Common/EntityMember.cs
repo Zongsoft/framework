@@ -74,6 +74,10 @@ namespace Zongsoft.Data.Common
 		}
 		#endregion
 
+		#region 公共属性
+		public bool IsEmpty => _member == null;
+		#endregion
+
 		#region 公共方法
 		public void Populate(ref object entity, IDataRecord record, int ordinal)
 		{
@@ -101,10 +105,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return this.Name + " : " + this.Type.Name;
-		}
+		public override string ToString() => this.Name + " : " + this.Type.Name;
 		#endregion
 	}
 }

@@ -48,11 +48,8 @@ namespace Zongsoft.Data.Common
 
 		#region 公共属性
 		public abstract string Name { get; }
-
 		public FeatureCollection Features { get; }
-
 		public Expressions.ExpressionVisitorBase Visitor { get; }
-
 		public abstract Expressions.IStatementBuilder Builder { get; }
 		#endregion
 

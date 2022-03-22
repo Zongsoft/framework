@@ -61,12 +61,12 @@ namespace Zongsoft.Data.Common
 			if(Zongsoft.Common.TypeExtension.IsScalarType(type))
 				return null;
 
-			return _cache.GetOrAdd(type, key => this.CreateMembers(key));
+			return _cache.GetOrAdd(type, key => CreateMembers(key));
 		}
 		#endregion
 
 		#region 私有方法
-		private Collections.INamedCollection<EntityMember> CreateMembers(Type type)
+		private static Collections.INamedCollection<EntityMember> CreateMembers(Type type)
 		{
 			//如果是字典则返回空
 			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
@@ -75,12 +75,12 @@ namespace Zongsoft.Data.Common
 			if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
 				type = Zongsoft.Common.TypeExtension.GetElementType(type);
 
-			var members = this.FindMembers(type);
+			var members = FindMembers(type);
 			var tokens = new Collections.NamedCollection<EntityMember>(item => item.Name);
 
 			foreach(var member in members)
 			{
-				var token = this.CreateMemberToken(member);
+				var token = CreateMemberToken(member);
 
 				if(token != null)
 					tokens.Add(token.Value);
@@ -89,7 +89,7 @@ namespace Zongsoft.Data.Common
 			return tokens;
 		}
 
-		private EntityMember? CreateMemberToken(MemberInfo member)
+		private static EntityMember? CreateMemberToken(MemberInfo member)
 		{
 			switch(member.MemberType)
 			{
@@ -118,7 +118,7 @@ namespace Zongsoft.Data.Common
 			return null;
 		}
 
-		private IEnumerable<MemberInfo> FindMembers(Type type)
+		private static IEnumerable<MemberInfo> FindMembers(Type type)
 		{
 			foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
 				yield return field;

@@ -53,9 +53,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据写入操作上下文的接口。
 	/// </summary>
-	public interface IDataMutateContext : IDataAccessContext, IDataMutateContextBase
-	{
-	}
+	public interface IDataMutateContext : IDataAccessContext, IDataMutateContextBase { }
 
 	public class DataExistContext : DataExistContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
@@ -316,8 +314,8 @@ namespace Zongsoft.Data
 
 			if(ambient == null || ambient.IsCompleted)
 				return new DataSession(sourceFactory());
-			else
-				return (DataSession)ambient.Information.Parameters.GetOrAdd("Zongsoft.Data:DataSession", _ => new DataSession(sourceFactory(), ambient));
+
+			return (DataSession)ambient.Information.Parameters.GetOrAdd("Zongsoft.Data:DataSession", _ => new DataSession(sourceFactory(), ambient));
 		}
 		#endregion
 	}

@@ -184,15 +184,8 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 遍历迭代
-			public IEnumerator<T> GetEnumerator()
-			{
-				return new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate);
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return this.GetEnumerator();
-			}
+			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate);
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 			#endregion
 
 			#region 激发事件

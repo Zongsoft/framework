@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Data;
 using System.Data.Common;
 using System.Collections;
@@ -53,17 +54,17 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private int _completedFlag;
-		private int _reads;
+		private volatile int _reads;
+		private volatile int _completedFlag;
 		private readonly AutoResetEvent _semaphore;
 		private readonly ConcurrentBag<IDbCommand> _commands;
 		#endregion
 
 		#region 成员字段
-		private IDataSource _source;
-		private DbConnection _connection;
-		private DbTransaction _transaction;
-		private Transactions.Transaction _ambient;
+		private volatile DbConnection _connection;
+		private volatile DbTransaction _transaction;
+		private readonly IDataSource _source;
+		private readonly Transactions.Transaction _ambient;
 		#endregion
 
 		#region 构造函数
@@ -83,59 +84,27 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取一个值，指示当前数据会话是否位于环境事务中。
-		/// </summary>
-		public bool InAmbient
-		{
-			get => _ambient != null;
-		}
+		/// <summary>获取一个值，指示当前数据会话是否位于环境事务中。</summary>
+		public bool InAmbient => _ambient != null;
 
-		/// <summary>
-		/// 获取当前数据会话的数据源对象。 
-		/// </summary>
-		public IDataSource Source
-		{
-			get => _source;
-		}
+		/// <summary>获取当前数据会话的数据源对象。</summary>
+		public IDataSource Source => _source;
 
-		/// <summary>
-		/// 获取当前数据会话的主连接对象。
-		/// </summary>
-		public IDbConnection Connection
-		{
-			get => _connection;
-		}
+		/// <summary>获取当前数据会话的主连接对象。</summary>
+		public IDbConnection Connection => _connection;
 
-		/// <summary>
-		/// 获取当前数据会话关联的数据事务。
-		/// </summary>
-		public IDbTransaction Transaction
-		{
-			get => _transaction;
-		}
+		/// <summary>获取当前数据会话关联的数据事务。</summary>
+		public IDbTransaction Transaction => _transaction;
 
-		/// <summary>
-		/// 获取一个值，指示当前环境事务是否已经完成(提交或回滚)。
-		/// </summary>
-		public bool IsCompleted
-		{
-			get => _completedFlag != NONE_FLAG;
-		}
+		/// <summary>获取一个值，指示当前环境事务是否已经完成(提交或回滚)。</summary>
+		public bool IsCompleted => _completedFlag != NONE_FLAG;
 
-		/// <summary>
-		/// 获取一个值，指示当前环境事务的数据连接是否正在进行数据读取操作。
-		/// </summary>
-		public bool IsReading
-		{
-			get => _reads != NONE_FLAG;
-		}
+		/// <summary>获取一个值，指示当前环境事务的数据连接是否正在进行数据读取操作。</summary>
+		public bool IsReading => _reads != NONE_FLAG;
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 创建语句对应的 <see cref="DbCommand"/> 数据命令。
-		/// </summary>
+		/// <summary>创建语句对应的 <see cref="DbCommand"/> 数据命令。</summary>
 		/// <param name="context">指定的数据访问上下文。</param>
 		/// <param name="statement">指定要创建命令的语句。</param>
 		/// <returns>返回创建的数据命令对象。</returns>
@@ -144,9 +113,7 @@ namespace Zongsoft.Data.Common
 			return new SessionCommand(this, _source.Driver.CreateCommand(context, statement));
 		}
 
-		/// <summary>
-		/// 提交当前会话事务。
-		/// </summary>
+		/// <summary>提交当前会话事务。</summary>
 		public void Commit()
 		{
 			/*
@@ -158,9 +125,7 @@ namespace Zongsoft.Data.Common
 			this.Complete(true);
 		}
 
-		/// <summary>
-		/// 回滚当前会话事务。
-		/// </summary>
+		/// <summary>回滚当前会话事务。</summary>
 		public void Rollback()
 		{
 			/*
@@ -172,21 +137,26 @@ namespace Zongsoft.Data.Common
 			this.Complete(false);
 		}
 
-		/// <summary>
-		/// 释放会话，如果当前会话没有完成则回滚事务。
-		/// </summary>
+		/// <summary>释放会话，如果当前会话没有完成则回滚事务。</summary>
 		public void Dispose()
 		{
-			if(this.Complete(false))
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
 			{
-				//释放信号量资源
-				_semaphore.Dispose();
+				if(this.Complete(false))
+				{
+					//释放信号量资源
+					_semaphore.Dispose();
+				}
 			}
 		}
 
-		/// <summary>
-		/// 完成当前数据会话。
-		/// </summary>
+		/// <summary>完成当前数据会话。</summary>
 		/// <param name="commit">指定是否提交当前数据事务。</param>
 		/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
 		private bool Complete(bool? commit)
@@ -239,9 +209,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 内部方法
-		/// <summary>
-		/// 设置指定命令的数据连接和关联到必要的数据事务。
-		/// </summary>
+		/// <summary>设置指定命令的数据连接和关联到必要的数据事务。</summary>
 		/// <param name="command">指定要绑定的命令对象。</param>
 		internal void Bind(IDbCommand command)
 		{
@@ -304,9 +272,7 @@ namespace Zongsoft.Data.Common
 			}
 		}
 
-		/// <summary>
-		/// 尝试进入读取临界区。
-		/// </summary>
+		/// <summary>尝试进入读取临界区。</summary>
 		/// <returns>如果成功进入读取状态则返回真(True)，否则返回假(False)。</returns>
 		/// <remarks>
 		/// 	<p>注意：进入成功的操作者必须确保当读取完成时调用<see cref="ExitRead"/>方法以重置读取标记。</p>
@@ -334,9 +300,7 @@ namespace Zongsoft.Data.Common
 			}
 		}
 
-		/// <summary>
-		/// 退出读取临界区。
-		/// </summary>
+		/// <summary>退出读取临界区。</summary>
 		internal bool ExitRead()
 		{
 			if(ShareConnectionSupported && _reads > 0)
@@ -403,12 +367,8 @@ namespace Zongsoft.Data.Common
 		#region 嵌套子类
 		private class Enlistment : Zongsoft.Transactions.IEnlistment
 		{
-			private DataSession _session;
-
-			public Enlistment(DataSession session)
-			{
-				_session = session;
-			}
+			private readonly DataSession _session;
+			public Enlistment(DataSession session) => _session = session;
 
 			public void OnEnlist(Zongsoft.Transactions.EnlistmentContext context)
 			{
@@ -628,7 +588,7 @@ namespace Zongsoft.Data.Common
 			#region 成员字段
 			private readonly DataSession _session;
 			private readonly DbDataReader _reader;
-			private DbConnection _connection;
+			private readonly DbConnection _connection;
 			#endregion
 
 			#region 构造函数
@@ -642,140 +602,44 @@ namespace Zongsoft.Data.Common
 
 			#region 重写属性
 			public override object this[int ordinal] => _reader[ordinal];
-
 			public override object this[string name] => _reader[name];
-
 			public override int Depth => _reader.Depth;
-
 			public override int FieldCount => _reader.FieldCount;
-
 			public override bool HasRows => _reader.HasRows;
-
 			public override bool IsClosed => _reader.IsClosed;
-
 			public override int RecordsAffected => _reader.RecordsAffected;
+			public override int VisibleFieldCount => _reader.VisibleFieldCount;
 			#endregion
 
 			#region 重写方法
-			public override bool GetBoolean(int ordinal)
-			{
-				return _reader.GetBoolean(ordinal);
-			}
-
-			public override byte GetByte(int ordinal)
-			{
-				return _reader.GetByte(ordinal);
-			}
-
-			public override long GetBytes(int ordinal, long offset, byte[] buffer, int bufferOffset, int length)
-			{
-				return _reader.GetBytes(ordinal, offset, buffer, bufferOffset, length);
-			}
-
-			public override char GetChar(int ordinal)
-			{
-				return _reader.GetChar(ordinal);
-			}
-
-			public override long GetChars(int ordinal, long offset, char[] buffer, int bufferOffset, int length)
-			{
-				return _reader.GetChars(ordinal, offset, buffer, bufferOffset, length);
-			}
-
-			public override DateTime GetDateTime(int ordinal)
-			{
-				return _reader.GetDateTime(ordinal);
-			}
-
-			public override decimal GetDecimal(int ordinal)
-			{
-				return _reader.GetDecimal(ordinal);
-			}
-
-			public override double GetDouble(int ordinal)
-			{
-				return _reader.GetDouble(ordinal);
-			}
-
-			public override float GetFloat(int ordinal)
-			{
-				return _reader.GetFloat(ordinal);
-			}
-
-			public override Guid GetGuid(int ordinal)
-			{
-				return _reader.GetGuid(ordinal);
-			}
-
-			public override short GetInt16(int ordinal)
-			{
-				return _reader.GetInt16(ordinal);
-			}
-
-			public override int GetInt32(int ordinal)
-			{
-				return _reader.GetInt32(ordinal);
-			}
-
-			public override long GetInt64(int ordinal)
-			{
-				return _reader.GetInt64(ordinal);
-			}
-
-			public override string GetString(int ordinal)
-			{
-				return _reader.GetString(ordinal);
-			}
-
-			public override object GetValue(int ordinal)
-			{
-				return _reader.GetValue(ordinal);
-			}
-
-			public override int GetValues(object[] values)
-			{
-				return _reader.GetValues(values);
-			}
-
-			public override string GetName(int ordinal)
-			{
-				return _reader.GetName(ordinal);
-			}
-
-			public override int GetOrdinal(string name)
-			{
-				return _reader.GetOrdinal(name);
-			}
-
-			public override Type GetFieldType(int ordinal)
-			{
-				return _reader.GetFieldType(ordinal);
-			}
-
-			public override string GetDataTypeName(int ordinal)
-			{
-				return _reader.GetDataTypeName(ordinal);
-			}
-
-			public override IEnumerator GetEnumerator()
-			{
-				return _reader.GetEnumerator();
-			}
-
-			public override bool IsDBNull(int ordinal)
-			{
-				return _reader.IsDBNull(ordinal);
-			}
-
-			public override bool NextResult()
-			{
-				return _reader.NextResult();
-			}
-
-			public override bool Read()
-			{
-				return _reader.Read();
-			}
+			public override bool GetBoolean(int ordinal) => _reader.GetBoolean(ordinal);
+			public override byte GetByte(int ordinal) => _reader.GetByte(ordinal);
+			public override long GetBytes(int ordinal, long offset, byte[] buffer, int bufferOffset, int length) => _reader.GetBytes(ordinal, offset, buffer, bufferOffset, length);
+			public override char GetChar(int ordinal) => _reader.GetChar(ordinal);
+			public override long GetChars(int ordinal, long offset, char[] buffer, int bufferOffset, int length) => _reader.GetChars(ordinal, offset, buffer, bufferOffset, length);
+			public override DateTime GetDateTime(int ordinal) => _reader.GetDateTime(ordinal);
+			public override decimal GetDecimal(int ordinal) => _reader.GetDecimal(ordinal);
+			public override double GetDouble(int ordinal) => _reader.GetDouble(ordinal);
+			public override float GetFloat(int ordinal) => _reader.GetFloat(ordinal);
+			public override Guid GetGuid(int ordinal) => _reader.GetGuid(ordinal);
+			public override short GetInt16(int ordinal) => _reader.GetInt16(ordinal);
+			public override int GetInt32(int ordinal) => _reader.GetInt32(ordinal);
+			public override long GetInt64(int ordinal) => _reader.GetInt64(ordinal);
+			public override string GetString(int ordinal) => _reader.GetString(ordinal);
+			public override Stream GetStream(int ordinal) => _reader.GetStream(ordinal);
+			public override object GetValue(int ordinal) => _reader.GetValue(ordinal);
+			public override int GetValues(object[] values) => _reader.GetValues(values);
+			public override string GetName(int ordinal) => _reader.GetName(ordinal);
+			public override int GetOrdinal(string name) => _reader.GetOrdinal(name);
+			public override string GetDataTypeName(int ordinal) => _reader.GetDataTypeName(ordinal);
+			public override Type GetFieldType(int ordinal) => _reader.GetFieldType(ordinal);
+			public override T GetFieldValue<T>(int ordinal) => _reader.GetFieldValue<T>(ordinal);
+			public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken) => _reader.GetFieldValueAsync<T>(ordinal, cancellationToken);
+			public override TextReader GetTextReader(int ordinal) => _reader.GetTextReader(ordinal);
+			public override IEnumerator GetEnumerator() => _reader.GetEnumerator();
+			public override bool IsDBNull(int ordinal) => _reader.IsDBNull(ordinal);
+			public override bool NextResult() => _reader.NextResult();
+			public override bool Read() => _reader.Read();
 			#endregion
 
 			#region 关闭方法

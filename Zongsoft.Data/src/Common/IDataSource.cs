@@ -36,45 +36,19 @@ namespace Zongsoft.Data.Common
 	/// </summary>
 	public interface IDataSource
 	{
-		/// <summary>
-		/// 获取数据源的名称。
-		/// </summary>
-		string Name
-		{
-			get;
-		}
+		/// <summary>获取数据源的名称。</summary>
+		string Name { get; }
 
-		/// <summary>
-		/// 获取数据源的连接字符串。
-		/// </summary>
-		string ConnectionString
-		{
-			get;
-		}
+		/// <summary>获取数据源的连接字符串。</summary>
+		string ConnectionString { get; }
 
-		/// <summary>
-		/// 获取数据源支持的访问方式。
-		/// </summary>
-		DataAccessMode Mode
-		{
-			get;
-			set;
-		}
+		/// <summary>获取数据源支持的访问方式。</summary>
+		DataAccessMode Mode { get; set; }
 
-		/// <summary>
-		/// 获取数据源关联的数据驱动器。
-		/// </summary>
-		IDataDriver Driver
-		{
-			get;
-		}
+		/// <summary>获取数据源关联的数据驱动器。</summary>
+		IDataDriver Driver { get; }
 
-		/// <summary>
-		/// 获取支持的功能特性集。
-		/// </summary>
-		FeatureCollection Features
-		{
-			get;
-		}
+		/// <summary>获取支持的功能特性集。</summary>
+		FeatureCollection Features { get; }
 	}
 }
