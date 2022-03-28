@@ -38,6 +38,6 @@ namespace Zongsoft.Common
 		/// </summary>
 		/// <param name="array">指定要判断的数组。</param>
 		/// <returns>如果数组为空或空则返回真(True)，否则返回假(False)。</returns>
-		public static bool IsEmpty(Array array) => array == null || array.Length == 0;
+		public static bool IsEmpty(this Array array) => array == null || array.Length == 0;
 	}
 }
