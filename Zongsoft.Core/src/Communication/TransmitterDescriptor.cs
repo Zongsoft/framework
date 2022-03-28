@@ -28,27 +28,42 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Communication
 {
-	/// <summary>
-	/// 提供模板信息发送功能的接口。
-	/// </summary>
-	public interface ITransmitter
+	public class TransmitterDescriptor
 	{
-		/// <summary>获取发送器名称。</summary>
-		string Name { get; }
+		public TransmitterDescriptor(string name, string title = null, string description = null)
+		{
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.Title = title;
+			this.Description = description;
+		}
 
-		/// <summary>获取或发送器描述。</summary>
-		TransmitterDescriptor Descriptor { get; }
+		public string Name { get; }
+		public string Title { get; set; }
+		public string Description { get; set; }
+		public ChannelDescriptorCollection Channels { get; set; }
 
-		/// <summary>
-		/// 发送模板信息到指定的接收者。
-		/// </summary>
-		/// <param name="destination">指定的接收的目的地。</param>
-		/// <param name="template">指定的模板标识。</param>
-		/// <param name="data">指定的模板数据。</param>
-		/// <param name="channel">指定的通道标识。</param>
-		void Transmit(string destination, string template, object data, string channel = null);
+		public class ChannelDescriptor
+		{
+			public ChannelDescriptor(string name, string title = null, string description = null)
+			{
+				this.Name = name ?? throw new ArgumentNullException(nameof(name));
+				this.Title = title;
+				this.Description = description;
+			}
+
+			public string Name { get; }
+			public string Title { get; set; }
+			public string Description { get; set; }
+		}
+
+		public class ChannelDescriptorCollection : KeyedCollection<string, ChannelDescriptor>
+		{
+			public ChannelDescriptorCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+			protected override string GetKeyForItem(ChannelDescriptor channel) => channel.Name;
+		}
 	}
 }
