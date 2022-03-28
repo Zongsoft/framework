@@ -28,16 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
 
-using Zongsoft.Text;
+using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Collections;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
+	[DisplayName("PhoneTransmitter.Title")]
+	[Description("PhoneTransmitter.Description")]
 	[Service(typeof(ITransmitter))]
 	public class PhoneTransmitter : ITransmitter
 	{
@@ -46,11 +47,12 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		private const string VOICE_CHANNEL = "voice";
 		#endregion
 
+		#region 成员字段
+		private TransmitterDescriptor _descriptor;
+		#endregion
+
 		#region 构造函数
-		public PhoneTransmitter(IServiceProvider serviceProvider)
-		{
-			this.Channels = new[] { MESSAGE_CHANNEL, VOICE_CHANNEL };
-		}
+		public PhoneTransmitter() { }
 		#endregion
 
 		#region 公共属性
@@ -59,7 +61,25 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		[ServiceDependency(IsRequired = true)]
 		public Phone Phone { get; set; }
 
-		public string[] Channels { get; }
+		public TransmitterDescriptor Descriptor
+		{
+			get
+			{
+				if(_descriptor == null)
+				{
+					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()))
+					{
+						Channels = new TransmitterDescriptor.ChannelDescriptorCollection
+						{
+							new (MESSAGE_CHANNEL, Properties.Resources.Text_Phone_Message),
+							new (VOICE_CHANNEL, Properties.Resources.Text_Phone_Voice),
+						}
+					};
+				}
+
+				return _descriptor;
+			}
+		}
 		#endregion
 
 		#region 公共方法
