@@ -89,7 +89,26 @@ namespace Zongsoft.IO
 				if(reader.TokenType == JsonTokenType.String)
 					return new PathLocation(reader.GetString());
 
-				return JsonSerializer.Deserialize<PathLocation>(ref reader, options);
+				if(reader.TokenType == JsonTokenType.StartObject)
+				{
+					var depth = reader.CurrentDepth;
+
+					while(reader.Read())
+					{
+						if(reader.TokenType == JsonTokenType.PropertyName && string.Equals(reader.GetString(), nameof(PathLocation.Path), StringComparison.OrdinalIgnoreCase))
+						{
+							if(reader.Read())
+								return new PathLocation(reader.GetString());
+							else
+								break;
+						}
+
+						if(reader.CurrentDepth == depth)
+							break;
+					}
+				}
+
+				return default;
 			}
 
 			public override void Write(Utf8JsonWriter writer, PathLocation value, JsonSerializerOptions options)
