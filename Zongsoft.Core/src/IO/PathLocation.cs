@@ -92,20 +92,21 @@ namespace Zongsoft.IO
 				if(reader.TokenType == JsonTokenType.StartObject)
 				{
 					var depth = reader.CurrentDepth;
+					var result = default(PathLocation);
 
 					while(reader.Read())
 					{
 						if(reader.TokenType == JsonTokenType.PropertyName && string.Equals(reader.GetString(), nameof(PathLocation.Path), StringComparison.OrdinalIgnoreCase))
 						{
 							if(reader.Read())
-								return new PathLocation(reader.GetString());
-							else
-								break;
+								result = new PathLocation(reader.GetString());
 						}
 
 						if(reader.CurrentDepth == depth)
 							break;
 					}
+
+					return result;
 				}
 
 				return default;
