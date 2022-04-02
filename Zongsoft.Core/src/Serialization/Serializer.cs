@@ -35,6 +35,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -63,7 +64,7 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 默认配置
-			private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions()
+			internal static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions()
 			{
 				NumberHandling = JsonNumberHandling.AllowReadingFromString,
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -77,7 +78,6 @@ namespace Zongsoft.Serialization
 					new ModelConverterFactory(),
 					new RangeConverterFactory(),
 					new ComplexConverterFactory(),
-					//new NullableConverterFactory(),
 				},
 			};
 			#endregion
@@ -119,40 +119,16 @@ namespace Zongsoft.Serialization
 			}
 			public T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => JsonSerializer.Deserialize<T>(buffer, GetOptions(options));
 
-			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default)
-			{
-				throw new NotImplementedException();
-			}
+			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
+				JsonSerializer.DeserializeAsync(stream, type, GetOptions(options), cancellationToken);
+			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
+				JsonSerializer.DeserializeAsync<T>(stream, GetOptions(options), cancellationToken);
 
-			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default)
-			{
-				return JsonSerializer.DeserializeAsync(stream, type, GetOptions(options), cancellationToken);
-			}
-
-			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default)
-			{
-				return JsonSerializer.DeserializeAsync<T>(stream, GetOptions(options), cancellationToken);
-			}
-
-			public object Deserialize(string text, TextSerializationOptions options = null)
-			{
-				throw new NotImplementedException();
-			}
-
-			public object Deserialize(string text, Type type, TextSerializationOptions options = null)
-			{
-				return JsonSerializer.Deserialize(text, type, GetOptions(options));
-			}
-
-			public T Deserialize<T>(string text, TextSerializationOptions options = null)
-			{
-				return JsonSerializer.Deserialize<T>(text, GetOptions(options));
-			}
-
-			public ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
-			{
-				throw new NotImplementedException();
-			}
+			public object Deserialize(string text, TextSerializationOptions options = null) => throw new NotImplementedException();
+			public object Deserialize(string text, Type type, TextSerializationOptions options = null) => JsonSerializer.Deserialize(text, type, GetOptions(options));
+			public T Deserialize<T>(string text, TextSerializationOptions options = null) => JsonSerializer.Deserialize<T>(text, GetOptions(options));
+			public ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
 			public ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
@@ -174,19 +150,22 @@ namespace Zongsoft.Serialization
 			#region 序列方法
 			public void Serialize(Stream stream, object graph, Type type = null, SerializationOptions options = null)
 			{
+				if(graph == null)
+					return;
+
 				using(Utf8JsonWriter writer = new Utf8JsonWriter(stream))
 				{
-					JsonSerializer.Serialize(writer, graph, type, GetOptions(options));
+					JsonSerializer.Serialize(writer, graph, type ?? graph.GetType(), GetOptions(options));
 				}
 			}
 
-			public string Serialize(object graph, TextSerializationOptions options = null)
-			{
-				return JsonSerializer.Serialize(graph, GetOptions(options));
-			}
+			public string Serialize(object graph, TextSerializationOptions options = null) => graph == null ? null : JsonSerializer.Serialize(graph, GetOptions(options));
 
 			public Task SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
+				if(graph == null)
+					return Task.CompletedTask;
+
 				if(stream == null)
 					throw new ArgumentNullException(nameof(stream));
 
@@ -195,6 +174,9 @@ namespace Zongsoft.Serialization
 
 			public async Task<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
+				if(graph == null)
+					return null;
+
 				using(var stream = new MemoryStream())
 				{
 					await JsonSerializer.SerializeAsync(stream, graph, GetOptions(options), cancellationToken);
@@ -228,7 +210,7 @@ namespace Zongsoft.Serialization
 
 				return new JsonSerializerOptions()
 				{
-					Encoder = DefaultOptions.Encoder,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = options.MaximumDepth,
 					NumberHandling = JsonNumberHandling.AllowReadingFromString,
@@ -242,7 +224,6 @@ namespace Zongsoft.Serialization
 						new ModelConverterFactory(),
 						new RangeConverterFactory(),
 						new ComplexConverterFactory(),
-						//new NullableConverterFactory(),
 					},
 				};
 			}
@@ -273,7 +254,7 @@ namespace Zongsoft.Serialization
 
 				return new JsonSerializerOptions()
 				{
-					Encoder = DefaultOptions.Encoder,
+					Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 					PropertyNameCaseInsensitive = true,
 					MaxDepth = options.MaximumDepth,
 					WriteIndented = options.Indented,
@@ -290,7 +271,6 @@ namespace Zongsoft.Serialization
 						new ModelConverterFactory(),
 						new RangeConverterFactory(),
 						new ComplexConverterFactory(),
-						//new NullableConverterFactory(),
 					},
 				};
 			}
@@ -678,20 +658,41 @@ namespace Zongsoft.Serialization
 
 		private class ModelConverterFactory : JsonConverterFactory
 		{
-			public override bool CanConvert(Type type)
+			private static readonly ConcurrentDictionary<Type, JsonConverter[]> _converters = new ConcurrentDictionary<Type, JsonConverter[]>();
+			internal static JsonConverter[] GetConverters(Type type)
 			{
-				return (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
+				if(!IsModel(type))
+					return null;
+
+				return _converters.GetOrAdd(type, type =>
+				{
+					var converters = new List<JsonConverter>();
+
+					foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+					{
+						var attribute = property.GetCustomAttribute<JsonConverterAttribute>();
+
+						if(attribute != null)
+							converters.Add((JsonConverter)Activator.CreateInstance(attribute.ConverterType));
+					}
+
+					return converters.ToArray();
+				});
 			}
 
-			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
-			{
-				return (JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(new Type[] { type }));
-			}
+			private static bool IsModel(Type type) => (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
+			public override bool CanConvert(Type type) => IsModel(type);
+
+			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) =>
+				(JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(new Type[] { type }), new object[] { GetConverters(type) });
 
 			private class ModelConverter<T> : JsonConverter<T> where T : class
 			{
 				private static readonly JsonEncodedText _TYPE_KEY_ = JsonEncodedText.Encode("$type");
 				private static readonly JsonEncodedText _TYPE_VALUE_ = JsonEncodedText.Encode(typeof(T).FullName);
+
+				private readonly JsonConverter[] _converters;
+				public ModelConverter(JsonConverter[] converters) => _converters = converters;
 
 				public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 				{
@@ -699,7 +700,7 @@ namespace Zongsoft.Serialization
 						throw new JsonException();
 
 					var model = (Data.IModel)Data.Model.Build<T>();
-					return (T)JsonSerializer.Deserialize(ref reader, model.GetType(), options);
+					return (T)JsonSerializer.Deserialize(ref reader, model.GetType(), GetOptions(options, _converters));
 
 					while(reader.Read())
 					{
@@ -819,6 +820,9 @@ namespace Zongsoft.Serialization
 						return;
 					}
 
+					JsonSerializer.Serialize(writer, value, typeof(object), GetOptions(options, _converters));
+					return;
+
 					writer.WriteStartObject();
 
 					foreach(var property in value.GetType().GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -916,6 +920,22 @@ namespace Zongsoft.Serialization
 					}
 
 					writer.WriteEndObject();
+				}
+
+				private static JsonSerializerOptions GetOptions(JsonSerializerOptions options, JsonConverter[] converters)
+				{
+					if(converters == null || converters.Length == 0)
+						return options;
+
+					if(options == null)
+						options = new JsonSerializerOptions(JsonSerializerWrapper.DefaultOptions);
+					else
+						options = new JsonSerializerOptions(options);
+
+					for(int i = converters.Length - 1; i >= 0; i--)
+						options.Converters.Insert(0, converters[i]);
+
+					return options;
 				}
 
 				private static bool TryGetString(PropertyInfo property, object value, out string text)
