@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Zongsoft.Data
 {
@@ -57,6 +58,9 @@ namespace Zongsoft.Data
 		public T Value { get => this.Range.Minimum.HasValue ? this.Range.Minimum.Value : default; }
 		public readonly T[] Array;
 		public readonly Range<T> Range;
+
+		public bool HasValue => (this.Array != null && this.Array.Length > 0) || this.Range.HasValue;
+		public bool IsEmpty => this.Array == null || this.Array.Length == 0 || this.Range.IsEmpty;
 		#endregion
 
 		#region 重写方法
@@ -103,26 +107,43 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#region 解析方法
+		public static bool TryParse(string text, out Complex<T> result)
+		{
+			if(Range<T>.TryParse(text, out var range))
+				result = new Complex<T>(range);
+			else
+				result = new Complex<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
+
+			return result.HasValue;
+		}
+		#endregion
+
 		#region 符号重写
 		public static bool operator ==(Complex<T> left, Complex<T> right) => left.Equals(right);
 		public static bool operator !=(Complex<T> left, Complex<T> right) => !(left == right);
 		#endregion
 	}
 
-	public class ComplexConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+	public static class ComplexUtility
 	{
-		public ICondition Convert(ConditionConverterContext context)
+		public static Condition ToCondition<T>(this Complex<T> complex, string name) where T : struct, IEquatable<T>, IComparable<T>
 		{
-			if(context.Value is Complex<T> complex)
-			{
-				if(complex.Array != null && complex.Array.Length > 0)
-					return Condition.In(context.GetFullName(), complex.Array);
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
 
-				if(complex.Range.HasValue)
-					return Condition.Between(context.GetFullName(), complex.Range);
-			}
+			if(complex.Array != null && complex.Array.Length > 0)
+				return Condition.In(name, complex.Array);
+
+			if(complex.Range.HasValue)
+				return Condition.Between(name, complex.Range);
 
 			return null;
 		}
+	}
+
+	public class ComplexConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+	{
+		public ICondition Convert(ConditionConverterContext context) => context.Value is Complex<T> complex ? complex.ToCondition(context.GetFullName()) : null;
 	}
 }
