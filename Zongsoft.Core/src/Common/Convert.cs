@@ -215,7 +215,9 @@ namespace Zongsoft.Common
 
 				if(value is string)
 				{
-					var method = type.GetMethod("TryParse", new Type[] { typeof(string), type });
+					var method = type.IsValueType ?
+						type.GetMethod("TryParse", new Type[] { typeof(string), type.MakeByRefType() }) :
+						type.GetMethod("TryParse", new Type[] { typeof(string), type });
 
 					if(method != null && method.IsStatic)
 					{
