@@ -48,15 +48,8 @@ namespace Zongsoft.Common
 		#region 类型转换
 		public static double ToDouble(float number) => (double)(decimal)number;
 
-		public static T ConvertValue<T>(object value)
-		{
-			return (T)ConvertValue(value, typeof(T));
-		}
-
-		public static T ConvertValue<T>(object value, T defaultValue)
-		{
-			return (T)ConvertValue(value, typeof(T), defaultValue);
-		}
+		public static T ConvertValue<T>(object value) => (T)ConvertValue(value, typeof(T));
+		public static T ConvertValue<T>(object value, T defaultValue) => (T)ConvertValue(value, typeof(T), defaultValue);
 
 		public static T ConvertValue<T>(object value, Func<T> defaultValueThunk)
 		{
@@ -69,15 +62,8 @@ namespace Zongsoft.Common
 			throw new InvalidOperationException($"Unable to convert {value} to {typeof(T)} type.");
 		}
 
-		public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory)
-		{
-			return (T)ConvertValue(value, typeof(T), converterFactory);
-		}
-
-		public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory, T defaultValue)
-		{
-			return (T)ConvertValue(value, typeof(T), converterFactory, defaultValue);
-		}
+		public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory) => (T)ConvertValue(value, typeof(T), converterFactory);
+		public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory, T defaultValue) => (T)ConvertValue(value, typeof(T), converterFactory, defaultValue);
 
 		public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory, Func<T> defaultValueThunk)
 		{
@@ -98,10 +84,7 @@ namespace Zongsoft.Common
 			throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
 		}
 
-		public static object ConvertValue(object value, Type conversionType, object defaultValue)
-		{
-			return TryConvertValue(value, conversionType, out var result) ? result : defaultValue;
-		}
+		public static object ConvertValue(object value, Type conversionType, object defaultValue) => TryConvertValue(value, conversionType, out var result) ? result : defaultValue;
 
 		public static object ConvertValue(object value, Type conversionType, Func<object> defaultValueThunk)
 		{
@@ -122,10 +105,8 @@ namespace Zongsoft.Common
 			throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
 		}
 
-		public static object ConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory, object defaultValue)
-		{
-			return TryConvertValue(value, conversionType, converterFactory, out var result) ? result : defaultValue;
-		}
+		public static object ConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory, object defaultValue) =>
+			TryConvertValue(value, conversionType, converterFactory, out var result) ? result : defaultValue;
 
 		public static object ConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory, Func<object> defaultValueThunk)
 		{
@@ -138,15 +119,8 @@ namespace Zongsoft.Common
 			throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
 		}
 
-		public static bool TryConvertValue<T>(object value, out T result)
-		{
-			return TryConvertValue<T>(value, null, out result);
-		}
-
-		public static bool TryConvertValue(object value, Type conversionType, out object result)
-		{
-			return TryConvertValue(value, conversionType, null, out result);
-		}
+		public static bool TryConvertValue<T>(object value, out T result) => TryConvertValue<T>(value, null, out result);
+		public static bool TryConvertValue(object value, Type conversionType, out object result) => TryConvertValue(value, conversionType, null, out result);
 
 		public static bool TryConvertValue<T>(object value, Func<TypeConverter> converterFactory, out T result)
 		{
@@ -156,7 +130,7 @@ namespace Zongsoft.Common
 				return true;
 			}
 
-			result = default(T);
+			result = default;
 			return false;
 		}
 
@@ -198,7 +172,7 @@ namespace Zongsoft.Common
 				//获取目标类型的转换器
 				var converter = converterFactory?.Invoke() ?? TypeDescriptor.GetConverter(type);
 
-				if(converter != null)
+				if(converter != null && converter.GetType() != typeof(TypeConverter))
 				{
 					if(converter.CanConvertFrom(value.GetType())) //尝试从源类型进行转换
 					{
