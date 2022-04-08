@@ -1942,7 +1942,7 @@ namespace Zongsoft.Data
 						{
 							var args = new List<object>();
 
-							foreach(CustomAttributeTypedArgument arg in (System.Collections.IEnumerable)attribute.ConstructorArguments[i].Value)
+							foreach(CustomAttributeTypedArgument arg in (IEnumerable)attribute.ConstructorArguments[i].Value)
 							{
 								args.Add(arg.Value);
 							}
@@ -2824,6 +2824,21 @@ namespace Zongsoft.Data
 				PropertyAttributes.None,
 				property.PropertyType,
 				null);
+
+			//获取当前属性的所有自定义标签
+			var customAttributes = property.GetCustomAttributesData();
+
+			//设置属性的自定义标签
+			if(customAttributes != null && customAttributes.Count > 0)
+			{
+				foreach(var customAttribute in customAttributes)
+				{
+					var annotation = GetAnnotation(customAttribute);
+
+					if(annotation != null)
+						propertyBuilder.SetCustomAttribute(annotation);
+				}
+			}
 
 			//定义属性的获取器方法
 			var getter = builder.DefineMethod(property.GetGetterName(),
