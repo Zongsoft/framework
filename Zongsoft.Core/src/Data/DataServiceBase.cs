@@ -741,11 +741,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 增改方法
-		public int Upsert(object data, DataUpsertOptions options = null)
-		{
-			return this.Upsert(data, string.Empty, options);
-		}
-
+		public int Upsert(object data, DataUpsertOptions options = null) => this.Upsert(data, string.Empty, options);
 		public int Upsert(object data, string schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -782,11 +778,7 @@ namespace Zongsoft.Data
 			return this.DataAccess.Upsert(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
 		}
 
-		public int UpsertMany(IEnumerable items, DataUpsertOptions options = null)
-		{
-			return this.UpsertMany(items, string.Empty, options);
-		}
-
+		public int UpsertMany(IEnumerable items, DataUpsertOptions options = null) => this.UpsertMany(items, string.Empty, options);
 		public int UpsertMany(IEnumerable items, string schema, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -824,6 +816,154 @@ namespace Zongsoft.Data
 
 			//执行数据引擎的复写操作
 			return this.DataAccess.UpsertMany(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
+		}
+
+		public int UpsertMany(string key, IEnumerable items, DataUpsertOptions options = null) => this.UpsertMany(key, items, null, false, options);
+		public int UpsertMany(string key, IEnumerable items, bool reset, DataUpsertOptions options = null) => this.UpsertMany(key, items, null, reset, options);
+		public int UpsertMany(string key, IEnumerable items, string schema, DataUpsertOptions options = null) => this.UpsertMany(key, items, schema, false, options);
+		public int UpsertMany(string key, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureUpsert(options);
+
+			if(items == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.UpsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var model = this.OnModel(key, item);
+				if(model == null)
+					continue;
+
+				var dictionary = DataDictionary.GetDictionary<TModel>(model);
+				dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
+			}
+
+			if(reset && this.CanDelete)
+				this.Delete(key, schema);
+
+			return dictionaries.Count > 0 ? this.OnUpsertMany(dictionaries, schematic, options) : 0;
+		}
+
+		public int UpsertMany<TKey1>(TKey1 key1, IEnumerable items, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> => this.UpsertMany(key1, items, null, false, options);
+		public int UpsertMany<TKey1>(TKey1 key1, IEnumerable items, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> => this.UpsertMany(key1, items, null, reset, options);
+		public int UpsertMany<TKey1>(TKey1 key1, IEnumerable items, string schema, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> => this.UpsertMany(key1, items, schema, false, options);
+		public int UpsertMany<TKey1>(TKey1 key1, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1>
+		{
+			return this.UpsertMany(new object[] { key1 }, items, schema, reset, options);
+		}
+
+		public int UpsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.UpsertMany(key1, key2, items, null, false, options);
+		public int UpsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.UpsertMany(key1, key2, items, null, reset, options);
+		public int UpsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.UpsertMany(key1, key2, items, schema, false, options);
+		public int UpsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+		{
+			return this.UpsertMany(new object[] { key1, key2 }, items, schema, reset, options);
+		}
+
+		public int UpsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.UpsertMany(key1, key2, key3, items, null, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.UpsertMany(key1, key2, key3, items, null, reset, options);
+		public int UpsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.UpsertMany(key1, key2, key3, items, schema, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+		{
+			return this.UpsertMany(new object[] { key1, key2, key3 }, items, schema, reset, options);
+		}
+
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.UpsertMany(key1, key2, key3, key4, items, null, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.UpsertMany(key1, key2, key3, key4, items, null, reset, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.UpsertMany(key1, key2, key3, key4, items, schema, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+		{
+			return this.UpsertMany(new object[] { key1, key2, key3, key4 }, items, schema, reset, options);
+		}
+
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.UpsertMany(key1, key2, key3, key4, key5, items, null, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, bool reset, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.UpsertMany(key1, key2, key3, key4, key5, items, null, reset, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataUpsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.UpsertMany(key1, key2, key3, key4, key5, items, schema, false, options);
+		public int UpsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
+		{
+			return this.UpsertMany(new object[] { key1, key2, key3, key4, key5 }, items, schema, reset, options);
+		}
+
+		protected int UpsertMany(object[] keys, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureUpsert(options);
+
+			if(keys == null || keys.Length == 0)
+				throw new DataArgumentException(nameof(keys));
+
+			if(items == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.UpsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var model = this.OnModel(keys, item);
+				if(model == null)
+					continue;
+
+				var dictionary = DataDictionary.GetDictionary<TModel>(model);
+				dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
+			}
+
+			if(reset && this.CanDelete)
+				this.Delete(this.OnCondition(DataServiceMethod.Delete(), keys, out _));
+
+			return dictionaries.Count > 0 ? this.OnUpsertMany(dictionaries, schematic, options) : 0;
 		}
 		#endregion
 
@@ -1922,6 +2062,11 @@ namespace Zongsoft.Data
 			e(this, args);
 			return args.Cancel;
 		}
+		#endregion
+
+		#region 模型转换
+		protected virtual TModel OnModel(string key, object item) => string.IsNullOrWhiteSpace(key) ? default : this.OnModel(key.Split('-', StringSplitOptions.TrimEntries), item);
+		protected virtual TModel OnModel(object[] values, object item) => throw new NotSupportedException();
 		#endregion
 
 		#region 条件转换
