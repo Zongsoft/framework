@@ -28,13 +28,12 @@
  */
 
 using System;
-using System.IO;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
@@ -43,7 +42,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class ChannelController : ControllerBase
 	{
 		[HttpPost("{id}/{action}")]
-		public async ValueTask<IActionResult> Postmark(string id)
+		public async ValueTask<IActionResult> Postmark(string id, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
@@ -51,8 +50,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(!ChannelManager.TryGetChannel(id, out var channel))
 				return this.NotFound();
 
-			var content = await this.Request.ReadAsStringAsync();
-			var (value, nonce, timestamp, period) = await channel.PostmarkAsync(content);
+			var content = await this.Request.ReadAsStringAsync(cancellation);
+			var (value, nonce, timestamp, period) = await channel.PostmarkAsync(content, cancellation);
 
 			if(value == null || value.Length == 0)
 				return this.NotFound();
@@ -73,22 +72,22 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class ChannelCredentialController : ControllerBase
 	{
 		[HttpGet("{id}/Credential")]
-		public async ValueTask<IActionResult> GetCredential(string id)
+		public async ValueTask<IActionResult> GetCredential(string id, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(id, out var channel))
 				return this.NotFound();
 
-			var credential = await channel.GetCredentialAsync(false);
+			var credential = await channel.GetCredentialAsync(false, cancellation);
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 
 		[HttpPost("{id}/Credential/[action]")]
-		public async ValueTask<IActionResult> Refresh(string key)
+		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(key, out var channel))
 				return this.NotFound();
 
-			var credential = await channel.GetCredentialAsync(true);
+			var credential = await channel.GetCredentialAsync(true, cancellation);
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 	}
@@ -98,19 +97,19 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class ChannelUserController : ControllerBase
 	{
 		[HttpGet("{identifier?}")]
-		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null)
+		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(id, out var channel))
 				return this.NotFound();
 
 			if(string.IsNullOrEmpty(identifier))
 			{
-				var result = await channel.Users.GetIdentifiersAsync(bookmark);
+				var result = await channel.Users.GetIdentifiersAsync(bookmark, cancellation);
 				this.Response.Headers["X-Bookmark"] = result.bookmark;
 				return result.identifiers == null || result.identifiers.Length == 0 ? this.NoContent() : this.Ok(result.identifiers);
 			}
 
-			var info = await channel.Users.GetInfoAsync(identifier);
+			var info = await channel.Users.GetInfoAsync(identifier, cancellation);
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.OpenId) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
@@ -120,11 +119,39 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	}
 
 	[ApiController]
+	[Route("Externals/Wechat/Channels/{id}/Messager")]
+	public class ChannelMessagerController : ControllerBase
+	{
+		[HttpGet("Templates")]
+		public async ValueTask<IActionResult> GetTemplatesAsync(string id, CancellationToken cancellation = default)
+		{
+			if(!ChannelManager.TryGetChannel(id, out var channel))
+				return this.NotFound();
+
+			var result = await channel.Messager.GetTemplatesAsync(cancellation);
+			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
+		}
+
+		[HttpPost("Send/{destination}")]
+		public async ValueTask<IActionResult> SendAsync(string id, string destination, [FromQuery]string template, [FromQuery]string url, [FromBody]Dictionary<string, object> data, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(template) || data == null)
+				return this.BadRequest();
+
+			if(!ChannelManager.TryGetChannel(id, out var channel))
+				return this.NotFound();
+
+			var result = await channel.Messager.SendAsync(destination, template, data, url, cancellation);
+			return result.Succeed ? this.Content(result.Value) : this.NotFound(result.Failure);
+		}
+	}
+
+	[ApiController]
 	[Route("Externals/Wechat/Channels/{id}/Authentication")]
 	public class ChannelAuthenticationController : ControllerBase
 	{
 		[HttpPost("{token}")]
-		public async ValueTask<IActionResult> AuthenticateAsync(string id, string token)
+		public async ValueTask<IActionResult> AuthenticateAsync(string id, string token, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
@@ -132,7 +159,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(!ChannelManager.TryGetChannel(id, out var channel))
 				return this.NotFound();
 
-			var result = await channel.Authentication.AuthenticateAsync(token);
+			var result = await channel.Authentication.AuthenticateAsync(token, cancellation);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
 		}
 	}

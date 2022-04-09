@@ -28,13 +28,11 @@
  */
 
 using System;
-using System.IO;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
@@ -44,9 +42,9 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	{
 		[HttpPost("{action}")]
 		[HttpPost("{id}/{action}")]
-		public async ValueTask<IActionResult> Login(string id)
+		public async ValueTask<IActionResult> Login(string id, CancellationToken cancellation = default)
 		{
-			var token = await this.Request.ReadAsStringAsync();
+			var token = await this.Request.ReadAsStringAsync(cancellation);
 
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
@@ -54,7 +52,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
 
-			var result = await applet.LoginAsync(token);
+			var result = await applet.LoginAsync(token, cancellation);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
 		}
 
@@ -62,7 +60,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpGet("PhoneNumber/{token}")]
 		[HttpGet("{id}/Phone/{token}")]
 		[HttpGet("{id}/PhoneNumber/{token}")]
-		public async ValueTask<IActionResult> GetPhoneNumber(string id, string token)
+		public async ValueTask<IActionResult> GetPhoneNumber(string id, string token, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
@@ -70,7 +68,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
 
-			var result = await applet.GetPhoneNumberAsync(token);
+			var result = await applet.GetPhoneNumberAsync(token, cancellation);
 			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
 		}
 	}
@@ -80,19 +78,19 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	public class AppletUserController : ControllerBase
 	{
 		[HttpGet("{identifier?}")]
-		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null)
+		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
 
 			if(string.IsNullOrEmpty(identifier))
 			{
-				var result = await applet.Users.GetIdentifiersAsync(bookmark);
+				var result = await applet.Users.GetIdentifiersAsync(bookmark, cancellation);
 				this.Response.Headers["X-Bookmark"] = result.bookmark;
 				return result.identifiers == null || result.identifiers.Length == 0 ? this.NoContent() : this.Ok(result.identifiers);
 			}
 
-			var info = await applet.Users.GetInfoAsync(identifier);
+			var info = await applet.Users.GetInfoAsync(identifier, cancellation);
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.OpenId) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
@@ -107,23 +105,23 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 	{
 		[HttpGet("Credential")]
 		[HttpGet("{key}/Credential")]
-		public async ValueTask<IActionResult> GetCredential(string key)
+		public async ValueTask<IActionResult> GetCredential(string key, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(key, out var applet))
 				return this.NotFound();
 
-			var credential = await applet.GetCredentialAsync(false);
+			var credential = await applet.GetCredentialAsync(false, cancellation);
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 
 		[HttpPost("Credential/[action]")]
 		[HttpPost("{key}/Credential/[action]")]
-		public async ValueTask<IActionResult> Refresh(string key)
+		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(key, out var applet))
 				return this.NotFound();
 
-			var credential = await applet.GetCredentialAsync(true);
+			var credential = await applet.GetCredentialAsync(true, cancellation);
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 	}

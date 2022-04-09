@@ -48,6 +48,7 @@ namespace Zongsoft.Externals.Wechat
 
 		#region 成员字段
 		private volatile UserProvider _users;
+		private volatile ChannelMessager _messager;
 		private volatile ChannelAuthentication _authentication;
 		#endregion
 
@@ -72,6 +73,17 @@ namespace Zongsoft.Externals.Wechat
 					Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
 
 				return _users;
+			}
+		}
+
+		public ChannelMessager Messager
+		{
+			get
+			{
+				if(_messager == null)
+					Interlocked.CompareExchange(ref _messager, new ChannelMessager(this.Account), null);
+
+				return _messager;
 			}
 		}
 
