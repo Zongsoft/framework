@@ -19,7 +19,7 @@ namespace Zongsoft.Externals.Wechat.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -57,6 +57,33 @@ namespace Zongsoft.Externals.Wechat.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 模板消息 的本地化字符串。
+        /// </summary>
+        internal static string TemplateMessage {
+            get {
+                return ResourceManager.GetString("TemplateMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 提供微信模板消息通知功能。 的本地化字符串。
+        /// </summary>
+        internal static string Transmitter_Description {
+            get {
+                return ResourceManager.GetString("Transmitter.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 微信通知 的本地化字符串。
+        /// </summary>
+        internal static string Transmitter_Title {
+            get {
+                return ResourceManager.GetString("Transmitter.Title", resourceCulture);
             }
         }
     }
