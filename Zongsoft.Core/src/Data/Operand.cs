@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Zongsoft.Data
 {
@@ -48,29 +49,99 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
+		public static string GetSymbol(OperandType type) => type switch
+		{
+			OperandType.Add => "+",
+			OperandType.Subtract => "-",
+			OperandType.Multiply => "*",
+			OperandType.Divide => "/",
+			OperandType.Modulo => "%",
+			OperandType.And => "&",
+			OperandType.Or => "|",
+			OperandType.Xor => "^",
+			OperandType.Not => "!",
+			OperandType.Negate => "-",
+			_ => string.Empty,
+		};
+
 		public static FieldOperand Field(string name) => new FieldOperand(name);
 		public static ConstantOperand<T> Constant<T>(T value) => new ConstantOperand<T>(value);
 		public static FunctionOperand Function(string name, params Operand[] arguments) => new FunctionOperand(name, arguments);
 		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, bool distinct = false) => new AggregateOperand(aggregate, member, null, distinct);
 		public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter, bool distinct = false) => new AggregateOperand(aggregate, member, filter, distinct);
+		#endregion
 
-		public static string GetSymbol(OperandType type)
-		{
-			return type switch
-			{
-				OperandType.Add => "+",
-				OperandType.Subtract => "-",
-				OperandType.Multiply => "*",
-				OperandType.Divide => "/",
-				OperandType.Modulo => "%",
-				OperandType.And => "&",
-				OperandType.Or => "|",
-				OperandType.Xor => "^",
-				OperandType.Not => "!",
-				OperandType.Negate => "-",
-				_ => string.Empty,
-			};
-		}
+		#region 聚合运元
+		public static AggregateOperand Count(ICondition filter = null, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, null, filter, distinct);
+		public static AggregateOperand Count(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, member, null, distinct);
+		public static AggregateOperand Count(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, member, filter, distinct);
+		public static AggregateOperand Sum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Sum, member, null, distinct);
+		public static AggregateOperand Sum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Sum, member, filter, distinct);
+		public static FunctionOperand Sum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Sum, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Sum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Sum, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Average(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Average, member, null, distinct);
+		public static AggregateOperand Average(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Average, member, filter, distinct);
+		public static FunctionOperand Average<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Average, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Average<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Average, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Median(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Median, member, null, distinct);
+		public static AggregateOperand Median(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Median, member, filter, distinct);
+		public static FunctionOperand Median<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Median, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Median<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Median, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Maximum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Maximum, member, null, distinct);
+		public static AggregateOperand Maximum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Maximum, member, filter, distinct);
+		public static FunctionOperand Maximum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Maximum, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Maximum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Maximum, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Minimum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Minimum, member, null, distinct);
+		public static AggregateOperand Minimum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Minimum, member, filter, distinct);
+		public static FunctionOperand Minimum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Minimum, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Minimum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Minimum, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Deviation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Deviation, member, null, distinct);
+		public static AggregateOperand Deviation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Deviation, member, filter, distinct);
+		public static FunctionOperand Deviation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Deviation, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Deviation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Deviation, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand DeviationPopulation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, null, distinct);
+		public static AggregateOperand DeviationPopulation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, filter, distinct);
+		public static FunctionOperand DeviationPopulation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand DeviationPopulation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand Variance(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Variance, member, null, distinct);
+		public static AggregateOperand Variance(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Variance, member, filter, distinct);
+		public static FunctionOperand Variance<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Variance, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand Variance<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Variance, member, filter, distinct), Constant(defaultValue));
+		public static AggregateOperand VariancePopulation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.VariancePopulation, member, null, distinct);
+		public static AggregateOperand VariancePopulation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.VariancePopulation, member, filter, distinct);
+		public static FunctionOperand VariancePopulation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.VariancePopulation, member, null, distinct), Constant(defaultValue));
+		public static FunctionOperand VariancePopulation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.VariancePopulation, member, filter, distinct), Constant(defaultValue));
+		#endregion
+
+		#region 函数运元
+		public static FunctionOperand Cast(string field, System.Data.DbType type, string style = null) => Cast(Field(field), type, style);
+		public static FunctionOperand Cast(string field, System.Data.DbType type, int length, string style = null) => Cast(Field(field), type, length, style);
+		public static FunctionOperand Cast(string field, System.Data.DbType type, byte precision, byte scale, string style = null) => Cast(Field(field), type, precision, scale, style);
+		public static FunctionOperand Cast(Operand operand, System.Data.DbType type, string style = null) => new FunctionOperand.CastFunction(operand, type, 0, style);
+		public static FunctionOperand Cast(Operand operand, System.Data.DbType type, int length, string style = null) => new FunctionOperand.CastFunction(operand, type, length, style);
+		public static FunctionOperand Cast(Operand operand, System.Data.DbType type, byte precision, byte scale, string style = null) => new FunctionOperand.CastFunction(operand, type, precision, scale, style);
+
+		public static FunctionOperand IsNull(string field, Operand replacement = null) => IsNull(Field(field), replacement);
+		public static FunctionOperand IsNull(Operand operand, Operand replacement = null) => replacement == null ?
+			new FunctionOperand(Functions.IsNull, operand) :
+			new FunctionOperand(Functions.IsNull, operand, replacement);
+
+		public static FunctionOperand IsDate(string field) => IsDate(Field(field));
+		public static FunctionOperand IsDate(Operand operand) => new FunctionOperand(Functions.IsDate, operand);
+
+		public static FunctionOperand IsNumeric(string field) => IsNumeric(Field(field));
+		public static FunctionOperand IsNumeric(Operand operand) => new FunctionOperand(Functions.IsNumeric, operand);
+
+		public static FunctionOperand Choose(int index, params Operand[] values) => Choose((Operand)Constant(index), values);
+		public static FunctionOperand Choose(string field, params Operand[] values) => Choose(Field(field), values);
+		public static FunctionOperand Choose(Operand operand, params Operand[] values) => values == null || values.Length == 0 ?
+			new FunctionOperand(Functions.Choose, operand) :
+			new FunctionOperand(Functions.Choose, values.Prepend(operand).ToArray());
+
+		public static FunctionOperand Coalesce(string field, params Operand[] values) => Coalesce(Field(field), values);
+		public static FunctionOperand Coalesce(Operand operand, params Operand[] values) => values == null || values.Length == 0 ?
+			new FunctionOperand(Functions.Coalesce, operand) :
+			new FunctionOperand(Functions.Coalesce, values.Prepend(operand).ToArray());
 		#endregion
 
 		#region 符号重写
@@ -255,6 +326,35 @@ namespace Zongsoft.Data
 				return HashCode.Combine(this.Name, code);
 			}
 			public override string ToString() => this.Arguments == null || this.Arguments.Length == 0 ? $"{this.Name}()" : $"{this.Name}(...)";
+			#endregion
+
+			#region 嵌套子类
+			public sealed class CastFunction : FunctionOperand
+			{
+				internal CastFunction(Operand value, System.Data.DbType conversionType, int length = 0, string style = null) : base(Functions.Cast)
+				{
+					this.Value = value;
+					this.ConversionType = conversionType;
+					this.Length = length;
+					this.Style = style;
+				}
+
+				internal CastFunction(Operand value, System.Data.DbType conversionType, byte precision, byte scale, string style = null) : base(Functions.Cast)
+				{
+					this.Value = value;
+					this.ConversionType = conversionType;
+					this.Precision = precision;
+					this.Scale = scale;
+					this.Style = style;
+				}
+
+				public Operand Value { get; }
+				public System.Data.DbType ConversionType { get; }
+				public int Length { get; }
+				public byte Precision { get; }
+				public byte Scale { get; }
+				public string Style { get; }
+			}
 			#endregion
 		}
 
