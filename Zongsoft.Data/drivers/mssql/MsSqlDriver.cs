@@ -67,7 +67,7 @@ namespace Zongsoft.Data.MsSql
 				{
 					case 2601:
 					case 2627:
-						if(this.TryGetConflict(error.Message, out var key, out var value))
+						if(TryGetConflict(error.Message, out var key, out var value))
 							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
 						else
 							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
@@ -77,56 +77,28 @@ namespace Zongsoft.Data.MsSql
 			return exception;
 		}
 
-		public override DbCommand CreateCommand()
+		public override DbCommand CreateCommand() => new SqlCommand();
+		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new SqlCommand(text)
 		{
-			return new SqlCommand();
-		}
+			CommandType = commandType,
+		};
 
-		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text)
-		{
-			return new SqlCommand(text)
-			{
-				CommandType = commandType,
-			};
-		}
-
-		public override DbConnection CreateConnection()
-		{
-			return new SqlConnection();
-		}
-
-		public override DbConnection CreateConnection(string connectionString)
-		{
-			return new SqlConnection(connectionString);
-		}
+		public override DbConnection CreateConnection() => new SqlConnection();
+		public override DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
 		#endregion
 
 		#region 保护方法
-		protected override ExpressionVisitorBase CreateVisitor()
-		{
-			return new MsSqlExpressionVisitor();
-		}
-
+		protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
 		protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
 		{
-			switch(expression.DbType)
+			parameter.DbType = expression.DbType switch
 			{
-				case DbType.SByte:
-					parameter.DbType = DbType.Byte;
-					break;
-				case DbType.UInt16:
-					parameter.DbType = DbType.Int16;
-					break;
-				case DbType.UInt32:
-					parameter.DbType = DbType.Int32;
-					break;
-				case DbType.UInt64:
-					parameter.DbType = DbType.Int64;
-					break;
-				default:
-					parameter.DbType = expression.DbType;
-					break;
-			}
+				DbType.SByte => DbType.Byte,
+				DbType.UInt16 => DbType.Int16,
+				DbType.UInt32 => DbType.Int32,
+				DbType.UInt64 => DbType.Int64,
+				_ => expression.DbType,
+			};
 
 			if(expression.Schema != null && expression.Schema.Token.Property.IsSimplex)
 				((SqlParameter)parameter).IsNullable = ((Metadata.IDataEntitySimplexProperty)expression.Schema.Token.Property).Nullable;
@@ -136,7 +108,7 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 私有方法
-		private bool TryGetConflict(string message, out string key, out string value)
+		private static bool TryGetConflict(string message, out string key, out string value)
 		{
 			key = null;
 			value = null;
