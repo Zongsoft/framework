@@ -84,7 +84,7 @@ namespace Zongsoft.Data.MySql
 						/*
 						 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
 						 */
-						if(this.TryGetConflict(error.Message, out var key, out var value))
+						if(TryGetConflict(error.Message, out var key, out var value))
 							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
 						else
 							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
@@ -102,39 +102,22 @@ namespace Zongsoft.Data.MySql
 			return exception;
 		}
 
-		public override DbCommand CreateCommand()
+		public override DbCommand CreateCommand() => new MySqlCommand();
+		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new MySqlCommand(text)
 		{
-			return new MySqlCommand();
-		}
+			CommandType = commandType,
+		};
 
-		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text)
-		{
-			return new MySqlCommand(text)
-			{
-				CommandType = commandType,
-			};
-		}
-
-		public override DbConnection CreateConnection()
-		{
-			return new MySqlConnection();
-		}
-
-		public override DbConnection CreateConnection(string connectionString)
-		{
-			return new MySqlConnection(connectionString);
-		}
+		public override DbConnection CreateConnection() => new MySqlConnection();
+		public override DbConnection CreateConnection(string connectionString) => new MySqlConnection(connectionString);
 		#endregion
 
 		#region 保护方法
-		protected override ExpressionVisitorBase CreateVisitor()
-		{
-			return new MySqlExpressionVisitor();
-		}
+		protected override ExpressionVisitorBase CreateVisitor() => new MySqlExpressionVisitor();
 		#endregion
 
 		#region 私有方法
-		private bool TryGetConflict(string message, out string key, out string value)
+		private static bool TryGetConflict(string message, out string key, out string value)
 		{
 			key = null;
 			value = null;

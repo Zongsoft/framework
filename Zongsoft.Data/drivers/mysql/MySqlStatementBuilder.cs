@@ -45,45 +45,14 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder()
-		{
-			return new MySqlSelectStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder()
-		{
-			return new MySqlDeleteStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder()
-		{
-			return new MySqlInsertStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder()
-		{
-			return new MySqlUpdateStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder()
-		{
-			return new MySqlUpsertStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder()
-		{
-			return new MySqlAggregateStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder()
-		{
-			return new MySqlExistStatementBuilder();
-		}
-
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder()
-		{
-			return new MySqlExecutionStatementBuilder();
-		}
+		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new MySqlSelectStatementBuilder();
+		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new MySqlDeleteStatementBuilder();
+		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new MySqlInsertStatementBuilder();
+		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new MySqlUpdateStatementBuilder();
+		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new MySqlUpsertStatementBuilder();
+		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new MySqlAggregateStatementBuilder();
+		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new MySqlExistStatementBuilder();
+		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new MySqlExecutionStatementBuilder();
 		#endregion
 	}
 }

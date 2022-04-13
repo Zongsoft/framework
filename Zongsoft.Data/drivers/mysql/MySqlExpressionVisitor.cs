@@ -106,6 +106,22 @@ namespace Zongsoft.Data.MySql
 					throw new DataException($"Not supported '{statement}' statement.");
 			}
 		}
+
+		protected override void VisitFunction(ExpressionVisitorContext context, MethodExpression expression)
+		{
+			if(expression is CastFunctionExpression casting)
+			{
+				context.Write("CONVERT(");
+				this.OnVisit(context, casting.Value);
+				context.Write(",");
+				context.Write(this.Dialect.GetDbType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+				context.Write(")");
+
+				return;
+			}
+
+			base.VisitFunction(context, expression);
+		}
 		#endregion
 
 		#region 嵌套子类
@@ -120,95 +136,66 @@ namespace Zongsoft.Data.MySql
 			#endregion
 
 			#region 公共方法
-			public string GetAlias(string alias)
-			{
-				return $"'{alias}'";
-			}
+			public string GetAlias(string alias) => $"'{alias}'";
+			public string GetSymbol(Operator @operator) => null;
+			public string GetIdentifier(string name) => $"`{name}`";
+			public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 
-			public string GetIdentifier(string name)
+			public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
 			{
-				return $"`{name}`";
-			}
-
-			public string GetIdentifier(IIdentifier identifier)
-			{
-				return this.GetIdentifier(identifier.Name);
-			}
-
-			public string GetSymbol(Operator @operator)
-			{
-				return null;
-			}
-
-			public string GetDbType(DbType dbType, int length, byte precision, byte scale)
-			{
-				switch(dbType)
-				{
-					case DbType.AnsiString:
-						return length > 0 ? "varchar(" + length.ToString() + ")" : "text";
-					case DbType.AnsiStringFixedLength:
-						return length > 0 ? "char(" + length.ToString() + ")" : "text";
-					case DbType.String:
-						return length > 0 ? "nvarchar(" + length.ToString() + ")" : "text";
-					case DbType.StringFixedLength:
-						return length > 0 ? "nchar(" + length.ToString() + ")" : "text";
-					case DbType.Binary:
-						return length > 0 ? "varbinary(" + length.ToString() + ")" : "blob";
-					case DbType.Boolean:
-						return "tinyint(1)";
-					case DbType.Byte:
-						return "unsigned tinyint";
-					case DbType.SByte:
-						return "tinyint";
-					case DbType.Date:
-						return "date";
-					case DbType.DateTime:
-						return "datetime";
-					case DbType.DateTime2:
-						return "datetime";
-					case DbType.DateTimeOffset:
-						return "datetime";
-					case DbType.Guid:
-						return "binary(16)";
-					case DbType.Int16:
-						return "smallint";
-					case DbType.Int32:
-						return "int";
-					case DbType.Int64:
-						return "bigint";
-					case DbType.Object:
-						return "json";
-					case DbType.Time:
-						return "time";
-					case DbType.UInt16:
-						return "unsigned smallint";
-					case DbType.UInt32:
-						return "unsigned int";
-					case DbType.UInt64:
-						return "unsigned bigint";
-					case DbType.Currency:
-						return "decimal(12,2)";
-					case DbType.Decimal:
-						return "decimal(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Double:
-						return "double(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Single:
-						return "float(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.VarNumeric:
-						return "numeric(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Xml:
-						return "text";
-				}
-
-				throw new DataException($"Unsupported '{dbType.ToString()}' data type.");
-			}
+				DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
+				DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "text",
+				DbType.String => length > 0 ? $"nvarchar({length})" : "text",
+				DbType.StringFixedLength => length > 0 ? $"nchar({length})" : "text",
+				DbType.Binary => length > 0 ? $"varbinary({length})" : "blob",
+				DbType.Boolean => "tinyint(1)",
+				DbType.Byte => "unsigned tinyint",
+				DbType.SByte => "tinyint",
+				DbType.Date => "date",
+				DbType.DateTime => "datetime",
+				DbType.DateTime2 => "datetime",
+				DbType.DateTimeOffset => "datetime",
+				DbType.Guid => "binary(16)",
+				DbType.Int16 => "smallint",
+				DbType.Int32 => "int",
+				DbType.Int64 => "bigint",
+				DbType.Object => "json",
+				DbType.Time => "time",
+				DbType.UInt16 => "unsigned smallint",
+				DbType.UInt32 => "unsigned int",
+				DbType.UInt64 => "unsigned bigint",
+				DbType.Currency => precision > 0 ? $"decimal({precision},{scale})" : "decimal(12,2)",
+				DbType.Decimal => $"decimal({precision},{scale})",
+				DbType.Double => $"double({precision},{scale})",
+				DbType.Single => $"float({precision},{scale})",
+				DbType.VarNumeric => $"numeric({precision},{scale})",
+				DbType.Xml => "text",
+				_ => throw new DataException($"Unsupported '{dbType}' data type."),
+			};
 
 			public string GetMethodName(MethodExpression method)
 			{
+				if(method.Name.Equals(Functions.IsNull, StringComparison.OrdinalIgnoreCase))
+					return "IFNULL";
+				if(method.Name.Equals(Functions.Stuff, StringComparison.OrdinalIgnoreCase))
+					return "INSERT";
+				if(method.Name.Equals(Functions.Replicate, StringComparison.OrdinalIgnoreCase))
+					return "REPEAT";
+				if(method.Name.Equals(Functions.Substring, StringComparison.OrdinalIgnoreCase))
+					return "SUBSTR";
+				if(method.Name.Equals(Functions.TrimEnd, StringComparison.OrdinalIgnoreCase))
+					return "RTRIM";
+				if(method.Name.Equals(Functions.TrimStart, StringComparison.OrdinalIgnoreCase))
+					return "LTRIM";
+				if(method.Name.Equals(Functions.Random, StringComparison.OrdinalIgnoreCase))
+					return "RAND";
+				if(method.Name.Equals(Functions.Guid, StringComparison.OrdinalIgnoreCase))
+					return "UUID";
+
 				return method switch
 				{
-					AggregateExpression aggregate => this.GetAggregateName(aggregate.Function),
-					SequenceExpression sequence => this.GetSequenceName(sequence),
+					AggregateExpression aggregate => GetAggregateName(aggregate.Function),
+					SequenceExpression sequence => GetSequenceName(sequence),
 					_ => method.Name,
 				};
 			}
@@ -216,35 +203,22 @@ namespace Zongsoft.Data.MySql
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetAggregateName(DataAggregateFunction function)
+			private static string GetAggregateName(DataAggregateFunction function) => function switch
 			{
-				switch(function)
-				{
-					case DataAggregateFunction.Count:
-						return "COUNT";
-					case DataAggregateFunction.Sum:
-						return "SUM";
-					case DataAggregateFunction.Average:
-						return "AVG";
-					case DataAggregateFunction.Maximum:
-						return "MAX";
-					case DataAggregateFunction.Minimum:
-						return "MIN";
-					case DataAggregateFunction.Deviation:
-						return "STDEV";
-					case DataAggregateFunction.DeviationPopulation:
-						return "STDEV_POP";
-					case DataAggregateFunction.Variance:
-						return "VARIANCE";
-					case DataAggregateFunction.VariancePopulation:
-						return "VAR_POP";
-					default:
-						throw new NotSupportedException($"Invalid '{function}' aggregate method.");
-				}
-			}
+				DataAggregateFunction.Count => "COUNT",
+				DataAggregateFunction.Sum => "SUM",
+				DataAggregateFunction.Average => "AVG",
+				DataAggregateFunction.Maximum => "MAX",
+				DataAggregateFunction.Minimum => "MIN",
+				DataAggregateFunction.Deviation => "STDEV",
+				DataAggregateFunction.DeviationPopulation => "STDEV_POP",
+				DataAggregateFunction.Variance => "VARIANCE",
+				DataAggregateFunction.VariancePopulation => "VAR_POP",
+				_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
+			};
 
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetSequenceName(SequenceExpression sequence)
+			private static string GetSequenceName(SequenceExpression sequence)
 			{
 				if(sequence.Method != SequenceMethod.Current)
 					throw new DataException($"The MySQL driver does not support the '{sequence.Method.ToString()}' sequence function.");
