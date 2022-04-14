@@ -464,17 +464,17 @@ namespace Zongsoft.Data
 			switch(name.ToLowerInvariant())
 			{
 				case "today":
-					return new DateTimeRangeParserResult(Range.GetToday());
+					return new DateTimeRangeParserResult(Range.Timing.Today());
 				case "yesterday":
-					return new DateTimeRangeParserResult(Range.GetYesterday());
+					return new DateTimeRangeParserResult(Range.Timing.Yesterday());
 				case "thisweek":
-					return new DateTimeRangeParserResult(Range.GetThisWeek());
+					return new DateTimeRangeParserResult(Range.Timing.ThisWeek());
 				case "thismonth":
-					return new DateTimeRangeParserResult(Range.GetThisMonth());
+					return new DateTimeRangeParserResult(Range.Timing.ThisMonth());
 				case "thisyear":
-					return new DateTimeRangeParserResult(Range.GetThisYear());
+					return new DateTimeRangeParserResult(Range.Timing.ThisYear());
 				case "lastyear":
-					return new DateTimeRangeParserResult(Range.GetLastYear());
+					return new DateTimeRangeParserResult(Range.Timing.LastYear());
 				case "ago":
 					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Ago range function is missing a required parameter.");
@@ -482,7 +482,7 @@ namespace Zongsoft.Data
 					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Ago range function has too many parameters.");
 
-					return new DateTimeRangeParserResult(Range.GetAgo(arguments[0].Value, arguments[0].Unit));
+					return new DateTimeRangeParserResult(Range.Timing.Ago(arguments[0].Value, arguments[0].Unit));
 				case "last":
 					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Last range function is missing a required parameter.");
@@ -490,7 +490,7 @@ namespace Zongsoft.Data
 					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Last range function has too many parameters.");
 
-					return new DateTimeRangeParserResult(Range.GetLast(arguments[0].Value, arguments[0].Unit));
+					return new DateTimeRangeParserResult(Range.Timing.Last(arguments[0].Value, arguments[0].Unit));
 				case "year":
 					if(arguments == null || arguments.Count < 1)
 						return new DateTimeRangeParserResult($"The Year range function is missing a required parameter.");
@@ -498,7 +498,7 @@ namespace Zongsoft.Data
 					if(arguments.Count > 1)
 						return new DateTimeRangeParserResult($"The Year range function has too many parameters.");
 
-					return new DateTimeRangeParserResult(Range.GetYear(arguments[0].Value));
+					return new DateTimeRangeParserResult(Range.Timing.Year(arguments[0].Value));
 				case "month":
 					if(arguments == null || arguments.Count < 2)
 						return new DateTimeRangeParserResult($"The Month range function is missing required parameters.");
@@ -506,7 +506,7 @@ namespace Zongsoft.Data
 					if(arguments.Count > 2)
 						return new DateTimeRangeParserResult($"The Month range function has too many parameters.");
 
-					return new DateTimeRangeParserResult(Range.GetMonth(arguments[0].Value, arguments[1].Value));
+					return new DateTimeRangeParserResult(Range.Timing.Month(arguments[0].Value, arguments[1].Value));
 				case "day":
 					if(arguments == null || arguments.Count < 3)
 						return new DateTimeRangeParserResult($"The Day range function is missing required parameters.");
@@ -514,7 +514,7 @@ namespace Zongsoft.Data
 					if(arguments.Count > 3)
 						return new DateTimeRangeParserResult($"The Day range function has too many parameters.");
 
-					return new DateTimeRangeParserResult(Range.GetDay(arguments[0].Value, arguments[1].Value, arguments[2].Value));
+					return new DateTimeRangeParserResult(Range.Timing.Day(arguments[0].Value, arguments[1].Value, arguments[2].Value));
 				default:
 					return new DateTimeRangeParserResult($"Invalid datetime range function name: {name}.");
 			}

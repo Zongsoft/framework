@@ -246,121 +246,81 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 区段计算
-		public static Range<DateTime> GetDay(this DateTime day) => new Range<DateTime>(day.Date, new DateTime(day.Year, day.Month, day.Day, 23, 59, 59, 999));
-		public static Range<DateTime> GetToday() => GetDay(DateTime.Today);
-		public static Range<DateTime> GetYesterday() => GetDay(DateTime.Today.AddDays(-1));
-
-		public static Range<DateTime> GetThisWeek()
+		#region 时间范围
+		public static class Timing
 		{
-			var today = DateTime.Today;
-			var days = (int)today.DayOfWeek;
-			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
-			return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
-		}
+			public static Range<DateTime> Day(DateTime date) => new Range<DateTime>(date.Date, new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999));
+			public static Range<DateTime> Day(int year, int month, int day) => new Range<DateTime>(new DateTime(year, month, day), new DateTime(year, month, day, 23, 59, 59, 999));
+			public static Range<DateTime> Today() => Day(DateTime.Today);
+			public static Range<DateTime> Yesterday() => Day(DateTime.Today.AddDays(-1));
 
-		public static Range<DateTime> GetThisMonth()
-		{
-			var today = DateTime.Today;
-			return GetMonth(today.Year, today.Month);
-		}
-
-		public static Range<DateTime> GetThisYear()
-		{
-			return GetYear(DateTime.Today.Year);
-		}
-
-		public static Range<DateTime> GetLastYear()
-		{
-			return GetYear(DateTime.Today.Year - 1);
-		}
-
-		public static Range<DateTime> GetYear(int year)
-		{
-			var firstday = new DateTime(year, 1, 1);
-			return new Range<DateTime>(firstday, new DateTime(year, 12, 31, 23, 59, 59, 999));
-		}
-
-		public static Range<DateTime> GetMonth(int year, int month)
-		{
-			var firstday = new DateTime(year, month, 1);
-			return new Range<DateTime>(firstday, new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
-		}
-
-		public static Range<DateTime> GetDay(int year, int month, int day)
-		{
-			var date = new DateTime(year, month, day);
-			return new Range<DateTime>(date, new DateTime(year, month, day, 23, 59, 59, 999));
-		}
-
-		public static Range<DateTime> GetAgo(int number, char unit)
-		{
-			var now = DateTime.Now;
-
-			if(number == 0)
-				return new Range<DateTime>(null, now);
-
-			switch(unit)
+			public static Range<DateTime> ThisWeek()
 			{
-				case 'Y':
-				case 'y':
-					return new Range<DateTime>(null, now.AddYears(-number));
-				case 'M':
-					return new Range<DateTime>(null, now.AddMonths(-number));
-				case 'D':
-				case 'd':
-					return new Range<DateTime>(null, now.AddDays(-number));
-				case 'H':
-				case 'h':
-					return new Range<DateTime>(null, now.AddHours(-number));
-				case 'm':
-					return new Range<DateTime>(null, now.AddMinutes(-number));
-				case 'S':
-				case 's':
-					return new Range<DateTime>(null, now.AddSeconds(-number));
-				default:
-					throw new ArgumentException(unit == '\0' ?
-						$"Missing the parameter unit of the ago datetime range function." :
-						$"Invalid parameter unit({unit}) of the ago datetime range function.");
+				var today = DateTime.Today;
+				var days = (int)today.DayOfWeek;
+				var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
+				return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 			}
-		}
 
-		public static Range<DateTime> GetLast(int number, char unit)
-		{
-			var now = DateTime.Now;
-
-			switch(unit)
+			public static Range<DateTime> ThisMonth()
 			{
-				case 'Y':
-				case 'y':
-					return number == 0 ?
-						new Range<DateTime>(new DateTime(now.Year, 1, 1), now) :
-						new Range<DateTime>(now.AddYears(-number), now);
-				case 'M':
-					return number == 0 ?
-						new Range<DateTime>(new DateTime(now.Year, now.Month, 1), now) :
-						new Range<DateTime>(now.AddMonths(-number), now);
-				case 'D':
-				case 'd':
-					return number == 0 ?
-						new Range<DateTime>(now.Date, now) :
-						new Range<DateTime>(now.AddDays(-number), now);
-				case 'H':
-				case 'h':
-					return number == 0 ?
-						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0), now) :
-						new Range<DateTime>(now.AddHours(-number), now);
-				case 'm':
-					return number == 0 ?
-						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0), now) :
-						new Range<DateTime>(now.AddMinutes(-number), now);
-				case 'S':
-				case 's':
-					return new Range<DateTime>(now.AddSeconds(-number), now);
-				default:
-					throw new ArgumentException(unit == '\0' ?
+				var today = DateTime.Today;
+				return Month(today.Year, today.Month);
+			}
+
+			public static Range<DateTime> ThisYear() => Year(DateTime.Today.Year);
+			public static Range<DateTime> LastYear() => Year(DateTime.Today.Year - 1);
+
+			public static Range<DateTime> Year(int year) => new Range<DateTime>(new DateTime(year, 1, 1), new DateTime(year, 12, 31, 23, 59, 59, 999));
+			public static Range<DateTime> Month(int year, int month) => new Range<DateTime>(new DateTime(year, month, 1), new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
+
+			public static Range<DateTime> Ago(int number, char unit)
+			{
+				var now = DateTime.Now;
+
+				if(number == 0)
+					return new Range<DateTime>(null, now);
+
+				return unit switch
+				{
+					'Y' or 'y' => new Range<DateTime>(null, now.AddYears(-number)),
+					'M' => new Range<DateTime>(null, now.AddMonths(-number)),
+					'D' or 'd' => new Range<DateTime>(null, now.AddDays(-number)),
+					'H' or 'h' => new Range<DateTime>(null, now.AddHours(-number)),
+					'm' => new Range<DateTime>(null, now.AddMinutes(-number)),
+					'S' or 's' => new Range<DateTime>(null, now.AddSeconds(-number)),
+					_ => throw new ArgumentException(unit == '\0' ?
 						$"Missing the parameter unit of the ago datetime range function." :
-						$"Invalid parameter unit({unit}) of the ago datetime range function.");
+						$"Invalid parameter unit({unit}) of the ago datetime range function."),
+				};
+			}
+
+			public static Range<DateTime> Last(int number, char unit)
+			{
+				var now = DateTime.Now;
+
+				return unit switch
+				{
+					'Y' or 'y' => number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, 1, 1), now) :
+						new Range<DateTime>(now.AddYears(-number), now),
+					'M' => number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, 1), now) :
+						new Range<DateTime>(now.AddMonths(-number), now),
+					'D' or 'd' => number == 0 ?
+						new Range<DateTime>(now.Date, now) :
+						new Range<DateTime>(now.AddDays(-number), now),
+					'H' or 'h' => number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0), now) :
+						new Range<DateTime>(now.AddHours(-number), now),
+					'm' => number == 0 ?
+						new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0), now) :
+						new Range<DateTime>(now.AddMinutes(-number), now),
+					'S' or 's' => new Range<DateTime>(now.AddSeconds(-number), now),
+					_ => throw new ArgumentException(unit == '\0' ?
+						$"Missing the parameter unit of the ago datetime range function." :
+						$"Invalid parameter unit({unit}) of the ago datetime range function."),
+				};
 			}
 		}
 		#endregion
