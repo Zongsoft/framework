@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Common
 				throw new ArgumentNullException(nameof(connectionSetting));
 
 			if(string.IsNullOrWhiteSpace(connectionSetting.Driver))
-				throw new ArgumentException($"Missing driver ");
+				throw new DataException($"Missing driver in the data connection string.");
 
 			_name = connectionSetting.Name;
 			_connectionString = connectionSetting.Value;
@@ -64,29 +64,13 @@ namespace Zongsoft.Data.Common
 			{
 				if(connectionSetting.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
 				{
-					switch(mode.Trim().ToLowerInvariant())
+					this.Mode = mode.Trim().ToLowerInvariant() switch
 					{
-						case "r":
-						case "read":
-						case "readonly":
-							this.Mode = DataAccessMode.ReadOnly;
-							break;
-						case "w":
-						case "write":
-						case "writeonly":
-							this.Mode = DataAccessMode.WriteOnly;
-							break;
-						case "*":
-						case "all":
-						case "none":
-						case "both":
-						case "readwrite":
-						case "writeread":
-							this.Mode = DataAccessMode.All;
-							break;
-						default:
-							throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration.");
-					}
+						"r" or "read" or "readonly" => DataAccessMode.ReadOnly,
+						"w" or "write" or "writeonly" => DataAccessMode.WriteOnly,
+						"*" or "all" or "none" or "both" or "read+write" or "write+read" => DataAccessMode.All,
+						_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
+					};
 				}
 			}
 		}
