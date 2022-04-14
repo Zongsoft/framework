@@ -2,11 +2,11 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Zongsoft.Data/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Zongsoft.Data/blob/master/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README-zh_CN.md)
 
 -----
 
-[Zongsoft.Data](https://github.com/Zongsoft/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
+[Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
 
 它的设计理念是以声明方式来表达数据结构关系以及去SQL脚本化 _（即不需要手写任何SQL或类SQL语法结构即可完成数据访问和导航）_，使得访问数据变得更加容易、应用代码更简洁，并提供最佳的综合性价比。
 
@@ -48,14 +48,14 @@ Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Zongsoft.Data/tre
 
 - **源码编译方式**
 
-建议在硬盘的非系统分区中建立一个 **_Zongsoft_** 目录，分别将 [Guidelines](https://github.com/Zongsoft/Guidelines)、[Zongsoft.CoreLibrary](https://github.com/Zongsoft/Zongsoft.CoreLibrary) 以及 [Zongsoft.Data](https://github.com/Zongsoft/Zongsoft.Data) 等项目克隆到该目录中。
+建议在硬盘的非系统分区中建立一个 **_Zongsoft_** 目录，分别将 [Guidelines](https://github.com/Zongsoft/Guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core) 以及 [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) 等项目克隆到该目录中。
 
 <a name="schema"></a>
 ## 数据模式
 
 数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用以描述要查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 的数据形状，表现形式有点类似于 [GraphQL](https://graphql.cn) 但不需要预先定义，通过它来定义要获取和写入的数据字段、级联删除的范围等。
 
-在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/ISchema.cs) 接口为解析后的模式表达式。
+在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/ISchema.cs) 接口为解析后的模式表达式。
 
 <a name="schema-syntax"></a>
 ### 语法定义
@@ -160,7 +160,7 @@ sorting ::=
 <a name="usage"></a>
 ## 使用
 
-所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/Zongsoft.CoreLibrary)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
+所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/Framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
 
 - 计数操作： `int Count(...)` 
 - 存在操作： `bool Exists(...)` 
@@ -450,7 +450,7 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### 分页查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/Paging.cs) 分页设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Paging.cs) 分页设置类。
 
 ```csharp
 // 定义查询的分页设置（譬如：第2页，每页25条）
@@ -472,7 +472,7 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### 排序查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/Sorting.cs) 排序设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Sorting.cs) 排序设置类。
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
