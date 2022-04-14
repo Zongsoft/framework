@@ -38,9 +38,7 @@ namespace Zongsoft.Data.Common.Expressions
 	public abstract class Expression : IExpression
 	{
 		#region 构造函数
-		protected Expression()
-		{
-		}
+		protected Expression() { }
 		#endregion
 
 		#region 静态方法
@@ -93,10 +91,17 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>
 		/// 创建一个参数表达式。
 		/// </summary>
+		/// <param name="parameter">指定的参数映射。</param>
+		/// <returns>返回新建的参数表达式。</returns>
+		public static ParameterExpression Parameter(Metadata.IDataCommandParameter parameter) => new ParameterExpression(parameter.Name, parameter.Type, parameter.Direction) { Value = parameter.Value };
+
+		/// <summary>
+		/// 创建一个参数表达式。
+		/// </summary>
 		/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
 		/// <param name="type">指定的参数的数据类型。</param>
 		/// <param name="direction">指定的参数方向，默认为输入参数。</param>
-		/// <returns></returns>
+		/// <returns>返回新建的参数表达式。</returns>
 		public static ParameterExpression Parameter(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input) => new ParameterExpression(name, type, direction);
 
 		/// <summary>
@@ -105,7 +110,7 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
 		/// <param name="type">指定的参数的数据类型。</param>
 		/// <param name="value">指定的参数值。</param>
-		/// <returns></returns>
+		/// <returns>返回新建的参数表达式。</returns>
 		public static ParameterExpression Parameter(string name, System.Data.DbType type, object value) => new ParameterExpression(name, type, value);
 
 		/// <summary>
@@ -113,14 +118,14 @@ namespace Zongsoft.Data.Common.Expressions
 		/// </summary>
 		/// <param name="type">指定的参数的数据类型。</param>
 		/// <param name="value">指定的参数值。</param>
-		/// <returns></returns>
+		/// <returns>返回新建的参数表达式。</returns>
 		public static ParameterExpression Parameter(System.Data.DbType type, object value) => new ParameterExpression(ParameterExpression.Anonymous, type, value);
 
 		/// <summary>
 		/// 创建一个参数表达式。
 		/// </summary>
 		/// <param name="value">指定的参数值。</param>
-		/// <returns></returns>
+		/// <returns>返回新建的参数表达式。</returns>
 		public static ParameterExpression Parameter(object value) => new ParameterExpression(ParameterExpression.Anonymous, Utility.GetDbType(value), value);
 
 		/// <summary>

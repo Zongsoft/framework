@@ -48,22 +48,12 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public SequenceMethod Method
-		{
-			get;
-		}
+		public SequenceMethod Method { get; }
 		#endregion
 
 		#region 静态方法
-		public static SequenceExpression Next(string name, string alias = null)
-		{
-			return new SequenceExpression(name, SequenceMethod.Next) { Alias = alias };
-		}
-
-		public static SequenceExpression Current(string name, string alias = null)
-		{
-			return new SequenceExpression(name, SequenceMethod.Current) { Alias = alias };
-		}
+		public static SequenceExpression Next(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Next) { Alias = alias };
+		public static SequenceExpression Current(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Current) { Alias = alias };
 		#endregion
 	}
 }
