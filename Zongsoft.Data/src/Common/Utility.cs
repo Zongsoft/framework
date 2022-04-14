@@ -154,6 +154,28 @@ namespace Zongsoft.Data.Common
 			throw new NotSupportedException("Invalid DbType.");
 		}
 
+		public static bool IsDecimal(this DbType dbType) => dbType switch
+		{
+			DbType.Single => true,
+			DbType.Double => true,
+			DbType.Decimal => true,
+			DbType.Currency => true,
+			_ => false,
+		};
+
+		public static bool IsInteger(this DbType dbType) => dbType switch
+		{
+			DbType.Byte => true,
+			DbType.SByte => true,
+			DbType.Int16 => true,
+			DbType.Int32 => true,
+			DbType.Int64 => true,
+			DbType.UInt16 => true,
+			DbType.UInt32 => true,
+			DbType.UInt64 => true,
+			_ => false,
+		};
+
 		public static TypeConverter GetConverter(this MemberInfo member)
 		{
 			if(member == null)

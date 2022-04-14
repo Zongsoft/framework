@@ -69,7 +69,7 @@ namespace Zongsoft.Data.Common.Expressions
 							this.Convert(context, statement, binary.Left),
 							this.Convert(context, statement, binary.Right));
 				case Operand.FunctionOperand.CastFunction casting:
-					return casting.ConversionType.IsNumeric() ?
+					return casting.ConversionType.IsDecimal() ?
 						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Precision, casting.Scale, casting.Style) :
 						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Length, casting.Style);
 				case Operand.FunctionOperand function:
