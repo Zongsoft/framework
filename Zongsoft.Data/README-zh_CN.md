@@ -164,7 +164,6 @@ sorting ::=
 
 - 计数操作： `int Count(...)` 
 - 存在操作： `bool Exists(...)` 
-- 递增递减操作： `long Increment(...)` `long Decrement(...)` 
 - 执行存储过程： `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
 - 删除操作： `int Delete(...)` 
 - 新增操作： `int Insert(...)` `int InsertMany(...)` 
@@ -175,6 +174,156 @@ sorting ::=
 **提醒：**
 > 下面的范例均基于 [Zongsoft.Community](https://github.com/Zongsoft/Zongsoft.Community) 开源项目，该项目是一个完整的论坛社区的后台程序。建议你在阅读范例之前，务必先查阅该项目的[数据库表结构](https://github.com/Zongsoft/Zongsoft.Community/blob/master/database/Zongsoft.Community.md)设计文档以了解相关数据结构关系。
 
+<a name="operand"></a>
+### 操作元
+
+操作元(`Operand`)可用于条件(`Condition`)和写入的数据字段，有以下几种操作元：
+- 常量操作元 `ConstantOperand<T>`
+- 字段操作元 `FieldOperand`
+- 函数操作元 `FunctionOperand`
+- 聚合操作元 `AggregateOperand`
+- 一元操作元 `UnaryOperand`，包括以下三种：
+> - `!` 表示逻辑非
+> - `~` 表示按位取反
+> - `-` 表示算术负号
+- 二元操作元 `BinaryOperand`，包括以下几种：
+> - `+` 表示`加法`运算
+> - `-` 表示`减法`运算
+> - `*` 表示`乘法`运算
+> - `/` 表示`除法`运算
+> - `%` 表示`取模`运算
+> - `&` 表示`逻辑与`或者`按位与`运算
+> - `|` 表示`逻辑或`或者`按位或`运算
+> - `^` 表示`异或`运算
+
+#### 范例
+
+- 字段引用
+```csharp
+var forums = this.DataAccess.Select<Forum>(
+    Condition.Equal("SiteId", this.User.SiteId) &
+    Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
+);
+```
+
+- 常量操作
+```csharp
+/* 以下两种方式的效果完全一致 */
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = Operand.Constant(10)
+    }
+    Condition.Between("Quantity", "100~200")
+);
+
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = 10
+    }
+    Condition.Between("Quantity", "100~200")
+);
+```
+
+- 一元运算
+```csharp
+/* 一元运算：算术取反 */
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = -Operand.Field("Discount")
+    },
+    Condition.LessThan("Discount", 0)
+);
+
+/* 一元运算：逻辑取反 */
+this.DataAccess.Update<Thread>(
+    new {
+        Visible = !Operand.Field("Visible")
+    },
+    Condition.Equal("ForumId", 404)
+);
+```
+
+- 二元运算
+```csharp
+/* 递增递增 */
+this.DataAccess.Update<Thread>(
+    new {
+        TotalReplies = Operand.Field("TotalReplies") + 1
+    },
+    Condition.Equal("ThreadId", 404)
+);
+
+/* 算术运算 */
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+- 函数运算
+```csharp
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
+        UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+- 聚合运算
+```csharp
+/* 以下两种方式的效果完全一致 */
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Sum("Details.Amount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+```csharp
+/* 以下三种方式的效果完全一致 */
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Function("COALESCE",
+            Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Sum("Details.Amount", 0)
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
 
 <a name="usage-query"></a>
 ### 查询操作
@@ -195,7 +344,7 @@ var threads = this.DataAccess.Select<Thread>(
 // 获取指定条件的单个实体对象（只包含特定字段）
 var forum = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("ForumId", 100),
+    Condition.Equal("ForumId", 100)
     "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
 

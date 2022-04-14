@@ -328,44 +328,81 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected virtual void VisitMethod(ExpressionVisitorContext context, MethodExpression expression)
 		{
-			var methodName = this.Dialect.GetMethodName(expression);
-
-			//先输出方法或变量名
-			context.Write(methodName);
-
-			if(expression.MethodType == MethodType.Function)
+			switch(expression.MethodType)
 			{
-				context.Write("(");
-
-				if(expression is AggregateExpression aggregate && aggregate.Distinct)
-					context.Write("DISTINCT ");
-
-				if(expression.Arguments != null)
-				{
-					var index = 0;
-
-					foreach(var argument in expression.Arguments)
-					{
-						if(index++ > 0)
-							context.Write(",");
-
-						var parenthesized = argument != null && typeof(IStatementBase).IsAssignableFrom(argument.GetType());
-
-						if(parenthesized)
-							context.Write("(");
-
-						this.OnVisit(context, argument);
-
-						if(parenthesized)
-							context.Write(")");
-					}
-				}
-
-				context.Write(")");
+				case MethodType.Function:
+					this.VisitFunction(context, expression);
+					break;
+				case MethodType.Procedure:
+					this.VisitProcedure(context, expression);
+					break;
 			}
+		}
+
+		protected virtual void VisitFunction(ExpressionVisitorContext context, MethodExpression expression)
+		{
+			var functionName = this.Dialect.GetMethodName(expression);
+			context.Write(functionName);
+			context.Write("(");
+
+			if(expression is AggregateExpression aggregate && aggregate.Distinct)
+				context.Write("DISTINCT ");
+
+			if(expression.Arguments != null)
+			{
+				var index = 0;
+
+				foreach(var argument in expression.Arguments)
+				{
+					if(index++ > 0)
+						context.Write(",");
+
+					var parenthesized = argument != null && typeof(IStatementBase).IsAssignableFrom(argument.GetType());
+
+					if(parenthesized)
+						context.Write("(");
+
+					this.OnVisit(context, argument);
+
+					if(parenthesized)
+						context.Write(")");
+				}
+			}
+
+			context.Write(")");
 
 			if(!string.IsNullOrEmpty(expression.Alias))
 				context.Write(" AS " + this.GetAlias(expression.Alias));
+		}
+
+		protected virtual void VisitProcedure(ExpressionVisitorContext context, MethodExpression expression)
+		{
+			context.Write("CALL ");
+			context.Write(expression.Name);
+			context.Write("(");
+
+			if(expression.Arguments != null)
+			{
+				var index = 0;
+
+				foreach(var argument in expression.Arguments)
+				{
+					if(index++ > 0)
+						context.Write(",");
+
+					var parenthesized = argument != null && typeof(IStatementBase).IsAssignableFrom(argument.GetType());
+
+					if(parenthesized)
+						context.Write("(");
+
+					this.OnVisit(context, argument);
+
+					if(parenthesized)
+						context.Write(")");
+				}
+			}
+
+			context.Write(")");
 		}
 
 		protected virtual void VisitCondition(ExpressionVisitorContext context, ConditionExpression condition)

@@ -68,6 +68,10 @@ namespace Zongsoft.Data.Common.Expressions
 							binary.Type.GetOperator(type),
 							this.Convert(context, statement, binary.Left),
 							this.Convert(context, statement, binary.Right));
+				case Operand.FunctionOperand.CastFunction casting:
+					return casting.ConversionType.IsNumeric() ?
+						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Precision, casting.Scale, casting.Style) :
+						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Length, casting.Style);
 				case Operand.FunctionOperand function:
 					if(function.Arguments == null || function.Arguments.Length == 0)
 						return MethodExpression.Function(function.Name);
