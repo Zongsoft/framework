@@ -215,6 +215,7 @@ namespace Zongsoft.Data
 
 		#region 隐式转换
 		public static implicit operator Range<T>(T value) => new Range<T>(value);
+		public static implicit operator Range<T>(ValueTuple<T, T> tuple) => new Range<T>(tuple.Item1, tuple.Item2);
 		#endregion
 
 		#region 私有方法
