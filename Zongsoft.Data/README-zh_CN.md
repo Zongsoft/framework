@@ -2,7 +2,7 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README-zh_CN.md)
 
 -----
 
@@ -55,7 +55,7 @@ Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Zongsoft.Data/tre
 
 数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用以描述要查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 的数据形状，表现形式有点类似于 [GraphQL](https://graphql.cn) 但不需要预先定义，通过它来定义要获取和写入的数据字段、级联删除的范围等。
 
-在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/ISchema.cs) 接口为解析后的模式表达式。
+在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/ISchema.cs) 接口为解析后的模式表达式。
 
 <a name="schema-syntax"></a>
 ### 语法定义
@@ -160,7 +160,7 @@ sorting ::=
 <a name="usage"></a>
 ## 使用
 
-所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/Framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
+所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/Framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
 
 - 计数操作： `int Count(...)` 
 - 存在操作： `bool Exists(...)` 
@@ -450,7 +450,7 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### 分页查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Paging.cs) 分页设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Paging.cs) 分页设置类。
 
 ```csharp
 // 定义查询的分页设置（譬如：第2页，每页25条）
@@ -472,7 +472,7 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### 排序查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Sorting.cs) 排序设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Sorting.cs) 排序设置类。
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(

@@ -2,7 +2,7 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Framework/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Framework/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Framework/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/Zongsoft.Data/master/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README-zh_CN.md)
 
 -----
 
@@ -162,7 +162,7 @@ We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blo
 <a name="usage"></a>
 ## Usages
 
-All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) interface in the [Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core)) and support the following data access operations:
+All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) interface in the [Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core)) and support the following data access operations:
 
 - `int Count(...)`
 - `bool Exists(...)`
@@ -451,7 +451,7 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### Paging query
 
-Specify the `paging` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) method for paging queries. For details, see the [`Paging`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Paging.cs) settings class.
+Specify the `paging` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) method for paging queries. For details, see the [`Paging`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Paging.cs) settings class.
 
 ```csharp
 // Define the paging settings for the query(page 2, 25 per page)
@@ -473,7 +473,7 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### Sorting query
 
-Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/IDataAccess.cs) method to sort the query. For details, please refer to the [Sorting](https://github.com/Zongsoft/Framework/blob/Zongsoft.Core/master/src/Data/Sorting.cs) settings class.
+Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) method to sort the query. For details, please refer to the [Sorting](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Sorting.cs) settings class.
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
