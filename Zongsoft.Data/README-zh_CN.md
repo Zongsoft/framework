@@ -157,6 +157,45 @@ sorting ::=
 > - 映射文件应该由系统架构师或模块开发负责人统一更新，映射中的 `inherits`, `immutable`, `sortable`, `sequence` 以及导航属性的设置对业务层开发有至关影响，必须仔细认真的对待。
 
 
+<a name="connection"></a>
+## 连接配置
+
+数据连接配置项的名称与 `DataAccess` 的名称相匹配；一个 `DataAccess` 可同时具有多个数据源，不同数据源的连接配置项的名称以冒号`:`分隔，冒号左边为 `DataAccess` 的名称，冒号右边即为不同的数据源标识，这主要应用于读写分离的方案中。
+
+> - **MySQL** 连接字符串的参考：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+> - **ADO.NET** 连接字符串的语法：https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/connection-string-syntax
+
+- 单数据源的配置：
+```xml
+<configuration>
+    <option path="/Data">
+        <connectionSettings default="Automao">
+            <connectionSetting connectionSetting.name="Automao" driver="MySql"
+                               value="server=127.0.0.1;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        </connectionSettings>
+    </option>
+</configuration>
+```
+
+- 多数据源（读写分离）的配置：
+```xml
+<configuration>
+    <option path="/Data">
+        <connectionSettings>
+            <connectionSetting connectionSetting.name="Automao:master" driver="MySql" mode="WriteOnly"
+                               value="server=192.168.0.10;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_1" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.11;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_2" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.12;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_3" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.13;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        </connectionSettings>
+    </option>
+</configuration>
+```
+
+
 <a name="usage"></a>
 ## 使用
 
@@ -213,14 +252,14 @@ this.DataAccess.Update<OrderDetail>(
     new {
         Discount = Operand.Constant(10)
     }
-    Condition.Between("Quantity", "100~200")
+    Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = 10
     }
-    Condition.Between("Quantity", "100~200")
+    Condition.Between("Quantity", 100, 200)
 );
 ```
 
@@ -714,6 +753,15 @@ var histories = this.DataAccess.Select<History>(
         Condition.Between("MostRecentViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
     )
 );
+
+/* 以下代码与上面代码的效果完全一致，只是时间范围参数的构建方式不同 */
+var histories = this.DataAccess.Select<History>(
+    Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
+    (
+        Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
+        Condition.Between("MostRecentViewedTime", Range.Timing.Last(30, 'D'))
+    )
+);
 ```
 
 上述查询方法调用大致生成如下SQL脚本：
@@ -1094,4 +1142,4 @@ WHEN NOT MATCHED THEN
 <a name="license"></a>
 ## 授权协议
 
-本项目采用 [LGPL](https://opensource.org/licenses/LGPL-2.1) 授权协议。
+本项目采用 [MIT](https://opensource.org/licenses/MIT) 授权协议。

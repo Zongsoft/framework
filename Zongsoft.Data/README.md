@@ -6,7 +6,7 @@ README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Dat
 
 -----
 
-The [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) is a [GraphQL](https://graphql.cn)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
+The [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) is a [GraphQL](https://graphql.com)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
 
 Its design philosophy is to represent the data structure relationship in a declarative way and de-scripting _(i.e. data access and navigation without writing any SQL or SQL-like syntax structure)_, making access to data easier, application code cleaner, and providing the best comprehensive price/performance ratio.
 
@@ -53,7 +53,7 @@ It is recommended to create a **_Zongsoft_** directory in the non-system partiti
 <a name="schema"></a>
 ## The data schema
 
-The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes the shape of the data to be query or write _(**D**elete/**I**nsert/**U**pdate/**U**psert)_, The representation is somewhat like [GraphQL](https://graphql.cn) but does not require to predefined. It is used to define the data fields to be fetched and written, scopes for cascading deletes, etc.
+The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes the shape of the data to be query or write _(**D**elete/**I**nsert/**U**pdate/**U**psert)_, The representation is somewhat like [GraphQL](https://graphql.com) but does not require to predefined. It is used to define the data fields to be fetched and written, scopes for cascading deletes, etc.
 
 The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/ISchema.cs) interface is the parsed schema expression.
 
@@ -151,12 +151,50 @@ We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blo
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
------
 
 > Although some programmers are used to using tools to generate mapping files, we still recommend handwriting:
 > 
 > - Data structure and relationship are undoubtedly the lowest level of infrastructure for any system. The database table structure is the concrete manifestation of this structure relationship. The mapping file is the "treasure map" about definition of the structural relationship between the upper layer entities and the lower tables.
 > - The mapping file should be uniformly updated by the system architect or the module development leader. The settings of `inherits`, `immutable`, `sortable`, `sequence` and navigation properties in the mapping have a crucial impact on the development of the application layer. so care must be taken carefully.
+
+
+<a name="connection"></a>
+## Connection Settings
+
+The name of the data connection configuration item matches the name of `DataAccess`; a `DataAccess` can have multiple data sources, and the names of these data source connection configuration items are separated by a colon `:`, with the name of the `DataAccess` to the left of the colon, the right side of the colon is the identification of different data sources, which is mainly used in the solution of read-write separation.
+
+> - The **MySQL** connection string reference：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+> - The **ADO.NET** connection string reference：https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
+
+- Configuration for a single data source:
+```xml
+<configuration>
+    <option path="/Data">
+        <connectionSettings default="Automao">
+            <connectionSetting connectionSetting.name="Automao" driver="MySql"
+                               value="server=127.0.0.1;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        </connectionSettings>
+    </option>
+</configuration>
+```
+
+- Configuration of multiple data sources(read-write separation mode):
+```xml
+<configuration>
+    <option path="/Data">
+        <connectionSettings>
+            <connectionSetting connectionSetting.name="Automao:master" driver="MySql" mode="WriteOnly"
+                               value="server=192.168.0.10;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_1" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.11;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_2" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.12;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Automao:slave_3" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.13;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        </connectionSettings>
+    </option>
+</configuration>
+```
 
 
 <a name="usage"></a>
@@ -175,6 +213,7 @@ All data operations are performed through the data access interface (located on 
 
 **Remind:**
 > The following examples are based on the [Zongsoft.Community](https://github.com/Zongsoft/Zongsoft.Community) open source project, which is a complete community forum .NET backend project. It is recommended that you read [the database table structure design document](https://github.com/Zongsoft/Zongsoft.Community/blob/master/database/Zongsoft.Community-Tables.md) of the project to understand the relevant data structure relationship before reading following samples.
+
 
 <a name="operand"></a>
 ### Operand
@@ -215,14 +254,14 @@ this.DataAccess.Update<OrderDetail>(
     new {
         Discount = Operand.Constant(10)
     }
-    Condition.Between("Quantity", "100~200")
+    Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = 10
     }
-    Condition.Between("Quantity", "100~200")
+    Condition.Between("Quantity", 100, 200)
 );
 ```
 
@@ -718,6 +757,16 @@ var histories = this.DataAccess.Select<History>(
         Condition.Between("MostRecentViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
     )
 );
+
+/* The following code is exactly the same as the execution effect of the above code,
+   just the time range parameter is constructed differently. */
+var histories = this.DataAccess.Select<History>(
+    Condition.Equal("Thread.IsValued", true) & /* The navigation condition */
+    (
+        Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
+        Condition.Between("MostRecentViewedTime", Range.Timing.Last(30, 'D'))
+    )
+);
 ```
 
 The above query method call will be roughly generated as the following SQL script:
@@ -1098,4 +1147,4 @@ We look forward to your support and sponsorship. You can provide us with the nec
 <a name="license"></a>
 ## License
 
-Licensed under the [LGPL](https://opensource.org/licenses/LGPL-2.1) license.
+Licensed under the [MIT](https://opensource.org/licenses/MIT) license.
