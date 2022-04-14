@@ -164,18 +164,166 @@ We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blo
 
 All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Zongsoft.CoreLibrary/blob/master/src/Data/IDataAccess.cs) interface in the [Zongsoft.CoreLibrary](https://github.com/Zongsoft/Zongsoft.CoreLibrary)) and support the following data access operations:
 
-- `int Count(...)` 
-- `bool Exists(...)` 
-- `long Increment(...)` `long Decrement(...)` 
-- `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
-- `int Delete(...)` 
-- `int Insert(...)` `int InsertMany(...)` 
-- `int Update(...)` `int UpdateMany(...)` 
-- `int Upsert(...)` `int UpsertMany(...)` 
-- `IEnumerable<T> Select<T>(...)` 
+- `int Count(...)`
+- `bool Exists(...)`
+- `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)`
+- `int Delete(...)`
+- `int Insert(...)` `int InsertMany(...)`
+- `int Update(...)` `int UpdateMany(...)`
+- `int Upsert(...)` `int UpsertMany(...)`
+- `IEnumerable<T> Select<T>(...)`
 
 **Remind:**
 > The following examples are based on the [Zongsoft.Community](https://github.com/Zongsoft/Zongsoft.Community) open source project, which is a complete community forum .NET backend project. It is recommended that you read [the database table structure design document](https://github.com/Zongsoft/Zongsoft.Community/blob/master/database/Zongsoft.Community-Tables.md) of the project to understand the relevant data structure relationship before reading following samples.
+
+<a name="operand"></a>
+### Operand
+
+The operands can be used for conditions (`Condition`) and written data fields. There are the following operands:
+- Constant operand `ConstantOperand<T>`
+- Field operand `FieldOperand`
+- Function operand `FunctionOperand`
+- Aggregation operand `AggregateOperand`
+- Unary operand `UnaryOperand`, Includes:
+> - `!` Means logical `NOT` operator
+> - `~` Means bitwise `NOT` operator
+> - `-` Means arithmetic negative operator
+- Binary operand `BinaryOperand`, Includes:
+> - `+` Means arithmetic `Addition` operation
+> - `-` Means arithmetic `Subtraction` operation
+> - `*` Means arithmetic `Multiplication` operation
+> - `/` Means arithmetic `Division` operation
+> - `%` Means arithmetic `Remainder` operation
+> - `&` Means bitwise or logical `AND` operation
+> - `|` Means bitwise or logical `OR` operation
+> - `^` Means bitwise or logical `XOR` operation
+
+#### Examples
+
+- The field reference:
+```csharp
+var forums = this.DataAccess.Select<Forum>(
+    Condition.Equal("SiteId", this.User.SiteId) &
+    Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
+);
+```
+
+- The constant operations:
+```csharp
+/* The effect of the following two methods is exactly the same */
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = Operand.Constant(10)
+    }
+    Condition.Between("Quantity", "100~200")
+);
+
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = 10
+    }
+    Condition.Between("Quantity", "100~200")
+);
+```
+
+- The unary operations:
+```csharp
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Discount = -Operand.Field("Discount")
+    },
+    Condition.LessThan("Discount", 0)
+);
+
+this.DataAccess.Update<Thread>(
+    new {
+        Visible = !Operand.Field("Visible")
+    },
+    Condition.Equal("ForumId", 404)
+);
+```
+
+- The binary operations:
+```csharp
+/* increment/decrement */
+this.DataAccess.Update<Thread>(
+    new {
+        TotalReplies = Operand.Field("TotalReplies") + 1
+    },
+    Condition.Equal("ThreadId", 404)
+);
+
+/* arithmetic operations */
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+- The function operations:
+```csharp
+this.DataAccess.Update<OrderDetail>(
+    new {
+        Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
+        UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+- The aggregation operations:
+```csharp
+/* The effect of the following two methods is exactly the same */
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Sum("Details.Amount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
+
+```csharp
+/* The effect of the following three methods is exactly the same */
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Function("COALESCE",
+            Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+
+this.DataAccess.Update<Order>(
+    new {
+        Amount = Operand.Sum("Details.Amount", 0)
+            + Operand.Field("Surcharge")
+            + Operand.Field("Taxes")
+            - Operand.Field("Discount")
+    },
+    Condition.Equal("OrderId", 404)
+);
+```
 
 <a name="usage-query"></a>
 ### Query operation
