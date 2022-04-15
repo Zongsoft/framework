@@ -62,17 +62,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		public IDataMetadataProvider Metadata { get => _provider; }
 
 		/// <summary>获取或设置数据命令的名称。</summary>
-		public string Name
-		{
-			get => _name;
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value.Trim();
-			}
-		}
+		public string Name { get => _name; set => _name = value?.Trim(); }
 
 		/// <summary>获取或设置数据命令的类型。</summary>
 		public DataCommandType Type { get; set; }
@@ -94,28 +84,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 重写方法
-		public bool Equals(IDataCommand other)
-		{
-			return other != null && string.Equals(other.Name, _name);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((IDataCommand)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return _name.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			return $"{this.Type}:{this.Name}()";
-		}
+		public bool Equals(IDataCommand other) => other != null && string.Equals(other.Name, _name, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is MetadataCommand other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Type, _name);
+		public override string ToString() => _parameters == null || _parameters.Count == 0 ?
+			$"{this.Type}:{this.Name}()" :
+			$"{this.Type}:{this.Name}(...)";
 		#endregion
 	}
 }

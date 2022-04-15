@@ -29,59 +29,77 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata.Profiles
 {
 	public class MetadataCommandScriptor : IDataCommandScriptor
 	{
-		#region 常量定义
-		private const string DEFAULT_KEY = "*";
+		#region 静态字段
+		private static readonly ConcurrentDictionary<ScriptKey, string> _scripts = new ConcurrentDictionary<ScriptKey, string>();
 		#endregion
 
 		#region 成员字段
 		private readonly MetadataCommand _command;
-		private readonly IDictionary<string, string> _entries;
 		#endregion
 
 		#region 构造函数
 		public MetadataCommandScriptor(MetadataCommand command)
 		{
 			_command = command ?? throw new ArgumentNullException(nameof(command));
-			_entries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共方法
-		public void Load(string path)
+		public void Load(string directory, string provider)
 		{
-			if(string.IsNullOrWhiteSpace(path))
+			if(string.IsNullOrEmpty(directory))
 				return;
 
-			var files = Directory.GetFiles(path, $"{_command.Name}-*.sql", SearchOption.AllDirectories);
+			var name = _command.Name;
 
-			if(files != null && files.Length > 0)
+			if(string.IsNullOrEmpty(provider))
 			{
+				var files = Directory.GetFiles(directory, $"{name}-*.sql", SearchOption.AllDirectories);
 				for(int i = 0; i < files.Length; i++)
+					LoadFile(files[i], name);
+			}
+			else
+			{
+				var files = Directory.GetFiles(directory, $"{provider}.{name}-*.sql", SearchOption.AllDirectories);
+				for(int i = 0; i < files.Length; i++)
+					LoadFile(files[i], name);
+
+				files = Directory.GetFiles(directory, $"{name}-*.sql", SearchOption.AllDirectories);
+				for(int i = 0; i < files.Length; i++)
+					LoadFile(files[i], name);
+			}
+
+			static bool LoadFile(string filePath, string commandName)
+			{
+				var fileName = Path.GetFileNameWithoutExtension(filePath);
+				var index = fileName.LastIndexOf('-');
+
+				if(index > 0 && index < fileName.Length - 1)
 				{
-					var name = Path.GetFileNameWithoutExtension(files[i]);
-					var index = name.LastIndexOf('-');
+					var driver = fileName.Substring(index + 1);
 
-					if(index > 0 && index < name.Length - 1)
-					{
-						var driver = name.Substring(index + 1);
-
-						if(!_entries.ContainsKey(driver))
-							this.TrySetScript(driver, File.ReadAllText(files[i]));
-					}
+					if(!_scripts.ContainsKey(new ScriptKey(commandName, driver)))
+						return TrySetScript(commandName, driver, File.ReadAllText(filePath));
 				}
+				else
+				{
+					if(!_scripts.ContainsKey(new ScriptKey(commandName)))
+						return TrySetScript(commandName, null, File.ReadAllText(filePath));
+				}
+
+				return false;
 			}
 		}
 
 		public string GetScript(string driver)
 		{
-			var key = string.IsNullOrWhiteSpace(driver) ? DEFAULT_KEY : driver;
-			return _entries.TryGetValue(key, out var text) ? text : null;
+			return _scripts.TryGetValue(new ScriptKey(_command.Name, driver), out var script) ? script : null;
 		}
 
 		public void SetScript(string driver, string text)
@@ -89,17 +107,46 @@ namespace Zongsoft.Data.Metadata.Profiles
 			if(string.IsNullOrWhiteSpace(text))
 				return;
 
-			var key = string.IsNullOrWhiteSpace(driver) ? DEFAULT_KEY : driver;
-			_entries[key] = text.Trim();
+			_scripts[new ScriptKey(_command.Name, driver)] = text.Trim();
 		}
+		#endregion
 
-		public bool TrySetScript(string driver, string text)
+		#region 私有方法
+		private static bool TrySetScript(string name, string driver, string text)
 		{
 			if(string.IsNullOrWhiteSpace(text))
 				return false;
 
-			var key = string.IsNullOrWhiteSpace(driver) ? DEFAULT_KEY : driver;
-			return _entries.TryAdd(key, text.Trim());
+			return _scripts.TryAdd(new ScriptKey(name, driver), text.Trim());
+		}
+		#endregion
+
+		#region 嵌套结构
+		private readonly struct ScriptKey : IEquatable<ScriptKey>
+		{
+			#region 常量定义
+			private const string DEFAULT_DRIVER = "*";
+			#endregion
+
+			#region 构造函数
+			public ScriptKey(string name, string driver = null)
+			{
+				this.Name = name.ToLowerInvariant();
+				this.Driver = string.IsNullOrEmpty(driver) ? DEFAULT_DRIVER : driver.ToLowerInvariant();
+			}
+			#endregion
+
+			#region 公共字段
+			public readonly string Name;
+			public readonly string Driver;
+			#endregion
+
+			#region 重写方法
+			public bool Equals(ScriptKey other) => string.Equals(this.Name, other.Name) && string.Equals(this.Driver, other.Driver);
+			public override bool Equals(object obj) => obj is ScriptKey other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.Name, this.Driver);
+			public override string ToString() => string.IsNullOrEmpty(this.Driver) || this.Driver == DEFAULT_DRIVER ? this.Name : $"{this.Driver}:{this.Name}";
+			#endregion
 		}
 		#endregion
 	}

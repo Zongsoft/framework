@@ -404,13 +404,15 @@ namespace Zongsoft.Data.Metadata.Profiles
 				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
 				reader.GetAttribute(XML_ALIAS_ATTRIBUTE))
 			{
-				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Procedure),
+				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Text),
 				Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
 				Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
 			};
 
+			//注意：首先尝试从外部脚本文件中加载命令文本
+			command.Scriptor.Load(Path.GetDirectoryName(provider.FilePath), Path.GetFileNameWithoutExtension(provider.FilePath));
+
 			int depth = reader.Depth;
-			var path = reader.GetAttribute(XML_PATH_ATTRIBUTE);
 
 			while(reader.Read() && reader.Depth > depth)
 			{
@@ -463,11 +465,6 @@ namespace Zongsoft.Data.Metadata.Profiles
 					_ => throw new MetadataFileException($"Invalid value '{value}' of '{XML_DIRECTION_ATTRIBUTE}' attribute in '{XML_PARAMETER_ELEMENT}' element."),
 				};
 			}
-
-			if(string.IsNullOrWhiteSpace(path))
-				command.Scriptor.Load(Path.GetDirectoryName(provider.FilePath));
-			else
-				command.Scriptor.Load(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(provider.FilePath), path)));
 
 			return command;
 		}
