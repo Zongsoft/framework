@@ -73,7 +73,7 @@ namespace Zongsoft.Data.Common
 					continue;
 
 				//构建当前属性的层级结构
-				this.FillTokens(entity, members, tokens, name, ordinal);
+				FillTokens(entity, members, tokens, name, ordinal);
 			}
 
 			return new EntityPopulator(underlying ?? type, tokens);
@@ -82,19 +82,17 @@ namespace Zongsoft.Data.Common
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool IsLetterOrUnderscore(char chr)
+		private static bool IsLetterOrUnderscore(char chr)
 		{
 			return (chr >= 'A' && chr <= 'Z') ||
 			       (chr >= 'a' && chr <= 'z') || chr == '_';
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void FillTokens(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name, int ordinal)
+		private static void FillTokens(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name, int ordinal)
 		{
-			EntityMember member;
-			EntityPopulator.PopulateToken? token = null;
-
 			int index, last = 0;
+			EntityPopulator.PopulateToken? token = null;
 
 			while((index = name.IndexOf('.', last + 1)) > 0)
 			{
@@ -109,7 +107,7 @@ namespace Zongsoft.Data.Common
 				tokens = token.Value.Tokens;
 			}
 
-			if(members.TryGet(name.Substring(GetLast(last)), out member))
+			if(members.TryGet(name.Substring(GetLast(last)), out var member))
 			{
 				if(token.HasValue && entity.Properties.Get(member.Name).IsPrimaryKey)
 				{
@@ -131,7 +129,7 @@ namespace Zongsoft.Data.Common
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private EntityPopulator.PopulateToken? FillToken(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name)
+		private static EntityPopulator.PopulateToken? FillToken(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name)
 		{
 			foreach(var token in tokens)
 			{
@@ -153,10 +151,7 @@ namespace Zongsoft.Data.Common
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private int GetLast(int last)
-		{
-			return last > 0 ? last + 1 : last;
-		}
+		private static int GetLast(int last) => last > 0 ? last + 1 : last;
 		#endregion
 	}
 }
