@@ -135,6 +135,10 @@ namespace Zongsoft.Data.MySql
 			private MySqlExpressionDialect() { }
 			#endregion
 
+			#region 公共属性
+			public string Name => MySqlDriver.Key;
+			#endregion
+
 			#region 公共方法
 			public string GetAlias(string alias) => $"'{alias}'";
 			public string GetSymbol(Operator @operator) => null;

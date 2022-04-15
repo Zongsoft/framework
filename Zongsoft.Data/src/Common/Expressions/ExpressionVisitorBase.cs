@@ -524,166 +524,88 @@ namespace Zongsoft.Data.Common.Expressions
 			private NormalDialect() { }
 			#endregion
 
+			#region 公共属性
+			public string Name => string.Empty;
+			#endregion
+
 			#region 公共方法
-			public string GetDbType(DbType dbType, int length, byte precision, byte scale)
+			public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
 			{
-				switch(dbType)
-				{
-					case DbType.AnsiString:
-						return length > 0 ? "varchar(" + length.ToString() + ")" : "text";
-					case DbType.AnsiStringFixedLength:
-						return length > 0 ? "char(" + length.ToString() + ")" : "char(MAX)";
-					case DbType.String:
-						return length > 0 ? "nvarchar(" + length.ToString() + ")" : "text";
-					case DbType.StringFixedLength:
-						return length > 0 ? "nchar(" + length.ToString() + ")" : "nchar(MAX)";
-					case DbType.Binary:
-						return length > 0 ? "varbinary(" + length.ToString() + ")" : "blob";
-					case DbType.Boolean:
-						return "bool";
-					case DbType.Byte:
-						return "unsigned tinyint";
-					case DbType.SByte:
-						return "tinyint";
-					case DbType.Date:
-						return "date";
-					case DbType.DateTime:
-						return "datetime";
-					case DbType.DateTime2:
-						return "datetime2";
-					case DbType.DateTimeOffset:
-						return "datetime";
-					case DbType.Guid:
-						return "guid";
-					case DbType.Int16:
-						return "smallint";
-					case DbType.Int32:
-						return "int";
-					case DbType.Int64:
-						return "bigint";
-					case DbType.Object:
-						return "object";
-					case DbType.Time:
-						return "time";
-					case DbType.UInt16:
-						return "unsigned smallint";
-					case DbType.UInt32:
-						return "unsigned int";
-					case DbType.UInt64:
-						return "unsigned bigint";
-					case DbType.Currency:
-						return "currency";
-					case DbType.Decimal:
-						return "decimal(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Double:
-						return "double(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Single:
-						return "float(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.VarNumeric:
-						return "numeric(" + precision.ToString() + "," + scale.ToString() + ")";
-					case DbType.Xml:
-						return "xml";
-				}
+				DbType.AnsiString => length > 0 ? "varchar(" + length.ToString() + ")" : "text",
+				DbType.AnsiStringFixedLength => length > 0 ? "char(" + length.ToString() + ")" : "char(MAX)",
+				DbType.String => length > 0 ? "nvarchar(" + length.ToString() + ")" : "text",
+				DbType.StringFixedLength => length > 0 ? "nchar(" + length.ToString() + ")" : "nchar(MAX)",
+				DbType.Binary => length > 0 ? "varbinary(" + length.ToString() + ")" : "blob",
+				DbType.Boolean => "bool",
+				DbType.Byte => "unsigned tinyint",
+				DbType.SByte => "tinyint",
+				DbType.Date => "date",
+				DbType.DateTime => "datetime",
+				DbType.DateTime2 => "datetime2",
+				DbType.DateTimeOffset => "datetime",
+				DbType.Guid => "guid",
+				DbType.Int16 => "smallint",
+				DbType.Int32 => "int",
+				DbType.Int64 => "bigint",
+				DbType.Object => "object",
+				DbType.Time => "time",
+				DbType.UInt16 => "unsigned smallint",
+				DbType.UInt32 => "unsigned int",
+				DbType.UInt64 => "unsigned bigint",
+				DbType.Currency => "currency",
+				DbType.Decimal => "decimal(" + precision.ToString() + "," + scale.ToString() + ")",
+				DbType.Double => "double(" + precision.ToString() + "," + scale.ToString() + ")",
+				DbType.Single => "float(" + precision.ToString() + "," + scale.ToString() + ")",
+				DbType.VarNumeric => "numeric(" + precision.ToString() + "," + scale.ToString() + ")",
+				DbType.Xml => "xml",
+				_ => dbType.ToString(),
+			};
 
-				return dbType.ToString();
-			}
-
-			public string GetSymbol(Operator @operator)
+			public string GetSymbol(Operator @operator) => @operator switch
 			{
-				switch(@operator)
-				{
-					case Operator.Plus:
-						return "+";
-					case Operator.Negate:
-						return "-";
-					case Operator.Add:
-						return "+";
-					case Operator.Subtract:
-						return "-";
-					case Operator.Multiply:
-						return "*";
-					case Operator.Divide:
-						return "/";
-					case Operator.Modulo:
-						return "%";
-					case Operator.Assign:
-						return "=";
-					case Operator.And:
-						return "&";
-					case Operator.Or:
-						return "|";
-					case Operator.Xor:
-						return "^";
-					case Operator.Not:
-						return "NOT";
-					case Operator.AndAlso:
-						return "AND";
-					case Operator.OrElse:
-						return "OR";
-					case Operator.All:
-						return "ALL";
-					case Operator.Any:
-						return "ANY";
-					case Operator.Between:
-						return "BETWEEN";
-					case Operator.Exists:
-						return "EXISTS";
-					case Operator.NotExists:
-						return "NOT EXISTS";
-					case Operator.In:
-						return "IN";
-					case Operator.NotIn:
-						return "NOT IN";
-					case Operator.Like:
-						return "LIKE";
-					case Operator.Is:
-						return "IS";
-					case Operator.NotIs:
-						return "IS NOT";
-					case Operator.Equal:
-						return "=";
-					case Operator.NotEqual:
-						return "!=";
-					case Operator.LessThan:
-						return "<";
-					case Operator.LessThanOrEqual:
-						return "<=";
-					case Operator.GreaterThan:
-						return ">";
-					case Operator.GreaterThanOrEqual:
-						return ">=";
-					default:
-						throw new DataException($"Unsupported '{@operator}' operator.");
-				}
-			}
+				Operator.Plus => "+",
+				Operator.Negate => "-",
+				Operator.Add => "+",
+				Operator.Subtract => "-",
+				Operator.Multiply => "*",
+				Operator.Divide => "/",
+				Operator.Modulo => "%",
+				Operator.Assign => "=",
+				Operator.And => "&",
+				Operator.Or => "|",
+				Operator.Xor => "^",
+				Operator.Not => "NOT",
+				Operator.AndAlso => "AND",
+				Operator.OrElse => "OR",
+				Operator.All => "ALL",
+				Operator.Any => "ANY",
+				Operator.Between => "BETWEEN",
+				Operator.Exists => "EXISTS",
+				Operator.NotExists => "NOT EXISTS",
+				Operator.In => "IN",
+				Operator.NotIn => "NOT IN",
+				Operator.Like => "LIKE",
+				Operator.Is => "IS",
+				Operator.NotIs => "IS NOT",
+				Operator.Equal => "=",
+				Operator.NotEqual => "!=",
+				Operator.LessThan => "<",
+				Operator.LessThanOrEqual => "<=",
+				Operator.GreaterThan => ">",
+				Operator.GreaterThanOrEqual => ">=",
+				_ => throw new DataException($"Unsupported '{@operator}' operator."),
+			};
 
-			public string GetIdentifier(string name)
-			{
-				return name;
-			}
+			public string GetAlias(string alias) => $"'{alias}'";
+			public string GetIdentifier(string name) => name;
+			public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 
-			public string GetIdentifier(IIdentifier identifier)
+			public string GetMethodName(MethodExpression method) => method switch
 			{
-				return this.GetIdentifier(identifier.Name);
-			}
-
-			public string GetAlias(string alias)
-			{
-				return "'" + alias + "'";
-			}
-
-			public string GetMethodName(MethodExpression method)
-			{
-				switch(method)
-				{
-					case AggregateExpression aggregate:
-						return aggregate.Function.ToString();
-					case SequenceExpression sequence:
-						return sequence.Method.ToString();
-					default:
-						return method.Name;
-				}
-			}
+				AggregateExpression aggregate => aggregate.Function.ToString(),
+				SequenceExpression sequence => sequence.Method.ToString(),
+				_ => method.Name,
+			};
 			#endregion
 		}
 		#endregion

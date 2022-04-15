@@ -34,6 +34,7 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public interface IExpressionDialect
 	{
+		string Name { get; }
 		string GetDbType(DbType dbType, int length, byte precision, byte scale);
 		string GetSymbol(Operator @operator);
 		string GetIdentifier(string name);

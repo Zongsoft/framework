@@ -116,6 +116,10 @@ namespace Zongsoft.Data.MsSql
 			}
 			#endregion
 
+			#region 公共属性
+			public string Name => MsSqlDriver.Key;
+			#endregion
+
 			#region 公共方法
 			public string GetAlias(string alias) => $"'{alias}'";
 			public string GetSymbol(Operator @operator) => null;
