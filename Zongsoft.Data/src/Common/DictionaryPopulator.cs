@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common
 {
-	public class DictionaryPopulator : IDataPopulator
+	public class DictionaryPopulator : IDataPopulator, IDataPopulator<IDictionary>
 	{
 		#region 成员字段
 		private readonly Type _type;
@@ -52,7 +52,8 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public object Populate(IDataRecord record)
+		object IDataPopulator.Populate(IDataRecord record) => this.Populate(record);
+		public IDictionary Populate(IDataRecord record)
 		{
 			if(record.FieldCount != _keys.Length)
 				throw new DataException("The record of populate has failed.");

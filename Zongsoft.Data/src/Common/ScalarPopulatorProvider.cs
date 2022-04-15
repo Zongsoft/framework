@@ -122,7 +122,7 @@ namespace Zongsoft.Data.Common
 		private class ConverterPopulater : IDataPopulator
 		{
 			#region 私有变量
-			private TypeConverter _converter;
+			private readonly TypeConverter _converter;
 			#endregion
 
 			#region 构造函数
@@ -136,10 +136,28 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 公共方法
-			public object Populate(IDataRecord record)
+			public object Populate(IDataRecord record) => _converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
+			#endregion
+		}
+
+		private class ConverterPopulater<T> : IDataPopulator<T>
+		{
+			#region 私有变量
+			private readonly TypeConverter _converter;
+			#endregion
+
+			#region 构造函数
+			public ConverterPopulater()
 			{
-				return _converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
+				_converter = TypeDescriptor.GetConverter(typeof(T)) ?? throw new InvalidOperationException($"The specified '{typeof(T).FullName}' type has no type converter.");
+
+				if(!_converter.CanConvertFrom(typeof(string)))
+					throw new InvalidOperationException($"The '{_converter.GetType().Name}' type converter does not support converting from a string to a '{typeof(T).FullName}' target type.");
 			}
+			#endregion
+
+			#region 公共方法
+			public T Populate(IDataRecord record) => (T)_converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
 			#endregion
 		}
 		#endregion

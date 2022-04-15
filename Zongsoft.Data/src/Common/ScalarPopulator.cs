@@ -60,9 +60,10 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		private class ValuePopulator<T> : IDataPopulator
+		private class ValuePopulator<T> : IDataPopulator, IDataPopulator<T>
 		{
-			public object Populate(IDataRecord record) => record.GetValue<T>(0);
+			object IDataPopulator.Populate(IDataRecord record) => record.GetValue<T>(0);
+			public T Populate(IDataRecord record) => record.GetValue<T>(0);
 		}
 		#endregion
 	}
@@ -95,9 +96,10 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		private class ValuePopulator<T> : IDataPopulator
+		private class ValuePopulator<T> : IDataPopulator, IDataPopulator<T>
 		{
-			public object Populate(IDataRecord record) => record.IsDBNull(0) ? null : record.GetValue<T>(0);
+			object IDataPopulator.Populate(IDataRecord record) => record.IsDBNull(0) ? null : record.GetValue<T>(0);
+			public T Populate(IDataRecord record) => record.IsDBNull(0) ? default : record.GetValue<T>(0);
 		}
 		#endregion
 	}

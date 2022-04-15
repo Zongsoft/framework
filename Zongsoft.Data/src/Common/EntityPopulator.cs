@@ -145,13 +145,9 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 重写方法
-			public override string ToString()
-			{
-				if(this.Tokens == null)
-					return $"[{this.Ordinal.ToString()}] {this.Member.ToString()}";
-				else
-					return $"[{this.Ordinal.ToString()}] {this.Member.ToString()} ({this.Tokens.Count.ToString()})";
-			}
+			public override string ToString() => this.Tokens == null ?
+				$"[{this.Ordinal}]{this.Member}" :
+				$"[{this.Ordinal}]{this.Member}({this.Tokens.Count})";
 			#endregion
 		}
 		#endregion

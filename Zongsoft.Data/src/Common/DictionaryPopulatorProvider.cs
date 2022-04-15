@@ -29,20 +29,18 @@
 
 using System;
 using System.Data;
-using System.Collections.Generic;
+using System.Collections;
 
 namespace Zongsoft.Data.Common
 {
-	public class DictionaryPopulatorProvider : IDataPopulatorProvider
+	public class DictionaryPopulatorProvider : IDataPopulatorProvider, IDataPopulatorProvider<IDictionary>
 	{
 		#region 单例模式
 		public static readonly DictionaryPopulatorProvider Instance = new DictionaryPopulatorProvider();
 		#endregion
 
 		#region 构造函数
-		private DictionaryPopulatorProvider()
-		{
-		}
+		private DictionaryPopulatorProvider() { }
 		#endregion
 
 		#region 公共方法
@@ -62,6 +60,19 @@ namespace Zongsoft.Data.Common
 			}
 
 			return new DictionaryPopulator(type, keys);
+		}
+
+		public IDataPopulator<IDictionary> GetPopulator(Metadata.IDataEntity entity, IDataReader reader)
+		{
+			var keys = new string[reader.FieldCount];
+
+			for(int i = 0; i < reader.FieldCount; i++)
+			{
+				//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
+				keys[i] = reader.GetName(i);
+			}
+
+			return new DictionaryPopulator(typeof(IDictionary), keys);
 		}
 		#endregion
 	}

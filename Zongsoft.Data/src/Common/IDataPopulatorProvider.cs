@@ -53,4 +53,15 @@ namespace Zongsoft.Data.Common
 		/// <returns>返回的数据实体装配器对象。</returns>
 		IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataReader reader);
 	}
+
+	public interface IDataPopulatorProvider<out T> : IDataPopulatorProvider
+	{
+		/// <summary>
+		/// 获取或创建一个数据实体装配器。
+		/// </summary>
+		/// <param name="entity">指定组装的实体元素。</param>
+		/// <param name="reader">指定要获取或构建的数据读取器。</param>
+		/// <returns>返回的数据实体装配器对象。</returns>
+		IDataPopulator<T> GetPopulator(Metadata.IDataEntity entity, IDataReader reader);
+	}
 }
