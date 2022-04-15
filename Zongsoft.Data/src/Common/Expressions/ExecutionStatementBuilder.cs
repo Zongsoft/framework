@@ -39,7 +39,23 @@ namespace Zongsoft.Data.Common.Expressions
 	{
 		public IEnumerable<IStatementBase> Build(DataExecuteContext context)
 		{
-			throw new NotImplementedException();
+			var statement = new ExecutionStatement(context.Command);
+
+			foreach(var parameter in context.Command.Parameters)
+			{
+				statement.Parameters.Add(Expression.Parameter(parameter));
+			}
+
+			if(statement.HasParameters && context.InParameters != null && context.InParameters.Count > 0)
+			{
+				foreach(var entry in context.InParameters)
+				{
+					if(statement.Parameters.TryGet(entry.Key, out var parameter))
+						parameter.Value = entry.Value;
+				}
+			}
+
+			yield return statement;
 		}
 	}
 }

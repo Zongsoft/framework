@@ -36,7 +36,10 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 重写方法
 		protected override void OnVisit(ExpressionVisitorContext context, ExecutionStatement statement)
 		{
-			throw new NotImplementedException();
+			if(statement.Command.Type == Metadata.DataCommandType.Procedure)
+				context.Output.AppendLine(string.IsNullOrEmpty(statement.Command.Alias) ? statement.Command.Name : statement.Command.Alias);
+			else
+				context.Output.AppendLine(statement.Command.Scriptor.GetScript(context.Dialect.Name));
 		}
 		#endregion
 	}

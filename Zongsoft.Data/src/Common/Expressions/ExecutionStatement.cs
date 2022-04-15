@@ -28,12 +28,13 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class ExecutionStatement : StatementBase
 	{
+		public ExecutionStatement(Metadata.IDataCommand command) => this.Command = command;
+		public Metadata.IDataCommand Command { get; }
+		public bool IsProcedure { get => this.Command.Type == Metadata.DataCommandType.Procedure; }
 	}
 }
