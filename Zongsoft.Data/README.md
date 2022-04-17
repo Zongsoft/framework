@@ -284,7 +284,7 @@ this.DataAccess.Update<Thread>(
 
 - The binary operations:
 ```csharp
-/* increment/decrement */
+/* increment|decrement */
 this.DataAccess.Update<Thread>(
     new {
         TotalReplies = Operand.Field("TotalReplies") + 1
@@ -298,6 +298,11 @@ this.DataAccess.Update<OrderDetail>(
         Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
     },
     Condition.Equal("OrderId", 404)
+);
+
+/* bitwise AND operation */
+this.DataAccess.Select<User>(
+    Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
 );
 ```
 

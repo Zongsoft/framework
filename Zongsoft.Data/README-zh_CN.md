@@ -299,6 +299,11 @@ this.DataAccess.Update<OrderDetail>(
     },
     Condition.Equal("OrderId", 404)
 );
+
+/* 位与运算 */
+this.DataAccess.Select<User>(
+    Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
+);
 ```
 
 - 函数运算
