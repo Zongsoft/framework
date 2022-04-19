@@ -57,16 +57,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		public ICollection<IDataPopulatorProvider> Providers
-		{
-			get
-			{
-				return _providers;
-			}
-		}
+		public ICollection<IDataPopulatorProvider> Providers => _providers;
 		#endregion
 
 		#region 公共方法
+		public IDataPopulatorProvider GetProvider<T>() => this.GetProvider(typeof(T));
 		public IDataPopulatorProvider GetProvider(Type type)
 		{
 			if(type == null)
@@ -83,15 +78,8 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 枚举遍历
-		public IEnumerator<IDataPopulatorProvider> GetEnumerator()
-		{
-			return _providers.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _providers.GetEnumerator();
-		}
+		public IEnumerator<IDataPopulatorProvider> GetEnumerator() => _providers.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _providers.GetEnumerator();
 		#endregion
 	}
 }
