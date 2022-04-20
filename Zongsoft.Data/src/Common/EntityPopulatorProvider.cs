@@ -54,7 +54,7 @@ namespace Zongsoft.Data.Common
 			         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 		}
 
-		public IDataPopulator GetPopulator(IDataEntity entity, Type type, IDataRecord reader)
+		public IDataPopulator GetPopulator(Type type, IDataRecord reader, IDataEntity entity = null)
 		{
 			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
 				EntityMemberProvider.Instance.GetMembers(underlying) :
@@ -157,7 +157,7 @@ namespace Zongsoft.Data.Common
 	public partial class EntityPopulatorProvider
 	{
 		#region 公共方法
-		public IDataPopulator<T> GetPopulator<T>(IDataEntity entity, IDataRecord reader)
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, IDataEntity entity = null)
 		{
 			var populator = new EntityPopulator<T>(entity);
 
@@ -205,20 +205,27 @@ namespace Zongsoft.Data.Common
 
 		private static IDataPopulator GetAssociativePopulator<T>(EntityPopulator<T> populator, EntityMember<T> member, ReadOnlySpan<char> children, int ordinal)
 		{
-			if(!populator.Entity.Properties.TryGet(member.Name, out var property))
-				throw new DataException($"The property named '{member.Name}' is undefined in the '{populator.Entity}' data entity mapping.");
+			IDataPopulator result;
 
-			if(property.IsSimplex)
-				throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
+			if(populator.Members.TryGetValue(member.Name, out var m))
+				result = m.Populator;
+			else if(populator.Entity is null)
+				result = (IDataPopulator)Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { null });
+			else
+			{
+				if(!populator.Entity.Properties.TryGet(member.Name, out var property))
+					throw new DataException($"The property named '{member.Name}' is undefined in the '{populator.Entity}' data entity mapping.");
 
-			var result = populator.Members.TryGetValue(member.Name, out var m) ?
-				m.Populator :
-				Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
+				if(property.IsSimplex)
+					throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
+
+				result = (IDataPopulator)Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
+			}
 
 			if(!children.IsEmpty)
 				DoInitialize(result, children.ToString(), ordinal);
 
-			return (IDataPopulator)result;
+			return result;
 		}
 
 		private static void DoInitialize(object populator, string name, int ordinal)

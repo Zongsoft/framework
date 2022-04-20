@@ -163,7 +163,7 @@ namespace Zongsoft.Data.Common
 		#region 构造函数
 		public EntityPopulator(Metadata.IDataEntity entity)
 		{
-			_entity = entity ?? throw new ArgumentNullException(nameof(entity));
+			_entity = entity;
 			_members = new PopulateMemberCollection();
 		}
 		#endregion

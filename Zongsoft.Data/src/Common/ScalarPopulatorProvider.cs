@@ -52,22 +52,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public bool CanPopulate(Type type)
-		{
-			return Zongsoft.Common.TypeExtension.IsScalarType(type);
-		}
-
-		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader)
-		{
-			return Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
-				this.GetPopulator(underlyingType, true) :
-				this.GetPopulator(type, false);
-		}
-
-		public IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader)
-		{
-			return this.GetPopulator(entity, typeof(T), reader) as IDataPopulator<T>;
-		}
+		public bool CanPopulate(Type type) => Zongsoft.Common.TypeExtension.IsScalarType(type);
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), reader, entity) as IDataPopulator<T>;
+		public IDataPopulator GetPopulator(Type type, IDataRecord reader, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
+			this.GetPopulator(underlyingType, true) :
+			this.GetPopulator(type, false);
 		#endregion
 
 		#region 私有方法

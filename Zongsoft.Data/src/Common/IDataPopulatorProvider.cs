@@ -43,16 +43,16 @@ namespace Zongsoft.Data.Common
 		bool CanPopulate(Type type);
 
 		/// <summary>获取或创建一个数据实体装配器。</summary>
-		/// <param name="entity">指定组装的实体元素。</param>
 		/// <param name="reader">指定要获取或构建的数据读取器。</param>
+		/// <param name="entity">指定组装的实体元素。</param>
 		/// <returns>返回的数据实体装配器对象。</returns>
-		IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader);
+		IDataPopulator<T> GetPopulator<T>(IDataRecord reader, Metadata.IDataEntity entity = null);
 
 		/// <summary>获取或创建一个数据实体装配器。</summary>
-		/// <param name="entity">指定组装的实体元素。</param>
 		/// <param name="type">指定要获取或创建的装配元素类型。</param>
 		/// <param name="reader">指定要获取或构建的数据读取器。</param>
+		/// <param name="entity">指定组装的实体元素。</param>
 		/// <returns>返回的数据实体装配器对象。</returns>
-		IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader);
+		IDataPopulator GetPopulator(Type type, IDataRecord reader, Metadata.IDataEntity entity = null);
 	}
 }

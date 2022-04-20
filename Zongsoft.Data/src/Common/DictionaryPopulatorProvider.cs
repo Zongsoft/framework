@@ -29,7 +29,6 @@
 
 using System;
 using System.Data;
-using System.Collections;
 
 namespace Zongsoft.Data.Common
 {
@@ -49,7 +48,7 @@ namespace Zongsoft.Data.Common
 			return Zongsoft.Common.TypeExtension.IsDictionary(type);
 		}
 
-		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader)
+		public IDataPopulator GetPopulator(Type type, IDataRecord reader, Metadata.IDataEntity entity = null)
 		{
 			var keys = new string[reader.FieldCount];
 
@@ -62,7 +61,7 @@ namespace Zongsoft.Data.Common
 			return new DictionaryPopulator(type, keys);
 		}
 
-		public IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader)
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, Metadata.IDataEntity entity = null)
 		{
 			var keys = new string[reader.FieldCount];
 
