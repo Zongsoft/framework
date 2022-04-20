@@ -34,11 +34,15 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data.Common
 {
-	public struct EntityMember
+	public struct EntityMember : IEquatable<EntityMember>
 	{
+		#region 委托定义
+		private delegate void SetValueDelegate(ref object target, object value);
+		#endregion
+
 		#region 私有变量
 		private readonly MemberInfo _member;
-		private readonly Action<object, object> _setter;
+		private readonly SetValueDelegate _setter;
 		private readonly EntityEmitter.Populator _populate;
 		#endregion
 
@@ -57,7 +61,7 @@ namespace Zongsoft.Data.Common
 			this.Type = field.FieldType;
 			this.Converter = converter;
 
-			_setter = (entity, value) => field.SetValue(entity, value);
+			_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
 			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 		}
 
@@ -69,7 +73,7 @@ namespace Zongsoft.Data.Common
 			this.Type = property.PropertyType;
 			this.Converter = converter;
 
-			_setter = (entity, value) => property.SetValue(entity, value);
+			_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
 			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 		}
 		#endregion
@@ -79,15 +83,8 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public void Populate(ref object entity, IDataRecord record, int ordinal)
-		{
-			_populate.Invoke(ref entity, record, ordinal, this.Converter);
-		}
-
-		public void SetValue(object entity, object value)
-		{
-			_setter.Invoke(entity, value);
-		}
+		public void Populate(ref object entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
+		public void SetValue(ref object entity, object value) => _setter.Invoke(ref entity, value);
 		#endregion
 
 		#region 内部方法
@@ -95,17 +92,87 @@ namespace Zongsoft.Data.Common
 		internal void EnsureConvertFrom(Type type)
 		{
 			var converter = this.Converter;
-
-			if(converter == null)
-				return;
-
 			if(converter != null && !converter.CanConvertFrom(type))
 				throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
 		}
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => this.Name + " : " + this.Type.Name;
+		public bool Equals(EntityMember other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is EntityMember other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Name);
+		public override string ToString() => $"{this.Name}:{this.Type.Name}";
+		#endregion
+	}
+
+	public struct EntityMember<T> : IEquatable<EntityMember<T>>
+	{
+		#region 委托定义
+		private delegate void SetValueDelegate(ref T target, object value);
+		#endregion
+
+		#region 私有变量
+		private readonly MemberInfo _member;
+		private readonly SetValueDelegate _setter;
+		private readonly EntityEmitter.Populator<T> _populate;
+		#endregion
+
+		#region 公共字段
+		public readonly string Name;
+		public readonly Type Type;
+		public readonly TypeConverter Converter;
+		#endregion
+
+		#region 构造函数
+		public EntityMember(FieldInfo field, TypeConverter converter, EntityEmitter.Populator<T> populate)
+		{
+			_member = field ?? throw new ArgumentNullException(nameof(field));
+
+			this.Name = field.Name;
+			this.Type = field.FieldType;
+			this.Converter = converter;
+
+			_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
+			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		}
+
+		public EntityMember(PropertyInfo property, TypeConverter converter, EntityEmitter.Populator<T> populate)
+		{
+			_member = property ?? throw new ArgumentNullException(nameof(property));
+
+			this.Name = property.Name;
+			this.Type = property.PropertyType;
+			this.Converter = converter;
+
+			_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
+			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		}
+		#endregion
+
+		#region 公共属性
+		public bool IsEmpty => _member == null;
+		#endregion
+
+		#region 公共方法
+		public void Populate(ref T entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
+		public void SetValue(ref T entity, object value) => _setter.Invoke(ref entity, value);
+		#endregion
+
+		#region 内部方法
+		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(Utility.FromDbType(dbType));
+		internal void EnsureConvertFrom(Type type)
+		{
+			var converter = this.Converter;
+			if(converter != null && !converter.CanConvertFrom(type))
+				throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
+		}
+		#endregion
+
+		#region 重写方法
+		public bool Equals(EntityMember<T> other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is EntityMember<T> other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Name);
+		public override string ToString() => $"{this.Name}:{this.Type.Name}";
 		#endregion
 	}
 }

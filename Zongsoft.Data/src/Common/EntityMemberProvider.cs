@@ -29,12 +29,13 @@
 
 using System;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Common
 {
-	public class EntityMemberProvider
+	public partial class EntityMemberProvider
 	{
 		#region 单例模式
 		public static readonly EntityMemberProvider Instance = new EntityMemberProvider();
@@ -136,6 +137,80 @@ namespace Zongsoft.Data.Common
 						yield return property;
 				}
 			}
+		}
+		#endregion
+	}
+
+	public partial class EntityMemberProvider
+	{
+		#region 成员字段
+		private readonly ConcurrentDictionary<Type, IEnumerable> _generics = new ConcurrentDictionary<Type, IEnumerable>();
+		#endregion
+
+		#region 公共方法
+		public Collections.INamedCollection<EntityMember<T>> GetMembers<T>()
+		{
+			//如果指定的类型是单值类型则返回空
+			if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
+				return null;
+
+			return (Collections.INamedCollection<EntityMember<T>>)_generics.GetOrAdd(typeof(T), _ => CreateMembers<T>());
+		}
+		#endregion
+
+		#region 私有方法
+		private static ICollection<EntityMember<T>> CreateMembers<T>()
+		{
+			var type = typeof(T);
+
+			//如果是字典则返回空
+			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
+				return null;
+
+			if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
+				type = Zongsoft.Common.TypeExtension.GetElementType(type);
+
+			var members = FindMembers(type);
+			var tokens = new Collections.NamedCollection<EntityMember<T>>(item => item.Name);
+
+			foreach(var member in members)
+			{
+				var token = CreateMemberToken<T>(member);
+
+				if(token != null)
+					tokens.Add(token.Value);
+			}
+
+			return tokens;
+		}
+
+		private static EntityMember<T>? CreateMemberToken<T>(MemberInfo member)
+		{
+			switch(member.MemberType)
+			{
+				case MemberTypes.Field:
+					var field = (FieldInfo)member;
+
+					if(!field.IsInitOnly)
+					{
+						var converter = Utility.GetConverter(member);
+						return new EntityMember<T>(field, converter, EntityEmitter.GenerateFieldSetter<T>(field, converter));
+					}
+
+					break;
+				case MemberTypes.Property:
+					var property = (PropertyInfo)member;
+
+					if(property.CanRead && property.CanWrite)
+					{
+						var converter = Utility.GetConverter(member);
+						return new EntityMember<T>(property, converter, EntityEmitter.GeneratePropertySetter<T>(property, converter));
+					}
+
+					break;
+			}
+
+			return null;
 		}
 		#endregion
 	}
