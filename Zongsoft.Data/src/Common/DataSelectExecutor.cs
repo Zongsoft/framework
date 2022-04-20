@@ -201,7 +201,7 @@ namespace Zongsoft.Data.Common
 				#region 成员变量
 				private IDataReader _reader;
 				private Action<string, Paging> _paginate;
-				private readonly IDataPopulator _populator;
+				private readonly IDataPopulator<T> _populator;
 				private readonly DataSelectContext _context;
 				private readonly SelectStatement _statement;
 				private readonly IDictionary<string, SlaveToken> _slaves;
@@ -227,7 +227,7 @@ namespace Zongsoft.Data.Common
 					_reader = reader;
 					_paginate = paginate;
 					_slaves = GetSlaves(_context, _statement, _reader);
-					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(entity, typeof(T), _reader);
+					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator<T>(_reader, entity);
 				}
 				#endregion
 
@@ -284,7 +284,7 @@ namespace Zongsoft.Data.Common
 							}
 						}
 
-						return (T)entity;
+						return entity;
 					}
 				}
 
