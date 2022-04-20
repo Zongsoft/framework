@@ -29,6 +29,8 @@
 
 using System;
 using System.Data;
+using System.Collections;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common.Expressions;
 
@@ -50,25 +52,58 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			if(statement.IsProcedure)
+				command.CommandType = CommandType.StoredProcedure;
+
 			if(context.IsScalar)
 			{
 				context.Result = command.ExecuteScalar();
-				return true;
+				return false;
 			}
 
-			using(var reader = command.ExecuteReader())
-			{
-				context.Result = this.Populate(reader, context.ResultType);
-			}
+			context.Result = System.Activator.CreateInstance(
+				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+				new object[] { context, command });
 
-			return true;
+			return false;
 		}
 		#endregion
 
-		#region 私有方法
-		private System.Collections.IEnumerable Populate(IDataReader reader, Type entityType)
+		#region 嵌套子类
+		private class ResultCollection<T> : IEnumerable<T>, IEnumerable
 		{
-			return null;
+			private readonly IDbCommand _command;
+
+			public ResultCollection(DataExecuteContext context, IDbCommand command) { _command = command; }
+			public IEnumerator<T> GetEnumerator() => new ResultIterator(_command.ExecuteReader());
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+			private class ResultIterator : IEnumerator<T>
+			{
+				private readonly IDataReader _reader;
+				private readonly IDataPopulator<T> _populator;
+
+				public ResultIterator(IDataReader reader)
+				{
+					_reader = reader;
+					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator<T>(_reader);
+				}
+
+				public T Current { get => _populator.Populate(_reader); }
+
+				public bool MoveNext()
+				{
+					if(_reader.Read())
+						return true;
+
+					this.Dispose();
+					return false;
+				}
+
+				public void Dispose() => _reader.Dispose();
+				object IEnumerator.Current { get => this.Current; }
+				void IEnumerator.Reset() { }
+			}
 		}
 		#endregion
 	}
