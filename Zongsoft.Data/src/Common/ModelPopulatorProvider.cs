@@ -57,8 +57,8 @@ namespace Zongsoft.Data.Common
 		public IDataPopulator GetPopulator(Type type, IDataRecord reader, IDataEntity entity = null)
 		{
 			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
-				ModelMemberTokenProvider.Instance.GetMembers(underlying) :
-				ModelMemberTokenProvider.Instance.GetMembers(type);
+				ModelMemberTokenManager.GetMembers(underlying) :
+				ModelMemberTokenManager.GetMembers(type);
 
 			var tokens = new List<ModelPopulator.MemberMapping>(reader.FieldCount);
 
@@ -102,7 +102,7 @@ namespace Zongsoft.Data.Common
 					return;
 
 				entity = token.Value.Entity;
-				members = ModelMemberTokenProvider.Instance.GetMembers(token.Value.Member.Type);
+				members = ModelMemberTokenManager.GetMembers(token.Value.Member.Type);
 				tokens = token.Value.Children;
 			}
 
@@ -182,7 +182,7 @@ namespace Zongsoft.Data.Common
 		private static void Initialize<T>(ModelPopulator<T> populator, string name, int ordinal)
 		{
 			var index = name.IndexOf('.');
-			var members = ModelMemberTokenProvider.Instance.GetMembers<T>();
+			var members = ModelMemberTokenManager.GetMembers<T>();
 
 			if(index > 0 && index < name.Length - 1)
 			{

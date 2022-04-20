@@ -35,25 +35,14 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Common
 {
-	public partial class ModelMemberTokenProvider
+	public static partial class ModelMemberTokenManager
 	{
-		#region 单例模式
-		public static readonly ModelMemberTokenProvider Instance = new ModelMemberTokenProvider();
-		#endregion
-
-		#region 成员字段
-		private readonly ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>> _cache;
-		#endregion
-
-		#region 构造函数
-		private ModelMemberTokenProvider()
-		{
-			_cache = new ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>>();
-		}
+		#region 私有变量
+		private static readonly ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>> _cache = new ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>>();
 		#endregion
 
 		#region 公共方法
-		public Collections.INamedCollection<ModelMemberToken> GetMembers(Type type)
+		public static Collections.INamedCollection<ModelMemberToken> GetMembers(Type type)
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -141,14 +130,14 @@ namespace Zongsoft.Data.Common
 		#endregion
 	}
 
-	public partial class ModelMemberTokenProvider
+	public static partial class ModelMemberTokenManager
 	{
-		#region 成员字段
-		private readonly ConcurrentDictionary<Type, IEnumerable> _generics = new ConcurrentDictionary<Type, IEnumerable>();
+		#region 私有变量
+		private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new ConcurrentDictionary<Type, IEnumerable>();
 		#endregion
 
 		#region 公共方法
-		public Collections.INamedCollection<ModelMemberToken<T>> GetMembers<T>()
+		public static Collections.INamedCollection<ModelMemberToken<T>> GetMembers<T>()
 		{
 			//如果指定的类型是单值类型则返回空
 			if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
