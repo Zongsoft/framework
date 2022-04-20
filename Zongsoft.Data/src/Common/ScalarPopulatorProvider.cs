@@ -41,13 +41,13 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private readonly ConcurrentDictionary<Type, ConverterPopulater> _converters;
+		private readonly ConcurrentDictionary<Type, IDataPopulator> _converters;
 		#endregion
 
 		#region 构造函数
 		private ScalarPopulatorProvider()
 		{
-			_converters = new ConcurrentDictionary<Type, ConverterPopulater>();
+			_converters = new ConcurrentDictionary<Type, IDataPopulator>();
 		}
 		#endregion
 
@@ -57,11 +57,16 @@ namespace Zongsoft.Data.Common
 			return Zongsoft.Common.TypeExtension.IsScalarType(type);
 		}
 
-		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataReader reader)
+		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader)
 		{
 			return Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
 				this.GetPopulator(underlyingType, true) :
 				this.GetPopulator(type, false);
+		}
+
+		public IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader)
+		{
+			return this.GetPopulator(entity, typeof(T), reader) as IDataPopulator<T>;
 		}
 		#endregion
 
@@ -114,33 +119,17 @@ namespace Zongsoft.Data.Common
 			if(type == typeof(char[]))
 				return nullable ? NullablePopulator.Chars : ScalarPopulator.Chars;
 
-			return _converters.GetOrAdd(type, t => new ConverterPopulater(t));
+			return _converters.GetOrAdd(type, type => (IDataPopulator)Activator.CreateInstance(typeof(ConverterPopulater<>).MakeGenericType(type)));
+		}
+
+		public IDataPopulator<T> GetPopulator<T>(bool nullable)
+		{
+			return this.GetPopulator(typeof(T), nullable) as IDataPopulator<T>;
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class ConverterPopulater : IDataPopulator
-		{
-			#region 私有变量
-			private readonly TypeConverter _converter;
-			#endregion
-
-			#region 构造函数
-			public ConverterPopulater(Type type)
-			{
-				_converter = TypeDescriptor.GetConverter(type) ?? throw new InvalidOperationException($"The specified '{type.FullName}' type has no type converter.");
-
-				if(!_converter.CanConvertFrom(typeof(string)))
-					throw new InvalidOperationException($"The '{_converter.GetType().Name}' type converter does not support converting from a string to a '{type.FullName}' target type.");
-			}
-			#endregion
-
-			#region 公共方法
-			public object Populate(IDataRecord record) => _converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
-			#endregion
-		}
-
-		private class ConverterPopulater<T> : IDataPopulator<T>
+		private class ConverterPopulater<T> : IDataPopulator, IDataPopulator<T>
 		{
 			#region 私有变量
 			private readonly TypeConverter _converter;
@@ -150,14 +139,35 @@ namespace Zongsoft.Data.Common
 			public ConverterPopulater()
 			{
 				_converter = TypeDescriptor.GetConverter(typeof(T)) ?? throw new InvalidOperationException($"The specified '{typeof(T).FullName}' type has no type converter.");
-
-				if(!_converter.CanConvertFrom(typeof(string)))
-					throw new InvalidOperationException($"The '{_converter.GetType().Name}' type converter does not support converting from a string to a '{typeof(T).FullName}' target type.");
 			}
 			#endregion
 
 			#region 公共方法
-			public T Populate(IDataRecord record) => (T)_converter.ConvertFrom(record.IsDBNull(0) ? null : record.GetValue(0));
+			object IDataPopulator.Populate(IDataRecord record)
+			{
+				object value = record.IsDBNull(0) ? null : record.GetValue(0);
+
+				if(_converter.CanConvertFrom(record.GetFieldType(0)))
+					return _converter.ConvertFrom(value);
+
+				if(_converter.CanConvertTo(typeof(T)))
+					return _converter.ConvertTo(value, typeof(T));
+
+				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
+			}
+
+			public T Populate(IDataRecord record)
+			{
+				object value = record.IsDBNull(0) ? null : record.GetValue(0);
+
+				if(_converter.CanConvertFrom(record.GetFieldType(0)))
+					return (T)_converter.ConvertFrom(value);
+
+				if(_converter.CanConvertTo(typeof(T)))
+					return (T)_converter.ConvertTo(value, typeof(T));
+
+				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
+			}
 			#endregion
 		}
 		#endregion

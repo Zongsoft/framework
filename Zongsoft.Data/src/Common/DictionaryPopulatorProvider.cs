@@ -33,7 +33,7 @@ using System.Collections;
 
 namespace Zongsoft.Data.Common
 {
-	public class DictionaryPopulatorProvider : IDataPopulatorProvider, IDataPopulatorProvider<IDictionary>
+	public class DictionaryPopulatorProvider : IDataPopulatorProvider
 	{
 		#region 单例模式
 		public static readonly DictionaryPopulatorProvider Instance = new DictionaryPopulatorProvider();
@@ -49,7 +49,7 @@ namespace Zongsoft.Data.Common
 			return Zongsoft.Common.TypeExtension.IsDictionary(type);
 		}
 
-		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataReader reader)
+		public IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader)
 		{
 			var keys = new string[reader.FieldCount];
 
@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Common
 			return new DictionaryPopulator(type, keys);
 		}
 
-		public IDataPopulator<IDictionary> GetPopulator(Metadata.IDataEntity entity, IDataReader reader)
+		public IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader)
 		{
 			var keys = new string[reader.FieldCount];
 
@@ -72,7 +72,7 @@ namespace Zongsoft.Data.Common
 				keys[i] = reader.GetName(i);
 			}
 
-			return new DictionaryPopulator(typeof(IDictionary), keys);
+			return new DictionaryPopulator<T>(keys);
 		}
 		#endregion
 	}

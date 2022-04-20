@@ -49,13 +49,21 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public object Populate(IDataRecord record)
-		{
-			return this.Populate(record, this.GetCreator(_type), _tokens);
-		}
+		public object Populate(IDataRecord record) => this.Populate(record, this.GetCreator(_type), _tokens);
 		#endregion
 
 		#region 私有方法
+		private static bool CanPopulate(IDataRecord record, PopulateToken token)
+		{
+			for(int i = 0; i < token.Keys.Length; i++)
+			{
+				if(token.Keys[i] < 0 || record.IsDBNull(token.Keys[i]))
+					return false;
+			}
+
+			return true;
+		}
+
 		private object Populate(IDataRecord record, Func<IDataRecord, object> creator, IEnumerable<PopulateToken> tokens)
 		{
 			object entity = null;
@@ -69,12 +77,12 @@ namespace Zongsoft.Data.Common
 
 					token.Member.Populate(ref entity, record, token.Ordinal);
 				}
-				else if(this.CanPopulate(record, token))
+				else if(CanPopulate(record, token))
 				{
 					if(entity == null)
 						entity = creator(record);
 
-					token.Member.SetValue(entity, this.Populate(record, this.GetCreator(token.Member.Type), token.Tokens));
+					token.Member.SetValue(ref entity, this.Populate(record, this.GetCreator(token.Member.Type), token.Tokens));
 				}
 			}
 
@@ -88,28 +96,14 @@ namespace Zongsoft.Data.Common
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if(type.IsAbstract)
-				return record => Model.Build(type);
-
-			return record => System.Activator.CreateInstance(type);
-		}
-		#endregion
-
-		#region 私有方法
-		private bool CanPopulate(IDataRecord record, PopulateToken token)
-		{
-			for(int i = 0; i < token.Keys.Length; i++)
-			{
-				if(token.Keys[i] < 0 || record.IsDBNull(token.Keys[i]))
-					return false;
-			}
-
-			return true;
+			return type.IsAbstract ?
+				record => Model.Build(type) :
+				record => System.Activator.CreateInstance(type);
 		}
 		#endregion
 
 		#region 嵌套子类
-		internal struct PopulateToken
+		internal readonly struct PopulateToken
 		{
 			#region 公共字段
 			public readonly int Ordinal;
@@ -149,6 +143,104 @@ namespace Zongsoft.Data.Common
 				$"[{this.Ordinal}]{this.Member}" :
 				$"[{this.Ordinal}]{this.Member}({this.Tokens.Count})";
 			#endregion
+		}
+		#endregion
+	}
+
+	public class EntityPopulator<T> : IDataPopulator, IDataPopulator<T>
+	{
+		#region 私有变量
+		private static readonly Func<IDataRecord, T> CREATOR = typeof(T).IsAbstract ?
+			record => Model.Build<T>() :
+			record => System.Activator.CreateInstance<T>();
+		#endregion
+
+		#region 成员字段
+		private readonly Metadata.IDataEntity _entity;
+		private readonly PopulateMemberCollection _members;
+		#endregion
+
+		#region 构造函数
+		public EntityPopulator(Metadata.IDataEntity entity)
+		{
+			_entity = entity ?? throw new ArgumentNullException(nameof(entity));
+			_members = new PopulateMemberCollection();
+		}
+		#endregion
+
+		#region 公共属性
+		public Metadata.IDataEntity Entity => _entity;
+		internal PopulateMemberCollection Members => _members;
+		#endregion
+
+		#region 公共方法
+		public T Populate(IDataRecord record) => Populate(record, _members);
+		object IDataPopulator.Populate(IDataRecord record) => this.Populate(record);
+		#endregion
+
+		#region 私有方法
+		private static T Populate(IDataRecord record, IEnumerable<PopulateMember> members)
+		{
+			T model = default;
+
+			foreach(var member in members)
+			{
+				if(member.Ordinal >= 0)
+				{
+					if(model == null)
+						model = CREATOR(record);
+
+					member.Token.Populate(ref model, record, member.Ordinal);
+				}
+				else if(member.Populator != null)
+				{
+					if(model == null)
+						model = CREATOR(record);
+
+					member.Token.SetValue(ref model, member.Populator.Populate(record));
+				}
+			}
+
+			return model;
+		}
+		#endregion
+
+		#region 嵌套子类
+		internal readonly struct PopulateMember
+		{
+			#region 公共字段
+			public readonly int Ordinal;
+			public readonly EntityMember<T> Token;
+			public readonly IDataPopulator Populator;
+			#endregion
+
+			#region 构造函数
+			public PopulateMember(EntityMember<T> token, int ordinal)
+			{
+				this.Token = token;
+				this.Ordinal = ordinal;
+				this.Populator = null;
+			}
+
+			public PopulateMember(EntityMember<T> token, IDataPopulator populator)
+			{
+				this.Token = token;
+				this.Populator = populator;
+				this.Ordinal = -1;
+			}
+			#endregion
+
+			#region 重写方法
+			public override string ToString() => this.Ordinal < 0 ?
+				$"{this.Token}({this.Populator})" :
+				$"{this.Token}#{this.Ordinal}";
+			#endregion
+		}
+
+		internal class PopulateMemberCollection : System.Collections.ObjectModel.KeyedCollection<string, PopulateMember>
+		{
+			public PopulateMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+			protected override string GetKeyForItem(PopulateMember member) => member.Token.Name;
 		}
 		#endregion
 	}

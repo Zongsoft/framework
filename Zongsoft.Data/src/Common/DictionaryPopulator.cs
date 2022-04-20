@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common
 {
-	public class DictionaryPopulator : IDataPopulator, IDataPopulator<IDictionary>
+	public class DictionaryPopulator : IDataPopulator
 	{
 		#region 成员字段
 		private readonly Type _type;
@@ -52,8 +52,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		object IDataPopulator.Populate(IDataRecord record) => this.Populate(record);
-		public IDictionary Populate(IDataRecord record)
+		public object Populate(IDataRecord record)
 		{
 			if(record.FieldCount != _keys.Length)
 				throw new DataException("The record of populate has failed.");
@@ -87,11 +86,18 @@ namespace Zongsoft.Data.Common
 			if(type.IsAbstract)
 				throw new InvalidOperationException($"The specified '{type.FullName}' type is an abstract class that the dictionary populator cannot to populate.");
 
-			if(typeof(IDictionary).IsAssignableFrom(type))
+			if(!typeof(IDictionary).IsAssignableFrom(type))
 				throw new InvalidOperationException($"The specified '{type.FullName}' type does not implement the {nameof(IDictionary)} interface that the dictionary populator cannot to populate.");
 
 			return capacity => (IDictionary)System.Activator.CreateInstance(type);
 		}
 		#endregion
+	}
+
+	public class DictionaryPopulator<T> : DictionaryPopulator, IDataPopulator<T>
+	{
+		internal protected DictionaryPopulator(string[] keys) : base(typeof(T), keys) { }
+
+		public new T Populate(IDataRecord record) => (T)base.Populate(record);
 	}
 }

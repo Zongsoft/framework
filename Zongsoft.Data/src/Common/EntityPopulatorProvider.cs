@@ -29,22 +29,21 @@
 
 using System;
 using System.Data;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common
 {
-	public class EntityPopulatorProvider : IDataPopulatorProvider
+	public partial class EntityPopulatorProvider : IDataPopulatorProvider
 	{
 		#region 单例模式
 		public static readonly EntityPopulatorProvider Instance = new EntityPopulatorProvider();
 		#endregion
 
 		#region 构造函数
-		private EntityPopulatorProvider()
-		{
-		}
+		private EntityPopulatorProvider() { }
 		#endregion
 
 		#region 公共方法
@@ -55,7 +54,7 @@ namespace Zongsoft.Data.Common
 			         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 		}
 
-		public IDataPopulator GetPopulator(IDataEntity entity, Type type, IDataReader reader)
+		public IDataPopulator GetPopulator(IDataEntity entity, Type type, IDataRecord reader)
 		{
 			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
 				EntityMemberProvider.Instance.GetMembers(underlying) :
@@ -152,6 +151,82 @@ namespace Zongsoft.Data.Common
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static int GetLast(int last) => last > 0 ? last + 1 : last;
+		#endregion
+	}
+
+	public partial class EntityPopulatorProvider
+	{
+		#region 公共方法
+		public IDataPopulator<T> GetPopulator<T>(IDataEntity entity, IDataRecord reader)
+		{
+			var populator = new EntityPopulator<T>(entity);
+
+			for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
+			{
+				//获取当前列对应的属性名（注意：由查询引擎确保返回的列名就是属性名）
+				var name = reader.GetName(ordinal);
+
+				//如果属性名的首字符不是字母或下划线则忽略当前列
+				if(!IsLetterOrUnderscore(name[0]))
+					continue;
+
+				//初始化模型组装器
+				Initialize(populator, name, ordinal);
+			}
+
+			return populator;
+		}
+		#endregion
+
+		#region 私有方法
+		private static void Initialize<T>(EntityPopulator<T> populator, string name, int ordinal)
+		{
+			var index = name.IndexOf('.');
+			var members = EntityMemberProvider.Instance.GetMembers<T>();
+
+			if(index > 0 && index < name.Length - 1)
+			{
+				if(members.TryGet(name.AsSpan().Slice(0, index).ToString(), out var member))
+				{
+					var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan().Slice(index + 1), ordinal);
+
+					if(subsidiary != null && !populator.Members.Contains(member.Name))
+						populator.Members.Add(new EntityPopulator<T>.PopulateMember(member, subsidiary));
+				}
+			}
+			else
+			{
+				if(members.TryGet(name, out var member))
+				{
+					populator.Members.Add(new EntityPopulator<T>.PopulateMember(member, ordinal));
+				}
+			}
+		}
+
+		private static IDataPopulator GetAssociativePopulator<T>(EntityPopulator<T> populator, EntityMember<T> member, ReadOnlySpan<char> children, int ordinal)
+		{
+			if(!populator.Entity.Properties.TryGet(member.Name, out var property))
+				throw new DataException($"The property named '{member.Name}' is undefined in the '{populator.Entity}' data entity mapping.");
+
+			if(property.IsSimplex)
+				throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
+
+			var result = populator.Members.TryGetValue(member.Name, out var m) ?
+				m.Populator :
+				Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
+
+			if(!children.IsEmpty)
+				DoInitialize(result, children.ToString(), ordinal);
+
+			return (IDataPopulator)result;
+		}
+
+		private static void DoInitialize(object populator, string name, int ordinal)
+		{
+			var type = populator.GetType().GetGenericArguments()[0];
+			var method = typeof(EntityPopulatorProvider).GetMethod(nameof(Initialize), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type);
+			method.Invoke(null, new object[] { populator, name, ordinal });
+		}
 		#endregion
 	}
 }

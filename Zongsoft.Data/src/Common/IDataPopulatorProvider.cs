@@ -37,31 +37,22 @@ namespace Zongsoft.Data.Common
 	/// </summary>
 	public interface IDataPopulatorProvider
 	{
-		/// <summary>
-		/// 确认装配提供程序是否支持指定的元素类型。
-		/// </summary>
+		/// <summary>确认装配提供程序是否支持指定的元素类型。</summary>
 		/// <param name="type">指定要装配的元素类型。</param>
 		/// <returns>如果支持指定的装配元素类型则返回真(True)，否则返回假(False)。</returns>
 		bool CanPopulate(Type type);
 
-		/// <summary>
-		/// 获取或创建一个数据实体装配器。
-		/// </summary>
+		/// <summary>获取或创建一个数据实体装配器。</summary>
+		/// <param name="entity">指定组装的实体元素。</param>
+		/// <param name="reader">指定要获取或构建的数据读取器。</param>
+		/// <returns>返回的数据实体装配器对象。</returns>
+		IDataPopulator<T> GetPopulator<T>(Metadata.IDataEntity entity, IDataRecord reader);
+
+		/// <summary>获取或创建一个数据实体装配器。</summary>
 		/// <param name="entity">指定组装的实体元素。</param>
 		/// <param name="type">指定要获取或创建的装配元素类型。</param>
 		/// <param name="reader">指定要获取或构建的数据读取器。</param>
 		/// <returns>返回的数据实体装配器对象。</returns>
-		IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataReader reader);
-	}
-
-	public interface IDataPopulatorProvider<out T> : IDataPopulatorProvider
-	{
-		/// <summary>
-		/// 获取或创建一个数据实体装配器。
-		/// </summary>
-		/// <param name="entity">指定组装的实体元素。</param>
-		/// <param name="reader">指定要获取或构建的数据读取器。</param>
-		/// <returns>返回的数据实体装配器对象。</returns>
-		IDataPopulator<T> GetPopulator(Metadata.IDataEntity entity, IDataReader reader);
+		IDataPopulator GetPopulator(Metadata.IDataEntity entity, Type type, IDataRecord reader);
 	}
 }
