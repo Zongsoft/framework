@@ -33,15 +33,15 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common
 {
-	public class EntityPopulator : IDataPopulator
+	public class ModelPopulator : IDataPopulator
 	{
 		#region 成员字段
 		private readonly Type _type;
-		private readonly IEnumerable<PopulateToken> _tokens;
+		private readonly IEnumerable<MemberMapping> _tokens;
 		#endregion
 
 		#region 构造函数
-		internal EntityPopulator(Type type, IEnumerable<PopulateToken> tokens)
+		internal ModelPopulator(Type type, IEnumerable<MemberMapping> tokens)
 		{
 			_type = type ?? throw new ArgumentNullException(nameof(type));
 			_tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static bool CanPopulate(IDataRecord record, PopulateToken token)
+		private static bool CanPopulate(IDataRecord record, MemberMapping token)
 		{
 			for(int i = 0; i < token.Keys.Length; i++)
 			{
@@ -64,7 +64,7 @@ namespace Zongsoft.Data.Common
 			return true;
 		}
 
-		private object Populate(IDataRecord record, Func<IDataRecord, object> creator, IEnumerable<PopulateToken> tokens)
+		private object Populate(IDataRecord record, Func<IDataRecord, object> creator, IEnumerable<MemberMapping> tokens)
 		{
 			object entity = null;
 
@@ -82,7 +82,7 @@ namespace Zongsoft.Data.Common
 					if(entity == null)
 						entity = creator(record);
 
-					token.Member.SetValue(ref entity, this.Populate(record, this.GetCreator(token.Member.Type), token.Tokens));
+					token.Member.SetValue(ref entity, this.Populate(record, this.GetCreator(token.Member.Type), token.Children));
 				}
 			}
 
@@ -103,32 +103,32 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		internal readonly struct PopulateToken
+		internal readonly struct MemberMapping
 		{
 			#region 公共字段
 			public readonly int Ordinal;
-			public readonly EntityMember Member;
+			public readonly ModelMemberToken Member;
 			public readonly Metadata.IDataEntity Entity;
-			public readonly ICollection<PopulateToken> Tokens;
+			public readonly ICollection<MemberMapping> Children;
 			public readonly int[] Keys;
 			#endregion
 
 			#region 构造函数
-			public PopulateToken(Metadata.IDataEntity entity, EntityMember member, int ordinal)
+			public MemberMapping(Metadata.IDataEntity entity, ModelMemberToken member, int ordinal)
 			{
 				this.Ordinal = ordinal;
 				this.Entity = entity;
 				this.Member = member;
-				this.Tokens = null;
+				this.Children = null;
 				this.Keys = null;
 			}
 
-			public PopulateToken(Metadata.IDataEntity entity, EntityMember member)
+			public MemberMapping(Metadata.IDataEntity entity, ModelMemberToken member)
 			{
 				this.Ordinal = -1;
 				this.Entity = entity;
 				this.Member = member;
-				this.Tokens = new List<PopulateToken>();
+				this.Children = new List<MemberMapping>();
 				this.Keys = new int[entity.Key.Length];
 
 				for(int i = 0; i < this.Keys.Length; i++)
@@ -139,15 +139,15 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 重写方法
-			public override string ToString() => this.Tokens == null ?
+			public override string ToString() => this.Children == null ?
 				$"[{this.Ordinal}]{this.Member}" :
-				$"[{this.Ordinal}]{this.Member}({this.Tokens.Count})";
+				$"[{this.Ordinal}]{this.Member}({this.Children.Count})";
 			#endregion
 		}
 		#endregion
 	}
 
-	public class EntityPopulator<T> : IDataPopulator, IDataPopulator<T>
+	public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 	{
 		#region 私有变量
 		private static readonly Func<IDataRecord, T> CREATOR = typeof(T).IsAbstract ?
@@ -157,20 +157,20 @@ namespace Zongsoft.Data.Common
 
 		#region 成员字段
 		private readonly Metadata.IDataEntity _entity;
-		private readonly PopulateMemberCollection _members;
+		private readonly MemberMappingCollection _members;
 		#endregion
 
 		#region 构造函数
-		public EntityPopulator(Metadata.IDataEntity entity)
+		public ModelPopulator(Metadata.IDataEntity entity)
 		{
 			_entity = entity;
-			_members = new PopulateMemberCollection();
+			_members = new MemberMappingCollection();
 		}
 		#endregion
 
 		#region 公共属性
 		public Metadata.IDataEntity Entity => _entity;
-		internal PopulateMemberCollection Members => _members;
+		internal MemberMappingCollection Members => _members;
 		#endregion
 
 		#region 公共方法
@@ -179,7 +179,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static T Populate(IDataRecord record, IEnumerable<PopulateMember> members)
+		private static T Populate(IDataRecord record, IEnumerable<MemberMapping> members)
 		{
 			T model = default;
 
@@ -206,23 +206,23 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		internal readonly struct PopulateMember
+		internal readonly struct MemberMapping
 		{
 			#region 公共字段
 			public readonly int Ordinal;
-			public readonly EntityMember<T> Token;
+			public readonly ModelMemberToken<T> Token;
 			public readonly IDataPopulator Populator;
 			#endregion
 
 			#region 构造函数
-			public PopulateMember(EntityMember<T> token, int ordinal)
+			public MemberMapping(ModelMemberToken<T> token, int ordinal)
 			{
 				this.Token = token;
 				this.Ordinal = ordinal;
 				this.Populator = null;
 			}
 
-			public PopulateMember(EntityMember<T> token, IDataPopulator populator)
+			public MemberMapping(ModelMemberToken<T> token, IDataPopulator populator)
 			{
 				this.Token = token;
 				this.Populator = populator;
@@ -237,10 +237,10 @@ namespace Zongsoft.Data.Common
 			#endregion
 		}
 
-		internal class PopulateMemberCollection : System.Collections.ObjectModel.KeyedCollection<string, PopulateMember>
+		internal class MemberMappingCollection : System.Collections.ObjectModel.KeyedCollection<string, MemberMapping>
 		{
-			public PopulateMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-			protected override string GetKeyForItem(PopulateMember member) => member.Token.Name;
+			public MemberMappingCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+			protected override string GetKeyForItem(MemberMapping member) => member.Token.Name;
 		}
 		#endregion
 	}

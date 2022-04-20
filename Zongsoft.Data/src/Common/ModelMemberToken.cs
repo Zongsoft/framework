@@ -34,7 +34,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data.Common
 {
-	public struct EntityMember : IEquatable<EntityMember>
+	public struct ModelMemberToken : IEquatable<ModelMemberToken>
 	{
 		#region 委托定义
 		private delegate void SetValueDelegate(ref object target, object value);
@@ -43,7 +43,7 @@ namespace Zongsoft.Data.Common
 		#region 私有变量
 		private readonly MemberInfo _member;
 		private readonly SetValueDelegate _setter;
-		private readonly EntityEmitter.Populator _populate;
+		private readonly ModelMemberEmitter.Populator _populate;
 		#endregion
 
 		#region 公共字段
@@ -53,7 +53,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 构造函数
-		public EntityMember(FieldInfo field, TypeConverter converter, EntityEmitter.Populator populate)
+		public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator populate)
 		{
 			_member = field ?? throw new ArgumentNullException(nameof(field));
 
@@ -65,7 +65,7 @@ namespace Zongsoft.Data.Common
 			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 		}
 
-		public EntityMember(PropertyInfo property, TypeConverter converter, EntityEmitter.Populator populate)
+		public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator populate)
 		{
 			_member = property ?? throw new ArgumentNullException(nameof(property));
 
@@ -98,14 +98,17 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 重写方法
-		public bool Equals(EntityMember other) => string.Equals(this.Name, other.Name);
-		public override bool Equals(object obj) => obj is EntityMember other && this.Equals(other);
+		public bool Equals(ModelMemberToken other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is ModelMemberToken other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name);
 		public override string ToString() => $"{this.Name}:{this.Type.Name}";
+
+		public static bool operator ==(ModelMemberToken left, ModelMemberToken right) => left.Equals(right);
+		public static bool operator !=(ModelMemberToken left, ModelMemberToken right) => !(left == right);
 		#endregion
 	}
 
-	public struct EntityMember<T> : IEquatable<EntityMember<T>>
+	public struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
 	{
 		#region 委托定义
 		private delegate void SetValueDelegate(ref T target, object value);
@@ -114,7 +117,7 @@ namespace Zongsoft.Data.Common
 		#region 私有变量
 		private readonly MemberInfo _member;
 		private readonly SetValueDelegate _setter;
-		private readonly EntityEmitter.Populator<T> _populate;
+		private readonly ModelMemberEmitter.Populator<T> _populate;
 		#endregion
 
 		#region 公共字段
@@ -124,7 +127,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 构造函数
-		public EntityMember(FieldInfo field, TypeConverter converter, EntityEmitter.Populator<T> populate)
+		public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
 		{
 			_member = field ?? throw new ArgumentNullException(nameof(field));
 
@@ -136,7 +139,7 @@ namespace Zongsoft.Data.Common
 			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 		}
 
-		public EntityMember(PropertyInfo property, TypeConverter converter, EntityEmitter.Populator<T> populate)
+		public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
 		{
 			_member = property ?? throw new ArgumentNullException(nameof(property));
 
@@ -169,10 +172,13 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 重写方法
-		public bool Equals(EntityMember<T> other) => string.Equals(this.Name, other.Name);
-		public override bool Equals(object obj) => obj is EntityMember<T> other && this.Equals(other);
+		public bool Equals(ModelMemberToken<T> other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is ModelMemberToken<T> other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name);
 		public override string ToString() => $"{this.Name}:{this.Type.Name}";
+
+		public static bool operator ==(ModelMemberToken<T> left, ModelMemberToken<T> right) => left.Equals(right);
+		public static bool operator !=(ModelMemberToken<T> left, ModelMemberToken<T> right) => !(left == right);
 		#endregion
 	}
 }

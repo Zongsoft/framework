@@ -36,14 +36,14 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common
 {
-	public partial class EntityPopulatorProvider : IDataPopulatorProvider
+	public partial class ModelPopulatorProvider : IDataPopulatorProvider
 	{
 		#region 单例模式
-		public static readonly EntityPopulatorProvider Instance = new EntityPopulatorProvider();
+		public static readonly ModelPopulatorProvider Instance = new ModelPopulatorProvider();
 		#endregion
 
 		#region 构造函数
-		private EntityPopulatorProvider() { }
+		private ModelPopulatorProvider() { }
 		#endregion
 
 		#region 公共方法
@@ -57,10 +57,10 @@ namespace Zongsoft.Data.Common
 		public IDataPopulator GetPopulator(Type type, IDataRecord reader, IDataEntity entity = null)
 		{
 			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
-				EntityMemberProvider.Instance.GetMembers(underlying) :
-				EntityMemberProvider.Instance.GetMembers(type);
+				ModelMemberTokenProvider.Instance.GetMembers(underlying) :
+				ModelMemberTokenProvider.Instance.GetMembers(type);
 
-			var tokens = new List<EntityPopulator.PopulateToken>(reader.FieldCount);
+			var tokens = new List<ModelPopulator.MemberMapping>(reader.FieldCount);
 
 			for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
 			{
@@ -75,7 +75,7 @@ namespace Zongsoft.Data.Common
 				FillTokens(entity, members, tokens, name, ordinal);
 			}
 
-			return new EntityPopulator(underlying ?? type, tokens);
+			return new ModelPopulator(underlying ?? type, tokens);
 		}
 		#endregion
 
@@ -88,10 +88,10 @@ namespace Zongsoft.Data.Common
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static void FillTokens(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name, int ordinal)
+		private static void FillTokens(IDataEntity entity, Collections.INamedCollection<ModelMemberToken> members, ICollection<ModelPopulator.MemberMapping> tokens, string name, int ordinal)
 		{
 			int index, last = 0;
-			EntityPopulator.PopulateToken? token = null;
+			ModelPopulator.MemberMapping? token = null;
 
 			while((index = name.IndexOf('.', last + 1)) > 0)
 			{
@@ -102,8 +102,8 @@ namespace Zongsoft.Data.Common
 					return;
 
 				entity = token.Value.Entity;
-				members = EntityMemberProvider.Instance.GetMembers(token.Value.Member.Type);
-				tokens = token.Value.Tokens;
+				members = ModelMemberTokenProvider.Instance.GetMembers(token.Value.Member.Type);
+				tokens = token.Value.Children;
 			}
 
 			if(members.TryGet(name.Substring(GetLast(last)), out var member))
@@ -123,12 +123,12 @@ namespace Zongsoft.Data.Common
 				if(entity.Properties.TryGet(member.Name, out var property) && property is IDataEntitySimplexProperty simplex)
 					member.EnsureConvertFrom(simplex.Type);
 
-				tokens.Add(new EntityPopulator.PopulateToken(entity, member, ordinal));
+				tokens.Add(new ModelPopulator.MemberMapping(entity, member, ordinal));
 			}
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static EntityPopulator.PopulateToken? FillToken(IDataEntity entity, Collections.INamedCollection<EntityMember> members, ICollection<EntityPopulator.PopulateToken> tokens, string name)
+		private static ModelPopulator.MemberMapping? FillToken(IDataEntity entity, Collections.INamedCollection<ModelMemberToken> members, ICollection<ModelPopulator.MemberMapping> tokens, string name)
 		{
 			foreach(var token in tokens)
 			{
@@ -141,7 +141,7 @@ namespace Zongsoft.Data.Common
 				if(entity.Properties[name].IsSimplex)
 					throw new InvalidOperationException($"The '{name}' property of '{entity}' entity is not a complex(navigation) property.");
 
-				var token = new EntityPopulator.PopulateToken(((IDataEntityComplexProperty)entity.Properties[name]).Foreign, (EntityMember)member);
+				var token = new ModelPopulator.MemberMapping(((IDataEntityComplexProperty)entity.Properties[name]).Foreign, (ModelMemberToken)member);
 				tokens.Add(token);
 				return token;
 			}
@@ -154,12 +154,12 @@ namespace Zongsoft.Data.Common
 		#endregion
 	}
 
-	public partial class EntityPopulatorProvider
+	public partial class ModelPopulatorProvider
 	{
 		#region 公共方法
 		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, IDataEntity entity = null)
 		{
-			var populator = new EntityPopulator<T>(entity);
+			var populator = new ModelPopulator<T>(entity);
 
 			for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
 			{
@@ -179,10 +179,10 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static void Initialize<T>(EntityPopulator<T> populator, string name, int ordinal)
+		private static void Initialize<T>(ModelPopulator<T> populator, string name, int ordinal)
 		{
 			var index = name.IndexOf('.');
-			var members = EntityMemberProvider.Instance.GetMembers<T>();
+			var members = ModelMemberTokenProvider.Instance.GetMembers<T>();
 
 			if(index > 0 && index < name.Length - 1)
 			{
@@ -191,26 +191,26 @@ namespace Zongsoft.Data.Common
 					var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan().Slice(index + 1), ordinal);
 
 					if(subsidiary != null && !populator.Members.Contains(member.Name))
-						populator.Members.Add(new EntityPopulator<T>.PopulateMember(member, subsidiary));
+						populator.Members.Add(new ModelPopulator<T>.MemberMapping(member, subsidiary));
 				}
 			}
 			else
 			{
 				if(members.TryGet(name, out var member))
 				{
-					populator.Members.Add(new EntityPopulator<T>.PopulateMember(member, ordinal));
+					populator.Members.Add(new ModelPopulator<T>.MemberMapping(member, ordinal));
 				}
 			}
 		}
 
-		private static IDataPopulator GetAssociativePopulator<T>(EntityPopulator<T> populator, EntityMember<T> member, ReadOnlySpan<char> children, int ordinal)
+		private static IDataPopulator GetAssociativePopulator<T>(ModelPopulator<T> populator, ModelMemberToken<T> member, ReadOnlySpan<char> children, int ordinal)
 		{
 			IDataPopulator result;
 
 			if(populator.Members.TryGetValue(member.Name, out var m))
 				result = m.Populator;
 			else if(populator.Entity is null)
-				result = (IDataPopulator)Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { null });
+				result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), new object[] { null });
 			else
 			{
 				if(!populator.Entity.Properties.TryGet(member.Name, out var property))
@@ -219,7 +219,7 @@ namespace Zongsoft.Data.Common
 				if(property.IsSimplex)
 					throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
 
-				result = (IDataPopulator)Activator.CreateInstance(typeof(EntityPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
+				result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
 			}
 
 			if(!children.IsEmpty)
@@ -231,7 +231,7 @@ namespace Zongsoft.Data.Common
 		private static void DoInitialize(object populator, string name, int ordinal)
 		{
 			var type = populator.GetType().GetGenericArguments()[0];
-			var method = typeof(EntityPopulatorProvider).GetMethod(nameof(Initialize), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type);
+			var method = typeof(ModelPopulatorProvider).GetMethod(nameof(Initialize), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type);
 			method.Invoke(null, new object[] { populator, name, ordinal });
 		}
 		#endregion

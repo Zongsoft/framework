@@ -35,7 +35,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data.Common
 {
-	public static class EntityEmitter
+	public static class ModelMemberEmitter
 	{
 		#region 委托定义
 		public delegate void Populator(ref object target, IDataRecord record, int ordinal, TypeConverter converter);
@@ -54,7 +54,7 @@ namespace Zongsoft.Data.Common
 		{
 			var method = new DynamicMethod(field.DeclaringType.FullName + "$Set" + field.Name, null,
 				new Type[] { typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter) },
-				typeof(EntityEmitter), true);
+				typeof(ModelMemberEmitter), true);
 
 			var generator = method.GetILGenerator();
 			var fieldType = field.FieldType;
@@ -141,7 +141,7 @@ namespace Zongsoft.Data.Common
 		{
 			var method = new DynamicMethod(field.DeclaringType.FullName + "$Set" + field.Name, null,
 				new Type[] { typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter) },
-				typeof(EntityEmitter), true);
+				typeof(ModelMemberEmitter), true);
 
 			var generator = method.GetILGenerator();
 			var fieldType = field.FieldType;
@@ -160,7 +160,7 @@ namespace Zongsoft.Data.Common
 			generator.Emit(OpCodes.Callvirt, __IsDBNull__);
 			generator.Emit(OpCodes.Brtrue, ending);
 
-			//target.
+			//target.~~~
 			generator.Emit(OpCodes.Ldarg_0);
 			if(!field.DeclaringType.IsValueType)
 				generator.Emit(OpCodes.Ldind_Ref);
@@ -207,7 +207,7 @@ namespace Zongsoft.Data.Common
 		{
 			var method = new DynamicMethod(property.DeclaringType.FullName + "$Set" + property.Name, null,
 				new Type[] { typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter) },
-				typeof(EntityEmitter), true);
+				typeof(ModelMemberEmitter), true);
 
 			var generator = method.GetILGenerator();
 			var propertyType = property.PropertyType;
@@ -294,7 +294,7 @@ namespace Zongsoft.Data.Common
 		{
 			var method = new DynamicMethod(property.DeclaringType.FullName + "$Set" + property.Name, null,
 				new Type[] { typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter) },
-				typeof(EntityEmitter), true);
+				typeof(ModelMemberEmitter), true);
 
 			var generator = method.GetILGenerator();
 			var propertyType = property.PropertyType;
@@ -313,7 +313,7 @@ namespace Zongsoft.Data.Common
 			generator.Emit(OpCodes.Callvirt, __IsDBNull__);
 			generator.Emit(OpCodes.Brtrue, ending);
 
-			//target.
+			//target.~~~
 			generator.Emit(OpCodes.Ldarg_0);
 			if(!property.DeclaringType.IsValueType)
 				generator.Emit(OpCodes.Ldind_Ref);

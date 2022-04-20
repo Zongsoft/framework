@@ -35,25 +35,25 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Common
 {
-	public partial class EntityMemberProvider
+	public partial class ModelMemberTokenProvider
 	{
 		#region 单例模式
-		public static readonly EntityMemberProvider Instance = new EntityMemberProvider();
+		public static readonly ModelMemberTokenProvider Instance = new ModelMemberTokenProvider();
 		#endregion
 
 		#region 成员字段
-		private readonly ConcurrentDictionary<Type, Collections.INamedCollection<EntityMember>> _cache;
+		private readonly ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>> _cache;
 		#endregion
 
 		#region 构造函数
-		private EntityMemberProvider()
+		private ModelMemberTokenProvider()
 		{
-			_cache = new ConcurrentDictionary<Type, Collections.INamedCollection<EntityMember>>();
+			_cache = new ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>>();
 		}
 		#endregion
 
 		#region 公共方法
-		public Collections.INamedCollection<EntityMember> GetMembers(Type type)
+		public Collections.INamedCollection<ModelMemberToken> GetMembers(Type type)
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -62,12 +62,12 @@ namespace Zongsoft.Data.Common
 			if(Zongsoft.Common.TypeExtension.IsScalarType(type))
 				return null;
 
-			return _cache.GetOrAdd(type, key => CreateMembers(key));
+			return _cache.GetOrAdd(type, key => Create(key));
 		}
 		#endregion
 
 		#region 私有方法
-		private static Collections.INamedCollection<EntityMember> CreateMembers(Type type)
+		private static Collections.INamedCollection<ModelMemberToken> Create(Type type)
 		{
 			//如果是字典则返回空
 			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
@@ -77,7 +77,7 @@ namespace Zongsoft.Data.Common
 				type = Zongsoft.Common.TypeExtension.GetElementType(type);
 
 			var members = FindMembers(type);
-			var tokens = new Collections.NamedCollection<EntityMember>(item => item.Name);
+			var tokens = new Collections.NamedCollection<ModelMemberToken>(item => item.Name);
 
 			foreach(var member in members)
 			{
@@ -90,7 +90,7 @@ namespace Zongsoft.Data.Common
 			return tokens;
 		}
 
-		private static EntityMember? CreateMemberToken(MemberInfo member)
+		private static ModelMemberToken? CreateMemberToken(MemberInfo member)
 		{
 			switch(member.MemberType)
 			{
@@ -100,7 +100,7 @@ namespace Zongsoft.Data.Common
 					if(!field.IsInitOnly)
 					{
 						var converter = Utility.GetConverter(member);
-						return new EntityMember(field, converter, EntityEmitter.GenerateFieldSetter(field, converter));
+						return new ModelMemberToken(field, converter, ModelMemberEmitter.GenerateFieldSetter(field, converter));
 					}
 
 					break;
@@ -110,7 +110,7 @@ namespace Zongsoft.Data.Common
 					if(property.CanRead && property.CanWrite)
 					{
 						var converter = Utility.GetConverter(member);
-						return new EntityMember(property, converter, EntityEmitter.GeneratePropertySetter(property, converter));
+						return new ModelMemberToken(property, converter, ModelMemberEmitter.GeneratePropertySetter(property, converter));
 					}
 
 					break;
@@ -141,25 +141,25 @@ namespace Zongsoft.Data.Common
 		#endregion
 	}
 
-	public partial class EntityMemberProvider
+	public partial class ModelMemberTokenProvider
 	{
 		#region 成员字段
 		private readonly ConcurrentDictionary<Type, IEnumerable> _generics = new ConcurrentDictionary<Type, IEnumerable>();
 		#endregion
 
 		#region 公共方法
-		public Collections.INamedCollection<EntityMember<T>> GetMembers<T>()
+		public Collections.INamedCollection<ModelMemberToken<T>> GetMembers<T>()
 		{
 			//如果指定的类型是单值类型则返回空
 			if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
 				return null;
 
-			return (Collections.INamedCollection<EntityMember<T>>)_generics.GetOrAdd(typeof(T), _ => CreateMembers<T>());
+			return (Collections.INamedCollection<ModelMemberToken<T>>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
 		}
 		#endregion
 
 		#region 私有方法
-		private static ICollection<EntityMember<T>> CreateMembers<T>()
+		private static ICollection<ModelMemberToken<T>> Create<T>()
 		{
 			var type = typeof(T);
 
@@ -171,7 +171,7 @@ namespace Zongsoft.Data.Common
 				type = Zongsoft.Common.TypeExtension.GetElementType(type);
 
 			var members = FindMembers(type);
-			var tokens = new Collections.NamedCollection<EntityMember<T>>(item => item.Name);
+			var tokens = new Collections.NamedCollection<ModelMemberToken<T>>(item => item.Name);
 
 			foreach(var member in members)
 			{
@@ -184,7 +184,7 @@ namespace Zongsoft.Data.Common
 			return tokens;
 		}
 
-		private static EntityMember<T>? CreateMemberToken<T>(MemberInfo member)
+		private static ModelMemberToken<T>? CreateMemberToken<T>(MemberInfo member)
 		{
 			switch(member.MemberType)
 			{
@@ -194,7 +194,7 @@ namespace Zongsoft.Data.Common
 					if(!field.IsInitOnly)
 					{
 						var converter = Utility.GetConverter(member);
-						return new EntityMember<T>(field, converter, EntityEmitter.GenerateFieldSetter<T>(field, converter));
+						return new ModelMemberToken<T>(field, converter, ModelMemberEmitter.GenerateFieldSetter<T>(field, converter));
 					}
 
 					break;
@@ -204,7 +204,7 @@ namespace Zongsoft.Data.Common
 					if(property.CanRead && property.CanWrite)
 					{
 						var converter = Utility.GetConverter(member);
-						return new EntityMember<T>(property, converter, EntityEmitter.GeneratePropertySetter<T>(property, converter));
+						return new ModelMemberToken<T>(property, converter, ModelMemberEmitter.GeneratePropertySetter<T>(property, converter));
 					}
 
 					break;

@@ -51,7 +51,7 @@ namespace Zongsoft.Data.Common
 			{
 				DictionaryPopulatorProvider.Instance,
 				ScalarPopulatorProvider.Instance,
-				EntityPopulatorProvider.Instance,
+				ModelPopulatorProvider.Instance,
 			});
 		}
 		#endregion
