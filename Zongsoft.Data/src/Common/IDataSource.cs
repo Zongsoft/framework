@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common
 {
@@ -50,5 +51,8 @@ namespace Zongsoft.Data.Common
 
 		/// <summary>获取支持的功能特性集。</summary>
 		FeatureCollection Features { get; }
+
+		/// <summary>获取扩展属性集。</summary>
+		Collections.Parameters Properties { get; }
 	}
 }

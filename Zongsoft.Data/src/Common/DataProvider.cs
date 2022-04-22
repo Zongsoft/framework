@@ -234,38 +234,18 @@ namespace Zongsoft.Data.Common
 			#region 执行方法
 			public void Execute(IDataAccessContext context, IStatementBase statement)
 			{
-				bool continued;
-
-				switch(statement)
+				var continued = statement switch
 				{
-					case SelectStatement select:
-						continued = _select.Execute(context, select);
-						break;
-					case DeleteStatement delete:
-						continued = _delete.Execute(context, delete);
-						break;
-					case InsertStatement insert:
-						continued = _insert.Execute(context, insert);
-						break;
-					case UpdateStatement update:
-						continued = _update.Execute(context, update);
-						break;
-					case UpsertStatement upsert:
-						continued = _upsert.Execute(context, upsert);
-						break;
-					case ExistStatement exist:
-						continued = _exist.Execute(context, exist);
-						break;
-					case ExecutionStatement execution:
-						continued = _execution.Execute(context, execution);
-						break;
-					case AggregateStatement aggregate:
-						continued = _aggregate.Execute(context, aggregate);
-						break;
-					default:
-						continued = context.Session.Build(context, statement).ExecuteNonQuery() > 0;
-						break;
-				}
+					SelectStatement select => _select.Execute(context, select),
+					DeleteStatement delete => _delete.Execute(context, delete),
+					InsertStatement insert => _insert.Execute(context, insert),
+					UpdateStatement update => _update.Execute(context, update),
+					UpsertStatement upsert => _upsert.Execute(context, upsert),
+					ExistStatement exist => _exist.Execute(context, exist),
+					AggregateStatement aggregate => _aggregate.Execute(context, aggregate),
+					ExecutionStatement execution => _execution.Execute(context, execution),
+					_ => context.Session.Build(context, statement).ExecuteNonQuery() > 0,
+				};
 
 				if(continued && statement.HasSlaves)
 				{
@@ -279,60 +259,33 @@ namespace Zongsoft.Data.Common
 		private class DataMultiplexer : IDataMultiplexer
 		{
 			#region 成员字段
-			private string _name;
-			private List<IDataSource> _sources;
+			private readonly string _name;
+			private IDataSourceSelector _selector;
 			#endregion
 
 			#region 构造函数
-			public DataMultiplexer(string name)
-			{
-				_name = name;
-			}
+			public DataMultiplexer(string name) => _name = name;
 			#endregion
 
 			#region 公共属性
 			public IDataSourceProvider Provider => DataSourceProvider.Default;
-			public IDataSourceSelector Selector => DataSourceSelector.Default;
+			public IDataSourceSelector Selector { get; }
 			#endregion
 
-			#region 重写方法
+			#region 公共方法
 			public IDataSource GetSource(IDataAccessContextBase context)
 			{
-				if(this.EnsureSources())
-					return this.Selector.GetSource(context, _sources) ?? throw new DataException("No matched data source for this data operation.");
+				if(_selector == null)
+				{
+					var sources = this.Provider.GetSources(_name);
 
-				throw new DataException($"No data sources for the '{_name}' data provider was found.");
-			}
-			#endregion
+					if(sources == null || !sources.Any())
+						throw new DataException($"No data sources for the '{_name}' data provider was found.");
 
-			#region 枚举遍历
-			public IEnumerator<IDataSource> GetEnumerator()
-			{
-				if(this.EnsureSources())
-					return _sources.GetEnumerator();
-				else
-					return Enumerable.Empty<IDataSource>().GetEnumerator();
-			}
+					_selector = new DataSourceSelector(sources);
+				}
 
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				if(this.EnsureSources())
-					return _sources.GetEnumerator();
-				else
-					return Enumerable.Empty<IDataSource>().GetEnumerator();
-			}
-			#endregion
-
-			#region 私有方法
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private bool EnsureSources()
-			{
-				if(_sources == null)
-					_sources = new List<IDataSource>(this.Provider.GetSources(_name));
-				else if(_sources.Count == 0)
-					_sources.AddRange(this.Provider.GetSources(_name));
-
-				return _sources.Count > 0;
+				return _selector.GetSource(context) ?? throw new DataException("No matched data source for this data operation.");
 			}
 			#endregion
 		}

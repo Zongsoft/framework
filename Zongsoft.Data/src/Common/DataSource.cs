@@ -59,6 +59,7 @@ namespace Zongsoft.Data.Common
 			_connectionString = connectionSetting.Value;
 			_driverName = connectionSetting.Driver;
 			this.Mode = DataAccessMode.All;
+			this.Properties = new Collections.Parameters(this);
 
 			if(connectionSetting.HasProperties)
 			{
@@ -71,6 +72,12 @@ namespace Zongsoft.Data.Common
 						"*" or "all" or "none" or "both" or "read+write" or "write+read" => DataAccessMode.All,
 						_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
 					};
+				}
+
+				foreach(var property in connectionSetting.Properties)
+				{
+					if(!string.Equals(property.Key, nameof(Mode), StringComparison.OrdinalIgnoreCase))
+						this.Properties.SetValue(property.Key, property.Value);
 				}
 			}
 		}
@@ -86,55 +93,25 @@ namespace Zongsoft.Data.Common
 			_connectionString = connectionString;
 			_driverName = driverName;
 			this.Mode = DataAccessMode.All;
+			this.Properties = new Collections.Parameters(this);
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get => _name;
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value;
-			}
-		}
-
-		public string ConnectionString
-		{
-			get => _connectionString;
-			set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				//如果连接字符串没有发生改变则返回
-				if(string.Equals(_connectionString, value, StringComparison.OrdinalIgnoreCase))
-					return;
-
-				//更新连接字符串成员字段
-				_connectionString = value;
-
-				//重新设置多活动结果集特性
-				if(_features != null && MARS_FEATURE.IsMatch(_connectionString))
-					_features.Add(Feature.MultipleActiveResultSets);
-			}
-		}
-
-		public DataAccessMode Mode
-		{
-			get; set;
-		}
+		public string Name => _name;
+		public string ConnectionString => _connectionString;
+		public DataAccessMode Mode { get; set; }
+		public Collections.Parameters Properties { get; }
 
 		public IDataDriver Driver
 		{
 			get
 			{
-				if(_driver == null && _driverName != null && _driverName.Length > 0)
+				if(_driver == null && !string.IsNullOrEmpty(_driverName))
 				{
-					if(!DataEnvironment.Drivers.TryGet(_driverName, out _driver))
+					if(DataEnvironment.Drivers.TryGet(_driverName, out var driver))
+						_driver = driver;
+					else
 						throw new DataException($"The '{_driverName}' data driver does not exist.");
 				}
 
@@ -160,12 +137,9 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return string.IsNullOrEmpty(_driverName) ?
-				$"{_name} <{_connectionString}>" :
-				$"[{_driverName}]{_name} <{_connectionString}>";
-		}
+		public override string ToString() => string.IsNullOrEmpty(_driverName) ?
+			$"{_name} <{_connectionString}>" :
+			$"[{_driverName}]{_name} <{_connectionString}>";
 		#endregion
 	}
 }

@@ -35,47 +35,112 @@ namespace Zongsoft.Data.Common
 {
 	public class DataSourceSelector : IDataSourceSelector
 	{
-		#region 单例字段
-		public static readonly DataSourceSelector Default = new DataSourceSelector();
+		#region 成员字段
+		private readonly int _readerTotal;
+		private readonly int _writerTotal;
+		private readonly SourceToken[] _readers;
+		private readonly SourceToken[] _writers;
 		#endregion
 
 		#region 私有构造
-		private DataSourceSelector()
+		public DataSourceSelector(IEnumerable<IDataSource> sources)
 		{
+			if(sources == null)
+				throw new ArgumentNullException(nameof(sources));
+
+			var readers = new List<SourceToken>();
+			var writers = new List<SourceToken>();
+
+			foreach(var source in sources)
+			{
+				var weight = GetWeight(source);
+
+				if((source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly)
+				{
+					_readerTotal += weight;
+					readers.Add(new SourceToken(source, weight, _readerTotal));
+				}
+
+				if((source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly)
+				{
+					_writerTotal += weight;
+					writers.Add(new SourceToken(source, weight, _writerTotal));
+				}
+			}
+
+			_readers = readers.ToArray();
+			_writers = writers.ToArray();
 		}
 		#endregion
 
 		#region 公共方法
-		public IDataSource GetSource(IDataAccessContextBase context, IReadOnlyList<IDataSource> sources)
+		public IDataSource GetSource(IDataAccessContextBase context)
 		{
-			if(sources == null || sources.Count == 0)
+			var sources = this.GetSources(context, out var total);
+
+			if(sources.Length == 0)
 				return null;
+			if(sources.Length == 1)
+				return sources[0].Source;
 
-			var mode = this.GetAccessMode(context);
-			var matches = sources.Where(p => (p.Mode & mode) == mode).ToArray();
+			var weight = Math.Abs(Zongsoft.Common.Randomizer.GenerateInt32()) % total;
+			var position = Array.BinarySearch(sources, weight);
 
-			if(matches.Length == 1)
-				return matches[0];
-
-			//获取一个随机的下标
-			var index = Zongsoft.Common.Randomizer.GenerateInt32() % matches.Length;
-
-			return matches[index];
+			return position >= 0 ?
+				sources[position].Source :
+				sources[(-position) - 1].Source;
 		}
 		#endregion
 
 		#region 私有方法
-		private DataAccessMode GetAccessMode(IDataAccessContextBase context)
+		private SourceToken[] GetSources(IDataAccessContextBase context, out int total)
 		{
 			switch(context.Method)
 			{
-				case DataAccessMethod.Exists:
 				case DataAccessMethod.Select:
+				case DataAccessMethod.Exists:
 				case DataAccessMethod.Aggregate:
-					return DataAccessMode.ReadOnly;
+					total = _readerTotal;
+					return _readers;
+				case DataAccessMethod.Execute:
+					if(((DataExecuteContextBase)context).Command.Mutability == Metadata.CommandMutability.None)
+					{
+						total = _readerTotal;
+						return _readers;
+					}
+					else
+					{
+						total = _writerTotal;
+						return _writers;
+					}
 				default:
-					return DataAccessMode.WriteOnly;
+					total = _writerTotal;
+					return _writers;
 			}
+		}
+
+		private static int GetWeight(IDataSource source, int defaultValue = 100)
+		{
+			return source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
+		}
+		#endregion
+
+		#region 嵌套结构
+		private readonly struct SourceToken : IComparable<SourceToken>, IComparable<int>
+		{
+			public SourceToken(IDataSource source, int weight, int boundary)
+			{
+				this.Source = source;
+				this.Weight = weight;
+				this.Boundary = boundary;
+			}
+
+			public readonly IDataSource Source;
+			public readonly int Weight;
+			public readonly int Boundary;
+
+			public int CompareTo(int other) => this.Boundary.CompareTo(other);
+			public int CompareTo(SourceToken other) => this.Boundary.CompareTo(other.Boundary);
 		}
 		#endregion
 	}

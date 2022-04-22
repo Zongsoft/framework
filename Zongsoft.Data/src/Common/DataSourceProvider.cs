@@ -42,9 +42,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有构造
-		private DataSourceProvider()
-		{
-		}
+		private DataSourceProvider() { }
 		#endregion
 
 		#region 公共方法
@@ -52,26 +50,22 @@ namespace Zongsoft.Data.Common
 		{
 			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
 
-			if(connectionSettings != null)
-			{
-				if(string.IsNullOrEmpty(name))
-				{
-					var defaultSetting = connectionSettings.GetDefault();
+			if(connectionSettings == null || connectionSettings.Count == 0)
+				yield break;
 
-					if(defaultSetting == null)
-						yield break;
-					else
-						yield return new DataSource(defaultSetting);
-				}
-				else
-				{
-					foreach(var connectionSetting in connectionSettings)
-					{
-						if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-						   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
-							yield return new DataSource(connectionSetting);
-					}
-				}
+			if(string.IsNullOrEmpty(name))
+			{
+				name = connectionSettings.Default;
+
+				if(string.IsNullOrEmpty(name))
+					yield break;
+			}
+
+			foreach(var connectionSetting in connectionSettings)
+			{
+				if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+				   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
+					yield return new DataSource(connectionSetting);
 			}
 		}
 		#endregion
