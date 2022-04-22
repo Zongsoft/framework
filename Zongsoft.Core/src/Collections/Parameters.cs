@@ -31,62 +31,68 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Collections
 {
-	public class Parameters : IEnumerable<KeyValuePair<string, object>>
+	public struct Parameters : IEnumerable<KeyValuePair<string, object>>
 	{
+		#region 常量字段
+		private const int SHRINK_COUNT = 1000; //收缩的数量底线
+		private const int SHRINK_SINCE = 30;   //收缩的时长间隔（单位：秒）
+		#endregion
+
+		#region 静态字段
+		private static readonly ConcurrentDictionary<WeakReference, Dictionary<string, object>> _cache = new();
+		#endregion
+
 		#region 成员字段
-		private Dictionary<string, object> _dictionary;
+		private readonly WeakReference _owner;
 		#endregion
 
 		#region 构造函数
-		public Parameters() { }
-
-		public Parameters(Parameters parameters)
+		public Parameters(object owner, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			var dictionary = parameters._dictionary;
+			if(owner == null)
+				throw new ArgumentNullException(nameof(owner));
 
-			if(dictionary != null && dictionary.Count > 0)
-				_dictionary = new Dictionary<string, object>(dictionary, StringComparer.OrdinalIgnoreCase);
-			else
-				_dictionary = null;
-		}
+			_owner = new WeakReference(owner);
 
-		public Parameters(IEnumerable<KeyValuePair<string, object>> parameters)
-		{
 			if(parameters != null && parameters.Any())
-				_dictionary = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
-			else
-				_dictionary = null;
+				_cache.TryAdd(_owner, new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase));
 		}
 		#endregion
 
 		#region 公共属性
-		public int Count { get => _dictionary == null ? 0 : _dictionary.Count; }
-		public bool IsEmpty { get => _dictionary == null || _dictionary.Count == 0; }
+		public int Count { get => _owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary) ? dictionary.Count : 0; }
+		public bool IsEmpty { get => !_owner.IsAlive || !_cache.TryGetValue(_owner, out var dictionary) || dictionary.Count == 0; }
 		public object this[string name]
 		{
-			get => _dictionary?[name];
+			get => _owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary) ? dictionary[name] : null;
 			set => this.SetValue(name, value);
 		}
 		#endregion
 
 		#region 公共方法
-		public void Clear() => _dictionary?.Clear();
-		public bool Contains(string name) => name != null && _dictionary != null && _dictionary.ContainsKey(name);
+		public void Clear()
+		{
+			if(_owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary))
+				dictionary.Clear();
+		}
+
+		public bool Contains(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
 
 		public bool TryGetValue(string name, out object value)
 		{
 			value = null;
-			return name != null && _dictionary != null && _dictionary.TryGetValue(name, out value);
+			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out value);
 		}
 
-		public bool HasValue(string name) => name != null && _dictionary != null && _dictionary.ContainsKey(name);
+		public bool HasValue(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
 		public bool HasValue(string name, out object value)
 		{
 			value = null;
-			return name != null && _dictionary != null && _dictionary.TryGetValue(name, out value);
+			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out value);
 		}
 
 		public void SetValue(string name, object value)
@@ -94,10 +100,14 @@ namespace Zongsoft.Collections
 			if(name == null)
 				throw new ArgumentNullException(nameof(name));
 
-			if(_dictionary == null)
-				System.Threading.Interlocked.CompareExchange(ref _dictionary, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+			if(!_owner.IsAlive)
+				return;
 
-			_dictionary[name] = value;
+			if(_cache.Count > SHRINK_COUNT)
+				Shrink();
+
+			var dictionary = _cache.GetOrAdd(_owner, _ => new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase));
+			dictionary[name] = value;
 		}
 
 		public void SetValue(IEnumerable<KeyValuePair<string, object>> parameters)
@@ -105,18 +115,40 @@ namespace Zongsoft.Collections
 			if(parameters == null || !parameters.Any())
 				return;
 
-			if(_dictionary == null)
-				System.Threading.Interlocked.CompareExchange(ref _dictionary, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+			if(!_owner.IsAlive)
+				return;
 
+			if(_cache.Count > SHRINK_COUNT)
+				Shrink();
+
+			var dictionary = _cache.GetOrAdd(_owner, _ => new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase));
 			foreach(var parameter in parameters)
-				_dictionary[parameter.Key] = parameter.Value;
+				dictionary[parameter.Key] = parameter.Value;
 		}
 
-		public bool Remove(string name) => name != null && _dictionary != null && _dictionary.Remove(name);
+		public bool Remove(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.Remove(name);
 		public bool Remove(string name, out object value)
 		{
 			value = null;
-			return name != null && _dictionary != null && _dictionary.Remove(name, out value);
+			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.Remove(name, out value);
+		}
+		#endregion
+
+		#region 收缩方法
+		private static long _timestamp;
+		private static void Shrink()
+		{
+			//如果距离上次收缩的时间低于指定秒数，则忽略本次收缩请求
+			if(_timestamp > 0 && Environment.TickCount64 - _timestamp < SHRINK_SINCE * 1000)
+				return;
+
+			foreach(var key in _cache.Keys)
+			{
+				if(!key.IsAlive)
+					_cache.TryRemove(key, out _);
+			}
+
+			_timestamp = Environment.TickCount64;
 		}
 		#endregion
 
@@ -124,13 +156,11 @@ namespace Zongsoft.Collections
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			var dictionary = _dictionary;
-
-			if(dictionary == null)
-				yield break;
-
-			foreach(var entry in dictionary)
-				yield return entry;
+			if(_owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary))
+			{
+				foreach(var entry in dictionary)
+					yield return entry;
+			}
 		}
 		#endregion
 	}
