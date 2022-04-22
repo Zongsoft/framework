@@ -52,9 +52,7 @@ namespace Zongsoft.Data
 	public class DataExistsOptions : DataOptionsBase, IDataExistsOptions
 	{
 		#region 构造函数
-		public DataExistsOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataExistsOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataExistsOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataExistsOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 

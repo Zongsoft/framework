@@ -47,9 +47,7 @@ namespace Zongsoft.Data
 	public class DataIncrementOptions : DataMutateOptions, IDataIncrementOptions
 	{
 		#region 构造函数
-		public DataIncrementOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataIncrementOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataIncrementOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 

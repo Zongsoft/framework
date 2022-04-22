@@ -47,9 +47,7 @@ namespace Zongsoft.Data
 	public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 	{
 		#region 构造函数
-		public DataDeleteOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataDeleteOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataDeleteOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataDeleteOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 

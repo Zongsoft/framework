@@ -58,9 +58,7 @@ namespace Zongsoft.Data
 	public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 	{
 		#region 构造函数
-		public DataSelectOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataSelectOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataSelectOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataSelectOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 

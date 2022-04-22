@@ -63,20 +63,9 @@ namespace Zongsoft.Data
 	public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	{
 		#region 构造函数
-		public DataUpdateOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataUpdateOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataUpdateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
-
-		public DataUpdateOptions(UpdateBehaviors behaviors, in Collections.Parameters parameters) : base(parameters) => this.Behaviors = behaviors;
 		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Behaviors = behaviors;
-
-		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, in Collections.Parameters parameters) : base(parameters)
-		{
-			this.Filter = filter;
-			this.Behaviors = behaviors;
-		}
-
 		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters)
 		{
 			this.Filter = filter;

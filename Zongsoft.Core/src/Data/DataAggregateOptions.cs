@@ -52,9 +52,7 @@ namespace Zongsoft.Data
 	public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions
 	{
 		#region 构造函数
-		public DataAggregateOptions(in Collections.Parameters parameters) : base(parameters) { }
 		public DataAggregateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataAggregateOptions(string filter, in Collections.Parameters parameters) : base(parameters) => this.Filter = filter;
 		public DataAggregateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
