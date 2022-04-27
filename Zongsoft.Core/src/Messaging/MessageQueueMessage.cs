@@ -113,9 +113,9 @@ namespace Zongsoft.Messaging
 			else
 			{
 				if(acknowledger.Method.GetParameters().Length == 1)
-					((Task)acknowledger.DynamicInvoke(CancellationToken.None)).GetAwaiter().GetResult();
+					((ValueTask)acknowledger.DynamicInvoke(CancellationToken.None)).GetAwaiter().GetResult();
 				else
-					((Task)acknowledger.DynamicInvoke(delay, CancellationToken.None)).GetAwaiter().GetResult();
+					((ValueTask)acknowledger.DynamicInvoke(delay, CancellationToken.None)).GetAwaiter().GetResult();
 			}
 		}
 
@@ -137,7 +137,9 @@ namespace Zongsoft.Messaging
 				return ValueTask.CompletedTask;
 			}
 
-			return acknowledger.Method.GetParameters().Length == 1 ? (ValueTask)_acknowledger.DynamicInvoke(cancellation) : (ValueTask)_acknowledger.DynamicInvoke(delay, cancellation);
+			return acknowledger.Method.GetParameters().Length == 1 ?
+				(ValueTask)_acknowledger.DynamicInvoke(cancellation) :
+				(ValueTask)_acknowledger.DynamicInvoke(delay, cancellation);
 		}
 		#endregion
 	}
