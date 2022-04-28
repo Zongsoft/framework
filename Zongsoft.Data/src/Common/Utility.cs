@@ -100,82 +100,6 @@ namespace Zongsoft.Data.Common
 			return DbType.Object;
 		}
 
-		public static Type FromDbType(DbType dbType)
-		{
-			switch(dbType)
-			{
-				case DbType.String:
-				case DbType.StringFixedLength:
-				case DbType.AnsiString:
-				case DbType.AnsiStringFixedLength:
-				case DbType.Xml:
-					return typeof(string);
-				case DbType.Int16:
-					return typeof(short);
-				case DbType.Int32:
-					return typeof(int);
-				case DbType.Int64:
-					return typeof(long);
-				case DbType.UInt16:
-					return typeof(ushort);
-				case DbType.UInt32:
-					return typeof(uint);
-				case DbType.UInt64:
-					return typeof(ulong);
-				case DbType.Byte:
-					return typeof(byte);
-				case DbType.SByte:
-					return typeof(sbyte);
-				case DbType.Binary:
-					return typeof(byte[]);
-				case DbType.Boolean:
-					return typeof(bool);
-				case DbType.Currency:
-				case DbType.Decimal:
-					return typeof(decimal);
-				case DbType.Double:
-				case DbType.VarNumeric:
-					return typeof(double);
-				case DbType.Single:
-					return typeof(float);
-				case DbType.Date:
-				case DbType.Time:
-				case DbType.DateTime:
-				case DbType.DateTime2:
-					return typeof(DateTime);
-				case DbType.DateTimeOffset:
-					return typeof(DateTimeOffset);
-				case DbType.Guid:
-					return typeof(Guid);
-				case DbType.Object:
-					return typeof(object);
-			}
-
-			throw new NotSupportedException("Invalid DbType.");
-		}
-
-		public static bool IsDecimal(this DbType dbType) => dbType switch
-		{
-			DbType.Single => true,
-			DbType.Double => true,
-			DbType.Decimal => true,
-			DbType.Currency => true,
-			_ => false,
-		};
-
-		public static bool IsInteger(this DbType dbType) => dbType switch
-		{
-			DbType.Byte => true,
-			DbType.SByte => true,
-			DbType.Int16 => true,
-			DbType.Int32 => true,
-			DbType.Int64 => true,
-			DbType.UInt16 => true,
-			DbType.UInt32 => true,
-			DbType.UInt64 => true,
-			_ => false,
-		};
-
 		public static TypeConverter GetConverter(this MemberInfo member)
 		{
 			if(member == null)
@@ -212,7 +136,7 @@ namespace Zongsoft.Data.Common
 			return _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
 		}
 
-		public static object GetMemberValue(ref object target, string name)
+		internal static object GetMemberValue(ref object target, string name)
 		{
 			if(target is IModel model)
 				return model.TryGetValue(name, out var value) ? value : null;
@@ -226,7 +150,7 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.GetValue(ref target, name);
 		}
 
-		public static object GetDefaultValue(DbType dbType, bool nullable = false)
+		internal static object GetDefaultValue(DbType dbType, bool nullable = false)
 		{
 			if(nullable)
 				return null;
@@ -256,7 +180,7 @@ namespace Zongsoft.Data.Common
 			};
 		}
 
-		public static bool TryGetMemberValue(ref object target, string name, out object value)
+		internal static bool TryGetMemberValue(ref object target, string name, out object value)
 		{
 			if(target is IModel model)
 				return model.TryGetValue(name, out value);
@@ -279,7 +203,7 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.TryGetValue(ref target, name, out value);
 		}
 
-		public static bool TrySetMemberValue(ref object target, string name, object value)
+		internal static bool TrySetMemberValue(ref object target, string name, object value)
 		{
 			if(target == null)
 				return false;
@@ -302,7 +226,7 @@ namespace Zongsoft.Data.Common
 			return Reflection.Reflector.TrySetValue(ref target, name, value);
 		}
 
-		public static bool IsGenerateRequired(ref object data, string name)
+		internal static bool IsGenerateRequired(ref object data, string name)
 		{
 			//注意：数据为空必须返回真
 			if(data == null)
@@ -318,7 +242,7 @@ namespace Zongsoft.Data.Common
 			};
 		}
 
-		public static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
+		internal static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
 		{
 			if(owner == null || owner.Token.Property.IsSimplex)
 				return false;

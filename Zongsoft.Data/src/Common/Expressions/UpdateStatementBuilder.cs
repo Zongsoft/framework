@@ -304,7 +304,7 @@ namespace Zongsoft.Data.Common.Expressions
 				var property = context.Entity.Find(name);
 
 				if(property.IsSimplex)
-					return Utility.FromDbType(((IDataEntitySimplexProperty)property).Type);
+					return ((IDataEntitySimplexProperty)property).Type.AsType();
 
 				throw new DataException($"The specified '{name}' property is not a simplex property, so its data type cannot be confirmed.");
 			}

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
@@ -151,6 +152,23 @@ namespace Zongsoft.Data
 
 		public IDataProvider Provider { get; }
 
+		public DataSession Session { get; }
+		#endregion
+	}
+
+	public class DataImportContext : DataImportContextBase
+	{
+		#region 构造函数
+		public DataImportContext(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
+		{
+			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+		}
+		#endregion
+
+		#region 公共属性
+		public IDataSource Source => this.Session.Source;
+		public IDataProvider Provider { get; }
 		public DataSession Session { get; }
 		#endregion
 	}

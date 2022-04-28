@@ -88,7 +88,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 内部方法
-		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(Utility.FromDbType(dbType));
+		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
 		internal void EnsureConvertFrom(Type type)
 		{
 			var converter = this.Converter;
@@ -162,7 +162,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 内部方法
-		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(Utility.FromDbType(dbType));
+		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
 		internal void EnsureConvertFrom(Type type)
 		{
 			var converter = this.Converter;

@@ -28,42 +28,17 @@
  */
 
 using System;
+using System.Collections;
 
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 表示数据访问的方法名的枚举。
+	/// 为数据访问的导入事件提供数据。
 	/// </summary>
-	public enum DataAccessMethod
+	public class DataImportedEventArgs : DataAccessEventArgs<DataImportContextBase>
 	{
-		/// <summary>执行方法</summary>
-		Execute,
-
-		/// <summary>是否存在</summary>
-		Exists,
-
-		/// <summary>聚合方法</summary>
-		Aggregate,
-
-		/// <summary>递增递减</summary>
-		Increment,
-
-		/// <summary>导入方法</summary>
-		Import,
-
-		/// <summary>查询方法</summary>
-		Select,
-
-		/// <summary>删除方法</summary>
-		Delete,
-
-		/// <summary>新增方法</summary>
-		Insert,
-
-		/// <summary>更新方法</summary>
-		Update,
-
-		/// <summary>增改方法</summary>
-		Upsert,
+		#region 构造函数
+		public DataImportedEventArgs(DataImportContextBase context) : base(context) { }
+		#endregion
 	}
 }

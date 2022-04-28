@@ -79,6 +79,11 @@ namespace Zongsoft.Data.Common
 		/// <param name="connectionString">指定的连接字符串。</param>
 		/// <returns>返回创建的数据连接对象，该连接对象的连接字符串为<paramref name="connectionString"/>参数值。</returns>
 		DbConnection CreateConnection(string connectionString);
+
+		/// <summary>创建一个数据导入器对象。</summary>
+		/// <param name="context">指定的数据导入上下文。</param>
+		/// <returns>返回创建的数据导入器对象。</returns>
+		IDataImporter CreateImporter(DataImportContextBase context);
 		#endregion
 	}
 }

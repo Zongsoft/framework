@@ -28,7 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common
 {
@@ -66,6 +67,16 @@ namespace Zongsoft.Data.Common
 		/// <summary>执行数据操作。</summary>
 		/// <param name="context">数据操作的上下文。</param>
 		void Execute(IDataAccessContext context);
+
+		/// <summary>导入数据操作。</summary>
+		/// <param name="context">数据导入的上下文。</param>
+		void Import(DataImportContext context);
+
+		/// <summary>异步导入数据操作。</summary>
+		/// <param name="context">数据导入的上下文。</param>
+		/// <param name="cancellation">指定的异步取消标记。</param>
+		/// <returns>返回的异步操作任务。</returns>
+		ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
 		#endregion
 	}
 }

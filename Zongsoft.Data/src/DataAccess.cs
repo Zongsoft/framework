@@ -42,11 +42,11 @@ namespace Zongsoft.Data
 	public class DataAccess : DataAccessBase
 	{
 		#region 成员字段
-		private IDataProvider _provider;
+		private readonly IDataProvider _provider;
 		#endregion
 
 		#region 构造函数
-		public DataAccess(string name) : base(name) { }
+		public DataAccess(string name) : this(name, null) { }
 		public DataAccess(string name, IEnumerable<object> filters) : base(name)
 		{
 			if(filters != null)
@@ -57,41 +57,34 @@ namespace Zongsoft.Data
 						this.Filters.Add(filter);
 				}
 			}
+
+			_provider = DataEnvironment.Providers.GetProvider(this.Name);
+			if(_provider != null)
+				_provider.Error += this.Provider_Error;
 		}
 		#endregion
 
 		#region 公共属性
-		public override IDataMetadataContainer Metadata
-		{
-			get => this.Provider.Metadata;
-		}
-
-		public IDataProvider Provider
-		{
-			get
-			{
-				if(_provider == null)
-				{
-					_provider = DataEnvironment.Providers.GetProvider(this.Name);
-
-					if(_provider != null)
-						_provider.Error += this.Provider_Error;
-				}
-
-				return _provider;
-			}
-		}
-
-		private void Provider_Error(object sender, DataAccessErrorEventArgs args)
-		{
-			this.OnError(args);
-		}
+		public IDataProvider Provider => _provider;
+		public override IDataMetadataContainer Metadata => this.Provider.Metadata;
 		#endregion
 
 		#region 执行方法
 		protected override void OnExecute(DataExecuteContextBase context)
 		{
 			this.Provider.Execute((IDataAccessContext)context);
+		}
+		#endregion
+
+		#region 导入方法
+		protected override void OnImport(DataImportContextBase context)
+		{
+			this.Provider.Import((DataImportContext)context);
+		}
+
+		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default)
+		{
+			return this.Provider.ImportAsync((DataImportContext)context, cancellation);
 		}
 		#endregion
 
@@ -211,6 +204,11 @@ namespace Zongsoft.Data
 			return new DataIncrementContext(this, name, member, criteria.Flatten(), interval, options);
 		}
 
+		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options)
+		{
+			return new DataImportContext(this, name, data, members, options);
+		}
+
 		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options)
 		{
 			return new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
@@ -245,6 +243,10 @@ namespace Zongsoft.Data
 
 			return ((DataSequenceProvider)this.Sequence).Increase(context, sequence, data);
 		}
+		#endregion
+
+		#region 异常事件
+		private void Provider_Error(object sender, DataAccessErrorEventArgs args) => this.OnError(args);
 		#endregion
 
 		#region 嵌套子类

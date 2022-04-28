@@ -30,6 +30,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data
 {
@@ -49,6 +51,8 @@ namespace Zongsoft.Data
 		public event EventHandler<DataAggregatingEventArgs> Aggregating;
 		public event EventHandler<DataIncrementedEventArgs> Incremented;
 		public event EventHandler<DataIncrementingEventArgs> Incrementing;
+		public event EventHandler<DataImportedEventArgs> Imported;
+		public event EventHandler<DataImportingEventArgs> Importing;
 		public event EventHandler<DataDeletedEventArgs> Deleted;
 		public event EventHandler<DataDeletingEventArgs> Deleting;
 		public event EventHandler<DataInsertedEventArgs> Inserted;
@@ -118,6 +122,105 @@ namespace Zongsoft.Data
 
 		/// <summary>获取数据访问过滤器集合。</summary>
 		public ICollection<object> Filters { get => _filters; }
+		#endregion
+
+		#region 导入方法
+		public int Import<T>(IEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null) =>
+			data == null ? 0 : this.Import(this.GetName<T>(), data, members, options);
+		int IDataAccess.Import(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options) =>
+			data == null ? 0 : this.Import(name, data, members, options);
+		public int Import(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, bool> importing = null, Action<DataImportContextBase> imported = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(data == null)
+				return 0;
+
+			//创建数据访问上下文对象
+			var context = this.CreateImportContext(name, data, members, options);
+
+			//处理数据访问操作前的回调
+			if(importing != null && importing(context))
+				return context.Count;
+
+			//激发“Importing”事件，如果被中断则返回
+			if(this.OnImporting(context))
+				return context.Count;
+
+			//调用数据访问过滤器前事件
+			this.OnFiltering(context);
+
+			//执行数据导入操作
+			this.OnImport(context);
+
+			//调用数据访问过滤器后事件
+			this.OnFiltered(context);
+
+			//激发“Imported”事件
+			this.OnImported(context);
+
+			//处理数据访问操作后的回调
+			imported?.Invoke(context);
+
+			var result = context.Count;
+
+			//处置上下文资源
+			context.Dispose();
+
+			//返回最终的结果
+			return result;
+		}
+
+		public ValueTask<int> ImportAsync<T>(IEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation = default) =>
+			data == null ? ValueTask.FromResult(0) : this.ImportAsync(this.GetName<T>(), data, members, options, cancellation);
+		ValueTask<int> IDataAccess.ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation) =>
+			data == null ? ValueTask.FromResult(0) : this.ImportAsync(name, data, members, options, cancellation, null, null);
+		public async ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation, Func<DataImportContextBase, bool> importing = null, Action<DataImportContextBase> imported = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(data == null)
+				return 0;
+
+			//创建数据访问上下文对象
+			var context = this.CreateImportContext(name, data, members, options);
+
+			//处理数据访问操作前的回调
+			if(importing != null && importing(context))
+				return context.Count;
+
+			//激发“Importing”事件，如果被中断则返回
+			if(this.OnImporting(context))
+				return context.Count;
+
+			//调用数据访问过滤器前事件
+			this.OnFiltering(context);
+
+			//执行数据导入操作
+			await this.OnImportAsync(context, cancellation);
+
+			//调用数据访问过滤器后事件
+			this.OnFiltered(context);
+
+			//激发“Imported”事件
+			this.OnImported(context);
+
+			//处理数据访问操作后的回调
+			imported?.Invoke(context);
+
+			var result = context.Count;
+
+			//处置上下文资源
+			context.Dispose();
+
+			//返回最终的结果
+			return result;
+		}
+
+		protected abstract void OnImport(DataImportContextBase context);
+		protected abstract ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default);
 		#endregion
 
 		#region 执行方法
@@ -1662,6 +1765,7 @@ namespace Zongsoft.Data
 		protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options);
 		protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options);
 		protected abstract DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options);
+		protected abstract DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options);
 		protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options);
 		protected abstract DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options);
 		protected abstract DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options);
@@ -1739,6 +1843,23 @@ namespace Zongsoft.Data
 				return false;
 
 			var args = new DataIncrementingEventArgs(context);
+			e(this, args);
+			return args.Cancel;
+		}
+
+		protected virtual void OnImported(DataImportContextBase context)
+		{
+			this.Imported?.Invoke(this, new DataImportedEventArgs(context));
+		}
+
+		protected virtual bool OnImporting(DataImportContextBase context)
+		{
+			var e = this.Importing;
+
+			if(e == null)
+				return false;
+
+			var args = new DataImportingEventArgs(context);
 			e(this, args);
 			return args.Cancel;
 		}

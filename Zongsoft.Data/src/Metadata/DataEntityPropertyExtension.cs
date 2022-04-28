@@ -99,7 +99,7 @@ namespace Zongsoft.Data.Metadata
 				throw new DataException($"The specified '{constraint.Name}' constraint association property is not a simplex property.");
 
 			//返回约束项值转换成关联属性数据类型的常量表达式
-			return Expression.Constant(Zongsoft.Common.Convert.ConvertValue(constraint.Value, Utility.FromDbType(((IDataEntitySimplexProperty)constraintProperty).Type)));
+			return Expression.Constant(Zongsoft.Common.Convert.ConvertValue(constraint.Value, ((IDataEntitySimplexProperty)constraintProperty).Type.AsType()));
 		}
 	}
 }

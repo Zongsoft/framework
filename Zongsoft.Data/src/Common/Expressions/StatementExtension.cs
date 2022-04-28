@@ -87,7 +87,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				if(model.HasChanges(member.Name))
 				{
-					value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+					value = member.Token.GetValue(data, dbType.HasValue ? dbType.Value.AsType() : null);
 					return true;
 				}
 
@@ -98,14 +98,14 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				if(dictionary.HasChanges(member.Name))
 				{
-					value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+					value = member.Token.GetValue(data, dbType.HasValue ? dbType.Value.AsType() : null);
 					return true;
 				}
 
 				return false;
 			}
 
-			value = member.Token.GetValue(data, dbType.HasValue ? Utility.FromDbType(dbType.Value) : null);
+			value = member.Token.GetValue(data, dbType.HasValue ? dbType.Value.AsType() : null);
 			return true;
 
 			static object Recursive(object data, SchemaMember member)

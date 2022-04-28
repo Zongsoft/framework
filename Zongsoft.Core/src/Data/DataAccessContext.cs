@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -276,6 +277,46 @@ namespace Zongsoft.Data
 		bool IDataMutateContextBase.IsMultiple
 		{
 			get => false;
+		}
+		#endregion
+	}
+
+	public class DataImportContextBase : DataAccessContextBase<IDataImportOptions>
+	{
+		#region 构造函数
+		protected DataImportContextBase(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? (IDataImportOptions)DataImportOptions.IgnoreConstraint())
+		{
+			this.Data = data ?? throw new ArgumentNullException(nameof(data));
+			this.Members = members == null ? Array.Empty<string>() : members.ToArray();
+			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取数据访问对应的实体元数据。</summary>
+		public Metadata.IDataEntity Entity { get; }
+
+		/// <summary>获取或设置导入的记录数。</summary>
+		public int Count { get; set; }
+
+		/// <summary>获取或设置导入操作的数据。</summary>
+		public IEnumerable Data { get; set; }
+
+		/// <summary>获取或设置导入操作的数据成员(字段)名数组。</summary>
+		public string[] Members { get; set; }
+
+		/// <summary>获取插入数据的元素类型。</summary>
+		public virtual Type ModelType
+		{
+			get
+			{
+				var data = this.Data;
+
+				if(data == null)
+					return null;
+
+				return Common.TypeExtension.GetElementType(data.GetType());
+			}
 		}
 		#endregion
 	}

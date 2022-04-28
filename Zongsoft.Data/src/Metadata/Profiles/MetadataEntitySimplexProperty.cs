@@ -139,7 +139,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 				if(_defaultThunk != null)
 					return _defaultThunk();
 
-				var type = Common.Utility.FromDbType(this.Type);
+				var type = Common.DbTypeUtility.AsType(this.Type);
 
 				if(type.IsValueType && this.Nullable)
 				{

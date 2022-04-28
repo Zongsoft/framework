@@ -30,6 +30,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data
 {
@@ -54,6 +56,8 @@ namespace Zongsoft.Data
 		event EventHandler<DataIncrementingEventArgs> Incrementing;
 		event EventHandler<DataDeletedEventArgs> Deleted;
 		event EventHandler<DataDeletingEventArgs> Deleting;
+		event EventHandler<DataImportedEventArgs> Imported;
+		event EventHandler<DataImportingEventArgs> Importing;
 		event EventHandler<DataInsertedEventArgs> Inserted;
 		event EventHandler<DataInsertingEventArgs> Inserting;
 		event EventHandler<DataUpsertedEventArgs> Upserted;
@@ -99,6 +103,24 @@ namespace Zongsoft.Data
 		/// 获取数据访问的过滤器集合。
 		/// </summary>
 		ICollection<object> Filters { get; }
+		#endregion
+
+		#region 导入方法
+		int Import(string name, IEnumerable data, DataImportOptions options = null) => this.Import(name, data, Array.Empty<string>(), options);
+		int Import(string name, IEnumerable data, string members, DataImportOptions options = null) => this.Import(name, data, string.IsNullOrEmpty(members) ? null : members.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries), options);
+		int Import(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options = null);
+		ValueTask<int> ImportAsync(string name, IEnumerable data, CancellationToken cancellation = default) => this.ImportAsync(name, data, Array.Empty<string>(), null, cancellation);
+		ValueTask<int> ImportAsync(string name, IEnumerable data, DataImportOptions options, CancellationToken cancellation = default) => this.ImportAsync(name, data, Array.Empty<string>(), options, cancellation);
+		ValueTask<int> ImportAsync(string name, IEnumerable data, string members, DataImportOptions options, CancellationToken cancellation = default) => this.ImportAsync(name, data, string.IsNullOrEmpty(members) ? null : members.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries), options, cancellation);
+		ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation = default);
+
+		int Import<T>(IEnumerable<T> data, DataImportOptions options = null) => this.Import<T>(data, Array.Empty<string>(), options);
+		int Import<T>(IEnumerable<T> data, string members, DataImportOptions options = null) => this.Import<T>(data, string.IsNullOrEmpty(members) ? null : members.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries), options);
+		int Import<T>(IEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null);
+		ValueTask<int> ImportAsync<T>(IEnumerable<T> data, CancellationToken cancellation = default) => this.ImportAsync(data, Array.Empty<string>(), null, cancellation);
+		ValueTask<int> ImportAsync<T>(IEnumerable<T> data, DataImportOptions options, CancellationToken cancellation = default) => this.ImportAsync<T>(data, Array.Empty<string>(), options, cancellation);
+		ValueTask<int> ImportAsync<T>(IEnumerable<T> data, string members, DataImportOptions options, CancellationToken cancellation = default) => this.ImportAsync<T>(data, string.IsNullOrEmpty(members) ? null : members.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries), options, cancellation);
+		ValueTask<int> ImportAsync<T>(IEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation = default);
 		#endregion
 
 		#region 执行方法

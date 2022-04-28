@@ -110,6 +110,8 @@ namespace Zongsoft.Data.MySql
 
 		public override DbConnection CreateConnection() => new MySqlConnection();
 		public override DbConnection CreateConnection(string connectionString) => new MySqlConnection(connectionString);
+
+		public override IDataImporter CreateImporter(DataImportContextBase context) => new MySqlImporter(context);
 		#endregion
 
 		#region 保护方法

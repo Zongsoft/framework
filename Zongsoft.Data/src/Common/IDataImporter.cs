@@ -28,20 +28,15 @@
  */
 
 using System;
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Services;
-
-namespace Zongsoft.Data
+namespace Zongsoft.Data.Common
 {
-	[Service(typeof(IServiceProvider<IDataAccess>), typeof(IServiceProvider<DataAccessBase>), typeof(IServiceProvider<DataAccess>))]
-	public class DataAccessProvider : DataAccessProviderBase<DataAccess>
+	public interface IDataImporter : IDisposable
 	{
-		#region 单例字段
-		public static readonly DataAccessProvider Instance = new DataAccessProvider();
-		#endregion
-
-		#region 重写方法
-		protected override DataAccess CreateAccessor(string name) => new DataAccess(name, DataEnvironment.Filters);
-		#endregion
+		void Import(DataImportContext context);
+		ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
 	}
 }

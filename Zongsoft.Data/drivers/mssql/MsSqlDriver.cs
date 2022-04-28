@@ -85,6 +85,8 @@ namespace Zongsoft.Data.MsSql
 
 		public override DbConnection CreateConnection() => new SqlConnection();
 		public override DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
+
+		public override IDataImporter CreateImporter(DataImportContextBase context) => new MsSqlImporter(context);
 		#endregion
 
 		#region 保护方法

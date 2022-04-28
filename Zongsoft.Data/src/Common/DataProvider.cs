@@ -29,8 +29,8 @@
 
 using System;
 using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Metadata.Profiles;
@@ -138,6 +138,20 @@ namespace Zongsoft.Data.Common
 		}
 		#endregion
 
+		#region 导入方法
+		public void Import(DataImportContext context)
+		{
+			using var importer = context.Source.Driver.CreateImporter(context);
+			importer.Import(context);
+		}
+
+		public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
+		{
+			using var importer = context.Source.Driver.CreateImporter(context);
+			return importer.ImportAsync(context, cancellation);
+		}
+		#endregion
+
 		#region 虚拟方法
 		protected virtual void OnExecute(IDataAccessContext context)
 		{
@@ -193,9 +207,7 @@ namespace Zongsoft.Data.Common
 		#region 嵌套子类
 		private class DataAccessEventArgs : DataAccessEventArgs<IDataAccessContext>
 		{
-			public DataAccessEventArgs(IDataAccessContext context) : base(context)
-			{
-			}
+			public DataAccessEventArgs(IDataAccessContext context) : base(context) { }
 		}
 
 		private class DataExecutor : IDataExecutor

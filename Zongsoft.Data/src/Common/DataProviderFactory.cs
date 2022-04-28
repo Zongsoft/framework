@@ -54,13 +54,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		public ICollection<IDataProvider> Providers
-		{
-			get
-			{
-				return _providers;
-			}
-		}
+		public ICollection<IDataProvider> Providers => _providers;
 		#endregion
 
 		#region 公共方法
@@ -85,22 +79,12 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IDataProvider CreateProvider(string name)
-		{
-			return new DataProvider(name);
-		}
+		protected virtual IDataProvider CreateProvider(string name) => new DataProvider(name);
 		#endregion
 
 		#region 枚举遍历
-		public IEnumerator<IDataProvider> GetEnumerator()
-		{
-			return _providers.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _providers.GetEnumerator();
-		}
+		public IEnumerator<IDataProvider> GetEnumerator() => _providers.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _providers.GetEnumerator();
 		#endregion
 	}
 }
