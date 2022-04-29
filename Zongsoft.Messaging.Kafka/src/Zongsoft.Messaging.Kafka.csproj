@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Version>5.0.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<Product>Zongsoft Kafka Library</Product>
+		<Description>This is a library about Kafka messaging development.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
+		<RootNamespace>Zongsoft.Messaging.Kafka</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<PackageIconUrl>..\..\..\Guidelines\zongsoft-logo(48x48).png</PackageIconUrl>
+		<Platforms>AnyCPU;x64</Platforms>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>Zongsoft.Messaging.Kafka.xml</DocumentationFile>
+		<NoWarn>1701;1702;1591</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Zongsoft.Messaging.Kafka.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Confluent.Kafka" Version="1.8.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+</Project>
