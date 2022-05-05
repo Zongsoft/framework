@@ -77,12 +77,13 @@ namespace Zongsoft.Data.MySql
 			//写入表体
 			foreach(var item in context.Data)
 			{
+				var target = item;
+
 				for(int i = 0; i < this.Members.Length; i++)
 				{
 					if(i > 0)
 						writer.Write(bulker.FieldTerminator);
 
-					var target = item;
 					var value = Reflector.GetValue(this.Members[i], ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
@@ -135,12 +136,13 @@ namespace Zongsoft.Data.MySql
 			//写入表体
 			foreach(var item in context.Data)
 			{
+				var target = item;
+
 				for(int i = 0; i < this.Members.Length; i++)
 				{
 					if(i > 0)
 						await writer.WriteAsync(bulker.FieldTerminator);
 
-					var target = item;
 					var value = Reflector.GetValue(this.Members[i], ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
