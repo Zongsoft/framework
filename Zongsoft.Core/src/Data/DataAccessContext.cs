@@ -284,7 +284,7 @@ namespace Zongsoft.Data
 	public class DataImportContextBase : DataAccessContextBase<IDataImportOptions>
 	{
 		#region 构造函数
-		protected DataImportContextBase(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? (IDataImportOptions)DataImportOptions.IgnoreConstraint())
+		protected DataImportContextBase(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? new DataImportOptions())
 		{
 			this.Data = data ?? throw new ArgumentNullException(nameof(data));
 			this.Members = members == null ? Array.Empty<string>() : members.ToArray();
