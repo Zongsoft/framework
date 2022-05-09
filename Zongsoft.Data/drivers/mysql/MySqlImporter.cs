@@ -105,6 +105,9 @@ namespace Zongsoft.Data.MySql
 			file.Dispose();
 
 			context.Count = bulker.Load();
+
+			//删除数据导入的临时文件
+			DeleteFile(bulker.FileName);
 		}
 
 		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
@@ -164,6 +167,9 @@ namespace Zongsoft.Data.MySql
 			file.Dispose();
 
 			context.Count = await bulker.LoadAsync(cancellation);
+
+			//删除数据导入的临时文件
+			DeleteFile(bulker.FileName);
 		}
 		#endregion
 
@@ -179,6 +185,15 @@ namespace Zongsoft.Data.MySql
 			Local = true,
 			ConflictOption = options.ConstraintIgnored ? MySqlBulkLoaderConflictOption.Ignore : MySqlBulkLoaderConflictOption.None,
 		};
+
+		private static void DeleteFile(string filePath)
+		{
+			try
+			{
+				File.Delete(filePath);
+			}
+			catch { }
+		}
 		#endregion
 	}
 }
