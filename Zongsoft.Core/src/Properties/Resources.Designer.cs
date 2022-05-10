@@ -635,15 +635,5 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("Text.WorkerStopCommand.Name", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
-        internal static byte[] zongsoft_logo {
-            get {
-                object obj = ResourceManager.GetObject("zongsoft-logo", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }
