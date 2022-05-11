@@ -47,6 +47,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public DataAggregateCollection Count(bool distinct = false) => this.Aggregate(DataAggregateFunction.Count, null, null, distinct);
 		public DataAggregateCollection Count(string member, bool distinct = false) => this.Aggregate(DataAggregateFunction.Count, member, null, distinct);
 		public DataAggregateCollection Count(string member, string alias, bool distinct = false) => this.Aggregate(DataAggregateFunction.Count, member, alias, distinct);
 

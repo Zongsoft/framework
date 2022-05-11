@@ -68,6 +68,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
+		public Grouping Count(bool distinct = false)
+		{
+			_aggregates.Count(null, distinct);
+			return this;
+		}
+
 		public Grouping Count(string member, bool distinct = false)
 		{
 			_aggregates.Count(member, distinct);
