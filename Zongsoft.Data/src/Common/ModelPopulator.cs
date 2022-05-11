@@ -241,6 +241,13 @@ namespace Zongsoft.Data.Common
 		{
 			public MemberMappingCollection() : base(StringComparer.OrdinalIgnoreCase) { }
 			protected override string GetKeyForItem(MemberMapping member) => member.Token.Name;
+			protected override void InsertItem(int index, MemberMapping item)
+			{
+				if(this.Contains(item.Token.Name))
+					throw new DataException($"The specified '{item.Token.Name}' member is duplicated.");
+
+				base.InsertItem(index, item);
+			}
 		}
 		#endregion
 	}
