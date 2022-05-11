@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 标识聚合元素的结构。
+	/// 表示聚合元素的结构。
 	/// </summary>
 	public struct DataAggregate
 	{
