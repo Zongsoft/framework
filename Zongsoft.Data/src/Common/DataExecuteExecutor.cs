@@ -81,15 +81,15 @@ namespace Zongsoft.Data.Common
 			private class ResultIterator : IEnumerator<T>
 			{
 				private readonly IDataReader _reader;
-				private readonly IDataPopulator<T> _populator;
+				private readonly IDataPopulator _populator;
 
 				public ResultIterator(IDataReader reader)
 				{
 					_reader = reader;
-					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator<T>(_reader);
+					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader);
 				}
 
-				public T Current { get => _populator.Populate(_reader); }
+				public T Current { get => _populator.Populate<T>(_reader); }
 
 				public bool MoveNext()
 				{

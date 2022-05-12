@@ -28,32 +28,13 @@
  */
 
 using System;
-using System.Data;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Common
 {
-	/// <summary>
-	/// 提供数据实体装配的接口。
-	/// </summary>
-	public interface IDataPopulator
+	public class ModelMemberTokenCollection<T> : KeyedCollection<string, ModelMemberToken<T>>
 	{
-		/// <summary>数据实体装配方法。</summary>
-		/// <param name="record">指定要装配的数据记录。</param>
-		/// <returns>返回装配成功的数据对象。</returns>
-		object Populate(IDataRecord record);
-
-		T Populate<T>(IDataRecord record);
-	}
-
-	/// <summary>
-	/// 提供数据实体装配的泛型接口。
-	/// </summary>
-	/// <typeparam name="T">装配的实体类型。</typeparam>
-	public interface IDataPopulator<out T>
-	{
-		/// <summary>数据实体装配方法。</summary>
-		/// <param name="record">指定要装配的数据记录。</param>
-		/// <returns>返回装配成功的数据对象。</returns>
-		T Populate(IDataRecord record);
+		public ModelMemberTokenCollection() : base(StringComparer.Ordinal) { }
+		protected override string GetKeyForItem(ModelMemberToken<T> item) => item.Name;
 	}
 }

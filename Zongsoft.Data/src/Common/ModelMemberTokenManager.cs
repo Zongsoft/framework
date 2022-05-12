@@ -137,13 +137,13 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
-		public static Collections.INamedCollection<ModelMemberToken<T>> GetMembers<T>()
+		public static ModelMemberTokenCollection<T> GetMembers<T>()
 		{
 			//如果指定的类型是单值类型则返回空
 			if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
 				return null;
 
-			return (Collections.INamedCollection<ModelMemberToken<T>>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
+			return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
 		}
 		#endregion
 
@@ -160,7 +160,7 @@ namespace Zongsoft.Data.Common
 				type = Zongsoft.Common.TypeExtension.GetElementType(type);
 
 			var members = FindMembers(type);
-			var tokens = new Collections.NamedCollection<ModelMemberToken<T>>(item => item.Name);
+			var tokens = new ModelMemberTokenCollection<T>();
 
 			foreach(var member in members)
 			{

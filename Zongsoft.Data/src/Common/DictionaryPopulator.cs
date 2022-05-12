@@ -52,6 +52,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
+		T IDataPopulator.Populate<T>(IDataRecord record) => (T)this.Populate(record);
 		public object Populate(IDataRecord record)
 		{
 			if(record.FieldCount != _keys.Length)

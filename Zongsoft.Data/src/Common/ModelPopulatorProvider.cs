@@ -31,7 +31,9 @@ using System;
 using System.Data;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
+using Zongsoft.Common;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common
@@ -54,7 +56,8 @@ namespace Zongsoft.Data.Common
 			         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 		}
 
-		public IDataPopulator GetPopulator(Type type, IDataRecord reader, IDataEntity entity = null)
+		[Obsolete]
+		public IDataPopulator GetPopulatorObsolete(Type type, IDataRecord reader, IDataEntity entity = null)
 		{
 			var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
 				ModelMemberTokenManager.GetMembers(underlying) :
@@ -156,15 +159,30 @@ namespace Zongsoft.Data.Common
 
 	public partial class ModelPopulatorProvider
 	{
+		private static readonly MethodInfo PopulatorTemplate = typeof(ModelPopulatorProvider).GetMethod(nameof(ModelPopulatorProvider.GetPopulator), 1, BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IDataRecord), typeof(IDataEntity) }, null);
+		private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new ();
+
 		#region 公共方法
-		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, IDataEntity entity = null)
+		public IDataPopulator GetPopulator(Type type, IDataRecord record, IDataEntity entity = null)
+		{
+			var key = new PopulatorKey(type, record, entity);
+
+			return _populators.GetOrAdd(key, (key, record) =>
+			{
+				var method = PopulatorTemplate.MakeGenericMethod(key.ModelType);
+				var invoker = method.CreateDelegate(typeof(Func<,,>).MakeGenericType(typeof(IDataRecord), typeof(IDataEntity), typeof(IDataPopulator<>).MakeGenericType(key.ModelType)), this);
+				return (IDataPopulator)invoker.DynamicInvoke(record, key.Entity);
+			}, record);
+		}
+
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord record, IDataEntity entity = null)
 		{
 			var populator = new ModelPopulator<T>(entity);
 
-			for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
+			for(int ordinal = 0; ordinal < record.FieldCount; ordinal++)
 			{
 				//获取当前列对应的属性名（注意：由查询引擎确保返回的列名就是属性名）
-				var name = reader.GetName(ordinal);
+				var name = record.GetName(ordinal);
 
 				//如果属性名的首字符不是字母或下划线则忽略当前列
 				if(!IsLetterOrUnderscore(name[0]))
@@ -186,7 +204,7 @@ namespace Zongsoft.Data.Common
 
 			if(index > 0 && index < name.Length - 1)
 			{
-				if(members.TryGet(name.AsSpan().Slice(0, index).ToString(), out var member))
+				if(members.TryGetValue(name.AsSpan().Slice(0, index).ToString(), out var member))
 				{
 					var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan().Slice(index + 1), ordinal);
 
@@ -196,7 +214,7 @@ namespace Zongsoft.Data.Common
 			}
 			else
 			{
-				if(members.TryGet(name, out var member))
+				if(members.TryGetValue(name, out var member))
 				{
 					populator.Members.Add(new ModelPopulator<T>.MemberMapping(member, ordinal));
 				}
@@ -235,5 +253,38 @@ namespace Zongsoft.Data.Common
 			method.Invoke(null, new object[] { populator, name, ordinal });
 		}
 		#endregion
+
+		private readonly struct PopulatorKey : IEquatable<PopulatorKey>
+		{
+			public readonly Type ModelType;
+			public readonly IDataEntity Entity;
+			public readonly int Record;
+			public readonly string[] Fields;
+
+			public PopulatorKey(Type modelType, IDataRecord record, IDataEntity entity)
+			{
+				this.ModelType = modelType;
+				this.Entity = entity;
+				this.Fields = new string[record.FieldCount];
+
+				var code = new HashCode();
+				for(int i = 0; i < record.FieldCount; i++)
+				{
+					this.Fields[i] = record.GetName(i);
+					code.Add(this.Fields[i]);
+				}
+
+				this.Record = code.ToHashCode();
+			}
+
+			public bool Equals(PopulatorKey other) =>
+				this.ModelType == other.ModelType &&
+				object.Equals(this.Entity, other.Entity) &&
+				this.Record == other.Record &&
+				System.Linq.Enumerable.SequenceEqual(this.Fields, other.Fields);
+
+			public override bool Equals(object obj) => obj is PopulatorKey other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.ModelType, this.Entity, this.Record);
+		}
 	}
 }

@@ -53,8 +53,8 @@ namespace Zongsoft.Data.Common
 
 		#region 公共方法
 		public bool CanPopulate(Type type) => Zongsoft.Common.TypeExtension.IsScalarType(type);
-		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), reader, entity) as IDataPopulator<T>;
-		public IDataPopulator GetPopulator(Type type, IDataRecord reader, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), record, entity) as IDataPopulator<T>;
+		public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
 			this.GetPopulator(underlyingType, true) :
 			this.GetPopulator(type, false);
 		#endregion
@@ -143,6 +143,19 @@ namespace Zongsoft.Data.Common
 					return _converter.ConvertTo(value, typeof(T));
 
 				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
+			}
+
+			TResult IDataPopulator.Populate<TResult>(IDataRecord record)
+			{
+				object value = record.IsDBNull(0) ? null : record.GetValue(0);
+
+				if(_converter.CanConvertFrom(record.GetFieldType(0)))
+					return (TResult)_converter.ConvertFrom(value);
+
+				if(_converter.CanConvertTo(typeof(TResult)))
+					return (TResult)_converter.ConvertTo(value, typeof(TResult));
+
+				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(TResult).FullName}' target type.");
 			}
 
 			public T Populate(IDataRecord record)

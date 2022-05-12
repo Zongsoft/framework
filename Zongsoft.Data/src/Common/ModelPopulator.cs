@@ -49,6 +49,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共方法
+		TResult IDataPopulator.Populate<TResult>(IDataRecord record) => (TResult)this.Populate(record, this.GetCreator(_type), _tokens);
 		public object Populate(IDataRecord record) => this.Populate(record, this.GetCreator(_type), _tokens);
 		#endregion
 
@@ -150,7 +151,7 @@ namespace Zongsoft.Data.Common
 	public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 	{
 		#region 私有变量
-		private static readonly Func<IDataRecord, T> CREATOR = typeof(T).IsAbstract ?
+		private static readonly Func<IDataRecord, T> Creator = typeof(T).IsAbstract ?
 			record => Model.Build<T>() :
 			record => System.Activator.CreateInstance<T>();
 		#endregion
@@ -175,6 +176,7 @@ namespace Zongsoft.Data.Common
 
 		#region 公共方法
 		public T Populate(IDataRecord record) => Populate(record, _members);
+		TResult IDataPopulator.Populate<TResult>(IDataRecord record) => (TResult)(object)Populate(record, _members);
 		object IDataPopulator.Populate(IDataRecord record) => this.Populate(record);
 		#endregion
 
@@ -188,14 +190,14 @@ namespace Zongsoft.Data.Common
 				if(member.Ordinal >= 0)
 				{
 					if(model == null)
-						model = CREATOR(record);
+						model = Creator.Invoke(record);
 
 					member.Token.Populate(ref model, record, member.Ordinal);
 				}
 				else if(member.Populator != null)
 				{
 					if(model == null)
-						model = CREATOR(record);
+						model = Creator.Invoke(record);
 
 					member.Token.SetValue(ref model, member.Populator.Populate(record));
 				}

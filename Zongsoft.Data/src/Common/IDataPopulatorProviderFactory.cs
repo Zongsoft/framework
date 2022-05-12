@@ -35,6 +35,5 @@ namespace Zongsoft.Data.Common
 	public interface IDataPopulatorProviderFactory : IEnumerable<IDataPopulatorProvider>
 	{
 		IDataPopulatorProvider GetProvider(Type type);
-		IDataPopulatorProvider GetProvider<T>() => GetProvider(typeof(T));
 	}
 }

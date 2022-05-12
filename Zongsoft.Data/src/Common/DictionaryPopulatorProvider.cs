@@ -48,27 +48,27 @@ namespace Zongsoft.Data.Common
 			return Zongsoft.Common.TypeExtension.IsDictionary(type);
 		}
 
-		public IDataPopulator GetPopulator(Type type, IDataRecord reader, Metadata.IDataEntity entity = null)
+		public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null)
 		{
-			var keys = new string[reader.FieldCount];
+			var keys = new string[record.FieldCount];
 
-			for(int i = 0; i < reader.FieldCount; i++)
+			for(int i = 0; i < record.FieldCount; i++)
 			{
 				//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-				keys[i] = reader.GetName(i);
+				keys[i] = record.GetName(i);
 			}
 
 			return new DictionaryPopulator(type, keys);
 		}
 
-		public IDataPopulator<T> GetPopulator<T>(IDataRecord reader, Metadata.IDataEntity entity = null)
+		public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null)
 		{
-			var keys = new string[reader.FieldCount];
+			var keys = new string[record.FieldCount];
 
-			for(int i = 0; i < reader.FieldCount; i++)
+			for(int i = 0; i < record.FieldCount; i++)
 			{
 				//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-				keys[i] = reader.GetName(i);
+				keys[i] = record.GetName(i);
 			}
 
 			return new DictionaryPopulator<T>(keys);
