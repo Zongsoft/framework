@@ -159,8 +159,10 @@ namespace Zongsoft.Data.Common
 
 	public partial class ModelPopulatorProvider
 	{
+		#region 静态变量
 		private static readonly MethodInfo PopulatorTemplate = typeof(ModelPopulatorProvider).GetMethod(nameof(ModelPopulatorProvider.GetPopulator), 1, BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IDataRecord), typeof(IDataEntity) }, null);
 		private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new ();
+		#endregion
 
 		#region 公共方法
 		public IDataPopulator GetPopulator(Type type, IDataRecord record, IDataEntity entity = null)
@@ -254,6 +256,7 @@ namespace Zongsoft.Data.Common
 		}
 		#endregion
 
+		#region 嵌套结构
 		private readonly struct PopulatorKey : IEquatable<PopulatorKey>
 		{
 			public readonly Type ModelType;
@@ -286,5 +289,6 @@ namespace Zongsoft.Data.Common
 			public override bool Equals(object obj) => obj is PopulatorKey other && this.Equals(other);
 			public override int GetHashCode() => HashCode.Combine(this.ModelType, this.Entity, this.Record);
 		}
+		#endregion
 	}
 }
