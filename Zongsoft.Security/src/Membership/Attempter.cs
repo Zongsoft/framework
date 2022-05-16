@@ -47,10 +47,7 @@ namespace Zongsoft.Security.Membership
 		public IServiceAccessor<ICache> Cache { get; set; }
 
 		[Options("Security/Membership/Authentication/Attempter")]
-		public Configuration.AttempterOptions Options
-		{
-			get; set;
-		}
+		public Configuration.AttempterOptions Options { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -132,9 +129,13 @@ namespace Zongsoft.Security.Membership
 
 			if(option != null)
 			{
-				threshold = option.Threshold;
-				window = option.Window;
-				period = option.Period;
+				threshold = Math.Max(option.Threshold, 1);
+
+				if(option.Window > TimeSpan.Zero)
+					window = option.Window;
+
+				if(option.Period > TimeSpan.Zero)
+					period = option.Period;
 			}
 		}
 
