@@ -52,6 +52,8 @@ namespace Zongsoft.Data.Common.Expressions
 				else
 					this.Alias = aggregate.Name + aggregate.Function.ToString();
 			}
+			else
+				this.Alias = aggregate.Alias;
 		}
 		#endregion
 
