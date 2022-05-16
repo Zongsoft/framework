@@ -58,7 +58,7 @@ namespace Zongsoft.Security.Membership
 		/// 校验指定用户是否可以继续验证。
 		/// </summary>
 		/// <param name="identity">指定待验证的用户标识。</param>
-		/// <param name="scene">表示验证操作的场景。</param>
+		/// <param name="namespace">指定的身份命名空间。</param>
 		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
 		public bool Verify(string identity, string @namespace = null)
 		{
@@ -80,7 +80,7 @@ namespace Zongsoft.Security.Membership
 		/// 验证成功方法。
 		/// </summary>
 		/// <param name="identity">指定验证成功的用户标识。</param>
-		/// <param name="scene">表示验证操作的场景。</param>
+		/// <param name="namespace">指定的身份命名空间。</param>
 		public void Done(string identity, string @namespace = null)
 		{
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
@@ -93,7 +93,7 @@ namespace Zongsoft.Security.Membership
 		/// 验证失败方法。
 		/// </summary>
 		/// <param name="identity">指定验证失败的用户标识。</param>
-		/// <param name="scene">表示验证操作的场景。</param>
+		/// <param name="namespace">指定的身份命名空间。</param>
 		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
 		public bool Fail(string identity, string @namespace = null)
 		{
@@ -103,7 +103,7 @@ namespace Zongsoft.Security.Membership
 				throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
 			//获取验证失败的阈值和锁定时长
-			this.GetAttempts(out var threshold, out var window);
+			this.GetAttempts(out var threshold, out var window, out var period);
 
 			if(threshold < 1 || window == TimeSpan.Zero)
 				return false;
@@ -111,10 +111,10 @@ namespace Zongsoft.Security.Membership
 			var KEY = GetCacheKey(identity, @namespace);
 			var attempts = sequence.Increment(KEY);
 
-			//如果失败计数器为新增（即递增结果为零或1），或者失败计数器到达限制数；
-			//则更新失败计数器的过期时长为指定的锁定时长。
-			if(attempts == 0 || attempts == 1 || attempts == threshold)
+			if(attempts < threshold)
 				cache.SetExpiry(KEY, window);
+			else if(attempts == threshold)
+				cache.SetExpiry(KEY, period);
 
 			return attempts >= threshold;
 		}
@@ -122,10 +122,11 @@ namespace Zongsoft.Security.Membership
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void GetAttempts(out int threshold, out TimeSpan window)
+		private void GetAttempts(out int threshold, out TimeSpan window, out TimeSpan period)
 		{
 			threshold = 3;
-			window = TimeSpan.FromHours(1);
+			window = TimeSpan.FromMinutes(1);
+			period = TimeSpan.FromMinutes(60);
 
 			var option = this.Options;
 
@@ -133,6 +134,7 @@ namespace Zongsoft.Security.Membership
 			{
 				threshold = option.Threshold;
 				window = option.Window;
+				period = option.Period;
 			}
 		}
 
