@@ -292,9 +292,9 @@ namespace Zongsoft.Data.Common.Expressions
 
 					throw new DataException($"Illegal range condition value.");
 				case ConditionOperator.Like:
-					return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.In:
-					var value = GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending);
+					var value = GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending);
 					var count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -305,7 +305,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.In(field, value);
 				case ConditionOperator.NotIn:
-					value = GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending);
+					value = GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending);
 					count = GetCollectionCount(value);
 
 					if(count == 0)
@@ -316,23 +316,23 @@ namespace Zongsoft.Data.Common.Expressions
 
 					return Expression.NotIn(field, value);
 				case ConditionOperator.Equal:
-					return Expression.Equal(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.Equal(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.NotEqual:
-					return Expression.NotEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.NotEqual(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.GreaterThan:
-					return Expression.GreaterThan(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.GreaterThan(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.GreaterThanEqual:
-					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.GreaterThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.LessThan:
-					return Expression.LessThan(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.LessThan(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				case ConditionOperator.LessThanEqual:
-					return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Value, dbType, fieldExpending));
+					return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 				default:
 					throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
 			}
 		}
 
-		private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, object value, DbType dbType, bool fieldExpending)
+		private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, ConditionOperator @operator, object value, DbType dbType, bool fieldExpending)
 		{
 			if(value == null)
 				return null;
@@ -343,7 +343,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(value is Operand operand)
 				return statement.GetOperandExpression(aliaser, operand, fieldExpending, out _);
 
-			if(value.GetType().IsArray || (value.GetType() != typeof(string) && value is IEnumerable))
+			if((@operator == ConditionOperator.In || @operator == ConditionOperator.NotIn) && (value.GetType().IsArray || (value.GetType() != typeof(string) && value is ICollection)))
 			{
 				var collection = new ExpressionCollection();
 

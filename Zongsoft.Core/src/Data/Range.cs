@@ -138,21 +138,6 @@ namespace Zongsoft.Data
 			if(!IsRange(type, out var underlyingType))
 				return false;
 
-			if(type.IsArray)
-			{
-				Array array = (Array)target;
-
-				if(array.Length >= 2)
-				{
-					minimum = array.GetValue(0);
-					maximum = array.GetValue(1);
-
-					return true;
-				}
-
-				return false;
-			}
-
 			_tokens.GetOrAdd(underlyingType, t => new RangeToken(t)).GetRange(target, out minimum, out maximum);
 
 			return minimum != null || maximum != null;
@@ -162,17 +147,6 @@ namespace Zongsoft.Data
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
-
-			if(type.IsArray)
-			{
-				var elementType = type.GetElementType();
-
-				if(typeof(IComparable).IsAssignableFrom(elementType) ||
-				   typeof(IComparable<>).MakeGenericType(elementType).IsAssignableFrom(elementType))
-					return true;
-
-				return false;
-			}
 
 			if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
 				type = underlyingType;
@@ -184,17 +158,6 @@ namespace Zongsoft.Data
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
-
-			if(type.IsArray)
-			{
-				underlyingType = type.GetElementType();
-
-				if(typeof(IComparable).IsAssignableFrom(underlyingType) ||
-				   typeof(IComparable<>).MakeGenericType(underlyingType).IsAssignableFrom(underlyingType))
-					return true;
-
-				return false;
-			}
 
 			if(Zongsoft.Common.TypeExtension.IsNullable(type, out var nullableType))
 				type = nullableType;
