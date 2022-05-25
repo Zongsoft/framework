@@ -31,24 +31,50 @@ using System;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 表示数据服务可写性的结构。
+	/// </summary>
 	public struct DataServiceWritability : IEquatable<DataServiceWritability>
 	{
 		#region 常量定义
-		private const byte INSERTABLE_VALUE = 0x1;
-		private const byte UPSERTABLE_VALUE = 0x2;
-		private const byte UPDATABLE_VALUE = 0x4;
-		private const byte DELETABLE_VALUE = 0x8;
-		private const byte UPSERTABLE_FLAG = 0x80;
+		private const byte DELETABLE_VALUE  = 0x01;
+		private const byte UPDATABLE_VALUE  = 0x02;
+		private const byte INSERTABLE_VALUE = 0x04;
+		private const byte UPSERTABLE_VALUE = 0x08;
+		private const byte UPSERTABLE_FLAG  = 0x80;
 		#endregion
 
 		#region 成员字段
 		private byte _value;
 		#endregion
 
+		#region 构造函数
+		private DataServiceWritability(byte value) => _value = value;
+		#endregion
+
 		#region 公共属性
-		public bool Deletable { get => (_value & DELETABLE_VALUE) == DELETABLE_VALUE; set => _value |= DELETABLE_VALUE; }
-		public bool Updatable { get => (_value & UPDATABLE_VALUE) == UPDATABLE_VALUE; set => _value |= UPDATABLE_VALUE; }
-		public bool Insertable { get => (_value & INSERTABLE_VALUE) == INSERTABLE_VALUE; set => _value |= INSERTABLE_VALUE; }
+		/// <summary>获取或设置一个值，指示是否可删除。</summary>
+		public bool Deletable
+		{
+			get => (_value & DELETABLE_VALUE) == DELETABLE_VALUE;
+			set => _value |= DELETABLE_VALUE;
+		}
+
+		/// <summary>获取或设置一个值，指示是否可更新。</summary>
+		public bool Updatable
+		{
+			get => (_value & UPDATABLE_VALUE) == UPDATABLE_VALUE;
+			set => _value |= UPDATABLE_VALUE;
+		}
+
+		/// <summary>获取或设置一个值，指示是否可新增。</summary>
+		public bool Insertable
+		{
+			get => (_value & INSERTABLE_VALUE) == INSERTABLE_VALUE;
+			set => _value |= INSERTABLE_VALUE;
+		}
+
+		/// <summary>获取或设置一个值，指示是否可增改。</summary>
 		public bool Upsertable
 		{
 			get => (_value & UPSERTABLE_FLAG) == UPSERTABLE_FLAG ? (_value & UPSERTABLE_VALUE) == UPSERTABLE_VALUE : this.Insertable && this.Updatable;
@@ -69,32 +95,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 符号重写
-		public static bool operator ==(DataServiceWritability left, DataServiceWritability right) => left.Equals(right);
-		public static bool operator !=(DataServiceWritability left, DataServiceWritability right) => !(left == right);
+		public static bool operator ==(DataServiceWritability left, DataServiceWritability right) => left._value == right._value;
+		public static bool operator !=(DataServiceWritability left, DataServiceWritability right) => left._value != right._value;
 		#endregion
 
 		#region 静态属性
-		public static DataServiceWritability None => new();
+		/// <summary>获取一个空的可写性，即没有任何可写性。</summary>
+		public static DataServiceWritability None => new (0);
 
-		public static DataServiceWritability All => new ()
-		{
-			Deletable = true,
-			Updatable = true,
-			Upsertable = true,
-			Insertable = true,
-		};
+		/// <summary>获取一个具有全部的可写性，支持“删除”、“更新”、“新增”、“增改”。</summary>
+		public static DataServiceWritability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
 
-		public static DataServiceWritability Default => new()
-		{
-			Insertable = true,
-			Updatable = true,
-			Deletable = false,
-		};
-
-		public static DataServiceWritability InsertOnly => new()
-		{
-			Insertable = true,
-		};
+		/// <summary>获取一个默认的可写性，支持“更新”和“新增”。</summary>
+		public static DataServiceWritability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
 		#endregion
 	}
 }
