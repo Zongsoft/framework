@@ -43,6 +43,8 @@ namespace Zongsoft.Data
 
 		public const string Choose = nameof(Choose);
 		public const string Coalesce = nameof(Coalesce);
+		public const string Greatest = nameof(Greatest);
+		public const string Least = nameof(Least);
 
 		public const string Abs = nameof(Abs);
 		public const string Floor = nameof(Floor);

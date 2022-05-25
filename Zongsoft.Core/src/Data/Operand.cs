@@ -142,6 +142,9 @@ namespace Zongsoft.Data
 		public static FunctionOperand Coalesce(Operand operand, params Operand[] values) => values == null || values.Length == 0 ?
 			new FunctionOperand(Functions.Coalesce, operand) :
 			new FunctionOperand(Functions.Coalesce, values.Prepend(operand).ToArray());
+
+		public static FunctionOperand Greatest(params Operand[] arguments) => arguments == null || arguments.Length == 0 ? throw new ArgumentNullException(nameof(arguments)) : new FunctionOperand(Functions.Greatest, arguments);
+		public static FunctionOperand Least(params Operand[] arguments) => arguments == null || arguments.Length == 0 ? throw new ArgumentNullException(nameof(arguments)) : new FunctionOperand(Functions.Least, arguments);
 		#endregion
 
 		#region 符号重写
