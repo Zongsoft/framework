@@ -231,6 +231,22 @@ namespace Zongsoft.Caching
 			return false;
 		}
 
+		public bool Remove(string key, out object value)
+		{
+			if(key != null && _cache.TryRemove(key, out var entry))
+			{
+				if(entry.Expiry.HasValue)
+					_expirator.Persist(key);
+
+				value = entry.Value;
+				this.OnChanged(CacheChangedEventArgs.Removed(key, entry.Value));
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
 		public int Remove(IEnumerable<string> keys)
 		{
 			if(keys == null)

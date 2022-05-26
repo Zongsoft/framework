@@ -141,6 +141,14 @@ namespace Zongsoft.Caching
 		bool Remove(string key);
 
 		/// <summary>
+		/// 从缓存字典中删除并获取指定键的缓存项。
+		/// </summary>
+		/// <param name="key">指定要删除的键。</param>
+		/// <param name="value">如果删除成功则返回该删除项的值。</param>
+		/// <returns>如果指定的键存在则返回真(True)，否则返回假(False)。</returns>
+		bool Remove(string key, out object value);
+
+		/// <summary>
 		/// 从缓存字典中删除多个缓存项。
 		/// </summary>
 		/// <param name="keys">指定要删除的键名集。</param>

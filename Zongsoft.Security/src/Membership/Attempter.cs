@@ -106,7 +106,7 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			var KEY = GetCacheKey(identity, @namespace);
-			var attempts = sequence.Increment(KEY);
+			var attempts = sequence.Increase(KEY);
 
 			if(attempts < threshold)
 				cache.SetExpiry(KEY, window);
