@@ -275,59 +275,117 @@ namespace Zongsoft.Data
 				if(sequence == null)
 					throw new ArgumentNullException(nameof(sequence));
 
-				return _sequence.Increment(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
+				return _sequence.Increase(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
 			}
 			#endregion
 
 			#region 显式实现
-			long ISequence.Increment(string key, int interval, int seed)
+			long ISequence.Increase(string key, int interval, int seed, TimeSpan? expiry)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.Increment(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed);
-			}
-
-			long ISequence.Decrement(string key, int interval, int seed)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return _sequence.Decrement(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed);
-			}
-
-			void ISequence.Reset(string key, int value)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-				_sequence.Reset(key, value == 0 ? sequence.Seed : value);
-			}
-
-			Task<long> ISequence.IncrementAsync(string key, int interval, int seed, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return _sequence.IncrementAsync(key,
+				return _sequence.Increase(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
+					expiry);
+			}
+
+			double ISequence.Increase(string key, double interval, double seed, TimeSpan? expiry)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.Increase(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry);
+			}
+
+			long ISequence.Decrease(string key, int interval, int seed, TimeSpan? expiry)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.Decrease(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry);
+			}
+
+			double ISequence.Decrease(string key, double interval, double seed, TimeSpan? expiry)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.Decrease(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry);
+			}
+
+			Task<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.IncreaseAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry,
 					cancellation);
 			}
 
-			Task<long> ISequence.DecrementAsync(string key, int interval, int seed, CancellationToken cancellation)
+			Task<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.DecrementAsync(key,
+				return _sequence.IncreaseAsync(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
+					expiry,
 					cancellation);
 			}
 
-			Task ISequence.ResetAsync(string key, int value, CancellationToken cancellation)
+			Task<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
-				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, cancellation);
+
+				return _sequence.DecreaseAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry,
+					cancellation);
+			}
+
+			Task<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+
+				return _sequence.DecreaseAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					seed == 0 ? sequence.Seed : seed,
+					expiry,
+					cancellation);
+			}
+
+			void ISequence.Reset(string key, int value, TimeSpan? expiry)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+				_sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+			}
+
+			void ISequence.Reset(string key, double value, TimeSpan? expiry)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+				_sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+			}
+
+			Task ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
+			}
+
+			Task ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
+			{
+				key = this.GetSequenceKey(key, out var sequence);
+				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
 			}
 			#endregion
 
