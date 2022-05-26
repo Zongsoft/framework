@@ -343,7 +343,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(value is Operand operand)
 				return statement.GetOperandExpression(aliaser, operand, fieldExpending, out _);
 
-			if((@operator == ConditionOperator.In || @operator == ConditionOperator.NotIn) && (value.GetType().IsArray || (value.GetType() != typeof(string) && value is ICollection)))
+			if((@operator == ConditionOperator.In || @operator == ConditionOperator.NotIn) && (value.GetType().IsArray || (value.GetType() != typeof(string) && value is IEnumerable)))
 			{
 				var collection = new ExpressionCollection();
 
