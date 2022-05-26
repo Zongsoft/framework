@@ -129,16 +129,16 @@
   <data name="Text.RedisCountCommand.Name" xml:space="preserve">
     <value>计数命令</value>
   </data>
-  <data name="Text.RedisDecrementCommand.Description" xml:space="preserve">
+  <data name="Text.RedisDecreaseCommand.Description" xml:space="preserve">
     <value>以原子方式递减指定键的数值。</value>
   </data>
-  <data name="Text.RedisDecrementCommand.Name" xml:space="preserve">
+  <data name="Text.RedisDecreaseCommand.Name" xml:space="preserve">
     <value>递减命令</value>
   </data>
-  <data name="Text.RedisDecrementCommand.Options.Interval" xml:space="preserve">
+  <data name="Text.RedisDecreaseCommand.Options.Interval" xml:space="preserve">
     <value>递减的步长，默认为1。</value>
   </data>
-  <data name="Text.RedisDecrementCommand.Options.Seed" xml:space="preserve">
+  <data name="Text.RedisDecreaseCommand.Options.Seed" xml:space="preserve">
     <value>种子数，当指定键值不存在时设置的初始值，默认为0。</value>
   </data>
   <data name="Text.RedisFindCommand.Description" xml:space="preserve">
@@ -156,16 +156,16 @@
   <data name="Text.RedisGetCommand.Name" xml:space="preserve">
     <value>获取命令</value>
   </data>
-  <data name="Text.RedisIncrementCommand.Description" xml:space="preserve">
+  <data name="Text.RedisIncreaseCommand.Description" xml:space="preserve">
     <value>以原子方式递增指定键的数值。</value>
   </data>
-  <data name="Text.RedisIncrementCommand.Name" xml:space="preserve">
+  <data name="Text.RedisIncreaseCommand.Name" xml:space="preserve">
     <value>递增命令</value>
   </data>
-  <data name="Text.RedisIncrementCommand.Options.Interval" xml:space="preserve">
+  <data name="Text.RedisIncreaseCommand.Options.Interval" xml:space="preserve">
     <value>递增的步长，默认为1。</value>
   </data>
-  <data name="Text.RedisIncrementCommand.Options.Seed" xml:space="preserve">
+  <data name="Text.RedisIncreaseCommand.Options.Seed" xml:space="preserve">
     <value>种子数，当指定键值不存在时设置的初始值，默认为0。</value>
   </data>
   <data name="Text.RedisInfoCommand.Description" xml:space="preserve">

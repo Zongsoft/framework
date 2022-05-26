@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Redis
 			var normalizer = this.Normalizer ??= DistributedLockNormalizer.Randon;
 			var token = normalizer.Normalize();
 
-			return await _database.StringSetAsync(key, token, duration, When.NotExists) ?
+			return await _database.StringSetAsync(key, token, duration, When.NotExists, CommandFlags.None) ?
 				new DistributedLock(this, key, token.ToArray(), DateTime.UtcNow.Add(duration)) : null;
 		}
 

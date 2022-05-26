@@ -30,33 +30,35 @@
 using System;
 using System.ComponentModel;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Externals.Redis.Commands
 {
-	[DisplayName("Text.RedisDecrementCommand.Name")]
-	[Description("Text.RedisDecrementCommand.Description")]
-	[Zongsoft.Services.CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisDecrementCommand.Options.Seed")]
-	[Zongsoft.Services.CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisDecrementCommand.Options.Interval")]
-	public class RedisDecrementCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	[DisplayName("Text.RedisDecreaseCommand.Name")]
+	[Description("Text.RedisDecreaseCommand.Description")]
+	[CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisDecreaseCommand.Options.Seed")]
+	[CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisDecreaseCommand.Options.Interval")]
+	[CommandOption("expiry", Type = typeof(TimeSpan), Description = "Text.RedisDecreaseCommand.Options.Expiry")]
+	public class RedisDecrementCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public RedisDecrementCommand() : base("Decrement")
-		{
-		}
+		public RedisDecrementCommand() : base("Decrease") { }
 		#endregion
 
 		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
+		protected override object OnExecute(CommandContext context)
 		{
 			if(context.Expression.Arguments.Length < 1)
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
+				throw new CommandException("Missing arguments.");
 
 			int seed = context.Expression.Options.GetValue<int>("seed");
 			var interval = context.Expression.Options.GetValue<int>("interval");
+			var expiry = context.Expression.Options.GetValue<TimeSpan>("expiry");
 			var result = new long[context.Expression.Arguments.Length];
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				result[i] = RedisCommand.GetRedis(context.CommandNode).Decrement(context.Expression.Arguments[i], interval, seed);
+				result[i] = RedisCommand.GetRedis(context.CommandNode).Decrease(context.Expression.Arguments[i], interval, seed, expiry);
 				context.Output.WriteLine(result[i].ToString());
 			}
 

@@ -44,13 +44,8 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis
 {
-	public partial class RedisService : ICache, ISequence, IDisposable
+	public partial class RedisService : ICache, IDisposable
 	{
-		#region 常量定义
-		private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
-		private const string DECREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";
-		#endregion
-
 		#region 事件定义
 		event EventHandler<CacheChangedEventArgs> ICache.Changed
 		{
@@ -241,12 +236,12 @@ namespace Zongsoft.Externals.Redis
 			key = GetKey(key);
 
 			if(value is MemoryStream memory)
-				return _database.StringSet(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+				return _database.StringSet(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 
 			if(value is byte[] buffer)
 			{
 				using(var memoryStream = new MemoryStream(buffer))
-				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 			}
 
 			if(value.GetType().IsDictionary(out var fields))
@@ -304,7 +299,7 @@ namespace Zongsoft.Externals.Redis
 				return transaction.Execute();
 			}
 
-			return _database.StringSet(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+			return _database.StringSet(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 		}
 
 		public async Task<bool> SetEntryAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default)
@@ -321,12 +316,12 @@ namespace Zongsoft.Externals.Redis
 			key = GetKey(key);
 
 			if(value is MemoryStream memory)
-				return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+				return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 
 			if(value is byte[] buffer)
 			{
 				using(var memoryStream = new MemoryStream(buffer))
-					return await _database.StringSetAsync(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
+					return await _database.StringSetAsync(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 			}
 
 			if(value.GetType().IsDictionary(out var fields))
@@ -384,86 +379,7 @@ namespace Zongsoft.Externals.Redis
 				return await transaction.ExecuteAsync();
 			}
 
-			return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite));
-		}
-		#endregion
-
-		#region 递增实现
-		public long Decrement(string key, int interval = 1, int seed = 0)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			if(seed == 0)
-				return _database.StringDecrement(GetKey(key), interval);
-
-			return (long)_database.ScriptEvaluate(DECREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public async Task<long> DecrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-
-			if(seed == 0)
-				return await _database.StringDecrementAsync(GetKey(key), interval);
-
-			return (long)await _database.ScriptEvaluateAsync(DECREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public long Increment(string key, int interval = 1, int seed = 0)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			if(seed == 0)
-				return _database.StringIncrement(GetKey(key), interval);
-
-			return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public async Task<long> IncrementAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-
-			if(seed == 0)
-				return await _database.StringIncrementAsync(GetKey(key), interval);
-
-			return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		void ISequence.Reset(string key, int value)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			_database.StringSet(GetKey(key), value, null, When.Exists);
-		}
-
-		async Task ISequence.ResetAsync(string key, int value, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-			await _database.StringSetAsync(GetKey(key), value, null, When.Exists);
+			return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 		}
 		#endregion
 
@@ -635,6 +551,19 @@ namespace Zongsoft.Externals.Redis
 			this.Connect();
 
 			return _database.KeyDelete(GetKey(key));
+		}
+
+		public bool Remove(string key, out object value)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			this.Connect();
+
+			var result = _database.StringGetDelete(GetKey(key));
+			value = result.HasValue ? result.GetValue<object>() : default;
+			return result.HasValue;
 		}
 
 		public int Remove(IEnumerable<string> keys)

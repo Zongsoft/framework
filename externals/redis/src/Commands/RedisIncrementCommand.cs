@@ -30,33 +30,35 @@
 using System;
 using System.ComponentModel;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Externals.Redis.Commands
 {
-	[DisplayName("Text.RedisIncrementCommand.Name")]
-	[Description("Text.RedisIncrementCommand.Description")]
-	[Zongsoft.Services.CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisIncrementCommand.Options.Seed")]
-	[Zongsoft.Services.CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisIncrementCommand.Options.Interval")]
-	public class RedisIncrementCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	[DisplayName("Text.RedisIncreaseCommand.Name")]
+	[Description("Text.RedisIncreaseCommand.Description")]
+	[CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisIncreaseCommand.Options.Seed")]
+	[CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisIncreaseCommand.Options.Interval")]
+	[CommandOption("expiry", Type = typeof(TimeSpan), Description = "Text.RedisIncreaseCommand.Options.Expiry")]
+	public class RedisIncrementCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public RedisIncrementCommand() : base("Increment")
-		{
-		}
+		public RedisIncrementCommand() : base("Increase") { }
 		#endregion
 
 		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
+		protected override object OnExecute(CommandContext context)
 		{
 			if(context.Expression.Arguments.Length < 1)
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
+				throw new CommandException("Missing arguments.");
 
 			int seed = context.Expression.Options.GetValue<int>("seed");
 			int interval = context.Expression.Options.GetValue<int>("interval");
+			var expiry = context.Expression.Options.GetValue<TimeSpan>("expiry");
 			var result = new long[context.Expression.Arguments.Length];
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				result[i] = RedisCommand.GetRedis(context.CommandNode).Increment(context.Expression.Arguments[i], interval, seed);
+				result[i] = RedisCommand.GetRedis(context.CommandNode).Increase(context.Expression.Arguments[i], interval, seed, expiry);
 				context.Output.WriteLine(result[i].ToString());
 			}
 

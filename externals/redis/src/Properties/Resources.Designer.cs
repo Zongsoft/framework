@@ -99,36 +99,36 @@ namespace Zongsoft.Externals.Redis.Properties {
         /// <summary>
         ///   查找类似 以原子方式递减指定键的数值。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecrementCommand_Description {
+        internal static string Text_RedisDecreaseCommand_Description {
             get {
-                return ResourceManager.GetString("Text.RedisDecrementCommand.Description", resourceCulture);
+                return ResourceManager.GetString("Text.RedisDecreaseCommand.Description", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 递减命令 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecrementCommand_Name {
+        internal static string Text_RedisDecreaseCommand_Name {
             get {
-                return ResourceManager.GetString("Text.RedisDecrementCommand.Name", resourceCulture);
+                return ResourceManager.GetString("Text.RedisDecreaseCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 递减的步长，默认为1。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecrementCommand_Options_Interval {
+        internal static string Text_RedisDecreaseCommand_Options_Interval {
             get {
-                return ResourceManager.GetString("Text.RedisDecrementCommand.Options.Interval", resourceCulture);
+                return ResourceManager.GetString("Text.RedisDecreaseCommand.Options.Interval", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 种子数，当指定键值不存在时设置的初始值，默认为0。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecrementCommand_Options_Seed {
+        internal static string Text_RedisDecreaseCommand_Options_Seed {
             get {
-                return ResourceManager.GetString("Text.RedisDecrementCommand.Options.Seed", resourceCulture);
+                return ResourceManager.GetString("Text.RedisDecreaseCommand.Options.Seed", resourceCulture);
             }
         }
         
@@ -180,36 +180,36 @@ namespace Zongsoft.Externals.Redis.Properties {
         /// <summary>
         ///   查找类似 以原子方式递增指定键的数值。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncrementCommand_Description {
+        internal static string Text_RedisIncreaseCommand_Description {
             get {
-                return ResourceManager.GetString("Text.RedisIncrementCommand.Description", resourceCulture);
+                return ResourceManager.GetString("Text.RedisIncreaseCommand.Description", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 递增命令 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncrementCommand_Name {
+        internal static string Text_RedisIncreaseCommand_Name {
             get {
-                return ResourceManager.GetString("Text.RedisIncrementCommand.Name", resourceCulture);
+                return ResourceManager.GetString("Text.RedisIncreaseCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 递增的步长，默认为1。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncrementCommand_Options_Interval {
+        internal static string Text_RedisIncreaseCommand_Options_Interval {
             get {
-                return ResourceManager.GetString("Text.RedisIncrementCommand.Options.Interval", resourceCulture);
+                return ResourceManager.GetString("Text.RedisIncreaseCommand.Options.Interval", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 种子数，当指定键值不存在时设置的初始值，默认为0。 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncrementCommand_Options_Seed {
+        internal static string Text_RedisIncreaseCommand_Options_Seed {
             get {
-                return ResourceManager.GetString("Text.RedisIncrementCommand.Options.Seed", resourceCulture);
+                return ResourceManager.GetString("Text.RedisIncreaseCommand.Options.Seed", resourceCulture);
             }
         }
         
