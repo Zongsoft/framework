@@ -9,8 +9,8 @@ copy /Y %Packages%\pipelines.sockets.unofficial\2.2.0\lib\net5.0\*.dll          
 copy /Y %Packages%\mqttnet\3.0.16\lib\net5.0\*.dll                                             %DestinationDirectory%\zongsoft\messaging\mqtt\
 copy /Y %Packages%\mqttnet.extensions.managedclient\3.0.16\lib\net5.0\*.dll                    %DestinationDirectory%\zongsoft\messaging\mqtt\
 
-copy /Y %Packages%\stackexchange.redis\2.2.50\lib\net5.0\*.dll                                 %DestinationDirectory%\zongsoft\externals\redis\
-copy /Y %Packages%\pipelines.sockets.unofficial\2.2.0\lib\net5.0\*.dll                         %DestinationDirectory%\zongsoft\externals\redis\
+copy /Y %Packages%\stackexchange.redis\2.5.61\lib\net5.0\*.dll                                 %DestinationDirectory%\zongsoft\externals\redis\
+copy /Y %Packages%\pipelines.sockets.unofficial\2.2.2\lib\net5.0\*.dll                         %DestinationDirectory%\zongsoft\externals\redis\
 copy /Y %Packages%\system.diagnostics.performancecounter\5.0.0\lib\netstandard2.0\*.dll        %DestinationDirectory%\zongsoft\externals\redis\
 
 copy /Y %Packages%\mysql.data\8.0.26\lib\net5.0\*.dll                                          %DestinationDirectory%\zongsoft\data\drivers\mysql\
