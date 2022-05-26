@@ -63,6 +63,9 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
+			if(interval == 0)
+				return (long)_database.StringGet(GetKey(key));
+
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (long)_database.ScriptEvaluate(DECREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
 
@@ -79,6 +82,9 @@ namespace Zongsoft.Externals.Redis
 
 			//确保连接成功
 			this.Connect();
+
+			if(interval == 0)
+				return (double)_database.StringGet(GetKey(key));
 
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (double)_database.ScriptEvaluate(DECREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
@@ -97,6 +103,9 @@ namespace Zongsoft.Externals.Redis
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
 
+			if(interval == 0)
+				return (long)_database.StringGet(GetKey(key));
+
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (long)await _database.ScriptEvaluateAsync(DECREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
 
@@ -113,6 +122,9 @@ namespace Zongsoft.Externals.Redis
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
+
+			if(interval == 0)
+				return (double)_database.StringGet(GetKey(key));
 
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (double)await _database.ScriptEvaluateAsync(DECREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
@@ -131,6 +143,9 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
+			if(interval == 0)
+				return (long)_database.StringGet(GetKey(key));
+
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
 
@@ -147,6 +162,9 @@ namespace Zongsoft.Externals.Redis
 
 			//确保连接成功
 			this.Connect();
+
+			if(interval == 0)
+				return (double)_database.StringGet(GetKey(key));
 
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (double)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
@@ -165,6 +183,9 @@ namespace Zongsoft.Externals.Redis
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
 
+			if(interval == 0)
+				return (long)_database.StringGet(GetKey(key));
+
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
 
@@ -181,6 +202,9 @@ namespace Zongsoft.Externals.Redis
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
+
+			if(interval == 0)
+				return (double)_database.StringGet(GetKey(key));
 
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				return (double)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
