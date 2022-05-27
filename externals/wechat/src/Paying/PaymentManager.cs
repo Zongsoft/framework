@@ -41,6 +41,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#region 公共属性
 		public PaymentService Payment { get; private set; }
 		public RefundmentService Refundment { get; private set; }
+		public SharingService Sharing { get; private set; }
 		#endregion
 
 		#region 静态构建
