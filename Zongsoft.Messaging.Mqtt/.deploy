@@ -1,0 +1,6 @@
+src/Zongsoft.Messaging.Mqtt.plugin
+src/Zongsoft.Messaging.Mqtt.option
+src/bin/$(Edition)/$(Target)/Zongsoft.Messaging.Mqtt.*
+
+%USERPROFILE%\.nuget\packages\mqttnet\3.0.16\lib\net5.0\*.dll
+%USERPROFILE%\.nuget\packages\mqttnet.extensions.managedclient\3.0.16\lib\net5.0\*.dll

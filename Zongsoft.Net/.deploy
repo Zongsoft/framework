@@ -1,0 +1,3 @@
+src/Zongsoft.Net.plugin
+src/Zongsoft.Net.option
+src/bin/$(Edition)/$(Target)/Zongsoft.Net.*

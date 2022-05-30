@@ -1,0 +1,3 @@
+src/Zongsoft.Messaging.Kafka.plugin
+src/Zongsoft.Messaging.Kafka.option
+src/bin/$(Edition)/$(Target)/Zongsoft.Messaging.Kafka.*

@@ -1,0 +1,3 @@
+src/Zongsoft.Externals.Aliyun.plugin
+src/Zongsoft.Externals.Aliyun.option
+src/bin/$(Edition)/$(Target)/Zongsoft.Externals.Aliyun.*

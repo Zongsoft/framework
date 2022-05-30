@@ -1,0 +1,2 @@
+src/Zongsoft.Data.plugin
+src/bin/$(Edition)/$(Target)/Zongsoft.Data.*
