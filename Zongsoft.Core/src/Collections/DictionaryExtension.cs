@@ -135,7 +135,8 @@ namespace Zongsoft.Collections
 			return false;
 		}
 
-		public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary dictionary, Func<object, TKey> keyConvert = null, Func<object, TValue> valueConvert = null)
+		public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary dictionary, Func<object, TKey> keyConvert = null, Func<object, TValue> valueConvert = null) => ToDictionary(dictionary, null, keyConvert, valueConvert);
+		public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary dictionary, IEqualityComparer<TKey> comparer, Func<object, TKey> keyConvert = null, Func<object, TValue> valueConvert = null)
 		{
 			if(dictionary == null)
 				return null;
@@ -146,7 +147,7 @@ namespace Zongsoft.Collections
 			if(valueConvert == null)
 				valueConvert = value => Zongsoft.Common.Convert.ConvertValue<TValue>(value);
 
-			var result = new Dictionary<TKey, TValue>(dictionary.Count);
+			var result = new Dictionary<TKey, TValue>(dictionary.Count, comparer);
 			var iterator = dictionary.GetEnumerator();
 
 			while(iterator.MoveNext())
