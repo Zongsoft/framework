@@ -2,4 +2,4 @@ src/Zongsoft.Externals.Wechat.plugin
 src/Zongsoft.Externals.Wechat.option
 src/bin/$(Edition)/$(Target)/Zongsoft.Externals.Wechat.*
 
-%USERPROFILE%\.nuget\packages\portable.bouncycastle\1.9.0\lib\netstandard2.0\*.dll
+%NUGET_PACKAGES%\portable.bouncycastle\1.9.0\lib\netstandard2.0\*.dll
