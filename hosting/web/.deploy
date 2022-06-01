@@ -1,0 +1,38 @@
+[plugins]
+../../Zongsoft.Plugins/Main.plugin
+
+[plugins zongsoft data]
+../../Zongsoft.Data/.deploy
+
+[plugins zongsoft data mysql]
+../../Zongsoft.Data/drivers/mysql/.deploy
+
+[plugins zongsoft commands]
+../../Zongsoft.Commands/.deploy
+
+[plugins zongsoft reporting]
+../../Zongsoft.Reporting/.deploy
+
+[plugins zongsoft security]
+../../Zongsoft.Security/.deploy
+../../Zongsoft.Security/src/api/.deploy
+
+[plugins zongsoft externals aliyun]
+../../externals/aliyun/.deploy
+
+[plugins zongsoft externals redis]
+../../externals/redis/.deploy
+
+[plugins zongsoft externals wechat]
+../../externals/wechat/.deploy
+../../externals/wechat/src/api/.deploy
+
+[plugins zongsoft messaging mqtt]
+../../Zongsoft.Messaging.Mqtt/.deploy
+
+[plugins zongsoft messaging kafka]
+../../Zongsoft.Messaging.Kafka/.deploy
+
+[plugins zongsoft administratives]
+/Zongsoft/Administratives/.deploy
+/Zongsoft/Administratives/src/api/.deploy
