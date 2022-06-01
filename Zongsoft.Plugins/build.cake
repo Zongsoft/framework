@@ -1,25 +1,21 @@
 var target = Argument("target", "default");
 
-var srcDirectory  = "src/";
-var testDirectory = "test/";
 var solutionFile  = "Zongsoft.Plugins.sln";
 
 Task("clean")
 	.Description("清理解决方案")
 	.Does(() =>
 {
-	DeleteFiles(srcDirectory + "*.nupkg");
-	CleanDirectories(srcDirectory + "**/bin");
-	CleanDirectories(srcDirectory + "**/obj");
-	CleanDirectories(testDirectory + "**/bin");
-	CleanDirectories(testDirectory + "**/obj");
+	DeleteFiles("**/*.nupkg");
+	CleanDirectories("**/bin");
+	CleanDirectories("**/obj");
 });
 
 Task("restore")
 	.Description("还原项目依赖")
 	.Does(() =>
 {
-	DotNetCoreRestore(solutionFile);
+	DotNetRestore(solutionFile);
 });
 
 Task("build")
@@ -28,31 +24,30 @@ Task("build")
 	.IsDependentOn("restore")
 	.Does(() =>
 {
-	var settings = new DotNetCoreBuildSettings
+	var settings = new DotNetBuildSettings
 	{
 		NoRestore = true
 	};
 
-	DotNetCoreBuild(solutionFile, settings);
+	DotNetBuild(solutionFile, settings);
 });
 
 Task("test")
 	.Description("单元测试")
 	.IsDependentOn("build")
-	.WithCriteria(DirectoryExists(testDirectory))
 	.Does(() =>
 {
-	var settings = new DotNetCoreTestSettings
+	var settings = new DotNetTestSettings
 	{
 		NoRestore = true,
 		NoBuild = true
 	};
 
-	var projects = GetFiles(testDirectory + "**/*.csproj");
+	var projects = GetFiles("**/test/*.csproj");
 
 	foreach(var project in projects)
 	{
-		DotNetCoreTest(project.FullPath, settings);
+		DotNetTest(project.FullPath, settings);
 	}
 });
 
