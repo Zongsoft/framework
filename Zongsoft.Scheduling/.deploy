@@ -1,8 +1,3 @@
 src/Zongsoft.Scheduling.option
 src/Zongsoft.Scheduling.plugin
 src/bin/$(Edition)/$(Target)/Zongsoft.Scheduling.*
-
-cron/Zongsoft.Scheduling.Cron.option
-cron/Zongsoft.Scheduling.Cron.plugin
-cron/bin/$(Edition)/$(Target)/Zongsoft.Scheduling.Cron.*
-cron/bin/$(Edition)/$(Target)/Cronos.*

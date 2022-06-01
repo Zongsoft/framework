@@ -1,0 +1,4 @@
+Zongsoft.Externals.Wechat.Daemon.option
+Zongsoft.Externals.Wechat.Daemon.plugin
+
+bin/$(Edition)/$(Target)/Zongsoft.Externals.Wechat.Daemon.*
