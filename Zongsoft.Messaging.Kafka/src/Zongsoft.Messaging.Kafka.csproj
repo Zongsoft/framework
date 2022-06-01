@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
 		<Version>5.0.0.0</Version>
+		<Platforms>AnyCPU;x64</Platforms>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Product>Zongsoft Kafka Library</Product>
 		<Description>This is a library about Kafka messaging development.</Description>
@@ -14,7 +15,7 @@
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-		<Platforms>AnyCPU;x64</Platforms>
+		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
