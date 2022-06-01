@@ -5,3 +5,4 @@ src/bin/$(Edition)/$(Target)/Zongsoft.Externals.Redis.*
 %NUGET_PACKAGES%/stackexchange.redis/2.5.61/lib/net5.0/*.dll
 %NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.2/lib/net5.0/*.dll
 %NUGET_PACKAGES%/system.diagnostics.performancecounter/5.0.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.io.pipelines/5.0.0/lib/netstandard2.0/*.dll
