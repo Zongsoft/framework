@@ -4,8 +4,8 @@
 		<Version>5.1.0.0</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Company>Zongsoft Studio</Company>
-		<Product>Zongsoft Wechat Daemon Library</Product>
-		<Description>This is a library about Wechat Daemon.</Description>
+		<Product>Zongsoft Wechat Web Library</Product>
+		<Description>This is a web api library about Wechat.</Description>
 		<Copyright>Copyright(C) Zongsoft Studio 2015-2022. All rights reserved.</Copyright>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -24,16 +24,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Zongsoft.Externals.Wechat.csproj" />
+		<ProjectReference Include="..\src\Zongsoft.Externals.Wechat.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 </Project>

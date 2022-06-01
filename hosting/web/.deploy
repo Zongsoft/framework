@@ -25,7 +25,7 @@
 
 [plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
-../../externals/wechat/src/api/.deploy
+../../externals/wechat/api/.deploy
 
 [plugins zongsoft messaging mqtt]
 ../../Zongsoft.Messaging.Mqtt/.deploy

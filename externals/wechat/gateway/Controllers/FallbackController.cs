@@ -35,7 +35,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat.Daemon.Controllers
+namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 {
 	[ApiController]
 	[Route("Externals/Wechat/Fallback")]

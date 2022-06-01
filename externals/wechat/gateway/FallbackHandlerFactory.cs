@@ -42,7 +42,7 @@ using Zongsoft.Components;
 
 using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat.Daemon
+namespace Zongsoft.Externals.Wechat.Gateway
 {
 	public static class FallbackHandlerFactory
 	{

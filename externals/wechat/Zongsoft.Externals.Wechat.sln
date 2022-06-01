@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30711.63
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat", "src\Zongsoft.Externals.Wechat.csproj", "{33E90532-1F00-46BA-BA87-61087574623A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat.Daemon", "src\daemon\Zongsoft.Externals.Wechat.Daemon.csproj", "{FC31E71B-A6B0-41D8-B841-E8937AEE174F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat.Gateway", "gateway\Zongsoft.Externals.Wechat.Gateway.csproj", "{FC31E71B-A6B0-41D8-B841-E8937AEE174F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat.Web", "src\api\Zongsoft.Externals.Wechat.Web.csproj", "{F08C4E75-D5A6-4779-BABE-5037733784CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat.Web", "api\Zongsoft.Externals.Wechat.Web.csproj", "{F08C4E75-D5A6-4779-BABE-5037733784CA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Wechat.Tests", "test\Zongsoft.Externals.Wechat.Tests.csproj", "{C51E7AD5-E103-4A05-AC95-89D01E437E30}"
 EndProject
