@@ -35,4 +35,4 @@
 
 [plugins zongsoft administratives]
 /Zongsoft/Administratives/.deploy
-/Zongsoft/Administratives/src/api/.deploy
+/Zongsoft/Administratives/api/.deploy

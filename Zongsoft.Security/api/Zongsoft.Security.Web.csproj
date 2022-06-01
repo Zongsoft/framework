@@ -19,21 +19,20 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DocumentationFile>D:\Zongsoft\Framework\Zongsoft.Plugins\src\Zongsoft.Plugins.xml</DocumentationFile>
 		<NoWarn>1701;1702;1591</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Zongsoft.Security.csproj" />
+		<ProjectReference Include="..\src\Zongsoft.Security.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Web">
-			<HintPath>..\..\..\Zongsoft.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Web.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\net5.0\Zongsoft.Web.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
