@@ -2,7 +2,7 @@
 
 set -ex
 
-CAKE_ARGS="--verbosity=verbose"
+CAKE_ARGS="--verbosity=normal"
 
 PROJECT_CORE="Zongsoft.Core/build.cake"
 PROJECT_DATA="Zongsoft.Data/build.cake"
@@ -19,8 +19,6 @@ PROJECT_ALIYUN="externals/aliyun/build.cake"
 PROJECT_REDIS="externals/redis/build.cake"
 PROJECT_WECHAT="externals/wechat/build.cake"
 # PROJECT_GRAPECITY="externals/grapecity/build.cake"
-
-dotnet tool restore
 
 dotnet cake $PROJECT_CORE $CAKE_ARGS "$@"
 dotnet cake $PROJECT_DATA $CAKE_ARGS "$@"

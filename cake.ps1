@@ -14,9 +14,7 @@
 [string]$project_wechat         = 'externals/wechat/build.cake'
 [string]$project_grapecity      = 'externals/grapecity/build.cake'
 
-[string]$CAKE_ARGS = '--verbosity=verbose'
-
-dotnet tool restore
+[string]$CAKE_ARGS = '--verbosity=normal'
 
 Write-Host "dotnet cake $project_core $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_core $CAKE_ARGS $ARGS
@@ -58,5 +56,5 @@ dotnet cake $project_redis $CAKE_ARGS $ARGS
 Write-Host "dotnet cake $project_wechat $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_wechat $CAKE_ARGS $ARGS
 
-Write-Host "dotnet cake $project_grapecity $CAKE_ARGS $ARGS" -ForegroundColor Magenta
-dotnet cake $project_grapecity $CAKE_ARGS $ARGS
+# Write-Host "dotnet cake $project_grapecity $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+# dotnet cake $project_grapecity $CAKE_ARGS $ARGS
