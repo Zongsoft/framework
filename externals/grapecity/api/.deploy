@@ -1,0 +1,3 @@
+Zongsoft.Externals.Grapecity.Web.option
+Zongsoft.Externals.Grapecity.Web.plugin
+bin/$(Edition)/$(Target)/Zongsoft.Externals.Grapecity.Web.*

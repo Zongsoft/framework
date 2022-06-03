@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Grapecity", "src\Zongsoft.Externals.Grapecity.csproj", "{C538BF3F-AA3C-459B-A902-358207028767}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Grapecity.Web", "src\api\Zongsoft.Externals.Grapecity.Web.csproj", "{C885F3B3-575A-41FC-AE07-9A01A2EC3767}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Grapecity.Web", "api\Zongsoft.Externals.Grapecity.Web.csproj", "{C885F3B3-575A-41FC-AE07-9A01A2EC3767}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
