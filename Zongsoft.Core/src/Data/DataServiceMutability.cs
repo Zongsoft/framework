@@ -32,9 +32,9 @@ using System;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// 表示数据服务可写性的结构。
+	/// 表示数据服务可变性的结构。
 	/// </summary>
-	public struct DataServiceWritability : IEquatable<DataServiceWritability>
+	public struct DataServiceMutability : IEquatable<DataServiceMutability>
 	{
 		#region 常量定义
 		private const byte DELETABLE_VALUE  = 0x01;
@@ -49,7 +49,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		private DataServiceWritability(byte value) => _value = value;
+		private DataServiceMutability(byte value) => _value = value;
 		#endregion
 
 		#region 公共属性
@@ -83,8 +83,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public bool Equals(DataServiceWritability other) => _value == other._value;
-		public override bool Equals(object obj) => obj is DataServiceWritability other && this.Equals(other);
+		public bool Equals(DataServiceMutability other) => _value == other._value;
+		public override bool Equals(object obj) => obj is DataServiceMutability other && this.Equals(other);
 		public override int GetHashCode() => _value;
 		public override string ToString() => _value == 0 ?
 			"None" :
@@ -95,19 +95,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 符号重写
-		public static bool operator ==(DataServiceWritability left, DataServiceWritability right) => left._value == right._value;
-		public static bool operator !=(DataServiceWritability left, DataServiceWritability right) => left._value != right._value;
+		public static bool operator ==(DataServiceMutability left, DataServiceMutability right) => left._value == right._value;
+		public static bool operator !=(DataServiceMutability left, DataServiceMutability right) => left._value != right._value;
 		#endregion
 
 		#region 静态属性
-		/// <summary>获取一个空的可写性，即没有任何可写性。</summary>
-		public static DataServiceWritability None => new (0);
+		/// <summary>获取一个空的可变性，即没有任何可变性。</summary>
+		public static DataServiceMutability None => new (0);
 
-		/// <summary>获取一个具有全部的可写性，支持“删除”、“更新”、“新增”、“增改”。</summary>
-		public static DataServiceWritability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
+		/// <summary>获取一个具有全部的可变性，支持“删除”、“新增”、“更新”、“增改”。</summary>
+		public static DataServiceMutability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
 
-		/// <summary>获取一个默认的可写性，支持“更新”和“新增”。</summary>
-		public static DataServiceWritability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
+		/// <summary>获取一个默认的可变性，支持“新增”和“更新”。</summary>
+		public static DataServiceMutability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
 		#endregion
 	}
 }

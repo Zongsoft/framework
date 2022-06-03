@@ -66,7 +66,7 @@ namespace Zongsoft.Data
 		private DataServiceAttribute _attribute;
 		private IDataSearcher<TModel> _searcher;
 		private IServiceProvider _serviceProvider;
-		private DataServiceWritability? _writability;
+		private DataServiceMutability? _mutability;
 		#endregion
 
 		#region 构造函数
@@ -92,24 +92,24 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceWritability writability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_writability = writability;
+			_mutability = mutability;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceWritability writability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider, writability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceWritability writability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(serviceProvider, writability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(serviceProvider, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -141,7 +141,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceWritability writability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -150,19 +150,19 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_writability = writability;
+			_mutability = mutability;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceWritability writability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider, writability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceWritability writability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, serviceProvider, writability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, serviceProvider, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -189,23 +189,23 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceWritability writability)
+		protected DataServiceBase(IDataService service, DataServiceMutability mutability)
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_writability = writability;
+			_mutability = mutability;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceWritability writability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service, writability)
+		protected DataServiceBase(IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceWritability writability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(service, writability)
+		protected DataServiceBase(IDataService service, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(service, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -236,7 +236,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceWritability writability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -244,19 +244,19 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_writability = writability;
+			_mutability = mutability;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceWritability writability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service, writability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceWritability writability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, service, writability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, service, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -288,10 +288,10 @@ namespace Zongsoft.Data
 		}
 
 		public DataServiceAttribute Attribute { get => _attribute; }
-		public virtual bool CanDelete { get => _writability.HasValue ? _writability.Value.Deletable : (this.Service?.CanDelete ?? false); }
-		public virtual bool CanInsert { get => _writability.HasValue ? _writability.Value.Insertable : (this.Service?.CanInsert ?? true); }
-		public virtual bool CanUpdate { get => _writability.HasValue ? _writability.Value.Updatable : (this.Service?.CanUpdate ?? true); }
-		public virtual bool CanUpsert { get => _writability.HasValue ? _writability.Value.Upsertable : (this.Service != null && this.CanInsert && this.CanUpdate); }
+		public virtual bool CanDelete { get => _mutability.HasValue ? _mutability.Value.Deletable : (this.Service?.CanDelete ?? false); }
+		public virtual bool CanInsert { get => _mutability.HasValue ? _mutability.Value.Insertable : (this.Service?.CanInsert ?? true); }
+		public virtual bool CanUpdate { get => _mutability.HasValue ? _mutability.Value.Updatable : (this.Service?.CanUpdate ?? true); }
+		public virtual bool CanUpsert { get => _mutability.HasValue ? _mutability.Value.Upsertable : (this.Service != null && this.CanInsert && this.CanUpdate); }
 
 		public IDataAccess DataAccess
 		{
