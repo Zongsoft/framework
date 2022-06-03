@@ -42,6 +42,9 @@ namespace Zongsoft.Data
 
 		/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
 		bool SequenceSuppressed { get; set; }
+
+		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
+		bool SequenceRetrieverSuppressed { get; set; }
 	}
 
 	/// <summary>
@@ -59,6 +62,8 @@ namespace Zongsoft.Data
 		public bool ConstraintIgnored { get; set; }
 		/// <inheritdoc />
 		public bool SequenceSuppressed { get; set; }
+		/// <inheritdoc />
+		public bool SequenceRetrieverSuppressed { get; set; }
 		#endregion
 
 		#region 静态方法
@@ -81,6 +86,10 @@ namespace Zongsoft.Data
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder SuppressSequence() => new() { SequenceSuppressed = true };
 
+		/// <summary>创建一个禁用数据库序号器返回值的增改选项构建器。</summary>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder SuppressSequenceRetriever() => new() { SequenceRetrieverSuppressed = true };
+
 		/// <summary>创建一个禁用数据验证器的增改选项构建器。</summary>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder SuppressValidator() => new() { ValidatorSuppressed = true };
@@ -99,6 +108,9 @@ namespace Zongsoft.Data
 
 			/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
 			public bool SequenceSuppressed { get; set; }
+
+			/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
+			public bool SequenceRetrieverSuppressed { get; set; }
 			#endregion
 
 			#region 设置方法
@@ -108,6 +120,8 @@ namespace Zongsoft.Data
 			public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
 			public Builder SuppressSequence() { this.SequenceSuppressed = true; return this; }
 			public Builder UnsuppressSequence() { this.SequenceSuppressed = false; return this; }
+			public Builder SuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = true; return this; }
+			public Builder UnsuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = false; return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
 			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 			#endregion
@@ -117,6 +131,7 @@ namespace Zongsoft.Data
 			{
 				ConstraintIgnored = this.ConstraintIgnored,
 				SequenceSuppressed = this.SequenceSuppressed,
+				SequenceRetrieverSuppressed = this.SequenceRetrieverSuppressed,
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};
 			#endregion

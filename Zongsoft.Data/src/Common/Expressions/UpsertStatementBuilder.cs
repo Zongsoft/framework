@@ -48,6 +48,7 @@ namespace Zongsoft.Data.Common.Expressions
 		internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContextBase context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
+			var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
 
 			//更新当前操作的容器数据
 			if(data != null && owner != null)
@@ -83,7 +84,7 @@ namespace Zongsoft.Data.Common.Expressions
 					{
 						var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin)
+						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 						{
 							statement.Sequence = new SelectStatement(owner?.FullPath);
 							statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
@@ -219,6 +220,8 @@ namespace Zongsoft.Data.Common.Expressions
 					yield return statement;
 			}
 		}
+
+		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
 		#endregion
 	}
 }

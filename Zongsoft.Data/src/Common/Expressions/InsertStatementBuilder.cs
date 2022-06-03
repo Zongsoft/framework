@@ -47,6 +47,7 @@ namespace Zongsoft.Data.Common.Expressions
 		private static IEnumerable<InsertStatement> BuildInserts(IDataMutateContextBase context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
+			var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
 
 			foreach(var inherit in inherits)
 			{
@@ -64,7 +65,7 @@ namespace Zongsoft.Data.Common.Expressions
 					{
 						var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin)
+						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 						{
 							statement.Sequence = new SelectStatement(owner?.FullPath);
 							statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
@@ -126,6 +127,8 @@ namespace Zongsoft.Data.Common.Expressions
 					yield return statement;
 			}
 		}
+
+		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
 		#endregion
 	}
 }
