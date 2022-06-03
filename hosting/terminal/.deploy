@@ -1,0 +1,40 @@
+[bin $(Edition) $(Target) plugins]
+../../Zongsoft.Plugins/Main.plugin
+plugins/Terminal.plugin
+
+[bin $(Edition) $(Target) plugins zongsoft data]
+../../Zongsoft.Data/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft data mysql]
+../../Zongsoft.Data/drivers/mysql/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft commands]
+../../Zongsoft.Commands/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft reporting]
+../../Zongsoft.Reporting/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft security]
+../../Zongsoft.Security/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft externals aliyun]
+../../externals/aliyun/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft externals redis]
+../../externals/redis/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft externals wechat]
+../../externals/wechat/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft messaging mqtt]
+../../Zongsoft.Messaging.Mqtt/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft messaging kafka]
+../../Zongsoft.Messaging.Kafka/.deploy
+
+[bin $(Edition) $(Target) plugins zongsoft scheduling]
+../../Zongsoft.Scheduling/.deploy
+[bin $(Edition) $(Target) plugins zongsoft scheduling cron]
+../../Zongsoft.Scheduling/cron/.deploy
+[bin $(Edition) $(Target) plugins zongsoft scheduling samples]
+../../Zongsoft.Scheduling/samples/.deploy

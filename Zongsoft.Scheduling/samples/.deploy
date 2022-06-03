@@ -1,0 +1,3 @@
+Zongsoft.Scheduling.Samples.option
+Zongsoft.Scheduling.Samples.plugin
+bin/$(Edition)/$(Target)/Zongsoft.Scheduling.Samples.*
