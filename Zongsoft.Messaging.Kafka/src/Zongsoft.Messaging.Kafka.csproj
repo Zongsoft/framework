@@ -20,7 +20,7 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DocumentationFile>Zongsoft.Messaging.Kafka.xml</DocumentationFile>
-		<NoWarn>1701;1702;1591</NoWarn>
+		<NoWarn>1701;1702;1591;NU5048</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

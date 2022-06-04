@@ -19,8 +19,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DocumentationFile>D:\Zongsoft\Framework\Zongsoft.Plugins\src\Zongsoft.Plugins.xml</DocumentationFile>
-		<NoWarn>1701;1702;1591</NoWarn>
+		<DocumentationFile>Zongsoft.Security.xml</DocumentationFile>
+		<NoWarn>1701;1702;1591;NU5048</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 

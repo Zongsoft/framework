@@ -17,6 +17,10 @@
 		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;1591;NU5048</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
 	</ItemGroup>
