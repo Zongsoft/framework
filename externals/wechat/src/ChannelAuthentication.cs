@@ -65,11 +65,11 @@ namespace Zongsoft.Externals.Wechat
 			if(result.Failed)
 				return (OperationResult)result.Failure;
 
-			var info = await this.GetUserInfo(result.Value.AccessToken, result.Value.OpenId, cancellation);
+			var info = await GetUserInfo(result.Value.AccessToken, result.Value.OpenId, cancellation);
 			return OperationResult.Success(result.Value.ToCredential(info.Succeed ? info.Value : default));
 		}
 
-		public async ValueTask<OperationResult<UserInfo>> GetUserInfo(string token, string openId, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<UserInfo>> GetUserInfo(string token, string openId, CancellationToken cancellation = default)
 		{
 			var response = await CredentialManager.Http.GetAsync($"/sns/userinfo?access_token={token}&openid={openId}", cancellation);
 			var result = await response.GetResultAsync<UserInfoResult>(cancellation);
@@ -105,31 +105,31 @@ namespace Zongsoft.Externals.Wechat
 			#region 公共属性
 			[JsonPropertyName("access_token")]
 			[Serialization.SerializationMember("access_token")]
-			public string AccessToken;
+			public string AccessToken { get; set; }
 
 			[JsonPropertyName("refresh_token")]
 			[Serialization.SerializationMember("refresh_token")]
-			public string RenewalToken;
+			public string RenewalToken { get; set; }
 
 			[JsonPropertyName("expires_in")]
 			[Serialization.SerializationMember("expires_in")]
-			public int Period;
+			public int Period { get; set; }
 
 			[JsonPropertyName("openid")]
 			[Serialization.SerializationMember("openid")]
-			public string OpenId;
+			public string OpenId { get; set; }
 
 			[JsonPropertyName("unionid")]
 			[Serialization.SerializationMember("unionid")]
-			public string UnionId;
+			public string UnionId { get; set; }
 
 			[JsonPropertyName("scope")]
 			[Serialization.SerializationMember("scope")]
-			public string Permission;
+			public string Permission { get; set; }
 			#endregion
 
 			#region 公共方法
-			public Credential ToCredential(UserInfo user) => new Credential
+			public Credential ToCredential(UserInfo user) => new
 			(
 				Randomizer.GenerateString(16),
 				this.AccessToken,

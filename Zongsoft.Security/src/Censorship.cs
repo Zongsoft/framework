@@ -34,8 +34,6 @@ using System.Linq;
 using Zongsoft.Data;
 using Zongsoft.Services;
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Zongsoft.Security
 {
 	[Service(typeof(ICensorship))]
@@ -79,13 +77,13 @@ namespace Zongsoft.Security
 		public string[] Keys
 		{
 			get => _keys;
-			set => _keys = value ?? throw new ArgumentNullException();
+			set => _keys = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? (_dataAccess = _services.GetRequiredService<IDataAccessProvider>().GetAccessor(Modules.Security));
-			set => _dataAccess = value ?? throw new ArgumentNullException();
+			get => _dataAccess ??= _services.ResolveRequired<IDataAccessProvider>().GetAccessor(Modules.Security);
+			set => _dataAccess = value ?? throw new ArgumentNullException(nameof(value));
 		}
 		#endregion
 

@@ -34,26 +34,16 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Scheduling.Commands
 {
-	public class SchedulerListenCommand : Zongsoft.Services.Commands.WorkerListenCommand
+	public class SchedulerListenCommand : Zongsoft.Services.Commands.WorkerListenCommandBase<Scheduler>
 	{
 		#region 构造函数
-		public SchedulerListenCommand()
-		{
-		}
-
-		public SchedulerListenCommand(string name) : base(name)
-		{
-		}
+		public SchedulerListenCommand() { }
+		public SchedulerListenCommand(string name) : base(name) { }
 		#endregion
 
 		#region 重写方法
-		protected override void OnListening(CommandContext context, IWorker worker)
+		protected override void OnListening(CommandContext context, Scheduler scheduler)
 		{
-			var scheduler = worker as IScheduler;
-
-			if(scheduler == null)
-				throw new CommandException("Missing a required scheduler.");
-
 			scheduler.Expired += this.Scheduler_Expired;
 			scheduler.Handled += this.Scheduler_Handled;
 			scheduler.Occurred += this.Scheduler_Occurred;
@@ -68,19 +58,14 @@ namespace Zongsoft.Scheduling.Commands
 			}
 
 			//调用基类同名方法（打印欢迎信息）
-			base.OnListening(context, worker);
+			base.OnListening(context, scheduler);
 
 			//打印基本信息
 			context.Output.WriteLine(SchedulerCommand.GetInfo(scheduler, true).AppendLine());
 		}
 
-		protected override void OnListened(CommandContext context, IWorker worker)
+		protected override void OnListened(CommandContext context, Scheduler scheduler)
 		{
-			var scheduler = worker as IScheduler;
-
-			if(scheduler == null)
-				return;
-
 			scheduler.Expired -= this.Scheduler_Expired;
 			scheduler.Handled -= this.Scheduler_Handled;
 			scheduler.Occurred -= this.Scheduler_Occurred;
@@ -107,7 +92,7 @@ namespace Zongsoft.Scheduling.Commands
 			var name = e.Exception == null ? Properties.Resources.Scheduler_Handled_Succeed : Properties.Resources.Scheduler_Handled_Failed;
 
 			//获取处理完成的事件信息内容
-			var content = this.GetHandledContent(name, CommandOutletColor.DarkGreen, e);
+			var content = GetHandledContent(name, CommandOutletColor.DarkGreen, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -168,7 +153,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Failed(object sender, HandledEventArgs e)
 		{
 			//获取重试失败的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Failed_Name, CommandOutletColor.DarkRed, e);
+			var content = GetHandledContent(Properties.Resources.Retriever_Failed_Name, CommandOutletColor.DarkRed, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -177,7 +162,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Succeed(object sender, HandledEventArgs e)
 		{
 			//获取重试成功的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Succeed_Name, CommandOutletColor.DarkYellow, e);
+			var content = GetHandledContent(Properties.Resources.Retriever_Succeed_Name, CommandOutletColor.DarkYellow, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -186,7 +171,7 @@ namespace Zongsoft.Scheduling.Commands
 		private void Retriever_Discarded(object sender, HandledEventArgs e)
 		{
 			//获取重试丢弃的事件信息内容
-			var content = this.GetHandledContent(Properties.Resources.Retriever_Discarded_Name, CommandOutletColor.Magenta, e);
+			var content = GetHandledContent(Properties.Resources.Retriever_Discarded_Name, CommandOutletColor.Magenta, e);
 
 			//输出事件信息内容
 			this.Context.Output.WriteLine(content);
@@ -194,7 +179,7 @@ namespace Zongsoft.Scheduling.Commands
 		#endregion
 
 		#region 私有方法
-		private CommandOutletContent GetHandledContent(string name, CommandOutletColor color, HandledEventArgs args)
+		private static CommandOutletContent GetHandledContent(string name, CommandOutletColor color, HandledEventArgs args)
 		{
 			var content = CommandOutletContent.Create(color, name)
 				.Append(CommandOutletColor.DarkGray, "(")
@@ -246,13 +231,13 @@ namespace Zongsoft.Scheduling.Commands
 				content.First.Color = CommandOutletColor.Red;
 
 				content.AppendLine()
-				       .Append(this.GetExceptionContent(args.Exception));
+				       .Append(GetExceptionContent(args.Exception));
 			}
 
 			return content;
 		}
 
-		private CommandOutletContent GetExceptionContent(Exception exception)
+		private static CommandOutletContent GetExceptionContent(Exception exception)
 		{
 			if(exception == null)
 				return null;

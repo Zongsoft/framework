@@ -37,11 +37,13 @@ namespace Zongsoft.Reporting
 	[Service(typeof(IReportDataLocator))]
 	public class ReportDataLocator : IReportDataLocator
 	{
-		private IServiceProvider _serviceProvider;
+		private readonly IServiceProvider _serviceProvider;
+
+		public ReportDataLocator(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
 
 		public IReportDataLoader Locate(IReportDataSource source)
 		{
-			var dataAccess = string.IsNullOrEmpty(source.Name) || source.Name == "_" ? _serviceProvider.GetDataAccess() : _serviceProvider.GetDataAccess(source.Name);
+			//var dataAccess = string.IsNullOrEmpty(source.Name) || source.Name == "_" ? _serviceProvider.GetDataAccess() : _serviceProvider.GetDataAccess(source.Name);
 			return null;
 			//return new ReportDataLoader(dataAccess);
 		}

@@ -42,18 +42,18 @@ namespace Zongsoft.Plugins
 	public class Plugin
 	{
 		#region 成员字段
-		private PluginTree _pluginTree;
-		private string _name;
-		private string _filePath;
-		private bool _isHidden;
+		private readonly PluginTree _pluginTree;
+		private readonly string _name;
+		private readonly string _filePath;
+		private readonly bool _isHidden;
+		private readonly PluginManifest _manifest;
+		private readonly Plugin _parent;
+		private readonly PluginCollection _children;
+		private readonly List<Builtin> _builtins;
 		private PluginStatus _status;
-		private PluginManifest _manifest;
-		private Plugin _parent;
-		private PluginCollection _children;
-		private List<Builtin> _builtins;
 
-		private BuilderElementCollection _builders;
-		private FixedElementCollection<IParser> _parsers;
+		private readonly BuilderElementCollection _builders;
+		private readonly FixedElementCollection<IParser> _parsers;
 		#endregion
 
 		#region 构造函数
@@ -68,10 +68,10 @@ namespace Zongsoft.Plugins
 		internal Plugin(PluginTree pluginTree, string name, string filePath, Plugin parent)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if(string.IsNullOrWhiteSpace(filePath))
-				throw new ArgumentNullException("filePath");
+				throw new ArgumentNullException(nameof(filePath));
 
 			_pluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
 			_name = name.Trim();
@@ -219,7 +219,7 @@ namespace Zongsoft.Plugins
 		private FixedElement GetFixedElement(string name, Plugin plugin, Func<Plugin, FixedElementCollection> getElements)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			//从当前指定的插件的固定元素集合中查找指定名称的固定元素
 			var element = getElements(plugin).Get(name);
@@ -319,13 +319,11 @@ namespace Zongsoft.Plugins
 				throw new InvalidOperationException();
 
 			if(this.IsMaster)
-				return new Plugin[0];
+				return Array.Empty<Plugin>();
 
 			List<Plugin> masters = new List<Plugin>();
-
 			this.AddMasters(this, masters);
-
-			return masters.ToArray();
+			return masters;
 		}
 
 		private void AddMasters(Plugin current, IList<Plugin> masters)
@@ -365,20 +363,20 @@ namespace Zongsoft.Plugins
 
 			List<Plugin> slaves = new List<Plugin>();
 			IEnumerable<Plugin> siblings = this.GetSiblings(false, true);
-			this.AddSlaves(this, siblings, slaves);
+			AddSlaves(this, siblings, slaves);
 
 			if(containsAll && slaves.Count > 0)
 			{
 				for(int i = 0; i < slaves.Count; i++)
-					this.AddSlaves(slaves[i], siblings, slaves);
+					AddSlaves(slaves[i], siblings, slaves);
 			}
 
 			return slaves.ToArray();
 		}
 
-		private void AddSlaves(Plugin master, IEnumerable<Plugin> siblings, IList<Plugin> slaves)
+		private static void AddSlaves(Plugin master, IEnumerable<Plugin> siblings, IList<Plugin> slaves)
 		{
-			if(siblings == null || siblings.Count() < 1)
+			if(siblings == null || !siblings.Any())
 				return;
 
 			foreach(Plugin sibling in siblings)
@@ -405,10 +403,10 @@ namespace Zongsoft.Plugins
 		internal void RegisterBuiltin(Builtin builtin)
 		{
 			if(builtin == null)
-				throw new ArgumentNullException("builtin");
+				throw new ArgumentNullException(nameof(builtin));
 
 			if(builtin.Plugin != null && (!object.ReferenceEquals(builtin.Plugin, this)))
-				throw new ArgumentException();
+				throw new ArgumentException($"Invalid builtin.");
 
 			_builtins.Add(builtin);
 		}
@@ -416,10 +414,10 @@ namespace Zongsoft.Plugins
 		internal void UnregisterBuiltin(Builtin builtin)
 		{
 			if(builtin == null)
-				throw new ArgumentNullException("builtin");
+				throw new ArgumentNullException(nameof(builtin));
 
 			if(builtin.Plugin != null && (!object.ReferenceEquals(builtin.Plugin, this)))
-				throw new ArgumentException();
+				throw new ArgumentException($"Invalid builtin.");
 
 			_builtins.Remove(builtin);
 		}
@@ -450,14 +448,12 @@ namespace Zongsoft.Plugins
 			if(_filePath == null)
 				return base.GetHashCode();
 
-			switch(Environment.OSVersion.Platform)
+			return Environment.OSVersion.Platform switch
 			{
-				case PlatformID.Unix:
-				case PlatformID.MacOSX:
-					return _filePath.GetHashCode();
-				default:
-					return _filePath.ToLowerInvariant().GetHashCode();
-			}
+				PlatformID.Unix => _filePath.GetHashCode(),
+				PlatformID.MacOSX => _filePath.GetHashCode(),
+				_ => _filePath.ToLowerInvariant().GetHashCode(),
+			};
 		}
 
 		/// <summary>
@@ -473,14 +469,12 @@ namespace Zongsoft.Plugins
 
 			var other = (Plugin)obj;
 
-			switch(Environment.OSVersion.Platform)
+			return Environment.OSVersion.Platform switch
 			{
-				case PlatformID.Unix:
-				case PlatformID.MacOSX:
-					return string.Equals(_filePath, other.FilePath, StringComparison.Ordinal);
-				default:
-					return string.Equals(_filePath, other.FilePath, StringComparison.OrdinalIgnoreCase);
-			}
+				PlatformID.Unix => string.Equals(_filePath, other.FilePath, StringComparison.Ordinal),
+				PlatformID.MacOSX => string.Equals(_filePath, other.FilePath, StringComparison.Ordinal),
+				_ => string.Equals(_filePath, other.FilePath, StringComparison.OrdinalIgnoreCase),
+			};
 		}
 		#endregion
 
@@ -491,7 +485,6 @@ namespace Zongsoft.Plugins
 			private readonly Plugin _plugin;
 			private readonly List<Assembly> _assemblies;
 			private PluginDependencyCollection _dependencies;
-			private PluginAssemblyLoader _loader;
 			private AssemblyDependencyResolver _resolver;
 			#endregion
 
@@ -576,7 +569,7 @@ namespace Zongsoft.Plugins
 				}
 
 				if(!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-					filePath = filePath + ".dll";
+					filePath += ".dll";
 
 				if(!File.Exists(filePath))
 				{

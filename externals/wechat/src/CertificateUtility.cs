@@ -66,6 +66,7 @@ namespace Zongsoft.Externals.Wechat
 		/// 获取微信平台的数字证书。
 		/// </summary>
 		/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
+		/// <param name="code">获取对应凭证证书的代号。</param>
 		/// <param name="cancellation">异步任务的取消标记。</param>
 		/// <returns>返回的微信平台的数字证书。</returns>
 		public static async ValueTask<Certificate> GetCertificateAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
@@ -113,7 +114,7 @@ namespace Zongsoft.Externals.Wechat
 			return _certificate = Create(authority, sequences.LastOrDefault());
 
 			static Certificate Create(IAuthority authority, CertificateResult.CertificateInfo info) =>
-				new Certificate(info.SerialNo, info.SerialNo, "X509", publicKey: GetCertificatePublicKey(authority, info.Data))
+				new (info.SerialNo, info.SerialNo, "X509", publicKey: GetCertificatePublicKey(authority, info.Data))
 				{
 					Validity = new CertificateValidity(info.Effective, info.Expiration),
 				};

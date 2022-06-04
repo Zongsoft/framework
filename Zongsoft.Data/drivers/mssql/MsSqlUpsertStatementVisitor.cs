@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MsSql
 	public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 	{
 		#region 单例字段
-		public static readonly MsSqlUpsertStatementVisitor Instance = new MsSqlUpsertStatementVisitor();
+		public static readonly MsSqlUpsertStatementVisitor Instance = new();
 		#endregion
 
 		#region 构造函数
@@ -48,7 +48,6 @@ namespace Zongsoft.Data.MsSql
 		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 		{
 			const string SOURCE_ALIAS = "SRC";
-			const string TARGET_ALIAS = "TAR";
 
 			if(statement.Fields == null || statement.Fields.Count == 0)
 				throw new DataException("Missing required fields in the upsert statment.");
@@ -152,14 +151,14 @@ namespace Zongsoft.Data.MsSql
 			context.Write(")");
 
 			//输出返回子句
-			this.VisitOutput(context, statement.Returning);
+			VisitOutput(context, statement.Returning);
 
 			context.WriteLine(";");
 		}
 		#endregion
 
 		#region 私有方法
-		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
+		private static void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
 		{
 			if(returning == null)
 				return;

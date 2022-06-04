@@ -97,11 +97,7 @@ namespace Zongsoft.Web
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType);
-
-			var encoding = mediaType?.Encoding;
-			if(encoding == null || encoding == Encoding.UTF7)
-				encoding = Encoding.UTF8;
+			var encoding = MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType) ? (mediaType.Encoding ?? Encoding.UTF8) : Encoding.UTF8;
 
 			using(var reader = new StreamReader(
 				request.Body,

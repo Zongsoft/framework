@@ -42,10 +42,6 @@ namespace Zongsoft.Externals.Wechat
 {
 	public class Applet
 	{
-		#region 静态变量
-		private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
-		#endregion
-
 		#region 成员字段
 		private volatile UserProvider _users;
 		#endregion
@@ -138,17 +134,17 @@ namespace Zongsoft.Externals.Wechat
 		{
 			[JsonPropertyName("phone_info")]
 			[Serialization.SerializationMember("phone_info")]
-			public PhoneInfo Phone;
+			public PhoneInfo Phone { get; set; }
 
 			public struct PhoneInfo
 			{
 				[JsonPropertyName("phoneNumber")]
 				[Serialization.SerializationMember("phoneNumber")]
-				public string PhoneNumber;
+				public string PhoneNumber { get; set; }
 
 				[JsonPropertyName("countryCode")]
 				[Serialization.SerializationMember("countryCode")]
-				public string CountryCode;
+				public string CountryCode { get; set; }
 			}
 		}
 		#endregion

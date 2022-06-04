@@ -100,11 +100,11 @@ namespace Zongsoft.Security.Membership
 		#region 嵌套结构
 		private struct UserSecret
 		{
-			public uint UserId;
-			public byte[] Password;
-			public long PasswordSalt;
-			public UserStatus Status;
-			public DateTime? StatusTimestamp;
+			public uint UserId { get; set; }
+			public byte[] Password { get; set; }
+			public long PasswordSalt { get; set; }
+			public UserStatus Status { get; set; }
+			public DateTime? StatusTimestamp { get; set; }
 		}
 
 		private class User : IUser, IUserIdentity
