@@ -350,19 +350,11 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-Zongsoft.Core/src/Zongsoft.Core.xml
-Zongsoft.Data/src/Zongsoft.Data.xml
-Zongsoft.Commands/src/Zongsoft.Commands.xml
-Zongsoft.Plugins/src/Zongsoft.Plugins.xml
-Zongsoft.Scheduling/src/Zongsoft.Scheduling.xml
-externals/grapecity/src/api/Properties/launchSettings.json
-externals/grapecity/.gclicx
-Zongsoft.Messaging.Mqtt/src/Zongsoft.Messaging.Mqtt.xml
+
+# Special files
 hosting/terminal/[Tt]erminal.lnk
-externals/aliyun/src/Zongsoft.Externals.Aliyun.xml
-externals/grapecity/src/Zongsoft.Externals.Grapecity.xml
-externals/redis/src/Zongsoft.Externals.Redis.xml
-externals/wechat/src/api/Zongsoft.Externals.Wechat.xml
-externals/wechat/src/daemon/Zongsoft.Externals.Wechat.xml
-externals/wechat/src/Zongsoft.Externals.Wechat.xml
-Zongsoft.Web/src/Zongsoft.Web.xml
+externals/grapecity/.gclicx
+externals/grapecity/src/api/Properties/launchSettings.json
+
+# The XML comment document files
+**/src/*.xml
