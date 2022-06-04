@@ -157,6 +157,7 @@ namespace Zongsoft.Reflection.Tests
 				this.StringField = "StringField";
 				this.DecimalProperty = 123.05m;
 				this.StringProperty = "StringProperty";
+				this.NullableField = null;
 			}
 			#endregion
 

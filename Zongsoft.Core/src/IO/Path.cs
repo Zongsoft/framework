@@ -60,9 +60,9 @@ namespace Zongsoft.IO
 	public struct Path : IEquatable<Path>
 	{
 		#region 成员字段
-		private string _scheme;
-		private string[] _segments;
-		private PathAnchor _anchor;
+		private readonly string _scheme;
+		private readonly string[] _segments;
+		private readonly PathAnchor _anchor;
 		#endregion
 
 		#region 私有构造
@@ -189,6 +189,11 @@ namespace Zongsoft.IO
 		{
 			return this.Url;
 		}
+		#endregion
+
+		#region 符号重写
+		public static bool operator ==(Path left, Path right) => left.Equals(right);
+		public static bool operator !=(Path left, Path right) => !(left == right);
 		#endregion
 
 		#region 静态方法

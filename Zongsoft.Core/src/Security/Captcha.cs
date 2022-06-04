@@ -243,7 +243,7 @@ namespace Zongsoft.Security
 			#region 私有变量
 			private int _last;
 			private int _current;
-			private ReadOnlySpan<char> _text;
+			private readonly ReadOnlySpan<char> _text;
 			private string _errorMessage;
 			#endregion
 

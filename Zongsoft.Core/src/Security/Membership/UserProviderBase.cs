@@ -427,26 +427,7 @@ namespace Zongsoft.Security.Membership
 			if(index <= 0 || index == token.Length - 1)
 				throw new ArgumentException("Invalid authority argument value.", nameof(token));
 
-			var name = token.Substring(0, index);
 			var type = MembershipUtility.GetIdentityType(identity);
-			(string key, string value) tuple;
-
-			switch(type)
-			{
-				case UserIdentityType.Name:
-					var text = token.Substring(index + 1);
-					var position = text.IndexOfAny(new char[] { '=', ':' });
-					tuple = (text.Substring(0, position), text.Substring(position + 1));
-					break;
-				case UserIdentityType.Email:
-				case UserIdentityType.Phone:
-					tuple = (identity, token.Substring(index + 1));
-					break;
-				default:
-					tuple = default;
-					break;
-			}
-
 			var user = this.CreateUser(parameters);
 			user.Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim();
 
@@ -489,7 +470,7 @@ namespace Zongsoft.Security.Membership
 			if(user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			if(!(user is IModel model) || !model.HasChanges())
+			if(user is not IModel model || !model.HasChanges())
 				return false;
 
 			//确认指定的用户编号是否有效
@@ -579,7 +560,7 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null)
 				attempter.Done("#" + userId.ToString(), null);
 
-			var passwordSalt = this.GetPasswordSalt();
+			var passwordSalt = GetPasswordSalt();
 
 			return string.IsNullOrEmpty(newPassword) ?
 				this.SetPassword(userId, null, 0) :
@@ -658,7 +639,7 @@ namespace Zongsoft.Security.Membership
 				this.OnValidatePassword(newPassword);
 
 				//更新用户的新密码
-				return this.SetPassword(this.GetUserId(userId), newPassword);
+				return this.SetPassword(GetUserId(userId), newPassword);
 			}
 
 			//重置密码校验失败，抛出异常
@@ -690,7 +671,7 @@ namespace Zongsoft.Security.Membership
 			//如果密码问答的答案验证失败，则抛出安全异常
 			for(int i = 0; i < passwordAnswers.Length; i++)
 			{
-				if(!PasswordUtility.VerifyPassword(passwordAnswers[i], answers[i], this.GetPasswordAnswerSalt(userId, i + 1)))
+				if(!PasswordUtility.VerifyPassword(passwordAnswers[i], answers[i], GetPasswordAnswerSalt(userId, i + 1)))
 					throw new SecurityException("Verification:PasswordAnswers", "The password answers verify failed.");
 			}
 
@@ -698,7 +679,7 @@ namespace Zongsoft.Security.Membership
 			this.OnValidatePassword(newPassword);
 
 			//重新生成密码随机数
-			var passwordSalt = this.GetPasswordSalt();
+			var passwordSalt = GetPasswordSalt();
 
 			return this.SetPassword(userId, PasswordUtility.HashPassword(newPassword, passwordSalt), passwordSalt);
 		}
@@ -814,7 +795,7 @@ namespace Zongsoft.Security.Membership
 				return this.SetPassword(userId, null, 0);
 
 			//重新生成密码随机数
-			var passwordSalt = this.GetPasswordSalt();
+			var passwordSalt = GetPasswordSalt();
 
 			return this.SetPassword(userId, PasswordUtility.HashPassword(password, passwordSalt), passwordSalt);
 		}
@@ -897,10 +878,10 @@ namespace Zongsoft.Security.Membership
 			}
 
 			if(questions.Length != answers.Length)
-				throw new ArgumentException();
+				throw new ArgumentException($"The specified '{nameof(questions)}' parameter does not match the length of the '{nameof(answers)}' parameter.");
 
 			if(questions.Length > 5)
-				throw new ArgumentOutOfRangeException();
+				throw new ArgumentOutOfRangeException(nameof(questions));
 
 			var buffer = new List<byte>(100)
 			{
@@ -908,7 +889,7 @@ namespace Zongsoft.Security.Membership
 			};
 
 			for(int i = 0; i < answers.Length; i++)
-				buffer.AddRange(this.HashPasswordAnswer(answers[i], userId, i + 1));
+				buffer.AddRange(HashPasswordAnswer(answers[i], userId, i + 1));
 
 			return this.DataAccess.Update<TUser>(new
 			{
@@ -980,7 +961,7 @@ namespace Zongsoft.Security.Membership
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private uint GetUserId(uint userId)
+		private static uint GetUserId(uint userId)
 		{
 			if(userId == 0)
 				return ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
@@ -1000,7 +981,7 @@ namespace Zongsoft.Security.Membership
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private uint GetUserId(uint userId, out bool secured)
+		private static uint GetUserId(uint userId, out bool secured)
 		{
 			/*
 			 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
@@ -1021,22 +1002,22 @@ namespace Zongsoft.Security.Membership
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private long GetPasswordSalt()
+		private static long GetPasswordSalt()
 		{
 			return Math.Abs(Randomizer.GenerateInt64());
 		}
 
-		private byte[] GetPasswordAnswerSalt(uint userId, int index)
+		private static byte[] GetPasswordAnswerSalt(uint userId, int index)
 		{
 			return Encoding.ASCII.GetBytes(string.Format("Zongsoft.Security.User:{0}:Password.Answer[{1}]", userId.ToString(), index.ToString()));
 		}
 
-		private byte[] HashPasswordAnswer(string answer, uint userId, int index)
+		private static byte[] HashPasswordAnswer(string answer, uint userId, int index)
 		{
 			if(string.IsNullOrEmpty(answer))
 				return null;
 
-			var salt = this.GetPasswordAnswerSalt(userId, index);
+			var salt = GetPasswordAnswerSalt(userId, index);
 			return PasswordUtility.HashPassword(answer, salt);
 		}
 
@@ -1051,16 +1032,16 @@ namespace Zongsoft.Security.Membership
 		#region 内部结构
 		protected struct PasswordToken
 		{
-			public uint UserId;
-			public byte[] Password;
-			public long PasswordSalt;
+			public uint UserId { get; set; }
+			public byte[] Password { get; set; }
+			public long PasswordSalt { get; set; }
 		}
 
 		private struct UserSecretRecord
 		{
-			public uint UserId;
-			public string SecretQuestion;
-			public byte[] SecretAnswer;
+			public uint UserId { get; set; }
+			public string SecretQuestion { get; set; }
+			public byte[] SecretAnswer { get; set; }
 		}
 		#endregion
 	}

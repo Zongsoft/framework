@@ -5,14 +5,13 @@ using Xunit;
 
 namespace Zongsoft.Security
 {
+	[Obsolete]
 	public class CaptchaTest
 	{
 		[Fact]
 		public void TestParse()
 		{
-			Captcha result;
-
-			Assert.False(Captcha.TryParse("", out result));
+			Assert.False(Captcha.TryParse("", out var result));
 			Assert.True(result.IsEmpty);
 			Assert.False(Captcha.TryParse("  ", out result));
 			Assert.True(result.IsEmpty);

@@ -77,7 +77,6 @@ namespace Zongsoft.Data
 		private struct StateContext
 		{
 			#region 私有变量
-			private int _bufferIndex;
 			private readonly char[] _buffer;
 			private readonly Action<string> _onError;
 			#endregion
@@ -95,7 +94,6 @@ namespace Zongsoft.Data
 			{
 				_onError = onError;
 				_buffer = new char[length];
-				_bufferIndex = 0;
 
 				this.Character = '\0';
 				this.Head = null;

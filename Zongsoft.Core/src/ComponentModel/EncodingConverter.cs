@@ -58,26 +58,16 @@ namespace Zongsoft.ComponentModel
 
 			if(value.GetType() == typeof(string))
 			{
-				switch(((string)value).ToLowerInvariant())
+				return ((string)value).ToLowerInvariant() switch
 				{
-					case "utf8":
-					case "utf-8":
-						return Encoding.UTF8;
-					case "utf7":
-					case "utf-7":
-						return Encoding.UTF7;
-					case "utf32":
-						return Encoding.UTF32;
-					case "unicode":
-						return Encoding.Unicode;
-					case "ascii":
-						return Encoding.ASCII;
-					case "bigend":
-					case "bigendian":
-						return Encoding.BigEndianUnicode;
-					default:
-						return Encoding.GetEncoding((string)value);
-				}
+					"utf8" or "utf-8" => Encoding.UTF8,
+					"utf7" or "utf-7" => Encoding.UTF7,
+					"utf32" => Encoding.UTF32,
+					"unicode" => Encoding.Unicode,
+					"ascii" => Encoding.ASCII,
+					"bigend" or "bigendian" => Encoding.BigEndianUnicode,
+					_ => Encoding.GetEncoding((string)value),
+				};
 			}
 			else if(value.GetType().IsPrimitive || value.GetType() == typeof(decimal))
 			{
