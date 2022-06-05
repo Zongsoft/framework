@@ -29,9 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.Net.Http;
 using Microsoft.Net.Http.Headers;
@@ -39,10 +39,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.WebUtilities;
 
 using Zongsoft.IO;
 using Zongsoft.Collections;
@@ -55,8 +52,6 @@ namespace Zongsoft.Web
 		private const string EXTENDED_PROPERTY_PREFIX = "x-zfs-";
 		private const string EXTENDED_PROPERTY_NAME = "Name";
 		private const string EXTENDED_PROPERTY_FILENAME = "FileName";
-
-		private static readonly DateTime EPOCH = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		#endregion
 
 		#region 成员字段
@@ -257,7 +252,7 @@ namespace Zongsoft.Web
 
 				//如果文件名为空，则生成一个以“时间戳-随机数.ext”的默认文件名
 				if(string.IsNullOrWhiteSpace(args.FileName))
-					args.FileName = string.Format("X{0}-{1}{2}", ((long)(DateTime.UtcNow - EPOCH).TotalSeconds).ToString(), Zongsoft.Common.Randomizer.GenerateString(), args.ExtensionAppend ? extensionName : string.Empty);
+					args.FileName = string.Format("X{0}-{1}{2}", ((long)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalSeconds).ToString(), Common.Randomizer.GenerateString(), args.ExtensionAppend ? extensionName : string.Empty);
 				else if(args.ExtensionAppend && !args.FileName.EndsWith(extensionName))
 					args.FileName += extensionName;
 
