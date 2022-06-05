@@ -9,6 +9,7 @@
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Messaging.Kafka</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,8 +20,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DocumentationFile>Zongsoft.Messaging.Kafka.xml</DocumentationFile>
 		<NoWarn>1701;1702;1591;NU5048</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>

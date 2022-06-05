@@ -6,6 +6,7 @@
 		<Product>Zongsoft Net Library</Product>
 		<Copyright>Copyright(C) Zongsoft Studio 2018-2022. All rights reserved.</Copyright>
 		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
@@ -16,8 +17,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DocumentationFile>Zongsoft.Net.xml</DocumentationFile>
 		<NoWarn>1701;1702;1591;NU5048</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>

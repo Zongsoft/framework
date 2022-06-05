@@ -9,6 +9,7 @@
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Reporting</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
@@ -20,6 +21,7 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>1701;1702;1591;NU5048</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>

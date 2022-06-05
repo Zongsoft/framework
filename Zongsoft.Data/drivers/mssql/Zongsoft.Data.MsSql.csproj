@@ -9,6 +9,7 @@
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2020. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Data.MsSql</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
