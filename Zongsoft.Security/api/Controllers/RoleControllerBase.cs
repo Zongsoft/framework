@@ -43,21 +43,24 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
-	[ApiController]
 	[Area(Modules.Security)]
 	[Authorize(Roles = IRole.Administrators + "," + IRole.Security)]
 	[Route("{area}/Roles")]
-	public class RoleController : ControllerBase
+	public abstract class RoleControllerBase<TRole> : ControllerBase where TRole : IRole
 	{
 		#region 成员字段
 		private IAuthorizer _authorizer;
-		private IRoleProvider<IRole> _roleProvider;
+		private IRoleProvider<TRole> _roleProvider;
 		private IMemberProvider<IRole, IUser> _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
 
-		#region 公共属性
-		[ServiceDependency(IsRequired = true)]
+		#region 构造函数
+		protected RoleControllerBase() { }
+        #endregion
+
+        #region 公共属性
+        [ServiceDependency(IsRequired = true)]
 		public IAuthorizer Authorizer
 		{
 			get => _authorizer;
@@ -65,7 +68,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IRoleProvider<IRole> RoleProvider
+		public IRoleProvider<TRole> RoleProvider
 		{
 			get => _roleProvider;
 			set => _roleProvider = value ?? throw new ArgumentNullException();
@@ -144,7 +147,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<IRole> Create([FromBody]IRole model)
+		public ActionResult<TRole> Create([FromBody]TRole model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -157,7 +160,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id:required}")]
 		[HttpPatch("{id:required}")]
-		public Task<IActionResult> Update(uint id, [FromBody]IRole model)
+		public Task<IActionResult> Update(uint id, [FromBody]TRole model)
 		{
 			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());

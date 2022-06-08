@@ -43,21 +43,24 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
-	[ApiController]
 	[Area(Modules.Security)]
 	[Authorize]
 	[Route("[area]/Users")]
-	public class UserController : ControllerBase
+	public abstract class UserControllerBase<TUser> : ControllerBase where TUser : IUser
 	{
 		#region 成员字段
-		private IUserProvider<IUser> _userProvider;
+		private IUserProvider<TUser> _userProvider;
 		private IAuthorizer _authorizer;
 		private IMemberProvider<IRole, IUser> _memberProvider;
 		private IPermissionProvider _permissionProvider;
-		#endregion
+        #endregion
 
-		#region 公共属性
-		[ServiceDependency(IsRequired = true)]
+        #region 构造函数
+        protected UserControllerBase() { }
+        #endregion
+
+        #region 公共属性
+        [ServiceDependency(IsRequired = true)]
 		public IAuthorizer Authorizer
 		{
 			get => _authorizer;
@@ -65,7 +68,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IUserProvider<IUser> UserProvider
+		public IUserProvider<TUser> UserProvider
 		{
 			get => _userProvider;
 			set => _userProvider = value ?? throw new ArgumentNullException();
@@ -150,7 +153,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<IUser> Create([FromBody]IUser model)
+		public ActionResult<TUser> Create([FromBody]TUser model)
 		{
 			if(model == null)
 				return this.BadRequest();
@@ -166,7 +169,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id?}")]
 		[HttpPatch("{id?}")]
-		public Task<IActionResult> Update(uint id, [FromBody]IUser model)
+		public Task<IActionResult> Update(uint id, [FromBody]TUser model)
 		{
 			return this.UserProvider.Update(id, model) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
