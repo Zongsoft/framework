@@ -180,7 +180,7 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Delete<TRole>(
 				Condition.In(nameof(IRole.RoleId), ids) &
 				Condition.NotIn(nameof(IRole.Name), IRole.Administrators, IRole.Security),
-				"Members,Children,Permissions,PermissionFilters");
+				"Members,Permissions,PermissionFilters");
 		}
 
 		public TRole Create(string name, string @namespace, string fullName = null, string description = null)
