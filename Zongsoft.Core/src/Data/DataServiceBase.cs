@@ -451,6 +451,9 @@ namespace Zongsoft.Data
 			return this.OnExists(criteria, options);
 		}
 
+		public bool Exists(Data.Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
+		public bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
+
 		protected virtual bool OnExists(ICondition criteria, DataExistsOptions options)
 		{
 			return this.DataAccess.Exists(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
@@ -518,6 +521,9 @@ namespace Zongsoft.Data
 			return this.OnAggregate<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0;
 		}
 
+		public int Count(Data.Condition criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
+		public int Count(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
+
 		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
 			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
@@ -583,6 +589,9 @@ namespace Zongsoft.Data
 			//执行聚合操作
 			return this.OnAggregate<TValue>(new DataAggregate(function, member), criteria, options);
 		}
+
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, Data.Condition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ConditionCollection criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
 
 		protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 		{
@@ -742,6 +751,11 @@ namespace Zongsoft.Data
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
 		}
+
+		public int Delete(Data.Condition criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
+		public int Delete(Data.Condition criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
+		public int Delete(ConditionCollection criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
+		public int Delete(ConditionCollection criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
 
 		protected virtual int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
 		{
@@ -1159,7 +1173,7 @@ namespace Zongsoft.Data
 
 		public int Update(object data, DataUpdateOptions options = null)
 		{
-			return this.Update(data, null, string.Empty, options);
+			return this.Update(data, (ICondition)null, string.Empty, options);
 		}
 
 		public int Update(object data, string schema, DataUpdateOptions options = null)
@@ -1227,6 +1241,11 @@ namespace Zongsoft.Data
 			//执行更新操作
 			return this.OnUpdate(dictionary, criteria, schematic, options);
 		}
+
+		public int Update(object data, Data.Condition criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
+		public int Update(object data, Data.Condition criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
+		public int Update(object data, ConditionCollection criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
+		public int Update(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
 
 		protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options)
 		{

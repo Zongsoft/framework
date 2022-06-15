@@ -36,7 +36,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据服务的接口。
 	/// </summary>
-	public interface IDataService
+	public partial interface IDataService
 	{
 		#region 事件定义
 		event EventHandler<DataExecutedEventArgs> Executed;
@@ -304,5 +304,30 @@ namespace Zongsoft.Data
 		IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
 		IEnumerable<T> Select<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
 		#endregion
+	}
+
+	/*
+	 * 本接口是为了处理相关方法的泛型条件重载版本的条件参数类型匹配错误的问题。
+	 */
+	public partial interface IDataService
+	{
+		bool Exists(Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
+		bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
+
+		int Count(Condition criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
+		int Count(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
+
+		TValue? Aggregate<TValue>(DataAggregateFunction function, string member, Condition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
+		TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ConditionCollection criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
+
+		int Delete(Condition criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
+		int Delete(Condition criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
+		int Delete(ConditionCollection criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
+		int Delete(ConditionCollection criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
+
+		int Update(object data, Condition criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
+		int Update(object data, Condition criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
+		int Update(object data, ConditionCollection criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
+		int Update(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
 	}
 }
