@@ -264,7 +264,14 @@ namespace Zongsoft.Diagnostics
 			if(frame == null)
 				return string.Empty;
 
-			return frame.GetMethod().DeclaringType.Assembly.GetName().Name;
+			try
+			{
+				return frame.GetMethod().DeclaringType.Assembly.GetName().Name;
+			}
+			catch
+			{
+				return System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
+			}
 		}
 		#endregion
 	}
