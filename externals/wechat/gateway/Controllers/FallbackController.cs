@@ -29,8 +29,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -42,11 +42,11 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 	public class FallbackController : ControllerBase
 	{
 		[HttpPost("{name}/{key?}")]
-		public async Task<IActionResult> HandleAsync(string name, string key = null)
+		public async Task<IActionResult> HandleAsync(string name, string key = null, CancellationToken cancellation = default)
 		{
 			Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
 
-			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key);
+			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
 
 			if(result.Succeed)
 				return result.Value == null ? this.NoContent() : this.Ok(result);
