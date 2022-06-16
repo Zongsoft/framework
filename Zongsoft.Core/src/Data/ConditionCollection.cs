@@ -343,14 +343,26 @@ namespace Zongsoft.Data
 		#region 重写方法
 		protected override void InsertItem(int index, ICondition item)
 		{
-			if(item != null)
-				base.InsertItem(index, item);
+			if(item == null)
+				return;
+
+			if(item is ConditionCollection collection && collection.Combination == this.Combination)
+			{
+				foreach(var condition in collection)
+					this.Add(condition);
+
+				return;
+			}
+
+			base.InsertItem(index, item);
 		}
 
 		protected override void SetItem(int index, ICondition item)
 		{
-			if(item != null)
-				base.SetItem(index, item);
+			if(item == null)
+				return;
+
+			base.SetItem(index, item);
 		}
 
 		public bool Equals(ConditionCollection other)
