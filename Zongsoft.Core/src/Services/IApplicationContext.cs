@@ -48,44 +48,31 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 属性定义
-		/// <summary>
-		/// 获取当前应用程序根目录的完整路径。
-		/// </summary>
+		/// <summary>获取当前应用程序根目录的完整路径。</summary>
 		string ApplicationPath { get; }
 
-		/// <summary>
-		/// 获取当前应用程序的应用配置。
-		/// </summary>
+		/// <summary>获取当前应用程序的应用配置。</summary>
 		IConfigurationRoot Configuration { get; }
 
-		/// <summary>
-		/// 获取当前应用程序的环境信息。
-		/// </summary>
+		/// <summary>获取当前应用程序的环境信息。</summary>
 		IApplicationEnvironment Environment { get; }
 
-		/// <summary>
-		/// 获取当前应用程序的安全主体。
-		/// </summary>
-		/// <remarks>
-		///		<para>该属性始终不会返回空(null)。</para>
-		/// </remarks>
+		/// <summary>获取当前应用程序的安全主体。</summary>
+		/// <remarks>该属性始终不会返回空(null)。</remarks>
 		ClaimsPrincipal Principal { get; }
 
-		/// <summary>
-		/// 获取当前应用程序的模块集。
-		/// </summary>
+		/// <summary>获取当前应用程序的模块集。</summary>
 		INamedCollection<IApplicationModule> Modules { get; }
 
-		/// <summary>
-		/// 获取当前应用程序的初始化器集。
-		/// </summary>
+		/// <summary>获取当前应用程序的初始化器集。</summary>
 		ICollection<IApplicationInitializer> Initializers { get; }
+
+		/// <summary>获取当前应用程序的会话数据集。</summary>
+		INamedCollection<object> Session { get; }
 		#endregion
 
 		#region 方法定义
-		/// <summary>
-		/// 确认指定的当前应用程序的相对目录是否存在，如果不存在则依次创建它们，并返回其对应的完整路径。
-		/// </summary>
+		/// <summary>确认指定的当前应用程序的相对目录是否存在，如果不存在则依次创建它们，并返回其对应的完整路径。</summary>
 		/// <param name="relativePath">相对于应用程序根目录的相对路径，可使用'/'或'\'字符作为相对路径的分隔符。</param>
 		/// <returns>如果<paramref name="relativePath"/>参数为空或者全空白字符则返回应用程序根目录(即<see cref="ApplicationPath"/>属性值。)，否则返回其相对路径的完整路径。</returns>
 		string EnsureDirectory(string relativePath);

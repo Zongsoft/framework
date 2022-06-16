@@ -94,13 +94,8 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 单例属性
-		/// <summary>
-		/// 获取当前应用程序的<see cref="IApplicationContext"/>上下文。
-		/// </summary>
-		public static IApplicationContext Current
-		{
-			get => _current;
-		}
+		/// <summary>获取当前应用程序的<see cref="IApplicationContext"/>上下文。</summary>
+		public static IApplicationContext Current => _current;
 		#endregion
 
 		#region 公共属性
@@ -169,6 +164,8 @@ namespace Zongsoft.Services
 		{
 			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		}
+
+		public virtual Collections.INamedCollection<object> Session { get; init; }
 
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 
