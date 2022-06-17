@@ -357,35 +357,35 @@ namespace Zongsoft.Web
 				throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual object OnGet(string key, string filter, Paging page, Sorting[] sortings)
+		protected virtual object OnGet(string key, string filter, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), new DataSelectOptions(filter), sortings);
+			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), new DataSelectOptions(filter, parameters), sortings);
 		}
 
-		protected virtual int OnDelete(string key, string filter)
+		protected virtual int OnDelete(string key, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return 0;
 
-			return this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter));
+			return this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter, parameters));
 		}
 
-		protected virtual int OnCreate(TModel model)
+		protected virtual int OnCreate(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Insert(model, this.GetSchema());
+			return this.DataService.Insert(model, this.GetSchema(), DataInsertOptions.Parameter(parameters));
 		}
 
-		protected virtual int OnUpdate(string key, TModel model)
+		protected virtual int OnUpdate(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			if(string.IsNullOrWhiteSpace(key))
-				return this.DataService.Update(model, this.GetSchema());
+				return this.DataService.Update(model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
 			else
-				return this.DataService.Update(key, model, this.GetSchema());
+				return this.DataService.Update(key, model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
 		}
 
-		protected virtual int OnUpsert(TModel model)
+		protected virtual int OnUpsert(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Upsert(model, this.GetSchema());
+			return this.DataService.Upsert(model, this.GetSchema(), DataUpsertOptions.Parameter(parameters));
 		}
 		#endregion
 
