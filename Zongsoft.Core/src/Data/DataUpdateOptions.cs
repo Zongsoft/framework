@@ -86,12 +86,17 @@ namespace Zongsoft.Data
 		/// <param name="name">指定的参数名称。</param>
 		/// <param name="value">指定的参数值。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder Parameter(string name, object value = null) => new(new KeyValuePair<string, object>(name, value));
+		public static Builder Parameter(string name, object value = null) => new(new[] { new KeyValuePair<string, object>(name, value) });
 
 		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 		/// <param name="parameters">指定的多个附加参数。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder Parameter(params KeyValuePair<string, object>[] parameters) => new(parameters);
+
+		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
+		/// <param name="parameters">指定的附加参数集。</param>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个禁用数据验证器的更新选项构建器。</summary>
 		/// <param name="filter">更新过滤表达式。</param>
@@ -116,7 +121,7 @@ namespace Zongsoft.Data
 			#region 构造函数
 			public Builder(string filter) => _filter = filter;
 			public Builder(UpdateBehaviors behaviors, string filter = null) { _behaviors = behaviors; _filter = filter; }
-			public Builder(params KeyValuePair<string, object>[] parameters) => this.Parameter(parameters);
+			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
 			#endregion
 
 			#region 设置方法
@@ -124,6 +129,7 @@ namespace Zongsoft.Data
 			public Builder Behaviors(UpdateBehaviors behaviors) { _behaviors = behaviors; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
+			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
 			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 			#endregion

@@ -81,12 +81,17 @@ namespace Zongsoft.Data
 		/// <param name="name">指定的参数名称。</param>
 		/// <param name="value">指定的参数值。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder Parameter(string name, object value = null) => new(new KeyValuePair<string, object>(name, value));
+		public static Builder Parameter(string name, object value = null) => new(new[] { new KeyValuePair<string, object>(name, value) });
 
 		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 		/// <param name="parameters">指定的多个附加参数。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 		public static Builder Parameter(params KeyValuePair<string, object>[] parameters) => new(parameters);
+
+		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
+		/// <param name="parameters">指定的附加参数集。</param>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个去重的查询选项构建器。</summary>
 		/// <param name="filter">查询过滤表达式。</param>
@@ -96,7 +101,7 @@ namespace Zongsoft.Data
 		/// <summary>创建一个禁用延迟加载的查询选项构建器。</summary>
 		/// <param name="distinct">指示是否进行去重查询。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressLazy(bool distinct = false) => new()
+		public static Builder SuppressLazy(bool distinct = false) => new((string)null)
 		{
 			IsDistinct = distinct,
 			LazySuppressed = true,
@@ -115,7 +120,7 @@ namespace Zongsoft.Data
 		/// <summary>创建一个禁用数据验证器的查询选项构建器。</summary>
 		/// <param name="distinct">指示是否进行去重查询。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(bool distinct = false) => new()
+		public static Builder SuppressValidator(bool distinct = false) => new((string)null)
 		{
 			IsDistinct = distinct,
 			ValidatorSuppressed = true,
@@ -141,7 +146,7 @@ namespace Zongsoft.Data
 
 			#region 构造函数
 			public Builder(string filter) => _filter = filter;
-			public Builder(params KeyValuePair<string, object>[] parameters) => this.Parameter(parameters);
+			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
 			#endregion
 
 			#region 公共属性
@@ -157,6 +162,7 @@ namespace Zongsoft.Data
 			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
+			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder Distinct() { this.IsDistinct = true; return this; }
 			public Builder Distinct(bool value) { this.IsDistinct = value; return this; }
 			public Builder SuppressLazy() { this.LazySuppressed = true; return this; }
