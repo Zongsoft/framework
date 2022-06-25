@@ -59,7 +59,7 @@ namespace Zongsoft.IO
 				encoding = Encoding.UTF8;
 
 			var buffer = new char[Math.Max(bufferSize, BUFFER_SIZE)];
-			var bufferRead = 0;
+			int bufferRead;
 
 			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
@@ -87,7 +87,7 @@ namespace Zongsoft.IO
 				encoding = Encoding.UTF8;
 
 			var buffer = new char[Math.Max(bufferSize, BUFFER_SIZE)];
-			var bufferRead = 0;
+			int bufferRead;
 
 			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{

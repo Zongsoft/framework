@@ -51,7 +51,7 @@ namespace Zongsoft.IO
 				throw new NotSupportedException("The destination stream does not support writing.");
 
 			var buffer = new byte[Math.Max(bufferSize, BUFFER_SIZE)];
-			var bufferRead = 0;
+			int bufferRead;
 
 			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
@@ -70,7 +70,7 @@ namespace Zongsoft.IO
 				throw new NotSupportedException("The destination stream does not support writing.");
 
 			var buffer = new byte[Math.Max(bufferSize, BUFFER_SIZE)];
-			var bufferRead = 0;
+			int bufferRead;
 
 			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
