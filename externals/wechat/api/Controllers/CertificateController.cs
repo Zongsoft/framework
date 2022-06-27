@@ -43,7 +43,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpGet("{code?}")]
 		public async ValueTask<IActionResult> GetCertificateAsync(string code = null, CancellationToken cancellation = default)
 		{
-			var certificate = await AuthorityFactory.GetAuthority().GetCertificateAsync(code, cancellation);
+			var certificate = await AuthorityUtility.GetAuthority().GetCertificateAsync(code, cancellation);
 			return certificate == null ? this.NotFound() : this.Ok(certificate);
 		}
 	}

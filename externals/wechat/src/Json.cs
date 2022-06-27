@@ -28,8 +28,13 @@
  */
 
 using System;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
+using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat
 {
@@ -45,11 +50,11 @@ namespace Zongsoft.Externals.Wechat
 
 		internal class CryptographyConverter : JsonConverter<string>
 		{
-			private Lazy<Certificate> _certificate;
+			private Lazy<ICertificate> _certificate;
 
 			public CryptographyConverter()
 			{
-				_certificate = new Lazy<Certificate>(() => AuthorityFactory.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
+				_certificate = new Lazy<ICertificate>(() => AuthorityUtility.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
 			}
 
 			public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)

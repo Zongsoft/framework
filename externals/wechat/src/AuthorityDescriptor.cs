@@ -29,6 +29,8 @@
 
 using System;
 
+using Zongsoft.Security;
+
 namespace Zongsoft.Externals.Wechat
 {
 	/// <summary>
@@ -37,7 +39,7 @@ namespace Zongsoft.Externals.Wechat
 	public class AuthorityDescriptor : IEquatable<AuthorityDescriptor>
 	{
 		#region 构造函数
-		public AuthorityDescriptor(string name, string code, string secret, Certificate certificate)
+		public AuthorityDescriptor(string name, string code, string secret, ICertificate certificate)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -56,7 +58,7 @@ namespace Zongsoft.Externals.Wechat
 		public string Name { get; }
 		public string Code { get; }
 		public string Secret { get; }
-		public Certificate Certificate { get; }
+		public ICertificate Certificate { get; }
 		#endregion
 
 		#region 重写方法

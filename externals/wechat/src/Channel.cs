@@ -59,6 +59,7 @@ namespace Zongsoft.Externals.Wechat
 				throw new ArgumentNullException(nameof(account));
 
 			this.Account = account;
+			this.Membership = new Membership(Account);
 		}
 		#endregion
 
@@ -75,6 +76,8 @@ namespace Zongsoft.Externals.Wechat
 				return _users;
 			}
 		}
+
+		public Membership Membership { get; }
 
 		public ChannelMessager Messager
 		{

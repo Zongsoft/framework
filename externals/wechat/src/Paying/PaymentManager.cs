@@ -70,7 +70,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(string.IsNullOrEmpty(subsidiary.Code))
 				throw new ArgumentException("Invalid authority of the wechat.");
 
-			var authority = AuthorityFactory.GetAuthority(master) ??
+			var authority = AuthorityUtility.GetAuthority(master) ??
 				throw new InvalidOperationException($"The specified '{master}' authority does not exist.");
 
 			return _services.GetOrAdd(master + ':' + subsidiary.Code, (key, state) =>

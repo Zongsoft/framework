@@ -34,6 +34,8 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 using Zongsoft.Security;
 
@@ -42,8 +44,8 @@ namespace Zongsoft.Externals.Wechat
 	public static class CertificateUtility
 	{
 		#region 私有变量
-		private static Certificate _certificate;
-		private static Certificate _transitory;
+		private static ICertificate _certificate;
+		private static ICertificate _transitory;
 		private static DateTime _timestamp;
 		#endregion
 
@@ -54,9 +56,9 @@ namespace Zongsoft.Externals.Wechat
 		/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
 		/// <param name="cancellation">异步任务的取消标记。</param>
 		/// <returns>返回的微信平台的数字证书。</returns>
-		public static ValueTask<Certificate> GetCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
+		public static ValueTask<ICertificate> GetCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
 		{
-			if(_certificate != null && _certificate.Validity.IsValidate(DateTime.UtcNow) && _certificate.Validity.Final > DateTime.UtcNow.AddHours(36))
+			if(_certificate != null && _certificate.Validity.IsValid() && _certificate.Validity.Final > DateTime.UtcNow.AddHours(36))
 				return ValueTask.FromResult(_certificate);
 
 			return AcquireCertificateAsync(authority, cancellation);
@@ -69,7 +71,7 @@ namespace Zongsoft.Externals.Wechat
 		/// <param name="code">获取对应凭证证书的代号。</param>
 		/// <param name="cancellation">异步任务的取消标记。</param>
 		/// <returns>返回的微信平台的数字证书。</returns>
-		public static async ValueTask<Certificate> GetCertificateAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
+		public static async ValueTask<ICertificate> GetCertificateAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(code))
 				return await GetCertificateAsync(authority, cancellation);
@@ -88,7 +90,7 @@ namespace Zongsoft.Externals.Wechat
 			return Find(code);
 		}
 
-		private static async ValueTask<Certificate> AcquireCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
+		private static async ValueTask<ICertificate> AcquireCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
 		{
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
@@ -113,20 +115,21 @@ namespace Zongsoft.Externals.Wechat
 			_transitory = Create(authority, sequences.FirstOrDefault());
 			return _certificate = Create(authority, sequences.LastOrDefault());
 
-			static Certificate Create(IAuthority authority, CertificateResult.CertificateInfo info) =>
-				new (info.SerialNo, info.SerialNo, "X509", publicKey: GetCertificatePublicKey(authority, info.Data))
-				{
-					Validity = new CertificateValidity(info.Effective, info.Expiration),
-				};
+			static ICertificate Create(IAuthority authority, CertificateResult.CertificateInfo info) =>
+				Zongsoft.Security.Certificate.FromRSAPublicKey(info.SerialNo, GetCertificatePublicKey(authority, info.Data), new CertificateValidity(info.Effective, info.Expiration));
+				//new (info.SerialNo, info.SerialNo, "X509", publicKey: GetCertificatePublicKey(authority, info.Data))
+				//{
+				//	Validity = new CertificateValidity(info.Effective, info.Expiration),
+				//};
 		}
 		#endregion
 
 		#region 私有方法
-		private static Certificate Find(string code)
+		private static ICertificate Find(string code)
 		{
-			if(_certificate != null && string.Equals(_certificate.Code, code))
+			if(_certificate != null && string.Equals(_certificate.Identifier, code))
 				return _certificate;
-			if(_transitory != null && string.Equals(_transitory.Code, code))
+			if(_transitory != null && string.Equals(_transitory.Identifier, code))
 				return _transitory;
 
 			return null;
@@ -139,6 +142,20 @@ namespace Zongsoft.Externals.Wechat
 				Encoding.UTF8.GetBytes(data.Nonce),
 				Encoding.UTF8.GetBytes(data.AssociatedData),
 				Convert.FromBase64String(data.Ciphertext));
+		}
+		#endregion
+
+		#region 内部方法
+		internal static byte[] Encrypt(this ICertificate certificate, string text)
+		{
+			var protocol = certificate?.GetProtocol();
+
+			return protocol switch
+			{
+				RSA rsa => rsa.Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.OaepSHA1),
+				X509Certificate2 x509 => x509.GetRSAPublicKey().Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.OaepSHA1),
+				_ => throw new WechatException($"Unsupported '{certificate.Format}' digital certificate type."),
+			};
 		}
 		#endregion
 

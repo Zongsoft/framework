@@ -30,12 +30,14 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Security;
+
 namespace Zongsoft.Externals.Wechat
 {
 	public class Authority : IAuthority, IEquatable<IAuthority>, IEquatable<Authority>
 	{
 		#region 构造函数
-		public Authority(string name, string code, string secret, Certificate certificate, AccountCollection accounts = null)
+		public Authority(string name, string code, string secret, ICertificate certificate, AccountCollection accounts = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -55,7 +57,7 @@ namespace Zongsoft.Externals.Wechat
 		public string Name { get; }
 		public string Code { get; }
 		public string Secret { get; }
-		public Certificate Certificate { get; }
+		public ICertificate Certificate { get; }
 		public AccountCollection Accounts { get; }
 		#endregion
 

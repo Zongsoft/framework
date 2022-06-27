@@ -77,7 +77,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#region 虚拟方法
 		protected virtual IAuthority GetAuthority(string code, string type)
 		{
-			var authority = AuthorityFactory.GetAuthority(code);
+			var authority = AuthorityUtility.GetAuthority(code);
 
 			if(authority != null)
 				return authority;

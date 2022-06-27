@@ -86,7 +86,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				applet = appId;
 
 				var plaintext = $"{appId}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
-				return _authority.Certificate.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
+				return _authority.Certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
 			}
 
 			public virtual async ValueTask<OperationResult> CancelAsync(string voucher, CancellationToken cancellation = default)

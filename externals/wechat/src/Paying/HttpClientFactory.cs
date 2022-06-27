@@ -35,13 +35,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
+using Zongsoft.Security;
+
 namespace Zongsoft.Externals.Wechat.Paying
 {
 	public static class HttpClientFactory
 	{
-		private static readonly ConcurrentDictionary<Certificate, HttpClient> _clients = new ConcurrentDictionary<Certificate, HttpClient>();
+		private static readonly ConcurrentDictionary<ICertificate, HttpClient> _clients = new ConcurrentDictionary<ICertificate, HttpClient>();
 
-		public static HttpClient GetHttpClient(Certificate certificate)
+		public static HttpClient GetHttpClient(ICertificate certificate)
 		{
 			if(certificate == null)
 				throw new ArgumentNullException(nameof(certificate));
@@ -49,7 +51,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			return _clients.GetOrAdd(certificate, key => CreateHttpClient(key));
 		}
 
-		private static HttpClient CreateHttpClient(Certificate certificate)
+		private static HttpClient CreateHttpClient(ICertificate certificate)
 		{
 			var client = new HttpClient(new PaymentHttpMessageHandler(certificate));
 			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/");
@@ -60,9 +62,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		private class PaymentHttpMessageHandler : DelegatingHandler
 		{
-			private readonly Certificate _certificate;
+			private readonly ICertificate _certificate;
 
-			public PaymentHttpMessageHandler(Certificate certificate)
+			public PaymentHttpMessageHandler(ICertificate certificate)
 			{
 				_certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
 				this.InnerHandler = new HttpClientHandler();
@@ -95,14 +97,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return await base.SendAsync(request, cancellation);
 			}
 
-			private static string Signature(Certificate certificate, string method, string url, string content)
+			private static string Signature(ICertificate certificate, string method, string url, string content)
 			{
 				var nonce = Guid.NewGuid().ToString("N");
 				var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
 				var message = $"{method}\n{url}\n{timestamp}\n{nonce}\n{content}\n";
-				var signature = System.Convert.ToBase64String(certificate.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
+				var signature = System.Convert.ToBase64String(certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
 
-				return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Code}\",signature=\"{signature}\"";
+				return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Identifier}\",signature=\"{signature}\"";
 			}
 		}
 

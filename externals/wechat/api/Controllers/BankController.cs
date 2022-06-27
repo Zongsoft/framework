@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(page == null)
 				page = Paging.Page(1, 50);
 
-			var result = await AuthorityFactory.GetAuthority().GetBanksAsync(kind, page, cancellation);
+			var result = await AuthorityUtility.GetAuthority().GetBanksAsync(kind, page, cancellation);
 
 			if(page.TotalCount > 0)
 			{
@@ -73,7 +73,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(page == null)
 				page = Paging.Page(1, 50);
 
-			var result = await AuthorityFactory.GetAuthority().GetBranchesAsync(code, city, page, cancellation);
+			var result = await AuthorityUtility.GetAuthority().GetBranchesAsync(code, city, page, cancellation);
 
 			if(page.TotalCount > 0)
 			{
@@ -92,7 +92,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(string.IsNullOrEmpty(code))
 				return this.BadRequest();
 
-			var result = await AuthorityFactory.GetAuthority().FindAsync(code, cancellation);
+			var result = await AuthorityUtility.GetAuthority().FindAsync(code, cancellation);
 			return result != null ? this.Ok(result.Value) : this.NotFound();
 		}
 	}

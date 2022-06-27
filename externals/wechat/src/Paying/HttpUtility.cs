@@ -35,6 +35,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
+using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -64,13 +65,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 			return PostAsync<TRequest, TResult>(client, url, request, null, cancellation);
 		}
 
-		public static async ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, Certificate certificate, CancellationToken cancellation = default)
+		public static async ValueTask<OperationResult<TResult>> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, ICertificate certificate, CancellationToken cancellation = default)
 		{
 			//var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Json.Options);
 			var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
 
 			if(certificate != null)
-				content.Headers.Add("Wechatpay-Serial", certificate.Code);
+				content.Headers.Add("Wechatpay-Serial", certificate.Identifier);
 
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync<TResult>(response, cancellation);
