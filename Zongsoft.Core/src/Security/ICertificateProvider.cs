@@ -34,6 +34,7 @@ namespace Zongsoft.Security
 	/// <summary>
 	/// 表示数字证书提供程序的接口。
 	/// </summary>
+	[Obsolete("This interface has been deprecated, Please use the CertificateManager class instead.")]
 	public interface ICertificateProvider<out TCertificate> where TCertificate : ICertificate
 	{
 		/// <summary>获取数字证书提供程序名称。</summary>

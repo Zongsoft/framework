@@ -36,11 +36,9 @@ namespace Zongsoft.Security
 	/// </summary>
 	public interface ICertificate : IEquatable<ICertificate>
 	{
-		/// <summary>获取证书号码。</summary>
-		string Code { get; }
-
-		/// <summary>获取证书名称。</summary>
-		string Name { get; }
+		#region 属性定义
+		/// <summary>获取证书的标识。</summary>
+		string Identifier { get; }
 
 		/// <summary>获取证书格式。</summary>
 		string Format { get; }
@@ -48,20 +46,28 @@ namespace Zongsoft.Security
 		/// <summary>获取证书签名算法。</summary>
 		string Algorithm { get; }
 
-		/// <summary>获取或设置证书签发者信息。</summary>
-		ICertificateIssuer Issuer { get; set; }
+		/// <summary>获取证书签发者信息。</summary>
+		ICertificateIssuer Issuer { get; }
 
-		/// <summary>获取或设置证书持有者信息。</summary>
-		ICertificateSubject Subject { get; set; }
+		/// <summary>获取证书持有者信息。</summary>
+		ICertificateSubject Subject { get; }
 
-		/// <summary>获取或设置证书有效期。</summary>
-		CertificateValidity Validity { get; set; }
+		/// <summary>获取证书有效期。</summary>
+		CertificateValidity Validity { get; }
+
+		/// <summary>获取数字证书签名器。</summary>
+		ISignaturer Signaturer { get; }
+		#endregion
+
+		#region 方法定义
+		object GetProtocol();
+		#endregion
 	}
 
 	/// <summary>
 	/// 表示数字证书有效期的结构。
 	/// </summary>
-	public struct CertificateValidity : IEquatable<CertificateValidity>
+	public readonly struct CertificateValidity : IEquatable<CertificateValidity>
 	{
 		#region 构造函数
 		public CertificateValidity(DateTime start, DateTime final)
@@ -74,18 +80,23 @@ namespace Zongsoft.Security
 		#region 公共字段
 		/// <summary>生效时间。</summary>
 		[System.Text.Json.Serialization.JsonInclude]
-		public DateTime Start;
+		public readonly DateTime? Start;
 
 		/// <summary>过期时间。</summary>
 		[System.Text.Json.Serialization.JsonInclude]
-		public DateTime Final;
+		public readonly DateTime? Final;
+		#endregion
+
+		#region 公共属性
+		public bool IsEmpty => this.Start == null && this.Final == null;
 		#endregion
 
 		#region 公共方法
-		public bool IsValidate(DateTime? timestamp = null)
+		public bool IsValid(DateTime? timestamp = null)
 		{
 			var time = timestamp == null ? DateTime.UtcNow : timestamp.Value.ToUniversalTime();
-			return this.Start <= time && this.Final >= time;
+			return (this.Start == null || (this.Start.HasValue && this.Start <= time)) &&
+			       (this.Final == null || (this.Final.HasValue && this.Final >= time));
 		}
 		#endregion
 

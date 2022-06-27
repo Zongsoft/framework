@@ -28,21 +28,20 @@
  */
 
 using System;
+using System.IO;
 
 namespace Zongsoft.Security
 {
 	/// <summary>
-	/// 提供数字证书签名校验功能的接口。
+	/// 提供数字证书解析功能的接口。
 	/// </summary>
-	public interface ICertificateVerifier<in TCertificate> where TCertificate : ICertificate
+	public interface ICertificateResolver
 	{
-		/// <summary>
-		/// 校验指定的数据摘要。
-		/// </summary>
-		/// <param name="certificate">指定的数字证书。</param>
-		/// <param name="data">待验证的数据内容。</param>
-		/// <param name="signature">待验证的签名内容。</param>
-		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
-		bool Verify(TCertificate certificate, ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature);
+		/// <summary>获取数字证书解析器名称，通常对应数字证书的格式名。</summary>
+		string Name { get; }
+
+		ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default);
+		ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default);
+		ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default);
 	}
 }

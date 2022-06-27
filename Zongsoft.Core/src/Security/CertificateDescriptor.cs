@@ -31,21 +31,30 @@ using System;
 
 namespace Zongsoft.Security
 {
-	/// <summary>
-	/// 提供摘要校验功能的接口。
-	/// </summary>
-	public interface IDigestVerifier
+	public struct CertificateDescriptor
 	{
-		/// <summary>获取校验器名称。</summary>
-		string Name { get; }
+		#region 构造函数
+		public CertificateDescriptor(string identifier, CertificateValidity validity = default, ICertificateIssuer issuer = null, ICertificateSubject subject = null)
+		{
+			this.Identifier = identifier;
+			this.Validity = validity;
+			this.Issuer = issuer;
+			this.Subject = subject;
+		}
+		#endregion
 
-		/// <summary>
-		/// 校验指定的数据摘要。
-		/// </summary>
-		/// <param name="identifier">校验项标识符。</param>
-		/// <param name="digest">待验证的数据摘要。</param>
-		/// <param name="data">待验证的数据内容。</param>
-		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
-		bool Verify(string identifier, ReadOnlySpan<byte> digest, ReadOnlySpan<byte> data);
+		#region 公共属性
+		/// <summary>获取证书标识。</summary>
+		public string Identifier { get; }
+
+		/// <summary>获取证书签发者信息。</summary>
+		public ICertificateIssuer Issuer { get; }
+
+		/// <summary>获取证书持有者信息。</summary>
+		public ICertificateSubject Subject { get; }
+
+		/// <summary>获取证书有效期。</summary>
+		public CertificateValidity Validity { get; }
+		#endregion
 	}
 }
