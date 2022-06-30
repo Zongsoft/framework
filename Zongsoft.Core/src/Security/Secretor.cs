@@ -42,7 +42,7 @@ namespace Zongsoft.Security
 	public class Secretor : ISecretor
 	{
 		#region 常量定义
-		private const int DEFAULT_EXPIRY_MINUTES = 10;
+		private const int DEFAULT_EXPIRY_MINUTES = 30;
 		private const int DEFAULT_PERIOD_SECONDS = 60;
 		#endregion
 
@@ -85,7 +85,7 @@ namespace Zongsoft.Security
 		[ServiceDependency]
 		public IServiceAccessor<ICache> Cache { get; set; }
 
-		/// <summary>获取或设置秘密内容的默认过期时长（默认为10分钟），不能设置为零。</summary>
+		/// <summary>获取或设置秘密内容的默认过期时长（默认为30分钟），不能设置为零。</summary>
 		public TimeSpan Expiry
 		{
 			get => _expiry;
@@ -116,7 +116,7 @@ namespace Zongsoft.Security
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
-			name = name.ToLowerInvariant().Trim();
+			name = PruneKey(name);
 
 			return cache.Exists(name);
 		}
@@ -131,7 +131,7 @@ namespace Zongsoft.Security
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
-			name = name.ToLowerInvariant().Trim();
+			name = PruneKey(name);
 
 			//从缓存内容解析出对应的缓存值和发出时间
 			if(cache.TryGetValue(name, out string cacheValue) && this.Unpack(cacheValue, out var _, out var timestamp, out _))
@@ -157,7 +157,7 @@ namespace Zongsoft.Security
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
-			name = name.ToLowerInvariant().Trim();
+			name = PruneKey(name);
 
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
 			if(cache.TryGetValue(name, out string cacheValue) &&
@@ -185,7 +185,7 @@ namespace Zongsoft.Security
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret generate operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
-			name = name.ToLowerInvariant().Trim();
+			name = PruneKey(name);
 
 			//从缓存容器中获取对应的内容
 			if(cache.TryGetValue(name, out string text) && !string.IsNullOrWhiteSpace(text))
@@ -222,7 +222,7 @@ namespace Zongsoft.Security
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
 
 			//修复秘密名（转换成小写并剔除收尾空格）
-			name = name.ToLowerInvariant().Trim();
+			name = PruneKey(name);
 
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
 			if(cache.TryGetValue(name, out string cacheValue) &&
@@ -319,6 +319,11 @@ namespace Zongsoft.Security
 
 			return !string.IsNullOrEmpty(secret);
 		}
+		#endregion
+
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string PruneKey(string name) => string.IsNullOrEmpty(name) ? name : $"Zongsoft.Secretor:{name.Trim().ToLowerInvariant()}";
 		#endregion
 
 		#region 嵌套子类
