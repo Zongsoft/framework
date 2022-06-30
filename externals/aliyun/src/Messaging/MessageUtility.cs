@@ -195,7 +195,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 					switch(reader.LocalName)
 					{
 						case "MessageId":
-							return reader.Value;
+							return reader.ReadElementContentAsString();
 					}
 				}
 			}

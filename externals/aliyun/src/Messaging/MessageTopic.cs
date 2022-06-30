@@ -118,8 +118,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(cancellation.IsCancellationRequested)
 				return null;
 
-			var content = await response.Content.ReadAsStreamAsync(cancellation);
-			return MessageUtility.GetMessageResponseId(content);
+			return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync(cancellation));
 		}
 		#endregion
 

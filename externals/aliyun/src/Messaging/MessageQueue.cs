@@ -163,7 +163,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
 				System.Convert.ToBase64String(data) +
 				"</MessageBody><DelaySeconds>" +
-				options.Delay.TotalSeconds.ToString() +
+				((int)options.Delay.TotalSeconds).ToString() +
 				"</DelaySeconds><Priority>" + options.Priority.ToString() + "</Priority></Message>";
 
 			var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"))
