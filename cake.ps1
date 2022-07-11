@@ -14,6 +14,8 @@
 [string]$project_wechat         = 'externals/wechat/build.cake'
 [string]$project_grapecity      = 'externals/grapecity/build.cake'
 
+[string]$project_administratives = '../Administratives/build.cake'
+
 [string]$CAKE_ARGS = '--verbosity=normal'
 
 Write-Host "dotnet cake $project_core $CAKE_ARGS $ARGS" -ForegroundColor Magenta
@@ -58,3 +60,9 @@ dotnet cake $project_wechat $CAKE_ARGS $ARGS
 
 # Write-Host "dotnet cake $project_grapecity $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 # dotnet cake $project_grapecity $CAKE_ARGS $ARGS
+
+if(Test-Path $project_administratives)
+{
+	Write-Host "dotnet cake $project_administratives $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+	dotnet cake $project_administratives $CAKE_ARGS $ARGS
+}

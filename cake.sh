@@ -20,6 +20,8 @@ PROJECT_REDIS="externals/redis/build.cake"
 PROJECT_WECHAT="externals/wechat/build.cake"
 # PROJECT_GRAPECITY="externals/grapecity/build.cake"
 
+PROJECT_ADMINISTRATIVES="../Administratives/build.cake"
+
 dotnet cake $PROJECT_CORE $CAKE_ARGS "$@"
 dotnet cake $PROJECT_DATA $CAKE_ARGS "$@"
 dotnet cake $PROJECT_NET $CAKE_ARGS "$@"
@@ -35,3 +37,7 @@ dotnet cake $PROJECT_ALIYUN $CAKE_ARGS "$@"
 dotnet cake $PROJECT_REDIS $CAKE_ARGS "$@"
 dotnet cake $PROJECT_WECHAT $CAKE_ARGS "$@"
 # dotnet cake $PROJECT_GRAPECITY $CAKE_ARGS "$@"
+
+if [ -f "$PROJECT_ADMINISTRATIVES" ]; then
+	dotnet cake $PROJECT_ADMINISTRATIVES $CAKE_ARGS "$@"
+fi
