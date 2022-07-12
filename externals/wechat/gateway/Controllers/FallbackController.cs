@@ -44,7 +44,7 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 		[HttpPost("{name}/{key?}")]
 		public async Task<IActionResult> HandleAsync(string name, string key = null, CancellationToken cancellation = default)
 		{
-			Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
+			//Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
 
 			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
 
