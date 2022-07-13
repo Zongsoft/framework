@@ -98,7 +98,43 @@ namespace Zongsoft.Externals.Wechat
 
 		public async ValueTask<OperationResult> ObsoleteAsync(string templateId, string code, CancellationToken cancellation = default)
 		{
-			return OperationResult.Fail();
+			if(string.IsNullOrEmpty(templateId))
+				throw new ArgumentNullException(nameof(templateId));
+
+			var response = await _http.PostAsJsonAsync($"marketing/membercard-open/cards/{templateId}/codes/unavailable", new { reason = string.Empty }, cancellation);
+
+			if(response.IsSuccessStatusCode)
+				return OperationResult.Success();
+
+			return OperationResult.Fail(response.StatusCode.ToString());
+		}
+		#endregion
+
+		#region 私有方法
+		public static async ValueTask<OperationResult<TResult>> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellation = default)
+		{
+			if(response == null)
+				throw new ArgumentNullException(nameof(response));
+
+			if(response.IsSuccessStatusCode)
+			{
+				if(response.Content.Headers.ContentLength <= 0)
+					return OperationResult.Success();
+
+				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
+				return OperationResult.Success(result);
+			}
+			else
+			{
+				if(response.Content.Headers.ContentLength <= 0)
+					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
+
+				var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
+					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
+					new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
+
+				return OperationResult.Fail(failure.Code, failure.Message);
+			}
 		}
 		#endregion
 

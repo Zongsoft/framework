@@ -33,7 +33,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat
 {
 	public struct FailureResult
 	{
@@ -64,10 +64,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return "[" + this.Code.ToString() + "] " + this.Message;
-		}
+		public override string ToString() => "[" + this.Code.ToString() + "] " + this.Message;
 		#endregion
 
 		#region 嵌套结构
