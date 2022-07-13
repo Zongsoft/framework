@@ -34,5 +34,5 @@
 ../../Zongsoft.Messaging.Kafka/.deploy
 
 [plugins zongsoft administratives]
-/Zongsoft/Administratives/.deploy
-/Zongsoft/Administratives/api/.deploy
+../../../Administratives/.deploy
+../../../Administratives/api/.deploy
