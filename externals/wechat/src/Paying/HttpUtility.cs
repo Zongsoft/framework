@@ -102,7 +102,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			if(response.IsSuccessStatusCode)
 			{
-				if(response.Content.Headers.ContentLength <= 0)
+				if(response.Content.Headers.ContentLength <= 0 || typeof(TResult) == typeof(void) || typeof(TResult) == typeof(object))
 					return OperationResult.Success();
 
 				//var text = await response.Content.ReadAsStringAsync(cancellation);
