@@ -1069,8 +1069,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				protected override object GetAuthenticationOfflineResult(string organization, string value) => new
 				{
-					AppId = this.Authority.Accounts.Default.Code,
+					Value = value,
 					OrganizationId = organization,
+					AppId = this.Authority.Accounts.Default.Code,
 					MerchantId = this.Authority.Code,
 					SubAppId = _subsidiary.Accounts.Default.Code,
 					SubMerchantId = _subsidiary.Code,
