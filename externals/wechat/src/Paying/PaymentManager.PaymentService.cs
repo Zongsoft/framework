@@ -195,7 +195,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{ "sp_appid", string.IsNullOrEmpty(appId) ? _authority.Accounts.Default.Code : appId },
 					{ "device_id", device },
 					{ "organization_id", organization },
-					{ "rawdata", data },
+					{ "raw_data", data },
 				};
 			}
 			#endregion
@@ -1041,7 +1041,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(request != null)
 					{
 						request["sub_mch_id"] = _subsidiary.Code;
-						request["sub_appid"] = _subsidiary.Accounts.Default.Code;
+
+						if(!_subsidiary.Accounts.Default.IsEmpty)
+							request["sub_appid"] = _subsidiary.Accounts.Default.Code;
 					}
 
 					return request;
@@ -1054,7 +1056,9 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(request != null)
 					{
 						request["sub_mchid"] = _subsidiary.Code;
-						request["sub_appid"] = _subsidiary.Accounts.Default.Code;
+
+						if(!_subsidiary.Accounts.Default.IsEmpty)
+							request["sub_appid"] = _subsidiary.Accounts.Default.Code;
 					}
 
 					return request;
