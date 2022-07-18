@@ -140,7 +140,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var request = this.GetAuthenticationOfflineRequest(applet, data, device, organization);
 
 				var response = await this.Client.PostAsJsonAsync(@"https://api.mch.weixin.qq.com/v3/offlineface/authinfo", request, cancellation);
-				return await response.GetResultAsync<AuthenticateOfflineResult>(cancellation);
+				var result = await response.GetResultAsync<AuthenticateOfflineResult>(cancellation);
+				return result.Succeed ? OperationResult.Success(this.GetAuthenticationOfflineResult(organization, result.Value.Value)) : result.Failure;
 			}
 			#endregion
 
@@ -198,6 +199,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{ "raw_data", data },
 				};
 			}
+
+			protected virtual object GetAuthenticationOfflineResult(string organization, string value) => null;
 			#endregion
 
 			#region 抽象方法
@@ -1063,6 +1066,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 					return request;
 				}
+
+				protected override object GetAuthenticationOfflineResult(string organization, string value) => new
+				{
+					AppId = this.Authority.Accounts.Default.Code,
+					OrganizationId = organization,
+					MerchantId = this.Authority.Code,
+					SubAppId = _subsidiary.Accounts.Default.Code,
+					SubMerchantId = _subsidiary.Code,
+				};
 				#endregion
 
 				#region 私有方法
