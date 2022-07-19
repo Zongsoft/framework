@@ -71,8 +71,8 @@ namespace Zongsoft.Externals.Wechat
 		public struct FailureDetail
 		{
 			public string Field { get; set; }
-			[JsonConverter(typeof(FailureDetailValueConverter))]
-			public string Value { get; set; }
+			//[JsonConverter(typeof(FailureDetailValueConverter))]
+			public object Value { get; set; }
 			public string Issue { get; set; }
 			public string Location { get; set; }
 
@@ -81,21 +81,35 @@ namespace Zongsoft.Externals.Wechat
 				$"{this.Location}:{this.Field}={this.Value}";
 		}
 
-		private class FailureDetailValueConverter : JsonConverter<string>
+		private class FailureDetailValueConverter : JsonConverter<object>
 		{
 			public override bool CanConvert(Type type) => true;
 
-			public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-				reader.TokenType == JsonTokenType.String ?
-					reader.GetString() :
-					reader.HasValueSequence ? Encoding.UTF8.GetString(reader.ValueSequence.ToArray()) : Encoding.UTF8.GetString(reader.ValueSpan);
+			public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				switch(reader.TokenType)
+				{
+					case JsonTokenType.Null:
+						return null;
+					case JsonTokenType.String:
+						return reader.GetString();
+					case JsonTokenType.True:
+						return true;
+					case JsonTokenType.False:
+						return false;
+					case JsonTokenType.Number:
+						return reader.TryGetInt64(out var integer) ? integer : reader.GetDouble();
+				}
 
-			public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+				return null;
+			}
+
+			public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
 			{
 				if(value == null)
 					writer.WriteNullValue();
 				else
-					writer.WriteStringValue(value);
+					writer.WriteStringValue(value.ToString());
 			}
 		}
 		#endregion

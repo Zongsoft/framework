@@ -1105,8 +1105,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string TicketCode { get; set; }
 					[JsonPropertyName("amount")]
 					public PaymentRequest.AmountInfo Amount { get; set; }
-					[JsonPropertyName("scene_info")]
-					public PaymentRequest.PlaceInfo Place { get; set; }
 					[JsonPropertyName("attach")]
 					public string Extra { get; set; }
 					[JsonPropertyName("description")]
@@ -1130,7 +1128,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 							VoucherCode = request.VoucherCode,
 							TicketCode = request.TicketCode,
 							Amount = request.Amount,
-							Place = request.Place,
 							Settlement = request.Settlement,
 							Extra = string.IsNullOrEmpty(request.Extra) ? request.Description : request.Extra,
 							Description = string.IsNullOrEmpty(request.Description) ? request.Extra : request.Description,
