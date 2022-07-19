@@ -998,12 +998,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public override async ValueTask<OperationResult<PaymentOrder>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 				{
 					if(_authority.Certificate == null)
-					{
-						if(request is PaymentRequest.TicketRequest ticketRequest && ticketRequest.Business.HasValue)
-							return await PayOfflineTicketAsync(ticketRequest, cancellation);
-						else
-							return await _compatibility.PayAsync(request, scenario, cancellation);
-					}
+						return await _compatibility.PayAsync(request, scenario, cancellation);
+
+					if(request is PaymentRequest.TicketRequest ticketRequest && ticketRequest.Business.HasValue)
+						return await PayOfflineTicketAsync(ticketRequest, cancellation);
 
 					var result = await this.PayV3Async(request, scenario, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)new BrokerOrder(result.Value, request)) : result.Failure;
@@ -1081,12 +1079,26 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 私有方法
 				private async ValueTask<OperationResult<PaymentOrder>> PayOfflineTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
 				{
-					var result = await this.Client.PostAsync<OfflineTicketRequest, BrokerOrder>(@"https://api.mch.weixin.qq.com/v3/offlineface/transactions", OfflineTicketRequest.Create(request), cancellation);
+					var result = await this.Client.PostAsync<OfflineTicketRequest, BrokerOrder>(
+						@"https://api.mch.weixin.qq.com/v3/offlineface/transactions",
+						OfflineTicketRequest.Create(request, uint.Parse(this.Authority.Code), this.Authority.Accounts.Default.Code, uint.Parse(_subsidiary.Code), _subsidiary.Accounts.Default.Code),
+						cancellation);
+
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : result.Failure;
 				}
 
 				private class OfflineTicketRequest
 				{
+					[JsonPropertyName("sp_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint MerchantId { get; set; }
+					[JsonPropertyName("sp_appid")]
+					public string AppId { get; set; }
+					[JsonPropertyName("sub_mchid")]
+					[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+					public uint SubMerchantId { get; set; }
+					[JsonPropertyName("sub_appid")]
+					public string SubAppId { get; set; }
 					[JsonPropertyName("out_trade_no")]
 					public string VoucherCode { get; set; }
 					[JsonPropertyName("auth_code")]
@@ -1104,13 +1116,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("business")]
 					public PaymentRequest.TicketRequest.BusinessInfo? Business { get; set; }
 
-					public static OfflineTicketRequest Create(PaymentRequest.TicketRequest request)
+					public static OfflineTicketRequest Create(PaymentRequest.TicketRequest request, uint merchantId, string appId, uint subMerchantId, string subAppId)
 					{
 						if(request == null || request.Business == null)
 							return default;
 
 						return new OfflineTicketRequest()
 						{
+							AppId = appId,
+							MerchantId = merchantId,
+							SubAppId = subAppId,
+							SubMerchantId = subMerchantId,
 							VoucherCode = request.VoucherCode,
 							TicketCode = request.TicketCode,
 							Amount = request.Amount,
