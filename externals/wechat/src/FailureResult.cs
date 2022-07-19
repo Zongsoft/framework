@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Buffers;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -71,7 +69,6 @@ namespace Zongsoft.Externals.Wechat
 		public struct FailureDetail
 		{
 			public string Field { get; set; }
-			//[JsonConverter(typeof(FailureDetailValueConverter))]
 			public object Value { get; set; }
 			public string Issue { get; set; }
 			public string Location { get; set; }

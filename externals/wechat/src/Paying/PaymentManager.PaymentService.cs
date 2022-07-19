@@ -1109,6 +1109,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public string Extra { get; set; }
 					[JsonPropertyName("description")]
 					public string Description { get; set; }
+					[JsonPropertyName("scene_info")]
+					public PlaceInfo Place { get; set; }
 					[JsonPropertyName("settle_info")]
 					public PaymentRequest.SettlementInfo Settlement { get; set; }
 					[JsonPropertyName("business")]
@@ -1128,11 +1130,23 @@ namespace Zongsoft.Externals.Wechat.Paying
 							VoucherCode = request.VoucherCode,
 							TicketCode = request.TicketCode,
 							Amount = request.Amount,
+							Place = new PlaceInfo(request.Place.DeviceIp),
 							Settlement = request.Settlement,
 							Extra = string.IsNullOrEmpty(request.Extra) ? request.Description : request.Extra,
 							Description = string.IsNullOrEmpty(request.Description) ? request.Extra : request.Description,
 							Business = request.Business.Value,
 						};
+					}
+
+					public struct PlaceInfo
+					{
+						public PlaceInfo(string ip)
+						{
+							this.DeviceIp = string.IsNullOrEmpty(ip) ? "127.0.0.1" : ip;
+						}
+
+						[JsonPropertyName("device_ip")]
+						public string DeviceIp { get; set; }
 					}
 				}
 				#endregion
