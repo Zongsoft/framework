@@ -36,6 +36,7 @@ using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
+using System.Text.Json;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -433,10 +434,29 @@ namespace Zongsoft.Externals.Wechat.Paying
 						public int SceneId { get; }
 					}
 
+					[JsonConverter(typeof(BusinessProductConverter))]
 					public enum BusinessProduct
 					{
 						K12 = 2,
 						Groupon = 11,
+					}
+
+					private class BusinessProductConverter : JsonConverter<BusinessProduct>
+					{
+						public override BusinessProduct Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+						{
+							if(reader.TokenType == JsonTokenType.Number)
+								return (BusinessProduct)reader.GetInt32();
+							else if(reader.TokenType == JsonTokenType.String)
+								return Enum.TryParse<BusinessProduct>(reader.GetString(), true, out var result) ? result : BusinessProduct.K12;
+							else
+								return BusinessProduct.K12;
+						}
+
+						public override void Write(Utf8JsonWriter writer, BusinessProduct value, JsonSerializerOptions options)
+						{
+							writer.WriteNumberValue((int)value);
+						}
 					}
 					#endregion
 				}
@@ -1079,9 +1099,11 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#region 私有方法
 				private async ValueTask<OperationResult<PaymentOrder>> PayOfflineTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
 				{
+					var ticket = OfflineTicketRequest.Create(request, uint.Parse(this.Authority.Code), this.Authority.Accounts.Default.Code, uint.Parse(_subsidiary.Code), _subsidiary.Accounts.Default.Code);
+
 					var result = await this.Client.PostAsync<OfflineTicketRequest, BrokerOrder>(
 						@"https://api.mch.weixin.qq.com/v3/offlineface/transactions",
-						OfflineTicketRequest.Create(request, uint.Parse(this.Authority.Code), this.Authority.Accounts.Default.Code, uint.Parse(_subsidiary.Code), _subsidiary.Accounts.Default.Code),
+						ticket,
 						cancellation);
 
 					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : result.Failure;
