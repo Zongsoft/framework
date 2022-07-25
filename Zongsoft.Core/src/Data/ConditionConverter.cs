@@ -83,26 +83,9 @@ namespace Zongsoft.Data
 			if(typeof(IModel).IsAssignableFrom(context.Type))
 			{
 				if(context.Operator == ConditionOperator.Exists || context.Operator == ConditionOperator.NotExists)
-				{
-					var qualifiedName = context.GetFullName();
-					var index = qualifiedName.LastIndexOf('.');
-					string name, path;
-
-					if(index > 0 && index < qualifiedName.Length - 1)
-					{
-						name = qualifiedName.Substring(0, index);
-						path = qualifiedName.Substring(index + 1);
-					}
-					else
-					{
-						name = qualifiedName;
-						path = null;
-					}
-
-					return new Condition(name, Criteria.Transform((IModel)context.Value, path), context.Operator.Value);
-				}
-
-				return Criteria.Transform((IModel)context.Value, context.GetFullName());
+					return new Condition(context.GetFullName(), Criteria.Transform((IModel)context.Value), context.Operator.Value);
+				else
+					return Criteria.Transform((IModel)context.Value, context.GetFullName());
 			}
 
 			//判断当前属性是否可以忽略
