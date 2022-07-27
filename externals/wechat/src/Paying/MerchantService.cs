@@ -29,6 +29,7 @@
 
 using System;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
@@ -41,19 +42,21 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		public class MerchantService
 		{
-			#region 私有变量
-			private readonly IAuthority _authority;
-			#endregion
-
 			#region 成员字段
 			private HttpClient _client;
 			#endregion
 
 			#region 构造函数
-			public MerchantService(IAuthority authority)
+			internal MerchantService(IAuthority authority)
 			{
-				_authority = authority ?? throw new ArgumentNullException(nameof(authority));
+				this.Authority = authority ?? throw new ArgumentNullException(nameof(authority));
+				this.Contracts = new ContractService(this);
 			}
+			#endregion
+
+			#region 公共属性
+			public IAuthority Authority { get; }
+			public ContractService Contracts { get; }
 			#endregion
 
 			#region 保护属性
@@ -67,7 +70,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					lock(this)
 					{
 						if(_client == null)
-							_client = HttpClientFactory.GetHttpClient(_authority.Certificate);
+							_client = HttpClientFactory.GetHttpClient(this.Authority.Certificate);
 					}
 
 					return _client;
@@ -82,7 +85,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw new ArgumentNullException(nameof(request));
 
 				//获取微信支付平台的数字证书
-				var certificate = await _authority.GetCertificateAsync(cancellation);
+				var certificate = await this.Authority.GetCertificateAsync(cancellation);
 
 				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments/", request, certificate, cancellation);
 				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId.ToString()) : result.Failure;
@@ -353,6 +356,399 @@ namespace Zongsoft.Externals.Wechat.Paying
 					[JsonPropertyName("remark")]
 					public string Remark { get; set; }
 				}
+			}
+			#endregion
+
+			#region 嵌套子类
+			public class ContractService
+			{
+				#region 成员字段
+				private readonly MerchantService _merchant;
+				#endregion
+
+				#region 构造函数
+				internal ContractService(MerchantService merchant) => _merchant = merchant ?? throw new ArgumentNullException(nameof(merchant));
+				#endregion
+
+				#region 公共方法
+				public ValueTask<OperationResult<SignatoryInfo>> GetSignatoryAsync(string organizationId, string userId, CancellationToken cancellation = default)
+				{
+					if(string.IsNullOrEmpty(organizationId))
+						throw new ArgumentNullException(nameof(organizationId));
+					if(string.IsNullOrEmpty(userId))
+						throw new ArgumentNullException(nameof(userId));
+
+					return _merchant.Client.GetAsync<SignatoryInfo>($"offlinefacemch/organizations/{organizationId}/users/out-user-id/{userId}", cancellation);
+				}
+
+				public ValueTask<OperationResult<ContractInfo>> GetContractAsync(string contractId, CancellationToken cancellation = default)
+				{
+					if(string.IsNullOrEmpty(contractId))
+						throw new ArgumentNullException(nameof(contractId));
+
+					return _merchant.Client.GetAsync<ContractInfo>($"offlineface/contracts/{contractId}?appid={_merchant.Authority.Accounts.Default.Code}", cancellation);
+				}
+
+				public ValueTask<OperationResult<string>> AuthenticateAsync(string organizationId, string userId, CancellationToken cancellation = default) => this.AuthenticateAsync(organizationId, userId, null, cancellation);
+				public async ValueTask<OperationResult<string>> AuthenticateAsync(string organizationId, string userId, string scene = null, CancellationToken cancellation = default)
+				{
+					if(string.IsNullOrEmpty(organizationId))
+						throw new ArgumentNullException(nameof(organizationId));
+					if(string.IsNullOrEmpty(userId))
+						throw new ArgumentNullException(nameof(userId));
+
+					if(string.IsNullOrWhiteSpace(scene))
+						scene = "WEBSESSION";
+
+					var result = await _merchant.Client.PostAsync<AuthenticateRequest, AuthenticateResult>("offlinefacemch/tokens", new AuthenticateRequest(organizationId, userId, scene), cancellation);
+					return result.Succeed ? OperationResult.Success(result.Value.Token) : result.Failure;
+				}
+
+				public async ValueTask<OperationResult<string>> ApplyAsync(ApplyRequest request, CancellationToken cancellation = default)
+				{
+					if(request == null)
+						throw new ArgumentNullException(nameof(request));
+
+					var result = await _merchant.Client.PostAsync<ApplyRequest, ApplyResult>("offlineface/contracts/presign", request, cancellation);
+					return result.Succeed ? OperationResult.Success(result.Value.Token) : result.Failure;
+				}
+				#endregion
+
+				#region 实体模型
+				private struct AuthenticateRequest
+				{
+					public AuthenticateRequest(string organizationId, string userId, string scene)
+					{
+						this.Scene = scene;
+						this.Data = new UserToken(organizationId, userId);
+					}
+
+					[JsonPropertyName("scene")]
+					public string Scene { get; }
+					[JsonPropertyName("web_init_data")]
+					public UserToken Data { get; }
+
+					public struct UserToken
+					{
+						public UserToken(string organizationId, string userId)
+						{
+							this.OrganizationId = organizationId;
+							this.UserId = userId;
+						}
+
+						[JsonPropertyName("out_user_id")]
+						public string UserId { get; }
+						[JsonPropertyName("organization_id")]
+						public string OrganizationId { get; }
+					}
+				}
+
+				private struct AuthenticateResult
+				{
+					[JsonPropertyName("token")]
+					public string Token { get; set; }
+				}
+
+				public class ApplyRequest
+				{
+					public ApplyRequest() { }
+					public ApplyRequest(string business, PayerInfo payer)
+					{
+						this.BusinessName = business;
+						this.Payer = payer;
+					}
+
+					[JsonPropertyName("business_name")]
+					public string BusinessName { get; set; }
+					[JsonPropertyName("contract_mode")]
+					public ContractMode? ContractMode { get; set; }
+					[JsonPropertyName("facepay_user")]
+					public PayerInfo Payer { get; set; }
+					[JsonPropertyName("limit_bank_card")]
+					public BankCardInfo? BankCard { get; set; }
+
+					public struct BankCardInfo
+					{
+						[JsonPropertyName("bank_card_number")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string Code { get; set; }
+
+						[JsonPropertyName("identification_name")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string Name { get; set; }
+
+						[JsonPropertyName("identification")]
+						public Identity Identity { get; set; }
+
+						[JsonPropertyName("bank_type")]
+						public string BankType { get; set; }
+
+						[JsonPropertyName("phone")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string PhoneNumber { get; set; }
+
+						[JsonPropertyName("valid_thru")]
+						public string Validity { get; set; }
+					}
+
+					public struct PayerInfo
+					{
+						[JsonPropertyName("out_user_id")]
+						public string UserId { get; set; }
+						[JsonPropertyName("identification_name")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string Name { get; set; }
+						[JsonPropertyName("organization_id")]
+						public string OrganizationId { get; set; }
+						[JsonPropertyName("phone")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string PhoneNumber { get; set; }
+						[JsonPropertyName("identification")]
+						public Identity Identity { get; set; }
+					}
+
+					public struct Identity
+					{
+						[JsonPropertyName("identification_type")]
+						public IdentityType Type { get; set; }
+						[JsonPropertyName("identification_number")]
+						[JsonConverter(typeof(Json.CryptographyConverter))]
+						public string Code { get; set; }
+					}
+
+					[JsonConverter(typeof(IdentityTypeConverter))]
+					public enum IdentityType
+					{
+						/// <summary>身份证</summary>
+						IdentityId,
+						/// <summary>护照</summary>
+						Passport,
+						/// <summary>港澳通行证</summary>
+						Traffic,
+					}
+
+					private class IdentityTypeConverter : JsonConverter<IdentityType>
+					{
+						public override IdentityType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+						{
+							if(reader.TokenType == JsonTokenType.String)
+							{
+								return reader.GetString() switch
+								{
+									"IDCARD" => IdentityType.IdentityId,
+									"PASSPORT_NO" => IdentityType.Passport,
+									"EEP_HK_MACAU" => IdentityType.Traffic,
+									_ => IdentityType.IdentityId,
+								};
+							}
+
+							return IdentityType.IdentityId;
+						}
+
+						public override void Write(Utf8JsonWriter writer, IdentityType value, JsonSerializerOptions options)
+						{
+							switch(value)
+							{
+								case IdentityType.IdentityId:
+									writer.WriteStringValue("IDCARD");
+									break;
+								case IdentityType.Passport:
+									writer.WriteStringValue("PASSPORT_NO");
+									break;
+								case IdentityType.Traffic:
+									writer.WriteStringValue("EEP_HK_MACAU");
+									break;
+								default:
+									writer.WriteStringValue("IDCARD");
+									break;
+							}
+						}
+					}
+				}
+
+				private struct ApplyResult
+				{
+					[JsonPropertyName("presign_token")]
+					public string Token { get; set; }
+				}
+
+				public class ContractInfo
+				{
+					[JsonPropertyName("contract_id")]
+					public string ContractId { get; set; }
+
+					[JsonPropertyName("mchid")]
+					public string MerchantId { get; set; }
+
+					[JsonPropertyName("organization_id")]
+					public string OrganizationId { get; set; }
+
+					[JsonPropertyName("user_id")]
+					public string UserCode { get; set; }
+
+					[JsonPropertyName("appid")]
+					public string AppId { get; set; }
+
+					[JsonPropertyName("openid")]
+					public string OpenId { get; set; }
+
+					[JsonPropertyName("contract_state")]
+					public ContractStatus Status { get; set; }
+
+					[JsonPropertyName("contract_signed_time")]
+					public DateTime SignedTime { get; set; }
+
+					[JsonPropertyName("contract_terminated_time")]
+					public DateTime TerminatedTime { get; set; }
+
+					[JsonPropertyName("contract_mode")]
+					public ContractMode ContractMode { get; set; }
+
+					[JsonPropertyName("contract_bank_card_from")]
+					public string BankCardFrom { get; set; }
+				}
+
+				public class SignatoryInfo
+				{
+					[JsonPropertyName("contract_id")]
+					public string ContractId { get; set; }
+
+					[JsonPropertyName("user_id")]
+					public string UserCode { get; set; }
+
+					[JsonPropertyName("out_user_id")]
+					public string UserId { get; set; }
+
+					[JsonPropertyName("user_name")]
+					public string Name { get; set; }
+
+					[JsonPropertyName("user_type")]
+					public string Type { get; set; }
+
+					[JsonPropertyName("status")]
+					public SignatoryStatus Status { get; set; }
+
+					[JsonPropertyName("contract_state")]
+					public ContractStatus ContractStatus { get; set; }
+
+					[JsonPropertyName("organization_id")]
+					public string OrganizationId { get; set; }
+
+					[JsonPropertyName("face_image_ok")]
+					public bool HasFaceImage { get; set; }
+
+					[JsonPropertyName("student_info")]
+					public StudentInfo Student { get; set; }
+
+					[JsonPropertyName("staff_info")]
+					public StaffInfo Staff { get; set; }
+				}
+
+				public enum SignatoryStatus
+				{
+					Normal,
+					Disabled,
+				}
+
+				[JsonConverter(typeof(ContractStatusConverter))]
+				public enum ContractStatus
+				{
+					None,
+					Signed,
+					Aborted,
+					Unknown,
+				}
+
+				[JsonConverter(typeof(ContractModeConverter))]
+				public enum ContractMode
+				{
+					None,
+					Priority,
+					Specially,
+				}
+
+				public struct StudentInfo
+				{
+					[JsonPropertyName("class_name")]
+					public string ClassName { get; set; }
+				}
+
+				public struct StaffInfo
+				{
+					[JsonPropertyName("occupation")]
+					public string Occupation { get; set; }
+				}
+
+				private class ContractStatusConverter : JsonConverter<ContractStatus>
+				{
+					public override ContractStatus Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+					{
+						if(reader.TokenType == JsonTokenType.String)
+						{
+							return reader.GetString() switch
+							{
+								"NOT_CONTRACTED" => ContractStatus.None,
+								"CONTRACTED" => ContractStatus.Signed,
+								"TERMINATED" => ContractStatus.Aborted,
+								_ => ContractStatus.None,
+							};
+						}
+
+						return ContractStatus.None;
+					}
+
+					public override void Write(Utf8JsonWriter writer, ContractStatus value, JsonSerializerOptions options)
+					{
+						switch(value)
+						{
+							case ContractStatus.None:
+								writer.WriteStringValue("NOT_CONTRACTED");
+								break;
+							case ContractStatus.Signed:
+								writer.WriteStringValue("CONTRACTED");
+								break;
+							case ContractStatus.Aborted:
+								writer.WriteStringValue("TERMINATED");
+								break;
+						}
+					}
+				}
+
+				private class ContractModeConverter : JsonConverter<ContractMode>
+				{
+					public override ContractMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+					{
+						if(reader.TokenType == JsonTokenType.String)
+						{
+							return reader.GetString() switch
+							{
+								"LIMIT_NONE" => ContractMode.None,
+								"PRIORITY_BANK_CARD" => ContractMode.Priority,
+								"LIMIT_BANK_CARD" => ContractMode.Specially,
+								_ => ContractMode.None,
+							};
+						}
+
+						return ContractMode.None;
+					}
+
+					public override void Write(Utf8JsonWriter writer, ContractMode value, JsonSerializerOptions options)
+					{
+						switch(value)
+						{
+							case ContractMode.None:
+								writer.WriteStringValue("LIMIT_NONE");
+								break;
+							case ContractMode.Priority:
+								writer.WriteStringValue("PRIORITY_BANK_CARD");
+								break;
+							case ContractMode.Specially:
+								writer.WriteStringValue("LIMIT_BANK_CARD");
+								break;
+						}
+					}
+				}
+				#endregion
 			}
 			#endregion
 		}

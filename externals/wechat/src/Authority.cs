@@ -66,7 +66,7 @@ namespace Zongsoft.Externals.Wechat
 		public bool Equals(IAuthority other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
 		public override bool Equals(object obj) => obj is IAuthority other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
-		public override string ToString() => $"{this.Code}({this.Name})";
+		public override string ToString() => string.IsNullOrEmpty(this.Name) || string.Equals(this.Code, this.Name) ? this.Code : $"{this.Code}({this.Name})";
 		#endregion
 	}
 }

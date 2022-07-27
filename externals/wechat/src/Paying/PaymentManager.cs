@@ -35,7 +35,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 	public partial class PaymentManager
 	{
 		#region 静态变量
-		private static readonly ConcurrentDictionary<string, PaymentManager> _services = new ConcurrentDictionary<string, PaymentManager>(StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, PaymentManager> _managers = new (StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, MerchantService> _merchants = new (StringComparer.OrdinalIgnoreCase);
 		#endregion
 
 		#region 公共属性
@@ -52,7 +53,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			if(string.IsNullOrEmpty(authority.Code))
 				throw new ArgumentException("Invalid authority of the wechat.");
 
-			return _services.GetOrAdd(authority.Code, (key, authority) =>
+			return _managers.GetOrAdd(authority.Code, (key, authority) =>
 			{
 				return new PaymentManager()
 				{
@@ -73,7 +74,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			var authority = AuthorityUtility.GetAuthority(master) ??
 				throw new InvalidOperationException($"The specified '{master}' authority does not exist.");
 
-			return _services.GetOrAdd(master + ':' + subsidiary.Code, (key, state) =>
+			return _managers.GetOrAdd(master + ':' + subsidiary.Code, (key, state) =>
 			{
 				return new PaymentManager()
 				{
@@ -81,6 +82,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 					Refundment = new RefundmentService.BrokerRefundmentService(state.authority, state.subsidiary),
 				};
 			}, new { authority, subsidiary });
+		}
+
+		public static MerchantService GetMerchantService(IAuthority authority)
+		{
+			if(authority == null)
+				throw new ArgumentNullException(nameof(authority));
+
+			if(string.IsNullOrEmpty(authority.Code))
+				throw new ArgumentException("Invalid authority of the wechat.");
+
+			return _merchants.GetOrAdd(authority.Code, (key, authority) => new MerchantService(authority), authority);
 		}
 		#endregion
 	}
