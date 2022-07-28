@@ -1020,8 +1020,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(_authority.Certificate == null)
 						return await _compatibility.PayAsync(request, scenario, cancellation);
 
-					if(request is PaymentRequest.TicketRequest ticketRequest && ticketRequest.Business.HasValue)
-						return await PayOfflineTicketAsync(ticketRequest, cancellation);
+					if(request is PaymentRequest.TicketRequest ticketRequest)
+					{
+						if(ticketRequest.Business.HasValue)
+							return await PayOfflineTicketAsync(ticketRequest, cancellation);
+						else
+							return await _compatibility.PayAsync(request, scenario, cancellation);
+					}
 
 					var result = await this.PayV3Async(request, scenario, cancellation);
 					return result.Succeed ? OperationResult.Success((PaymentOrder)new BrokerOrder(result.Value, request)) : result.Failure;
