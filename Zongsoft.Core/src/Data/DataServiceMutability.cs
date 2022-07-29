@@ -34,7 +34,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 表示数据服务可变性的结构。
 	/// </summary>
-	public struct DataServiceMutability : IEquatable<DataServiceMutability>
+	public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 	{
 		#region 常量定义
 		private const byte DELETABLE_VALUE  = 0x01;
@@ -101,7 +101,7 @@ namespace Zongsoft.Data
 
 		#region 静态属性
 		/// <summary>获取一个空的可变性，即没有任何可变性。</summary>
-		public static DataServiceMutability None => new (0);
+		public static DataServiceMutability None => default;
 
 		/// <summary>获取一个具有全部的可变性，支持“删除”、“新增”、“更新”、“增改”。</summary>
 		public static DataServiceMutability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
@@ -116,7 +116,7 @@ namespace Zongsoft.Data
 		{
 			if(string.IsNullOrEmpty(text))
 			{
-				result = new DataServiceMutability(0);
+				result = default;
 				return true;
 			}
 

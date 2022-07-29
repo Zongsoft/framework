@@ -34,7 +34,7 @@ namespace Zongsoft.Data
 			Assert.False(result.Updatable);
 			Assert.False(result.Upsertable);
 
-			succeed = DataServiceMutability.TryParse("  insert , None", out result);
+			succeed = DataServiceMutability.TryParse("  insert, , None", out result);
 			Assert.True(succeed);
 			Assert.False(result.Deletable);
 			Assert.True(result.Insertable);
@@ -55,7 +55,7 @@ namespace Zongsoft.Data
 			Assert.False(result.Updatable);
 			Assert.True(result.Upsertable);
 
-			succeed = DataServiceMutability.TryParse(" None , UPDATE , None, Delete , INSERTABLE ,Insert,Upsertable", out result);
+			succeed = DataServiceMutability.TryParse(" None , UPDATE , \t, None, Delete ,, INSERTABLE ,Insert,Upsertable", out result);
 			Assert.True(succeed);
 			Assert.True(result.Deletable);
 			Assert.True(result.Insertable);
