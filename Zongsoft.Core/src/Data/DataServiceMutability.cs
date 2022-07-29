@@ -45,7 +45,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 成员字段
-		private byte _value;
+		private readonly byte _value;
 		#endregion
 
 		#region 构造函数
@@ -57,28 +57,28 @@ namespace Zongsoft.Data
 		public bool Deletable
 		{
 			get => (_value & DELETABLE_VALUE) == DELETABLE_VALUE;
-			set => _value |= DELETABLE_VALUE;
+			init => _value |= DELETABLE_VALUE;
 		}
 
 		/// <summary>获取或设置一个值，指示是否可更新。</summary>
 		public bool Updatable
 		{
 			get => (_value & UPDATABLE_VALUE) == UPDATABLE_VALUE;
-			set => _value |= UPDATABLE_VALUE;
+			init => _value |= UPDATABLE_VALUE;
 		}
 
 		/// <summary>获取或设置一个值，指示是否可新增。</summary>
 		public bool Insertable
 		{
 			get => (_value & INSERTABLE_VALUE) == INSERTABLE_VALUE;
-			set => _value |= INSERTABLE_VALUE;
+			init => _value |= INSERTABLE_VALUE;
 		}
 
 		/// <summary>获取或设置一个值，指示是否可增改。</summary>
 		public bool Upsertable
 		{
 			get => (_value & UPSERTABLE_FLAG) == UPSERTABLE_FLAG ? (_value & UPSERTABLE_VALUE) == UPSERTABLE_VALUE : this.Insertable && this.Updatable;
-			set => _value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
+			init => _value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
 		}
 		#endregion
 
@@ -87,7 +87,7 @@ namespace Zongsoft.Data
 		public override bool Equals(object obj) => obj is DataServiceMutability other && this.Equals(other);
 		public override int GetHashCode() => _value;
 		public override string ToString() => _value == 0 ?
-			"None" :
+			nameof(None) :
 			$"{(this.Deletable ? nameof(this.Deletable) : null)}," +
 			$"{(this.Updatable ? nameof(this.Updatable) : null)}," +
 			$"{(this.Insertable ? nameof(this.Insertable) : null)}," +
@@ -108,6 +108,57 @@ namespace Zongsoft.Data
 
 		/// <summary>获取一个默认的可变性，支持“新增”和“更新”。</summary>
 		public static DataServiceMutability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
+		#endregion
+
+		#region 解析方法
+		public static DataServiceMutability Parse(string text) => TryParse(text, out var result) ? result : throw new ArgumentException($"Illegal format parameter value.", nameof(text));
+		public static bool TryParse(string text, out DataServiceMutability result)
+		{
+			if(string.IsNullOrEmpty(text))
+			{
+				result = new DataServiceMutability(0);
+				return true;
+			}
+
+			byte value = 0;
+			var parts = text.Split(new[] { ',', '|' }, StringSplitOptions.TrimEntries);
+
+			for(int i = 0; i < parts.Length; i++)
+			{
+				var part = parts[i];
+
+				if(string.IsNullOrWhiteSpace(part))
+					continue;
+
+				switch(part.ToUpperInvariant())
+				{
+					case "NONE":
+						break;
+					case "DELETE":
+					case "DELETABLE":
+						value |= DELETABLE_VALUE;
+						break;
+					case "INSERT":
+					case "INSERTABLE":
+						value |= INSERTABLE_VALUE;
+						break;
+					case "UPDATE":
+					case "UPDATABLE":
+						value |= UPDATABLE_VALUE;
+						break;
+					case "UPSERT":
+					case "UPSERTABLE":
+						value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
+						break;
+					default:
+						result = default;
+						return false;
+				}
+			}
+
+			result = new DataServiceMutability(value);
+			return true;
+		}
 		#endregion
 	}
 }
