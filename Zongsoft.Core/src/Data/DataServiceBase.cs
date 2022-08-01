@@ -305,16 +305,10 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
-		public virtual System.Security.Claims.ClaimsPrincipal Principal
-		{
-			get => Services.ApplicationContext.Current?.Principal;
-		}
-
+		public virtual System.Security.Claims.ClaimsPrincipal Principal => Services.ApplicationContext.Current?.Principal;
 		public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
-
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
-
-		IDataServiceValidator IDataService.Validator { get => this.Validator ?? this.Service?.Validator; }
+		IDataServiceValidator IDataService.Validator { get => this.Validator; }
 
 		public IServiceProvider ServiceProvider
 		{
