@@ -488,6 +488,9 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
+			if(typeof(T) == typeof(ISet<string>))
+				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+
 			return _database.StringGet(GetKey(key)).GetValue<T>();
 		}
 
@@ -503,6 +506,12 @@ namespace Zongsoft.Externals.Redis
 
 			//确保连接成功
 			this.Connect();
+
+			if(typeof(T) == typeof(ISet<string>))
+			{
+				expiry = _database.KeyTimeToLive(GetKey(key));
+				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+			}
 
 			var result = _database.StringGetWithExpiry(GetKey(key));
 			expiry = result.Expiry;
@@ -521,6 +530,10 @@ namespace Zongsoft.Externals.Redis
 
 			cancellation.ThrowIfCancellationRequested();
 			await this.ConnectAsync(cancellation);
+
+			if(typeof(T) == typeof(ISet<string>))
+				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+
 			return (await _database.StringGetAsync(GetKey(key))).GetValue<T>();
 		}
 
@@ -535,10 +548,12 @@ namespace Zongsoft.Externals.Redis
 				throw new ArgumentNullException(nameof(key));
 
 			cancellation.ThrowIfCancellationRequested();
-
 			await this.ConnectAsync(cancellation);
-			var result = await _database.StringGetWithExpiryAsync(GetKey(key));
 
+			if(typeof(T) == typeof(ISet<string>))
+				return ((T)(ISet<string>)new RedisHashset(_database, GetKey(key)), await _database.KeyTimeToLiveAsync(GetKey(key)));
+
+			var result = await _database.StringGetWithExpiryAsync(GetKey(key));
 			return (result.Value.GetValue<T>(), result.Expiry);
 		}
 
