@@ -84,7 +84,7 @@ namespace Zongsoft.Data.MySql
 					if(i > 0)
 						writer.Write(bulker.FieldTerminator);
 
-					var value = Reflector.GetValue(this.Members[i], ref target);
+					var value = this.Members[i].GetValue(ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
 						writer.Write(bulker.FieldQuotationCharacter);
@@ -151,7 +151,7 @@ namespace Zongsoft.Data.MySql
 					if(i > 0)
 						await writer.WriteAsync(bulker.FieldTerminator);
 
-					var value = Reflector.GetValue(this.Members[i], ref target);
+					var value = this.Members[i].GetValue(ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
 						await writer.WriteAsync(bulker.FieldQuotationCharacter);

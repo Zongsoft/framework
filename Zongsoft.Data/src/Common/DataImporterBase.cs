@@ -46,7 +46,7 @@ namespace Zongsoft.Data.Common
 
 			if(context.Members == null || context.Members.Length == 0)
 			{
-				var members = new List<MemberInfo>(context.Entity.Properties.Count);
+				var members = new List<Member>(context.Entity.Properties.Count);
 
 				foreach(var property in context.Entity.Properties)
 				{
@@ -55,14 +55,14 @@ namespace Zongsoft.Data.Common
 
 					var info = GetMemberInfo(context.ModelType, property.Name);
 					if(info != null)
-						members.Add(info);
+						members.Add(new Member(info, (Metadata.IDataEntitySimplexProperty)property));
 				}
 
 				this.Members = members.ToArray();
 			}
 			else
 			{
-				var members = new List<MemberInfo>(context.Members.Length);
+				var members = new List<Member>(context.Members.Length);
 
 				for(int i = 0; i < context.Members.Length; i++)
 				{
@@ -73,7 +73,7 @@ namespace Zongsoft.Data.Common
 
 						var info = GetMemberInfo(context.ModelType, property.Name);
 						if(info != null)
-							members.Add(info);
+							members.Add(new Member(info, (Metadata.IDataEntitySimplexProperty)property));
 					}
 				}
 
@@ -83,7 +83,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		public MemberInfo[] Members { get; }
+		public Member[] Members { get; }
 		#endregion
 
 		#region 导入方法
@@ -105,6 +105,23 @@ namespace Zongsoft.Data.Common
 
 		private volatile int _disposed;
 		protected virtual void Dispose(bool disposing) { }
+		#endregion
+
+		#region 嵌套结构
+		public struct Member
+		{
+			public Member(MemberInfo info, Metadata.IDataEntitySimplexProperty property)
+			{
+				this.Info = info ?? throw new ArgumentNullException(nameof(info));
+				this.Property = property ?? throw new ArgumentNullException(nameof(property));
+			}
+
+			public string Name => this.Info.Name;
+			public readonly MemberInfo Info;
+			public readonly Metadata.IDataEntitySimplexProperty Property;
+
+			public object GetValue(ref object target) => Zongsoft.Reflection.Reflector.GetValue(this.Info, ref target);
+		}
 		#endregion
 	}
 }

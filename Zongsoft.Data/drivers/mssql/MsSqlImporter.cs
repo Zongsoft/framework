@@ -54,10 +54,7 @@ namespace Zongsoft.Data.MsSql
 
 			foreach(var member in this.Members)
 			{
-				var property = context.Entity.Properties[member.Name];
-
-				if(property != null && property.IsSimplex)
-					_table.Columns.Add(property.GetFieldName(out _), ((IDataEntitySimplexProperty)property).Type.AsType());
+				_table.Columns.Add(member.Property.GetFieldName(out _), member.Property.Type.AsType());
 			}
 		}
 		#endregion
@@ -100,7 +97,7 @@ namespace Zongsoft.Data.MsSql
 			DestinationTableName = name,
 		};
 
-		private static void FillTable(DataTable table, IEnumerable data, System.Reflection.MemberInfo[] members)
+		private static void FillTable(DataTable table, IEnumerable data, Member[] members)
 		{
 			foreach(var item in data)
 			{
@@ -109,7 +106,7 @@ namespace Zongsoft.Data.MsSql
 				for(int i = 0; i < members.Length; i++)
 				{
 					var target = item;
-					row[members[i].Name] = Reflector.GetValue(members[i], ref target);
+					row[members[i].Name] = members[i].GetValue(ref target);
 				}
 
 				table.Rows.Add(row);
