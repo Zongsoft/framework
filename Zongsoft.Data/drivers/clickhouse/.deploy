@@ -1,0 +1,7 @@
+Zongsoft.Data.ClickHouse.plugin
+bin/$(Edition)/$(Target)/Zongsoft.Data.ClickHouse.*
+
+%NUGET_PACKAGES%/clickhouse.ado/1.5.1/lib/net5.0/*.dll
+%NUGET_PACKAGES%/lz4net.unsafe.netcore/1.0.15.93/lib/netstandard1.0/*.dll
+%NUGET_PACKAGES%/lz4net/1.0.15.93/lib/netstandard1.0/*.dll
+

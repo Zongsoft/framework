@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Data.ClickHouse"
+        title="Zongsoft.Data.ClickHouse Plugin"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        version="1.0"
+        copyright="Copyright (C) 2015-2022 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2022-08-01 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Data.ClickHouse" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Data/Drivers">
+		<object name="ClickHouse" type="Zongsoft.Data.ClickHouse.ClickHouseDriver, Zongsoft.Data.ClickHouse" />
+	</extension>
+</plugin>

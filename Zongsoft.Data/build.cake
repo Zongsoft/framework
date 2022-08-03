@@ -1,10 +1,12 @@
 var target = Argument("target", "default");
 
 var solutionFile  = "Zongsoft.Data.sln";
-var mssqlDirectory = "drivers/mssql/";
-var mssqlSolution  = mssqlDirectory + "Zongsoft.Data.MsSql.sln";
-var mysqlDirectory = "drivers/mysql/";
-var mysqlSolution  = mysqlDirectory + "Zongsoft.Data.MySql.sln";
+var providerFiles = new string[]
+{
+	@"drivers/mssql/Zongsoft.Data.MsSql.sln",
+	@"drivers/mysql/Zongsoft.Data.MySql.sln",
+	@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln",
+};
 
 Task("clean")
 	.Description("清理解决方案")
@@ -20,8 +22,11 @@ Task("restore")
 	.Does(() =>
 {
 	DotNetRestore(solutionFile);
-	DotNetRestore(mssqlSolution);
-	DotNetRestore(mysqlSolution);
+
+	foreach(var providerFile in providerFiles)
+	{
+		DotNetRestore(providerFile);
+	}
 });
 
 Task("build")
@@ -36,8 +41,11 @@ Task("build")
 	};
 
 	DotNetBuild(solutionFile, settings);
-	DotNetBuild(mssqlSolution, settings);
-	DotNetBuild(mysqlSolution, settings);
+
+	foreach(var providerFile in providerFiles)
+	{
+		DotNetBuild(providerFile, settings);
+	}
 });
 
 Task("test")
