@@ -68,10 +68,22 @@ namespace Zongsoft.Externals.Redis
 
 		void ICollection<string>.CopyTo(string[] array, int arrayIndex)
 		{
-			var items = _database.SetMembers(_name);
+			if(array == null || array.Length == 0)
+				return;
 
-			if(items != null && items.Length > 0)
-				Array.Copy(items, 0, array, arrayIndex, array.Length - arrayIndex);
+			if(arrayIndex < 0 || arrayIndex >= array.Length)
+				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+			var items = _database.SetMembers(_name).AsSpan();
+
+			for(int i = 0; i < items.Length; i++)
+			{
+				var destinationIndex = arrayIndex + i;
+				if(destinationIndex >= array.Length)
+					break;
+
+				array[destinationIndex] = (string)items[i];
+			}
 		}
 
 		public void ExceptWith(IEnumerable<string> items)
