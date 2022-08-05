@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Hangfire">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="localhost" driver="redis"
+			                   value="127.0.0.1:6379" />
+		</connectionSettings>
+	</option>
+</options>

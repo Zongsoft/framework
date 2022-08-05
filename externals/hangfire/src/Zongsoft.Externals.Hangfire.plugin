@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Hangfire"
+        title="Zongsoft.Externals.Hangfire Plugin"
+        author="Zongsoft Studio"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2020-08-01" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Hangfire" />
+		</assemblies>
+	</manifest>
+
+</plugin>

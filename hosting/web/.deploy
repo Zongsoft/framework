@@ -27,6 +27,10 @@
 ../../externals/wechat/.deploy
 ../../externals/wechat/api/.deploy
 
+[plugins zongsoft externals hangfire]
+../../externals/hangfire/.deploy
+../../externals/hangfire/web/.deploy
+
 [plugins zongsoft messaging mqtt]
 ../../Zongsoft.Messaging.Mqtt/.deploy
 
