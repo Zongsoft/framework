@@ -91,7 +91,11 @@ namespace Zongsoft.Externals.Wechat
 		public async ValueTask<OperationResult<string>> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
-			var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
+			//var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
+
+			/* 注意：此API调用微信不兼容 HttpClient.PostAsJsonAsync(...) 方法，必须改为 StringContent 模式（具体原因不详）。 */
+			var content = new StringContent(Zongsoft.Serialization.Serializer.Json.Serialize(new { code = token }), Encoding.UTF8, "application/json");
+			var response = await CredentialManager.Http.PostAsync($"/wxa/business/getuserphonenumber?access_token={credential}", content, cancellation);
 			var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
 
 			return result.Succeed ?
