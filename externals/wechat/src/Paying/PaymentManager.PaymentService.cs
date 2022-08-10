@@ -247,6 +247,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			public abstract class PaymentRequest
 			{
+				#region 成员字段
+				private string _description;
+				#endregion
+
 				#region 构造函数
 				protected PaymentRequest(string voucher, decimal amount, string currency = null, string description = null)
 				{
@@ -262,7 +266,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				public string VoucherCode { get; set; }
 
 				[JsonPropertyName("description")]
-				public string Description { get; set; }
+				public string Description { get => _description; set => _description = Utility.Truncate(value, 127); }
 
 				[JsonPropertyName("time_expire")]
 				public DateTime? Expiration { get; set; }
@@ -346,11 +350,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				public struct OrderDetailInfo
 				{
+					private string _itemName;
+
 					[JsonPropertyName("merchant_goods_id")]
 					public string ItemCode { get; set; }
 
 					[JsonPropertyName("goods_name")]
-					public string ItemName { get; set; }
+					public string ItemName { get => _itemName; set => _itemName = Utility.Truncate(value, 256); }
 
 					[JsonPropertyName("quantity")]
 					public int Quantity { get; set; }

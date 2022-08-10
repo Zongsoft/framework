@@ -117,6 +117,29 @@ namespace Zongsoft.Externals.Wechat
 			return System.Convert.ToHexString(result);
 		}
 
+		public static string Truncate(string text, int maxBytes)
+		{
+			if(string.IsNullOrEmpty(text) || maxBytes < 0)
+				return text;
+
+			if(maxBytes == 0)
+				return string.Empty;
+
+			var span = text.AsSpan();
+			if(System.Text.Encoding.UTF8.GetByteCount(span) <= maxBytes)
+				return text;
+
+			int count = 0;
+			for(int i = 0; i < span.Length; i++)
+			{
+				count += System.Text.Encoding.UTF8.GetByteCount(span.Slice(i, 1));
+				if(count > maxBytes)
+					return span.Slice(0, i).ToString();
+			}
+
+			return text;
+		}
+
 		private struct ErrorResult
 		{
 			#region 构造函数
