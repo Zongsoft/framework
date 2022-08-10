@@ -32,9 +32,3 @@ plugins/Terminal.plugin
 [bin $(Edition) $(Target) plugins zongsoft messaging kafka]
 ../../Zongsoft.Messaging.Kafka/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft scheduling]
-../../Zongsoft.Scheduling/.deploy
-[bin $(Edition) $(Target) plugins zongsoft scheduling cron]
-../../Zongsoft.Scheduling/cron/.deploy
-[bin $(Edition) $(Target) plugins zongsoft scheduling samples]
-../../Zongsoft.Scheduling/samples/.deploy

@@ -34,8 +34,8 @@ Write-Host "dotnet cake $project_plugins $CAKE_ARGS $ARGS" -ForegroundColor Mage
 dotnet cake $project_plugins $CAKE_ARGS $ARGS
 dotnet cake $project_plugins_web $CAKE_ARGS $ARGS
 
-Write-Host "dotnet cake $project_scheduling $CAKE_ARGS $ARGS" -ForegroundColor Magenta
-dotnet cake $project_scheduling $CAKE_ARGS $ARGS
+# Write-Host "dotnet cake $project_scheduling $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+# dotnet cake $project_scheduling $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_security $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_security $CAKE_ARGS $ARGS
