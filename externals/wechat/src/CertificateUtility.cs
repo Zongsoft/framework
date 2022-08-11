@@ -157,6 +157,18 @@ namespace Zongsoft.Externals.Wechat
 				_ => throw new WechatException($"Unsupported '{certificate.Format}' digital certificate type."),
 			};
 		}
+
+		internal static byte[] Decrypt(this ICertificate certificate, byte[] data)
+		{
+			var protocol = certificate?.GetProtocol();
+
+			return protocol switch
+			{
+				RSA rsa => rsa.Decrypt(data, RSAEncryptionPadding.OaepSHA1),
+				X509Certificate2 x509 => x509.GetRSAPrivateKey().Decrypt(data, RSAEncryptionPadding.OaepSHA1),
+				_ => throw new WechatException($"Unsupported '{certificate.Format}' digital certificate type."),
+			};
+		}
 		#endregion
 
 		#region 嵌套结构

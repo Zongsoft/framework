@@ -371,14 +371,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共方法
-				public ValueTask<OperationResult<SignatoryInfo>> GetSignatoryAsync(string organizationId, string userId, CancellationToken cancellation = default)
+				public async ValueTask<OperationResult<SignatoryInfo>> GetSignatoryAsync(string organizationId, string userId, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(organizationId))
 						throw new ArgumentNullException(nameof(organizationId));
 					if(string.IsNullOrEmpty(userId))
 						throw new ArgumentNullException(nameof(userId));
 
-					return _merchant.Client.GetAsync<SignatoryInfo>($"offlinefacemch/organizations/{organizationId}/users/out-user-id/{userId}", cancellation);
+					var result = await _merchant.Client.GetAsync<SignatoryInfo>($"offlinefacemch/organizations/{organizationId}/users/out-user-id/{userId}", cancellation);
+					return result;
 				}
 
 				public ValueTask<OperationResult<ContractInfo>> GetContractAsync(string contractId, CancellationToken cancellation = default)
