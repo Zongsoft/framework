@@ -86,6 +86,18 @@ namespace Zongsoft.IO.Tests
 		}
 
 		[Fact]
+		public void TestGetUrl()
+		{
+			var url = FileSystem.GetUrl("1");
+			Assert.NotNull(url);
+			Assert.Equal("1", url);
+
+			url = FileSystem.GetUrl("12");
+			Assert.NotNull(url);
+			Assert.Equal("12", url);
+		}
+
+		[Fact]
 		public void TestCombine()
 		{
 			var baseDirectory = "zfs.local:/data/images/";

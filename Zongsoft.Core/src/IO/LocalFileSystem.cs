@@ -57,36 +57,30 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 公共方法
-		public string GetUrl(string path)
-		{
-			if(string.IsNullOrEmpty(path))
-				return null;
-
-			return GetLocalPath(path);
-		}
-
-		public string GetUrl(Path path)
-		{
-			return GetLocalPath(path);
-		}
+		public string GetUrl(string path) => String.IsNullOrEmpty(path) ? null : GetLocalPath(path);
+		public string GetUrl(Path path) => TryGetLocalPath(path, out var result) ? result : path.Url;
 		#endregion
 
 		#region 路径解析
-		public static string GetLocalPath(string text)
-		{
-			return GetLocalPath(Path.Parse(text));
-		}
+		public static string GetLocalPath(string text) => TryGetLocalPath(Path.Parse(text), out var path) ? path : throw new PathException($"Illegal path format: `{text}`.");
 
-		private static string GetLocalPath(Path path)
+		private static bool TryGetLocalPath(Path path, out string result)
 		{
 			switch(Environment.OSVersion.Platform)
 			{
 				case PlatformID.MacOSX:
 				case PlatformID.Unix:
-					return path.FullPath;
+					result = path.FullPath;
+					return true;
 			}
 
-			var driveName = path.Anchor == PathAnchor.Root && path.HasSegments ? path.Segments[0] : throw new PathException(string.Format("The '{0}' path not cantians drive.", path.Url));
+			var driveName = path.Anchor == PathAnchor.Root && path.HasSegments ? path.Segments[0] : null;
+
+			if(string.IsNullOrEmpty(driveName))
+			{
+				result = null;
+				return false;
+			}
 
 			if(driveName.Length > 1)
 			{
@@ -105,13 +99,18 @@ namespace Zongsoft.IO
 				}
 
 				if(!matched)
-					throw new PathException(string.Format("Not matched drive for '{0}' path.", path.Url));
+				{
+					result = null;
+					return false;
+				}
 			}
 
 			if(path.Segments.Length > 1)
-				return driveName + ":/" + string.Join('/', path.Segments, 1, path.Segments.Length - 1);
+				result = driveName + ":/" + string.Join('/', path.Segments, 1, path.Segments.Length - 1);
 			else
-				return driveName + ":/";
+				result = driveName + ":/";
+
+			return true;
 		}
 
 		private static bool MatchDriver(System.IO.DriveInfo drive, string driveName)
