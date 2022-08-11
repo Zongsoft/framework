@@ -644,6 +644,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public StaffInfo Staff { get; set; }
 				}
 
+				[JsonConverter(typeof(SignatoryStatusConverter))]
 				public enum SignatoryStatus
 				{
 					Normal,
@@ -677,6 +678,37 @@ namespace Zongsoft.Externals.Wechat.Paying
 				{
 					[JsonPropertyName("occupation")]
 					public string Occupation { get; set; }
+				}
+
+				private class SignatoryStatusConverter : JsonConverter<SignatoryStatus>
+				{
+					public override SignatoryStatus Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+					{
+						if(reader.TokenType == JsonTokenType.String)
+						{
+							return reader.GetString() switch
+							{
+								"NORMAL" => SignatoryStatus.Normal,
+								"DISABLED" => SignatoryStatus.Disabled,
+								_ => SignatoryStatus.Normal,
+							};
+						}
+
+						return SignatoryStatus.Normal;
+					}
+
+					public override void Write(Utf8JsonWriter writer, SignatoryStatus value, JsonSerializerOptions options)
+					{
+						switch(value)
+						{
+							case SignatoryStatus.Normal:
+								writer.WriteStringValue("NORMAL");
+								break;
+							case SignatoryStatus.Disabled:
+								writer.WriteStringValue("DISABLED");
+								break;
+						}
+					}
 				}
 
 				private class ContractStatusConverter : JsonConverter<ContractStatus>
