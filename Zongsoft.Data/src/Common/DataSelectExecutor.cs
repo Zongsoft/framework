@@ -393,17 +393,22 @@ namespace Zongsoft.Data.Common
 
 					if(reader != null)
 					{
-						//处理分页的总记录数
-						if(_statement.Paging != null && _statement.Paging.PageSize > 0)
+						try
 						{
-							if(reader.NextResult() && reader.Read())
+							//处理分页的总记录数
+							if(_statement.Paging != null && _statement.Paging.PageSize > 0)
 							{
-								_statement.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-								_paginate?.Invoke(_statement.Alias, _statement.Paging);
+								if(reader.NextResult() && reader.Read())
+								{
+									_statement.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+									_paginate?.Invoke(_statement.Alias, _statement.Paging);
+								}
 							}
 						}
-
-						reader.Dispose();
+						finally
+						{
+							reader.Dispose();
+						}
 					}
 				}
 				#endregion
