@@ -413,6 +413,16 @@ namespace Zongsoft.Externals.Wechat.Paying
 					var result = await _merchant.Client.PostAsync<ApplyRequest, ApplyResult>("offlineface/contracts/presign", request, cancellation);
 					return result.Succeed ? OperationResult.Success(result.Value.Token) : result.Failure;
 				}
+
+				public async ValueTask<OperationResult> RevokeAsync(string organizationId, string userId, CancellationToken cancellation = default)
+				{
+					if(string.IsNullOrEmpty(organizationId))
+						throw new ArgumentNullException(nameof(organizationId));
+					if(string.IsNullOrEmpty(userId))
+						throw new ArgumentNullException(nameof(userId));
+
+					return await _merchant.Client.PostAsync<object>($"offlinefacemch/organizations/{organizationId}/users/user-id/{userId}/terminate-contract", null, cancellation);
+				}
 				#endregion
 
 				#region 实体模型
