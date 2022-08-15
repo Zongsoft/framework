@@ -180,6 +180,38 @@ namespace Zongsoft.Caching
 			return (T)this.GetValue(key, out expiry);
 		}
 
+		public bool TryGetValue<T>(string key, out T value)
+		{
+			if(key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			if(_cache.TryGetValue(key, out var entry))
+			{
+				value = (T)entry.Value;
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
+		public bool TryGetValue<T>(string key, out T value, out TimeSpan? expiry)
+		{
+			if(key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			if(_cache.TryGetValue(key, out var entry))
+			{
+				value = (T)entry.Value;
+				expiry = entry.Expiry;
+				return true;
+			}
+
+			value = default;
+			expiry = null;
+			return false;
+		}
+
 		public Task<object> GetValueAsync(string key, CancellationToken cancellation = default)
 		{
 			if(key == null)

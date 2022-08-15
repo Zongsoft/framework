@@ -557,6 +557,46 @@ namespace Zongsoft.Externals.Redis
 			return (result.Value.GetValue<T>(), result.Expiry);
 		}
 
+		public bool TryGetValue<T>(string key, out T value)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			this.Connect();
+
+			if(typeof(T) == typeof(ISet<string>))
+			{
+				value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				return true;
+			}
+
+			var result = _database.StringGet(GetKey(key));
+			value = result.HasValue ? result.GetValue<T>() : default;
+			return result.HasValue;
+		}
+
+		public bool TryGetValue<T>(string key, out T value, out TimeSpan? expiry)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			this.Connect();
+
+			if(typeof(T) == typeof(ISet<string>))
+			{
+				value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				expiry = _database.KeyTimeToLive(GetKey(key));
+				return true;
+			}
+
+			var result = _database.StringGetWithExpiry(GetKey(key));
+			value = result.Expiry.HasValue ? result.Value.GetValue<T>() : default;
+			expiry = result.Expiry;
+			return result.Value.HasValue;
+		}
+
 		public bool Remove(string key)
 		{
 			if(string.IsNullOrEmpty(key))
