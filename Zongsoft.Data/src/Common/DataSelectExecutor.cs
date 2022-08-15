@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
-			context.Result = CreateResults(context.ModelType, context, statement, command, null);
+			context.Result = CreateResults(context.ModelType, context, statement, command, null, 0);
 
 			return false;
 		}
@@ -140,13 +140,13 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginator)
+		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginator, int skip = 0)
 		{
 			return (IEnumerable)System.Activator.CreateInstance(
 				typeof(LazyCollection<>).MakeGenericType(elementType),
 				new object[]
 				{
-					context, statement, command, paginator
+					context, statement, command, paginator, skip
 				});
 		}
 		#endregion
@@ -159,6 +159,7 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 成员变量
+			private readonly int _skip;
 			private readonly DbCommand _command;
 			private readonly DataSelectContext _context;
 			private readonly SelectStatement _statement;
@@ -166,8 +167,9 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 构造函数
-			public LazyCollection(DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginate)
+			public LazyCollection(DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginate, int skip)
 			{
+				_skip = skip;
 				_context = context ?? throw new ArgumentNullException(nameof(context));
 				_statement = statement ?? throw new ArgumentNullException(nameof(statement));
 				_command = command ?? throw new ArgumentNullException(nameof(command));
@@ -184,7 +186,7 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 遍历迭代
-			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate);
+			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate, _skip);
 			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 			#endregion
 
@@ -201,6 +203,7 @@ namespace Zongsoft.Data.Common
 				#region 成员变量
 				private IDataReader _reader;
 				private Action<string, Paging> _paginate;
+				private readonly int _skip;
 				private readonly IDataPopulator _populator;
 				private readonly DataSelectContext _context;
 				private readonly SelectStatement _statement;
@@ -208,7 +211,7 @@ namespace Zongsoft.Data.Common
 				#endregion
 
 				#region 构造函数
-				public LazyIterator(DataSelectContext context, SelectStatement statement, IDataReader reader, Action<string, Paging> paginate)
+				public LazyIterator(DataSelectContext context, SelectStatement statement, IDataReader reader, Action<string, Paging> paginate, int skip)
 				{
 					var entity = context.Entity;
 
@@ -226,6 +229,7 @@ namespace Zongsoft.Data.Common
 					_statement = statement;
 					_reader = reader;
 					_paginate = paginate;
+					_skip = skip;
 					_slaves = GetSlaves(_context, _statement, _reader);
 
 					if(Zongsoft.Common.TypeExtension.IsNullable(typeof(T), out var underlyingType))
@@ -240,55 +244,15 @@ namespace Zongsoft.Data.Common
 				{
 					get
 					{
-						var entity = _populator.Populate<T>(_reader);
+						var model = _populator.Populate<T>(_reader);
 
-						if(entity == null)
+						if(model == null)
 							return default;
 
 						if(_statement.HasSlaves)
-						{
-							foreach(var slave in _statement.Slaves)
-							{
-								if(slave is SelectStatement selection && _slaves.TryGetValue(selection.Alias, out var token))
-								{
-									if(token.Schema.Token.MemberType == null)
-										continue;
+							this.PopulateSlaves(model);
 
-									object container = GetCurrentContainer(entity, token);
-
-									if(container == null)
-										continue;
-
-									//生成子查询语句对应的命令
-									var command = _context.Session.Build(_context, slave);
-
-									foreach(var parameter in token.Parameters)
-									{
-										command.Parameters[parameter.Name].Value = _reader.GetValue(parameter.Ordinal);
-									}
-
-									//创建一个新的查询结果集
-									var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _paginate);
-
-									//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
-									if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
-									{
-										var list = Activator.CreateInstance(
-											typeof(List<>).MakeGenericType(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType)),
-											new object[] { results });
-
-										if(token.Schema.Token.MemberType.IsArray)
-											results = (IEnumerable)list.GetType().GetMethod("ToArray").Invoke(list, Array.Empty<object>());
-										else
-											results = (IEnumerable)list;
-									}
-
-									token.Schema.Token.SetValue(container, results);
-								}
-							}
-						}
-
-						return entity;
+						return model;
 					}
 				}
 
@@ -301,10 +265,7 @@ namespace Zongsoft.Data.Common
 					return false;
 				}
 
-				public void Reset()
-				{
-					throw new NotSupportedException();
-				}
+				public void Reset() => throw new NotSupportedException();
 				#endregion
 
 				#region 私有方法
@@ -346,14 +307,57 @@ namespace Zongsoft.Data.Common
 					return null;
 				}
 
-				private static object GetCurrentContainer(object entity, SlaveToken token)
+				private void PopulateSlaves(T model)
+				{
+					foreach(var slave in _statement.Slaves)
+					{
+						if(slave is SelectStatement selection && _slaves.TryGetValue(selection.Alias, out var token))
+						{
+							if(token.Schema.Token.MemberType == null)
+								continue;
+
+							object container = GetCurrentContainer(model, token, _skip);
+
+							if(container == null)
+								continue;
+
+							//生成子查询语句对应的命令
+							var command = _context.Session.Build(_context, slave);
+
+							foreach(var parameter in token.Parameters)
+							{
+								command.Parameters[parameter.Name].Value = _reader.GetValue(parameter.Ordinal);
+							}
+
+							//创建一个新的查询结果集
+							var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _paginate, _skip + 1);
+
+							//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
+							if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
+							{
+								var list = Activator.CreateInstance(
+									typeof(List<>).MakeGenericType(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType)),
+									new object[] { results });
+
+								if(token.Schema.Token.MemberType.IsArray)
+									results = (IEnumerable)list.GetType().GetMethod("ToArray").Invoke(list, Array.Empty<object>());
+								else
+									results = (IEnumerable)list;
+							}
+
+							token.Schema.Token.SetValue(container, results);
+						}
+					}
+				}
+
+				private static object GetCurrentContainer(object model, SlaveToken token, int skipCount)
 				{
 					if(token.Schema.Parent == null || token.Schema.Parent.Token.IsMultiple)
-						return entity;
+						return model;
 
 					var stack = new Stack<SchemaMember>();
 					var member = token.Schema.Parent;
-					var container = entity;
+					var container = model;
 
 					while(member != null)
 					{
@@ -361,8 +365,13 @@ namespace Zongsoft.Data.Common
 						member = member.Parent;
 					}
 
+					int skipped = 0;
+
 					while(stack.TryPop(out member))
 					{
+						if(skipped++ < skipCount)
+							continue;
+
 						container = member.Token.GetValue(container);
 
 						if(container == null)
@@ -374,10 +383,7 @@ namespace Zongsoft.Data.Common
 				#endregion
 
 				#region 显式实现
-				object IEnumerator.Current
-				{
-					get => this.Current;
-				}
+				object IEnumerator.Current => this.Current;
 				#endregion
 
 				#region 处置方法
@@ -407,8 +413,8 @@ namespace Zongsoft.Data.Common
 
 		private struct SlaveToken
 		{
-			public SchemaMember Schema;
-			public IEnumerable<ParameterToken> Parameters;
+			public readonly SchemaMember Schema;
+			public readonly IEnumerable<ParameterToken> Parameters;
 
 			public SlaveToken(SchemaMember schema, IEnumerable<ParameterToken> parameters)
 			{
