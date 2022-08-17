@@ -89,7 +89,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						}
 					}
 					else
-						content = request.Content == null ? null : await request.Content.ReadAsStringAsync(cancellation);
+						content = await request.Content?.ReadAsStringAsync(cancellation);
 				}
 
 				var value = Signature(_certificate, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
