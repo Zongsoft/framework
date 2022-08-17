@@ -36,6 +36,7 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Security;
+using System.Reflection.Metadata;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -55,8 +56,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		public static async ValueTask<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
-			var content = request is null ? new StringContent(null) : (HttpContent)JsonContent.Create(request, request.GetType(), null, Json.Options);
-			var response = await client.PostAsync(url, content, cancellation);
+			HttpResponseMessage response;
+
+			if(request is null)
+				response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Post, url), cancellation);
+			else
+				response = await client.PostAsync(url, JsonContent.Create(request, request.GetType(), null, Json.Options), cancellation);
+
 			return await GetResultAsync(response, cancellation);
 		}
 
