@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		public static async ValueTask<OperationResult> PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 		{
-			var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
+			var content = request is null ? new StringContent(null) : (HttpContent)JsonContent.Create(request, request.GetType(), null, Json.Options);
 			var response = await client.PostAsync(url, content, cancellation);
 			return await GetResultAsync(response, cancellation);
 		}
