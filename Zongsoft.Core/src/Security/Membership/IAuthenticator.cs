@@ -52,9 +52,10 @@ namespace Zongsoft.Security.Membership
 		/// <param name="key">指定的校验键值。</param>
 		/// <param name="data">指定的校验数据。</param>
 		/// <param name="scenario">指定的验证场景。</param>
+		/// <param name="parameters">指定的参数集。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回的校验结果。</returns>
-		ValueTask<Common.OperationResult> VerifyAsync(string key, object data, string scenario, CancellationToken cancellation = default);
+		ValueTask<Common.OperationResult> VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 签发身份凭证。
@@ -80,9 +81,10 @@ namespace Zongsoft.Security.Membership
 		/// <param name="key">指定的校验键值。</param>
 		/// <param name="data">指定的校验数据。</param>
 		/// <param name="scenario">指定的验证场景。</param>
+		/// <param name="parameters">指定的参数集。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回的校验结果。</returns>
-		ValueTask<Common.OperationResult<TToken>> VerifyAsync(string key, TData data, string scenario, CancellationToken cancellation = default);
+		ValueTask<Common.OperationResult<TToken>> VerifyAsync(string key, TData data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default);
 
 		/// <summary>
 		/// 签发身份凭证。

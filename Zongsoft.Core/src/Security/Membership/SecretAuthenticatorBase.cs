@@ -57,15 +57,15 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation)
+		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return await this.VerifyAsync(key, GetTicket(data), scenario, cancellation);
+			return await this.VerifyAsync(key, GetTicket(data), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<OperationResult<string>> VerifyAsync(string key, string data, string scenario, CancellationToken cancellation = default)
+		public async ValueTask<OperationResult<string>> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
 				return OperationResult.Fail("InvalidToken");

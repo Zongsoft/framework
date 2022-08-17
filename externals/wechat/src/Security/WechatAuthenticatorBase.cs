@@ -55,8 +55,8 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 身份校验
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, cancellation);
-		public async ValueTask<OperationResult<Identity>> VerifyAsync(string key, string secret, string scenario, CancellationToken cancellation = default)
+		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
+		public async ValueTask<OperationResult<Identity>> VerifyAsync(string key, string secret, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(secret))
 				return OperationResult.Fail("InvalidTicket");
@@ -66,8 +66,8 @@ namespace Zongsoft.Externals.Wechat.Security
 
 			return account.Type switch
 			{
-				AccountType.Applet => await GetAppletToken(AppletManager.GetApplet(account), secret, cancellation),
-				AccountType.Channel => await GetChannelToken(ChannelManager.GetChannel(account), secret, cancellation),
+				AccountType.Applet => await GetAppletToken(AppletManager.GetApplet(account), secret, parameters, cancellation),
+				AccountType.Channel => await GetChannelToken(ChannelManager.GetChannel(account), secret, parameters, cancellation),
 				_ => OperationResult.Fail(),
 			};
 		}
@@ -87,7 +87,7 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 私有方法
-		private static async ValueTask<OperationResult<Identity>> GetAppletToken(Applet applet, string code, CancellationToken cancellation = default)
+		private static async ValueTask<OperationResult<Identity>> GetAppletToken(Applet applet, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			var result = await applet.LoginAsync(code, cancellation);
 
@@ -100,13 +100,13 @@ namespace Zongsoft.Externals.Wechat.Security
 
 			if(info.Succeed)
 				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Identity(applet.Account, openId, info.Value.Nickname, info.Value.Avatar, info.Value.Description)) :
+					OperationResult.Success(new Identity(applet.Account, openId, info.Value.Nickname, info.Value.Avatar, info.Value.Description, parameters)) :
 					OperationResult.Success(new Identity(applet.Account, openId, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
 
-			return OperationResult.Success(new Identity(applet.Account, openId, unionId));
+			return OperationResult.Success(new Identity(applet.Account, openId, unionId, parameters));
 		}
 
-		private static async ValueTask<OperationResult<Identity>> GetChannelToken(Channel channel, string code, CancellationToken cancellation = default)
+		private static async ValueTask<OperationResult<Identity>> GetChannelToken(Channel channel, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			var result = await channel.Authentication.AuthenticateAsync(code, cancellation);
 
@@ -117,8 +117,8 @@ namespace Zongsoft.Externals.Wechat.Security
 			var unionId = string.IsNullOrEmpty(result.Value.UnionId) ? result.Value.User.OpenId : result.Value.UnionId;
 
 			return string.IsNullOrEmpty(unionId) ?
-				OperationResult.Success(new Identity(channel.Account, openId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description)) :
-				OperationResult.Success(new Identity(channel.Account, openId, unionId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description));
+				OperationResult.Success(new Identity(channel.Account, openId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description, parameters)) :
+				OperationResult.Success(new Identity(channel.Account, openId, unionId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description, parameters));
 		}
 
 		private static async ValueTask<string> GetSecretAsync(object data, CancellationToken cancellation = default)
@@ -145,7 +145,7 @@ namespace Zongsoft.Externals.Wechat.Security
 		#region 嵌套结构
 		public struct Identity
 		{
-			public Identity(in Account account, string openId, string unionId)
+			public Identity(in Account account, string openId, string unionId, IDictionary<string, object> parameters)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -153,9 +153,10 @@ namespace Zongsoft.Externals.Wechat.Security
 				this.Nickname = null;
 				this.Avatar = null;
 				this.Description = null;
+				this.Parameters = parameters;
 			}
 
-			public Identity(in Account account, string openId, string nickname, string avatar, string description = null)
+			public Identity(in Account account, string openId, string nickname, string avatar, string description = null, IDictionary<string, object> parameters = null)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -163,9 +164,10 @@ namespace Zongsoft.Externals.Wechat.Security
 				this.Nickname = nickname;
 				this.Avatar = avatar;
 				this.Description = description;
+				this.Parameters = parameters;
 			}
 
-			public Identity(in Account account, string openId, string unionId, string nickname, string avatar, string description = null)
+			public Identity(in Account account, string openId, string unionId, string nickname, string avatar, string description = null, IDictionary<string, object> parameters = null)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -173,6 +175,7 @@ namespace Zongsoft.Externals.Wechat.Security
 				this.Nickname = nickname;
 				this.Avatar = avatar;
 				this.Description = description;
+				this.Parameters = parameters;
 			}
 
 			public readonly Account Account;
@@ -181,6 +184,7 @@ namespace Zongsoft.Externals.Wechat.Security
 			public readonly string Nickname;
 			public readonly string Avatar;
 			public readonly string Description;
+			public readonly IDictionary<string, object> Parameters;
 		}
 		#endregion
 	}

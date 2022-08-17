@@ -149,7 +149,7 @@ namespace Zongsoft.Security.Membership
 				return OperationResult.Fail("InvalidAuthenticator");
 
 			//校验身份
-			var result = await authenticator.VerifyAsync(key, data, scenario);
+			var result = await authenticator.VerifyAsync(key, data, scenario, parameters);
 
 			if(result.Failed)
 				return result;
