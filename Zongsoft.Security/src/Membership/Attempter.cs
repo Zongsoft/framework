@@ -59,6 +59,9 @@ namespace Zongsoft.Security.Membership
 		/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
 		public bool Verify(string identity, string @namespace = null)
 		{
+			if(string.IsNullOrEmpty(identity))
+				return false;
+
 			var option = this.Options;
 
 			if(option == null || option.Threshold < 1)
@@ -80,6 +83,9 @@ namespace Zongsoft.Security.Membership
 		/// <param name="namespace">指定的身份命名空间。</param>
 		public void Done(string identity, string @namespace = null)
 		{
+			if(string.IsNullOrEmpty(identity))
+				return;
+
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
 
 			if(cache != null)
@@ -94,6 +100,9 @@ namespace Zongsoft.Security.Membership
 		/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
 		public bool Fail(string identity, string @namespace = null)
 		{
+			if(string.IsNullOrEmpty(identity))
+				return false;
+
 			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
 
 			if(cache is not ISequence sequence)
