@@ -31,8 +31,8 @@ using System;
 
 namespace Zongsoft.Scheduling
 {
-	public interface ITriggerBuilder
+	public class Trigger
 	{
-		ITrigger Build<TOptions>(TOptions options);
+		public static ITriggerOptions Options => null;
 	}
 }

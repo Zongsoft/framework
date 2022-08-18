@@ -31,8 +31,32 @@ using System;
 
 namespace Zongsoft.Scheduling
 {
-	public interface ITriggerBuilder
+	public class TriggerOptions : ITriggerOptions
 	{
-		ITrigger Build<TOptions>(TOptions options);
+		#region 构造函数
+		public TriggerOptions(string id = null) => this.Identifier = id;
+		#endregion
+
+		#region 公共属性
+		public string Identifier { get; set; }
+		#endregion
+
+		#region 嵌套子类
+		public class Cron : TriggerOptions
+		{
+			public Cron(string expression) => this.Expression = expression;
+			public Cron(string id, string expression) : base(id) => this.Expression = expression;
+
+			public string Expression { get; set; }
+		}
+
+		public class Latency : TriggerOptions
+		{
+			public Latency(TimeSpan duration) => this.Duration = duration;
+			public Latency(string id, TimeSpan duration) : base(id) => this.Duration = duration;
+
+			public TimeSpan Duration { get; set; }
+		}
+		#endregion
 	}
 }

@@ -35,15 +35,15 @@ namespace Zongsoft.Scheduling
 {
 	public interface IScheduler
 	{
-		void Schedule(IHandler handler, ITrigger trigger = null);
-		void Schedule(Type handlerType, ITrigger trigger = null);
-		void Schedule<THandler>(ITrigger trigger = null);
+		void Schedule(IHandler handler, ITriggerOptions options = null);
+		void Schedule(Type handlerType, ITriggerOptions options = null);
+		void Schedule<THandler>(ITriggerOptions options = null) where THandler : IHandler;
 
-		void Schedule<TParameter>(IHandler<TParameter> handler, TParameter parameter, ITrigger trigger = null);
-		void Schedule<TParameter>(Type handlerType, TParameter parameter, ITrigger trigger = null);
-		void Schedule<THandler, TParameter>(TParameter parameter, ITrigger trigger = null);
+		void Schedule<TParameter>(IHandler<TParameter> handler, TParameter parameter, ITriggerOptions options = null);
+		void Schedule<TParameter>(Type handlerType, TParameter parameter, ITriggerOptions options = null);
+		void Schedule<THandler, TParameter>(TParameter parameter, ITriggerOptions options = null) where THandler : IHandler;
 
-		bool Reschedule(string id);
-		bool Unschedule(string id);
+		bool Reschedule(string identifier);
+		bool Unschedule(string identifier);
 	}
 }

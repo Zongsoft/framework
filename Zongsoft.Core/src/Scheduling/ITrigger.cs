@@ -58,4 +58,14 @@ namespace Zongsoft.Scheduling
 		DateTimeOffset? GetNextOccurrence(DateTimeOffset origin, bool inclusive = false);
 		#endregion
 	}
+
+	/// <summary>
+	/// 表示调度触发器的接口。
+	/// </summary>
+	/// <typeparam name="TOptions"></typeparam>
+	public interface ITrigger<out TOptions> : ITrigger
+	{
+		/// <summary>获取触发器的配置。</summary>
+		TOptions Options { get; }
+	}
 }

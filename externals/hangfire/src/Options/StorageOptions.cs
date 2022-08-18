@@ -11,28 +11,30 @@
  *
  * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Core library.
+ * This file is part of Zongsoft.Externals.Hangfire library.
  *
- * The Zongsoft.Core is free software: you can redistribute it and/or modify
+ * The Zongsoft.Externals.Hangfire is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Core is distributed in the hope that it will be useful,
+ * The Zongsoft.Externals.Hangfire is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Externals.Hangfire library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Threading;
 
-namespace Zongsoft.Scheduling
+namespace Zongsoft.Externals.Hangfire.Options
 {
-	public interface ITriggerBuilder
+	public class StorageOptions
 	{
-		ITrigger Build<TOptions>(TOptions options);
+		/// <summary>获取或设置连接设置名。</summary>
+		public string Connection { get; set; }
 	}
 }
