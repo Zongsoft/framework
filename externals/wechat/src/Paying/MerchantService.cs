@@ -382,12 +382,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return result;
 				}
 
-				public ValueTask<OperationResult<ContractInfo>> GetContractAsync(string contractId, CancellationToken cancellation = default)
+				public ValueTask<OperationResult<ContractInfo>> GetContractAsync(string contractId, string appId = null, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(contractId))
 						throw new ArgumentNullException(nameof(contractId));
 
-					return _merchant.Client.GetAsync<ContractInfo>($"offlineface/contracts/{contractId}?appid={_merchant.Authority.Accounts.Default.Code}", cancellation);
+					if(string.IsNullOrEmpty(appId))
+						appId = _merchant.Authority.Accounts.Default.Code;
+
+					return _merchant.Client.GetAsync<ContractInfo>($"offlineface/contracts/{contractId}?appid={appId}", cancellation);
 				}
 
 				public ValueTask<OperationResult<string>> AuthenticateAsync(string organizationId, string userId, CancellationToken cancellation = default) => this.AuthenticateAsync(organizationId, userId, null, cancellation);
