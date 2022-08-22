@@ -147,11 +147,13 @@ namespace Zongsoft.Web
 			#endregion
 
 			#region 公共方法
-			public bool Contains(string name) => !string.IsNullOrEmpty(name) && _accessor.HttpContext.Request.RouteValues.ContainsKey(name);
+			public bool Contains(string name) => !string.IsNullOrEmpty(name) && _accessor.HttpContext != null && _accessor.HttpContext.Request != null && _accessor.HttpContext.Request.RouteValues.ContainsKey(name);
 
 			public bool TryGet(string name, out object value)
 			{
-				if(!string.IsNullOrEmpty(name) && _accessor.HttpContext.Request.RouteValues.TryGetValue(name, out value))
+				var request = _accessor?.HttpContext?.Request;
+
+				if(!string.IsNullOrEmpty(name) && request != null && request.RouteValues.TryGetValue(name, out value))
 					return true;
 
 				value = null;
@@ -161,13 +163,13 @@ namespace Zongsoft.Web
 
 			#region 显式实现
 			bool ICollection<object>.IsReadOnly => true;
-			int ICollection<object>.Count => _accessor.HttpContext.Request.RouteValues.Count;
+			int ICollection<object>.Count => _accessor?.HttpContext?.Request.RouteValues.Count ?? 0;
 			void ICollection<object>.Add(object item) => throw new NotSupportedException();
 			void ICollection<object>.Clear() => throw new NotSupportedException();
 			bool ICollection<object>.Contains(object item) => item switch { string key => this.Contains(key), KeyValuePair<string, object> pair => this.Contains(pair.Key), _ => false };
 			bool ICollection<object>.Remove(object item) => throw new NotSupportedException();
 
-			IEnumerable<string> Collections.INamedCollection<object>.Keys => _accessor.HttpContext.Request.RouteValues.Keys;
+			IEnumerable<string> Collections.INamedCollection<object>.Keys => _accessor?.HttpContext?.Request.RouteValues.Keys ?? Array.Empty<string>();
 			object Collections.INamedCollection<object>.Get(string name) => this.TryGet(name, out var value) ? value : throw new KeyNotFoundException();
 			bool Collections.INamedCollection<object>.Remove(string name) => throw new NotSupportedException();
 
@@ -193,6 +195,11 @@ namespace Zongsoft.Web
 			#region 遍历枚举
 			public IEnumerator<object> GetEnumerator()
 			{
+				var request = _accessor?.HttpContext?.Request;
+
+				if(request == null)
+					yield break;
+
 				foreach(var entry in _accessor.HttpContext.Request.RouteValues)
 					yield return new KeyValuePair<string, object>(entry.Key, entry.Value);
 			}
