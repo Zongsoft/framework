@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Wechat
 
 				if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
 				{
-					_localCache.TryAdd(key, new CredentialToken(credentialId, expiry.Value));
+					_localCache[key] = new CredentialToken(credentialId, expiry.Value);
 					return credentialId;
 				}
 			}
@@ -127,7 +127,7 @@ namespace Zongsoft.Externals.Wechat
 					token = result.Value;
 
 					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-						_localCache.TryAdd(key, token);
+						_localCache[key] = token;
 
 					return token.Key;
 				}
