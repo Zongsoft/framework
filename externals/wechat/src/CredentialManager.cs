@@ -34,7 +34,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
@@ -47,7 +47,7 @@ namespace Zongsoft.Externals.Wechat
 	{
 		#region 成员字段
 		private static readonly HttpClient _http;
-		private static readonly Dictionary<string, Token> _localCache;
+		private static readonly ConcurrentDictionary<string, Token> _localCache;
 
 		private static ICache _cache;
 		private static IDistributedLockManager _locker;
@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Wechat
 			_http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			_http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
 
-			_localCache = new Dictionary<string, Token>();
+			_localCache = new ConcurrentDictionary<string, Token>();
 		}
 		#endregion
 
@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Wechat
 
 				if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
 				{
-					_localCache[key] = new CredentialToken(credentialId, expiry.Value);
+					_localCache.TryAdd(key, new CredentialToken(credentialId, expiry.Value));
 					return credentialId;
 				}
 			}
@@ -127,7 +127,7 @@ namespace Zongsoft.Externals.Wechat
 					token = result.Value;
 
 					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-						_localCache[key] = token;
+						_localCache.TryAdd(key, token);
 
 					return token.Key;
 				}
