@@ -13,6 +13,7 @@
 [string]$project_redis          = 'externals/redis/build.cake'
 [string]$project_wechat         = 'externals/wechat/build.cake'
 [string]$project_grapecity      = 'externals/grapecity/build.cake'
+[string]$project_hangfire       = 'externals/hangfire/build.cake'
 
 [string]$project_administratives = '../Administratives/build.cake'
 
@@ -60,6 +61,9 @@ dotnet cake $project_wechat $CAKE_ARGS $ARGS
 
 # Write-Host "dotnet cake $project_grapecity $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 # dotnet cake $project_grapecity $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_hangfire $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_hangfire $CAKE_ARGS $ARGS
 
 if(Test-Path $project_administratives)
 {
