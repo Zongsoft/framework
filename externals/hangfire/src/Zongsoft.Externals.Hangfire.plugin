@@ -12,4 +12,17 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Scheduler">
+			<scheduler.command>
+				<object type="Zongsoft.Externals.Hangfire.Commands.SchedulerCommand, Zongsoft.Externals.Hangfire" />
+			</scheduler.command>
+		</object>
+	</extension>
+
+	<extension path="/Workbench/Executor/Commands/Scheduler">
+		<object name="Schedule" type="Zongsoft.Externals.Hangfire.Commands.ScheduleCommand, Zongsoft.Externals.Hangfire" />
+		<object name="Reschedule" type="Zongsoft.Externals.Hangfire.Commands.RescheduleCommand, Zongsoft.Externals.Hangfire" />
+		<object name="Unschedule" type="Zongsoft.Externals.Hangfire.Commands.UnscheduleCommand, Zongsoft.Externals.Hangfire" />
+	</extension>
 </plugin>

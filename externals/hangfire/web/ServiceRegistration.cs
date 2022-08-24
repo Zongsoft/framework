@@ -28,21 +28,23 @@
  */
 
 using System;
+using System.Linq;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 using Hangfire;
+using Hangfire.AspNetCore;
 
-namespace Zongsoft.Externals.Hangfire
+using Zongsoft.Services;
+
+namespace Zongsoft.Externals.Hangfire.Web
 {
-	public class ServiceActivator : JobActivator
+	public class ServiceRegistration : IServiceRegistration
 	{
-		public override object ActivateJob(Type type) => Zongsoft.Services.ApplicationContext.Current.Services.GetService(type);
-		public override JobActivatorScope BeginScope(JobActivatorContext context) => new SingletonScope(this);
-
-		private class SingletonScope : JobActivatorScope
+		public void Register(IServiceCollection services, IConfiguration configuration)
 		{
-			private readonly JobActivator _activator;
-			public SingletonScope(JobActivator activator) => _activator = activator ?? throw new ArgumentNullException(nameof(activator));
-			public override object Resolve(Type type) => _activator.ActivateJob(type);
+			services.AddHangfire(configuration => { });
 		}
 	}
 }

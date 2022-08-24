@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Hangfire.Samples"
+	title="Zongsoft.Externals.Hangfire.Samples Plugin"
+	author="Popeye Zhong(zongsoft@qq.com)"
+	description="Created date:2022-08-20 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Hangfire.Samples" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Externals.Hangfire" />
+		</dependencies>
+	</manifest>
+</plugin>

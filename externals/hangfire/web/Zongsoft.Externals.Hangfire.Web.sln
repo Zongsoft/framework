@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32811.315
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Hangfire.Web", "Zongsoft.Externals.Hangfire.Web.csproj", "{B6F1DFB6-858A-459C-BCCD-0332FD6A65DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Hangfire", "..\src\Zongsoft.Externals.Hangfire.csproj", "{53CCFAA4-16A5-46AD-91A1-5834DF7EDB44}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6F1DFB6-858A-459C-BCCD-0332FD6A65DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6F1DFB6-858A-459C-BCCD-0332FD6A65DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6F1DFB6-858A-459C-BCCD-0332FD6A65DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6F1DFB6-858A-459C-BCCD-0332FD6A65DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53CCFAA4-16A5-46AD-91A1-5834DF7EDB44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53CCFAA4-16A5-46AD-91A1-5834DF7EDB44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53CCFAA4-16A5-46AD-91A1-5834DF7EDB44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53CCFAA4-16A5-46AD-91A1-5834DF7EDB44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EFE116B1-203B-4ABA-A202-46C128014CC8}
+	EndGlobalSection
+EndGlobal

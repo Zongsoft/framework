@@ -1,6 +1,11 @@
 var target = Argument("target", "default");
 
-var solutionFile  = "Zongsoft.Externals.Hangfire.sln";
+var solutionFile = "Zongsoft.Externals.Hangfire.sln";
+var dependents = new []
+{
+	"web/Zongsoft.Externals.Hangfire.Web.sln",
+	"storages/Zongsoft.Externals.Hangfire.Storages.sln"
+};
 
 Task("clean")
 	.Description("清理解决方案")
@@ -16,6 +21,11 @@ Task("restore")
 	.Does(() =>
 {
 	DotNetRestore(solutionFile);
+
+	foreach(var dependent in dependents)
+	{
+		DotNetRestore(dependent);
+	}
 });
 
 Task("build")
@@ -30,6 +40,11 @@ Task("build")
 	};
 
 	DotNetBuild(solutionFile, settings);
+
+	foreach(var dependent in dependents)
+	{
+		DotNetBuild(dependent, settings);
+	}
 });
 
 Task("test")

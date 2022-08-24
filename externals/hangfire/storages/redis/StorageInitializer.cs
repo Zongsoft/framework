@@ -28,51 +28,44 @@
  */
 
 using System;
-using System.Threading;
+using System.Linq;
 
 using Hangfire;
-using Hangfire.Server;
-using Hangfire.Storage;
+using Hangfire.Redis;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Hangfire
+namespace Zongsoft.Externals.Hangfire.Storages.Redis
 {
-	public class Server : WorkerBase
+	[Service(typeof(IApplicationInitializer))]
+	public class StorageInitializer : IApplicationInitializer
 	{
-		#region 成员字段
-		private BackgroundJobServer _server;
-		#endregion
-
-		#region 构造函数
-		public Server()
+		public void Initialize(IApplicationContext context)
 		{
-			this.CanPauseAndContinue = false;
-		}
+			var setting = GetConnectionSetting(context.Configuration?.GetOption<ConnectionSettingCollection>("/Externals/Hangfire/ConnectionSettings"));
 
-		public Server(string name) : base(name)
-		{
-			this.CanPauseAndContinue = false;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void OnStart(string[] args)
-		{
-			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
+			if(setting != null)
 			{
-				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{Environment.MachineName}",
-				SchedulePollingInterval = TimeSpan.FromSeconds(5),
-			});
+				var storage = new RedisStorage(setting.Value, new RedisStorageOptions()
+				{
+					FetchTimeout = TimeSpan.FromSeconds(5),
+				});
+
+				GlobalConfiguration.Configuration.UseStorage(storage);
+			}
 		}
 
-		protected override void OnStop(string[] args)
+		private static ConnectionSetting GetConnectionSetting(ConnectionSettingCollection settings)
 		{
-			var server = Interlocked.Exchange(ref _server, null);
+			if(settings == null || settings.Count == 0)
+				return null;
 
-			if(server != null)
-				server.Dispose();
+			var setting = settings.GetDefault();
+			if(setting != null && string.Equals(setting.Driver, "redis", StringComparison.OrdinalIgnoreCase))
+				return setting;
+
+			return settings.FirstOrDefault(setting => setting != null && string.Equals(setting.Driver, "redis", StringComparison.OrdinalIgnoreCase));
 		}
-		#endregion
 	}
 }

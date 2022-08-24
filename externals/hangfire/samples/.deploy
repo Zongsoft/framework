@@ -1,0 +1,3 @@
+Zongsoft.Externals.Hangfire.Samples.plugin
+Zongsoft.Externals.Hangfire.Samples.option
+bin/$(Edition)/$(Target)/Zongsoft.Externals.Hangfire.Samples.*

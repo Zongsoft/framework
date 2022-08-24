@@ -28,51 +28,41 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
-
-using Hangfire;
-using Hangfire.Server;
-using Hangfire.Storage;
+using System.Threading.Tasks;
 
 using Zongsoft.Services;
+using Zongsoft.Scheduling;
 
-namespace Zongsoft.Externals.Hangfire
+namespace Zongsoft.Externals.Hangfire.Commands
 {
-	public class Server : WorkerBase
+	public class RescheduleCommand : CommandBase<CommandContext>
 	{
-		#region 成员字段
-		private BackgroundJobServer _server;
-		#endregion
+		public RescheduleCommand() : base("Reschedule") { }
 
-		#region 构造函数
-		public Server()
+		protected override object OnExecute(CommandContext context)
 		{
-			this.CanPauseAndContinue = false;
-		}
+			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
+				throw new CommandException($"Missing the required arguments.");
 
-		public Server(string name) : base(name)
-		{
-			this.CanPauseAndContinue = false;
-		}
-		#endregion
+			var scheduler = SchedulerCommand.GetScheduler(context.CommandNode);
 
-		#region 重写方法
-		protected override void OnStart(string[] args)
-		{
-			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
+			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{Environment.MachineName}",
-				SchedulePollingInterval = TimeSpan.FromSeconds(5),
-			});
-		}
+				var rescheduled = scheduler.Reschedule(context.Expression.Arguments[i]);
 
-		protected override void OnStop(string[] args)
-		{
-			var server = Interlocked.Exchange(ref _server, null);
+				context.Output.Write($"[{i + 1}] ");
+				context.Output.Write(CommandOutletColor.DarkYellow, context.Expression.Arguments[i]);
+				context.Output.Write(":");
 
-			if(server != null)
-				server.Dispose();
+				if(rescheduled)
+					context.Output.WriteLine(CommandOutletColor.Green, "Succeed");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkRed, "Failed");
+			}
+
+			return null;
 		}
-		#endregion
 	}
 }

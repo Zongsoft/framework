@@ -30,115 +30,64 @@
 using System;
 using System.Linq;
 using System.Threading;
-using System.Reflection;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire
 {
+	[Service(typeof(IScheduler))]
 	public class Scheduler : IScheduler
 	{
-		private static readonly Lazy<BackgroundJobClient> _client = new Lazy<BackgroundJobClient>(true);
-		private static readonly MethodInfo _handleMethod = typeof(IHandler).GetMethod(nameof(IHandler.HandleAsync), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-		public void Schedule(IHandler handler, ITriggerOptions options = null)
+		#region 公共方法
+		public string Schedule(string name, ITriggerOptions options = null)
 		{
-			if(handler is null)
-				throw new ArgumentNullException(nameof(handler));
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
 
 			switch(options)
 			{
 				case TriggerOptions.Cron cron:
-					RecurringJob.AddOrUpdate(() => handler.HandleAsync(null, null, CancellationToken.None).AsTask(), cron.Expression);
-					break;
+					if(string.IsNullOrEmpty(options.Identifier))
+						RecurringJob.AddOrUpdate(() => HandlerFactory.HandleAsync(name, CancellationToken.None), cron.Expression);
+					else
+						RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, CancellationToken.None), cron.Expression);
+					return options.Identifier;
 				case TriggerOptions.Latency latency:
-					BackgroundJob.Schedule(() => handler.HandleAsync(null, null, CancellationToken.None).AsTask(), latency.Duration);
-					break;
+					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, CancellationToken.None), latency.Duration);
 				default:
-					BackgroundJob.Enqueue(() => handler.HandleAsync(null, null, CancellationToken.None).AsTask());
-					break;
+					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, CancellationToken.None));
 			}
 		}
 
-		public void Schedule(Type handlerType, ITriggerOptions options = null)
+		public string Schedule<TParameter>(string name, TParameter parameter, ITriggerOptions options)
 		{
-			if(handlerType is null)
-				throw new ArgumentNullException(nameof(handlerType));
-			if(typeof(IHandler).IsAssignableFrom(handlerType))
-				throw new ArgumentException($"The specified '{handlerType.FullName}' type does not implement the '{typeof(IHandler).FullName}' interface.", nameof(handlerType));
-
-			_client.Value.Create(new Job(handlerType, _handleMethod, new object[] { null, null, CancellationToken.None }), new EnqueuedState());
-		}
-
-		public void Schedule<THandler>(ITriggerOptions options = null) where THandler : IHandler
-		{
-			switch(options)
-			{
-				case TriggerOptions.Cron cron:
-					RecurringJob.AddOrUpdate<THandler>(handler => handler.HandleAsync(null, null, CancellationToken.None).AsTask(), cron.Expression);
-					break;
-				case TriggerOptions.Latency latency:
-					BackgroundJob.Schedule<THandler>(handler => handler.HandleAsync(null, null, CancellationToken.None).AsTask(), latency.Duration);
-					break;
-				default:
-					BackgroundJob.Enqueue<THandler>(handler => handler.HandleAsync(null, null, CancellationToken.None).AsTask());
-					break;
-			}
-		}
-
-		public void Schedule<TParameter>(IHandler<TParameter> handler, TParameter parameter, ITriggerOptions options = null)
-		{
-			if(handler is null)
-				throw new ArgumentNullException(nameof(handler));
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
 
 			switch(options)
 			{
 				case TriggerOptions.Cron cron:
-					RecurringJob.AddOrUpdate(() => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask(), cron.Expression);
-					break;
+					if(string.IsNullOrEmpty(options.Identifier))
+						RecurringJob.AddOrUpdate(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), cron.Expression);
+					else
+						RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), cron.Expression);
+					return options.Identifier;
 				case TriggerOptions.Latency latency:
-					BackgroundJob.Schedule(() => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask(), latency.Duration);
-					break;
+					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), latency.Duration);
 				default:
-					BackgroundJob.Enqueue(() => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask());
-					break;
-			}
-		}
-
-		public void Schedule<TParameter>(Type handlerType, TParameter parameter, ITriggerOptions options = null)
-		{
-			if(handlerType is null)
-				throw new ArgumentNullException(nameof(handlerType));
-			if(typeof(IHandler).IsAssignableFrom(handlerType))
-				throw new ArgumentException($"The specified '{handlerType.FullName}' type does not implement the '{typeof(IHandler).FullName}' interface.", nameof(handlerType));
-
-			_client.Value.Create(new Job(handlerType, _handleMethod, new object[] { null, parameter, CancellationToken.None }), new EnqueuedState());
-		}
-
-		public void Schedule<THandler, TParameter>(TParameter parameter, ITriggerOptions options = null) where THandler : IHandler
-		{
-			switch(options)
-			{
-				case TriggerOptions.Cron cron:
-					RecurringJob.AddOrUpdate<THandler>(handler => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask(), cron.Expression);
-					break;
-				case TriggerOptions.Latency latency:
-					BackgroundJob.Schedule<THandler>(handler => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask(), latency.Duration);
-					break;
-				default:
-					BackgroundJob.Enqueue<THandler>(handler => handler.HandleAsync(null, parameter, CancellationToken.None).AsTask());
-					break;
+					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None));
 			}
 		}
 
 		public bool Reschedule(string identifier)
 		{
-			if(string.IsNullOrWhiteSpace(identifier))
+			if(string.IsNullOrEmpty(identifier))
 				return false;
 
 			return BackgroundJob.Requeue(identifier);
@@ -146,11 +95,94 @@ namespace Zongsoft.Externals.Hangfire
 
 		public bool Unschedule(string identifier)
 		{
-			if(string.IsNullOrWhiteSpace(identifier))
+			if(string.IsNullOrEmpty(identifier))
 				return false;
 
+			if(BackgroundJob.Delete(identifier))
+				return true;
+
 			RecurringJob.RemoveIfExists(identifier);
-			return BackgroundJob.Delete(identifier);
+			return false;
 		}
+		#endregion
+
+		#region 嵌套子类
+		private static class HandlerFactory
+		{
+			public static async Task HandleAsync(string name, CancellationToken cancellation)
+			{
+				var handlers = GetHandlers(name);
+
+				if(handlers == null || !handlers.Any())
+					throw new InvalidOperationException($"No matching handlers found for job named '{name}'.");
+
+				foreach(var handler in handlers)
+				{
+					var result = await handler.HandleAsync(null, null, cancellation);
+
+					if(result.Failed)
+						throw new InvalidOperationException(result.Failure.ToString());
+				}
+			}
+
+			public static async Task HandleAsync<TParameter>(string name, TParameter parameter, CancellationToken cancellation)
+			{
+				var handlers = GetHandlers<TParameter>(name);
+
+				if(handlers == null || !handlers.Any())
+					throw new InvalidOperationException($"No matching handlers found for job named '{name}'.");
+
+				foreach(var handler in handlers)
+				{
+					var result = await handler.HandleAsync(null, parameter, cancellation);
+
+					if(result.Failed)
+						throw new InvalidOperationException(result.Failure.ToString());
+				}
+			}
+
+			private static IEnumerable<IHandler> GetHandlers(string name)
+			{
+				var handlers = ApplicationContext.Current.Services.ResolveAll<IHandler>(name);
+
+				if(!string.IsNullOrEmpty(name) && (handlers == null || !handlers.Any()))
+				{
+					handlers = ApplicationContext.Current.Services.ResolveAll<IHandler>();
+
+					if(handlers == null)
+						return null;
+
+					return handlers.Where(handler => handler != null &&
+						(
+							handler.GetType().Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+							handler.GetType().FullName.Equals(name, StringComparison.OrdinalIgnoreCase)
+						));
+				}
+
+				return handlers;
+			}
+
+			private static IEnumerable<IHandler<T>> GetHandlers<T>(string name)
+			{
+				var handlers = ApplicationContext.Current.Services.ResolveAll<IHandler<T>>(name);
+
+				if(!string.IsNullOrEmpty(name) && (handlers == null || !handlers.Any()))
+				{
+					handlers = ApplicationContext.Current.Services.ResolveAll<IHandler<T>>();
+
+					if(handlers == null)
+						return null;
+
+					return handlers.Where(handler => handler != null &&
+						(
+							handler.GetType().Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+							handler.GetType().FullName.Equals(name, StringComparison.OrdinalIgnoreCase)
+						));
+				}
+
+				return handlers;
+			}
+		}
+		#endregion
 	}
 }

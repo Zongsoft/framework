@@ -28,51 +28,24 @@
  */
 
 using System;
-using System.Threading;
+using System.Linq;
+
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 
 using Hangfire;
-using Hangfire.Server;
-using Hangfire.Storage;
+using Hangfire.AspNetCore;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Externals.Hangfire
+namespace Zongsoft.Externals.Hangfire.Web
 {
-	public class Server : WorkerBase
+	[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
+	public class Initializer : IApplicationInitializer<IApplicationBuilder>
 	{
-		#region 成员字段
-		private BackgroundJobServer _server;
-		#endregion
-
-		#region 构造函数
-		public Server()
+		public void Initialize(IApplicationBuilder builder)
 		{
-			this.CanPauseAndContinue = false;
+			builder.UseHangfireDashboard();
 		}
-
-		public Server(string name) : base(name)
-		{
-			this.CanPauseAndContinue = false;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void OnStart(string[] args)
-		{
-			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
-			{
-				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{Environment.MachineName}",
-				SchedulePollingInterval = TimeSpan.FromSeconds(5),
-			});
-		}
-
-		protected override void OnStop(string[] args)
-		{
-			var server = Interlocked.Exchange(ref _server, null);
-
-			if(server != null)
-				server.Dispose();
-		}
-		#endregion
 	}
 }

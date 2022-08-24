@@ -28,13 +28,40 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Externals.Hangfire.Options
+using Zongsoft.Services;
+using Zongsoft.Scheduling;
+
+namespace Zongsoft.Externals.Hangfire.Commands
 {
-	public class StorageOptions
+	public class SchedulerCommand : CommandBase<CommandContext>
 	{
-		/// <summary>获取或设置连接设置名。</summary>
-		public string Connection { get; set; }
+		private IScheduler _scheduler;
+
+		public SchedulerCommand(IServiceProvider serviceProvider)
+		{
+			_scheduler = serviceProvider?.Resolve<IScheduler>();
+		}
+
+		protected override object OnExecute(CommandContext context)
+		{
+			return _scheduler;
+		}
+
+		#region 静态方法
+		public static IScheduler GetScheduler(CommandTreeNode node)
+		{
+			if(node == null)
+				return null;
+
+			if(node.Command is SchedulerCommand command)
+				return command._scheduler;
+
+			return GetScheduler(node.Parent) ?? throw new InvalidOperationException("Missing required scheduler.");
+		}
+		#endregion
 	}
 }
