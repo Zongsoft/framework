@@ -62,6 +62,9 @@ namespace Zongsoft.Services
 				if(type.IsNotPublic || !type.IsClass || (type.IsAbstract && !type.IsSealed))
 					continue;
 
+				if(RegisterServices(services, type, configuration))
+					continue;
+
 				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
 
 				if(attribute != null)
@@ -110,6 +113,18 @@ namespace Zongsoft.Services
 
 				type = type.BaseType?.GetTypeInfo();
 			} while(type != null && type.GetTypeInfo() != ObjectType);
+		}
+
+		private static bool RegisterServices(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+		{
+			if(typeof(IServiceRegistration).IsAssignableFrom(type))
+			{
+				var registration = (IServiceRegistration)Activator.CreateInstance(type);
+				registration.Register(services, configuration);
+				return true;
+			}
+
+			return false;
 		}
 
 		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
