@@ -64,6 +64,11 @@ namespace Zongsoft.Hosting.Web
 			app.UseAuthentication();
 			app.UseAuthorization();
 
+			var initializers = app.ApplicationServices.GetServices<Zongsoft.Services.IApplicationInitializer<IApplicationBuilder>>();
+
+			foreach(var initializer in initializers)
+				initializer.Initialize(app);
+
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
