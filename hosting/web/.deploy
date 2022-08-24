@@ -30,6 +30,8 @@
 [plugins zongsoft externals hangfire]
 ../../externals/hangfire/.deploy
 ../../externals/hangfire/web/.deploy
+[plugins zongsoft externals hangfire redis]
+../../externals/hangfire/storages/redis/.deploy
 
 [plugins zongsoft messaging mqtt]
 ../../Zongsoft.Messaging.Mqtt/.deploy

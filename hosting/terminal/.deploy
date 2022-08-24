@@ -26,6 +26,13 @@ plugins/Terminal.plugin
 [bin $(Edition) $(Target) plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
 
+[bin $(Edition) $(Target) plugins zongsoft externals hangfire]
+../../externals/hangfire/.deploy
+[bin $(Edition) $(Target) plugins zongsoft externals hangfire redis]
+../../externals/hangfire/storages/redis/.deploy
+[bin $(Edition) $(Target) plugins zongsoft externals hangfire samples]
+../../externals/hangfire/samples/.deploy
+
 [bin $(Edition) $(Target) plugins zongsoft messaging mqtt]
 ../../Zongsoft.Messaging.Mqtt/.deploy
 
