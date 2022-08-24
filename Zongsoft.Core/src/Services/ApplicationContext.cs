@@ -62,7 +62,7 @@ namespace Zongsoft.Services
 		private string _description;
 
 		private readonly ServiceProvider _services;
-		private ICollection<IApplicationInitializer> _initializers;
+		private List<IApplicationInitializer> _initializers;
 
 		private readonly CancellationTokenRegistration _applicationStarted;
 		private readonly CancellationTokenRegistration _applicationStopped;
@@ -203,11 +203,16 @@ namespace Zongsoft.Services
 		#region 初始方法
 		public virtual void Initialize()
 		{
-			if(_disposed != 0)
+			if(_disposed != 0 || _initializers == null)
 				throw new ObjectDisposedException(this.GetType().FullName);
 
 			if(_started != 0 || _stopped != 0)
 				throw new InvalidOperationException();
+
+			var services = this.Services;
+
+			if(services != null)
+				_initializers.AddRange(services.ResolveAll<IApplicationInitializer>());
 
 			foreach(var initializer in _initializers)
 			{
@@ -233,12 +238,15 @@ namespace Zongsoft.Services
 				_applicationStarted.Dispose();
 				_applicationStopped.Dispose();
 
-				var initializers = Interlocked.Exchange(ref _initializers, Array.Empty<IApplicationInitializer>());
+				var initializers = Interlocked.Exchange(ref _initializers, null);
 
-				foreach(var initializer in initializers)
+				if(initializers != null)
 				{
-					if(initializer is IDisposable disposable)
-						disposable.Dispose();
+					foreach(var initializer in initializers)
+					{
+						if(initializer is IDisposable disposable)
+							disposable.Dispose();
+					}
 				}
 
 				foreach(var module in this.Modules)
