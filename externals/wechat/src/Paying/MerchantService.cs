@@ -610,10 +610,12 @@ namespace Zongsoft.Externals.Wechat.Paying
 					public ContractStatus Status { get; set; }
 
 					[JsonPropertyName("contract_signed_time")]
-					public DateTime SignedTime { get; set; }
+					[JsonConverter(typeof(Json.DateConverter))]
+					public DateTime? SignedTime { get; set; }
 
 					[JsonPropertyName("contract_terminated_time")]
-					public DateTime TerminatedTime { get; set; }
+					[JsonConverter(typeof(Json.DateConverter))]
+					public DateTime? TerminatedTime { get; set; }
 
 					[JsonPropertyName("contract_mode")]
 					public ContractMode ContractMode { get; set; }
