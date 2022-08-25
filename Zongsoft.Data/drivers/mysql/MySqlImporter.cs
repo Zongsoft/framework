@@ -89,10 +89,14 @@ namespace Zongsoft.Data.MySql
 					if(bulker.FieldQuotationCharacter != '\0')
 						writer.Write(bulker.FieldQuotationCharacter);
 
-					if(value != null)
+					if(value is null)
+						writer.Write(@"\N");
+					else
 					{
 						if(value is DateTime timestamp)
 							writer.Write(timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+						else if(value is bool boolean)
+							writer.Write(boolean ? "1" : "0");
 						else
 							writer.Write(value);
 					}
@@ -156,10 +160,14 @@ namespace Zongsoft.Data.MySql
 					if(bulker.FieldQuotationCharacter != '\0')
 						await writer.WriteAsync(bulker.FieldQuotationCharacter);
 
-					if(value != null)
+					if(value is null)
+						writer.Write(@"\N");
+					else
 					{
 						if(value is DateTime timestamp)
 							await writer.WriteAsync(timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+						else if(value is bool boolean)
+							await writer.WriteAsync(boolean ? "1" : "0");
 						else
 							await writer.WriteAsync(value.ToString());
 					}
