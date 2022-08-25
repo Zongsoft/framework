@@ -302,7 +302,10 @@ namespace Zongsoft.Plugins
 			object target = node.UnwrapValue(ObtainMode.Auto);
 
 			if(target is IWorker worker && worker.Enabled)
+			{
 				worker.Start();
+				this.ApplicationContext.Workers.Add(worker);
+			}
 
 			foreach(PluginTreeNode child in node.Children)
 				this.StartWorkers(child);
@@ -319,7 +322,10 @@ namespace Zongsoft.Plugins
 			object target = node.UnwrapValue(ObtainMode.Never);
 
 			if(target is IWorker worker)
+			{
 				worker.Stop();
+				this.ApplicationContext.Workers.Remove(worker);
+			}
 		}
 		#endregion
 	}

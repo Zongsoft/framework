@@ -62,6 +62,7 @@ namespace Zongsoft.Services
 		private string _description;
 
 		private readonly ServiceProvider _services;
+		private readonly List<IWorker> _workers;
 		private List<IApplicationInitializer> _initializers;
 
 		private readonly CancellationTokenRegistration _applicationStarted;
@@ -76,6 +77,7 @@ namespace Zongsoft.Services
 
 			_services = services as ServiceProvider ?? services.GetRequiredService<ServiceProvider>();
 			_initializers = new List<IApplicationInitializer>();
+			_workers = new List<IWorker>();
 
 			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
 			this.Schemas = new ComponentModel.SchemaCollection();
@@ -150,15 +152,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual IServiceProvider Services
-		{
-			get => _services;
-		}
-
-		public ICollection<IApplicationInitializer> Initializers
-		{
-			get => _initializers;
-		}
+		public virtual IServiceProvider Services => _services;
 
 		public virtual ClaimsPrincipal Principal
 		{
@@ -170,6 +164,9 @@ namespace Zongsoft.Services
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
+
+		public ICollection<IApplicationInitializer> Initializers => _initializers;
+		public ICollection<IWorker> Workers => _workers;
 
 		public IDictionary<string, object> Properties { get; }
 		#endregion

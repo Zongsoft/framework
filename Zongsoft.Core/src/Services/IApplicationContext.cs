@@ -61,14 +61,17 @@ namespace Zongsoft.Services
 		/// <remarks>该属性始终不会返回空(null)。</remarks>
 		ClaimsPrincipal Principal { get; }
 
+		/// <summary>获取当前应用程序的会话数据集。</summary>
+		INamedCollection<object> Session { get; }
+
 		/// <summary>获取当前应用程序的模块集。</summary>
 		INamedCollection<IApplicationModule> Modules { get; }
 
 		/// <summary>获取当前应用程序的初始化器集。</summary>
 		ICollection<IApplicationInitializer> Initializers { get; }
 
-		/// <summary>获取当前应用程序的会话数据集。</summary>
-		INamedCollection<object> Session { get; }
+		/// <summary>获取当前应用程序的后台工作者集。</summary>
+		ICollection<IWorker> Workers { get; }
 		#endregion
 
 		#region 方法定义
