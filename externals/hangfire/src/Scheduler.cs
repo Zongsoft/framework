@@ -31,7 +31,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Hangfire;
 
@@ -111,76 +110,45 @@ namespace Zongsoft.Externals.Hangfire
 		{
 			public static async Task HandleAsync(string name, CancellationToken cancellation)
 			{
-				var handlers = GetHandlers(name);
+				var count = 0;
 
-				if(handlers == null || !handlers.Any())
-					throw new InvalidOperationException($"No matching handlers found for job named '{name}'.");
-
-				foreach(var handler in handlers)
+				foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
 				{
-					var result = await handler.HandleAsync(null, null, cancellation);
+					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
+					{
+						count++;
+						var result = await handler.HandleAsync(null, null, cancellation);
 
-					if(result.Failed)
-						throw new InvalidOperationException(result.Failure.ToString());
+						if(result.Failed)
+							throw new InvalidOperationException(result.Failure.ToString());
+					}
 				}
+
+				if(count < 1)
+					Zongsoft.Diagnostics.Logger.Warn($"No matching handlers found for job named '{name}'.") ;
 			}
 
 			public static async Task HandleAsync<TParameter>(string name, TParameter parameter, CancellationToken cancellation)
 			{
-				var handlers = GetHandlers<TParameter>(name);
+				var count = 0;
 
-				if(handlers == null || !handlers.Any())
-					throw new InvalidOperationException($"No matching handlers found for job named '{name}'.");
-
-				foreach(var handler in handlers)
+				foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
 				{
-					var result = await handler.HandleAsync(null, parameter, cancellation);
+					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
+					{
+						count++;
 
-					if(result.Failed)
-						throw new InvalidOperationException(result.Failure.ToString());
-				}
-			}
+						var result = handler is IHandler<TParameter> strong ?
+							await strong.HandleAsync(null, parameter, cancellation) :
+							await handler.HandleAsync(null, parameter, cancellation);
 
-			private static IEnumerable<IHandler> GetHandlers(string name)
-			{
-				var handlers = ApplicationContext.Current.Services.ResolveAll<IHandler>(name);
-
-				if(!string.IsNullOrEmpty(name) && (handlers == null || !handlers.Any()))
-				{
-					handlers = ApplicationContext.Current.Services.ResolveAll<IHandler>();
-
-					if(handlers == null)
-						return null;
-
-					return handlers.Where(handler => handler != null &&
-						(
-							handler.GetType().Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
-							handler.GetType().FullName.Equals(name, StringComparison.OrdinalIgnoreCase)
-						));
+						if(result.Failed)
+							throw new InvalidOperationException(result.Failure.ToString());
+					}
 				}
 
-				return handlers;
-			}
-
-			private static IEnumerable<IHandler<T>> GetHandlers<T>(string name)
-			{
-				var handlers = ApplicationContext.Current.Services.ResolveAll<IHandler<T>>(name);
-
-				if(!string.IsNullOrEmpty(name) && (handlers == null || !handlers.Any()))
-				{
-					handlers = ApplicationContext.Current.Services.ResolveAll<IHandler<T>>();
-
-					if(handlers == null)
-						return null;
-
-					return handlers.Where(handler => handler != null &&
-						(
-							handler.GetType().Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
-							handler.GetType().FullName.Equals(name, StringComparison.OrdinalIgnoreCase)
-						));
-				}
-
-				return handlers;
+				if(count < 1)
+					Zongsoft.Diagnostics.Logger.Warn($"No matching handlers found for job named '{name}'.");
 			}
 		}
 		#endregion

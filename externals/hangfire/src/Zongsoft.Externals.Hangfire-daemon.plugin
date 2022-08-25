@@ -16,7 +16,17 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Externals/Hangfire">
+		<object name="Server" type="Zongsoft.Externals.Hangfire.Server, Zongsoft.Externals.Hangfire">
+			<expose name="Handlers" value="{path:../@Handlers}" />
+		</object>
+	</extension>
+
+	<extension path="/Workbench/Scheduler">
+		<expose name="Handlers" value="{path:/Workbench/Externals/Hangfire/Server/Handlers}" />
+	</extension>
+
 	<extension path="/Workbench/Startup">
-		<object name="Hangfire" type="Zongsoft.Externals.Hangfire.Server, Zongsoft.Externals.Hangfire" />
+		<object name="Hangfire" value="{path:/Workbench/Externals/Hangfire/Server}" />
 	</extension>
 </plugin>

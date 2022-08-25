@@ -11,7 +11,6 @@ using Zongsoft.Diagnostics;
 
 namespace Zongsoft.Externals.Hangfire.Samples
 {
-	[Service(typeof(IHandler<object>))]
 	public class MyHandler : HandlerBase<object>
 	{
 		private int _count = 0;
@@ -19,7 +18,7 @@ namespace Zongsoft.Externals.Hangfire.Samples
 		public override OperationResult Handle(object caller, object parameter)
 		{
 			if(parameter == null)
-				parameter = Interlocked.Increment(ref _count).ToString();
+				parameter = $"Count:{Interlocked.Increment(ref _count)}";
 
 			Console.ForegroundColor = ConsoleColor.DarkYellow;
 			Console.Write(parameter);

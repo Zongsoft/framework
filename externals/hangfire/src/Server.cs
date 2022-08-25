@@ -29,15 +29,18 @@
 
 using System;
 using System.Threading;
+using System.Collections.Generic;
 
 using Hangfire;
 using Hangfire.Server;
 using Hangfire.Storage;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Hangfire
 {
+	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class Server : WorkerBase
 	{
 		#region 成员字段
@@ -48,12 +51,18 @@ namespace Zongsoft.Externals.Hangfire
 		public Server()
 		{
 			this.CanPauseAndContinue = false;
+			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		public Server(string name) : base(name)
 		{
 			this.CanPauseAndContinue = false;
+			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
 		}
+		#endregion
+
+		#region 公共属性
+		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
 
 		#region 重写方法

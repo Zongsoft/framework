@@ -14,4 +14,8 @@
 			<dependency name="Zongsoft.Externals.Hangfire" />
 		</dependencies>
 	</manifest>
+
+	<extension path="/Workbench/Scheduler/Handlers">
+		<object name="MyHandler" type="Zongsoft.Externals.Hangfire.Samples.MyHandler, Zongsoft.Externals.Hangfire.Samples" />
+	</extension>
 </plugin>
