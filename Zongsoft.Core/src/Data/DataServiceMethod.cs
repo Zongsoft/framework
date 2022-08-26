@@ -54,8 +54,8 @@ namespace Zongsoft.Data
 
 		private DataServiceMethod(string name, DataAccessMethod kind, bool isMultiple)
 		{
-			this.Name = name ?? kind.ToString();
 			this.Kind = kind;
+			this.Name = string.IsNullOrEmpty(name) ? kind.ToString() : name.Trim();
 			this.IsMultiple = isMultiple;
 		}
 		#endregion
@@ -68,21 +68,14 @@ namespace Zongsoft.Data
 		public static DataServiceMethod Execute() => new DataServiceMethod(DataAccessMethod.Execute);
 		public static DataServiceMethod Increment() => new DataServiceMethod(nameof(Increment), DataAccessMethod.Increment, false);
 		public static DataServiceMethod Decrement() => new DataServiceMethod(nameof(Decrement), DataAccessMethod.Increment, false);
-		public static DataServiceMethod Delete() => new DataServiceMethod(DataAccessMethod.Delete);
-		public static DataServiceMethod Insert() => new DataServiceMethod(DataAccessMethod.Insert);
+		public static DataServiceMethod Select(string name = null) => new DataServiceMethod(name, DataAccessMethod.Select, false);
+		public static DataServiceMethod Delete(string name = null) => new DataServiceMethod(name, DataAccessMethod.Delete, false);
+		public static DataServiceMethod Insert(string name = null) => new DataServiceMethod(name, DataAccessMethod.Insert, false);
 		public static DataServiceMethod InsertMany() => new DataServiceMethod(nameof(InsertMany), DataAccessMethod.Insert, true);
-		public static DataServiceMethod Update() => new DataServiceMethod(DataAccessMethod.Update);
+		public static DataServiceMethod Update(string name = null) => new DataServiceMethod(name, DataAccessMethod.Update, false);
 		public static DataServiceMethod UpdateMany() => new DataServiceMethod(nameof(UpdateMany), DataAccessMethod.Update, true);
-		public static DataServiceMethod Upsert() => new DataServiceMethod(DataAccessMethod.Upsert);
+		public static DataServiceMethod Upsert(string name = null) => new DataServiceMethod(name, DataAccessMethod.Upsert, false);
 		public static DataServiceMethod UpsertMany() => new DataServiceMethod(nameof(UpsertMany), DataAccessMethod.Upsert, true);
-
-		public static DataServiceMethod Select(string name = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				return new DataServiceMethod(DataAccessMethod.Select);
-			else
-				return new DataServiceMethod(name, DataAccessMethod.Select, false);
-		}
 		#endregion
 
 		#region 公共方法
