@@ -33,8 +33,8 @@ using System.Text.RegularExpressions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
+using Zongsoft.Reflection.Expressions;
 
 namespace Zongsoft.Services
 {
@@ -137,10 +137,29 @@ namespace Zongsoft.Services
 				{
 					var result = provider.Resolve((string)mode);
 
-					if(result != null && context.MemberType != null && context.MemberType.IsAssignableFrom(result.GetType()))
-						return result;
+					if(result == null)
+					{
+						if(context.MemberType != null)
+						{
+							result = provider.Resolve(context.MemberType, (string)mode);
+							if(result != null)
+								return result;
+						}
 
-					return provider.Resolve(context.MemberType, (string)mode);
+						var parts = ((string)mode).Split('.');
+						if(parts.Length > 1)
+						{
+							result = provider.Resolve(parts[0]);
+
+							if(result != null)
+							{
+								var expression = MemberExpression.Parse(string.Join(',', parts, 1, parts.Length - 1));
+								return MemberExpressionEvaluator.Default.GetValue(expression, result);
+							}
+						}
+					}
+
+					return result;
 				}
 
 				if(mode is Type)
