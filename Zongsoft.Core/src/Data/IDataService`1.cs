@@ -52,6 +52,9 @@ namespace Zongsoft.Data
 
 		/// <summary>获取数据服务操作验证器。</summary>
 		new IDataServiceValidator<TModel> Validator { get; }
+
+		/// <summary>获取数据服务过滤器集合。</summary>
+		ICollection<IDataServiceFilter<TModel>> Filters { get; }
 		#endregion
 
 		#region 查询方法

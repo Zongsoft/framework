@@ -35,6 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
+	[System.Reflection.DefaultMember(nameof(Filters))]
 	public partial class DataServiceBase<TModel> : IDataService<TModel>
 	{
 		#region 事件定义
@@ -63,10 +64,11 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private string _name;
 		private IDataAccess _dataAccess;
-		private DataServiceAttribute _attribute;
 		private IDataSearcher<TModel> _searcher;
 		private IServiceProvider _serviceProvider;
-		private DataServiceMutability? _mutability;
+		private readonly DataServiceAttribute _attribute;
+		private readonly DataServiceMutability? _mutability;
+		private readonly ICollection<IDataServiceFilter<TModel>> _filters;
 		#endregion
 
 		#region 构造函数
@@ -75,6 +77,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -97,6 +100,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -124,6 +128,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -150,6 +155,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -172,6 +178,7 @@ namespace Zongsoft.Data
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -193,6 +200,7 @@ namespace Zongsoft.Data
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -219,6 +227,7 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -244,6 +253,7 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+			_filters = new List<IDataServiceFilter<TModel>>();
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -309,6 +319,7 @@ namespace Zongsoft.Data
 		public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
 		IDataServiceValidator IDataService.Validator { get => this.Validator; }
+		public ICollection<IDataServiceFilter<TModel>> Filters { get => _filters; }
 
 		public IServiceProvider ServiceProvider
 		{
@@ -2004,175 +2015,255 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
+		#region 触发过滤
+		protected void OnFiltered(DataServiceMethod method, object result, params object[] arguments) => this.OnFiltered(method, null, result, arguments);
+		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFiltered(method, context, null, arguments);
+		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments)
+		{
+			var filters = this.Filters;
+			if(filters == null || filters.Count == 0)
+				return;
+
+			foreach(var filter in filters)
+				filter.OnFiltered(new DataServiceContext<TModel>(this, method, context, result, arguments));
+		}
+
+		protected bool OnFiltering(DataServiceMethod method, params object[] arguments) => this.OnFiltering(method, null, arguments);
+		protected bool OnFiltering(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments)
+		{
+			var filters = this.Filters;
+			if(filters == null || filters.Count == 0)
+				return false;
+
+			foreach(var filter in filters)
+			{
+				if(filter.OnFiltering(new DataServiceContext<TModel>(this, method, context, null, arguments)))
+					return true;
+			}
+
+			return false;
+		}
+		#endregion
+
 		#region 激发事件
 		protected virtual void OnGetted(DataSelectContextBase context)
 		{
 			this.Getted?.Invoke(this, new DataGettedEventArgs<TModel>(context));
+			this.OnFiltered(DataServiceMethod.Get(), context);
 		}
 
 		protected virtual bool OnGetting(DataSelectContextBase context)
 		{
 			var e = this.Getting;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataGettingEventArgs<TModel>(context);
+				e.Invoke(this, args);
 
-			var args = new DataGettingEventArgs<TModel>(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Get(), context);
 		}
 
 		protected virtual void OnExecuted(DataExecuteContextBase context)
 		{
 			this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Execute(), context);
 		}
 
 		protected virtual bool OnExecuting(DataExecuteContextBase context)
 		{
 			var e = this.Executing;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataExecutingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataExecutingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Execute(), context);
 		}
 
 		protected virtual void OnExisted(DataExistContextBase context)
 		{
 			this.Existed?.Invoke(this, new DataExistedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Exists(), context);
 		}
 
 		protected virtual bool OnExisting(DataExistContextBase context)
 		{
 			var e = this.Existing;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataExistingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataExistingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Exists(), context);
 		}
 
 		protected virtual void OnAggregated(DataAggregateContextBase context)
 		{
 			this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Aggregate(context.Aggregate.Function), context);
 		}
 
 		protected virtual bool OnAggregating(DataAggregateContextBase context)
 		{
 			var e = this.Aggregating;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataAggregatingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataAggregatingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Aggregate(context.Aggregate.Function), context);
 		}
 
 		protected virtual void OnIncremented(DataIncrementContextBase context)
 		{
 			this.Incremented?.Invoke(this, new DataIncrementedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Increment(), context);
 		}
 
 		protected virtual bool OnIncrementing(DataIncrementContextBase context)
 		{
 			var e = this.Incrementing;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataIncrementingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataIncrementingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Increment(), context);
 		}
 
 		protected virtual void OnDeleted(DataDeleteContextBase context)
 		{
 			this.Deleted?.Invoke(this, new DataDeletedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Delete(), context);
 		}
 
 		protected virtual bool OnDeleting(DataDeleteContextBase context)
 		{
 			var e = this.Deleting;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataDeletingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataDeletingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Delete(), context);
 		}
 
 		protected virtual void OnInserted(DataInsertContextBase context)
 		{
 			this.Inserted?.Invoke(this, new DataInsertedEventArgs(context));
+			this.OnFiltered(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context);
 		}
 
 		protected virtual bool OnInserting(DataInsertContextBase context)
 		{
 			var e = this.Inserting;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataInsertingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataInsertingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context);
 		}
 
 		protected virtual void OnUpserted(DataUpsertContextBase context)
 		{
 			this.Upserted?.Invoke(this, new DataUpsertedEventArgs(context));
+			this.OnFiltered(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context);
 		}
 
 		protected virtual bool OnUpserting(DataUpsertContextBase context)
 		{
 			var e = this.Upserting;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataUpsertingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataUpsertingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context);
 		}
 
 		protected virtual void OnUpdated(DataUpdateContextBase context)
 		{
 			this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
+			this.OnFiltered(context.IsMultiple ? DataServiceMethod.UpdateMany() : DataServiceMethod.Update(), context);
 		}
 
 		protected virtual bool OnUpdating(DataUpdateContextBase context)
 		{
 			var e = this.Updating;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataUpdatingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataUpdatingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(context.IsMultiple ? DataServiceMethod.UpdateMany() : DataServiceMethod.Update(), context);
 		}
 
 		protected virtual void OnSelected(DataSelectContextBase context)
 		{
 			this.Selected?.Invoke(this, new DataSelectedEventArgs(context));
+			this.OnFiltered(DataServiceMethod.Select(), context);
 		}
 
 		protected virtual bool OnSelecting(DataSelectContextBase context)
 		{
 			var e = this.Selecting;
 
-			if(e == null)
-				return false;
+			if(e != null)
+			{
+				var args = new DataSelectingEventArgs(context);
+				e.Invoke(this, args);
 
-			var args = new DataSelectingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
+				if(args.Cancel)
+					return true;
+			}
+
+			return this.OnFiltering(DataServiceMethod.Select(), context);
 		}
 		#endregion
 
