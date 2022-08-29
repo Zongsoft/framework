@@ -35,10 +35,7 @@ namespace Zongsoft.Data
 	public class DataAccessFilterAttribute : Attribute
 	{
 		#region 构造函数
-		public DataAccessFilterAttribute(params string[] names)
-		{
-			this.Names = names;
-		}
+		public DataAccessFilterAttribute(params string[] names) => this.Names = names;
 		#endregion
 
 		#region 公共属性
