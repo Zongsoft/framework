@@ -38,13 +38,15 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private int _count;
+		private readonly IDataService<TModel> _service;
 		private readonly Dictionary<string, HashSet<IDataServiceFilter<TModel>>> _filters;
 		#endregion
 
 		#region 构造函数
-		public DataServiceFilterCollection()
+		public DataServiceFilterCollection(IDataService<TModel> service)
 		{
 			_count = 0;
+			_service = service ?? throw new ArgumentNullException(nameof(service));
 			_filters = new Dictionary<string, HashSet<IDataServiceFilter<TModel>>>();
 		}
 		#endregion
@@ -183,25 +185,38 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 内部方法
-		internal void OnFiltered(DataServiceContext<TModel> context)
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private DataServiceContext<TModel> CreateContext(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments) => new DataServiceContext<TModel>(_service, method, context, result, arguments);
+
+		internal void OnFiltered(DataServiceMethod method, IDataAccessContextBase accessContext, object result, params object[] arguments)
 		{
-			if(_filters.TryGetValue(context.Method.Name, out var filters) && filters != null && filters.Count > 0)
+			DataServiceContext<TModel> context = null;
+
+			if(_filters.TryGetValue(method.Name, out var filters) && filters != null && filters.Count > 0)
 			{
+				context ??= this.CreateContext(method, accessContext, result, arguments);
+
 				foreach(var filter in filters)
 					filter.OnFiltered(context);
 			}
 
 			if(_filters.TryGetValue(string.Empty, out filters) && filters != null && filters.Count > 0)
 			{
+				context ??= this.CreateContext(method, accessContext, result, arguments);
+
 				foreach(var filter in filters)
 					filter.OnFiltered(context);
 			}
 		}
 
-		internal bool OnFiltering(DataServiceContext<TModel> context)
+		internal bool OnFiltering(DataServiceMethod method, IDataAccessContextBase accessContext, params object[] arguments)
 		{
-			if(_filters.TryGetValue(context.Method.Name, out var filters) && filters != null && filters.Count > 0)
+			DataServiceContext<TModel> context = null;
+
+			if(_filters.TryGetValue(method.Name, out var filters) && filters != null && filters.Count > 0)
 			{
+				context ??= this.CreateContext(method, accessContext, null, arguments);
+
 				foreach(var filter in filters)
 				{
 					if(filter.OnFiltering(context))
@@ -211,6 +226,8 @@ namespace Zongsoft.Data
 
 			if(_filters.TryGetValue(string.Empty, out filters) && filters != null && filters.Count > 0)
 			{
+				context ??= this.CreateContext(method, accessContext, null, arguments);
+
 				foreach(var filter in filters)
 				{
 					if(filter.OnFiltering(context))

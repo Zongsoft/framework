@@ -77,7 +77,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = new DataServiceFilterCollection<TModel>();
+			_filters = new DataServiceFilterCollection<TModel>(this);
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -100,7 +100,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -128,7 +128,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -155,7 +155,7 @@ namespace Zongsoft.Data
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -178,7 +178,7 @@ namespace Zongsoft.Data
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -200,7 +200,7 @@ namespace Zongsoft.Data
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -227,7 +227,7 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -253,7 +253,7 @@ namespace Zongsoft.Data
 			_name = name.Trim();
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
-			_filters = _filters = new DataServiceFilterCollection<TModel>();
+			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
 
 			//创建数据搜索器
@@ -2020,13 +2020,13 @@ namespace Zongsoft.Data
 		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFiltered(method, context, null, arguments);
 		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments)
 		{
-			_filters.OnFiltered(new DataServiceContext<TModel>(this, method, context, result, arguments));
+			_filters.OnFiltered(method, context, result, arguments);
 		}
 
 		protected bool OnFiltering(DataServiceMethod method, params object[] arguments) => this.OnFiltering(method, null, arguments);
 		protected bool OnFiltering(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments)
 		{
-			return _filters.OnFiltering(new DataServiceContext<TModel>(this, method, context, null, arguments));
+			return _filters.OnFiltering(method, context, null, arguments);
 		}
 		#endregion
 
