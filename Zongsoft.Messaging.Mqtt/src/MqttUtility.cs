@@ -33,13 +33,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using MQTTnet;
-using MQTTnet.Protocol;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
-using MQTTnet.Client.Publishing;
-using MQTTnet.Client.Connecting;
-using MQTTnet.Client.Disconnecting;
+using MQTTnet.Protocol;
 using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
@@ -54,7 +49,7 @@ namespace Zongsoft.Messaging.Mqtt
 			_ => MqttQualityOfServiceLevel.AtMostOnce,
 		};
 
-		public static IMqttClientOptions GetOptions(Zongsoft.Configuration.IConnectionSetting setting = null)
+		public static MqttClientOptions GetOptions(Zongsoft.Configuration.IConnectionSetting setting = null)
 		{
 			if(setting == null)
 				throw new ArgumentNullException(nameof(setting));

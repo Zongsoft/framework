@@ -39,13 +39,9 @@ using Zongsoft.Configuration;
 
 using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
-using MQTTnet.Client.Publishing;
-using MQTTnet.Client.Connecting;
-using MQTTnet.Client.Disconnecting;
-using MQTTnet.Extensions.ManagedClient;
+using MQTTnet.Packets;
 using MQTTnet.Protocol;
+using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
@@ -72,7 +68,8 @@ namespace Zongsoft.Messaging.Mqtt
 			_client = Factory.CreateManagedMqttClient();
 			_subscribers = new Dictionary<string, MqttSubscriber>();
 
-			_client.UseApplicationMessageReceivedHandler(OnHandleAsync);
+			_client.ApplicationMessageReceivedAsync += OnHandleAsync;
+			//_client.UseApplicationMessageReceivedHandler(OnHandleAsync);
 		}
 		#endregion
 
@@ -91,10 +88,12 @@ namespace Zongsoft.Messaging.Mqtt
 				throw new ArgumentException($"The tags is not supported.");
 			var qos = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS();
 
-			await _client.SubscribeAsync(new MqttTopicFilter()
-			{
-				Topic = topic,
-				QualityOfServiceLevel = qos,
+			await _client.SubscribeAsync(new[]{
+				new MqttTopicFilter()
+				{
+					Topic = topic,
+					QualityOfServiceLevel = qos,
+				}
 			});
 
 			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
@@ -131,13 +130,13 @@ namespace Zongsoft.Messaging.Mqtt
 			{
 				Topic = topic,
 				Payload = data.ToArray(),
-				QualityOfServiceLevel = options == null ? MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
+				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
 			var result = _client.EnsureStart(this.ConnectionSetting)
 				.ContinueWith
 				(
-					(task, arg) => _client.PublishAsync((MqttApplicationMessage)arg),
+					(task, arg) => _client.InternalClient.PublishAsync((MqttApplicationMessage)arg),
 					message
 				).GetAwaiter().GetResult().Result;
 
@@ -155,11 +154,11 @@ namespace Zongsoft.Messaging.Mqtt
 			{
 				Topic = topic,
 				Payload = data,
-				QualityOfServiceLevel = options == null ? MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
+				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
 			await _client.EnsureStart(this.ConnectionSetting);
-			var result = await _client.PublishAsync(message);
+			var result = await _client.InternalClient.PublishAsync(message, cancellation);
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 		#endregion
@@ -183,6 +182,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 处置方法
 		public async ValueTask DisposeAsync()
 		{
+			_client.ApplicationMessageReceivedAsync -= OnHandleAsync;
 			await _client.StopAsync();
 		}
 		#endregion
