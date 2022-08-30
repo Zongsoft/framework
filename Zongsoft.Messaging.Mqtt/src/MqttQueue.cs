@@ -111,6 +111,9 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 处理方法
 		private async Task OnHandleAsync(MqttApplicationMessageReceivedEventArgs args)
 		{
+			//关闭自动应答
+			args.AutoAcknowledge = false;
+
 			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
 			{
 				Identity = args.ClientId
