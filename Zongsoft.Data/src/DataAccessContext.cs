@@ -69,14 +69,8 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -94,14 +88,8 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -119,14 +107,8 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -144,14 +126,8 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -186,19 +162,9 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
-		public new Schema Schema
-		{
-			get => (Schema)base.Schema;
-		}
-
+		public new Schema Schema => (Schema)base.Schema;
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -216,19 +182,9 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
-		public new Schema Schema
-		{
-			get => (Schema)base.Schema;
-		}
-
+		public new Schema Schema => (Schema)base.Schema;
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -246,19 +202,9 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
-		public new Schema Schema
-		{
-			get => (Schema)base.Schema;
-		}
-
+		public new Schema Schema => (Schema)base.Schema;
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -276,19 +222,9 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
-		public new Schema Schema
-		{
-			get => (Schema)base.Schema;
-		}
-
+		public new Schema Schema => (Schema)base.Schema;
 		public DataSession Session { get; }
 		#endregion
 	}
@@ -306,19 +242,9 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public Common.Expressions.Aliaser Aliaser { get; }
-
-		public IDataSource Source
-		{
-			get => this.Session.Source;
-		}
-
+		public IDataSource Source => this.Session.Source;
 		public IDataProvider Provider { get; }
-
-		public new Schema Schema
-		{
-			get => (Schema)base.Schema;
-		}
-
+		public new Schema Schema => (Schema)base.Schema;
 		public DataSession Session { get; }
 		#endregion
 	}
