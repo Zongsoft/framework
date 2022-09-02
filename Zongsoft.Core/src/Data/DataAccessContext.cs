@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public class DataExistContextBase : DataAccessContextBase<IDataExistsOptions>
+	public abstract class DataExistContextBase : DataAccessContextBase<IDataExistsOptions>
 	{
 		#region 构造函数
 		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? new DataExistsOptions())
@@ -45,28 +45,20 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取或设置判断操作的条件。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取或设置判断操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>
-		/// 获取判断操作的结果，即指定条件的数据是否存在。
-		/// </summary>
+		/// <summary>获取判断操作的结果，即指定条件的数据是否存在。</summary>
 		public bool Result { get; set; }
 
-		/// <summary>
-		/// 获取当前判断操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前判断操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -81,7 +73,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataExecuteContextBase : DataAccessContextBase<IDataExecuteOptions>
+	public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecuteOptions>
 	{
 		#region 成员字段
 		private Type _resultType;
@@ -99,43 +91,34 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的命令元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的命令元数据。</summary>
 		public Metadata.IDataCommand Command { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否为返回单值。
-		/// </summary>
+		/// <summary>获取数据访问命令支持的驱动。</summary>
+		public override string Driver => this.Command.Driver;
+
+		/// <summary>获取一个值，指示是否为返回单值。</summary>
 		public bool IsScalar { get; }
 
-		/// <summary>
-		/// 获取或设置执行结果的类型。
-		/// </summary>
+		/// <summary>获取或设置执行结果的类型。</summary>
 		public Type ResultType
 		{
 			get => _resultType;
 			set => _resultType = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取或设置执行操作的结果。
-		/// </summary>
+		/// <summary>获取或设置执行操作的结果。</summary>
 		public object Result { get; set; }
 
-		/// <summary>
-		/// 获取执行操作的输入参数。
-		/// </summary>
+		/// <summary>获取执行操作的输入参数。</summary>
 		public IDictionary<string, object> InParameters { get; }
 
-		/// <summary>
-		/// 获取或设置执行操作的输出参数。
-		/// </summary>
+		/// <summary>获取或设置执行操作的输出参数。</summary>
 		public IDictionary<string, object> OutParameters { get; set; }
 		#endregion
 	}
 
-	public class DataAggregateContextBase : DataAccessContextBase<IDataAggregateOptions>
+	public abstract class DataAggregateContextBase : DataAccessContextBase<IDataAggregateOptions>
 	{
 		#region 构造函数
 		protected DataAggregateContextBase(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, DataAccessMethod.Aggregate, options ?? new DataAggregateOptions())
@@ -147,33 +130,23 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取或设置聚合操作的结果。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取或设置聚合操作的结果。</summary>
 		public object Result { get; set; }
 
-		/// <summary>
-		/// 获取或设置聚合操作的条件。
-		/// </summary>
+		/// <summary>获取或设置聚合操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>
-		/// 获取聚合操作的聚合元素。
-		/// </summary>
+		/// <summary>获取聚合操作的聚合元素。</summary>
 		public DataAggregate Aggregate { get; }
 
-		/// <summary>
-		/// 获取当前聚合操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前聚合操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -193,7 +166,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataIncrementContextBase : DataAccessContextBase<IDataIncrementOptions>, IDataMutateContextBase
+	public abstract class DataIncrementContextBase : DataAccessContextBase<IDataIncrementOptions>, IDataMutateContextBase
 	{
 		#region 成员字段
 		private string _member;
@@ -215,10 +188,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
+
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
 
 		public int Count { get; set; }
 
@@ -238,18 +212,11 @@ namespace Zongsoft.Data
 
 		public long Result { get; set; }
 
-		/// <summary>
-		/// 获取写入操作的选项对象。
-		/// </summary>
+		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>
-		/// 获取当前递增(减)操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前递增(减)操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -281,7 +248,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataImportContextBase : DataAccessContextBase<IDataImportOptions>
+	public abstract class DataImportContextBase : DataAccessContextBase<IDataImportOptions>
 	{
 		#region 构造函数
 		protected DataImportContextBase(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? new DataImportOptions())
@@ -295,6 +262,9 @@ namespace Zongsoft.Data
 		#region 公共属性
 		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
+
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
 
 		/// <summary>获取或设置导入的记录数。</summary>
 		public int Count { get; set; }
@@ -321,7 +291,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataSelectContextBase : DataAccessContextBase<IDataSelectOptions>
+	public abstract class DataSelectContextBase : DataAccessContextBase<IDataSelectOptions>
 	{
 		#region 委托定义
 		public delegate bool FilterDelegate(DataSelectContextBase context, ref object data);
@@ -345,49 +315,34 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取查询要返回的结果集元素类型。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取查询要返回的结果集元素类型。</summary>
 		public Type ModelType { get; }
 
-		/// <summary>
-		/// 获取或设置查询操作的条件。
-		/// </summary>
+		/// <summary>获取或设置查询操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询操作的结果数据模式（即查询结果的形状结构）。
-		/// </summary>
+		/// <summary>获取或设置查询操作的结果数据模式（即查询结果的形状结构）。</summary>
 		public ISchema Schema { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询操作的分组。
-		/// </summary>
+		/// <summary>获取或设置查询操作的分组。</summary>
 		public Grouping Grouping { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询操作的分页设置。
-		/// </summary>
+		/// <summary>获取或设置查询操作的分页设置。</summary>
 		public Paging Paging { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询操作的排序设置。
-		/// </summary>
+		/// <summary>获取或设置查询操作的排序设置。</summary>
 		public Sorting[] Sortings { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询结果的过滤器。
-		/// </summary>
+		/// <summary>获取或设置查询结果的过滤器。</summary>
 		public FilterDelegate ResultFilter { get; set; }
 
-		/// <summary>
-		/// 获取或设置查询操作的结果集。
-		/// </summary>
+		/// <summary>获取或设置查询操作的结果集。</summary>
 		public IEnumerable Result
 		{
 			get
@@ -405,13 +360,8 @@ namespace Zongsoft.Data
 			set => _result = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取当前查询操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前查询操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -426,7 +376,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataDeleteContextBase : DataAccessContextBase<IDataDeleteOptions>, IDataMutateContextBase
+	public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteOptions>, IDataMutateContextBase
 	{
 		#region 构造函数
 		protected DataDeleteContextBase(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, DataAccessMethod.Delete, options ?? new DataDeleteOptions())
@@ -438,38 +388,26 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取或设置删除操作的受影响记录数。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取或设置删除操作的受影响记录数。</summary>
 		public int Count { get; set; }
 
-		/// <summary>
-		/// 获取或设置删除操作的条件。
-		/// </summary>
+		/// <summary>获取或设置删除操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>
-		/// 获取或设置删除操作的数据模式（即删除数据的形状结构）。
-		/// </summary>
+		/// <summary>获取或设置删除操作的数据模式（即删除数据的形状结构）。</summary>
 		public ISchema Schema { get; set; }
 
-		/// <summary>
-		/// 获取写入操作的选项对象。
-		/// </summary>
+		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>
-		/// 获取当前删除操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前删除操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -497,7 +435,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataInsertContextBase : DataAccessContextBase<IDataInsertOptions>, IDataMutateContextBase
+	public abstract class DataInsertContextBase : DataAccessContextBase<IDataInsertOptions>, IDataMutateContextBase
 	{
 		#region 构造函数
 		protected DataInsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Insert, options ?? new DataInsertOptions())
@@ -510,39 +448,28 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否为批量新增操作。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取一个值，指示是否为批量新增操作。</summary>
 		public bool IsMultiple { get; }
 
-		/// <summary>
-		/// 获取或设置插入操作的受影响记录数。
-		/// </summary>
+		/// <summary>获取或设置插入操作的受影响记录数。</summary>
 		public int Count { get; set; }
 
-		/// <summary>
-		/// 获取或设置插入操作的数据。
-		/// </summary>
+		/// <summary>获取或设置插入操作的数据。</summary>
 		public object Data { get; set; }
 
-		/// <summary>
-		/// 获取或设置插入操作的数据模式（即插入的数据形状结构）。
-		/// </summary>
+		/// <summary>获取或设置插入操作的数据模式（即插入的数据形状结构）。</summary>
 		public ISchema Schema { get; set; }
 
-		/// <summary>
-		/// 获取写入操作的选项对象。
-		/// </summary>
+		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>
-		/// 获取插入数据的元素类型。
-		/// </summary>
+		/// <summary>获取插入数据的元素类型。</summary>
 		public virtual Type ModelType
 		{
 			get
@@ -559,17 +486,12 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>
-		/// 获取当前新增操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前新增操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 	}
 
-	public class DataUpdateContextBase : DataAccessContextBase<IDataUpdateOptions>, IDataMutateContextBase
+	public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateOptions>, IDataMutateContextBase
 	{
 		#region 构造函数
 		protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? new DataUpdateOptions())
@@ -583,44 +505,31 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否为批量更新操作。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取一个值，指示是否为批量更新操作。</summary>
 		public bool IsMultiple { get; }
 
-		/// <summary>
-		/// 获取或设置更新操作的受影响记录数。
-		/// </summary>
+		/// <summary>获取或设置更新操作的受影响记录数。</summary>
 		public int Count { get; set; }
 
-		/// <summary>
-		/// 获取或设置更新操作的数据。
-		/// </summary>
+		/// <summary>获取或设置更新操作的数据。</summary>
 		public object Data { get; set; }
 
-		/// <summary>
-		/// 获取或设置更新操作的条件。
-		/// </summary>
+		/// <summary>获取或设置更新操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>
-		/// 获取或设置更新操作的数据模式（即更新的数据形状结构）。
-		/// </summary>
+		/// <summary>获取或设置更新操作的数据模式（即更新的数据形状结构）。</summary>
 		public ISchema Schema { get; set; }
 
-		/// <summary>
-		/// 获取写入操作的选项对象。
-		/// </summary>
+		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>
-		/// 获取更新数据的元素类型。
-		/// </summary>
+		/// <summary>获取更新数据的元素类型。</summary>
 		public virtual Type ModelType
 		{
 			get
@@ -637,13 +546,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>
-		/// 获取当前更新操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前更新操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 
 		#region 公共方法
@@ -658,7 +562,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataUpsertContextBase : DataAccessContextBase<IDataUpsertOptions>, IDataMutateContextBase
+	public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertOptions>, IDataMutateContextBase
 	{
 		#region 构造函数
 		protected DataUpsertContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, DataAccessMethod.Upsert, options ?? new DataUpsertOptions())
@@ -671,39 +575,28 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问对应的实体元数据。
-		/// </summary>
+		/// <summary>获取数据访问对应的实体元数据。</summary>
 		public Metadata.IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取一个值，指示是否为批量操作。
-		/// </summary>
+		/// <summary>获取数据访问实体支持的驱动。</summary>
+		public override string Driver => this.Entity.Driver;
+
+		/// <summary>获取一个值，指示是否为批量操作。</summary>
 		public bool IsMultiple { get; }
 
-		/// <summary>
-		/// 获取或设置操作的受影响记录数。
-		/// </summary>
+		/// <summary>获取或设置操作的受影响记录数。</summary>
 		public int Count { get; set; }
 
-		/// <summary>
-		/// 获取或设置操作的数据。
-		/// </summary>
+		/// <summary>获取或设置操作的数据。</summary>
 		public object Data { get; set; }
 
-		/// <summary>
-		/// 获取或设置操作的数据模式（即更新或新增的数据形状结构）。
-		/// </summary>
+		/// <summary>获取或设置操作的数据模式（即更新或新增的数据形状结构）。</summary>
 		public ISchema Schema { get; set; }
 
-		/// <summary>
-		/// 获取写入操作的选项对象。
-		/// </summary>
+		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>
-		/// 获取操作数据的元素类型。
-		/// </summary>
+		/// <summary>获取操作数据的元素类型。</summary>
 		public virtual Type ModelType
 		{
 			get
@@ -720,13 +613,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>
-		/// 获取当前写入操作的验证器。
-		/// </summary>
-		public virtual IDataValidator Validator
-		{
-			get => this.DataAccess.Validator;
-		}
+		/// <summary>获取当前写入操作的验证器。</summary>
+		public virtual IDataValidator Validator => this.DataAccess.Validator;
 		#endregion
 	}
 

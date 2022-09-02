@@ -53,13 +53,14 @@ namespace Zongsoft.Data.Metadata
 		/// <summary>获取数据实体继承的父实体名。</summary>
 		string BaseName { get; }
 
+		/// <summary>获取数据实体支持的驱动。</summary>
+		string Driver { get; }
+
 		/// <summary>获取数据实体的主键属性数组。</summary>
 		IDataEntitySimplexProperty[] Key { get; }
 
 		/// <summary>获取一个值，指示是否为不可变实体，默认为否(False)。</summary>
-		/// <remarks>
-		/// 	<para>不可变实体只支持新增和删除操作。</para>
-		/// </remarks>
+		/// <remarks>不可变实体只支持新增和删除操作。</remarks>
 		bool Immutable { get; }
 
 		/// <summary>获取一个值，指示该实体定义中是否含有序号属性。</summary>

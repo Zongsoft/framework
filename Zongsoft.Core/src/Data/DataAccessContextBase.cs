@@ -53,6 +53,9 @@ namespace Zongsoft.Data
 		/// <summary>获取数据访问的名称。</summary>
 		public string Name { get; }
 
+		/// <summary>获取数据驱动的名称。</summary>
+		public abstract string Driver { get; }
+
 		/// <summary>获取数据访问的方法。</summary>
 		public DataAccessMethod Method { get; }
 
