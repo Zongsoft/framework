@@ -42,10 +42,15 @@ namespace Zongsoft.Data.ClickHouse
 		#endregion
 
 		#region 公共属性
-		public override IExpressionDialect Dialect => MySqlExpressionDialect.Instance;
+		public override IExpressionDialect Dialect => ClickHouseExpressionDialect.Instance;
 		#endregion
 
 		#region 重写方法
+		protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
+		{
+			context.Write(parameter.Name);
+		}
+
 		protected override void VisitExists(ExpressionVisitorContext context, IExpression expression)
 		{
 			//查找当前表达式所属的语句
@@ -76,7 +81,7 @@ namespace Zongsoft.Data.ClickHouse
 			switch(statement)
 			{
 				case TableDefinition table:
-					MySqlTableDefinitionVisitor.Instance.Visit(context, table);
+					ClickHouseTableDefinitionVisitor.Instance.Visit(context, table);
 					break;
 				case SelectStatement select:
 					ClickHouseSelectStatementVisitor.Instance.Visit(context, select);
@@ -125,14 +130,14 @@ namespace Zongsoft.Data.ClickHouse
 		#endregion
 
 		#region 嵌套子类
-		private class MySqlExpressionDialect : IExpressionDialect
+		private class ClickHouseExpressionDialect : IExpressionDialect
 		{
 			#region 单例字段
-			public static readonly MySqlExpressionDialect Instance = new MySqlExpressionDialect();
+			public static readonly ClickHouseExpressionDialect Instance = new ClickHouseExpressionDialect();
 			#endregion
 
 			#region 私有构造
-			private MySqlExpressionDialect() { }
+			private ClickHouseExpressionDialect() { }
 			#endregion
 
 			#region 公共属性
@@ -232,14 +237,14 @@ namespace Zongsoft.Data.ClickHouse
 			#endregion
 		}
 
-		private class MySqlTableDefinitionVisitor : TableDefinitionVisitor
+		private class ClickHouseTableDefinitionVisitor : TableDefinitionVisitor
 		{
 			#region 单例字段
-			public static readonly MySqlTableDefinitionVisitor Instance = new MySqlTableDefinitionVisitor();
+			public static readonly ClickHouseTableDefinitionVisitor Instance = new ClickHouseTableDefinitionVisitor();
 			#endregion
 
 			#region 私有构造
-			private MySqlTableDefinitionVisitor() { }
+			private ClickHouseTableDefinitionVisitor() { }
 			#endregion
 		}
 		#endregion

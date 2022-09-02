@@ -33,7 +33,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using ClickHouse.Ado;
+using ClickHouse.Client;
+using ClickHouse.Client.ADO;
+using ClickHouse.Client.Copy;
 
 using Zongsoft.Reflection;
 using Zongsoft.Data.Common;
@@ -50,87 +52,64 @@ namespace Zongsoft.Data.ClickHouse
 		#region 公共方法
 		public override void Import(DataImportContext context)
 		{
-			var command = GetCommand(context);
-			if(command == null || command.Connection == null)
+			var bulker = GetBulker(context);
+			if(bulker == null)
 				return;
 
-			try
-			{
-				var count = command.ExecuteNonQuery();
-			}
-			finally
-			{
-				var connection = command.Connection;
+			var records = GetRecords(context, this.Members);
+			if(records == null)
+				return;
 
-				if(connection != null)
-					connection.Dispose();
-			}
+			bulker.WriteToServerAsync(records, context.Members).ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 
-		public override ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
 		{
-			var command = GetCommand(context);
-			if(command == null || command.Connection == null)
-				return ValueTask.CompletedTask;
+			var bulker = GetBulker(context);
+			if(bulker == null)
+				return;
 
-			try
-			{
-				var count = command.ExecuteNonQuery();
-				return ValueTask.CompletedTask;
-			}
-			finally
-			{
-				var connection = command.Connection;
+			var records = GetRecords(context, this.Members);
+			if(records == null)
+				return;
 
-				if(connection != null)
-					connection.Dispose();
-			}
+			await bulker.WriteToServerAsync(records, context.Members, cancellation);
 		}
 		#endregion
 
 		#region 私有方法
-		private IDbCommand GetCommand(DataImportContext context)
+		private static ClickHouseConnection GetConnection(DataImportContext context) => (ClickHouseConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
+		private static ClickHouseBulkCopy GetBulker(DataImportContext context)
 		{
-			if(this.Members.Length == 0)
+			var connection = GetConnection(context);
+			var bulker = new ClickHouseBulkCopy(connection);
+			bulker.DestinationTableName = context.Entity.GetTableName();
+			return bulker;
+		}
+
+		private static IEnumerable<object[]> GetRecords(DataImportContext context, Member[] members)
+		{
+			if(members == null || members.Length == 0)
 				return null;
-
-			//构建批量导入的命令脚本
-			var text = new System.Text.StringBuilder($"INSERT INTO {context.Entity.GetTableName()} (", 256);
-			for(int i = 0; i < this.Members.Length; i++)
-			{
-				if(i > 0)
-					text.Append(',');
-
-				text.Append(this.Members[i].Property.GetFieldName(out _));
-			}
-			text.AppendLine(") VALUES (@bulk);");
 
 			//构建导入的数据记录集
 			var records = new List<object[]>();
+
 			foreach(var item in context.Data)
 			{
 				var target = item;
-				var record = new object[this.Members.Length];
+				var record = new object[members.Length];
 
-				for(int i = 0; i < this.Members.Length; i++)
+				for(int i = 0; i < members.Length; i++)
 				{
-					record[i] = this.Members[i].GetValue(ref target);
+					record[i] = members[i].GetValue(ref target);
 				}
 
 				records.Add(record);
 			}
 
-			//如果导入的数据记录为空则返回失败
-			if(records == null || records.Count == 0)
-				return null;
-
-			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-			var command = connection.CreateCommand();
-			command.CommandText = text.ToString();
-			command.CommandType = CommandType.Text;
-			command.AddParameter("bulk", DbType.Object, records);
-
-			return command;
+			return records;
 		}
 		#endregion
 	}
