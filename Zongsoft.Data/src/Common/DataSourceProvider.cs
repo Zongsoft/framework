@@ -64,7 +64,7 @@ namespace Zongsoft.Data.Common
 			foreach(var connectionSetting in connectionSettings)
 			{
 				if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-				   connectionSetting.Name.StartsWith(name + ":", StringComparison.OrdinalIgnoreCase))
+				   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
 					yield return new DataSource(connectionSetting);
 			}
 		}

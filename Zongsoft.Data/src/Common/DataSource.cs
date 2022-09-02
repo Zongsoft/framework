@@ -32,9 +32,13 @@ using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data.Common
 {
-	public class DataSource : IDataSource
+	public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataSource>
 	{
-		#region 常量定义
+		#region 公共常量
+		public const char SEPARATOR = '#';
+		#endregion
+
+		#region 私有常量
 		private static readonly Regex MARS_FEATURE = new Regex(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
@@ -137,6 +141,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 重写方法
+		public bool Equals(IDataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
+		public bool Equals(DataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
+		public override bool Equals(object obj) => obj is IDataSource other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant(), this.Mode);
+
 		public override string ToString() => string.IsNullOrEmpty(_driverName) ?
 			$"{_name} <{_connectionString}>" :
 			$"[{_driverName}]{_name} <{_connectionString}>";

@@ -35,7 +35,7 @@ namespace Zongsoft.Data.Common
 	/// <summary>
 	/// 表示数据源的接口。
 	/// </summary>
-	public interface IDataSource
+	public interface IDataSource : IEquatable<IDataSource>
 	{
 		/// <summary>获取数据源的名称。</summary>
 		string Name { get; }

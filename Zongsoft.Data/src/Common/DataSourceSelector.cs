@@ -36,10 +36,8 @@ namespace Zongsoft.Data.Common
 	public class DataSourceSelector : IDataSourceSelector
 	{
 		#region 成员字段
-		private readonly int _readerTotal;
-		private readonly int _writerTotal;
-		private readonly SourceToken[] _readers;
-		private readonly SourceToken[] _writers;
+		private readonly string _defaultDriver;
+		private readonly Dictionary<string, DataSourceWeighter> _weighters;
 		#endregion
 
 		#region 私有构造
@@ -48,99 +46,65 @@ namespace Zongsoft.Data.Common
 			if(sources == null)
 				throw new ArgumentNullException(nameof(sources));
 
-			var readers = new List<SourceToken>();
-			var writers = new List<SourceToken>();
-
 			foreach(var source in sources)
 			{
-				var weight = GetWeight(source);
+				if(string.IsNullOrEmpty(_defaultDriver))
+					_defaultDriver = source.Driver.Name;
 
-				if((source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly)
+				if(!source.Name.Contains(DataSource.SEPARATOR))
 				{
-					_readerTotal += weight;
-					readers.Add(new SourceToken(source, weight, _readerTotal));
-				}
-
-				if((source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly)
-				{
-					_writerTotal += weight;
-					writers.Add(new SourceToken(source, weight, _writerTotal));
+					_defaultDriver = source.Driver.Name;
+					break;
 				}
 			}
 
-			_readers = readers.ToArray();
-			_writers = writers.ToArray();
+			_weighters = new Dictionary<string, DataSourceWeighter>(StringComparer.OrdinalIgnoreCase);
+
+			foreach(var group in sources.GroupBy(source => source.Driver.Name, StringComparer.OrdinalIgnoreCase))
+				_weighters[group.Key] = new DataSourceWeighter(group);
 		}
 		#endregion
 
 		#region 公共方法
 		public IDataSource GetSource(IDataAccessContextBase context)
 		{
-			var sources = this.GetSources(context, out var total);
+			var driver = string.IsNullOrEmpty(context.Driver) ? _defaultDriver : context.Driver;
 
-			if(sources.Length == 0)
-				return null;
-			if(sources.Length == 1)
-				return sources[0].Source;
+			if(driver != null && _weighters.TryGetValue(driver, out var weighter))
+				return weighter.Get(context);
 
-			var weight = Math.Abs(Zongsoft.Common.Randomizer.GenerateInt32()) % total;
-			var position = Array.BinarySearch(sources, weight);
-
-			return position >= 0 ?
-				sources[position].Source :
-				sources[(-position) - 1].Source;
+			return null;
 		}
 		#endregion
 
 		#region 私有方法
-		private SourceToken[] GetSources(IDataAccessContextBase context, out int total)
-		{
-			switch(context.Method)
-			{
-				case DataAccessMethod.Select:
-				case DataAccessMethod.Exists:
-				case DataAccessMethod.Aggregate:
-					total = _readerTotal;
-					return _readers;
-				case DataAccessMethod.Execute:
-					if(((DataExecuteContextBase)context).Command.Mutability == Metadata.CommandMutability.None)
-					{
-						total = _readerTotal;
-						return _readers;
-					}
-					else
-					{
-						total = _writerTotal;
-						return _writers;
-					}
-				default:
-					total = _writerTotal;
-					return _writers;
-			}
-		}
-
 		private static int GetWeight(IDataSource source, int defaultValue = 100)
 		{
 			return source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
 		}
 		#endregion
 
-		#region 嵌套结构
-		private readonly struct SourceToken : IComparable<SourceToken>, IComparable<int>
+		#region 加权计重
+		private class DataSourceWeighter
 		{
-			public SourceToken(IDataSource source, int weight, int boundary)
+			private readonly Components.Weighter<IDataSource> _readables;
+			private readonly Components.Weighter<IDataSource> _writables;
+
+			public DataSourceWeighter(IEnumerable<IDataSource> sources)
 			{
-				this.Source = source;
-				this.Weight = weight;
-				this.Boundary = boundary;
+				_readables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly).Select(source => new Components.Weighter<IDataSource>.Entry(source, GetWeight(source))));
+				_writables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly).Select(source => new Components.Weighter<IDataSource>.Entry(source, GetWeight(source))));
 			}
 
-			public readonly IDataSource Source;
-			public readonly int Weight;
-			public readonly int Boundary;
-
-			public int CompareTo(int other) => this.Boundary.CompareTo(other);
-			public int CompareTo(SourceToken other) => this.Boundary.CompareTo(other.Boundary);
+			public IDataSource Get(IDataAccessContextBase context)
+			{
+				return context.Method switch
+				{
+					DataAccessMethod.Select or DataAccessMethod.Exists or DataAccessMethod.Aggregate => _readables.Get(),
+					DataAccessMethod.Execute => ((DataExecuteContextBase)context).Command.Mutability == Metadata.CommandMutability.None ? _readables.Get() : _writables.Get(),
+					_ => _writables.Get(),
+				};
+			}
 		}
 		#endregion
 	}
