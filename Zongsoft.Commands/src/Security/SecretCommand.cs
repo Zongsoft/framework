@@ -63,8 +63,8 @@ namespace Zongsoft.Security.Commands
 				case ISecretor secretor:
 					this.Secretor = secretor;
 					break;
-				case ICache cache:
-					this.Secretor = new Zongsoft.Security.Secretor(cache, ApplicationContext.Current.Services);
+				case IDistributedCache cache:
+					this.Secretor = new Secretor(cache, ApplicationContext.Current.Services);
 					break;
 			}
 

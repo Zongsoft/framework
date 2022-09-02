@@ -44,7 +44,7 @@ namespace Zongsoft.Security.Membership
 	{
 		#region 公共属性
 		[ServiceDependency]
-		public IServiceAccessor<ICache> Cache { get; set; }
+		public IServiceAccessor<IDistributedCache> Cache { get; set; }
 
 		[Options("Security/Membership/Authentication/Attempter")]
 		public Configuration.AttempterOptions Options { get; set; }

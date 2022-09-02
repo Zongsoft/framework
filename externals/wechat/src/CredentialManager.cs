@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Wechat
 		private static readonly HttpClient _http;
 		private static readonly ConcurrentDictionary<string, Token> _localCache;
 
-		private static ICache _cache;
+		private static IDistributedCache _cache;
 		private static IDistributedLockManager _locker;
 		#endregion
 
@@ -66,9 +66,9 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共属性
-		public static ICache Cache
+		public static IDistributedCache Cache
 		{
-			get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<ICache>>()?.GetService(GetCacheName());
+			get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedCache>>()?.GetService(GetCacheName());
 			set => _cache = value;
 		}
 
