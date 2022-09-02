@@ -63,13 +63,13 @@ namespace Zongsoft.Security
 			this.Transmitter = new DefaultTransmitter(this, serviceProvider);
 		}
 
-		public Secretor(ICache cache, IServiceProvider serviceProvider)
+		public Secretor(IDistributedCache cache, IServiceProvider serviceProvider)
 		{
 			if(cache == null)
 				throw new ArgumentNullException(nameof(cache));
 
 			//设置缓存容器
-			this.Cache = new ServiceAccessor<ICache>(cache);
+			this.Cache = new ServiceAccessor<IDistributedCache>(cache);
 
 			//设置属性的默认值
 			_expiry = TimeSpan.FromMinutes(DEFAULT_EXPIRY_MINUTES);
@@ -83,7 +83,7 @@ namespace Zongsoft.Security
 		#region 公共属性
 		/// <summary>获取秘密内容的缓存容器。</summary>
 		[ServiceDependency]
-		public IServiceAccessor<ICache> Cache { get; set; }
+		public IServiceAccessor<IDistributedCache> Cache { get; set; }
 
 		/// <summary>获取或设置秘密内容的默认过期时长（默认为30分钟），不能设置为零。</summary>
 		public TimeSpan Expiry

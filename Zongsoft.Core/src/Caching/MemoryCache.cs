@@ -93,6 +93,7 @@ namespace Zongsoft.Caching
 		#region 处置方法
 		public void Dispose()
 		{
+			//确保单例的共享内存缓存实例不能被释放
 			if(object.ReferenceEquals(this, Shared))
 				return;
 

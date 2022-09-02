@@ -35,9 +35,9 @@ using System.Threading.Tasks;
 namespace Zongsoft.Caching
 {
 	/// <summary>
-	/// 表示缓存容器的接口。
+	/// 表示分布式缓存容的接口。
 	/// </summary>
-	public interface ICache
+	public interface IDistributedCache
 	{
 		#region 事件定义
 		/// <summary>
@@ -50,10 +50,7 @@ namespace Zongsoft.Caching
 		/// <summary>
 		/// 获取当前缓存容器的名字。
 		/// </summary>
-		string Name
-		{
-			get;
-		}
+		string Name { get; }
 		#endregion
 
 		#region 常用方法
