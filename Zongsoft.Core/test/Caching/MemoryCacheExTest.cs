@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Zongsoft.Caching
 {
-	public class MemoryCacheTest
+	public class MemoryCacheExTest
 	{
 		private MemoryCacheEx _cache = new MemoryCacheEx();
 

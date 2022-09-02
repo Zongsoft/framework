@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Zongsoft.Caching
@@ -84,10 +83,62 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 设置方法
-		public void SetValue<TValue>(object key, TValue value) => _cache.Set<TValue>(key, value);
-		public void SetValue<TValue>(object key, TValue value, DateTime expires) => _cache.Set(key, value, expires);
-		public void SetValue<TValue>(object key, TValue value, TimeSpan expires) => _cache.Set(key, value, expires);
-		public void SetValue<TValue>(object key, TValue value, IChangeToken expiration) => _cache.Set(key, value, expiration);
+		public void SetValue<TValue>(object key, TValue value, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, Action<object, object, CacheChangedReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+		}
+
+		public void SetValue<TValue>(object key, TValue value, DateTime expiry, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiry, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTime expiry, Action<object, object, CacheChangedReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.AbsoluteExpiration = expiry;
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+		}
+
+		public void SetValue<TValue>(object key, TValue value, TimeSpan expiry, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiry, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, TimeSpan expiry, Action<object, object, CacheChangedReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.AbsoluteExpirationRelativeToNow = expiry;
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+		}
+		#endregion
+
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static CacheItemPriority GetPriority(CachePriority priority) => priority switch
+		{
+			CachePriority.Normal => CacheItemPriority.Normal,
+			CachePriority.Low => CacheItemPriority.Low,
+			CachePriority.High => CacheItemPriority.High,
+			CachePriority.NeverRemove => CacheItemPriority.NeverRemove,
+			_ => CacheItemPriority.Normal,
+		};
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static CacheChangedReason GetReason(EvictionReason reason) => reason switch
+		{
+			EvictionReason.Removed => CacheChangedReason.Removed,
+			EvictionReason.Expired => CacheChangedReason.Expired,
+			EvictionReason.Replaced => CacheChangedReason.Updated,
+			EvictionReason.TokenExpired => CacheChangedReason.Expired,
+			_ => CacheChangedReason.None,
+		};
 		#endregion
 
 		#region 处置方法
@@ -98,6 +149,7 @@ namespace Zongsoft.Caching
 				return;
 
 			_cache.Dispose();
+			GC.SuppressFinalize(this);
 		}
 		#endregion
 	}

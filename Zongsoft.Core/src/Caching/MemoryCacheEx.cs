@@ -36,6 +36,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Caching
 {
+	[Obsolete("Please use 'MemoryCache' class instead.")]
 	public class MemoryCacheEx
 	{
 		#region 事件声明
