@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 
 using Zongsoft.Caching;
 using Zongsoft.Services;
@@ -52,13 +51,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public CredentialProvider(IServiceProvider serviceProvider)
-		{
-			_memoryCache = new MemoryCache("Zongsoft.Security.Authenticator");
-
-			//挂载内存缓存容器的事件
-			_memoryCache.Changed += MemoryCache_Changed;
-		}
+		public CredentialProvider() => _memoryCache = new MemoryCache();
 		#endregion
 
 		#region 公共属性
@@ -66,7 +59,7 @@ namespace Zongsoft.Security.Membership
 		public Configuration.AuthenticationOptions Options { get; set; }
 
 		[ServiceDependency]
-		public IServiceAccessor<ICache> Cache { get; set; }
+		public IServiceAccessor<IDistributedCache> Cache { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -101,7 +94,11 @@ namespace Zongsoft.Security.Membership
 			cache.SetValue(this.GetCacheKeyOfUser(principal.Identity.GetIdentifier(), principal.Scenario), principal.CredentialId, principal.Expiration);
 
 			//将凭证对象保存到本地内存缓存中
-			_memoryCache.SetValue(principal.CredentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
+			_memoryCache.SetValue(
+				principal.CredentialId,
+				new CredentialToken(principal),
+				CachePriority.High,
+				TimeSpan.FromTicks(principal.Expiration.Ticks));
 
 			//激发“Registered”事件
 			this.OnRegistered(principal, false);
@@ -122,10 +119,12 @@ namespace Zongsoft.Security.Membership
 
 			//将当前用户及场景对应的凭证号记录删除
 			if(_memoryCache.TryGetValue<CredentialToken>(credentialId, out var token))
+			{
 				cache.Remove(this.GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier(), token.Principal.Scenario));
 
-			//从本地内存缓存中把指定编号的凭证对象删除
-			_memoryCache.Remove(credentialId);
+				//从本地内存缓存中把指定编号的凭证对象删除
+				_memoryCache.Remove(credentialId);
+			}
 
 			//激发“Unregistered”事件
 			this.OnUnregistered(credentialId, false);
@@ -156,7 +155,11 @@ namespace Zongsoft.Security.Membership
 			cache.SetValue(this.GetCacheKeyOfUser(principal.Identity.GetIdentifier(), principal.Scenario), principal.CredentialId, principal.Expiration);
 
 			//将新建的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(principal.CredentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
+			_memoryCache.SetValue(
+				principal.CredentialId,
+				new CredentialToken(principal),
+				CachePriority.High,
+				TimeSpan.FromTicks(principal.Expiration.Ticks));
 
 			//将原来的凭证从物理存储层中删除
 			cache.Remove(this.GetCacheKeyOfCredential(credentialId));
@@ -200,7 +203,11 @@ namespace Zongsoft.Security.Membership
 			cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), principal.Expiration);
 
 			//将获取到的凭证保存到本地内存缓存中
-			_memoryCache.SetValue(credentialId, new CredentialToken(principal), TimeSpan.FromSeconds(principal.Expiration.TotalSeconds * 0.6));
+			_memoryCache.SetValue(
+				credentialId,
+				new CredentialToken(principal),
+				CachePriority.High,
+				TimeSpan.FromTicks(principal.Expiration.Ticks));
 
 			return principal;
 		}
@@ -217,16 +224,6 @@ namespace Zongsoft.Security.Membership
 				return null;
 
 			return this.GetPrincipal(credentialId);
-		}
-		#endregion
-
-		#region 事件处理
-		private void MemoryCache_Changed(object sender, CacheChangedEventArgs e)
-		{
-			if(e.Reason != CacheChangedReason.Expired)
-				return;
-
-			this.Refresh(e.Key, e.OldValue as CredentialToken);
 		}
 		#endregion
 
@@ -303,20 +300,9 @@ namespace Zongsoft.Security.Membership
 			#endregion
 
 			#region 公共属性
-			public CredentialPrincipal Principal
-			{
-				get;
-			}
-
-			public DateTime IssuedTime
-			{
-				get => _issuedTime;
-			}
-
-			public DateTime ActiveTime
-			{
-				get => _activeTime;
-			}
+			public CredentialPrincipal Principal { get; }
+			public DateTime IssuedTime => _issuedTime;
+			public DateTime ActiveTime => _activeTime;
 			#endregion
 
 			#region 公共方法
