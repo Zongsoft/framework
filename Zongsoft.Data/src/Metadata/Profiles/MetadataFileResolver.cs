@@ -227,6 +227,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			//设置其他属性
 			entity.Alias = reader.GetAttribute(XML_ALIAS_ATTRIBUTE) ?? reader.GetAttribute(XML_TABLE_ATTRIBUTE);
+			entity.Driver = reader.GetAttribute(XML_DRIVER_ATTRIBUTE);
 
 			var keys = new HashSet<string>();
 			int depth = reader.Depth;
@@ -406,6 +407,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			{
 				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Text),
 				Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
+				Driver = GetAttributeValue<string>(reader, XML_DRIVER_ATTRIBUTE),
 				Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
 			};
 

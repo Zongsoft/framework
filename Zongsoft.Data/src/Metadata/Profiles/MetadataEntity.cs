@@ -73,6 +73,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 		/// <summary>获取或设置数据实体继承的父实体名。</summary>
 		public string BaseName { get; set; }
 
+		/// <summary>获取或设置数据实体支持的驱动。</summary>
+		public string Driver { get; set; }
+
 		/// <summary>获取或设置数据实体的主键属性数组。</summary>
 		public IDataEntitySimplexProperty[] Key { get; set; }
 

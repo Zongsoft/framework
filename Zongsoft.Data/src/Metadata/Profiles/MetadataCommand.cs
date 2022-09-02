@@ -70,6 +70,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 		/// <summary>获取或设置数据命令的别名（表名、存储过程名）。</summary>
 		public string Alias { get; set; }
 
+		/// <summary>获取或设置数据命令支持的驱动。</summary>
+		public string Driver { get; set; }
+
 		/// <summary>获取或设置数据命令的变化性。</summary>
 		public CommandMutability Mutability { get; set; }
 
