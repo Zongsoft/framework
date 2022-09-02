@@ -7,7 +7,7 @@ namespace Zongsoft.Caching
 {
 	public class MemoryCacheTest
 	{
-		private MemoryCache _cache = new MemoryCache();
+		private MemoryCacheEx _cache = new MemoryCacheEx();
 
 		[Fact]
 		public void TestSetValue()
@@ -32,7 +32,6 @@ namespace Zongsoft.Caching
 			Assert.Equal(CacheChangedReason.Expired, e.Arguments.Reason);
 			Assert.Equal("K1", e.Arguments.Key);
 			Assert.Equal("V1", e.Arguments.OldValue);
-			Assert.Empty(_cache);
 		}
 	}
 }
