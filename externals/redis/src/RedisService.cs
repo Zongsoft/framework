@@ -44,19 +44,13 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis
 {
-	public partial class RedisService : ICache, IDisposable
+	public partial class RedisService : IDistributedCache, IDisposable
 	{
 		#region 事件定义
-		event EventHandler<CacheChangedEventArgs> ICache.Changed
+		event EventHandler<CacheChangedEventArgs> IDistributedCache.Changed
 		{
-			add
-			{
-				throw new NotSupportedException();
-			}
-			remove
-			{
-				throw new NotSupportedException();
-			}
+			add => throw new NotSupportedException();
+			remove => throw new NotSupportedException();
 		}
 		#endregion
 
