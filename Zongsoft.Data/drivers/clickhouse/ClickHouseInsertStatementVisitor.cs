@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.ClickHouse
@@ -52,6 +53,40 @@ namespace Zongsoft.Data.ClickHouse
 				context.Write("INSERT IGNORE INTO ");
 			else
 				context.Write("INSERT INTO ");
+		}
+
+		protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
+		{
+			context.WriteLine(" VALUES");
+
+			for(int i = 0; i < statement.Fields.Count; i++)
+			{
+				var field = statement.Fields[i];
+				var value = statement.Values[i];
+
+				if(i > 0)
+					context.Write(",");
+
+				if(i % rounds == 0)
+					context.Write("(");
+
+				var parenthesisRequired = value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
+				context.Write("{");
+				context.Visit(value);
+				context.Write(":");
+				context.Write(ClickHouseUtility.GetDataType(field.Token.Property));
+				context.Write("}");
+
+				if(parenthesisRequired)
+					context.Write(")");
+
+				if((i + 1) % rounds == 0)
+					context.Write(")");
+			}
 		}
 		#endregion
 	}
