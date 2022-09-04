@@ -54,16 +54,16 @@ namespace Zongsoft.Data
 			RecordGetterTemplate<byte[]>.Get = new Func<IDataRecord, int, byte[]>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as byte[]);
 			RecordGetterTemplate<IEnumerable<byte>>.Get = new Func<IDataRecord, int, IEnumerable<byte>>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as IEnumerable<byte>);
 
-			RecordGetterTemplate<sbyte>.Get = new Func<IDataRecord, int, sbyte>((record, ordinal) => (sbyte)record.GetInt16(ordinal));
-			RecordGetterTemplate<sbyte?>.Get = new Func<IDataRecord, int, sbyte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (sbyte?)record.GetInt16(ordinal));
+			RecordGetterTemplate<sbyte>.Get = new Func<IDataRecord, int, sbyte>((record, ordinal) => (sbyte)record.GetValue(ordinal));
+			RecordGetterTemplate<sbyte?>.Get = new Func<IDataRecord, int, sbyte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (sbyte?)record.GetValue(ordinal));
 			RecordGetterTemplate<short>.Get = new Func<IDataRecord, int, short>((record, ordinal) => record.GetInt16(ordinal));
 			RecordGetterTemplate<short?>.Get = new Func<IDataRecord, int, short?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (short?)record.GetInt16(ordinal));
-			RecordGetterTemplate<ushort>.Get = new Func<IDataRecord, int, ushort>((record, ordinal) => (ushort)record.GetInt32(ordinal));
-			RecordGetterTemplate<ushort?>.Get = new Func<IDataRecord, int, ushort?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ushort?)record.GetInt32(ordinal));
+			RecordGetterTemplate<ushort>.Get = new Func<IDataRecord, int, ushort>((record, ordinal) => (ushort)record.GetValue(ordinal));
+			RecordGetterTemplate<ushort?>.Get = new Func<IDataRecord, int, ushort?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ushort?)record.GetValue(ordinal));
 			RecordGetterTemplate<int>.Get = new Func<IDataRecord, int, int>((record, ordinal) => record.GetInt32(ordinal));
 			RecordGetterTemplate<int?>.Get = new Func<IDataRecord, int, int?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (int?)record.GetInt32(ordinal));
-			RecordGetterTemplate<uint>.Get = new Func<IDataRecord, int, uint>((record, ordinal) => (uint)record.GetInt64(ordinal));
-			RecordGetterTemplate<uint?>.Get = new Func<IDataRecord, int, uint?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (uint?)record.GetInt64(ordinal));
+			RecordGetterTemplate<uint>.Get = new Func<IDataRecord, int, uint>((record, ordinal) => (uint)record.GetValue(ordinal));
+			RecordGetterTemplate<uint?>.Get = new Func<IDataRecord, int, uint?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (uint?)record.GetValue(ordinal));
 			RecordGetterTemplate<long>.Get = new Func<IDataRecord, int, long>((record, ordinal) => record.GetInt64(ordinal));
 			RecordGetterTemplate<long?>.Get = new Func<IDataRecord, int, long?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (long?)record.GetInt64(ordinal));
 			RecordGetterTemplate<ulong>.Get = new Func<IDataRecord, int, ulong>((record, ordinal) => (ulong)record.GetValue(ordinal));
