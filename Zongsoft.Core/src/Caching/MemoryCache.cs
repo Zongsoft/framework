@@ -57,6 +57,10 @@ namespace Zongsoft.Caching
 		public int Count => _cache.Count;
 		#endregion
 
+		#region 存在方法
+		public bool Exists(object key) => key is not null && _cache.TryGetValue(key, out _);
+		#endregion
+
 		#region 删除方法
 		public void Clear() => _cache.Compact(1.0);
 		public bool Remove(object key)
