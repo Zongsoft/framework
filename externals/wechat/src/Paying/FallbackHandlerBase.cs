@@ -113,7 +113,18 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, null, cancellation);
 				var resource = message.Resource;
-				var data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
+				byte[] data;
+
+				try
+				{
+					data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
+				}
+				catch(Exception ex)
+				{
+					Zongsoft.Diagnostics.Logger.Error(ex, $"微信回调解密出错：\nAuthority.name:{authority.Name}\nAuthority.Secret:{authority.Secret}\nResource.Nonce:{resource.Nonce}\nResource.AssociatedData:{resource.AssociatedData}\nResource.Ciphertext:{resource.Ciphertext}");
+					return OperationResult.Fail(ex);
+				}
+
 				var payload = JsonSerializer.Deserialize(data, GetRequestType(format), Json.Options);
 				return OperationResult.Success((TRequest)payload);
 			}
