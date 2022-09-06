@@ -271,6 +271,23 @@ namespace Zongsoft.Caching
 		/// <param name="expiry">输出参数，表示获取到的缓存项有效期。</param>
 		/// <returns>如果获取成功则返回真(True)，否则返回假(False)。</returns>
 		bool TryGetValue<T>(string key, out T value, out TimeSpan? expiry);
+
+		/// <summary>
+		/// 尝试从缓存中获取指定键的缓存值。
+		/// </summary>
+		/// <param name="key">指定要获取的键名。</param>
+		/// <param name="cancellation">异步操作取消令牌。</param>
+		/// <returns>返回的异步操作任务结果。</returns>
+		Task<(bool result, object value)> TryGetValueAsync(string key, CancellationToken cancellation = default);
+
+		/// <summary>
+		/// 尝试从缓存中获取指定键的缓存值。
+		/// </summary>
+		/// <typeparam name="T">指定的缓存项类型。</typeparam>
+		/// <param name="key">指定要获取的键名。</param>
+		/// <param name="cancellation">异步操作取消令牌。</param>
+		/// <returns>返回的异步操作任务结果。</returns>
+		Task<(bool result, T value)> TryGetValueAsync<T>(string key, CancellationToken cancellation = default);
 		#endregion
 
 		#region 设置方法

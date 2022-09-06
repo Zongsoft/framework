@@ -591,6 +591,29 @@ namespace Zongsoft.Externals.Redis
 			return result.Value.HasValue;
 		}
 
+		public Task<(bool result, object value)> TryGetValueAsync(string key, CancellationToken cancellation = default)
+		{
+			return this.TryGetValueAsync<object>(key, cancellation);
+		}
+
+		public async Task<(bool result, T value)> TryGetValueAsync<T>(string key, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			cancellation.ThrowIfCancellationRequested();
+			await this.ConnectAsync(cancellation);
+
+			if(typeof(T) == typeof(ISet<string>))
+			{
+				var hashset = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				return (true, hashset);
+			}
+
+			var result = await _database.StringGetAsync(GetKey(key));
+			return (result.HasValue, result.HasValue ? result.GetValue<T>() : default);
+		}
+
 		public bool Remove(string key)
 		{
 			if(string.IsNullOrEmpty(key))
