@@ -347,6 +347,7 @@ namespace Zongsoft.Data
 		}
 
 		protected abstract void OnExecute(DataExecuteContextBase context);
+		protected abstract Task OnExecuteAsync(DataExecuteContextBase context);
 		#endregion
 
 		#region 存在方法
