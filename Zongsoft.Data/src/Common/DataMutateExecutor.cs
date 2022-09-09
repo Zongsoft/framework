@@ -28,6 +28,10 @@
  */
 
 using System;
+using System.Data;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -38,7 +42,7 @@ namespace Zongsoft.Data.Common
 {
 	public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement> where TStatement : IMutateStatement
 	{
-		#region 执行方法
+		#region 同步执行
 		public bool Execute(IDataAccessContext context, TStatement statement)
 		{
 			if(context is IDataMutateContext ctx)
@@ -120,8 +124,90 @@ namespace Zongsoft.Data.Common
 		}
 		#endregion
 
+		#region 异步执行
+		public Task<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation)
+		{
+			if(context is IDataMutateContext ctx)
+				return this.OnExecuteAsync(ctx, statement, cancellation);
+
+			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		}
+
+		protected virtual async Task<bool> OnExecuteAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
+		{
+			if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
+				throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
+
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+
+			//获取当前操作是否为多数据
+			var isMultiple = context.IsMultiple;
+
+			//保存当前上下文的数据
+			var data = context.Data;
+
+			if(statement.Schema != null)
+			{
+				isMultiple = statement.Schema.Token.IsMultiple;
+				context.Data = statement.Schema.Token.GetValue(context.Data);
+
+				if(context.Data == null)
+				{
+					context.Data = data;
+					return false;
+				}
+			}
+
+			try
+			{
+				if(isMultiple)
+				{
+					//获取当前一对多导航属性的链接成员标记
+					var tokens = GetLinkTokens(data, statement.Schema);
+
+					foreach(var item in (IEnumerable)context.Data)
+					{
+						//更新当前操作数据
+						context.Data = item;
+
+						if(tokens != null && tokens.Length > 0)
+						{
+							var current = item;
+
+							//依次同步当前集合元素中的导航属性值
+							for(int i = 0; i < tokens.Length; i++)
+								tokens[i].SetForeignValue(ref current);
+
+							context.Data = current;
+						}
+
+						var continued = await this.MutateAsync(context, statement, command, cancellation);
+
+						if(continued && statement.HasSlaves)
+						{
+							foreach(var slave in statement.Slaves)
+								await context.Provider.Executor.ExecuteAsync(context, slave, cancellation);
+						}
+					}
+
+					return false;
+				}
+				else
+				{
+					return await this.MutateAsync(context, statement, command, cancellation);
+				}
+			}
+			finally
+			{
+				//还原当前上下文的数据
+				context.Data = data;
+			}
+		}
+		#endregion
+
 		#region 虚拟方法
-		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, System.Data.IDataReader reader)
+		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, DbDataReader reader)
 		{
 			if(context is DataIncrementContextBase increment)
 			{
@@ -134,18 +220,28 @@ namespace Zongsoft.Data.Common
 			return true;
 		}
 
-		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count)
+		protected virtual async Task<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 		{
-			return count > 0;
+			if(context is DataIncrementContextBase increment)
+			{
+				if(await reader.ReadAsync(cancellation))
+					increment.Result = await reader.IsDBNullAsync(0, cancellation) ? 0 : (long)Convert.ChangeType(reader.GetValue(0), TypeCode.Int64);
+				else
+					return false;
+			}
+
+			return true;
 		}
 
-		protected virtual void OnMutating(IDataMutateContext context, TStatement statement)
-		{
-		}
+		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count) => count > 0;
+		protected virtual Task<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, int count, CancellationToken cancellation) => Task.FromResult(count > 0);
+
+		protected virtual void OnMutating(IDataMutateContext context, TStatement statement) { }
+		protected virtual Task OnMutatingAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation) => Task.CompletedTask;
 		#endregion
 
 		#region 私有方法
-		private bool Mutate(IDataMutateContext context, TStatement statement, System.Data.Common.DbCommand command)
+		private bool Mutate(IDataMutateContext context, TStatement statement, DbCommand command)
 		{
 			bool continued;
 
@@ -167,6 +263,43 @@ namespace Zongsoft.Data.Common
 			{
 				//执行数据命令操作
 				var count = command.ExecuteNonQuery();
+
+				//累加总受影响的记录数
+				context.Count += count;
+
+				//调用写入操作完成方法
+				continued = this.OnMutated(context, statement, count);
+			}
+
+			//如果需要继续并且有从属语句则尝试绑定从属写操作数据
+			if(continued && statement.HasSlaves)
+				this.Bind(context.Data, statement.Slaves);
+
+			return continued;
+		}
+
+		private async Task<bool> MutateAsync(IDataMutateContext context, TStatement statement, DbCommand command, CancellationToken cancellation)
+		{
+			bool continued;
+
+			//调用写入操作开始方法
+			this.OnMutating(context, statement);
+
+			//绑定命令参数
+			statement.Bind(context, command, context.Data);
+
+			if(statement.Returning != null && statement.Returning.Table == null)
+			{
+				using(var reader = await command.ExecuteReaderAsync(cancellation))
+				{
+					//调用写入操作完成方法
+					continued = await this.OnMutatedAsync(context, statement, reader, cancellation);
+				}
+			}
+			else
+			{
+				//执行数据命令操作
+				var count = await command.ExecuteNonQueryAsync(cancellation);
 
 				//累加总受影响的记录数
 				context.Count += count;

@@ -29,6 +29,8 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -38,7 +40,7 @@ namespace Zongsoft.Data.Common
 {
 	public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 	{
-		#region 执行方法
+		#region 同步执行
 		public bool Execute(IDataAccessContext context, ExecutionStatement statement)
 		{
 			if(context is DataExecuteContext ctx)
@@ -58,6 +60,37 @@ namespace Zongsoft.Data.Common
 			if(context.IsScalar)
 			{
 				context.Result = command.ExecuteScalar();
+				return false;
+			}
+
+			context.Result = System.Activator.CreateInstance(
+				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+				new object[] { context, command });
+
+			return false;
+		}
+		#endregion
+
+		#region 异步执行
+		public Task<bool> ExecuteAsync(IDataAccessContext context, ExecutionStatement statement, CancellationToken cancellation)
+		{
+			if(context is DataExecuteContext ctx)
+				return this.OnExecuteAsync(ctx, statement, cancellation);
+
+			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		}
+
+		protected virtual async Task<bool> OnExecuteAsync(DataExecuteContext context, ExecutionStatement statement, CancellationToken cancellation)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+
+			if(statement.IsProcedure)
+				command.CommandType = CommandType.StoredProcedure;
+
+			if(context.IsScalar)
+			{
+				context.Result = await command.ExecuteScalarAsync(cancellation);
 				return false;
 			}
 

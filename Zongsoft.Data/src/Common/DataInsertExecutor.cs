@@ -28,7 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
@@ -64,11 +65,49 @@ namespace Zongsoft.Data.Common
 			base.OnMutating(context, statement);
 		}
 
+		protected override async Task OnMutatingAsync(IDataMutateContext context, InsertStatement statement, CancellationToken cancellation)
+		{
+			//如果新增实体包含序号定义项则尝试处理其中的外部序号
+			if(statement.Entity.HasSequences)
+			{
+				foreach(var field in statement.Fields)
+				{
+					if(field.Token.Property.IsSimplex)
+					{
+						var sequence = ((IDataEntitySimplexProperty)field.Token.Property).Sequence;
+
+						if(sequence != null && sequence.IsExternal)
+						{
+							var value = field.Token.GetValue(context.Data);
+
+							if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
+							{
+								var id = await ((DataAccess)context.DataAccess).IncreaseAsync(context, sequence, context.Data, cancellation);
+								field.Token.SetValue(context.Data, Convert.ChangeType(id, field.Token.MemberType));
+							}
+						}
+					}
+				}
+			}
+
+			//调用基类同名方法
+			await base.OnMutatingAsync(context, statement, cancellation);
+		}
+
 		protected override bool OnMutated(IDataMutateContext context, InsertStatement statement, int count)
 		{
 			//执行获取新增后的自增型字段值
 			if(count > 0 && statement.Sequence != null)
 				context.Provider.Executor.Execute(context, statement.Sequence);
+
+			return count > 0;
+		}
+
+		protected override async Task<bool> OnMutatedAsync(IDataMutateContext context, InsertStatement statement, int count, CancellationToken cancellation)
+		{
+			//执行获取新增后的自增型字段值
+			if(count > 0 && statement.Sequence != null)
+				await context.Provider.Executor.ExecuteAsync(context, statement.Sequence, cancellation);
 
 			return count > 0;
 		}

@@ -136,6 +136,54 @@ namespace Zongsoft.Data.Common
 			//激发“Executed”事件
 			this.OnExecuted(context);
 		}
+
+		public async Task ExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
+		{
+			//激发“Executing”事件
+			this.OnExecuting(context);
+
+			try
+			{
+				object data = null;
+				var mutation = context as IDataMutateContextBase;
+
+				//保存当前操作的原始值
+				if(mutation != null)
+					data = mutation.Data;
+
+				//进行具体的执行处理
+				await this.OnExecuteAsync(context, cancellation);
+
+				//尝试提交当前数据会话
+				context.Session.Commit();
+
+				//还原当前操作的原始值
+				if(mutation != null)
+					mutation.Data = data;
+			}
+			catch(Exception ex)
+			{
+				//尝试回滚当前数据会话
+				context.Session.Rollback();
+
+				//激发“Error”事件
+				var handledException = this.OnError(context, ex);
+
+				//如果“Error”事件处理完异常则退出
+				if(handledException == null)
+					return;
+
+				//如果“Error”事件没有处理异常，则重抛以尽量避免异常过多嵌套
+				if(object.ReferenceEquals(ex, handledException))
+					throw;
+
+				throw handledException is DataException ? handledException :
+					  new DataException("The data execution error has occurred.", handledException);
+			}
+
+			//激发“Executed”事件
+			this.OnExecuted(context);
+		}
 		#endregion
 
 		#region 导入方法
@@ -162,6 +210,18 @@ namespace Zongsoft.Data.Common
 			{
 				//由执行器执行语句
 				_executor.Execute(context, statement);
+			}
+		}
+
+		protected virtual async Task OnExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
+		{
+			//根据上下文生成对应执行语句集
+			var statements = context.Source.Driver.Builder.Build(context);
+
+			foreach(var statement in statements)
+			{
+				//由执行器执行语句
+				await _executor.ExecuteAsync(context, statement, cancellation);
 			}
 		}
 		#endregion
@@ -263,6 +323,28 @@ namespace Zongsoft.Data.Common
 				{
 					foreach(var slave in statement.Slaves)
 						this.Execute(context, slave);
+				}
+			}
+
+			public async Task ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
+			{
+				var continued = statement switch
+				{
+					SelectStatement select => await _select.ExecuteAsync(context, select, cancellation),
+					DeleteStatement delete => await _delete.ExecuteAsync(context, delete, cancellation),
+					InsertStatement insert => await _insert.ExecuteAsync(context, insert, cancellation),
+					UpdateStatement update => await _update.ExecuteAsync(context, update, cancellation),
+					UpsertStatement upsert => await _upsert.ExecuteAsync(context, upsert, cancellation),
+					ExistStatement exist => await _exist.ExecuteAsync(context, exist, cancellation),
+					AggregateStatement aggregate => await _aggregate.ExecuteAsync(context, aggregate, cancellation),
+					ExecutionStatement execution => await _execution.ExecuteAsync(context, execution, cancellation),
+					_ => await context.Session.Build(context, statement).ExecuteNonQueryAsync(cancellation) > 0,
+				};
+
+				if(continued && statement.HasSlaves)
+				{
+					foreach(var slave in statement.Slaves)
+						await this.ExecuteAsync(context, slave, cancellation);
 				}
 			}
 			#endregion

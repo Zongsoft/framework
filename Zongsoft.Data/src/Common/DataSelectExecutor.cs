@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -40,7 +42,7 @@ namespace Zongsoft.Data.Common
 {
 	public class DataSelectExecutor : IDataExecutor<SelectStatement>
 	{
-		#region 执行方法
+		#region 同步执行
 		public bool Execute(IDataAccessContext context, SelectStatement statement)
 		{
 			switch(context)
@@ -136,6 +138,105 @@ namespace Zongsoft.Data.Common
 			context.Result = Zongsoft.Common.Convert.ConvertValue<long>(command.ExecuteScalar());
 
 			return true;
+		}
+		#endregion
+
+		#region 异步执行
+		public Task<bool> ExecuteAsync(IDataAccessContext context, SelectStatement statement, CancellationToken cancellation)
+		{
+			switch(context)
+			{
+				case DataSelectContext selection:
+					return this.OnExecuteAsync(selection, statement, cancellation);
+				case DataInsertContext insertion:
+					return this.OnExecuteAsync(insertion, statement, cancellation);
+				case DataUpsertContext upsertion:
+					return this.OnExecuteAsync(upsertion, statement, cancellation);
+				case DataIncrementContext increment:
+					return this.OnExecuteAsync(increment, statement, cancellation);
+			}
+
+			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		}
+
+		protected virtual Task<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+			context.Result = CreateResults(context.ModelType, context, statement, command, null, 0);
+
+			return Task.FromResult(false);
+		}
+
+		protected virtual async Task<bool> OnExecuteAsync(DataInsertContext context, SelectStatement statement, CancellationToken cancellation)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+
+			//绑定命令参数
+			statement.Bind(context, command, context.Data);
+
+			using(var reader = await command.ExecuteReaderAsync(cancellation))
+			{
+				if(await reader.ReadAsync(cancellation))
+				{
+					for(int i = 0; i < reader.FieldCount; i++)
+					{
+						var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
+
+						if(schema != null)
+						{
+							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+								schema = child;
+
+							schema.Token.SetValue(context.Data, reader.GetValue(i));
+						}
+					}
+				}
+			}
+
+			return true;
+		}
+
+		protected virtual async Task<bool> OnExecuteAsync(DataUpsertContext context, SelectStatement statement, CancellationToken cancellation)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+
+			//绑定命令参数
+			statement.Bind(context, command, context.Data);
+
+			using(var reader = await command.ExecuteReaderAsync(cancellation))
+			{
+				if(await reader.ReadAsync(cancellation))
+				{
+					for(int i = 0; i < reader.FieldCount; i++)
+					{
+						var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
+
+						if(schema != null)
+						{
+							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+								schema = child;
+
+							schema.Token.SetValue(context.Data, reader.GetValue(i));
+						}
+					}
+				}
+			}
+
+			return true;
+		}
+
+		protected virtual Task<bool> OnExecuteAsync(DataIncrementContext context, SelectStatement statement, CancellationToken cancellation)
+		{
+			//根据生成的脚本创建对应的数据命令
+			var command = context.Session.Build(context, statement);
+
+			//执行命令
+			context.Result = Zongsoft.Common.Convert.ConvertValue<long>(command.ExecuteScalar());
+
+			return Task.FromResult(true);
 		}
 		#endregion
 

@@ -70,85 +70,57 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 执行方法
-		protected override void OnExecute(DataExecuteContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnExecute(DataExecuteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 导入方法
-		protected override void OnImport(DataImportContextBase context)
-		{
-			this.Provider.Import((DataImportContext)context);
-		}
-
-		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default)
-		{
-			return this.Provider.ImportAsync((DataImportContext)context, cancellation);
-		}
+		protected override void OnImport(DataImportContextBase context) => this.Provider.Import((DataImportContext)context);
+		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default) => this.Provider.ImportAsync((DataImportContext)context, cancellation);
 		#endregion
 
 		#region 存在方法
-		protected override void OnExists(DataExistContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnExists(DataExistContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 聚合方法
-		protected override void OnAggregate(DataAggregateContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnAggregate(DataAggregateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 递增方法
-		protected override void OnIncrement(DataIncrementContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnIncrement(DataIncrementContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnIncrementAsync(DataIncrementContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 删除方法
-		protected override void OnDelete(DataDeleteContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnDelete(DataDeleteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 插入方法
-		protected override void OnInsert(DataInsertContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnInsert(DataInsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
-		#region 复写方法
-		protected override void OnUpsert(DataUpsertContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		#region 增改方法
+		protected override void OnUpsert(DataUpsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 更新方法
-		protected override void OnUpdate(DataUpdateContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnUpdate(DataUpdateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 查询方法
-		protected override void OnSelect(DataSelectContextBase context)
-		{
-			this.Provider.Execute((IDataAccessContext)context);
-		}
+		protected override void OnSelect(DataSelectContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+		protected override Task OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 模式解析
-		protected override ISchemaParser CreateSchema()
-		{
-			return new SchemaParser(this.Provider);
-		}
+		protected override ISchemaParser CreateSchema() => new SchemaParser(this.Provider);
 		#endregion
 
 		#region 序号构建
@@ -184,55 +156,35 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 上下文法
-		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options)
-		{
-			return new DataExistContext(this, name, criteria.Flatten(), options);
-		}
+		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) =>
+			new DataExistContext(this, name, criteria.Flatten(), options);
 
-		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options)
-		{
-			return new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, options);
-		}
+		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options) =>
+			new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, options);
 
-		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options)
-		{
-			return new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
-		}
+		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) =>
+			new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
 
-		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options)
-		{
-			return new DataIncrementContext(this, name, member, criteria.Flatten(), interval, options);
-		}
+		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options) =>
+			new DataIncrementContext(this, name, member, criteria.Flatten(), interval, options);
 
-		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options)
-		{
-			return new DataImportContext(this, name, data, members, options);
-		}
+		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options) =>
+			new DataImportContext(this, name, data, members, options);
 
-		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options)
-		{
-			return new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
-		}
+		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options) =>
+			new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
 
-		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options)
-		{
-			return new DataInsertContext(this, name, isMultiple, data, schema, options);
-		}
+		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options) =>
+			new DataInsertContext(this, name, isMultiple, data, schema, options);
 
-		protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options)
-		{
-			return new DataUpsertContext(this, name, isMultiple, data, schema, options);
-		}
+		protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) =>
+			new DataUpsertContext(this, name, isMultiple, data, schema, options);
 
-		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options)
-		{
-			return new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
-		}
+		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) =>
+			new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
 
-		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options)
-		{
-			return new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);
-		}
+		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options) =>
+			new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);
 		#endregion
 
 		#region 内部方法
@@ -242,6 +194,14 @@ namespace Zongsoft.Data
 				throw new InvalidOperationException($"Missing required sequence of the '{this.Name}' DataAccess.");
 
 			return ((DataSequenceProvider)this.Sequence).Increase(context, sequence, data);
+		}
+
+		internal Task<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+		{
+			if(this.Sequence == null)
+				throw new InvalidOperationException($"Missing required sequence of the '{this.Name}' DataAccess.");
+
+			return ((DataSequenceProvider)this.Sequence).IncreaseAsync(context, sequence, data, cancellation);
 		}
 		#endregion
 
@@ -276,6 +236,14 @@ namespace Zongsoft.Data
 					throw new ArgumentNullException(nameof(sequence));
 
 				return _sequence.Increase(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
+			}
+
+			public Task<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+			{
+				if(sequence == null)
+					throw new ArgumentNullException(nameof(sequence));
+
+				return _sequence.IncreaseAsync(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
 			}
 			#endregion
 

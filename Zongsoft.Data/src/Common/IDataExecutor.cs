@@ -28,12 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common
 {
 	public interface IDataExecutor
 	{
 		void Execute(IDataAccessContext context, Expressions.IStatementBase statement);
+		Task ExecuteAsync(IDataAccessContext context, Expressions.IStatementBase statement, CancellationToken cancellation = default);
 	}
 }
