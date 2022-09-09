@@ -29,6 +29,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -103,20 +104,36 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		private class ResultCollection<T> : IEnumerable<T>, IEnumerable
+		private class ResultCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
 		{
-			private readonly IDbCommand _command;
+			#region 成员字段
+			private readonly DbCommand _command;
+			#endregion
 
-			public ResultCollection(DataExecuteContext context, IDbCommand command) { _command = command; }
+			#region 构造函数
+			public ResultCollection(DataExecuteContext context, DbCommand command) { _command = command; }
+			#endregion
+
+			#region 遍历迭代
+			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
+			{
+				var iterator = new ResultIterator(await _command.ExecuteReaderAsync(cancellation));
+
+				while(await iterator.MoveNextAsync())
+					yield return iterator.Current;
+			}
+
 			public IEnumerator<T> GetEnumerator() => new ResultIterator(_command.ExecuteReader());
 			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			#endregion
 
-			private class ResultIterator : IEnumerator<T>
+			#region 嵌套子类
+			private class ResultIterator : IEnumerator<T>, IAsyncEnumerator<T>
 			{
-				private readonly IDataReader _reader;
+				private readonly DbDataReader _reader;
 				private readonly IDataPopulator _populator;
 
-				public ResultIterator(IDataReader reader)
+				public ResultIterator(DbDataReader reader)
 				{
 					_reader = reader;
 					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader);
@@ -133,10 +150,22 @@ namespace Zongsoft.Data.Common
 					return false;
 				}
 
+				public async ValueTask<bool> MoveNextAsync()
+				{
+					if(await _reader.ReadAsync())
+						return true;
+
+					await this.DisposeAsync();
+					return false;
+				}
+
 				public void Dispose() => _reader.Dispose();
+				public ValueTask DisposeAsync() => _reader.DisposeAsync();
+
 				object IEnumerator.Current { get => this.Current; }
 				void IEnumerator.Reset() { }
 			}
+			#endregion
 		}
 		#endregion
 	}

@@ -253,7 +253,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		private class LazyCollection<T> : IEnumerable<T>, IEnumerable, IPageable
+		private class LazyCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable, IPageable
 		{
 			#region 公共事件
 			public event EventHandler<PagingEventArgs> Paginated;
@@ -287,6 +287,14 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 遍历迭代
+			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
+			{
+				var iterator = (IAsyncEnumerator<T>)new LazyIterator(_context, _statement, await _command.ExecuteReaderAsync(cancellation), _paginate, _skip);
+
+				while(await iterator.MoveNextAsync())
+					yield return iterator.Current;
+			}
+
 			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate, _skip);
 			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 			#endregion
@@ -299,10 +307,10 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 数据迭代
-			private class LazyIterator : IEnumerator<T>, IDisposable
+			private class LazyIterator : IEnumerator<T>, IAsyncEnumerator<T>
 			{
 				#region 成员变量
-				private IDataReader _reader;
+				private DbDataReader _reader;
 				private Action<string, Paging> _paginate;
 				private readonly int _skip;
 				private readonly IDataPopulator _populator;
@@ -312,7 +320,7 @@ namespace Zongsoft.Data.Common
 				#endregion
 
 				#region 构造函数
-				public LazyIterator(DataSelectContext context, SelectStatement statement, IDataReader reader, Action<string, Paging> paginate, int skip)
+				public LazyIterator(DataSelectContext context, SelectStatement statement, DbDataReader reader, Action<string, Paging> paginate, int skip)
 				{
 					var entity = context.Entity;
 
@@ -366,7 +374,14 @@ namespace Zongsoft.Data.Common
 					return false;
 				}
 
-				public void Reset() => throw new NotSupportedException();
+				public async ValueTask<bool> MoveNextAsync()
+				{
+					if(await _reader.ReadAsync())
+						return true;
+
+					await this.DisposeAsync();
+					return false;
+				}
 				#endregion
 
 				#region 私有方法
@@ -485,12 +500,13 @@ namespace Zongsoft.Data.Common
 
 				#region 显式实现
 				object IEnumerator.Current => this.Current;
+				void IEnumerator.Reset() => throw new NotSupportedException();
 				#endregion
 
 				#region 处置方法
 				public void Dispose()
 				{
-					var reader = System.Threading.Interlocked.Exchange(ref _reader, null);
+					var reader = Interlocked.Exchange(ref _reader, null);
 
 					if(reader != null)
 					{
@@ -509,6 +525,31 @@ namespace Zongsoft.Data.Common
 						finally
 						{
 							reader.Dispose();
+						}
+					}
+				}
+
+				public async ValueTask DisposeAsync()
+				{
+					var reader = Interlocked.Exchange(ref _reader, null);
+
+					if(reader != null)
+					{
+						try
+						{
+							//处理分页的总记录数
+							if(_statement.Paging != null && _statement.Paging.PageSize > 0)
+							{
+								if(await reader.NextResultAsync() && await reader.ReadAsync())
+								{
+									_statement.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+									_paginate?.Invoke(_statement.Alias, _statement.Paging);
+								}
+							}
+						}
+						finally
+						{
+							await reader.DisposeAsync();
 						}
 					}
 				}
