@@ -804,15 +804,6 @@ namespace Zongsoft.Data
 			return this.OnInsert(dictionary, schematic, options);
 		}
 
-		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
-		{
-			if(data == null || data.Data == null || !data.HasChanges())
-				return 0;
-
-			//执行数据引擎的插入操作
-			return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
-		}
-
 		public int InsertMany(IEnumerable items, DataInsertOptions options = null)
 		{
 			return this.InsertMany(items, string.Empty, options);
@@ -846,6 +837,15 @@ namespace Zongsoft.Data
 			}
 
 			return this.OnInsertMany(dictionares, schematic, options);
+		}
+
+		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
+		{
+			if(data == null || data.Data == null || !data.HasChanges())
+				return 0;
+
+			//执行数据引擎的插入操作
+			return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 		}
 
 		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options)
