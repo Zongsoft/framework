@@ -240,7 +240,7 @@ namespace Zongsoft.Components
 			public Entry(T value, int weight)
 			{
 				this.Value = value;
-				this.Weight = Math.Max(weight, 0);
+				this.Weight = Math.Max(weight, 1);
 			}
 
 			public readonly T Value;
