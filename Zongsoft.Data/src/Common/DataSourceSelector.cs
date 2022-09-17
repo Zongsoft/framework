@@ -92,8 +92,8 @@ namespace Zongsoft.Data.Common
 
 			public DataSourceWeighter(IEnumerable<IDataSource> sources)
 			{
-				_readables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly).Select(source => new Components.Weighter<IDataSource>.Entry(source, GetWeight(source))));
-				_writables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly).Select(source => new Components.Weighter<IDataSource>.Entry(source, GetWeight(source))));
+				_readables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly), source => GetWeight(source));
+				_writables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly), source => GetWeight(source));
 			}
 
 			public IDataSource Get(IDataAccessContextBase context)
