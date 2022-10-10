@@ -4,7 +4,8 @@ var solutionFile = "Zongsoft.Externals.Hangfire.sln";
 var dependents = new []
 {
 	"web/Zongsoft.Externals.Hangfire.Web.sln",
-	"storages/Zongsoft.Externals.Hangfire.Storages.sln"
+	"storages/Zongsoft.Externals.Hangfire.Storages.sln",
+	"samples/Zongsoft.Externals.Hangfire.Samples.sln"
 };
 
 Task("clean")

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Zongsoft.Hosting.Terminal": {
+      "commandName": "Project",
+      "workingDirectory": "$(OutDir)"
+    }
+  }
+}

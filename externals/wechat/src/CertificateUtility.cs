@@ -103,7 +103,7 @@ namespace Zongsoft.Externals.Wechat
 			//更新获取的时间
 			_timestamp = DateTime.Now;
 
-			var infos = (await response.Content.ReadFromJsonAsync<CertificateResult>(null, cancellation)).Value;
+			var infos = (await response.Content.ReadFromJsonAsync<CertificateResult>(Json.Options, cancellation)).Value;
 
 			if(infos == null || infos.Length == 0)
 				return _certificate ?? _transitory;

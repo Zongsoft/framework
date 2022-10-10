@@ -1,13 +1,15 @@
 Zongsoft.Data.MySql.plugin
 bin/$(Edition)/$(Target)/Zongsoft.Data.MySql.*
 
-%NUGET_PACKAGES%/mysql.data/8.0.26/lib/net5.0/*.dll
+%NUGET_PACKAGES%/mysql.data/8.0.30/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/portable.bouncycastle/1.9.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/google.protobuf/3.14.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/k4os.compression.lz4/1.1.11/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/k4os.compression.lz4.streams/1.1.11/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/google.protobuf/3.19.4/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/k4os.compression.lz4/1.2.6/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/k4os.compression.lz4.streams/1.2.6/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/k4os.hash.xxhash/1.0.6/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/system.buffers/4.5.1/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.configuration.configurationmanager/5.0.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.security.permissions/5.0.0/lib/net5.0/*.dll
-%NUGET_PACKAGES%/system.text.encoding.codepages/5.0.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.configuration.configurationmanager/4.4.1/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.runtime.compilerservices.unsafe/6.0.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.security.accesscontrol/4.7.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.security.permissions/4.7.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/system.text.encoding.codepages/4.4.0/lib/netstandard2.0/*.dll

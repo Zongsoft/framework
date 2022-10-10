@@ -111,7 +111,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(string.IsNullOrEmpty(authority.Secret))
 					return OperationResult.Fail("Invalid", $"The specified '{key}' authority has no secret key.");
 
-				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, null, cancellation);
+				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, Json.Options, cancellation);
 				var resource = message.Resource;
 				byte[] data;
 

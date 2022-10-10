@@ -1,30 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
 		<Version>5.0.0.0</Version>
-		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
-		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Data Driver for ClickHouse</Product>
 		<Description>This is a data driver for ClickHouse of the Zongsoft data engine.</Description>
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Data.ClickHouse</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
-		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1701;1702;1591;NU5048</NoWarn>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/clickhouse</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ClickHouse.Client" Version="5.0.4" />
+		<PackageReference Include="ClickHouse.Client" Version="5.1.1" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -33,7 +22,7 @@
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

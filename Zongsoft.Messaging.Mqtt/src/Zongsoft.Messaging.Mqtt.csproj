@@ -1,41 +1,36 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
 		<Version>5.1.0.0</Version>
-		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Product>Zongsoft Mqtt Library</Product>
 		<Description>This is a library about mqtt messaging development.</Description>
-		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
 		<RootNamespace>Zongsoft.Messaging.Mqtt</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
-		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<NoWarn>1701;1702;1591;NU5048</NoWarn>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Mqtt</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<None Remove="Zongsoft.Messaging.Mqtt.xml" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
+	</ItemGroup>
+
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
-	  <PackageReference Include="MQTTnet" Version="4.1.0.247" />
-	  <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.1.0.247" />
+		<PackageReference Include="MQTTnet" Version="4.1.1.318" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.1.1.318" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

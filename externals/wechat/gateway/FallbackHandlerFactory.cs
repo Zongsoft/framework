@@ -92,7 +92,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 				else if(context.Request.ContentLength > 0)
 				{
 					if(context.Request.ContentType != null && context.Request.ContentType.EndsWith("json", StringComparison.OrdinalIgnoreCase))
-						request = await JsonSerializer.DeserializeAsync(context.Request.Body, requestType, null, cancellation);
+						request = await JsonSerializer.DeserializeAsync(context.Request.Body, requestType, (JsonSerializerOptions)null, cancellation);
 					else
 						request = context.Request.Body;
 				}
