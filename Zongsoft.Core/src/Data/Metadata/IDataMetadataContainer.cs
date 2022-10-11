@@ -42,10 +42,10 @@ namespace Zongsoft.Data.Metadata
 		string Name { get; }
 
 		/// <summary>获取元数据容器中的数据实体定义集。</summary>
-		Collections.IReadOnlyNamedCollection<IDataEntity> Entities { get; }
+		IDataEntityCollection Entities { get; }
 
 		/// <summary>获取元数据容器中的数据命令定义集。</summary>
-		Collections.IReadOnlyNamedCollection<IDataCommand> Commands { get; }
+		IDataCommandCollection Commands { get; }
 		#endregion
 	}
 }

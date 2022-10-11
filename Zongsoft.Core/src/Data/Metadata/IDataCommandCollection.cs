@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,18 +32,14 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata
 {
-	/// <summary>
-	/// 表示数据应用的元数据管理的接口。
-	/// </summary>
-	public interface IDataMetadataManager : IDataMetadataContainer
+	public interface IDataCommandCollection : ICollection<IDataCommand>
 	{
-		/// <summary>获取当前应用的元数据加载器。</summary>
-		IDataMetadataLoader Loader { get; }
+		IDataCommand this[string name, string @namespace = null] { get; }
 
-		/// <summary>获取元数据提供程序集合。</summary>
-		ICollection<IDataMetadataProvider> Providers { get; }
-
-		/// <summary>重新加载所有元数据。</summary>
-		void Reload();
+		bool Contains(string name, string @namespace = null);
+		bool Remove(string name, string @namespace = null);
+		bool TryAdd(IDataCommand command);
+		bool TryGetValue(string name, out IDataCommand value) => this.TryGetValue(name, null, out value);
+		bool TryGetValue(string name, string @namespace, out IDataCommand value);
 	}
 }

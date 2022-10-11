@@ -37,11 +37,17 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataCommand : IEquatable<IDataCommand>
 	{
-		/// <summary>获取元数据所属的提供程序。</summary>
-		IDataMetadataProvider Metadata { get; }
+		/// <summary>获取所属的元数据容器。</summary>
+		IDataMetadataContainer Container { get; }
+
+		/// <summary>获取所属命名空间。</summary>
+		string Namespace { get; }
 
 		/// <summary>获取数据命令的名称。</summary>
 		string Name { get; }
+
+		/// <summary>获取数据命令的限定名称。</summary>
+		string QualifiedName { get; }
 
 		/// <summary>获取或设置命令的类型。</summary>
 		DataCommandType Type { get; set; }

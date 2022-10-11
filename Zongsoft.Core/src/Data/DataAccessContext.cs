@@ -40,7 +40,7 @@ namespace Zongsoft.Data
 		protected DataExistContextBase(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, DataAccessMethod.Exists, options ?? new DataExistsOptions())
 		{
 			this.Criteria = criteria;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -86,7 +86,7 @@ namespace Zongsoft.Data
 			this.IsScalar = isScalar;
 			this.InParameters = inParameters;
 			this.OutParameters = outParameters;
-			this.Command = DataContextUtility.GetCommand(name, dataAccess.Metadata);
+			this.Command = dataAccess.GetCommand(name);
 		}
 		#endregion
 
@@ -125,7 +125,7 @@ namespace Zongsoft.Data
 		{
 			this.Criteria = criteria;
 			this.Aggregate = aggregate;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -183,7 +183,7 @@ namespace Zongsoft.Data
 			_criteria = criteria ?? throw new ArgumentNullException(nameof(criteria));
 
 			this.Interval = interval;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -255,7 +255,7 @@ namespace Zongsoft.Data
 		{
 			this.Data = data ?? throw new ArgumentNullException(nameof(data));
 			this.Members = members == null ? Array.Empty<string>() : members.ToArray();
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -309,7 +309,7 @@ namespace Zongsoft.Data
 			this.Schema = schema;
 			this.Paging = paging;
 			this.Sortings = sortings;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 			this.ModelType = modelType ?? typeof(object);
 		}
 		#endregion
@@ -383,7 +383,7 @@ namespace Zongsoft.Data
 		{
 			this.Criteria = criteria;
 			this.Schema = schema;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -443,7 +443,7 @@ namespace Zongsoft.Data
 			this.Data = data ?? throw new ArgumentNullException(nameof(data));
 			this.Schema = schema;
 			this.IsMultiple = isMultiple;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -500,7 +500,7 @@ namespace Zongsoft.Data
 			this.Criteria = criteria;
 			this.Schema = schema;
 			this.IsMultiple = isMultiple;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -570,7 +570,7 @@ namespace Zongsoft.Data
 			this.Data = data ?? throw new ArgumentNullException(nameof(data));
 			this.Schema = schema;
 			this.IsMultiple = isMultiple;
-			this.Entity = DataContextUtility.GetEntity(name, dataAccess.Metadata);
+			this.Entity = dataAccess.GetEntity(name);
 		}
 		#endregion
 
@@ -620,17 +620,17 @@ namespace Zongsoft.Data
 
 	internal static class DataContextUtility
 	{
-		public static Metadata.IDataEntity GetEntity(string name, Metadata.IDataMetadataContainer metadata)
+		public static Metadata.IDataEntity GetEntity(this IDataAccess dataAccess, string name)
 		{
-			if(metadata.Entities.TryGet(name, out var entity))
+			if(dataAccess.Metadata.Entities.TryGetValue(name, out var entity))
 				return entity;
 
 			throw new DataException($"The specified '{name}' entity mapping does not exist.");
 		}
 
-		public static Metadata.IDataCommand GetCommand(string name, Metadata.IDataMetadataContainer metadata)
+		public static Metadata.IDataCommand GetCommand(this IDataAccess dataAccess, string name)
 		{
-			if(metadata.Commands.TryGet(name, out var command))
+			if(dataAccess.Metadata.Commands.TryGetValue(name, out var command))
 				return command;
 
 			throw new DataException($"The specified '{name}' command mapping does not exist.");

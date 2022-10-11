@@ -53,7 +53,7 @@ namespace Zongsoft.Data
 		#region 解析方法
 		public override ISchema<SchemaMember> Parse(string name, string expression, Type entityType)
 		{
-			var entity = _provider.Metadata.Entities.Get(name);
+			var entity = _provider.Metadata.Entities[name];
 
 			if(string.IsNullOrWhiteSpace(expression))
 				expression = "*";

@@ -217,10 +217,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 解析方法
-		private static IDataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
+		private static MetadataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 		{
 			//创建实体元素对象
-			var entity = new MetadataEntity(provider, @namespace,
+			var entity = new MetadataEntity(@namespace,
 				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
 				GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
 				GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
@@ -373,35 +373,17 @@ namespace Zongsoft.Data.Metadata.Profiles
 				}
 			}
 
-			//确认实体的主键信息
+			//设置实体的主键
 			if(keys.Count > 0)
-			{
-				var array = new IDataEntitySimplexProperty[keys.Count];
-				var index = 0;
-
-				foreach(var key in keys)
-				{
-					if(!entity.Properties.TryGet(key, out var property))
-						throw new MetadataFileException($"The '{key}' primary key in the '{entity.Name}' entity is undefined.");
-					if(property.IsComplex)
-						throw new MetadataFileException($"The '{key}' primary key in the '{entity.Name}' entity cannot be a complex(navigation) property.");
-
-					//将主键属性的是否主键开关打开
-					((MetadataEntitySimplexProperty)property).SetPrimaryKey();
-
-					array[index++] = (IDataEntitySimplexProperty)property;
-				}
-
-				entity.Key = array;
-			}
+				entity.SetKey(keys);
 
 			return entity;
 		}
 
-		private static IDataCommand ResolveCommand(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
+		private static MetadataCommand ResolveCommand(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 		{
 			//创建命令元素对象
-			var command = new MetadataCommand(provider,
+			var command = new MetadataCommand(@namespace,
 				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
 				reader.GetAttribute(XML_ALIAS_ATTRIBUTE))
 			{

@@ -28,12 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata
 {
 	public interface IDataMetadataLoader
 	{
-		IEnumerable<IDataMetadataProvider> Load(string name);
+		void Load(IDataMetadataContainer container);
 	}
 }

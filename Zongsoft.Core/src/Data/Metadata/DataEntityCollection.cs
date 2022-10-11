@@ -28,20 +28,88 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
-	public class DataEntityCollection : KeyedCollection<string, IDataEntity>
+	public class DataEntityCollection : IDataEntityCollection
 	{
-		public DataEntityCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(IDataEntity item) => item.Name;
-	}
+		#region 成员字段
+		private readonly Dictionary<string, IDataEntity> _dictionary;
+		#endregion
 
-	public class DataEntityCollection<TEntity> : KeyedCollection<string, TEntity> where TEntity : IDataEntity
-	{
-		public DataEntityCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(TEntity item) => item.Name;
+		#region 构造函数
+		public DataEntityCollection() => _dictionary = new Dictionary<string, IDataEntity>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 公共属性
+		public int Count => _dictionary.Count;
+		bool ICollection<IDataEntity>.IsReadOnly => false;
+		public IDataEntity this[string name, string @namespace = null]
+		{
+			get
+			{
+				var key = string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+
+				if(_dictionary.TryGetValue(key, out var entity))
+					return entity;
+
+				throw new DataException($"The specified '{key}' entity mapping does not exist.");
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public void Add(IDataEntity entity) => _dictionary.Add(GetKey(entity), entity);
+		public void Clear() => _dictionary.Clear();
+		public bool Contains(IDataEntity entity) => entity != null && _dictionary.ContainsKey(GetKey(entity));
+		public bool Remove(IDataEntity entity) => entity != null && _dictionary.Remove(GetKey(entity));
+
+		public bool Contains(string name, string @namespace = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
+		}
+
+		public bool Remove(string name, string @namespace = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			return string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name) : _dictionary.Remove($"{@namespace}.{name}");
+		}
+
+		public bool TryAdd(IDataEntity entity) => _dictionary.TryAdd(GetKey(entity), entity);
+		public bool TryGetValue(string name, out IDataEntity value) => _dictionary.TryGetValue(name, out value);
+		public bool TryGetValue(string name, string @namespace, out IDataEntity value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
+
+		public void CopyTo(IDataEntity[] array, int arrayIndex)
+		{
+			if(array == null)
+				throw new ArgumentNullException(nameof(array));
+			if(arrayIndex < 0 || arrayIndex >= array.Length)
+				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+			_dictionary.Values.CopyTo(array, arrayIndex);
+		}
+		#endregion
+
+		#region 枚举遍历
+		public IEnumerator<IDataEntity> GetEnumerator() => _dictionary.Values.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		#endregion
+
+		#region 私有方法
+		private static string GetKey(IDataEntity entity)
+		{
+			if(entity is null)
+				throw new ArgumentNullException(nameof(entity));
+
+			return entity.QualifiedName;
+		}
+		#endregion
 	}
 }

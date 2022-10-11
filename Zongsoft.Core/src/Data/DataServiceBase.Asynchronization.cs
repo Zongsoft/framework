@@ -809,7 +809,7 @@ namespace Zongsoft.Data
 			if(criteria != null)
 			{
 				//获取当前数据服务的实体主键集
-				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+				var keys = this.DataAccess.Metadata.Entities[this.Name].Key;
 
 				if(keys != null && keys.Length > 0)
 				{

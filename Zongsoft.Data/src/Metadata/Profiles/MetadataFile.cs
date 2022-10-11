@@ -35,14 +35,13 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Data.Metadata.Profiles
 {
-	public class MetadataFile : IDataMetadataProvider
+	public class MetadataFile
 	{
 		#region 成员字段
 		private readonly string _name;
 		private readonly string _filePath;
-		private IDataMetadataManager _manager;
-		private readonly INamedCollection<IDataEntity> _entities;
-		private readonly INamedCollection<IDataCommand> _commands;
+		private readonly INamedCollection<MetadataEntity> _entities;
+		private readonly INamedCollection<MetadataCommand> _commands;
 		#endregion
 
 		#region 构造函数
@@ -52,8 +51,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 				_name = name.Trim();
 
 			_filePath = filePath;
-			_entities = new NamedCollection<IDataEntity>(p => p.Name);
-			_commands = new NamedCollection<IDataCommand>(p => p.Name);
+			_entities = new NamedCollection<MetadataEntity>(p => p.Name);
+			_commands = new NamedCollection<MetadataCommand>(p => p.Name);
 		}
 		#endregion
 
@@ -64,19 +63,11 @@ namespace Zongsoft.Data.Metadata.Profiles
 		/// <summary>获取映射文件的完整路径。</summary>
 		public string FilePath { get => _filePath; }
 
-		/// <summary>获取映射文件所属的元数据管理器。</summary>
-		public IDataMetadataManager Manager { get => _manager; set => _manager = value; }
-
 		/// <summary>获取映射文件中的实体元素集。</summary>
-		public INamedCollection<IDataEntity> Entities { get => _entities; }
+		public INamedCollection<MetadataEntity> Entities { get => _entities; }
 
 		/// <summary>获取映射文件中的命令元素集。</summary>
-		public INamedCollection<IDataCommand> Commands { get => _commands; }
-		#endregion
-
-		#region 显式实现
-		IReadOnlyNamedCollection<IDataEntity> IDataMetadataContainer.Entities => (IReadOnlyNamedCollection<IDataEntity>)_entities;
-		IReadOnlyNamedCollection<IDataCommand> IDataMetadataContainer.Commands => (IReadOnlyNamedCollection<IDataCommand>)_commands;
+		public INamedCollection<MetadataCommand> Commands { get => _commands; }
 		#endregion
 
 		#region 加载方法

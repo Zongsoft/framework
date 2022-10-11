@@ -29,9 +29,12 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 using Zongsoft.Collections;
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
+using Zongsoft.Data.Metadata.Profiles;
 
 namespace Zongsoft.Data
 {
@@ -46,6 +49,7 @@ namespace Zongsoft.Data
 		private static IDataAccessProvider _accessors;
 		private static IDataProviderFactory _providers;
 		private static IDataPopulatorProviderFactory _populators;
+		private static readonly ICollection<IDataMetadataLoader> _loaders;
 		private static readonly INamedCollection<IDataDriver> _drivers;
 		private static readonly DataAccessFilterCollection _filters;
 		#endregion
@@ -58,6 +62,7 @@ namespace Zongsoft.Data
 			_populators = DataPopulatorProviderFactory.Instance;
 			_drivers = new NamedCollection<IDataDriver>(p => p.Name, StringComparer.OrdinalIgnoreCase);
 			_filters = new DataAccessFilterCollection();
+			_loaders = new List<IDataMetadataLoader>() { MetadataFileLoader.Default };
 		}
 		#endregion
 
@@ -74,21 +79,15 @@ namespace Zongsoft.Data
 			set => _providers = value ?? throw new ArgumentNullException();
 		}
 
-		public static INamedCollection<IDataDriver> Drivers
-		{
-			get => _drivers;
-		}
-
-		public static DataAccessFilterCollection Filters
-		{
-			get => _filters;
-		}
-
 		public static IDataPopulatorProviderFactory Populators
 		{
 			get => _populators;
 			set => _populators = value ?? throw new ArgumentNullException();
 		}
+
+		public static ICollection<IDataMetadataLoader> Loaders => _loaders;
+		public static INamedCollection<IDataDriver> Drivers => _drivers;
+		public static DataAccessFilterCollection Filters => _filters;
 		#endregion
 	}
 }

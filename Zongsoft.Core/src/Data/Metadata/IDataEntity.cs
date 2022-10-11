@@ -38,14 +38,17 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataEntity : IEquatable<IDataEntity>
 	{
 		#region 属性声明
-		/// <summary>获取元数据所属的提供程序。</summary>
-		IDataMetadataProvider Metadata { get; }
+		/// <summary>获取所属的元数据容器。</summary>
+		IDataMetadataContainer Container { get; }
 
 		/// <summary>获取所属命名空间。</summary>
 		string Namespace { get; }
 
 		/// <summary>获取数据实体的名称。</summary>
 		string Name { get; }
+
+		/// <summary>获取数据实体的限定名称。</summary>
+		string QualifiedName { get; }
 
 		/// <summary>获取数据实体映射的别名（表名）。</summary>
 		string Alias { get; }
@@ -63,15 +66,11 @@ namespace Zongsoft.Data.Metadata
 		/// <remarks>不可变实体只支持新增和删除操作。</remarks>
 		bool Immutable { get; }
 
-		/// <summary>获取一个值，指示该实体定义中是否含有序号属性。</summary>
-		bool HasSequences { get; }
+		/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
+		bool HasKey => this.Key != null && this.Key.Length > 0;
 
 		/// <summary>获取数据实体的属性元数据集合。</summary>
 		IDataEntityPropertyCollection Properties { get; }
-		#endregion
-
-		#region 方法定义
-		IDataEntityPropertySequence[] GetSequences();
 		#endregion
 	}
 }

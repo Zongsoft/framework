@@ -1213,7 +1213,7 @@ namespace Zongsoft.Data
 			if(criteria != null)
 			{
 				//获取当前数据服务的实体主键集
-				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+				var keys = this.DataAccess.Metadata.Entities[this.Name].Key;
 
 				if(keys != null && keys.Length > 0)
 				{
@@ -1972,7 +1972,7 @@ namespace Zongsoft.Data
 
 			if((sortings == null || sortings.Length == 0) && this.Service == null)
 			{
-				var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+				var keys = this.DataAccess.Metadata.Entities[this.Name].Key;
 
 				if(keys != null && keys.Length > 0)
 				{
@@ -2291,7 +2291,7 @@ namespace Zongsoft.Data
 			singular = false;
 
 			//获取当前数据服务对应的主键
-			var primaryKey = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+			var primaryKey = this.DataAccess.Metadata.Entities[this.Name].Key;
 
 			//如果主键获取失败或主键未定义或主键项数量小于传入的数组元素个数则返回空
 			if(primaryKey == null || primaryKey.Length == 0 || primaryKey.Length < values.Length)
@@ -2393,7 +2393,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private ICondition GetUpdateKey(IDataDictionary dictionary)
 		{
-			var keys = this.DataAccess.Metadata.Entities.Get(this.Name).Key;
+			var keys = this.DataAccess.Metadata.Entities[this.Name].Key;
 
 			if(keys == null || keys.Length == 0)
 				return null;

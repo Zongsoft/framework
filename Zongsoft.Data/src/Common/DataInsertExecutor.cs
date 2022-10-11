@@ -42,7 +42,7 @@ namespace Zongsoft.Data.Common
 		protected override void OnMutating(IDataMutateContext context, InsertStatement statement)
 		{
 			//如果新增实体包含序号定义项则尝试处理其中的外部序号
-			if(statement.Entity.HasSequences)
+			if(statement.Entity.HasSequences())
 			{
 				foreach(var field in statement.Fields)
 				{
@@ -68,7 +68,7 @@ namespace Zongsoft.Data.Common
 		protected override async Task OnMutatingAsync(IDataMutateContext context, InsertStatement statement, CancellationToken cancellation)
 		{
 			//如果新增实体包含序号定义项则尝试处理其中的外部序号
-			if(statement.Entity.HasSequences)
+			if(statement.Entity.HasSequences())
 			{
 				foreach(var field in statement.Fields)
 				{

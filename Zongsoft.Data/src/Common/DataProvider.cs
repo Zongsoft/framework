@@ -33,7 +33,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Data.Metadata;
-using Zongsoft.Data.Metadata.Profiles;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.Common
@@ -48,7 +47,7 @@ namespace Zongsoft.Data.Common
 
 		#region 成员字段
 		private IDataExecutor _executor;
-		private IDataMetadataManager _metadata;
+		private IDataMetadataContainer _metadata;
 		private IDataMultiplexer _multiplexer;
 		#endregion
 
@@ -61,7 +60,7 @@ namespace Zongsoft.Data.Common
 			this.Name = name.Trim();
 
 			_executor = DataExecutor.Instance;
-			_metadata = new MetadataFileManager(this.Name);
+			_metadata = new DataMetadataContainer(this.Name);
 			_multiplexer = new DataMultiplexer(this.Name);
 		}
 		#endregion
@@ -75,7 +74,7 @@ namespace Zongsoft.Data.Common
 			set => _executor = value ?? throw new ArgumentNullException();
 		}
 
-		public IDataMetadataManager Metadata
+		public IDataMetadataContainer Metadata
 		{
 			get => _metadata;
 			set => _metadata = value ?? throw new ArgumentNullException();

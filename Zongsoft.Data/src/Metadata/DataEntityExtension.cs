@@ -93,13 +93,7 @@ namespace Zongsoft.Data.Metadata
 			if(entity == null || string.IsNullOrEmpty(name))
 				return null;
 
-			if(name.Contains('.'))
-				return entity.Metadata.Manager.Entities.Get(name);
-
-			if(entity.Metadata.Entities.TryGet(entity.Namespace + '.' + name, out var found))
-				return found;
-
-			return entity.Metadata.Manager.Entities.Get(name);
+			return entity.Container.Entities[name];
 		}
 
 		/// <summary>
@@ -175,6 +169,12 @@ namespace Zongsoft.Data.Metadata
 
 			return _cache.GetOrAdd(entity, e => new EntityTokenCache(e)).GetTokens(type);
 		}
+
+		/// <summary>获取一个值，指示指定的数据实体中是否含有序号属性。</summary>
+		public static bool HasSequences(this IDataEntity entity)
+		{
+			return entity != null && _cache.TryGetValue(entity, out var token) && token.HasSequences;
+		}
 		#endregion
 
 		#region 嵌套子类
@@ -189,7 +189,23 @@ namespace Zongsoft.Data.Metadata
 			internal EntityTokenCache(IDataEntity entity)
 			{
 				_entity = entity;
+
+				var sequences = new List<IDataEntityPropertySequence>();
+
+				foreach(var property in entity.Properties)
+				{
+					if(property.IsSimplex && ((IDataEntitySimplexProperty)property).Sequence != null)
+						sequences.Add(((IDataEntitySimplexProperty)property).Sequence);
+				}
+
+				this.Sequences = sequences.ToArray();
+				this.HasSequences = sequences != null && sequences.Count > 0;
 			}
+			#endregion
+
+			#region 公共属性
+			public bool HasSequences { get; }
+			public IDataEntityPropertySequence[] Sequences { get; }
 			#endregion
 
 			#region 公共方法

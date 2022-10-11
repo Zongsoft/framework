@@ -28,20 +28,88 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
-	public class DataCommandCollection : KeyedCollection<string, IDataCommand>
+	public class DataCommandCollection : IDataCommandCollection
 	{
-		public DataCommandCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(IDataCommand item) => item.Name;
-	}
+		#region 成员字段
+		private readonly Dictionary<string, IDataCommand> _dictionary;
+		#endregion
 
-	public class DataCommandCollection<TCommand> : KeyedCollection<string, TCommand> where TCommand : IDataCommand
-	{
-		public DataCommandCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(TCommand item) => item.Name;
+		#region 构造函数
+		public DataCommandCollection() => _dictionary = new Dictionary<string, IDataCommand>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 公共属性
+		public int Count => _dictionary.Count;
+		bool ICollection<IDataCommand>.IsReadOnly => false;
+		public IDataCommand this[string name, string @namespace = null]
+		{
+			get
+			{
+				var key = string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+
+				if(_dictionary.TryGetValue(key, out var command))
+					return command;
+
+				throw new DataException($"The specified '{key}' command mapping does not exist.");
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public void Add(IDataCommand command) => _dictionary.Add(GetKey(command), command);
+		public void Clear() => _dictionary.Clear();
+		public bool Contains(IDataCommand command) => command != null && _dictionary.ContainsKey(GetKey(command));
+		public bool Remove(IDataCommand command) => command != null && _dictionary.Remove(GetKey(command));
+
+		public bool Contains(string name, string @namespace = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
+		}
+
+		public bool Remove(string name, string @namespace = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			return string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name) : _dictionary.Remove($"{@namespace}.{name}");
+		}
+
+		public bool TryAdd(IDataCommand command) => _dictionary.TryAdd(GetKey(command), command);
+		public bool TryGetValue(string name, out IDataCommand value) => _dictionary.TryGetValue(name, out value);
+		public bool TryGetValue(string name, string @namespace, out IDataCommand value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
+
+		public void CopyTo(IDataCommand[] array, int arrayIndex)
+		{
+			if(array == null)
+				throw new ArgumentNullException(nameof(array));
+			if(arrayIndex < 0 || arrayIndex >= array.Length)
+				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+			_dictionary.Values.CopyTo(array, arrayIndex);
+		}
+		#endregion
+
+		#region 枚举遍历
+		public IEnumerator<IDataCommand> GetEnumerator() => _dictionary.Values.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		#endregion
+
+		#region 私有方法
+		private static string GetKey(IDataCommand command)
+		{
+			if(command is null)
+				throw new ArgumentNullException(nameof(command));
+
+			return command.QualifiedName;
+		}
+		#endregion
 	}
 }
