@@ -36,11 +36,16 @@ namespace Zongsoft.Data.Metadata
 	public class DataCommandCollection : IDataCommandCollection
 	{
 		#region 成员字段
+		private readonly IDataMetadataContainer _container;
 		private readonly Dictionary<string, IDataCommand> _dictionary;
 		#endregion
 
 		#region 构造函数
-		public DataCommandCollection() => _dictionary = new Dictionary<string, IDataCommand>(StringComparer.OrdinalIgnoreCase);
+		public DataCommandCollection(IDataMetadataContainer container)
+		{
+			_container = container ?? throw new ArgumentNullException(nameof(container));
+			_dictionary = new Dictionary<string, IDataCommand>(StringComparer.OrdinalIgnoreCase);
+		}
 		#endregion
 
 		#region 公共属性
@@ -61,11 +66,28 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共方法
-		public void Add(IDataCommand command) => _dictionary.Add(GetKey(command), command);
+		public void Add(IDataCommand command)
+		{
+			CheckContainer(command);
+			_dictionary.Add(GetKey(command), command);
+			command.Container = _container;
+		}
+
+		public bool TryAdd(IDataCommand command)
+		{
+			CheckContainer(command);
+
+			if(_dictionary.TryAdd(GetKey(command), command))
+			{
+				command.Container = _container;
+				return true;
+			}
+
+			return false;
+		}
+
 		public void Clear() => _dictionary.Clear();
 		public bool Contains(IDataCommand command) => command != null && _dictionary.ContainsKey(GetKey(command));
-		public bool Remove(IDataCommand command) => command != null && _dictionary.Remove(GetKey(command));
-
 		public bool Contains(string name, string @namespace = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -74,15 +96,29 @@ namespace Zongsoft.Data.Metadata
 			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
 		}
 
+		public bool Remove(IDataCommand command)
+		{
+			if(command != null && _dictionary.Remove(GetKey(command), out var value))
+			{
+				value.Container = null;
+				return true;
+			}
+
+			return false;
+		}
+
 		public bool Remove(string name, string @namespace = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				return false;
 
-			return string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name) : _dictionary.Remove($"{@namespace}.{name}");
+			var result = string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name, out var command) : _dictionary.Remove($"{@namespace}.{name}", out command);
+			if(result)
+				command.Container = null;
+
+			return result;
 		}
 
-		public bool TryAdd(IDataCommand command) => _dictionary.TryAdd(GetKey(command), command);
 		public bool TryGetValue(string name, out IDataCommand value) => _dictionary.TryGetValue(name, out value);
 		public bool TryGetValue(string name, string @namespace, out IDataCommand value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
 
@@ -109,6 +145,12 @@ namespace Zongsoft.Data.Metadata
 				throw new ArgumentNullException(nameof(command));
 
 			return command.QualifiedName;
+		}
+
+		private void CheckContainer(IDataCommand command)
+		{
+			if(command != null && command.Container != null && !object.ReferenceEquals(_container, command.Container))
+				throw new DataException($"The specified '{command}' data command mapping did not detach the container.");
 		}
 		#endregion
 	}

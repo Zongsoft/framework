@@ -41,7 +41,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			if(container.Entities.TryAdd(entity))
 			{
-				entity.Container = container;
+				if(entity.Container == null)
+					entity.Container = container;
+
 				return;
 			}
 
@@ -73,7 +75,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			if(container.Commands.TryAdd(command))
 			{
-				command.Container = container;
+				if(command.Container == null)
+					command.Container = container;
+
 				return;
 			}
 

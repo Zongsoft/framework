@@ -36,11 +36,16 @@ namespace Zongsoft.Data.Metadata
 	public class DataEntityCollection : IDataEntityCollection
 	{
 		#region 成员字段
+		private readonly IDataMetadataContainer _container;
 		private readonly Dictionary<string, IDataEntity> _dictionary;
 		#endregion
 
 		#region 构造函数
-		public DataEntityCollection() => _dictionary = new Dictionary<string, IDataEntity>(StringComparer.OrdinalIgnoreCase);
+		public DataEntityCollection(IDataMetadataContainer container)
+		{
+			_container = container ?? throw new ArgumentNullException(nameof(container));
+			_dictionary = new Dictionary<string, IDataEntity>(StringComparer.OrdinalIgnoreCase);
+		}
 		#endregion
 
 		#region 公共属性
@@ -61,11 +66,28 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共方法
-		public void Add(IDataEntity entity) => _dictionary.Add(GetKey(entity), entity);
+		public void Add(IDataEntity entity)
+		{
+			CheckContainer(entity);
+			_dictionary.Add(GetKey(entity), entity);
+			entity.Container = _container;
+		}
+
+		public bool TryAdd(IDataEntity entity)
+		{
+			CheckContainer(entity);
+
+			if(_dictionary.TryAdd(GetKey(entity), entity))
+			{
+				entity.Container = _container;
+				return true;
+			}
+
+			return false;
+		}
+
 		public void Clear() => _dictionary.Clear();
 		public bool Contains(IDataEntity entity) => entity != null && _dictionary.ContainsKey(GetKey(entity));
-		public bool Remove(IDataEntity entity) => entity != null && _dictionary.Remove(GetKey(entity));
-
 		public bool Contains(string name, string @namespace = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -74,15 +96,29 @@ namespace Zongsoft.Data.Metadata
 			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
 		}
 
+		public bool Remove(IDataEntity entity)
+		{
+			if(entity != null && _dictionary.Remove(GetKey(entity), out var value))
+			{
+				value.Container = null;
+				return true;
+			}
+
+			return false;
+		}
+
 		public bool Remove(string name, string @namespace = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				return false;
 
-			return string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name) : _dictionary.Remove($"{@namespace}.{name}");
+			var result = string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name, out var entity) : _dictionary.Remove($"{@namespace}.{name}", out entity);
+			if(result)
+				entity.Container = null;
+
+			return result;
 		}
 
-		public bool TryAdd(IDataEntity entity) => _dictionary.TryAdd(GetKey(entity), entity);
 		public bool TryGetValue(string name, out IDataEntity value) => _dictionary.TryGetValue(name, out value);
 		public bool TryGetValue(string name, string @namespace, out IDataEntity value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
 
@@ -109,6 +145,12 @@ namespace Zongsoft.Data.Metadata
 				throw new ArgumentNullException(nameof(entity));
 
 			return entity.QualifiedName;
+		}
+
+		private void CheckContainer(IDataEntity entity)
+		{
+			if(entity != null && entity.Container != null && !object.ReferenceEquals(_container, entity.Container))
+				throw new DataException($"The specified '{entity}' data entity mapping did not detach the container.");
 		}
 		#endregion
 	}

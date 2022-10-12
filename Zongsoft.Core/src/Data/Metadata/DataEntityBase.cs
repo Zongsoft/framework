@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Metadata
 			get => _container;
 			set
 			{
-				if(_container is not null)
+				if(value is not null && _container is not null)
 					throw new InvalidOperationException();
 
 				_container = value;
@@ -90,11 +90,11 @@ namespace Zongsoft.Data.Metadata
 		/// <summary>获取或设置一个值，指示是否为不可变实体。</summary>
 		public bool Immutable { get; set; }
 
-		/// <summary>获取或设置数据实体的主键属性数组。</summary>
-		public IDataEntitySimplexProperty[] Key { get; set; }
-
 		/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
 		public bool HasKey => this.Key != null && this.Key.Length > 0;
+
+		/// <summary>获取或设置数据实体的主键。</summary>
+		public IDataEntitySimplexProperty[] Key { get; set; }
 
 		/// <summary>获取数据实体的属性元数据集合。</summary>
 		public IDataEntityPropertyCollection Properties { get; protected set; }

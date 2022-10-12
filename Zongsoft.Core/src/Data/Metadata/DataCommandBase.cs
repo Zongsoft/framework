@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Metadata
 			get => _container;
 			set
 			{
-				if(_container is not null)
+				if(value is not null && _container is not null)
 					throw new InvalidOperationException();
 
 				_container = value;

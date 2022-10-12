@@ -37,8 +37,8 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataCommand : IEquatable<IDataCommand>
 	{
-		/// <summary>获取所属的元数据容器。</summary>
-		IDataMetadataContainer Container { get; }
+		/// <summary>获取或设置所属的元数据容器。</summary>
+		IDataMetadataContainer Container { get; set; }
 
 		/// <summary>获取所属命名空间。</summary>
 		string Namespace { get; }

@@ -47,8 +47,8 @@ namespace Zongsoft.Data.Metadata
 		{
 			this.Name = name ?? string.Empty;
 			_locker = new ReaderWriterLockSlim();
-			_entities = new DataEntityCollection();
-			_commands = new DataCommandCollection();
+			_entities = new DataEntityCollection(this);
+			_commands = new DataCommandCollection(this);
 		}
 		#endregion
 
