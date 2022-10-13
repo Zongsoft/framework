@@ -5,6 +5,7 @@ var providerFiles = new string[]
 {
 	@"drivers/mssql/Zongsoft.Data.MsSql.sln",
 	@"drivers/mysql/Zongsoft.Data.MySql.sln",
+	@"drivers/sqlite/Zongsoft.Data.SQLite.sln",
 	@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln",
 };
 
