@@ -12,16 +12,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\..\src\Zongsoft.Data.csproj" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data">
+			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

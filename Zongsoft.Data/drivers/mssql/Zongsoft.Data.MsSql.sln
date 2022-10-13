@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29728.190
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Data.MsSql", "Zongsoft.Data.MsSql.csproj", "{670706AF-47A1-4773-91A6-39DFE9CBD56A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Data", "..\..\src\Zongsoft.Data.csproj", "{16495CA6-887B-4CCE-99D5-4FCAEA516425}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{670706AF-47A1-4773-91A6-39DFE9CBD56A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{670706AF-47A1-4773-91A6-39DFE9CBD56A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{670706AF-47A1-4773-91A6-39DFE9CBD56A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{16495CA6-887B-4CCE-99D5-4FCAEA516425}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{16495CA6-887B-4CCE-99D5-4FCAEA516425}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{16495CA6-887B-4CCE-99D5-4FCAEA516425}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{16495CA6-887B-4CCE-99D5-4FCAEA516425}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
