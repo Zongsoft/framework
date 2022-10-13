@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>5.0.0.0</Version>
+		<Product>Zongsoft Data Driver for SQLite</Product>
+		<Description>This is a data driver for SQLite of the Zongsoft data engine.</Description>
+		<RootNamespace>Zongsoft.Data.SQLite</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/sqlite</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.10" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data">
+			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+</Project>
