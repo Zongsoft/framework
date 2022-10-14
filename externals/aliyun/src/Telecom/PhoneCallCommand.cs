@@ -39,12 +39,14 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 	[CommandOption(KEY_TEMPLATE_OPTION, typeof(string), null, true, "Text.PhoneCallCommand.Options.Template")]
 	[CommandOption(KEY_PARAMETERS_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Parameters")]
 	[CommandOption(KEY_EXTRA_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Extra")]
+	[CommandOption(KEY_INTERACTIVE_OPTION, Description = "Text.PhoneCallCommand.Options.Interactive")]
 	public class PhoneCallCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
 		private const string KEY_TEMPLATE_OPTION = "template";
 		private const string KEY_PARAMETERS_OPTION = "parameters";
 		private const string KEY_EXTRA_OPTION = "extra";
+		private const string KEY_INTERACTIVE_OPTION = "interactive";
 		#endregion
 
 		#region 成员字段
@@ -69,17 +71,21 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 					context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 					context.Expression.Arguments,
 					context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
-					context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION))
+					context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION),
+					context.Expression.Options.Contains(KEY_INTERACTIVE_OPTION))
 			);
 		}
 
-		private async Task<Phone.Result[]> CallAsync(string templateCode, string[] phoneNumbers, object parameter, string extra)
+		private async Task<Phone.Result[]> CallAsync(string templateCode, string[] phoneNumbers, object parameter, string extra, bool interactive = false)
 		{
 			var results = new Phone.Result[phoneNumbers.Length];
 
 			for(int i = 0; i < phoneNumbers.Length; i++)
 			{
-				results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], parameter, extra);
+				if(interactive)
+					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], string.IsNullOrEmpty(extra) ? null : new Phone.InteractionArgument(extra), CancellationToken.None);
+				else
+					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], parameter, extra, CancellationToken.None);
 			}
 
 			return results;

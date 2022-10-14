@@ -187,6 +187,15 @@ namespace Zongsoft.Externals.Aliyun.Properties {
         }
         
         /// <summary>
+        ///   查找类似 是否启用语音交互功能。 的本地化字符串。
+        /// </summary>
+        internal static string Text_PhoneCallCommand_Options_Interactive {
+            get {
+                return ResourceManager.GetString("Text.PhoneCallCommand.Options.Interactive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 语音模板参数，参数之间使用逗号或竖线分隔，参数键值使用等号或冒号分隔（譬如：key1=value1,key2:value2）。 的本地化字符串。
         /// </summary>
         internal static string Text_PhoneCallCommand_Options_Parameters {
