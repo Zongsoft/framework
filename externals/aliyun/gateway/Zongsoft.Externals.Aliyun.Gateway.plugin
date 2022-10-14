@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Aliyun.Gateway"
+        title="Zongsoft.Externals.Aliyun.Gateway Plugin"
+        version="1.0"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2022. All rights reserved."
+        description="">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Aliyun.Gateway" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Externals.Aliyun" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Externals/Aliyun/Fallback">
+		<object name="Handlers" value="{static:Zongsoft.Externals.Aliyun.Gateway.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Aliyun.Gateway}" />
+	</extension>
+</plugin>

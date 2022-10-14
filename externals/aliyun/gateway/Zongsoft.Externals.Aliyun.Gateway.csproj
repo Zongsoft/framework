@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<Version>5.1.0.0</Version>
+		<Product>Zongsoft Aliyun Gateway Library</Product>
+		<Description>This is a library about Aliyun Gateway.</Description>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/aliyun/gateway</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Externals.Aliyun.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+Zongsoft.Externals.Aliyun.Gateway.option
+Zongsoft.Externals.Aliyun.Gateway.plugin
+
+bin/$(Edition)/$(Target)/Zongsoft.Externals.Aliyun.Gateway.*

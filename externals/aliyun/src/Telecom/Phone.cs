@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Text;
@@ -76,14 +77,105 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 		#region 公共方法
 		/// <summary>
+		/// 拨打交互电话到指定的手机号。
+		/// </summary>
+		/// <param name="name">指定的语音模板名称。</param>
+		/// <param name="destination">目标手机号。</param>
+		/// <param name="argument">交互语音呼叫参数对象。</param>
+		/// <param name="cancellation">异步操作的取消标记。</param>
+		/// <returns>返回的语音呼叫结果信息。</returns>
+		public async Task<Result> CallAsync(string name, string destination, InteractionArgument argument = null, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(string.IsNullOrWhiteSpace(destination))
+				throw new ArgumentNullException(nameof(destination));
+
+			//确认当前电信服务的配置
+			var options = this.EnsureOptions();
+
+			if(options.Voice == null)
+				throw new InvalidOperationException($"Missing required telecom voice option.");
+
+			if(options.Voice.Numbers == null || options.Voice.Numbers.Length == 0)
+				throw new InvalidOperationException($"Missing required telecom voice phone numbers in the option.");
+
+			var caller = options.Voice.Numbers[0];
+
+			if(options.Voice.Numbers.Length > 1)
+				caller = options.Voice.Numbers[Common.Randomizer.GenerateInt32() % options.Voice.Numbers.Length];
+
+			//获取指定名称的语音模板配置，如果获取失败则抛出异常
+			if(!options.Message.Templates.TryGet(name, out var template))
+				throw new InvalidOperationException($"The specified '{name}' voice template is not existed.");
+
+			//获取当前电信服务的凭证
+			var certificate = this.GetCertificate();
+
+			//生成服务请求的公共头集
+			var headers = this.GetCommonHeaders("SmartCall");
+
+			//添加必须的语音服务参数
+			headers.Add("VoiceCode", template.Code.StartsWith("TTS_") ? "$tts_code$" : template.Code);
+			headers.Add("CalledNumber", destination);
+			headers.Add("CalledShowNumber", caller.Trim());
+
+			if(argument != null)
+			{
+				if(argument.Parameter != null)
+				{
+					//尝试进行模板数据格式化
+					if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
+					{
+						argument.Parameter = formatter.Format(template.Name, argument.Parameter, argument.Extra);
+					}
+
+					if(argument.Parameter is string || argument.Parameter is System.Text.StringBuilder)
+						headers.Add("VoiceCodeParam", argument.Parameter.ToString());
+					else
+						headers.Add("VoiceCodeParam", Serializer.Json.Serialize(argument.Parameter, TextSerializationOptions.Camel()));
+				}
+
+				headers.Add("ActionCodeBreak", argument.CanBreak ? "true" : "false");
+				headers.Add("RecordFlag", argument.Recordable ? "true" : "false");
+
+				if(argument.Deadline > TimeSpan.Zero)
+					headers.Add("SessionTimeout", argument.Deadline.TotalSeconds.ToString());
+
+				if(!string.IsNullOrWhiteSpace(argument.Extra))
+				{
+					headers.Add("OutId", argument.Extra.Trim());
+					headers.Add("DynamicId", argument.Extra.Trim());
+				}
+			}
+
+			//构建语音拨号的HTTP请求消息包
+			var request = new HttpRequestMessage(HttpMethod.Get, "http://" + PHONE_VOICE_DOMAIN + "?" + Utility.GetQueryString(headers));
+			request.Headers.Accept.TryParseAdd("application/json");
+
+			//获取当前实例关联的HTTP客户端程序
+			var http = this.GetHttpClient(certificate);
+
+			//提交语音拨号请求
+			var response = await http.SendAsync(request, cancellation);
+
+			//确认返回状态码是成功的
+			response.EnsureSuccessStatusCode();
+
+			return await this.GetResultAsync(response.Content);
+		}
+
+		/// <summary>
 		/// 拨打电话到指定的手机号。
 		/// </summary>
 		/// <param name="name">指定的语音模板名称。</param>
 		/// <param name="destination">目标手机号。</param>
 		/// <param name="parameter">语音呼叫模板参数对象。</param>
 		/// <param name="extra">扩展附加数据，通常表示特定的业务数据。</param>
+		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回的语音呼叫结果信息。</returns>
-		public async Task<Result> CallAsync(string name, string destination, object parameter, string extra = null)
+		public async Task<Result> CallAsync(string name, string destination, object parameter, string extra = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -145,7 +237,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			var http = this.GetHttpClient(certificate);
 
 			//提交语音拨号请求
-			var response = await http.SendAsync(request);
+			var response = await http.SendAsync(request, cancellation);
 
 			//确认返回状态码是成功的
 			response.EnsureSuccessStatusCode();
@@ -161,8 +253,9 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		/// <param name="parameter">短信模板参数对象。</param>
 		/// <param name="scheme">短信签名，如果为空或空字符串则使用指定模板中的签名。</param>
 		/// <param name="extra">扩展附加数据，通常表示特定的业务数据。</param>
+		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回的短信发送结果信息。</returns>
-		public async Task<Result> SendAsync(string name, IEnumerable<string> destinations, object parameter, string scheme = null, string extra = null)
+		public async Task<Result> SendAsync(string name, IEnumerable<string> destinations, object parameter, string scheme = null, string extra = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -221,7 +314,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			var http = this.GetHttpClient(certificate);
 
 			//提交短信发送请求
-			var response = await http.SendAsync(request);
+			var response = await http.SendAsync(request, cancellation);
 
 			//确认返回状态码是成功的
 			response.EnsureSuccessStatusCode();
@@ -285,7 +378,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 			if(string.Equals(content.Headers.ContentType.MediaType, "application/json", StringComparison.OrdinalIgnoreCase) ||
 			   string.Equals(content.Headers.ContentType.MediaType, "text/json", StringComparison.OrdinalIgnoreCase))
-				return Zongsoft.Serialization.Serializer.Json.Deserialize<Result>(text);
+				return Serializer.Json.Deserialize<Result>(text);
 
 			return new Result("Unknown", text);
 		}
@@ -300,19 +393,49 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 结果结构
 		public struct Result
 		{
-			public Result(string code, string message)
+			public Result(string code, string message, string identifier = null)
 			{
 				this.Code = code;
 				this.Message = message;
+				this.Identifier = identifier;
 			}
 
 			public string Code { get; set; }
 			public string Message { get; set; }
 
+			[SerializationMember("BizId")]
+			[System.Text.Json.Serialization.JsonPropertyName("BizId")]
+			public string Identifier { get; set; }
+
 			public override string ToString()
 			{
 				return "[" + this.Code + "]" + this.Message;
 			}
+		}
+
+		public class InteractionArgument
+		{
+			public InteractionArgument(string extra = null)
+			{
+				this.Extra = extra;
+				this.CanBreak = true;
+				this.Recordable = false;
+			}
+
+			/// <summary>获取或设置一个值，指示是否启用录音。</summary>
+			public bool Recordable { get; set; }
+
+			/// <summary>获取或设置一个值，指示是否允许本次语音播放被打断。</summary>
+			public bool CanBreak { get; set; }
+
+			/// <summary>获取或设置最长通话时长。</summary>
+			public TimeSpan Deadline { get; set; }
+
+			/// <summary>获取或设置附加参数，该参数在回调中会被原样返回。</summary>
+			public string Extra { get; set; }
+
+			/// <summary>获取或设置模板参数。</summary>
+			public object Parameter { get; set; }
 		}
 		#endregion
 	}
