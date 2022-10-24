@@ -6,6 +6,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Remove="benchmarks\**" />
+		<EmbeddedResource Remove="benchmarks\**" />
+		<None Remove="benchmarks\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Remove="Data\SchemaTest.cs" />
 		<Compile Remove="IO\FileSystemTest.cs" />
 	</ItemGroup>
