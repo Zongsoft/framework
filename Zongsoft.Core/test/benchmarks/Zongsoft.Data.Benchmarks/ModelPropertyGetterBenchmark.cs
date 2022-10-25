@@ -11,7 +11,7 @@ namespace Zongsoft.Data.Benchmarks
 #elif NET6_0
 	[SimpleJob(RuntimeMoniker.Net60, 1, 0, 3)]
 #endif
-	[MinColumn, MaxColumn, MeanColumn, MedianColumn]
+	[MemoryDiagnoser]
 	[RPlotExporter, HtmlExporter, MarkdownExporter]
 	public class ModelPropertyGetterBenchmark
 	{
