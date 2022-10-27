@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.OpenXml"
+        title="Zongsoft.Externals.OpenXml Plugin"
+        author="Zongsoft Studio"
+        version="2.0"
+        description="Create by: Popeye Zhong at 2022-10-25" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.OpenXml" />
+		</assemblies>
+	</manifest>
+</plugin>

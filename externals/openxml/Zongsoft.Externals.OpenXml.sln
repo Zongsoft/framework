@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.OpenXml", "src\Zongsoft.Externals.OpenXml.csproj", "{7A3F123A-38A0-4509-86E0-2D80152C1C0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Externals.OpenXml.Tests", "test\Zongsoft.Externals.OpenXml.Tests.csproj", "{04554A97-3B1C-46B8-AC37-40BD84EF2360}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A3F123A-38A0-4509-86E0-2D80152C1C0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3F123A-38A0-4509-86E0-2D80152C1C0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3F123A-38A0-4509-86E0-2D80152C1C0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3F123A-38A0-4509-86E0-2D80152C1C0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04554A97-3B1C-46B8-AC37-40BD84EF2360}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04554A97-3B1C-46B8-AC37-40BD84EF2360}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04554A97-3B1C-46B8-AC37-40BD84EF2360}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04554A97-3B1C-46B8-AC37-40BD84EF2360}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66A01364-0195-41E0-9C92-993785028919}
+	EndGlobalSection
+EndGlobal
