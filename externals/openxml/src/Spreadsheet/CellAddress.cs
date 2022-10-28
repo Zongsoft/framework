@@ -32,34 +32,50 @@ using System.Buffers;
 
 namespace Zongsoft.Externals.OpenXml.Spreadsheet
 {
+	/// <summary>
+	/// 表示单元格地址的结构。
+	/// </summary>
 	public readonly struct CellAddress : IEquatable<CellAddress>
 	{
 		#region 公共字段
-		public readonly int Row;
-		public readonly int Column;
+		private readonly int _row;
+		private readonly int _column;
 		#endregion
 
 		#region 构造函数
+		/// <summary>构建单元格地址结构。</summary>
+		/// <param name="address">指定的单元格地址文本，譬如：<c>A1</c>、<c>AC100</c>。</param>
 		public CellAddress(string address)
 		{
 			if(string.IsNullOrEmpty(address))
 			{
-				this.Row = 0;
-				this.Column = 0;
+				_row = 0;
+				_column = 0;
 			}
 			else
 			{
 				(var row, var column) = ParseCore(address, true);
-				this.Row = row;
-				this.Column = column;
+				_row = row;
+				_column = column;
 			}
 		}
 
+		/// <summary>构建单元格地址结构。</summary>
+		/// <param name="row">指定的单元格行号(基于<c>1</c>)。</param>
+		/// <param name="column">指定的单元格列号(基于<c>1</c>)。</param>
 		public CellAddress(int row, int column)
 		{
-			this.Row = row > 0 ? row : 0;
-			this.Column = column > 0 ? column : 0;
+			_row = row > 0 ? row - 1 : 0;
+			_column = column > 0 ? column - 1: 0;
 		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取单元格的行号（基于<c>1</c>）。</summary>
+		public int Row => _row + 1;
+
+		/// <summary>获取单元格的列号（基于<c>1</c>）。</summary>
+		public int Column => _column + 1;
 		#endregion
 
 		#region 解析方法
@@ -116,15 +132,18 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		#endregion
 
 		#region 重写方法
-		public bool Equals(CellAddress other) => this.Row == other.Row && this.Column == other.Column;
+		public bool Equals(CellAddress other) => _row == other._row && _column == other._column;
 		public override bool Equals(object obj) => obj is CellAddress other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Row, this.Column);
-		public override string ToString() => GetColumnName(this.Column) + this.Row.ToString();
+		public override int GetHashCode() => HashCode.Combine(_row, _column);
+		public override string ToString() => $"{GetColumnName(_column)}{(_row + 1)}";
 		#endregion
 
 		#region 符号重写
 		public static bool operator ==(CellAddress left, CellAddress right) => left.Equals(right);
 		public static bool operator !=(CellAddress left, CellAddress right) => !(left == right);
+
+		public static implicit operator string (CellAddress address) => $"{GetColumnName(address._column)}{(address._row + 1)}";
+		public static implicit operator CellAddress(string address) => Parse(address);
 		#endregion
 
 		#region 私有方法
@@ -139,13 +158,13 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 
 			try
 			{
-				while(value > 26)
+				while(value > 25)
 				{
 					if(round >= result.Length - 1)
 						throw new ArgumentOutOfRangeException(nameof(column));
 
-					result[^++round] = (char)('A' + (value % 27));
-					value /= 27;
+					result[^++round] = (char)('A' + (value % 26));
+					value = (value / 26) - 1;
 				}
 
 				result[^(round + 1)] = (char)('A' + value);
