@@ -37,6 +37,10 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 	/// </summary>
 	public readonly struct CellAddress : IEquatable<CellAddress>
 	{
+		#region 常量定义
+		private const string INVALID_FORMAT_MESSAGE = @"Invalid cell address format.";
+		#endregion
+
 		#region 公共字段
 		private readonly int _row;
 		private readonly int _column;
@@ -102,32 +106,146 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		private static (int row, int column) ParseCore(string text, bool throwOnError = true)
 		{
 			if(string.IsNullOrEmpty(text))
-				return default;
-
-			var index = 0;
-			var span = text.AsSpan();
-
-			for(int i = 0; i < span.Length; i++)
 			{
-				var chr = span[i];
+				if(throwOnError)
+					throw new ArgumentNullException(nameof(text));
 
-				if((chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z'))
+				return default;
+			}
+
+			int row = -1, column = -1;
+			var context = new StateContext(text);
+
+			while(context.Move())
+			{
+				switch(context.State)
 				{
+					case State.None:
+						DoNone(ref context);
+						break;
+					case State.Column:
+						if(DoColumn(ref context, out var value))
+						{
+							if(!TryGetColumn(value, out column))
+							{
+								if(throwOnError)
+									throw new ArgumentException($"The specified '{value.ToString()}' is an invalid column name.");
+
+								return (-1, -1);
+							}
+						}
+
+						break;
+					case State.Row:
+						if(DoRow(ref context, out value))
+						{
+							if(!int.TryParse(value, out row))
+							{
+								if(throwOnError)
+									throw new ArgumentException($"The specified '{value.ToString()}' is an invalid row number.");
+
+								return (-1, -1);
+							}
+						}
+
+						break;
+					case State.Prefix:
+						DoPrefix(ref context);
+						break;
+					case State.Suffix:
+						DoSuffix(ref context);
+						break;
 				}
-				else if(chr >= '0' && chr <= '9')
+
+				if(context.HasError(out var message))
 				{
-					index = i;
-					break;
-				}
-				else
-				{
+					if(throwOnError)
+						throw new ArgumentException(message);
+
+					return (-1, -1);
 				}
 			}
 
-			if(index < 1)
-				;
+			if(context.Final(out var span) == State.Row)
+			{
+				if(!int.TryParse(span, out row))
+				{
+					if(throwOnError)
+						throw new ArgumentException($"The specified '{span.ToString()}' is an invalid row number.");
 
-			return default;
+					return (-1, -1);
+				}
+			}
+
+			return (row, column);
+
+			#region 状态转换
+			static bool DoNone(ref StateContext context)
+			{
+				if(context.IsLetter())
+					return context.Accept(State.Column);
+				if(context.IsWhitespace())
+					return context.Accept(State.Prefix);
+
+				return context.Error(INVALID_FORMAT_MESSAGE);
+			}
+
+			static bool DoColumn(ref StateContext context, out ReadOnlySpan<char> value)
+			{
+				if(context.IsLetter())
+					return context.Accept(out value);
+				if(context.IsDigit())
+					return context.Accept(State.Row, out value);
+
+				value = default;
+				return context.Error(INVALID_FORMAT_MESSAGE);
+			}
+
+			static bool DoRow(ref StateContext context, out ReadOnlySpan<char> value)
+			{
+				if(context.IsDigit())
+					return context.Accept(out value);
+				if(context.IsWhitespace())
+					return context.Accept(State.Suffix, out value);
+
+				value = default;
+				return context.Error(INVALID_FORMAT_MESSAGE);
+			}
+
+			static bool DoPrefix(ref StateContext context)
+			{
+				if(context.IsLetter())
+					return context.Accept(State.Column);
+				if(context.IsWhitespace())
+					return context.Accept();
+
+				return context.Error(INVALID_FORMAT_MESSAGE);
+			}
+
+			static bool DoSuffix(ref StateContext context)
+			{
+				return context.IsWhitespace() ? context.Accept() : context.Error(INVALID_FORMAT_MESSAGE);
+			}
+			#endregion
+		}
+
+		private static bool TryGetColumn(ReadOnlySpan<char> name, out int value)
+		{
+			value = 0;
+
+			for(int i = 0; i < name.Length; i++)
+			{
+				var chr = name[^(i + 1)];
+
+				if(chr >= 'A' && chr <= 'Z')
+					value += (chr - 'A') + (int)Math.Pow(26, i);
+				else if(chr >= 'a' && chr <= 'z')
+					value += (chr - 'a') + (int)Math.Pow(26, i);
+				else
+					return false;
+			}
+
+			return true;
 		}
 		#endregion
 
@@ -174,6 +292,96 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			{
 				ArrayPool<char>.Shared.Return(result);
 			}
+		}
+		#endregion
+
+		#region 嵌套结构
+		private enum State
+		{
+			None,
+			Row,
+			Column,
+			Prefix,
+			Suffix,
+		}
+
+		private ref struct StateContext
+		{
+			private int _index;
+			private int _position;
+			private string _error;
+			private State _state;
+			private ReadOnlySpan<char> _text;
+
+			public StateContext(string text)
+			{
+				_text = text.AsSpan();
+				_index = 0;
+				_position = -1;
+				_error = null;
+				_state = State.None;
+			}
+
+			public State State => _state;
+			public int Position => _position;
+
+			public bool Accept() => false;
+			public bool Accept(out ReadOnlySpan<char> value)
+			{
+				value = default;
+				return false;
+			}
+			public bool Accept(State state)
+			{
+				if(_state == state)
+					return false;
+
+				_index = _position;
+				_state = state;
+				return true;
+			}
+			public bool Accept(State state, out ReadOnlySpan<char> value)
+			{
+				value = default;
+
+				if(_state == state)
+					return false;
+
+				if(_index < _position)
+					value = _text.Slice(_index, _position - _index);
+
+				_index = _position;
+				_state = state;
+				return true;
+			}
+
+			public State Final(out ReadOnlySpan<char> value)
+			{
+				if(_index < _position)
+					value = _text.Slice(_index, Math.Min(_position, _text.Length) - _index);
+				else
+					value = default;
+
+				return _state;
+			}
+
+			public bool Error(string message)
+			{
+				var hasError = !string.IsNullOrEmpty(_error);
+				_error = message;
+				return hasError;
+			}
+
+			public bool HasError(out string message)
+			{
+				message = _error;
+				return !string.IsNullOrEmpty(message);
+			}
+
+			public bool Move() => ++_position < _text.Length;
+			public bool IsDigit() => char.IsDigit(_text[_position]);
+			public bool IsLetter() => char.IsLetter(_text[_position]);
+			public bool IsWhitespace() => char.IsWhiteSpace(_text[_position]);
 		}
 		#endregion
 	}
