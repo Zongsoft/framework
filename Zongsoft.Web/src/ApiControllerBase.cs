@@ -210,7 +210,7 @@ namespace Zongsoft.Web
 
 			if(this.OnCreate(model) > 0)
 			{
-				var keys = this.DataService.DataAccess.Metadata.Entities.Get(this.DataService.Name).Key;
+				var keys = this.DataService.DataAccess.Metadata.Entities[this.DataService.Name].Key;
 
 				if(keys == null || keys.Length == 0)
 					return this.CreatedAtAction(nameof(Get), this.RouteData.Values, model);
