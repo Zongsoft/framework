@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Buffers;
 using System.Threading.Tasks;
 
 namespace Zongsoft.IO
@@ -50,12 +51,20 @@ namespace Zongsoft.IO
 			if(!destination.CanWrite)
 				throw new NotSupportedException("The destination stream does not support writing.");
 
-			var buffer = new byte[Math.Max(bufferSize, BUFFER_SIZE)];
-			int bufferRead;
+			var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 
-			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+			try
 			{
-				destination.Write(buffer, 0, bufferRead);
+				int bufferRead;
+
+				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+				{
+					destination.Write(buffer, 0, bufferRead);
+				}
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(buffer);
 			}
 		}
 
@@ -69,12 +78,20 @@ namespace Zongsoft.IO
 			if(!destination.CanWrite)
 				throw new NotSupportedException("The destination stream does not support writing.");
 
-			var buffer = new byte[Math.Max(bufferSize, BUFFER_SIZE)];
-			int bufferRead;
+			var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 
-			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+			try
 			{
-				await destination.WriteAsync(buffer, 0, bufferRead);
+				int bufferRead;
+
+				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+				{
+					await destination.WriteAsync(buffer.AsMemory(0, bufferRead));
+				}
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(buffer);
 			}
 		}
 	}

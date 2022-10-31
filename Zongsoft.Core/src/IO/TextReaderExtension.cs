@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Buffers;
 using System.Threading.Tasks;
 
 namespace Zongsoft.IO
@@ -40,11 +41,7 @@ namespace Zongsoft.IO
 		private const int BUFFER_SIZE = 1024;
 		#endregion
 
-		public static void CopyTo(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
-		{
-			CopyTo(reader, destination, null, bufferSize);
-		}
-
+		public static void CopyTo(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyTo(reader, destination, null, bufferSize);
 		public static void CopyTo(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
 		{
 			if(reader == null)
@@ -58,21 +55,25 @@ namespace Zongsoft.IO
 			if(encoding == null)
 				encoding = Encoding.UTF8;
 
-			var buffer = new char[Math.Max(bufferSize, BUFFER_SIZE)];
-			int bufferRead;
+			var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 
-			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+			try
 			{
-				var bytes = encoding.GetBytes(buffer, 0, bufferRead);
-				destination.Write(bytes, 0, bytes.Length);
+				int bufferRead;
+
+				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+				{
+					var bytes = encoding.GetBytes(buffer, 0, bufferRead);
+					destination.Write(bytes, 0, bytes.Length);
+				}
+			}
+			finally
+			{
+				ArrayPool<char>.Shared.Return(buffer);
 			}
 		}
 
-		public static Task CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
-		{
-			return CopyToAsync(reader, destination, null, bufferSize);
-		}
-
+		public static Task CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyToAsync(reader, destination, null, bufferSize);
 		public static async Task CopyToAsync(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
 		{
 			if(reader == null)
@@ -86,13 +87,21 @@ namespace Zongsoft.IO
 			if(encoding == null)
 				encoding = Encoding.UTF8;
 
-			var buffer = new char[Math.Max(bufferSize, BUFFER_SIZE)];
-			int bufferRead;
+			var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 
-			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+			try
 			{
-				var bytes = encoding.GetBytes(buffer, 0, bufferRead);
-				await destination.WriteAsync(bytes, 0, bytes.Length);
+				int bufferRead;
+
+				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+				{
+					var bytes = encoding.GetBytes(buffer, 0, bufferRead);
+					await destination.WriteAsync(bytes);
+				}
+			}
+			finally
+			{
+				ArrayPool<char>.Shared.Return(buffer);
 			}
 		}
 	}
