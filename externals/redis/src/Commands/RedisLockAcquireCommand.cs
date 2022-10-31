@@ -71,7 +71,7 @@ namespace Zongsoft.Externals.Redis.Commands
 			{
 				var key = context.Expression.Arguments[i];
 				var locker = redis.AcquireAsync(key, expiry).AsTask().GetAwaiter().GetResult();
-				Print(context.Output, i + 1, key, locker, redis.Normalizer);
+				Print(context.Output, i + 1, key, locker, redis.Tokenizer);
 
 				if(locker != null)
 					lockers.Add(locker);
@@ -82,7 +82,7 @@ namespace Zongsoft.Externals.Redis.Commands
 		#endregion
 
 		#region 私有方法
-		private void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockNormalizer normalizer)
+		private void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockTokenizer tokenizer)
 		{
 			var content = CommandOutletContent.Create(CommandOutletColor.Gray, $"[{index}] ")
 				.Append(CommandOutletColor.DarkGreen, key);
@@ -93,16 +93,16 @@ namespace Zongsoft.Externals.Redis.Commands
 			}
 			else
 			{
-				content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(normalizer, locker.Token)}")
-					.Append(CommandOutletColor.DarkMagenta, $" {locker.Expiry}");
+				content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(tokenizer, locker.Token)}")
+				       .Append(CommandOutletColor.DarkMagenta, $" {locker.Expiry}");
 			}
 
 			output.WriteLine(content);
 		}
 
-		private string GetTokenString(IDistributedLockNormalizer normalizer, byte[] token)
+		private string GetTokenString(IDistributedLockTokenizer tokenizer, byte[] token)
 		{
-			return normalizer == null || token == null || token.Length == 0 ? null : normalizer.GetString(token);
+			return tokenizer == null || token == null || token.Length == 0 ? null : tokenizer.GetString(token);
 		}
 		#endregion
 	}

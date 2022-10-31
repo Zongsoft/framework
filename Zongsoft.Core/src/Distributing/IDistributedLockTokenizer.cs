@@ -31,27 +31,10 @@ using System;
 
 namespace Zongsoft.Distributing
 {
-	public class DistributedLockNormalizer
+	public interface IDistributedLockTokenizer
 	{
-		#region 单例字段
-		public static readonly IDistributedLockNormalizer Guid = new GuidNormalizer();
-		public static readonly IDistributedLockNormalizer Randon = new RandomNormalizer();
-		#endregion
-
-		#region 嵌套子类
-		private class GuidNormalizer : IDistributedLockNormalizer
-		{
-			public string Name { get => "Guid"; }
-			public ReadOnlyMemory<byte> Normalize() => System.Guid.NewGuid().ToByteArray();
-			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : (new Guid(value)).ToString();
-		}
-
-		private class RandomNormalizer : IDistributedLockNormalizer
-		{
-			public string Name { get => "Random"; }
-			public ReadOnlyMemory<byte> Normalize() => BitConverter.GetBytes((ulong)Zongsoft.Common.Randomizer.GenerateInt64());
-			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : BitConverter.ToUInt64(value).ToString();
-		}
-		#endregion
+		string Name { get; }
+		ReadOnlyMemory<byte> Tokenize();
+		string GetString(ReadOnlySpan<byte> value);
 	}
 }

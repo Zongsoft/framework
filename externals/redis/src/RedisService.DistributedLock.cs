@@ -44,7 +44,7 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 公共属性
-		public IDistributedLockNormalizer Normalizer { get; set; }
+		public IDistributedLockTokenizer Tokenizer { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -58,8 +58,8 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			var normalizer = this.Normalizer ??= DistributedLockNormalizer.Randon;
-			var token = normalizer.Normalize();
+			var tokenizer = this.Tokenizer ??= DistributedLockTokenizer.Random;
+			var token = tokenizer.Tokenize();
 
 			return await _database.StringSetAsync(key, token, duration, When.NotExists, CommandFlags.None) ?
 				new DistributedLock(this, key, token.ToArray(), DateTime.UtcNow.Add(duration)) : null;

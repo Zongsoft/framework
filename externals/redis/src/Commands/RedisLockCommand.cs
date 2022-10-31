@@ -47,7 +47,7 @@ namespace Zongsoft.Externals.Redis.Commands
 		protected override object OnExecute(CommandContext context)
 		{
 			var redis = RedisCommand.GetRedis(context.CommandNode);
-			var normalizer = redis?.Normalizer;
+			var normalizer = redis?.Tokenizer;
 
 			if(normalizer != null)
 				context.Output.WriteLine(normalizer.Name);

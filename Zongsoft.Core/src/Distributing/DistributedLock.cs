@@ -105,7 +105,7 @@ namespace Zongsoft.Distributing
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => $"{this.Key}@{this.Expiry}";
+		public override string ToString() => $"{this.Key}:{Convert.ToHexString(this.Token)}({this.Expiry})";
 		#endregion
 	}
 }

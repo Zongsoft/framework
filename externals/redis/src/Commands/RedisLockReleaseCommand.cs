@@ -63,7 +63,7 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length != 2)
 				return false;
 
-			return Print(context.Output, redis.ReleaseAsync(context.Expression.Arguments[0], GetToken(redis.Normalizer.Name, context.Expression.Arguments[1])).AsTask().GetAwaiter().GetResult());
+			return Print(context.Output, redis.ReleaseAsync(context.Expression.Arguments[0], GetToken(redis.Tokenizer.Name, context.Expression.Arguments[1])).AsTask().GetAwaiter().GetResult());
 		}
 		#endregion
 
