@@ -39,6 +39,7 @@ namespace Zongsoft.Components
 	/// 提供按权重调度功能的类。
 	/// </summary>
 	/// <typeparam name="T">加权元素的类型。</typeparam>
+	/// <remarks>本实现基于 Nginx 的加权轮调算法，详细说明请参考：<c>https://zongsoft.com/blog/zh-cn/zongsoft/smooth-weighted-round-robin-balancing</c>。</remarks>
 	public class Weighter<T> : IEnumerable<T>, IDisposable
 	{
 		#region 常量定义

@@ -40,35 +40,32 @@ namespace Zongsoft.Caching
 			this.Reason = reason;
 			this.Key = key;
 			this.NewValue = newValue;
-            this.OldValue = oldValue;
-        }
-        #endregion
+			this.OldValue = oldValue;
+		}
+		#endregion
 
-        #region 公共属性
-        public CacheChangedReason Reason { get; }
-
+		#region 公共属性
 		public string Key { get; }
-
 		public object OldValue { get; }
-
 		public object NewValue { get; }
-        #endregion
+		public CacheChangedReason Reason { get; }
+		#endregion
 
-        #region 静态方法
-        public static CacheChangedEventArgs Updated(string key, object newValue, object oldValue)
-        {
-            return new CacheChangedEventArgs(CacheChangedReason.Updated, key, oldValue: oldValue, newValue:newValue);
-        }
+		#region 静态方法
+		public static CacheChangedEventArgs Updated(string key, object newValue, object oldValue)
+		{
+			return new CacheChangedEventArgs(CacheChangedReason.Updated, key, oldValue: oldValue, newValue:newValue);
+		}
 
-        public static CacheChangedEventArgs Removed(string key, object value)
-        {
-            return new CacheChangedEventArgs(CacheChangedReason.Removed, key, oldValue: value);
-        }
+		public static CacheChangedEventArgs Removed(string key, object value)
+		{
+			return new CacheChangedEventArgs(CacheChangedReason.Removed, key, oldValue: value);
+		}
 
-        public static CacheChangedEventArgs Expired(string key, object value)
-        {
-            return new CacheChangedEventArgs(CacheChangedReason.Expired, key, oldValue: value);
-        }
+		public static CacheChangedEventArgs Expired(string key, object value)
+		{
+			return new CacheChangedEventArgs(CacheChangedReason.Expired, key, oldValue: value);
+		}
 		#endregion
 	}
 }

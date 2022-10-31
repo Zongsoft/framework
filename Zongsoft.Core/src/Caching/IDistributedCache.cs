@@ -35,7 +35,7 @@ using System.Threading.Tasks;
 namespace Zongsoft.Caching
 {
 	/// <summary>
-	/// 表示分布式缓存容的接口。
+	/// 表示分布式缓存容器的接口。
 	/// </summary>
 	public interface IDistributedCache
 	{
