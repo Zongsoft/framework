@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -32,10 +32,10 @@ using System.ComponentModel;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
-    [DisplayName("Text.RedisCountCommand.Name")]
-    [Description("Text.RedisCountCommand.Description")]
-    public class RedisCountCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
-    {
+	[DisplayName("Text.RedisCountCommand.Name")]
+	[Description("Text.RedisCountCommand.Description")]
+	public class RedisCountCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	{
 		#region 构造函数
 		public RedisCountCommand() : base("Count")
 		{

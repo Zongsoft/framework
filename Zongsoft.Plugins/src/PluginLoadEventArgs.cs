@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -36,16 +36,12 @@ namespace Zongsoft.Plugins
 		#region 构造函数
 		public PluginLoadEventArgs(PluginOptions options)
 		{
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+			this.Options = options ?? throw new ArgumentNullException(nameof(options));
 		}
 		#endregion
 
 		#region 公共属性
-		public PluginOptions Options
-		{
-			get;
-			private set;
-		}
+		public PluginOptions Options { get; }
 		#endregion
 	}
 }

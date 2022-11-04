@@ -33,10 +33,10 @@ namespace Zongsoft.Plugins
 {
 	public class PluginMountEventArgs : EventArgs
 	{
-        #region 构造函数
-        public PluginMountEventArgs(string path, object value)
+		#region 构造函数
+		public PluginMountEventArgs(string path, object value)
 		{
-			if(string.IsNullOrEmpty(path))
+			if (string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
 
 			this.Path = path;
@@ -46,8 +46,7 @@ namespace Zongsoft.Plugins
 
 		#region 公共属性
 		public string Path { get; }
-
-        public object Value { get; }
-        #endregion
-    }
+		public object Value { get; }
+		#endregion
+	}
 }

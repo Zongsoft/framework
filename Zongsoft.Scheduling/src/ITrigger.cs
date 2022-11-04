@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -34,8 +34,8 @@ namespace Zongsoft.Scheduling
 	/// <summary>
 	/// 表示时间触发器的接口。
 	/// </summary>
-    public interface ITrigger : IEquatable<ITrigger>
-    {
+	public interface ITrigger : IEquatable<ITrigger>
+	{
 		#region 属性定义
 		/// <summary>获取触发器的表达式文本。</summary>
 		string Expression { get; }

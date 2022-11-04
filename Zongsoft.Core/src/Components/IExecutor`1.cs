@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -33,8 +33,8 @@ using System.Threading.Tasks;
 namespace Zongsoft.Components
 {
 	public interface IExecutor<in TContext> : IExecutor
-    {
-        void Execute(TContext context);
-        ValueTask ExecuteAsync(TContext context);
-    }
+	{
+		void Execute(TContext context);
+		ValueTask ExecuteAsync(TContext context);
+	}
 }

@@ -34,7 +34,7 @@ namespace Zongsoft.Services
 {
 	public interface IApplicationEnvironment
 	{
-        string Name { get; }
-        IDictionary<string, object> Properties { get; }
+		string Name { get; }
+		IDictionary<string, object> Properties { get; }
 	}
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -40,19 +40,19 @@ namespace Zongsoft.Configuration
 		#region 解析方法
 		public override object Parse(ParserContext context)
 		{
-			if(string.IsNullOrWhiteSpace(context.Text))
+			if (string.IsNullOrWhiteSpace(context.Text))
 				return null;
 
-            var expression = Collections.HierarchicalExpression.Parse(context.Text);
+			var expression = Collections.HierarchicalExpression.Parse(context.Text);
 
-			if(expression != null)
+			if (expression != null)
 			{
 				object target = ApplicationContext.Current.Configuration.GetOption(context.MemberType, expression.Path);
 
-                if(target != null && expression.Accessor != null)
-                    return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
-                else
-                    return target;
+				if (target != null && expression.Accessor != null)
+					return Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(expression.Accessor, target);
+				else
+					return target;
 			}
 
 			return null;

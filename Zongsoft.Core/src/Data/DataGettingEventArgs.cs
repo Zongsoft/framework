@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -44,13 +44,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，表示是否取消当前操作。
-		/// </summary>
-		public bool Cancel
-        {
-            get; set;
-        }
+		/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+		public bool Cancel { get; set; }
 		#endregion
 	}
 }

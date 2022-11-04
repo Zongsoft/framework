@@ -53,14 +53,14 @@ namespace Zongsoft.Security.Web.Controllers
 		private IAuthorizer _authorizer;
 		private IMemberProvider<IRole, IUser> _memberProvider;
 		private IPermissionProvider _permissionProvider;
-        #endregion
+		#endregion
 
-        #region 构造函数
-        protected UserControllerBase() { }
-        #endregion
+		#region 构造函数
+		protected UserControllerBase() { }
+		#endregion
 
-        #region 公共属性
-        [ServiceDependency(IsRequired = true)]
+		#region 公共属性
+		[ServiceDependency(IsRequired = true)]
 		public IAuthorizer Authorizer
 		{
 			get => _authorizer;
@@ -102,9 +102,9 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet("{identity?}")]
 		[HttpGet("{namespace:required}:{identity:required}")]
-		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging page = null)
+		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery] Paging page = null)
 		{
-			if(string.IsNullOrEmpty(identity) || identity == "*")
+			if (string.IsNullOrEmpty(identity) || identity == "*")
 				return Task.FromResult(WebUtility.Paginate(this.UserProvider.GetUsers(@namespace, page ?? Paging.Page(1))));
 
 			var result = this.UserProvider.GetUser(identity, @namespace);
@@ -117,7 +117,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("{id}")]
 		public Task<IActionResult> Delete(uint id)
 		{
-			if(id == 0)
+			if (id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.UserProvider.Delete(id) > 0 ?
@@ -130,12 +130,12 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var ids = Common.StringExtension.Slice<uint>(content, new[] { ',', '|' }, uint.TryParse).ToArray();
 
-			if(ids == null || ids.Length == 0)
+			if (ids == null || ids.Length == 0)
 				return this.BadRequest();
 
 			return this.UserProvider.Delete(ids) > 0 ? this.NoContent() : this.NotFound();
@@ -143,7 +143,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[AllowAnonymous]
 		[HttpPost("Register")]
-		public IActionResult Register([FromBody]RegisterEntity entity, [FromQuery]string token)
+		public IActionResult Register([FromBody] RegisterEntity entity, [FromQuery] string token)
 		{
 			var user = this.UserProvider.Register(entity.Namespace, entity.Identity, token, entity.Password, entity.Parameters);
 			return user == null ? this.NoContent() : this.Ok(user);
@@ -153,15 +153,15 @@ namespace Zongsoft.Security.Web.Controllers
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status409Conflict)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public ActionResult<TUser> Create([FromBody]TUser model)
+		public ActionResult<TUser> Create([FromBody] TUser model)
 		{
-			if(model == null)
+			if (model == null)
 				return this.BadRequest();
 
 			//从请求消息的头部获取指定的用户密码
 			this.Request.Headers.TryGetValue("x-password", out var password);
 
-			if(this.UserProvider.Create(model, password))
+			if (this.UserProvider.Create(model, password))
 				return this.CreatedAtAction(nameof(Get), new { id = model.UserId }, model);
 
 			return this.Conflict();
@@ -169,7 +169,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id?}")]
 		[HttpPatch("{id?}")]
-		public Task<IActionResult> Update(uint id, [FromBody]TUser model)
+		public Task<IActionResult> Update(uint id, [FromBody] TUser model)
 		{
 			return this.UserProvider.Update(id, model) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
@@ -182,7 +182,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetNamespace(id, content) ? this.NoContent() : this.NotFound();
@@ -194,7 +194,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetName(id, content) ? this.NoContent() : this.NotFound();
@@ -207,7 +207,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetFullName(id, content) ? this.NoContent() : this.NotFound();
@@ -219,7 +219,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetEmail(id, content, true) ? this.NoContent() : this.NotFound();
@@ -231,7 +231,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetPhone(id, content, true) ? this.NoContent() : this.NotFound();
@@ -243,7 +243,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.UserProvider.SetDescription(id, content) ? this.NoContent() : this.NotFound();
@@ -273,7 +273,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("exists/{namespace}:{identity}")]
 		public Task<IActionResult> Exists(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if (string.IsNullOrWhiteSpace(identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.UserProvider.Exists(identity, @namespace) ?
@@ -283,7 +283,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[AllowAnonymous]
 		[HttpPost("{id}/Verify/{type:required}")]
-		public Task<IActionResult> Verify(uint id, string type, [FromQuery]string secret)
+		public Task<IActionResult> Verify(uint id, string type, [FromQuery] string secret)
 		{
 			return this.UserProvider.Verify(id, type, secret) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
@@ -306,7 +306,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Password.Has/{namespace:required}:{identity}")]
 		public Task<IActionResult> HasPassword(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if (string.IsNullOrWhiteSpace(identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.UserProvider.HasPassword(identity, @namespace) ?
@@ -317,7 +317,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[Authorize]
 		[HttpPut("{id}/Password.Change")]
 		[HttpPut("Password.Change")]
-		public Task<IActionResult> ChangePassword(uint id, [FromBody]PasswordChangeEntity password)
+		public Task<IActionResult> ChangePassword(uint id, [FromBody] PasswordChangeEntity password)
 		{
 			return this.UserProvider.ChangePassword(id, password.OldPassword, password.NewPassword) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
@@ -329,7 +329,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPost("Password.Forget/{namespace:required}:{identity}")]
 		public Task<IActionResult> ForgetPassword(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if (string.IsNullOrWhiteSpace(identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			var id = this.UserProvider.ForgetPassword(identity, @namespace);
@@ -342,9 +342,9 @@ namespace Zongsoft.Security.Web.Controllers
 		[AllowAnonymous]
 		[HttpPost("{id}/Password.Reset")]
 		[HttpPost("Password.Reset")]
-		public Task<IActionResult> ResetPassword(uint id, [FromBody]PasswordResetEntity content)
+		public Task<IActionResult> ResetPassword(uint id, [FromBody] PasswordResetEntity content)
 		{
-			if(string.IsNullOrWhiteSpace(content.Secret))
+			if (string.IsNullOrWhiteSpace(content.Secret))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.UserProvider.ResetPassword(id, content.Secret, content.Password) ?
@@ -355,12 +355,12 @@ namespace Zongsoft.Security.Web.Controllers
 		[AllowAnonymous]
 		[HttpPost("Password.Reset/{identity}")]
 		[HttpPost("Password.Reset/{namespace:required}:{identity}")]
-		public Task<IActionResult> ResetPassword(string @namespace, string identity, [FromBody]PasswordResetEntity content)
+		public Task<IActionResult> ResetPassword(string @namespace, string identity, [FromBody] PasswordResetEntity content)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if (string.IsNullOrWhiteSpace(identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			if(content.PasswordAnswers == null || content.PasswordAnswers.Length < 3)
+			if (content.PasswordAnswers == null || content.PasswordAnswers.Length < 3)
 				Task.FromResult(this.BadRequest());
 
 			return this.UserProvider.ResetPassword(identity, @namespace, content.PasswordAnswers, content.Password) ?
@@ -375,13 +375,13 @@ namespace Zongsoft.Security.Web.Controllers
 			var result = this.UserProvider.GetPasswordQuestions(id);
 
 			//如果返回的结果为空表示指定的表示的用户不存在
-			if(result == null)
+			if (result == null)
 				return Task.FromResult((IActionResult)this.NotFound());
 
 			//如果问题数组内容不是全空，则返回该数组
-			for(int i = 0; i < result.Length; i++)
+			for (int i = 0; i < result.Length; i++)
 			{
-				if(!string.IsNullOrEmpty(result[i]))
+				if (!string.IsNullOrEmpty(result[i]))
 					return Task.FromResult((IActionResult)this.Ok(result));
 			}
 
@@ -394,19 +394,19 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Password.Questions/{namespace:required}:{identity}")]
 		public Task<IActionResult> GetPasswordQuestions(string @namespace, string identity)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if (string.IsNullOrWhiteSpace(identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			var result = this.UserProvider.GetPasswordQuestions(identity, @namespace);
 
 			//如果返回的结果为空表示指定的表示的用户不存在
-			if(result == null)
+			if (result == null)
 				return Task.FromResult((IActionResult)this.NotFound());
 
 			//如果问题数组内容不是全空，则返回该数组
-			for(int i = 0; i < result.Length; i++)
+			for (int i = 0; i < result.Length; i++)
 			{
-				if(!string.IsNullOrEmpty(result[i]))
+				if (!string.IsNullOrEmpty(result[i]))
 					return Task.FromResult((IActionResult)this.Ok(result));
 			}
 
@@ -416,7 +416,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Password.Answers")]
 		[HttpPut("Password.Answers")]
-		public Task<IActionResult> SetPasswordQuestionsAndAnswers(uint id, [FromBody]PasswordQuestionsAndAnswersEntity content)
+		public Task<IActionResult> SetPasswordQuestionsAndAnswers(uint id, [FromBody] PasswordQuestionsAndAnswersEntity content)
 		{
 			return this.UserProvider.SetPasswordQuestionsAndAnswers(id, content.Password, content.Questions, content.Answers) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
@@ -440,7 +440,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Roles/{id?}")]
 		public Task<IActionResult> GetRoles(uint id = 0)
 		{
-			if(id == 0)
+			if (id == 0)
 				id = this.User.Identity.GetIdentifier<uint>();
 
 			var roles = this.MemberProvider.GetRoles(id, MemberType.User);
@@ -456,7 +456,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if(string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var members = Zongsoft.Common.StringExtension.Slice<uint>(content, ',', uint.TryParse).Select(roleId => new Member(roleId, id, MemberType.User));
@@ -467,7 +467,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("In/{roles:required}")]
 		public Task<IActionResult> InRole(uint id, string roles)
 		{
-			if(string.IsNullOrWhiteSpace(roles))
+			if (string.IsNullOrWhiteSpace(roles))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.Authorizer.InRoles(id, Common.StringExtension.Slice(roles, ',', '|').ToArray()) ?
@@ -481,9 +481,9 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Authorize/{schemaId}:{actionId}")]
 		public Task<IActionResult> Authorize(uint id, string schemaId, string actionId)
 		{
-			if(string.IsNullOrWhiteSpace(schemaId))
+			if (string.IsNullOrWhiteSpace(schemaId))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing schema for the authorize operation."));
-			if(string.IsNullOrWhiteSpace(actionId))
+			if (string.IsNullOrWhiteSpace(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing action for the authorize operation."));
 
 			return this.Authorizer.Authorize(id, schemaId, actionId) ?
@@ -495,7 +495,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Authorizes/{id?}")]
 		public IActionResult Authorizes(uint id = 0)
 		{
-			if(id == 0)
+			if (id == 0)
 				id = this.User.Identity.GetIdentifier<uint>();
 
 			return this.Ok(this.Authorizer.Authorizes(id, MemberType.User).Select(p =>
@@ -520,7 +520,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permissions")]
 		[HttpPut("Permissions")]
-		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<Permission> permissions, [FromQuery]bool reset = false)
+		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<Permission> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissions), new { id }, null)) :
@@ -531,7 +531,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("Permission/{schemaId}:{actionId}")]
 		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId = null)
 		{
-			if(string.IsNullOrWhiteSpace(schemaId) || string.IsNullOrWhiteSpace(actionId))
+			if (string.IsNullOrWhiteSpace(schemaId) || string.IsNullOrWhiteSpace(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId, actionId) > 0 ?
@@ -563,7 +563,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permission.Filters")]
 		[HttpPut("Permission.Filters")]
-		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilter> permissions, [FromQuery]bool reset = false)
+		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilter> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissionFilters), new { id }, null)) :
@@ -574,7 +574,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("Permission.Filter/{schemaId}:{actionId}")]
 		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
 		{
-			if(string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
+			if (string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId, actionId) > 0 ?

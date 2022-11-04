@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -36,10 +36,10 @@ namespace Zongsoft.Components
 {
 	public interface IExecutor
 	{
-        IHandler Handler { get; set; }
-        ICollection<IExecutionFilter> Filters { get; }
+		IHandler Handler { get; set; }
+		ICollection<IExecutionFilter> Filters { get; }
 
-        Common.OperationResult Execute(object context);
-        ValueTask<Common.OperationResult> ExecuteAsync(object context, CancellationToken cancellation = default);
+		Common.OperationResult Execute(object context);
+		ValueTask<Common.OperationResult> ExecuteAsync(object context, CancellationToken cancellation = default);
 	}
 }

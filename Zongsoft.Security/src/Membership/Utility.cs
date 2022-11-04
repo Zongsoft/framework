@@ -35,8 +35,8 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Security.Membership
 {
-    public static class Utility
-    {
+	public static class Utility
+	{
 		internal static Condition GetIdentityCondition(string identity)
 		{
 			return GetIdentityCondition(identity, out _);
