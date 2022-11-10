@@ -99,12 +99,10 @@ namespace Zongsoft.Data
 						DoSuspense(ref context);
 						break;
 					case State.Key:
-						DoKey(ref context, out part);
-						key = part.IsEmpty ? null : part.ToString();
+						DoKey(ref context, out key);
 						break;
 					case State.Value:
-						DoValue(ref context, out part);
-						value = part.IsEmpty ? null : part.ToString();
+						DoValue(ref context, out value);
 						break;
 				}
 
@@ -174,21 +172,28 @@ namespace Zongsoft.Data
 			}
 		}
 
-		private static void DoKey(ref CriteriaParserContext context, out ReadOnlySpan<char> key)
+		private static void DoKey(ref CriteriaParserContext context, out string key)
 		{
+			ReadOnlySpan<char> part;
+
 			switch(context.Character)
 			{
 				case ':':
-					context.Reset(State.Value, out key);
+					context.Reset(State.Value, out part);
+					key = part.IsEmpty ? null : part.ToString();
 					break;
 				case '+':
-					context.Reset(State.None, out key);
+					context.Reset(State.None, out part);
+					key = part.IsEmpty ? null : part.ToString();
 					break;
 				default:
 					key = default;
 
 					if(context.IsWhitespace)
-						context.Reset(State.Suspense, out key);
+					{
+						context.Reset(State.Suspense, out part);
+						key = part.IsEmpty ? null : part.ToString();
+					}
 					else if(char.IsLetterOrDigit(context.Character) || context.Character == '_' || context.Character == '.')
 						context.Accept();
 					else
@@ -197,7 +202,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		private static void DoValue(ref CriteriaParserContext context, out ReadOnlySpan<char> value)
+		private static void DoValue(ref CriteriaParserContext context, out string value)
 		{
 			value = default;
 
@@ -207,7 +212,10 @@ namespace Zongsoft.Data
 					if(context.HasFlags(Flags.Escaping))
 						context.Accept();
 					else
-						context.Reset(State.None, out value);
+					{
+						context.Reset(State.None, out var part);
+						value = part.IsEmpty ? null : part.ToString();
+					}
 
 					break;
 				case '\\':

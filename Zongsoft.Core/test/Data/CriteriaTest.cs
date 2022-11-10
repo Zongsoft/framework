@@ -61,9 +61,34 @@ namespace Zongsoft.Data.Tests
 		public void TestExpression()
 		{
 			var text = @"name:popeye+createdTime:thisyear";
-			var conditions = Criteria.Transform(typeof(DummyCriteria), text);
+			var criteria = Criteria.Transform(typeof(DummyCriteria), text) as ConditionCollection;
 
+			Assert.NotNull(criteria);
+			Assert.Equal(2, criteria.Count);
+
+			var conditions = criteria[0] as ConditionCollection;
 			Assert.NotNull(conditions);
+			Assert.Equal(2, conditions.Count);
+			Assert.IsType<Condition>(conditions[0]);
+			Assert.IsType<Condition>(conditions[1]);
+			Assert.Equal("Name", ((Condition)conditions[0]).Name);
+			Assert.NotNull(((Condition)conditions[0]).Value);
+			Assert.True(((Condition)conditions[0]).Value.ToString().Contains("popeye", StringComparison.OrdinalIgnoreCase));
+			Assert.Equal("PinYin", ((Condition)conditions[1]).Name);
+			Assert.NotNull(((Condition)conditions[1]).Value);
+			Assert.True(((Condition)conditions[1]).Value.ToString().Contains("popeye", StringComparison.OrdinalIgnoreCase));
+
+			var condition = criteria[1] as Condition;
+			Assert.NotNull(condition);
+			Assert.Equal("CreatedTime", condition.Name);
+			Assert.IsType<Zongsoft.Data.Range<DateTime>>(condition.Value);
+			var range = (Zongsoft.Data.Range<DateTime>)condition.Value;
+			Assert.Equal(DateTime.Today.Year, range.Minimum.Value.Year);
+			Assert.Equal(1, range.Minimum.Value.Month);
+			Assert.Equal(1, range.Minimum.Value.Day);
+			Assert.Equal(DateTime.Today.Year, range.Maximum.Value.Year);
+			Assert.Equal(12, range.Maximum.Value.Month);
+			Assert.Equal(31, range.Maximum.Value.Day);
 		}
 
 		public abstract class DummyCriteria : CriteriaBase

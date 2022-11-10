@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data.Tests
 {
 	public class DataServiceMutabilityTest
 	{

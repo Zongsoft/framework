@@ -37,8 +37,8 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public static RangeParserResult Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
 		{
-			var minimum = ReadOnlySpan<char>.Empty;
-			var maximum = ReadOnlySpan<char>.Empty;
+			var minimum = string.Empty;
+			var maximum = string.Empty;
 			var context = new RangeParserContext(span);
 
 			for(int i = start; i < span.Length; i++)
@@ -87,15 +87,17 @@ namespace Zongsoft.Data
 					case State.Minimum:
 					case State.MinimumFinal:
 					case State.Separator:
-						context.Reset(out minimum);
+						context.Reset(out var minimumSpan);
+						minimum = minimumSpan.ToString();
 						break;
 					default:
-						context.Reset(out maximum);
+						context.Reset(out var maximumSpan);
+						maximum = maximumSpan.ToString();
 						break;
 				}
 			}
 
-			if(maximum.IsEmpty && (context.State == State.Minimum || context.State == State.MinimumFinal))
+			if(string.IsNullOrEmpty(maximum) && (context.State == State.Minimum || context.State == State.MinimumFinal))
 				maximum = minimum;
 
 			return new RangeParserResult(minimum, maximum);
@@ -130,25 +132,29 @@ namespace Zongsoft.Data
 				context.Error("The range expression contains redundant content.");
 		}
 
-		private static void DoMinimum(ref RangeParserContext context, out ReadOnlySpan<char> value)
+		private static void DoMinimum(ref RangeParserContext context, out string value)
 		{
+			ReadOnlySpan<char> part;
+
 			switch(context.Character)
 			{
 				case '~':
-					context.Reset(State.Separator, out value);
+					context.Reset(State.Separator, out part);
 					break;
 				case '*':
 				case '?':
-					context.Reset(State.MinimumFinal, out value);
+					context.Reset(State.MinimumFinal, out part);
 					break;
 				case ')':
-					context.Reset(State.Final, out value);
+					context.Reset(State.Final, out part);
 					break;
 				default:
 					context.Accept(State.Minimum);
-					value = ReadOnlySpan<char>.Empty;
+					part = default;
 					break;
 			}
+
+			value = part.IsEmpty ? null : part.ToString();
 		}
 
 		private static void DoMinimunFinal(ref RangeParserContext context)
@@ -168,22 +174,26 @@ namespace Zongsoft.Data
 			}
 		}
 
-		private static void DoMaximum(ref RangeParserContext context, out ReadOnlySpan<char> value)
+		private static void DoMaximum(ref RangeParserContext context, out string value)
 		{
+			ReadOnlySpan<char> part;
+
 			switch(context.Character)
 			{
 				case '*':
 				case '?':
-					context.Reset(State.MaximumFinal, out value);
+					context.Reset(State.MaximumFinal, out part);
 					break;
 				case ')':
-					context.Reset(State.Final, out value);
+					context.Reset(State.Final, out part);
 					break;
 				default:
 					context.Accept(State.Maximum);
-					value = ReadOnlySpan<char>.Empty;
+					part = ReadOnlySpan<char>.Empty;
 					break;
 			}
+
+			value = part.IsEmpty ? null : part.ToString();
 		}
 
 		private static void DoMaximumFinal(ref RangeParserContext context)
