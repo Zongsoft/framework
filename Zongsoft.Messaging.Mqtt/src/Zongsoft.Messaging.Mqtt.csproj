@@ -23,6 +23,10 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="MQTTnet" Version="4.1.1.318" />
 		<PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.1.1.318" />
@@ -33,5 +37,4 @@
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-
 </Project>

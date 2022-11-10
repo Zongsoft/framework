@@ -18,6 +18,10 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Hangfire.Core" Version="1.7.31" />
 		<PackageReference Include="Hangfire.Redis.StackExchange" Version="1.8.5" />

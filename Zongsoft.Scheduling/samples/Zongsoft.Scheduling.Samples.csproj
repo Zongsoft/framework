@@ -8,5 +8,4 @@
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-
 </Project>

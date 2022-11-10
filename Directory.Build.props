@@ -1,6 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net6.0;</TargetFrameworks>
+		<TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<Company>Zongsoft Studio</Company>
@@ -19,7 +19,7 @@
 
 	<PropertyGroup>
 		<IsTestProject>$(MSBuildProjectName.Contains('Tests'))</IsTestProject>
-		<NoWarn>$(NoWarn);1701;1702;CS1591;NU1701;NU5048;SYSLIB0001</NoWarn>
+		<NoWarn>$(NoWarn);1701;1702;CS1591;NU1701;NU5048;SYSLIB0001;NETSDK1138;</NoWarn>
 		<GenerateDocumentationFile Condition=" '$(Configuration)' == 'Release' ">true</GenerateDocumentationFile>
 	</PropertyGroup>
 

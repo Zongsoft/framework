@@ -24,5 +24,4 @@
 			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-
 </Project>
