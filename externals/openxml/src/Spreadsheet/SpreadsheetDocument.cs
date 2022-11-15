@@ -35,20 +35,25 @@ using System.Collections.Generic;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Spreadsheet;
 
-namespace Zongsoft.Externals.OpenXML.Spreadsheet
+namespace Zongsoft.Externals.OpenXml.Spreadsheet
 {
 	public class SpreadsheetDocument : IDisposable
 	{
 		#region 成员字段
 		private DocumentFormat.OpenXml.Packaging.SpreadsheetDocument _document;
+		private SheetCollection _sheets;
 		#endregion
 
 		#region 构造函数
 		private SpreadsheetDocument(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument document)
 		{
 			_document = document ?? throw new ArgumentNullException(nameof(document));
-			this.Initilize();
+			_sheets = new SheetCollection(_document.WorkbookPart);
 		}
+		#endregion
+
+		#region 公共属性
+		public SheetCollection Sheets => _sheets;
 		#endregion
 
 		#region 公共方法
@@ -74,13 +79,6 @@ namespace Zongsoft.Externals.OpenXML.Spreadsheet
 		public static SpreadsheetDocument Create(string filePath)
 		{
 			return new SpreadsheetDocument(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook));
-		}
-		#endregion
-
-		#region 私有方法
-		private void Initilize()
-		{
-			var document = _document;
 		}
 		#endregion
 

@@ -34,18 +34,90 @@ using System.Threading;
 using System.Collections.Generic;
 
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace Zongsoft.Externals.OpenXml.Spreadsheet
 {
 	public class Sheet
 	{
-		public string Name { get; init; }
+		#region 成员字段
+		private readonly WorksheetPart _sheet;
+		private readonly SheetCollection _sheets;
+		#endregion
 
-		public string GetCellText(CellAddress address) => this.GetCellText(address.Row, address.Column);
-		public string GetCellText(int row, int column)
+		#region 构造函数
+		internal Sheet(SheetCollection sheets, WorksheetPart sheet, uint id, string name, bool visible = true)
 		{
-			return null;
+			_sheet = sheet;
+			_sheets = sheets;
+
+			_sheet.Worksheet.Elements<Columns>();
+
+			this.SheetId = id;
+			this.Name = name;
+			this.Visible = visible;
 		}
+		#endregion
+
+		#region 公共属性
+		public uint SheetId { get; init; }
+		public string Name { get; init; }
+		public bool Visible { get; set; }
+		#endregion
+
+		#region 公共方法
+		public string GetCellText(int row, int column) => this.GetCellText(new CellAddress(row, column));
+		public string GetCellText(CellAddress address)
+		{
+			var cell = GetCell(address);
+			if(cell == null)
+				return null;
+
+			if(cell.DataType == null)
+				return cell.CellValue.InnerText;
+
+			switch(cell.DataType.Value)
+			{
+				case CellValues.SharedString:
+					return _sheets.GetSharedString(cell.CellValue.InnerText) ?? cell.InnerText;
+				case CellValues.Boolean:
+					return cell.CellValue.TryGetBoolean(out var value) ? value.ToString() : cell.InnerText;
+			}
+
+			return cell.InnerText;
+		}
+
+		public void SetCellText(int row, int column, string value) => this.SetCellText(new CellAddress(row, column), value);
+		public void SetCellText(CellAddress address, string value)
+		{
+			var cell = GetCell(address);
+			if(cell == null)
+				return;
+
+			if(string.IsNullOrEmpty(value))
+			{
+				cell.Remove();
+
+				if(cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+					_sheets.RemoveSharedString(cell.CellValue.Text);
+			}
+			else
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.InlineString);
+				cell.CellValue.Text = value;
+			}
+
+			_sheet.Worksheet.Save();
+		}
+		#endregion
+
+		#region 私有方法
+		private Cell GetCell(CellAddress address)
+		{
+			var row = _sheet.Worksheet.GetFirstChild<SheetData>().Elements<Row>().Where(line => line.RowIndex.Value == (uint)address.Row).FirstOrDefault();
+			return row?.Elements<Cell>().FirstOrDefault(cell => string.Equals(cell.CellReference.Value, address.ToString()));
+		}
+		#endregion
 	}
 }
