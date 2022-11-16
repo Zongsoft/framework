@@ -30,8 +30,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Collections.Generic;
 
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -70,7 +68,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		public string GetCellText(int row, int column) => this.GetCellText(new CellAddress(row, column));
 		public string GetCellText(CellAddress address)
 		{
-			var cell = GetCell(address);
+			var cell = GetCell(address, out _);
 			if(cell == null)
 				return null;
 
@@ -91,7 +89,8 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		public void SetCellText(int row, int column, string value) => this.SetCellText(new CellAddress(row, column), value);
 		public void SetCellText(CellAddress address, string value)
 		{
-			var cell = GetCell(address);
+			var cell = GetCell(address, out var row) ?? CreateCell(address, row);
+
 			if(cell == null)
 				return;
 
@@ -104,19 +103,47 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			}
 			else
 			{
-				cell.DataType = new EnumValue<CellValues>(CellValues.InlineString);
-				cell.CellValue.Text = value;
+				cell.DataType = new EnumValue<CellValues>(CellValues.String);
+				cell.CellValue = new CellValue(value);
 			}
-
-			_sheet.Worksheet.Save();
 		}
 		#endregion
 
 		#region 私有方法
-		private Cell GetCell(CellAddress address)
+		private Cell GetCell(CellAddress address, out Row row)
 		{
-			var row = _sheet.Worksheet.GetFirstChild<SheetData>().Elements<Row>().Where(line => line.RowIndex.Value == (uint)address.Row).FirstOrDefault();
+			row = _sheet.Worksheet.GetFirstChild<SheetData>().Elements<Row>().Where(line => line.RowIndex.Value == (uint)address.Row).FirstOrDefault();
 			return row?.Elements<Cell>().FirstOrDefault(cell => string.Equals(cell.CellReference.Value, address.ToString()));
+		}
+
+		private Cell CreateCell(CellAddress address, Row row)
+		{
+			var data = _sheet.Worksheet.GetFirstChild<SheetData>();
+
+			if(data == null)
+				return null;
+
+			if(row == null)
+			{
+				row = new Row() { RowIndex = (uint)address.Row, };
+				data.Append(row);
+			}
+
+			Cell marker = null;
+
+			foreach(var cell in row.Elements<Cell>())
+			{
+				if(string.Compare(cell.CellReference.Value, address, true) > 0)
+				{
+					marker = cell;
+					break;
+				}
+			}
+
+			return row.InsertBefore(new Cell()
+			{
+				CellReference = address.ToString()
+			}, marker);
 		}
 		#endregion
 	}

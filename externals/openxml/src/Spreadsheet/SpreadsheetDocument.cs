@@ -29,16 +29,22 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Collections.Generic;
 
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace Zongsoft.Externals.OpenXml.Spreadsheet
 {
 	public class SpreadsheetDocument : IDisposable
 	{
+		#region 常量定义
+		private static readonly string[] SHEETS = new[] { "Sheet1" };
+		#endregion
+
 		#region 成员字段
 		private DocumentFormat.OpenXml.Packaging.SpreadsheetDocument _document;
 		private SheetCollection _sheets;
@@ -57,6 +63,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		#endregion
 
 		#region 公共方法
+		public void Save() => _document?.Save();
 		public void Close() => _document?.Close();
 		#endregion
 
@@ -71,14 +78,43 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			return new SpreadsheetDocument(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(filePath, editable));
 		}
 
-		public static SpreadsheetDocument Create(Stream stream)
+		public static SpreadsheetDocument Create(Stream stream, params string[] sheets)
 		{
-			return new SpreadsheetDocument(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook));
+			var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook);
+			Initialize(document, sheets);
+			return new SpreadsheetDocument(document);
 		}
 
-		public static SpreadsheetDocument Create(string filePath)
+		public static SpreadsheetDocument Create(string filePath, params string[] sheets)
 		{
-			return new SpreadsheetDocument(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook));
+			var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook);
+			Initialize(document, sheets);
+			return new SpreadsheetDocument(document);
+		}
+
+		private static void Initialize(DocumentFormat.OpenXml.Packaging.SpreadsheetDocument document, IEnumerable<string> sheets = null)
+		{
+			var workbook = document.AddWorkbookPart();
+			workbook.Workbook = new Workbook();
+
+			var worksheet = workbook.AddNewPart<WorksheetPart>();
+			worksheet.Worksheet = new Worksheet(new SheetData());
+
+			if(sheets == null || !sheets.Any())
+				sheets = SHEETS;
+
+			var index = 0U;
+			var sheetReferences = workbook.Workbook.AppendChild(new Sheets());
+
+			foreach(var sheet in sheets)
+			{
+				sheetReferences.AddChild(new DocumentFormat.OpenXml.Spreadsheet.Sheet()
+				{
+					Id = workbook.GetIdOfPart(worksheet),
+					SheetId = ++index,
+					Name = string.IsNullOrWhiteSpace(sheet) ? $"Sheet{index}" : sheet.Trim(),
+				});
+			}
 		}
 		#endregion
 
