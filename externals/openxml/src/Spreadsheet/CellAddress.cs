@@ -82,8 +82,30 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		public int Column => _column + 1;
 		#endregion
 
+		#region 范围方法
+		public static (CellAddress start, CellAddress end) Range(ReadOnlySpan<char> range)
+		{
+			if(range.IsEmpty)
+				return default;
+
+			var index = range.IndexOf(':');
+			if(index < 2 || index >= range.Length - 2)
+				throw new ArgumentException($"Invalid cell range format.");
+
+			return (
+				Parse(range.Slice(0, index)),
+				Parse(range.Slice(index + 1))
+			);
+		}
+
+		public static string Range(CellAddress start, CellAddress end)
+		{
+			return $"{start}:{end}";
+		}
+		#endregion
+
 		#region 解析方法
-		public static bool TryParse(string text, out CellAddress value)
+		public static bool TryParse(ReadOnlySpan<char> text, out CellAddress value)
 		{
 			(var row, var column) = ParseCore(text, false);
 
@@ -97,15 +119,15 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			return true;
 		}
 
-		public static CellAddress Parse(string text)
+		public static CellAddress Parse(ReadOnlySpan<char> text)
 		{
 			(var row, var column) = ParseCore(text, true);
 			return new(row, column);
 		}
 
-		private static (int row, int column) ParseCore(string text, bool throwOnError = true)
+		private static (int row, int column) ParseCore(ReadOnlySpan<char> text, bool throwOnError = true)
 		{
-			if(string.IsNullOrEmpty(text))
+			if(text.IsEmpty)
 			{
 				if(throwOnError)
 					throw new ArgumentNullException(nameof(text));
@@ -313,9 +335,9 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			private State _state;
 			private ReadOnlySpan<char> _text;
 
-			public StateContext(string text)
+			public StateContext(ReadOnlySpan<char> text)
 			{
-				_text = text.AsSpan();
+				_text = text;
 				_index = 0;
 				_position = -1;
 				_error = null;
