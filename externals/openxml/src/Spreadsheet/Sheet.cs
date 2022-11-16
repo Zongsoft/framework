@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 
 using DocumentFormat.OpenXml;
@@ -73,7 +72,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 				return null;
 
 			if(cell.DataType == null)
-				return cell.CellValue.InnerText;
+				return cell.InnerText;
 
 			switch(cell.DataType.Value)
 			{
@@ -86,26 +85,148 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 			return cell.InnerText;
 		}
 
-		public void SetCellText(int row, int column, string value) => this.SetCellText(new CellAddress(row, column), value);
-		public void SetCellText(CellAddress address, string value)
+		public bool TryGetCellValue(int row, int column, out string value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out string value)
+		{
+			value = this.GetCellText(address);
+			return value != null;
+		}
+
+		public bool TryGetCellValue(int row, int column, out bool value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out bool value)
+		{
+			var text = this.GetCellText(address);
+			return bool.TryParse(text, out value);
+		}
+
+		public bool TryGetCellValue(int row, int column, out int value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out int value)
+		{
+			var text = this.GetCellText(address);
+			return int.TryParse(text, out value);
+		}
+
+		public bool TryGetCellValue(int row, int column, out double value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out double value)
+		{
+			var text = this.GetCellText(address);
+			return double.TryParse(text, out value);
+		}
+
+		public bool TryGetCellValue(int row, int column, out decimal value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out decimal value)
+		{
+			var text = this.GetCellText(address);
+			return decimal.TryParse(text, out value);
+		}
+
+		public bool TryGetCellValue(int row, int column, out DateTime value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out DateTime value)
+		{
+			var text = this.GetCellText(address);
+			return DateTime.TryParse(text, out value);
+		}
+
+		public bool TryGetCellValue(int row, int column, out DateTimeOffset value) => this.TryGetCellValue(new CellAddress(row, column), out value);
+		public bool TryGetCellValue(CellAddress address, out DateTimeOffset value)
+		{
+			var text = this.GetCellText(address);
+			return DateTimeOffset.TryParse(text, out value);
+		}
+
+		public void SetCellValue(int row, int column, string value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, string value)
 		{
 			var cell = GetCell(address, out var row) ?? CreateCell(address, row);
 
 			if(cell == null)
 				return;
 
+			if(cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+				_sheets.RemoveSharedString(cell.InnerText);
+
 			if(string.IsNullOrEmpty(value))
 			{
 				cell.Remove();
-
-				if(cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
-					_sheets.RemoveSharedString(cell.CellValue.Text);
 			}
 			else
 			{
 				cell.DataType = new EnumValue<CellValues>(CellValues.String);
 				cell.CellValue = new CellValue(value);
 			}
+		}
+
+		public void SetCellValue(int row, int column, bool value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, bool value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Boolean);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		public void SetCellValue(int row, int column, int value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, int value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		public void SetCellValue(int row, int column, double value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, double value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		public void SetCellValue(int row, int column, decimal value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, decimal value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		public void SetCellValue(int row, int column, DateTime value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, DateTime value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Date);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		public void SetCellValue(int row, int column, DateTimeOffset value) => this.SetCellValue(new CellAddress(row, column), value);
+		public void SetCellValue(CellAddress address, DateTimeOffset value)
+		{
+			this.SetCellValue(address, cell =>
+			{
+				cell.DataType = new EnumValue<CellValues>(CellValues.Date);
+				cell.CellValue = new CellValue(value);
+			});
+		}
+
+		private void SetCellValue(CellAddress address, Action<Cell> onValue)
+		{
+			var cell = GetCell(address, out var row) ?? CreateCell(address, row);
+
+			if(cell == null)
+				return;
+
+			if(cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+				_sheets.RemoveSharedString(cell.InnerText);
+
+			onValue(cell);
 		}
 		#endregion
 
