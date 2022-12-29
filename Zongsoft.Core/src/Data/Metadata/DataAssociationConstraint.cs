@@ -59,10 +59,9 @@ namespace Zongsoft.Data.Metadata
 		#region 重写方法
 		public override string ToString()
 		{
-			if(this.Value == null)
-				return this.Actor.ToString() + ":" + this.Name + "=NULL";
-			else
-				return this.Actor.ToString() + ":" + this.Name + "=" + this.Value.ToString();
+			return this.Value == null || Convert.IsDBNull(this.Value) ?
+				$"{this.Actor}:{this.Name}=NULL" :
+				$"{this.Actor}:{this.Name}={this.Value}";
 		}
 		#endregion
 	}
