@@ -51,19 +51,13 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取分组键的成员数组。
-		/// </summary>
+		/// <summary>获取分组键的成员数组。</summary>
 		public GroupKey[] Keys { get; }
 
-		/// <summary>
-		/// 获取分组的聚合成员集合。
-		/// </summary>
+		/// <summary>获取分组的聚合成员集合。</summary>
 		public DataAggregateCollection Aggregates { get => _aggregates; }
 
-		/// <summary>
-		/// 获取或设置分组的过滤条件，默认为空。
-		/// </summary>
+		/// <summary>获取或设置分组的过滤条件，默认为空。</summary>
 		public ICondition Filter { get; set; }
 		#endregion
 
@@ -196,9 +190,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个分组设置。
-		/// </summary>
+		/// <summary>创建一个分组设置。</summary>
 		/// <param name="keys">分组键成员数组，分组键元素使用冒号分隔成员的名称和别名。</param>
 		/// <returns>返回创建的分组设置。</returns>
 		public static Grouping Group(params string[] keys)
@@ -206,16 +198,14 @@ namespace Zongsoft.Data
 			return Group(null, keys);
 		}
 
-		/// <summary>
-		/// 创建一个分组设置。
-		/// </summary>
+		/// <summary>创建一个分组设置。</summary>
 		/// <param name="filter">分组的过滤条件。</param>
 		/// <param name="keys">分组键成员数组，分组键元素使用冒号分隔成员的名称和别名。</param>
 		/// <returns>返回创建的分组设置。</returns>
 		public static Grouping Group(ICondition filter, params string[] keys)
 		{
 			if(keys == null || keys.Length < 1)
-				return new Grouping(filter, null);
+				throw new ArgumentNullException(nameof(keys));
 
 			var list = new List<GroupKey>(keys.Length);
 
@@ -282,24 +272,37 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套结构
-		public readonly struct GroupKey
+		/// <summary>
+		/// 表示数据分组键的结构。
+		/// </summary>
+		public readonly struct GroupKey : IEquatable<GroupKey>
 		{
+			#region 公共字段
+			/// <summary>获取分组键名。</summary>
 			public readonly string Name;
+			/// <summary>获取分组键的别名。</summary>
 			public readonly string Alias;
+			#endregion
 
+			#region 构造函数
 			public GroupKey(string name, string alias = null)
 			{
-				this.Name = name;
-				this.Alias = alias;
+				this.Name = name ?? throw new ArgumentNullException(nameof(name));
+				this.Alias = string.IsNullOrWhiteSpace(alias) ? null : alias;
 			}
+			#endregion
 
-			public override string ToString()
-			{
-				if(string.IsNullOrEmpty(this.Alias))
-					return this.Name;
-				else
-					return this.Name + ":" + this.Alias;
-			}
+			#region 重写方法
+			public bool Equals(GroupKey other) => string.Equals(this.Name, other.Name) && string.Equals(this.Alias, other.Alias);
+			public override bool Equals(object obj) => obj is GroupKey other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.Name, this.Alias);
+			public override string ToString() => string.IsNullOrEmpty(this.Alias) ? this.Name : $"{this.Name}:{this.Alias}";
+			#endregion
+
+			#region 重写符号
+			public static bool operator ==(GroupKey left, GroupKey right) => left.Equals(right);
+			public static bool operator !=(GroupKey left, GroupKey right) => !(left == right);
+			#endregion
 		}
 		#endregion
 	}
