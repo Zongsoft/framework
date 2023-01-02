@@ -36,6 +36,7 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 表示队列消息的结构。
 	/// </summary>
+	[Obsolete("This struct has been deprecated, Please use the Message struct instead.")]
 	public struct MessageQueueMessage
 	{
 		#region 静态字段

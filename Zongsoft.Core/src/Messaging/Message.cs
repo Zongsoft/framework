@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -34,13 +34,12 @@ using System.Threading.Tasks;
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 表示主题消息的结构。
+	/// 表示消息的结构。
 	/// </summary>
-	[Obsolete("This struct has been deprecated, Please use the Message struct instead.")]
-	public struct MessageTopicMessage
+	public struct Message
 	{
 		#region 静态字段
-		public static readonly MessageTopicMessage Empty = new MessageTopicMessage();
+		public static readonly Message Empty = new Message();
 		#endregion
 
 		#region 成员字段
@@ -48,31 +47,31 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 构造函数
-		public MessageTopicMessage(string topic, byte[] data) : this(null, topic, data, null, (Delegate)null) { }
+		public Message(string topic, byte[] data) : this(null, topic, data, null, (Delegate)null) { }
 
-		public MessageTopicMessage(string topic, byte[] data, Action acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, Action<TimeSpan> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, string tags, Action acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, Action acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, Action<TimeSpan> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, string tags, Action acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
 
-		public MessageTopicMessage(string topic, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, string tags, Func<CancellationToken, ValueTask> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(null, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, string tags, Func<CancellationToken, ValueTask> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(null, topic, data, tags, (Delegate)acknowledger) { }
 
-		public MessageTopicMessage(string identifier, string topic, byte[] data) : this(identifier, topic, data, null, (Delegate)null) { }
+		public Message(string identifier, string topic, byte[] data) : this(identifier, topic, data, null, (Delegate)null) { }
 
-		public MessageTopicMessage(string identifier, string topic, byte[] data, Action acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, Action<TimeSpan> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Action acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, Action acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, Action<TimeSpan> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, string tags, Action acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, string tags, Action<TimeSpan> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
 
-		public MessageTopicMessage(string identifier, string topic, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Func<CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
-		public MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, Func<CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, null, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, string tags, Func<CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
+		public Message(string identifier, string topic, byte[] data, string tags, Func<TimeSpan, CancellationToken, ValueTask> acknowledger) : this(identifier, topic, data, tags, (Delegate)acknowledger) { }
 
-		private MessageTopicMessage(string identifier, string topic, byte[] data, string tags, Delegate acknowledger)
+		private Message(string identifier, string topic, byte[] data, string tags, Delegate acknowledger)
 		{
 			this.Topic = topic;
 			this.Data = data;
@@ -91,7 +90,7 @@ namespace Zongsoft.Messaging
 		/// <summary>获取或设置消息内容。</summary>
 		public byte[] Data { get; set; }
 
-		/// <summary>获取或设置主题标签。</summary>
+		/// <summary>获取或设置消息标签。</summary>
 		public string Tags { get; set; }
 
 		/// <summary>获取或设置消息的身份标识。</summary>
@@ -110,7 +109,11 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共方法
+		/// <summary>应答消息。</summary>
 		public void Acknowledge() => this.Acknowledge(TimeSpan.Zero);
+
+		/// <summary>应答消息。</summary>
+		/// <param name="delay">指定的应答延迟。</param>
 		public void Acknowledge(TimeSpan delay)
 		{
 			var acknowledger = _acknowledger;
@@ -134,7 +137,15 @@ namespace Zongsoft.Messaging
 			}
 		}
 
+		/// <summary>应答消息。</summary>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的异步任务。</returns>
 		public ValueTask AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
+
+		/// <summary>应答消息。</summary>
+		/// <param name="delay">指定的应答延迟。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的异步任务。</returns>
 		public ValueTask AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
 		{
 			var acknowledger = _acknowledger;
