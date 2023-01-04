@@ -37,7 +37,7 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 表示消息消费者的接口。
 	/// </summary>
-	public interface IMessageConsumer
+	public interface IMessageConsumer : IDisposable
 	{
 		#region 属性定义
 		/// <summary>获取订阅的消息主题。</summary>
@@ -48,6 +48,9 @@ namespace Zongsoft.Messaging
 
 		/// <summary>获取一个值，指示消费者是否已订阅完成。</summary>
 		bool IsSubscribed { get; }
+
+		/// <summary>获取或设置消息消费者选项设置。</summary>
+		public MessageQueueSubscriptionOptions Options { get; set; }
 		#endregion
 
 		#region 订阅方法

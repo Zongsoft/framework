@@ -30,16 +30,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
-using Zongsoft.Common;
+using Zongsoft.Components;
 
 namespace Zongsoft.Messaging
 {
 	/// <summary>
-	/// 提供消息队列基础功能的接口。
+	/// 表示消息队列的接口。
 	/// </summary>
-	public interface IMessageQueue
+	public interface IMessageQueue : IMessageProducer
 	{
 		#region 属性定义
 		/// <summary>获取消息队列的名称。</summary>
@@ -47,71 +46,52 @@ namespace Zongsoft.Messaging
 
 		/// <summary>获取或设置消息队列的连接设置。</summary>
 		Configuration.IConnectionSetting ConnectionSetting { get; set; }
-
-		/// <summary>获取订阅者集合。</summary>
-		IEnumerable<IMessageSubscriber> Subscribers { get; }
 		#endregion
 
 		#region 订阅方法
-		ValueTask<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null);
-		#endregion
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理函数。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <returns>返回订阅成功的消息消费者。</returns>
+		IMessageConsumer Subscribe(string topics, Action<Message> handler, MessageQueueSubscriptionOptions options = null);
 
-		#region 长度方法
-		/// <summary>
-		/// 获取队列的元素数量。
-		/// </summary>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回的队列元素数量。</returns>
-		ValueTask<long> GetCountAsync(CancellationToken cancellation = default);
-		#endregion
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理器对象。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <returns>返回订阅成功的消息消费者。</returns>
+		IMessageConsumer Subscribe(string topics, IHandler<Message> handler, MessageQueueSubscriptionOptions options = null);
 
-		#region 清空方法
-		/// <summary>
-		/// 异步移除队列中的所有元素。
-		/// </summary>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务对象。</returns>
-		ValueTask ClearAsync(CancellationToken cancellation = default);
-		#endregion
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理函数。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, CancellationToken cancellation = default);
 
-		#region 入队方法
-		/// <summary>
-		/// 将消息添加到队列的结尾处。
-		/// </summary>
-		/// <param name="data">要入队的数据。</param>
-		/// <param name="options">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务对象。</returns>
-		ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
-		#endregion
-	}
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理函数。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, MessageQueueSubscriptionOptions options, CancellationToken cancellation = default);
 
-	/// <summary>
-	/// 提供消息队列相关功能的接口。
-	/// </summary>
-	public interface IMessageQueue<TMessage> : IMessageQueue
-	{
-		#region 处理方法
-		/// <summary>
-		/// 处理队列消息。
-		/// </summary>
-		/// <param name="message">待处理的消息。</param>
-		/// <param name="cancellation">指定的异步取消标记。</param>
-		ValueTask<OperationResult> HandleAsync(ref TMessage message, CancellationToken cancellation = default);
-		#endregion
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理器对象。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, CancellationToken cancellation = default);
 
-		#region 出队方法
-		/// <summary>
-		/// 移除并返回位于队列开始处的消息。
-		/// </summary>
-		/// <param name="options">指定出队的一些选项参数，具体内容请参考特定实现者的规范。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回表示异步操作的任务消息。</returns>
-		ValueTask<TMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default);
-		#endregion
-
-		#region 默认实现
-		ValueTask<TMessage> DequeueAsync(CancellationToken cancellation) => this.DequeueAsync(null, cancellation);
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="handler">指定的消息接收处理器对象。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, MessageQueueSubscriptionOptions options, CancellationToken cancellation = default);
 		#endregion
 	}
 }
