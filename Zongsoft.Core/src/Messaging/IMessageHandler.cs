@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,29 +28,13 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageTopicSubscriptionOptions
+	public interface IMessageHandler
 	{
-		#region 单例字段
-		public static readonly MessageTopicSubscriptionOptions Default = new MessageTopicSubscriptionOptions(MessageReliability.MostOnce);
-		#endregion
-
-		#region 构造函数
-		public MessageTopicSubscriptionOptions(MessageReliability reliability = MessageReliability.MostOnce, MessageFallbackBehavior fallbackBehavior = MessageFallbackBehavior.Backoff)
-		{
-			this.Reliability = reliability;
-			this.FallbackBehavior = fallbackBehavior;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置订阅消息回调的可靠性。</summary>
-		public MessageReliability Reliability { get; set; }
-
-		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
-		public MessageFallbackBehavior FallbackBehavior { get; set; }
-		#endregion
+		ValueTask HandleAsync(in Message message, CancellationToken cancellation = default);
 	}
 }

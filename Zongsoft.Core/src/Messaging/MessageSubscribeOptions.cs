@@ -28,38 +28,32 @@
  */
 
 using System;
-using System.ComponentModel;
-using System.Globalization;
-
-using Zongsoft.Services;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageTopicConverter : TypeConverter
+	/// <summary>
+	/// 表示消息主题订阅操作的选项类。
+	/// </summary>
+	public class MessageSubscribeOptions
 	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		#region 单例字段
+		public static readonly MessageSubscribeOptions Default = new MessageSubscribeOptions();
+		#endregion
 
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		#region 构造函数
+		public MessageSubscribeOptions(MessageReliability reliability = MessageReliability.MostOnce, MessageFallbackBehavior fallbackBehavior = MessageFallbackBehavior.Backoff)
 		{
-			if(value is string text)
-			{
-				var services = ApplicationContext.Current?.Services;
-
-				if(services == null)
-					return null;
-
-				var index = text.IndexOf('@');
-
-				if(index > 0 && index < text.Length - 1)
-				{
-					var provider = services.Resolve<IMessageTopicProvider>(text.Substring(index + 1));
-					return provider?.GetTopic(text.Substring(0, index));
-				}
-
-				return services.Resolve(text) as IMessageTopic;
-			}
-
-			return base.ConvertFrom(context, culture, value);
+			this.Reliability = reliability;
+			this.FallbackBehavior = fallbackBehavior;
 		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取或设置订阅消息回调的可靠性。</summary>
+		public MessageReliability Reliability { get; set; }
+
+		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
+		public MessageFallbackBehavior FallbackBehavior { get; set; }
+		#endregion
 	}
 }

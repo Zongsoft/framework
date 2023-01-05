@@ -37,30 +37,26 @@ namespace Zongsoft.Messaging
 	/// 提供消息队列轮询功能的类。
 	/// </summary>
 	/// <typeparam name="TMessage">队列的消息类型。</typeparam>
-	public class MessageQueuePoller<TMessage> : IDisposable
+	public class MessageQueuePoller<TMessage> : IMessagePoller
 	{
 		#region 私有变量
+		private IMessageQueue _queue;
 		private Action<TMessage> _handler;
-		private IMessageQueue<TMessage> _queue;
 		private CancellationTokenSource _cancellation;
 		#endregion
 
 		#region 构造函数
-		/// <summary>
-		/// 构建消息队列轮询器。
-		/// </summary>
+		/// <summary>构建消息队列轮询器。</summary>
 		/// <param name="handler">队列消息处理函数。</param>
 		public MessageQueuePoller(Action<TMessage> handler)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 		}
 
-		/// <summary>
-		/// 构建消息队列轮询器。
-		/// </summary>
+		/// <summary>构建消息队列轮询器。</summary>
 		/// <param name="queue">待轮询的队列。</param>
 		/// <param name="handler">队列消息处理函数。</param>
-		public MessageQueuePoller(IMessageQueue<TMessage> queue, Action<TMessage> handler)
+		public MessageQueuePoller(IMessageQueue queue, Action<TMessage> handler)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -70,18 +66,23 @@ namespace Zongsoft.Messaging
 		#region 公共属性
 		/// <summary>获取或设置轮询的队列。</summary>
 		[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
-		public IMessageQueue<TMessage> Queue
+		public IMessageQueue Queue
 		{
 			get => _queue;
 			set => _queue = value ?? throw new ArgumentNullException();
 		}
+
+		/// <inheritdoc />
+		public bool IsPolling { get; private set; }
 		#endregion
 
 		#region 公共方法
+		public void Start() => this.Start(null, 1000);
+
 		/// <summary>开始队列轮询。</summary>
 		/// <param name="options">轮询的出队选项。</param>
 		/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
-		public void Start(MessageDequeueOptions options = null, int interval = 1000)
+		public void Start(MessageConsumeOptions options = null, int interval = 1000)
 		{
 			_cancellation = new CancellationTokenSource();
 			Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
@@ -174,13 +175,13 @@ namespace Zongsoft.Messaging
 		#region 轮询参数
 		private class PollArgument
 		{
-			public PollArgument(MessageDequeueOptions options, int interval = 1000)
+			public PollArgument(MessageConsumeOptions options, int interval = 1000)
 			{
-				this.Options = options ?? MessageDequeueOptions.Default;
+				this.Options = options ?? MessageConsumeOptions.Default;
 				this.Interval = Math.Max(interval, 100);
 			}
 
-			public readonly MessageDequeueOptions Options;
+			public readonly MessageConsumeOptions Options;
 			public readonly int Interval;
 		}
 

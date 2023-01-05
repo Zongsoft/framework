@@ -32,16 +32,19 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageEnqueueOptions
+	/// <summary>
+	/// 表示消息入队(生产)操作的选项类。
+	/// </summary>
+	public class MessageProduceOptions
 	{
 		#region 单例字段
-		public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions();
+		public static readonly MessageProduceOptions Default = new MessageProduceOptions();
 		#endregion
 
 		#region 构造函数
-		public MessageEnqueueOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
-		public MessageEnqueueOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
-		public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
+		public MessageProduceOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
+		public MessageProduceOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
+		public MessageProduceOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
 		{
 			this.Delay = delay;
 			this.Expiry = TimeSpan.Zero;

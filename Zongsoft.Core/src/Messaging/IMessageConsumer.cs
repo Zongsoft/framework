@@ -43,30 +43,47 @@ namespace Zongsoft.Messaging
 		/// <summary>获取订阅的消息主题。</summary>
 		string[] Topics { get; }
 
-		/// <summary>获取消息轮询器。</summary>
-		IMessagePoller Poller { get; }
+		/// <summary>获取订阅的过滤标签。</summary>
+		string[] Tags { get; }
 
 		/// <summary>获取一个值，指示消费者是否已订阅完成。</summary>
 		bool IsSubscribed { get; }
 
-		/// <summary>获取或设置消息消费者选项设置。</summary>
-		public MessageQueueSubscriptionOptions Options { get; set; }
+		/// <summary>获取消息处理器。</summary>
+		IMessageHandler Handler { get; }
+
+		/// <summary>获取订阅选项设置。</summary>
+		MessageSubscribeOptions Options { get; }
 		#endregion
 
 		#region 订阅方法
 		/// <summary>订阅消息主题。</summary>
-		/// <param name="topics">指定要订阅的消息主题。</param>
-		void Subscribe(string topics);
-
-		/// <summary>订阅消息主题。</summary>
-		/// <param name="topics">指定要订阅的消息主题集。</param>
-		void Subscribe(IEnumerable<string> topics);
-
-		/// <summary>订阅消息主题。</summary>
-		/// <param name="topics">指定要订阅的消息主题。</param>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的订阅异步操作任务。</returns>
 		ValueTask SubscribeAsync(string topics, CancellationToken cancellation = default);
+
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="tags">指定要过滤的消息标签，多个标签之间以分号分隔。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(string topics, string tags, CancellationToken cancellation = default);
+
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="options">指定的主题订阅操作的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(string topics, MessageSubscribeOptions options, CancellationToken cancellation = default);
+
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
+		/// <param name="tags">指定要过滤的消息标签，多个标签之间以分号分隔。</param>
+		/// <param name="options">指定的主题订阅操作的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(string topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
 		/// <summary>订阅消息主题。</summary>
 		/// <param name="topics">指定要订阅的消息主题集。</param>
@@ -74,16 +91,27 @@ namespace Zongsoft.Messaging
 		/// <returns>返回的订阅异步操作任务。</returns>
 		ValueTask SubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default);
 
-		/// <summary>取消所有订阅。</summary>
-		void Unsubscribe();
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题集。</param>
+		/// <param name="tags">指定要过滤的消息标签，多个标签之间以分号分隔。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, CancellationToken cancellation = default);
 
-		/// <summary>取消订阅消息主题。</summary>
-		/// <param name="topics">指定要取消订阅的消息主题，如果为空则表示取消所有订阅。</param>
-		void Unsubscribe(string topics);
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题集。</param>
+		/// <param name="options">指定的主题订阅操作的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(IEnumerable<string> topics, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>取消订阅消息主题。</summary>
-		/// <param name="topics">指定要取消订阅的消息主题集，如果为空则表示取消所有订阅。</param>
-		void Unsubscribe(IEnumerable<string> topics);
+		/// <summary>订阅消息主题。</summary>
+		/// <param name="topics">指定要订阅的消息主题集。</param>
+		/// <param name="tags">指定要过滤的消息标签，多个标签之间以分号分隔。</param>
+		/// <param name="options">指定的主题订阅操作的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的订阅异步操作任务。</returns>
+		ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
 		/// <summary>取消所有订阅。</summary>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
@@ -91,7 +119,7 @@ namespace Zongsoft.Messaging
 		ValueTask UnsubscribeAsync(CancellationToken cancellation = default);
 
 		/// <summary>取消订阅消息主题。</summary>
-		/// <param name="topics">指定要取消订阅的消息主题，如果为空则表示取消所有订阅。</param>
+		/// <param name="topics">指定要取消订阅的消息主题（多个主题之间以分号分隔），如果为空则表示取消所有订阅。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的取消订阅异步操作任务。</returns>
 		ValueTask UnsubscribeAsync(string topics, CancellationToken cancellation = default);

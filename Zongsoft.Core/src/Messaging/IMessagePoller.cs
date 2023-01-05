@@ -36,6 +36,9 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface IMessagePoller : IDisposable
 	{
+		/// <summary>获取一个值，指示是否处于轮询中。</summary>
+		bool IsPolling { get; }
+
 		/// <summary>启动轮询。</summary>
 		void Start();
 

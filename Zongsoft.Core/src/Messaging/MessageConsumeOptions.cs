@@ -28,29 +28,30 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging
 {
-	public class MessageQueueSubscriptionOptions
+	/// <summary>
+	/// 表示消息出队(消费)操作的选项类。
+	/// </summary>
+	public class MessageConsumeOptions
 	{
 		#region 单例字段
-		public static readonly MessageQueueSubscriptionOptions Default = new MessageQueueSubscriptionOptions();
+		public static readonly MessageConsumeOptions Default = new MessageConsumeOptions(TimeSpan.FromSeconds(10));
 		#endregion
 
 		#region 构造函数
-		public MessageQueueSubscriptionOptions(MessageReliability reliability = MessageReliability.MostOnce, MessageFallbackBehavior fallbackBehavior = MessageFallbackBehavior.Backoff)
+		public MessageConsumeOptions() : this(TimeSpan.Zero) { }
+		public MessageConsumeOptions(TimeSpan timeout)
 		{
-			this.Reliability = reliability;
-			this.FallbackBehavior = fallbackBehavior;
+			this.Timeout = timeout;
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置订阅消息回调的可靠性。</summary>
-		public MessageReliability Reliability { get; set; }
-
-		/// <summary>获取或设置订阅回调失败的重试策略。</summary>
-		public MessageFallbackBehavior FallbackBehavior { get; set; }
+		/// <summary>获取或设置出队超时。</summary>
+		public TimeSpan Timeout { get; set; }
 		#endregion
 	}
 }

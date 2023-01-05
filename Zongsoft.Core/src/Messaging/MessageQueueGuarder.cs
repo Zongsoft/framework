@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Linq;
 using System.ComponentModel;
+using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Services;
 
 namespace Zongsoft.Messaging
@@ -47,7 +50,23 @@ namespace Zongsoft.Messaging
 		protected override void OnStart(string[] args)
 		{
 			var queue = this.Queue ?? throw new InvalidOperationException($"Missing the required message queue.");
-			queue.SubscribeAsync(GetSubscriptionOptions());
+			var options = this.GetSubscriptionOptions(out var filters);
+
+			foreach(var filter in filters)
+			{
+				queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
+			}
+
+			if(args != null && args.Length > 0)
+			{
+				for(int i = 0; i < args.Length; i++)
+				{
+					var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
+
+					if(!string.IsNullOrEmpty(filter.Topic))
+						queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
+				}
+			}
 		}
 
 		protected override void OnStop(string[] args)
@@ -63,13 +82,17 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 私有方法
-		private MessageQueueSubscriptionOptions GetSubscriptionOptions()
+		private MessageSubscribeOptions GetSubscriptionOptions(out IEnumerable<Options.QueueSubscriptionFilter> filters)
 		{
 			var options = this.Options;
 
 			if(options != null && options.TryGet(this.Queue.Name, out var option) && option.Subscription != null)
-				return new MessageQueueSubscriptionOptions(option.Subscription.Reliability, option.Subscription.Fallback);
+			{
+				filters = option.Subscription.Filters ?? Array.Empty<Options.QueueSubscriptionFilter>();
+				return new MessageSubscribeOptions(option.Subscription.Reliability, option.Subscription.Fallback);
+			}
 
+			filters = Array.Empty<Options.QueueSubscriptionFilter>();
 			return null;
 		}
 		#endregion

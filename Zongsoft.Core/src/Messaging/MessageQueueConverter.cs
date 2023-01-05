@@ -53,7 +53,7 @@ namespace Zongsoft.Messaging
 				if(index > 0 && index < text.Length - 1)
 				{
 					var provider = services.Resolve<IMessageQueueProvider>(text.Substring(index + 1));
-					return provider?.GetQueue(text.Substring(0, index));
+					return provider?.Queue(text.Substring(0, index));
 				}
 
 				return services.Resolve(text) as IMessageQueue;

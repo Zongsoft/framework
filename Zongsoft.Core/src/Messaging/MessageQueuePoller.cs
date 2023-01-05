@@ -63,7 +63,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args) => _poller.Start(MessageDequeueOptions.Default, 1000);
+		protected override void OnStart(string[] args) => _poller.Start(MessageConsumeOptions.Default, 1000);
 		protected override void OnStop(string[] args) => _poller.Stop();
 		#endregion
 	}
