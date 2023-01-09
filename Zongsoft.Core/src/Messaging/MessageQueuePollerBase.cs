@@ -36,19 +36,18 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 提供消息队列轮询功能的类。
 	/// </summary>
-	/// <typeparam name="TMessage">队列的消息类型。</typeparam>
-	public class MessageQueuePoller<TMessage> : IMessagePoller
+	public abstract class MessageQueuePollerBase : IMessagePoller
 	{
 		#region 私有变量
 		private IMessageQueue _queue;
-		private Action<TMessage> _handler;
+		private Action<Message> _handler;
 		private CancellationTokenSource _cancellation;
 		#endregion
 
 		#region 构造函数
 		/// <summary>构建消息队列轮询器。</summary>
 		/// <param name="handler">队列消息处理函数。</param>
-		public MessageQueuePoller(Action<TMessage> handler)
+		public MessageQueuePollerBase(Action<Message> handler)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 		}
@@ -56,7 +55,7 @@ namespace Zongsoft.Messaging
 		/// <summary>构建消息队列轮询器。</summary>
 		/// <param name="queue">待轮询的队列。</param>
 		/// <param name="handler">队列消息处理函数。</param>
-		public MessageQueuePoller(IMessageQueue queue, Action<TMessage> handler)
+		public MessageQueuePollerBase(IMessageQueue queue, Action<Message> handler)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -106,13 +105,13 @@ namespace Zongsoft.Messaging
 
 			while(!cancellation.IsCancellationRequested)
 			{
-				TMessage message;
+				Message message;
 				Exception exception = null;
 
 				try
 				{
 					//以同步方式从消息队列中获取一条消息
-					message = _queue.DequeueAsync(settings.Options).GetAwaiter().GetResult();
+					message = this.Receive(null, settings.Options, cancellation.Token);
 				}
 				catch(Exception ex)
 				{
@@ -124,13 +123,13 @@ namespace Zongsoft.Messaging
 				}
 
 				//如果消息获取失败则休息一小会
-				if(exception != null || message == null || (message is MessageQueueMessage qm && qm.IsEmpty))
+				if(exception != null || message.IsEmpty)
 					Thread.Sleep(settings.Interval);
 				else
 					OnHandle(_handler, message, _cancellation.Token);
 			}
 
-			static void OnHandle(Action<TMessage> handler, TMessage message, CancellationToken cancellation)
+			static void OnHandle(Action<Message> handler, Message message, CancellationToken cancellation)
 			{
 				if(cancellation.IsCancellationRequested)
 					return;
@@ -149,6 +148,8 @@ namespace Zongsoft.Messaging
 				}
 			}
 		}
+
+		protected abstract Message Receive(IMessageConsumer subscriber, MessageConsumeOptions options, CancellationToken cancellation);
 		#endregion
 
 		#region 释放资源
@@ -187,14 +188,14 @@ namespace Zongsoft.Messaging
 
 		private class HandleArgument
 		{
-			public HandleArgument(Action<TMessage> handler, TMessage message)
+			public HandleArgument(Action<Message> handler, Message message)
 			{
 				this.Handler = handler;
 				this.Message = message;
 			}
 
-			public readonly Action<TMessage> Handler;
-			public readonly TMessage Message;
+			public readonly Action<Message> Handler;
+			public readonly Message Message;
 		}
 		#endregion
 	}

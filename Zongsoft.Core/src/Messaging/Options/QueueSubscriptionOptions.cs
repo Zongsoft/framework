@@ -50,7 +50,7 @@ namespace Zongsoft.Messaging.Options
 	{
 		#region 构造函数
 		public QueueSubscriptionFilter() { }
-		public QueueSubscriptionFilter(string topic, params string[] tags)
+		public QueueSubscriptionFilter(string topic, string tags = null)
 		{
 			this.Topic = topic;
 			this.Tags = tags;
@@ -61,7 +61,7 @@ namespace Zongsoft.Messaging.Options
 		public string Topic { get; set; }
 
 		[TypeConverter(typeof(TagsConverter))]
-		public string[] Tags { get; set; }
+		public string Tags { get; set; }
 		#endregion
 
 		#region 重写方法
@@ -81,7 +81,7 @@ namespace Zongsoft.Messaging.Options
 
 				if(index > 0 && index < text.Length - 1)
 				{
-					var tags = Zongsoft.Common.StringExtension.Slice(text.Substring(index + 1), ',').ToArray();
+					var tags = text.Substring(index + 1);
 					return new QueueSubscriptionFilter(text.Substring(0, index), tags);
 				}
 			}

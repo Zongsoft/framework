@@ -39,10 +39,12 @@ namespace Zongsoft.Messaging
 {
 	public class MessageQueueGuarder : WorkerBase
 	{
+		private IMessageConsumer[] _consumers;
+
 		#region 公共属性
 		[TypeConverter(typeof(MessageQueueConverter))]
 		public IMessageQueue Queue { get; set; }
-
+		public IMessageHandler Handler { get; set; }
 		public Options.QueueOptionsCollection Options { get; set; }
 		#endregion
 
@@ -51,10 +53,14 @@ namespace Zongsoft.Messaging
 		{
 			var queue = this.Queue ?? throw new InvalidOperationException($"Missing the required message queue.");
 			var options = this.GetSubscriptionOptions(out var filters);
+			var consumers = new List<IMessageConsumer>();
 
 			foreach(var filter in filters)
 			{
-				queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
+				var consumer = queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options).GetAwaiter().GetResult();
+
+				if(consumer != null)
+					consumers.Add(consumer);
 			}
 
 			if(args != null && args.Length > 0)
@@ -64,19 +70,26 @@ namespace Zongsoft.Messaging
 					var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
 
 					if(!string.IsNullOrEmpty(filter.Topic))
-						queue.SubscribeAsync(filter.Topic, filter.Tags, options).GetAwaiter().GetResult();
+					{
+						var consumer = queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options).GetAwaiter().GetResult();
+
+						if(consumer != null)
+							consumers.Add(consumer);
+					}
 				}
 			}
+
+			_consumers = consumers.ToArray();
 		}
 
 		protected override void OnStop(string[] args)
 		{
-			var subscribers = this.Queue?.Subscribers;
+			var subscribers = _consumers;
 
 			if(subscribers != null)
 			{
-				foreach(var subscriber in subscribers)
-					subscriber.UnsubscribeAsync().GetAwaiter().GetResult();
+				for(int i = 0; i < subscribers.Length; i++)
+					subscribers[i].UnsubscribeAsync().GetAwaiter().GetResult();
 			}
 		}
 		#endregion
