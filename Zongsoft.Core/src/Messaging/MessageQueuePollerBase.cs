@@ -81,7 +81,7 @@ namespace Zongsoft.Messaging
 		/// <summary>开始队列轮询。</summary>
 		/// <param name="options">轮询的出队选项。</param>
 		/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
-		public void Start(MessageConsumeOptions options = null, int interval = 1000)
+		public void Start(MessageDequeueOptions options = null, int interval = 1000)
 		{
 			_cancellation = new CancellationTokenSource();
 			Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
@@ -149,7 +149,7 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		protected abstract Message Receive(IMessageConsumer subscriber, MessageConsumeOptions options, CancellationToken cancellation);
+		protected abstract Message Receive(IMessageConsumer subscriber, MessageDequeueOptions options, CancellationToken cancellation);
 		#endregion
 
 		#region 释放资源
@@ -176,13 +176,13 @@ namespace Zongsoft.Messaging
 		#region 轮询参数
 		private class PollArgument
 		{
-			public PollArgument(MessageConsumeOptions options, int interval = 1000)
+			public PollArgument(MessageDequeueOptions options, int interval = 1000)
 			{
-				this.Options = options ?? MessageConsumeOptions.Default;
+				this.Options = options ?? MessageDequeueOptions.Default;
 				this.Interval = Math.Max(interval, 100);
 			}
 
-			public readonly MessageConsumeOptions Options;
+			public readonly MessageDequeueOptions Options;
 			public readonly int Interval;
 		}
 

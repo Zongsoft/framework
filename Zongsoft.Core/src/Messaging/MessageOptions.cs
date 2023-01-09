@@ -31,15 +31,15 @@ public class MessageSubscribeOptions
 /// <summary>
 /// 表示消息出队(消费)操作的选项类。
 /// </summary>
-public class MessageConsumeOptions
+public class MessageDequeueOptions
 {
 	#region 单例字段
-	public static readonly MessageConsumeOptions Default = new MessageConsumeOptions(TimeSpan.FromSeconds(10));
+	public static readonly MessageDequeueOptions Default = new MessageDequeueOptions(TimeSpan.FromSeconds(10));
 	#endregion
 
 	#region 构造函数
-	public MessageConsumeOptions() : this(TimeSpan.Zero) { }
-	public MessageConsumeOptions(TimeSpan timeout)
+	public MessageDequeueOptions() : this(TimeSpan.Zero) { }
+	public MessageDequeueOptions(TimeSpan timeout)
 	{
 		this.Timeout = timeout;
 	}
@@ -54,16 +54,16 @@ public class MessageConsumeOptions
 /// <summary>
 /// 表示消息入队(生产)操作的选项类。
 /// </summary>
-public class MessageProduceOptions
+public class MessageEnqueueOptions
 {
 	#region 单例字段
-	public static readonly MessageProduceOptions Default = new MessageProduceOptions();
+	public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions();
 	#endregion
 
 	#region 构造函数
-	public MessageProduceOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
-	public MessageProduceOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
-	public MessageProduceOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
+	public MessageEnqueueOptions(byte priority = 0) : this(MessageReliability.MostOnce, priority) { }
+	public MessageEnqueueOptions(MessageReliability reliability, byte priority = 0) : this(TimeSpan.Zero, reliability, priority) { }
+	public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
 	{
 		this.Delay = delay;
 		this.Expiry = TimeSpan.Zero;
