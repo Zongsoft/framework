@@ -52,6 +52,15 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 生产方法
+		public ValueTask<string> ProduceAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
+			this.ProduceAsync(null, null, data, options, cancellation);
+
+		public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
+			this.ProduceAsync(null, null, data, Encoding.UTF8, options, cancellation);
+
+		public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, Encoding encoding, MessageEnqueueOptions options = null, CancellationToken cancellation = default)=>
+			this.ProduceAsync(null, null, data, encoding, options, cancellation);
+
 		public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 			this.ProduceAsync(topic, null, data, options, cancellation);
 

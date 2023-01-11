@@ -34,8 +34,11 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 表示消息队列轮询器的接口。
 	/// </summary>
-	public interface IMessagePoller : IDisposable
+	public interface IMessageQueuePoller : IDisposable
 	{
+		/// <summary>获取轮询的队列。</summary>
+		IMessageQueue Queue { get; }
+
 		/// <summary>获取一个值，指示是否处于轮询中。</summary>
 		bool IsPolling { get; }
 

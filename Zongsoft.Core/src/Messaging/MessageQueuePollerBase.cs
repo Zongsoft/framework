@@ -36,43 +36,35 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 提供消息队列轮询功能的类。
 	/// </summary>
-	public abstract class MessageQueuePollerBase : IMessagePoller
+	public abstract class MessageQueuePollerBase<TQueue> : IMessageQueuePoller where TQueue : class, IMessageQueue
 	{
 		#region 私有变量
-		private IMessageQueue _queue;
-		private Action<Message> _handler;
+		private TQueue _queue;
 		private CancellationTokenSource _cancellation;
 		#endregion
 
 		#region 构造函数
 		/// <summary>构建消息队列轮询器。</summary>
-		/// <param name="handler">队列消息处理函数。</param>
-		public MessageQueuePollerBase(Action<Message> handler)
-		{
-			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-		}
-
-		/// <summary>构建消息队列轮询器。</summary>
 		/// <param name="queue">待轮询的队列。</param>
-		/// <param name="handler">队列消息处理函数。</param>
-		public MessageQueuePollerBase(IMessageQueue queue, Action<Message> handler)
+		protected MessageQueuePollerBase(TQueue queue)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 		}
 		#endregion
 
 		#region 公共属性
+		/// <inheritdoc />
+		public bool IsPolling { get; private set; }
+
+		IMessageQueue IMessageQueuePoller.Queue { get => _queue; }
+
 		/// <summary>获取或设置轮询的队列。</summary>
 		[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
-		public IMessageQueue Queue
+		public TQueue Queue
 		{
 			get => _queue;
 			set => _queue = value ?? throw new ArgumentNullException();
 		}
-
-		/// <inheritdoc />
-		public bool IsPolling { get; private set; }
 		#endregion
 
 		#region 公共方法
@@ -81,8 +73,11 @@ namespace Zongsoft.Messaging
 		/// <summary>开始队列轮询。</summary>
 		/// <param name="options">轮询的出队选项。</param>
 		/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
-		public void Start(MessageDequeueOptions options = null, int interval = 1000)
+		public void Start(MessageDequeueOptions options, int interval = 1000)
 		{
+			if(_queue == null)
+				throw new ObjectDisposedException(this.GetType().Name);
+
 			_cancellation = new CancellationTokenSource();
 			Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 		}
@@ -111,7 +106,7 @@ namespace Zongsoft.Messaging
 				try
 				{
 					//以同步方式从消息队列中获取一条消息
-					message = this.Receive(null, settings.Options, cancellation.Token);
+					message = this.Receive(settings.Options, cancellation.Token);
 				}
 				catch(Exception ex)
 				{
@@ -126,21 +121,21 @@ namespace Zongsoft.Messaging
 				if(exception != null || message.IsEmpty)
 					Thread.Sleep(settings.Interval);
 				else
-					OnHandle(_handler, message, _cancellation.Token);
+					Handle(message, _cancellation.Token);
 			}
 
-			static void OnHandle(Action<Message> handler, Message message, CancellationToken cancellation)
+			void Handle(in Message message, CancellationToken cancellation)
 			{
 				if(cancellation.IsCancellationRequested)
 					return;
 
 				try
 				{
-					Task.Factory.StartNew(argument =>
+					Task.Factory.StartNew(async argument =>
 					{
-						var token = (HandleArgument)argument;
-						token.Handler.Invoke(token.Message);
-					}, new HandleArgument(handler, message), cancellation);
+						var message = (Message)argument;
+						await this.OnHandleAsync(message, cancellation);
+					}, message, cancellation);
 				}
 				catch(Exception ex)
 				{
@@ -149,7 +144,11 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		protected abstract Message Receive(IMessageConsumer subscriber, MessageDequeueOptions options, CancellationToken cancellation);
+		protected abstract Message Receive(MessageDequeueOptions options, CancellationToken cancellation);
+		#endregion
+
+		#region 处理方法
+		protected abstract ValueTask OnHandleAsync(Message message, CancellationToken cancellation);
 		#endregion
 
 		#region 释放资源
@@ -184,18 +183,6 @@ namespace Zongsoft.Messaging
 
 			public readonly MessageDequeueOptions Options;
 			public readonly int Interval;
-		}
-
-		private class HandleArgument
-		{
-			public HandleArgument(Action<Message> handler, Message message)
-			{
-				this.Handler = handler;
-				this.Message = message;
-			}
-
-			public readonly Action<Message> Handler;
-			public readonly Message Message;
 		}
 		#endregion
 	}
