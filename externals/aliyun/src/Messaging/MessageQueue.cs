@@ -28,20 +28,20 @@
  */
 
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Messaging;
-using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class MessageQueue : IMessageQueue<MessageQueueMessage>
+	public class MessageQueue : MessageQueueBase
 	{
 		#region 常量定义
 		private static readonly Regex COUNT_REGEX = new Regex(@"\<(?'tag'(ActiveMessages|InactiveMessages|DelayMessages))\>\s*(?<value>[^<>\s]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
@@ -53,45 +53,38 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 构造函数
-		public MessageQueue(string name)
+		public MessageQueue(string name) : base(name)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name.Trim();
-
 			var certificate = MessageQueueUtility.GetCertificate(name);
 			_http = new HttpClient(new HttpClientHandler(certificate, MessageAuthenticator.Instance));
 			_http.DefaultRequestHeaders.Add("x-mns-version", "2015-06-06");
 		}
 		#endregion
 
-		#region 公共属性
-		public string Name { get; }
-		public IHandler<MessageQueueMessage> Handler { get; set; }
-		public IConnectionSetting ConnectionSetting { get; set; }
-		System.Collections.Generic.IEnumerable<IMessageSubscriber> IMessageQueue.Subscribers => Array.Empty<IMessageSubscriber>();
-		#endregion
-
 		#region 订阅方法
-		public bool Subscribe(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
-		public ValueTask<bool> SubscribeAsync(MessageQueueSubscriptionOptions options = null) => throw new NotSupportedException();
+		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		{
+			if(handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			if(!string.IsNullOrEmpty(topics) && topics != "*")
+				throw new NotSupportedException($"This message queue does not support subscription topics and tags.");
+			if(!string.IsNullOrEmpty(tags) && tags != "*")
+				throw new NotSupportedException($"This message queue does not support subscription topics and tags.");
+
+			return ValueTask.FromResult<IMessageConsumer>(new MessageQueueConsumer(this, handler, options));
+		}
 		#endregion
 
-		#region 处理方法
-		public ValueTask<OperationResult> HandleAsync(ref MessageQueueMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
-		#endregion
-
-		#region 队列方法
-		public long GetCount() => this.GetCountAsync().GetAwaiter().GetResult();
+		#region 数量获取
 		public async ValueTask<long> GetCountAsync(CancellationToken cancellation = default)
 		{
-			var response = await _http.GetAsync(this.GetRequestUrl());
+			var response = await _http.GetAsync(this.GetRequestUrl(), cancellation);
 
 			if(!response.IsSuccessStatusCode)
 				return -1;
 
-			var content = await response.Content.ReadAsStringAsync();
+			var content = await response.Content.ReadAsStringAsync(cancellation);
 
 			if(string.IsNullOrWhiteSpace(content))
 				return -1;
@@ -111,10 +104,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			return total;
 		}
+		#endregion
 
-		public ValueTask ClearAsync(CancellationToken cancellation = default) => throw new NotSupportedException();
-
-		public async ValueTask<MessageQueueMessage> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
+		#region 出队方法
+		public async ValueTask<Message> DequeueAsync(MessageDequeueOptions options, CancellationToken cancellation = default)
 		{
 			if(options == null)
 				options = MessageDequeueOptions.Default;
@@ -134,7 +127,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				switch(exception.Code)
 				{
 					case MessageUtility.MessageNotExist:
-						return MessageQueueMessage.Empty;
+						return Message.Empty;
 					case MessageUtility.QueueNotExist:
 						throw exception;
 					default:
@@ -142,9 +135,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
-			return MessageQueueMessage.Empty;
+			return Message.Empty;
 		}
+		#endregion
 
+		#region 入队方法
 		public string Enqueue(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
 		public ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
 		public async ValueTask<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
@@ -181,6 +176,11 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			}
 
 			return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync(cancellation));
+		}
+
+		public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		{
+			return this.EnqueueAsync(data, options, cancellation);
 		}
 		#endregion
 
@@ -243,5 +243,77 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			return MessageQueueUtility.GetRequestUrl(this.Name, parts);
 		}
 		#endregion
+
+		#region 资源释放
+		protected override void Dispose(bool disposing)
+		{
+			var http = Interlocked.Exchange(ref _http, null);
+
+			if(http != null)
+				http.Dispose();
+		}
+		#endregion
+
+		private class MessageQueueConsumer : MessageConsumerBase, IEquatable<MessageQueueConsumer>
+		{
+			private MessageQueue _queue;
+			private MessageQueuePoller _poller;
+
+			public MessageQueueConsumer(MessageQueue queue, IMessageHandler handler, MessageSubscribeOptions options = null) : base(handler, options)
+			{
+				_queue = queue ?? throw new ArgumentNullException(nameof(queue));
+				_poller = new MessageQueuePoller(queue, handler);
+			}
+
+			protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
+			{
+				return ValueTask.CompletedTask;
+			}
+
+			protected override ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
+			{
+				if(topics != null && topics.Any())
+					throw new NotSupportedException($"This message queue does not support unsubscribing to specified topics.");
+
+				return ValueTask.CompletedTask;
+			}
+
+			protected override void OnSubscribed() => _poller.Start();
+			protected override void OnUnsubscribed() => _poller.Stop();
+
+			public bool Equals(MessageQueueConsumer other) => other is not null &&
+				object.ReferenceEquals(_queue, other._queue) &&
+				object.ReferenceEquals(this.Handler, other.Handler);
+
+			public override bool Equals(object obj) => obj is MessageQueueConsumer other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(_queue, this.Handler);
+
+			protected override void Dispose(bool disposing)
+			{
+				if(disposing)
+					_poller.Stop();
+
+				base.Dispose(disposing);
+			}
+		}
+
+		private class MessageQueuePoller : MessageQueuePollerBase<MessageQueue>
+		{
+			private readonly IMessageHandler _handler;
+
+			public MessageQueuePoller(MessageQueue queue, IMessageHandler handler) : base(queue) => _handler = handler;
+
+			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
+			{
+				var task = this.Queue.DequeueAsync(options, cancellation).AsTask();
+				task.Wait(cancellation);
+				return task.Result;
+			}
+
+			protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
+			{
+				return _handler.HandleAsync(message, cancellation);
+			}
+		}
 	}
 }

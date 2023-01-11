@@ -47,10 +47,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		private static readonly Regex _error_regex = new Regex(@"\<(?'tag'(Code|Message))\>\s*(?<value>[^<>]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
-		public static MessageQueueMessage ResolveMessage(MessageQueue queue, Stream stream)
+		public static Message ResolveMessage(MessageQueue queue, Stream stream)
 		{
 			if(stream == null)
-				return new MessageQueueMessage(queue, null);
+				return Message.Empty;
 
 			string id = null, ackId = null, md5 = null, body = null;
 			DateTime? expires = null, enqueuedTime = null, dequeuedTime = null;
@@ -67,7 +67,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			using(var reader = XmlReader.Create(stream, settings))
 			{
 				if(reader.MoveToContent() != XmlNodeType.Element)
-					return new MessageQueueMessage(queue, null);
+					return Message.Empty;
 
 				while(reader.Read())
 				{
@@ -107,9 +107,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
-			return new MessageQueueMessage(
-				queue,
+			return new Message(
 				id,
+				null,
 				string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body),
 				(delay, cancellation) => queue.AcknowledgeAsync(ackId, delay, cancellation));
 		}

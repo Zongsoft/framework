@@ -54,7 +54,14 @@ namespace Zongsoft.Messaging
 
 		#region 公共属性
 		/// <inheritdoc />
-		public bool IsPolling { get; private set; }
+		public bool IsPolling
+		{
+			get
+			{
+				var cancellation = _cancellation;
+				return cancellation != null && !cancellation.IsCancellationRequested;
+			}
+		}
 
 		IMessageQueue IMessageQueuePoller.Queue { get => _queue; }
 
@@ -78,6 +85,9 @@ namespace Zongsoft.Messaging
 			if(_queue == null)
 				throw new ObjectDisposedException(this.GetType().Name);
 
+			if(this.IsPolling)
+				return;
+
 			_cancellation = new CancellationTokenSource();
 			Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 		}
@@ -85,7 +95,7 @@ namespace Zongsoft.Messaging
 		/// <summary>停止队列轮询。</summary>
 		public void Stop()
 		{
-			var cancellation = _cancellation;
+			var cancellation = Interlocked.Exchange(ref _cancellation, null);
 
 			if(cancellation != null && !cancellation.IsCancellationRequested)
 				_cancellation.Cancel(false);

@@ -37,44 +37,24 @@ using Zongsoft.Messaging;
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
 	[Service(typeof(IMessageQueueProvider))]
-	public class MessageQueueProvider : IMessageQueueProvider, IEnumerable<MessageQueue>
+	public class MessageQueueProvider : MessageQueueProviderBase
 	{
 		#region 成员字段
-		private readonly Dictionary<string, MessageQueue> _queues = new Dictionary<string, MessageQueue>(StringComparer.OrdinalIgnoreCase);
-		#endregion
-
-		#region 公共属性
-		public string Name => "Aliyun.Queue";
-		public int Count => _queues.Count;
+		public MessageQueueProvider() : base("Aliyun.MNS") { }
 		#endregion
 
 		#region 公共方法
-		public IMessageQueue GetQueue(string name)
+		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			if(string.IsNullOrEmpty(name))
-				return null;
+			var options = MessageUtility.GetOptions();
 
-			if(_queues.TryGetValue(name, out var queue) && queue != null)
-				return queue;
+			if(options.Queues.TryGet(name, out var queue))
+				return new MessageQueue(queue.Name);
+			if(options.Topics.TryGet(name, out var topic))
+				return new MessageTopic(topic.Name);
 
-			lock(_queues)
-			{
-				if(_queues.TryGetValue(name, out queue) && queue != null)
-					return queue;
-
-				var options = MessageUtility.GetOptions();
-
-				if(options != null && options.Queues.TryGet(name, out var option))
-					_queues.Add(option.Name, queue = new MessageQueue(option.Name));
-
-				return queue;
-			}
+			return null;
 		}
-		#endregion
-
-		#region 遍历枚举
-		public IEnumerator<MessageQueue> GetEnumerator() => _queues.Values.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _queues.Values.GetEnumerator();
 		#endregion
 	}
 }

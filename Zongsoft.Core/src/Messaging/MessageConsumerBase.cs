@@ -134,12 +134,7 @@ namespace Zongsoft.Messaging
 		public async ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			if(topics == null || !topics.Any())
-			{
 				topics = _topics;
-
-				if(topics == null || !topics.Any())
-					throw new InvalidOperationException("The message topics to subscribe to is missing.");
-			}
 
 			//尝试取消原有订阅
 			await this.UnsubscribeAsync(topics, cancellation);
@@ -154,6 +149,9 @@ namespace Zongsoft.Messaging
 
 			//更新订阅标记(已订阅)
 			_subscribed = true;
+
+			//通知订阅完成
+			this.OnSubscribed();
 		}
 
 		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default) => this.UnsubscribeAsync(this.Topics, cancellation);
@@ -173,15 +171,17 @@ namespace Zongsoft.Messaging
 				task.AsTask().ContinueWith(t =>
 				{
 					if(t.IsCompletedSuccessfully)
-						this.OnUnsubscribed();
+						this.OnUnsubscribed(topics);
 				}, cancellation);
 
 			return task;
 		}
 
+		protected virtual void OnSubscribed() { }
 		protected abstract ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation);
-		protected abstract ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation);
+
 		protected virtual void OnUnsubscribed() { }
+		protected abstract ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation);
 
 		private void OnUnsubscribed(IEnumerable<string> topics)
 		{

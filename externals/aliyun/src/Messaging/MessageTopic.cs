@@ -37,12 +37,10 @@ using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Messaging;
-using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class MessageTopic : IMessageTopic<MessageTopicMessage>, IDisposable
+	public class MessageTopic : MessageQueueBase
 	{
 		#region 常量定义
 		private readonly string MESSAGE_SEND_URL;
@@ -56,13 +54,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 构造函数
-		public MessageTopic(string name)
+		public MessageTopic(string name) : base(name)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name.Trim();
-
 			//初始化相关操作的URL常量
 			MESSAGE_SEND_URL = MessageTopicUtility.GetRequestUrl(name, "messages");
 
@@ -72,48 +65,20 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		}
 		#endregion
 
-		#region 公共属性
-		public string Name { get; }
-		public IHandler<MessageTopicMessage> Handler { get; set; }
-		public IConnectionSetting ConnectionSetting { get; set; }
-		IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => Array.Empty<IMessageSubscriber>();
-		#endregion
-
-		#region 公共方法
-		public ValueTask<OperationResult> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default)
+		#region 订阅方法
+		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
-			return this.Handler?.HandleAsync(message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
+			throw new NotImplementedException();
 		}
 		#endregion
 
-		#region 公共方法
-		public ValueTask<bool> SubscribeAsync(string topic, IEnumerable<string> tags, MessageTopicSubscriptionOptions options = null)
+		#region 发送消息
+		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
-			throw new NotSupportedException();
-		}
-
-		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.PublishAsync(data.ToArray(), 0, data.Length, topic, tags, options, cancellation);
-		}
-
-		public async ValueTask<string> PublishAsync(byte[] data, int offset, int count, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
-		{
-			if(data == null || data.Length == 0)
+			if(data.IsEmpty)
 				return null;
 
-			if(offset < 0 || offset > data.Length - 1)
-				throw new ArgumentOutOfRangeException(nameof(offset));
-
-			if(count < 1)
-				count = data.Length - offset;
-			else
-			{
-				if(offset + count > data.Length)
-					throw new ArgumentOutOfRangeException(nameof(count));
-			}
-
-			var response = await _http.PostAsync(MESSAGE_SEND_URL, CreateMessageRequest(data, offset, count, tags), cancellation);
+			var response = await _http.PostAsync(MESSAGE_SEND_URL, CreateMessageRequest(data.Span, string.IsNullOrEmpty(tags) ? Array.Empty<string>() : tags.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)), cancellation);
 
 			if(cancellation.IsCancellationRequested)
 				return null;
@@ -134,28 +99,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			return new StringContent(content, Encoding.UTF8, "application/xml");
 		}
-
-		private static HttpContent CreateMessageRequest(byte[] data, int offset, int count, IEnumerable<string> tags)
-		{
-			var content = System.Convert.ToBase64String(data, offset, count);
-
-			if(tags == null || !tags.Any())
-				content = string.Format(MESSAGE_CONTENT_NOTAG_TEMPLATE, content);
-			else
-				content = string.Format(MESSAGE_CONTENT_FULLY_TEMPLATE, content, tags);
-
-			return new StringContent(content, Encoding.UTF8, "application/xml");
-		}
 		#endregion
 
-		#region 处置方法
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
+		#region 资源释放
+		protected override void Dispose(bool disposing)
 		{
 			var http = Interlocked.Exchange(ref _http, null);
 
