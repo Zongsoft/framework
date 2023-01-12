@@ -38,9 +38,8 @@ namespace Zongsoft.Messaging.Commands
 {
 	[DisplayName("Text.QueueCommand.Name")]
 	[Description("Text.QueueCommand.Description")]
-	[CommandOption("queue", typeof(string), Description = "Text.QueueCommand.Options.Queue")]
-	[CommandOption("topic", typeof(string), Description = "Text.QueueCommand.Options.Topic")]
-	public class QueueCommand : CommandBase<CommandContext>
+	[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
+	public class QueueCommand : Services.Commands.HostCommandBase<IMessageQueue>
 	{
 		#region 成员字段
 		private readonly IServiceProvider _serviceProvider;
@@ -55,13 +54,34 @@ namespace Zongsoft.Messaging.Commands
 		public QueueCommand(IServiceProvider serviceProvider, string name) : base(name)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			this.Queue = serviceProvider.ResolveAll<IMessageQueue>().FirstOrDefault(queue => queue.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+			foreach(var provider in serviceProvider.ResolveAll<IMessageQueueProvider>())
+			{
+				var queue = GetQueue(provider, name);
+
+				if(queue != null)
+				{
+					this.Queue = queue;
+					break;
+				}
+			}
+
+			static IMessageQueue GetQueue(IMessageQueueProvider provider, string name)
+			{
+				try
+				{
+					return provider.Queue(name);
+				}
+				catch
+				{
+					return null;
+				}
+			}
 		}
 		#endregion
 
 		#region 公共属性
-		public IMessageQueue Queue { get; set; }
-		public IMessageTopic Topic { get; set; }
+		public IMessageQueue Queue { get => this.Host; set => this.Host = value; }
 		#endregion
 
 		#region 执行方法
@@ -69,7 +89,7 @@ namespace Zongsoft.Messaging.Commands
 		{
 			string name;
 
-			if(context.Expression.Options.TryGetValue("queue", out name))
+			if(context.Expression.Options.TryGetValue("name", out name))
 			{
 				if(string.IsNullOrEmpty(name))
 					return this.Queue;
@@ -81,12 +101,11 @@ namespace Zongsoft.Messaging.Commands
 
 				foreach(var provider in providers)
 				{
-					var queue = provider.GetQueue(name);
+					var queue = provider.Queue(name);
 
 					if(queue != null)
 					{
 						this.Queue = queue;
-						this.Topic = null;
 
 						//打印队列信息
 						context.Output.WriteLine(CommandOutletColor.Green, queue.Name);
@@ -97,35 +116,7 @@ namespace Zongsoft.Messaging.Commands
 				}
 			}
 
-			if(context.Expression.Options.TryGetValue("topic", out name))
-			{
-				if(string.IsNullOrEmpty(name))
-					return this.Topic;
-
-				var providers = _serviceProvider.ResolveAll<IMessageTopicProvider>();
-
-				if(providers == null)
-					throw new CommandException(string.Format(Properties.Resources.Text_QueueCommand_NotFoundQueue, name));
-
-				foreach(var provider in providers)
-				{
-					var topic = provider.GetTopic(name);
-
-					if(topic != null)
-					{
-						this.Topic = topic;
-						this.Queue = null;
-
-						//打印队列信息
-						context.Output.WriteLine(CommandOutletColor.Green, topic.Name);
-						PrintConnectionSetting(context.Output, topic.ConnectionSetting?.Values);
-
-						return topic; ;
-					}
-				}
-			}
-
-			if(this.Queue == null && this.Topic == null)
+			if(this.Queue == null)
 				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
 
 			if(this.Queue != null)
@@ -135,15 +126,6 @@ namespace Zongsoft.Messaging.Commands
 				PrintConnectionSetting(context.Output, this.Queue.ConnectionSetting?.Values);
 
 				return this.Queue;
-			}
-
-			if(this.Topic != null)
-			{
-				//打印队列信息
-				context.Output.WriteLine(CommandOutletColor.Green, this.Topic.Name);
-				PrintConnectionSetting(context.Output, this.Topic.ConnectionSetting?.Values);
-
-				return this.Topic;
 			}
 
 			return null;

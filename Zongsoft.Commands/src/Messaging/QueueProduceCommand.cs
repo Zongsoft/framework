@@ -45,11 +45,11 @@ namespace Zongsoft.Messaging.Commands
 	[CommandOption("topic", Type = typeof(string))]
 	[CommandOption("tags", Type = typeof(string))]
 	[CommandOption("qos", Type = typeof(MessageReliability))]
-	public class QueueInCommand : CommandBase<CommandContext>
+	public class QueueProduceCommand : CommandBase<CommandContext>
 	{
 		#region 构造函数
-		public QueueInCommand() : this("In") { }
-		public QueueInCommand(string name) : base(name) { }
+		public QueueProduceCommand() : this("Produce") { }
+		public QueueProduceCommand(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性
@@ -60,43 +60,28 @@ namespace Zongsoft.Messaging.Commands
 		protected override object OnExecute(CommandContext context)
 		{
 			var queue = context.CommandNode.FindQueue();
-
-			if(queue != null)
-			{
-				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
-				return this.ExecuteCore(queue.Name, context, data => queue.EnqueueAsync(data, options).GetAwaiter().GetResult());
-			}
+			if(queue == null)
+				return null;
 
 			if(context.Expression.Options.TryGetValue<string>("topic", out var value))
 				this.Topic = value == "*" ? null : value;
 
 			if(string.IsNullOrEmpty(this.Topic))
-				throw new CommandOptionMissingException("topic");
-
-			var topic = context.CommandNode.FindTopic();
-
-			if(topic != null)
-			{
-				context.Output.WriteLine(CommandOutletColor.DarkGray, new string('-', topic.Name.Length + this.Topic.Length + 1));
-
+				context.Output.WriteLine(CommandOutletColor.DarkMagenta, queue.Name);
+			else
 				context.Output.WriteLine(
 					CommandOutletContent
-					.Create(CommandOutletColor.DarkMagenta, topic.Name)
+					.Create(CommandOutletColor.DarkMagenta, queue.Name)
 					.Append(":")
 					.Append(CommandOutletColor.DarkYellow, this.Topic));
 
-				context.Output.WriteLine(CommandOutletColor.DarkGray, new string('-', topic.Name.Length + this.Topic.Length + 1));
+			var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
+			var tags = context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null;
 
-				var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageTopicPublishOptions(reliability) : MessageTopicPublishOptions.Default;
-				var tags = context.Expression.Options.TryGetValue<string>("tags", out value) ? value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
-
-				return this.ExecuteCore(topic.Name, context, data => topic.PublishAsync(data, this.Topic, tags, options).GetAwaiter().GetResult());
-			}
-
-			return null;
+			return this.ExecuteCore(context, data => queue.ProduceAsync(this.Topic, tags, data, options).GetAwaiter().GetResult());
 		}
 
-		private IList<string> ExecuteCore(string name, CommandContext context, Func<byte[], string> invoke)
+		private IList<string> ExecuteCore(CommandContext context, Func<byte[], string> invoke)
 		{
 			var round = context.Expression.Options.GetValue<int>("round");
 			var list = new List<string>();

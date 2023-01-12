@@ -120,6 +120,12 @@
   <data name="FileOrDirectoryNotExists" xml:space="preserve">
     <value>{0}文件或目录是不存在的。</value>
   </data>
+  <data name="QueueSubscribeCommand.Prompt" xml:space="preserve">
+    <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>
+  </data>
+  <data name="QueueSubscribeCommand.Welcome" xml:space="preserve">
+    <value>欢迎进入 {0} 消息队列的侦听模式。</value>
+  </data>
   <data name="Text.AssemblyCommand.Description" xml:space="preserve">
     <value>查看当前应用程序(进程)所有加载的程序集信息。</value>
   </data>
@@ -259,7 +265,7 @@
   <data name="Text.QueueCommand.Options.Count" xml:space="preserve">
     <value>出队或者提取的项目个数。</value>
   </data>
-  <data name="Text.QueueCommand.Options.Queue" xml:space="preserve">
+  <data name="Text.QueueCommand.Options.Name" xml:space="preserve">
     <value>消息队列名称。</value>
   </data>
   <data name="Text.QueueCommand.Options.Queues" xml:space="preserve">
@@ -267,9 +273,6 @@
   </data>
   <data name="Text.QueueCommand.Options.Round" xml:space="preserve">
     <value>出队或入队操作循环执行的次数，默认值为1。如果在出队命令中该参数为负数则表示直至将队列出空为止。</value>
-  </data>
-  <data name="Text.QueueCommand.Options.Topic" xml:space="preserve">
-    <value>主题消息队列的名称。</value>
   </data>
   <data name="Text.QueueCountCommand.Description" xml:space="preserve">
     <value>返回指定队列的元素个数。</value>

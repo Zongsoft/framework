@@ -28,49 +28,105 @@
  */
 
 using System;
-using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
+using System.Text;
 
 namespace Zongsoft.Messaging.Commands
 {
-	public class QueueSubscribeCommand : CommandBase<CommandContext>
+	[CommandOption("format", typeof(QueueMessageFormat))]
+	public class QueueSubscribeCommand : Zongsoft.Services.Commands.HostListenCommandBase<IMessageQueue>
 	{
+		#region 私有变量
+		private ICollection<IMessageConsumer> _consumers;
+		#endregion
+
 		#region 构造函数
 		public QueueSubscribeCommand() : this("Subscribe") { }
 		public QueueSubscribeCommand(string name) : base(name) { }
 		#endregion
 
-		protected override object OnExecute(CommandContext context)
+		#region 重写方法
+		protected override void OnListening(CommandContext context, IMessageQueue queue)
 		{
-			var queue = context.CommandNode.FindQueue();
+			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.QueueSubscribeCommand_Welcome, queue.Name));
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
 
-			if(queue != null)
-				return queue.SubscribeAsync().GetAwaiter().GetResult() ? 1 : 0;
+			var handler = new QueueHandler(context);
+			_consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
 
-			var topic = context.CommandNode.FindTopic();
-
-			if(topic != null)
+			foreach(var argument in context.Expression.Arguments)
 			{
-				if(context.Expression.Arguments.Length == 0)
-					throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+				var index = argument.IndexOfAny(new[] { ':', '?' });
+				var consumer = index > 0 && index < argument.Length ?
+					queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).GetAwaiter().GetResult() :
+					queue.SubscribeAsync(argument, handler).GetAwaiter().GetResult();
 
-				int count = 0;
+				_consumers.Add(consumer);
+			}
+		}
 
-				foreach(var argument in context.Expression.Arguments)
-				{
-					var index = argument.IndexOfAny(new[] { ':', '?' });
+		protected override void OnListened(CommandContext context, IMessageQueue queue)
+		{
+			var consumers = Interlocked.Exchange(ref _consumers, null);
 
-					if(index > 0 && index < argument.Length)
-						count += topic.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)).GetAwaiter().GetResult() ? 1 : 0;
-					else
-						count += topic.SubscribeAsync(argument).GetAwaiter().GetResult() ? 1 : 0;
-				}
+			if(consumers != null)
+			{
+				foreach(var consumer in consumers)
+					consumer.UnsubscribeAsync();
+			}
+		}
+		#endregion
 
-				return count;
+		#region 嵌套子类
+		private class QueueHandler : IMessageHandler
+		{
+			private readonly CommandContext _context;
+			private readonly QueueMessageFormat _format;
+
+			public QueueHandler(CommandContext context)
+			{
+				_context = context;
+				_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
 			}
 
-			return 0;
+			public ValueTask HandleAsync(in Message message, CancellationToken cancellation = default)
+			{
+				var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
+
+				var content = string.IsNullOrEmpty(message.Tags) ?
+					CommandOutletContent.Create(CommandOutletColor.DarkGreen, topic) :
+					CommandOutletContent.Create(CommandOutletColor.DarkGreen, topic).Append(CommandOutletColor.DarkGray, $"({message.Tags})");
+
+				if(!string.IsNullOrEmpty(message.Identity))
+					content.Append(CommandOutletColor.DarkCyan, $"@{message.Identity}");
+
+				content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp} ");
+				content.AppendLine(CommandOutletColor.DarkMagenta, message.Identifier);
+
+				content.AppendLine(
+					_format == QueueMessageFormat.Text ?
+					Encoding.UTF8.GetString(message.Data) :
+					Convert.ToBase64String(message.Data)
+				);
+
+				_context.Output.WriteLine(content);
+
+				//应答消息
+				message.Acknowledge();
+
+				return ValueTask.CompletedTask;
+			}
 		}
+		#endregion
+	}
+
+	public enum QueueMessageFormat
+	{
+		None,
+		Text,
 	}
 }

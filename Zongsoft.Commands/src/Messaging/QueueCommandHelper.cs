@@ -46,16 +46,5 @@ namespace Zongsoft.Messaging.Commands
 
 			return FindQueue(node.Parent);
 		}
-
-		public static IMessageTopic FindTopic(this CommandTreeNode node)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is QueueCommand queueCommand)
-				return queueCommand.Topic;
-
-			return FindTopic(node.Parent);
-		}
 	}
 }
