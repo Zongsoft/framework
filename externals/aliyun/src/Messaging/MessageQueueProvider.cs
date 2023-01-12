@@ -39,7 +39,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 	[Service(typeof(IMessageQueueProvider))]
 	public class MessageQueueProvider : MessageQueueProviderBase
 	{
-		#region 成员字段
+		#region 构造函数
 		public MessageQueueProvider() : base("Aliyun.MNS") { }
 		#endregion
 
