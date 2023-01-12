@@ -40,9 +40,10 @@ namespace Zongsoft.Messaging
 	public abstract class MessageQueueBase : IMessageQueue
 	{
 		#region 构造函数
-		protected MessageQueueBase(string name)
+		protected MessageQueueBase(string name, IConnectionSetting connectionSetting = null)
 		{
 			this.Name = name ?? string.Empty;
+			this.ConnectionSetting = connectionSetting;
 		}
 		#endregion
 
