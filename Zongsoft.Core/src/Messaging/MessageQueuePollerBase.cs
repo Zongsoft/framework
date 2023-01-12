@@ -98,7 +98,7 @@ namespace Zongsoft.Messaging
 			var cancellation = Interlocked.Exchange(ref _cancellation, null);
 
 			if(cancellation != null && !cancellation.IsCancellationRequested)
-				_cancellation.Cancel(false);
+				cancellation.Cancel(false);
 		}
 		#endregion
 
