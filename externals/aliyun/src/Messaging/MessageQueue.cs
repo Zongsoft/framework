@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -72,7 +72,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(!string.IsNullOrEmpty(tags) && tags != "*")
 				throw new NotSupportedException($"This message queue does not support subscription topics and tags.");
 
-			return ValueTask.FromResult<IMessageConsumer>(new MessageQueueConsumer(this, handler, options));
+			var consumer = new MessageQueueConsumer(this, handler, options);
+			await consumer.SubscribeAsync(topics, tags, cancellation);
+			return consumer;
 		}
 		#endregion
 
@@ -273,7 +275,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			protected override ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
 			{
 				if(topics != null && topics.Any())
-					throw new NotSupportedException($"This message queue does not support unsubscribing to specified topics.");
+				{
+					if(topics.Count() > 1 || topics.First() != "*")
+						throw new NotSupportedException($"This message queue does not support unsubscribing to specified topics.");
+				}
 
 				return ValueTask.CompletedTask;
 			}
