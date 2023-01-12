@@ -35,6 +35,6 @@ namespace Zongsoft.Messaging
 {
 	public interface IMessageHandler
 	{
-		ValueTask HandleAsync(in Message message, CancellationToken cancellation = default);
+		ValueTask HandleAsync(Message message, CancellationToken cancellation = default);
 	}
 }

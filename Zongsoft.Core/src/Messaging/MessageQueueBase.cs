@@ -124,7 +124,7 @@ namespace Zongsoft.Messaging
 				_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 			}
 
-			public ValueTask HandleAsync(in Message message, CancellationToken cancellation = default)
+			public ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
 			{
 				_handler?.Invoke(message);
 				return ValueTask.CompletedTask;

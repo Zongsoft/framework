@@ -93,7 +93,7 @@ namespace Zongsoft.Messaging.Commands
 				_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
 			}
 
-			public ValueTask HandleAsync(in Message message, CancellationToken cancellation = default)
+			public async ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
 			{
 				var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
 
@@ -106,19 +106,17 @@ namespace Zongsoft.Messaging.Commands
 
 				content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp} ");
 				content.AppendLine(CommandOutletColor.DarkMagenta, message.Identifier);
-
-				content.AppendLine(
+				content.Append(
 					_format == QueueMessageFormat.Text ?
 					Encoding.UTF8.GetString(message.Data) :
 					Convert.ToBase64String(message.Data)
 				);
 
+				//输出内容
 				_context.Output.WriteLine(content);
 
 				//应答消息
-				message.Acknowledge();
-
-				return ValueTask.CompletedTask;
+				await message.AcknowledgeAsync(cancellation);
 			}
 		}
 		#endregion
