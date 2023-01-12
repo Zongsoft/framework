@@ -32,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
@@ -45,89 +46,114 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttQueue : IMessageTopic<MessageTopicMessage>, IAsyncDisposable
+	public class MqttQueue : MessageQueueBase
 	{
 		#region 工厂字段
 		private static readonly MqttFactory Factory = new MqttFactory();
 		#endregion
 
 		#region 成员字段
-		private readonly IManagedMqttClient _client;
-		private readonly IDictionary<string, MqttSubscriber> _subscribers;
+		private IManagedMqttClient _client;
+		private readonly ConcurrentDictionary<string, ISet<MqttSubscriber>> _subscribers;
 		#endregion
 
 		#region 构造函数
-		public MqttQueue(string name, IConnectionSetting connectionSetting)
+		public MqttQueue(string name, IConnectionSetting connectionSetting) : base(name, connectionSetting)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name.Trim();
-			this.ConnectionSetting = connectionSetting;
-
 			_client = Factory.CreateManagedMqttClient();
-			_subscribers = new Dictionary<string, MqttSubscriber>();
+			_subscribers = new ConcurrentDictionary<string, ISet<MqttSubscriber>>();
 
-			_client.ApplicationMessageReceivedAsync += OnHandleAsync;
-			//_client.UseApplicationMessageReceivedHandler(OnHandleAsync);
+			//挂载消息接收事件
+			_client.ApplicationMessageReceivedAsync += OnReceivedAsync;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name { get; }
-		public IConnectionSetting ConnectionSetting { get; set; }
-		public IHandler<MessageTopicMessage> Handler { get; set; }
-		public ICollection<MqttSubscriber> Subscribers { get => _subscribers.Values; }
-		IEnumerable<IMessageSubscriber> IMessageTopic.Subscribers => this.Subscribers;
+		public IEnumerable<MqttSubscriber> Subscribers { get => _subscribers.SelectMany(subscriber => subscriber.Value); }
 		#endregion
 
 		#region 订阅方法
-		public async ValueTask<bool> SubscribeAsync(string topic, IEnumerable<string> tags, MessageTopicSubscriptionOptions options = null)
+		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			if(tags != null && tags.Any())
 				throw new ArgumentException($"The tags is not supported.");
+
 			var qos = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS();
+			var subscriber = new MqttSubscriber(this, topics, tags, handler, options);
+			var parts = topics.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-			await _client.SubscribeAsync(new[]{
-				new MqttTopicFilter()
-				{
-					Topic = topic,
-					QualityOfServiceLevel = qos,
-				}
-			});
-
-			if(_subscribers.TryAdd(GetSubscriberKey(topic, tags), new MqttSubscriber(this, topic, tags)))
+			foreach(var part in parts)
 			{
-				await _client.EnsureStart(this.ConnectionSetting);
-				return true;
+				if(_subscribers.TryGetValue(part, out var token))
+				{
+					token.Add(subscriber);
+				}
+				else
+				{
+					if(_subscribers.TryAdd(part, new HashSet<MqttSubscriber>() { subscriber }))
+					{
+						await _client.SubscribeAsync(new[]
+						{
+							new MqttTopicFilter()
+							{
+								Topic = part,
+								QualityOfServiceLevel = qos,
+							}
+						});
+
+						await _client.EnsureStart(this.ConnectionSetting);
+					}
+					else
+					{
+						_subscribers[part].Add(subscriber);
+					}
+				}
 			}
 
-			return false;
+			return subscriber;
 		}
 
-		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.Remove(topic) ? new ValueTask(_client.UnsubscribeAsync(topic)) : ValueTask.CompletedTask;
+		internal async ValueTask UnsubscribeAsync(IEnumerable<string> topics)
+		{
+			if(topics == null || !topics.Any())
+				topics = _subscribers.Keys;
+
+			foreach(var topic in topics)
+				await this.UnsubscribeAsync(topic);
+		}
+
+		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.TryRemove(topic, out var _) ?
+			new ValueTask(_client.UnsubscribeAsync(topic)) :
+			ValueTask.CompletedTask;
 		#endregion
 
-		#region 处理方法
-		private async Task OnHandleAsync(MqttApplicationMessageReceivedEventArgs args)
+		#region 接收处理
+		private async Task OnReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
 		{
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
-			var message = new MessageTopicMessage(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
+			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
 			{
 				Identity = args.ClientId
 			};
 
-			if((await this.HandleAsync(ref message)).Succeed)
-				await args.AcknowledgeAsync(CancellationToken.None);
-		}
+			if(_subscribers.TryGetValue(message.Topic, out var subscribers))
+			{
+				foreach(var subscriber in subscribers)
+				{
+					if(subscriber.IsSubscribed)
+						await subscriber.Handler?.HandleAsync(message).AsTask();
+				}
 
-		public virtual ValueTask<OperationResult> HandleAsync(ref MessageTopicMessage message, CancellationToken cancellation = default) => this.Handler?.HandleAsync(this, message, cancellation) ?? ValueTask.FromResult(OperationResult.Fail());
+				//没有异常则应答
+				await args.AcknowledgeAsync(CancellationToken.None);
+			}
+		}
 		#endregion
 
 		#region 发布方法
-		public string Publish(ReadOnlySpan<byte> data, string topic, IEnumerable<string> tags, MessageTopicPublishOptions options = null)
+		public string Produce(string topic, ReadOnlySpan<byte> data, MessageEnqueueOptions options = null)
 		{
 			var message = new MqttApplicationMessage()
 			{
@@ -146,17 +172,12 @@ namespace Zongsoft.Messaging.Mqtt
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
-		public ValueTask<string> PublishAsync(ReadOnlyMemory<byte> data, string topic, IEnumerable<string> tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.PublishAsync(data.ToArray(), topic, tags, options, cancellation);
-		}
-
-		public async ValueTask<string> PublishAsync(byte[] data, string topic, IEnumerable<string> tags = null, MessageTopicPublishOptions options = null, CancellationToken cancellation = default)
+		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 		{
 			var message = new MqttApplicationMessage()
 			{
 				Topic = topic,
-				Payload = data,
+				Payload = data.ToArray(),
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
@@ -164,10 +185,6 @@ namespace Zongsoft.Messaging.Mqtt
 			var result = await _client.InternalClient.PublishAsync(message, cancellation);
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
-		#endregion
-
-		#region 私有方法
-		private static string GetSubscriberKey(string topic, IEnumerable<string> tags) => tags != null && tags.Any() ? topic + ':' + string.Join(',', tags) : topic;
 		#endregion
 
 		#region 重写方法
@@ -183,10 +200,15 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 处置方法
-		public async ValueTask DisposeAsync()
+		protected override void Dispose(bool disposing)
 		{
-			_client.ApplicationMessageReceivedAsync -= OnHandleAsync;
-			await _client.StopAsync();
+			var client = Interlocked.Exchange(ref _client, null);
+
+			if(client != null)
+			{
+				client.ApplicationMessageReceivedAsync -= OnReceivedAsync;
+				client.Dispose();
+			}
 		}
 		#endregion
 	}

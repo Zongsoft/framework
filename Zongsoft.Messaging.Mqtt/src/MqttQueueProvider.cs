@@ -36,46 +36,28 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	[Service(typeof(IMessageTopicProvider))]
-	public class MqttQueueProvider : IMessageTopicProvider, IEnumerable<MqttQueue>
+	[Service(typeof(IMessageQueueProvider))]
+	public class MqttQueueProvider : MessageQueueProviderBase
 	{
-		#region 成员字段
-		private readonly Dictionary<string, MqttQueue> _queues = new Dictionary<string, MqttQueue>(StringComparer.OrdinalIgnoreCase);
+		#region 构造函数
+		public MqttQueueProvider() : base("Mqtt") { }
 		#endregion
 
-		#region 公共属性
-		public string Name => "Mqtt";
-		public int Count => _queues.Count;
-		#endregion
-
-		#region 公共方法
-		public IMessageTopic GetTopic(string name)
+		#region 重写方法
+		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			if(string.IsNullOrEmpty(name))
+			var connectionSetting = ApplicationContext.Current?.Configuration.GetOption<ConnectionSetting>("/Messaging/Mqtt/ConnectionSettings/" + name);
+			if(connectionSetting == null)
 				return null;
 
-			if(_queues.TryGetValue(name, out var queue) && queue != null)
-				return queue;
-
-			lock(_queues)
+			if(settings != null)
 			{
-				if(_queues.TryGetValue(name, out queue) && queue != null)
-					return queue;
-
-				var setting = ApplicationContext.Current?.Configuration.GetOption<ConnectionSetting>("/Messaging/Mqtt/ConnectionSettings/" + name);
-
-				if(setting == null)
-					return null;
-
-				_queues.Add(name, queue = new MqttQueue(name, setting));
-				return queue;
+				foreach(var setting in settings)
+					connectionSetting.Properties[setting.Key] = setting.Value;
 			}
-		}
-		#endregion
 
-		#region 遍历枚举
-		public IEnumerator<MqttQueue> GetEnumerator() => _queues.Values.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _queues.Values.GetEnumerator();
+			return new MqttQueue(name, connectionSetting);
+		}
 		#endregion
 	}
 }

@@ -35,42 +35,44 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttSubscriber : IMessageTopicSubscriber<MessageTopicMessage>, IEquatable<MqttSubscriber>
+	public class MqttSubscriber : MessageConsumerBase, IEquatable<MqttSubscriber>
 	{
 		#region 成员字段
 		private readonly MqttQueue _queue;
 		#endregion
 
 		#region 构造函数
-		public MqttSubscriber(MqttQueue queue, string filter, IEnumerable<string> tags = null)
+		public MqttSubscriber(MqttQueue queue, string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, tags, options, handler)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-			this.Filter = filter;
-			this.Tags = tags == null ? null : tags.ToArray();
 		}
 		#endregion
 
 		#region 公共属性
 		public MqttQueue Queue { get => _queue; }
-		public string Filter { get; }
-		public string[] Tags { get; }
 		#endregion
 
 		#region 公共方法
-		public void Unsubscribe() => _queue.UnsubscribeAsync(this.Filter).GetAwaiter().GetResult();
-		public ValueTask UnsubscribeAsync() => _queue.UnsubscribeAsync(this.Filter);
+		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
+		{
+			return ValueTask.CompletedTask;
+		}
+
+		protected override async ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
+		{
+			foreach(var topic in topics)
+			{
+				await _queue.UnsubscribeAsync(topic);
+			}
+		}
 		#endregion
 
 		#region 重写方法
-		public bool Equals(MqttSubscriber other) => string.Equals(this.Filter, other.Filter) && string.Equals(this.Tags, other.Tags);
+		public bool Equals(MqttSubscriber other) => string.Equals(this.Topics, other.Topics) && string.Equals(this.Tags, other.Tags);
 		public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
-		public override int GetHashCode() => HashCode.Combine(this.Filter, this.Tags);
-		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Filter}:{string.Join(',', this.Tags)}" : this.Filter;
+		public override int GetHashCode() => HashCode.Combine(_queue, this.Topics, this.Tags);
+		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topics}:{string.Join(',', this.Tags)}" : string.Join(',', this.Topics);
 		#endregion
 
-		#region 显式实现
-		string IMessageSubscriber.Name => _queue.Name;
-		IMessageTopic<MessageTopicMessage> IMessageTopicSubscriber<MessageTopicMessage>.Topic => _queue;
-		#endregion
 	}
 }
