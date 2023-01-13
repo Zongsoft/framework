@@ -46,6 +46,22 @@ namespace Zongsoft.Configuration
 		{
 			return this.Default != null && this.TryGet(this.Default, out var setting) ? setting : null;
 		}
+
+		public bool Contains(string name, string driver)
+		{
+			return string.IsNullOrEmpty(driver) ?
+				this.ContainsName(name) :
+				this.TryGet(name, driver, out _);
+		}
+
+		public bool TryGet(string name, string driver, out ConnectionSetting result)
+		{
+			if(this.TryGetItem(name, out result) && !string.IsNullOrEmpty(driver))
+				result = string.Equals(result.Driver, driver, StringComparison.OrdinalIgnoreCase) ||
+				         result.Driver.EndsWith($".{driver}", StringComparison.OrdinalIgnoreCase)? result : null;
+
+			return result != null;
+		}
 		#endregion
 
 		#region 重写方法
