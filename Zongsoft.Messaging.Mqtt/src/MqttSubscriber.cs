@@ -73,6 +73,5 @@ namespace Zongsoft.Messaging.Mqtt
 		public override int GetHashCode() => HashCode.Combine(_queue, this.Topics, this.Tags);
 		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topics}:{string.Join(',', this.Tags)}" : string.Join(',', this.Topics);
 		#endregion
-
 	}
 }

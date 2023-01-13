@@ -57,24 +57,15 @@ namespace Zongsoft.Messaging.Commands
 
 			foreach(var provider in serviceProvider.ResolveAll<IMessageQueueProvider>())
 			{
-				var queue = GetQueue(provider, name);
+				if(!provider.Exists(name))
+					continue;
+
+				var queue = provider.Queue(name);
 
 				if(queue != null)
 				{
 					this.Queue = queue;
 					break;
-				}
-			}
-
-			static IMessageQueue GetQueue(IMessageQueueProvider provider, string name)
-			{
-				try
-				{
-					return provider.Queue(name);
-				}
-				catch
-				{
-					return null;
 				}
 			}
 		}
@@ -101,6 +92,9 @@ namespace Zongsoft.Messaging.Commands
 
 				foreach(var provider in providers)
 				{
+					if(!provider.Exists(name))
+						continue;
+
 					var queue = provider.Queue(name);
 
 					if(queue != null)
@@ -119,16 +113,11 @@ namespace Zongsoft.Messaging.Commands
 			if(this.Queue == null)
 				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
 
-			if(this.Queue != null)
-			{
-				//打印队列信息
-				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.Name);
-				PrintConnectionSetting(context.Output, this.Queue.ConnectionSetting?.Values);
+			//打印队列信息
+			context.Output.WriteLine(CommandOutletColor.Green, this.Queue.Name);
+			PrintConnectionSetting(context.Output, this.Queue.ConnectionSetting?.Values);
 
-				return this.Queue;
-			}
-
-			return null;
+			return this.Queue;
 		}
 
 		private static void PrintConnectionSetting(ICommandOutlet output, IConnectionSettingValues values)

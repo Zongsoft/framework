@@ -68,7 +68,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 订阅方法
 		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
-			throw new NotImplementedException();
+			return ValueTask.FromResult<IMessageConsumer>(null);
 		}
 		#endregion
 

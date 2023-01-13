@@ -124,7 +124,7 @@ namespace Zongsoft.Messaging.Commands
 
 	public enum QueueMessageFormat
 	{
-		None,
+		Raw,
 		Text,
 	}
 }
