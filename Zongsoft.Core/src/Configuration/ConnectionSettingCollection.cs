@@ -34,9 +34,7 @@ namespace Zongsoft.Configuration
 	public class ConnectionSettingCollection : Collections.NamedCollectionBase<ConnectionSetting>
 	{
 		#region 构造函数
-		public ConnectionSettingCollection()
-		{
-		}
+		public ConnectionSettingCollection() { }
 		#endregion
 
 		#region 公共属性
@@ -51,6 +49,22 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
+		protected override ConnectionSetting GetItem(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = this.Default ?? string.Empty;
+
+			return base.GetItem(name);
+		}
+
+		protected override bool TryGetItem(string name, out ConnectionSetting value)
+		{
+			if(string.IsNullOrEmpty(name))
+				name = this.Default ?? string.Empty;
+
+			return base.TryGetItem(name, out value);
+		}
+
 		protected override string GetKeyForItem(ConnectionSetting item)
 		{
 			return item.Name;
