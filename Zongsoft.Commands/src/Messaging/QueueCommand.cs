@@ -78,35 +78,23 @@ namespace Zongsoft.Messaging.Commands
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			string name;
-
-			if(context.Expression.Options.TryGetValue("name", out name))
+			if(context.Expression.Options.TryGetValue<string>("name", out var name))
 			{
 				if(string.IsNullOrEmpty(name))
 					return this.Queue;
 
-				var providers = _serviceProvider.ResolveAll<IMessageQueueProvider>();
+				//根据名称获取对应的消息队列
+				var queue = MessageQueueConverter.Resolve(name);
 
-				if(providers == null)
-					throw new CommandException(string.Format(Properties.Resources.Text_QueueCommand_NotFoundQueue, name));
-
-				foreach(var provider in providers)
+				if(queue != null)
 				{
-					if(!provider.Exists(name))
-						continue;
+					this.Queue = queue;
 
-					var queue = provider.Queue(name);
+					//打印队列信息
+					context.Output.WriteLine(CommandOutletColor.Green, queue.Name);
+					PrintConnectionSetting(context.Output, queue.ConnectionSetting?.Values);
 
-					if(queue != null)
-					{
-						this.Queue = queue;
-
-						//打印队列信息
-						context.Output.WriteLine(CommandOutletColor.Green, queue.Name);
-						PrintConnectionSetting(context.Output, queue.ConnectionSetting?.Values);
-
-						return queue;
-					}
+					return queue;
 				}
 			}
 

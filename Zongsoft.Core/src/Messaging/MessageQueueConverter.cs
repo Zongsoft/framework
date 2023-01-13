@@ -37,29 +37,38 @@ namespace Zongsoft.Messaging
 {
 	public class MessageQueueConverter : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? Resolve(text) : base.ConvertFrom(context, culture, value);
+		#endregion
 
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		#region 静态方法
+		public static IMessageQueue Resolve(string text) => Resolve(ApplicationContext.Current?.Services, text);
+		public static IMessageQueue Resolve(IServiceProvider services, string text)
 		{
-			if(value is string text)
-			{
-				var services = ApplicationContext.Current?.Services;
+			if(services == null || string.IsNullOrEmpty(text))
+				return null;
 
-				if(services == null)
+			var index = text.IndexOf('@');
+
+			if(index > 0 && index < text.Length - 1)
+			{
+				var provider = services.Resolve<IMessageQueueProvider>(text.Substring(index + 1));
+				if(provider == null)
 					return null;
 
-				var index = text.IndexOf('@');
-
-				if(index > 0 && index < text.Length - 1)
-				{
-					var provider = services.Resolve<IMessageQueueProvider>(text.Substring(index + 1));
-					return provider?.Queue(text.Substring(0, index));
-				}
-
-				return services.Resolve(text) as IMessageQueue;
+				var name = text.Substring(0, index);
+				return provider.Exists(name) ? provider.Queue(name) : null;
 			}
 
-			return base.ConvertFrom(context, culture, value);
+			foreach(var provider in services.ResolveAll<IMessageQueueProvider>())
+			{
+				if(provider.Exists(text))
+					return provider.Queue(text);
+			}
+
+			return services.Resolve(text) as IMessageQueue;
 		}
+		#endregion
 	}
 }
