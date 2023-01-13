@@ -62,8 +62,8 @@ namespace Zongsoft.Messaging.Commands
 			{
 				var index = argument.IndexOfAny(new[] { ':', '?' });
 				var consumer = index > 0 && index < argument.Length ?
-					queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).GetAwaiter().GetResult() :
-					queue.SubscribeAsync(argument, handler).GetAwaiter().GetResult();
+					queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).AsTask().GetAwaiter().GetResult() :
+					queue.SubscribeAsync(argument, handler).AsTask().GetAwaiter().GetResult();
 
 				_consumers.Add(consumer);
 			}
@@ -76,7 +76,7 @@ namespace Zongsoft.Messaging.Commands
 			if(consumers != null)
 			{
 				foreach(var consumer in consumers)
-					consumer.UnsubscribeAsync();
+					consumer.UnsubscribeAsync().AsTask().GetAwaiter().GetResult();
 			}
 		}
 		#endregion

@@ -78,7 +78,7 @@ namespace Zongsoft.Messaging.Commands
 			var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
 			var tags = context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null;
 
-			return this.ExecuteCore(context, data => queue.ProduceAsync(this.Topic, tags, data, options).GetAwaiter().GetResult());
+			return this.ExecuteCore(context, data => queue.ProduceAsync(this.Topic, tags, data, options).AsTask().GetAwaiter().GetResult());
 		}
 
 		private IList<string> ExecuteCore(CommandContext context, Func<byte[], string> invoke)
