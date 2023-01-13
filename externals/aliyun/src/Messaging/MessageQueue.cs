@@ -73,7 +73,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				throw new NotSupportedException($"This message queue does not support subscription topics and tags.");
 
 			var consumer = new MessageQueueConsumer(this, handler, options);
-			await consumer.SubscribeAsync(topics, tags, cancellation);
+			await consumer.SubscribeAsync(cancellation);
 			return consumer;
 		}
 		#endregion
@@ -266,6 +266,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 				_poller = new MessageQueuePoller(queue, handler);
 			}
+
+			internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
 
 			protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
 			{

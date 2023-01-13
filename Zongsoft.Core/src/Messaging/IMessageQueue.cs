@@ -50,6 +50,32 @@ namespace Zongsoft.Messaging
 
 		#region 订阅方法
 		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="handler">指定的消息接收处理函数。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default);
+
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="handler">指定的消息接收处理函数。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="handler">指定的消息接收处理器对象。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, CancellationToken cancellation = default);
+
+		/// <summary>订阅指定的消息主题。</summary>
+		/// <param name="handler">指定的消息接收处理器对象。</param>
+		/// <param name="options">指定的订阅消费者的设置。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回订阅成功的消息消费者任务。</returns>
+		ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+
+		/// <summary>订阅指定的消息主题。</summary>
 		/// <param name="topics">指定要订阅的消息主题，多个主题之间以分号分隔。</param>
 		/// <param name="handler">指定的消息接收处理函数。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>

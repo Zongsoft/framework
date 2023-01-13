@@ -111,7 +111,7 @@ namespace Zongsoft.Messaging.Mqtt
 			}
 
 			//调用消费者的订阅方法，以更新其订阅状态
-			await subscriber.SubscribeAsync(topics, tags, options, cancellation);
+			await subscriber.SubscribeAsync(cancellation);
 
 			return subscriber;
 		}

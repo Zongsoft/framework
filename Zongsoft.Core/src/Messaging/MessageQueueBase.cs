@@ -81,6 +81,18 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 订阅方法
+		public ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default) =>
+			this.SubscribeAsync(null, null, new HandlerAdapter(handler), null, cancellation);
+
+		public ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
+			this.SubscribeAsync(null, null, new HandlerAdapter(handler), options, cancellation);
+
+		public ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, CancellationToken cancellation = default) =>
+			this.SubscribeAsync(null, null, handler, null, cancellation);
+
+		public ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
+			this.SubscribeAsync(null, null, handler, options, cancellation);
+
 		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, null, new HandlerAdapter(handler), null, cancellation);
 

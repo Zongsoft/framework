@@ -70,7 +70,7 @@ namespace Zongsoft.Messaging.Kafka
 		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			var subscriber = new KafkaSubscriber(this, topics, handler, options);
-			await subscriber.SubscribeAsync(topics, cancellation);
+			await subscriber.SubscribeAsync(cancellation);
 			return subscriber;
 		}
 		#endregion

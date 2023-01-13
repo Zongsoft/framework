@@ -52,7 +52,9 @@ namespace Zongsoft.Messaging.Mqtt
 		public MqttQueue Queue { get => _queue; }
 		#endregion
 
-		#region 公共方法
+		#region 订阅方法
+		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
+
 		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
 			return ValueTask.CompletedTask;

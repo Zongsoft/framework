@@ -51,6 +51,8 @@ namespace Zongsoft.Messaging.Kafka
 			_poller = new Poller(this);
 		}
 
+		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
+
 		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
 			if(topics != null && topics.Any())

@@ -75,7 +75,7 @@ namespace Zongsoft.Messaging
 		public string[] Topics
 		{
 			get => _topics;
-			set
+			protected set
 			{
 				if(_subscribed)
 					throw new InvalidOperationException();
@@ -87,7 +87,7 @@ namespace Zongsoft.Messaging
 		public string[] Tags
 		{
 			get => _tags;
-			set
+			protected set
 			{
 				if(_subscribed)
 					throw new InvalidOperationException();
@@ -99,7 +99,7 @@ namespace Zongsoft.Messaging
 		public IMessageHandler Handler
 		{
 			get => _handler;
-			set
+			protected set
 			{
 				if(_subscribed)
 					throw new InvalidOperationException();
@@ -111,7 +111,7 @@ namespace Zongsoft.Messaging
 		public MessageSubscribeOptions Options
 		{
 			get => _options;
-			set
+			protected set
 			{
 				if(_subscribed)
 					throw new InvalidOperationException();
@@ -124,14 +124,14 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 订阅方法
-		public ValueTask SubscribeAsync(string topics, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, null, cancellation);
-		public ValueTask SubscribeAsync(string topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, null, cancellation);
-		public ValueTask SubscribeAsync(string topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, options, cancellation);
-		public ValueTask SubscribeAsync(string topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, options, cancellation);
-		public ValueTask SubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, null, cancellation);
-		public ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(topics, tags, null, cancellation);
-		public ValueTask SubscribeAsync(IEnumerable<string> topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, options, cancellation);
-		public async ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		protected ValueTask SubscribeAsync(string topics, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, null, cancellation);
+		protected ValueTask SubscribeAsync(string topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, null, cancellation);
+		protected ValueTask SubscribeAsync(string topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, options, cancellation);
+		protected ValueTask SubscribeAsync(string topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, options, cancellation);
+		protected ValueTask SubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, null, cancellation);
+		protected ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(topics, tags, null, cancellation);
+		protected ValueTask SubscribeAsync(IEnumerable<string> topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, options, cancellation);
+		protected async ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			if(topics == null || !topics.Any())
 				topics = _topics;
