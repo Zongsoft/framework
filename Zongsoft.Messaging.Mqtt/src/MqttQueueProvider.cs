@@ -44,10 +44,16 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 重写方法
+		public override bool Exists(string name)
+		{
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/Mqtt/ConnectionSettings");
+			return connectionSettings != null && (string.IsNullOrEmpty(name) ? connectionSettings.Contains(connectionSettings.Default) : connectionSettings.Contains(name));
+		}
+
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			var connectionSetting = ApplicationContext.Current?.Configuration.GetOption<ConnectionSetting>("/Messaging/Mqtt/ConnectionSettings/" + name);
-			if(connectionSetting == null)
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/Mqtt/ConnectionSettings");
+			if(connectionSettings == null || !connectionSettings.TryGet(name, out var connectionSetting))
 				return null;
 
 			if(settings != null)

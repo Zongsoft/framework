@@ -44,6 +44,12 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 公共方法
+		public override bool Exists(string name)
+		{
+			var options = MessageUtility.GetOptions();
+			return options != null && (options.Queues.Contains(name) || options.Topics.Contains(name));
+		}
+
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
 			var options = MessageUtility.GetOptions();

@@ -51,28 +51,11 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取消息队列提供程序的名称。</summary>
-		/// <remarks>
-		///		<para>消息队列提供程序名是特定消息队列的唯一标识，通常有如下：</para>
-		///		<list type="bullet">
-		///			<item>
-		///				<term>kafka</term>
-		///				<description>表示 Kafka 消息队列。</description>
-		///			</item>
-		///			<item>
-		///				<term>msmq</term>
-		///				<description>表示微软消息队列。</description>
-		///			</item>
-		///			<item>
-		///				<term>rabbitmq</term>
-		///				<description>表示 RabbitMQ 消息队列。</description>
-		///			</item>
-		///		</list>
-		/// </remarks>
 		public string Name { get; }
 		#endregion
 
 		#region 公共方法
+		public virtual bool Exists(string name) => name != null && _queues.ContainsKey(name);
 		public IMessageQueue Queue(IEnumerable<KeyValuePair<string, string>> settings = null) => this.Queue(string.Empty, settings);
 		public IMessageQueue Queue(string name, IEnumerable<KeyValuePair<string, string>> settings = null)
 		{
