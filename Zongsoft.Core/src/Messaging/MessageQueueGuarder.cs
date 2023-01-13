@@ -28,18 +28,21 @@
  */
 
 using System;
-using System.Linq;
+using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
 {
 	public class MessageQueueGuarder : WorkerBase
 	{
-		private IMessageConsumer[] _consumers;
+		#region 私有变量
+		private IMessageConsumer[] _subscribers;
+		#endregion
 
 		#region 公共属性
 		[TypeConverter(typeof(MessageQueueConverter))]
@@ -79,12 +82,12 @@ namespace Zongsoft.Messaging
 				}
 			}
 
-			_consumers = consumers.ToArray();
+			_subscribers = consumers.ToArray();
 		}
 
 		protected override void OnStop(string[] args)
 		{
-			var subscribers = _consumers;
+			var subscribers = Interlocked.Exchange(ref _subscribers, null);
 
 			if(subscribers != null)
 			{
@@ -97,7 +100,7 @@ namespace Zongsoft.Messaging
 		#region 私有方法
 		private MessageSubscribeOptions GetSubscriptionOptions(out IEnumerable<Options.QueueSubscriptionFilter> filters)
 		{
-			var options = this.Options;
+			var options = this.Options ?? ApplicationContext.Current?.Configuration?.GetOption<Options.QueueOptionsCollection>("Messaging");
 
 			if(options != null && options.TryGet(this.Queue.Name, out var option) && option.Subscription != null)
 			{
