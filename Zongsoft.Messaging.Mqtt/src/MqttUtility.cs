@@ -80,7 +80,20 @@ namespace Zongsoft.Messaging.Mqtt
 				.WithClientOptions(GetOptions(setting))
 				.Build();
 
+			//开启客户端
 			await client.StartAsync(mqttOptions);
+
+			//确保客户端已连接成功
+			if(!client.IsConnected)
+			{
+				int round = 0;
+
+				//如果没有连接成功，则尝试进行等待一小会
+				while(!client.IsConnected && round++ < 10)
+				{
+					Thread.SpinWait(100 * Environment.ProcessorCount);
+				}
+			}
 		}
 	}
 }

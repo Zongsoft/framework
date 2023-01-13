@@ -84,9 +84,9 @@ namespace Zongsoft.Messaging.Mqtt
 
 			foreach(var part in parts)
 			{
-				if(_subscribers.TryGetValue(part, out var token))
+				if(_subscribers.TryGetValue(part, out var hashset))
 				{
-					token.Add(subscriber);
+					hashset.Add(subscriber);
 				}
 				else
 				{
@@ -100,7 +100,7 @@ namespace Zongsoft.Messaging.Mqtt
 								QualityOfServiceLevel = qos,
 							}
 						});
-
+ 
 						await _client.EnsureStart(this.ConnectionSetting);
 					}
 					else
@@ -109,6 +109,9 @@ namespace Zongsoft.Messaging.Mqtt
 					}
 				}
 			}
+
+			//调用消费者的订阅方法，以更新其订阅状态
+			await subscriber.SubscribeAsync(topics, tags, options, cancellation);
 
 			return subscriber;
 		}
