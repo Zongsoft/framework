@@ -33,7 +33,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Configuration
 {
 	[Configuration(nameof(Properties))]
-	public interface ISetting
+	public interface ISetting : IEquatable<ISetting>
 	{
 		string Name { get; }
 		string Value { get; set; }

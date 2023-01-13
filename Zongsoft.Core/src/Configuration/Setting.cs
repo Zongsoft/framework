@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public class Setting : ISetting, IEquatable<Setting>
+	public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 	{
 		#region 成员字段
 		private string _name;
@@ -106,9 +106,10 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase) && string.Equals(_value, setting._value);
-		public override bool Equals(object obj) => obj is Setting setting && this.Equals(setting);
-		public override int GetHashCode() => HashCode.Combine(_name, _value);
+		public bool Equals(ISetting setting) => setting != null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
+		public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is ISetting setting && this.Equals(setting);
+		public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
 		public override string ToString() => $"{this.Name}={this.Value}";
 		#endregion
 	}

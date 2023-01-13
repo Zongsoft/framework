@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public interface IConnectionSetting : ISetting
+	public interface IConnectionSetting : ISetting, IEquatable<IConnectionSetting>
 	{
 		string Driver { get; set; }
 		IConnectionSettingValues Values { get; }

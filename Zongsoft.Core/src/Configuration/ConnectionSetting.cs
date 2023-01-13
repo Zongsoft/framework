@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSetting : Setting, IConnectionSetting
+	public class ConnectionSetting : Setting, IConnectionSetting, IEquatable<ConnectionSetting>, IEquatable<IConnectionSetting>
 	{
 		#region 静态字段
 		private static readonly Dictionary<string, IConnectionSettingValuesMapper> _mappers;
@@ -104,6 +104,16 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
+		public bool Equals(IConnectionSetting setting) => setting != null &&
+			string.Equals(this.Name, setting.Name, StringComparison.OrdinalIgnoreCase) &&
+			string.Equals(this.Driver, setting.Driver, StringComparison.OrdinalIgnoreCase);
+
+		public bool Equals(ConnectionSetting setting) => setting != null &&
+			string.Equals(this.Name, setting.Name, StringComparison.OrdinalIgnoreCase) &&
+			string.Equals(this.Driver, setting.Driver, StringComparison.OrdinalIgnoreCase);
+
+		public override bool Equals(object obj) => obj is IConnectionSetting setting && this.Equals(setting);
+		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver.ToLowerInvariant());
 		public override string ToString()
 		{
 			var driver = this.Driver;
