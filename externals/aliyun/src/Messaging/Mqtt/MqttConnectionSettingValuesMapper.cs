@@ -37,10 +37,6 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 {
 	public class MqttConnectionSettingValuesMapper : ConnectionSettingValuesMapper
 	{
-		#region 常量定义
-		private const string GROUP_KEY = "Group";
-		#endregion
-
 		#region 构造函数
 		public MqttConnectionSettingValuesMapper() : base("Aliyun.Mqtt") { }
 		#endregion
@@ -65,7 +61,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 			if(values.TryGetValue(nameof(IConnectionSettingValues.Client), out var client) && !string.IsNullOrWhiteSpace(client))
 				return client;
 
-			if(values.TryGetValue(GROUP_KEY, out var group) && !string.IsNullOrWhiteSpace(group))
+			if(values.TryGetValue(nameof(IConnectionSettingValues.Group), out var group) && !string.IsNullOrWhiteSpace(group))
 				return values[nameof(IConnectionSettingValues.Client)] = group + "@@@C" + Zongsoft.Common.Randomizer.GenerateString();
 
 			return null;

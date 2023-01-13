@@ -46,6 +46,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 特定属性
+		string Group { get; set; }
 		string Client { get; set; }
 		string Server { get; set; }
 		ushort Port { get; set; }

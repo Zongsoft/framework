@@ -151,6 +151,12 @@ namespace Zongsoft.Configuration
 			#endregion
 
 			#region 特定属性
+			public string Group
+			{
+				get => this.GetValue(nameof(Group));
+				set => this.SetValue(nameof(Group), value);
+			}
+
 			public string Client
 			{
 				get => this.GetValue(nameof(Client));

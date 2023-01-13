@@ -68,7 +68,7 @@ namespace Zongsoft.Messaging.Kafka
 
 			var config = new ConsumerConfig
 			{
-				GroupId = setting.Values["Group"],
+				GroupId = setting.Values.Group,
 				ClientId = setting.Values.Client,
 				BootstrapServers = setting.Values.Server
 			};
