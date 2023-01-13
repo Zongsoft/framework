@@ -2,4 +2,4 @@ src/Zongsoft.Messaging.Kafka.plugin
 src/Zongsoft.Messaging.Kafka.option
 src/bin/$(Edition)/$(Target)/Zongsoft.Messaging.Kafka.*
 
-%NUGET_PACKAGES%/system.memory/4.5.4/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/confluent.kafka/1.9.3/lib/netstandard2.0/*.dll

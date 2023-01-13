@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.Kafka"
+        title="Zongsoft.Messaging.Kafka Plugin"
+        author="Zongsoft Corporation"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2023-01-10" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Messaging.Kafka" />
+		</assemblies>
+	</manifest>
+</plugin>
