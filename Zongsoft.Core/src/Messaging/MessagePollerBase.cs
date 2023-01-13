@@ -36,20 +36,15 @@ namespace Zongsoft.Messaging
 	/// <summary>
 	/// 提供消息队列轮询功能的类。
 	/// </summary>
-	public abstract class MessageQueuePollerBase<TQueue> : IMessageQueuePoller where TQueue : class, IMessageQueue
+	public abstract class MessagePollerBase : IMessagePoller
 	{
 		#region 私有变量
-		private TQueue _queue;
 		private CancellationTokenSource _cancellation;
 		#endregion
 
 		#region 构造函数
 		/// <summary>构建消息队列轮询器。</summary>
-		/// <param name="queue">待轮询的队列。</param>
-		protected MessageQueuePollerBase(TQueue queue)
-		{
-			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-		}
+		protected MessagePollerBase() { }
 		#endregion
 
 		#region 公共属性
@@ -62,16 +57,6 @@ namespace Zongsoft.Messaging
 				return cancellation != null && !cancellation.IsCancellationRequested;
 			}
 		}
-
-		IMessageQueue IMessageQueuePoller.Queue { get => _queue; }
-
-		/// <summary>获取或设置轮询的队列。</summary>
-		[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
-		public TQueue Queue
-		{
-			get => _queue;
-			set => _queue = value ?? throw new ArgumentNullException();
-		}
 		#endregion
 
 		#region 公共方法
@@ -82,9 +67,6 @@ namespace Zongsoft.Messaging
 		/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
 		public void Start(MessageDequeueOptions options, int interval = 1000)
 		{
-			if(_queue == null)
-				throw new ObjectDisposedException(this.GetType().Name);
-
 			if(this.IsPolling)
 				return;
 
@@ -174,11 +156,6 @@ namespace Zongsoft.Messaging
 
 			if(cancellation != null && !cancellation.IsCancellationRequested)
 				cancellation.Cancel(false);
-
-			var queue = Interlocked.Exchange(ref _queue, null);
-
-			if(queue != null && queue is IDisposable disposable)
-				disposable.Dispose();
 		}
 		#endregion
 

@@ -302,15 +302,20 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			}
 		}
 
-		private class MessageQueuePoller : MessageQueuePollerBase<MessageQueue>
+		private class MessageQueuePoller : MessagePollerBase
 		{
+			private readonly MessageQueue _queue;
 			private readonly IMessageHandler _handler;
 
-			public MessageQueuePoller(MessageQueue queue, IMessageHandler handler) : base(queue) => _handler = handler;
+			public MessageQueuePoller(MessageQueue queue, IMessageHandler handler)
+			{
+				_queue = queue;
+				_handler = handler;
+			}
 
 			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 			{
-				var task = this.Queue.DequeueAsync(options, cancellation).AsTask();
+				var task = _queue.DequeueAsync(options, cancellation).AsTask();
 				task.Wait(cancellation);
 				return task.Result;
 			}
