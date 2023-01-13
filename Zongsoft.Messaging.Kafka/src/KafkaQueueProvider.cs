@@ -47,20 +47,14 @@ namespace Zongsoft.Messaging.Kafka
 		public override bool Exists(string name)
 		{
 			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/ConnectionSettings");
-			return connectionSettings != null && (string.IsNullOrEmpty(name) ? connectionSettings.Contains(connectionSettings.Default) : connectionSettings.Contains(name));
+			return connectionSettings != null && connectionSettings.Contains(name, this.Name);
 		}
 
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/ConnectionSettings");
-			if(connectionSettings == null || !connectionSettings.TryGet(name, out var connectionSetting))
-				return null;
-
-			//如果指定的连接设置的driver属性有值，但却不匹配当前消息队列提供程序名则抛出异常
-			if(!string.IsNullOrEmpty(connectionSetting.Driver) &&
-			   !connectionSetting.Driver.Equals(this.Name, StringComparison.OrdinalIgnoreCase) &&
-			   !connectionSetting.Driver.EndsWith($".{this.Name}", StringComparison.OrdinalIgnoreCase))
-				throw new ConfigurationException($"The specified name '{name}' is not the connection setting for the '{this.Name}' message queue provider because its driver is '{connectionSetting.Driver}'.");
+			var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSetting("/Messaging/ConnectionSettings", name, this.Name);
+			if(connectionSetting == null)
+				throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
 
 			if(settings != null)
 			{
