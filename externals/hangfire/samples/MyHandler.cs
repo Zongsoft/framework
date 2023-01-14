@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Common;
-using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Diagnostics;
 
@@ -15,7 +11,7 @@ namespace Zongsoft.Externals.Hangfire.Samples
 	{
 		private int _count = 0;
 
-		public override OperationResult Handle(object caller, object parameter)
+		public override object Handle(object caller, object parameter)
 		{
 			if(parameter == null)
 				parameter = $"Count:{Interlocked.Increment(ref _count)}";
@@ -27,10 +23,10 @@ namespace Zongsoft.Externals.Hangfire.Samples
 			Console.ResetColor();
 
 			Logger.Debug("OnHandle the scheduled job.", parameter);
-			return OperationResult.Success();
+			return null;
 		}
 
-		public override ValueTask<OperationResult> HandleAsync(object caller, object parameter, CancellationToken cancellation = default)
+		public override ValueTask<object> HandleAsync(object caller, object parameter, CancellationToken cancellation = default)
 		{
 			return ValueTask.FromResult(this.Handle(caller, parameter));
 		}
