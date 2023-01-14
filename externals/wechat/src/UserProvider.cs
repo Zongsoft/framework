@@ -57,31 +57,23 @@ namespace Zongsoft.Externals.Wechat
 		public async ValueTask<(string bookmark, string[] identifiers)> GetIdentifiersAsync(string cursor, CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
-
 			if(string.IsNullOrEmpty(credential))
 				return default;
 
 			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/get?access_token={credential}&next_openid={cursor}", cancellation);
 			var result = await response.GetResultAsync<IdentifierResult>(cancellation);
-
-			return result.Succeed ?
-					(result.Value.Bookmark, result.Value.Data.Values) :
-					(null, Array.Empty<string>());
+			return (result.Bookmark, result.Data.Values);
 		}
 
-		public async ValueTask<OperationResult<UserInfo>> GetInfoAsync(string openId, CancellationToken cancellation = default)
+		public async ValueTask<UserInfo> GetInfoAsync(string openId, CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
-
 			if(string.IsNullOrEmpty(credential))
 				return default;
 
 			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={openId}", cancellation);
 			var result = await response.GetResultAsync<UserInfoResult>(cancellation);
-
-			return result.Succeed ?
-					OperationResult.Success(result.Value.ToInfo()) :
-					(OperationResult)result.Failure;
+			return result.ToInfo();
 		}
 		#endregion
 

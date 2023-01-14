@@ -72,7 +72,8 @@ namespace Zongsoft.Communication
 
 			return ValueTask.CompletedTask;
 		}
-		protected virtual ValueTask<Common.OperationResult> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(this, package, cancellation) ?? ValueTask.FromResult(Common.OperationResult.Fail());
+
+		protected virtual ValueTask<object> OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(this, package, cancellation) ?? ValueTask.FromCanceled<object>(cancellation);
 		#endregion
 
 		#region 协议转换

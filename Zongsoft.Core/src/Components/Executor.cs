@@ -74,7 +74,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 执行方法
-		public Common.OperationResult Execute(object context)
+		public object Execute(object context)
 		{
 			var filters = this.Filters;
 
@@ -95,7 +95,7 @@ namespace Zongsoft.Components
 			return result;
 		}
 
-		public async ValueTask<Common.OperationResult> ExecuteAsync(object context, CancellationToken cancellation = default)
+		public async ValueTask<object> ExecuteAsync(object context, CancellationToken cancellation = default)
 		{
 			var filters = _filters;
 
@@ -124,14 +124,14 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ValueTask<Common.OperationResult> OnExecuteAsync(object context, CancellationToken cancellation = default)
+		protected virtual ValueTask<object> OnExecuteAsync(object context, CancellationToken cancellation = default)
 		{
 			var handler = this.Handler;
 
 			if(handler != null && handler.CanHandle(context))
-				return handler.HandleAsync(context, cancellation);
+				return handler.HandleAsync(this, context, cancellation);
 
-			return ValueTask.FromResult(Common.OperationResult.Fail());
+			return ValueTask.FromCanceled<object>(cancellation);
 		}
 
 		protected virtual void OnFiltered(IExecutionFilter filter, object context)
@@ -152,7 +152,7 @@ namespace Zongsoft.Components
 
 		#region 显式实现
 		bool IHandler.CanHandle(object context) => this.Handler?.CanHandle(context) ?? false;
-		ValueTask<Common.OperationResult> IHandler.HandleAsync(object caller, object context, CancellationToken cancellation) => this.ExecuteAsync(context, cancellation);
+		ValueTask<object> IHandler.HandleAsync(object caller, object context, CancellationToken cancellation) => this.ExecuteAsync(context, cancellation);
 		#endregion
 	}
 }

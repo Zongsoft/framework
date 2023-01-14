@@ -55,20 +55,20 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 身份校验
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
-		public async ValueTask<OperationResult<Identity>> VerifyAsync(string key, string secret, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
+		public async ValueTask<Identity> VerifyAsync(string key, string secret, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(secret))
-				return OperationResult.Fail("InvalidTicket");
+				throw new ArgumentNullException(nameof(secret));
 
 			if(!Account.TryParse(key, out var account))
-				return OperationResult.Fail("InvalidKey", $"The specified ‘{key}’ key is not recognized.");
+				throw new ArgumentException($"The specified ‘{key}’ key is not recognized.", nameof(key));
 
 			return account.Type switch
 			{
 				AccountType.Applet => await GetAppletToken(AppletManager.GetApplet(account), secret, parameters, cancellation),
 				AccountType.Channel => await GetChannelToken(ChannelManager.GetChannel(account), secret, parameters, cancellation),
-				_ => OperationResult.Fail(),
+				_ => throw new InvalidOperationException(),
 			};
 		}
 		#endregion
@@ -87,38 +87,25 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 私有方法
-		private static async ValueTask<OperationResult<Identity>> GetAppletToken(Applet applet, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		private static async ValueTask<Identity> GetAppletToken(Applet applet, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			var result = await applet.LoginAsync(code, cancellation);
+			var info = await applet.Users.GetInfoAsync(result.OpenId, cancellation);
 
-			if(result.Failed)
-				return result.Failure;
-
-			var openId = result.Value.OpenId;
-			var unionId = result.Value.UnionId;
-			var info = await applet.Users.GetInfoAsync(openId);
-
-			if(info.Succeed)
-				return string.IsNullOrEmpty(info.Value.UnionId) ?
-					OperationResult.Success(new Identity(applet.Account, openId, info.Value.Nickname, info.Value.Avatar, info.Value.Description, parameters)) :
-					OperationResult.Success(new Identity(applet.Account, openId, info.Value.UnionId, info.Value.Nickname, info.Value.Avatar, info.Value.Description));
-
-			return OperationResult.Success(new Identity(applet.Account, openId, unionId, parameters));
+			return string.IsNullOrEmpty(info.UnionId) ?
+				new Identity(applet.Account, result.OpenId, info.Nickname, info.Avatar, info.Description, parameters) :
+				new Identity(applet.Account, result.OpenId, info.UnionId, info.Nickname, info.Avatar, info.Description);
 		}
 
-		private static async ValueTask<OperationResult<Identity>> GetChannelToken(Channel channel, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		private static async ValueTask<Identity> GetChannelToken(Channel channel, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
-			var result = await channel.Authentication.AuthenticateAsync(code, cancellation);
-
-			if(result.Failed)
-				return result.Failure;
-
-			var openId = result.Value.OpenId;
-			var unionId = string.IsNullOrEmpty(result.Value.UnionId) ? result.Value.User.OpenId : result.Value.UnionId;
+			var credential = await channel.Authentication.AuthenticateAsync(code, cancellation);
+			var openId = credential.OpenId;
+			var unionId = string.IsNullOrEmpty(credential.UnionId) ? credential.User.OpenId : credential.UnionId;
 
 			return string.IsNullOrEmpty(unionId) ?
-				OperationResult.Success(new Identity(channel.Account, openId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description, parameters)) :
-				OperationResult.Success(new Identity(channel.Account, openId, unionId, result.Value.User.Nickname, result.Value.User.Avatar, result.Value.User.Description, parameters));
+				new Identity(channel.Account, openId, credential.User.Nickname, credential.User.Avatar, credential.User.Description, parameters) :
+				new Identity(channel.Account, openId, unionId, credential.User.Nickname, credential.User.Avatar, credential.User.Description, parameters);
 		}
 
 		private static async ValueTask<string> GetSecretAsync(object data, CancellationToken cancellation = default)

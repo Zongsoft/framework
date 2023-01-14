@@ -34,6 +34,6 @@ namespace Zongsoft.Security
 {
 	public interface IChallenger
 	{
-		Common.OperationResult Challenge(ClaimsPrincipal principal, string scenario);
+		object Challenge(ClaimsPrincipal principal, string scenario);
 	}
 }

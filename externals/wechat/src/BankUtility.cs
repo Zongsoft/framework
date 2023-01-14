@@ -34,7 +34,6 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 using Zongsoft.Data;
-using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat
 {
@@ -54,12 +53,12 @@ namespace Zongsoft.Externals.Wechat
 
 			var result = await response.GetResultAsync<Result<Bank>>(cancellation);
 
-			if(result.Succeed)
+			if(result.HasData)
 			{
 				if(page != null)
-					page.TotalCount = result.Value.Total;
+					page.TotalCount = result.Total;
 
-				return result.Value.Data;
+				return result.Data;
 			}
 
 			return null;
@@ -76,12 +75,12 @@ namespace Zongsoft.Externals.Wechat
 			var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/{id}/branches?city_code={city}&offset={offset}&limit={limit}", cancellation);
 			var result = await response.GetResultAsync<Result<BankBranch>>(cancellation);
 
-			if(result.Succeed)
+			if(result.HasData)
 			{
 				if(page != null)
-					page.TotalCount = result.Value.Total;
+					page.TotalCount = result.Total;
 
-				return result.Value.Data;
+				return result.Data;
 			}
 
 			return null;
@@ -99,7 +98,7 @@ namespace Zongsoft.Externals.Wechat
 			var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/search-banks-by-bank-account?account_number={account}", cancellation);
 			var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
 
-			return result.Succeed && result.Value.Data != null && result.Value.Data.Length > 0 ? result.Value.Data[0] : null;
+			return result.HasData ? result.Data[0] : null;
 		}
 
 		private struct Result<T>
@@ -112,6 +111,10 @@ namespace Zongsoft.Externals.Wechat
 			public int Offset { get; set; }
 			[JsonPropertyName("data")]
 			public T[] Data { get; set; }
+
+			[JsonIgnore]
+			[Serialization.SerializationMember(Ignored = true)]
+			public bool HasData => this.Data != null && this.Data.Length > 0;
 		}
 
 		public enum BankKind

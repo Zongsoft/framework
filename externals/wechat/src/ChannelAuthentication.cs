@@ -57,23 +57,19 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<OperationResult<Credential>> AuthenticateAsync(string token, CancellationToken cancellation = default)
+		public async ValueTask<Credential> AuthenticateAsync(string token, CancellationToken cancellation = default)
 		{
 			var response = await CredentialManager.Http.GetAsync($"/sns/oauth2/access_token?appid={this.Account.Code}&secret={this.Account.Secret}&code={token}&grant_type=authorization_code", cancellation);
 			var result = await response.GetResultAsync<AuthenticationResult>(cancellation);
-
-			if(result.Failed)
-				return (OperationResult)result.Failure;
-
-			var info = await GetUserInfo(result.Value.AccessToken, result.Value.OpenId, cancellation);
-			return OperationResult.Success(result.Value.ToCredential(info.Succeed ? info.Value : default));
+			var info = await GetUserInfo(result.AccessToken, result.OpenId, cancellation);
+			return result.ToCredential(info);
 		}
 
-		public static async ValueTask<OperationResult<UserInfo>> GetUserInfo(string token, string openId, CancellationToken cancellation = default)
+		public static async ValueTask<UserInfo> GetUserInfo(string token, string openId, CancellationToken cancellation = default)
 		{
 			var response = await CredentialManager.Http.GetAsync($"/sns/userinfo?access_token={token}&openid={openId}", cancellation);
 			var result = await response.GetResultAsync<UserInfoResult>(cancellation);
-			return result.Succeed ? OperationResult.Success(result.Value.ToInfo(openId)) : (OperationResult)result.Failure;
+			return result.ToInfo(openId);
 		}
 		#endregion
 

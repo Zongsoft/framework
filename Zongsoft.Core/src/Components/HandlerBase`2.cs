@@ -31,8 +31,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Common;
-
 namespace Zongsoft.Components
 {
 	public abstract class HandlerBase<TRequest, TResult> : IHandler<TRequest, TResult>, IHandler
@@ -43,13 +41,17 @@ namespace Zongsoft.Components
 
 		#region 公共方法
 		public virtual bool CanHandle(TRequest request) => request != null;
-		public virtual OperationResult<TResult> Handle(object caller, TRequest request) => this.HandleAsync(caller, request, CancellationToken.None).GetAwaiter().GetResult();
-		public abstract ValueTask<OperationResult<TResult>> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		public virtual TResult Handle(object caller, TRequest request) => this.HandleAsync(caller, request, CancellationToken.None).GetAwaiter().GetResult();
+		public abstract ValueTask<TResult> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
 		#endregion
 
 		#region 显式实现
 		bool IHandler.CanHandle(object request) => request is TRequest model ? this.CanHandle(model) : false;
-		async ValueTask<OperationResult> IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => request is TRequest model ? await this.HandleAsync(caller, model, cancellation) : OperationResult.Fail();
+		async ValueTask<object> IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(request), cancellation);
+		#endregion
+
+		#region 参数转换
+		protected TRequest Convert(object request) => request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
 		#endregion
 	}
 }

@@ -117,10 +117,7 @@ namespace Zongsoft.Externals.Hangfire
 					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
 					{
 						count++;
-						var result = await handler.HandleAsync(null, null, cancellation);
-
-						if(result.Failed)
-							throw new InvalidOperationException(result.Failure.ToString());
+						await handler.HandleAsync(null, null, cancellation);
 					}
 				}
 
@@ -138,12 +135,10 @@ namespace Zongsoft.Externals.Hangfire
 					{
 						count++;
 
-						var result = handler is IHandler<TParameter> strong ?
-							await strong.HandleAsync(null, parameter, cancellation) :
+						if(handler is IHandler<TParameter> strong)
+							await strong.HandleAsync(null, parameter, cancellation);
+						else
 							await handler.HandleAsync(null, parameter, cancellation);
-
-						if(result.Failed)
-							throw new InvalidOperationException(result.Failure.ToString());
 					}
 				}
 

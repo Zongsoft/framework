@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public async ValueTask<OperationResult<string>> RegisterAsync(Registration request, CancellationToken cancellation = default)
+			public async ValueTask<string> RegisterAsync(Registration request, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
@@ -88,10 +88,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var certificate = await this.Authority.GetCertificateAsync(cancellation);
 
 				var result = await this.Client.PostAsync<Registration, RegistrationResult>("ecommerce/applyments/", request, certificate, cancellation);
-				return result.Succeed ? OperationResult.Success(result.Value.ApplymentId.ToString()) : result.Failure;
+				return result.ApplymentId.ToString();
 			}
 
-			public ValueTask<OperationResult<Applyment>> GetAsync(string key, CancellationToken cancellation = default)
+			public ValueTask<Applyment> GetAsync(string key, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(key))
 					throw new ArgumentNullException(nameof(key));
@@ -371,18 +371,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共方法
-				public async ValueTask<OperationResult<SignatoryInfo>> GetSignatoryAsync(string organizationId, string userId, CancellationToken cancellation = default)
+				public ValueTask<SignatoryInfo> GetSignatoryAsync(string organizationId, string userId, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(organizationId))
 						throw new ArgumentNullException(nameof(organizationId));
 					if(string.IsNullOrEmpty(userId))
 						throw new ArgumentNullException(nameof(userId));
 
-					var result = await _merchant.Client.GetAsync<SignatoryInfo>($"offlinefacemch/organizations/{organizationId}/users/out-user-id/{userId}", cancellation);
-					return result;
+					return _merchant.Client.GetAsync<SignatoryInfo>($"offlinefacemch/organizations/{organizationId}/users/out-user-id/{userId}", cancellation);
 				}
 
-				public ValueTask<OperationResult<ContractInfo>> GetContractAsync(string contractId, string appId = null, CancellationToken cancellation = default)
+				public ValueTask<ContractInfo> GetContractAsync(string contractId, string appId = null, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(contractId))
 						throw new ArgumentNullException(nameof(contractId));
@@ -393,8 +392,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return _merchant.Client.GetAsync<ContractInfo>($"offlineface/contracts/{contractId}?appid={appId}", cancellation);
 				}
 
-				public ValueTask<OperationResult<string>> AuthenticateAsync(string organizationId, string userId, CancellationToken cancellation = default) => this.AuthenticateAsync(organizationId, userId, null, cancellation);
-				public async ValueTask<OperationResult<string>> AuthenticateAsync(string organizationId, string userId, string scene = null, CancellationToken cancellation = default)
+				public ValueTask<string> AuthenticateAsync(string organizationId, string userId, CancellationToken cancellation = default) => this.AuthenticateAsync(organizationId, userId, null, cancellation);
+				public async ValueTask<string> AuthenticateAsync(string organizationId, string userId, string scene = null, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(organizationId))
 						throw new ArgumentNullException(nameof(organizationId));
@@ -405,26 +404,26 @@ namespace Zongsoft.Externals.Wechat.Paying
 						scene = "WEBSESSION";
 
 					var result = await _merchant.Client.PostAsync<AuthenticateRequest, AuthenticateResult>("offlinefacemch/tokens", new AuthenticateRequest(organizationId, userId, scene), cancellation);
-					return result.Succeed ? OperationResult.Success(result.Value.Token) : result.Failure;
+					return result.Token;
 				}
 
-				public async ValueTask<OperationResult<string>> ApplyAsync(ApplyRequest request, CancellationToken cancellation = default)
+				public async ValueTask<string> ApplyAsync(ApplyRequest request, CancellationToken cancellation = default)
 				{
 					if(request == null)
 						throw new ArgumentNullException(nameof(request));
 
 					var result = await _merchant.Client.PostAsync<ApplyRequest, ApplyResult>("offlineface/contracts/presign", request, cancellation);
-					return result.Succeed ? OperationResult.Success(result.Value.Token) : result.Failure;
+					return result.Token;
 				}
 
-				public async ValueTask<OperationResult> RevokeAsync(string organizationId, string userId, CancellationToken cancellation = default)
+				public ValueTask RevokeAsync(string organizationId, string userId, CancellationToken cancellation = default)
 				{
 					if(string.IsNullOrEmpty(organizationId))
 						throw new ArgumentNullException(nameof(organizationId));
 					if(string.IsNullOrEmpty(userId))
 						throw new ArgumentNullException(nameof(userId));
 
-					return await _merchant.Client.PostAsync<object>($"offlinefacemch/organizations/{organizationId}/users/user-id/{userId}/terminate-contract", null, cancellation);
+					return _merchant.Client.PostAsync($"offlinefacemch/organizations/{organizationId}/users/user-id/{userId}/terminate-contract", cancellation);
 				}
 				#endregion
 

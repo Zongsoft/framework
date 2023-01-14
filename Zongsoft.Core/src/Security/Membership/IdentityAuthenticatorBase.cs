@@ -57,7 +57,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
+		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
@@ -65,12 +65,12 @@ namespace Zongsoft.Security.Membership
 			return await this.VerifyAsync(key, GetTicket(data), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<OperationResult<IIdentityTicket>> VerifyAsync(string key, Ticket data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask<IIdentityTicket> VerifyAsync(string key, Ticket data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(data.Identity))
 			{
 				if(string.IsNullOrEmpty(key))
-					return OperationResult.Fail(SecurityReasons.InvalidIdentity, "Missing identity.");
+					throw new AuthenticationException(SecurityReasons.InvalidIdentity, "Missing identity.");
 
 				data.Identity = key;
 			}
@@ -80,34 +80,32 @@ namespace Zongsoft.Security.Membership
 
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
 			if(attempter != null && !attempter.Verify(data.Identity, data.Namespace))
-				return OperationResult.Fail(SecurityReasons.AccountSuspended);
+				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			//获取当前用户的密码及密码盐
 			var userId = this.GetPassword(data.Identity, data.Namespace, out var storedPassword, out var storedPasswordSalt, out var status, out _);
 
 			//如果帐户不存在则返回无效账户
 			if(userId == 0)
-				return OperationResult.Fail(SecurityReasons.InvalidIdentity);
+				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
 			//如果账户状态异常则返回账户状态异常
 			if(status != UserStatus.Active)
-				return OperationResult.Fail(SecurityReasons.AccountDisabled);
+				throw new AuthenticationException(SecurityReasons.AccountDisabled);
 
 			//密码校验失败则返回密码验证失败
 			if(!PasswordUtility.VerifyPassword(data.Password, storedPassword, storedPasswordSalt, "SHA1"))
 			{
 				//通知验证尝试失败
-				if(attempter != null)
-					attempter.Fail(data.Identity, data.Namespace);
+				attempter?.Fail(data.Identity, data.Namespace);
 
-				return OperationResult.Fail(SecurityReasons.InvalidPassword);
+				throw new AuthenticationException(SecurityReasons.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
-			if(attempter != null)
-				attempter.Done(data.Identity, data.Namespace);
+			attempter?.Done(data.Identity, data.Namespace);
 
-			return OperationResult.Success<IIdentityTicket>(new Ticket(data.Namespace, data.Identity));
+			return ValueTask.FromResult<IIdentityTicket>(new Ticket(data.Namespace, data.Identity));
 		}
 		#endregion
 

@@ -44,19 +44,32 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 		[HttpPost("{name}/{key?}")]
 		public async Task<IActionResult> HandleAsync(string name, string key = null, CancellationToken cancellation = default)
 		{
-			//Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
-			var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
-
-			if(result.Succeed)
-				return result.Value == null ? this.NoContent() : this.Ok(result);
-
-			return result.Failure.Reason switch
+			try
 			{
-				FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
-				FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
-				FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
-				_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, result.Failure),
-			};
+				//Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
+				var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
+				return result == null ? this.NoContent() : this.Ok(result);
+			}
+			catch(Zongsoft.Common.OperationException ex)
+			{
+				return ex.Reason switch
+				{
+					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
+					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
+					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
+				};
+			}
+			catch(AggregateException ex) when (ex.InnerException is Zongsoft.Common.OperationException operationException)
+			{
+				return operationException.Reason switch
+				{
+					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
+					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
+					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, operationException),
+				};
+			}
 		}
 
 		private async ValueTask<string> GetRequestInfoAsync()

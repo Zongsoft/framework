@@ -30,13 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Collections.Generic;
-
-using Zongsoft.Common;
-using Zongsoft.Services;
-using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -44,7 +37,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal ValueTask<OperationResult> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder order, CancellationToken cancellation = default) => this.OnHandleAsync(caller, order, cancellation);
+		internal ValueTask<object> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder order, CancellationToken cancellation = default) =>
+			this.OnHandleAsync(caller, order, cancellation);
 
 		protected override Type GetRequestType(string format) =>
 			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?

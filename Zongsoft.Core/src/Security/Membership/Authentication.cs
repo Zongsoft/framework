@@ -103,19 +103,16 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<OperationResult<CredentialPrincipal>> AuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public async ValueTask<CredentialPrincipal> AuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			//激发“Authenticating”事件
 			this.OnAuthenticating(new AuthenticatingEventArgs(this, data, scenario, parameters));
 
 			//进行身份验证
-			var result = await this.OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
-
-			if(result.Failed)
-				return (OperationResult)result.Failure;
+			var identity = await this.OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
 
 			//生成安全主体
-			var principal = CreateCredential(result.Value, scenario);
+			var principal = CreateCredential(identity, scenario);
 
 			//获取安全质询器
 			var challengers = this.GetChallengers();
@@ -124,11 +121,11 @@ namespace Zongsoft.Security.Membership
 			{
 				foreach(var challenger in challengers)
 				{
-					result = challenger.Challenge(principal, scenario);
+					var result = challenger.Challenge(principal, scenario);
 
 					//质询失败则返回失败
-					if(result.Failed)
-						return (OperationResult)result.Failure;
+					if(result == null)
+						throw new AuthenticationException(SecurityReasons.Forbidden);
 				}
 			}
 
@@ -136,31 +133,28 @@ namespace Zongsoft.Security.Membership
 			this.OnAuthenticated(principal, scenario, parameters);
 
 			//返回成功
-			return OperationResult.Success(principal);
+			return principal;
 		}
 		#endregion
 
 		#region 抽象方法
-		protected async virtual ValueTask<OperationResult<ClaimsIdentity>> OnAuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
+		protected async virtual ValueTask<ClaimsIdentity> OnAuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			var authenticator = this.GetAuthenticator(scheme, key, data, scenario);
 
 			if(authenticator == null)
-				return OperationResult.Fail("InvalidAuthenticator");
+				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Invalid authenticator scheme.");
 
 			//校验身份
 			var result = await authenticator.VerifyAsync(key, data, scenario, parameters);
 
-			if(result.Failed)
-				return result;
-
 			//签发身份
-			var identity = await authenticator.IssueAsync(result.Value, scenario, parameters);
+			var identity = await authenticator.IssueAsync(result, scenario, parameters);
 
 			if(identity == null)
-				return OperationResult.Fail(SecurityReasons.InvalidIdentity);
+				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
-			return OperationResult.Success(identity);
+			return identity;
 		}
 		#endregion
 

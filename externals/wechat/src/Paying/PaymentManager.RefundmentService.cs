@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			#endregion
 
 			#region 公共方法
-			public ValueTask<OperationResult<RefundmentOrder>> RefundAsync(RefundmentRequest request, CancellationToken cancellation = default)
+			public ValueTask<RefundmentOrder> RefundAsync(RefundmentRequest request, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
@@ -69,7 +69,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return this.Client.PostAsync<RefundmentRequest, RefundmentOrder>("refund/domestic/refunds", request, cancellation);
 			}
 
-			public ValueTask<OperationResult<RefundmentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
+			public ValueTask<RefundmentOrder> GetAsync(string voucher, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));

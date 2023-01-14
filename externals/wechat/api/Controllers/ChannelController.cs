@@ -34,6 +34,7 @@ using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using System.Linq;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
@@ -110,11 +111,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			}
 
 			var info = await channel.Users.GetInfoAsync(identifier, cancellation);
-
-			if(info.Succeed)
-				return string.IsNullOrEmpty(info.Value.OpenId) && string.IsNullOrEmpty(info.Value.UnionId) ? this.NoContent() : this.Ok(info.Value);
-
-			return this.NotFound(info.Failure);
+			return string.IsNullOrEmpty(info.OpenId) && string.IsNullOrEmpty(info.UnionId) ? this.NoContent() : this.Ok(info);
 		}
 	}
 
@@ -129,7 +126,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var result = await channel.Messager.GetTemplatesAsync(cancellation);
-			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
+			return result != null && result.Any() ? this.Ok(result) : this.NoContent();
 		}
 
 		[HttpPost("Send/{destination}")]
@@ -142,7 +139,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var result = await channel.Messager.SendAsync(destination, template, data, url, cancellation);
-			return result.Succeed ? this.Content(result.Value) : this.NotFound(result.Failure);
+			return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
 		}
 	}
 
@@ -160,7 +157,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.NotFound();
 
 			var result = await channel.Authentication.AuthenticateAsync(token, cancellation);
-			return result.Succeed ? this.Ok(result.Value) : this.NotFound(result.Failure);
+			return this.Ok(result);
 		}
 	}
 }

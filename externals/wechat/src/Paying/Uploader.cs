@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		private static readonly SHA256 _sha256 = SHA256.Create();
 
-		public static ValueTask<OperationResult<string>> UploadAsync(this IAuthority authority, string filePath, CancellationToken cancellation = default)
+		public static ValueTask<string> UploadAsync(this IAuthority authority, string filePath, CancellationToken cancellation = default)
 		{
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
@@ -74,10 +74,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return UploadFileAsync(authority, filePath, "merchant/media/video_upload", cancellation);
 			}
 
-			return ValueTask.FromResult((OperationResult<string>)OperationResult.Fail("InvalidFileFormat", $"Unsupported '{extension}' file format."));
+			throw new OperationException("InvalidFileFormat", $"Unsupported '{extension}' file format.");
 		}
 
-		private static async ValueTask<OperationResult<string>> UploadFileAsync(this IAuthority authority, string filePath, string url, CancellationToken cancellation = default)
+		private static async ValueTask<string> UploadFileAsync(this IAuthority authority, string filePath, string url, CancellationToken cancellation = default)
 		{
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
@@ -90,7 +90,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 			using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
 			{
 				using var stream = new MemoryStream();
-				await fileStream.CopyToAsync(stream);
+				await fileStream.CopyToAsync(stream, cancellation);
 				data = stream.ToArray();
 			}
 
@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 			var response = await client.PostAsync(url, form, cancellation);
 			var result = await response.GetResultAsync<UploaderResult>(cancellation);
-			return result.Succeed ? OperationResult.Success(result.Value.Identifier) : result.Failure;
+			return result.Identifier;
 		}
 
 		private struct UploaderResult

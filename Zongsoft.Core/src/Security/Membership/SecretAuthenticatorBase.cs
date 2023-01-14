@@ -57,7 +57,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 校验方法
-		async ValueTask<OperationResult> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
+		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
@@ -65,15 +65,14 @@ namespace Zongsoft.Security.Membership
 			return await this.VerifyAsync(key, GetTicket(data), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<OperationResult<string>> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask<string> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
-				return OperationResult.Fail("InvalidToken");
+				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Missing the required authentication token.");
 
 			var index = data.IndexOfAny(new[] { ':', '=' });
-
 			if(index <= 0 || index >= data.Length - 1)
-				return OperationResult.Fail(SecurityReasons.InvalidArgument, $"Illegal identity verification token format.");
+				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Illegal identity verification token format.");
 
 			var identifier = data.Substring(0, index);
 			var secret = data.Substring(index + 1);
@@ -83,24 +82,23 @@ namespace Zongsoft.Security.Membership
 
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
 			if(attempter != null && !attempter.Verify(key))
-				return OperationResult.Fail(SecurityReasons.AccountSuspended);
+				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			if(!this.Secretor.Verify(key, secret, out var extra))
 			{
 				//通知验证尝试失败
-				if(attempter != null)
-					attempter.Fail(key);
+				attempter?.Fail(key);
 
-				return OperationResult.Fail(SecurityReasons.VerifyFaild);
+				throw new AuthenticationException(SecurityReasons.VerifyFaild);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
-			if(attempter != null)
-				attempter.Done(key);
+			attempter?.Done(key);
 
-			return (string.IsNullOrEmpty(extra) && string.IsNullOrEmpty(identifier)) || string.Equals(identifier, extra, StringComparison.OrdinalIgnoreCase) ?
-				OperationResult.Success(extra) :
-				OperationResult.Fail(SecurityReasons.VerifyFaild, $"Identity verification data is inconsistent.");
+			if((string.IsNullOrEmpty(extra) && string.IsNullOrEmpty(identifier)) || string.Equals(identifier, extra, StringComparison.OrdinalIgnoreCase))
+				return ValueTask.FromResult(extra);
+			else
+				throw new AuthenticationException(SecurityReasons.VerifyFaild, $"Identity verification data is inconsistent.");
 		}
 		#endregion
 

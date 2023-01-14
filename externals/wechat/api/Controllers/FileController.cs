@@ -56,7 +56,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 				return this.BadRequest();
 
 			var result = await AuthorityUtility.GetAuthority(name).UploadAsync(filePath, cancellation);
-			return result.Succeed ? this.Content(result.Value) : this.BadRequest(result.Failure);
+			return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
 		}
 
 		private static async ValueTask<string> ReadAsStringAsync(HttpRequest request)

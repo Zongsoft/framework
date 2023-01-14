@@ -120,19 +120,22 @@ namespace Zongsoft.Externals.Wechat
 
 			if(locker != null)
 			{
-				var result = await AcquireCredentialAsync(account.Code, account.Secret);
-
-				if(result.Succeed)
+				try
 				{
-					token = result.Value;
+					token = await AcquireCredentialAsync(account.Code, account.Secret);
+
+					if(token == null)
+						return null;
 
 					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
 						_localCache[key] = token;
 
 					return token.Key;
 				}
-
-				Zongsoft.Diagnostics.Logger.Error(result.Failure.Message, result.Failure);
+				catch(Exception ex)
+				{
+					Zongsoft.Diagnostics.Logger.Error(ex);
+				}
 			}
 			else
 			{
@@ -196,19 +199,22 @@ namespace Zongsoft.Externals.Wechat
 				if(string.IsNullOrEmpty(credential))
 					return default;
 
-				var result = await AcquireTicketAsync(credential, type);
-
-				if(result.Succeed)
+				try
 				{
-					token = result.Value;
+					token = await AcquireTicketAsync(credential, type);
+
+					if(token == null)
+						return default;
 
 					if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
 						_localCache[key] = token;
 
 					return (token.Key, token.Expiry.GetPeriod());
 				}
-
-				Zongsoft.Diagnostics.Logger.Error(result.Failure.Message, result.Failure);
+				catch(Exception ex)
+				{
+					Zongsoft.Diagnostics.Logger.Error(ex);
+				}
 			}
 			else
 			{
@@ -233,41 +239,53 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 私有方法
-		private static async ValueTask<OperationResult<Token>> AcquireCredentialAsync(string appId, string secret, int retries = 3)
+		private static async ValueTask<Token> AcquireCredentialAsync(string appId, string secret, int retries = 3)
 		{
 			var response = await _http.GetAsync($"/cgi-bin/token?grant_type=client_credential&appid={appId}&secret={secret}");
-			var result = await response.GetResultAsync<CredentialToken>();
 
-			if(result.Succeed)
-				return OperationResult.Success((Token)result.Value);
+			try
+			{
+				return await response.GetResultAsync<CredentialToken>();
+			}
+			catch(AggregateException ex) when(ex.InnerException is OperationException operationException)
+			{
+				if(int.TryParse(operationException.Reason, out var reason) && reason == ErrorCodes.Busy && retries > 0)
+					return await Retry(appId, secret, retries);
 
-			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
+				throw;
+			}
+
+			static async ValueTask<Token> Retry(string appId, string secret, int retries)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
 				return await AcquireCredentialAsync(appId, secret, retries - 1);
 			}
-
-			return (OperationResult)result.Failure;
 		}
 
-		private static async ValueTask<OperationResult<Token>> AcquireTicketAsync(string credentialId, string type, int retries = 3)
+		private static async ValueTask<Token> AcquireTicketAsync(string credentialId, string type, int retries = 3)
 		{
 			if(string.IsNullOrEmpty(credentialId))
-				return OperationResult.Fail("MissingCredential", $"Missing the access token of the Wechat.");
+				throw new ArgumentNullException(nameof(credentialId));
 
 			var response = await _http.GetAsync($"/cgi-bin/ticket/getticket?access_token={credentialId}&type={type}");
-			var result = await response.GetResultAsync<TicketToken>();
 
-			if(result.Succeed)
-				return OperationResult.Success((Token)result.Value);
+			try
+			{
+				return await response.GetResultAsync<TicketToken>();
+			}
+			catch(AggregateException ex) when(ex.InnerException is OperationException operationException)
+			{
+				if(int.TryParse(operationException.Reason, out var reason) && reason == ErrorCodes.Busy && retries > 0)
+					return await Retry(credentialId, type, retries);
 
-			if(result.Failure.Code == ErrorCodes.Busy && retries > 0)
+				throw;
+			}
+
+			static async ValueTask<Token> Retry(string credentialId, string type, int retries)
 			{
 				await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
 				return await AcquireTicketAsync(credentialId, type, retries - 1);
 			}
-
-			return (OperationResult)result.Failure;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

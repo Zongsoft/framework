@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, string key, CancellationToken cancellation = default)
+		public static async ValueTask<object> HandleAsync(HttpContext context, string name, string key, CancellationToken cancellation = default)
 		{
 			if(name != null && Handlers.TryGetValue(name, out var handler) && handler != null)
 			{
@@ -87,7 +87,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 					else if(converter.CanConvertFrom(typeof(Stream)))
 						request = converter.ConvertFrom(context.Request.Body);
 					else
-						return OperationResult.Fail(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
+						throw new OperationException(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
 				}
 				else if(context.Request.ContentLength > 0)
 				{
@@ -99,10 +99,10 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 
 				return handler.CanHandle(request) ?
 					await handler.HandleAsync(key, request, cancellation) :
-					OperationResult.Fail(ERROR_CANNOTHANDLE);
+					throw new OperationException(ERROR_CANNOTHANDLE, $"The specified '{name}' handler({handler.GetType().FullName}) cannot process the current request.");
 			}
 
-			return OperationResult.Fail(ERROR_NOTFOUND);
+			throw new OperationException(ERROR_NOTFOUND, $"The specified handler named '{name}' was not found.");
 		}
 		#endregion
 

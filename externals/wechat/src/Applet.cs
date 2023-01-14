@@ -76,19 +76,16 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 登录方法
-		public async ValueTask<OperationResult<LoginResult>> LoginAsync(string token, CancellationToken cancellation = default)
+		public async ValueTask<LoginResult> LoginAsync(string token, CancellationToken cancellation = default)
 		{
 			var response = await CredentialManager.Http.GetAsync($"/sns/jscode2session?appid={this.Account.Code}&secret={this.Account.Secret}&js_code={token}&grant_type=authorization_code", cancellation);
 			var result = await response.GetResultAsync<LoginResultWrapper>(cancellation);
-
-			return result.Succeed ?
-				OperationResult.Success(new LoginResult(result.Value.OpenId, result.Value.Secret, result.Value.UnionId)) :
-				(OperationResult)result.Failure;
+			return new LoginResult(result.OpenId, result.Secret, result.UnionId);
 		}
 		#endregion
 
 		#region 手机号码
-		public async ValueTask<OperationResult<string>> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
+		public async ValueTask<string> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 			//var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
@@ -97,10 +94,7 @@ namespace Zongsoft.Externals.Wechat
 			var content = new StringContent(Zongsoft.Serialization.Serializer.Json.Serialize(new { code = token }), Encoding.UTF8, "application/json");
 			var response = await CredentialManager.Http.PostAsync($"/wxa/business/getuserphonenumber?access_token={credential}", content, cancellation);
 			var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
-
-			return result.Succeed ?
-				OperationResult.Success(result.Value.Phone.PhoneNumber) :
-				(OperationResult)result.Failure;
+			return result.Phone.PhoneNumber;
 		}
 		#endregion
 

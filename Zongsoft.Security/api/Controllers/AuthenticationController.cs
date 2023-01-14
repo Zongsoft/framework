@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
@@ -77,11 +78,18 @@ namespace Zongsoft.Security.Web.Controllers
 			if(feature != null)
 				feature.AllowSynchronousIO = true;
 
-			var result = await Authentication.Instance.AuthenticateAsync(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			try
+			{
+				var principal = await Authentication.Instance.AuthenticateAsync(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
 
-			return result.Succeed ?
-				this.Ok(this.Transform(result.Value)) :
-				this.StatusCode(403, result.Failure);
+				return principal != null ?
+					this.Ok(this.Transform(principal)) :
+					this.StatusCode(403, new { Reason = SecurityReasons.Unknown });
+			}
+			catch(AuthenticationException ex)
+			{
+				return this.StatusCode(StatusCodes.Status403Forbidden, new { ex.Reason, ex.Message });
+			}
 		}
 
 		[HttpPost]

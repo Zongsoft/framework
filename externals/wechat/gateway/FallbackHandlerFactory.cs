@@ -37,10 +37,10 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Microsoft.AspNetCore.Http;
+
 using Zongsoft.Common;
 using Zongsoft.Components;
-
-using Microsoft.AspNetCore.Http;
 
 namespace Zongsoft.Externals.Wechat.Gateway
 {
@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 		#endregion
 
 		#region 公共方法
-		public static async ValueTask<OperationResult> HandleAsync(HttpContext context, string name, string key, CancellationToken cancellation = default)
+		public static async ValueTask<object> HandleAsync(HttpContext context, string name, string key, CancellationToken cancellation = default)
 		{
 			if(name != null && Handlers.TryGetValue(name, out var handler) && handler != null)
 			{
@@ -87,7 +87,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 					else if(converter.CanConvertFrom(typeof(Stream)))
 						request = converter.ConvertFrom(context.Request.Body);
 					else
-						return OperationResult.Fail(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
+						throw new OperationException(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
 				}
 				else if(context.Request.ContentLength > 0)
 				{
@@ -99,10 +99,10 @@ namespace Zongsoft.Externals.Wechat.Gateway
 
 				return handler.CanHandle(request) ?
 					await handler.HandleAsync(key, request, cancellation) :
-					OperationResult.Fail(ERROR_CANNOTHANDLE);
+					throw new OperationException(ERROR_CANNOTHANDLE);
 			}
 
-			return OperationResult.Fail(ERROR_NOTFOUND);
+			throw new OperationException(ERROR_NOTFOUND);
 		}
 		#endregion
 

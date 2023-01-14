@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<OperationResult<IEnumerable<Template>>> GetTemplatesAsync(CancellationToken cancellation = default)
+		public async ValueTask<IEnumerable<Template>> GetTemplatesAsync(CancellationToken cancellation = default)
 		{
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 
@@ -71,15 +71,15 @@ namespace Zongsoft.Externals.Wechat
 
 			var response = await CredentialManager.Http.GetAsync($"/cgi-bin/template/get_all_private_template?access_token={credential}", cancellation);
 			var result = await response.GetResultAsync<TemplateWrapper>(cancellation);
-			return result.Succeed ? OperationResult.Success(result.Value.Entries.Select(template => template.ToTemplate())) : result.Failure;
+			return result.Entries.Select(template => template.ToTemplate());
 		}
 
-		public async ValueTask<OperationResult<string>> SendAsync(string destination, string template, object data, string url = null, CancellationToken cancellation = default)
+		public async ValueTask<string> SendAsync(string destination, string template, object data, string url = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(destination))
-				return OperationResult.Fail("Argument");
+				throw new ArgumentNullException(nameof(destination));
 			if(string.IsNullOrEmpty(template))
-				return OperationResult.Fail("Argument");
+				throw new ArgumentNullException(nameof(template));
 
 			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
 
@@ -93,7 +93,7 @@ namespace Zongsoft.Externals.Wechat
 				cancellation);
 
 			var result = await response.GetResultAsync<MessageResult>(cancellation);
-			return result.Succeed ? OperationResult.Success(result.Value.MessageId.ToString()) : result.Failure;
+			return result.MessageId.ToString();
 		}
 		#endregion
 

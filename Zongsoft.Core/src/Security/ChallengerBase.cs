@@ -14,8 +14,6 @@
 using System;
 using System.Security.Claims;
 
-using Zongsoft.Common;
-
 namespace Zongsoft.Security
 {
 	public abstract class ChallengerBase<TEntity> : IChallenger
@@ -25,25 +23,22 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 公共方法
-		public OperationResult Challenge(ClaimsPrincipal principal, string scenario)
+		public object Challenge(ClaimsPrincipal principal, string scenario)
 		{
 			//通知质询开始
-			var result = this.OnChallenging(principal);
+			var succeed = this.OnChallenging(principal);
 
-			if(result.Failed)
-				return result;
+			if(!succeed)
+				return succeed;
 
 			//依次验证主体身份
 			foreach(var identity in principal.Identities)
 			{
-				var validation = this.Validate(identity, scenario);
-
-				if(validation.Failed)
-					return validation;
+				var entity = this.Validate(identity, scenario);
 
 				//更新当前用户的声明属性
-				if(validation.Value != null)
-					this.OnClaims(identity, validation.Value);
+				if(entity != null)
+					this.OnClaims(identity, entity);
 			}
 
 			//通知质询完成
@@ -52,13 +47,13 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 虚拟方法
-		protected virtual OperationResult OnChallenging(ClaimsPrincipal principal) => OperationResult.Success();
-		protected virtual OperationResult OnChallenged(ClaimsPrincipal principal) => OperationResult.Success();
+		protected virtual bool OnChallenging(ClaimsPrincipal principal) => true;
+		protected virtual object OnChallenged(ClaimsPrincipal principal) => null;
 		#endregion
 
 		#region 抽象方法
 		protected abstract void OnClaims(ClaimsIdentity identity, TEntity user);
-		protected abstract OperationResult<TEntity> Validate(ClaimsIdentity identity, string scenario);
+		protected abstract TEntity Validate(ClaimsIdentity identity, string scenario);
 		#endregion
 	}
 }

@@ -91,24 +91,24 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return _authority.Certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
 			}
 
-			public virtual async ValueTask<OperationResult> CancelAsync(string voucher, CancellationToken cancellation = default)
+			public virtual ValueTask CancelAsync(string voucher, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
 
-				return await this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close"), this.GetCancellation(), cancellation);
+				return this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close"), this.GetCancellation(), cancellation);
 			}
 
-			public abstract ValueTask<OperationResult<PaymentOrder>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default);
-			public abstract ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default);
-			public abstract ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default);
+			public abstract ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default);
+			public abstract ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default);
+			public abstract ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default);
 
 			/// <summary>初始化人脸识别设备的在线刷脸验证请求。</summary>
 			/// <returns>返回人脸识别验证凭证。</returns>
-			public async ValueTask<OperationResult> AuthenticateOnlineAsync(string applet, string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
+			public async ValueTask<object> AuthenticateOnlineAsync(string applet, string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(data))
-					return OperationResult.Fail("Argument", $"Missing the required data of the recognition authenticate.");
+					throw new ArgumentNullException(nameof(data), $"Missing the required data of the recognition authenticate.");
 
 				var request = this.GetAuthenticationOnlineRequest(applet, data, device, store, title, extra);
 
@@ -118,8 +118,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://payapp.weixin.qq.com/face/get_wxpayface_authinfo", request.CreateXmlContent(), cancellation);
 				var result = await response.GetXmlContentAsync(cancellation);
 
-				return result != null && result.TryGetValue("authinfo", out var value) && value != null ?
-					OperationResult.Success(new
+				if(result != null && result.TryGetValue("authinfo", out var value) && value != null)
+					return new
 					{
 						Value = value,
 						AppId = result.TryGetValue("appid", out var appId) ? (string)appId : string.Empty,
@@ -127,49 +127,49 @@ namespace Zongsoft.Externals.Wechat.Paying
 						SubAppId = result.TryGetValue("sub_appid", out var subAppId) ? (string)subAppId : string.Empty,
 						SubMerchantId = result.TryGetValue("sub_mch_id", out var subMerchantId) ? (string)subMerchantId : string.Empty,
 						Expires = result.TryGetValue("expires_in", out var expires) && int.TryParse(expires, out var seconds) ? seconds : 0,
-					}) :
-					OperationResult.Fail(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+					};
+
+				throw new OperationException(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
 			}
 
 			/// <summary>初始化人脸识别设备的离线刷脸验证请求。</summary>
 			/// <returns>返回人脸识别验证凭证。</returns>
-			public async ValueTask<OperationResult> AuthenticateOfflineAsync(string applet, string data, string device, string organization, CancellationToken cancellation = default)
+			public async ValueTask<object> AuthenticateOfflineAsync(string applet, string data, string device, string organization, CancellationToken cancellation = default)
 			{
 				if(string.IsNullOrEmpty(data))
-					return OperationResult.Fail("Argument", $"Missing the required data of the recognition authenticate.");
+					throw new ArgumentNullException(nameof(data), $"Missing the required data of the recognition authenticate.");
 
 				var request = this.GetAuthenticationOfflineRequest(applet, data, device, organization);
-
 				var response = await this.Client.PostAsJsonAsync(@"https://api.mch.weixin.qq.com/v3/offlineface/authinfo", request, cancellation);
 				var result = await response.GetResultAsync<AuthenticateOfflineResult>(cancellation);
-				return result.Succeed ? OperationResult.Success(this.GetAuthenticationOfflineResult(organization, result.Value.Value)) : result.Failure;
+				return this.GetAuthenticationOfflineResult(organization, result.Value);
 			}
 			#endregion
 
 			#region 保护方法
-			protected async ValueTask<OperationResult<T>> GetAsync<T>(string voucher, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
+			protected ValueTask<T> GetAsync<T>(string voucher, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
 			{
 				if(string.IsNullOrEmpty(voucher))
 					throw new ArgumentNullException(nameof(voucher));
 
-				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}?{arguments}"), cancellation);
+				return this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}?{arguments}"), cancellation);
 			}
 
-			public async ValueTask<OperationResult<string>> PayV3Async(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+			public async ValueTask<string> PayV3Async(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
 				var result = await this.Client.PostAsync<PaymentRequest, PayResult>(this.GetUrl("transactions", scenario), request, cancellation);
-				return result.Succeed ? OperationResult.Success(result.Value.Code) : (OperationResult)result.Failure;
+				return result.Code;
 			}
 
-			protected async ValueTask<OperationResult<T>> GetCompletedAsync<T>(string key, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
+			protected ValueTask<T> GetCompletedAsync<T>(string key, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
 			{
 				if(string.IsNullOrEmpty(key))
 					throw new ArgumentNullException(nameof(key));
 
-				return await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
+				return this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
 			}
 
 			protected virtual IDictionary<string, object> GetAuthenticationOnlineRequest(string appId, string data, string device, string store, string title, string extra = null)
@@ -603,7 +603,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 公共方法
-				public async ValueTask<OperationResult<PaymentOrder>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				public async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 				{
 					var dictionary = this.GetRequest(request, scenario);
 
@@ -622,7 +622,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						content.TryAdd("transaction_id", prepayId);
 
 					if(content == null || !content.TryGetValue("transaction_id", out var id) || string.IsNullOrEmpty(id))
-						return OperationResult.Fail(content.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", content.TryGetValue("return_msg", out var message) ? message : null);
+						throw new OperationException(content.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", content.TryGetValue("return_msg", out var message) ? message : null);
 
 					//将返回的数据组装成支付单实体
 					var order = this.GetOrder(content);
@@ -637,7 +637,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 							false);
 					}
 
-					return OperationResult.Success(order);
+					return order;
 				}
 				#endregion
 
@@ -752,25 +752,23 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
-				public override async ValueTask<OperationResult<PaymentOrder>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 				{
 					if(_authority.Certificate == null || request is PaymentRequest.TicketRequest)
 						return await _compatibility.PayAsync(request, scenario, cancellation);
 
 					var result = await this.PayV3Async(request, scenario, cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)new DirectOrder(result.Value, request)) : result.Failure;
+					return new DirectOrder(result, request);
 				}
 
-				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
-					var result = await base.GetAsync<DirectOrder>(voucher, $"mchid={_authority.Code}", cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+					return await base.GetAsync<DirectOrder>(voucher, $"mchid={_authority.Code}", cancellation);
 				}
 
-				public override async ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default)
 				{
-					var result = await base.GetCompletedAsync<DirectOrder>(key, $"mchid={_authority.Code}", cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+					return await base.GetCompletedAsync<DirectOrder>(key, $"mchid={_authority.Code}", cancellation);
 				}
 
 				protected override string GetUrl(string path, Scenario? scenario)
@@ -1021,7 +1019,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 重写方法
-				public override async ValueTask<OperationResult<PaymentOrder>> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 				{
 					if(_authority.Certificate == null)
 						return await _compatibility.PayAsync(request, scenario, cancellation);
@@ -1035,19 +1033,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 					}
 
 					var result = await this.PayV3Async(request, scenario, cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)new BrokerOrder(result.Value, request)) : result.Failure;
+					return new BrokerOrder(result, request);
 				}
 
-				public override async ValueTask<OperationResult<PaymentOrder>> GetAsync(string voucher, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default)
 				{
-					var result = await base.GetAsync<BrokerOrder>(voucher, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+					return await base.GetAsync<BrokerOrder>(voucher, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
 				}
 
-				public override async ValueTask<OperationResult<PaymentOrder>> GetCompletedAsync(string key, CancellationToken cancellation = default)
+				public override async ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default)
 				{
-					var result = await base.GetCompletedAsync<BrokerOrder>(key, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
-					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : (OperationResult)result.Failure;
+					return await base.GetCompletedAsync<BrokerOrder>(key, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
 				}
 
 				protected override string GetUrl(string path, Scenario? scenario)
@@ -1108,7 +1104,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				#endregion
 
 				#region 私有方法
-				private async ValueTask<OperationResult<PaymentOrder>> PayOfflineTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
+				private async ValueTask<PaymentOrder> PayOfflineTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
 				{
 					var ticket = OfflineTicketRequest.Create(request, uint.Parse(this.Authority.Code), this.Authority.Accounts.Default.Code, uint.Parse(_subsidiary.Code), _subsidiary.Accounts.Default.Code);
 
@@ -1117,7 +1113,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 						ticket,
 						cancellation);
 
-					return result.Succeed ? OperationResult.Success((PaymentOrder)result.Value) : result.Failure;
+					return result;
 				}
 
 				private class OfflineTicketRequest

@@ -59,19 +59,16 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 重写方法
-		public override async ValueTask<OperationResult> HandleAsync(object caller, Stream input, CancellationToken cancellation = default)
+		public override async ValueTask<object> HandleAsync(object caller, Stream input, CancellationToken cancellation = default)
 		{
 			var request = await this.GetRequestAsync(caller, input, cancellation);
-			if(request.Failed)
-				return request.Failure;
-
-			return await this.OnHandleAsync(caller, request.Value, cancellation);
+			return await this.OnHandleAsync(caller, request, cancellation);
 		}
 		#endregion
 
 		#region 抽象方法
 		protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask<OperationResult> OnHandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		protected abstract ValueTask<object> OnHandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
 		#endregion
 
 		#region 虚拟方法
@@ -95,7 +92,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 内部方法
-		internal async ValueTask<OperationResult<TRequest>> GetRequestAsync(object caller, Stream input, CancellationToken cancellation = default)
+		internal async ValueTask<TRequest> GetRequestAsync(object caller, Stream input, CancellationToken cancellation = default)
 		{
 			if(caller == null || input == null)
 				return default;
@@ -106,10 +103,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var authority = GetAuthority(key, format);
 
 				if(authority == null)
-					return OperationResult.Fail("NotFound", $"Didn't find the '{key}' authority or it has no certificate.");
+					throw new OperationException("NotFound", $"Didn't find the '{key}' authority or it has no certificate.");
 
 				if(string.IsNullOrEmpty(authority.Secret))
-					return OperationResult.Fail("Invalid", $"The specified '{key}' authority has no secret key.");
+					throw new OperationException("InvalidKey", $"The specified '{key}' authority has no secret key.");
 
 				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, Json.Options, cancellation);
 				var resource = message.Resource;
@@ -122,14 +119,14 @@ namespace Zongsoft.Externals.Wechat.Paying
 				catch(Exception ex)
 				{
 					Zongsoft.Diagnostics.Logger.Error(ex, $"微信回调解密出错：\nAuthority.name:{authority.Name}\nAuthority.Secret:{authority.Secret}\nResource.Nonce:{resource.Nonce}\nResource.AssociatedData:{resource.AssociatedData}\nResource.Ciphertext:{resource.Ciphertext}");
-					return OperationResult.Fail(ex);
+					throw;
 				}
 
 				var payload = JsonSerializer.Deserialize(data, GetRequestType(format), Json.Options);
-				return OperationResult.Success((TRequest)payload);
+				return (TRequest)payload;
 			}
 
-			return OperationResult.Fail("NotFound");
+			throw new OperationException("NotFound");
 		}
 		#endregion
 

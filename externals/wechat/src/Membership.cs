@@ -78,7 +78,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<OperationResult<IEnumerable<string>>> AllocateAsync(string templateId, IEnumerable<string> codes, CancellationToken cancellation = default)
+		public async ValueTask<IEnumerable<string>> AllocateAsync(string templateId, IEnumerable<string> codes, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(templateId))
 				throw new ArgumentNullException(nameof(templateId));
@@ -86,30 +86,26 @@ namespace Zongsoft.Externals.Wechat
 			var response = await _http.PostAsJsonAsync($"marketing/membercard-open/cards/{templateId}/codes/deposit", new { code = codes }, cancellation);
 			var result = await GetResultAsync<AllocateResult>(response, cancellation);
 
-			if(result.Succeed)
-				return result.Value.HasData(out var data) ?
-					OperationResult.Success(data.Where(entry => string.Equals(entry.Result, "SUCCESS", StringComparison.OrdinalIgnoreCase)).Select(entry => entry.Code)) :
-					OperationResult.Success(Enumerable.Empty<string>());
-
-			return result.Failure;
+			return result.HasData(out var data) ?
+				data.Where(entry => string.Equals(entry.Result, "SUCCESS", StringComparison.OrdinalIgnoreCase)).Select(entry => entry.Code) :
+				Enumerable.Empty<string>();
 		}
 
-		public async ValueTask<OperationResult> ObsoleteAsync(string templateId, string code, CancellationToken cancellation = default)
+		public async ValueTask ObsoleteAsync(string templateId, string code, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(templateId))
 				throw new ArgumentNullException(nameof(templateId));
 
 			var response = await _http.PostAsJsonAsync($"marketing/membercard-open/cards/{templateId}/codes/{code}/unavailable", new { reason = string.Empty }, cancellation);
-
 			if(response.IsSuccessStatusCode)
-				return OperationResult.Success();
+				return;
 
-			return OperationResult.Fail(response.StatusCode.ToString());
+			throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
 		}
 		#endregion
 
 		#region 私有方法
-		public static async ValueTask<OperationResult<TResult>> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellation = default)
+		public static async ValueTask<TResult> GetResultAsync<TResult>(HttpResponseMessage response, CancellationToken cancellation = default)
 		{
 			if(response == null)
 				throw new ArgumentNullException(nameof(response));
@@ -117,21 +113,20 @@ namespace Zongsoft.Externals.Wechat
 			if(response.IsSuccessStatusCode)
 			{
 				if(response.Content.Headers.ContentLength <= 0 || typeof(TResult) == typeof(void) || typeof(TResult) == typeof(object))
-					return OperationResult.Success();
+					return default;
 
-				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
-				return OperationResult.Success(result);
+				return await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
 			}
 			else
 			{
 				if(response.Content.Headers.ContentLength <= 0)
-					return OperationResult.Fail((int)response.StatusCode, response.ReasonPhrase);
+					throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
 
 				var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
 					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
 					new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
 
-				return OperationResult.Fail(failure.Code, failure.Message);
+				throw new OperationException(failure.Code, failure.Message);
 			}
 		}
 		#endregion
@@ -401,24 +396,25 @@ namespace Zongsoft.Externals.Wechat
 			private readonly Account _account;
 			internal TemplateService(Account account) => _account = account;
 
-			public async ValueTask<OperationResult<CardTemplateResponse>> GetAsync(string id, CancellationToken cancellation = default)
+			public async ValueTask<CardTemplateResponse> GetAsync(string id, CancellationToken cancellation = default)
 			{
 				var response = await _http.GetAsync($"marketing/membercard-open/cards/{id}", cancellation);
-				var result = await Paying.HttpUtility.GetResultAsync<CardTemplateResponse>(response, cancellation);
-				return result;
+				return await Paying.HttpUtility.GetResultAsync<CardTemplateResponse>(response, cancellation);
 			}
 
-			public async ValueTask<OperationResult<CardTemplateResponse>> CreateAsync(CardTemplate template, CancellationToken cancellation = default)
+			public async ValueTask<CardTemplateResponse> CreateAsync(CardTemplate template, CancellationToken cancellation = default)
 			{
 				var response = await _http.PostAsJsonAsync(@"https://api.mch.weixin.qq.com/v3/marketing/membercard-open/cards", template, cancellation);
-				var result = await Paying.HttpUtility.GetResultAsync<CardTemplateResponse>(response, cancellation);
-				return result;
+				return await Paying.HttpUtility.GetResultAsync<CardTemplateResponse>(response, cancellation);
 			}
 
-			public async ValueTask<OperationResult> DeleteAsync(string id, CancellationToken cancellation = default)
+			public async ValueTask DeleteAsync(string id, CancellationToken cancellation = default)
 			{
 				var response = await _http.DeleteAsync($"marketing/membercard-open/cards/{id}", cancellation);
-				return await Paying.HttpUtility.GetResultAsync(response, cancellation);
+				if(response.IsSuccessStatusCode)
+					return;
+
+				throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
 			}
 		}
 		#endregion
