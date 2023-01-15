@@ -196,6 +196,51 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 未能找到目标，导致操作异常。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Unfound_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Unfound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发生未知的操作异常。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Unknown_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Unknown.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无法处理当前操作。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Unprocessed_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Unprocessed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 未能满足必要的先决条件，导致操作失败。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Unsatisfied_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Unsatisfied.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 不支持当前操作。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Unsupported_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Unsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 身份验证失败。 的本地化字符串。
         /// </summary>
         internal static string Text_AuthenticationException_Message {

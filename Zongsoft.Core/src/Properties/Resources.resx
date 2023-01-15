@@ -162,6 +162,21 @@
   <data name="Error.UnSupportedNodeType" xml:space="preserve">
     <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
+  <data name="OperationException.Unfound.Message" xml:space="preserve">
+    <value>未能找到目标，导致操作异常。</value>
+  </data>
+  <data name="OperationException.Unknown.Message" xml:space="preserve">
+    <value>发生未知的操作异常。</value>
+  </data>
+  <data name="OperationException.Unprocessed.Message" xml:space="preserve">
+    <value>无法处理当前操作。</value>
+  </data>
+  <data name="OperationException.Unsatisfied.Message" xml:space="preserve">
+    <value>未能满足必要的先决条件，导致操作失败。</value>
+  </data>
+  <data name="OperationException.Unsupported.Message" xml:space="preserve">
+    <value>不支持当前操作。</value>
+  </data>
   <data name="Text.AuthenticationException.Message" xml:space="preserve">
     <value>身份验证失败。</value>
   </data>
@@ -309,5 +324,4 @@
   <data name="Text.WorkerStopCommand.Name" xml:space="preserve">
     <value>停止</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
 </root>
