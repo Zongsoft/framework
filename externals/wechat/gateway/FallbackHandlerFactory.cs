@@ -46,12 +46,6 @@ namespace Zongsoft.Externals.Wechat.Gateway
 {
 	public static class FallbackHandlerFactory
 	{
-		#region 常量定义
-		internal const string ERROR_NOTFOUND = "NotFound";
-		internal const string ERROR_UNSUPPORTED = "Unsupported";
-		internal const string ERROR_CANNOTHANDLE = "CannotHandle";
-		#endregion
-
 		#region 私有变量
 		private static readonly ConcurrentDictionary<Type, Type> _cache = new ConcurrentDictionary<Type, Type>();
 		#endregion
@@ -87,7 +81,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 					else if(converter.CanConvertFrom(typeof(Stream)))
 						request = converter.ConvertFrom(context.Request.Body);
 					else
-						throw new OperationException(ERROR_UNSUPPORTED, $"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
+						throw OperationException.Unsupported($"The '{converter.GetType().FullName}' fallback converter does not support conversion.");
 				}
 				else if(context.Request.ContentLength > 0)
 				{
@@ -99,10 +93,10 @@ namespace Zongsoft.Externals.Wechat.Gateway
 
 				return handler.CanHandle(request) ?
 					await handler.HandleAsync(key, request, cancellation) :
-					throw new OperationException(ERROR_CANNOTHANDLE);
+					throw OperationException.Unprocessed($"The handler named '{name}' could not process the request.");
 			}
 
-			throw new OperationException(ERROR_NOTFOUND);
+			throw OperationException.Unfound($"The handler specified as '{name}' was not found.");
 		}
 		#endregion
 

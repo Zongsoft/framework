@@ -35,6 +35,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
+using Zongsoft.Common;
+using Zongsoft.Services;
+
 namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 {
 	[ApiController]
@@ -50,25 +53,25 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 				var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
 				return result == null ? this.NoContent() : this.Ok(result);
 			}
-			catch(Zongsoft.Common.OperationException operationException)
+			catch(OperationException ex)
 			{
-				return operationException.Reason switch
+				return ex.Reason switch
 				{
-					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
-					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
-					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, operationException),
+					nameof(OperationException.Unfound) => this.NotFound(),
+					nameof(OperationException.Unsupported) => this.BadRequest(),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
 				};
 			}
-			catch(AggregateException ex) when (ex.InnerException is Zongsoft.Common.OperationException operationException)
+			catch(AggregateException ae)
 			{
-				return operationException.Reason switch
+				return (IActionResult)ae.Handle<OperationException>(ex => ex.Reason switch
 				{
-					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
-					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
-					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, operationException),
-				};
+					nameof(OperationException.Unfound) => this.NotFound(),
+					nameof(OperationException.Unsupported) => this.BadRequest(),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
+				});
 			}
 		}
 

@@ -103,10 +103,10 @@ namespace Zongsoft.Externals.Wechat.Paying
 				var authority = GetAuthority(key, format);
 
 				if(authority == null)
-					throw new OperationException("NotFound", $"Didn't find the '{key}' authority or it has no certificate.");
+					throw OperationException.Unfound($"Didn't find the '{key}' authority or it has no certificate.");
 
 				if(string.IsNullOrEmpty(authority.Secret))
-					throw new OperationException("InvalidKey", $"The specified '{key}' authority has no secret key.");
+					throw OperationException.Unsatisfied($"The specified '{key}' authority has no secret key.");
 
 				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, Json.Options, cancellation);
 				var resource = message.Resource;
@@ -126,7 +126,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				return (TRequest)payload;
 			}
 
-			throw new OperationException("NotFound");
+			throw OperationException.Unsupported();
 		}
 		#endregion
 
