@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -34,125 +34,81 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public class Executor : IExecutor, IHandler
+	[System.Reflection.DefaultMember(nameof(Handlers))]
+	public class Executor : Executor<ExecutorContext>
 	{
-		#region 同步字段
-		private readonly object _syncRoot = new object();
-		#endregion
+		#region 重写方法
+		protected override IHandler GetHandler(ExecutorContext context)
+		{
+			const string KYE_NAME = "Name";
+			const string KEY_HANDLER = "Handler";
 
+			if(context.HasParameters && (context.Parameters.TryGetValue(KYE_NAME, out var value) || context.Parameters.TryGetValue(KEY_HANDLER, out value)))
+			{
+				if(value is string name)
+					return this.Handlers.TryGetValue(name, out var handler) ? handler : null;
+				else if(value is IHandler handler)
+					return handler;
+			}
+
+			return null;
+		}
+		#endregion
+	}
+
+	[System.Reflection.DefaultMember(nameof(Handlers))]
+	public class Executor<TContext> : ExecutorBase<TContext> where TContext : IExecutorContext
+	{
 		#region 成员字段
-		private volatile ICollection<IExecutionFilter> _filters;
+		private readonly Func<Executor<TContext>, TContext, IHandler> _locator;
 		#endregion
 
 		#region 构造函数
-		protected Executor() { }
-		protected Executor(IHandler handler)
+		protected Executor()
 		{
-			this.Handler = handler;
+			this.Handler = new ExecutorHandler(this, GetHandler);
+			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
+		}
+
+		public Executor(Func<Executor<TContext>, TContext, IHandler> locator)
+		{
+			_locator = locator;
+			this.Handler = new ExecutorHandler(this, GetHandler);
+			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
-		public IHandler Handler { get; set; }
-
-		public ICollection<IExecutionFilter> Filters
-		{
-			get
-			{
-				if(_filters == null)
-				{
-					lock(_syncRoot)
-					{
-						if(_filters == null)
-							_filters = this.CreateFilters();
-					}
-				}
-
-				return _filters;
-			}
-		}
-		#endregion
-
-		#region 执行方法
-		public object Execute(object context)
-		{
-			var filters = this.Filters;
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					this.OnFiltering(filter, context);
-			}
-
-			var result = this.OnExecuteAsync(context).GetAwaiter().GetResult();
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					this.OnFiltered(filter, context);
-			}
-
-			return result;
-		}
-
-		public async ValueTask<object> ExecuteAsync(object context, CancellationToken cancellation = default)
-		{
-			var filters = _filters;
-
-			if(filters != null)
-			{
-				await Task.Run(() =>
-				{
-					foreach(var filter in filters)
-						this.OnFiltering(filter, context);
-				});
-			}
-
-			var result = await this.OnExecuteAsync(context);
-
-			if(filters != null)
-			{
-				await Task.Run(() =>
-				{
-					foreach(var filter in filters)
-						this.OnFiltered(filter, context);
-				});
-			}
-
-			return result;
-		}
+		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ValueTask<object> OnExecuteAsync(object context, CancellationToken cancellation = default)
-		{
-			var handler = this.Handler;
-
-			if(handler != null && handler.CanHandle(context))
-				return handler.HandleAsync(this, context, cancellation);
-
-			return ValueTask.FromCanceled<object>(cancellation);
-		}
-
-		protected virtual void OnFiltered(IExecutionFilter filter, object context)
-		{
-			filter.OnFiltered(context);
-		}
-
-		protected virtual void OnFiltering(IExecutionFilter filter, object context)
-		{
-			filter.OnFiltering(context);
-		}
-
-		protected virtual ICollection<IExecutionFilter> CreateFilters()
-		{
-			return new List<IExecutionFilter>();
-		}
+		protected virtual IHandler GetHandler(TContext context) => _locator?.Invoke(this, context);
 		#endregion
 
-		#region 显式实现
-		bool IHandler.CanHandle(object context) => this.Handler?.CanHandle(context) ?? false;
-		ValueTask<object> IHandler.HandleAsync(object caller, object context, CancellationToken cancellation) => this.ExecuteAsync(context, cancellation);
+		#region 嵌套子类
+		private class ExecutorHandler : HandlerBase<TContext>
+		{
+			private readonly Executor<TContext> _executor;
+			private readonly Func<TContext, IHandler> _locator;
+
+			public ExecutorHandler(Executor<TContext> executor, Func<TContext, IHandler> locator)
+			{
+				_executor = executor ?? throw new ArgumentNullException(nameof(executor));
+				_locator = locator ?? throw new ArgumentNullException(nameof(locator));
+			}
+
+			public override bool CanHandle(TContext request)
+			{
+				return base.CanHandle(request) && _locator(request) != null;
+			}
+
+			public override async ValueTask HandleAsync(object caller, TContext request, CancellationToken cancellation = default)
+			{
+				var handler = _locator(request) ?? throw Common.OperationException.Unfound($"Unable to locate the handler based on current request.");
+				await _executor.ExecuteAsync(handler, request, cancellation);
+			}
+		}
 		#endregion
 	}
 }

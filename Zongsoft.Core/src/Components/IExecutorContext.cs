@@ -32,6 +32,9 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
+	/// <summary>
+	/// 表示执行器上下文的接口。
+	/// </summary>
 	public interface IExecutorContext
 	{
 		/// <summary>获取处理本次执行请求的执行器。</summary>
@@ -46,17 +49,19 @@ namespace Zongsoft.Components
 		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
 		IDictionary<string, object> Parameters { get; }
 
-		/// <summary>
-		/// 设置一个异常。
-		/// </summary>
-		/// <param name="exception">发生的异常对象。</param>
-		public void Error(Exception exception);
+		/// <summary>获取执行输入值。</summary>
+		object Value { get; }
 
-		/// <summary>
-		/// 获取一个值，指示本次执行中是否发生了异常。
-		/// </summary>
+		/// <summary>获取或设置执行结果。</summary>
+		object Result { get; set; }
+
+		/// <summary>设置一个异常。</summary>
+		/// <param name="exception">发生的异常对象。</param>
+		void Error(Exception exception);
+
+		/// <summary>获取一个值，指示本次执行中是否发生了异常。</summary>
 		/// <param name="exception">输出参数，不为空则表示发生的异常。</param>
 		/// <returns>返回真(True)表示执行过程有错误，否则返回假(False)。</returns>
-		public bool HasError(out Exception exception);
+		bool HasError(out Exception exception);
 	}
 }

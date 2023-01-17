@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -35,20 +35,16 @@ namespace Zongsoft.Components
 {
 	public interface IHandler<in TRequest> : IHandler
 	{
-		/// <summary>
-		/// 确认当前处理程序能否处理本次执行请求。
-		/// </summary>
+		/// <summary>确认当前处理程序能否处理本次执行请求。</summary>
 		/// <param name="request">当前处理的请求对象。</param>
 		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
 		bool CanHandle(TRequest request);
 
-		/// <summary>
-		/// 异步处理执行请求。
-		/// </summary>
+		/// <summary>异步处理执行请求。</summary>
 		/// <param name="caller">处理程序的调用者。</param>
 		/// <param name="request">当前处理的请求对象。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask<object> HandleAsync(object caller, TRequest request, CancellationToken cancellation);
+		ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
 	}
 }

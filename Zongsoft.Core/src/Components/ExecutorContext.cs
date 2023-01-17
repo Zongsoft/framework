@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
@@ -40,20 +41,21 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 构造函数
-		public ExecutorContext(IExecutor executor, IDictionary<string, object> parameters = null)
+		public ExecutorContext(IExecutor executor, object value, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Executor = executor ?? throw new ArgumentNullException(nameof(executor));
+			this.Value = value;
 
-			if(parameters != null && parameters.Count > 0)
-				_parameters = new Dictionary<string, object>(parameters);
+			if(parameters != null && parameters.Any())
+				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
 		public IExecutor Executor { get; }
-
+		public object Value { get; }
+		public object Result { get; set; }
 		public bool HasParameters { get => _parameters != null; }
-
 		public IDictionary<string, object> Parameters
 		{
 			get

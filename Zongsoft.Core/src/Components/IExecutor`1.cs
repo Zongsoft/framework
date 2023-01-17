@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,14 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Components
 {
 	public interface IExecutor<in TContext> : IExecutor
 	{
-		void Execute(TContext context);
-		ValueTask ExecuteAsync(TContext context);
+		object Execute(TContext context);
+		ValueTask<object> ExecuteAsync(TContext context, CancellationToken cancellation = default);
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -36,7 +36,6 @@ namespace Zongsoft.Components
 {
 	public interface IExecutor
 	{
-		IHandler Handler { get; set; }
 		ICollection<IExecutionFilter> Filters { get; }
 
 		object Execute(object context);

@@ -41,17 +41,26 @@ namespace Zongsoft.Components
 
 		#region 公共方法
 		public virtual bool CanHandle(TRequest request) => request != null;
-		public virtual object Handle(object caller, TRequest request) => this.HandleAsync(caller, request, CancellationToken.None).GetAwaiter().GetResult();
-		public abstract ValueTask<object> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		public virtual void Handle(object caller, TRequest request)
+		{
+			var task = this.HandleAsync(caller, request, CancellationToken.None);
+
+			if(task.IsCompleted)
+				return;
+
+			task.AsTask().Wait();
+		}
+
+		public abstract ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object request) => request is TRequest model ? this.CanHandle(model) : false;
-		ValueTask<object> IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(request), cancellation);
+		bool IHandler.CanHandle(object request) => this.CanHandle(this.Convert(request));
+		ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(request), cancellation);
 		#endregion
 
 		#region 参数转换
-		protected TRequest Convert(object request) => request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
+		protected virtual TRequest Convert(object request) => request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
 		#endregion
 	}
 }
