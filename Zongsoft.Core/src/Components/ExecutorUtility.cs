@@ -53,27 +53,31 @@ namespace Zongsoft.Components
 			//获取指定处理器的请求参数的类型
 			var requestType = _cache.GetOrAdd(handler.GetType(), GetHandlerRequestType);
 
-			if(requestType == null || requestType == typeof(object) || requestType.IsAssignableFrom(context.Value.GetType()))
+			//如果处理器的请求参数类型是object或执行上下文的传入参数类型
+			if(requestType == null || requestType == typeof(object) || (context.Value != null && requestType.IsAssignableFrom(context.Value.GetType())))
 			{
-				await handler.HandleAsync(executor, context.Value, cancellation);
+				await handler.HandleAsync(executor, context.Value, context.HasParameters ? context.Parameters : null, cancellation);
 				return null;
 			}
 
+			//如果处理器的请求参数类型是执行上下文类型
 			if(requestType.IsAssignableFrom(context.GetType()))
 			{
-				await handler.HandleAsync(executor, context, cancellation);
+				await handler.HandleAsync(executor, context, context.HasParameters ? context.Parameters : null, cancellation);
 				return context.Result;
 			}
 
+			//如果执行上下文对象可被转换为处理器的请求参数类型
 			if(Common.Convert.TryConvertValue(context, requestType, out var request))
 			{
-				await handler.HandleAsync(executor, request, cancellation);
+				await handler.HandleAsync(executor, request, context.HasParameters ? context.Parameters : null, cancellation);
 				return context.Result;
 			}
 
+			//如果执行上下文传入参数值可被转换为处理器的请求参数类型
 			if(Common.Convert.TryConvertValue(context.Value, requestType, out request))
 			{
-				await handler.HandleAsync(executor, request, cancellation);
+				await handler.HandleAsync(executor, request, context.HasParameters ? context.Parameters : null, cancellation);
 				return null;
 			}
 

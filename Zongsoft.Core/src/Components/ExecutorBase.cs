@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -124,7 +125,7 @@ namespace Zongsoft.Components
 			var handler = this.Handler;
 
 			if(handler != null && this.CanExecute(context))
-				return handler.HandleAsync(this, context, cancellation);
+				return handler.HandleAsync(this, context, context.HasParameters ? context.Parameters : null, cancellation);
 
 			return ValueTask.FromCanceled(cancellation);
 		}
@@ -133,17 +134,38 @@ namespace Zongsoft.Components
 		protected virtual void OnFiltering(IExecutionFilter filter, object context) => filter?.OnFiltering(context);
 		protected virtual ICollection<IExecutionFilter> CreateFilters() => new List<IExecutionFilter>();
 
-		protected virtual TContext Convert(object request) => request is TContext context ? context : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TContext).FullName}' type.", nameof(request));
+		protected virtual TContext Convert(object request, IEnumerable<KeyValuePair<string, object>> parameters)
+		{
+			if(request is TContext context)
+				return FillParameters(context, parameters);
+
+			throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TContext).FullName}' type.", nameof(request));
+		}
 		#endregion
 
 		#region 显式实现
-		object IExecutor.Execute(object context) => this.Execute(Convert(context));
-		ValueTask<object> IExecutor.ExecuteAsync(object context, CancellationToken cancellation) => this.ExecuteAsync(Convert(context), cancellation);
+		object IExecutor.Execute(object context) => this.Execute(Convert(context, null));
+		ValueTask<object> IExecutor.ExecuteAsync(object context, CancellationToken cancellation) => this.ExecuteAsync(Convert(context, null), cancellation);
 
-		bool IHandler.CanHandle(object request) => this.CanExecute(Convert(request));
-		bool IHandler<TContext>.CanHandle(TContext request) => this.CanExecute(request);
-		async ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => await this.ExecuteAsync(Convert(request), cancellation);
+		bool IHandler.CanHandle(object request, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanExecute(Convert(request, parameters));
+		bool IHandler<TContext>.CanHandle(TContext request, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanExecute(FillParameters(request, parameters));
+		async ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => await this.ExecuteAsync(Convert(request, null), cancellation);
+		async ValueTask IHandler.HandleAsync(object caller, object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => await this.ExecuteAsync(Convert(request, parameters), cancellation);
 		async ValueTask IHandler<TContext>.HandleAsync(object caller, TContext request, CancellationToken cancellation) => await this.ExecuteAsync(request, cancellation);
+		async ValueTask IHandler<TContext>.HandleAsync(object caller, TContext request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => await this.ExecuteAsync(request, cancellation);
+		#endregion
+
+		#region 私有方法
+		private static TContext FillParameters(TContext context, IEnumerable<KeyValuePair<string, object>> parameters)
+		{
+			if(context != null && parameters == null && parameters.Any())
+			{
+				foreach(var parameter in parameters)
+					context.Parameters[parameter.Key] = parameter.Value;
+			}
+
+			return context;
+		}
 		#endregion
 	}
 }

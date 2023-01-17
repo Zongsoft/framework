@@ -28,11 +28,18 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
+	/// <summary>
+	/// 表示处理程序的基类。
+	/// </summary>
+	/// <typeparam name="TRequest">处理程序的请求参数类型。</typeparam>
+	/// <typeparam name="TResult">处理程序的结果类型。</typeparam>
 	public abstract class HandlerBase<TRequest, TResult> : IHandler<TRequest, TResult>, IHandler
 	{
 		#region 构造函数
@@ -40,10 +47,10 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanHandle(TRequest request) => request != null;
-		public virtual TResult Handle(object caller, TRequest request)
+		public virtual bool CanHandle(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) => request != null;
+		public virtual TResult Handle(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			var task = this.HandleAsync(caller, request);
+			var task = this.HandleAsync(caller, request, null, CancellationToken.None);
 
 			if(task.IsCompleted)
 				return task.Result;
@@ -51,12 +58,24 @@ namespace Zongsoft.Components
 			return task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public abstract ValueTask<TResult> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		public ValueTask<TResult> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(caller, request, null, cancellation);
+		public ValueTask<TResult> HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		{
+			if(parameters != null && parameters.Any())
+				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
+			else
+				return this.OnHandleAsync(caller, request, null, cancellation);
+		}
+		#endregion
+
+		#region 抽象方法
+		protected abstract ValueTask<TResult> OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object request) => this.CanHandle(this.Convert(request));
-		async ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(request), cancellation);
+		bool IHandler.CanHandle(object request, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanHandle(this.Convert(request), parameters);
+		async ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(request), null, cancellation);
+		async ValueTask IHandler.HandleAsync(object caller, object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(request), parameters, cancellation);
 		#endregion
 
 		#region 参数转换

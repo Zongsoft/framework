@@ -98,12 +98,12 @@ namespace Zongsoft.Components
 				_locator = locator ?? throw new ArgumentNullException(nameof(locator));
 			}
 
-			public override bool CanHandle(TContext request)
+			public override bool CanHandle(TContext request, IEnumerable<KeyValuePair<string, object>> parameters)
 			{
 				return base.CanHandle(request) && _locator(request) != null;
 			}
 
-			public override async ValueTask HandleAsync(object caller, TContext request, CancellationToken cancellation = default)
+			protected override async ValueTask OnHandleAsync(object caller, TContext request, IDictionary<string, object> parameters, CancellationToken cancellation)
 			{
 				var handler = _locator(request) ?? throw Common.OperationException.Unfound($"Unable to locate the handler based on current request.");
 				await _executor.ExecuteAsync(handler, request, cancellation);
