@@ -61,9 +61,9 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 				{
 					nameof(OperationException.Unfound) => this.NotFound(result),
 					nameof(OperationException.Unsupported) => this.BadRequest(result),
-					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, result),
 					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(result),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, result),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, result),
+					_ => this.StatusCode(StatusCodes.Status500InternalServerError, result),
 				};
 			}
 			catch(AggregateException ae)
@@ -72,9 +72,9 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 				{
 					nameof(OperationException.Unfound) => this.NotFound(new { ex.Reason, ex.Message }),
 					nameof(OperationException.Unsupported) => this.BadRequest(new { ex.Reason, ex.Message }),
-					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, new { ex.Reason, ex.Message }),
 					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(new { ex.Reason, ex.Message }),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, new { ex.Reason, ex.Message }),
+					_ => this.StatusCode(StatusCodes.Status500InternalServerError, new { ex.Reason, ex.Message }),
 				});
 			}
 		}
