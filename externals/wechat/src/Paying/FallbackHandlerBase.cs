@@ -29,10 +29,10 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
@@ -58,21 +58,34 @@ namespace Zongsoft.Externals.Wechat.Paying
 		protected IServiceProvider ServiceProvider { get; }
 		#endregion
 
-		#region 重写方法
-		public override async ValueTask<object> HandleAsync(object caller, Stream input, CancellationToken cancellation = default)
+		#region 公共方法
+		public ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) =>
+			this.OnHandleAsync(caller, request, null, cancellation);
+
+		public ValueTask HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			var request = await this.GetRequestAsync(caller, input, cancellation);
-			return await this.OnHandleAsync(caller, request, cancellation);
+			if(parameters != null && parameters.Any())
+				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters), cancellation);
+			else
+				return this.OnHandleAsync(caller, request, null, cancellation);
+		}
+		#endregion
+
+		#region 重写方法
+		protected override async ValueTask OnHandleAsync(object caller, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation)
+		{
+			var request = await this.GetRequestAsync(stream, parameters, cancellation);
+			await this.OnHandleAsync(caller, request, parameters, cancellation);
 		}
 		#endregion
 
 		#region 抽象方法
-		protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask<object> OnHandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		internal protected abstract Type GetRequestType(string format);
+		protected abstract ValueTask OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IAuthority GetAuthority(string code, string type)
+		internal protected virtual IAuthority GetAuthority(string code, string type)
 		{
 			var authority = AuthorityUtility.GetAuthority(code);
 
@@ -90,17 +103,93 @@ namespace Zongsoft.Externals.Wechat.Paying
 			return null;
 		}
 		#endregion
+	}
 
-		#region 内部方法
-		internal async ValueTask<TRequest> GetRequestAsync(object caller, Stream input, CancellationToken cancellation = default)
+	public abstract class FallbackHandlerBase<TRequest, TResult> : HandlerBase<Stream, TResult>
+	{
+		#region 私有变量
+		private IEnumerable<IServiceProvider<IAuthority>> _providers;
+		#endregion
+
+		#region 构造函数
+		protected FallbackHandlerBase(IServiceProvider serviceProvider)
 		{
-			if(caller == null || input == null)
+			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		}
+		#endregion
+
+		#region 保护属性
+		protected IServiceProvider ServiceProvider { get; }
+		#endregion
+
+		#region 公共方法
+		public ValueTask<TResult> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) =>
+			this.OnHandleAsync(caller, request, null, cancellation);
+
+		public ValueTask<TResult> HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		{
+			if(parameters != null && parameters.Any())
+				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters), cancellation);
+			else
+				return this.OnHandleAsync(caller, request, null, cancellation);
+		}
+		#endregion
+
+		#region 重写方法
+		protected override async ValueTask<TResult> OnHandleAsync(object caller, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation)
+		{
+			var request = await this.GetRequestAsync(stream, parameters, cancellation);
+			return await this.OnHandleAsync(caller, request, parameters, cancellation);
+		}
+		#endregion
+
+		#region 抽象方法
+		internal protected abstract Type GetRequestType(string format);
+		protected abstract ValueTask<TResult> OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
+		#endregion
+
+		#region 虚拟方法
+		internal protected virtual IAuthority GetAuthority(string code, string type)
+		{
+			var authority = AuthorityUtility.GetAuthority(code);
+
+			if(authority != null)
+				return authority;
+
+			foreach(var provider in _providers ??= this.ServiceProvider.ResolveAll<IServiceProvider<IAuthority>>())
+			{
+				authority = provider.GetService(code);
+
+				if(authority != null)
+					return authority;
+			}
+
+			return null;
+		}
+		#endregion
+	}
+
+	internal static class FallbackHandlerUtility
+	{
+		public static ValueTask<TRequest> GetRequestAsync<TRequest>(this FallbackHandlerBase<TRequest> handler, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		{
+			return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
+		}
+
+		public static ValueTask<TRequest> GetRequestAsync<TRequest, TResult>(this FallbackHandlerBase<TRequest, TResult> handler, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		{
+			return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
+		}
+
+		private static async ValueTask<TRequest> GetRequestAsync<TRequest>(Stream stream, IDictionary<string, object> parameters, Func<string, string, IAuthority> authorityThunk, Func<string, Type> typeThunk, CancellationToken cancellation = default)
+		{
+			if(stream == null)
 				return default;
 
-			if(caller is string text)
+			if(parameters != null && parameters.TryGetValue("key", out var value) && value is string text)
 			{
 				var (key, format) = Resolve(text);
-				var authority = GetAuthority(key, format);
+				var authority = authorityThunk(key, format);
 
 				if(authority == null)
 					throw OperationException.Unfound($"Didn't find the '{key}' authority or it has no certificate.");
@@ -108,7 +197,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				if(string.IsNullOrEmpty(authority.Secret))
 					throw OperationException.Unsatisfied($"The specified '{key}' authority has no secret key.");
 
-				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(input, Json.Options, cancellation);
+				var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(stream, Json.Options, cancellation);
 				var resource = message.Resource;
 				byte[] data;
 
@@ -122,15 +211,13 @@ namespace Zongsoft.Externals.Wechat.Paying
 					throw;
 				}
 
-				var payload = JsonSerializer.Deserialize(data, GetRequestType(format), Json.Options);
+				var payload = JsonSerializer.Deserialize(data, typeThunk(format), Json.Options);
 				return (TRequest)payload;
 			}
 
-			throw OperationException.Unsupported();
+			throw OperationException.Unfound();
 		}
-		#endregion
 
-		#region 私有方法
 		private static (string authority, string format) Resolve(ReadOnlySpan<char> key)
 		{
 			if(key.IsEmpty)
@@ -150,6 +237,5 @@ namespace Zongsoft.Externals.Wechat.Paying
 						(key.Slice(0, index).ToString(), key[(index + 1)..].ToString());
 			}
 		}
-		#endregion
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Components;
 using Zongsoft.Diagnostics;
@@ -11,24 +12,20 @@ namespace Zongsoft.Externals.Hangfire.Samples
 	{
 		private int _count = 0;
 
-		public override object Handle(object caller, object parameter)
+		protected override ValueTask OnHandleAsync(object caller, object request, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
-			if(parameter == null)
-				parameter = $"Count:{Interlocked.Increment(ref _count)}";
+			if(request == null)
+				request = $"Count:{Interlocked.Increment(ref _count)}";
 
 			Console.ForegroundColor = ConsoleColor.DarkYellow;
-			Console.Write(parameter);
+			Console.Write(request);
 			Console.ForegroundColor = ConsoleColor.DarkMagenta;
 			Console.WriteLine(" " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			Console.ResetColor();
 
-			Logger.Debug("OnHandle the scheduled job.", parameter);
-			return null;
-		}
+			Logger.Debug("OnHandle the scheduled job.", request);
 
-		public override ValueTask<object> HandleAsync(object caller, object parameter, CancellationToken cancellation = default)
-		{
-			return ValueTask.FromResult(this.Handle(caller, parameter));
+			return ValueTask.CompletedTask;
 		}
 	}
 }

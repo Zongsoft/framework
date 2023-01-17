@@ -18,6 +18,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Externals/Wechat/Fallback">
-		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Gateway.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Wechat.Gateway}" />
+		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Gateway.FallbackExecutor.Instance, Zongsoft.Externals.Wechat.Gateway}" />
 	</extension>
 </plugin>

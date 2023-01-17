@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -37,10 +38,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal ValueTask<object> HandleAsync(object caller, PaymentManager.PaymentService.PaymentOrder order, CancellationToken cancellation = default) =>
-			this.OnHandleAsync(caller, order, cancellation);
+		internal protected override Type GetRequestType(string format) =>
+			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
+			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
+	}
 
-		protected override Type GetRequestType(string format) =>
+	public abstract class PaymentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder, TResult>
+	{
+		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+		internal protected override Type GetRequestType(string format) =>
 			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
 			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
 			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);

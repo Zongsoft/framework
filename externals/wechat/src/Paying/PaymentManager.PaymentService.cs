@@ -632,7 +632,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					{
 						//从后台线程中进行支付回调处理
 						ThreadPool.QueueUserWorkItem(async state =>
-							await state.Handler.HandleAsync(state.Order.Merchant.Identifier, state.Order, CancellationToken.None),
+							await state.Handler.HandleAsync(this, state.Order, new KeyValuePair<string, object>[] { new(nameof(state.Order.Merchant), state.Order.Merchant) }),
 							(ticketRequest.Handler, Order:order),
 							false);
 					}

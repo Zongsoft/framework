@@ -50,7 +50,8 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 			try
 			{
 				//Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
-				var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
+
+				var result = await FallbackExecutor.Instance.ExecuteAsync(this.Request, cancellation);
 				return result == null ? this.NoContent() : this.Ok(result);
 			}
 			catch(OperationException ex)

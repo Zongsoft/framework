@@ -35,7 +35,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 	{
 		protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		protected override Type GetRequestType(string format) =>
+		internal protected override Type GetRequestType(string format) =>
+			string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+			typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
+			typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
+	}
+
+	public abstract class RefundmentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder, TResult>
+	{
+		protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+		internal protected override Type GetRequestType(string format) =>
 			string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
 			typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
 			typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
