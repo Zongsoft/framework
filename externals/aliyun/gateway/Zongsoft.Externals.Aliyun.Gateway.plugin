@@ -18,6 +18,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Externals/Aliyun/Fallback">
-		<object name="Handlers" value="{static:Zongsoft.Externals.Aliyun.Gateway.FallbackHandlerFactory.Handlers, Zongsoft.Externals.Aliyun.Gateway}" />
+		<object name="Handlers" value="{static:Zongsoft.Externals.Aliyun.Gateway.FallbackExecutor.Instance, Zongsoft.Externals.Aliyun.Gateway}" />
 	</extension>
 </plugin>
