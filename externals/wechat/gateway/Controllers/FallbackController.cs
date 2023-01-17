@@ -55,22 +55,26 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 			}
 			catch(OperationException ex)
 			{
+				var result = new { ex.Reason, ex.Message };
+
 				return ex.Reason switch
 				{
-					nameof(OperationException.Unfound) => this.NotFound(),
-					nameof(OperationException.Unsupported) => this.BadRequest(),
-					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
+					nameof(OperationException.Unfound) => this.NotFound(result),
+					nameof(OperationException.Unsupported) => this.BadRequest(result),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, result),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(result),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, result),
 				};
 			}
 			catch(AggregateException ae)
 			{
 				return (IActionResult)ae.Handle<OperationException>(ex => ex.Reason switch
 				{
-					nameof(OperationException.Unfound) => this.NotFound(),
-					nameof(OperationException.Unsupported) => this.BadRequest(),
-					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
+					nameof(OperationException.Unfound) => this.NotFound(new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unsupported) => this.BadRequest(new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(new { ex.Reason, ex.Message }),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, new { ex.Reason, ex.Message }),
 				});
 			}
 		}

@@ -35,6 +35,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
+using Zongsoft.Common;
+using Zongsoft.Services;
+
 namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 {
 	[ApiController]
@@ -50,25 +53,29 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 				var result = await FallbackHandlerFactory.HandleAsync(this.HttpContext, name, key, cancellation);
 				return result == null ? this.NoContent() : this.Ok(result);
 			}
-			catch(Zongsoft.Common.OperationException ex)
+			catch(OperationException ex)
 			{
+				var result = new { ex.Reason, ex.Message };
+
 				return ex.Reason switch
 				{
-					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
-					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
-					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, ex),
+					nameof(OperationException.Unfound) => this.NotFound(result),
+					nameof(OperationException.Unsupported) => this.BadRequest(result),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, result),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(result),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, result),
 				};
 			}
-			catch(AggregateException ex) when (ex.InnerException is Zongsoft.Common.OperationException operationException)
+			catch(AggregateException ae)
 			{
-				return operationException.Reason switch
+				return (IActionResult)ae.Handle<OperationException>(ex => ex.Reason switch
 				{
-					FallbackHandlerFactory.ERROR_NOTFOUND => this.NotFound(),
-					FallbackHandlerFactory.ERROR_UNSUPPORTED => this.BadRequest(),
-					FallbackHandlerFactory.ERROR_CANNOTHANDLE => this.UnprocessableEntity(),
-					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, operationException),
-				};
+					nameof(OperationException.Unfound) => this.NotFound(new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unsupported) => this.BadRequest(new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unsatisfied) => this.StatusCode(StatusCodes.Status412PreconditionFailed, new { ex.Reason, ex.Message }),
+					nameof(OperationException.Unprocessed) => this.UnprocessableEntity(new { ex.Reason, ex.Message }),
+					_ => this.StatusCode((int)System.Net.HttpStatusCode.InternalServerError, new { ex.Reason, ex.Message }),
+				});
 			}
 		}
 
