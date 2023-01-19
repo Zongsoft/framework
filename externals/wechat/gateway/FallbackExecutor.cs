@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 
-using Zongsoft.Common;
+using Zongsoft.Web.Http;
 using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Gateway
@@ -44,17 +44,13 @@ namespace Zongsoft.Externals.Wechat.Gateway
 		public static readonly FallbackExecutor Instance = new FallbackExecutor();
 		#endregion
 
-		#region 私有构造
-		public FallbackExecutor() { }
-		#endregion
-
 		#region 公共方法
 		public ValueTask<object> ExecuteAsync(HttpRequest request, CancellationToken cancellation = default)
 		{
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			return this.ExecuteAsync(new ExecutorContext(this, request.Body, request.RouteValues), cancellation);
+			return this.ExecuteAsync(new ExecutorContext(this, request.Body, request.GetParameters()), cancellation);
 		}
 		#endregion
 	}

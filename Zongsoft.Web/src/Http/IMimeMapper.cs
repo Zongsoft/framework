@@ -37,17 +37,10 @@ namespace Zongsoft.Web.Http
 	/// </summary>
 	public interface IMimeMapper : Microsoft.AspNetCore.StaticFiles.IContentTypeProvider
 	{
-		/// <summary>
-		/// 获取MIME类型的映射表。
-		/// </summary>
-		IDictionary<string, string> Mappings
-		{
-			get;
-		}
+		/// <summary>获取MIME类型的映射表。</summary>
+		IDictionary<string, string> Mappings { get; }
 
-		/// <summary>
-		/// 获取指定名称映射的MIME类型。
-		/// </summary>
+		/// <summary>获取指定名称映射的MIME类型。</summary>
 		/// <param name="path">指定的文件路径或扩展名。</param>
 		/// <returns>如果映射成功则返回指定名称对应的MIME类型，否则返回空(null)。</returns>
 		string GetMimeType(string path);
