@@ -32,20 +32,21 @@ using System.Threading;
 
 namespace Zongsoft.Common
 {
-	public struct BitVector32 : IEquatable<BitVector32>
+	public struct BitVector64 : IEquatable<BitVector64>
 	{
 		#region 成员字段
-		private int _data;
+		private long _data;
 		#endregion
 
 		#region 构造函数
-		public BitVector32(int data) => _data = data;
+		public BitVector64(int data) => _data = data;
+		public BitVector64(long data) => _data = data;
 		#endregion
 
 		#region 公共属性
-		public int Data => _data;
+		public long Data => _data;
 
-		public bool this[int bit]
+		public bool this[long bit]
 		{
 			get
 			{
@@ -56,8 +57,8 @@ namespace Zongsoft.Common
 			{
 				while(true)
 				{
-					var oldData = _data;
-					int newData;
+					long oldData = _data;
+					long newData;
 
 					if(value)
 						newData = oldData | bit;
@@ -74,18 +75,20 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 类型转换
-		public static implicit operator int(BitVector32 vector) => vector._data;
-		public static implicit operator BitVector32(int data) => new BitVector32(data);
+		public static implicit operator long(BitVector64 vector) => vector._data;
+		public static implicit operator BitVector64(long data) => new BitVector64(data);
+		public static implicit operator BitVector64(BitVector32 vector) => new BitVector64(vector.Data);
 		#endregion
 
 		#region 符号重写
-		public static bool operator ==(BitVector32 left, BitVector32 right) => left._data == right._data;
-		public static bool operator !=(BitVector32 left, BitVector32 right) => left._data != right._data;
+		public static bool operator ==(BitVector64 left, BitVector64 right) => left._data == right._data;
+		public static bool operator !=(BitVector64 left, BitVector64 right) => left._data != right._data;
 		#endregion
 
 		#region 重写方法
-		public bool Equals(BitVector32 other) => _data == other._data;
-		public override bool Equals(object obj) => obj is BitVector32 other && this.Equals(other);
+		public bool Equals(BitVector32 other) => _data == other.Data;
+		public bool Equals(BitVector64 other) => _data == other._data;
+		public override bool Equals(object obj) => obj is BitVector64 other && this.Equals(other);
 		public override int GetHashCode() => _data.GetHashCode();
 		public override string ToString() => _data.ToString();
 		#endregion
