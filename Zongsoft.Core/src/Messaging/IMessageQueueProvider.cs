@@ -37,7 +37,7 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface IMessageQueueProvider : IEnumerable<IMessageQueue>
 	{
-		/// <summary>消息队列提供程序名称，譬如：<c>Kafka</c>、<c>RabbitMQ</c>、<c>RocketMQ</c>、<c>Mqtt</c>、<c>Aliyun.MNS</c>等。</summary>
+		/// <summary>消息队列提供程序名称，譬如：<c>Kafka</c>、<c>RabbitMQ</c>、<c>Redis</c>、<c>Mqtt</c>、<c>Aliyun.MNS</c>等。</summary>
 		string Name { get; }
 
 		/// <summary>判断指定名称的消息队列是否存在。</summary>
