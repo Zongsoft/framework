@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -80,6 +81,16 @@ namespace Zongsoft.Configuration
 		public IConnectionSettingValues Values { get => _values; }
 		#endregion
 
+		#region 公共方法
+		public bool IsDriver(string driver)
+		{
+			if(string.IsNullOrWhiteSpace(driver))
+				return string.IsNullOrWhiteSpace(this.Driver);
+
+			return string.IsNullOrWhiteSpace(this.Driver) || string.Equals(this.Driver, driver, StringComparison.OrdinalIgnoreCase);
+		}
+		#endregion
+
 		#region 参数解析
 		protected override void OnValueChanged(string value)
 		{
@@ -116,12 +127,9 @@ namespace Zongsoft.Configuration
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver.ToLowerInvariant());
 		public override string ToString()
 		{
-			var driver = this.Driver;
-
-			if(!string.IsNullOrEmpty(driver))
-				return $"[{driver}]" + base.ToString();
-
-			return base.ToString();
+			return string.IsNullOrEmpty(this.Driver) ?
+				$"[{this.Name}]{this.Value}" :
+				$"[{this.Name}@{this.Driver}]{this.Value}";
 		}
 		#endregion
 
@@ -237,6 +245,14 @@ namespace Zongsoft.Configuration
 			public bool Remove(string key, out string value) => _dictionary.Remove(GetKey(key), out value);
 			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
 			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				var dictionary = _dictionary;
+				return dictionary == null || dictionary.Count == 0 ? string.Empty : string.Join(';', dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
+			}
 			#endregion
 
 			#region 私有方法

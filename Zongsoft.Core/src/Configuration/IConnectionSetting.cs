@@ -32,12 +32,25 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
+	/// <summary>
+	/// 表示连接设置的接口。
+	/// </summary>
 	public interface IConnectionSetting : ISetting, IEquatable<IConnectionSetting>
 	{
+		/// <summary>获取连接的驱动标识。</summary>
 		string Driver { get; set; }
+		/// <summary>获取连接设置值。</summary>
 		IConnectionSettingValues Values { get; }
+
+		/// <summary>判断当前连接是否为指定的驱动。</summary>
+		/// <param name="driver">指定的驱动标识。</param>
+		/// <returns>如果当前连接的驱动是<paramref name="driver"/>参数指定的驱动则返回真(True)，否则返回假(False)。</returns>
+		bool IsDriver(string driver);
 	}
 
+	/// <summary>
+	/// 表示连接设置值的接口。
+	/// </summary>
 	public interface IConnectionSettingValues : IEnumerable<KeyValuePair<string, string>>
 	{
 		#region 通用属性
@@ -69,6 +82,9 @@ namespace Zongsoft.Configuration
 		#endregion
 	}
 
+	/// <summary>
+	/// 表示连接设置值映射器的接口。
+	/// </summary>
 	public interface IConnectionSettingValuesMapper
 	{
 		/// <summary>获取当前连接的驱动标识。</summary>
