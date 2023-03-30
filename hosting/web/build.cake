@@ -36,7 +36,7 @@ Task("deploy")
 	.Description("部署插件")
 	.Does(() =>
 {
-	DotNetTool(solutionFile, "deploy", $" -edition:{edition} -target:net5.0");
+	DotNetTool(solutionFile, "deploy", $" -edition:{edition} -target:net7.0");
 });
 
 Task("default")

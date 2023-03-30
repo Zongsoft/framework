@@ -1,1 +1,1 @@
-dotnet deploy -site:daemon -edition:Debug -target:net5.0
+dotnet deploy -site:daemon -edition:Debug -target:net7.0
