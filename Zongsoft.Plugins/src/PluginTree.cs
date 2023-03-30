@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Collections.Concurrent;
@@ -457,7 +458,10 @@ namespace Zongsoft.Plugins
 			{
 				var filePath = resolver.ResolveAssemblyToPath(assemblyName);
 
-				if(!string.IsNullOrEmpty(filePath))
+				if(string.IsNullOrEmpty(filePath))
+					filePath = Path.Combine(Path.GetDirectoryName(plugin.FilePath), assemblyName.Name) + ".dll";
+
+				if(File.Exists(filePath))
 					return AssemblyLoadContext.Default.LoadFromAssemblyPath(filePath);
 			}
 
