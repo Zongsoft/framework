@@ -234,6 +234,9 @@
   <data name="Text.Message.CommandNotFound" xml:space="preserve">
     <value>没有找到指定‘{0}’的命令。</value>
   </data>
+  <data name="Text.NoQueue" xml:space="preserve">
+    <value>没有队列。</value>
+  </data>
   <data name="Text.OpenFile.Prompt" xml:space="preserve">
     <value>请输入要打开的文件路径：</value>
   </data>

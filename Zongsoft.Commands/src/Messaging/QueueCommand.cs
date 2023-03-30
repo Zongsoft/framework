@@ -84,49 +84,16 @@ namespace Zongsoft.Messaging.Commands
 					return this.Queue;
 
 				//根据名称获取对应的消息队列
-				var queue = MessageQueueConverter.Resolve(name);
-
-				if(queue != null)
-				{
-					this.Queue = queue;
-
-					//打印队列信息
-					context.Output.WriteLine(CommandOutletColor.Green, queue.Name);
-					PrintConnectionSetting(context.Output, queue.ConnectionSetting?.Values);
-
-					return queue;
-				}
+				this.Queue = MessageQueueConverter.Resolve(name) ??
+					throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
 			}
 
 			if(this.Queue == null)
-				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Queue"));
-
-			//打印队列信息
-			context.Output.WriteLine(CommandOutletColor.Green, this.Queue.Name);
-			PrintConnectionSetting(context.Output, this.Queue.ConnectionSetting?.Values);
+				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoQueue);
+			else
+				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ConnectionSetting);
 
 			return this.Queue;
-		}
-
-		private static void PrintConnectionSetting(ICommandOutlet output, IConnectionSettingValues values)
-		{
-			if(values == null)
-				return;
-
-			var content = CommandOutletContent
-				.Create(CommandOutletColor.DarkYellow, nameof(values.Server))
-				.Append(CommandOutletColor.DarkGray, "=")
-				.Append(CommandOutletColor.DarkGreen, values.Server)
-				.Append(CommandOutletColor.DarkMagenta, ",")
-				.Append(CommandOutletColor.DarkYellow, nameof(values.Instance))
-				.Append(CommandOutletColor.DarkGray, "=")
-				.Append(CommandOutletColor.DarkGreen, values.Instance)
-				.Append(CommandOutletColor.DarkMagenta, ",")
-				.Append(CommandOutletColor.DarkYellow, nameof(values.Client))
-				.Append(CommandOutletColor.DarkGray, "=")
-				.Append(CommandOutletColor.DarkGreen, values.Client);
-
-			output.WriteLine(content);
 		}
 		#endregion
 	}

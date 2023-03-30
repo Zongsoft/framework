@@ -412,6 +412,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 没有队列。 的本地化字符串。
+        /// </summary>
+        internal static string Text_NoQueue {
+            get {
+                return ResourceManager.GetString("Text.NoQueue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 请输入要打开的文件路径： 的本地化字符串。
         /// </summary>
         internal static string Text_OpenFile_Prompt {
