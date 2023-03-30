@@ -64,10 +64,11 @@ namespace Zongsoft.Configuration
 			if(key == null)
 				return null;
 
-			if(_keys.TryGetValue(key, out var name))
-				key = name;
+			//如果指定键有对应的映射名则首先获取映射名对应的值
+			if(_keys.TryGetValue(key, out var name) && values.TryGetValue(name, out var value))
+				return value;
 
-			return values.TryGetValue(key, out var value) ? value : null;
+			return values.TryGetValue(key, out value) ? value : null;
 		}
 
 		public virtual bool Validate(string key, string value) => key != null;
