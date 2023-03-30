@@ -3,8 +3,8 @@
 <options>
 	<option path="/Messaging">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="local" driver="mqtt"
-			                   value="client=client1;server=127.0.0.1;username=guest;password=xxx" />
+			<connectionSetting connectionSetting.name="mqtt" driver="mqtt"
+			                   value="server=127.0.0.1;username=guest;password=xxx;client=client1;group=group1" />
 		</connectionSettings>
 	</option>
 </options>

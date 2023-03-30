@@ -3,8 +3,8 @@
 <options>
 	<option path="/Messaging">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="local" driver="kafka"
-			                   value="server=127.0.0.1;username=guest;password=xxx;group=group1;client=client1" />
+			<connectionSetting connectionSetting.name="kafka" driver="kafka"
+			                   value="server=127.0.0.1;username=guest;password=xxx;client=client1;group=group1" />
 		</connectionSettings>
 	</option>
 </options>
