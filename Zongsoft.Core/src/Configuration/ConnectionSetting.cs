@@ -151,10 +151,28 @@ namespace Zongsoft.Configuration
 
 			#region 通用属性
 			public int Count => _dictionary.Count;
+
 			public string this[string key]
 			{
 				get => this.GetValue(key);
 				set => this.SetValue(key, value);
+			}
+
+			public IEnumerable<KeyValuePair<string, string>> Mapping
+			{
+				get
+				{
+					if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+					{
+						foreach(var entry in _dictionary)
+							yield return new KeyValuePair<string, string>(mapper.Map(entry.Key), entry.Value);
+					}
+					else
+					{
+						foreach(var entry in _dictionary)
+							yield return entry;
+					}
+				}
 			}
 			#endregion
 

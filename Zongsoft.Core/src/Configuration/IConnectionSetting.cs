@@ -49,13 +49,21 @@ namespace Zongsoft.Configuration
 	}
 
 	/// <summary>
-	/// 表示连接设置值的接口。
+	/// 表示连接设置值（连接字符串）的接口。
 	/// </summary>
 	public interface IConnectionSettingValues : IEnumerable<KeyValuePair<string, string>>
 	{
 		#region 通用属性
+		/// <summary>获取连接字符串的键值对数量。</summary>
 		int Count { get; }
+
+		/// <summary>获取或设置指定键名的值。</summary>
+		/// <param name="key">指定的连接字符串的键名，支持标准名和映射的原始名。</param>
+		/// <returns>返回指定键名的设置值，如果为空(null)则表示指定的键名不存在。</returns>
 		string this[string key] { get; set; }
+
+		/// <summary>获取连接字符串的原始键名的映射项集合。</summary>
+		IEnumerable<KeyValuePair<string, string>> Mapping { get; }
 		#endregion
 
 		#region 特定属性
@@ -83,7 +91,7 @@ namespace Zongsoft.Configuration
 	}
 
 	/// <summary>
-	/// 表示连接设置值映射器的接口。
+	/// 表示连接设置值（连接字符串）映射器的接口。
 	/// </summary>
 	public interface IConnectionSettingValuesMapper
 	{
