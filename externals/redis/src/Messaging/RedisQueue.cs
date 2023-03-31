@@ -48,14 +48,18 @@ namespace Zongsoft.Externals.Redis.Messaging
 	public class RedisQueue : MessageQueueBase
 	{
 		#region 成员字段
-		private IDatabaseAsync _database;
+		private IDatabase _database;
 		#endregion
 
 		#region 构造函数
-		public RedisQueue(string name, IDatabaseAsync database, IConnectionSetting settings = null) : base(name, settings)
+		public RedisQueue(string name, IDatabase database, IConnectionSetting settings = null) : base(name, settings)
 		{
 			_database = database ?? throw new ArgumentNullException(nameof(database));
 		}
+		#endregion
+
+		#region 内部属性
+		internal IDatabase Database => _database ?? throw new ObjectDisposedException(nameof(RedisQueue));
 		#endregion
 
 		#region 生成方法

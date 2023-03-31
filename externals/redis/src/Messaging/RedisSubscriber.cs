@@ -49,55 +49,37 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#region 私有字段
 		private Poller _poller;
 		private RedisQueue _queue;
-		private IDatabaseAsync _database;
 		private Task<StreamEntry[]>[] _tasks;
-		private readonly string _subscriberId;
+		private readonly string _client;
 		private readonly string _group;
 		#endregion
 
 		#region 构造函数
 		public RedisSubscriber(RedisQueue queue, string topics, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
 		{
-			if(queue == null)
-				throw new ArgumentNullException(nameof(queue));
-
+			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
+			_group = queue.ConnectionSetting.Values.Group;
+			_client = string.IsNullOrEmpty(queue.ConnectionSetting.Values.Client) ? Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
 			_poller = new Poller(this);
-
-			if(queue.ConnectionSetting == null || string.IsNullOrEmpty(queue.ConnectionSetting.Values.Client))
-			{
-				_group = null;
-				_subscriberId = Randomizer.GenerateString();
-			}
-			else
-			{
-				_group = queue.ConnectionSetting.Values.Group;
-				_subscriberId = queue.ConnectionSetting.Values.Client;
-			}
 		}
 		#endregion
 
 		#region 重写方法
 		protected override async ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
-			if(topics != null && topics.Any())
-			{
-				if(topics.Count() > 1 || topics.First() != "*")
-					throw new NotSupportedException($"This message queue does not support unsubscribing to specified topics.");
-			}
-
 			cancellation.ThrowIfCancellationRequested();
 
 			//确保指定的队列分组是存在的，如果不存在则创建它
 			if(!string.IsNullOrEmpty(_group))
 			{
+				var database = _queue.Database;
+
 				foreach(var topic in topics)
 				{
 					var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
 
-					if(!await _database.KeyExistsAsync(key) || (await _database.StreamGroupInfoAsync(key)).All(x => x.Name != _group))
-					{
-						await _database.StreamCreateConsumerGroupAsync(key, _group, "0-0", true);
-					}
+					if(!await database.KeyExistsAsync(key) || (await database.StreamGroupInfoAsync(key)).All(x => x.Name != _group))
+						await database.StreamCreateConsumerGroupAsync(key, _group, "0-0", true);
 				}
 			}
 		}
@@ -122,14 +104,11 @@ namespace Zongsoft.Externals.Redis.Messaging
 		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
 		internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 		{
-			if(_database == null)
-				throw new InvalidOperationException($"The message queue topic to consume is not yet subscribed.");
-
 			if(cancellation.IsCancellationRequested)
 				return Message.Empty;
 
-			if(options.Timeout > TimeSpan.Zero)
-				cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
+			//if(options.Timeout > TimeSpan.Zero)
+			//	cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
 
 			var tasks = _tasks;
 			var topics = this.Topics;
@@ -149,40 +128,48 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(index < 0)
 				return Message.Empty;
 
-			//获取已完成的任务结果
-			var result = this.GetReceiveResult(tasks[index], topics[index]);
+			//获取当前任务
+			var task = _tasks[index];
 
 			//更新已完成的任务槽位
 			_tasks[index] = GetReceiveTask(topics[index]);
 
 			//返回已完成的任务结果
-			return result;
+			return this.GetReceiveResult(task, topics[index]);
 		}
 		#endregion
 
 		#region 私有方法
 		private Task<StreamEntry[]> GetReceiveTask(string topic)
 		{
+			var database = _queue.Database;
 			var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
 
 			//同步方式从消息队列中拉取消息(堵塞当前线程)
 			return string.IsNullOrEmpty(_group) ?
-				_database.StreamReadAsync(key, StreamPosition.NewMessages) :
-				_database.StreamReadGroupAsync(key, _group, _subscriberId);
+				database.StreamReadAsync(key, StreamPosition.NewMessages) :
+				database.StreamReadGroupAsync(key, _group, _client);
 		}
 
 		private Message GetReceiveResult(Task<StreamEntry[]> task, string topic)
 		{
+			var database = _queue.Database;
 			var result = task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
 
 			if(result == null || result.Length == 0)
 				return Message.Empty;
 
 			//构建接收到的消息
-			return new Message(result[0].Id, topic, result[0].Values[0].Value, cancellation => new ValueTask(_database.StreamAcknowledgeAsync(_queue.Name, _group, result[0].Id)))
+			return new Message(result[0].Id, topic, result[0].Values[0].Value, Acknowledge)
 			{
 				Timestamp = DateTime.UtcNow,
 			};
+
+			ValueTask Acknowledge(CancellationToken cancellation)
+			{
+				var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
+				return new ValueTask(database.StreamAcknowledgeAsync(key, _group, result[0].Id));
+			}
 		}
 		#endregion
 
@@ -194,8 +181,6 @@ namespace Zongsoft.Externals.Redis.Messaging
 				poller.Dispose();
 
 			base.Dispose(disposing);
-
-			Interlocked.Exchange(ref _database, null);
 		}
 		#endregion
 
