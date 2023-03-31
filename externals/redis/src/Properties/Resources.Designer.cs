@@ -61,6 +61,24 @@ namespace Zongsoft.Externals.Redis.Properties {
         }
         
         /// <summary>
+        ///   查找类似 无法获得命令的操作目标：{0}。 的本地化字符串。
+        /// </summary>
+        internal static string Text_CannotObtainCommandTarget {
+            get {
+                return ResourceManager.GetString("Text.CannotObtainCommandTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 没有Redis服务。 的本地化字符串。
+        /// </summary>
+        internal static string Text_NoRedis {
+            get {
+                return ResourceManager.GetString("Text.NoRedis", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 为其他 Redis 命令提供宿主环境。 的本地化字符串。
         /// </summary>
         internal static string Text_RedisCommand_Description {

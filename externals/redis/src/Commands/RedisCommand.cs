@@ -67,8 +67,13 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(!string.IsNullOrEmpty(name))
 			{
 				var provider = (RedisServiceProvider)_services.GetService(typeof(RedisServiceProvider)) ?? throw new InvalidOperationException("Missing the required RedisProvider.");
-				_redis = provider.GetRedis(name);
+				_redis = provider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
 			}
+
+			if(_redis == null)
+				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoRedis);
+			else
+				context.Output.WriteLine(CommandOutletColor.Green, _redis.Settings);
 
 			return _redis;
 		}
