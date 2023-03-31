@@ -65,8 +65,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 					connectionSetting.Properties[setting.Key] = setting.Value;
 			}
 
-			var redisSettings = RedisServiceSettings.Parse(connectionSetting.Value);
-			var connection = ConnectionMultiplexer.Connect(redisSettings.RedisOptions);
+			var redisSettings = new Configuration.RedisConnectionSetting(connectionSetting);
+			var connection = ConnectionMultiplexer.Connect(redisSettings.Options);
 			var database = connection.GetDatabase();
 
 			return new RedisQueue(name, database, connectionSetting);

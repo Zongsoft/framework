@@ -12,7 +12,7 @@ namespace Zongsoft.Externals.Redis.Tests
 
 		public SequenceTest()
 		{
-			_redis = new RedisService("test", RedisServiceSettings.Parse("127.0.0.1"));
+			_redis = new RedisService("test", "server=127.0.0.1;password=;");
 		}
 
 		//[Fact]

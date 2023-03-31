@@ -3,8 +3,15 @@
 <options>
 	<option path="/Externals/Redis">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="localhost" driver="redis"
-			                   value="127.0.0.1:6379" />
+			<connectionSetting connectionSetting.name="local" driver="redis"
+			                   value="server=127.0.0.1;port=6379;password=xxx" />
+		</connectionSettings>
+	</option>
+
+	<option path="/Messaging">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="redis" driver="redis"
+			                   value="server=127.0.0.1;port=6379;password=xxx;group=group1;client=client1;" />
 		</connectionSettings>
 	</option>
 </options>

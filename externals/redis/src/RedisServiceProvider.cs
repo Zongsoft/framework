@@ -59,7 +59,7 @@ namespace Zongsoft.Externals.Redis
 						key = settings.Default ?? string.Empty;
 
 					if(settings.TryGet(key, out var setting))
-						return new RedisService(key, RedisServiceSettings.Parse(setting.Value));
+						return new RedisService(key, setting);
 				}
 
 				return null;

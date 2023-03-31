@@ -37,8 +37,8 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
-using Zongsoft.Configuration;
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 using StackExchange.Redis;
 
@@ -57,7 +57,7 @@ namespace Zongsoft.Externals.Redis
 		#region 成员字段
 		private readonly string _name;
 		private string _namespace;
-		private RedisServiceSettings _settings;
+		private Configuration.RedisConnectionSetting _settings;
 
 		private IDatabase _database;
 		private volatile ConnectionMultiplexer _connection;
@@ -73,13 +73,24 @@ namespace Zongsoft.Externals.Redis
 			_name = name.Trim();
 		}
 
-		public RedisService(string name, RedisServiceSettings settings)
+		public RedisService(string name, IConnectionSetting settings)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
-			_settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			_settings = (settings as Configuration.RedisConnectionSetting) ?? new Configuration.RedisConnectionSetting(settings);
+		}
+
+		public RedisService(string name, string connectionString)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+			if(string.IsNullOrWhiteSpace(connectionString))
+				throw new ArgumentNullException(nameof(connectionString));
+
+			_name = name.Trim();
+			_settings = new Configuration.RedisConnectionSetting(new ConnectionSetting(_name, connectionString));
 		}
 		#endregion
 
@@ -100,16 +111,16 @@ namespace Zongsoft.Externals.Redis
 			get => _database?.Database ?? -1;
 		}
 
-		public RedisServiceSettings Settings
+		public IConnectionSetting Settings
 		{
 			get
 			{
 				if(_settings == null)
 				{
-					var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Externals/Redis/ConnectionSettings");
+					var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSetting("/Externals/Redis/ConnectionSettings", _name, "redis");
 
-					if(connectionSettings != null && connectionSettings.Contains(_name))
-						_settings = RedisServiceSettings.Parse(connectionSettings[_name].Value);
+					if(connectionSetting != null)
+						_settings = new Configuration.RedisConnectionSetting(connectionSetting);
 				}
 
 				return _settings;
@@ -823,7 +834,7 @@ namespace Zongsoft.Externals.Redis
 			if(_database != null)
 				return;
 
-			var settings = this.Settings ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+			var settings = (Configuration.RedisConnectionSetting)this.Settings ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
 
 			_connectionLock.Wait();
 
@@ -831,7 +842,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				if(_database == null)
 				{
-					_connection = ConnectionMultiplexer.Connect(settings.RedisOptions);
+					_connection = ConnectionMultiplexer.Connect(settings.Options);
 					_database = _connection.GetDatabase(databaseId);
 				}
 			}
@@ -853,7 +864,7 @@ namespace Zongsoft.Externals.Redis
 			if(_database != null)
 				return;
 
-			var settings = this.Settings ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+			var settings = (Configuration.RedisConnectionSetting)this.Settings ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
 
 			await _connectionLock.WaitAsync(cancellation);
 
@@ -861,7 +872,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				if(_database == null)
 				{
-					_connection = await ConnectionMultiplexer.ConnectAsync(settings.RedisOptions);
+					_connection = await ConnectionMultiplexer.ConnectAsync(settings.Options);
 					_database = _connection.GetDatabase(databaseId);
 				}
 			}
