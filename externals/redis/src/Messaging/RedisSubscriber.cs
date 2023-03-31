@@ -147,8 +147,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			//同步方式从消息队列中拉取消息(堵塞当前线程)
 			return string.IsNullOrEmpty(_group) ?
-				database.StreamReadAsync(key, StreamPosition.NewMessages) :
-				database.StreamReadGroupAsync(key, _group, _client);
+				database.StreamReadAsync(key, StreamPosition.NewMessages, 1) :
+				database.StreamReadGroupAsync(key, _group, _client, ">", 1);
 		}
 
 		private Message GetReceiveResult(Task<StreamEntry[]> task, string topic)
