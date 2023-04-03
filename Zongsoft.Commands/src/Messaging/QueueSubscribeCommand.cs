@@ -28,12 +28,12 @@
  */
 
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
-using System.Text;
 
 namespace Zongsoft.Messaging.Commands
 {
@@ -84,6 +84,7 @@ namespace Zongsoft.Messaging.Commands
 		#region 嵌套子类
 		private class QueueHandler : IMessageHandler
 		{
+			private int _count;
 			private readonly CommandContext _context;
 			private readonly QueueMessageFormat _format;
 
@@ -96,10 +97,12 @@ namespace Zongsoft.Messaging.Commands
 			public async ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
 			{
 				var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
+				var content = CommandOutletContent
+					.Create(CommandOutletColor.DarkGray, $"[{Interlocked.Increment(ref _count)}] ")
+					.Append(CommandOutletColor.DarkGreen, topic);
 
-				var content = string.IsNullOrEmpty(message.Tags) ?
-					CommandOutletContent.Create(CommandOutletColor.DarkGreen, topic) :
-					CommandOutletContent.Create(CommandOutletColor.DarkGreen, topic).Append(CommandOutletColor.DarkGray, $"({message.Tags})");
+				if(!string.IsNullOrEmpty(message.Tags))
+					content.Append(CommandOutletColor.DarkGray, $"({message.Tags})");
 
 				if(!string.IsNullOrEmpty(message.Identity))
 					content.Append(CommandOutletColor.DarkCyan, $"@{message.Identity}");
