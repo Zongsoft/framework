@@ -50,6 +50,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private Poller _poller;
 		private RedisQueue _queue;
 		private Task<StreamEntry[]>[] _tasks;
+		private string _lastMessageId;
 		private readonly string _client;
 		private readonly string _group;
 		#endregion
@@ -128,14 +129,18 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(index < 0)
 				return Message.Empty;
 
-			//获取当前任务
-			var task = _tasks[index];
+			//获取已完成的任务结果
+			var result = this.GetReceiveResult(_tasks[index], topics[index]);
+
+			//如果是无分组(即全局广播)接受模式则更新最后接收到的消息编号
+			if(string.IsNullOrEmpty(_group) && !result.IsEmpty)
+				_lastMessageId = result.Identifier;
 
 			//更新已完成的任务槽位
 			_tasks[index] = GetReceiveTask(topics[index]);
 
 			//返回已完成的任务结果
-			return this.GetReceiveResult(task, topics[index]);
+			return result;
 		}
 		#endregion
 
@@ -145,10 +150,12 @@ namespace Zongsoft.Externals.Redis.Messaging
 			var database = _queue.Database;
 			var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
 
-			//同步方式从消息队列中拉取消息(堵塞当前线程)
-			return string.IsNullOrEmpty(_group) ?
-				database.StreamReadAsync(key, StreamPosition.NewMessages, 1) :
-				database.StreamReadGroupAsync(key, _group, _client, ">", 1);
+			if(string.IsNullOrEmpty(_group))
+				return string.IsNullOrEmpty(_lastMessageId) ?
+					database.StreamRangeAsync(key, "-", "+", 1, Order.Descending) :
+					database.StreamReadAsync(key, _lastMessageId, 1);
+
+			return database.StreamReadGroupAsync(key, _group, _client, ">", 1);
 		}
 
 		private Message GetReceiveResult(Task<StreamEntry[]> task, string topic)
@@ -196,7 +203,18 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 			{
-				return _subscriber?.Receive(options, cancellation) ?? Message.Empty;
+				try
+				{
+					return _subscriber?.Receive(options, cancellation) ?? Message.Empty;
+				}
+				catch(OperationCanceledException)
+				{
+					return Message.Empty;
+				}
+				catch
+				{
+					throw;
+				}
 			}
 
 			protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
