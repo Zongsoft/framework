@@ -88,6 +88,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 已应答 的本地化字符串。
+        /// </summary>
+        internal static string Text_Acknowledged {
+            get {
+                return ResourceManager.GetString("Text.Acknowledged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 查看当前应用程序(进程)所有加载的程序集信息。 的本地化字符串。
         /// </summary>
         internal static string Text_AssemblyCommand_Description {

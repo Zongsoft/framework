@@ -126,6 +126,9 @@
   <data name="QueueSubscribeCommand.Welcome" xml:space="preserve">
     <value>欢迎进入 {0} 消息队列的侦听模式。</value>
   </data>
+  <data name="Text.Acknowledged" xml:space="preserve">
+    <value>已应答</value>
+  </data>
   <data name="Text.AssemblyCommand.Description" xml:space="preserve">
     <value>查看当前应用程序(进程)所有加载的程序集信息。</value>
   </data>
