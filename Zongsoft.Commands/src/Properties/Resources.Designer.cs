@@ -647,6 +647,24 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 是否自动应答，默认值为真(true)。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueSubscribeCommand_Acknowledgeable {
+            get {
+                return ResourceManager.GetString("Text.QueueSubscribeCommand.Acknowledgeable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 显示格式，收到消息后消息内容的显示格式。 的本地化字符串。
+        /// </summary>
+        internal static string Text_QueueSubscribeCommand_Format {
+            get {
+                return ResourceManager.GetString("Text.QueueSubscribeCommand.Format", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 必须的 的本地化字符串。
         /// </summary>
         internal static string Text_Required {

@@ -313,6 +313,12 @@
   <data name="Text.QueuePeekCommand.Name" xml:space="preserve">
     <value>查看队首</value>
   </data>
+  <data name="Text.QueueSubscribeCommand.Acknowledgeable" xml:space="preserve">
+    <value>是否自动应答，默认值为真(true)。</value>
+  </data>
+  <data name="Text.QueueSubscribeCommand.Format" xml:space="preserve">
+    <value>显示格式，收到消息后消息内容的显示格式。</value>
+  </data>
   <data name="Text.Required" xml:space="preserve">
     <value>必须的</value>
   </data>

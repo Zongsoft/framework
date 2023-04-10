@@ -37,7 +37,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Messaging.Commands
 {
-	[CommandOption("format", typeof(QueueMessageFormat))]
+	[CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
+	[CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
 	public class QueueSubscribeCommand : Zongsoft.Services.Commands.HostListenCommandBase<IMessageQueue>
 	{
 		#region 私有变量
@@ -85,6 +86,7 @@ namespace Zongsoft.Messaging.Commands
 		private class QueueHandler : IMessageHandler
 		{
 			private int _count;
+			private readonly bool _acknowledgeable;
 			private readonly CommandContext _context;
 			private readonly QueueMessageFormat _format;
 
@@ -92,6 +94,7 @@ namespace Zongsoft.Messaging.Commands
 			{
 				_context = context;
 				_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
+				_acknowledgeable = context.Expression.Options.GetValue<bool>("acknowledgeable");
 			}
 
 			public async ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
@@ -116,10 +119,20 @@ namespace Zongsoft.Messaging.Commands
 				);
 
 				//输出内容
-				_context.Output.WriteLine(content);
+				_context.Output.Write(content);
 
-				//应答消息
-				await message.AcknowledgeAsync(cancellation);
+				if(_acknowledgeable)
+				{
+					//应答消息
+					await message.AcknowledgeAsync(cancellation);
+
+					//追加“已应答”提示文本
+					_context.Output.WriteLine(CommandOutletColor.Magenta, $" []");
+				}
+				else
+				{
+					_context.Output.WriteLine();
+				}
 			}
 		}
 		#endregion
