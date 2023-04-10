@@ -51,6 +51,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private RedisQueue _queue;
 		private Task<StreamEntry[]>[] _tasks;
 		private string _lastMessageId;
+		private DateTime _lastClaimTime;
+		private TimeSpan _idleTimeout;
 		private readonly string _client;
 		private readonly string _group;
 		#endregion
@@ -60,9 +62,17 @@ namespace Zongsoft.Externals.Redis.Messaging
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_group = queue.ConnectionSetting.Values.Group;
-			_client = string.IsNullOrEmpty(queue.ConnectionSetting.Values.Client) ? Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
+			_client = string.IsNullOrWhiteSpace(queue.ConnectionSetting.Values.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
 			_poller = new Poller(this);
+
+			//设置未处理消息的超时默认值
+			_idleTimeout = TimeSpan.FromSeconds(30);
 		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取或设置未处理消息的超时时长，默认为<c>30</c>秒。</summary>
+		public TimeSpan IdleTimeout { get => _idleTimeout; set => _idleTimeout = value > TimeSpan.Zero ? value : throw new ArgumentOutOfRangeException(); }
 		#endregion
 
 		#region 重写方法
@@ -70,17 +80,17 @@ namespace Zongsoft.Externals.Redis.Messaging
 		{
 			cancellation.ThrowIfCancellationRequested();
 
-			//确保指定的队列分组是存在的，如果不存在则创建它
 			if(!string.IsNullOrEmpty(_group))
 			{
 				var database = _queue.Database;
 
 				foreach(var topic in topics)
 				{
-					var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
+					var queueKey = GetRedisQueueName(topic);
 
-					if(!await database.KeyExistsAsync(key) || (await database.StreamGroupInfoAsync(key)).All(x => x.Name != _group))
-						await database.StreamCreateConsumerGroupAsync(key, _group, "0-0", true);
+					//如果指定的队列不存在或指定的消费组不存在则创建它
+					if(!await database.KeyExistsAsync(queueKey) || (await database.StreamGroupInfoAsync(queueKey)).All(x => x.Name != _group))
+						await database.StreamCreateConsumerGroupAsync(queueKey, _group, "0-0", true);
 				}
 			}
 		}
@@ -108,8 +118,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(cancellation.IsCancellationRequested)
 				return Message.Empty;
 
-			//if(options.Timeout > TimeSpan.Zero)
-			//	cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
+			if(options.Timeout > TimeSpan.Zero)
+				cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
 
 			var tasks = _tasks;
 			var topics = this.Topics;
@@ -129,18 +139,38 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(index < 0)
 				return Message.Empty;
 
-			//获取已完成的任务结果
-			var result = this.GetReceiveResult(_tasks[index], topics[index]);
+			try
+			{
+				//获取已完成的任务结果
+				var result = this.GetReceiveResult(_tasks[index], topics[index]);
 
-			//如果是无分组(即全局广播)接受模式则更新最后接收到的消息编号
-			if(string.IsNullOrEmpty(_group) && !result.IsEmpty)
-				_lastMessageId = result.Identifier;
+				if(string.IsNullOrEmpty(_group))
+				{
+					//如果是无分组(即全局广播)接受模式则更新最后接收到的消息编号
+					if(!result.IsEmpty)
+						_lastMessageId = result.Identifier;
+				}
+				else if(result.IsEmpty) //如果是分组接受模式并且队列组已被消费完
+				{
+					//如果距离上次转移的时长已达到阈值
+					if(DateTime.Now - _lastClaimTime >= _idleTimeout)
+					{
+						//将超时未处理的消息转移给当前消费者
+						_queue.Database.StreamAutoClaimIdsOnly(GetRedisQueueName(topics[index]), _group, _client, (int)_idleTimeout.TotalMilliseconds, "0-0", int.MaxValue, CommandFlags.FireAndForget);
 
-			//更新已完成的任务槽位
-			_tasks[index] = GetReceiveTask(topics[index]);
+						//更新最后转移时间
+						_lastClaimTime = DateTime.Now;
+					}
+				}
 
-			//返回已完成的任务结果
-			return result;
+				//返回已完成的任务结果
+				return result;
+			}
+			finally
+			{
+				//更新已完成的任务槽位
+				_tasks[index] = GetReceiveTask(topics[index]);
+			}
 		}
 		#endregion
 
@@ -148,21 +178,26 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private Task<StreamEntry[]> GetReceiveTask(string topic)
 		{
 			var database = _queue.Database;
-			var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
+			var queueKey = GetRedisQueueName(topic);
 
 			if(string.IsNullOrEmpty(_group))
 				return string.IsNullOrEmpty(_lastMessageId) ?
-					database.StreamRangeAsync(key, "-", "+", 1, Order.Descending) :
-					database.StreamReadAsync(key, _lastMessageId, 1);
+					database.StreamRangeAsync(queueKey, "-", "+", 1, Order.Descending) :
+					database.StreamReadAsync(queueKey, _lastMessageId, 1);
 
-			return database.StreamReadGroupAsync(key, _group, _client, ">", 1);
+			return database.StreamReadGroupAsync(queueKey, _group, _client, ">", 1);
 		}
 
 		private Message GetReceiveResult(Task<StreamEntry[]> task, string topic)
 		{
-			var database = _queue.Database;
+			//如果任务超时则返回空消息
+			if(task.Status == TaskStatus.Faulted && AggregateExceptionUtility.Handle<RedisTimeoutException>(task.Exception, ex => Message.Empty) is Message message)
+				return message;
+
+			//获取任务的结果
 			var result = task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
 
+			//如果任务结果为空则返回空消息
 			if(result == null || result.Length == 0)
 				return Message.Empty;
 
@@ -174,10 +209,14 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			ValueTask Acknowledge(CancellationToken cancellation)
 			{
-				var key = string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
-				return new ValueTask(database.StreamAcknowledgeAsync(key, _group, result[0].Id));
+				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(GetRedisQueueName(topic), _group, result[0].Id));
 			}
 		}
+		#endregion
+
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private string GetRedisQueueName(string topic) => string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
 		#endregion
 
 		#region 处置方法
