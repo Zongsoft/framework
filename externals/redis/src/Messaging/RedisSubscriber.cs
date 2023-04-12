@@ -202,6 +202,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				return Task.FromResult(Array.Empty<StreamEntry>());
 			}
 
+			//返回最新的未投递消息
 			return database.StreamReadGroupAsync(queueKey, _group, _client, ">", 1);
 		}
 
