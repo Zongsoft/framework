@@ -118,20 +118,21 @@ namespace Zongsoft.Messaging.Commands
 					Convert.ToBase64String(message.Data)
 				);
 
-				//输出内容
-				_context.Output.Write(content);
-
 				if(_acknowledgeable)
 				{
+					//输出内容
+					_context.Output.Write(content);
+
 					//应答消息
 					await message.AcknowledgeAsync(cancellation);
 
 					//追加“已应答”提示文本
-					_context.Output.WriteLine(CommandOutletColor.Magenta, $" [{Properties.Resources.Text_Acknowledged}]");
+					_context.Output.WriteLine(CommandOutletColor.Blue, $" ({Properties.Resources.Text_Acknowledged})");
 				}
 				else
 				{
-					_context.Output.WriteLine();
+					//输出内容
+					_context.Output.WriteLine(content);
 				}
 			}
 		}
