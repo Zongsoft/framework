@@ -41,6 +41,16 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis.Messaging
 {
+	/// <summary>
+	/// 表示Redis消息队列的消费者。
+	/// </summary>
+	/// <remarks>
+	///		<para>参考资料：</para>
+	///		<list type="bullet">
+	///			<term>中文：<seealso cref="http://www.redis.cn/topics/streams-intro.html"/></term>
+	///			<term>英文：<seealso cref="https://redis.io/docs/data-types/streams-tutorial/"/></term>
+	///		</list>
+	/// </remarks>
 	internal class RedisSubscriber : MessageConsumerBase
 	{
 		#region 私有字段
@@ -92,7 +102,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 					//如果指定的队列不存在或指定的消费组不存在则创建它
 					if(!await database.KeyExistsAsync(queueKey) || (await database.StreamGroupInfoAsync(queueKey)).All(x => x.Name != _group))
-						await database.StreamCreateConsumerGroupAsync(queueKey, _group, "0", true);
+						await database.StreamCreateConsumerGroupAsync(queueKey, _group, "$", true);
 				}
 			}
 		}
