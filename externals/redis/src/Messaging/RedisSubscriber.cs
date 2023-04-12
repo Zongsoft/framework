@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,8 +35,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Caching;
-using Zongsoft.Services;
 using Zongsoft.Messaging;
 
 using StackExchange.Redis;
@@ -53,6 +50,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private string _lastMessageId;
 		private DateTime _lastClaimTime;
 		private TimeSpan _idleTimeout;
+		private bool _pendingAcquired;
 		private readonly string _client;
 		private readonly string _group;
 		#endregion
@@ -65,14 +63,18 @@ namespace Zongsoft.Externals.Redis.Messaging
 			_client = string.IsNullOrWhiteSpace(queue.ConnectionSetting.Values.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
 			_poller = new Poller(this);
 
-			//设置未处理消息的超时默认值
+			//设置未应答消息的超时默认值
 			_idleTimeout = TimeSpan.FromSeconds(30);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置未处理消息的超时时长，默认为<c>30</c>秒。</summary>
-		public TimeSpan IdleTimeout { get => _idleTimeout; set => _idleTimeout = value > TimeSpan.Zero ? value : throw new ArgumentOutOfRangeException(); }
+		/// <summary>获取或设置未应答消息的超时时长，默认为<c>30</c>秒。</summary>
+		public TimeSpan IdleTimeout
+		{
+			get => _idleTimeout;
+			set => _idleTimeout = value > TimeSpan.Zero ? value : throw new ArgumentOutOfRangeException();
+		}
 		#endregion
 
 		#region 重写方法
@@ -90,7 +92,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 					//如果指定的队列不存在或指定的消费组不存在则创建它
 					if(!await database.KeyExistsAsync(queueKey) || (await database.StreamGroupInfoAsync(queueKey)).All(x => x.Name != _group))
-						await database.StreamCreateConsumerGroupAsync(queueKey, _group, "0-0", true);
+						await database.StreamCreateConsumerGroupAsync(queueKey, _group, "0", true);
 				}
 			}
 		}
@@ -155,12 +157,15 @@ namespace Zongsoft.Externals.Redis.Messaging
 					//如果距离上次转移的时长已达到阈值
 					if(DateTime.Now - _lastClaimTime >= _idleTimeout)
 					{
-						//将超时未处理的消息转移给当前消费者
-						_queue.Database.StreamAutoClaimIdsOnly(GetRedisQueueName(topics[index]), _group, _client, (int)_idleTimeout.TotalMilliseconds, "0-0", int.MaxValue, CommandFlags.FireAndForget);
+						//将超时未应答的消息转移给当前消费者
+						_queue.Database.StreamAutoClaimIdsOnly(GetRedisQueueName(topics[index]), _group, _client, (long)_idleTimeout.TotalMilliseconds, "0", int.MaxValue, CommandFlags.FireAndForget);
 
 						//更新最后转移时间
 						_lastClaimTime = DateTime.Now;
 					}
+
+					//翻转从未应答列表中获取数据的标记
+					_pendingAcquired = !_pendingAcquired;
 				}
 
 				//返回已完成的任务结果
@@ -184,6 +189,18 @@ namespace Zongsoft.Externals.Redis.Messaging
 				return string.IsNullOrEmpty(_lastMessageId) ?
 					database.StreamRangeAsync(queueKey, "-", "+", 1, Order.Descending) :
 					database.StreamReadAsync(queueKey, _lastMessageId, 1);
+
+			//判断是否为处理未应答消息
+			if(_pendingAcquired)
+			{
+				//获取当前消费者超时未应答的消息
+				var pendings = database.GetPendingMessages(queueKey, _group, _client, _idleTimeout, 1);
+
+				if(pendings != null && pendings.Length > 0)
+					return database.StreamReadAsync(queueKey, pendings[0].MessageId, 1);
+
+				return Task.FromResult(Array.Empty<StreamEntry>());
+			}
 
 			return database.StreamReadGroupAsync(queueKey, _group, _client, ">", 1);
 		}
