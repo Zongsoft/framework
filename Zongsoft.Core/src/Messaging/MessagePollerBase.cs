@@ -113,7 +113,7 @@ namespace Zongsoft.Messaging
 				if(exception != null || message.IsEmpty)
 					Thread.Sleep(settings.Interval);
 				else
-					Handle(message, _cancellation.Token);
+					Handle(message, cancellation.Token);
 			}
 
 			void Handle(in Message message, CancellationToken cancellation)
