@@ -87,6 +87,8 @@ namespace Zongsoft.Configuration
 		bool Contains(string key);
 		bool Remove(string key);
 		bool Remove(string key, out string value);
+		T GetValue<T>(string key, T defaultValue);
+		bool SetValue(string key, string value);
 		#endregion
 	}
 

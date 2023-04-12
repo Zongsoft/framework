@@ -261,23 +261,8 @@ namespace Zongsoft.Configuration
 			public bool Contains(string key) => _dictionary.ContainsKey(GetKey(key));
 			public bool Remove(string key) => _dictionary.Remove(GetKey(key));
 			public bool Remove(string key, out string value) => _dictionary.Remove(GetKey(key), out value);
-			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
-			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
-			#endregion
 
-			#region 重写方法
-			public override string ToString()
-			{
-				var dictionary = _dictionary;
-				return dictionary == null || dictionary.Count == 0 ? string.Empty : string.Join(';', dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
-			}
-			#endregion
-
-			#region 私有方法
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetKey(string name) => _mappers.TryGetValue(_connectionSetting.Driver, out var mapper) ? mapper.Map(name) : name;
-
-			private string GetValue(string name)
+			public string GetValue(string name)
 			{
 				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
 					return mapper.GetValue(name, _dictionary);
@@ -285,7 +270,7 @@ namespace Zongsoft.Configuration
 				return _dictionary.TryGetValue(name, out var value) ? value : null;
 			}
 
-			private T GetValue<T>(string name, T defaultValue = default)
+			public T GetValue<T>(string name, T defaultValue = default)
 			{
 				string value;
 
@@ -301,7 +286,7 @@ namespace Zongsoft.Configuration
 				return defaultValue;
 			}
 
-			private bool SetValue(string name, string value)
+			public bool SetValue(string name, string value)
 			{
 				if(_connectionSetting.Driver != null && _mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
 				{
@@ -312,6 +297,24 @@ namespace Zongsoft.Configuration
 				_dictionary[name] = value;
 				return true;
 			}
+			#endregion
+
+			#region 重写方法
+			public override string ToString()
+			{
+				var dictionary = _dictionary;
+				return dictionary == null || dictionary.Count == 0 ? string.Empty : string.Join(';', dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
+			}
+			#endregion
+
+			#region 私有方法
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private string GetKey(string name) => _mappers.TryGetValue(_connectionSetting.Driver, out var mapper) ? mapper.Map(name) : name;
+			#endregion
+
+			#region 枚举遍历
+			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
+			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
 			#endregion
 		}
 
