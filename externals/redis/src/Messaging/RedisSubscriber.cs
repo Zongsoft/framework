@@ -63,8 +63,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 			_client = string.IsNullOrWhiteSpace(queue.ConnectionSetting.Values.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
 			_poller = new Poller(this);
 
-			//设置未应答消息的超时默认值
-			_idleTimeout = TimeSpan.FromSeconds(30);
+			//设置未应答消息的超时时长，默认值为30秒
+			this.IdleTimeout = queue.ConnectionSetting.Values.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
 		}
 		#endregion
 
@@ -187,7 +187,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			if(string.IsNullOrEmpty(_group))
 				return string.IsNullOrEmpty(_lastMessageId) ?
-					database.StreamRangeAsync(queueKey, "-", "+", 1, Order.Descending) :
+					database.StreamRangeAsync(queueKey, "-", "+", 1, Order.Ascending) :
 					database.StreamReadAsync(queueKey, _lastMessageId, 1);
 
 			//判断是否为处理未应答消息
@@ -197,7 +197,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				var pendings = database.GetPendingMessages(queueKey, _group, _client, _idleTimeout, 1);
 
 				if(pendings != null && pendings.Length > 0)
-					return database.StreamReadAsync(queueKey, pendings[0].MessageId, 1);
+					return database.StreamRangeAsync(queueKey, pendings[0].MessageId, pendings[0].MessageId, 1);
 
 				return Task.FromResult(Array.Empty<StreamEntry>());
 			}
