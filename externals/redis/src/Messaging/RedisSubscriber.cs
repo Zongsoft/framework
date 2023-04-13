@@ -61,6 +61,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private DateTime _lastClaimTime;
 		private TimeSpan _idleTimeout;
 		private bool _pendingAcquired;
+		private string _pendingMessageId;
 		private readonly string _client;
 		private readonly string _group;
 		#endregion
@@ -204,11 +205,15 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(_pendingAcquired)
 			{
 				//获取当前消费者超时未应答的消息
-				var pendings = database.GetPendingMessages(queueKey, _group, _client, _idleTimeout, 1);
+				var pendings = database.GetPendingMessages(queueKey, _group, _client, _idleTimeout, 1, RedisUtility.IncreaseId(_pendingMessageId));
 
 				if(pendings != null && pendings.Length > 0)
-					return database.StreamRangeAsync(queueKey, pendings[0].MessageId, pendings[0].MessageId, 1);
+				{
+					_pendingMessageId = pendings[0].MessageId;
+					return database.StreamReadGroupAsync(queueKey, _group, _client, RedisUtility.DecreaseId(_pendingMessageId), 1);
+				}
 
+				_pendingMessageId = null;
 				return Task.FromResult(Array.Empty<StreamEntry>());
 			}
 
