@@ -65,6 +65,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private string _lastMessageId;
 		private DateTime _lastClaimTime;
 		private TimeSpan _idleTimeout;
+		private int _deadline;
 		private bool _pendingAcquired;
 		private string _pendingMessageId;
 		private readonly string _client;
@@ -79,7 +80,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 			_client = string.IsNullOrWhiteSpace(queue.ConnectionSetting.Values.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSetting.Values.Client;
 			_poller = new Poller(this);
 
-			//设置未应答消息的超时时长，默认值为30秒
+			//初始化属性值
+			this.Deadline = queue.ConnectionSetting.Values.GetValue(nameof(Deadline), 10000);
 			this.IdleTimeout = queue.ConnectionSetting.Values.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
 		}
 		#endregion
@@ -90,6 +92,13 @@ namespace Zongsoft.Externals.Redis.Messaging
 		{
 			get => _idleTimeout;
 			set => _idleTimeout = value > TimeSpan.Zero ? value : throw new ArgumentOutOfRangeException();
+		}
+
+		/// <summary>获取或设置未应答消息转为死信的阈值，如果为零则表示不开启死信功能。默认为<c>10000</c>。</summary>
+		public int Deadline
+		{
+			get => _deadline;
+			set => _deadline = Math.Max(value, 0);
 		}
 		#endregion
 
@@ -235,8 +244,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 				_pendingMessageId = pendings[0].MessageId;
 
-				//如果超时未应答的消息投递次数大于阈值则转为死信
-				if(pendings[0].DeliveryCount > 10000)
+				//如果启用死信队列特性，且超时未应答的消息投递次数已达到阈值则转为死信
+				if(_deadline > 0 && pendings[0].DeliveryCount >= _deadline)
 				{
 					var deadId = this.Dead(database, queueKey, pendings[0].MessageId, topic);
 
@@ -268,7 +277,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				return Message.Empty;
 
 			//构建接收到的消息
-			return new Message(result[0].Id, topic, result[0].Values[0].Value, Acknowledge)
+			return new Message(result[0].Id, topic, result[0].GetMessageData(), result[0].GetMessageTags(), Acknowledge)
 			{
 				Timestamp = DateTime.UtcNow,
 			};
@@ -281,6 +290,12 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 		private string Dead(IDatabase database, string key, string id, string topic)
 		{
+			const string DEAD_SUFFIX = ":DEAD!";
+
+			//如果指定队列就是死信队列则返回空
+			if(key.EndsWith(DEAD_SUFFIX))
+				return null;
+
 			var task = database.StreamRangeAsync(key, id, id, 1);
 			var message = this.GetReceiveResult(task, topic);
 
@@ -289,7 +304,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				return null;
 
 			//将消息转发到死信队列
-			var result = database.StreamAdd($"{key}:Dead!", RedisUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
+			var result = database.StreamAdd($"{key}{DEAD_SUFFIX}", RedisUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
 
 			//如果死信队列转发成功则将该消息应答
 			if(result.HasValue)

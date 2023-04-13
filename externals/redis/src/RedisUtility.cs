@@ -163,6 +163,23 @@ namespace Zongsoft.Externals.Redis
 
 		internal static string GetQueueName(string name, string topic) => string.IsNullOrWhiteSpace(topic) ? $"Zongsoft.Queue:{name}" : $"Zongsoft.Queue:{name}:{topic}";
 
+		internal static RedisValue GetMessageData(this StreamEntry entry) => GetValue(entry, "Data");
+		internal static RedisValue GetMessageTags(this StreamEntry entry) => GetValue(entry, "Tags");
+		internal static RedisValue GetValue(this StreamEntry entry, string name) => GetValue(entry.Values, name);
+		internal static RedisValue GetValue(this NameValueEntry[] values, string name)
+		{
+			if(values == null || values.Length == 0 || name == null)
+				return RedisValue.Null;
+
+			for(int i = 0; i < values.Length; i++)
+			{
+				if(string.Equals(values[i].Name, name))
+					return values[i].Value;
+			}
+
+			return RedisValue.Null;
+		}
+
 		internal static NameValueEntry[] GetMessagePayload(ReadOnlyMemory<byte> data, string tags) =>
 			string.IsNullOrEmpty(tags) ? new NameValueEntry[]
 			{
