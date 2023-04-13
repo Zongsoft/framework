@@ -53,6 +53,11 @@ namespace Zongsoft.Externals.Redis.Messaging
 	/// </remarks>
 	internal class RedisSubscriber : MessageConsumerBase
 	{
+		#region 常量定义
+		private const long TICKS_PERSECOND = 10000000;
+		private const long TICKS_PERHOUR   = TICKS_PERSECOND * 60 * 60;
+		#endregion
+
 		#region 私有字段
 		private Poller _poller;
 		private RedisQueue _queue;
@@ -131,9 +136,6 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(cancellation.IsCancellationRequested)
 				return Message.Empty;
 
-			if(options.Timeout > TimeSpan.Zero)
-				cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
-
 			var tasks = _tasks;
 			var topics = this.Topics;
 
@@ -146,6 +148,9 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 				tasks = _tasks;
 			}
+
+			if(options.Timeout > TimeSpan.Zero)
+				cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
 
 			//等待任务集中最先执行完成的任务
 			var index = Task.WaitAny(tasks, cancellation);
@@ -166,7 +171,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 				else if(result.IsEmpty) //如果是分组接受模式并且队列组已被消费完
 				{
 					//如果距离上次转移的时长已达到阈值
-					if(DateTime.Now - _lastClaimTime >= _idleTimeout)
+					//注意：由于XAUTOCLAIM指令会重置未应答记录的空闲时长，因此不能每次IdleTimeout都调用，必须以更长(譬如每小时)间隔进行调用。
+					if((DateTime.Now - _lastClaimTime).Ticks >= Math.Max(_idleTimeout.Ticks, TICKS_PERHOUR))
 					{
 						//将超时未应答的消息转移给当前消费者
 						_queue.Database.StreamAutoClaimIdsOnly(
@@ -218,7 +224,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 					_client,
 					_idleTimeout,
 					1,
-					string.IsNullOrEmpty(_pendingMessageId) ? "-" : RedisUtility.IncreaseId(_pendingMessageId));
+					RedisUtility.IncreaseId(_pendingMessageId));
 
 				if(pendings != null && pendings.Length > 0)
 				{
