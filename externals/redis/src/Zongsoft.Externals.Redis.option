@@ -11,7 +11,7 @@
 	<option path="/Messaging">
 		<connectionSettings>
 			<connectionSetting connectionSetting.name="redis" driver="redis"
-			                   value="server=127.0.0.1;port=6379;password=xxx;group=group1;client=client1;" />
+			                   value="server=127.0.0.1;port=6379;password=xxx;group=group1;client=client1;idleTimeout=30s;" />
 		</connectionSettings>
 	</option>
 </options>
