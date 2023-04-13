@@ -110,7 +110,7 @@ namespace Zongsoft.Messaging.Commands
 				if(!string.IsNullOrEmpty(message.Identity))
 					content.Append(CommandOutletColor.DarkCyan, $"@{message.Identity}");
 
-				content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp} ");
+				content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp.ToLocalTime()} ");
 				content.AppendLine(CommandOutletColor.DarkMagenta, message.Identifier);
 				content.Append(
 					_format == QueueMessageFormat.Text ?
