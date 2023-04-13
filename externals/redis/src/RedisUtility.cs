@@ -162,6 +162,16 @@ namespace Zongsoft.Externals.Redis
 		}
 
 		internal static string GetQueueName(string name, string topic) => string.IsNullOrWhiteSpace(topic) ? $"Zongsoft.Queue:{name}" : $"Zongsoft.Queue:{name}:{topic}";
+
+		internal static NameValueEntry[] GetMessagePayload(ReadOnlyMemory<byte> data, string tags) =>
+			string.IsNullOrEmpty(tags) ? new NameValueEntry[]
+			{
+				new("Data", data)
+			} : new NameValueEntry[]
+			{
+				new NameValueEntry("Data", data),
+				new NameValueEntry("Tags", tags),
+			};
 	}
 
 	public readonly struct RedisQueuePendingMessageInfo
