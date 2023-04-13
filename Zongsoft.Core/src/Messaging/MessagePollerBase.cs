@@ -60,6 +60,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共方法
+		/// <summary>开始队列轮询。</summary>
 		public void Start() => this.Start(null, 1000);
 
 		/// <summary>开始队列轮询。</summary>
@@ -165,7 +166,7 @@ namespace Zongsoft.Messaging
 			public PollArgument(MessageDequeueOptions options, int interval = 1000)
 			{
 				this.Options = options ?? MessageDequeueOptions.Default;
-				this.Interval = Math.Max(interval, 100);
+				this.Interval = Math.Min(Math.Max(interval, 100), 60 * 1000);
 			}
 
 			public readonly MessageDequeueOptions Options;
