@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(string.IsNullOrEmpty(topic))
 				throw new ArgumentNullException(nameof(topic));
 
-			return await _database.StreamAddAsync(RedisUtility.GetQueueName(this.Name, topic), RedisUtility.GetMessagePayload(data, tags));
+			return await _database.StreamAddAsync(RedisQueueUtility.GetQueueName(this.Name, topic), RedisQueueUtility.GetMessagePayload(data, tags));
 		}
 		#endregion
 

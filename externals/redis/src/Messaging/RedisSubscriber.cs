@@ -47,8 +47,8 @@ namespace Zongsoft.Externals.Redis.Messaging
 	/// <remarks>
 	///		<para>参考资料：</para>
 	///		<list type="bullet">
-	///			<term>中文：<seealso cref="http://www.redis.cn/topics/streams-intro.html"/></term>
-	///			<term>英文：<seealso cref="https://redis.io/docs/data-types/streams-tutorial/"/></term>
+	///			<term>中文：http://www.redis.cn/topics/streams-intro.html"</term>
+	///			<term>英文：https://redis.io/docs/data-types/streams-tutorial"</term>
 	///		</list>
 	/// </remarks>
 	internal class RedisSubscriber : MessageConsumerBase
@@ -113,7 +113,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 				foreach(var topic in topics)
 				{
-					var queueKey = RedisUtility.GetQueueName(_queue.Name, topic);
+					var queueKey = RedisQueueUtility.GetQueueName(_queue.Name, topic);
 
 					//如果指定的队列不存在或指定的消费组不存在则创建它
 					if(!await database.KeyExistsAsync(queueKey) || (await database.StreamGroupInfoAsync(queueKey)).All(x => x.Name != _group))
@@ -185,7 +185,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 					{
 						//将超时未应答的消息转移给当前消费者
 						_queue.Database.StreamAutoClaimIdsOnly(
-							RedisUtility.GetQueueName(_queue.Name, topics[index]),
+							RedisQueueUtility.GetQueueName(_queue.Name, topics[index]),
 							_group,
 							_client,
 							(long)_idleTimeout.TotalMilliseconds,
@@ -216,7 +216,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private Task<StreamEntry[]> GetReceiveTask(string topic)
 		{
 			var database = _queue.Database;
-			var queueKey = RedisUtility.GetQueueName(_queue.Name, topic);
+			var queueKey = RedisQueueUtility.GetQueueName(_queue.Name, topic);
 
 			if(string.IsNullOrEmpty(_group))
 				return string.IsNullOrEmpty(_lastMessageId) ?
@@ -233,7 +233,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 					_client,
 					_idleTimeout,
 					1,
-					RedisUtility.IncreaseId(_pendingMessageId));
+					RedisQueueUtility.IncreaseId(_pendingMessageId));
 
 				//如果没有超时未应答的消息则返回空任务
 				if(pendings == null || pendings.Length == 0)
@@ -256,7 +256,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 				//返回当前超时未应答的消息
 				//注意：因为XReadGroup指令是获取大于指定编号的消息，因此必须对当前超时未应答的消息编号递减一个数值
-				return database.StreamReadGroupAsync(queueKey, _group, _client, RedisUtility.DecreaseId(_pendingMessageId), 1);
+				return database.StreamReadGroupAsync(queueKey, _group, _client, RedisQueueUtility.DecreaseId(_pendingMessageId), 1);
 			}
 
 			//返回最新的未投递消息
@@ -284,7 +284,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			ValueTask Acknowledge(CancellationToken cancellation)
 			{
-				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(RedisUtility.GetQueueName(_queue.Name, topic), _group, result[0].Id));
+				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(RedisQueueUtility.GetQueueName(_queue.Name, topic), _group, result[0].Id));
 			}
 		}
 
@@ -304,7 +304,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				return null;
 
 			//将消息转发到死信队列
-			var result = database.StreamAdd($"{key}{DEAD_SUFFIX}", RedisUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
+			var result = database.StreamAdd($"{key}{DEAD_SUFFIX}", RedisQueueUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
 
 			//如果死信队列转发成功则将该消息应答
 			if(result.HasValue)
