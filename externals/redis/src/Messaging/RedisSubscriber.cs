@@ -171,7 +171,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				else if(result.IsEmpty) //如果是分组接受模式并且队列组已被消费完
 				{
 					//如果距离上次转移的时长已达到阈值
-					//注意：由于XAUTOCLAIM指令会重置未应答记录的空闲时长，因此不能每次IdleTimeout都调用，必须以更长(譬如每小时)间隔进行调用。
+					//注意：由于XAutoClaim指令会重置未应答记录的空闲时长，因此不能每次IdleTimeout都调用，必须以更长(譬如每小时)间隔进行调用。
 					if((DateTime.Now - _lastClaimTime).Ticks >= Math.Max(_idleTimeout.Ticks, TICKS_PERHOUR))
 					{
 						//将超时未应答的消息转移给当前消费者
@@ -226,14 +226,28 @@ namespace Zongsoft.Externals.Redis.Messaging
 					1,
 					RedisUtility.IncreaseId(_pendingMessageId));
 
-				if(pendings != null && pendings.Length > 0)
+				//如果没有超时未应答的消息则返回空任务
+				if(pendings == null || pendings.Length == 0)
 				{
-					_pendingMessageId = pendings[0].MessageId;
-					return database.StreamReadGroupAsync(queueKey, _group, _client, RedisUtility.DecreaseId(_pendingMessageId), 1);
+					_pendingMessageId = null;
+					return Task.FromResult(Array.Empty<StreamEntry>());
 				}
 
-				_pendingMessageId = null;
-				return Task.FromResult(Array.Empty<StreamEntry>());
+				_pendingMessageId = pendings[0].MessageId;
+
+				//如果超时未应答的消息投递次数大于阈值则转为死信
+				if(pendings[0].DeliveryCount > 10000)
+				{
+					var deadId = this.Dead(database, queueKey, pendings[0].MessageId, topic);
+
+					//如果死信队列投递成功则返回空任务
+					if(!string.IsNullOrEmpty(deadId))
+						return Task.FromResult(Array.Empty<StreamEntry>());
+				}
+
+				//返回当前超时未应答的消息
+				//注意：因为XReadGroup指令是获取大于指定编号的消息，因此必须对当前超时未应答的消息编号递减一个数值
+				return database.StreamReadGroupAsync(queueKey, _group, _client, RedisUtility.DecreaseId(_pendingMessageId), 1);
 			}
 
 			//返回最新的未投递消息
@@ -263,6 +277,26 @@ namespace Zongsoft.Externals.Redis.Messaging
 			{
 				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(RedisUtility.GetQueueName(_queue.Name, topic), _group, result[0].Id));
 			}
+		}
+
+		private string Dead(IDatabase database, string key, string id, string topic)
+		{
+			var task = database.StreamRangeAsync(key, id, id, 1);
+			var message = this.GetReceiveResult(task, topic);
+
+			//如果消息获取失败则返回
+			if(message.IsEmpty)
+				return null;
+
+			//将消息转发到死信队列
+			var result = database.StreamAdd($"{key}:Dead!", RedisUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
+
+			//如果死信队列转发成功则将该消息应答
+			if(result.HasValue)
+				message.Acknowledge();
+
+			//返回死信消息编号
+			return result;
 		}
 		#endregion
 
