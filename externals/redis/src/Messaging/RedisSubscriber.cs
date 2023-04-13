@@ -99,7 +99,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 				foreach(var topic in topics)
 				{
-					var queueKey = GetRedisQueueName(topic);
+					var queueKey = RedisUtility.GetQueueName(_queue.Name, topic);
 
 					//如果指定的队列不存在或指定的消费组不存在则创建它
 					if(!await database.KeyExistsAsync(queueKey) || (await database.StreamGroupInfoAsync(queueKey)).All(x => x.Name != _group))
@@ -169,7 +169,14 @@ namespace Zongsoft.Externals.Redis.Messaging
 					if(DateTime.Now - _lastClaimTime >= _idleTimeout)
 					{
 						//将超时未应答的消息转移给当前消费者
-						_queue.Database.StreamAutoClaimIdsOnly(GetRedisQueueName(topics[index]), _group, _client, (long)_idleTimeout.TotalMilliseconds, "0", int.MaxValue, CommandFlags.FireAndForget);
+						_queue.Database.StreamAutoClaimIdsOnly(
+							RedisUtility.GetQueueName(_queue.Name, topics[index]),
+							_group,
+							_client,
+							(long)_idleTimeout.TotalMilliseconds,
+							"0",
+							int.MaxValue,
+							CommandFlags.FireAndForget);
 
 						//更新最后转移时间
 						_lastClaimTime = DateTime.Now;
@@ -194,7 +201,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		private Task<StreamEntry[]> GetReceiveTask(string topic)
 		{
 			var database = _queue.Database;
-			var queueKey = GetRedisQueueName(topic);
+			var queueKey = RedisUtility.GetQueueName(_queue.Name, topic);
 
 			if(string.IsNullOrEmpty(_group))
 				return string.IsNullOrEmpty(_lastMessageId) ?
@@ -205,7 +212,13 @@ namespace Zongsoft.Externals.Redis.Messaging
 			if(_pendingAcquired)
 			{
 				//获取当前消费者超时未应答的消息
-				var pendings = database.GetPendingMessages(queueKey, _group, _client, _idleTimeout, 1, RedisUtility.IncreaseId(_pendingMessageId));
+				var pendings = database.GetPendingMessages(
+					queueKey,
+					_group,
+					_client,
+					_idleTimeout,
+					1,
+					string.IsNullOrEmpty(_pendingMessageId) ? "-" : RedisUtility.IncreaseId(_pendingMessageId));
 
 				if(pendings != null && pendings.Length > 0)
 				{
@@ -242,14 +255,9 @@ namespace Zongsoft.Externals.Redis.Messaging
 
 			ValueTask Acknowledge(CancellationToken cancellation)
 			{
-				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(GetRedisQueueName(topic), _group, result[0].Id));
+				return new ValueTask(_queue.Database.StreamAcknowledgeAsync(RedisUtility.GetQueueName(_queue.Name, topic), _group, result[0].Id));
 			}
 		}
-		#endregion
-
-		#region 私有方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetRedisQueueName(string topic) => string.IsNullOrEmpty(topic) ? _queue.Name : $"{_queue.Name}:{topic}";
 		#endregion
 
 		#region 处置方法

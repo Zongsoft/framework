@@ -70,8 +70,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 				new NameValueEntry("Tags", tags),
 			};
 
-			var key = string.IsNullOrWhiteSpace(topic) ? this.Name : $"{this.Name}:{topic}";
-			return await _database.StreamAddAsync(key, payload);
+			return await _database.StreamAddAsync(RedisUtility.GetQueueName(this.Name, topic), payload);
 		}
 		#endregion
 

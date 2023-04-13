@@ -124,6 +124,7 @@ namespace Zongsoft.Externals.Redis
 					new object[] { key, group, minimum, maximum, count, consumer };
 
 			var result = database.Execute(@"XPENDING", args);
+
 			if(result == null || result.IsNull || result.Type != ResultType.MultiBulk)
 				return Array.Empty<RedisQueuePendingMessageInfo>();
 
@@ -159,6 +160,8 @@ namespace Zongsoft.Externals.Redis
 
 			return pendings;
 		}
+
+		internal static string GetQueueName(string name, string topic) => string.IsNullOrWhiteSpace(topic) ? $"Zongsoft.Queue:{name}" : $"Zongsoft.Queue:{name}:{topic}";
 	}
 
 	public readonly struct RedisQueuePendingMessageInfo
