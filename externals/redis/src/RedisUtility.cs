@@ -35,6 +35,58 @@ namespace Zongsoft.Externals.Redis
 {
 	public static class RedisUtility
 	{
+		public static string IncreaseId(ReadOnlySpan<char> id)
+		{
+			if(id.IsEmpty || (id.Length == 1 && (id[0] == '0' || id[0] == '-')))
+				return "0-1";
+
+			long value;
+			var index = id.LastIndexOf('-');
+
+			if(index < 0) //没有分隔符
+				return long.TryParse(id, out value) ? $"{value}-1" : throw IllegalId(id);
+
+			if(index == 0) //分隔符位于首字符
+				return long.TryParse(id[1..], out value) ? $"0-{value + 1}" : throw IllegalId(id);
+
+			if(index == id.Length - 1) //分隔符位于最末尾
+				return $"{id}1";
+
+			return long.TryParse(id[(index + 1)..], out value) ? $"{id[..index]}-{value + 1}" : throw IllegalId(id);
+		}
+
+		public static string DecreaseId(ReadOnlySpan<char> id)
+		{
+			if(id.IsEmpty || (id.Length == 1 && (id[0] == '0' || id[0] == '-')) || id == "0-0")
+				return "0";
+
+			long value;
+			var index = id.LastIndexOf('-');
+
+			if(index < 0) //没有分隔符
+				return long.TryParse(id, out value) ? $"{value - 1}-{long.MaxValue}" : throw IllegalId(id);
+
+			if(index == 0) //分隔符位于首字符
+				return long.TryParse(id[1..], out value) ? value > 1 ? $"0-{value - 1}" : "0" : throw IllegalId(id);
+
+			if(index == id.Length - 1) //分隔符位于最末尾
+				return long.TryParse(id[0..index], out value) ? (value > 0 ? $"{value - 1}-{long.MaxValue}" : "0") : throw IllegalId(id);
+
+			if(long.TryParse(id[(index + 1)..], out value))
+			{
+				if(value > 0)
+					return $"{id[..index]}-{value - 1}";
+
+				if(long.TryParse(id[0..index], out value))
+					return value > 0 ? $"{value - 1}-{long.MaxValue}" : "0";
+			}
+
+			throw IllegalId(id);
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static Exception IllegalId(ReadOnlySpan<char> id) => new ArgumentException($"The specified '{id}' is an invalid message id value.");
+
 		public static RedisQueuePendingMessageInfo[] GetPendingMessages(this IDatabase database, string key, string group, TimeSpan idle, int count = 100, string minimum = "-", string maximum = "+") =>
 			GetPendingMessages(database, key, group, null, idle > TimeSpan.Zero ? (long)idle.TotalMilliseconds : 0L, count, minimum, maximum);
 
