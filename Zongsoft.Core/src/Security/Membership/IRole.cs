@@ -66,6 +66,11 @@ namespace Zongsoft.Security.Membership
 		string Namespace { get; set; }
 
 		/// <summary>
+		/// 获取或设置角色所属的模块标识。
+		/// </summary>
+		string Module { get; set; }
+
+		/// <summary>
 		/// 获取或设置角色的描述信息。
 		/// </summary>
 		string Description { get; set; }
