@@ -3,18 +3,19 @@ SET TIME_ZONE='+08:00';
 
 CREATE TABLE IF NOT EXISTS `Security_Role` (
   `RoleId`      int unsigned NOT NULL COMMENT '主键，角色编号',
-  `Namespace`   varchar(50)  NULL     COMMENT '角色所属的命名空间，该字段表示应用或组织机构的标识',
-  `Name`        varchar(50)  NOT NULL COMMENT '角色名称，该名称在所属命名空间内具有唯一性',
+  `Namespace`   varchar(50)  NULL     COMMENT '命名空间，表示应用或组织机构的标识',
+  `Module`      varchar(50)  NOT NULL DEFAULT '_' COMMENT '模块标识，表示对应的业务模块标识',
+  `Name`        varchar(50)  NOT NULL COMMENT '角色名称，所属命名空间和模块内具有唯一性',
   `FullName`    varchar(50)  NULL     COMMENT '角色全称',
   `Description` varchar(500) NULL     COMMENT '描述信息',
   PRIMARY KEY (`RoleId`),
-  UNIQUE INDEX `UX_Security_Role_Name` (`Namespace`, `Name`)
+  UNIQUE INDEX `UX_Security_Role_Name` (`Namespace`, `Module`, `Name`)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8 COMMENT='角色表';
 
 CREATE TABLE IF NOT EXISTS `Security_User` (
   `UserId`            int unsigned     NOT NULL COMMENT '主键，用户编号',
-  `Namespace`         varchar(50)      NULL     COMMENT '用户所属的命名空间，该字段表示应用或组织机构的标识',
-  `Name`              varchar(50)      NOT NULL COMMENT '用户名称，该名称在所属命名空间内具有唯一性',
+  `Namespace`         varchar(50)      NULL     COMMENT '命名空间，表示应用或组织机构的标识',
+  `Name`              varchar(50)      NOT NULL COMMENT '用户名称，所属命名空间内具有唯一性',
   `FullName`          varchar(50)      NULL     COMMENT '用户全称',
   `Password`          varbinary(64)    NULL     COMMENT '用户的登录口令',
   `PasswordSalt`      bigint unsigned  NULL     COMMENT '口令加密向量(随机数)',

@@ -11,6 +11,7 @@
 			<property name="Name" type="string" length="50" nullable="false" />
 			<property name="FullName" type="string" length="50" nullable="true" />
 			<property name="Namespace" type="string" length="50" nullable="false" />
+			<property name="Module" type="string" length="50" nullable="false" default="_" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
 			<complexProperty name="Children" port="Member" multiplicity="*" immutable="false">

@@ -5,21 +5,21 @@
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 UserId            | int       | 4   | ✗ | 主键，用户编号
-Namespace         | varchar   | 50  | ✓ | 用户所属命名空间(_表示对应的组织机构标识_)
+Namespace         | varchar   | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name              | varchar   | 50  | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
 FullName          | nvarchar  | 50  | ✓ | 用户全称
 Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
 Phone             | varchar   | 50  | ✓ | 绑定的手机号码(_在所属命名空间内具有唯一性_)
-Status            | byte      | 1   | ✗ | 用户状态 _(0:正常; 1:待批准; 2:已禁用)_
+Status            | byte      | 1   | ✗ | 用户状态(_0:正常; 1:待批准; 2:已禁用_)
 StatusTimestamp   | datetime  | -   | ✓ | 状态更改时间
 PasswordQuestion1 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[1]
-PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1] _(哈希值)_
+PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1] (_哈希值_)
 PasswordQuestion2 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[2]
-PasswordAnswer2   | varbinary | 64  | ✓ | 用户的密码问答的答案[2] _(哈希值)_
+PasswordAnswer2   | varbinary | 64  | ✓ | 用户的密码问答的答案[2] (_哈希值_)
 PasswordQuestion3 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[3]
-PasswordAnswer3   | varbinary | 64  | ✓ | 用户的密码问答的答案[3] _(哈希值)_
+PasswordAnswer3   | varbinary | 64  | ✓ | 用户的密码问答的答案[3] (_哈希值_)
 Creation          | datetime  | -   | ✗ | 创建时间
 Modification      | datetime  | -   | ✓ | 最后修改时间
 Description       | nvarchar  | 500 | ✓ | 描述信息
@@ -30,8 +30,9 @@ Description       | nvarchar  | 500 | ✓ | 描述信息
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 RoleId      | int      | 4   | ✗ | 主键，角色编号
-Namespace   | varchar  | 50  | ✓ | 角色所属命名空间(_表示对应的组织机构标识_)
-Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间内具有唯一性_)
+Namespace   | varchar  | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
+Module      | varchar  | 50  | ✗ | 模块标识(_表示对应的业务模块标识_)
+Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间和模块内具有唯一性_)
 FullName    | nvarchar | 50  | ✓ | 角色全称
 Description | nvarchar | 500 | ✓ | 描述信息
 
@@ -42,7 +43,7 @@ Description | nvarchar | 500 | ✓ | 描述信息
 ------- |:-------:|:---:|:---:| ----
 RoleId     | int  | 4 | ✗ | 主键，角色编号
 MemberId   | int  | 4 | ✗ | 主键，用户或角色的编号
-MemberType | byte | 1 | ✗ | 主键，成员类型 _(0:用户; 1:角色)_
+MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 
 
 ## 权限表 `Permission`
@@ -50,7 +51,7 @@ MemberType | byte | 1 | ✗ | 主键，成员类型 _(0:用户; 1:角色)_
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 MemberId   | int     | 4  | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1  | ✗ | 主键，成员类型 _(0:用户; 1:角色)_
+MemberType | byte    | 1  | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 SchemaId   | varchar | 50 | ✗ | 主键，授权目标的标识
 ActionId   | varchar | 50 | ✗ | 主键，授权行为的标识
 Granted    | bool    | -  | ✗ | 授权标记
@@ -65,7 +66,7 @@ Granted    | bool    | -  | ✗ | 授权标记
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 MemberId   | int     | 4   | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1   | ✗ | 主键，成员类型 _(0:用户; 1:角色)_
+MemberType | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 SchemaId   | varchar | 50  | ✗ | 主键，授权目标的标识
 ActionId   | varchar | 50  | ✗ | 主键，授权行为的标识
 Filter     | varchar | 500 | ✗ | 过滤表达式
