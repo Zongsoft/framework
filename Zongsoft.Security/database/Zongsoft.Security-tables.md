@@ -31,8 +31,7 @@ Description       | nvarchar  | 500 | ✓ | 描述信息
 ------- |:-------:|:---:|:---:| ----
 RoleId      | int      | 4   | ✗ | 主键，角色编号
 Namespace   | varchar  | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
-Module      | varchar  | 50  | ✗ | 模块标识(_表示对应的业务模块标识_)
-Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间和模块内具有唯一性_)
+Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间内具有唯一性_)
 FullName    | nvarchar | 50  | ✓ | 角色全称
 Description | nvarchar | 500 | ✓ | 描述信息
 

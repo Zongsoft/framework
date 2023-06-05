@@ -1,7 +1,6 @@
 CREATE TABLE [dbo].[Security_Role] (
   [RoleId]      INT           NOT NULL,
   [Namespace]   VARCHAR(50)   NULL,
-  [Module]      VARCHAR(50)   NOT NULL DEFAULT '_',
   [Name]        VARCHAR(50)   NOT NULL,
   [FullName]    NVARCHAR(50)  NULL,
   [Description] NVARCHAR(500) NULL,
@@ -87,8 +86,7 @@ GO
 
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'主键，角色编号', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'RoleId'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'命名空间，表示应用或组织机构的标识', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Namespace'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'模块标识，表示对应的业务模块标识', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Module'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色名称，所属命名空间和模块内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Name'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色名称，所属命名空间内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Name'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色全称', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'FullName'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'描述信息', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Description'
 GO
