@@ -87,7 +87,7 @@ namespace Zongsoft.Security.Membership
 		/// 	<para>注意：该集合仅包含了最终的已授权状态信息。</para>
 		/// 	<para>该方法对指定角色及其所属角色进行逐级向上展开做授权计算，因此只需对本方法一次调用即可得知指定角色的最终授权计算结果。</para>
 		/// </remarks>
-		IEnumerable<AuthorizationToken> Authorizes(IRole role);
+		IEnumerable<AuthorizationToken> Authorizes(IRoleModel role);
 
 		/// <summary>
 		/// 获取指定用户或角色的最终授权状态集。

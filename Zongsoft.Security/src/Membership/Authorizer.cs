@@ -50,9 +50,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public Authorizer()
-		{
-		}
+		public Authorizer() { }
 		#endregion
 
 		#region 公共属性
@@ -95,7 +93,7 @@ namespace Zongsoft.Security.Membership
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
-			if(this.InRoles(user.GetIdentifier<uint>(), IRole.Administrators))
+			if(this.InRoles(user.GetIdentifier<uint>(), IRoleModel.Administrators))
 				return true;
 
 			//获取指定的安全凭证对应的有效的授权状态集
@@ -124,7 +122,7 @@ namespace Zongsoft.Security.Membership
 			return MembershipUtility.GetAuthorizes(this.DataAccess, identity);
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(IRole role)
+		public IEnumerable<AuthorizationToken> Authorizes(IRoleModel role)
 		{
 			if(role == null)
 				throw new ArgumentNullException(nameof(role));
@@ -161,42 +159,35 @@ namespace Zongsoft.Security.Membership
 
 		public bool InRoles(IUserIdentity user, params string[] roleNames)
 		{
-			return MembershipUtility.InRoles(this.DataAccess, user as IUser, roleNames);
+			return MembershipUtility.InRoles(this.DataAccess, user as IUserModel, roleNames);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IUser GetUser(uint userId, string schema = null)
+		protected virtual IUserModel GetUser(uint userId, string schema = null)
 		{
 			var fetcher = ApplicationContext.Current.Services.Resolve<IUserFetcher>();
 
 			if(fetcher != null)
 				return fetcher.GetUser(userId, schema);
 
-			return this.DataAccess.Select<IUser>(Mapping.Instance.User, Condition.Equal(nameof(IUser.UserId), userId), schema).FirstOrDefault();
+			return this.DataAccess.Select<IUserModel>(Mapping.Instance.User, Condition.Equal(nameof(IUserModel.UserId), userId), schema).FirstOrDefault();
 		}
 
-		protected virtual IRole GetRole(uint roleId, string schema = null)
+		protected virtual IRoleModel GetRole(uint roleId, string schema = null)
 		{
 			var fetcher = ApplicationContext.Current.Services.Resolve<IRoleFetcher>();
 
 			if(fetcher != null)
 				return fetcher.GetRole(roleId, schema);
 
-			return this.DataAccess.Select<IRole>(Mapping.Instance.Role, Condition.Equal(nameof(IRole.RoleId), roleId), schema).FirstOrDefault();
+			return this.DataAccess.Select<IRoleModel>(Mapping.Instance.Role, Condition.Equal(nameof(IRoleModel.RoleId), roleId), schema).FirstOrDefault();
 		}
 		#endregion
 
 		#region 事件激发
-		protected virtual void OnAuthorizing(AuthorizationContext context)
-		{
-			this.Authorizing?.Invoke(this, context);
-		}
-
-		protected virtual void OnAuthorized(AuthorizationContext context)
-		{
-			this.Authorized?.Invoke(this, context);
-		}
+		protected virtual void OnAuthorizing(AuthorizationContext context) => this.Authorizing?.Invoke(this, context);
+		protected virtual void OnAuthorized(AuthorizationContext context) => this.Authorized?.Invoke(this, context);
 		#endregion
 	}
 }

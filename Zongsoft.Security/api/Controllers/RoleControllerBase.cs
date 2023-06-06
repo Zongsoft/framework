@@ -44,14 +44,14 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[Area(Modules.Security)]
-	[Authorize(Roles = IRole.Administrators + "," + IRole.Security)]
+	[Authorize(Roles = IRoleModel.Administrators + "," + IRoleModel.Security)]
 	[Route("{area}/Roles")]
-	public abstract class RoleControllerBase<TRole> : ControllerBase where TRole : IRole
+	public abstract class RoleControllerBase<TRole> : ControllerBase where TRole : IRoleModel
 	{
 		#region 成员字段
 		private IAuthorizer _authorizer;
 		private IRoleProvider<TRole> _roleProvider;
-		private IMemberProvider<IRole, IUser> _memberProvider;
+		private IMemberProvider<IRoleModel, IUserModel> _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
 
@@ -75,7 +75,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IMemberProvider<IRole, IUser> MemberProvider
+		public IMemberProvider<IRoleModel, IUserModel> MemberProvider
 		{
 			get => _memberProvider;
 			set => _memberProvider = value ?? throw new ArgumentNullException();
@@ -350,7 +350,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPut("{id}/Permissions")]
-		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<Permission> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<PermissionModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.Role, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissions), new { id }, null)) :
@@ -389,7 +389,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPut("{id}/Permission.Filters")]
-		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilter> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilterModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.Role, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtAction(nameof(GetPermissionFilters), new { id }, null)) :

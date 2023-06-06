@@ -34,8 +34,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IMemberProvider<IRole, IUser>))]
-	public class MemberProvider : MemberProviderBase<IRole, IUser>
+	[Service(typeof(IMemberProvider<IRoleModel, IUserModel>))]
+	public class MemberProvider : MemberProviderBase<IRoleModel, IUserModel>
 	{
 		#region 构造函数
 		public MemberProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }

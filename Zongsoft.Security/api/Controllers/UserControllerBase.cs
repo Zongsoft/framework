@@ -46,12 +46,12 @@ namespace Zongsoft.Security.Web.Controllers
 	[Area(Modules.Security)]
 	[Authorize]
 	[Route("[area]/Users")]
-	public abstract class UserControllerBase<TUser> : ControllerBase where TUser : IUser
+	public abstract class UserControllerBase<TUser> : ControllerBase where TUser : IUserModel
 	{
 		#region 成员字段
 		private IUserProvider<TUser> _userProvider;
 		private IAuthorizer _authorizer;
-		private IMemberProvider<IRole, IUser> _memberProvider;
+		private IMemberProvider<IRoleModel, IUserModel> _memberProvider;
 		private IPermissionProvider _permissionProvider;
 		#endregion
 
@@ -75,7 +75,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[ServiceDependency(IsRequired = true)]
-		public IMemberProvider<IRole, IUser> MemberProvider
+		public IMemberProvider<IRoleModel, IUserModel> MemberProvider
 		{
 			get => _memberProvider;
 			set => _memberProvider = value ?? throw new ArgumentNullException();
@@ -520,7 +520,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permissions")]
 		[HttpPut("Permissions")]
-		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<Permission> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<PermissionModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissions), new { id }, null)) :
@@ -563,7 +563,7 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permission.Filters")]
 		[HttpPut("Permission.Filters")]
-		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilter> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilterModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissionFilters), new { id }, null)) :

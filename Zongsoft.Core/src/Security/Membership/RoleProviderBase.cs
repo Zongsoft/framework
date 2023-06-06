@@ -37,7 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class RoleProviderBase<TRole> : IRoleProvider<TRole> where TRole : IRole
+	public abstract class RoleProviderBase<TRole> : IRoleProvider<TRole> where TRole : IRoleModel
 	{
 		#region 事件定义
 		public event EventHandler<ChangedEventArgs> Changed;
@@ -64,7 +64,7 @@ namespace Zongsoft.Security.Membership
 		#region 角色管理
 		public TRole GetRole(uint roleId)
 		{
-			return this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRole.RoleId), roleId)).FirstOrDefault();
+			return this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRoleModel.RoleId), roleId)).FirstOrDefault();
 		}
 
 		public TRole GetRole(string name, string @namespace = null)
@@ -72,7 +72,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			return this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRole.Name), name) & this.GetNamespace(@namespace)).FirstOrDefault();
+			return this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRoleModel.Name), name) & this.GetNamespace(@namespace)).FirstOrDefault();
 		}
 
 		public IEnumerable<TRole> GetRoles(string @namespace, Paging paging = null)
@@ -82,7 +82,7 @@ namespace Zongsoft.Security.Membership
 
 		public bool Exists(uint roleId)
 		{
-			return this.DataAccess.Exists<TRole>(Condition.Equal(nameof(IRole.RoleId), roleId));
+			return this.DataAccess.Exists<TRole>(Condition.Equal(nameof(IRoleModel.RoleId), roleId));
 		}
 
 		public bool Exists(string name, string @namespace = null)
@@ -90,16 +90,16 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(name))
 				return false;
 
-			return this.DataAccess.Exists<IRole>(Condition.Equal(nameof(IRole.Name), name) & this.GetNamespace(@namespace));
+			return this.DataAccess.Exists<IRoleModel>(Condition.Equal(nameof(IRoleModel.Name), name) & this.GetNamespace(@namespace));
 		}
 
 		public bool SetNamespace(uint roleId, string @namespace)
 		{
 			if(this.DataAccess.Update<TRole>(
 				new { Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim() },
-				new Condition(nameof(IRole.RoleId), roleId)) > 0)
+				new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRole.Namespace), @namespace);
+				this.OnChanged(roleId, nameof(IRoleModel.Namespace), @namespace);
 				return true;
 			}
 
@@ -111,7 +111,7 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Update<TRole>(new
 			{
 				Namespace = string.IsNullOrWhiteSpace(newNamespace) ? null : newNamespace.Trim(),
-			}, new Condition(nameof(IRole.Namespace), oldNamespace));
+			}, new Condition(nameof(IRoleModel.Namespace), oldNamespace));
 		}
 
 		public bool SetName(uint roleId, string name)
@@ -120,8 +120,8 @@ namespace Zongsoft.Security.Membership
 				throw new ArgumentNullException(nameof(name));
 
 			//验证指定的名称是否为系统内置名
-			if(string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
-			   string.Equals(name, IRole.Security, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, IRoleModel.Administrators, StringComparison.OrdinalIgnoreCase) ||
+			   string.Equals(name, IRoleModel.Security, StringComparison.OrdinalIgnoreCase))
 				throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
 
 			//验证指定的名称是否合法
@@ -132,9 +132,9 @@ namespace Zongsoft.Security.Membership
 				{
 					Name = name.Trim()
 				},
-				new Condition(nameof(IRole.RoleId), roleId)) > 0)
+				new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRole.Name), name);
+				this.OnChanged(roleId, nameof(IRoleModel.Name), name);
 				return true;
 			}
 
@@ -148,9 +148,9 @@ namespace Zongsoft.Security.Membership
 				{
 					FullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName.Trim(),
 				},
-				new Condition(nameof(IRole.RoleId), roleId)) > 0)
+				new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRole.FullName), fullName);
+				this.OnChanged(roleId, nameof(IRoleModel.FullName), fullName);
 				return true;
 			}
 
@@ -163,9 +163,9 @@ namespace Zongsoft.Security.Membership
 				new
 				{
 					Description = string.IsNullOrEmpty(description) ? null : description
-				}, new Condition(nameof(IRole.RoleId), roleId)) > 0)
+				}, new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRole.Description), description);
+				this.OnChanged(roleId, nameof(IRoleModel.Description), description);
 				return true;
 			}
 
@@ -178,8 +178,8 @@ namespace Zongsoft.Security.Membership
 				return 0;
 
 			return this.DataAccess.Delete<TRole>(
-				Condition.In(nameof(IRole.RoleId), ids) &
-				Condition.NotIn(nameof(IRole.Name), IRole.Administrators, IRole.Security),
+				Condition.In(nameof(IRoleModel.RoleId), ids) &
+				Condition.NotIn(nameof(IRoleModel.Name), IRoleModel.Administrators, IRoleModel.Security),
 				"Members,Permissions,PermissionFilters");
 		}
 
@@ -249,11 +249,11 @@ namespace Zongsoft.Security.Membership
 			if(!(role is IModel model) || !model.HasChanges())
 				return false;
 
-			if(model.HasChanges(nameof(IRole.Name)) && !string.IsNullOrWhiteSpace(role.Name))
+			if(model.HasChanges(nameof(IRoleModel.Name)) && !string.IsNullOrWhiteSpace(role.Name))
 			{
 				//验证指定的名称是否为系统内置名
-				if(string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
-				   string.Equals(role.Name, IRole.Security, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(role.Name, IRoleModel.Administrators, StringComparison.OrdinalIgnoreCase) ||
+				   string.Equals(role.Name, IRoleModel.Security, StringComparison.OrdinalIgnoreCase))
 					throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
 
 				//验证指定的名称是否合法
@@ -261,7 +261,7 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//验证指定的命名空间是否合规
-			if(model.HasChanges(nameof(IRole.Namespace)))
+			if(model.HasChanges(nameof(IRoleModel.Namespace)))
 			{
 				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
 
@@ -271,7 +271,7 @@ namespace Zongsoft.Security.Membership
 					role.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(role, new Condition(nameof(IRole.RoleId), roleId)) > 0)
+			if(this.DataAccess.Update(role, new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{

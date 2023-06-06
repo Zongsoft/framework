@@ -36,7 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class MemberProviderBase<TRole, TUser> : IMemberProvider<TRole, TUser> where TRole : IRole where TUser : IUser
+	public abstract class MemberProviderBase<TRole, TUser> : IMemberProvider<TRole, TUser> where TRole : IRoleModel where TUser : IUserModel
 	{
 		#region 构造函数
 		protected MemberProviderBase(IServiceProvider serviceProvider)
@@ -62,10 +62,10 @@ namespace Zongsoft.Security.Membership
 			switch(memberType)
 			{
 				case MemberType.User:
-					var user = this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUser.UserId), memberId)).FirstOrDefault();
+					var user = this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUserModel.UserId), memberId)).FirstOrDefault();
 					return user == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, user);
 				case MemberType.Role:
-					var role = this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRole.RoleId), memberId)).FirstOrDefault();
+					var role = this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRoleModel.RoleId), memberId)).FirstOrDefault();
 					return role == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, role);
 				default:
 					return null;

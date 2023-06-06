@@ -53,10 +53,10 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 重写方法
-		protected override IUser GetUser(string identifier)
+		protected override IUserModel GetUser(string identifier)
 		{
 			ICondition criteria = Utility.GetIdentityCondition(identifier);
-			return _serviceProvider.GetDataAccess().Select<IUser>(Mapping.Instance.User, criteria).FirstOrDefault();
+			return _serviceProvider.GetDataAccess().Select<IUserModel>(Mapping.Instance.User, criteria).FirstOrDefault();
 		}
 
 		protected override TimeSpan GetPeriod(string scenario)

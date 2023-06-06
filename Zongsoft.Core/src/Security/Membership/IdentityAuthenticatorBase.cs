@@ -132,9 +132,9 @@ namespace Zongsoft.Security.Membership
 
 		#region 虚拟方法
 		protected abstract uint GetPassword(string identity, string @namespace, out byte[] password, out long passwordSalt, out UserStatus status, out DateTime? statusTimestamp);
-		protected abstract IUser GetUser(IIdentityTicket ticket);
+		protected abstract IUserModel GetUser(IIdentityTicket ticket);
 		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(4);
-		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
+		protected virtual ClaimsIdentity Identity(IUserModel user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
 		#endregion
 
 		#region 私有方法

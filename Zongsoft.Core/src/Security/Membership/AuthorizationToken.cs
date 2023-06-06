@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security.Membership
 {
-	public struct AuthorizationToken : IEquatable<AuthorizationToken>
+	public readonly struct AuthorizationToken : IEquatable<AuthorizationToken>
 	{
 		#region 构造函数
 		public AuthorizationToken(string schema, params ActionToken[] actions)
@@ -67,36 +67,20 @@ namespace Zongsoft.Security.Membership
 		}
 		#endregion
 
+		#region 重写符号
+		public static bool operator ==(AuthorizationToken left, AuthorizationToken right) => left.Equals(right);
+		public static bool operator !=(AuthorizationToken left, AuthorizationToken right) => !(left == right);
+		#endregion
+
 		#region 重写方法
-		public bool Equals(AuthorizationToken other)
-		{
-			return string.Equals(this.Schema, other.Schema, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((AuthorizationToken)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return this.Schema.ToUpperInvariant().GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			if(this.Actions == null || this.Actions.Length == 0)
-				return this.Schema;
-			else
-				return this.Schema + "(" + string.Join(",", this.Actions) + ")";
-		}
+		public bool Equals(AuthorizationToken other) => string.Equals(this.Schema, other.Schema, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is AuthorizationToken other && this.Equals(other);
+		public override int GetHashCode() => this.Schema.ToUpperInvariant().GetHashCode();
+		public override string ToString() => this.Actions == null || this.Actions.Length == 0 ? this.Schema : $"{this.Schema}({string.Join(",", this.Actions)})";
 		#endregion
 
 		#region 嵌套结构
-		public struct ActionToken : IEquatable<ActionToken>
+		public readonly struct ActionToken : IEquatable<ActionToken>
 		{
 			#region 构造函数
 			public ActionToken(string action, string filter = null)
@@ -114,32 +98,16 @@ namespace Zongsoft.Security.Membership
 			public string Filter { get; }
 			#endregion
 
+			#region 重写符号
+			public static bool operator ==(ActionToken left, ActionToken right) => left.Equals(right);
+			public static bool operator !=(ActionToken left, ActionToken right) => !(left == right);
+			#endregion
+
 			#region 重写方法
-			public bool Equals(ActionToken other)
-			{
-				return string.Equals(this.Action, other.Action, StringComparison.OrdinalIgnoreCase);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != this.GetType())
-					return false;
-
-				return this.Equals((ActionToken)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return this.Action.ToUpperInvariant().GetHashCode();
-			}
-
-			public override string ToString()
-			{
-				if(string.IsNullOrEmpty(this.Filter))
-					return this.Action;
-				else
-					return this.Action + ":" + this.Filter;
-			}
+			public bool Equals(ActionToken other) => string.Equals(this.Action, other.Action, StringComparison.OrdinalIgnoreCase);
+			public override bool Equals(object obj) => obj is ActionToken other && this.Equals(other);
+			public override int GetHashCode() => this.Action.ToUpperInvariant().GetHashCode();
+			public override string ToString() => string.IsNullOrEmpty(this.Filter) ? this.Action : $"{this.Action}:{this.Filter}";
 			#endregion
 		}
 		#endregion

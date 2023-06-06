@@ -283,9 +283,9 @@ namespace Zongsoft.Security
 			else
 				model = Activator.CreateInstance<T>();
 
-			if(typeof(Membership.IUser).IsAssignableFrom(typeof(T)))
+			if(typeof(Membership.IUserModel).IsAssignableFrom(typeof(T)))
 			{
-				var user = (Membership.IUser)model;
+				var user = (Membership.IUserModel)model;
 				user.FullName = identity.Label;
 
 				var property = model.GetType().GetProperty("Properties");
@@ -506,7 +506,7 @@ namespace Zongsoft.Security
 			return false;
 		}
 
-		private static bool SetUserProperty(Membership.IUser user, Claim claim)
+		private static bool SetUserProperty(Membership.IUserModel user, Claim claim)
 		{
 			switch(claim.Type)
 			{
@@ -558,25 +558,25 @@ namespace Zongsoft.Security
 			switch(claim.Type)
 			{
 				case ClaimTypes.Name:
-					return model.TrySetValue(nameof(Membership.IUser.Name), claim.Value);
+					return model.TrySetValue(nameof(Membership.IUserModel.Name), claim.Value);
 				case ClaimTypes.NameIdentifier:
-					return uint.TryParse(claim.Value, out var userId) && model.TrySetValue(nameof(Membership.IUser.UserId), userId);
+					return uint.TryParse(claim.Value, out var userId) && model.TrySetValue(nameof(Membership.IUserModel.UserId), userId);
 				case ClaimNames.Namespace:
-					return model.TrySetValue(nameof(Membership.IUser.Namespace), claim.Value);
+					return model.TrySetValue(nameof(Membership.IUserModel.Namespace), claim.Value);
 				case ClaimNames.Description:
-					return model.TrySetValue(nameof(Membership.IUser.Description), claim.Value);
+					return model.TrySetValue(nameof(Membership.IUserModel.Description), claim.Value);
 				case ClaimTypes.Email:
-					return model.TrySetValue(nameof(Membership.IUser.Email), claim.Value);
+					return model.TrySetValue(nameof(Membership.IUserModel.Email), claim.Value);
 				case ClaimTypes.MobilePhone:
-					return model.TrySetValue(nameof(Membership.IUser.Phone), claim.Value);
+					return model.TrySetValue(nameof(Membership.IUserModel.Phone), claim.Value);
 				case ClaimNames.UserStatus:
-					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && model.TrySetValue(nameof(Membership.IUser.Status), status);
+					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && model.TrySetValue(nameof(Membership.IUserModel.Status), status);
 				case ClaimNames.UserStatusTimestamp:
-					return DateTime.TryParse(claim.Value, out var timestamp) && model.TrySetValue(nameof(Membership.IUser.StatusTimestamp), timestamp);
+					return DateTime.TryParse(claim.Value, out var timestamp) && model.TrySetValue(nameof(Membership.IUserModel.StatusTimestamp), timestamp);
 				case ClaimNames.Creation:
-					return DateTime.TryParse(claim.Value, out var creation) && model.TrySetValue(nameof(Membership.IUser.Creation), creation);
+					return DateTime.TryParse(claim.Value, out var creation) && model.TrySetValue(nameof(Membership.IUserModel.Creation), creation);
 				case ClaimNames.Modification:
-					return DateTime.TryParse(claim.Value, out var modification) && model.TrySetValue(nameof(Membership.IUser.Modification), modification);
+					return DateTime.TryParse(claim.Value, out var modification) && model.TrySetValue(nameof(Membership.IUserModel.Modification), modification);
 			}
 
 			return false;
@@ -587,25 +587,25 @@ namespace Zongsoft.Security
 			switch(claim.Type)
 			{
 				case ClaimTypes.Name:
-					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Name), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Name), claim.Value);
 				case ClaimTypes.NameIdentifier:
-					return uint.TryParse(claim.Value, out var userId) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.UserId), userId);
+					return uint.TryParse(claim.Value, out var userId) && Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.UserId), userId);
 				case ClaimNames.Namespace:
-					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Namespace), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Namespace), claim.Value);
 				case ClaimNames.Description:
-					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Description), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Description), claim.Value);
 				case ClaimTypes.Email:
-					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Email), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Email), claim.Value);
 				case ClaimTypes.MobilePhone:
-					return Reflector.TrySetValue(ref target, nameof(Membership.IUser.Phone), claim.Value);
+					return Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Phone), claim.Value);
 				case ClaimNames.UserStatus:
-					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Status), status);
+					return Enum.TryParse<Membership.UserStatus>(claim.Value, out var status) && Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Status), status);
 				case ClaimNames.UserStatusTimestamp:
-					return DateTime.TryParse(claim.Value, out var timestamp) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.StatusTimestamp), timestamp);
+					return DateTime.TryParse(claim.Value, out var timestamp) && Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.StatusTimestamp), timestamp);
 				case ClaimNames.Creation:
-					return DateTime.TryParse(claim.Value, out var creation) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Creation), creation);
+					return DateTime.TryParse(claim.Value, out var creation) && Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Creation), creation);
 				case ClaimNames.Modification:
-					return DateTime.TryParse(claim.Value, out var modification) && Reflector.TrySetValue(ref target, nameof(Membership.IUser.Modification), modification);
+					return DateTime.TryParse(claim.Value, out var modification) && Reflector.TrySetValue(ref target, nameof(Membership.IUserModel.Modification), modification);
 			}
 
 			return false;

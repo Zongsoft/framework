@@ -50,17 +50,17 @@ namespace Zongsoft.Security.Membership
 			if(identity.Contains("@"))
 			{
 				identityType = UserIdentityType.Email;
-				return Condition.Equal(nameof(IUser.Email), identity);
+				return Condition.Equal(nameof(IUserModel.Email), identity);
 			}
 
 			if(identity.IsDigits(out var digits))
 			{
 				identityType = UserIdentityType.Phone;
-				return Condition.Equal(nameof(IUser.Phone), digits);
+				return Condition.Equal(nameof(IUserModel.Phone), digits);
 			}
 
 			identityType = UserIdentityType.Name;
-			return Condition.Equal(nameof(IUser.Name), identity);
+			return Condition.Equal(nameof(IUserModel.Name), identity);
 		}
 
 		internal static UserIdentityType GetIdentityType(string identity)

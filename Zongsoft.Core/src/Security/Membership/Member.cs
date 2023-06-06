@@ -51,9 +51,9 @@ namespace Zongsoft.Security.Membership
 		public uint MemberId { get;set; }
 		public MemberType MemberType { get; set; }
 
-		public IRole Role { get; set; }
-		public IRole MemberRole { get;set; }
-		public IUser MemberUser { get;set; }
+		public IRoleModel Role { get; set; }
+		public IRoleModel MemberRole { get;set; }
+		public IUserModel MemberUser { get;set; }
 		#endregion
 
 		#region 重写方法
@@ -64,23 +64,9 @@ namespace Zongsoft.Security.Membership
 			       this.MemberType == other.MemberType;
 		}
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((Member)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
-		}
-
-		public override string ToString()
-		{
-			return $"{this.RoleId}-{this.MemberType}:{this.MemberId}";
-		}
+		public override bool Equals(object obj) => obj is Member other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
+		public override string ToString() => $"{this.RoleId}-{this.MemberType}:{this.MemberId}";
 		#endregion
 	}
 }

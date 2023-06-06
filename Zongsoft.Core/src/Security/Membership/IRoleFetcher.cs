@@ -33,6 +33,6 @@ namespace Zongsoft.Security.Membership
 {
 	public interface IRoleFetcher
 	{
-		IRole GetRole(uint roleId, string schema = null);
+		IRoleModel GetRole(uint roleId, string schema = null);
 	}
 }

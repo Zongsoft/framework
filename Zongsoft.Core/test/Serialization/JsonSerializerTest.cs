@@ -14,7 +14,7 @@ namespace Zongsoft.Serialization
 		[Fact]
 		public void TestSerialize()
 		{
-			var user = Model.Build<IUser>(p =>
+			var user = Model.Build<IUserModel>(p =>
 			{
 				p.UserId = 100;
 				p.Name = "Popeye";
@@ -81,7 +81,7 @@ namespace Zongsoft.Serialization
 			public TimeSpan Expiration { get; set; }
 			public int Count { get; set; }
 
-			public IUser User { get; set; }
+			public IUserModel User { get; set; }
 		}
 	}
 }

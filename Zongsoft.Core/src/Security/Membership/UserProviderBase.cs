@@ -38,7 +38,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class UserProviderBase<TUser> : IUserProvider<TUser> where TUser : IUser
+	public abstract class UserProviderBase<TUser> : IUserProvider<TUser> where TUser : IUserModel
 	{
 		#region 常量定义
 		private const string KEY_EMAIL_SECRET = "user.email";
@@ -81,7 +81,7 @@ namespace Zongsoft.Security.Membership
 		#region 用户管理
 		public TUser GetUser(uint userId)
 		{
-			return this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUser.UserId), GetUserId(userId))).FirstOrDefault();
+			return this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUserModel.UserId), GetUserId(userId))).FirstOrDefault();
 		}
 
 		public TUser GetUser(string identity, string @namespace = null)
@@ -98,7 +98,7 @@ namespace Zongsoft.Security.Membership
 
 		public bool Exists(uint userId)
 		{
-			return this.DataAccess.Exists<TUser>(Condition.Equal(nameof(IUser.UserId), userId));
+			return this.DataAccess.Exists<TUser>(Condition.Equal(nameof(IUserModel.UserId), userId));
 		}
 
 		public bool Exists(string identity, string @namespace = null)
@@ -135,9 +135,9 @@ namespace Zongsoft.Security.Membership
 				{
 					Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
 					Modification = DateTime.Now,
-				}, Condition.Equal(nameof(IUser.UserId), userId)) > 0)
+				}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUser.Email), email);
+				this.OnChanged(userId, nameof(IUserModel.Email), email);
 				return true;
 			}
 
@@ -170,9 +170,9 @@ namespace Zongsoft.Security.Membership
 				{
 					Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim(),
 					Modification = DateTime.Now,
-				}, Condition.Equal(nameof(IUser.UserId), userId)) > 0)
+				}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUser.Phone), phone);
+				this.OnChanged(userId, nameof(IUserModel.Phone), phone);
 				return true;
 			}
 
@@ -190,9 +190,9 @@ namespace Zongsoft.Security.Membership
 					Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim(),
 					Modification = DateTime.Now,
 				},
-				new Condition(nameof(IUser.UserId), userId)) > 0)
+				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUser.Namespace), @namespace);
+				this.OnChanged(userId, nameof(IUserModel.Namespace), @namespace);
 				return true;
 			}
 
@@ -209,7 +209,7 @@ namespace Zongsoft.Security.Membership
 					Namespace = string.IsNullOrWhiteSpace(newNamespace) ? null : newNamespace.Trim(),
 					Modification = DateTime.Now,
 				},
-				new Condition(nameof(IUser.Namespace), oldNamespace));
+				new Condition(nameof(IUserModel.Namespace), oldNamespace));
 		}
 
 		public bool SetName(uint userId, string name)
@@ -221,7 +221,7 @@ namespace Zongsoft.Security.Membership
 			userId = GetUserId(userId);
 
 			//验证指定的名称是否为系统内置名
-			if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, IUserModel.Administrator, StringComparison.OrdinalIgnoreCase))
 				throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
 
 			//验证指定的名称是否合法
@@ -233,7 +233,7 @@ namespace Zongsoft.Security.Membership
 					Name = name.Trim(),
 					Modification = DateTime.Now,
 				},
-				new Condition(nameof(IUser.UserId), userId)) > 0)
+				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
 				this.OnChanged(userId, nameof(IUserIdentity.Name), name);
 				return true;
@@ -253,7 +253,7 @@ namespace Zongsoft.Security.Membership
 					FullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName.Trim(),
 					Modification = DateTime.Now,
 				},
-				new Condition(nameof(IUser.UserId), userId)) > 0)
+				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
 				this.OnChanged(userId, nameof(IUserIdentity.FullName), fullName);
 				return true;
@@ -276,9 +276,9 @@ namespace Zongsoft.Security.Membership
 					StatusTimestamp = timestamp,
 					Modification = timestamp,
 				},
-				new Condition(nameof(IUser.UserId), userId)) > 0)
+				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUser.Status), status);
+				this.OnChanged(userId, nameof(IUserModel.Status), status);
 				return true;
 			}
 
@@ -296,9 +296,9 @@ namespace Zongsoft.Security.Membership
 					Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
 					Modification = DateTime.Now,
 				},
-				new Condition(nameof(IUser.UserId), userId)) > 0)
+				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUser.Description), description);
+				this.OnChanged(userId, nameof(IUserModel.Description), description);
 				return true;
 			}
 
@@ -460,8 +460,8 @@ namespace Zongsoft.Security.Membership
 			EnsureRoles();
 
 			return this.DataAccess.Delete<TUser>(
-				Condition.In(nameof(IUser.UserId), ids) &
-				Condition.NotEqual(nameof(IUser.Name), IUser.Administrator),
+				Condition.In(nameof(IUserModel.UserId), ids) &
+				Condition.NotEqual(nameof(IUserModel.Name), IUserModel.Administrator),
 				"Members,Permissions,PermissionFilters");
 		}
 
@@ -476,10 +476,10 @@ namespace Zongsoft.Security.Membership
 			//确认指定的用户编号是否有效
 			userId = GetUserId(userId);
 
-			if(model.HasChanges(nameof(IUser.Name)) && !string.IsNullOrWhiteSpace(user.Name))
+			if(model.HasChanges(nameof(IUserModel.Name)) && !string.IsNullOrWhiteSpace(user.Name))
 			{
 				//验证指定的名称是否为系统内置名
-				if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(user.Name, IUserModel.Administrator, StringComparison.OrdinalIgnoreCase))
 					throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
 
 				//验证指定的名称是否合法
@@ -487,7 +487,7 @@ namespace Zongsoft.Security.Membership
 			}
 
 			//验证指定的命名空间是否合规
-			if(model.HasChanges(nameof(IUser.Namespace)))
+			if(model.HasChanges(nameof(IUserModel.Namespace)))
 			{
 				var @namespace = ApplicationContext.Current.Principal.Identity.GetNamespace();
 
@@ -497,7 +497,7 @@ namespace Zongsoft.Security.Membership
 					user.Namespace = @namespace;
 			}
 
-			if(this.DataAccess.Update(user, new Condition(nameof(IUser.UserId), userId), "*,!Name,!Status,!StatusTimestamp") > 0)
+			if(this.DataAccess.Update(user, new Condition(nameof(IUserModel.UserId), userId), "*,!Name,!Status,!StatusTimestamp") > 0)
 			{
 				foreach(var entry in model.GetChanges())
 				{
@@ -514,7 +514,7 @@ namespace Zongsoft.Security.Membership
 		#region 密码管理
 		public virtual bool HasPassword(uint userId)
 		{
-			return this.DataAccess.Exists<TUser>(Condition.Equal(nameof(IUser.UserId), GetUserId(userId)) & Condition.NotEqual("Password", null));
+			return this.DataAccess.Exists<TUser>(Condition.Equal(nameof(IUserModel.UserId), GetUserId(userId)) & Condition.NotEqual("Password", null));
 		}
 
 		public virtual bool HasPassword(string identity, string @namespace = null)
@@ -580,7 +580,7 @@ namespace Zongsoft.Security.Membership
 				throw new NotSupportedException("Invalid user identity for the forget password operation.");
 
 			//获取指定标识的用户信息
-			var user = this.DataAccess.Select<IUser>(condition & this.GetNamespace(@namespace)).FirstOrDefault();
+			var user = this.DataAccess.Select<IUserModel>(condition & this.GetNamespace(@namespace)).FirstOrDefault();
 
 			if(user == null)
 				return 0;
@@ -686,7 +686,7 @@ namespace Zongsoft.Security.Membership
 
 		public string[] GetPasswordQuestions(uint userId)
 		{
-			return this.GetSecretQuestions(Condition.Equal(nameof(IUser.UserId), GetUserId(userId)));
+			return this.GetSecretQuestions(Condition.Equal(nameof(IUserModel.UserId), GetUserId(userId)));
 		}
 
 		public string[] GetPasswordQuestions(string identity, string @namespace = null)
@@ -740,8 +740,8 @@ namespace Zongsoft.Security.Membership
 						{
 							Email = string.IsNullOrWhiteSpace(extra) ? null : extra.Trim(),
 							Modification = DateTime.Now,
-						}, Condition.Equal(nameof(IUser.UserId), userId)) > 0)
-							this.OnChanged(userId, nameof(IUser.Email), extra);
+						}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0)
+							this.OnChanged(userId, nameof(IUserModel.Email), extra);
 
 						break;
 					case KEY_PHONE_SECRET:
@@ -749,8 +749,8 @@ namespace Zongsoft.Security.Membership
 						{
 							Phone = string.IsNullOrWhiteSpace(extra) ? null : extra.Trim(),
 							Modification = DateTime.Now,
-						}, Condition.Equal(nameof(IUser.UserId), userId)) > 0)
-							this.OnChanged(userId, nameof(IUser.Phone), extra);
+						}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0)
+							this.OnChanged(userId, nameof(IUserModel.Phone), extra);
 
 						break;
 				}
@@ -786,7 +786,7 @@ namespace Zongsoft.Security.Membership
 		{
 			return this.DataAccess.Select<PasswordToken>(
 				this.DataAccess.Naming.Get<TUser>(),
-				Condition.Equal(nameof(IUser.UserId), userId)).FirstOrDefault();
+				Condition.Equal(nameof(IUserModel.UserId), userId)).FirstOrDefault();
 		}
 
 		protected bool SetPassword(uint userId, string password)
@@ -807,13 +807,13 @@ namespace Zongsoft.Security.Membership
 				{
 					Password = DBNull.Value,
 					PasswordSalt = DBNull.Value,
-				}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+				}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 
 			return this.DataAccess.Update<TUser>(new
 			{
 				Password = password,
 				PasswordSalt = passwordSalt,
-			}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+			}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 		}
 
 		protected virtual string[] GetSecretQuestions(ICondition criteria)
@@ -874,7 +874,7 @@ namespace Zongsoft.Security.Membership
 				{
 					PasswordQuestion = DBNull.Value,
 					PasswordAnswer = DBNull.Value
-				}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+				}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 			}
 
 			if(questions.Length != answers.Length)
@@ -895,10 +895,10 @@ namespace Zongsoft.Security.Membership
 			{
 				PasswordQuestion = string.Join('\n', questions),
 				PasswordAnswer = buffer
-			}, Condition.Equal(nameof(IUser.UserId), userId)) > 0;
+			}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 		}
 
-		protected virtual void OnChangeEmail(IUser user, string email)
+		protected virtual void OnChangeEmail(IUserModel user, string email)
 		{
 			if(user == null)
 				return;
@@ -912,7 +912,7 @@ namespace Zongsoft.Security.Membership
 			});
 		}
 
-		protected virtual void OnChangePhone(IUser user, string phone)
+		protected virtual void OnChangePhone(IUserModel user, string phone)
 		{
 			if(user == null)
 				return;
@@ -974,7 +974,7 @@ namespace Zongsoft.Security.Membership
 
 			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
-			if(current == userId || ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security }))
+			if(current == userId || ApplicationContext.Current.Principal.InRoles(new[] { IRoleModel.Administrators, IRoleModel.Security }))
 				return userId;
 
 			throw new AuthorizationException($"The current user cannot operate on other user information.");
@@ -993,7 +993,7 @@ namespace Zongsoft.Security.Membership
 				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
-			secured = ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security });
+			secured = ApplicationContext.Current.Principal.InRoles(new[] { IRoleModel.Administrators, IRoleModel.Security });
 
 			if(current == userId || secured)
 				return userId;
@@ -1024,7 +1024,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static void EnsureRoles()
 		{
-			if(!ApplicationContext.Current.Principal.InRoles(new[] { IRole.Administrators, IRole.Security }))
+			if(!ApplicationContext.Current.Principal.InRoles(new[] { IRoleModel.Administrators, IRoleModel.Security }))
 				throw new AuthorizationException("Denied: The current user is not a security administrator and is not authorized to perform this operation.");
 		}
 		#endregion

@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 {
 	public static class AuthenticatorExtension
 	{
-		public static ClaimsIdentity Identity(this IAuthenticator authenticator, IUser user, TimeSpan? expiration = null)
+		public static ClaimsIdentity Identity(this IAuthenticator authenticator, IUserModel user, TimeSpan? expiration = null)
 		{
 			if(user == null)
 				return new ClaimsIdentity();

@@ -89,9 +89,9 @@ namespace Zongsoft.Security.Membership
 					return null;
 
 				if(string.IsNullOrEmpty(@namespace))
-					return Data.Condition.Equal(nameof(IUser.Namespace), null);
+					return Data.Condition.Equal(nameof(IUserModel.Namespace), null);
 				else
-					return Data.Condition.Equal(nameof(IUser.Namespace), @namespace);
+					return Data.Condition.Equal(nameof(IUserModel.Namespace), @namespace);
 			}
 
 			public string GetField(string entity)
@@ -99,21 +99,21 @@ namespace Zongsoft.Security.Membership
 				return "Namespace";
 			}
 
-			public string GetNamespace(IUser user, out string field)
+			public string GetNamespace(IUserModel user, out string field)
 			{
-				field = nameof(IUser.Namespace);
+				field = nameof(IUserModel.Namespace);
 				return user == null ? null : user.Namespace;
 			}
 
-			public string GetNamespace(IRole role, out string field)
+			public string GetNamespace(IRoleModel role, out string field)
 			{
-				field = nameof(IRole.Namespace);
+				field = nameof(IRoleModel.Namespace);
 				return role == null ? null : role.Namespace;
 			}
 
 			public string GetNamespace(ClaimsIdentity identity, out string field)
 			{
-				field = nameof(IUser.Namespace);
+				field = nameof(IUserModel.Namespace);
 				return identity?.GetNamespace();
 			}
 		}

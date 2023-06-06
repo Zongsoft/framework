@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供关于用户管理的接口。
 	/// </summary>
-	public interface IUserProvider<TUser> where TUser : IUser
+	public interface IUserProvider<TUser> where TUser : IUserModel
 	{
 		#region 事件定义
 		/// <summary>
@@ -181,7 +181,7 @@ namespace Zongsoft.Security.Membership
 		/// <summary>
 		/// 创建一个用户，并为其设置密码。
 		/// </summary>
-		/// <param name="user">要创建的<seealso cref="IUser"/>用户对象。</param>
+		/// <param name="user">要创建的<seealso cref="IUserModel"/>用户对象。</param>
 		/// <param name="password">为新创建用户的设置的密码。</param>
 		/// <returns>如果创建成功则返回真(true)，否则返回假(false)。</returns>
 		bool Create(TUser user, string password = null);

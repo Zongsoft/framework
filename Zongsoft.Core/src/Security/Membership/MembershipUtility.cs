@@ -40,21 +40,21 @@ namespace Zongsoft.Security.Membership
 	public static class MembershipUtility
 	{
 		#region 公共方法
-		public static bool InRoles(IDataAccess dataAccess, IRole role, params string[] roleNames)
+		public static bool InRoles(IDataAccess dataAccess, IRoleModel role, params string[] roleNames)
 		{
 			if(role == null || role.Name == null || roleNames == null || roleNames.Length < 1)
 				return false;
 
 			//如果指定的角色对应的是系统内置管理员（即 Administrators），那么它拥有对任何角色的隶属判断
-			if(string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(role.Name, IRoleModel.Administrators, StringComparison.OrdinalIgnoreCase))
 				return true;
 
 			//处理非系统内置管理员角色
-			if(GetAncestors(dataAccess, role, out ISet<IRole> flats, out _) > 0)
+			if(GetAncestors(dataAccess, role, out ISet<IRoleModel> flats, out _) > 0)
 			{
 				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
 				return flats.Any(role =>
-					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(role.Name, IRoleModel.Administrators, StringComparison.OrdinalIgnoreCase) ||
 					roleNames.Contains(role.Name)
 				);
 			}
@@ -62,21 +62,21 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		public static bool InRoles(IDataAccess dataAccess, IUser user, params string[] roleNames)
+		public static bool InRoles(IDataAccess dataAccess, IUserModel user, params string[] roleNames)
 		{
 			if(user == null || user.Name == null || roleNames == null || roleNames.Length < 1)
 				return false;
 
 			//如果指定的用户对应的是系统内置管理员（即 Administrator），那么它拥有对任何角色的隶属判断
-			if(string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(user.Name, IUserModel.Administrator, StringComparison.OrdinalIgnoreCase))
 				return true;
 
 			//处理非系统内置管理员账号
-			if(GetAncestors(dataAccess, user, out ISet<IRole> flats, out _) > 0)
+			if(GetAncestors(dataAccess, user, out ISet<IRoleModel> flats, out _) > 0)
 			{
 				//如果所属的角色中包括系统内置管理员，则该用户自然属于任何角色
 				return flats.Any(role =>
-					string.Equals(role.Name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(role.Name, IRoleModel.Administrators, StringComparison.OrdinalIgnoreCase) ||
 					roleNames.Contains(role.Name)
 				);
 			}
@@ -92,7 +92,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
 		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
 		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
-		public static int GetAncestors<TRole>(IDataAccess dataAccess, IRole role, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		public static int GetAncestors<TRole>(IDataAccess dataAccess, IRoleModel role, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -119,7 +119,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
 		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
 		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
-		public static int GetAncestors<TRole>(IDataAccess dataAccess, IUser user, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		public static int GetAncestors<TRole>(IDataAccess dataAccess, IUserModel user, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -146,7 +146,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
 		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
 		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
-		public static int GetAncestors<TRole>(IDataAccess dataAccess, ClaimsIdentity identity, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		public static int GetAncestors<TRole>(IDataAccess dataAccess, ClaimsIdentity identity, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -175,7 +175,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
 		/// <param name="hierarchies">输出参数，表示所隶属的所有上级角色的层级列表，该列表包含的所有角色已经去除重复。</param>
 		/// <returns>返回指定成员隶属的所有上级角色去重后的数量。</returns>
-		private static int GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRole
+		private static int GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter, out ISet<TRole> flats, out IList<IEnumerable<TRole>> hierarchies) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -184,7 +184,7 @@ namespace Zongsoft.Security.Membership
 			hierarchies = null;
 
 			//获取指定命名空间下的所有成员及其关联的角色对象（注：即时加载到内存中）
-			var members = dataAccess.Select<Member<TRole, IUser>>(
+			var members = dataAccess.Select<Member<TRole, IUserModel>>(
 				filter, "*, Role{*}")
 				.Where(m => m.Role != null)
 				.ToArray();
@@ -213,7 +213,7 @@ namespace Zongsoft.Security.Membership
 			return flats.Count;
 		}
 
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IRole role) where TRole : IRole
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IRoleModel role) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -231,7 +231,7 @@ namespace Zongsoft.Security.Membership
 				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(role)));
 		}
 
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IUser user) where TRole : IRole
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IUserModel user) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -249,7 +249,7 @@ namespace Zongsoft.Security.Membership
 				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(user)));
 		}
 
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, ClaimsIdentity identity) where TRole : IRole
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, ClaimsIdentity identity) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
@@ -267,12 +267,12 @@ namespace Zongsoft.Security.Membership
 				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(identity)));
 		}
 
-		private static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter) where TRole : IRole
+		private static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
 
-			var roles = new HashSet<TRole>(dataAccess.Select<Member<TRole, IUser>>(
+			var roles = new HashSet<TRole>(dataAccess.Select<Member<TRole, IUserModel>>(
 				Mapping.Instance.Member,
 				Condition.Equal(nameof(Member.MemberId), memberId) &
 				Condition.Equal(nameof(Member.MemberType), memberType) &
@@ -288,7 +288,7 @@ namespace Zongsoft.Security.Membership
 
 				while(intersection.Any())
 				{
-					var parents = dataAccess.Select<Member<TRole, IUser>>(
+					var parents = dataAccess.Select<Member<TRole, IUserModel>>(
 						Mapping.Instance.Member,
 						Condition.In(nameof(Member.MemberId), intersection) &
 						Condition.Equal(nameof(Member.MemberType), MemberType.Role) &
@@ -308,49 +308,49 @@ namespace Zongsoft.Security.Membership
 			return roles;
 		}
 
-		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IRole role)
+		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IRoleModel role)
 		{
-			if(GetAncestors<IRole>(dataAccess, role, out var flats, out var hierarchies) > 0)
+			if(GetAncestors<IRoleModel>(dataAccess, role, out var flats, out var hierarchies) > 0)
 				return GetAuthorizedTokens(dataAccess, flats, hierarchies, role.RoleId, MemberType.Role);
 			else
 				return Array.Empty<AuthorizationToken>();
 		}
 
-		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IUser user)
+		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IUserModel user)
 		{
-			GetAncestors<IRole>(dataAccess, user, out var flats, out var hierarchies);
+			GetAncestors<IRoleModel>(dataAccess, user, out var flats, out var hierarchies);
 			return GetAuthorizedTokens(dataAccess, flats, hierarchies, user.UserId, MemberType.User);
 		}
 
 		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, ClaimsIdentity identity)
 		{
-			GetAncestors<IRole>(dataAccess, identity, out var flats, out var hierarchies);
+			GetAncestors<IRoleModel>(dataAccess, identity, out var flats, out var hierarchies);
 			return GetAuthorizedTokens(dataAccess, flats, hierarchies, identity.GetIdentifier<uint>(), MemberType.User);
 		}
 
-		private static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRole> flats, IList<IEnumerable<IRole>> hierarchies, uint memberId, MemberType memberType)
+		private static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRoleModel> flats, IList<IEnumerable<IRoleModel>> hierarchies, uint memberId, MemberType memberType)
 		{
-			var criteria = Condition.Equal(nameof(Permission.MemberId), memberId) &
-			               Condition.Equal(nameof(Permission.MemberType), memberType);
+			var criteria = Condition.Equal(nameof(PermissionModel.MemberId), memberId) &
+			               Condition.Equal(nameof(PermissionModel.MemberType), memberType);
 
 			//获取指定成员的所有上级角色集和上级角色的层级列表
 			if(flats != null && flats.Count > 0)
 			{
 				//如果指定成员有上级角色，则进行权限定义的查询条件还需要加上所有上级角色
 				criteria = criteria.Or(
-					Condition.In(nameof(Permission.MemberId), flats.Select(p => p.RoleId)) &
-					Condition.Equal(nameof(Permission.MemberType), MemberType.Role)
+					Condition.In(nameof(PermissionModel.MemberId), flats.Select(p => p.RoleId)) &
+					Condition.Equal(nameof(PermissionModel.MemberType), MemberType.Role)
 				);
 			}
 
 			//获取指定条件的所有权限定义（注：禁止分页查询，并即时加载到数组中）
-			var permissions = dataAccess.Select<Permission>(Mapping.Instance.Permission, criteria, Paging.Disabled).ToArray();
+			var permissions = dataAccess.Select<PermissionModel>(Mapping.Instance.Permission, criteria, Paging.Disabled).ToArray();
 
 			//获取指定条件的所有权限过滤定义（注：禁止分页查询，并即时加载到数组中）
-			var permissionFilters = dataAccess.Select<PermissionFilter>(Mapping.Instance.PermissionFilter, criteria, Paging.Disabled).ToArray();
+			var permissionFilters = dataAccess.Select<PermissionFilterModel>(Mapping.Instance.PermissionFilter, criteria, Paging.Disabled).ToArray();
 
 			var states = new HashSet<AuthorizationState>();
-			IEnumerable<Permission> prepares;
+			IEnumerable<PermissionModel> prepares;
 			IEnumerable<AuthorizationState> grants, denies;
 
 			//如果上级角色层级列表不为空则进行分层过滤
@@ -406,17 +406,17 @@ namespace Zongsoft.Security.Membership
 			if(identity.Contains("@"))
 			{
 				identityType = UserIdentityType.Email;
-				return Condition.Equal(nameof(IUser.Email), identity);
+				return Condition.Equal(nameof(IUserModel.Email), identity);
 			}
 
 			if(identity.IsDigits(out var digits))
 			{
 				identityType = UserIdentityType.Phone;
-				return Condition.Equal(nameof(IUser.Phone), digits);
+				return Condition.Equal(nameof(IUserModel.Phone), digits);
 			}
 
 			identityType = UserIdentityType.Name;
-			return Condition.Equal(nameof(IUser.Name), identity);
+			return Condition.Equal(nameof(IUserModel.Name), identity);
 		}
 
 		internal static UserIdentityType GetIdentityType(string identity)
@@ -435,7 +435,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 私有方法
-		private static void SetPermissionFilters(IEnumerable<AuthorizationState> states, IEnumerable<PermissionFilter> filters)
+		private static void SetPermissionFilters(IEnumerable<AuthorizationState> states, IEnumerable<PermissionFilterModel> filters)
 		{
 			var groups = filters.GroupBy(p => new AuthorizationState(p.SchemaId, p.ActionId));
 
@@ -455,7 +455,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 嵌套子类
-		private class RoleComparer<TRole> : IEqualityComparer<TRole> where TRole : IRole
+		private class RoleComparer<TRole> : IEqualityComparer<TRole> where TRole : IRoleModel
 		{
 			public static readonly RoleComparer<TRole> Instance = new RoleComparer<TRole>();
 

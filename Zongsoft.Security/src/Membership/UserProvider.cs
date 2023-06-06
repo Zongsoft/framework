@@ -37,8 +37,8 @@ using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IUserProvider<IUser>))]
-	public class UserProvider : UserProviderBase<IUser>
+	[Service(typeof(IUserProvider<IUserModel>))]
+	public class UserProvider : UserProviderBase<IUserModel>
 	{
 		#region 构造函数
 		public UserProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
@@ -53,9 +53,9 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 虚拟方法
-		protected override IUser CreateUser(IDictionary<string, object> parameters)
+		protected override IUserModel CreateUser(IDictionary<string, object> parameters)
 		{
-			return Model.Build<IUser>();
+			return Model.Build<IUserModel>();
 		}
 
 		protected override bool IsVerifyEmailRequired()

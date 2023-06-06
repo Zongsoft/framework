@@ -75,7 +75,7 @@ namespace Zongsoft.Security.Membership
 			return user.UserId;
 		}
 
-		protected override IUser GetUser(IIdentityTicket ticket)
+		protected override IUserModel GetUser(IIdentityTicket ticket)
 		{
 			ICondition criteria = Utility.GetIdentityCondition(ticket.Identity);
 
@@ -107,7 +107,7 @@ namespace Zongsoft.Security.Membership
 			public DateTime? StatusTimestamp { get; set; }
 		}
 
-		private class User : IUser, IUserIdentity
+		private class User : IUserModel, IUserIdentity
 		{
 			public uint UserId { get; set; }
 			public string Name { get; set; }

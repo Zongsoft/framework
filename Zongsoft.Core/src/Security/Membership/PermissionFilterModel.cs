@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Membership
 {
-	public struct PermissionFilter : IEquatable<PermissionFilter>
+	public struct PermissionFilterModel : IEquatable<PermissionFilterModel>
 	{
 		#region 成员变量
 		private string _schemaId;
@@ -40,7 +40,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public PermissionFilter(uint memberId, MemberType memberType, string schemaId, string actionId, string filter)
+		public PermissionFilterModel(uint memberId, MemberType memberType, string schemaId, string actionId, string filter)
 		{
 			if(string.IsNullOrEmpty(schemaId))
 				throw new ArgumentNullException(nameof(schemaId));
@@ -59,22 +59,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		public uint MemberId
-		{
-			get; set;
-		}
-
-		public MemberType MemberType
-		{
-			get; set;
-		}
+		public uint MemberId { get; set; }
+		public MemberType MemberType { get; set; }
 
 		public string SchemaId
 		{
-			get
-			{
-				return _schemaId;
-			}
+			get => _schemaId;
 			set
 			{
 				if(string.IsNullOrEmpty(value))
@@ -86,10 +76,7 @@ namespace Zongsoft.Security.Membership
 
 		public string ActionId
 		{
-			get
-			{
-				return _actionId;
-			}
+			get => _actionId;
 			set
 			{
 				if(string.IsNullOrEmpty(value))
@@ -101,10 +88,7 @@ namespace Zongsoft.Security.Membership
 
 		public string Filter
 		{
-			get
-			{
-				return _filter;
-			}
+			get => _filter;
 			set
 			{
 				if(string.IsNullOrEmpty(value))
@@ -116,30 +100,16 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 重写方法
-		public bool Equals(PermissionFilter other)
+		public bool Equals(PermissionFilterModel other)
 		{
 			return this.MemberId == other.MemberId && this.MemberType == other.MemberType &&
 			       string.Equals(_schemaId, other._schemaId, StringComparison.OrdinalIgnoreCase) &&
 			       string.Equals(_actionId, other._actionId, StringComparison.OrdinalIgnoreCase);
 		}
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((PermissionFilter)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return (int)this.MemberId ^ this.MemberType.GetHashCode() ^ (_schemaId + ":" + _actionId).ToLowerInvariant().GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			return $"{this.MemberType.ToString()}:{this.MemberId.ToString()}-{this.SchemaId}-{this.ActionId}" + Environment.NewLine + this.Filter;
-		}
+		public override bool Equals(object obj) => obj is PermissionFilterModel other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.MemberId, this.MemberType, _schemaId, _actionId);
+		public override string ToString() => $"{this.MemberType}:{this.MemberId}-{this.SchemaId}-{this.ActionId}" + Environment.NewLine + this.Filter;
 		#endregion
 	}
 }

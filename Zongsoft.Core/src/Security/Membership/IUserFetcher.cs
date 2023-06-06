@@ -33,6 +33,6 @@ namespace Zongsoft.Security.Membership
 {
 	public interface IUserFetcher
 	{
-		IUser GetUser(uint userId, string schema = null);
+		IUserModel GetUser(uint userId, string schema = null);
 	}
 }

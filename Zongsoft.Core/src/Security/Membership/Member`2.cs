@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Membership
 {
-	public struct Member<TRole, TUser> : IEquatable<Member<TRole, TUser>> where TRole : IRole where TUser : IUser
+	public struct Member<TRole, TUser> : IEquatable<Member<TRole, TUser>> where TRole : IRoleModel where TUser : IUserModel
 	{
 		#region 公共属性
 		public uint RoleId { get;set; }
@@ -51,23 +51,9 @@ namespace Zongsoft.Security.Membership
 				   this.MemberType == other.MemberType;
 		}
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((Member<TRole, TUser>)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
-		}
-
-		public override string ToString()
-		{
-			return $"{this.RoleId}-{this.MemberType}:{this.MemberId}";
-		}
+		public override bool Equals(object obj) => obj is Member<TRole, TUser> other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
+		public override string ToString() => $"{this.RoleId}-{this.MemberType}:{this.MemberId}";
 		#endregion
 	}
 }

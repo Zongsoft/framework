@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供关于角色成员管理的接口。
 	/// </summary>
-	public interface IMemberProvider<TRole, TUser> where TRole : IRole where TUser : IUser
+	public interface IMemberProvider<TRole, TUser> where TRole : IRoleModel where TUser : IUserModel
 	{
 		/// <summary>
 		/// 获取指定成员的所有祖先角色集。

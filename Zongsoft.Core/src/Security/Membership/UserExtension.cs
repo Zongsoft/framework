@@ -34,7 +34,7 @@ namespace Zongsoft.Security.Membership
 {
 	public static class UserExtension
 	{
-		public static ClaimsIdentity Identity(this IUser user, string scheme, string issuer, TimeSpan? expiration = null)
+		public static ClaimsIdentity Identity(this IUserModel user, string scheme, string issuer, TimeSpan? expiration = null)
 		{
 			if(user == null)
 				return new ClaimsIdentity();
@@ -49,7 +49,7 @@ namespace Zongsoft.Security.Membership
 			return identity;
 		}
 
-		public static void SetClaims(this ClaimsIdentity identity, IUser user, TimeSpan? expiration = null)
+		public static void SetClaims(this ClaimsIdentity identity, IUserModel user, TimeSpan? expiration = null)
 		{
 			if(identity == null || user == null)
 				return;

@@ -125,8 +125,8 @@ namespace Zongsoft.Security.Membership
 
 		#region 虚拟方法
 		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(2);
-		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
-		protected abstract IUser GetUser(string identifier);
+		protected virtual ClaimsIdentity Identity(IUserModel user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
+		protected abstract IUserModel GetUser(string identifier);
 		#endregion
 
 		#region 私有方法

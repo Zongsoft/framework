@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Membership
 	/// <summary>
 	/// 提供关于角色和角色成员管理的接口。
 	/// </summary>
-	public interface IRoleProvider<TRole> where TRole : IRole
+	public interface IRoleProvider<TRole> where TRole : IRoleModel
 	{
 		#region 事件定义
 		/// <summary>

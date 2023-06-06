@@ -33,46 +33,33 @@ using System.Collections.Generic;
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// 表示权限系统角色的实体接口。
+	/// 表示权限系统用户实体的接口。
 	/// </summary>
-	public interface IRole
+	public interface IUserModel : IUserIdentity
 	{
 		#region 常量定义
-		/// <summary>系统管理员角色名。</summary>
-		public const string Administrators = nameof(Administrators);
-
-		/// <summary>安全管理员角色名。</summary>
-		public const string Security = nameof(Security);
+		/// <summary>系统管理员用户名。</summary>
+		public const string Administrator = nameof(Administrator);
 		#endregion
 
-		/// <summary>
-		/// 获取或设置角色编号。
-		/// </summary>
-		uint RoleId { get; set; }
+		#region 属性定义
+		/// <summary>获取或设置用户的邮箱标识。</summary>
+		string Email { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色名称。
-		/// </summary>
-		string Name { get; set; }
+		/// <summary>获取或设置用户的电话标识。</summary>
+		string Phone { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色全称。
-		/// </summary>
-		string FullName { get; set; }
+		/// <summary>获取或设置用户状态。</summary>
+		UserStatus Status { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色所属的命名空间。
-		/// </summary>
-		string Namespace { get; set; }
+		/// <summary>获取或设置用户状态变更时间。</summary>
+		DateTime? StatusTimestamp { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色的描述信息。
-		/// </summary>
-		string Description { get; set; }
+		/// <summary>获取或设置创建时间。</summary>
+		DateTime Creation { get; set; }
 
-		/// <summary>
-		/// 获取或设置角色成员子集。
-		/// </summary>
-		IEnumerable<Member> Children { get; set; }
+		/// <summary>获取或设置最后修改时间。</summary>
+		DateTime? Modification { get; set; }
+		#endregion
 	}
 }

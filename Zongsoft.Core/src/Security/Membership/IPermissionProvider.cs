@@ -44,7 +44,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="memberType">指定要获取的权限集的成员类型。</param>
 		/// <param name="schemaId">指定的要获取的权限集的目标标识，如果为空(null)或空字符串则忽略该参数。</param>
 		/// <returns>返回指定用户或角色的权限集。注意：该结果集不包含指定成员所属的上级角色的权限设置。</returns>
-		IEnumerable<Permission> GetPermissions(uint memberId, MemberType memberType, string schemaId = null);
+		IEnumerable<PermissionModel> GetPermissions(uint memberId, MemberType memberType, string schemaId = null);
 
 		/// <summary>
 		/// 设置指定用户或角色的权限集。
@@ -54,7 +54,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="permissions">要设置更新的权限集，如果为空则表示清空指定成员的权限集。</param>
 		/// <param name="shouldResetting">指示是否以重置的方式更新权限集。如果为真表示写入之前先清空指定成员下的所有权限设置；否则如果指定的权限项存在则更新它，不存在则新增。</param>
 		/// <returns>返回设置成功的记录数。</returns>
-		int SetPermissions(uint memberId, MemberType memberType, IEnumerable<Permission> permissions, bool shouldResetting = false);
+		int SetPermissions(uint memberId, MemberType memberType, IEnumerable<PermissionModel> permissions, bool shouldResetting = false);
 
 		/// <summary>
 		/// 设置指定用户或角色的权限集。
@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="permissions">要设置更新的权限集，如果为空则表示清空指定成员的权限集。</param>
 		/// <param name="shouldResetting">指示是否以重置的方式更新权限集。如果为真表示写入之前先清空指定成员下的所有权限设置；否则如果指定的权限项存在则更新它，不存在则新增。</param>
 		/// <returns>返回设置成功的记录数。</returns>
-		int SetPermissions(uint memberId, MemberType memberType, string schemaId, IEnumerable<Permission> permissions, bool shouldResetting = false);
+		int SetPermissions(uint memberId, MemberType memberType, string schemaId, IEnumerable<PermissionModel> permissions, bool shouldResetting = false);
 
 		/// <summary>
 		/// 移除单个或多个权限设置项。
@@ -84,7 +84,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="memberType">指定要获取的权限过滤集的成员类型。</param>
 		/// <param name="schemaId">指定的要获取的权限过滤集的目标标识，如果为空(null)或空字符串则忽略该参数。</param>
 		/// <returns>返回指定用户或角色的权限过滤集。注意：该结果集不包含指定成员所属的上级角色的权限设置。</returns>
-		IEnumerable<PermissionFilter> GetPermissionFilters(uint memberId, MemberType memberType, string schemaId = null);
+		IEnumerable<PermissionFilterModel> GetPermissionFilters(uint memberId, MemberType memberType, string schemaId = null);
 
 		/// <summary>
 		/// 设置指定用户或角色的权限过滤集。
@@ -94,7 +94,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="permissionFilters">要设置更新的权限过滤集，如果为空则表示清空指定成员的权限过滤集。</param>
 		/// <param name="shouldResetting">指示是否以重置的方式更新权限过滤集。如果为真表示写入之前先清空指定成员下的所有权限过滤设置；否则如果指定的权限过滤项存在则更新它，不存在则新增。</param>
 		/// <returns>返回设置成功的记录数。</returns>
-		int SetPermissionFilters(uint memberId, MemberType memberType, IEnumerable<PermissionFilter> permissionFilters, bool shouldResetting = false);
+		int SetPermissionFilters(uint memberId, MemberType memberType, IEnumerable<PermissionFilterModel> permissionFilters, bool shouldResetting = false);
 
 		/// <summary>
 		/// 设置指定用户或角色的权限过滤集。
@@ -105,7 +105,7 @@ namespace Zongsoft.Security.Membership
 		/// <param name="permissionFilters">要设置更新的权限过滤集，如果为空则表示清空指定成员的权限过滤集。</param>
 		/// <param name="shouldResetting">指示是否以重置的方式更新权限过滤集。如果为真表示写入之前先清空指定成员下的所有权限过滤设置；否则如果指定的权限过滤项存在则更新它，不存在则新增。</param>
 		/// <returns>返回设置成功的记录数。</returns>
-		int SetPermissionFilters(uint memberId, MemberType memberType, string schemaId, IEnumerable<PermissionFilter> permissionFilters, bool shouldResetting = false);
+		int SetPermissionFilters(uint memberId, MemberType memberType, string schemaId, IEnumerable<PermissionFilterModel> permissionFilters, bool shouldResetting = false);
 
 		/// <summary>
 		/// 移除单个权限过滤设置项。
