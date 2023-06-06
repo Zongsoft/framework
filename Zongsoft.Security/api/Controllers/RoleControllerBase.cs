@@ -194,16 +194,16 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.RoleProvider.SetName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
-		[HttpPatch("{id}/FullName")]
-		[HttpPatch("FullName/{id}")]
-		public async Task<IActionResult> SetFullName(uint id)
+		[HttpPatch("{id}/Nickname")]
+		[HttpPatch("Nickname/{id}")]
+		public async Task<IActionResult> SetNickname(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
 			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.RoleProvider.SetFullName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
+			return this.RoleProvider.SetNickname(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Description")]

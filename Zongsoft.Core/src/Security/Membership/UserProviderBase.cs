@@ -242,7 +242,7 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		public bool SetFullName(uint userId, string fullName)
+		public bool SetNickname(uint userId, string nickname)
 		{
 			//确认指定的用户编号是否有效
 			userId = GetUserId(userId);
@@ -250,12 +250,12 @@ namespace Zongsoft.Security.Membership
 			if(this.DataAccess.Update<TUser>(
 				new
 				{
-					FullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName.Trim(),
+					Nickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname.Trim(),
 					Modification = DateTime.Now,
 				},
 				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUserIdentity.Nickname), fullName);
+				this.OnChanged(userId, nameof(IUserIdentity.Nickname), nickname);
 				return true;
 			}
 

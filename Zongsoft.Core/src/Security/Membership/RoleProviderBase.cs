@@ -141,16 +141,16 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		public bool SetFullName(uint roleId, string fullName)
+		public bool SetNickname(uint roleId, string nickname)
 		{
 			if(this.DataAccess.Update<TRole>(
 				new
 				{
-					FullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName.Trim(),
+					Nickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname.Trim(),
 				},
 				new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRoleModel.Nickname), fullName);
+				this.OnChanged(roleId, nameof(IRoleModel.Nickname), nickname);
 				return true;
 			}
 

@@ -38,9 +38,7 @@ namespace Zongsoft.Security.Membership
 	public interface IUserProvider<TUser> where TUser : IUserModel
 	{
 		#region 事件定义
-		/// <summary>
-		/// 表示用户信息发生更改之后的事件。
-		/// </summary>
+		/// <summary>表示用户信息发生更改之后的事件。</summary>
 		event EventHandler<ChangedEventArgs> Changed;
 		#endregion
 
@@ -127,12 +125,12 @@ namespace Zongsoft.Security.Membership
 		bool SetName(uint userId, string name);
 
 		/// <summary>
-		/// 设置指定编号的用户全称(昵称)。
+		/// 设置指定编号的用户昵称。
 		/// </summary>
 		/// <param name="userId">要设置的用户编号。</param>
-		/// <param name="fullName">要设置的用户全称(昵称)。</param>
+		/// <param name="nickname">要设置的用户昵称。</param>
 		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
-		bool SetFullName(uint userId, string fullName);
+		bool SetNickname(uint userId, string nickname);
 
 		/// <summary>
 		/// 设置指定编号的用户描述信息。

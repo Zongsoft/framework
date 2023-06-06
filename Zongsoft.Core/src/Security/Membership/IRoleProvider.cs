@@ -109,12 +109,12 @@ namespace Zongsoft.Security.Membership
 		bool SetName(uint roleId, string name);
 
 		/// <summary>
-		/// 设置指定编号的角色全称。
+		/// 设置指定编号的角色昵称。
 		/// </summary>
 		/// <param name="roleId">要设置的角色编号。</param>
-		/// <param name="fullName">要设置的角色全称。</param>
+		/// <param name="nickname">要设置的角色昵称。</param>
 		/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
-		bool SetFullName(uint roleId, string fullName);
+		bool SetNickname(uint roleId, string nickname);
 
 		/// <summary>
 		/// 设置指定编号的角色描述信息。
@@ -136,10 +136,10 @@ namespace Zongsoft.Security.Membership
 		/// </summary>
 		/// <param name="name">指定的新建角色的名称。</param>
 		/// <param name="namespace">新建角色所属的命名空间。</param>
-		/// <param name="fullName">指定的新建角色的全称。</param>
+		/// <param name="nickname">指定的新建角色的昵称。</param>
 		/// <param name="description">指定的新建角色的描述信息。</param>
 		/// <returns>返回创建成功的角色对象，如果为空(null)则表示创建失败。</returns>
-		TRole Create(string name, string @namespace, string fullName = null, string description = null);
+		TRole Create(string name, string @namespace, string nickname = null, string description = null);
 
 		/// <summary>
 		/// 创建一个角色。

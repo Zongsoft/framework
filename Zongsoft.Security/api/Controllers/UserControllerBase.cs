@@ -201,16 +201,16 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[Authorize]
-		[HttpPatch("{id}/FullName")]
-		[HttpPatch("FullName/{id?}")]
-		public async Task<IActionResult> SetFullName(uint id)
+		[HttpPatch("{id}/Nickname")]
+		[HttpPatch("Nickname/{id?}")]
+		public async Task<IActionResult> SetNickname(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
 			if (string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			return this.UserProvider.SetFullName(id, content) ? this.NoContent() : this.NotFound();
+			return this.UserProvider.SetNickname(id, content) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPatch("{id}/Email")]
