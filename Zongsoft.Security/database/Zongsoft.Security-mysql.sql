@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `Security_Role` (
   `RoleId`      int unsigned NOT NULL COMMENT '主键，角色编号',
   `Namespace`   varchar(50)  NULL     COMMENT '命名空间，表示应用或组织机构的标识',
   `Name`        varchar(50)  NOT NULL COMMENT '角色名称，所属命名空间内具有唯一性',
-  `FullName`    varchar(50)  NULL     COMMENT '角色全称',
+  `Nickname`    varchar(50)  NULL     COMMENT '角色昵称',
   `Description` varchar(500) NULL     COMMENT '描述信息',
   PRIMARY KEY (`RoleId`),
   UNIQUE INDEX `UX_Security_Role_Name` (`Namespace`, `Name`)
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `Security_User` (
   `UserId`            int unsigned     NOT NULL COMMENT '主键，用户编号',
   `Namespace`         varchar(50)      NULL     COMMENT '命名空间，表示应用或组织机构的标识',
   `Name`              varchar(50)      NOT NULL COMMENT '用户名称，所属命名空间内具有唯一性',
-  `FullName`          varchar(50)      NULL     COMMENT '用户全称',
+  `Nickname`          varchar(50)      NULL     COMMENT '用户昵称',
   `Password`          varbinary(64)    NULL     COMMENT '用户的登录口令',
   `PasswordSalt`      bigint unsigned  NULL     COMMENT '口令加密向量(随机数)',
   `Email`             varchar(50)      NULL     COMMENT '用户的电子邮箱，该邮箱地址在所属命名空间内具有唯一性',
@@ -47,19 +47,19 @@ CREATE TABLE IF NOT EXISTS `Security_Member` (
 CREATE TABLE IF NOT EXISTS `Security_Permission` (
   `MemberId`   int unsigned     NOT NULL COMMENT '主键，成员编号',
   `MemberType` tinyint unsigned NOT NULL COMMENT '主键，成员类型',
-  `SchemaId`   varchar(50)      NOT NULL COMMENT '主键，授权目标的标识',
-  `ActionId`   varchar(50)      NOT NULL COMMENT '主键，授权行为的标识',
+  `Target`     varchar(50)      NOT NULL COMMENT '主键，授权目标的标识',
+  `Action`     varchar(50)      NOT NULL COMMENT '主键，授权行为的标识',
   `Granted`    tinyint(1)       NOT NULL COMMENT '是否授权(0: 表示拒绝; 1: 表示授予)',
-  PRIMARY KEY (`MemberId`, `MemberType`, `SchemaId`, `ActionId`)
+  PRIMARY KEY (`MemberId`, `MemberType`, `Target`, `Action`)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8 COMMENT='权限表';
 
 CREATE TABLE IF NOT EXISTS `Security_PermissionFilter` (
   `MemberId`   int unsigned     NOT NULL COMMENT '主键，成员编号',
   `MemberType` tinyint unsigned NOT NULL COMMENT '主键，成员类型',
-  `SchemaId`   varchar(50)      NOT NULL COMMENT '主键，授权目标的标识',
-  `ActionId`   varchar(50)      NOT NULL COMMENT '主键，授权行为的标识',
+  `Target`     varchar(50)      NOT NULL COMMENT '主键，授权目标的标识',
+  `Action`     varchar(50)      NOT NULL COMMENT '主键，授权行为的标识',
   `Filter`     varchar(4000)    NOT NULL COMMENT '拒绝授权的过滤表达式',
-  PRIMARY KEY (`MemberId`, `MemberType`, `SchemaId`, `ActionId`)
+  PRIMARY KEY (`MemberId`, `MemberType`, `Target`, `Action`)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8 COMMENT='权限过滤表';
 
 CREATE TABLE IF NOT EXISTS `Security_Censorship` (
@@ -70,12 +70,12 @@ CREATE TABLE IF NOT EXISTS `Security_Censorship` (
 
 
 /* 添加系统内置角色 */
-INSERT INTO Security_Role (RoleId, Name, FullName, Description) VALUES (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)');
-INSERT INTO Security_Role (RoleId, Name, FullName, Description) VALUES (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
+INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)');
+INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
-INSERT INTO Security_User (UserId, Name, FullName, Description, Status) VALUES (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)', 0);
-INSERT INTO Security_User (UserId, Name, FullName, Description, Status) VALUES (2, 'Guest', '来宾', '来宾', 1);
+INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)', 0);
+INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (2, 'Guest', '来宾', '来宾', 1);
 
 /* 添加系统内置保留名字 */
 INSERT INTO Security_Censorship (Name, Word) VALUES ('Names', 'Zongsoft');

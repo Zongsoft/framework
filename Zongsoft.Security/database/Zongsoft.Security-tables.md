@@ -7,7 +7,7 @@
 UserId            | int       | 4   | ✗ | 主键，用户编号
 Namespace         | varchar   | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name              | varchar   | 50  | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
-FullName          | nvarchar  | 50  | ✓ | 用户全称
+Nickname          | nvarchar  | 50  | ✓ | 用户昵称
 Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
@@ -32,7 +32,7 @@ Description       | nvarchar  | 500 | ✓ | 描述信息
 RoleId      | int      | 4   | ✗ | 主键，角色编号
 Namespace   | varchar  | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间内具有唯一性_)
-FullName    | nvarchar | 50  | ✓ | 角色全称
+Nickname    | nvarchar | 50  | ✓ | 角色昵称
 Description | nvarchar | 500 | ✓ | 描述信息
 
 
@@ -51,11 +51,11 @@ MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 ------- |:-------:|:---:|:---:| ----
 MemberId   | int     | 4  | ✗ | 主键，用户或角色编号
 MemberType | byte    | 1  | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-SchemaId   | varchar | 50 | ✗ | 主键，授权目标的标识
-ActionId   | varchar | 50 | ✗ | 主键，授权行为的标识
+Target     | varchar | 50 | ✗ | 主键，授权目标的标识
+Action     | varchar | 50 | ✗ | 主键，授权行为的标识
 Granted    | bool    | -  | ✗ | 授权标记
 
-> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对操作目标(_`Schema`_)是否具有指定操作(`Action`)的授权，定义如下：
+> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对操作目标(_`Target`_)是否具有指定操作(_`Action`_)的授权，定义如下：
 > - **真**：表示用户或角色对指定目标拥有指定操作的授权；
 > - **假**：表示用户或角色对指定目标没有指定操作的权限。
 
@@ -66,8 +66,8 @@ Granted    | bool    | -  | ✗ | 授权标记
 ------- |:-------:|:---:|:---:| ----
 MemberId   | int     | 4   | ✗ | 主键，用户或角色编号
 MemberType | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-SchemaId   | varchar | 50  | ✗ | 主键，授权目标的标识
-ActionId   | varchar | 50  | ✗ | 主键，授权行为的标识
+Target     | varchar | 50  | ✗ | 主键，授权目标的标识
+Action     | varchar | 50  | ✗ | 主键，授权行为的标识
 Filter     | varchar | 500 | ✗ | 过滤表达式
 
 -----
@@ -80,14 +80,14 @@ Filter     | varchar | 500 | ✗ | 过滤表达式
 
 #### 用户记录 `User`
 
-UserId | Name | FullName
+UserId | Name | Nickname
 :-----:|:----:|---------
 1001   | Jack | 杰克·马
 1002   | Pony | 波尼·马
 
 #### 角色记录 `Role`
 
-RoleId | Name | FullName
+RoleId | Name | Nickname
 :-----:|:----:|---------
 101    | Users    | 普通用户
 201    | Sales    | 销售人员
@@ -105,7 +105,7 @@ RoleId | MemberId | MemberType
 
 #### 权限记录 `Permission`
 
-MemberId | MemberType | SchemaId | ActionId | Granted
+MemberId | MemberType |  Target  |  Action  | Granted
 :-------:|:----------:|:--------:|:--------:|:------:
 101      | `1`(_Role_) | Product   | Select  | ✓ (_True_)
 101      | `1`(_Role_) | Feedback  | Select  | ✓ (_True_)
@@ -133,15 +133,15 @@ MemberId | MemberType | SchemaId | ActionId | Granted
 ```json
 [
 	{
-		"Schema":"Product",
+		"Target":"Product",
 		"Actions":["Select"]
 	},
 	{
-		"Schema":"Feedback",
+		"Target":"Feedback",
 		"Actions":["Select"]
 	},
 	{
-		"Schema":"SaleOrder",
+		"Target":"SaleOrder",
 		"Actions":["Select", "Update"]
 	}
 ]
@@ -165,15 +165,15 @@ MemberId | MemberType | SchemaId | ActionId | Granted
 ```json
 [
 	{
-		"Schema":"Product",
+		"Target":"Product",
 		"Actions":["Select"]
 	},
 	{
-		"Schema":"Feedback",
+		"Target":"Feedback",
 		"Actions":["Select"]
 	},
 	{
-		"Schema":"SaleOrder",
+		"Target":"SaleOrder",
 		"Actions":["Select"]
 	}
 ]
@@ -186,7 +186,7 @@ MemberId | MemberType | SchemaId | ActionId | Granted
 
 #### 权限过滤 `PermissionFilter`
 
-MemberId | MemberType | SchemaId | ActionId | Filter
+MemberId | MemberType |  Target  |  Action  | Filter
 :-------:|:----------:|:--------:|:--------:|:------:
 201      | `1`(_Role_) | SaleOrder | Select  | `!Amount,!Details.Price,!Details.Discount,!Details.Quantity`
 
