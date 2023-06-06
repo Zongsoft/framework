@@ -18,7 +18,7 @@ namespace Zongsoft.Serialization
 			{
 				p.UserId = 100;
 				p.Name = "Popeye";
-				p.FullName = "钟少";
+				p.Nickname = "钟少";
 			});
 
 			var credential = new Credential()
@@ -71,7 +71,7 @@ namespace Zongsoft.Serialization
 			Assert.NotNull(credential.User);
 			Assert.Equal(100u, credential.User.UserId);
 			Assert.Equal("Popeye", credential.User.Name);
-			Assert.Equal("钟少", credential.User.FullName);
+			Assert.Equal("钟少", credential.User.Nickname);
 		}
 
 		public class Credential

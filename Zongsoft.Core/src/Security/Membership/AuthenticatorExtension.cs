@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Membership
 			var issuer = authenticator.Name;
 			var identity = new CredentialIdentity(user.Name, authenticator.Name, issuer)
 			{
-				Label = user.FullName
+				Label = user.Nickname
 			};
 
 			identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(), ClaimValueTypes.UInteger32, issuer, issuer, identity));

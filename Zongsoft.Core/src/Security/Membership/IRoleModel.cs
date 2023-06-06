@@ -52,8 +52,8 @@ namespace Zongsoft.Security.Membership
 		/// <summary>获取或设置角色名称。</summary>
 		string Name { get; set; }
 
-		/// <summary>获取或设置角色全称。</summary>
-		string FullName { get; set; }
+		/// <summary>获取或设置角色昵称。</summary>
+		string Nickname { get; set; }
 
 		/// <summary>获取或设置角色所属的命名空间。</summary>
 		string Namespace { get; set; }

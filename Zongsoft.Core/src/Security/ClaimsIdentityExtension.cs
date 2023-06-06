@@ -286,7 +286,7 @@ namespace Zongsoft.Security
 			if(typeof(Membership.IUserModel).IsAssignableFrom(typeof(T)))
 			{
 				var user = (Membership.IUserModel)model;
-				user.FullName = identity.Label;
+				user.Nickname = identity.Label;
 
 				var property = model.GetType().GetProperty("Properties");
 

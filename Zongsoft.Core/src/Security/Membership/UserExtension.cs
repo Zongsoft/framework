@@ -41,7 +41,7 @@ namespace Zongsoft.Security.Membership
 
 			var identity = new CredentialIdentity(user.Name, scheme, issuer)
 			{
-				Label = user.FullName
+				Label = user.Nickname
 			};
 
 			SetClaims(identity, user, expiration);
@@ -54,8 +54,8 @@ namespace Zongsoft.Security.Membership
 			if(identity == null || user == null)
 				return;
 
-			if(!string.IsNullOrWhiteSpace(user.FullName))
-				identity.Label = user.FullName;
+			if(!string.IsNullOrWhiteSpace(user.Nickname))
+				identity.Label = user.Nickname;
 
 			identity.AddClaim(new Claim(identity.NameClaimType, user.Name, ClaimValueTypes.String));
 			identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString(), ClaimValueTypes.UInteger32));

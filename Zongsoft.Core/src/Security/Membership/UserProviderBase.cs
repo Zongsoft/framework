@@ -255,7 +255,7 @@ namespace Zongsoft.Security.Membership
 				},
 				new Condition(nameof(IUserModel.UserId), userId)) > 0)
 			{
-				this.OnChanged(userId, nameof(IUserIdentity.FullName), fullName);
+				this.OnChanged(userId, nameof(IUserIdentity.Nickname), fullName);
 				return true;
 			}
 
@@ -435,11 +435,11 @@ namespace Zongsoft.Security.Membership
 			{
 				case UserIdentityType.Name:
 					user.Name = identity;
-					user.FullName = identity;
+					user.Nickname = identity;
 					break;
 				case UserIdentityType.Phone:
 					user.Phone = identity;
-					user.FullName = identity.Mask(3, 4);
+					user.Nickname = identity.Mask(3, 4);
 					break;
 				case UserIdentityType.Email:
 					user.Email = identity.Mask(2, 2, 0, identity.IndexOf('@'));

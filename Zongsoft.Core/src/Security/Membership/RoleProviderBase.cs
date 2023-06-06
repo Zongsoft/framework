@@ -150,7 +150,7 @@ namespace Zongsoft.Security.Membership
 				},
 				new Condition(nameof(IRoleModel.RoleId), roleId)) > 0)
 			{
-				this.OnChanged(roleId, nameof(IRoleModel.FullName), fullName);
+				this.OnChanged(roleId, nameof(IRoleModel.Nickname), fullName);
 				return true;
 			}
 
@@ -191,7 +191,7 @@ namespace Zongsoft.Security.Membership
 			var role = this.CreateRole();
 
 			role.Name = name;
-			role.FullName = fullName;
+			role.Nickname = fullName;
 			role.Namespace = @namespace;
 			role.Description = string.IsNullOrEmpty(description) ? null : description;
 
@@ -223,8 +223,8 @@ namespace Zongsoft.Security.Membership
 				this.OnValidateName(role.Name);
 
 				//确保角色全称不为空
-				if(string.IsNullOrEmpty(role.FullName))
-					role.FullName = role.Name;
+				if(string.IsNullOrEmpty(role.Nickname))
+					role.Nickname = role.Name;
 			}
 
 			var count = this.DataAccess.InsertMany(roles);

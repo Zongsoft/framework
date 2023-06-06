@@ -36,29 +36,19 @@ namespace Zongsoft.Security.Membership
 	/// </summary>
 	public interface IUserIdentity
 	{
-		/// <summary>
-		/// 获取或设置用户编号。
-		/// </summary>
+		/// <summary>获取或设置用户编号。</summary>
 		uint UserId { get; set; }
 
-		/// <summary>
-		/// 获取或设置用户名称。
-		/// </summary>
+		/// <summary>获取或设置用户名称。</summary>
 		string Name { get; set; }
 
-		/// <summary>
-		/// 获取或设置用户全称。
-		/// </summary>
-		string FullName { get; set; }
+		/// <summary>获取或设置用户昵称。</summary>
+		string Nickname { get; set; }
 
-		/// <summary>
-		/// 获取或设置用户所属的命名空间。
-		/// </summary>
+		/// <summary>获取或设置用户所属的命名空间。</summary>
 		string Namespace { get; set; }
 
-		/// <summary>
-		/// 获取或设置用户的描述信息。
-		/// </summary>
+		/// <summary>获取或设置用户的描述信息。</summary>
 		string Description { get; set; }
 	}
 }
