@@ -34,26 +34,26 @@ namespace Zongsoft.Security.Membership
 	public struct PermissionFilterModel : IEquatable<PermissionFilterModel>
 	{
 		#region 成员变量
-		private string _schemaId;
-		private string _actionId;
+		private string _target;
+		private string _action;
 		private string _filter;
 		#endregion
 
 		#region 构造函数
-		public PermissionFilterModel(uint memberId, MemberType memberType, string schemaId, string actionId, string filter)
+		public PermissionFilterModel(uint memberId, MemberType memberType, string target, string action, string filter)
 		{
-			if(string.IsNullOrEmpty(schemaId))
-				throw new ArgumentNullException(nameof(schemaId));
-			if(string.IsNullOrEmpty(actionId))
-				throw new ArgumentNullException(nameof(actionId));
+			if(string.IsNullOrEmpty(target))
+				throw new ArgumentNullException(nameof(target));
+			if(string.IsNullOrEmpty(action))
+				throw new ArgumentNullException(nameof(action));
 			if(string.IsNullOrEmpty(filter))
 				throw new ArgumentNullException(nameof(filter));
 
 			this.MemberId = memberId;
 			this.MemberType = memberType;
 
-			_schemaId = schemaId.Trim();
-			_actionId = actionId.Trim();
+			_target = target.Trim();
+			_action = action.Trim();
 			_filter = filter.Trim();
 		}
 		#endregion
@@ -62,27 +62,27 @@ namespace Zongsoft.Security.Membership
 		public uint MemberId { get; set; }
 		public MemberType MemberType { get; set; }
 
-		public string SchemaId
+		public string Target
 		{
-			get => _schemaId;
+			get => _target;
 			set
 			{
 				if(string.IsNullOrEmpty(value))
 					throw new ArgumentNullException();
 
-				_schemaId = value.Trim();
+				_target = value.Trim();
 			}
 		}
 
-		public string ActionId
+		public string Action
 		{
-			get => _actionId;
+			get => _action;
 			set
 			{
 				if(string.IsNullOrEmpty(value))
 					throw new ArgumentNullException();
 
-				_actionId = value.Trim();
+				_action = value.Trim();
 			}
 		}
 
@@ -103,13 +103,13 @@ namespace Zongsoft.Security.Membership
 		public bool Equals(PermissionFilterModel other)
 		{
 			return this.MemberId == other.MemberId && this.MemberType == other.MemberType &&
-			       string.Equals(_schemaId, other._schemaId, StringComparison.OrdinalIgnoreCase) &&
-			       string.Equals(_actionId, other._actionId, StringComparison.OrdinalIgnoreCase);
+			       string.Equals(_target, other._target, StringComparison.OrdinalIgnoreCase) &&
+			       string.Equals(_action, other._action, StringComparison.OrdinalIgnoreCase);
 		}
 
 		public override bool Equals(object obj) => obj is PermissionFilterModel other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.MemberId, this.MemberType, _schemaId, _actionId);
-		public override string ToString() => $"{this.MemberType}:{this.MemberId}-{this.SchemaId}-{this.ActionId}" + Environment.NewLine + this.Filter;
+		public override int GetHashCode() => HashCode.Combine(this.MemberId, this.MemberType, _target, _action);
+		public override string ToString() => $"{this.MemberType}:{this.MemberId}-{this.Target}-{this.Action}" + Environment.NewLine + this.Filter;
 		#endregion
 	}
 }

@@ -477,16 +477,16 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 授权操作
-		[HttpGet("{id}/Authorize/{schemaId}:{actionId}")]
-		[HttpGet("Authorize/{schemaId}:{actionId}")]
-		public Task<IActionResult> Authorize(uint id, string schemaId, string actionId)
+		[HttpGet("{id}/Authorize/{target}:{actionId}")]
+		[HttpGet("Authorize/{target}:{actionId}")]
+		public Task<IActionResult> Authorize(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrWhiteSpace(schemaId))
+			if (string.IsNullOrWhiteSpace(target))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing schema for the authorize operation."));
 			if (string.IsNullOrWhiteSpace(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest("Missing action for the authorize operation."));
 
-			return this.Authorizer.Authorize(id, schemaId, actionId) ?
+			return this.Authorizer.Authorize(id, target, actionId) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -499,19 +499,19 @@ namespace Zongsoft.Security.Web.Controllers
 				id = this.User.Identity.GetIdentifier<uint>();
 
 			return this.Ok(this.Authorizer.Authorizes(id, MemberType.User).Select(p =>
-				p.Schema + ":" + string.Join(',', p.Actions.Select(a => a.Action).ToArray())
+				p.Target + ":" + string.Join(',', p.Actions.Select(a => a.Name).ToArray())
 			));
 		}
 		#endregion
 
 		#region 权限操作
-		[HttpGet("{id}/Permissions/{schemaId?}", Name = nameof(GetPermissions))]
-		[HttpGet("Permissions/{schemaId?}")]
-		public Task<IActionResult> GetPermissions(uint id, string schemaId = null)
+		[HttpGet("{id}/Permissions/{target?}", Name = nameof(GetPermissions))]
+		[HttpGet("Permissions/{target?}")]
+		public Task<IActionResult> GetPermissions(uint id, string target = null)
 		{
-			var result = this.PermissionProvider.GetPermissions(id, MemberType.User, schemaId)
-				.GroupBy(p => p.SchemaId)
-				.ToDictionary(group => group.Key, elements => elements.Select(element => element.ActionId + ":" + element.Granted.ToString()));
+			var result = this.PermissionProvider.GetPermissions(id, MemberType.User, target)
+				.GroupBy(p => p.Target)
+				.ToDictionary(group => group.Key, elements => elements.Select(element => element.Action + ":" + element.Granted.ToString()));
 
 			return (result != null && result.Count > 0) ?
 				Task.FromResult((IActionResult)this.Ok(result)) :
@@ -520,41 +520,41 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permissions")]
 		[HttpPut("Permissions")]
-		public Task<IActionResult> SetPermissions(uint id, [FromBody] IEnumerable<PermissionModel> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissions(uint id, [FromBody]IEnumerable<PermissionModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissions(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissions), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id}/Permission/{schemaId}:{actionId}")]
-		[HttpDelete("Permission/{schemaId}:{actionId}")]
-		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId = null)
+		[HttpDelete("{id}/Permission/{target}:{actionId}")]
+		[HttpDelete("Permission/{target}:{actionId}")]
+		public Task<IActionResult> RemovePermission(uint id, string target, string actionId = null)
 		{
-			if (string.IsNullOrWhiteSpace(schemaId) || string.IsNullOrWhiteSpace(actionId))
+			if (string.IsNullOrWhiteSpace(target) || string.IsNullOrWhiteSpace(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId, actionId) > 0 ?
+			return this.PermissionProvider.RemovePermissions(id, MemberType.User, target, actionId) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id}/Permissions/{schemaId?}")]
-		[HttpDelete("Permissions/{schemaId?}")]
-		public Task<IActionResult> RemovePermissions(uint id, string schemaId = null)
+		[HttpDelete("{id}/Permissions/{target?}")]
+		[HttpDelete("Permissions/{target?}")]
+		public Task<IActionResult> RemovePermissions(uint id, string target = null)
 		{
-			return this.PermissionProvider.RemovePermissions(id, MemberType.User, schemaId) > 0 ?
+			return this.PermissionProvider.RemovePermissions(id, MemberType.User, target) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{id}/Permission.Filters/{schemaId?}", Name = nameof(GetPermissionFilters))]
-		[HttpGet("Permission.Filters/{schemaId?}")]
-		public Task<IActionResult> GetPermissionFilters(uint id, string schemaId = null)
+		[HttpGet("{id}/Permission.Filters/{target?}", Name = nameof(GetPermissionFilters))]
+		[HttpGet("Permission.Filters/{target?}")]
+		public Task<IActionResult> GetPermissionFilters(uint id, string target = null)
 		{
-			var result = this.PermissionProvider.GetPermissionFilters(id, MemberType.User, schemaId)
-				.GroupBy(p => p.SchemaId)
-				.ToDictionary(group => group.Key, elements => elements.Select(element => element.ActionId + ":" + element.Filter));
+			var result = this.PermissionProvider.GetPermissionFilters(id, MemberType.User, target)
+				.GroupBy(p => p.Target)
+				.ToDictionary(group => group.Key, elements => elements.Select(element => element.Action + ":" + element.Filter));
 
 			return (result != null && result.Count > 0) ?
 				Task.FromResult((IActionResult)this.Ok(result)) :
@@ -563,30 +563,30 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpPut("{id}/Permission.Filters")]
 		[HttpPut("Permission.Filters")]
-		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody] IEnumerable<PermissionFilterModel> permissions, [FromQuery] bool reset = false)
+		public Task<IActionResult> SetPermissionFilters(uint id, [FromBody]IEnumerable<PermissionFilterModel> permissions, [FromQuery] bool reset = false)
 		{
 			return this.PermissionProvider.SetPermissionFilters(id, MemberType.User, permissions, reset) > 0 ?
 				Task.FromResult((IActionResult)this.CreatedAtRoute(nameof(GetPermissionFilters), new { id }, null)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id}/Permission.Filter/{schemaId}:{actionId}")]
-		[HttpDelete("Permission.Filter/{schemaId}:{actionId}")]
-		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
+		[HttpDelete("{id}/Permission.Filter/{target}:{actionId}")]
+		[HttpDelete("Permission.Filter/{target}:{actionId}")]
+		public Task<IActionResult> RemovePermissionFilter(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
+			if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId, actionId) > 0 ?
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, target, actionId) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id}/Permission.Filters/{schemaId?}")]
-		[HttpDelete("Permission.Filters/{schemaId?}")]
-		public Task<IActionResult> RemovePermissionFilters(uint id, string schemaId = null)
+		[HttpDelete("{id}/Permission.Filters/{target?}")]
+		[HttpDelete("Permission.Filters/{target?}")]
+		public Task<IActionResult> RemovePermissionFilters(uint id, string target = null)
 		{
-			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, schemaId) > 0 ?
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.User, target) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}

@@ -331,18 +331,18 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.BadRequest();
 
 			return this.Ok(this.Authorizer.Authorizes(id, MemberType.Role).Select(p =>
-				p.Schema + ":" + string.Join(',', p.Actions.Select(a => a.Action).ToArray())
+				p.Target + ":" + string.Join(',', p.Actions.Select(a => a.Name).ToArray())
 			));
 		}
 		#endregion
 
 		#region 权限操作
-		[HttpGet("{id}/Permissions/{schemaId?}")]
-		public Task<IActionResult> GetPermissions(uint id, string schemaId = null)
+		[HttpGet("{id}/Permissions/{target?}")]
+		public Task<IActionResult> GetPermissions(uint id, string target = null)
 		{
-			var result = this.PermissionProvider.GetPermissions(id, MemberType.Role, schemaId)
-				.GroupBy(p => p.SchemaId)
-				.ToDictionary(group => group.Key, elements => elements.Select(element => element.ActionId + ":" + element.Granted.ToString()));
+			var result = this.PermissionProvider.GetPermissions(id, MemberType.Role, target)
+				.GroupBy(p => p.Target)
+				.ToDictionary(group => group.Key, elements => elements.Select(element => element.Action + ":" + element.Granted.ToString()));
 
 			return (result != null && result.Count > 0) ?
 				Task.FromResult((IActionResult)this.Ok(result)) :
@@ -357,31 +357,31 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id}/Permission/{schemaId}:{actionId}")]
-		public Task<IActionResult> RemovePermission(uint id, string schemaId, string actionId)
+		[HttpDelete("{id}/Permission/{target}:{actionId}")]
+		public Task<IActionResult> RemovePermission(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
+			if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId, actionId) > 0 ?
+			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, target, actionId) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id}/Permissions/{schemaId?}")]
-		public Task<IActionResult> RemovePermissions(uint id, string schemaId = null)
+		[HttpDelete("{id}/Permissions/{target?}")]
+		public Task<IActionResult> RemovePermissions(uint id, string target = null)
 		{
-			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, schemaId) > 0 ?
+			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, target) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{id}/Permission.Filters/{schemaId?}")]
-		public Task<IActionResult> GetPermissionFilters(uint id, string schemaId = null)
+		[HttpGet("{id}/Permission.Filters/{target?}")]
+		public Task<IActionResult> GetPermissionFilters(uint id, string target = null)
 		{
-			var result = this.PermissionProvider.GetPermissionFilters(id, MemberType.Role, schemaId)
-				.GroupBy(p => p.SchemaId)
-				.ToDictionary(group => group.Key, elements => elements.Select(element => element.ActionId + ":" + element.Filter));
+			var result = this.PermissionProvider.GetPermissionFilters(id, MemberType.Role, target)
+				.GroupBy(p => p.Target)
+				.ToDictionary(group => group.Key, elements => elements.Select(element => element.Action + ":" + element.Filter));
 
 			return (result != null && result.Count > 0) ?
 				Task.FromResult((IActionResult)this.Ok(result)) :
@@ -396,21 +396,21 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpDelete("{id}/Permission.Filter/{schemaId}:{actionId}")]
-		public Task<IActionResult> RemovePermissionFilter(uint id, string schemaId, string actionId)
+		[HttpDelete("{id}/Permission.Filter/{target}:{actionId}")]
+		public Task<IActionResult> RemovePermissionFilter(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrEmpty(schemaId) || string.IsNullOrEmpty(actionId))
+			if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId, actionId) > 0 ?
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, target, actionId) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpDelete("{id}/Permission.Filters/{schemaId?}")]
-		public Task<IActionResult> RemovePermissionFilters(uint id, string schemaId = null)
+		[HttpDelete("{id}/Permission.Filters/{target?}")]
+		public Task<IActionResult> RemovePermissionFilters(uint id, string target = null)
 		{
-			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, schemaId) > 0 ?
+			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, target) > 0 ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}

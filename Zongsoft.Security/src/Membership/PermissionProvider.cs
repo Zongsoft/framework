@@ -57,12 +57,12 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public IEnumerable<PermissionModel> GetPermissions(uint memberId, MemberType memberType, string schemaId = null)
+		public IEnumerable<PermissionModel> GetPermissions(uint memberId, MemberType memberType, string target = null)
 		{
 			var conditions = Condition.Equal(nameof(PermissionModel.MemberId), memberId) & Condition.Equal(nameof(PermissionModel.MemberType), memberType);
 
-			if(!string.IsNullOrWhiteSpace(schemaId))
-				conditions.Add(Condition.Equal(nameof(PermissionModel.SchemaId), schemaId));
+			if(!string.IsNullOrWhiteSpace(target))
+				conditions.Add(Condition.Equal(nameof(PermissionModel.Target), target));
 
 			return this.DataAccess.Select<PermissionModel>(conditions);
 		}
@@ -70,12 +70,12 @@ namespace Zongsoft.Security.Membership
 		public int SetPermissions(uint memberId, MemberType memberType, IEnumerable<PermissionModel> permissions, bool shouldResetting = false) =>
 			this.SetPermissions(memberId, memberType, null, permissions, shouldResetting);
 
-		public int SetPermissions(uint memberId, MemberType memberType, string schemaId, IEnumerable<PermissionModel> permissions, bool shouldResetting = false)
+		public int SetPermissions(uint memberId, MemberType memberType, string target, IEnumerable<PermissionModel> permissions, bool shouldResetting = false)
 		{
 			var conditions = Condition.Equal(nameof(PermissionModel.MemberId), memberId) & Condition.Equal(nameof(PermissionModel.MemberType), memberType);
 
-			if(!string.IsNullOrWhiteSpace(schemaId))
-				conditions.Add(Condition.Equal(nameof(PermissionModel.SchemaId), schemaId));
+			if(!string.IsNullOrWhiteSpace(target))
+				conditions.Add(Condition.Equal(nameof(PermissionModel.Target), target));
 
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
@@ -88,7 +88,7 @@ namespace Zongsoft.Security.Membership
 				//写入指定的权限设置集到数据库中
 				if(permissions != null)
 					count = this.DataAccess.UpsertMany(
-						permissions.Select(p => new PermissionModel(memberId, memberType, (string.IsNullOrEmpty(schemaId) ? p.SchemaId : schemaId), p.ActionId, p.Granted)));
+						permissions.Select(p => new PermissionModel(memberId, memberType, (string.IsNullOrEmpty(target) ? p.Target : target), p.Action, p.Granted)));
 
 				//提交事务
 				transaction.Commit();
@@ -97,26 +97,26 @@ namespace Zongsoft.Security.Membership
 			}
 		}
 
-		public int RemovePermissions(uint memberId, MemberType memberType, string schemaId = null, string actionId = null)
+		public int RemovePermissions(uint memberId, MemberType memberType, string target = null, string action = null)
 		{
 			var criteria = Condition.Equal(nameof(PermissionModel.MemberId), memberId) &
 			               Condition.Equal(nameof(PermissionModel.MemberType), memberType);
 
-			if(schemaId != null && schemaId.Length > 0)
-				criteria.Add(Condition.Equal(nameof(PermissionModel.SchemaId), schemaId));
+			if(target != null && target.Length > 0)
+				criteria.Add(Condition.Equal(nameof(PermissionModel.Target), target));
 
-			if(actionId != null && actionId.Length > 0)
-				criteria.Add(Condition.Equal(nameof(PermissionModel.ActionId), actionId));
+			if(action != null && action.Length > 0)
+				criteria.Add(Condition.Equal(nameof(PermissionModel.Action), action));
 
 			return this.DataAccess.Delete<PermissionModel>(criteria);
 		}
 
-		public IEnumerable<PermissionFilterModel> GetPermissionFilters(uint memberId, MemberType memberType, string schemaId = null)
+		public IEnumerable<PermissionFilterModel> GetPermissionFilters(uint memberId, MemberType memberType, string target = null)
 		{
 			var conditions = Condition.Equal(nameof(PermissionFilterModel.MemberId), memberId) & Condition.Equal(nameof(PermissionFilterModel.MemberType), memberType);
 
-			if(!string.IsNullOrWhiteSpace(schemaId))
-				conditions.Add(Condition.Equal(nameof(PermissionFilterModel.SchemaId), schemaId));
+			if(!string.IsNullOrWhiteSpace(target))
+				conditions.Add(Condition.Equal(nameof(PermissionFilterModel.Target), target));
 
 			return this.DataAccess.Select<PermissionFilterModel>(conditions);
 		}
@@ -124,12 +124,12 @@ namespace Zongsoft.Security.Membership
 		public int SetPermissionFilters(uint memberId, MemberType memberType, IEnumerable<PermissionFilterModel> permissionFilters, bool shouldResetting = false) =>
 			this.SetPermissionFilters(memberId, memberType, null, permissionFilters, shouldResetting);
 
-		public int SetPermissionFilters(uint memberId, MemberType memberType, string schemaId, IEnumerable<PermissionFilterModel> permissionFilters, bool shouldResetting = false)
+		public int SetPermissionFilters(uint memberId, MemberType memberType, string target, IEnumerable<PermissionFilterModel> permissionFilters, bool shouldResetting = false)
 		{
 			var conditions = Condition.Equal(nameof(PermissionFilterModel.MemberId), memberId) & Condition.Equal(nameof(PermissionFilterModel.MemberType), memberType);
 
-			if(!string.IsNullOrWhiteSpace(schemaId))
-				conditions.Add(Condition.Equal(nameof(PermissionFilterModel.SchemaId), schemaId));
+			if(!string.IsNullOrWhiteSpace(target))
+				conditions.Add(Condition.Equal(nameof(PermissionFilterModel.Target), target));
 
 			using(var transaction = new Zongsoft.Transactions.Transaction())
 			{
@@ -142,7 +142,7 @@ namespace Zongsoft.Security.Membership
 				//插入指定的权限设置集到数据库中
 				if(permissionFilters != null)
 					count = this.DataAccess.UpsertMany(
-						permissionFilters.Select(p => new PermissionFilterModel(memberId, memberType, (string.IsNullOrEmpty(schemaId) ? p.SchemaId : schemaId), p.ActionId, p.Filter)));
+						permissionFilters.Select(p => new PermissionFilterModel(memberId, memberType, (string.IsNullOrEmpty(target) ? p.Target : target), p.Action, p.Filter)));
 
 				//提交事务
 				transaction.Commit();
@@ -151,16 +151,16 @@ namespace Zongsoft.Security.Membership
 			}
 		}
 
-		public int RemovePermissionFilters(uint memberId, MemberType memberType, string schemaId = null, string actionId = null)
+		public int RemovePermissionFilters(uint memberId, MemberType memberType, string target = null, string action = null)
 		{
 			var criteria = Condition.Equal(nameof(PermissionModel.MemberId), memberId) &
 			               Condition.Equal(nameof(PermissionModel.MemberType), memberType);
 
-			if(schemaId != null && schemaId.Length > 0)
-				criteria.Add(Condition.Equal(nameof(PermissionModel.SchemaId), schemaId));
+			if(target != null && target.Length > 0)
+				criteria.Add(Condition.Equal(nameof(PermissionModel.Target), target));
 
-			if(actionId != null && actionId.Length > 0)
-				criteria.Add(Condition.Equal(nameof(PermissionModel.ActionId), actionId));
+			if(action != null && action.Length > 0)
+				criteria.Add(Condition.Equal(nameof(PermissionModel.Action), action));
 
 			return this.DataAccess.Delete<PermissionFilterModel>(criteria);
 		}

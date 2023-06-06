@@ -65,25 +65,25 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共方法
-		public bool Authorize(uint userId, string schema, string action)
+		public bool Authorize(uint userId, string target, string action)
 		{
 			if(userId == 0)
 				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			return this.Authorizes(userId, MemberType.User)
-			           .Any(token => string.Equals(schema, token.Schema, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
+			           .Any(token => string.Equals(target, token.Target, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
 		}
 
-		public bool Authorize(ClaimsIdentity user, string schema, string action)
+		public bool Authorize(ClaimsIdentity user, string target, string action)
 		{
 			if(user == null)
 				throw new ArgumentNullException(nameof(user));
 
-			if(string.IsNullOrEmpty(schema))
-				throw new ArgumentNullException(nameof(schema));
+			if(string.IsNullOrEmpty(target))
+				throw new ArgumentNullException(nameof(target));
 
 			//创建授权上下文对象
-			var context = new AuthorizationContext(user, schema, action, true);
+			var context = new AuthorizationContext(user, target, action, true);
 
 			//激发“Authorizing”事件
 			this.OnAuthorizing(context);
@@ -100,11 +100,11 @@ namespace Zongsoft.Security.Membership
 			var tokens = this.Authorizes(user.GetIdentifier<uint>(), MemberType.User);
 
 			if(string.IsNullOrWhiteSpace(action) || action == "*")
-				context.IsAuthorized = tokens != null && tokens.Any(state => string.Equals(state.Schema, schema, StringComparison.OrdinalIgnoreCase));
+				context.IsAuthorized = tokens != null && tokens.Any(state => string.Equals(state.Target, target, StringComparison.OrdinalIgnoreCase));
 			else
 				context.IsAuthorized = tokens != null && tokens.Any(
-					token => string.Equals(token.Schema, schema, StringComparison.OrdinalIgnoreCase) &&
-							 token.Actions.Any(p => string.Equals(p.Action, action, StringComparison.OrdinalIgnoreCase))
+					token => string.Equals(token.Target, target, StringComparison.OrdinalIgnoreCase) &&
+							 token.Actions.Any(a => string.Equals(a.Name, action, StringComparison.OrdinalIgnoreCase))
 				);
 
 			//激发“Authorized”事件
@@ -114,7 +114,7 @@ namespace Zongsoft.Security.Membership
 			return context.IsAuthorized;
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(ClaimsIdentity identity)
+		public IEnumerable<Permission> Authorizes(ClaimsIdentity identity)
 		{
 			if(identity == null)
 				throw new ArgumentNullException(nameof(identity));
@@ -122,7 +122,7 @@ namespace Zongsoft.Security.Membership
 			return MembershipUtility.GetAuthorizes(this.DataAccess, identity);
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(IRoleModel role)
+		public IEnumerable<Permission> Authorizes(IRoleModel role)
 		{
 			if(role == null)
 				throw new ArgumentNullException(nameof(role));
@@ -130,19 +130,19 @@ namespace Zongsoft.Security.Membership
 			return MembershipUtility.GetAuthorizes(this.DataAccess, role);
 		}
 
-		public IEnumerable<AuthorizationToken> Authorizes(uint memberId, MemberType memberType)
+		public IEnumerable<Permission> Authorizes(uint memberId, MemberType memberType)
 		{
 			if(memberType == MemberType.User)
 			{
 				//获取指定编号的用户对象
 				var user = this.GetUser(memberId);
-				return user == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, user);
+				return user == null ? Array.Empty<Permission>() : MembershipUtility.GetAuthorizes(this.DataAccess, user);
 			}
 			else
 			{
 				//获取指定编号的角色对象
 				var role = this.GetRole(memberId);
-				return role == null ? Array.Empty<AuthorizationToken>() : MembershipUtility.GetAuthorizes(this.DataAccess, role);
+				return role == null ? Array.Empty<Permission>() : MembershipUtility.GetAuthorizes(this.DataAccess, role);
 			}
 		}
 

@@ -308,27 +308,27 @@ namespace Zongsoft.Security.Membership
 			return roles;
 		}
 
-		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IRoleModel role)
+		public static IEnumerable<Permission> GetAuthorizes(IDataAccess dataAccess, IRoleModel role)
 		{
 			if(GetAncestors<IRoleModel>(dataAccess, role, out var flats, out var hierarchies) > 0)
 				return GetAuthorizedTokens(dataAccess, flats, hierarchies, role.RoleId, MemberType.Role);
 			else
-				return Array.Empty<AuthorizationToken>();
+				return Array.Empty<Permission>();
 		}
 
-		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, IUserModel user)
+		public static IEnumerable<Permission> GetAuthorizes(IDataAccess dataAccess, IUserModel user)
 		{
 			GetAncestors<IRoleModel>(dataAccess, user, out var flats, out var hierarchies);
 			return GetAuthorizedTokens(dataAccess, flats, hierarchies, user.UserId, MemberType.User);
 		}
 
-		public static IEnumerable<AuthorizationToken> GetAuthorizes(IDataAccess dataAccess, ClaimsIdentity identity)
+		public static IEnumerable<Permission> GetAuthorizes(IDataAccess dataAccess, ClaimsIdentity identity)
 		{
 			GetAncestors<IRoleModel>(dataAccess, identity, out var flats, out var hierarchies);
 			return GetAuthorizedTokens(dataAccess, flats, hierarchies, identity.GetIdentifier<uint>(), MemberType.User);
 		}
 
-		private static IEnumerable<AuthorizationToken> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRoleModel> flats, IList<IEnumerable<IRoleModel>> hierarchies, uint memberId, MemberType memberType)
+		private static IEnumerable<Permission> GetAuthorizedTokens(IDataAccess dataAccess, ISet<IRoleModel> flats, IList<IEnumerable<IRoleModel>> hierarchies, uint memberId, MemberType memberType)
 		{
 			var criteria = Condition.Equal(nameof(PermissionModel.MemberId), memberId) &
 			               Condition.Equal(nameof(PermissionModel.MemberType), memberType);
@@ -362,8 +362,8 @@ namespace Zongsoft.Security.Membership
 					//定义权限集过滤条件：当前层级的角色集的所有权限定义
 					prepares = permissions.Where(p => hierarchies[i].Any(role => role.RoleId == p.MemberId) && p.MemberType == MemberType.Role);
 
-					grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
-					denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+					grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.Target, p.Action)).ToArray();
+					denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.Target, p.Action)).ToArray();
 
 					states.UnionWith(grants);  //合并授予的权限定义
 					states.ExceptWith(denies); //排除拒绝的权限定义
@@ -376,8 +376,8 @@ namespace Zongsoft.Security.Membership
 			//查找权限定义中当前成员的设置项
 			prepares = permissions.Where(p => p.MemberId == memberId && p.MemberType == memberType);
 
-			grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
-			denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.SchemaId, p.ActionId)).ToArray();
+			grants = prepares.Where(p => p.Granted).Select(p => new AuthorizationState(p.Target, p.Action)).ToArray();
+			denies = prepares.Where(p => !p.Granted).Select(p => new AuthorizationState(p.Target, p.Action)).ToArray();
 
 			states.UnionWith(grants);  //合并授予的权限定义
 			states.ExceptWith(denies); //排除拒绝的权限定义
@@ -387,7 +387,7 @@ namespace Zongsoft.Security.Membership
 
 			foreach(var group in states.GroupBy(p => p.SchemaId))
 			{
-				yield return new AuthorizationToken(group.Key, group.Select(p => new AuthorizationToken.ActionToken(p.ActionId, p.Filter)));
+				yield return new Permission(group.Key, group.Select(p => new Permission.Action(p.ActionId, p.Filter)));
 			}
 		}
 		#endregion
@@ -437,7 +437,7 @@ namespace Zongsoft.Security.Membership
 		#region 私有方法
 		private static void SetPermissionFilters(IEnumerable<AuthorizationState> states, IEnumerable<PermissionFilterModel> filters)
 		{
-			var groups = filters.GroupBy(p => new AuthorizationState(p.SchemaId, p.ActionId));
+			var groups = filters.GroupBy(p => new AuthorizationState(p.Target, p.Action));
 
 			foreach(var group in groups)
 			{
