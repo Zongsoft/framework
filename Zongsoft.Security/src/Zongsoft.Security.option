@@ -3,8 +3,8 @@
 <options>
 	<option path="/Data">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Security" driver="MsSql"
-			                   value="Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\Zongsoft\Zongsoft.Security\database\Zongsoft.Security.mdf;Integrated Security=True;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" />
+			<connectionSetting connectionSetting.name="Security" driver="MySql"
+			                   value="server=127.0.0.1;username=program;password=xxxxxx;database=zongsoft;persist security info=False;Charset=utf8mb4;Convert zero Datetime=true;Allow zero Datetime=true;" />
 		</connectionSettings>
 	</option>
 
