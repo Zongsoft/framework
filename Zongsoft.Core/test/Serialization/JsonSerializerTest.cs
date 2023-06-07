@@ -55,7 +55,7 @@ namespace Zongsoft.Serialization
 	},
 	""userId"": 100,
 	""name"": ""Popeye"",
-	""fullName"": ""钟少"",
+	""nickname"": ""钟少"",
 	""namespace"": ""automao"",
 	""description"": ""钟峰""
 }}";
