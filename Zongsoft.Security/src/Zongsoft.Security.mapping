@@ -2,7 +2,7 @@
 
 <schema xmlns="http://schemas.zongsoft.com/data">
 	<container name="Security">
-		<entity name="Role" table="security_role">
+		<entity name="Role" table="Security_Role">
 			<key>
 				<member name="RoleId" />
 			</key>
@@ -42,7 +42,7 @@
 			</complexProperty>
 		</entity>
 
-		<entity name="User" table="security_user">
+		<entity name="User" table="Security_User">
 			<key>
 				<member name="UserId" />
 			</key>
@@ -100,7 +100,7 @@
 			</complexProperty>
 		</entity>
 
-		<entity name="Member" table="security_member">
+		<entity name="Member" table="Security_Member">
 			<key>
 				<member name="RoleId" />
 				<member name="MemberId" />
@@ -132,7 +132,7 @@
 			</complexProperty>
 		</entity>
 
-		<entity name="Permission" table="security_permission">
+		<entity name="Permission" table="Security_Permission">
 			<key>
 				<member name="MemberId" />
 				<member name="MemberType" />
@@ -147,7 +147,7 @@
 			<property name="Granted" type="bool" nullable="false" />
 		</entity>
 
-		<entity name="PermissionFilter" table="security_permissionfilter">
+		<entity name="PermissionFilter" table="Security_PermissionFilter">
 			<key>
 				<member name="MemberId" />
 				<member name="MemberType" />
@@ -162,7 +162,7 @@
 			<property name="Filter" type="string" length="4000" nullable="false" />
 		</entity>
 
-		<entity name="Censorship" table="security_censorship">
+		<entity name="Censorship" table="Security_Censorship">
 			<key>
 				<member name="Name" />
 				<member name="Word" />
