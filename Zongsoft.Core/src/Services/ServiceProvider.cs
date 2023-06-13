@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -83,11 +85,36 @@ namespace Zongsoft.Services
 		#region 公共方法
 		public object GetService(Type serviceType)
 		{
+			//如果是默认服务容器则可直接解析返回
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 
-			if(serviceType.IsAbstract && ServiceModular.TryGetContract(_name, serviceType, out var contract))
-				return _provider.GetService(contract);
+			//如果是获取多个服务，则必须将其内部服务类型调整为模块化类型
+			if(serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+			{
+				//将服务类型更改为元素类型，以方便操作
+				var elementType = serviceType.GenericTypeArguments[0];
+
+				if(ModularServicerUtility.TryGetModularServiceType(_name, elementType, out var modularType))
+				{
+					var index = 0;
+					var modulars = _provider.GetServices(modularType).Cast<IModularService>();
+					var array = Array.CreateInstance(elementType, modulars.Count());
+					using var iterator = modulars.GetEnumerator();
+
+					while(iterator.MoveNext())
+					{
+						var service = iterator.Current.GetValue(_provider);
+						array.SetValue(service, index++);
+					}
+
+					return array;
+				}
+			}
+
+			//获取单个模块化类型
+			if(ModularServicerUtility.TryGetModularServiceType(_name, serviceType, out var contractType))
+				return ((IModularService)_provider.GetService(contractType)).GetValue(_provider);
 
 			return _provider.GetService(serviceType);
 		}

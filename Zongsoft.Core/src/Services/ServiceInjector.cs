@@ -171,16 +171,16 @@ namespace Zongsoft.Services
 					if(string.IsNullOrEmpty(attribute.Provider))
 						_valueFactory = (provider, target) =>
 						{
-							if(ServiceModular.TryGetContract(target, serviceType, out var contract))
-								return provider.GetRequiredService(contract);
+							if(ModularServicerUtility.TryGetModularServiceType(target, serviceType, out var modularType))
+								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException();
 							else
 								return provider.GetRequiredService(serviceType);
 						};
 					else
 						_valueFactory = (provider, target) =>
 						{
-							if(ServiceModular.TryGetContract(attribute.Provider, serviceType, out var contract))
-								return provider.GetRequiredService(contract);
+							if(ModularServicerUtility.TryGetModularServiceType(attribute.Provider, serviceType, out var modularType))
+								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider);
 							else
 								return provider.GetRequiredService(serviceType);
 						};
@@ -190,16 +190,16 @@ namespace Zongsoft.Services
 					if(string.IsNullOrEmpty(attribute.Provider))
 						_valueFactory = (provider, target) =>
 						{
-							if(ServiceModular.TryGetContract(target, serviceType, out var contract))
-								return provider.GetService(contract);
+							if(ModularServicerUtility.TryGetModularServiceType(target, serviceType, out var modularType))
+								return ((IModularService)provider.GetService(modularType))?.GetValue(provider);
 							else
 								return provider.GetService(serviceType);
 						};
 					else
 						_valueFactory = (provider, target) =>
 						{
-							if(ServiceModular.TryGetContract(attribute.Provider, serviceType, out var contract))
-								return provider.GetService(contract);
+							if(ModularServicerUtility.TryGetModularServiceType(attribute.Provider, serviceType, out var modularType))
+								return ((IModularService)provider.GetService(modularType))?.GetValue(provider);
 							else
 								return provider.GetService(serviceType);
 						};
@@ -229,7 +229,15 @@ namespace Zongsoft.Services
 					};
 				}
 				else
-					_valueFactory = (provider, target) => provider.GetService(ServiceModular.TryGetContract(target, memberType, out var contract) ? contract : memberType);
+				{
+					_valueFactory = (provider, target) =>
+					{
+						if(ModularServicerUtility.TryGetModularServiceType(target, memberType, out var modularType))
+							return ((IModularService)provider.GetService(modularType)).GetValue(provider);
+						else
+							return provider.GetService(memberType);
+					};
+				}
 			}
 
 			public void SetValue(IServiceProvider provider, ref object target)
@@ -269,7 +277,7 @@ namespace Zongsoft.Services
 
 			private static IApplicationModule GetApplicationModule(Type type)
 			{
-				var moduleName = ServiceModular.GetModuleName(type);
+				var moduleName = ModularServicerUtility.GetModuleName(type);
 
 				if(!string.IsNullOrEmpty(moduleName) && ApplicationContext.Current.Modules.TryGet(moduleName, out var module))
 					return module;

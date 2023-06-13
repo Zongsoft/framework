@@ -145,7 +145,7 @@ namespace Zongsoft.Services
 			if(attribute.Contracts != null)
 			{
 				var contracts = attribute.Contracts;
-				var moduleName = ServiceModular.GetModuleName(type);
+				var moduleName = ModularServicerUtility.GetModuleName(type);
 
 				if(string.IsNullOrEmpty(moduleName))
 				{
@@ -158,8 +158,8 @@ namespace Zongsoft.Services
 				{
 					for(var i = 0; i < contracts.Length; i++)
 					{
-						var contract = ServiceModular.GenerateContract(moduleName, contracts[i]);
-						services.AddSingleton(contract, svcs => svcs.GetService(type));
+						var modular = ModularServicerUtility.GetModularService(moduleName, contracts[i], type);
+						services.AddSingleton(modular.GetType(), modular);
 					}
 				}
 			}
@@ -170,7 +170,7 @@ namespace Zongsoft.Services
 			if(string.IsNullOrEmpty(members))
 				return;
 
-			var moduleName = ServiceModular.GetModuleName(type);
+			var moduleName = ModularServicerUtility.GetModuleName(type);
 
 			if(string.IsNullOrEmpty(moduleName))
 			{
@@ -201,7 +201,8 @@ namespace Zongsoft.Services
 
 					if(property != null)
 					{
-						services.AddSingleton(ServiceModular.GenerateContract(moduleName, property.PropertyType), property.GetValue(null));
+						var modular = ModularServicerUtility.GetModularService(moduleName, property.PropertyType, property.GetValue(null));
+						services.AddSingleton(modular.GetType(), modular);
 						continue;
 					}
 
@@ -209,7 +210,8 @@ namespace Zongsoft.Services
 
 					if(field != null)
 					{
-						services.AddSingleton(ServiceModular.GenerateContract(moduleName, field.FieldType), field.GetValue(null));
+						var modular = ModularServicerUtility.GetModularService(moduleName, field.FieldType, field.GetValue(null));
+						services.AddSingleton(modular.GetType(), modular);
 						continue;
 					}
 				}
