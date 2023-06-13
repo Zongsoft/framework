@@ -34,64 +34,28 @@ namespace Zongsoft.Diagnostics.Configuration
 {
 	public class LoggerOptions
 	{
-		public LoggerHandlerSettingCollection Handlers
-		{
-			get; set;
-		}
+		public LoggerHandlerSettingCollection Handlers { get; set; }
 
 		[Zongsoft.Configuration.Configuration(nameof(Properties))]
 		public class LoggerHandlerSetting
 		{
-			public string Name
-			{
-				get; set;
-			}
-
-			public string Type
-			{
-				get; set;
-			}
-
-			public LoggerHandlerPredicationSetting Predication
-			{
-				get; set;
-			}
-
-			public bool HasProperties
-			{
-				get => this.Properties?.Count > 0;
-			}
-
-			public IDictionary<string, string> Properties
-			{
-				get; set;
-			}
+			public string Name { get; set; }
+			public string Type { get; set; }
+			public LoggerHandlerPredicationSetting Predication { get; set; }
+			public bool HasProperties { get => this.Properties?.Count > 0; }
+			public IDictionary<string, string> Properties { get; set; }
 		}
 
 		public class LoggerHandlerSettingCollection : Collections.NamedCollectionBase<LoggerHandlerSetting>
 		{
-			protected override string GetKeyForItem(LoggerHandlerSetting item)
-			{
-				return item.Name;
-			}
+			protected override string GetKeyForItem(LoggerHandlerSetting item) => item.Name;
 		}
 
 		public class LoggerHandlerPredicationSetting
 		{
-			public string Source
-			{
-				get; set;
-			}
-
-			public LogLevel? MinLevel
-			{
-				get; set;
-			}
-
-			public LogLevel? MaxLevel
-			{
-				get; set;
-			}
+			public string Source { get; set; }
+			public LogLevel? MinLevel { get; set; }
+			public LogLevel? MaxLevel { get; set; }
 		}
 	}
 }
