@@ -162,7 +162,7 @@ namespace Zongsoft.Services
 
 				if(IsServiceAccessor(serviceType, out var accessorType))
 				{
-					_valueFactory = (provider, target) => ActivatorUtilities.CreateInstance(provider, accessorType, new object[] { GetApplicationModule(member.ReflectedType) });
+					_valueFactory = (provider, target) => ActivatorUtilities.CreateInstance(provider, accessorType, new object[] { GetApplicationModule(target?.GetType() ?? member.ReflectedType) });
 					return;
 				}
 
