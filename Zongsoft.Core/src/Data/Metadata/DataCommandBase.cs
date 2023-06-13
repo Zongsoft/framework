@@ -104,9 +104,7 @@ namespace Zongsoft.Data.Metadata
 		public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
 		public override string ToString()
 		{
-			var qualifiedName = string.IsNullOrEmpty(this.Namespace) ?
-				$"{this.Name}({(this.Parameters.Count > 0 ? "..." : null)})" :
-				$"{this.Namespace}.{this.Name}({(this.Parameters.Count > 0 ? "..." : null)})";
+			var qualifiedName = $"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})";
 
 			if(this.Mutability != CommandMutability.None)
 				qualifiedName += $"!{this.Mutability}";
