@@ -17,11 +17,20 @@ plugins/Terminal.plugin
 [bin $(Edition) $(Target) plugins zongsoft security]
 ../../Zongsoft.Security/.deploy
 
+../.deploy/options/$(cloud)/Zongsoft.Security.option
+../.deploy/options/$(cloud)/Zongsoft.Security.*.option
+
 [bin $(Edition) $(Target) plugins zongsoft externals aliyun]
 ../../externals/aliyun/.deploy
 
+../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.*.option
+
 [bin $(Edition) $(Target) plugins zongsoft externals redis]
 ../../externals/redis/.deploy
+
+../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.*.option
 
 [bin $(Edition) $(Target) plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy

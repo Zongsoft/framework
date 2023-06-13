@@ -15,13 +15,22 @@
 
 [plugins zongsoft security]
 ../../Zongsoft.Security/.deploy
-../../Zongsoft.Security/src/api/.deploy
+../../Zongsoft.Security/api/.deploy
+
+../.deploy/options/$(cloud)/Zongsoft.Security.option
+../.deploy/options/$(cloud)/Zongsoft.Security.*.option
 
 [plugins zongsoft externals aliyun]
 ../../externals/aliyun/.deploy
 
+../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.*.option
+
 [plugins zongsoft externals redis]
 ../../externals/redis/.deploy
+
+../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.*.option
 
 [plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
@@ -41,4 +50,4 @@
 
 [plugins zongsoft administratives]
 ../../../Administratives/.deploy
-../../../Administratives/api/.deploy
+../../../Administratives/src/api/.deploy

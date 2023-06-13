@@ -1,1 +1,1 @@
-dotnet deploy -site:daemon -edition:Debug -target:net7.0
+dotnet deploy -cloud:aliyun -site:daemon -edition:Debug -target:net7.0

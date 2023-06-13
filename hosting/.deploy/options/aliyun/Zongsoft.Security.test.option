@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Security" driver="MySql"
+			                   value="Server=xxxxx.mysql.rds.aliyuncs.com;UserName=program;Password=xxxxxx;Database=zongsoft-test;Charset=utf8mb4;ConvertZeroDatetime=true;AllowZeroDateTime=true;AllowLoadLocalInfile=true;SslMode=none;" />
+		</connectionSettings>
+	</option>
+
+	<option path="/Externals/Redis">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Security" driver="redis"
+			                   value="server=xxx.redis.rds.aliyuncs.com;port=6379;password=program:xxxxxx" />
+		</connectionSettings>
+	</option>
+
+	<option path="/Security/Membership">
+		<identity verification="none"
+		          passwordLength="0" passwordStrength="None" />
+
+		<authorization roles="security,securities" />
+
+		<authentication period="4:0:0">
+			<attempter threshold="3" window="0:1:0" period="0:5:0" />
+
+			<expiration>
+				<scenario scenario.name="web" period="8:0:0" />
+				<scenario scenario.name="app" period="24:0:0" />
+				<scenario scenario.name="mobile" period="24:00:00" />
+				<scenario scenario.name="wechat" period="24:00:00" />
+			</expiration>
+		</authentication>
+	</option>
+</options>
