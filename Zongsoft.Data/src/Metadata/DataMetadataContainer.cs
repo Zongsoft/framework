@@ -60,7 +60,6 @@ namespace Zongsoft.Data.Metadata
 			get
 			{
 				this.Initialize();
-				_locker.EnterReadLock();
 				return _entities;
 			}
 		}
@@ -70,7 +69,6 @@ namespace Zongsoft.Data.Metadata
 			get
 			{
 				this.Initialize();
-				_locker.EnterReadLock();
 				return _commands;
 			}
 		}
@@ -79,13 +77,21 @@ namespace Zongsoft.Data.Metadata
 		#region 加载方法
 		public void Reload()
 		{
-			if(_locker.TryEnterWriteLock(TimeSpan.FromSeconds(10)))
+			try
 			{
-				_entities.Clear();
-				_commands.Clear();
+				if(_locker.TryEnterWriteLock(TimeSpan.FromSeconds(10)))
+				{
+					_entities.Clear();
+					_commands.Clear();
 
-				foreach(var loader in DataEnvironment.Loaders)
-					loader.Load(this);
+					foreach(var loader in DataEnvironment.Loaders)
+						loader.Load(this);
+				}
+			}
+			finally
+			{
+				if(_locker.IsWriteLockHeld)
+					_locker.ExitWriteLock();
 			}
 		}
 
@@ -95,11 +101,22 @@ namespace Zongsoft.Data.Metadata
 			if(Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
 				return;
 
-			_entities.Clear();
-			_commands.Clear();
+			try
+			{
+				if(_locker.TryEnterWriteLock(TimeSpan.FromSeconds(10)))
+				{
+					_entities.Clear();
+					_commands.Clear();
 
-			foreach(var loader in DataEnvironment.Loaders)
-				loader.Load(this);
+					foreach(var loader in DataEnvironment.Loaders)
+						loader.Load(this);
+				}
+			}
+			finally
+			{
+				if(_locker.IsWriteLockHeld)
+					_locker.ExitWriteLock();
+			}
 		}
 		#endregion
 	}

@@ -221,7 +221,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		{
 			//创建实体元素对象
 			var entity = new MetadataEntity(@namespace,
-				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
+				reader.GetAttribute(XML_NAME_ATTRIBUTE),
 				GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
 				GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
 
@@ -384,7 +384,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		{
 			//创建命令元素对象
 			var command = new MetadataCommand(@namespace,
-				GetFullName(reader.GetAttribute(XML_NAME_ATTRIBUTE), @namespace),
+				reader.GetAttribute(XML_NAME_ATTRIBUTE),
 				reader.GetAttribute(XML_ALIAS_ATTRIBUTE))
 			{
 				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Text),
