@@ -34,7 +34,8 @@ namespace Zongsoft.Hosting.Web
 				builder
 				.AllowAnyHeader()
 				.AllowAnyMethod()
-				.AllowAnyOrigin()));
+				.AllowCredentials()
+				.SetIsOriginAllowed(origin => true)));
 
 			services
 				.AddSignalR(options => { });
@@ -49,7 +50,9 @@ namespace Zongsoft.Hosting.Web
 					options.OutputFormatters.Add(new Zongsoft.Web.Formatters.JsonOutputFormatter());
 
 					options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
+					options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
 					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
+					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.ComplexModelBinderProvider());
 				});
 		}
 
@@ -63,6 +66,7 @@ namespace Zongsoft.Hosting.Web
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
+			app.UseStaticFiles();
 
 			var initializers = app.ApplicationServices.GetServices<Zongsoft.Services.IApplicationInitializer<IApplicationBuilder>>();
 

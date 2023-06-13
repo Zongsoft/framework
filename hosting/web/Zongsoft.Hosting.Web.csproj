@@ -19,6 +19,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Remove="plugins\**" />
+		<Content Remove="plugins\**" />
+		<EmbeddedResource Remove="plugins\**" />
+		<None Remove="plugins\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
