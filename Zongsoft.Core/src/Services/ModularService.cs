@@ -33,22 +33,21 @@ namespace Zongsoft.Services
 {
 	public interface IModularService
 	{
-		Type ServiceType { get; }
 		object GetValue(IServiceProvider provider);
 	}
 
 	public abstract class ModularServiceBase<TContract> : IModularService where TContract : class
 	{
 		private readonly object _service;
+		private readonly Type _serviceType;
 
-		protected ModularServiceBase(Type serviceType) => this.ServiceType = serviceType;
+		protected ModularServiceBase(Type serviceType) => _serviceType = serviceType;
 		protected ModularServiceBase(object service)
 		{
 			_service = service;
-			this.ServiceType = service?.GetType();
+			_serviceType = service?.GetType();
 		}
 
-		public Type ServiceType { get; }
-		public object GetValue(IServiceProvider provider) => _service ?? (this.ServiceType == null ? null : provider.GetService(this.ServiceType));
+		public object GetValue(IServiceProvider provider) => _service ?? (_serviceType == null ? null : provider.GetService(_serviceType));
 	}
 }
