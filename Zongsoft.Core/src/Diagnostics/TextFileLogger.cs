@@ -34,6 +34,10 @@ namespace Zongsoft.Diagnostics
 {
 	public class TextFileLogger : FileLogger<string>
 	{
+		#region 单例字段
+		public static readonly TextFileLogger Default = new TextFileLogger();
+		#endregion
+
 		#region 构造函数
 		public TextFileLogger()
 		{

@@ -36,10 +36,7 @@ namespace Zongsoft.Diagnostics
 	public static class Logger
 	{
 		#region 静态构造
-		static Logger()
-		{
-			Loggers = new List<ILogger>();
-		}
+		static Logger() => Loggers = new List<ILogger>();
 		#endregion
 
 		#region 公共属性
@@ -47,15 +44,8 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 日志方法
-		public static void Trace(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Trace, GetSource(), exception, data));
-		}
-
-		public static void Trace(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Trace, GetSource(), message, data));
-		}
+		public static void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, GetSource(), exception, data));
+		public static void Trace(string message, object data = null) => Log(new LogEntry(LogLevel.Trace, GetSource(), message, data));
 
 		public static void Trace(string source, Exception exception, object data = null)
 		{
@@ -75,15 +65,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Trace, source, message, exception, data));
 		}
 
-		public static void Debug(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Debug, GetSource(), exception, data));
-		}
-
-		public static void Debug(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Debug, GetSource(), message, data));
-		}
+		public static void Debug(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Debug, GetSource(), exception, data));
+		public static void Debug(string message, object data = null) => Log(new LogEntry(LogLevel.Debug, GetSource(), message, data));
 
 		public static void Debug(string source, Exception exception, object data = null)
 		{
@@ -103,15 +86,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Debug, source, message, exception, data));
 		}
 
-		public static void Info(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Info, GetSource(), exception, data));
-		}
-
-		public static void Info(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Info, GetSource(), message, data));
-		}
+		public static void Info(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Info, GetSource(), exception, data));
+		public static void Info(string message, object data = null) => Log(new LogEntry(LogLevel.Info, GetSource(), message, data));
 
 		public static void Info(string source, Exception exception, object data = null)
 		{
@@ -131,15 +107,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Info, source, message, exception, data));
 		}
 
-		public static void Warn(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Warn, GetSource(), exception, data));
-		}
-
-		public static void Warn(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Warn, GetSource(), message, data));
-		}
+		public static void Warn(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Warn, GetSource(), exception, data));
+		public static void Warn(string message, object data = null) => Log(new LogEntry(LogLevel.Warn, GetSource(), message, data));
 
 		public static void Warn(string source, Exception exception, object data = null)
 		{
@@ -159,15 +128,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Warn, source, message, exception, data));
 		}
 
-		public static void Error(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Error, GetSource(), exception, data));
-		}
-
-		public static void Error(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Error, GetSource(), message, data));
-		}
+		public static void Error(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Error, GetSource(), exception, data));
+		public static void Error(string message, object data = null) => Log(new LogEntry(LogLevel.Error, GetSource(), message, data));
 
 		public static void Error(string source, Exception exception, object data = null)
 		{
@@ -187,15 +149,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Error, source, message, exception, data));
 		}
 
-		public static void Fatal(Exception exception, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Fatal, GetSource(), exception, data));
-		}
-
-		public static void Fatal(string message, object data = null)
-		{
-			Log(new LogEntry(LogLevel.Fatal, GetSource(), message, data));
-		}
+		public static void Fatal(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Fatal, GetSource(), exception, data));
+		public static void Fatal(string message, object data = null) => Log(new LogEntry(LogLevel.Fatal, GetSource(), message, data));
 
 		public static void Fatal(string source, Exception exception, object data = null)
 		{
@@ -215,15 +170,8 @@ namespace Zongsoft.Diagnostics
 			Log(new LogEntry(LogLevel.Fatal, source, message, exception, data));
 		}
 
-		public static void Log(LogLevel level, Exception exception, object data = null)
-		{
-			Log(new LogEntry(level, GetSource(), exception, data));
-		}
-
-		public static void Log(LogLevel level, string message, object data = null)
-		{
-			Log(new LogEntry(level, GetSource(), message, data));
-		}
+		public static void Log(LogLevel level, Exception exception, object data = null) => Log(new LogEntry(level, GetSource(), exception, data));
+		public static void Log(LogLevel level, string message, object data = null) => Log(new LogEntry(level, GetSource(), message, data));
 
 		public static void Log(LogLevel level, string source, Exception exception, object data = null)
 		{
@@ -247,6 +195,12 @@ namespace Zongsoft.Diagnostics
 		{
 			if(entry == null)
 				return;
+
+			if(Loggers.Count == 0)
+			{
+				TextFileLogger.Default.Log(entry);
+				return;
+			}
 
 			System.Threading.Tasks.Parallel.ForEach(Loggers, logger =>
 			{
