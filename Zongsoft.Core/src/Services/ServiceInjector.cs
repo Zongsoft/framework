@@ -71,30 +71,24 @@ namespace Zongsoft.Services
 			return instance;
 		}
 
-		public static object Inject(this IServiceProvider provider, object target)
+		public static object Inject(this IServiceProvider provider, object instance)
 		{
 			if(provider == null)
 				throw new ArgumentNullException(nameof(provider));
 
-			if(target == null)
-				return target;
+			if(instance == null)
+				return instance;
 
-			if(IsInjectable(target.GetType(), out var descriptors))
+			if(IsInjectable(instance.GetType(), out var descriptors))
 			{
 				for(int i = 0; i < descriptors.Length; i++)
-					descriptors[i].SetValue(provider, ref target);
+					descriptors[i].SetValue(provider, ref instance);
 			}
 
-			return target;
+			return instance;
 		}
 
-		public static bool IsInjectable(this Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			return IsInjectable(type, out _);
-		}
+		public static bool IsInjectable(this Type type) => type != null && IsInjectable(type, out _);
 		#endregion
 
 		#region 私有方法
@@ -153,18 +147,23 @@ namespace Zongsoft.Services
 			{
 				_member = member;
 
-				var serviceType = attribute.ServiceType ?? member switch
+				//如果待注入的成员类型是服务访问器接口，则优先以服务访问器方式进行注入
+				if(IsServiceAccessor(GetMemberType(member), out var accessorType))
 				{
-					PropertyInfo property => property.PropertyType,
-					FieldInfo field => field.FieldType,
-					_ => throw new ArgumentException("Invalid member type."),
-				};
+					_valueFactory = (provider, target) =>
+					{
+						return Activator.CreateInstance(accessorType, new object[]
+						{
+							GetApplicationModule(target?.GetType() ?? member.ReflectedType),
+							attribute.ServiceName
+						});
+					};
 
-				if(IsServiceAccessor(serviceType, out var accessorType))
-				{
-					_valueFactory = (provider, target) => ActivatorUtilities.CreateInstance(provider, accessorType, new object[] { GetApplicationModule(target?.GetType() ?? member.ReflectedType) });
 					return;
 				}
+
+				//根据待注入的成员类型以及声明的服务注入注解来确定最终的注入服务类型
+				var serviceType = GetServiceType(member, attribute.ServiceType);
 
 				if(attribute.IsRequired)
 				{
@@ -172,15 +171,17 @@ namespace Zongsoft.Services
 						_valueFactory = (provider, target) =>
 						{
 							if(ModularServicerUtility.TryGetModularServiceType(target, serviceType, out var modularType))
-								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException();
+								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 							else
 								return provider.GetRequiredService(serviceType);
 						};
+					else if(attribute.IsApplicationProvider)
+						_valueFactory = (provider, target) => ApplicationContext.Current.Services.GetRequiredService(serviceType);
 					else
 						_valueFactory = (provider, target) =>
 						{
 							if(ModularServicerUtility.TryGetModularServiceType(attribute.Provider, serviceType, out var modularType))
-								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider);
+								return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException(@"No service for type '{serviceType}' has been registered.");
 							else
 								return provider.GetRequiredService(serviceType);
 						};
@@ -195,6 +196,8 @@ namespace Zongsoft.Services
 							else
 								return provider.GetService(serviceType);
 						};
+					else if(attribute.IsApplicationProvider)
+						_valueFactory = (provider, target) => ApplicationContext.Current.Services.GetService(serviceType);
 					else
 						_valueFactory = (provider, target) =>
 						{
@@ -252,27 +255,34 @@ namespace Zongsoft.Services
 
 			private static bool IsServiceAccessor(Type type, out Type accessorType)
 			{
-				accessorType = null;
-
-				if(type.IsValueType)
-					return false;
-
 				if(type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IServiceAccessor<>))
 				{
 					accessorType = typeof(ServiceAccessor<>).MakeGenericType(type.GenericTypeArguments[0]);
 					return true;
 				}
 
-				foreach(var contract in type.GetTypeInfo().ImplementedInterfaces)
-				{
-					if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IServiceAccessor<>))
-					{
-						accessorType = type;
-						return true;
-					}
-				}
-
+				accessorType = null;
 				return false;
+			}
+
+			private static Type GetMemberType(MemberInfo member) => member switch
+			{
+				PropertyInfo property => property.PropertyType,
+				FieldInfo field => field.FieldType,
+				_ => throw new InvalidOperationException($"The '{member.ReflectedType.FullName}.{member.Name}' member is an unsupported injection member."),
+			};
+
+			private static Type GetServiceType(MemberInfo member, Type serviceType)
+			{
+				//如果未指定注入的服务类型，则将待注入的成员类型作为服务类型
+				if(serviceType == null)
+					return GetMemberType(member);
+
+				//如果指定注入的服务类型是泛型原型，则返回以该原型泛化的成员类型的泛型
+				if(serviceType.IsGenericTypeDefinition)
+					return serviceType.MakeGenericType(GetMemberType(member));
+
+				return serviceType;
 			}
 
 			private static IApplicationModule GetApplicationModule(Type type)

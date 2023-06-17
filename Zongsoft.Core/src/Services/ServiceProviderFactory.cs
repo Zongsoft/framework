@@ -48,15 +48,8 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		public IServiceCollection CreateBuilder(IServiceCollection services)
-		{
-			return services;
-		}
-
-		public System.IServiceProvider CreateServiceProvider(IServiceCollection services)
-		{
-			return new ServiceProvider(services, _options);
-		}
+		public IServiceCollection CreateBuilder(IServiceCollection services) => services;
+		public System.IServiceProvider CreateServiceProvider(IServiceCollection services) => new ServiceProvider(services, _options);
 		#endregion
 	}
 }

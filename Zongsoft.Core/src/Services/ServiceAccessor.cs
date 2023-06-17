@@ -29,6 +29,8 @@
 
 using System;
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Services
 {
 	public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
@@ -36,36 +38,29 @@ namespace Zongsoft.Services
 		#region 构造函数
 		public ServiceAccessor(T value) => this.Value = value;
 
-		public ServiceAccessor(IApplicationModule module)
+		public ServiceAccessor(IApplicationModule module, string name)
 		{
 			static T GetValue(string name, IServiceProvider serviceProvider)
 			{
 				if(serviceProvider == null)
 					return default;
 
-				var provider = serviceProvider.Resolve<IServiceProvider<T>>();
+				var provider = serviceProvider.GetService<IServiceProvider<T>>();
 
 				if(provider == null)
-					return serviceProvider.Resolve<T>();
+					return serviceProvider.GetService<T>();
 
 				if(string.IsNullOrEmpty(name))
-					return provider.GetService(string.Empty) ?? serviceProvider.Resolve<T>();
+					return provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
 				else
-					return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.Resolve<T>();
+					return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
 			}
 
-			if(module == null)
-				module = ApplicationContext.Current;
-
-			if(module != null)
-			{
-				var value = GetValue(module.Name, module.Services);
-
-				if(value == null && module is not IApplicationContext)
-					value = GetValue(null, ApplicationContext.Current.Services);
-
-				this.Value = value;
-			}
+			//注意：以下代码的处理机制必须遵循服务注入注解类中ServiceName属性的规范！
+			if(module == null || module is IApplicationContext)
+				this.Value = GetValue(name ?? string.Empty, ApplicationContext.Current.Services);
+			else
+				this.Value = GetValue(name ?? module.Name, module.Services);
 		}
 		#endregion
 

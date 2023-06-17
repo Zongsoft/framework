@@ -28,9 +28,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -48,27 +48,27 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		public ServiceProvider(IServiceCollection descriptors, ServiceProviderOptions options = null)
+		public ServiceProvider(IServiceCollection services, ServiceProviderOptions options = null)
 		{
-			if(descriptors == null)
-				throw new ArgumentNullException(nameof(descriptors));
+			if(services == null)
+				throw new ArgumentNullException(nameof(services));
 
-			for(int i = 0; i < descriptors.Count; i++)
+			for(int i = 0; i < services.Count; i++)
 			{
-				var descriptor = descriptors[i];
+				var descriptor = services[i];
 
 				if(descriptor.ImplementationType != null && descriptor.ImplementationType.IsInjectable())
 				{
 					var method = GetFacotryMethod.MakeGenericMethod(descriptor.ImplementationType);
 					var factory = (Func<IServiceProvider, object>)method.Invoke(null, Array.Empty<object>());
-					descriptors[i] = new ServiceDescriptor(descriptor.ServiceType, factory, descriptor.Lifetime);
+					services[i] = new ServiceDescriptor(descriptor.ServiceType, factory, descriptor.Lifetime);
 				}
 			}
 
-			descriptors.AddSingleton(this);
-			descriptors.AddSingleton<IServiceProvider>(this);
+			services.AddSingleton(this);
+			services.AddSingleton<IServiceProvider>(this);
 
-			_provider = descriptors.BuildServiceProvider(options);
+			_provider = services.BuildServiceProvider(options);
 		}
 
 		internal ServiceProvider(string name, IServiceProvider provider)
@@ -89,34 +89,53 @@ namespace Zongsoft.Services
 			if(string.IsNullOrEmpty(_name))
 				return _provider.GetService(serviceType);
 
-			//如果是获取多个服务，则必须将其内部服务类型调整为模块化类型
+			//获取多个服务，即解析服务集
 			if(serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 			{
-				//将服务类型更改为元素类型，以方便操作
+				//解析出要获取的服务类型
 				var elementType = serviceType.GenericTypeArguments[0];
 
 				if(ModularServicerUtility.TryGetModularServiceType(_name, elementType, out var modularType))
 				{
-					var index = 0;
 					var modulars = _provider.GetServices(modularType).Cast<IModularService>();
-					var array = Array.CreateInstance(elementType, modulars.Count());
-					using var iterator = modulars.GetEnumerator();
 
-					while(iterator.MoveNext())
+					//如果当前模块服务容器中找到了指定的模块化服务
+					if(modulars.Any())
 					{
-						var service = iterator.Current.GetValue(_provider);
-						array.SetValue(service, index++);
-					}
+						var index = 0;
+						var array = Array.CreateInstance(elementType, modulars.Count());
+						using var iterator = modulars.GetEnumerator();
 
-					return array;
+						while(iterator.MoveNext())
+						{
+							var service = iterator.Current.GetValue(_provider);
+							array.SetValue(service, index++);
+						}
+
+						return array;
+					}
 				}
+
+				return this.GetServiceBacktrack(serviceType) ?? Zongsoft.Common.ArrayExtension.Empty(elementType);
 			}
 
 			//获取单个模块化类型
+			//注意：如果当前模块服务容器没有找到指定的服务则再从应用服务容器中获取指定类型的服务
 			if(ModularServicerUtility.TryGetModularServiceType(_name, serviceType, out var contractType))
-				return ((IModularService)_provider.GetService(contractType)).GetValue(_provider);
+				return ((IModularService)_provider.GetService(contractType)).GetValue(_provider) ?? this.GetServiceBacktrack(serviceType);
 
-			return _provider.GetService(serviceType);
+			return this.GetServiceBacktrack(serviceType);
+		}
+
+		private object GetServiceBacktrack(Type serviceType)
+		{
+			var result = _provider.GetService(serviceType);
+			if(result != null)
+				return result;
+
+			return object.ReferenceEquals(this, ApplicationContext.Current.Services) ||
+				object.ReferenceEquals(_provider, ApplicationContext.Current.Services) ?
+				result : ApplicationContext.Current.Services.GetService(serviceType);
 		}
 		#endregion
 
