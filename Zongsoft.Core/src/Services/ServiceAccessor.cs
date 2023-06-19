@@ -37,7 +37,6 @@ namespace Zongsoft.Services
 	{
 		#region 构造函数
 		public ServiceAccessor(T value) => this.Value = value;
-
 		public ServiceAccessor(IApplicationModule module, string name)
 		{
 			static T GetValue(string name, IServiceProvider serviceProvider)

@@ -70,20 +70,11 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get; protected set;
-		}
-
-		public string Title
-		{
-			get; set;
-		}
-
-		public string Description
-		{
-			get; set;
-		}
+		public string Name { get; protected set; }
+		public string Title {get; set; }
+		public string Description { get; set; }
+		public INamedCollection<Schema> Schemas { get; }
+		public IDictionary<string, object> Properties { get; }
 
 		public virtual IServiceProvider Services
 		{
@@ -93,23 +84,12 @@ namespace Zongsoft.Services
 				{
 					lock(_syncRoot)
 					{
-						if(_services == null)
-							_services = new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
+						_services ??= new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
 					}
 				}
 
 				return _services;
 			}
-		}
-
-		public INamedCollection<Schema> Schemas
-		{
-			get;
-		}
-
-		public IDictionary<string, object> Properties
-		{
-			get;
 		}
 		#endregion
 
@@ -136,7 +116,7 @@ namespace Zongsoft.Services
 			if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
 				return this.Name;
 			else
-				return string.Format("[{0}] {1}", this.Name, this.Title);
+				return $"[{this.Name}]{this.Title}";
 		}
 		#endregion
 	}
