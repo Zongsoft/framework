@@ -65,11 +65,8 @@ namespace Zongsoft.Security
 
 		public Secretor(IDistributedCache cache, IServiceProvider serviceProvider)
 		{
-			if(cache == null)
-				throw new ArgumentNullException(nameof(cache));
-
 			//设置缓存容器
-			this.Cache = new ServiceAccessor<IDistributedCache>(cache);
+			this.Cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
 			//设置属性的默认值
 			_expiry = TimeSpan.FromMinutes(DEFAULT_EXPIRY_MINUTES);
@@ -82,8 +79,8 @@ namespace Zongsoft.Security
 
 		#region 公共属性
 		/// <summary>获取秘密内容的缓存容器。</summary>
-		[ServiceDependency]
-		public IServiceAccessor<IDistributedCache> Cache { get; set; }
+		[ServiceDependency("Security", IsRequired = true)]
+		public IDistributedCache Cache { get; set; }
 
 		/// <summary>获取或设置秘密内容的默认过期时长（默认为30分钟），不能设置为零。</summary>
 		public TimeSpan Expiry
@@ -113,12 +110,10 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(name))
 				return false;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
-
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
-			return cache.Exists(name);
+			return this.Cache.Exists(name);
 		}
 
 		public bool Exists(string name, out TimeSpan duration)
@@ -128,13 +123,11 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(name))
 				return false;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
-
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
 			//从缓存内容解析出对应的缓存值和发出时间
-			if(cache.TryGetValue(name, out string cacheValue) && this.Unpack(cacheValue, out var _, out var timestamp, out _))
+			if(this.Cache.TryGetValue(name, out string cacheValue) && this.Unpack(cacheValue, out var _, out var timestamp, out _))
 			{
 				duration = DateTime.UtcNow - timestamp;
 				return true;
@@ -154,17 +147,15 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(secret))
 				return false;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
-
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
-			if(cache.TryGetValue(name, out string cacheValue) &&
+			if(this.Cache.TryGetValue(name, out string cacheValue) &&
 			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
 			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
 			{
-				cache.Remove(name);
+				this.Cache.Remove(name);
 
 				//返回校验成功
 				return true;
@@ -182,13 +173,11 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret generate operation.");
-
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
 			//从缓存容器中获取对应的内容
-			if(cache.TryGetValue(name, out string text) && !string.IsNullOrWhiteSpace(text))
+			if(this.Cache.TryGetValue(name, out string text) && !string.IsNullOrWhiteSpace(text))
 			{
 				//尚未验证：则必须确保在最小时间间隔之后才能重新生成
 				if(_period > TimeSpan.Zero &&
@@ -201,7 +190,7 @@ namespace Zongsoft.Security
 			var secret = this.GenerateSecret(name, pattern);
 
 			//将秘密内容保存到缓存容器中（如果指定的过期时长为零则采用默认过期时长）
-			cache.SetValue(name, this.Pack(secret, extra), _expiry);
+			this.Cache.SetValue(name, this.Pack(secret, extra), _expiry);
 
 			return secret;
 		}
@@ -219,13 +208,11 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(secret))
 				return false;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing a required cache for the secret verify operation.");
-
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
-			if(cache.TryGetValue(name, out string cacheValue) &&
+			if(this.Cache.TryGetValue(name, out string cacheValue) &&
 			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
 			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
 			{

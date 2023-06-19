@@ -43,8 +43,8 @@ namespace Zongsoft.Security.Membership
 	public class Attempter : IAttempter
 	{
 		#region 公共属性
-		[ServiceDependency]
-		public IServiceAccessor<IDistributedCache> Cache { get; set; }
+		[ServiceDependency("@", IsRequired = true)]
+		public IDistributedCache Cache { get; set; }
 
 		[Options("Security/Membership/Authentication/Attempter")]
 		public Configuration.AttempterOptions Options { get; set; }
@@ -67,12 +67,7 @@ namespace Zongsoft.Security.Membership
 			if(option == null || option.Threshold < 1)
 				return true;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
-
-			if(cache == null)
-				return true;
-
-			return Zongsoft.Common.Convert.TryConvertValue<int>(cache.GetValue(GetCacheKey(identity, @namespace)), out var number) &&
+			return Zongsoft.Common.Convert.TryConvertValue<int>(this.Cache.GetValue(GetCacheKey(identity, @namespace)), out var number) &&
 			       number < option.Threshold;
 		}
 
@@ -86,10 +81,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(identity))
 				return;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
-
-			if(cache != null)
-				cache.Remove(GetCacheKey(identity, @namespace));
+			this.Cache.Remove(GetCacheKey(identity, @namespace));
 		}
 
 		/// <summary>
@@ -103,9 +95,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(identity))
 				return false;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException("Missing the required cache.");
-
-			if(cache is not ISequence sequence)
+			if(this.Cache is not ISequence sequence)
 				throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
 			//获取验证失败的阈值和锁定时长
@@ -118,9 +108,9 @@ namespace Zongsoft.Security.Membership
 			var attempts = sequence.Increase(KEY);
 
 			if(attempts < threshold)
-				cache.SetExpiry(KEY, window);
+				this.Cache.SetExpiry(KEY, window);
 			else if(attempts == threshold)
-				cache.SetExpiry(KEY, period);
+				this.Cache.SetExpiry(KEY, period);
 
 			return attempts >= threshold;
 		}

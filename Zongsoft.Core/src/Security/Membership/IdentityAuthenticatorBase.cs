@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Serialization;
@@ -52,8 +53,8 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; set; }
 
-		[ServiceDependency]
-		public IServiceProvider ServiceProvider { get; set; }
+		[ServiceDependency("@", IsRequired = true)]
+		public IDataAccess DataAccess { get; set; }
 		#endregion
 
 		#region 校验方法

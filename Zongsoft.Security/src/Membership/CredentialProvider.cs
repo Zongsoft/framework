@@ -58,8 +58,8 @@ namespace Zongsoft.Security.Membership
 		[Options("Security/Membership/Authentication")]
 		public Configuration.AuthenticationOptions Options { get; set; }
 
-		[ServiceDependency]
-		public IServiceAccessor<IDistributedCache> Cache { get; set; }
+		[ServiceDependency("@", IsRequired = true)]
+		public IDistributedCache Cache { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -68,7 +68,7 @@ namespace Zongsoft.Security.Membership
 			if(principal == null || principal.Identity == null)
 				return;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
+			var cache = this.Cache;
 
 			//确保同个用户在相同场景下只能存在一个凭证
 			if(cache.GetValue(this.GetCacheKeyOfUser(principal.Identity.GetIdentifier(), principal.Scenario)) is string credentialId && credentialId.Length > 0)
@@ -109,7 +109,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(credentialId))
 				return;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
+			var cache = this.Cache;
 
 			//激发“Unregistering”事件
 			this.OnUnregistering(credentialId);
@@ -140,7 +140,7 @@ namespace Zongsoft.Security.Membership
 			if(principal == null || token != principal.RenewalToken)
 				return null;
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
+			var cache = this.Cache;
 
 			//激发“Unregistered”事件
 			this.OnUnregistered(credentialId, true);
@@ -188,7 +188,7 @@ namespace Zongsoft.Security.Membership
 				return token.Principal;
 			}
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
+			var cache = this.Cache;
 			var buffer = cache.GetValue<byte[]>(this.GetCacheKeyOfCredential(credentialId));
 
 			if(buffer == null || buffer.Length == 0)
@@ -217,8 +217,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
-			var credentialId = cache.GetValue<string>(this.GetCacheKeyOfUser(identity, scene));
+			var credentialId = this.Cache.GetValue<string>(this.GetCacheKeyOfUser(identity, scene));
 
 			if(string.IsNullOrEmpty(credentialId))
 				return null;
@@ -252,13 +251,11 @@ namespace Zongsoft.Security.Membership
 		#region 私有方法
 		private void Refresh(string credentialId, CredentialToken token)
 		{
-			var cache = this.Cache.Value ?? throw new InvalidOperationException($"Missing the required cache.");
-
 			//顺延当前用户及场景对应凭证号的缓存项的过期时长
-			cache.SetExpiry(this.GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier(), token.Principal.Scenario), token.Principal.Expiration);
+			this.Cache.SetExpiry(this.GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier(), token.Principal.Scenario), token.Principal.Expiration);
 
 			//顺延当前凭证缓存项的过期时长
-			cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), token.Principal.Expiration);
+			this.Cache.SetExpiry(this.GetCacheKeyOfCredential(credentialId), token.Principal.Expiration);
 
 			//重置本地缓存的时间信息
 			token.Reset();

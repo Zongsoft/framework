@@ -43,7 +43,7 @@ using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security.Web.Controllers
 {
-	[Area(Modules.Security)]
+	[Area(Module.NAME)]
 	[Authorize]
 	[Route("[area]/Users")]
 	public abstract class UserControllerBase<TUser> : ControllerBase where TUser : IUserModel

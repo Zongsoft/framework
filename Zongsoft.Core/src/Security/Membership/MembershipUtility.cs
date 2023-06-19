@@ -385,9 +385,9 @@ namespace Zongsoft.Security.Membership
 			//更新授权集中的相关目标的过滤文本
 			SetPermissionFilters(states, permissionFilters.Where(p => p.MemberId == memberId && p.MemberType == memberType));
 
-			foreach(var group in states.GroupBy(p => p.SchemaId))
+			foreach(var group in states.GroupBy(p => p.Target))
 			{
-				yield return new Permission(group.Key, group.Select(p => new Permission.Action(p.ActionId, p.Filter)));
+				yield return new Permission(group.Key, group.Select(p => new Permission.Action(p.Action, p.Filter)));
 			}
 		}
 		#endregion
@@ -478,52 +478,33 @@ namespace Zongsoft.Security.Membership
 			#region 公共字段
 			private readonly string KEY;
 
-			public readonly string SchemaId;
-			public readonly string ActionId;
+			public readonly string Target;
+			public readonly string Action;
 			public string Filter;
 			#endregion
 
 			#region 构造函数
-			public AuthorizationState(string schemaId, string actionId, string filter = null)
+			public AuthorizationState(string target, string action, string filter = null)
 			{
-				if(string.IsNullOrEmpty(schemaId))
-					throw new ArgumentNullException(nameof(schemaId));
-				if(string.IsNullOrEmpty(actionId))
-					throw new ArgumentNullException(nameof(actionId));
+				if(string.IsNullOrEmpty(target))
+					throw new ArgumentNullException(nameof(target));
+				if(string.IsNullOrEmpty(action))
+					throw new ArgumentNullException(nameof(action));
 
-				this.KEY = schemaId.ToUpperInvariant() + ":" + actionId.ToUpperInvariant();
-				this.SchemaId = schemaId;
-				this.ActionId = actionId;
+				this.KEY = target.ToUpperInvariant() + ":" + action.ToUpperInvariant();
+				this.Target = target;
+				this.Action = action;
 				this.Filter = filter;
 			}
 			#endregion
 
 			#region 重写方法
-			public bool Equals(AuthorizationState other)
-			{
-				return string.Equals(this.KEY, other.KEY, StringComparison.Ordinal);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != typeof(AuthorizationState))
-					return false;
-
-				return this.Equals((AuthorizationState)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return this.KEY.GetHashCode();
-			}
-
-			public override string ToString()
-			{
-				if(string.IsNullOrEmpty(this.Filter))
-					return this.SchemaId + ":" + this.ActionId;
-				else
-					return this.SchemaId + ":" + this.ActionId + "(" + this.Filter + ")";
-			}
+			public bool Equals(AuthorizationState other) => string.Equals(this.KEY, other.KEY, StringComparison.Ordinal);
+			public override bool Equals(object obj) => obj is AuthorizationState other && this.Equals(other);
+			public override int GetHashCode() => this.KEY.GetHashCode();
+			public override string ToString() => string.IsNullOrEmpty(this.Filter) ?
+					$"{this.Target}:{this.Action}" :
+					$"{this.Target}:{this.Action}({this.Filter})";
 			#endregion
 		}
 		#endregion

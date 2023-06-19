@@ -45,23 +45,13 @@ namespace Zongsoft.Security.Membership
 		public event EventHandler<AuthorizationContext> Authorized;
 		#endregion
 
-		#region 成员字段
-		private IDataAccess _dataAccess;
-		#endregion
-
 		#region 构造函数
 		public Authorizer() { }
 		#endregion
 
 		#region 公共属性
-		public IDataAccess DataAccess
-		{
-			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor(Modules.Security));
-			set => _dataAccess = value ?? throw new ArgumentNullException();
-		}
-
-		[ServiceDependency(IsRequired = true)]
-		public IDataAccessProvider DataAccessProvider { get; set; }
+		[ServiceDependency("@", IsRequired = true)]
+		public IDataAccess DataAccess { get; set; }
 		#endregion
 
 		#region 公共方法

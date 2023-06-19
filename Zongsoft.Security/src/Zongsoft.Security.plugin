@@ -18,9 +18,9 @@
 	</manifest>
 
 	<extension path="/Workbench/Modules">
-		<object name="Security" type="Zongsoft.Services.ApplicationModule, Zongsoft.Core"
-		        title="{res:Security.Title}"
-		        description="{res:Security.Description}" />
+		<object name="Security" value="{static:Zongsoft.Security.Module.Current, Zongsoft.Security}">
+			<expose name="Schemas" value="{path:../@Schemas}" />
+		</object>
 	</extension>
 
 	<extension path="/Workbench/Modules/Security/Schemas">
@@ -48,6 +48,7 @@
 	<!-- 挂载验证和授权集成模块 -->
 	<extension path="/Workbench/Security">
 		<object name="Authentication"
+			authority="{srv:~@Security}"
 		        value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
 			<expose name="Authenticators" value="{path:../@Authenticators}" />
 			<expose name="Challengers" value="{path:../@Challengers}" />

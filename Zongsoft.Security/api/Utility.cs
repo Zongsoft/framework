@@ -36,7 +36,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Module.NAME)]
 
 namespace Zongsoft.Security.Web
 {

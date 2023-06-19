@@ -29,12 +29,24 @@
 
 using System;
 
-//[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Modules.Security)]
+[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Module.NAME)]
 
 namespace Zongsoft.Security
 {
-	public static class Modules
+	public sealed class Module : Zongsoft.Services.ApplicationModule
 	{
-		public const string Security = nameof(Security);
+		#region 常量定义
+		/// <summary>表示安全模块的名称常量值。</summary>
+		public const string NAME = nameof(Security);
+		#endregion
+
+		#region 单例字段
+		/// <summary>表示安全模块的单例字段。</summary>
+		public static readonly Module Current = new Module();
+		#endregion
+
+		#region 私有构造
+		private Module() : base(NAME, Zongsoft.Security.Properties.Resources.Security_Title, Zongsoft.Security.Properties.Resources.Security_Description) { }
+		#endregion
 	}
 }

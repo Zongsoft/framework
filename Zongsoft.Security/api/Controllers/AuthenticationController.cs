@@ -43,7 +43,7 @@ using Zongsoft.Security.Membership;
 namespace Zongsoft.Security.Web.Controllers
 {
 	[ApiController]
-	[Area(Modules.Security)]
+	[Area(Module.NAME)]
 	[Route("{area}/{controller}/{action}")]
 	public class AuthenticationController : ControllerBase
 	{

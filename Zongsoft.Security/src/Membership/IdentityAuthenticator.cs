@@ -55,7 +55,7 @@ namespace Zongsoft.Security.Membership
 			if(@namespace != "*" && @namespace != "?" && Mapping.Instance.Namespace != null)
 				criteria = criteria.And(Mapping.Instance.Namespace.GetCondition(Mapping.Instance.User, @namespace));
 
-			var user = this.ServiceProvider.GetDataAccess().Select<UserSecret>(Mapping.Instance.User, criteria).FirstOrDefault();
+			var user = this.DataAccess.Select<UserSecret>(Mapping.Instance.User, criteria).FirstOrDefault();
 
 			if(user.UserId == 0)
 			{
@@ -82,7 +82,7 @@ namespace Zongsoft.Security.Membership
 			if(ticket.Namespace != "*" && ticket.Namespace != "?" && Mapping.Instance.Namespace != null)
 				criteria = criteria.And(Mapping.Instance.Namespace.GetCondition(Mapping.Instance.User, ticket.Namespace));
 
-			return this.ServiceProvider.GetDataAccess().Select<User>(Mapping.Instance.User, criteria).FirstOrDefault();
+			return this.DataAccess.Select<User>(Mapping.Instance.User, criteria).FirstOrDefault();
 		}
 
 		protected override TimeSpan GetPeriod(string scenario)
