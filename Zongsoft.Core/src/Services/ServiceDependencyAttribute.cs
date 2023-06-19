@@ -80,16 +80,17 @@ namespace Zongsoft.Services
 
 		/// <summary>获取或设置注入的服务名称，默认值为空(<c>null</c>)。</summary>
 		/// <remarks>
-		///		<list type="table">
+		///		<list type="bullet">
 		///			<item>
-		///				<term>当属性值为空(<c>null</c>)，且注入的服务类型为<see cref="IServiceAccessor{T}"/>：</term>
-		///				<description>表示从对应的<see cref="IServiceProvider{T}"/>提供程序中获取的服务名为注入目标所在的应用模块名称。</description>
+		///				<term>当属性值不为空(<c>null</c>)：</term>
+		///				<description>表示注入的服务为 <see cref="IServiceProvider{T}.GetService(string)" /> 方法的返回值。</description>
 		///			</item>
 		///			<item>
-		///				<term>当属性值为空字符串(<c>""</c>)，且注入的服务类型为<see cref="IServiceAccessor{T}"/>：</term>
-		///				<description>表示从对应的<see cref="IServiceProvider{T}"/>提供程序中获取的服务名为空字符串（注：名称为空字符串的服务通常为所属容器中的默认服务）。</description>
+		///				<term>当属性值为“<c>@</c>”符号，</term>
+		///				<description>表示该属性的实际值为待注入目标所在应用模块的名称。</description>
 		///			</item>
 		///		</list>
+		///		<para>如果 <see cref="ServiceType"/> 属性值不为空，则其即为 <see cref="IServiceProvider{T}"/> 泛型接口的泛型参数类型，如果为空(<c>null</c>)，则将注入成员的类型作为 <see cref="IServiceProvider{T}"/> 泛型接口的泛型参数类型。</para>
 		/// </remarks>
 		public string ServiceName { get; set; }
 
@@ -102,6 +103,7 @@ namespace Zongsoft.Services
 
 		#region 内部方法
 		internal bool IsApplicationProvider => this.Provider == "/" || this.Provider == "*";
+		internal string GetServiceName(Type type) => this.ServiceName == "@" ? ModularServicerUtility.GetModuleName(type) : this.ServiceName;
 		#endregion
 	}
 }

@@ -96,39 +96,35 @@ namespace Zongsoft.Services
 		{
 			descriptors = _descriptors.GetOrAdd(type, t =>
 			{
-				var type = t.GetTypeInfo();
-				var list = new List<MemberInjectionDescriptor>();
+				var fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
+				var properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+				var list = new List<MemberInjectionDescriptor>(properties.Length + fields.Length);
 
-				do
+				foreach(var property in properties)
 				{
-					foreach(var property in type.DeclaredProperties)
-					{
-						if(!property.CanWrite || property.SetMethod.IsStatic || !property.SetMethod.IsPublic)
-							continue;
+					if(!property.CanWrite || property.SetMethod.IsStatic || !property.SetMethod.IsPublic)
+						continue;
 
-						var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
+					var attribute = property.GetCustomAttribute<ServiceDependencyAttribute>();
 
-						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(property, attribute));
-						else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
-							list.Add(new MemberInjectionDescriptor(property));
-					}
+					if(attribute != null)
+						list.Add(new MemberInjectionDescriptor(property, attribute));
+					else if(property.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
+						list.Add(new MemberInjectionDescriptor(property));
+				}
 
-					foreach(var field in type.DeclaredFields)
-					{
-						if(field.IsInitOnly || field.IsStatic || !field.IsPublic)
-							continue;
+				foreach(var field in fields)
+				{
+					if(field.IsInitOnly || field.IsStatic || !field.IsPublic)
+						continue;
 
-						var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
+					var attribute = field.GetCustomAttribute<ServiceDependencyAttribute>();
 
-						if(attribute != null)
-							list.Add(new MemberInjectionDescriptor(field, attribute));
-						else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
-							list.Add(new MemberInjectionDescriptor(field));
-					}
-
-					type = type.BaseType?.GetTypeInfo();
-				} while(type != null && type != ObjectType);
+					if(attribute != null)
+						list.Add(new MemberInjectionDescriptor(field, attribute));
+					else if(field.IsDefined(typeof(Configuration.Options.OptionsAttribute), true))
+						list.Add(new MemberInjectionDescriptor(field));
+				}
 
 				return list.Count > 0 ? list.ToArray() : null;
 			});
@@ -146,19 +142,26 @@ namespace Zongsoft.Services
 			public MemberInjectionDescriptor(MemberInfo member, ServiceDependencyAttribute attribute)
 			{
 				_member = member;
+				var memberType = GetMemberType(member);
 
 				//如果待注入的成员类型是服务访问器接口，则优先以服务访问器方式进行注入
-				if(IsServiceAccessor(GetMemberType(member), out var accessorType))
+				if(IsServiceAccessor(memberType, out var accessorType))
 				{
 					_valueFactory = (provider, target) =>
-					{
-						return Activator.CreateInstance(accessorType, new object[]
+						Activator.CreateInstance(accessorType, new object[]
 						{
 							GetApplicationModule(target?.GetType() ?? member.ReflectedType),
-							attribute.ServiceName
+							attribute.GetServiceName(member.ReflectedType)
 						});
-					};
 
+					return;
+				}
+
+				if(attribute.ServiceName != null)
+				{
+					var invoker = ServiceProviderInvoker.GetInvoker(attribute.ServiceType ?? memberType, attribute.IsRequired);
+					var serviceName = attribute.GetServiceName(member.ReflectedType);
+					_valueFactory = (provider, target) => invoker.Invoke(provider, serviceName);
 					return;
 				}
 
@@ -294,6 +297,27 @@ namespace Zongsoft.Services
 
 				return ApplicationContext.Current;
 			}
+		}
+
+		private static class ServiceProviderInvoker<T> where T : class
+		{
+			public static object GetService(IServiceProvider serviceProvider, string name) =>
+				serviceProvider.GetService<IServiceProvider<T>>()?.GetService(name);
+
+			public static object GetRequiredService(IServiceProvider serviceProvider, string name) =>
+				serviceProvider.GetRequiredService<IServiceProvider<T>>().GetService(name) ?? throw new InvalidOperationException($"No service named '{name}' was found in the service provider of type '{typeof(IServiceProvider<T>).FullName}'.");
+		}
+
+		private static class ServiceProviderInvoker
+		{
+			public static Func<IServiceProvider, string, object> GetInvoker(Type type, bool required) =>
+				required ?
+				typeof(ServiceProviderInvoker<>).MakeGenericType(type)
+				.GetMethod(nameof(ServiceProviderInvoker<object>.GetRequiredService), BindingFlags.Static | BindingFlags.Public)
+				.CreateDelegate<Func<IServiceProvider, string, object>>() :
+				typeof(ServiceProviderInvoker<>).MakeGenericType(type)
+				.GetMethod(nameof(ServiceProviderInvoker<object>.GetService), BindingFlags.Static | BindingFlags.Public)
+				.CreateDelegate<Func<IServiceProvider, string, object>>();
 		}
 		#endregion
 	}
