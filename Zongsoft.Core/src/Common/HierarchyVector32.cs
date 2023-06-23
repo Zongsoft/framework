@@ -34,7 +34,7 @@ namespace Zongsoft.Common
 	/// <summary>
 	/// 表示层次向量的结构。
 	/// </summary>
-	public struct HierarchyVector32 : IEquatable<HierarchyVector32>, IEquatable<uint>
+	public readonly struct HierarchyVector32 : IEquatable<HierarchyVector32>, IEquatable<uint>
 	{
 		#region 静态字段
 		/// <summary>获取为数值为零的层次向量。</summary>
