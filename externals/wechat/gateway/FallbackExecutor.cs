@@ -28,8 +28,10 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
 
@@ -38,7 +40,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Wechat.Gateway
 {
-	public class FallbackExecutor : Executor
+	public class FallbackExecutor : ExecutorBase<IExecutorContext<Stream, object>, Stream, object>
 	{
 		#region 单例字段
 		public static readonly FallbackExecutor Instance = new FallbackExecutor();
@@ -50,8 +52,12 @@ namespace Zongsoft.Externals.Wechat.Gateway
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			return this.ExecuteAsync(new ExecutorContext(this, request.Body, request.GetParameters()), cancellation);
+			return this.ExecuteAsync(request.Body, request.GetParameters(), cancellation);
 		}
+		#endregion
+
+		#region 重写方法
+		protected override IExecutorContext<Stream, object> CreateContext(Stream request, IEnumerable<KeyValuePair<string, object>> parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
 		#endregion
 	}
 }

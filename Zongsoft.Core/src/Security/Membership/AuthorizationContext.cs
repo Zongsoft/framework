@@ -28,42 +28,53 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
+
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Membership
 {
-	public class AuthorizationContext
+	public class AuthorizationContext : ExecutorContext<AuthorizationRequest, AuthorizationResponse>
 	{
 		#region 构造函数
-		public AuthorizationContext(ClaimsIdentity identity, string schema, string action, bool isAuthorized)
-		{
+		public AuthorizationContext(AuthorizationRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(null, request, parameters) { }
+		public AuthorizationContext(IExecutor executor, AuthorizationRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, request, parameters) { }
+		#endregion
+
+		#region 公共方法
+		public bool Authorized() => this.Response.IsAuthorized;
+		public void Authorized(bool value) => this.Response = new AuthorizationResponse(value);
+		#endregion
+	}
+
+	public readonly struct AuthorizationRequest
+	{
+        public AuthorizationRequest(ClaimsIdentity identity, string target, string action)
+        {
 			this.Identity = identity;
-			this.Schema = schema;
+			this.Target = target;
 			this.Action = action;
-			this.IsAuthorized = isAuthorized;
-		}
-		#endregion
+        }
 
-		#region 公共属性
-		/// <summary>
-		/// 获取授权的用户对象。
-		/// </summary>
-		public ClaimsIdentity Identity { get; }
+        /// <summary>获取授权的用户对象。</summary>
+        public ClaimsIdentity Identity { get; }
 
-		/// <summary>
-		/// 获取待授权的资源标识。
-		/// </summary>
-		public string Schema { get; }
+		/// <summary>获取待授权的资源标识。</summary>
+		public string Target { get; }
 
-		/// <summary>
-		/// 获取待授权的行为标识。
-		/// </summary>
+		/// <summary>获取待授权的行为标识。</summary>
 		public string Action { get; }
+	}
 
-		/// <summary>
-		/// 获取或设置是否授权通过。
-		/// </summary>
-		public bool IsAuthorized { get; set; }
-		#endregion
+	public struct AuthorizationResponse
+	{
+        public AuthorizationResponse(bool authorized)
+        {
+			this.IsAuthorized = authorized;
+        }
+
+        /// <summary>获取或设置是否授权通过。</summary>
+        public bool IsAuthorized { get; set; }
 	}
 }

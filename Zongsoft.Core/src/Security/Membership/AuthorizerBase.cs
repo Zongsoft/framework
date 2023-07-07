@@ -9,22 +9,22 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Security library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Security is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Security is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -37,21 +37,30 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IAuthorizer))]
-	public class Authorizer : IAuthorizer
+	public abstract class AuthorizerBase : IAuthorizer
 	{
 		#region 事件定义
 		public event EventHandler<AuthorizationContext> Authorizing;
 		public event EventHandler<AuthorizationContext> Authorized;
 		#endregion
 
+		#region 成员字段
+		private IDataAccess _dataAccess;
+		#endregion
+
 		#region 构造函数
-		public Authorizer() { }
+		protected AuthorizerBase() { }
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency("@", IsRequired = true)]
-		public IDataAccess DataAccess { get; set; }
+		public IDataAccess DataAccess
+		{
+			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor("Security"));
+			set => _dataAccess = value ?? throw new ArgumentNullException();
+		}
+
+		[ServiceDependency(IsRequired = true)]
+		public IDataAccessProvider DataAccessProvider { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -61,7 +70,7 @@ namespace Zongsoft.Security.Membership
 				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			return this.Authorizes(userId, MemberType.User)
-			           .Any(token => string.Equals(target, token.Target, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
+					   .Any(token => string.Equals(target, token.Target, StringComparison.OrdinalIgnoreCase) && token.HasAction(action));
 		}
 
 		public bool Authorize(ClaimsIdentity user, string target, string action)
@@ -73,16 +82,13 @@ namespace Zongsoft.Security.Membership
 				throw new ArgumentNullException(nameof(target));
 
 			//创建授权上下文对象
-			var context = new AuthorizationContext(new AuthorizationRequest(user, target, action))
-			{
-				Response = new AuthorizationResponse(true),
-			};
+			var context = new AuthorizationContext(null, new AuthorizationRequest(user, target, action)) { Response = new AuthorizationResponse(true) };
 
 			//激发“Authorizing”事件
 			this.OnAuthorizing(context);
 
 			//如果时间参数指定的验证结果为失败，则直接返回失败
-			if(!context.Authorized())
+			if(!context.Response.IsAuthorized)
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
@@ -95,7 +101,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrWhiteSpace(action) || action == "*")
 				context.Authorized(tokens != null && tokens.Any(state => string.Equals(state.Target, target, StringComparison.OrdinalIgnoreCase)));
 			else
-				context.Authorized(tokens != null && tokens.Any(
+				context.Authorized( tokens != null && tokens.Any(
 					token => string.Equals(token.Target, target, StringComparison.OrdinalIgnoreCase) &&
 							 token.Actions.Any(a => string.Equals(a.Name, action, StringComparison.OrdinalIgnoreCase)))
 				);
@@ -104,24 +110,14 @@ namespace Zongsoft.Security.Membership
 			this.OnAuthorized(context);
 
 			//返回最终的验证结果
-			return context.Authorized();
+			return context.Response.IsAuthorized;
 		}
 
-		public IEnumerable<Permission> Authorizes(ClaimsIdentity identity)
-		{
-			if(identity == null)
-				throw new ArgumentNullException(nameof(identity));
+		public IEnumerable<Permission> Authorizes(ClaimsIdentity identity) =>
+			MembershipUtility.GetAuthorizes(this.DataAccess, identity ?? throw new ArgumentNullException(nameof(identity)));
 
-			return MembershipUtility.GetAuthorizes(this.DataAccess, identity);
-		}
-
-		public IEnumerable<Permission> Authorizes(IRoleModel role)
-		{
-			if(role == null)
-				throw new ArgumentNullException(nameof(role));
-
-			return MembershipUtility.GetAuthorizes(this.DataAccess, role);
-		}
+		public IEnumerable<Permission> Authorizes(IRoleModel role) =>
+			MembershipUtility.GetAuthorizes(this.DataAccess, role ?? throw new ArgumentNullException(nameof(role)));
 
 		public IEnumerable<Permission> Authorizes(uint memberId, MemberType memberType)
 		{
@@ -150,10 +146,8 @@ namespace Zongsoft.Security.Membership
 				roleNames);
 		}
 
-		public bool InRoles(IUserIdentity user, params string[] roleNames)
-		{
-			return MembershipUtility.InRoles(this.DataAccess, user as IUserModel, roleNames);
-		}
+		public bool InRoles(IUserIdentity user, params string[] roleNames) =>
+			MembershipUtility.InRoles(this.DataAccess, user as IUserModel, roleNames);
 		#endregion
 
 		#region 虚拟方法
