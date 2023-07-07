@@ -359,3 +359,6 @@ externals/grapecity/src/api/Properties/launchSettings.json
 # The XML comment document files
 **/src/*.xml
 **/api/*.xml
+
+# The launchSettings.json file
+**/launchSettings.json
