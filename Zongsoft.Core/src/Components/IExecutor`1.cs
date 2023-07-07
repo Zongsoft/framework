@@ -30,12 +30,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutor<in TContext> : IExecutor
+	public interface IExecutor<TRequest> : IExecutor
 	{
-		object Execute(TContext context);
-		ValueTask<object> ExecuteAsync(TContext context, CancellationToken cancellation = default);
+		void Execute(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		ValueTask ExecuteAsync(TRequest request, CancellationToken cancellation = default);
+		ValueTask ExecuteAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
 	}
 }

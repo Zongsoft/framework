@@ -32,9 +32,8 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	public interface IFilterable<TContext> where TContext : class
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		ICollection<IFilter<TContext>> Filters { get; }
 	}
 }

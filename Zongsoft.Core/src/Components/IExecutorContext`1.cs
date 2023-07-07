@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,9 +32,12 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	/// <summary>
+	/// 表示执行器上下文的接口。
+	/// </summary>
+	public interface IExecutorContext<out TRequest> : IExecutorContext
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		/// <summary>获取执行请求对象。</summary>
+		new TRequest Request { get; }
 	}
 }

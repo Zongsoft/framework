@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,9 +32,9 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	public interface IFilter<in TContext> where TContext : class
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		void OnFiltered(TContext context);
+		void OnFiltering(TContext context);
 	}
 }

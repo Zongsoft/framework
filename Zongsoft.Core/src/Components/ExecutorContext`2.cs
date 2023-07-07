@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,44 +33,22 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public class ExecutorContext : IExecutorContext
+	public class ExecutorContext<TRequest, TResponse> : ExecutorContextBase, IExecutorContext<TRequest, TResponse>
 	{
-		#region 成员字段
-		private Exception _exception;
-		private IDictionary<string, object> _parameters;
-		#endregion
-
 		#region 构造函数
-		public ExecutorContext(IExecutor executor, object value, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public ExecutorContext(IExecutor executor, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
 		{
-			this.Executor = executor ?? throw new ArgumentNullException(nameof(executor));
-			this.Value = value;
-
-			if(parameters != null && parameters.Any())
-				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+			this.Request = request;
 		}
 		#endregion
 
 		#region 公共属性
-		public IExecutor Executor { get; }
-		public object Value { get; }
-		public object Result { get; set; }
-		public bool HasParameters { get => _parameters != null; }
-		public IDictionary<string, object> Parameters
-		{
-			get
-			{
-				if(_parameters == null)
-					System.Threading.Interlocked.CompareExchange(ref _parameters, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _parameters;
-			}
-		}
+		public TRequest Request { get; }
+		public TResponse Response { get; set; }
 		#endregion
 
-		#region 公共方法
-		public void Error(Exception exception) => _exception = exception;
-		public bool HasError(out Exception exception) => (exception = _exception) != null;
+		#region 重写方法
+		protected override object GetRequest() => this.Request;
 		#endregion
 	}
 }

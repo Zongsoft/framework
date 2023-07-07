@@ -79,7 +79,13 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 参数转换
-		protected virtual TRequest Convert(object request) => request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
+		protected virtual TRequest Convert(object request)
+		{
+			if(request == null)
+				return default;
+
+			return request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
+		}
 		#endregion
 	}
 }

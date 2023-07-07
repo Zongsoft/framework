@@ -38,7 +38,8 @@ namespace Zongsoft.Components
 	{
 		ICollection<IExecutionFilter> Filters { get; }
 
-		object Execute(object context);
-		ValueTask<object> ExecuteAsync(object context, CancellationToken cancellation = default);
+		void Execute(object request, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		ValueTask ExecuteAsync(object request, CancellationToken cancellation = default);
+		ValueTask ExecuteAsync(object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
 	}
 }

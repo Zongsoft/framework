@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,16 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	public interface IExecutor<TRequest, TResponse> : IExecutor
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		TResponse Execute(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		ValueTask<TResponse> ExecuteAsync(TRequest request, CancellationToken cancellation = default);
+		ValueTask<TResponse> ExecuteAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
 	}
 }

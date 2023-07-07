@@ -49,11 +49,8 @@ namespace Zongsoft.Components
 		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
 		IDictionary<string, object> Parameters { get; }
 
-		/// <summary>获取执行输入值。</summary>
-		object Value { get; }
-
-		/// <summary>获取或设置执行结果。</summary>
-		object Result { get; set; }
+		/// <summary>获取执行请求对象。</summary>
+		object Request { get; }
 
 		/// <summary>设置一个异常。</summary>
 		/// <param name="exception">发生的异常对象。</param>

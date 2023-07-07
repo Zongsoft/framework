@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,26 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	public class ExecutorContext<TRequest> : ExecutorContextBase, IExecutorContext<TRequest>
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		#region 构造函数
+		public ExecutorContext(IExecutor executor, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
+		{
+			this.Request = request;
+		}
+		#endregion
+
+		#region 公共属性
+		public TRequest Request { get; }
+		#endregion
+
+		#region 重写方法
+		protected override object GetRequest() => this.Request;
+		#endregion
 	}
 }
