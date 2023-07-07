@@ -3,7 +3,7 @@ using System.Linq;
 
 using Xunit;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components.Tests
 {
 	public class WeighterTest
 	{
