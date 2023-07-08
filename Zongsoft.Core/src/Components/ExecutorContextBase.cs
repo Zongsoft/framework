@@ -45,8 +45,12 @@ namespace Zongsoft.Components
 		{
 			this.Executor = executor;
 
-			if(parameters != null && parameters.Any())
-				_parameters = new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+			if(parameters != null)
+			{
+				_parameters = parameters is IDictionary<string, object> dictionary ?
+					dictionary :
+					new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+			}
 		}
 		#endregion
 

@@ -51,19 +51,19 @@ namespace Zongsoft.Components
 		{
 			var task = this.HandleAsync(caller, request, parameters, CancellationToken.None);
 
-			if(task.IsCompleted)
+			if(task.IsCompletedSuccessfully)
 				return;
 
-			task.AsTask().Wait();
+			task.AsTask().GetAwaiter().GetResult();
 		}
 
 		public ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(caller, request, null, cancellation);
 		public ValueTask HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			if(parameters != null && parameters.Any())
-				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
-			else
+			if(parameters == null)
 				return this.OnHandleAsync(caller, request, null, cancellation);
+			else
+				return this.OnHandleAsync(caller, request, parameters is IDictionary<string, object> dictionary ? dictionary : new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
 		}
 		#endregion
 
