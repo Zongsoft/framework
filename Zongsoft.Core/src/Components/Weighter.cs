@@ -201,15 +201,10 @@ namespace Zongsoft.Components
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<T> GetEnumerator()
 		{
-			var entries = _entries;
-
-			if(entries == null)
-				throw new ObjectDisposedException(this.GetType().Name);
+			var entries = _entries ?? throw new ObjectDisposedException(this.GetType().Name);
 
 			for(int i = 0; i < entries.Length; i++)
-			{
 				yield return entries[i].Value;
-			}
 		}
 		#endregion
 
