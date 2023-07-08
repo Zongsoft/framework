@@ -110,11 +110,11 @@ namespace Zongsoft.Messaging
 
 		#region 公共方法
 		/// <summary>应答消息。</summary>
-		public void Acknowledge() => this.Acknowledge(TimeSpan.Zero);
+		public readonly void Acknowledge() => this.Acknowledge(TimeSpan.Zero);
 
 		/// <summary>应答消息。</summary>
 		/// <param name="delay">指定的应答延迟。</param>
-		public void Acknowledge(TimeSpan delay)
+		public readonly void Acknowledge(TimeSpan delay)
 		{
 			var acknowledger = _acknowledger;
 
@@ -140,13 +140,13 @@ namespace Zongsoft.Messaging
 		/// <summary>应答消息。</summary>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		public ValueTask AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
+		public readonly ValueTask AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
 
 		/// <summary>应答消息。</summary>
 		/// <param name="delay">指定的应答延迟。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		public ValueTask AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
+		public readonly ValueTask AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
 		{
 			var acknowledger = _acknowledger;
 
