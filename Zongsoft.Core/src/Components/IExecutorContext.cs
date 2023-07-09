@@ -50,7 +50,7 @@ namespace Zongsoft.Components
 		IDictionary<string, object> Parameters { get; }
 
 		/// <summary>获取执行请求对象。</summary>
-		object Request { get; }
+		object Argument { get; }
 
 		/// <summary>设置一个异常。</summary>
 		/// <param name="exception">发生的异常对象。</param>

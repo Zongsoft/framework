@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter<in TContext> : IExecutionFilter
+	public interface IHandlerLocator<in TContext> where TContext : class
 	{
-		void OnFiltered(TContext context);
-		void OnFiltering(TContext context);
+		IHandler Locate(TContext context);
 	}
 }

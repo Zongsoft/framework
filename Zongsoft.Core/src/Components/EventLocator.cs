@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutionFilter
+	public class EventLocator : EventLocatorBase<IExecutorContext>
 	{
-		void OnFiltered(IExecutorContext context);
-		void OnFiltering(IExecutorContext context);
+		public EventLocator() { }
+		public EventLocator(EventRegistry registry) : base(registry) { }
+
+		protected override string GetName(IExecutorContext context) =>
+			context.HasParameters && context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
 	}
 }

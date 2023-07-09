@@ -35,22 +35,19 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Membership
 {
-	public class AuthorizationContext : ExecutorContext<AuthorizationRequest, AuthorizationResponse>
+	public class AuthorizationContext : ExecutorContext<AuthorizationArgument, bool>
 	{
 		#region 构造函数
-		public AuthorizationContext(AuthorizationRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(null, request, parameters) { }
-		public AuthorizationContext(IExecutor executor, AuthorizationRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, request, parameters) { }
-		#endregion
-
-		#region 公共方法
-		public bool Authorized() => this.Response.IsAuthorized;
-		public void Authorized(bool value) => this.Response = new AuthorizationResponse(value);
+		public AuthorizationContext(AuthorizationArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(null, argument, parameters) { }
+		public AuthorizationContext(IExecutor executor, AuthorizationArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, argument, parameters) { }
+		public AuthorizationContext(bool authorized, AuthorizationArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(null, authorized, argument, parameters) { }
+		public AuthorizationContext(IExecutor executor, bool authorized, AuthorizationArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, authorized, argument, parameters) { }
 		#endregion
 	}
 
-	public readonly struct AuthorizationRequest
+	public readonly struct AuthorizationArgument
 	{
-        public AuthorizationRequest(ClaimsIdentity identity, string target, string action)
+        public AuthorizationArgument(ClaimsIdentity identity, string target, string action)
         {
 			this.Identity = identity;
 			this.Target = target;
@@ -65,16 +62,5 @@ namespace Zongsoft.Security.Membership
 
 		/// <summary>获取待授权的行为标识。</summary>
 		public string Action { get; }
-	}
-
-	public struct AuthorizationResponse
-	{
-        public AuthorizationResponse(bool authorized)
-        {
-			this.IsAuthorized = authorized;
-        }
-
-        /// <summary>获取或设置是否授权通过。</summary>
-        public bool IsAuthorized { get; set; }
 	}
 }

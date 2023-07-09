@@ -73,16 +73,13 @@ namespace Zongsoft.Security.Membership
 				throw new ArgumentNullException(nameof(target));
 
 			//创建授权上下文对象
-			var context = new AuthorizationContext(new AuthorizationRequest(user, target, action))
-			{
-				Response = new AuthorizationResponse(true),
-			};
+			var context = new AuthorizationContext(true, new AuthorizationArgument(user, target, action));
 
 			//激发“Authorizing”事件
 			this.OnAuthorizing(context);
 
 			//如果时间参数指定的验证结果为失败，则直接返回失败
-			if(!context.Authorized())
+			if(!context.Result)
 				return false;
 
 			//如果指定的用户属于系统内置的管理员角色则立即返回授权通过
@@ -93,18 +90,18 @@ namespace Zongsoft.Security.Membership
 			var tokens = this.Authorizes(user.GetIdentifier<uint>(), MemberType.User);
 
 			if(string.IsNullOrWhiteSpace(action) || action == "*")
-				context.Authorized(tokens != null && tokens.Any(state => string.Equals(state.Target, target, StringComparison.OrdinalIgnoreCase)));
+				context.Result = tokens != null && tokens.Any(state => string.Equals(state.Target, target, StringComparison.OrdinalIgnoreCase));
 			else
-				context.Authorized(tokens != null && tokens.Any(
+				context.Result = tokens != null && tokens.Any(
 					token => string.Equals(token.Target, target, StringComparison.OrdinalIgnoreCase) &&
-							 token.Actions.Any(a => string.Equals(a.Name, action, StringComparison.OrdinalIgnoreCase)))
-				);
+							 token.Actions.Any(a => string.Equals(a.Name, action, StringComparison.OrdinalIgnoreCase))
+					);
 
 			//激发“Authorized”事件
 			this.OnAuthorized(context);
 
 			//返回最终的验证结果
-			return context.Authorized();
+			return context.Result;
 		}
 
 		public IEnumerable<Permission> Authorizes(ClaimsIdentity identity)

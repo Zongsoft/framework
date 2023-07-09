@@ -37,28 +37,28 @@ namespace Zongsoft.Components
 	/// <summary>
 	/// 表示处理程序的接口。
 	/// </summary>
-	/// <typeparam name="TRequest">处理程序的请求参数类型。</typeparam>
-	public interface IHandler<in TRequest> : IHandler
+	/// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
+	public interface IHandler<in TArgument> : IHandler
 	{
 		/// <summary>确认当前处理程序能否处理本次执行请求。</summary>
-		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="parameters">当前处理的参数集。</param>
 		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
-		bool CanHandle(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		bool CanHandle(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null);
 
 		/// <summary>异步处理执行请求。</summary>
 		/// <param name="caller">处理程序的调用者。</param>
-		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default);
+		ValueTask HandleAsync(object caller, TArgument argument, CancellationToken cancellation = default);
 
 		/// <summary>异步处理执行请求。</summary>
 		/// <param name="caller">处理程序的调用者。</param>
-		/// <param name="request">当前处理的请求对象。</param>
+		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="parameters">当前处理的参数集。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
+		ValueTask HandleAsync(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
 	}
 }

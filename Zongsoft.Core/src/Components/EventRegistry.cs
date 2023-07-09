@@ -30,12 +30,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
 	[System.Reflection.DefaultMember(nameof(Events))]
-	public class EventRegistry
+	public class EventRegistry : IEnumerable<EventDescriptor>
 	{
 		#region 构造函数
 		public EventRegistry()
@@ -45,33 +46,39 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取事件描述器集合。</summary>
 		public EventDescriptorCollection Events { get; }
 		#endregion
 
 		#region 公共方法
-		public ValueTask RaiseAsync(string name, object request, CancellationToken cancellation = default) => this.RaiseAsync(name, request, null, cancellation);
-		public ValueTask RaiseAsync(string name, object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
+		public ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
-				return descriptor.HandleAsync(request, parameters, cancellation);
+				return descriptor.HandleAsync(argument, parameters, cancellation);
 			else
 				return ValueTask.CompletedTask;
 		}
 
-		public ValueTask RaiseAsync<T>(string name, T request, CancellationToken cancellation = default) => this.RaiseAsync(name, request, null, cancellation);
-		public ValueTask RaiseAsync<T>(string name, T request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask RaiseAsync<T>(string name, T argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
+		public ValueTask RaiseAsync<T>(string name, T argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
-				return descriptor.HandleAsync(request, parameters, cancellation);
+				return descriptor.HandleAsync(argument, parameters, cancellation);
 			else
 				return ValueTask.CompletedTask;
 		}
+		#endregion
+
+		#region 遍历枚举
+		public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 	}
 }

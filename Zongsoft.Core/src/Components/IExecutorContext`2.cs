@@ -35,9 +35,9 @@ namespace Zongsoft.Components
 	/// <summary>
 	/// 表示执行器上下文的接口。
 	/// </summary>
-	public interface IExecutorContext<TRequest, TResponse> : IExecutorContext, IExecutorContext<TRequest>
+	public interface IExecutorContext<TArgument, TResult> : IExecutorContext, IExecutorContext<TArgument>
 	{
-		/// <summary>获取或设置执行响应对象。</summary>
-		TResponse Response { get; set; }
+		/// <summary>获取或设置执行结果。</summary>
+		TResult Result { get; set; }
 	}
 }

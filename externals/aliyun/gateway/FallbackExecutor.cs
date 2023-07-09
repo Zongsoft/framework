@@ -40,14 +40,18 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Aliyun.Gateway
 {
-	public class FallbackExecutor : ExecutorBase<IExecutorContext<Stream, object>, Stream, object>
+	public class FallbackExecutor : ExecutorBase<Stream, object>
 	{
 		#region 单例字段
 		public static readonly FallbackExecutor Instance = new FallbackExecutor();
 		#endregion
 
 		#region 私有构造
-		private FallbackExecutor() { }
+		private FallbackExecutor() => this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 公共属性
+		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
 
 		#region 公共方法
@@ -62,6 +66,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 
 		#region 重写方法
 		protected override IExecutorContext<Stream, object> CreateContext(Stream request, IEnumerable<KeyValuePair<string, object>> parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
+		protected override IHandler GetHandler(IExecutorContext<Stream, object> context) => context.HasParameters && context.Parameters.TryGetValue("name", out var value) && value is string name && this.Handlers.TryGetValue(name, out var handler) ? handler : null;
 		#endregion
 	}
 }

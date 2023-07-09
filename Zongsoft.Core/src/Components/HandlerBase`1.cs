@@ -38,18 +38,18 @@ namespace Zongsoft.Components
 	/// <summary>
 	/// 表示处理程序的基类。
 	/// </summary>
-	/// <typeparam name="TRequest">处理程序的请求参数类型。</typeparam>
-	public abstract class HandlerBase<TRequest> : IHandler<TRequest>, IHandler
+	/// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
+	public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 	{
 		#region 构造函数
 		protected HandlerBase() { }
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanHandle(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) => request != null;
-		public virtual void Handle(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public virtual bool CanHandle(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => argument != null;
+		public virtual void Handle(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			var task = this.HandleAsync(caller, request, parameters, CancellationToken.None);
+			var task = this.HandleAsync(caller, argument, parameters, CancellationToken.None);
 
 			if(task.IsCompletedSuccessfully)
 				return;
@@ -57,33 +57,33 @@ namespace Zongsoft.Components
 			task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(caller, request, null, cancellation);
-		public ValueTask HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(object caller, TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(caller, argument, null, cancellation);
+		public ValueTask HandleAsync(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(parameters == null)
-				return this.OnHandleAsync(caller, request, null, cancellation);
+				return this.OnHandleAsync(caller, argument, null, cancellation);
 			else
-				return this.OnHandleAsync(caller, request, parameters is IDictionary<string, object> dictionary ? dictionary : new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
+				return this.OnHandleAsync(caller, argument, parameters is IDictionary<string, object> dictionary ? dictionary : new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
 		}
 		#endregion
 
 		#region 抽象方法
-		protected abstract ValueTask OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask OnHandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object request, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanHandle(this.Convert(request), parameters);
-		ValueTask IHandler.HandleAsync(object caller, object request, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(request), null, cancellation);
-		ValueTask IHandler.HandleAsync(object caller, object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(request), parameters, cancellation);
+		bool IHandler.CanHandle(object argument, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanHandle(this.Convert(argument), parameters);
+		ValueTask IHandler.HandleAsync(object caller, object argument, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(argument), null, cancellation);
+		ValueTask IHandler.HandleAsync(object caller, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
 		#endregion
 
 		#region 参数转换
-		protected virtual TRequest Convert(object request)
+		protected virtual TArgument Convert(object argument)
 		{
-			if(request == null)
+			if(argument == null)
 				return default;
 
-			return request is TRequest result ? result : throw new ArgumentException($"The specified request parameter cannot be converted to '{typeof(TRequest).FullName}' type.", nameof(request));
+			return argument is TArgument result ? result : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
 		}
 		#endregion
 	}

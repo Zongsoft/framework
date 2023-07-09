@@ -70,8 +70,8 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 显式实现
-		protected abstract object GetRequest();
-		object IExecutorContext.Request { get => this.GetRequest(); }
+		protected abstract object GetArgument();
+		object IExecutorContext.Argument { get => this.GetArgument(); }
 		#endregion
 
 		#region 公共方法

@@ -55,7 +55,7 @@ namespace Zongsoft.Security.Membership
 			authorizers.CollectionChanged += OnCollectionChanged;
 
 			this.Authorizers = authorizers;
-			this.Filters = new List<IExecutionFilter>();
+			this.Filters = new List<IFilter<AuthorizationContext>>();
 		}
 		#endregion
 
@@ -64,7 +64,7 @@ namespace Zongsoft.Security.Membership
 		public ICollection<IAuthorizer> Authorizers { get; }
 
 		/// <summary>获取一个授权的过滤器集合，该过滤器包含对授权的响应处理。</summary>
-		public ICollection<IExecutionFilter> Filters { get; }
+		public ICollection<IFilter<AuthorizationContext>> Filters { get; }
 		#endregion
 
 		#region 事件响应

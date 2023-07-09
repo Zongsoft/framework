@@ -191,25 +191,33 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 执行处理
-		public ValueTask HandleAsync(object request, CancellationToken cancellation = default) => this.HandleAsync(request, null, cancellation);
-		public async ValueTask HandleAsync(object request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync(object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
+			var tasks = new List<Task>(this.Handlers.Count);
+
 			foreach(var handler in this.Handlers)
 			{
-				await handler.HandleAsync(this, request, parameters, cancellation);
+				tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
 			}
+
+			return new ValueTask(Task.WhenAll(tasks));
 		}
 
-		public ValueTask HandleAsync<TRequest>(TRequest request, CancellationToken cancellation = default) => this.HandleAsync(request, null, cancellation);
-		public async ValueTask HandleAsync<TRequest>(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync<TRequest>(TRequest argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync<TRequest>(TRequest argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
+			var tasks = new List<Task>(this.Handlers.Count);
+
 			foreach(var handler in this.Handlers)
 			{
 				if(handler is IHandler<TRequest> generic)
-					await generic.HandleAsync(this, request, parameters, cancellation);
+					tasks.Add(generic.HandleAsync(this, argument, parameters, cancellation).AsTask());
 				else
-					await handler.HandleAsync(this, request, parameters, cancellation);
+					tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
 			}
+
+			return new ValueTask(Task.WhenAll(tasks));
 		}
 		#endregion
 

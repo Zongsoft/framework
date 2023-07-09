@@ -33,22 +33,28 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public class ExecutorContext<TRequest, TResponse> : ExecutorContextBase, IExecutorContext<TRequest, TResponse>
+	public class ExecutorContext<TArgument, TResult> : ExecutorContextBase, IExecutorContext<TArgument, TResult>
 	{
 		#region 构造函数
-		public ExecutorContext(IExecutor executor, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
+		public ExecutorContext(IExecutor executor, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
 		{
-			this.Request = request;
+			this.Argument = argument;
+		}
+
+		public ExecutorContext(IExecutor executor, TResult result, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
+		{
+			this.Result = result;
+			this.Argument = argument;
 		}
 		#endregion
 
 		#region 公共属性
-		public TRequest Request { get; }
-		public TResponse Response { get; set; }
+		public TArgument Argument { get; }
+		public TResult Result { get; set; }
 		#endregion
 
 		#region 重写方法
-		protected override object GetRequest() => this.Request;
+		protected override object GetArgument() => this.Argument;
 		#endregion
 	}
 }

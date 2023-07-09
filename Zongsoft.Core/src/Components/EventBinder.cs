@@ -37,7 +37,7 @@ namespace Zongsoft.Components
 {
 	internal static class EventBinder
 	{
-		private static Dictionary<EventDescriptor, Delegate> _binding = new Dictionary<EventDescriptor, Delegate>();
+		private static readonly Dictionary<EventDescriptor, Delegate> _binding = new();
 
 		public static void Bind(this EventDescriptor descriptor, object target, EventInfo @event)
 		{

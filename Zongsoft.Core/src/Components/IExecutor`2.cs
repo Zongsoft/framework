@@ -34,10 +34,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IExecutor<TRequest, TResponse> : IExecutor
+	public interface IExecutor<in TArgument, TResult> : IExecutor
 	{
-		TResponse Execute(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters = null);
-		ValueTask<TResponse> ExecuteAsync(TRequest request, CancellationToken cancellation = default);
-		ValueTask<TResponse> ExecuteAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
+		TResult Execute(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		ValueTask<TResult> ExecuteAsync(TArgument argument, CancellationToken cancellation = default);
+		ValueTask<TResult> ExecuteAsync(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
 	}
 }
