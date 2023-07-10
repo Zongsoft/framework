@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 
 using Zongsoft.Collections;
+using Zongsoft.Components;
 using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
@@ -40,34 +41,25 @@ namespace Zongsoft.Services
 	/// </summary>
 	public interface IApplicationModule
 	{
-		/// <summary>
-		/// 获取应用模块名称。
-		/// </summary>
+		/// <summary>获取应用模块名称。</summary>
 		string Name { get; }
 
-		/// <summary>
-		/// 获取应用模块的标题。
-		/// </summary>
+		/// <summary>获取应用模块的标题。</summary>
 		string Title { get; }
 
-		/// <summary>
-		/// 获取应用模块的描述文本。
-		/// </summary>
+		/// <summary>获取应用模块的描述文本。</summary>
 		string Description { get; }
 
-		/// <summary>
-		/// 获取应用模块的服务容器。
-		/// </summary>
+		/// <summary>获取事件注册表。</summary>
+		EventRegistry Events { get; }
+
+		/// <summary>获取应用模块的服务容器。</summary>
 		IServiceProvider Services { get; }
 
-		/// <summary>
-		/// 获取应用模块的授权目标集。
-		/// </summary>
+		/// <summary>获取应用模块的授权目标集。</summary>
 		INamedCollection<Schema> Schemas { get; }
 
-		/// <summary>
-		/// 获取应用模块的自定义属性集。
-		/// </summary>
+		/// <summary>获取应用模块的自定义属性集。</summary>
 		IDictionary<string, object> Properties { get; }
 	}
 }

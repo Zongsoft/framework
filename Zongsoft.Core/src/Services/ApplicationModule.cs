@@ -34,6 +34,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
+using Zongsoft.Components;
 
 namespace Zongsoft.Services
 {
@@ -52,6 +53,7 @@ namespace Zongsoft.Services
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = this.Title = name.Trim();
+			this.Events = new EventRegistry();
 			this.Schemas = new SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
@@ -64,6 +66,7 @@ namespace Zongsoft.Services
 			this.Name = name.Trim();
 			this.Title = title ?? this.Name;
 			this.Description = description;
+			this.Events = new EventRegistry();
 			this.Schemas = new SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
@@ -73,6 +76,7 @@ namespace Zongsoft.Services
 		public string Name { get; protected set; }
 		public string Title {get; set; }
 		public string Description { get; set; }
+		public EventRegistry Events { get; }
 		public INamedCollection<Schema> Schemas { get; }
 		public IDictionary<string, object> Properties { get; }
 
