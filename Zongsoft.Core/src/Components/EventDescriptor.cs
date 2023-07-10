@@ -43,29 +43,10 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 构造函数
-		public EventDescriptor(string qualifiedName, string displayName = null, string description = null)
+		public EventDescriptor(string name, string title = null, string description = null)
 		{
-			if(string.IsNullOrEmpty(qualifiedName))
-				throw new ArgumentNullException(nameof(qualifiedName));
-
-			var index = qualifiedName.LastIndexOf(':');
-			switch(index)
-			{
-				case 0:
-					this.Name = qualifiedName[1..];
-					this.Namespace = null;
-					break;
-				case -1:
-					this.Name = qualifiedName;
-					this.Namespace = null;
-					break;
-				default:
-					this.Name = qualifiedName[(index + 1)..];
-					this.Namespace = qualifiedName[..index];
-					break;
-			}
-
-			this.DisplayName = displayName;
+			this.Name = name;
+			this.Title = title;
 			this.Description = description;
 			this.Handlers = new List<IHandler>();
 		}
@@ -74,10 +55,8 @@ namespace Zongsoft.Components
 		#region 公共属性
 		/// <summary>获取事件名称。</summary>
 		public string Name { get; }
-		/// <summary>获取事件命名空间。</summary>
-		public string Namespace { get; }
 		/// <summary>获取事件的显示名。</summary>
-		public string DisplayName { get; set; }
+		public string Title { get; set; }
 		/// <summary>获取事件的描述信息。</summary>
 		public string Description { get; set; }
 
@@ -222,13 +201,10 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 重写方法
-		public bool Equals(EventDescriptor other) =>
-			string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
-			string.Equals(this.Namespace, other.Namespace, StringComparison.OrdinalIgnoreCase);
-
+		public bool Equals(EventDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 		public override bool Equals(object obj) => obj is EventDescriptor other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Namespace, this.Name);
-		public override string ToString() => string.IsNullOrEmpty(this.Namespace) ? this.Name : $"{this.Namespace}:{this.Name}";
+		public override int GetHashCode() => this.Name.GetHashCode();
+		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.Name : $"{this.Name}[{this.Title}]";
 		#endregion
 	}
 }

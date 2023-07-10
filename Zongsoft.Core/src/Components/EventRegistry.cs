@@ -36,7 +36,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Components
 {
 	[System.Reflection.DefaultMember(nameof(Events))]
-	public class EventRegistry : IEnumerable<EventDescriptor>
+	public sealed class EventRegistry : IEnumerable<EventDescriptor>
 	{
 		#region 构造函数
 		public EventRegistry()
@@ -50,8 +50,39 @@ namespace Zongsoft.Components
 		public EventDescriptorCollection Events { get; }
 		#endregion
 
+		#region 注册事件
+		public EventDescriptor Event(string name, string title = null, string description = null)
+		{
+			var descriptor = new EventDescriptor(name, title, description);
+			this.Events.Add(descriptor);
+			return descriptor;
+		}
+
+		public EventDescriptor Event(object target, string name, string title = null, string description = null)
+		{
+			var descriptor = new EventDescriptor(name, title, description);
+			this.Events.Add(descriptor);
+			descriptor.Target = target;
+			return descriptor;
+		}
+		#endregion
+
 		#region 公共方法
-		public ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
+		public void Raise(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		{
+			var task = RaiseAsync(name, argument, parameters);
+			if(!task.IsCompletedSuccessfully)
+				task.AsTask().GetAwaiter().GetResult();
+		}
+
+		public void Raise<T>(string name, T argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		{
+			var task = RaiseAsync(name, argument, parameters);
+			if(!task.IsCompletedSuccessfully)
+				task.AsTask().GetAwaiter().GetResult();
+		}
+
+		public ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
 		public ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -63,7 +94,7 @@ namespace Zongsoft.Components
 				return ValueTask.CompletedTask;
 		}
 
-		public ValueTask RaiseAsync<T>(string name, T argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
+		public ValueTask RaiseAsync<T>(string name, T argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
 		public ValueTask RaiseAsync<T>(string name, T argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))

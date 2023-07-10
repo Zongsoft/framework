@@ -18,7 +18,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.MyEvent);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -42,7 +42,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.MyEventWithArgs);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -66,7 +66,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action0);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -90,7 +90,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action1_Object);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -114,7 +114,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action1_Generic);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -138,7 +138,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action2_Object);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -162,7 +162,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action2_Generic);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -186,7 +186,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action3_Object);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
@@ -210,7 +210,7 @@ namespace Zongsoft.Components.Tests
 			var name = nameof(_trigger.Action3_Generic);
 			var descriptor = new EventDescriptor(name);
 			Assert.Equal(name, descriptor.Name);
-			Assert.Null(descriptor.DisplayName);
+			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
 			Assert.Null(descriptor.Target);
 			Assert.Empty(descriptor.Handlers);
