@@ -75,7 +75,7 @@ namespace Zongsoft.Components
 				task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public void Raise<T>(string name, T argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public void Raise<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			var task = RaiseAsync(name, argument, parameters);
 			if(!task.IsCompletedSuccessfully)
@@ -91,11 +91,11 @@ namespace Zongsoft.Components
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
 				return descriptor.HandleAsync(argument, parameters, cancellation);
 			else
-				return ValueTask.CompletedTask;
+				throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
 		}
 
-		public ValueTask RaiseAsync<T>(string name, T argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		public ValueTask RaiseAsync<T>(string name, T argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
+		public ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -103,7 +103,7 @@ namespace Zongsoft.Components
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
 				return descriptor.HandleAsync(argument, parameters, cancellation);
 			else
-				return ValueTask.CompletedTask;
+				throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
 		}
 		#endregion
 
