@@ -29,6 +29,8 @@
 
 using System;
 using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
@@ -72,7 +74,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public void Transmit(string destination, string template, object data, string channel = null)
+		public async ValueTask TransmitAsync(string destination, string template, object data, string channel, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(destination))
 				throw new ArgumentNullException(nameof(destination));
@@ -83,10 +85,10 @@ namespace Zongsoft.Externals.Wechat
 			if(index <= 0 || index >= destination.Length - 1)
 				throw new ArgumentException($"Invalid destination format.");
 
-			if(!ChannelManager.TryGetChannel(destination.Substring(0, index), out var channelObject))
-				throw new ArgumentException($"The specified '{destination.Substring(0, index)}' WeChat channel does not exist.");
+			if(!ChannelManager.TryGetChannel(destination[..index], out var channelObject))
+				throw new ArgumentException($"The specified '{destination[..index]}' WeChat channel does not exist.");
 
-			channelObject.Messager.SendAsync(destination.Substring(index + 1), template, data).ConfigureAwait(false).GetAwaiter().GetResult();
+			await channelObject.Messager.SendAsync(destination[(index + 1)..], template, data, cancellation: cancellation);
 		}
 		#endregion
 	}

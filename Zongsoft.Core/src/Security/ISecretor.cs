@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Security
 {
@@ -133,9 +135,13 @@ namespace Zongsoft.Security
 		/// </summary>
 		public abstract class SecretTransmitter
 		{
-			/// <summary>
-			/// 发送秘密（验证码）到指定的目的。
-			/// </summary>
+			public ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, CancellationToken cancellation = default) =>
+				this.TransmitAsync(scheme, destination, template, scenario, captcha, null, null, cancellation);
+
+			public ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel, CancellationToken cancellation = default) =>
+				this.TransmitAsync(scheme, destination, template, scenario, captcha, channel, null, cancellation);
+
+			/// <summary>发送秘密（验证码）到指定的目的。</summary>
 			/// <param name="scheme">指定的发送方案。</param>
 			/// <param name="destination">指定的验证码接受目的。</param>
 			/// <param name="template">指定的模板标识。</param>
@@ -143,8 +149,9 @@ namespace Zongsoft.Security
 			/// <param name="captcha">指定的人机识别参数。</param>
 			/// <param name="channel">指定的通道标识。</param>
 			/// <param name="extra">指定的附加信息。</param>
+			/// <param name="cancellation">指定的异步操作取消标记。</param>
 			/// <returns>返回的验证码凭证标识。</returns>
-			public abstract string Transmit(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel = null, string extra = null);
+			public abstract ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel, string extra, CancellationToken cancellation = default);
 		}
 		#endregion
 	}

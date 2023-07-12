@@ -29,6 +29,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
@@ -338,7 +340,7 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 公共方法
-			public override string Transmit(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel = null, string extra = null)
+			public override async ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel, string extra, CancellationToken cancellation)
 			{
 				if(!string.IsNullOrEmpty(scheme) && !string.IsNullOrEmpty(destination) && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
@@ -355,7 +357,7 @@ namespace Zongsoft.Security
 					var value = _secretor.Generate(token, null, extra);
 
 					//发送验证码到目的地
-					transmitter.Transmit(destination, template, new SecretTemplateData(value), channel);
+					await transmitter.TransmitAsync(destination, template, new SecretTemplateData(value), channel, cancellation);
 
 					return token;
 				}

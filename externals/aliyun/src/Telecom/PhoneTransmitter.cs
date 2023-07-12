@@ -29,6 +29,8 @@
 
 using System;
 using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
@@ -83,15 +85,15 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共方法
-		public void Transmit(string destination, string template, object data, string channel = null)
+		public async ValueTask TransmitAsync(string destination, string template, object data, string channel, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
 			if(string.IsNullOrEmpty(channel) || string.Equals(channel, MESSAGE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.SendAsync(template, new[] { destination }, data).Wait(TimeSpan.FromSeconds(1));
+				await this.Phone.SendAsync(template, new[] { destination }, data, cancellation:cancellation);
 			else if(string.Equals(channel, VOICE_CHANNEL, StringComparison.OrdinalIgnoreCase))
-				this.Phone.CallAsync(template, destination, data).Wait(TimeSpan.FromSeconds(1));
+				await this.Phone.CallAsync(template, destination, data, cancellation:cancellation);
 			else
 				throw new ArgumentException($"Unsupported ‘{channel}’ channel.", nameof(channel));
 		}

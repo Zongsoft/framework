@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -108,18 +109,14 @@ namespace Zongsoft.Security.Membership
 
 		private void OnAuthorizing(object sender, AuthorizationContext context)
 		{
-			foreach(var filter in this.Filters)
-			{
-				filter.OnFiltering(context);
-			}
+			var tasks = this.Filters.Select(filter => filter.OnFiltering(context, default).AsTask());
+			System.Threading.Tasks.Task.WaitAll(tasks.ToArray());
 		}
 
 		private void OnAuthorized(object sender, AuthorizationContext context)
 		{
-			foreach(var filter in this.Filters)
-			{
-				filter.OnFiltered(context);
-			}
+			var tasks = this.Filters.Select(filter => filter.OnFiltered(context, default).AsTask());
+			System.Threading.Tasks.Task.WaitAll(tasks.ToArray());
 		}
 		#endregion
 	}

@@ -120,7 +120,7 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPost("{scheme}:{destination}")]
-		public IActionResult Secret(string scheme, string destination, [FromQuery]string scenario, [FromQuery]string channel = null)
+		public async ValueTask<IActionResult> SecretAsync(string scheme, string destination, [FromQuery]string scenario, [FromQuery]string channel = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
 				return this.BadRequest();
@@ -142,7 +142,8 @@ namespace Zongsoft.Security.Web.Controllers
 					return this.BadRequest($"Invalid CAPTCHA format.");
 			}
 
-			return this.Content(this.Secretor.Transmitter.Transmit(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination));
+			var result = await this.Secretor.Transmitter.TransmitAsync(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination, cancellation);
+			return this.Content(result);
 		}
 
 		[HttpPost("{token}")]
