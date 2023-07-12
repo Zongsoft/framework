@@ -56,7 +56,7 @@ namespace Zongsoft.Components
 			if(message.IsEmpty || cancellation.IsCancellationRequested)
 				return ValueTask.CompletedTask;
 
-			var context = this.GetContext(message);
+			var context = this.GetContext(message.Data);
 			var subscriptions = this.GetSubscriptions(context);
 			var tasks = subscriptions.Any() ? new List<Task>() : null;
 
@@ -75,7 +75,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 虚拟方法
-		protected virtual EventContext<T> GetContext(Message message) => Serializer.Json.Deserialize<EventContext<T>>(message.Data);
+		protected virtual EventContext<T> GetContext(byte[] data) => Serializer.Json.Deserialize<EventContext<T>>(data);
 		protected virtual ITransmitter GetTransmitter(IEventSubscriptionNotification notification) => (this.Services ?? ApplicationContext.Current.Services).Resolve<ITransmitter>(notification.Notifier);
 		protected virtual ValueTask NotifyAsync(IEventSubscriptionNotification notification, CancellationToken cancellation) =>
 			this.GetTransmitter(notification)?.TransmitAsync(notification.Destination, notification.Template, notification.Argument, notification.Channel, cancellation) ?? ValueTask.CompletedTask;
