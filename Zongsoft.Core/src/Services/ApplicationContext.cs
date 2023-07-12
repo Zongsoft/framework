@@ -79,7 +79,6 @@ namespace Zongsoft.Services
 			_initializers = new List<IApplicationInitializer>();
 			_workers = new List<IWorker>();
 
-			this.Events = new Components.EventRegistry();
 			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
 			this.Schemas = new ComponentModel.SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -153,14 +152,12 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual IServiceProvider Services => _services;
-
 		public virtual ClaimsPrincipal Principal
 		{
 			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		}
 
-		public Components.EventRegistry Events { get; }
+		public virtual IServiceProvider Services => _services;
 		public virtual Collections.INamedCollection<object> Session { get; init; }
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }

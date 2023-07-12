@@ -32,9 +32,9 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Zongsoft.Components;
 using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
-using Zongsoft.Components;
 
 namespace Zongsoft.Services
 {
@@ -47,18 +47,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		public ApplicationModule(string name)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = this.Title = name.Trim();
-			this.Events = new EventRegistry();
-			this.Schemas = new SchemaCollection();
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-		}
-
-		public ApplicationModule(string name, string title, string description = null)
+		public ApplicationModule(string name, string title = null, string description = null)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -66,7 +55,6 @@ namespace Zongsoft.Services
 			this.Name = name.Trim();
 			this.Title = title ?? this.Name;
 			this.Description = description;
-			this.Events = new EventRegistry();
 			this.Schemas = new SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
@@ -76,7 +64,6 @@ namespace Zongsoft.Services
 		public string Name { get; protected set; }
 		public string Title {get; set; }
 		public string Description { get; set; }
-		public EventRegistry Events { get; }
 		public INamedCollection<Schema> Schemas { get; }
 		public IDictionary<string, object> Properties { get; }
 
@@ -122,6 +109,21 @@ namespace Zongsoft.Services
 			else
 				return $"[{this.Name}]{this.Title}";
 		}
+		#endregion
+	}
+
+	public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistry, new()
+	{
+		#region 构造函数
+		public ApplicationModule(string name, string title = null, string description = null) : base(name, title, description)
+        {
+			this.Events = new TEvents();
+        }
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取本模块的事件注册表。</summary>
+		public TEvents Events { get; }
 		#endregion
 	}
 }

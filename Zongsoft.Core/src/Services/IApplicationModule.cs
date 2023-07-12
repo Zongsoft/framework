@@ -50,9 +50,6 @@ namespace Zongsoft.Services
 		/// <summary>获取应用模块的描述文本。</summary>
 		string Description { get; }
 
-		/// <summary>获取事件注册表。</summary>
-		EventRegistry Events { get; }
-
 		/// <summary>获取应用模块的服务容器。</summary>
 		IServiceProvider Services { get; }
 
