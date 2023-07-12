@@ -28,14 +28,25 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public interface IFilter<in TContext> where TContext : class
+	public class EventContext<TArgument> : EventContextBase
 	{
-		ValueTask OnFiltered(TContext context, CancellationToken cancellation);
-		ValueTask OnFiltering(TContext context, CancellationToken cancellation);
+		#region 构造函数
+		public EventContext(EventRegistry registry, string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
+		{
+			this.Argument = argument;
+		}
+		#endregion
+
+		#region 公共属性
+		public TArgument Argument { get; set; }
+		#endregion
+
+		#region 重写方法
+		protected override T GetArgument<T>() => this.Argument is T result ? result : default;
+		#endregion
 	}
 }

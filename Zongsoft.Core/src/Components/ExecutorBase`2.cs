@@ -55,26 +55,10 @@ namespace Zongsoft.Components
 		public TResult Execute(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.Execute(this.CreateContext(argument, parameters));
 		protected TResult Execute(IExecutorContext<TArgument, TResult> context)
 		{
-			var filters = this.Filters;
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					this.OnFiltering(filter, context);
-			}
-
-			var task = this.OnExecuteAsync(context);
-			var result = task.IsCompletedSuccessfully ?
+			var task = this.ExecuteAsync(context, default);
+			return task.IsCompletedSuccessfully ?
 				task.Result :
 				task.GetAwaiter().GetResult();
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					this.OnFiltered(filter, context);
-			}
-
-			return result;
 		}
 
 		public ValueTask<TResult> ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
@@ -86,7 +70,7 @@ namespace Zongsoft.Components
 			if(filters != null)
 			{
 				foreach(var filter in filters)
-					this.OnFiltering(filter, context);
+					await this.OnFiltering(filter, context, cancellation);
 			}
 
 			var result = await this.OnExecuteAsync(context, cancellation);
@@ -94,7 +78,7 @@ namespace Zongsoft.Components
 			if(filters != null)
 			{
 				foreach(var filter in filters)
-					this.OnFiltered(filter, context);
+					await this.OnFiltered(filter, context, cancellation);
 			}
 
 			return result;
@@ -171,8 +155,8 @@ namespace Zongsoft.Components
 			return context.Result;
 		}
 
-		protected virtual void OnFiltered(IFilter<IExecutorContext<TArgument, TResult>> filter, IExecutorContext<TArgument, TResult> context) => filter?.OnFiltered(context);
-		protected virtual void OnFiltering(IFilter<IExecutorContext<TArgument, TResult>> filter, IExecutorContext<TArgument, TResult> context) => filter?.OnFiltering(context);
+		protected virtual ValueTask OnFiltered(IFilter<IExecutorContext<TArgument, TResult>> filter, IExecutorContext<TArgument, TResult> context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
+		protected virtual ValueTask OnFiltering(IFilter<IExecutorContext<TArgument, TResult>> filter, IExecutorContext<TArgument, TResult> context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
 		#endregion
 
 		#region 显式实现

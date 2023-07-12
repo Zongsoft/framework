@@ -28,14 +28,18 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Components
 {
-	public interface IFilter<in TContext> where TContext : class
+	/// <summary>
+	/// 表示事件订阅的接口。
+	/// </summary>
+	public interface IEventSubscription
 	{
-		ValueTask OnFiltered(TContext context, CancellationToken cancellation);
-		ValueTask OnFiltering(TContext context, CancellationToken cancellation);
+		/// <summary>获取订阅的事件名称。</summary>
+		string Name { get; }
+
+		/// <summary>获取订阅的事件通知集。</summary>
+		EventSubscriptionNotificationCollection Notifications { get; }
 	}
 }

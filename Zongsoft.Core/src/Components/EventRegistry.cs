@@ -36,18 +36,22 @@ using System.Collections.Generic;
 namespace Zongsoft.Components
 {
 	[System.Reflection.DefaultMember(nameof(Events))]
-	public sealed class EventRegistry : IEnumerable<EventDescriptor>
+	public class EventRegistry : IFilterable<EventContextBase>, IEnumerable<EventDescriptor>
 	{
 		#region 构造函数
 		public EventRegistry()
 		{
 			this.Events = new EventDescriptorCollection();
+			this.Filters = new List<IFilter<EventContextBase>>();
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取事件描述器集合。</summary>
 		public EventDescriptorCollection Events { get; }
+
+		/// <summary>获取事件过滤器集合。</summary>
+		public ICollection<IFilter<EventContextBase>> Filters { get; }
 		#endregion
 
 		#region 注册事件
@@ -83,29 +87,52 @@ namespace Zongsoft.Components
 		}
 
 		public ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		public ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public async ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
-				return descriptor.HandleAsync(argument, parameters, cancellation);
-			else
-				throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
+			{
+				var context = new EventContext(this, name, argument, parameters);
+
+				foreach(var filter in this.Filters)
+					await this.OnFiltering(filter, context, cancellation);
+
+				await descriptor.HandleAsync(argument, parameters, cancellation);
+
+				foreach(var filter in this.Filters)
+					await this.OnFiltered(filter, context, cancellation);
+			}
+
+			throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
 		}
 
 		public ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		public ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			if(this.Events.TryGetValue(name, out var descriptor) && descriptor != null)
-				return descriptor.HandleAsync(argument, parameters, cancellation);
-			else
-				throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
+			{
+				var context = new EventContext<TArgument>(this, name, argument, parameters);
+
+				foreach(var filter in this.Filters)
+					await this.OnFiltering(filter, context, cancellation);
+
+				await descriptor.HandleAsync(argument, parameters, cancellation);
+
+				foreach(var filter in this.Filters)
+					await this.OnFiltered(filter, context, cancellation);
+			}
+
+			throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
 		}
 		#endregion
+
+		protected virtual ValueTask OnFiltered(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
+		protected virtual ValueTask OnFiltering(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
 
 		#region 遍历枚举
 		public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
