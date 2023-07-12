@@ -55,6 +55,8 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 注册事件
+		public void Event(EventDescriptor descriptor) => this.Events.Add(descriptor ?? throw new ArgumentNullException(nameof(descriptor)));
+
 		public EventDescriptor Event(string name, string title = null, string description = null)
 		{
 			var descriptor = new EventDescriptor(name, title, description);
@@ -131,8 +133,10 @@ namespace Zongsoft.Components
 		}
 		#endregion
 
+		#region 虚拟方法
 		protected virtual ValueTask OnFiltered(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
 		protected virtual ValueTask OnFiltering(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
+		#endregion
 
 		#region 遍历枚举
 		public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
