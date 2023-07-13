@@ -112,7 +112,7 @@ namespace Zongsoft.Services
 		#endregion
 	}
 
-	public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistry, new()
+	public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistryBase, new()
 	{
 		#region 构造函数
 		public ApplicationModule(string name, string title = null, string description = null) : base(name, title, description)

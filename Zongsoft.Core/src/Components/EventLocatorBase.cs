@@ -38,12 +38,12 @@ namespace Zongsoft.Components
 	{
 		#region 构造函数
 		protected EventLocatorBase() { }
-		protected EventLocatorBase(EventRegistry registry) => this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
+		protected EventLocatorBase(EventRegistryBase registry) => this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取或设置事件注册表。</summary>
-		public EventRegistry Registry { get; set; }
+		public EventRegistryBase Registry { get; set; }
 		#endregion
 
 		#region 公共方法

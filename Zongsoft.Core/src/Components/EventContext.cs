@@ -39,7 +39,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 构造函数
-		protected EventContextBase(EventRegistry registry, string name, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected EventContextBase(EventRegistryBase registry, string name, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 			this.Name = name;
@@ -56,7 +56,7 @@ namespace Zongsoft.Components
 		#region 公共属性
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
-		public EventRegistry Registry { get; }
+		public EventRegistryBase Registry { get; }
 		public string Name { get; }
 
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -82,7 +82,7 @@ namespace Zongsoft.Components
 	public class EventContext : EventContextBase
 	{
 		#region 构造函数
-		public EventContext(EventRegistry registry, string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
+		public EventContext(EventRegistryBase registry, string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
 		{
 			this.Argument = argument;
 		}

@@ -35,7 +35,7 @@ namespace Zongsoft.Components
 	public class EventContext<TArgument> : EventContextBase
 	{
 		#region 构造函数
-		public EventContext(EventRegistry registry, string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
+		public EventContext(EventRegistryBase registry, string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
 		{
 			this.Argument = argument;
 		}

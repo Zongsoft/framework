@@ -36,35 +36,41 @@ using System.Collections.Generic;
 namespace Zongsoft.Components
 {
 	[System.Reflection.DefaultMember(nameof(Events))]
-	public class EventRegistry : IFilterable<EventContextBase>, IEnumerable<EventDescriptor>
+	public class EventRegistryBase : IFilterable<EventContextBase>, IEnumerable<EventDescriptor>
 	{
 		#region 构造函数
-		public EventRegistry()
+		protected EventRegistryBase(string name)
 		{
+			this.Name = name ?? string.Empty;
 			this.Events = new EventDescriptorCollection();
 			this.Filters = new List<IFilter<EventContextBase>>();
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取事件注册表名称。</summary>
+		public string Name { get; }
+
 		/// <summary>获取事件描述器集合。</summary>
 		public EventDescriptorCollection Events { get; }
 
 		/// <summary>获取事件过滤器集合。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
 		public ICollection<IFilter<EventContextBase>> Filters { get; }
 		#endregion
 
-		#region 注册事件
-		public void Event(EventDescriptor descriptor) => this.Events.Add(descriptor ?? throw new ArgumentNullException(nameof(descriptor)));
+		#region 注册方法
+		protected void Event(EventDescriptor descriptor) => this.Events.Add(descriptor ?? throw new ArgumentNullException(nameof(descriptor)));
 
-		public EventDescriptor Event(string name, string title = null, string description = null)
+		protected EventDescriptor Event(string name, string title = null, string description = null)
 		{
 			var descriptor = new EventDescriptor(name, title, description);
 			this.Events.Add(descriptor);
 			return descriptor;
 		}
 
-		public EventDescriptor Event(object target, string name, string title = null, string description = null)
+		protected EventDescriptor Event(object target, string name, string title = null, string description = null)
 		{
 			var descriptor = new EventDescriptor(name, title, description);
 			this.Events.Add(descriptor);
@@ -73,23 +79,23 @@ namespace Zongsoft.Components
 		}
 		#endregion
 
-		#region 公共方法
-		public void Raise(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		#region 激发方法
+		protected void Raise(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			var task = RaiseAsync(name, argument, parameters);
 			if(!task.IsCompletedSuccessfully)
 				task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public void Raise<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected void Raise<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			var task = RaiseAsync(name, argument, parameters);
 			if(!task.IsCompletedSuccessfully)
 				task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		public async ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected ValueTask RaiseAsync(string name, object argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
+		protected async ValueTask RaiseAsync(string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -110,8 +116,8 @@ namespace Zongsoft.Components
 			throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
 		}
 
-		public ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		public async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
+		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -133,7 +139,7 @@ namespace Zongsoft.Components
 		}
 		#endregion
 
-		#region 虚拟方法
+		#region 过滤方法
 		protected virtual ValueTask OnFiltered(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
 		protected virtual ValueTask OnFiltering(IFilter<EventContextBase> filter, EventContextBase context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
 		#endregion

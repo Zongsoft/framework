@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Zongsoft.Components.Tests
 {
-	public class EventTest
+	public class EventDescriptorTest
 	{
 		private MyEventTrigger _trigger = new MyEventTrigger();
 
