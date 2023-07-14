@@ -114,7 +114,7 @@ namespace Zongsoft.Common
 
 			if(type.IsGenericType && type.IsGenericTypeDefinition)
 			{
-				IEnumerable<Type> baseTypes = null;
+				IEnumerable<Type> baseTypes;
 
 				if(type.IsInterface)
 				{
