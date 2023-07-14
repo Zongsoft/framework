@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -43,6 +45,10 @@ namespace Zongsoft.Collections
 
 			return (IEnumerable)System.Activator.CreateInstance(typeof(EmptyEnumerable<>).MakeGenericType(elementType));
 		}
+
+		public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Empty;
+
+		public static IAsyncEnumerable<T> Asynchronize<T>(IEnumerable<T> source) => source is IAsyncEnumerable<T> enumerable ? enumerable : new AsyncEnumerable<T>(source);
 
 		public static IEnumerable<T> Enumerate<T>(object source)
 		{
@@ -105,22 +111,15 @@ namespace Zongsoft.Collections
 			#endregion
 
 			#region 迭代遍历
-			public IEnumerator<T> GetEnumerator()
-			{
-				return _iterator();
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return _iterator();
-			}
+			public IEnumerator<T> GetEnumerator() => _iterator();
+			IEnumerator IEnumerable.GetEnumerator() => _iterator();
 			#endregion
 
 			#region 迭代实现
 			private class SimulateEnumerator : IEnumerator<T>
 			{
 				private int _flag;
-				private T _element;
+				private readonly T _element;
 
 				public SimulateEnumerator(T element)
 				{
@@ -141,13 +140,7 @@ namespace Zongsoft.Collections
 					}
 				}
 
-				object IEnumerator.Current
-				{
-					get
-					{
-						return this.Current;
-					}
-				}
+				object IEnumerator.Current => this.Current;
 
 				public bool MoveNext()
 				{
@@ -160,10 +153,7 @@ namespace Zongsoft.Collections
 					return false;
 				}
 
-				public void Reset()
-				{
-					_flag = 0;
-				}
+				public void Reset() => _flag = 0;
 
 				public void Dispose()
 				{
@@ -174,38 +164,12 @@ namespace Zongsoft.Collections
 
 			private class MultitapEnumerator : IEnumerator<T>
 			{
-				private IEnumerator _enumerator;
-
-				public MultitapEnumerator(IEnumerator enumerator)
-				{
-					_enumerator = enumerator;
-				}
-
-				public T Current
-				{
-					get
-					{
-						return (T)_enumerator.Current;
-					}
-				}
-
-				object IEnumerator.Current
-				{
-					get
-					{
-						return _enumerator.Current;
-					}
-				}
-
-				public bool MoveNext()
-				{
-					return _enumerator.MoveNext();
-				}
-
-				public void Reset()
-				{
-					_enumerator.Reset();
-				}
+				private readonly IEnumerator _enumerator;
+				public MultitapEnumerator(IEnumerator enumerator) => _enumerator = enumerator;
+				public T Current => (T)_enumerator.Current;
+				object IEnumerator.Current => _enumerator.Current;
+				public bool MoveNext() => _enumerator.MoveNext();
+				public void Reset() => _enumerator.Reset();
 
 				public void Dispose()
 				{
@@ -214,6 +178,35 @@ namespace Zongsoft.Collections
 				}
 			}
 			#endregion
+		}
+
+		private class EmptyAsyncEnumerable<T> : IAsyncEnumerable<T>
+		{
+			public static readonly EmptyAsyncEnumerable<T> Empty = new();
+
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) => new EmptyAsyncEnumerator();
+
+			private class EmptyAsyncEnumerator : IAsyncEnumerator<T>
+			{
+				public T Current => default;
+				public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+				public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(false);
+			}
+		}
+
+		private class AsyncEnumerable<T> : IAsyncEnumerable<T>
+		{
+			private readonly IEnumerable<T> _items;
+
+            public AsyncEnumerable(IEnumerable<T> items) => _items = items;
+            public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+			{
+				if(_items == null)
+					yield break;
+
+				foreach(var item in _items)
+					yield return item;
+			}
 		}
 		#endregion
 	}
