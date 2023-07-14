@@ -61,6 +61,8 @@ namespace Zongsoft.Data.SQLite
 			{
 				switch(error.SqliteErrorCode)
 				{
+					case -1:
+						break;
 				}
 			}
 

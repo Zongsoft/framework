@@ -35,7 +35,6 @@ using System.Threading.Tasks;
 
 using MySql.Data.MySqlClient;
 
-using Zongsoft.Reflection;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
@@ -184,7 +183,7 @@ namespace Zongsoft.Data.MySql
 			writer.Close();
 			file.Dispose();
 
-			context.Count = await bulker.LoadAsync(cancellation);
+			context.Count = await bulker.LoadAsync(null, cancellation);
 
 			//删除数据导入的临时文件
 			DeleteFile(bulker.FileName);
