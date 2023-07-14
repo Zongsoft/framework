@@ -68,8 +68,8 @@ namespace Zongsoft.Components
 				return position switch
 				{
 					0 => (string.Empty, text[1..]),
-					-1 => (string.Empty, text),
-					_ => position < text.Length - 1 ?
+					<0 => (string.Empty, text),
+					>0 => position < text.Length - 1 ?
 						(text[..position], text[(position + 1)..]) :
 						(text[..position], string.Empty),
 				};

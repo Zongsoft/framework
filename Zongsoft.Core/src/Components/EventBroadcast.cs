@@ -76,7 +76,7 @@ namespace Zongsoft.Components
 			if(string.IsNullOrEmpty(json))
 				return;
 
-			await queue.ProduceAsync(this.Topic, json.AsMemory(), MessageEnqueueOptions.Default, cancellation);
+			await queue.ProduceAsync(this.Topic, context.QualifiedName, json.AsMemory(), MessageEnqueueOptions.Default, cancellation);
 		}
 
 		public ValueTask OnFiltering(EventContextBase context, CancellationToken cancellation) => ValueTask.CompletedTask;

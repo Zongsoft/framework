@@ -40,11 +40,17 @@ namespace Zongsoft.Components
 	{
 		#region 成员字段
 		private object _target;
+		private string _qualifiedName;
 		#endregion
 
 		#region 构造函数
 		public EventDescriptor(string name, string title = null, string description = null)
 		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			_qualifiedName = name;
+
 			this.Name = name;
 			this.Title = title;
 			this.Description = description;
@@ -55,6 +61,8 @@ namespace Zongsoft.Components
 		#region 公共属性
 		/// <summary>获取事件名称。</summary>
 		public string Name { get; }
+		/// <summary>获取事件的限定名称。</summary>
+		public string QualifiedName { get => _qualifiedName; }
 		/// <summary>获取事件的显示名。</summary>
 		public string Title { get; set; }
 		/// <summary>获取事件的描述信息。</summary>
@@ -73,6 +81,16 @@ namespace Zongsoft.Components
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public ICollection<IHandler> Handlers { get; }
+		#endregion
+
+		#region 内部方法
+		internal string Qualified(string @namespace)
+		{
+			if(string.IsNullOrEmpty(@namespace))
+				return _qualifiedName = this.Name;
+			else
+				return _qualifiedName = $"{@namespace}:{this.Name}";
+	}
 		#endregion
 
 		#region 绑定事件
@@ -183,14 +201,14 @@ namespace Zongsoft.Components
 			return new ValueTask(Task.WhenAll(tasks));
 		}
 
-		public ValueTask HandleAsync<TRequest>(TRequest argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync<TRequest>(TRequest argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync<TArgument>(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 
 			foreach(var handler in this.Handlers)
 			{
-				if(handler is IHandler<TRequest> generic)
+				if(handler is IHandler<TArgument> generic)
 					tasks.Add(generic.HandleAsync(this, argument, parameters, cancellation).AsTask());
 				else
 					tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
@@ -206,5 +224,26 @@ namespace Zongsoft.Components
 		public override int GetHashCode() => this.Name.GetHashCode();
 		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.Name : $"{this.Name}[{this.Title}]";
 		#endregion
+	}
+
+	public class EventDescriptor<TArgument> : EventDescriptor
+	{
+        public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
+
+        public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync<TArgument>(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		{
+			var tasks = new List<Task>(this.Handlers.Count);
+
+			foreach(var handler in this.Handlers)
+			{
+				if(handler is IHandler<TArgument> generic)
+					tasks.Add(generic.HandleAsync(this, argument, parameters, cancellation).AsTask());
+				else
+					tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
+			}
+
+			return new ValueTask(Task.WhenAll(tasks));
+		}
 	}
 }

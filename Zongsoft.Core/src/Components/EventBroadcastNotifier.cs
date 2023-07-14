@@ -40,42 +40,75 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Components
 {
-	public abstract class EventBroadcastHandlerBase<T> : IMessageHandler
+	public class EventBroadcastNotifier : IMessageHandler
 	{
 		#region 构造函数
-		protected EventBroadcastHandlerBase(IServiceProvider services) => this.Services = services;
-		#endregion
-
-		#region 保护属性
-		protected IServiceProvider Services { get; }
-		#endregion
-
-		#region 处理方法
-		public ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
+		public EventBroadcastNotifier(IServiceProvider services)
 		{
-			if(message.IsEmpty || cancellation.IsCancellationRequested)
-				return ValueTask.CompletedTask;
-
-			var context = this.GetContext(message);
-			var subscriptions = this.GetSubscriptions(context);
-			var tasks = subscriptions.Any() ? new List<Task>() : null;
-
-			foreach(var subscription in subscriptions)
-			{
-				foreach(var notification in subscription.Notifications)
-					tasks.Add(this.NotifyAsync(notification, cancellation).AsTask());
-			}
-
-			return new ValueTask(Task.WhenAll(tasks));
+			this.Services = services ?? throw new ArgumentNullException(nameof(services));
 		}
 		#endregion
 
-		#region 抽象方法
-		protected abstract IEnumerable<IEventSubscription> GetSubscriptions(EventContext<T> context);
+		#region 公共属性
+		public IServiceProvider Services { get; }
+		#endregion
+
+		#region 处理方法
+		public async ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
+		{
+			if(message.IsEmpty || cancellation.IsCancellationRequested)
+				return;
+
+			//根据收到的消息解析出其对应的事件上下文
+			var context = this.GetContext(message);
+
+			if(context != null)
+			{
+				IList<Task> tasks = null;
+				var subscriptions = this.GetSubscriptionsAsync(context, cancellation);
+
+				await foreach(var subscription in subscriptions)
+				{
+					tasks ??= new List<Task>();
+
+					foreach(var notification in subscription.Notifications)
+						tasks.Add(this.NotifyAsync(notification, cancellation).AsTask());
+				}
+
+				//等待所有通知任务完成
+				if(tasks != null && tasks.Count > 0)
+					await Task.WhenAll(tasks);
+			}
+
+			//执行消息应答
+			await message.AcknowledgeAsync(cancellation);
+		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual EventContext<T> GetContext(Message message) => Serializer.Json.Deserialize<EventContext<T>>(message.Data);
+		protected virtual EventContextBase GetContext(Message message)
+		{
+			//将消息的标签作为事件的限定名称
+			var descriptor = Events.GetEvent(message.Tags);
+
+			//如果指定的事件未定义则返回空
+			if(descriptor == null)
+				return null;
+
+			var type = descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
+			return type == null ? null : (EventContextBase)Serializer.Json.Deserialize(message.Data, typeof(EventContext<>).MakeGenericType(type));
+		}
+
+		protected virtual IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContextBase context, CancellationToken cancellation)
+		{
+			var type = context.GetType();
+			var provider = type.IsGenericType ?
+				this.Services.Resolve(typeof(IEventSubscriptionProvider<>).MakeGenericType(type.GenericTypeArguments[0])) ?? this.Services.Resolve<IEventSubscriptionProvider>(context) :
+				this.Services.Resolve<IEventSubscriptionProvider>(context);
+
+			return EventSubscriptionProviderUtility.GetSubscriptionsAsync(provider, context, cancellation);
+		}
+
 		protected virtual ITransmitter GetTransmitter(IEventSubscriptionNotification notification) => (this.Services ?? ApplicationContext.Current.Services).Resolve<ITransmitter>(notification.Notifier);
 		protected virtual ValueTask NotifyAsync(IEventSubscriptionNotification notification, CancellationToken cancellation) =>
 			this.GetTransmitter(notification)?.TransmitAsync(notification.Destination, notification.Template, notification.Argument, notification.Channel, cancellation) ?? ValueTask.CompletedTask;

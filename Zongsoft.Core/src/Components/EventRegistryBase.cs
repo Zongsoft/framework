@@ -42,7 +42,7 @@ namespace Zongsoft.Components
 		protected EventRegistryBase(string name)
 		{
 			this.Name = name ?? string.Empty;
-			this.Events = new EventDescriptorCollection();
+			this.Events = new EventDescriptorCollection(this);
 			this.Filters = new List<IFilter<EventContextBase>>();
 		}
 		#endregion

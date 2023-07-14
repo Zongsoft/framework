@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,30 +28,36 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Components
 {
-	public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
+	public static class EventSubscriptionNotificationUtility
 	{
-		private readonly EventRegistryBase _registry;
-		internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
-		protected override string GetKeyForItem(EventDescriptor item) => item.Name;
-		protected override void InsertItem(int index, EventDescriptor item)
+		public static string GetNotifier(string notifier, out string channel)
 		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+			if(string.IsNullOrEmpty(notifier))
+			{
+				channel = null;
+				return null;
+			}
 
-			base.InsertItem(index, item);
-			item.Qualified(_registry.Name);
-		}
-		protected override void SetItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+			var index = notifier.IndexOf(':');
 
-			base.SetItem(index, item);
-			item.Qualified(_registry.Name);
+			switch(index)
+			{
+				case 0:
+					throw new ArgumentException($"Illegal notifier parameter value format: '{notifier}'.", nameof(notifier));
+				case < 0:
+					channel = null;
+					return notifier;
+				case > 0:
+					channel = index >= notifier.Length - 1 ? null : notifier[(index + 1)..].ToString();
+					return notifier[..index].ToString();
+			}
 		}
+
+		public static string ToString(this IEventSubscriptionNotification notification) => string.IsNullOrEmpty(notification.Channel) ?
+			$"{notification.Notifier}:{notification.Template}({notification.Argument})->{notification.Destination}" :
+			$"{notification.Notifier}.{notification.Channel}:{notification.Template}({notification.Argument})->{notification.Destination}";
 	}
 }

@@ -46,7 +46,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 重写方法
-		protected override T GetArgument<T>() => this.Argument is T result ? result : default;
+		public override T GetArgument<T>() => this.Argument is T result ? result : default;
 		#endregion
 	}
 }

@@ -28,32 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Threading;
+using System.Collections.Generic;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Components
 {
-	public class EventSubscriptionNotificationCollection : KeyedCollection<string, IEventSubscriptionNotification>, IAsyncEnumerable<IEventSubscriptionNotification>
+	public abstract class EventSubscriptionProviderBase<TArgument> : IEventSubscriptionProvider<TArgument>, IEventSubscriptionProvider, IMatchable
 	{
-		public EventSubscriptionNotificationCollection() : base(StringComparer.OrdinalIgnoreCase, 3) { }
+		protected EventSubscriptionProviderBase() { }
 
-		public async IAsyncEnumerator<IEventSubscriptionNotification> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-		{
-			IEventSubscriptionNotification n = null;
+		bool IMatchable.Match(object parameter) => this.OnMatch(parameter as EventContextBase);
+		protected virtual bool OnMatch(EventContextBase context) => context != null && context.GetArgument<TArgument>() != null;
 
-			System.Data.Common.DbCommand command = null;
-			var reader = await command.ExecuteReaderAsync(cancellationToken);
-			while(await reader.ReadAsync(cancellationToken))
-			{
-				yield return Zongsoft.Data.Model.Build<IEventSubscriptionNotification>(notification =>
-				{
-				});
-			}
-
-			yield return n;
-		}
-
-		protected override string GetKeyForItem(IEventSubscriptionNotification item) => $"{item.Notifier}:{item.Channel}";
+		IAsyncEnumerable<IEventSubscription> IEventSubscriptionProvider.GetSubscriptionsAsync(EventContextBase context, CancellationToken cancellation) => GetSubscriptionsAsync(context.Name, context.GetArgument<TArgument>(), context.HasParameters ? context.Parameters : null, cancellation);
+		public IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContext<TArgument> context, CancellationToken cancellation) => GetSubscriptionsAsync(context.Name, context.Argument, context.HasParameters ? context.Parameters : null, cancellation);
+		protected abstract IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string name, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation);
 	}
 }

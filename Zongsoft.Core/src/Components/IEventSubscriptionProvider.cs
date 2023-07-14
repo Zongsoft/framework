@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,30 +28,18 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
+using System.Threading;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
+	public interface IEventSubscriptionProvider
 	{
-		private readonly EventRegistryBase _registry;
-		internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
-		protected override string GetKeyForItem(EventDescriptor item) => item.Name;
-		protected override void InsertItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+		IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContextBase context, CancellationToken cancellation = default);
+	}
 
-			base.InsertItem(index, item);
-			item.Qualified(_registry.Name);
-		}
-		protected override void SetItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			base.SetItem(index, item);
-			item.Qualified(_registry.Name);
-		}
+	public interface IEventSubscriptionProvider<TArgument>
+	{
+		IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContext<TArgument> context, CancellationToken cancellation = default);
 	}
 }

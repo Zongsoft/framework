@@ -43,6 +43,7 @@ namespace Zongsoft.Components
 		{
 			this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 			this.Name = name;
+			this.QualifiedName = string.IsNullOrEmpty(registry.Name) ? name : $"{registry.Name}:{name}";
 
 			if(parameters != null)
 			{
@@ -58,6 +59,7 @@ namespace Zongsoft.Components
 		[Serialization.SerializationMember(Ignored = true)]
 		public EventRegistryBase Registry { get; }
 		public string Name { get; }
+		public string QualifiedName { get; }
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
@@ -75,7 +77,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 抽象方法
-		protected abstract T GetArgument<T>();
+		public abstract T GetArgument<T>();
 		#endregion
 	}
 
@@ -93,7 +95,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 重写方法
-		protected override T GetArgument<T>() => this.Argument is T result ? result : default;
+		public override T GetArgument<T>() => this.Argument is T result ? result : default;
 		#endregion
 	}
 }

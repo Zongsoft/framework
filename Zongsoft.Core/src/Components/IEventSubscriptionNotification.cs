@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,30 +28,27 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Components
 {
-	public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
+	/// <summary>
+	/// 表示事件订阅通知的接口。
+	/// </summary>
+	public interface IEventSubscriptionNotification
 	{
-		private readonly EventRegistryBase _registry;
-		internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
-		protected override string GetKeyForItem(EventDescriptor item) => item.Name;
-		protected override void InsertItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+		/// <summary>获取通知器名称。</summary>
+		string Notifier { get; }
 
-			base.InsertItem(index, item);
-			item.Qualified(_registry.Name);
-		}
-		protected override void SetItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+		/// <summary>获取通知通道名。</summary>
+		string Channel { get; }
 
-			base.SetItem(index, item);
-			item.Qualified(_registry.Name);
-		}
+		/// <summary>获取或设置通知模板标识。</summary>
+		string Template { get; set; }
+
+		/// <summary>获取或设置通知模板参数。</summary>
+		object Argument { get; set; }
+
+		/// <summary>获取或设置通知目标。</summary>
+		string Destination { get; set; }
 	}
 }
