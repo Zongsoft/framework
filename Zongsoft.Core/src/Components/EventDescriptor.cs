@@ -222,7 +222,7 @@ namespace Zongsoft.Components
 		public bool Equals(EventDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 		public override bool Equals(object obj) => obj is EventDescriptor other && this.Equals(other);
 		public override int GetHashCode() => this.Name.GetHashCode();
-		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.Name : $"{this.Name}[{this.Title}]";
+		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.Name : $"{this.QualifiedName}[{this.Title}]";
 		#endregion
 	}
 

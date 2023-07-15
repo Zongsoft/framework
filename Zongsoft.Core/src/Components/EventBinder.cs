@@ -191,7 +191,7 @@ namespace Zongsoft.Components
 			return default;
 		}
 
-		private static void DoTask(this ValueTask task)
+		private static void Complete(this ValueTask task)
 		{
 			if(task.IsCompleted)
 			{
@@ -205,7 +205,7 @@ namespace Zongsoft.Components
 					throw exception;
 			}
 
-			task.AsTask().Wait();
+			task.GetAwaiter().GetResult();
 		}
 
 		private class ActionAdapter
@@ -215,7 +215,7 @@ namespace Zongsoft.Components
 
 			public void Raise()
 			{
-				_descriptor.HandleAsync(null).DoTask();
+				_descriptor.HandleAsync(null).Complete();
 			}
 		}
 
@@ -226,7 +226,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 
@@ -237,7 +237,7 @@ namespace Zongsoft.Components
 
 			public void Raise(T argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 
@@ -248,7 +248,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, object argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 
@@ -259,7 +259,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, T argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 
@@ -270,7 +270,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, object argument, TParameters parameters)
 			{
-				_descriptor.HandleAsync(argument, parameters).DoTask();
+				_descriptor.HandleAsync(argument, parameters).Complete();
 			}
 		}
 
@@ -281,7 +281,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, T argument, TParameters parameters)
 			{
-				_descriptor.HandleAsync(argument, parameters).DoTask();
+				_descriptor.HandleAsync(argument, parameters).Complete();
 			}
 		}
 
@@ -292,7 +292,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, EventArgs argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 
@@ -303,7 +303,7 @@ namespace Zongsoft.Components
 
 			public void Raise(object sender, T argument)
 			{
-				_descriptor.HandleAsync(argument).DoTask();
+				_descriptor.HandleAsync(argument).Complete();
 			}
 		}
 	}
