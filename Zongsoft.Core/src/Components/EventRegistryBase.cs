@@ -69,14 +69,6 @@ namespace Zongsoft.Components
 			this.Events.Add(descriptor);
 			return descriptor;
 		}
-
-		protected EventDescriptor Event(object target, string name, string title = null, string description = null)
-		{
-			var descriptor = new EventDescriptor(name, title, description);
-			this.Events.Add(descriptor);
-			descriptor.Target = target;
-			return descriptor;
-		}
 		#endregion
 
 		#region 激发方法

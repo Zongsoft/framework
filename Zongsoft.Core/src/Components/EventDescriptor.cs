@@ -39,7 +39,6 @@ namespace Zongsoft.Components
 	public class EventDescriptor : IEquatable<EventDescriptor>
 	{
 		#region 成员字段
-		private object _target;
 		private string _qualifiedName;
 		#endregion
 
@@ -68,15 +67,6 @@ namespace Zongsoft.Components
 		/// <summary>获取事件的描述信息。</summary>
 		public string Description { get; set; }
 
-		/// <summary>获取事件的定义对象，对于静态事件则该属性值为所属的<see cref="Type"/>类型。</summary>
-		[System.Text.Json.Serialization.JsonIgnore]
-		[Serialization.SerializationMember(Ignored = true)]
-		public object Target
-		{
-			get => _target;
-			set => this.Rebind(value);
-		}
-
 		/// <summary>获取事件处理程序集。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
@@ -91,100 +81,6 @@ namespace Zongsoft.Components
 			else
 				return _qualifiedName = $"{@namespace}:{this.Name}";
 	}
-		#endregion
-
-		#region 绑定事件
-		private void Rebind(object value)
-		{
-			if(_target == value)
-				return;
-
-			var older = _target;
-
-			if(value != null)
-				this.Bind(value);
-
-			_target = value;
-
-			if(older != null)
-				this.Unbind(older);
-		}
-
-		private void Unbind(object target)
-		{
-			var value = GetDelegateMember(target, this.Name);
-
-			switch(value)
-			{
-				case EventInfo @event:
-					EventBinder.Unbind(this, target, @event);
-					break;
-				case FieldInfo field:
-					EventBinder.Unbind(this, target, field);
-					break;
-				case PropertyInfo property:
-					EventBinder.Unbind(this, target, property);
-					break;
-				case Delegate @delegate:
-					EventBinder.Unbind(this, @delegate);
-					break;
-			}
-		}
-
-		private void Bind(object target)
-		{
-			var value = GetDelegateMember(target, this.Name);
-
-			switch(value)
-			{
-				case EventInfo @event:
-					EventBinder.Bind(this, target, @event);
-					break;
-				case FieldInfo field:
-					EventBinder.Bind(this, target, field);
-					break;
-				case PropertyInfo property:
-					EventBinder.Bind(this, target, property);
-					break;
-				case Delegate @delegate:
-					EventBinder.Bind(this, @delegate);
-					break;
-			}
-		}
-
-		private static object GetDelegateMember(object target, string name)
-		{
-			if(target == null)
-				throw new ArgumentNullException(nameof(target));
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			Type type = target is Type t ? t : target.GetType();
-			MemberInfo[] members = type.GetMember(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-
-			if(members == null || members.Length == 0)
-				throw new InvalidOperationException($"The specified '{name}' member is undefined in the '{type}' type.");
-
-			switch(members[0].MemberType)
-			{
-				case MemberTypes.Field:
-					var field = (FieldInfo)members[0];
-					if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
-						throw new InvalidOperationException($"The '{name}' field of type '{type}' cannot be event-bound because its type is not a delegate type.");
-
-					return field;
-				case MemberTypes.Property:
-					var property = (PropertyInfo)members[0];
-					if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
-						throw new InvalidOperationException($"The '{name}' property of type '{type}' cannot be event-bound because its type is not a delegate type.");
-
-					return property;
-				case MemberTypes.Event:
-					return (EventInfo)members[0];
-				default:
-					throw new InvalidOperationException($"The '{name}' member of type '{type}' cannot be event-bound because the member is not a property, field, or event.");
-			}
-		}
 		#endregion
 
 		#region 执行处理
