@@ -29,11 +29,8 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
-using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Text;
@@ -106,10 +103,6 @@ namespace Zongsoft.Serialization
 					return JsonSerializer.Deserialize(reader.ReadToEnd(), type, GetOptions(options));
 				}
 			}
-
-			public object Deserialize(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => throw new NotSupportedException();
-			public object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null) => JsonSerializer.Deserialize(buffer, type, GetOptions(options));
-
 			public T Deserialize<T>(Stream stream, SerializationOptions options = null)
 			{
 				using(var reader = new StreamReader(stream, Encoding.UTF8))
@@ -117,6 +110,9 @@ namespace Zongsoft.Serialization
 					return JsonSerializer.Deserialize<T>(reader.ReadToEnd(), GetOptions(options));
 				}
 			}
+
+			public object Deserialize(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => throw new NotSupportedException();
+			public object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null) => JsonSerializer.Deserialize(buffer, type, GetOptions(options));
 			public T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => JsonSerializer.Deserialize<T>(buffer, GetOptions(options));
 
 			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -124,6 +120,12 @@ namespace Zongsoft.Serialization
 				JsonSerializer.DeserializeAsync(stream, type, GetOptions(options), cancellationToken);
 			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
 				JsonSerializer.DeserializeAsync<T>(stream, GetOptions(options), cancellationToken);
+
+			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
+				JsonSerializer.DeserializeAsync(new MemoryStream(buffer.ToArray()), type, GetOptions(options), cancellationToken);
+			public ValueTask<T> DeserializeAsync<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
+				JsonSerializer.DeserializeAsync<T>(new MemoryStream(buffer.ToArray()), GetOptions(options), cancellationToken);
 
 			public object Deserialize(string text, TextSerializationOptions options = null) => throw new NotImplementedException();
 			public object Deserialize(string text, Type type, TextSerializationOptions options = null) => JsonSerializer.Deserialize(text, type, GetOptions(options));
