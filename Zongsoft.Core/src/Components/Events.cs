@@ -109,6 +109,13 @@ namespace Zongsoft.Components
 		private static EventRegistryBase GetEventRegistry(IApplicationModule module) =>
 			_accessors.GetOrAdd(module, CreateAccessor)?.Invoke(module);
 
+		/*
+		 * 生成获取 IApplicationModule<TEvents> 应用模块 Events 属性的调用委托，该委托代码如下所示：
+		 * EventRegistryBase Invoke(IApplicationModule module)
+		 * {
+		 *		return ((IApplicationModule<TEvents>)module).Events;
+		 * }
+		 */
 		private static Func<IApplicationModule, EventRegistryBase> CreateAccessor(IApplicationModule module)
 		{
 			var type = module.GetType();
