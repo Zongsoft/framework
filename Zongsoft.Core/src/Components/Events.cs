@@ -44,21 +44,26 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
-		public static EventDescriptor GetEvent(string qualifiedName)
+		public static EventDescriptor GetEvent(string qualifiedName) => GetEvent(qualifiedName, out _);
+		public static EventDescriptor GetEvent(string qualifiedName, out EventRegistryBase registry)
 		{
 			if(string.IsNullOrEmpty(qualifiedName))
+			{
+				registry = null;
 				return null;
+			}
 
 			(var moduleName, var eventName) = Parse(qualifiedName);
 
 			if(ApplicationContext.Current.Modules.TryGet(moduleName, out var applicationModule))
 			{
-				var registry = GetEventRegistry(applicationModule);
+				registry = GetEventRegistry(applicationModule);
 
 				if(registry != null)
 					return registry.Events.TryGetValue(eventName, out var descriptor) ? descriptor : null;
 			}
 
+			registry = null;
 			return null;
 
 			static (string @namespace, string name) Parse(string text)
