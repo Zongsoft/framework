@@ -48,7 +48,23 @@ namespace Zongsoft.Collections
 
 		public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Empty;
 
-		public static IAsyncEnumerable<T> Asynchronize<T>(IEnumerable<T> source) => source is IAsyncEnumerable<T> enumerable ? enumerable : new AsyncEnumerable<T>(source);
+		public static IEnumerable<T> Synchronize<T>(this IAsyncEnumerable<T> source)
+		{
+			var iterator = source.GetAsyncEnumerator();
+
+			while(true)
+			{
+				var task = iterator.MoveNextAsync();
+				var succeed = task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
+
+				if(succeed)
+					yield return iterator.Current;
+				else
+					yield break;
+			}
+		}
+
+		public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) => source is IAsyncEnumerable<T> enumerable ? enumerable : new AsyncEnumerable<T>(source);
 
 		public static IEnumerable<T> Enumerate<T>(object source)
 		{
