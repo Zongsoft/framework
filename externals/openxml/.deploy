@@ -2,4 +2,4 @@ src/Zongsoft.Externals.OpenXml.plugin
 src/Zongsoft.Externals.OpenXml.option
 src/bin/$(Edition)/$(Target)/Zongsoft.Externals.OpenXml.*
 
-%NUGET_PACKAGES%/documentformat.openxml/2.18.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/documentformat.openxml/2.20.0/lib/netstandard2.0/*.dll
