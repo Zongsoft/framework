@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.ClosedXml"
+        title="Zongsoft.Externals.ClosedXml Plugin"
+        author="Zongsoft Studio"
+        version="1.0"
+        description="Create by: Popeye Zhong at 2023-07-20" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.ClosedXml" />
+		</assemblies>
+	</manifest>
+</plugin>

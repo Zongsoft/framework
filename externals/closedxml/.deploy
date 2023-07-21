@@ -1,0 +1,9 @@
+src/Zongsoft.Externals.ClosedXml.plugin
+src/Zongsoft.Externals.ClosedXml.option
+src/bin/$(Edition)/$(Target)/Zongsoft.Externals.ClosedXml.*
+
+%NUGET_PACKAGES%/documentformat.openxml/2.20.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/excelnumberformat/1.1.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/sixlabors.fonts/1.0.0-beta19/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/xlparser/1.5.2/lib/netstandard1.6/*.dll
+%NUGET_PACKAGES%/irony.netcore/1.0.11/lib/netstandard1.6/*.dll
