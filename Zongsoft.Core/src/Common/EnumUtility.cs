@@ -213,8 +213,8 @@ namespace Zongsoft.Common
 				throw new ArgumentNullException(nameof(field));
 
 			var attribute = field.GetCustomAttribute<DescriptionAttribute>();
-			var resourceKey = attribute?.Description ?? field.DeclaringType.Name + "." + field.Name;
-			return GetResourceString(resourceKey, field.DeclaringType.Assembly);
+			var resourceKey = attribute?.Description ?? $"{field.DeclaringType.Name}.{field.Name}";
+			return GetResourceString(resourceKey, field.DeclaringType.Assembly) ?? attribute?.Description;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
