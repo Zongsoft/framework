@@ -42,13 +42,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据访问的名称。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取数据访问的名称。</summary>
+		public string Name { get; }
 		#endregion
 	}
 }
