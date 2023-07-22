@@ -69,9 +69,12 @@ namespace Zongsoft.Externals.ClosedXml
 				return ValueTask.CompletedTask;
 
 			using var workbook = new XLWorkbook();
-			var worksheet = workbook.AddWorksheet(template.Name);
+			var worksheet = workbook.AddWorksheet(template.Title ?? template.Name);
 			worksheet.Style.Font.SetFontSize(12);
 			worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+			if(descriptors.Count > 5)
+				worksheet.PageSetup.SetPageOrientation(XLPageOrientation.Landscape);
 
 			//生成数据文件标题
 			worksheet.Cell(1, 1).SetValue(template.Title);
@@ -119,15 +122,44 @@ namespace Zongsoft.Externals.ClosedXml
 				if(!string.IsNullOrEmpty(descriptor.Description))
 					cell.CreateComment().AddText(descriptor.Description);
 
-				//如果是特定类型则设置该列水平对齐为居中
+				//如果是特定类型则调整其样式
 				if(descriptor.Type != null)
 				{
-					if(!Zongsoft.Common.TypeExtension.IsNullable(descriptor.Type, out var type))
+					if(!Common.TypeExtension.IsNullable(descriptor.Type, out var type))
 						type = descriptor.Type;
 
-					if(type.IsEnum || type == typeof(byte) ||
+					//为枚举列添加说明
+					if(type.IsEnum)
+					{
+						var comment = cell.CreateComment();
+						var entries = Common.EnumUtility.GetEnumEntries(type, true);
+
+						for(int i = 0; i < entries.Length; i++)
+						{
+							if(!string.IsNullOrEmpty(comment.Text))
+								comment.AddNewLine();
+
+							if(string.IsNullOrEmpty(entries[i].Description))
+								comment.AddText($"[{entries[i].Value}] {entries[i].Name}");
+							else
+								comment.AddText($"[{entries[i].Value}] {entries[i].Name}:{entries[i].Description}");
+						}
+					}
+
+					if(type.IsEnum || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
 					   type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
+					{
+						//所有枚举、数值、日期时间、时间范围等设置其字体
+						cell.WorksheetColumn().Style.Font.SetFontName("Arial Narrow");
+					}
+
+					//特定类型则设置其水平居中
+					if(type.IsEnum || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
 						cell.WorksheetColumn().Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+					//特定日期时间类型的格式
+					if(type == typeof(DateTime) || type == typeof(DateTimeOffset))
+						cell.WorksheetColumn().Style.DateFormat.SetFormat("yyyy-MM-dd");
 				}
 			}
 
@@ -188,7 +220,12 @@ namespace Zongsoft.Externals.ClosedXml
 
 				//设置字段内容
 				if(Reflection.Reflector.TryGetValue(ref item, field.Name, out var value) && value != null)
-					cell.SetCellValue(value);
+				{
+					if(value.GetType().IsEnum)
+						cell.SetCellValue(value.ToString());
+					else
+						cell.SetCellValue(value);
+				}
 			}
 
 			worksheet.Row(row).Height = 20;
