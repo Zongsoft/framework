@@ -76,10 +76,18 @@ namespace Zongsoft.Data
 		public ModelPropertyDescriptorCollection Properties { get; }
 
 		/// <summary>获取或设置模型标题。</summary>
-		public string Title { get => string.IsNullOrEmpty(_title) ? GetTitle() : _title; set => _title = value; }
+		public string Title
+		{
+			get => string.IsNullOrEmpty(_title) ? GetTitle() : _title;
+			set => _title = value;
+		}
 
 		/// <summary>获取或设置模型描述文本。</summary>
-		public string Description { get => string.IsNullOrEmpty(_description) ? GetDescription() : _description; set => _description = value; }
+		public string Description
+		{
+			get => string.IsNullOrEmpty(_description) ? GetDescription() : _description;
+			set => _description = value;
+		}
 		#endregion
 
 		#region 私有方法

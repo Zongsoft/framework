@@ -28,8 +28,8 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Reflection;
+using System.ComponentModel;
 
 using Zongsoft.Common;
 using Zongsoft.Data.Metadata;
@@ -56,19 +56,20 @@ namespace Zongsoft.Data
 
 		#region 构造函数
 		internal ModelPropertyDescriptor(MemberInfo member)
-        {
+		{
 			_member = member ?? throw new ArgumentNullException(nameof(member));
 
 			_type = member switch
 			{
 				FieldInfo field => field.FieldType,
 				PropertyInfo property => property.PropertyType,
-				_ => throw new ArgumentException($""),
+				_ => throw new ArgumentException($"The specified '{member.Name}' member is not a valid model property member."),
 			};
 
 			_nullable = _type.IsInterface || _type.IsClass || _type.IsNullable();
 
 			var attribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
+
 			if(attribute != null)
 				_defaultValue = attribute.Value;
 			else
@@ -98,12 +99,6 @@ namespace Zongsoft.Data
 		/// <summary>获取属性类型。</summary>
 		public Type Type => _type;
 
-		/// <summary>获取或设置属性的语义角色。</summary>
-		public ModelPropertyRole Role { get; set; }
-
-		/// <summary>获取或设置属性的标记。</summary>
-		public ModelPropertyFlags Flags { get; set; }
-
 		/// <summary>获取一个值，指示当属性为文本类型时，其允许的最大长度。</summary>
 		public int Length => _length;
 
@@ -116,17 +111,35 @@ namespace Zongsoft.Data
 		/// <summary>获取属性的默认值。</summary>
 		public object DefaultValue => _defaultValue;
 
+		/// <summary>获取或设置属性的语义角色。</summary>
+		public ModelPropertyRole Role { get; set; }
+
+		/// <summary>获取或设置属性的标记。</summary>
+		public ModelPropertyFlags Flags { get; set; }
+
 		/// <summary>获取或设置属性的标题。</summary>
-		public string Label { get => string.IsNullOrEmpty(_label) ? GetLabel() : _label; set => _label = value; }
+		public string Label
+		{
+			get => string.IsNullOrEmpty(_label) ? GetLabel() : _label;
+			set => _label = value;
+		}
 
 		/// <summary>获取或设置属性的描述文本。</summary>
-		public string Description { get => string.IsNullOrEmpty(_description) ? GetDescription() : _description; set => _description = value; }
+		public string Description
+		{
+			get => string.IsNullOrEmpty(_description) ? GetDescription() : _description;
+			set => _description = value;
+		}
 		#endregion
 
 		#region 内部方法
 		internal void SetModel(ModelDescriptor model)
 		{
-			_model = model ?? throw new ArgumentNullException(nameof(model));
+			_model = model;
+
+			if(model == null)
+				return;
+
 			_field = _model.Entity.Properties.TryGet(this.Name, out var field) ? field : null;
 
 			if(field != null)
@@ -155,8 +168,8 @@ namespace Zongsoft.Data
 
 		#region 重写方法
 		public override string ToString() => this.Role == ModelPropertyRole.None ?
-			$"{this.Name}@{Zongsoft.Common.TypeExtension.GetTypeAlias(this.Type)}" :
-			$"{this.Name}({this.Role})@{Zongsoft.Common.TypeExtension.GetTypeAlias(this.Type)}";
+			$"{this.Name}@{TypeExtension.GetTypeAlias(this.Type)}" :
+			$"{this.Name}({this.Role})@{TypeExtension.GetTypeAlias(this.Type)}";
 		#endregion
 	}
 }
