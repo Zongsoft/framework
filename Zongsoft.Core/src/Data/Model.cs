@@ -39,7 +39,7 @@ namespace Zongsoft.Data
 	/// <summary>
 	/// 提供 <see cref="IModel"/> 数据实体或其他模型的动态编译及构建的静态类。
 	/// </summary>
-	public static class Model
+	public static partial class Model
 	{
 		#region 常量定义
 		private const string ASSEMBLY_NAME = "Zongsoft.Dynamics.Models";
