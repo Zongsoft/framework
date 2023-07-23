@@ -39,7 +39,6 @@ using ClosedXML.Excel;
 
 using Zongsoft.Data;
 using Zongsoft.Data.Templates;
-using DocumentFormat.OpenXml.Drawing;
 
 namespace Zongsoft.Externals.ClosedXml
 {

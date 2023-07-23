@@ -255,7 +255,8 @@ namespace Zongsoft.Externals.ClosedXml
 			using var report = new XLTemplate(stream);
 
 			//添加报表数据
-			report.AddVariable(data);
+			if(data != null)
+				report.AddVariable(data);
 
 			//添加报表参数
 			if(parameters != null)
