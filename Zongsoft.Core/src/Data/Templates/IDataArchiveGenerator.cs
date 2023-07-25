@@ -31,33 +31,32 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Templates
 {
 	/// <summary>
-	/// 提供数据模板渲染功能的接口。
+	/// 提供数据文件生成功能的接口。
 	/// </summary>
-	public interface IDataTemplateRenderer
+	public interface IDataArchiveGenerator
 	{
-		/// <summary>获取一个值，表示支持的数据模板格式。</summary>
+		/// <summary>获取一个值，表示支持的数据文件格式。</summary>
 		string Format { get; }
 
-		/// <summary>渲染指定数据模板到输出流中。</summary>
-		/// <param name="output">指定的渲染输出的数据流。</param>
-		/// <param name="template">指定的数据模型。</param>
-		/// <param name="data">指定的渲染数据。</param>
+		/// <summary>将指定的数据写入到输出流中。</summary>
+		/// <param name="output">待写入的数据流。</param>
+		/// <param name="model">对应的模型描述器。</param>
+		/// <param name="data">待写入的数据。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
-		/// <returns>返回的渲染任务。</returns>
-		ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default);
+		/// <returns>返回的生成任务。</returns>
+		ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, CancellationToken cancellation = default);
 
-		/// <summary>渲染指定数据模板到输出流中。</summary>
-		/// <param name="output">指定的渲染输出的数据流。</param>
-		/// <param name="template">指定的数据模型。</param>
-		/// <param name="data">指定的渲染数据。</param>
-		/// <param name="parameters">指定的渲染参数。</param>
+		/// <summary>将指定的数据写入到输出流中。</summary>
+		/// <param name="output">待写入的数据流。</param>
+		/// <param name="model">对应的模型描述器。</param>
+		/// <param name="data">待写入的数据。</param>
+		/// <param name="options">生成操作选项设置。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
-		/// <returns>返回的渲染任务。</returns>
-		ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
+		/// <returns>返回的生成任务。</returns>
+		ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default);
 	}
 }

@@ -28,18 +28,18 @@
  */
 
 using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Templates
 {
-	public interface IDataFileRenderer
+	public class DataArchiveFieldCollection : KeyedCollection<string, DataArchiveField>
 	{
-		string Format { get; }
+		public DataArchiveFieldCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+		protected override string GetKeyForItem(DataArchiveField field) => field.Name;
 
-		ValueTask RenderAsync(Stream output, IDataFileTemplate template, object data, CancellationToken cancellation = default);
-		ValueTask RenderAsync(Stream output, IDataFileTemplate template, object data, IEnumerable<string> fields, CancellationToken cancellation = default);
+		public static explicit operator string[](DataArchiveFieldCollection collection) =>
+			collection == null ? Array.Empty<string>() : collection.Select(field => field.Name).ToArray();
 	}
 }

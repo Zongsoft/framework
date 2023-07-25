@@ -28,18 +28,19 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Templates
 {
-	public class DataFileFieldCollection : KeyedCollection<string, DataFileField>
+	/// <summary>
+	/// 表示数据文件生成选项的接口。
+	/// </summary>
+	public interface IDataArchiveGeneratorOptions
 	{
-		public DataFileFieldCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(DataFileField field) => field.Name;
+		/// <summary>获取或设置生成格式化器。</summary>
+		/// <remarks>对每条数据记录各字段生成目标单元的时候会回调该委托，并将该委托的结果作为最终结果写入到目标单元。</remarks>
+		Func<object, ModelPropertyDescriptor, object> Formatter { get; set; }
 
-		public static explicit operator string[](DataFileFieldCollection collection) =>
-			collection == null ? Array.Empty<string>() : collection.Select(field => field.Name).ToArray();
+		/// <summary>获取或设置生成的字段数组。</summary>
+		DataArchiveField[] Fields { get; set; }
 	}
 }

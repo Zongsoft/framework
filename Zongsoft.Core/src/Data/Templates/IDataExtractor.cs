@@ -35,11 +35,29 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Templates
 {
-	public interface IDataFileResolver
+	/// <summary>
+	/// 提供数据提取功能的接口。
+	/// </summary>
+	public interface IDataExtractor
 	{
+		/// <summary>获取一个值，表示支持的数据文件格式。</summary>
 		string Format { get; }
 
-		IAsyncEnumerable<T> ResolveAsync<T>(Stream input, IDataFileTemplate template, CancellationToken cancellation = default);
-		IAsyncEnumerable<T> ResolveAsync<T>(Stream input, IDataFileTemplate template, IEnumerable<string> fields, CancellationToken cancellation = default);
+		/// <summary>从数据流中提取数据。</summary>
+		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
+		/// <param name="input">待提取的数据流。</param>
+		/// <param name="model">对应的模型描述器。</param>
+		/// <param name="cancellation">异步操作的取消标记。</param>
+		/// <returns>返回提取到的数据集。</returns>
+		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, CancellationToken cancellation = default);
+
+		/// <summary>从数据流中提取数据。</summary>
+		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
+		/// <param name="input">待提取的数据流。</param>
+		/// <param name="model">对应的模型描述器。</param>
+		/// <param name="options">提取操作选项设置。</param>
+		/// <param name="cancellation">异步操作的取消标记。</param>
+		/// <returns>返回提取到的数据集。</returns>
+		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataExtractorOptions options, CancellationToken cancellation = default);
 	}
 }

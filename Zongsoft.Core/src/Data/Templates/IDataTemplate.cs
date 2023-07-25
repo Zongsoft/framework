@@ -28,14 +28,26 @@
  */
 
 using System;
+using System.IO;
 
 namespace Zongsoft.Data.Templates
 {
+	/// <summary>
+	/// 表示数据模板的接口。
+	/// </summary>
 	public interface IDataTemplate
 	{
+		/// <summary>获取模板名称。</summary>
 		string Name { get; }
-		string Title { get; }
-		string FilePath { get; set; }
+		/// <summary>获取模板格式。</summary>
+		string Format { get; }
+		/// <summary>获取或设置模板标题。</summary>
+		string Title { get; set; }
+		/// <summary>获取或设置模板描述文本。</summary>
 		string Description { get; set; }
+
+		/// <summary>获取模板内容。</summary>
+		/// <returns>返回模板内容流。</returns>
+		Stream GetContent();
 	}
 }

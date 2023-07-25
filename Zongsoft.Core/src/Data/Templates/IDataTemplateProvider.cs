@@ -31,11 +31,8 @@ using System;
 
 namespace Zongsoft.Data.Templates
 {
-	public interface IDataFileTemplate
+	public interface IDataTemplateProvider
 	{
-		string Name { get; }
-		string Title { get; }
-		string Description { get; set; }
-		DataFileFieldCollection Fields { get; }
+		IDataTemplate GetTemplate(string name, string format = null);
 	}
 }

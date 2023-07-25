@@ -31,35 +31,15 @@ using System;
 
 namespace Zongsoft.Data.Templates
 {
-	public class DataFileField
+	/// <summary>
+	/// 表示数据提取选项的接口。
+	/// </summary>
+	public interface IDataExtractorOptions
 	{
-		#region 构造函数
-		public DataFileField(string name, Type type, string label, string description = null) : this(name, null, type, label, description) { }
-		public DataFileField(string name, string alias, Type type, string label, string description = null)
-        {
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		/// <summary>获取或设置提取来源。</summary>
+		object Source { get; set; }
 
-            this.Name = name;
-			this.Type = type;
-			this.Alias = string.IsNullOrEmpty(alias) ? name : alias;
-			this.Label = string.IsNullOrEmpty(label) ? name : label;
-			this.Description = description;
-        }
-		#endregion
-
-		#region 公共属性
-		public string Name { get; set; }
-		public string Alias { get; set; }
-		public Type Type { get; set; }
-		public string Label { get; set; }
-		public string Description { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => string.IsNullOrEmpty(this.Label) || string.Equals(this.Name, this.Label) ?
-			$"{this.Name}:{this.Type?.Name}" :
-			$"{this.Name}({this.Label}):{this.Type?.Name}";
-		#endregion
+		/// <summary>获取或设置提取的字段名集。</summary>
+		string[] Fields { get; set; }
 	}
 }
