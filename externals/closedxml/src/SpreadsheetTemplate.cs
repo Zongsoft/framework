@@ -29,56 +29,50 @@
 
 using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections;
-using System.Collections.Generic;
 
 using ClosedXML;
-using ClosedXML.Report;
+using ClosedXML.Excel;
 
-using Zongsoft.IO;
 using Zongsoft.Data;
 using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
 {
-	[Zongsoft.Services.Service(typeof(IDataTemplateRenderer))]
-	public class SpreadsheetRenderer : IDataTemplateRenderer
+	public class SpreadsheetTemplate : IDataTemplate
 	{
-		#region 公共属性
-		public string Format => SpreadsheetTemplateProvider.Format;
+		#region 构造函数
+		private SpreadsheetTemplate(string filePath, string title = null, string description = null)
+		{
+			if(string.IsNullOrEmpty(filePath))
+				throw new ArgumentNullException(nameof(filePath));
+
+			this.Name = Path.GetFileNameWithoutExtension(filePath);
+			this.FilePath = filePath;
+			this.Title = string.IsNullOrEmpty(title) ? this.Name : title;
+			this.Description = description;
+		}
 		#endregion
 
-		#region 模板渲染
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, cancellation);
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		#region 公共属性
+		public string Name { get; }
+		public string Format => SpreadsheetTemplateProvider.Format;
+		public string FilePath { get; }
+		public string Title { get; set; }
+		public string Description { get; set; }
+		#endregion
+
+		#region 公共方法
+		public Stream GetContent() => File.OpenRead(this.FilePath);
+		#endregion
+
+		#region 静态方法
+		public static SpreadsheetTemplate From(string filePath)
 		{
-			if(output == null)
-				throw new ArgumentNullException(nameof(output));
-			if(template == null)
-				throw new ArgumentNullException(nameof(template));
+			if(string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+				return null;
 
-			using var stream = template.GetContent();
-			using var report = new XLTemplate(stream);
-
-			//添加报表数据
-			if(data != null)
-				report.AddVariable(data);
-
-			//添加报表参数
-			if(parameters != null)
-			{
-				foreach(var parameter in parameters)
-					report.AddVariable(parameter.Key, parameter.Value);
-			}
-
-			//生成报表内容
-			report.Generate();
-			//输出报表内容
-			report.SaveAs(output);
-
-			return ValueTask.CompletedTask;
+			using var workbook = new XLWorkbook(filePath);
+			return new(filePath, workbook.Properties.Title, workbook.Properties.Comments);
 		}
 		#endregion
 	}

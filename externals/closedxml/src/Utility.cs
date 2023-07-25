@@ -33,26 +33,22 @@ using ClosedXML;
 using ClosedXML.Excel;
 
 using Zongsoft.Data;
-using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
 {
 	public static class Utility
 	{
-		public static object GetCellValue(this IXLCell cell, IDataFileTemplate template, string field) =>
-			field != null && template != null && template.Fields.TryGetValue(field, out var descriptor) ? GetCellValue(cell, descriptor) : null;
-
-		public static object GetCellValue(this IXLCell cell, DataFileField field)
+		public static object GetCellValue(this IXLCell cell, ModelPropertyDescriptor property)
 		{
-			if(field == null || cell == null || cell.IsEmpty() || cell.Value.IsBlank || cell.Value.IsError)
+			if(cell == null || cell.IsEmpty() || cell.Value.IsBlank || cell.Value.IsError)
 				return null;
 
 			var value = GetCellValue(cell);
 
-			if(field.Type == null)
+			if(property == null || property.Type == null)
 				return value.ToString();
 
-			return Common.Convert.ConvertValue(value, field.Type);
+			return Common.Convert.ConvertValue(value, property.Type);
 		}
 
 		public static object GetCellValue(this IXLCell cell) => cell.Value.Type switch
@@ -69,9 +65,9 @@ namespace Zongsoft.Externals.ClosedXml
 
 		public static void SetCellValue(this IXLCell cell, object value)
 		{
-			if(value == null || System.Convert.IsDBNull(value))
+			if(value == null || Convert.IsDBNull(value))
 			{
-				cell.Value = (Blank)null;
+				cell.Value = Blank.Value;
 				return;
 			}
 
