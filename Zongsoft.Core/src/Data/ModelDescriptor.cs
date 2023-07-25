@@ -46,10 +46,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		public ModelDescriptor(IDataEntity entity, Type type)
+		public ModelDescriptor(Type type, IDataEntity entity)
 		{
-			_entity = entity ?? throw new ArgumentNullException(nameof(entity));
 			_type = type ?? throw new ArgumentNullException(nameof(type));
+			_entity = entity ?? throw new ArgumentNullException(nameof(entity));
 			this.Properties = new ModelPropertyDescriptorCollection(this);
 		}
 		#endregion
@@ -91,7 +91,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type.Assembly, $"{this.Name}.{nameof(this.Title)}") ?? this.Name;
+		private string GetTitle() =>
+			Resources.ResourceUtility.GetResourceString(this.Type.Assembly, $"{this.Name}.{nameof(this.Title)}") ??
+			Resources.ResourceUtility.GetResourceString(this.Type.Assembly, this.Name) ??
+			this.Name;
+
 		private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type.Assembly, $"{this.Name}.{nameof(this.Description)}");
 		#endregion
 

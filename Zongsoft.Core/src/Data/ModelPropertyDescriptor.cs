@@ -68,12 +68,33 @@ namespace Zongsoft.Data
 
 			_nullable = _type.IsInterface || _type.IsClass || _type.IsNullable();
 
-			var attribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
+			//设置默认值
+			var defaultAttribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
+			_defaultValue = defaultAttribute == null ? TypeExtension.GetDefaultValue(_type) : Common.Convert.ConvertValue(defaultAttribute.Value, _type);
 
-			if(attribute != null)
-				_defaultValue = attribute.Value;
-			else
-				_defaultValue = TypeExtension.GetDefaultValue(_type);
+			//设置默认的语义角色
+			if(member.Name.EndsWith(nameof(ModelPropertyRole.Code), StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Code;
+			else if(member.Name.EndsWith(nameof(ModelPropertyRole.Name), StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Name;
+			else if(member.Name.EndsWith(nameof(ModelPropertyRole.Email), StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Email;
+			else if(member.Name.EndsWith(nameof(ModelPropertyRole.Phone), StringComparison.InvariantCultureIgnoreCase) || member.Name.EndsWith("PhoneNumber", StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Phone;
+			else if(member.Name.EndsWith(nameof(ModelPropertyRole.Password), StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Password;
+			else if(member.Name.EndsWith(nameof(ModelPropertyRole.Description), StringComparison.InvariantCultureIgnoreCase) || member.Name.EndsWith("Remark", StringComparison.InvariantCultureIgnoreCase))
+				this.Role = ModelPropertyRole.Description;
+
+			var propertyAttribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
+			if(propertyAttribute != null)
+			{
+				if(propertyAttribute.Role.HasValue)
+					this.Role = propertyAttribute.Role.Value;
+
+				if(propertyAttribute.Flags.HasValue)
+					this.Flags = propertyAttribute.Flags.Value;
+			}
 		}
 		#endregion
 
@@ -159,7 +180,9 @@ namespace Zongsoft.Data
 		#region 私有方法
 		private string GetLabel() => _model == null ? this.Name :
 			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, $"{_model.Name}.{this.Name}.{nameof(this.Label)}") ??
-			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, $"{this.Name}.{nameof(this.Label)}");
+			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, $"{_model.Name}.{this.Name}") ??
+			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, $"{this.Name}.{nameof(this.Label)}") ??
+			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, this.Name);
 
 		private string GetDescription() => _model == null ? null :
 			Resources.ResourceUtility.GetResourceString(_model.Type.Assembly, $"{_model.Name}.{this.Name}.{nameof(this.Description)}") ??

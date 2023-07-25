@@ -47,17 +47,40 @@ namespace Zongsoft.Data
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
+			//对动态类型进行特殊处理
+			if(type.IsClass && type.Assembly.IsDynamic && type.BaseType.IsAbstract)
+				type = type.BaseType;
+
+			//如果已经缓存则直接从缓存中获取
 			if(_descriptors.TryGetValue(type, out var descriptor))
 				return descriptor;
 
 			if(accessor == null)
 				throw new ArgumentNullException(nameof(accessor));
 
+			//如果未指定模型名称则根据模型类型获取其名称
 			if(string.IsNullOrEmpty(name))
 				name = accessor.Naming.Get(type);
 
-			var entity = accessor.Metadata.Entities[name];
-			var model = new ModelDescriptor(entity, type);
+			return GetDescriptor(accessor.Metadata.Entities[name], type);
+		}
+
+		public static ModelDescriptor GetDescriptor<TModel>(this Metadata.IDataEntity entity) => GetDescriptor(entity, typeof(TModel));
+		public static ModelDescriptor GetDescriptor(this Metadata.IDataEntity entity, Type type)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			//对动态类型进行特殊处理
+			if(type.IsClass && type.Assembly.IsDynamic && type.BaseType.IsAbstract)
+				type = type.BaseType;
+
+			//如果已经缓存则直接从缓存中获取
+			if(_descriptors.TryGetValue(type, out var descriptor))
+				return descriptor;
+
+			//创建模型描述器
+			var model = new ModelDescriptor(type, entity);
 
 			//添加模型的属性定义
 			model.Properties.AddRange(
