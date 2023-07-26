@@ -90,6 +90,7 @@ namespace Zongsoft.Externals.ClosedXml
 			{
 				private AsyncEnumerable<T> _owner;
 				private readonly Table _table;
+				private readonly IXLRanges _ignores;
 				private readonly CancellationToken _cancellation;
 				private int _row;
 
@@ -97,6 +98,7 @@ namespace Zongsoft.Externals.ClosedXml
 				{
 					_owner = owner;
 					_cancellation = cancellation;
+					_ignores = (owner.Worksheet.NamedRange("Ignores") ?? owner.Worksheet.Workbook.NamedRange("Ignores"))?.Ranges;
 					_table = GetTable(owner.Worksheet, owner.Model, owner.Fields);
 				}
 
@@ -132,8 +134,8 @@ namespace Zongsoft.Externals.ClosedXml
 
 						var row = _table.Range.Row(_row);
 
-						//忽略空行、隐藏行
-						if(row.IsEmpty() || row.IsMerged())
+						//跳过空行、隐藏行、忽略行
+						if(row.IsEmpty() || row.IsMerged() || IsIgnored(_ignores, row))
 							continue;
 
 						return true;
@@ -150,6 +152,7 @@ namespace Zongsoft.Externals.ClosedXml
 					return ValueTask.CompletedTask;
 				}
 
+				private static bool IsIgnored(IXLRanges ignores, IXLRangeRow row) => ignores != null && ignores.Contains(row.AsRange());
 				private static Table GetTable(IXLWorksheet worksheet, ModelDescriptor model, string[] fields)
 				{
 					//根据模型名获取指定的数据区引用
