@@ -29,8 +29,8 @@
 
 using System;
 using System.IO;
-using System.Threading;
-using System.Collections.Concurrent;
+using System.Collections;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Data.Templates;
@@ -49,9 +49,9 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 私有字段
-		private volatile int _initialized = 0;
+		private bool _initialized;
 		private readonly string _root;
-		private readonly ConcurrentDictionary<string, SpreadsheetTemplate> _templates = new(StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<string, SpreadsheetTemplate> _templates = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
 		#region 构造函数
@@ -62,19 +62,26 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 初始化器
 		private void Initialize()
 		{
-			var initialized = Interlocked.CompareExchange(ref _initialized, 1, 0);
-			if(initialized != 0)
+			if(_initialized)
 				return;
 
-			foreach(var file in Directory.GetFiles(_root, "*.xlsx", SearchOption.AllDirectories))
-				_templates.TryAdd(Path.GetFileNameWithoutExtension(file), SpreadsheetTemplate.From(file));
+			lock(_templates)
+			{
+				if(_initialized)
+					return;
+
+				foreach(var file in Directory.GetFiles(_root, "*.xlsx", SearchOption.AllDirectories))
+					_templates.TryAdd(Path.GetFileNameWithoutExtension(file), SpreadsheetTemplate.From(file));
+
+				_initialized = true;
+			}
 		}
 		#endregion
 
 		#region 公共方法
 		public IDataTemplate GetTemplate(string name, string format = null)
 		{
-			if(_initialized == 0)
+			if(!_initialized)
 				this.Initialize();
 
 			return _templates.TryGetValue(name, out var template) && (string.IsNullOrEmpty(format) || string.Equals(format, template.Format, StringComparison.OrdinalIgnoreCase)) ? template : null;

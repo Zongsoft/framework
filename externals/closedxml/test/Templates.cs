@@ -9,7 +9,7 @@ namespace Zongsoft.Externals.ClosedXml.Tests;
 
 internal class Templates
 {
-	public static readonly UserModel User= new();
+	public static readonly UserModel User = new();
 	public static readonly AssetUsageModel AssetUsage = new();
 	public static readonly ApartmentUsageModel ApartmentUsage = new();
 
@@ -51,7 +51,7 @@ internal class Templates
 
 	public class AssetUsageModel
 	{
-        public AssetUsageModel()
+		public AssetUsageModel()
 		{
 			var entity = new DataEntity(nameof(Models.AssetUsage));
 			entity.Properties.Simplex(nameof(Models.AssetUsage.AssetId), DbType.Int64, false).IsPrimaryKey = true;
@@ -74,10 +74,10 @@ internal class Templates
 
 	public class ApartmentUsageModel
 	{
-		private readonly SpreadsheetTemplateProvider _provider = new(Path.Combine(Environment.CurrentDirectory, "../../../templates/"));
+		private SpreadsheetTemplateProvider _provider;
 
 		public ApartmentUsageModel()
-        {
+		{
 			this.Park = Parks[0];
 			this.Usages = new[]
 			{
@@ -109,12 +109,19 @@ internal class Templates
 					Latest = new AssetUsage(Assets[1].AssetId, DateTime.Today, 300),
 				}
 			};
-        }
+		}
 
 		public Park Park { get; }
 		public ApartmentUsage[] Usages { get; }
 
-		public IDataTemplate Template => _provider.GetTemplate("apartment.usages");
+		public IDataTemplate Template
+		{
+			get
+			{
+				_provider ??= new(Path.Combine(Environment.CurrentDirectory, "../../../templates/"));
+				return _provider.GetTemplate("apartment.usages");
+			}
+		}
 
 		private static readonly Item[] Items = new[]
 		{
