@@ -51,18 +51,23 @@ namespace Zongsoft.Externals.ClosedXml
 			return Common.Convert.ConvertValue(value, property.Type);
 		}
 
-		public static object GetCellValue(this IXLCell cell) => cell.Value.Type switch
+		private static object GetCellValue(this IXLCell cell)
 		{
-			XLDataType.Blank => null,
-			XLDataType.Text => cell.GetText(),
-			XLDataType.Number => cell.GetDouble(),
-			XLDataType.Boolean => cell.GetBoolean(),
-			XLDataType.DateTime => cell.GetDateTime(),
-			XLDataType.TimeSpan => cell.GetTimeSpan(),
-			XLDataType.Error => cell.GetError().ToString(),
-			_ => null,
-		};
+			if(cell.HasFormula)
+				return cell.GetFormattedString();
 
+			return cell.Value.Type switch
+			{
+				XLDataType.Blank => null,
+				XLDataType.Text => cell.GetText(),
+				XLDataType.Number => cell.GetDouble(),
+				XLDataType.Boolean => cell.GetBoolean(),
+				XLDataType.DateTime => cell.GetDateTime(),
+				XLDataType.TimeSpan => cell.GetTimeSpan(),
+				XLDataType.Error => cell.GetError().ToString(),
+				_ => null,
+			};
+		}
 		public static void SetCellValue(this IXLCell cell, object value)
 		{
 			if(value == null || Convert.IsDBNull(value))
