@@ -46,8 +46,8 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取或设置模板描述文本。</summary>
 		string Description { get; set; }
 
-		/// <summary>获取模板内容。</summary>
+		/// <summary>打开模板(获取模板内容)。</summary>
 		/// <returns>返回模板内容流。</returns>
-		Stream GetContent();
+		Stream Open();
 	}
 }

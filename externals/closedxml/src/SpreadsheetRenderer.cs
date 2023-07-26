@@ -59,7 +59,7 @@ namespace Zongsoft.Externals.ClosedXml
 			if(template == null)
 				throw new ArgumentNullException(nameof(template));
 
-			using var stream = template.GetContent();
+			using var stream = template.Open();
 			using var report = new XLTemplate(stream);
 
 			//添加报表数据

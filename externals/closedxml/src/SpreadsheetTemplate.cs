@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 公共方法
-		public Stream GetContent() => File.OpenRead(this.FilePath);
+		public Stream Open() => File.OpenRead(this.FilePath);
 		#endregion
 
 		#region 静态方法
