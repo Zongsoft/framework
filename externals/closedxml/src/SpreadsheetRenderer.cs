@@ -44,10 +44,10 @@ using Zongsoft.Data.Templates;
 namespace Zongsoft.Externals.ClosedXml
 {
 	[Zongsoft.Services.Service(typeof(IDataTemplateRenderer))]
-	public class SpreadsheetRenderer : IDataTemplateRenderer
+	public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 	{
 		#region 公共属性
-		public string Format => SpreadsheetTemplateProvider.Format;
+		public string Format => SpreadsheetFormat.Name;
 		#endregion
 
 		#region 模板渲染
@@ -80,6 +80,10 @@ namespace Zongsoft.Externals.ClosedXml
 
 			return ValueTask.CompletedTask;
 		}
+		#endregion
+
+		#region 服务匹配
+		bool Services.IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
 		#endregion
 	}
 }

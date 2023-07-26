@@ -28,52 +28,16 @@
  */
 
 using System;
-using System.IO;
-
-using ClosedXML;
-using ClosedXML.Excel;
-
-using Zongsoft.Data;
-using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
 {
-	public class SpreadsheetTemplate : IDataTemplate
+	public static class SpreadsheetFormat
 	{
-		#region 构造函数
-		private SpreadsheetTemplate(string filePath, string title = null, string description = null)
-		{
-			if(string.IsNullOrEmpty(filePath))
-				throw new ArgumentNullException(nameof(filePath));
+		public const string Name = "Spreadsheet";
+		public const string Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-			this.Name = Path.GetFileNameWithoutExtension(filePath);
-			this.FilePath = filePath;
-			this.Title = string.IsNullOrEmpty(title) ? this.Name : title;
-			this.Description = description;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string Format => SpreadsheetFormat.Name;
-		public string FilePath { get; }
-		public string Title { get; set; }
-		public string Description { get; set; }
-		#endregion
-
-		#region 公共方法
-		public Stream Open() => File.OpenRead(this.FilePath);
-		#endregion
-
-		#region 静态方法
-		public static SpreadsheetTemplate Create(string filePath)
-		{
-			if(string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-				return null;
-
-			using var workbook = new XLWorkbook(filePath);
-			return new(filePath, workbook.Properties.Title, workbook.Properties.Comments);
-		}
-		#endregion
+		public static bool IsFormat(string text) =>
+			string.Equals(text, Name, StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(text, Type, StringComparison.OrdinalIgnoreCase);
 	}
 }

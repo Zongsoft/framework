@@ -44,10 +44,10 @@ using Zongsoft.Data.Templates;
 namespace Zongsoft.Externals.ClosedXml
 {
 	[Zongsoft.Services.Service(typeof(IDataExtractor))]
-	public class SpreadsheetExtractor : IDataExtractor
+	public class SpreadsheetExtractor : IDataExtractor, Services.IMatchable
 	{
 		#region 公共属性
-		public string Format => SpreadsheetTemplateProvider.Format;
+		public string Format => SpreadsheetFormat.Name;
 		#endregion
 
 		#region 公共方法
@@ -68,6 +68,10 @@ namespace Zongsoft.Externals.ClosedXml
 
 		#region 私有方法
 		private static T Create<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
+		#endregion
+
+		#region 服务匹配
+		bool Services.IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
 		#endregion
 
 		#region 嵌套子类

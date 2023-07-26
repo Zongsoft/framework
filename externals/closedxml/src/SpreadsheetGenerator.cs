@@ -44,14 +44,14 @@ using Zongsoft.Data.Templates;
 namespace Zongsoft.Externals.ClosedXml
 {
 	[Zongsoft.Services.Service(typeof(IDataArchiveGenerator))]
-	public class SpreadsheetGenerator : IDataArchiveGenerator
+	public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	{
 		#region 常量定义
 		private const string FONT_NAME = "Arial Narrow"; //偏爱的字体：适用于主键、代号、枚举、电话号码、邮箱地址等
 		#endregion
 
 		#region 公共属性
-		public string Format => SpreadsheetTemplateProvider.Format;
+		public string Format => SpreadsheetFormat.Name;
 		#endregion
 
 		#region 公共方法
@@ -319,6 +319,10 @@ namespace Zongsoft.Externals.ClosedXml
 				return Reflection.Reflector.TryGetValue(ref target, property.Name, out var value) ? value : null;
 			}
 		}
+		#endregion
+
+		#region 服务匹配
+		bool Services.IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
 		#endregion
 
 		#region 嵌套子类

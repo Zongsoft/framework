@@ -40,10 +40,6 @@ namespace Zongsoft.Externals.ClosedXml
 	[Service(typeof(IDataTemplateProvider), typeof(IServiceProvider<IDataTemplate>))]
 	public class SpreadsheetTemplateProvider : IDataTemplateProvider, IServiceProvider<IDataTemplate>, IMatchable
 	{
-		#region 常量定义
-		public const string Format = "Spreadsheet";
-		#endregion
-
 		#region 单例字段
 		public static readonly SpreadsheetTemplateProvider Default = new();
 		#endregion
@@ -71,7 +67,7 @@ namespace Zongsoft.Externals.ClosedXml
 					return;
 
 				foreach(var file in Directory.GetFiles(_root, "*.xlsx", SearchOption.AllDirectories))
-					_templates.TryAdd(Path.GetFileNameWithoutExtension(file), SpreadsheetTemplate.From(file));
+					_templates.TryAdd(Path.GetFileNameWithoutExtension(file), SpreadsheetTemplate.Create(file));
 
 				_initialized = true;
 			}
@@ -90,7 +86,7 @@ namespace Zongsoft.Externals.ClosedXml
 
 		#region 显式实现
 		IDataTemplate IServiceProvider<IDataTemplate>.GetService(string name) => this.GetTemplate(name);
-		bool IMatchable.Match(object parameter) => parameter is string format && string.Equals(Format, format, StringComparison.OrdinalIgnoreCase);
+		bool IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
 		#endregion
 	}
 }
