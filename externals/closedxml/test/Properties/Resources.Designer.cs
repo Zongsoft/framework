@@ -61,6 +61,51 @@ namespace Zongsoft.Externals.ClosedXml.Tests.Properties {
         }
         
         /// <summary>
+        ///   查找类似 出生日期 的本地化字符串。
+        /// </summary>
+        internal static string Birthdate {
+            get {
+                return ResourceManager.GetString("Birthdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 生日 的本地化字符串。
+        /// </summary>
+        internal static string Birthday {
+            get {
+                return ResourceManager.GetString("Birthday", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 描述信息 的本地化字符串。
+        /// </summary>
+        internal static string Description {
+            get {
+                return ResourceManager.GetString("Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 电子邮箱 的本地化字符串。
+        /// </summary>
+        internal static string Email {
+            get {
+                return ResourceManager.GetString("Email", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 性别 的本地化字符串。
+        /// </summary>
+        internal static string Gender {
+            get {
+                return ResourceManager.GetString("Gender", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 女性 的本地化字符串。
         /// </summary>
         internal static string Gender_Female {
@@ -75,6 +120,60 @@ namespace Zongsoft.Externals.ClosedXml.Tests.Properties {
         internal static string Gender_Male {
             get {
                 return ResourceManager.GetString("Gender.Male", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 电话 的本地化字符串。
+        /// </summary>
+        internal static string Phone {
+            get {
+                return ResourceManager.GetString("Phone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户 的本地化字符串。
+        /// </summary>
+        internal static string User {
+            get {
+                return ResourceManager.GetString("User", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户名称 的本地化字符串。
+        /// </summary>
+        internal static string User_Name {
+            get {
+                return ResourceManager.GetString("User.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户昵称 的本地化字符串。
+        /// </summary>
+        internal static string User_Nickname {
+            get {
+                return ResourceManager.GetString("User.Nickname", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户电话 的本地化字符串。
+        /// </summary>
+        internal static string User_Phone {
+            get {
+                return ResourceManager.GetString("User.Phone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户编号 的本地化字符串。
+        /// </summary>
+        internal static string UserId {
+            get {
+                return ResourceManager.GetString("UserId", resourceCulture);
             }
         }
     }

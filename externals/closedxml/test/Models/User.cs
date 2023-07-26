@@ -1,15 +1,15 @@
-﻿namespace Zongsoft.Externals.ClosedXml.Tests;
+﻿namespace Zongsoft.Externals.ClosedXml.Tests.Models;
 
 public class User
 {
 	public User() { }
 	public User(int userId, string name, string nickname, Gender? gender = null, DateTime? birthday = null)
 	{
-		this.UserId = userId;
-		this.Name = name;
-		this.Nickname = nickname;
-		this.Gender = gender;
-		this.Birthday = birthday;
+		UserId = userId;
+		Name = name;
+		Nickname = nickname;
+		Gender = gender;
+		Birthday = birthday;
 	}
 
 	public int UserId { get; set; }
@@ -19,6 +19,7 @@ public class User
 	public string Phone { get; set; }
 	public Gender? Gender { get; set; }
 	public DateTime? Birthday { get; set; }
+	public string Description { get; set; }
 }
 
 public enum Gender : byte
