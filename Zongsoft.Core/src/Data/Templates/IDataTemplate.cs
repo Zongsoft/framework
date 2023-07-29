@@ -39,8 +39,8 @@ namespace Zongsoft.Data.Templates
 	{
 		/// <summary>获取模板名称。</summary>
 		string Name { get; }
-		/// <summary>获取模板格式。</summary>
-		string Format { get; }
+		/// <summary>获取模板类型。</summary>
+		string Type { get; }
 		/// <summary>获取或设置模板标题。</summary>
 		string Title { get; set; }
 		/// <summary>获取或设置模板描述文本。</summary>

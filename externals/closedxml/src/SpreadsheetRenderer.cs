@@ -37,8 +37,6 @@ using System.Collections.Generic;
 using ClosedXML;
 using ClosedXML.Report;
 
-using Zongsoft.IO;
-using Zongsoft.Data;
 using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
@@ -47,17 +45,27 @@ namespace Zongsoft.Externals.ClosedXml
 	public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 	{
 		#region 公共属性
-		public string Format => SpreadsheetFormat.Name;
+		public string Name => SpreadsheetFormat.Name;
 		#endregion
 
 		#region 模板渲染
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, cancellation);
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, null, cancellation);
+		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, string format, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, format, cancellation);
+		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, parameters, null, cancellation);
+		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation = default)
 		{
 			if(output == null)
 				throw new ArgumentNullException(nameof(output));
 			if(template == null)
 				throw new ArgumentNullException(nameof(template));
+
+			//确保模板类型是受支持的电子表格类型
+			if(!SpreadsheetFormat.IsFormat(template.Type))
+				throw new InvalidOperationException($"Unsupported template type: '{template.Type}'.");
+
+			//确保指定的渲染格式是受支持的电子表格类型
+			if(!string.IsNullOrEmpty(format) && SpreadsheetFormat.IsFormat(format))
+				throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
 
 			using var stream = template.Open();
 			using var report = new XLTemplate(stream);
@@ -83,7 +91,12 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 服务匹配
-		bool Services.IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
+		bool Services.IMatchable.Match(object parameter) => parameter switch
+		{
+			string format => SpreadsheetFormat.IsFormat(format),
+			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			_ => false,
+		};
 		#endregion
 	}
 }

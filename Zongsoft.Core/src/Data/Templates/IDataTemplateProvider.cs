@@ -33,6 +33,6 @@ namespace Zongsoft.Data.Templates
 {
 	public interface IDataTemplateProvider
 	{
-		IDataTemplate GetTemplate(string name, string format = null);
+		IDataTemplate GetTemplate(string name, string type = null);
 	}
 }

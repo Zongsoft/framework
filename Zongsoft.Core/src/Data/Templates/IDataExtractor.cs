@@ -40,8 +40,8 @@ namespace Zongsoft.Data.Templates
 	/// </summary>
 	public interface IDataExtractor
 	{
-		/// <summary>获取一个值，表示支持的数据文件格式。</summary>
-		string Format { get; }
+		/// <summary>获取提取器名称。</summary>
+		string Name { get; }
 
 		/// <summary>从数据流中提取数据。</summary>
 		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>

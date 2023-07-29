@@ -39,8 +39,8 @@ namespace Zongsoft.Data.Templates
 	/// </summary>
 	public interface IDataArchiveGenerator
 	{
-		/// <summary>获取一个值，表示支持的数据文件格式。</summary>
-		string Format { get; }
+		/// <summary>获取生成器名称。</summary>
+		string Name { get; }
 
 		/// <summary>将指定的数据写入到输出流中。</summary>
 		/// <param name="output">待写入的数据流。</param>

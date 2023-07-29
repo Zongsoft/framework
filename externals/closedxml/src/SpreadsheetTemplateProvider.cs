@@ -51,7 +51,8 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 构造函数
-		public SpreadsheetTemplateProvider(string root = null) => _root = string.IsNullOrEmpty(root) ?
+		public SpreadsheetTemplateProvider() : this(null) { }
+		public SpreadsheetTemplateProvider(string root) => _root = string.IsNullOrEmpty(root) ?
 			ApplicationContext.Current?.ApplicationPath ?? Environment.CurrentDirectory : root;
 		#endregion
 
@@ -75,18 +76,23 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 公共方法
-		public IDataTemplate GetTemplate(string name, string format = null)
+		public IDataTemplate GetTemplate(string name, string type = null)
 		{
 			if(!_initialized)
 				this.Initialize();
 
-			return _templates.TryGetValue(name, out var template) && (string.IsNullOrEmpty(format) || string.Equals(format, template.Format, StringComparison.OrdinalIgnoreCase)) ? template : null;
+			return _templates.TryGetValue(name, out var template) && (string.IsNullOrEmpty(type) || string.Equals(type, template.Type, StringComparison.OrdinalIgnoreCase)) ? template : null;
 		}
 		#endregion
 
 		#region 显式实现
 		IDataTemplate IServiceProvider<IDataTemplate>.GetService(string name) => this.GetTemplate(name);
-		bool IMatchable.Match(object parameter) => parameter is string format && SpreadsheetFormat.IsFormat(format);
+		bool IMatchable.Match(object parameter) => parameter switch
+		{
+			string format => SpreadsheetFormat.IsFormat(format),
+			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			_ => false,
+		};
 		#endregion
 	}
 }
