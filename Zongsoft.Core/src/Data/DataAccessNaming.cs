@@ -51,42 +51,39 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get => _mapping.Count;
-		}
+		public int Count => _mapping.Count;
 		#endregion
 
 		#region 公共方法
-		public void Map(Type type, string name = null)
+		public void Map<TModel>(string name = null) => this.Map(typeof(TModel), name);
+		public void Map(Type modelType, string name = null)
 		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
+			if(modelType == null)
+				throw new ArgumentNullException(nameof(modelType));
 
-			_mapping[type] = string.IsNullOrEmpty(name) ? GetName(type) : name;
+			//对动态模型类进行特殊处理
+			if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
+				modelType = modelType.BaseType;
+
+			_mapping[modelType] = string.IsNullOrEmpty(name) ? GetName(modelType) : name;
 		}
 
-		public void Map<T>(string name = null)
+		public string Get<TModel>() => this.Get(typeof(TModel));
+		public string Get(Type modelType)
 		{
-			this.Map(typeof(T), name);
-		}
+			if(modelType == null)
+				throw new ArgumentNullException(nameof(modelType));
 
-		public string Get(Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
+			//对动态模型类进行特殊处理
+			if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
+				modelType = modelType.BaseType;
 
-			return _mapping.GetOrAdd(type, key => GetName(key));
-		}
-
-		public string Get<T>()
-		{
-			return this.Get(typeof(T));
+			return _mapping.GetOrAdd(modelType, GetName);
 		}
 		#endregion
 
 		#region 静态方法
-		internal static string GetName(Type type)
+		private static string GetName(Type type)
 		{
 			//如果该类型应用了数据访问注解，则返回注解中声明的名字
 			if(TryGetNameFromAttribute(type, out var name))
@@ -129,25 +126,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 集合成员
-		bool ICollection<KeyValuePair<Type, string>>.IsReadOnly
-		{
-			get => false;
-		}
-
-		void ICollection<KeyValuePair<Type, string>>.Add(KeyValuePair<Type, string> item)
-		{
-			this.Map(item.Key, item.Value);
-		}
-
-		void ICollection<KeyValuePair<Type, string>>.Clear()
-		{
-			_mapping.Clear();
-		}
-
-		bool ICollection<KeyValuePair<Type, string>>.Contains(KeyValuePair<Type, string> item)
-		{
-			return _mapping.ContainsKey(item.Key);
-		}
+		bool ICollection<KeyValuePair<Type, string>>.IsReadOnly => false;
+		void ICollection<KeyValuePair<Type, string>>.Add(KeyValuePair<Type, string> item) => this.Map(item.Key, item.Value);
+		void ICollection<KeyValuePair<Type, string>>.Clear() => _mapping.Clear();
+		bool ICollection<KeyValuePair<Type, string>>.Remove(KeyValuePair<Type, string> item) => _mapping.TryRemove(item.Key, out _);
+		bool ICollection<KeyValuePair<Type, string>>.Contains(KeyValuePair<Type, string> item) => _mapping.ContainsKey(item.Key);
 
 		void ICollection<KeyValuePair<Type, string>>.CopyTo(KeyValuePair<Type, string>[] array, int arrayIndex)
 		{
@@ -162,20 +145,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool ICollection<KeyValuePair<Type, string>>.Remove(KeyValuePair<Type, string> item)
-		{
-			return _mapping.TryRemove(item.Key, out _);
-		}
-
-		public IEnumerator<KeyValuePair<Type, string>> GetEnumerator()
-		{
-			return _mapping.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _mapping.GetEnumerator();
-		}
+		public IEnumerator<KeyValuePair<Type, string>> GetEnumerator() => _mapping.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _mapping.GetEnumerator();
 		#endregion
 	}
 }
