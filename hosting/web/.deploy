@@ -36,6 +36,9 @@
 ../../externals/wechat/.deploy
 ../../externals/wechat/api/.deploy
 
+[plugins zongsoft externals closedxml]
+../../externals/closedxml/.deploy
+
 [plugins zongsoft externals hangfire]
 ../../externals/hangfire/.deploy
 ../../externals/hangfire/web/.deploy
