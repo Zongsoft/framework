@@ -37,10 +37,10 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataAccessNaming : ICollection<KeyValuePair<Type, string>>
 	{
-		void Map(Type type, string name = null);
-		void Map<T>(string name = null);
+		void Map<TModel>(string name = null);
+		void Map(Type modelType, string name = null);
 
-		string Get(Type type);
-		string Get<T>();
+		string Get<TModel>();
+		string Get(Type modelType);
 	}
 }
