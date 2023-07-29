@@ -61,25 +61,10 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 属性定义
-		protected virtual bool CanDelete
-		{
-			get => this.DataService.CanDelete;
-		}
-
-		protected virtual bool CanCreate
-		{
-			get => this.DataService.CanInsert;
-		}
-
-		protected virtual bool CanUpdate
-		{
-			get => this.DataService.CanUpdate;
-		}
-
-		protected virtual bool CanUpsert
-		{
-			get => this.CanCreate && this.CanUpdate && this.DataService.CanUpsert;
-		}
+		protected virtual bool CanDelete => this.DataService.CanDelete;
+		protected virtual bool CanCreate => this.DataService.CanInsert;
+		protected virtual bool CanUpdate => this.DataService.CanUpdate;
+		protected virtual bool CanUpsert => this.CanCreate && this.CanUpdate && this.DataService.CanUpsert;
 
 		protected TService DataService
 		{
@@ -364,10 +349,7 @@ namespace Zongsoft.Web
 
 		protected virtual int OnDelete(string key, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			if(string.IsNullOrWhiteSpace(key))
-				return 0;
-
-			return this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter, parameters));
+			return string.IsNullOrWhiteSpace(key) ? 0 : this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter, parameters));
 		}
 
 		protected virtual int OnCreate(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
@@ -377,10 +359,9 @@ namespace Zongsoft.Web
 
 		protected virtual int OnUpdate(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			if(string.IsNullOrWhiteSpace(key))
-				return this.DataService.Update(model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
-			else
-				return this.DataService.Update(key, model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
+			return string.IsNullOrWhiteSpace(key) ?
+				this.DataService.Update(model, this.GetSchema(), DataUpdateOptions.Parameter(parameters)) :
+				this.DataService.Update(key, model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
 		}
 
 		protected virtual int OnUpsert(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
