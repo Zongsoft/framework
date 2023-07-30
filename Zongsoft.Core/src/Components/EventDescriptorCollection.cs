@@ -34,24 +34,51 @@ namespace Zongsoft.Components
 {
 	public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
 	{
+		#region 成员字段
 		private readonly EventRegistryBase _registry;
+		#endregion
+
+		#region 构造函数
 		internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
-		protected override string GetKeyForItem(EventDescriptor item) => item.Name;
-		protected override void InsertItem(int index, EventDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+		#endregion
 
-			base.InsertItem(index, item);
-			item.Qualified(_registry.Name);
-		}
-		protected override void SetItem(int index, EventDescriptor item)
+		#region 重写方法
+		protected override string GetKeyForItem(EventDescriptor descriptor) => descriptor.Name;
+		protected override void InsertItem(int index, EventDescriptor descriptor)
 		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+			if(descriptor == null)
+				throw new ArgumentNullException(nameof(descriptor));
 
-			base.SetItem(index, item);
-			item.Qualified(_registry.Name);
+			if(string.IsNullOrEmpty(descriptor.Title))
+				descriptor.Title = GetTitle(_registry, descriptor.Name);
+			if(string.IsNullOrEmpty(descriptor.Description))
+				descriptor.Description = GetDescription(_registry, descriptor.Name);
+
+			base.InsertItem(index, descriptor);
+			descriptor.Qualified(_registry.Name);
 		}
+		protected override void SetItem(int index, EventDescriptor descriptor)
+		{
+			if(descriptor == null)
+				throw new ArgumentNullException(nameof(descriptor));
+
+			if(string.IsNullOrEmpty(descriptor.Title))
+				descriptor.Title = GetTitle(_registry, descriptor.Name);
+			if(string.IsNullOrEmpty(descriptor.Description))
+				descriptor.Description = GetDescription(_registry, descriptor.Name);
+
+			base.SetItem(index, descriptor);
+			descriptor.Qualified(_registry.Name);
+		}
+		#endregion
+
+		#region 私有方法
+		private static string GetTitle(EventRegistryBase registry, string name) =>
+			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, $"{name}.{nameof(EventDescriptor.Title)}") ??
+			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, name);
+
+		private static string GetDescription(EventRegistryBase registry, string name) =>
+			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, $"{name}.{nameof(EventDescriptor.Description)}");
+		#endregion
 	}
 }

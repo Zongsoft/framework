@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -36,7 +35,6 @@ using System.Collections.Generic;
 using Zongsoft.Services;
 using Zongsoft.Messaging;
 using Zongsoft.Communication;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.Components
 {
@@ -59,25 +57,35 @@ namespace Zongsoft.Components
 			if(message.IsEmpty || cancellation.IsCancellationRequested)
 				return;
 
-			//根据收到的消息解析出其对应的事件上下文
-			var context = this.GetContext(message);
+			//获取事件名称
+			var name = message.Tags;
+			if(string.IsNullOrEmpty(name))
+				return;
 
-			if(context != null)
+			//根据收到的消息解析出其对应的事件参数
+			(var argument, IDictionary<string, object> parameters) = Events.Marshaler.Unmarshal(name, message.Data);
+
+			//定义异步通知操作的任务集
+			var tasks = new List<Task>();
+
+			foreach(var provider in this.Services.ResolveAll<IEventSubscriptionProvider>(name))
 			{
-				IList<Task> tasks = null;
-				var subscriptions = this.GetSubscriptionsAsync(context, cancellation);
+				var subscriptions = provider.GetSubscriptionsAsync(name, argument, parameters, cancellation);
 
 				await foreach(var subscription in subscriptions)
 				{
-					tasks ??= new List<Task>();
-
 					foreach(var notification in subscription.Notifications)
 						tasks.Add(this.NotifyAsync(notification, cancellation).AsTask());
 				}
 
-				//等待所有通知任务完成
 				if(tasks != null && tasks.Count > 0)
+				{
+					//等待所有通知任务完成
 					await Task.WhenAll(tasks);
+
+					//清空已完成的任务集
+					tasks.Clear();
+				}
 			}
 
 			//执行消息应答
@@ -86,29 +94,6 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 虚拟方法
-		protected virtual EventContextBase GetContext(Message message)
-		{
-			//将消息的标签作为事件的限定名称
-			var descriptor = Events.GetEvent(message.Tags);
-
-			//如果指定的事件未定义则返回空
-			if(descriptor == null)
-				return null;
-
-			var type = descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
-			return type == null ? null : (EventContextBase)Serializer.Json.Deserialize(message.Data, typeof(EventContext<>).MakeGenericType(type));
-		}
-
-		protected virtual IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContextBase context, CancellationToken cancellation)
-		{
-			var type = context.GetType();
-			var provider = type.IsGenericType ?
-				this.Services.Resolve(typeof(IEventSubscriptionProvider<>).MakeGenericType(type.GenericTypeArguments[0])) ?? this.Services.Resolve<IEventSubscriptionProvider>(context) :
-				this.Services.Resolve<IEventSubscriptionProvider>(context);
-
-			return EventSubscriptionProviderUtility.GetSubscriptionsAsync(provider, context, cancellation);
-		}
-
 		protected virtual ITransmitter GetTransmitter(IEventSubscriptionNotification notification) => (this.Services ?? ApplicationContext.Current.Services).Resolve<ITransmitter>(notification.Notifier);
 		protected virtual ValueTask NotifyAsync(IEventSubscriptionNotification notification, CancellationToken cancellation) =>
 			this.GetTransmitter(notification)?.TransmitAsync(notification.Destination, notification.Template, notification.Argument, notification.Channel, cancellation) ?? ValueTask.CompletedTask;

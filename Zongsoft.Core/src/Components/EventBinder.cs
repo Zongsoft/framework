@@ -209,7 +209,26 @@ namespace Zongsoft.Components
 		#region 私有方法
 		private static (object adapter, Delegate trigger) GetAdapter(this EventDescriptor descriptor, Type delegateType)
 		{
+			const string EVENT_BINDING_ERROR_MESSAGE = @"The bound event argument type do not match.";
+
 			static bool IsParametersType(Type type) => typeof(IEnumerable<KeyValuePair<string, object>>).IsAssignableFrom(type);
+
+			if(delegateType == typeof(Action))
+			{
+				var adapter = new ActionAdapter(descriptor);
+				var trigger = new Action(adapter.Raise);
+				return (adapter, trigger);
+			}
+
+			if(delegateType == typeof(EventHandler))
+			{
+				if(descriptor.GetArgumentType() != typeof(EventArgs))
+					throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+
+				var adapter = new EventHandlerAdapter(descriptor as EventDescriptor<EventArgs>);
+				var trigger = new EventHandler(adapter.Raise);
+				return (adapter, trigger);
+			}
 
 			if(delegateType.IsGenericType)
 			{
@@ -217,60 +236,58 @@ namespace Zongsoft.Components
 
 				if(prototype == typeof(EventHandler<>))
 				{
+					if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
+						throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+
 					var adapter = Activator.CreateInstance(
 						typeof(EventHandlerAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
 						new object[] { descriptor });
-					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(EventHandlerAdapter<object>.Raise));
+					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(EventHandlerAdapter<EventArgs>.Raise));
 					return (adapter, trigger);
 				}
 
 				if(prototype == typeof(Action<,,>))
 				{
+					if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
+						throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+
 					if(delegateType.GenericTypeArguments[0] == typeof(object) &&
 					   IsParametersType(delegateType.GenericTypeArguments[2]))
 					{
 						var adapter = Activator.CreateInstance(
-							typeof(ActionAdapter3<,>).MakeGenericType(delegateType.GenericTypeArguments[1], delegateType.GenericTypeArguments[2]),
+							typeof(ActionAdapterWithCaller<,>).MakeGenericType(delegateType.GenericTypeArguments[1], delegateType.GenericTypeArguments[2]),
 							new object[] { descriptor });
-						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter3<object, IDictionary<string, object>>.Raise));
+						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object, IDictionary<string, object>>.Raise));
 						return (adapter, trigger);
 					}
 				}
 
 				if(prototype == typeof(Action<,>))
 				{
+					if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
+						throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+
 					if(delegateType.GenericTypeArguments[0] == typeof(object))
 					{
 						var adapter = Activator.CreateInstance(
-							typeof(ActionAdapter2<>).MakeGenericType(delegateType.GenericTypeArguments[1]),
+							typeof(ActionAdapterWithCaller<>).MakeGenericType(delegateType.GenericTypeArguments[1]),
 							new object[] { descriptor });
-						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter2<object>.Raise));
+						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object>.Raise));
 						return (adapter, trigger);
 					}
 				}
 
 				if(prototype == typeof(Action<>))
 				{
+					if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
+						throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+
 					var adapter = Activator.CreateInstance(
-						typeof(ActionAdapter1<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
+						typeof(ActionAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
 						new object[] { descriptor });
-					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter1<object>.Raise));
+					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter<object>.Raise));
 					return (adapter, trigger);
 				}
-			}
-
-			if(delegateType == typeof(EventHandler))
-			{
-				var adapter = new EventHandlerAdapter(descriptor);
-				var trigger = new EventHandler(adapter.Raise);
-				return (adapter, trigger);
-			}
-
-			if(delegateType == typeof(Action))
-			{
-				var adapter = new ActionAdapter(descriptor);
-				var trigger = new Action(adapter.Raise);
-				return (adapter, trigger);
 			}
 
 			return default;
@@ -314,6 +331,11 @@ namespace Zongsoft.Components
 
 			task.GetAwaiter().GetResult();
 		}
+
+		private static Type GetArgumentType(this EventDescriptor descriptor)
+		{
+			return descriptor != null && descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
+		}
 		#endregion
 
 		#region 嵌套子类
@@ -321,99 +343,42 @@ namespace Zongsoft.Components
 		{
 			private readonly EventDescriptor _descriptor;
 			public ActionAdapter(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise()
-			{
-				_descriptor.HandleAsync(null).Complete();
-			}
+			public void Raise() => _descriptor.HandleAsync().Complete();
 		}
 
-		private class ActionAdapter1
+		private class ActionAdapter<TArgument>
 		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter1(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
+			private readonly EventDescriptor<TArgument> _descriptor;
+			public ActionAdapter(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
+			public void Raise(TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapter1<T>
+		private class ActionAdapterWithCaller<TArgument>
 		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter1(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(T argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
+			private readonly EventDescriptor<TArgument> _descriptor;
+			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
+			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapter2
+		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : IEnumerable<KeyValuePair<string, object>>
 		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter2(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, object argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
-		}
-
-		private class ActionAdapter2<T>
-		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter2(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, T argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
-		}
-
-		private class ActionAdapter3<TParameters> where TParameters : IEnumerable<KeyValuePair<string, object>>
-		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter3(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, object argument, TParameters parameters)
-			{
-				_descriptor.HandleAsync(argument, parameters).Complete();
-			}
-		}
-
-		private class ActionAdapter3<T, TParameters> where TParameters : IEnumerable<KeyValuePair<string, object>>
-		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter3(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, T argument, TParameters parameters)
-			{
-				_descriptor.HandleAsync(argument, parameters).Complete();
-			}
+			private readonly EventDescriptor<TArgument> _descriptor;
+			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
+			public void Raise(object sender, TArgument argument, TParameters parameters) => _descriptor.HandleAsync(argument, parameters).Complete();
 		}
 
 		private class EventHandlerAdapter
 		{
-			private readonly EventDescriptor _descriptor;
-			public EventHandlerAdapter(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, EventArgs argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
+			private readonly EventDescriptor<EventArgs> _descriptor;
+			public EventHandlerAdapter(EventDescriptor<EventArgs> descriptor) => _descriptor = descriptor;
+			public void Raise(object sender, EventArgs argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class EventHandlerAdapter<T>
+		private class EventHandlerAdapter<TArgument> where TArgument : EventArgs
 		{
-			private readonly EventDescriptor _descriptor;
-			public EventHandlerAdapter(EventDescriptor descriptor) => _descriptor = descriptor;
-
-			public void Raise(object sender, T argument)
-			{
-				_descriptor.HandleAsync(argument).Complete();
-			}
+			private readonly EventDescriptor<TArgument> _descriptor;
+			public EventHandlerAdapter(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
+			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 		#endregion
 	}

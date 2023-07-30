@@ -35,15 +35,29 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Components
 {
-	public abstract class EventSubscriptionProviderBase<TArgument> : IEventSubscriptionProvider<TArgument>, IEventSubscriptionProvider, IMatchable
+	public abstract class EventSubscriptionProviderBase<TArgument> : IEventSubscriptionProvider, IMatchable
 	{
-		protected EventSubscriptionProviderBase() { }
+		#region 成员字段
+		private readonly HashSet<string> _names;
+		#endregion
 
-		bool IMatchable.Match(object parameter) => this.OnMatch(parameter as EventContextBase);
-		protected virtual bool OnMatch(EventContextBase context) => context != null && context.GetArgument<TArgument>() != null;
+		#region 构造函数
+		protected EventSubscriptionProviderBase(params string[] names) => _names = new(names ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+		protected EventSubscriptionProviderBase(IEnumerable<string> names) => _names = new(names ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+		#endregion
 
-		IAsyncEnumerable<IEventSubscription> IEventSubscriptionProvider.GetSubscriptionsAsync(EventContextBase context, CancellationToken cancellation) => GetSubscriptionsAsync(context.Name, context.GetArgument<TArgument>(), context.HasParameters ? context.Parameters : null, cancellation);
-		public IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(EventContext<TArgument> context, CancellationToken cancellation) => GetSubscriptionsAsync(context.Name, context.Argument, context.HasParameters ? context.Parameters : null, cancellation);
-		protected abstract IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string name, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation);
+		#region 匹配方法
+		bool IMatchable.Match(object parameter) => this.OnMatch(parameter);
+		protected virtual bool OnMatch(object parameter) => _names == null || _names.Count == 0 || _names.Contains(string.Empty) || _names.Contains("*") || (parameter is string name && _names.Contains(name));
+		#endregion
+
+		#region 获取方法
+		IAsyncEnumerable<IEventSubscription> IEventSubscriptionProvider.GetSubscriptionsAsync(string qualifiedName, object argument, IDictionary<string, object> parameters, CancellationToken cancellation) => GetSubscriptionsAsync(qualifiedName, Convert(argument), parameters, cancellation);
+		public abstract IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string qualifiedName, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
+		#endregion
+
+		#region 参数转换
+		protected virtual TArgument Convert(object argument) => argument is TArgument value ? value : default;
+		#endregion
 	}
 }

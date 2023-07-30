@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Target1.Created" xml:space="preserve">
+    <value>创建完成</value>
+  </data>
+  <data name="Target1.Created.Description" xml:space="preserve">
+    <value>创建完成事件的描述信息。</value>
+  </data>
+  <data name="Target1.StatusChanged" xml:space="preserve">
+    <value>状态变更</value>
+  </data>
+  <data name="Target1.StatusChanged.Description" xml:space="preserve">
+    <value>状态变更事件的描述信息。</value>
+  </data>
   <data name="Text.Gender.Female" xml:space="preserve">
     <value>女士</value>
   </data>

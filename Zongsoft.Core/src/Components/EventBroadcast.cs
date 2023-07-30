@@ -36,7 +36,7 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Components
 {
-	public class EventBroadcast : IFilter<EventContextBase>
+	public class EventBroadcast : IFilter<EventContext>
 	{
 		#region 常量定义
 		private const string DEFAULT_TOPIC = "Events";
@@ -66,20 +66,17 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 过滤方法
-		public async ValueTask OnFiltered(EventContextBase context, CancellationToken cancellation)
+		public async ValueTask OnFiltered(EventContext context, CancellationToken cancellation)
 		{
 			var queue = this.Queue;
-			if(queue == null || context == null)
+			if(queue == null)
 				return;
 
-			var json = await Serializer.Json.SerializeAsync(context, _options, cancellation);
-			if(string.IsNullOrEmpty(json))
-				return;
-
-			await queue.ProduceAsync(this.Topic, context.QualifiedName, json.AsMemory(), MessageEnqueueOptions.Default, cancellation);
+			var data = Events.Marshaler.Marshal(context);
+			await queue.ProduceAsync(this.Topic, context.QualifiedName, data, MessageEnqueueOptions.Default, cancellation);
 		}
 
-		public ValueTask OnFiltering(EventContextBase context, CancellationToken cancellation) => ValueTask.CompletedTask;
+		public ValueTask OnFiltering(EventContext context, CancellationToken cancellation) => ValueTask.CompletedTask;
 		#endregion
 	}
 }

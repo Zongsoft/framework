@@ -32,14 +32,14 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
-	public abstract class EventContextBase
+	public class EventContext
 	{
 		#region 成员字段
 		private IDictionary<string, object> _parameters;
 		#endregion
 
 		#region 构造函数
-		protected EventContextBase(EventRegistryBase registry, string name, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public EventContext(EventRegistryBase registry, string name, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 			this.Name = name;
@@ -75,27 +75,19 @@ namespace Zongsoft.Components
 			}
 		}
 		#endregion
-
-		#region 抽象方法
-		public abstract T GetArgument<T>();
-		#endregion
 	}
 
-	public class EventContext : EventContextBase
+	public class EventContext<TArgument> : EventContext
 	{
 		#region 构造函数
-		public EventContext(EventRegistryBase registry, string name, object argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
+		public EventContext(EventRegistryBase registry, string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
 		{
 			this.Argument = argument;
 		}
 		#endregion
 
 		#region 公共属性
-		public object Argument { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override T GetArgument<T>() => this.Argument is T result ? result : default;
+		public TArgument Argument { get; set; }
 		#endregion
 	}
 }

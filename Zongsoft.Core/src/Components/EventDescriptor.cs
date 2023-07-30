@@ -83,7 +83,9 @@ namespace Zongsoft.Components
 		}
 		#endregion
 
-		#region 执行处理
+		#region 处理方法
+		public ValueTask HandleAsync(CancellationToken cancellation = default) => this.HandleAsync(null, null, cancellation);
+		public ValueTask HandleAsync(IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
 		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
 		public ValueTask HandleAsync(object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
@@ -96,38 +98,25 @@ namespace Zongsoft.Components
 
 			return new ValueTask(Task.WhenAll(tasks));
 		}
-
-		public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync<TArgument>(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
-		{
-			var tasks = new List<Task>(this.Handlers.Count);
-
-			foreach(var handler in this.Handlers)
-			{
-				if(handler is IHandler<TArgument> generic)
-					tasks.Add(generic.HandleAsync(this, argument, parameters, cancellation).AsTask());
-				else
-					tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
-			}
-
-			return new ValueTask(Task.WhenAll(tasks));
-		}
 		#endregion
 
 		#region 重写方法
-		public bool Equals(EventDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+		public bool Equals(EventDescriptor other) => string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
 		public override bool Equals(object obj) => obj is EventDescriptor other && this.Equals(other);
-		public override int GetHashCode() => this.Name.GetHashCode();
-		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.Name : $"{this.QualifiedName}[{this.Title}]";
+		public override int GetHashCode() => this.QualifiedName.GetHashCode();
+		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.QualifiedName : $"{this.QualifiedName}[{this.Title}]";
 		#endregion
 	}
 
 	public class EventDescriptor<TArgument> : EventDescriptor
 	{
+		#region 构造函数
 		public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
+		#endregion
 
-		public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync<TArgument>(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		#region 处理方法
+		public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 
@@ -141,5 +130,6 @@ namespace Zongsoft.Components
 
 			return new ValueTask(Task.WhenAll(tasks));
 		}
+		#endregion
 	}
 }

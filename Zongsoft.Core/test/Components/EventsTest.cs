@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Zongsoft.Services;
 
 using Xunit;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Zongsoft.Components.Tests
 {
@@ -13,14 +15,14 @@ namespace Zongsoft.Components.Tests
 	{
 		private readonly App _app;
 
-        public EventsTest()
+		public EventsTest()
 		{
 			_app = new App(new ServiceProviderFactory());
 			_app.Modules.Add(ModuleA.Current);
 			_app.Modules.Add(ModuleB.Current);
 		}
 
-        [Fact]
+		[Fact]
 		public void TestGetEvents()
 		{
 			var descriptors = Events.GetEvents();
@@ -32,17 +34,75 @@ namespace Zongsoft.Components.Tests
 		[Fact]
 		public void TestGetEvent()
 		{
-			var descriptor = Events.GetEvent("");
-			Assert.Null(descriptor);
+			var descriptor = Events.GetEvent(null);
+			Assert.Null(descriptor); //查找失败
 
 			descriptor = Events.GetEvent("Created");
-			Assert.Null(descriptor);
+			Assert.Null(descriptor); //查找失败
 
 			descriptor = Events.GetEvent("ModuleB:Target1.Created");
 			Assert.NotNull(descriptor);
+			Assert.Same(ModuleB.EventRegistry.Target1Event.Created, descriptor);
+			Assert.Equal("Target1.Created", descriptor.Name);
+			Assert.Equal(Properties.Resources.Target1_Created, descriptor.Title);
+			Assert.Equal(Properties.Resources.Target1_Created_Description, descriptor.Description);
 
 			descriptor = Events.GetEvent("ModuleB:Target1.StatusChanged");
 			Assert.NotNull(descriptor);
+			Assert.Same(ModuleB.EventRegistry.Target1Event.StatusChanged, descriptor);
+			Assert.Equal("Target1.StatusChanged", descriptor.Name);
+			Assert.Equal(Properties.Resources.Target1_StatusChanged, descriptor.Title);
+			Assert.Equal(Properties.Resources.Target1_StatusChanged_Description, descriptor.Description);
+		}
+
+		[Fact]
+		public void TestRaiseEvent()
+		{
+			var createdHandler = new CreatedHandler();
+			var descriptor = Events.GetEvent("ModuleB:Target1.Created");
+			Assert.NotNull(descriptor);
+			descriptor.Handlers.Add(createdHandler);
+			Assert.Contains(createdHandler, descriptor.Handlers);
+			Assert.Throws<NotImplementedException>(OnCreate);
+			descriptor.Handlers.Remove(createdHandler);
+			Assert.DoesNotContain(createdHandler, descriptor.Handlers);
+
+			var changedHandler = new StatusChangedHandler();
+			descriptor = Events.GetEvent("ModuleB:Target1.StatusChanged");
+			Assert.NotNull(descriptor);
+			descriptor.Handlers.Add(changedHandler);
+			Assert.Contains(changedHandler, descriptor.Handlers);
+			Assert.Throws<NotImplementedException>(OnStatusChanged);
+			descriptor.Handlers.Remove(changedHandler);
+			Assert.DoesNotContain(changedHandler, descriptor.Handlers);
+
+			static void OnCreate() => ModuleB.Current.Events.Target1.OnCreated(new("MyMessage"), new Dictionary<string, object> { { "MyInteger", 100 } });
+			static void OnStatusChanged() => ModuleB.Current.Events.Target1.OnStatusChanged(new(1, "MyStatusChanged"), new Dictionary<string, object> { { "MyInteger", 200 } });
+		}
+
+		[Fact]
+		public void TestUnmarshalEvent()
+		{
+			var json = @"{""Argument"":{""Message"":""MyMessage""},""Parameters"":{""MyInteger"":100}}";
+			var data = System.Text.Encoding.UTF8.GetBytes(json);
+
+			(var argument, var parameters) = Events.Marshaler.Unmarshal("ModuleB:Target1.Created", data);
+
+			Assert.NotNull(argument);
+			Assert.IsType<CreatedArgument>(argument);
+
+			Assert.NotNull(parameters);
+			Assert.NotEmpty(parameters);
+		}
+
+		private class CreatedHandler : HandlerBase<CreatedArgument>
+		{
+			protected override ValueTask OnHandleAsync(object caller, CreatedArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => throw new NotImplementedException();
+		}
+
+		private class StatusChangedHandler : HandlerBase<StatusChangedArgument>
+		{
+			protected override ValueTask OnHandleAsync(object caller, StatusChangedArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => throw new NotImplementedException();
 		}
 	}
 
@@ -83,8 +143,8 @@ namespace Zongsoft.Components.Tests
 			public sealed class Target1Event
 			{
 				#region 静态字段
-				internal static readonly EventDescriptor Created = new($"Target1.{nameof(Created)}");
-				internal static readonly EventDescriptor StatusChanged = new($"Target1.{nameof(StatusChanged)}");
+				internal static readonly EventDescriptor<CreatedArgument> Created = new($"Target1.{nameof(Created)}");
+				internal static readonly EventDescriptor<StatusChangedArgument> StatusChanged = new($"Target1.{nameof(StatusChanged)}");
 				#endregion
 
 				#region 成员字段
@@ -94,13 +154,18 @@ namespace Zongsoft.Components.Tests
 				#region 构造函数
 				internal Target1Event(EventRegistry registry) => _registry = registry;
 				#endregion
+
+				#region 公共方法
+				public void OnCreated(CreatedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				#endregion
 			}
 
 			public sealed class Target2Event
 			{
 				#region 静态字段
-				internal static readonly EventDescriptor Created = new($"Target2.{nameof(Created)}");
-				internal static readonly EventDescriptor StatusChanged = new($"Target2.{nameof(StatusChanged)}");
+				internal static readonly EventDescriptor<CreatedArgument> Created = new($"Target2.{nameof(Created)}");
+				internal static readonly EventDescriptor<StatusChangedArgument> StatusChanged = new($"Target2.{nameof(StatusChanged)}");
 				#endregion
 
 				#region 成员字段
@@ -110,7 +175,35 @@ namespace Zongsoft.Components.Tests
 				#region 构造函数
 				internal Target2Event(EventRegistry registry) => _registry = registry;
 				#endregion
+
+				#region 公共方法
+				public void OnCreated(CreatedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				#endregion
 			}
 		}
+	}
+
+	public class CreatedArgument
+	{
+		public CreatedArgument() { }
+		public CreatedArgument(string message) => this.Message = message;
+
+		public string Message { get; set; }
+	}
+
+	public class StatusChangedArgument
+	{
+		public StatusChangedArgument() { }
+		public StatusChangedArgument(int status, string description = null)
+		{
+			this.Status = status;
+			this.Timestamp = DateTime.Now;
+			this.Description = description;
+		}
+
+		public int Status { get; set; }
+		public DateTime Timestamp { get; set; }
+		public string Description { get; set; }
 	}
 }
