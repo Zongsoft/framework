@@ -80,7 +80,7 @@ namespace Zongsoft.Components
 				return _qualifiedName = this.Name;
 			else
 				return _qualifiedName = $"{@namespace}:{this.Name}";
-	}
+		}
 		#endregion
 
 		#region 执行处理
@@ -124,9 +124,9 @@ namespace Zongsoft.Components
 
 	public class EventDescriptor<TArgument> : EventDescriptor
 	{
-        public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
+		public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
 
-        public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync<TArgument>(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
 		public ValueTask HandleAsync<TArgument>(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
