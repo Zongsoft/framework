@@ -32,9 +32,9 @@ using System;
 namespace Zongsoft.Data.Templates
 {
 	/// <summary>
-	/// 表示数据提取选项的接口。
+	/// 表示数据文件提取选项的接口。
 	/// </summary>
-	public interface IDataExtractorOptions
+	public interface IDataArchiveExtractorOptions
 	{
 		/// <summary>获取或设置提取来源。</summary>
 		object Source { get; set; }

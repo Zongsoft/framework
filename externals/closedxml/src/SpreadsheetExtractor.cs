@@ -43,8 +43,8 @@ using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
 {
-	[Zongsoft.Services.Service(typeof(IDataExtractor))]
-	public class SpreadsheetExtractor : IDataExtractor, Services.IMatchable
+	[Zongsoft.Services.Service(typeof(IDataArchiveExtractor))]
+	public class SpreadsheetExtractor : IDataArchiveExtractor, Services.IMatchable
 	{
 		#region 公共属性
 		public string Name => SpreadsheetFormat.Name;
@@ -52,7 +52,7 @@ namespace Zongsoft.Externals.ClosedXml
 
 		#region 公共方法
 		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, CancellationToken cancellation = default) => this.ExtractAsync<T>(input, model, null, cancellation);
-		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataExtractorOptions options, CancellationToken cancellation = default)
+		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataArchiveExtractorOptions options, CancellationToken cancellation = default)
 		{
 			if(input == null)
 				throw new ArgumentNullException(nameof(input));

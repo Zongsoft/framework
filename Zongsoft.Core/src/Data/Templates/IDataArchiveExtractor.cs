@@ -36,9 +36,9 @@ using System.Collections.Generic;
 namespace Zongsoft.Data.Templates
 {
 	/// <summary>
-	/// 提供数据提取功能的接口。
+	/// 提供数据文件提取功能的接口。
 	/// </summary>
-	public interface IDataExtractor
+	public interface IDataArchiveExtractor
 	{
 		/// <summary>获取提取器名称。</summary>
 		string Name { get; }
@@ -58,6 +58,6 @@ namespace Zongsoft.Data.Templates
 		/// <param name="options">提取操作选项设置。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回提取到的数据集。</returns>
-		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataExtractorOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataArchiveExtractorOptions options, CancellationToken cancellation = default);
 	}
 }
