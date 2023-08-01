@@ -59,15 +59,31 @@ public class Apartment
 public class ApartmentUsage
 {
 	public ApartmentUsage() { }
-	public ApartmentUsage(int apartmentId, long assetId)
+	public ApartmentUsage(Apartment apartment, Asset asset, DateTime date, double quantity)
 	{
-		this.ApartmentId = apartmentId;
-		this.AssetId = assetId;
+		this.Apartment = apartment;
+		this.ApartmentId = apartment.ApartmentId;
+		this.Asset = asset;
+		this.AssetId = asset.AssetId;
+		this.Date = date;
+		this.Quantity = quantity;
 	}
 
 	public int ApartmentId { get; set; }
 	public Apartment Apartment { get; set; }
 	public long AssetId { get; set; }
 	public Asset Asset { get; set; }
-	public AssetUsage Latest { get; set; }
+	public DateTime Date { get; set; }
+	public double Quantity { get; set; }
+	public float Coefficient { get; set; }
+	public string Voucher { get; set; }
+	public string VoucherKey { get; set; }
+	public string VoucherDescription { get; set; }
+	public int CreatorId { get; set; }
+	public DateTime CreatedTime { get; set; }
+	public User Creator { get; set; }
+	public int? ModifierId { get; set; }
+	public DateTime? ModifiedTime { get; set; }
+	public User Modifier { get; set; }
+	public string Remark { get; set; }
 }

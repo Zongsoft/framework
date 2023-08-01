@@ -81,33 +81,10 @@ internal class Templates
 			this.Park = Parks[0];
 			this.Usages = new[]
 			{
-				new ApartmentUsage(101, 10001)
-				{
-					Apartment = Apartments[0],
-					Asset = Assets[0],
-					AssetId = Assets[0].AssetId,
-					Latest = new AssetUsage(Assets[0].AssetId, DateTime.Today, 100),
-				},
-				new ApartmentUsage(101, 10002)
-				{
-					Apartment = Apartments[0],
-					Asset = Assets[1],
-					AssetId = Assets[1].AssetId,
-					Latest = new AssetUsage(Assets[1].AssetId, DateTime.Today, 200),
-				},
-				new ApartmentUsage(102, 10002)
-				{
-					Apartment = Apartments[1],
-					Asset = Assets[0],
-					AssetId = Assets[0].AssetId,
-				},
-				new ApartmentUsage(102, 10002)
-				{
-					Apartment = Apartments[1],
-					Asset = Assets[1],
-					AssetId = Assets[1].AssetId,
-					Latest = new AssetUsage(Assets[1].AssetId, DateTime.Today, 300),
-				}
+				new ApartmentUsage(Apartments[0], Assets[0], DateTime.Today.AddMonths(-1), 100d),
+				new ApartmentUsage(Apartments[0], Assets[1], DateTime.Today.AddMonths(-1), 200d),
+				new ApartmentUsage(Apartments[1], Assets[0], DateTime.Today.AddMonths(-2), 000d),
+				new ApartmentUsage(Apartments[1], Assets[1], DateTime.Today.AddMonths(-1), 400d),
 			};
 		}
 
