@@ -29,18 +29,26 @@
 
 using System;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Data.Templates
 {
-	public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
+	internal static class DataTemplateUtility
 	{
-		public DataArchiveExtractorOptions() { }
-		public DataArchiveExtractorOptions(object source, params string[] fields)
+		public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string type = null)
 		{
-			this.Source = source;
-			this.Fields = fields;
-		}
+			if(serviceProvider == null)
+				throw new ArgumentNullException(nameof(serviceProvider));
 
-		public object Source { get; set; }
-		public string[] Fields { get; set; }
+			foreach(var provider in serviceProvider.ResolveAll<IDataTemplateProvider>())
+			{
+				var template = provider.GetTemplate(name, type);
+
+				if(template != null)
+					return template;
+			}
+
+			return null;
+		}
 	}
 }

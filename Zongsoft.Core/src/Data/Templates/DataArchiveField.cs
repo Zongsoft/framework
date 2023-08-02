@@ -35,14 +35,14 @@ namespace Zongsoft.Data.Templates
 	{
 		#region 构造函数
 		public DataArchiveField(string name, string label = null, string description = null)
-        {
+		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-            this.Name = name;
+			this.Name = name;
 			this.Label = label;
 			this.Description = description;
-        }
+		}
 		#endregion
 
 		#region 公共属性
