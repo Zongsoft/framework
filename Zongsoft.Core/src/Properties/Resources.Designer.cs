@@ -196,6 +196,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 参数异常，可能传入了不支持的参数值。 的本地化字符串。
+        /// </summary>
+        internal static string OperationException_Argument_Message {
+            get {
+                return ResourceManager.GetString("OperationException.Argument.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 未能找到目标，导致操作异常。 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unfound_Message {

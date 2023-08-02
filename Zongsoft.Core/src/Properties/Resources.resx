@@ -162,6 +162,9 @@
   <data name="Error.UnSupportedNodeType" xml:space="preserve">
     <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
+  <data name="OperationException.Argument.Message" xml:space="preserve">
+    <value>参数异常，可能传入了不支持的参数值。</value>
+  </data>
   <data name="OperationException.Unfound.Message" xml:space="preserve">
     <value>未能找到目标，导致操作异常。</value>
   </data>

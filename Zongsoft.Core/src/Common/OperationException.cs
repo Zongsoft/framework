@@ -59,6 +59,12 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 静态方法
+		/// <summary>构建一个原因“无效参数”的操作异常。</summary>
+		/// <param name="message">指定的异常消息。</param>
+		/// <param name="innerException">指定的导致当前异常的内部异常。</param>
+		/// <returns>返回构建的操作异常实例。</returns>
+		public static OperationException Argument(string message = null, Exception innerException = null) => new(nameof(Argument), string.IsNullOrEmpty(message) ? Properties.Resources.OperationException_Argument_Message : message, innerException);
+
 		/// <summary>构建一个原因“未知”的操作异常。</summary>
 		/// <param name="message">指定的异常消息。</param>
 		/// <param name="innerException">指定的导致当前异常的内部异常。</param>
