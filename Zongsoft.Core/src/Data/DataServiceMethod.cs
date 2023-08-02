@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Data
 {
-	public struct DataServiceMethod : IEquatable<DataServiceMethod>
+	public readonly struct DataServiceMethod : IEquatable<DataServiceMethod>
 	{
 		#region 公共字段
 		/// <summary>方法的名称。</summary>
@@ -68,6 +68,8 @@ namespace Zongsoft.Data
 		public static DataServiceMethod Execute() => new DataServiceMethod(DataAccessMethod.Execute);
 		public static DataServiceMethod Increment() => new DataServiceMethod(nameof(Increment), DataAccessMethod.Increment, false);
 		public static DataServiceMethod Decrement() => new DataServiceMethod(nameof(Decrement), DataAccessMethod.Increment, false);
+		public static DataServiceMethod Import() => new DataServiceMethod(nameof(Import), DataAccessMethod.Import, true);
+		public static DataServiceMethod Export() => new DataServiceMethod(nameof(Export), DataAccessMethod.Select, true);
 		public static DataServiceMethod Select(string name = null) => new DataServiceMethod(name, DataAccessMethod.Select, false);
 		public static DataServiceMethod Delete(string name = null) => new DataServiceMethod(name, DataAccessMethod.Delete, false);
 		public static DataServiceMethod Insert(string name = null) => new DataServiceMethod(name, DataAccessMethod.Insert, false);
@@ -80,39 +82,41 @@ namespace Zongsoft.Data
 
 		#region 公共方法
 		/// <summary>获取一个值，指示当前是否为删除方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Delete"/>。</summary>
-		public bool IsDelete { get => this.Kind == DataAccessMethod.Delete; }
+		public bool IsDelete => this.Kind == DataAccessMethod.Delete;
 		/// <summary>获取一个值，指示当前是否为新增方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Insert"/>。</summary>
-		public bool IsInsert { get => this.Kind == DataAccessMethod.Insert; }
+		public bool IsInsert => this.Kind == DataAccessMethod.Insert;
 		/// <summary>获取一个值，指示当前是否为更新方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Update"/>。</summary>
-		public bool IsUpdate { get => this.Kind == DataAccessMethod.Update; }
+		public bool IsUpdate => this.Kind == DataAccessMethod.Update;
 		/// <summary>获取一个值，指示当前是否为增改方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Upsert"/>。</summary>
-		public bool IsUpsert { get => this.Kind == DataAccessMethod.Upsert; }
+		public bool IsUpsert => this.Kind == DataAccessMethod.Upsert;
 		/// <summary>获取一个值，指示当前是否为查询方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/>。</summary>
-		public bool IsSelect { get => this.Kind == DataAccessMethod.Select; }
-		/// <summary>获取一个值，指示当前是否为获取方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于“Get”。</summary>
-		public bool IsGet { get => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get); }
+		public bool IsSelect => this.Kind == DataAccessMethod.Select;
+		/// <summary>获取一个值，指示当前是否为导入方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Import"/>。</summary>
+		public bool IsImport => this.Kind == DataAccessMethod.Import;
+		/// <summary>获取一个值，指示当前是否为导出方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于 <c>Export</c>。</summary>
+		public bool IsExport => this.Kind == DataAccessMethod.Select && this.Name == nameof(Export);
+		/// <summary>获取一个值，指示当前是否为获取方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于 <c>Get</c>。</summary>
+		public bool IsGet => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get);
 
-		/// <summary>
-		/// 获取一个值，指示当前方法是否为读取方法(Get/Select/Exists/Aggregate)。
-		/// </summary>
-		public bool IsReading
-		{
-			get => this.Kind == DataAccessMethod.Select ||
-				   this.Kind == DataAccessMethod.Exists ||
-				   this.Kind == DataAccessMethod.Aggregate;
-		}
+		/// <summary>获取一个值，指示当前方法是否为读取方法(<c>Get</c>,<c>Select</c>,<c>Exists</c>,<c>Count</c>,<c>Aggregate</c>)。</summary>
+		public bool IsReading =>
+			this.Kind == DataAccessMethod.Select ||
+			this.Kind == DataAccessMethod.Exists ||
+			this.Kind == DataAccessMethod.Aggregate;
 
-		/// <summary>
-		/// 获取一个值，指示当前方法是否为修改方法(Delete/Insert/Update/Upsert)。
-		/// </summary>
-		public bool IsWriting
-		{
-			get => this.Kind == DataAccessMethod.Delete ||
-				   this.Kind == DataAccessMethod.Insert ||
-				   this.Kind == DataAccessMethod.Update ||
-				   this.Kind == DataAccessMethod.Upsert ||
-				   this.Kind == DataAccessMethod.Increment;
-		}
+		/// <summary>获取一个值，指示当前方法是否为修改方法(<c>Delete</c>,<c>Insert</c>,<c>Update</c>,<c>Upsert</c>,<c>Import</c>,<c>Increment</c>,<c>Decrement</c>)。</summary>
+		public bool IsWriting =>
+			this.Kind == DataAccessMethod.Delete ||
+			this.Kind == DataAccessMethod.Insert ||
+			this.Kind == DataAccessMethod.Update ||
+			this.Kind == DataAccessMethod.Upsert ||
+			this.Kind == DataAccessMethod.Import ||
+			this.Kind == DataAccessMethod.Increment;
+		#endregion
+
+		#region 重写符号
+		public static bool operator ==(DataServiceMethod left, DataServiceMethod right) => left.Equals(right);
+		public static bool operator !=(DataServiceMethod left, DataServiceMethod right) => !(left == right);
 		#endregion
 
 		#region 重写方法
