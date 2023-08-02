@@ -31,19 +31,34 @@ using System;
 
 namespace Zongsoft.Data.Templates
 {
-	/// <summary>
-	/// 表示数据文件生成选项的接口。
-	/// </summary>
-	public interface IDataArchiveGeneratorOptions
+	public class DataArchiveGeneratorOptions : IDataArchiveGeneratorOptions
 	{
-		/// <summary>获取或设置生成的字段数组。</summary>
-		DataArchiveField[] Fields { get; set; }
+		#region 构造函数
+		public DataArchiveGeneratorOptions(params DataArchiveField[] fields) : this(null, fields) { }
+		public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params DataArchiveField[] fields)
+		{
+			this.Formatter = formatter;
+			this.Fields = fields;
+		}
+		#endregion
 
-		/// <summary>格式化某个属性值。</summary>
-		/// <param name="target">待格式化的目标对象。</param>
-		/// <param name="property">待格式化的目标属性。</param>
-		/// <returns>返回格式化后的属性值。</returns>
-		/// <remarks>数据文件生成器会对每条数据生成目标记录时候会回调该接口的格式化方法，并将其格式化的结果作为最终结果写入到目标记录的相应单元内。</remarks>
-		object Format(object target, ModelPropertyDescriptor property);
+		#region 公共属性
+		/// <summary>获取或设置生成格式化器。</summary>
+		public IDataArchiveFormatter Formatter { get; set; }
+		/// <inheritdoc />
+		public DataArchiveField[] Fields { get; set; }
+		#endregion
+
+		#region 公共方法
+		public virtual object Format(object target, ModelPropertyDescriptor property)
+		{
+			var formatter = this.Formatter;
+
+			if(formatter == null)
+				return Reflection.Reflector.GetValue(property.Member, ref target);
+			else
+				return formatter.Format(target, property);
+		}
+		#endregion
 	}
 }

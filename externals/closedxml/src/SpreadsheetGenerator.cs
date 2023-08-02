@@ -311,13 +311,8 @@ namespace Zongsoft.Externals.ClosedXml
 				range.Style.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
 			}
 
-			static object GetValue(ref object target, ModelPropertyDescriptor property, IDataArchiveGeneratorOptions options)
-			{
-				if(options != null && options.Formatter != null)
-					return options.Formatter(target, property);
-
-				return Reflection.Reflector.TryGetValue(ref target, property.Name, out var value) ? value : null;
-			}
+			static object GetValue(ref object target, ModelPropertyDescriptor property, IDataArchiveGeneratorOptions options) =>
+				options != null ? options.Format(target, property) : Reflection.Reflector.TryGetValue(ref target, property.Name, out var value) ? value : null;
 		}
 		#endregion
 

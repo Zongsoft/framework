@@ -61,13 +61,51 @@ namespace Zongsoft.Externals.ClosedXml
 
 			var workbook = new XLWorkbook(input);
 			var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
+			var table = GetTable(worksheet, model, options?.Fields);
 
-			return new AsyncEnumerable<T>(worksheet, model, options?.Fields);
+			//如果提取选项不为空但没有指定要提取的字段，则更新真实能提取到的字段集到选项中
+			if(options != null && (options.Fields == null || options.Fields.Length == 0))
+				options.Fields = table.Columns.Select(column => column.Name).ToArray();
+
+			return new AsyncEnumerable<T>(table);
 		}
 		#endregion
 
 		#region 私有方法
 		private static T Create<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
+		private static Table GetTable(IXLWorksheet worksheet, ModelDescriptor model, string[] fields)
+		{
+			//根据模型名获取指定的数据区引用
+			var reference = worksheet.NamedRange(model.Name) ?? worksheet.Workbook.NamedRange(model.Name);
+			if(reference == null || !reference.IsValid)
+				return null;
+
+			//获取数据内容区
+			var dataRange = worksheet.Range(reference.RefersTo);
+			if(dataRange == null || dataRange.IsEmpty())
+				return null;
+
+			var properties = fields == null || fields.Length == 0 ?
+				model.Properties.Where(property => property.Field == null || (property.Field.IsSimplex && !property.Field.Immutable)) :
+				fields.Select(field => field != null && model.Properties.TryGetValue(field, out var property) ? property : null).Where(property => property != null);
+
+			var columns = new List<TableColumn>(dataRange.ColumnCount());
+
+			foreach(var property in properties)
+			{
+				reference = worksheet.NamedRange(property.Name) ?? worksheet.Workbook.NamedRange(property.Name);
+				if(reference == null || !reference.IsValid)
+					continue;
+
+				var fieldRange = worksheet.Range(reference.RefersTo);
+				if(fieldRange == null || fieldRange.IsEmpty())
+					continue;
+
+				columns.Add(new(property, fieldRange.FirstColumn().ColumnNumber()));
+			}
+
+			return columns == null || columns.Count == 0 ? null : new Table(worksheet, dataRange, model, columns);
+		}
 		#endregion
 
 		#region 服务匹配
@@ -82,33 +120,22 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 嵌套子类
 		private class AsyncEnumerable<T> : IAsyncEnumerable<T>
 		{
-			private readonly IXLWorksheet Worksheet;
-			private readonly ModelDescriptor Model;
-			private readonly string[] Fields;
-
-			public AsyncEnumerable(IXLWorksheet worksheet, ModelDescriptor model, string[] fields)
-			{
-				this.Worksheet = worksheet;
-				this.Model = model;
-				this.Fields = fields;
-			}
-
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(this, cancellation);
+			private readonly Table _table;
+			public AsyncEnumerable(Table table) => _table = table;
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_table, cancellation);
 
 			private class AsyncEnumerator : IAsyncEnumerator<T>
 			{
-				private AsyncEnumerable<T> _owner;
-				private readonly Table _table;
+				private int _row;
+				private Table _table;
 				private readonly IXLRanges _ignores;
 				private readonly CancellationToken _cancellation;
-				private int _row;
 
-				public AsyncEnumerator(AsyncEnumerable<T> owner, CancellationToken cancellation)
+				public AsyncEnumerator(Table table, CancellationToken cancellation)
 				{
-					_owner = owner;
+					_table = table;
 					_cancellation = cancellation;
-					_ignores = (owner.Worksheet.NamedRange("Ignores") ?? owner.Worksheet.Workbook.NamedRange("Ignores"))?.Ranges;
-					_table = GetTable(owner.Worksheet, owner.Model, owner.Fields);
+					_ignores = (table.Worksheet.NamedRange("Ignores") ?? table.Workbook.NamedRange("Ignores"))?.Ranges;
 				}
 
 				public T Current
@@ -133,7 +160,7 @@ namespace Zongsoft.Externals.ClosedXml
 
 				public async ValueTask<bool> MoveNextAsync()
 				{
-					if(_owner == null || _table == null)
+					if(_table == null || _cancellation.IsCancellationRequested)
 						return false;
 
 					while(_row++ < _table.Rows)
@@ -156,52 +183,25 @@ namespace Zongsoft.Externals.ClosedXml
 
 				public ValueTask DisposeAsync()
 				{
-					var owner = Interlocked.Exchange(ref _owner, null);
-					owner?.Worksheet.Workbook.Dispose();
+					var table = Interlocked.Exchange(ref _table, null);
+					table?.Dispose();
 					return ValueTask.CompletedTask;
 				}
 
 				private static bool IsIgnored(IXLRanges ignores, IXLRangeRow row) => ignores != null && ignores.Contains(row.AsRange());
-				private static Table GetTable(IXLWorksheet worksheet, ModelDescriptor model, string[] fields)
-				{
-					//根据模型名获取指定的数据区引用
-					var reference = worksheet.NamedRange(model.Name) ?? worksheet.Workbook.NamedRange(model.Name);
-					if(reference == null || !reference.IsValid)
-						return null;
-
-					//获取数据内容区
-					var dataRange = worksheet.Range(reference.RefersTo);
-					if(dataRange == null || dataRange.IsEmpty())
-						return null;
-
-					var properties = fields == null || fields.Length == 0 ?
-						model.Properties.Where(property => property.Field == null || (property.Field.IsSimplex && !property.Field.Immutable)) :
-						fields.Select(field => field != null && model.Properties.TryGetValue(field, out var property) ? property : null).Where(property => property != null);
-
-					var columns = new List<TableColumn>(dataRange.ColumnCount());
-
-					foreach(var property in properties)
-					{
-						reference = worksheet.NamedRange(property.Name) ?? worksheet.Workbook.NamedRange(property.Name);
-						if(reference == null || !reference.IsValid)
-							continue;
-
-						var fieldRange = worksheet.Range(reference.RefersTo);
-						if(fieldRange == null || fieldRange.IsEmpty())
-							continue;
-
-						columns.Add(new(property, fieldRange.FirstColumn().ColumnNumber()));
-					}
-
-					return columns == null || columns.Count == 0 ? null : new Table(dataRange, model, columns);
-				}
 			}
 		}
 
-		private sealed class Table
+		private sealed class Table : IDisposable
 		{
-			public Table(IXLRange range, ModelDescriptor model, IEnumerable<TableColumn> columns = null)
+			#region 成员字段
+			private IXLWorksheet _worksheet;
+			#endregion
+
+			#region 构造函数
+			public Table(IXLWorksheet worksheet, IXLRange range, ModelDescriptor model, IEnumerable<TableColumn> columns = null)
 			{
+				_worksheet = worksheet ?? throw new ArgumentNullException(nameof(worksheet));
 				this.Range = range ?? throw new ArgumentNullException(nameof(range));
 				this.Model = model ?? throw new ArgumentNullException(nameof(model));
 				this.Columns = new TableColumnCollection(this);
@@ -216,11 +216,24 @@ namespace Zongsoft.Externals.ClosedXml
 
 				this.Rows = this.Range.RowCount();
 			}
+			#endregion
 
+			#region 公共属性
 			public int Rows { get; }
 			public IXLRange Range { get; }
 			public ModelDescriptor Model { get; }
 			public TableColumnCollection Columns { get; }
+			public IXLWorksheet Worksheet => _worksheet;
+			public IXLWorkbook Workbook => _worksheet?.Workbook;
+			#endregion
+
+			#region 处置方法
+			public void Dispose()
+			{
+				var worksheet = Interlocked.Exchange(ref _worksheet, null);
+				worksheet?.Workbook.Dispose();
+			}
+			#endregion
 		}
 
 		private sealed class TableColumn
