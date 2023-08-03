@@ -33,8 +33,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 using Zongsoft.IO;
 using Zongsoft.Data;
@@ -65,17 +65,9 @@ namespace Zongsoft.Web
 		protected virtual bool CanCreate => this.DataService.CanInsert;
 		protected virtual bool CanUpdate => this.DataService.CanUpdate;
 		protected virtual bool CanUpsert => this.CanCreate && this.CanUpdate && this.DataService.CanUpsert;
-
-		protected TService DataService
-		{
-			get
-			{
-				if(_dataService == null)
-					_dataService = this.GetService() ?? throw new InvalidOperationException("Missing required data service.");
-
-				return _dataService;
-			}
-		}
+		protected virtual bool CanImport => this.DataService is IDataImportable importable && importable.CanImport;
+		protected virtual bool CanExport => this.DataService is IDataExportable exportable && exportable.CanExport;
+		protected TService DataService => _dataService ??= this.GetService() ?? throw new InvalidOperationException("Missing required data service.");
 
 		protected IServiceProvider ServiceProvider
 		{
@@ -251,7 +243,103 @@ namespace Zongsoft.Web
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.Paginate(this.DataService.Select(Criteria.Transform(criteria as IModel), Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers), page ?? Paging.Page(1), sort));
+			return this.Paginate(this.DataService.Select(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), sort));
+		}
+		#endregion
+
+		#region 导入导出
+		[HttpPost("[action]")]
+		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery]string format = null, CancellationToken cancellation = default)
+		{
+			if(!this.CanImport)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var count = this.DataService is IDataImportable importable ? await importable.ImportAsync(file.OpenReadStream(), format, null, cancellation) : 0;
+			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
+		}
+
+		[HttpGet("{key?}/[action]")]
+		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery]string format = null, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		{
+			if(!this.CanExport)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			if(this.DataService is IDataExportable exportable)
+			{
+				var data = string.IsNullOrEmpty(key) ? null : this.OnGet(key, filter, page, sort);
+				using var output = new System.IO.MemoryStream();
+				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
+				output.Seek(0, System.IO.SeekOrigin.Begin);
+				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+			}
+
+			return this.NoContent();
+		}
+
+		[HttpPost("[action]")]
+		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery]string format = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		{
+			if(!this.CanExport)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			if(this.DataService is IDataExportable exportable)
+			{
+				var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation);
+				var data = this.DataService.Select(
+					Criteria.Transform(criteria as IModel),
+					this.GetSchema(),
+					page ?? Paging.Page(1),
+					sort);
+
+				using var output = new System.IO.MemoryStream();
+				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
+				output.Seek(0, System.IO.SeekOrigin.Begin);
+				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+			}
+
+			return this.NoContent();
+		}
+
+		[HttpGet("[action]/{template}/{key?}")]
+		public virtual async ValueTask<IActionResult> ExportAsync(string template, string key, [FromQuery]string format = null, CancellationToken cancellation = default)
+		{
+			if(!this.CanExport)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			if(this.DataService is IDataExportable exportable)
+			{
+				using var output = new System.IO.MemoryStream();
+				await exportable.ExportAsync(output, template, key, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
+				output.Seek(0, System.IO.SeekOrigin.Begin);
+				return this.File(output, this.Request.Headers.Accept, template);
+			}
+
+			return this.NoContent();
+		}
+
+		[HttpPost("[action]/{template}")]
+		public virtual async ValueTask<IActionResult> ExportAsync(string template, [FromQuery]string format = null, CancellationToken cancellation = default)
+		{
+			if(!this.CanExport)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation);
+
+			if(this.DataService is IDataExportable exportable)
+			{
+				using var output = new System.IO.MemoryStream();
+				await exportable.ExportAsync(output, template, criteria, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
+				output.Seek(0, System.IO.SeekOrigin.Begin);
+				return this.File(output, this.Request.Headers.Accept, template);
+			}
+
+			return this.NoContent();
 		}
 		#endregion
 
@@ -287,7 +375,7 @@ namespace Zongsoft.Web
 				if(uploaded == null || uploaded(file))
 					return file;
 
-				this.DeleteFile(file.Path.Url);
+				DeleteFile(file.Path.Url);
 			}
 
 			return null;
@@ -328,7 +416,7 @@ namespace Zongsoft.Web
 				if((item = uploaded(file)) != null)
 					result.Add(item);
 				else
-					this.DeleteFile(file.Path.Url);
+					DeleteFile(file.Path.Url);
 			}
 
 			return result;
@@ -389,7 +477,7 @@ namespace Zongsoft.Web
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void DeleteFile(string filePath)
+		private static void DeleteFile(string filePath)
 		{
 			try
 			{
@@ -400,10 +488,11 @@ namespace Zongsoft.Web
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetSchema()
-		{
-			return Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
-		}
+		private string GetSchema() => Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private string[] GetExportMembers() => this.Request.Headers.TryGetValue("X-Export-Members", out var content) && content.Count > 0 ?
+			content.ToString().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
 		#endregion
 	}
 }
