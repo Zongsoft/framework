@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Authentication;
 
 using Zongsoft.Data;
+using Zongsoft.Common;
 using Zongsoft.Security;
 using Zongsoft.Security.Membership;
 
@@ -68,6 +67,21 @@ namespace Zongsoft.Web.Filters
 						Status = StatusCodes.Status403Forbidden,
 					});
 
+					break;
+				case OperationException operationException when operationException.IsArgument:
+					context.Result = new BadRequestResult();
+					break;
+				case OperationException operationException when operationException.IsUnfound:
+					context.Result = new NotFoundResult();
+					break;
+				case OperationException operationException when operationException.IsUnsatisfied:
+					context.Result = new StatusCodeResult(StatusCodes.Status412PreconditionFailed);
+					break;
+				case OperationException operationException when operationException.IsUnprocessed:
+					context.Result = new StatusCodeResult(StatusCodes.Status406NotAcceptable);
+					break;
+				case OperationException operationException when operationException.IsUnsupported:
+					context.Result = new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
 					break;
 				case DataArgumentException argumentException:
 					if(!string.IsNullOrEmpty(argumentException.Name))

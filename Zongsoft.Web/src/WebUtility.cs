@@ -36,7 +36,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
 
 using Zongsoft.Data;
 
@@ -44,6 +43,10 @@ namespace Zongsoft.Web
 {
 	public static class WebUtility
 	{
+		#region 常量定义
+		private static readonly Microsoft.Net.Http.Headers.MediaTypeHeaderValue TEXT = new("text/*");
+		#endregion
+
 		#region 公共方法
 		public static IActionResult Paginate(object data, IPageable pageable = null)
 		{
@@ -53,8 +56,8 @@ namespace Zongsoft.Web
 					return null;
 
 				return paging.PageIndex.ToString() + "/" +
-				       paging.PageCount.ToString() + "(" +
-				       paging.TotalCount.ToString() + ")";
+					   paging.PageCount.ToString() + "(" +
+					   paging.TotalCount.ToString() + ")";
 			}
 
 			if(data == null)
@@ -97,7 +100,11 @@ namespace Zongsoft.Web
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			var encoding = MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType) ? (mediaType.Encoding ?? Encoding.UTF8) : Encoding.UTF8;
+			var headers = request.GetTypedHeaders();
+			var encoding = headers.ContentType?.Encoding ?? Encoding.UTF8;
+
+			if(!headers.ContentType.IsSubsetOf(TEXT))
+				return null;
 
 			using(var reader = new StreamReader(
 				request.Body,
