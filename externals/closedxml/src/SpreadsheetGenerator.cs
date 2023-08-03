@@ -279,6 +279,9 @@ namespace Zongsoft.Externals.ClosedXml
 
 		private static void GenerateRow(IXLWorksheet worksheet, int row, object record, TableColumn[] columns, IDataArchiveGeneratorOptions options)
 		{
+			if(record == null)
+				return;
+
 			int index = 1;
 
 			foreach(var column in columns)
