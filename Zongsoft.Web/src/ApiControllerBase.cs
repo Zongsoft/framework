@@ -258,7 +258,8 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpGet("{key?}/[action]")]
+		[HttpGet("[action]")]
+		[HttpGet("{key}/[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery]string format = null, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -267,7 +268,7 @@ namespace Zongsoft.Web
 			if(this.DataService is IDataExportable exportable)
 			{
 				var data = string.IsNullOrEmpty(key) ? null : this.OnGet(key, filter, page, sort);
-				using var output = new System.IO.MemoryStream();
+				var output = new System.IO.MemoryStream();
 				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
@@ -294,7 +295,7 @@ namespace Zongsoft.Web
 					page ?? Paging.Page(1),
 					sort);
 
-				using var output = new System.IO.MemoryStream();
+				var output = new System.IO.MemoryStream();
 				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
@@ -311,7 +312,7 @@ namespace Zongsoft.Web
 
 			if(this.DataService is IDataExportable exportable)
 			{
-				using var output = new System.IO.MemoryStream();
+				var output = new System.IO.MemoryStream();
 				await exportable.ExportAsync(output, template, key, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, template);
@@ -333,7 +334,7 @@ namespace Zongsoft.Web
 
 			if(this.DataService is IDataExportable exportable)
 			{
-				using var output = new System.IO.MemoryStream();
+				var output = new System.IO.MemoryStream();
 				await exportable.ExportAsync(output, template, criteria, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, template);
