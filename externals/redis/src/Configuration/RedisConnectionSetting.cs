@@ -37,6 +37,10 @@ namespace Zongsoft.Externals.Redis.Configuration
 {
 	public class RedisConnectionSetting : IConnectionSetting
 	{
+		#region 常量定义
+		internal const string DRIVER = "Redis";
+		#endregion
+
 		#region 成员字段
 		private readonly IConnectionSetting _connectionSetting;
 		private readonly StackExchange.Redis.ConfigurationOptions _options;
@@ -48,7 +52,7 @@ namespace Zongsoft.Externals.Redis.Configuration
 			if(connectionSetting == null)
 				throw new ArgumentNullException(nameof(connectionSetting));
 
-			if(!connectionSetting.IsDriver("redis"))
+			if(!connectionSetting.IsDriver(DRIVER))
 				throw new ConfigurationException($"The specified '{connectionSetting}' connection settings is not a Redis configuration.");
 
 			var host = connectionSetting.Values.Server;

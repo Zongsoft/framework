@@ -36,7 +36,7 @@ namespace Zongsoft.Externals.Redis.Configuration
 {
 	public class RedisConnectionSettingValuesMapper : ConnectionSettingValuesMapper
 	{
-		public RedisConnectionSettingValuesMapper() : base("Redis", new[]
+		public RedisConnectionSettingValuesMapper() : base(RedisConnectionSetting.DRIVER, new[]
 		{
 			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.Client), "name"),
 			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.UserName), "user"),
