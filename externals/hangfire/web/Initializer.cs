@@ -34,7 +34,6 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 
 using Hangfire;
-using Hangfire.AspNetCore;
 
 using Zongsoft.Services;
 

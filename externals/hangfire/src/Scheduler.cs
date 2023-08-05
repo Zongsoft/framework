@@ -53,9 +53,9 @@ namespace Zongsoft.Externals.Hangfire
 			{
 				case TriggerOptions.Cron cron:
 					if(string.IsNullOrEmpty(options.Identifier))
-						RecurringJob.AddOrUpdate(() => HandlerFactory.HandleAsync(this, name, CancellationToken.None), cron.Expression);
-					else
-						RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, CancellationToken.None), cron.Expression);
+						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
+
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, CancellationToken.None), cron.Expression);
 					return options.Identifier;
 				case TriggerOptions.Latency latency:
 					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(this, name, CancellationToken.None), latency.Duration);
@@ -73,9 +73,9 @@ namespace Zongsoft.Externals.Hangfire
 			{
 				case TriggerOptions.Cron cron:
 					if(string.IsNullOrEmpty(options.Identifier))
-						RecurringJob.AddOrUpdate(() => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), cron.Expression);
-					else
-						RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), cron.Expression);
+						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
+
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), cron.Expression);
 					return options.Identifier;
 				case TriggerOptions.Latency latency:
 					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), latency.Duration);
@@ -122,7 +122,7 @@ namespace Zongsoft.Externals.Hangfire
 				}
 
 				if(count < 1)
-					Zongsoft.Diagnostics.Logger.Warn($"No matching handlers found for job named '{name}'.") ;
+					Zongsoft.Diagnostics.Logger.Warn($"No matching handlers found for job named '{name}'.");
 			}
 
 			public static async Task HandleAsync<TParameter>(object caller, string name, TParameter parameter, CancellationToken cancellation)

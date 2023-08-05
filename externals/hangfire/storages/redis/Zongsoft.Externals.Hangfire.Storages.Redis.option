@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Redis">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Hangfire" driver="redis"
+			                   value="server=127.0.0.1;password=xxxxx" />
+		</connectionSettings>
+	</option>
+</options>

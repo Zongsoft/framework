@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Zongsoft.Services;
 using Zongsoft.Scheduling;
@@ -39,8 +36,11 @@ namespace Zongsoft.Externals.Hangfire.Commands
 {
 	public class SchedulerCommand : CommandBase<CommandContext>
 	{
+		#region 成员字段
 		private IScheduler _scheduler;
+		#endregion
 
+		#region 构造函数
 		public SchedulerCommand(IServiceProvider serviceProvider)
 		{
 			_scheduler = serviceProvider?.Resolve<IScheduler>();
@@ -50,6 +50,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		{
 			return _scheduler;
 		}
+		#endregion
 
 		#region 静态方法
 		public static IScheduler GetScheduler(CommandTreeNode node)

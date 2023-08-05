@@ -6,6 +6,5 @@ src/Zongsoft.Externals.Hangfire-$(site).plugin
 
 src/bin/$(Edition)/$(Target)/Zongsoft.Externals.Hangfire.*
 
-%NUGET_PACKAGES%/hangfire.core/1.7.31/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/hangfire.core/1.7.31/lib/netstandard2.0/*/*.dll
-%NUGET_PACKAGES%/newtonsoft.json/13.0.1/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/hangfire.core/1.8.4/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/newtonsoft.json/11.0.1/lib/netstandard2.0/*.dll

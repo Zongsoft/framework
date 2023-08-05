@@ -32,8 +32,6 @@ using System.Threading;
 using System.Collections.Generic;
 
 using Hangfire;
-using Hangfire.Server;
-using Hangfire.Storage;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
@@ -62,6 +60,8 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 公共属性
+		[ServiceDependency]
+		public JobStorage Storage { get; set; }
 		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
 
@@ -70,9 +70,9 @@ namespace Zongsoft.Externals.Hangfire
 		{
 			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
 			{
-				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{Environment.MachineName}",
+				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{System.Environment.MachineName}",
 				SchedulePollingInterval = TimeSpan.FromSeconds(5),
-			});
+			}, this.Storage ?? JobStorage.Current);
 		}
 
 		protected override void OnStop(string[] args)
