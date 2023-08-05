@@ -10,9 +10,9 @@ Visual Studio 默认使用 IIS Express 作为Web服务器，且默认只绑定�
 system.applicationHost/sites/site[name=xxxx]/bindings
 ```
 
-1. 修改其绑定内容为：
+1. 在绑定集中添加一个对应IP或自定义域名的绑定节点，譬如：
 ```xml
-<binding protocol="http" bindingInformation="*:8069:*" />
+<binding protocol="http" bindingInformation="*:8069:127.0.0.1" />
 ```
 
 2. 以管理员方式运行“命令终端”，然后在终端执行器中执行下面命令：
