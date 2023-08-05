@@ -9,4 +9,5 @@ src/bin/$(Edition)/$(Target)/Zongsoft.Externals.ClosedXml.*
 %NUGET_PACKAGES%/sixlabors.fonts/1.0.0-beta19/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/xlparser/1.5.2/lib/netstandard1.6/*.dll
 %NUGET_PACKAGES%/morelinq/3.4.1/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/system.io.packaging/6.0.0/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/system.linq.dynamic.core/1.3.0/lib/netstandard2.1/*.dll
