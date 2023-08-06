@@ -34,10 +34,12 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
 
-using Zongsoft.Services;
+using Zongsoft.Security;
+using Zongsoft.Security.Membership;
 
 namespace Zongsoft.Security
 {
+	[DefaultMember(nameof(Transformers))]
 	public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 	{
 		#region 单例字段
@@ -45,7 +47,11 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
-		protected ClaimsPrincipalTransformer() { }
+		protected ClaimsPrincipalTransformer() => this.Transformers = new List<IClaimsIdentityTransformer>();
+		#endregion
+
+		#region 公共属性
+		public ICollection<IClaimsIdentityTransformer> Transformers { get; }
 		#endregion
 
 		#region 公共方法
@@ -76,37 +82,38 @@ namespace Zongsoft.Security
 			if(principal.Identity != null)
 			{
 				if(transform == null)
-					dictionary.Add(nameof(ClaimsPrincipal.Identity), this.TransformIdentity((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+					dictionary.Add(nameof(ClaimsPrincipal.Identity), this.OnTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 				else
 					dictionary.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 			}
 
 			if(principal.Identities != null)
-				dictionary.Add(nameof(ClaimsPrincipal.Identities), principal.Identities
+			{
+				var identities = principal.Identities
 					.Where(identity => identity != principal.Identity)
-					.Select(identity => transform == null ? this.TransformIdentity(identity) : transform(identity)));
+					.Select(identity => new
+					{
+						Scheme = identity.AuthenticationType,
+						Identity = transform == null ? this.OnTransform(identity) : transform(identity)
+					});
+
+				dictionary.Add(nameof(ClaimsPrincipal.Identities), identities);
+			}
 
 			return dictionary;
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual object TransformIdentity(ClaimsIdentity identity)
+		protected virtual object OnTransform(ClaimsIdentity identity)
 		{
-			return this.TransformIdentity(identity.Claims.FirstOrDefault(claim => string.Equals(claim.Type, ClaimTypes.System))?.Value, identity);
-		}
-
-		protected virtual object TransformIdentity(string name, ClaimsIdentity identity)
-		{
-			var transformers = ApplicationContext.Current?.Services.ResolveAll<IClaimsIdentityTransformer>(name);
-
-			foreach(var transformer in transformers)
+			foreach(var transformer in this.Transformers)
 			{
 				if(transformer.CanTransform(identity))
 					return transformer.Transform(identity);
 			}
 
-			return identity.AsModel<Membership.IUserModel>();
+			return identity.AsModel<IUserModel>();
 		}
 		#endregion
 	}

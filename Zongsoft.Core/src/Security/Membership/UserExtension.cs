@@ -28,13 +28,14 @@
  */
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
 	public static class UserExtension
 	{
-		public static ClaimsIdentity Identity(this IUserModel user, string scheme, string issuer, TimeSpan? expiration = null)
+		public static ClaimsIdentity Identity(this IUserIdentity user, string scheme, string issuer, TimeSpan? expiration = null)
 		{
 			if(user == null)
 				return new ClaimsIdentity();
@@ -44,15 +45,18 @@ namespace Zongsoft.Security.Membership
 				Label = user.Nickname
 			};
 
-			SetClaims(identity, user, expiration);
+			if(user is IUserModel model)
+				SetClaims(identity, model, expiration);
+			else
+				SetClaims(identity, user, expiration);
 
 			return identity;
 		}
 
-		public static void SetClaims(this ClaimsIdentity identity, IUserModel user, TimeSpan? expiration = null)
+		public static bool SetClaims(this ClaimsIdentity identity, IUserIdentity user, TimeSpan? expiration = null)
 		{
 			if(identity == null || user == null)
-				return;
+				return false;
 
 			if(!string.IsNullOrWhiteSpace(user.Nickname))
 				identity.Label = user.Nickname;
@@ -64,6 +68,21 @@ namespace Zongsoft.Security.Membership
 				identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String));
 			if(!string.IsNullOrEmpty(user.Description))
 				identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String));
+
+			if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
+				identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration));
+
+			return true;
+		}
+
+		public static bool SetClaims(this ClaimsIdentity identity, IUserModel user, TimeSpan? expiration = null)
+		{
+			if(!SetClaims(identity, (IUserIdentity)user, expiration))
+				return false;
+
+			if(!string.IsNullOrWhiteSpace(user.Nickname))
+				identity.Label = user.Nickname;
+
 			if(!string.IsNullOrEmpty(user.Email))
 				identity.AddClaim(new Claim(ClaimTypes.Email, user.Email.ToString(), ClaimValueTypes.String));
 			if(!string.IsNullOrEmpty(user.Phone))
@@ -79,8 +98,7 @@ namespace Zongsoft.Security.Membership
 			if(user.Modification.HasValue)
 				identity.AddClaim(new Claim(ClaimNames.Modification, user.Modification.ToString(), ClaimValueTypes.DateTime));
 
-			if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
-				identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration));
+			return true;
 		}
 	}
 }

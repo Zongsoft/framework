@@ -58,6 +58,7 @@ namespace Zongsoft.Security.Membership
 		private ICredentialProvider _authority;
 		private readonly KeyedCollection<string, IAuthenticator> _authenticators;
 		private readonly List<IChallenger> _challengers;
+		private IClaimsPrincipalTransformer _transformer;
 		private bool _initilized;
 		#endregion
 
@@ -66,6 +67,7 @@ namespace Zongsoft.Security.Membership
 		{
 			_authenticators = new AuthenticatorCollection();
 			_challengers = new List<IChallenger>();
+			_transformer = ClaimsPrincipalTransformer.Default;
 		}
 		#endregion
 
@@ -79,7 +81,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		/// <summary>获取当前验证器的标识。</summary>
-		public virtual string Scheme { get => "Zongsoft.Authentication"; }
+		public virtual string Scheme => "Zongsoft.Authentication";
 
 		/// <summary>获取或设置凭证主体的提供程序。</summary>
 		public ICredentialProvider Authority
@@ -89,10 +91,13 @@ namespace Zongsoft.Security.Membership
 		}
 
 		/// <summary>获取一个身份验证器集合。</summary>
-		public KeyedCollection<string, IAuthenticator> Authenticators { get => _authenticators; }
+		public KeyedCollection<string, IAuthenticator> Authenticators => _authenticators;
 
 		/// <summary>获取一个身份验证质询器集合。</summary>
-		public ICollection<IChallenger> Challengers { get => _challengers; }
+		public ICollection<IChallenger> Challengers => _challengers;
+
+		/// <summary>获取一个安全主体的转换器。</summary>
+		public IClaimsPrincipalTransformer Transformer { get => _transformer; set => _transformer = value ?? throw new ArgumentNullException(); }
 
 		/// <summary>获取或设置验证失败阻止器。</summary>
 		public IAttempter Attempter { get; set; }
@@ -131,16 +136,12 @@ namespace Zongsoft.Security.Membership
 			var identity = await this.OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
 
 			//生成安全主体
-			var principal = CreateCredential(identity, scenario);
+			var principal = CreatePrincipal(identity, scenario);
 
-			//遍历安全质询器集合并依次调用
+			//遍历安全质询器集合并依次质询
 			foreach(var challenger in _challengers)
 			{
-				var result = challenger.Challenge(principal, scenario);
-
-				//质询失败则返回失败
-				if(result == null)
-					throw new AuthenticationException(SecurityReasons.Forbidden);
+				challenger.Challenge(principal, scenario);
 			}
 
 			//通知验证完成
@@ -154,25 +155,19 @@ namespace Zongsoft.Security.Membership
 		#region 虚拟方法
 		protected async virtual ValueTask<ClaimsIdentity> OnAuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
-			var authenticator = this.GetAuthenticator(scheme, key, data, scenario);
-
-			if(authenticator == null)
+			//获取身份验证器
+			var authenticator = this.GetAuthenticator(scheme, key, data, scenario) ??
 				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Invalid authenticator scheme.");
 
 			//校验身份
-			var result = await authenticator.VerifyAsync(key, data, scenario, parameters);
+			var result = await authenticator.VerifyAsync(key, data, scenario, parameters, cancellation);
 
 			//签发身份
-			var identity = await authenticator.IssueAsync(result, scenario, parameters);
-
-			if(identity == null)
+			var identity = await authenticator.IssueAsync(result, scenario, parameters, cancellation) ??
 				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
 			return identity;
 		}
-
-		protected virtual IAuthenticator GetAuthenticator(string scheme, string key, object data, string scenario) =>
-			_authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
 
 		protected virtual void OnAuthenticated(CredentialPrincipal principal, string scenario, IDictionary<string, object> parameters)
 		{
@@ -185,7 +180,10 @@ namespace Zongsoft.Security.Membership
 			this.OnAuthenticated(new AuthenticatedEventArgs(this, principal, scenario, parameters));
 		}
 
-		protected virtual CredentialPrincipal CreateCredential(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(scenario, identity);
+		protected virtual IAuthenticator GetAuthenticator(string scheme, string key, object data, string scenario) =>
+			_authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
+
+		protected virtual CredentialPrincipal CreatePrincipal(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(scenario, identity);
 		#endregion
 
 		#region 激发事件

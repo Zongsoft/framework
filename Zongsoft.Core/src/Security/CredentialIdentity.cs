@@ -53,6 +53,7 @@ namespace Zongsoft.Security
 			if(string.IsNullOrEmpty(originalIssuer))
 				originalIssuer = issuer;
 
+			base.AddClaim(new Claim(ClaimTypes.System, issuer, ClaimValueTypes.String, issuer, originalIssuer, this));
 			base.AddClaim(new Claim(base.NameClaimType, _name, ClaimValueTypes.String, issuer, originalIssuer, this));
 		}
 

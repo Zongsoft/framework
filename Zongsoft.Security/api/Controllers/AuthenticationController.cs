@@ -169,10 +169,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 私有方法
-		private object Transform(System.Security.Claims.ClaimsPrincipal principal)
-		{
-			return ClaimsPrincipalTransformer.Default.Transform(principal);
-		}
+		private object Transform(System.Security.Claims.ClaimsPrincipal principal) => Authentication.Instance.Transformer.Transform(principal);
 		#endregion
 	}
 }
