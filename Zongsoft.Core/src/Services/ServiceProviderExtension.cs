@@ -145,7 +145,7 @@ namespace Zongsoft.Services
 					if(matcher.Match(typeof(T), parameter))
 						return service;
 				}
-				else if(typeof(IMatchable).IsAssignableFrom(typeof(T)))
+				else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 				{
 					if(((IMatchable)service).Match(parameter))
 						return service;
@@ -182,7 +182,7 @@ namespace Zongsoft.Services
 					if(matcher.Match(typeof(T), parameter))
 						yield return service;
 				}
-				else if(typeof(IMatchable).IsAssignableFrom(typeof(T)))
+				else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 				{
 					if(((IMatchable)service).Match(parameter))
 						yield return service;
@@ -217,7 +217,7 @@ namespace Zongsoft.Services
 					if(matcher.Match(serviceType, parameter))
 						return service;
 				}
-				else if(typeof(IMatchable).IsAssignableFrom(serviceType))
+				else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 				{
 					if(((IMatchable)service).Match(parameter))
 						return service;
@@ -254,7 +254,7 @@ namespace Zongsoft.Services
 					if(matcher.Match(serviceType, parameter))
 						yield return service;
 				}
-				else if(typeof(IMatchable).IsAssignableFrom(serviceType))
+				else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 				{
 					if(((IMatchable)service).Match(parameter))
 						yield return service;
