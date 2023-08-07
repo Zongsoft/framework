@@ -128,7 +128,7 @@ namespace Zongsoft.Web.Filters
 					break;
 				case NotSupportedException unsupported:
 				case NotImplementedException unimplemented:
-					context.Result = new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+					context.Result = new StatusCodeResult(StatusCodes.Status501NotImplemented);
 					break;
 				default:
 					Zongsoft.Diagnostics.Logger.Error(context.Exception);
