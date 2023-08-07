@@ -169,7 +169,9 @@ namespace Zongsoft.Data
 
 		protected virtual ValueTask OnExportAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
 		{
-			var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template);
+			var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template) ??
+				throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
+
 			return renderer.RenderAsync(output, template, data, parameters, cancellation);
 		}
 		#endregion
