@@ -38,7 +38,7 @@ using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
 {
-	public class SpreadsheetTemplate : IDataTemplate
+	public class SpreadsheetTemplate : IDataTemplate, IEquatable<SpreadsheetTemplate>
 	{
 		#region 构造函数
 		private SpreadsheetTemplate(string filePath, string title = null, string description = null)
@@ -63,6 +63,13 @@ namespace Zongsoft.Externals.ClosedXml
 
 		#region 公共方法
 		public Stream Open() => File.OpenRead(this.FilePath);
+		#endregion
+
+		#region 重写方法
+		public bool Equals(SpreadsheetTemplate other) => other != null && string.Equals(this.FilePath, other.FilePath, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+		public override bool Equals(object obj) => obj is SpreadsheetTemplate template && this.Equals(template);
+		public override int GetHashCode() => OperatingSystem.IsWindows() ? HashCode.Combine(this.FilePath.ToUpperInvariant()) : HashCode.Combine(this.FilePath);
+		public override string ToString() => $"{this.Name}@{this.FilePath}";
 		#endregion
 
 		#region 静态方法
