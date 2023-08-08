@@ -126,9 +126,12 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Export(), options);
 
 			//获取指定的数据模板
-			var templateObject = DataTemplateUtility.GetTemplate(this.ServiceProvider, template, format);
-			if(templateObject == null)
-				throw OperationException.Unfound();
+			var templateObject = DataTemplateUtility.GetTemplate(this.ServiceProvider, template, format) ??
+			(
+				string.IsNullOrEmpty(format) ?
+				throw OperationException.Unfound($"The data template with specified the name '{template}' was not found.") :
+				throw OperationException.Unfound($"The data template with specified the name '{template}' and the format '{format}' was not found.")
+			);
 
 			//获取数据模板对应的模型数据和参数
 			var model = this.GetExportModel(templateObject, argument, parameters, options);
@@ -139,19 +142,22 @@ namespace Zongsoft.Data
 
 		protected virtual IDataTemplateModel GetExportModel(IDataTemplate template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
 		{
-			var provider = this.ServiceProvider.Resolve<IDataTemplateModelProvider>(template);
-			if(provider == null)
-				throw OperationException.Unfound();
+			var provider = this.ServiceProvider.Resolve<IDataTemplateModelProvider>(template) ??
+				throw OperationException.Unfound($"No data template model provider found for '{template.Name}' template.");
 
+			//获取指定模板和参数对应数据模型
 			var model = provider.GetModel(template, argument);
-			if(model == null)
-				throw OperationException.Argument();
 
 			//如果传入的参数集不为空，则需传入的参数集加入到模型参数集中
 			if(parameters != null)
 			{
-				foreach(var parameter in parameters)
-					model.Parameters[parameter.Key] = parameter.Value;
+				if(model == null)
+					model = new DataTemplateModel(null, parameters);
+				else
+				{
+					foreach(var parameter in parameters)
+						model.Parameters[parameter.Key] = parameter.Value;
+				}
 			}
 
 			return model;
