@@ -36,11 +36,16 @@ namespace Zongsoft.Data.Templates
 	public abstract class DataTemplateModelProviderBase : IDataTemplateModelProvider, IMatchable
 	{
 		#region 构造函数
-		protected DataTemplateModelProviderBase(string name) => this.Name = name ?? throw new ArgumentNullException(nameof(name));
+		protected DataTemplateModelProviderBase(string name, IServiceProvider services)
+		{
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.Services = services ?? throw new ArgumentNullException(nameof(services));
+		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
+		public IServiceProvider Services { get; }
 		#endregion
 
 		#region 抽象方法
