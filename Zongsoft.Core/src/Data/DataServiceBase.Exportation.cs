@@ -147,13 +147,11 @@ namespace Zongsoft.Data
 			if(model == null)
 				throw OperationException.Argument();
 
-			//如果传入的参数集不为空，则需将传入的参数集与模型参数集进行合并处理
+			//如果传入的参数集不为空，则需传入的参数集加入到模型参数集中
 			if(parameters != null)
 			{
-				if(model.Parameters == null)
-					model.Parameters = parameters;
-				else
-					model.Parameters = parameters.Concat(model.Parameters);
+				foreach(var parameter in parameters)
+					model.Parameters[parameter.Key] = parameter.Value;
 			}
 
 			return model;

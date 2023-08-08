@@ -38,7 +38,7 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取模型数据。</summary>
 		object Data { get; }
 
-		/// <summary>获取或设置模型参数集。</summary>
-		IEnumerable<KeyValuePair<string, object>> Parameters { get; set; }
+		/// <summary>获取模型参数集。</summary>
+		IDictionary<string, object> Parameters { get; }
 	}
 }

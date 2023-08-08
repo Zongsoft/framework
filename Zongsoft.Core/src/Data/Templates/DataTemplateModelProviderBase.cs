@@ -28,25 +28,33 @@
  */
 
 using System;
-using System.Collections.Generic;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Data.Templates
 {
-	public class DataTemplateModel : IDataTemplateModel
+	public abstract class DataTemplateModelProviderBase : IDataTemplateModelProvider, IMatchable
 	{
 		#region 构造函数
-		public DataTemplateModel(object data, IEnumerable<KeyValuePair<string, object>> parameters = null)
-		{
-			this.Data = data;
-			this.Parameters = parameters == null ?
-				new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) :
-				new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
-		}
+		protected DataTemplateModelProviderBase(string name) => this.Name = name ?? throw new ArgumentNullException(nameof(name));
 		#endregion
 
 		#region 公共属性
-		public object Data { get; }
-		public IDictionary<string, object> Parameters { get; }
+		public string Name { get; }
+		#endregion
+
+		#region 抽象方法
+		public abstract IDataTemplateModel GetModel(IDataTemplate template, object argument);
+		#endregion
+
+		#region 服务匹配
+		bool IMatchable.Match(object parameter) => this.OnMatch(parameter);
+		protected virtual bool OnMatch(object parameter) => parameter switch
+		{
+			string name => string.Equals(name, this.Name, StringComparison.OrdinalIgnoreCase),
+			IDataTemplate template => string.Equals(template?.Name, this.Name, StringComparison.OrdinalIgnoreCase),
+			_ => false,
+		};
 		#endregion
 	}
 }
