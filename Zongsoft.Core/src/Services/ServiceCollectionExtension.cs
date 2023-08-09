@@ -49,6 +49,7 @@ namespace Zongsoft.Services
 				null);
 		#endregion
 
+		#region 公共方法
 		public static void Register(this IServiceCollection services, Assembly assembly, IConfiguration configuration)
 		{
 			if(assembly == null)
@@ -62,19 +63,25 @@ namespace Zongsoft.Services
 				if(type.IsNotPublic || !type.IsClass || (type.IsAbstract && !type.IsSealed))
 					continue;
 
+				//使用 IServiceRegistration 服务注册器注册服务
 				if(RegisterServices(services, type, configuration))
 					continue;
 
+				//获取服务注册注解
 				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
 
+				//尝试注册服务
 				if(attribute != null)
 					RegisterServices(services, type, attribute);
 
+				//尝试注入配置
 				if(configuration != null)
 					RegisterOptions(services, type, configuration);
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private static void RegisterOptions(IServiceCollection services, TypeInfo type, IConfiguration configuration)
 		{
 			static Type GetOptionType(Type type)
@@ -147,20 +154,18 @@ namespace Zongsoft.Services
 				var contracts = attribute.Contracts;
 				var moduleName = ModularServicerUtility.GetModuleName(type);
 
-				if(string.IsNullOrEmpty(moduleName))
-				{
-					for(var i = 0; i < contracts.Length; i++)
-					{
-						services.AddSingleton(contracts[i], services => services.GetService(type));
-					}
-				}
-				else
+				if(!string.IsNullOrEmpty(moduleName))
 				{
 					for(var i = 0; i < contracts.Length; i++)
 					{
 						var modular = ModularServicerUtility.GetModularService(moduleName, contracts[i], type);
 						services.AddSingleton(modular.GetType(), modular);
 					}
+				}
+
+				for(var i = 0; i < contracts.Length; i++)
+				{
+					services.AddSingleton(contracts[i], services => services.GetService(type));
 				}
 			}
 		}
@@ -172,50 +177,41 @@ namespace Zongsoft.Services
 
 			var moduleName = ModularServicerUtility.GetModuleName(type);
 
-			if(string.IsNullOrEmpty(moduleName))
+			foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
 			{
-				foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
+				var property = type.GetProperty(member, BindingFlags.Static | BindingFlags.Public);
+
+				if(property != null)
 				{
-					var property = type.GetDeclaredProperty(member);
+					var value = property.GetValue(null);
 
-					if(property != null)
+					if(!string.IsNullOrEmpty(moduleName))
 					{
-						services.AddSingleton(property.PropertyType, property.GetValue(null));
-						continue;
+						var modular = ModularServicerUtility.GetModularService(moduleName, property.PropertyType, value);
+						services.AddSingleton(modular.GetType(), modular);
 					}
 
-					var field = type.GetDeclaredField(member);
-
-					if(field != null)
-					{
-						services.AddSingleton(field.FieldType, field.GetValue(null));
-						continue;
-					}
+					services.AddSingleton(property.PropertyType, value);
+					continue;
 				}
-			}
-			else
-			{
-				foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
+
+				var field = type.GetField(member, BindingFlags.Static | BindingFlags.Public);
+
+				if(field != null)
 				{
-					var property = type.GetDeclaredProperty(member);
+					var value = field.GetValue(null);
 
-					if(property != null)
+					if(!string.IsNullOrEmpty(moduleName))
 					{
-						var modular = ModularServicerUtility.GetModularService(moduleName, property.PropertyType, property.GetValue(null));
+						var modular = ModularServicerUtility.GetModularService(moduleName, field.FieldType, value);
 						services.AddSingleton(modular.GetType(), modular);
-						continue;
 					}
 
-					var field = type.GetDeclaredField(member);
-
-					if(field != null)
-					{
-						var modular = ModularServicerUtility.GetModularService(moduleName, field.FieldType, field.GetValue(null));
-						services.AddSingleton(modular.GetType(), modular);
-						continue;
-					}
+					services.AddSingleton(field.FieldType, value);
+					continue;
 				}
 			}
 		}
+		#endregion
 	}
 }
