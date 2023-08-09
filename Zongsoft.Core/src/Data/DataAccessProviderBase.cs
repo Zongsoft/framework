@@ -51,14 +51,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get => _accesses.Count;
-		}
+		public int Count => _accesses.Count;
 		#endregion
 
 		#region 公共方法
-		public TDataAccess GetService(string name)
+		public TDataAccess GetAccessor(string name)
 		{
 			if(string.IsNullOrEmpty(name))
 				name = GetDefaultName();
@@ -77,26 +74,7 @@ namespace Zongsoft.Data
 			return accessor;
 		}
 
-		public IDataAccess GetAccessor(string name)
-		{
-			if(string.IsNullOrEmpty(name))
-				name = GetDefaultName();
-
-			if(_accesses.TryGet(name, out var accessor))
-				return accessor;
-
-			lock(_accesses)
-			{
-				if(_accesses.TryGet(name, out accessor))
-					return accessor;
-
-				_accesses.Add(accessor = this.CreateAccessor(name));
-			}
-
-			return accessor;
-		}
-
-		public bool TryGetAccessor(string name, out IDataAccess accessor)
+		public bool TryGetAccessor(string name, out TDataAccess accessor)
 		{
 			if(string.IsNullOrEmpty(name))
 				name = GetDefaultName();
@@ -128,57 +106,32 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 集合接口
-		bool ICollection<TDataAccess>.IsReadOnly
+		#region 显式实现
+		TDataAccess IServiceProvider<TDataAccess>.GetService(string name) => this.GetAccessor(name);
+		IDataAccess IDataAccessProvider.GetAccessor(string name) => this.GetAccessor(name);
+		bool IDataAccessProvider.TryGetAccessor(string name, out IDataAccess accessor)
 		{
-			get
+			if(this.TryGetAccessor(name, out var result))
 			{
-				return false;
+				accessor = result;
+				return true;
 			}
+
+			accessor = null;
+			return false;
 		}
 
-		void ICollection<TDataAccess>.Add(TDataAccess item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			_accesses.Add(item);
-		}
-
-		void ICollection<TDataAccess>.Clear()
-		{
-			_accesses.Clear();
-		}
-
-		bool ICollection<TDataAccess>.Contains(TDataAccess item)
-		{
-			if(item == null)
-				return false;
-
-			return _accesses.Contains(item);
-		}
-
-		void ICollection<TDataAccess>.CopyTo(TDataAccess[] array, int arrayIndex)
-		{
-			_accesses.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<TDataAccess>.Remove(TDataAccess item)
-		{
-			return _accesses.Remove(item);
-		}
+		bool ICollection<TDataAccess>.IsReadOnly => false;
+		void ICollection<TDataAccess>.Add(TDataAccess item) => _accesses.Add(item ?? throw new ArgumentNullException(nameof(item)));
+		void ICollection<TDataAccess>.Clear() => _accesses.Clear();
+		bool ICollection<TDataAccess>.Contains(TDataAccess item) => item != null && _accesses.Contains(item);
+		void ICollection<TDataAccess>.CopyTo(TDataAccess[] array, int arrayIndex) => _accesses.CopyTo(array, arrayIndex);
+		bool ICollection<TDataAccess>.Remove(TDataAccess item) => item != null && _accesses.Remove(item);
 		#endregion
 
 		#region 枚举遍历
-		public IEnumerator<TDataAccess> GetEnumerator()
-		{
-			return _accesses.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _accesses.GetEnumerator();
-		}
+		public IEnumerator<TDataAccess> GetEnumerator() => _accesses.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _accesses.GetEnumerator();
 		#endregion
 	}
 }
