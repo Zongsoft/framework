@@ -111,22 +111,12 @@ namespace Zongsoft.Security.Membership
 				//设置集合的初始化标记
 				_initilized = true;
 
-				//将默认服务容器中的所有质询器加入到集合中
+				//将所有质询器加入到集合中
 				_challengers.AddRange(ApplicationContext.Current.Services.ResolveAll<IChallenger>());
 
-				//将默认服务容器中的所有验证器加入到集合中
+				//将所有验证器加入到集合中
 				foreach(var authenticator in ApplicationContext.Current.Services.ResolveAll<IAuthenticator>())
 					_authenticators.Add(authenticator);
-
-				foreach(var module in ApplicationContext.Current.Modules)
-				{
-					//将子模块中的质询器加入到集合中
-					_challengers.AddRange(module.Services.ResolveAll<IChallenger>());
-
-					//将子模块中的验证器加入到集合中
-					foreach(var authenticator in module.Services.ResolveAll<IAuthenticator>())
-						_authenticators.Add(authenticator);
-				}
 			}
 
 			//激发“Authenticating”事件
