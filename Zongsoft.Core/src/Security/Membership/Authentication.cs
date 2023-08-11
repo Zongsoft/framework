@@ -59,7 +59,7 @@ namespace Zongsoft.Security.Membership
 		private readonly KeyedCollection<string, IAuthenticator> _authenticators;
 		private readonly List<IChallenger> _challengers;
 		private IClaimsPrincipalTransformer _transformer;
-		private bool _initilized;
+		private volatile int _initialized;
 		#endregion
 
 		#region 构造函数
@@ -106,17 +106,20 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public async ValueTask<CredentialPrincipal> AuthenticateAsync(string scheme, string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
-			if(!_initilized)
+			if(_initialized == 0)
 			{
 				//设置集合的初始化标记
-				_initilized = true;
+				var initialized = Interlocked.Exchange(ref _initialized, 1);
 
-				//将所有质询器加入到集合中
-				_challengers.AddRange(ApplicationContext.Current.Services.ResolveAll<IChallenger>());
+				if(initialized == 0)
+				{
+					//将所有质询器加入到集合中
+					_challengers.AddRange(ApplicationContext.Current.Services.ResolveAll<IChallenger>());
 
-				//将所有验证器加入到集合中
-				foreach(var authenticator in ApplicationContext.Current.Services.ResolveAll<IAuthenticator>())
-					_authenticators.Add(authenticator);
+					//将所有验证器加入到集合中
+					foreach(var authenticator in ApplicationContext.Current.Services.ResolveAll<IAuthenticator>())
+						_authenticators.Add(authenticator);
+				}
 			}
 
 			//激发“Authenticating”事件

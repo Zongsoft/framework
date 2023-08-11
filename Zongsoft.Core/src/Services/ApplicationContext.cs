@@ -57,6 +57,7 @@ namespace Zongsoft.Services
 		private volatile int _started;
 		private volatile int _stopped;
 		private volatile int _disposed;
+		private volatile int _initialized;
 
 		private string _title;
 		private string _description;
@@ -197,11 +198,19 @@ namespace Zongsoft.Services
 		#region 初始方法
 		public virtual void Initialize()
 		{
+			if(_initialized != 0)
+				return;
+
 			if(_disposed != 0 || _initializers == null)
 				throw new ObjectDisposedException(this.GetType().FullName);
 
 			if(_started != 0 || _stopped != 0)
 				throw new InvalidOperationException();
+
+			var initialized = Interlocked.Exchange(ref _initialized, 1);
+
+			if(initialized != 0)
+				return;
 
 			var services = this.Services;
 
