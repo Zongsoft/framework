@@ -130,14 +130,11 @@ namespace Zongsoft.Plugins
 			if(!base.Initialize())
 				return false;
 
-			if(this.PluginTree.Status == PluginTreeStatus.None)
-			{
-				//加载插件树
-				this.PluginTree.Load();
+			//加载插件树
+			this.PluginTree.Load();
 
-				//挂载当前应用上下文
-				this.PluginTree.Mount(this.Options.GetApplicationContextMountion(), this);
-			}
+			//挂载当前应用上下文
+			this.PluginTree.Mount(this.Options.GetApplicationContextMountion(), this);
 
 			//返回初始化完成
 			return true;
