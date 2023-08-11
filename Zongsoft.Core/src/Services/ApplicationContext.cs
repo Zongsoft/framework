@@ -196,10 +196,10 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 初始方法
-		public virtual void Initialize()
+		public virtual bool Initialize()
 		{
 			if(_initialized != 0)
-				return;
+				return false;
 
 			if(_disposed != 0 || _initializers == null)
 				throw new ObjectDisposedException(this.GetType().FullName);
@@ -210,7 +210,7 @@ namespace Zongsoft.Services
 			var initialized = Interlocked.Exchange(ref _initialized, 1);
 
 			if(initialized != 0)
-				return;
+				return false;
 
 			var services = this.Services;
 
@@ -221,6 +221,8 @@ namespace Zongsoft.Services
 			{
 				initializer?.Initialize(this);
 			}
+
+			return true;
 		}
 		#endregion
 

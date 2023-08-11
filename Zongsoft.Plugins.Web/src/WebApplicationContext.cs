@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Collections;
@@ -82,12 +83,20 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 重写方法
-		public override void Initialize()
+		public override bool Initialize()
 		{
-			base.Initialize();
+			if(!base.Initialize())
+				return false;
+
+			var parts = this.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts;
+			if(!parts.Any(part => part is AssemblyPart assemblyPart && assemblyPart.Assembly == Assembly.GetEntryAssembly()))
+				parts.Add(new AssemblyPart(Assembly.GetEntryAssembly()));
 
 			//加载插件中的Web程序集部件
-			PopulateApplicationParts(this.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts, this.Plugins);
+			PopulateApplicationParts(parts, this.Plugins);
+
+			//返回初始化成功
+			return true;
 		}
 
 		protected override Plugins.IWorkbenchBase CreateWorkbench(out Plugins.PluginTreeNode node)
