@@ -57,8 +57,7 @@ namespace Zongsoft.Data
 		#region 公共方法
 		public TDataAccess GetAccessor(string name)
 		{
-			if(string.IsNullOrEmpty(name))
-				name = GetDefaultName();
+			name = GetName(name);
 
 			if(_accesses.TryGet(name, out var accessor))
 				return accessor;
@@ -77,7 +76,15 @@ namespace Zongsoft.Data
 		public bool TryGetAccessor(string name, out TDataAccess accessor)
 		{
 			if(string.IsNullOrEmpty(name))
-				name = GetDefaultName();
+			{
+				name = GetConnectionSettings().Default;
+
+				if(string.IsNullOrEmpty(name))
+				{
+					accessor = null;
+					return false;
+				}
+			}
 
 			if(_accesses.TryGet(name, out var result))
 			{
@@ -95,15 +102,26 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private static string GetDefaultName()
+		private static string GetName(string name)
 		{
-			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
+			var connectionSettings = GetConnectionSettings() ??
+				throw new DataException($"Missing database connection settings.");
 
-			if(connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.Default))
-				throw new InvalidOperationException("Missing the default connection settings.");
+			if(!string.IsNullOrEmpty(name) && connectionSettings.Contains(name))
+				return name;
 
-			return connectionSettings.Default;
+			var defaultSetting = connectionSettings.GetDefault();
+			if(defaultSetting != null)
+				return defaultSetting.Name;
+
+			throw new DataException(
+				string.IsNullOrEmpty(name) ?
+				$"Missing the default database connection setting." :
+				$"The specified '{name}' database connection setting does not exist and the default database connection setting is not defined."
+			);
 		}
+
+		private static ConnectionSettingCollection GetConnectionSettings() => ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
 		#endregion
 
 		#region 显式实现

@@ -49,21 +49,25 @@ namespace Zongsoft.Externals.Redis
 		#region 公共方法
 		public RedisService GetRedis(string name)
 		{
-			return _services.GetOrAdd(name ?? string.Empty, key =>
+			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSetting(key)));
+
+			static IConnectionSetting GetConnectionSetting(string name)
 			{
 				var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Externals/Redis/ConnectionSettings");
+				if(settings == null || settings.Count == 0)
+					throw new ConfigurationException($"Missing redis connection settings.");
 
-				if(settings != null)
-				{
-					if(string.IsNullOrEmpty(key))
-						key = settings.Default ?? string.Empty;
+				if(!string.IsNullOrEmpty(name) && settings.TryGet(name, "redis", out var setting))
+					return setting;
 
-					if(settings.TryGet(key, out var setting))
-						return new RedisService(key, setting);
-				}
+				setting = settings.GetDefault();
+				if(setting == null)
+					throw new ConfigurationException(string.IsNullOrEmpty(name) ?
+						$"Missing the default redis connection setting." :
+						$"The specified '{name}' redis connection setting does not exist and the default redis connection setting is not defined.");
 
-				return null;
-			});
+				return setting;
+			}
 		}
 		#endregion
 
