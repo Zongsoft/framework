@@ -75,7 +75,6 @@ namespace Zongsoft.Data
 		protected DataServiceBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = new DataServiceFilterCollection<TModel>(this);
 
@@ -98,7 +97,6 @@ namespace Zongsoft.Data
 		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
@@ -126,7 +124,6 @@ namespace Zongsoft.Data
 
 			_name = name.Trim();
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 
@@ -153,7 +150,6 @@ namespace Zongsoft.Data
 
 			_name = name.Trim();
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-			_dataAccess = (IDataAccess)serviceProvider.GetService(typeof(IDataAccess)) ?? ((IDataAccessProvider)serviceProvider.GetService(typeof(IDataAccessProvider)))?.GetAccessor(null);
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 			_mutability = mutability;
@@ -303,6 +299,7 @@ namespace Zongsoft.Data
 		public virtual bool CanUpdate { get => _mutability.HasValue ? _mutability.Value.Updatable : (this.Service?.CanUpdate ?? true); }
 		public virtual bool CanUpsert { get => _mutability.HasValue ? _mutability.Value.Upsertable : (this.Service != null && this.CanInsert && this.CanUpdate); }
 
+		[Services.ServiceDependency("~")]
 		public IDataAccess DataAccess
 		{
 			get => _dataAccess ?? this.Service?.DataAccess;
@@ -329,6 +326,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护属性
+		/// <summary>获取父数据服务。</summary>
 		protected IDataService Service { get; }
 		#endregion
 
