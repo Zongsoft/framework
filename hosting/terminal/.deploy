@@ -1,50 +1,53 @@
-[bin $(Edition) $(Target) plugins]
+[bin $(Edition) $(Framework) plugins]
 ../../Zongsoft.Plugins/Main.plugin
 plugins/Terminal.plugin
 
-[bin $(Edition) $(Target) plugins zongsoft data]
+[bin $(Edition) $(Framework) plugins zongsoft data]
 ../../Zongsoft.Data/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft data mysql]
+[bin $(Edition) $(Framework) plugins zongsoft data mysql]
 ../../Zongsoft.Data/drivers/mysql/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft commands]
+[bin $(Edition) $(Framework) plugins zongsoft data clickhouse]
+../../Zongsoft.Data/drivers/clickhouse/.deploy
+
+[bin $(Edition) $(Framework) plugins zongsoft commands]
 ../../Zongsoft.Commands/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft reporting]
+[bin $(Edition) $(Framework) plugins zongsoft reporting]
 ../../Zongsoft.Reporting/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft security]
+[bin $(Edition) $(Framework) plugins zongsoft security]
 ../../Zongsoft.Security/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Security.option
 ../.deploy/options/$(cloud)/Zongsoft.Security.*.option
 
-[bin $(Edition) $(Target) plugins zongsoft externals aliyun]
+[bin $(Edition) $(Framework) plugins zongsoft externals aliyun]
 ../../externals/aliyun/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.option
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.*.option
 
-[bin $(Edition) $(Target) plugins zongsoft externals redis]
+[bin $(Edition) $(Framework) plugins zongsoft externals redis]
 ../../externals/redis/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.option
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.*.option
 
-[bin $(Edition) $(Target) plugins zongsoft externals wechat]
+[bin $(Edition) $(Framework) plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft externals hangfire]
+[bin $(Edition) $(Framework) plugins zongsoft externals hangfire]
 ../../externals/hangfire/.deploy
-[bin $(Edition) $(Target) plugins zongsoft externals hangfire redis]
+[bin $(Edition) $(Framework) plugins zongsoft externals hangfire redis]
 ../../externals/hangfire/storages/redis/.deploy
-[bin $(Edition) $(Target) plugins zongsoft externals hangfire samples]
+[bin $(Edition) $(Framework) plugins zongsoft externals hangfire samples]
 ../../externals/hangfire/samples/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft messaging mqtt]
+[bin $(Edition) $(Framework) plugins zongsoft messaging mqtt]
 ../../Zongsoft.Messaging.Mqtt/.deploy
 
-[bin $(Edition) $(Target) plugins zongsoft messaging kafka]
+[bin $(Edition) $(Framework) plugins zongsoft messaging kafka]
 ../../Zongsoft.Messaging.Kafka/.deploy
 
