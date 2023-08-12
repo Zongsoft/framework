@@ -42,34 +42,25 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 构造函数
-		public CredentialPrincipal(string scenario, ClaimsIdentity identity) : base(identity)
+		public CredentialPrincipal(ClaimsIdentity identity, string scenario, TimeSpan? validity = null) : base(identity)
 		{
 			var (credentialId, renewalToken) = GenerateIdentifier();
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
 			this.Scenario = scenario;
+
+			if(validity.HasValue && validity.Value > TimeSpan.Zero)
+				this.Validity = validity.Value;
 		}
 
-		public CredentialPrincipal(string scenario, IEnumerable<ClaimsIdentity> identities) : base(identities)
-		{
-			var (credentialId, renewalToken) = GenerateIdentifier();
-			this.CredentialId = credentialId;
-			this.RenewalToken = renewalToken;
-			this.Scenario = scenario;
-		}
-
-		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, ClaimsIdentity identity) : base(identity)
+		public CredentialPrincipal(ClaimsIdentity identity, string credentialId, string renewalToken, string scenario, TimeSpan? validity = null) : base(identity)
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
 			this.Scenario = scenario;
-		}
 
-		public CredentialPrincipal(string credentialId, string renewalToken, string scenario, IEnumerable<ClaimsIdentity> identities) : base(identities)
-		{
-			this.CredentialId = credentialId;
-			this.RenewalToken = renewalToken;
-			this.Scenario = scenario;
+			if(validity.HasValue && validity.Value > TimeSpan.Zero)
+				this.Validity = validity.Value;
 		}
 
 		public CredentialPrincipal(BinaryReader reader) : base(reader)
@@ -87,17 +78,17 @@ namespace Zongsoft.Security
 				if(parts.Length > 2)
 					this.Scenario = parts[2];
 
-				if(parts.Length > 3 && TimeSpan.TryParse(parts[3], out var expiration))
-					this.Expiration = expiration;
+				if(parts.Length > 3 && TimeSpan.TryParse(parts[3], out var validity))
+					this.Validity = validity;
 			}
 		}
 
-		private CredentialPrincipal(ClaimsPrincipal principal, string credentialId, string renewalToken, string scenario, TimeSpan expiration) : base(principal)
+		private CredentialPrincipal(ClaimsPrincipal principal, string credentialId, string renewalToken, string scenario, TimeSpan validity) : base(principal)
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
 			this.Scenario = scenario;
-			this.Expiration = expiration;
+			this.Validity = validity;
 		}
 		#endregion
 
@@ -111,20 +102,20 @@ namespace Zongsoft.Security
 		/// <summary>获取场景名称。</summary>
 		public string Scenario { get; }
 
-		/// <summary>获取或设置过期时长。</summary>
-		public TimeSpan Expiration { get; set; }
+		/// <summary>获取或设置有效期时长。</summary>
+		public TimeSpan Validity { get; set; }
 		#endregion
 
 		#region 公共方法
 		public override CredentialPrincipal Clone()
 		{
 			var (credentialId, renewalToken) = GenerateIdentifier();
-			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Expiration);
+			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Validity);
 		}
 
 		public CredentialPrincipal Clone(string credentialId, string renewalToken)
 		{
-			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Expiration);
+			return new CredentialPrincipal(this, credentialId, renewalToken, this.Scenario, this.Validity);
 		}
 
 		public byte[] Serialize()
@@ -161,17 +152,13 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 重写方法
-		protected override ClaimsIdentity CreateClaimsIdentity(BinaryReader reader)
+		protected override ClaimsIdentity CreateClaimsIdentity(BinaryReader reader) => new CredentialIdentity(reader);
+		protected override void WriteTo(BinaryWriter writer, byte[] data)
 		{
-			return new CredentialIdentity(reader);
-		}
+			if(data == null || data.Length == 0)
+				data = System.Text.Encoding.UTF8.GetBytes($"{this.CredentialId}|{this.RenewalToken}|{this.Scenario}|{this.Validity}");
 
-		protected override void WriteTo(BinaryWriter writer, byte[] userData)
-		{
-			if(userData == null || userData.Length == 0)
-				userData = System.Text.Encoding.UTF8.GetBytes(this.CredentialId + "|" + this.RenewalToken + "|" + this.Scenario + "|" + this.Expiration);
-
-			base.WriteTo(writer, userData);
+			base.WriteTo(writer, data);
 		}
 		#endregion
 

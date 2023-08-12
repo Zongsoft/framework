@@ -176,7 +176,7 @@ namespace Zongsoft.Security.Membership
 		protected virtual IAuthenticator GetAuthenticator(string scheme, string key, object data, string scenario) =>
 			_authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
 
-		protected virtual CredentialPrincipal CreatePrincipal(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(scenario, identity);
+		protected virtual CredentialPrincipal CreatePrincipal(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(identity, scenario);
 		#endregion
 
 		#region 激发事件
