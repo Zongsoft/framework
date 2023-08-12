@@ -14,7 +14,7 @@ namespace Zongsoft.Hosting.Web
 	{
 		public static void Main(string[] args)
 		{
-#if NET7_0
+#if NET7_0_OR_GREATER
 			var app = Application.Web("Zongsoft.Web", args);
 			app.Map("/", async ctx => ctx.Response.Redirect("/Application"));
 			app.Run();
