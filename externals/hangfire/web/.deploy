@@ -1,6 +1,6 @@
 Zongsoft.Externals.Hangfire.Web.plugin
 Zongsoft.Externals.Hangfire.Web.option
-bin/$(Edition)/$(Target)/Zongsoft.Externals.Hangfire.Web.*
+bin/$(Edition)/$(Framework)/Zongsoft.Externals.Hangfire.Web.*
 
 %NUGET_PACKAGES%/hangfire.netcore/1.8.4/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/hangfire.aspnetcore/1.8.4/lib/netstandard2.0/*.dll

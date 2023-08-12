@@ -1,6 +1,6 @@
 Zongsoft.Externals.Hangfire.Storages.Redis.plugin
 Zongsoft.Externals.Hangfire.Storages.Redis.option
-bin/$(Edition)/$(Target)/Zongsoft.Externals.Hangfire.Storages.Redis.*
+bin/$(Edition)/$(Framework)/Zongsoft.Externals.Hangfire.Storages.Redis.*
 
 %NUGET_PACKAGES%/hangfire.redis.stackexchange/1.9.0/lib/netstandard2.1/*.dll
 

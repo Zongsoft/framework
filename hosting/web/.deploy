@@ -7,6 +7,9 @@
 [plugins zongsoft data mysql]
 ../../Zongsoft.Data/drivers/mysql/.deploy
 
+[plugins zongsoft data clickhouse]
+../../Zongsoft.Data/drivers/clickhouse/.deploy
+
 [plugins zongsoft commands]
 ../../Zongsoft.Commands/.deploy
 
@@ -54,3 +57,10 @@
 [plugins zongsoft administratives]
 ../../../Administratives/.deploy
 ../../../Administratives/src/api/.deploy
+
+[plugins zongsoft community]
+../../../Zongsoft.Community/.deploy
+../../../Zongsoft.Community/src/api/.deploy
+
+../.deploy/options/$(cloud)/Zongsoft.Community.option
+../.deploy/options/$(cloud)/Zongsoft.Community.*.option

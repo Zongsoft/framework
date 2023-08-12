@@ -1,4 +1,4 @@
 Zongsoft.Externals.Wechat.Web.option
 Zongsoft.Externals.Wechat.Web.plugin
 
-bin/$(Edition)/$(Target)/Zongsoft.Externals.Wechat.Web.*
+bin/$(Edition)/$(Framework)/Zongsoft.Externals.Wechat.Web.*

@@ -1,5 +1,5 @@
 src/Zongsoft.Messaging.Kafka.plugin
 src/Zongsoft.Messaging.Kafka.option
-src/bin/$(Edition)/$(Target)/Zongsoft.Messaging.Kafka.*
+src/bin/$(Edition)/$(Framework)/Zongsoft.Messaging.Kafka.*
 
 %NUGET_PACKAGES%/confluent.kafka/1.9.3/lib/netstandard2.0/*.dll

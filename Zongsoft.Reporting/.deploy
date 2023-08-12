@@ -2,4 +2,4 @@ src/Zongsoft.Reporting.option
 src/Zongsoft.Reporting.plugin
 src/Zongsoft.Reporting.mapping
 
-src/bin/$(Edition)/$(Target)/Zongsoft.Reporting.*
+src/bin/$(Edition)/$(Framework)/Zongsoft.Reporting.*

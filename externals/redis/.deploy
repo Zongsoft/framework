@@ -1,6 +1,6 @@
 src/Zongsoft.Externals.Redis.plugin
 src/Zongsoft.Externals.Redis.option
-src/bin/$(Edition)/$(Target)/Zongsoft.Externals.Redis.*
+src/bin/$(Edition)/$(Framework)/Zongsoft.Externals.Redis.*
 
 %NUGET_PACKAGES%/stackexchange.redis/2.6.122/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll
