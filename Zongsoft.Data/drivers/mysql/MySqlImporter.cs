@@ -183,12 +183,18 @@ namespace Zongsoft.Data.MySql
 			writer.Close();
 			file.Dispose();
 
+#if NET5_0
+			context.Count = await bulker.LoadAsync(cancellation);
+#elif NET6_0
+			context.Count = await bulker.LoadAsync(cancellation);
+#elif NET7_0_OR_GREATER
 			context.Count = await bulker.LoadAsync(null, cancellation);
+#endif
 
 			//删除数据导入的临时文件
 			DeleteFile(bulker.FileName);
 		}
-		#endregion
+#endregion
 
 		#region 私有方法
 		private static MySqlBulkLoader GetBulker(string name, string filePath, MySqlConnection connection, IDataImportOptions options) => new MySqlBulkLoader(connection)
