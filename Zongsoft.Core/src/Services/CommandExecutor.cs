@@ -29,9 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Services
 {
@@ -49,10 +49,10 @@ namespace Zongsoft.Services
 
 		#region 成员字段
 		private readonly CommandTreeNode _root;
+		private readonly IDictionary<string, object> _states;
 		private ICommandExpressionParser _parser;
 		private ICommandOutlet _output;
 		private TextWriter _error;
-		private IDictionary<string, object> _states;
 		#endregion
 
 		#region 构造函数
@@ -67,9 +67,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 静态属性
-		/// <summary>
-		/// 获取或设置默认的<see cref="CommandExecutor"/>命令执行器。
-		/// </summary>
+		/// <summary>获取或设置默认的<see cref="CommandExecutor"/>命令执行器。</summary>
 		public static CommandExecutor Default
 		{
 			get
@@ -81,76 +79,35 @@ namespace Zongsoft.Services
 			}
 			set
 			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_default = value;
+				_default = value ?? throw new ArgumentNullException();
 			}
 		}
 		#endregion
 
 		#region 公共属性
-		public CommandTreeNode Root
-		{
-			get
-			{
-				return _root;
-			}
-		}
-
+		public CommandTreeNode Root => _root;
+		public IDictionary<string, object> States => _states;
 		public ICommandExpressionParser Parser
 		{
-			get
-			{
-				return _parser;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_parser = value;
-			}
+			get => _parser;
+			set => _parser = value ?? throw new ArgumentNullException();
 		}
 
 		public virtual ICommandOutlet Output
 		{
-			get
-			{
-				return _output;
-			}
-			set
-			{
-				_output = value ?? NullCommandOutlet.Instance;
-			}
+			get => _output;
+			set => _output = value ?? NullCommandOutlet.Instance;
 		}
 
 		public virtual TextWriter Error
 		{
-			get
-			{
-				return _error;
-			}
-			set
-			{
-				_error = value ?? TextWriter.Null;
-			}
-		}
-
-		public IDictionary<string, object> States
-		{
-			get
-			{
-				return _states;
-			}
+			get => _error;
+			set => _error = value ?? TextWriter.Null;
 		}
 		#endregion
 
 		#region 查找方法
-		public virtual CommandTreeNode Find(string path)
-		{
-			return _root.Find(path);
-		}
+		public virtual CommandTreeNode Find(string path) => _root.Find(path);
 		#endregion
 
 		#region 执行方法
@@ -373,92 +330,34 @@ namespace Zongsoft.Services
 			public static readonly ICommandOutlet Instance = new NullCommandOutlet();
 			#endregion
 
-			public System.Text.Encoding Encoding
+			#region 公共属性
+			public Encoding Encoding
 			{
-				get
-				{
-					return null;
-				}
-				set
-				{
-				}
+				get => Encoding.UTF8;
+				set { }
 			}
+			public TextWriter Writer => TextWriter.Null;
+			#endregion
 
-			public TextWriter Writer
-			{
-				get
-				{
-					return TextWriter.Null;
-				}
-			}
-
-			public void Write(object value)
-			{
-			}
-
-			public void Write(string text)
-			{
-			}
-
-			public void Write(CommandOutletColor color, object value)
-			{
-			}
-
-			public void Write(CommandOutletColor color, string text)
-			{
-			}
-
-			public void Write(string format, params object[] args)
-			{
-			}
-
-			public void Write(CommandOutletContent content)
-			{
-			}
-
-			public void Write(CommandOutletColor color, CommandOutletContent content)
-			{
-			}
-
-			public void Write(CommandOutletColor color, string format, params object[] args)
-			{
-			}
-
-			public void WriteLine()
-			{
-			}
-
-			public void WriteLine(object value)
-			{
-			}
-
-			public void WriteLine(string text)
-			{
-			}
-
-			public void WriteLine(CommandOutletColor color, object value)
-			{
-			}
-
-			public void WriteLine(CommandOutletColor color, string text)
-			{
-			}
-
-			public void WriteLine(string format, params object[] args)
-			{
-			}
-
-			public void WriteLine(CommandOutletContent content)
-			{
-			}
-
-			public void WriteLine(CommandOutletColor color, CommandOutletContent content)
-			{
-			}
-
-			public void WriteLine(CommandOutletColor color, string format, params object[] args)
-			{
-			}
+			#region 公共方法
+			public void Write(object value) { }
+			public void Write(string text) { }
+			public void Write(CommandOutletColor color, object value) { }
+			public void Write(CommandOutletColor color, string text) { }
+			public void Write(string format, params object[] args) { }
+			public void Write(CommandOutletContent content) { }
+			public void Write(CommandOutletColor color, CommandOutletContent content) { }
+			public void Write(CommandOutletColor color, string format, params object[] args) { }
+			public void WriteLine() { }
+			public void WriteLine(object value) { }
+			public void WriteLine(string text) { }
+			public void WriteLine(CommandOutletColor color, object value) { }
+			public void WriteLine(CommandOutletColor color, string text) { }
+			public void WriteLine(string format, params object[] args) { }
+			public void WriteLine(CommandOutletContent content) { }
+			public void WriteLine(CommandOutletColor color, CommandOutletContent content) { }
+			public void WriteLine(CommandOutletColor color, string format, params object[] args) { }
+			#endregion
 		}
 
 		private class CommandErrorWriter : TextWriter
@@ -467,69 +366,60 @@ namespace Zongsoft.Services
 			public static readonly TextWriter Instance = new CommandErrorWriter();
 			#endregion
 
-			public override Encoding Encoding
-			{
-				get
-				{
-					return Encoding.UTF8;
-				}
-			}
+			#region 实例字段
+			private readonly Zongsoft.Diagnostics.Logger _logger = Zongsoft.Diagnostics.Logger.GetLogger<CommandExecutor>();
+			#endregion
 
+			#region 公共属性
+			public override Encoding Encoding => Encoding.UTF8;
+			#endregion
+
+			#region 重写方法
 			public override void Write(object value)
 			{
 				if(value == null)
 					return;
 
-				if(value is string)
-					Zongsoft.Diagnostics.Logger.Error((string)value);
-				else if(value is StringBuilder)
-					Zongsoft.Diagnostics.Logger.Error(value.ToString());
-				else
-					Zongsoft.Diagnostics.Logger.Error("An error occurred.", value);
+				switch(value)
+				{
+					case string text:
+						_logger.Error(text);
+						break;
+					case StringBuilder buffer:
+						_logger.Error(buffer.ToString());
+						break;
+					default:
+						_logger.Error("An error occurred.", value);
+						break;
+				}
 			}
 
-			public override void Write(string value)
-			{
-				Zongsoft.Diagnostics.Logger.Error(value);
-			}
-
-			public override void Write(string format, params object[] args)
-			{
-				Zongsoft.Diagnostics.Logger.Error(string.Format(format, args));
-			}
-
-			public override Task WriteAsync(string value)
-			{
-				return Task.Run(() => Zongsoft.Diagnostics.Logger.Error(value));
-			}
-
+			public override void Write(string value) => _logger.Error(value);
+			public override void Write(string format, params object[] args) => _logger.Error(string.Format(format, args));
+			public override Task WriteAsync(string value) => Task.Run(() => _logger.Error(value));
 			public override void WriteLine(object value)
 			{
 				if(value == null)
 					return;
 
-				if(value is string)
-					Zongsoft.Diagnostics.Logger.Error((string)value + this.NewLine);
-				else if(value is StringBuilder)
-					Zongsoft.Diagnostics.Logger.Error(value.ToString() + this.NewLine);
-				else
-					Zongsoft.Diagnostics.Logger.Error("An error occurred.", value);
+				switch(value)
+				{
+					case string text:
+						_logger.Error(text + Environment.NewLine);
+						break;
+					case StringBuilder buffer:
+						_logger.Error(buffer.ToString() + Environment.NewLine);
+						break;
+					default:
+						_logger.Error("An error occurred.", value);
+						break;
+				}
 			}
 
-			public override void WriteLine(string value)
-			{
-				Zongsoft.Diagnostics.Logger.Error(value + this.NewLine);
-			}
-
-			public override void WriteLine(string format, params object[] args)
-			{
-				Zongsoft.Diagnostics.Logger.Error(string.Format(format, args) + this.NewLine);
-			}
-
-			public override Task WriteLineAsync(string value)
-			{
-				return Task.Run(() => Zongsoft.Diagnostics.Logger.Error(value + this.NewLine));
-			}
+			public override void WriteLine(string value) => _logger.Error(value + this.NewLine);
+			public override void WriteLine(string format, params object[] args) => _logger.Error(string.Format(format, args) + this.NewLine);
+			public override Task WriteLineAsync(string value) => Task.Run(() => _logger.Error(value + this.NewLine));
+			#endregion
 		}
 		#endregion
 	}

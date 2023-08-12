@@ -39,6 +39,7 @@ using System.Collections.Concurrent;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Diagnostics;
 using Zongsoft.Distributing;
 
 namespace Zongsoft.Externals.Wechat
@@ -48,6 +49,7 @@ namespace Zongsoft.Externals.Wechat
 		#region 成员字段
 		private static readonly HttpClient _http;
 		private static readonly ConcurrentDictionary<string, Token> _localCache;
+		private static readonly Logger _logger = Logger.GetLogger(typeof(CredentialManager));
 
 		private static IDistributedCache _cache;
 		private static IDistributedLockManager _locker;
@@ -99,7 +101,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(cache == null)
 			{
-				Zongsoft.Diagnostics.Logger.Error("Missing the required distributed cache in the credential manager.");
+				_logger.Error("Missing the required distributed cache in the credential manager.");
 				return null;
 			}
 
@@ -134,7 +136,7 @@ namespace Zongsoft.Externals.Wechat
 				}
 				catch(Exception ex)
 				{
-					Zongsoft.Diagnostics.Logger.Error(ex);
+					_logger.Error(ex);
 				}
 			}
 			else
@@ -152,7 +154,7 @@ namespace Zongsoft.Externals.Wechat
 					}
 				}
 
-				Zongsoft.Diagnostics.Logger.Error("Attempts to acquires credential of the Wechat failed.");
+				_logger.Error("Attempts to acquires credential of the Wechat failed.");
 			}
 
 			return null;
@@ -173,7 +175,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(cache == null)
 			{
-				Zongsoft.Diagnostics.Logger.Error("Missing the required distributed cache in the credential manager.");
+				_logger.Error("Missing the required distributed cache in the credential manager.");
 				return default;
 			}
 
@@ -213,7 +215,7 @@ namespace Zongsoft.Externals.Wechat
 				}
 				catch(Exception ex)
 				{
-					Zongsoft.Diagnostics.Logger.Error(ex);
+					_logger.Error(ex);
 				}
 			}
 			else
@@ -231,7 +233,7 @@ namespace Zongsoft.Externals.Wechat
 					}
 				}
 
-				Zongsoft.Diagnostics.Logger.Error("Attempts to acquires ticket of the Wechat failed.");
+				_logger.Error("Attempts to acquires ticket of the Wechat failed.");
 			}
 
 			return (null, TimeSpan.Zero);

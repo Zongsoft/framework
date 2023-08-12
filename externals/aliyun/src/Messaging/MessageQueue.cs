@@ -173,7 +173,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			if(!response.IsSuccessStatusCode)
 			{
-				Zongsoft.Diagnostics.Logger.Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
 				return null;
 			}
 

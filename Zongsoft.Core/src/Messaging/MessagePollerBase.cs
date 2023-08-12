@@ -107,7 +107,7 @@ namespace Zongsoft.Messaging
 					exception = ex;
 
 					//错误日志
-					Zongsoft.Diagnostics.Logger.Error(ex);
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 				}
 
 				//如果消息获取失败则休息一小会
@@ -132,7 +132,7 @@ namespace Zongsoft.Messaging
 				}
 				catch(Exception ex)
 				{
-					Zongsoft.Diagnostics.Logger.Error(ex, message);
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex, message);
 				}
 			}
 		}

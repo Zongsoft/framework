@@ -131,7 +131,7 @@ namespace Zongsoft.Web.Filters
 					context.Result = new StatusCodeResult(StatusCodes.Status501NotImplemented);
 					break;
 				default:
-					Zongsoft.Diagnostics.Logger.Error(context.Exception);
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(context.Exception);
 					break;
 			}
 		}

@@ -23,7 +23,7 @@ namespace Zongsoft.Externals.Hangfire.Samples
 			Console.WriteLine(" " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			Console.ResetColor();
 
-			Logger.Debug("OnHandle the scheduled job.", request);
+			Logger.GetLogger(this).Debug("OnHandle the scheduled job.", request);
 
 			return ValueTask.CompletedTask;
 		}

@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 		{
 			try
 			{
-				//Zongsoft.Diagnostics.Logger.Debug(await GetRequestInfoAsync());
+				//Zongsoft.Diagnostics.Logger.GetLogger(this).Debug(await GetRequestInfoAsync());
 
 				var result = await FallbackExecutor.Instance.ExecuteAsync(this.Request, cancellation);
 				return result == null ? this.NoContent() : this.Ok(result);
