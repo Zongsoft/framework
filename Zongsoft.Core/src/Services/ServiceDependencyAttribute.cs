@@ -86,7 +86,7 @@ namespace Zongsoft.Services
 		///				<description>表示注入的服务为 <see cref="IServiceProvider{T}.GetService(string)" /> 方法的返回值。</description>
 		///			</item>
 		///			<item>
-		///				<term>当属性值为“<c>@</c>”符号，</term>
+		///				<term>当属性值为“<c>~</c>”或“<c>.</c>”符号，</term>
 		///				<description>表示该属性的实际值为待注入目标所在应用模块的名称。</description>
 		///			</item>
 		///		</list>
@@ -103,7 +103,7 @@ namespace Zongsoft.Services
 
 		#region 内部方法
 		internal bool IsApplicationProvider => this.Provider == "/" || this.Provider == "*";
-		internal string GetServiceName(Type type) => this.ServiceName == "@" ? ModularServicerUtility.GetModuleName(type) : this.ServiceName;
+		internal string GetServiceName(Type type) => this.ServiceName == "~" || this.ServiceName == "." ? ModularServicerUtility.GetModuleName(type) : this.ServiceName;
 		#endregion
 	}
 }

@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Membership
 	public class Attempter : IAttempter
 	{
 		#region 公共属性
-		[ServiceDependency("@", IsRequired = true)]
+		[ServiceDependency("~", IsRequired = true)]
 		public IDistributedCache Cache { get; set; }
 
 		[Options("Security/Membership/Authentication/Attempter")]

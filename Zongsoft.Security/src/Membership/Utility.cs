@@ -37,17 +37,13 @@ namespace Zongsoft.Security.Membership
 {
 	public static class Utility
 	{
-		internal static Condition GetIdentityCondition(string identity)
-		{
-			return GetIdentityCondition(identity, out _);
-		}
-
+		internal static Condition GetIdentityCondition(string identity) => GetIdentityCondition(identity, out _);
 		internal static Condition GetIdentityCondition(string identity, out UserIdentityType identityType)
 		{
 			if(string.IsNullOrWhiteSpace(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			if(identity.Contains("@"))
+			if(identity.Contains('@'))
 			{
 				identityType = UserIdentityType.Email;
 				return Condition.Equal(nameof(IUserModel.Email), identity);
@@ -68,7 +64,7 @@ namespace Zongsoft.Security.Membership
 			if(string.IsNullOrEmpty(identity))
 				throw new ArgumentNullException(nameof(identity));
 
-			if(identity.Contains("@"))
+			if(identity.Contains('@'))
 				return UserIdentityType.Email;
 
 			if(identity.IsDigits())

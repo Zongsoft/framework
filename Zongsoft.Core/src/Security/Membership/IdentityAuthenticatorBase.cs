@@ -53,7 +53,7 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; set; }
 
-		[ServiceDependency("@", IsRequired = true)]
+		[ServiceDependency("~", IsRequired = true)]
 		public IDataAccess DataAccess { get; set; }
 		#endregion
 

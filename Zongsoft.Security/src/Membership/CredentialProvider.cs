@@ -58,7 +58,7 @@ namespace Zongsoft.Security.Membership
 		[Options("Security/Membership/Authentication")]
 		public Configuration.AuthenticationOptions Options { get; set; }
 
-		[ServiceDependency("@", IsRequired = true)]
+		[ServiceDependency("~", IsRequired = true)]
 		public IDistributedCache Cache { get; set; }
 		#endregion
 
