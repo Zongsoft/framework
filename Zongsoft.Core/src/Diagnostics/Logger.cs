@@ -54,7 +54,7 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 静态方法
-		public static Logger GetLogger<T>(T instance) => GetLogger(typeof(T));
+		public static Logger GetLogger<T>(T _) => GetLogger(typeof(T));
 		public static Logger GetLogger<T>() => GetLogger(typeof(T));
 		public static Logger GetLogger(Type type)
 		{
@@ -101,13 +101,10 @@ namespace Zongsoft.Diagnostics
 			if(entry == null)
 				return;
 
-			if(Loggers.Count == 0)
-			{
+			if(_loggers.Count == 0)
 				TextFileLogger.Default.Log(entry);
-				return;
-			}
-
-			System.Threading.Tasks.Parallel.ForEach(Loggers, logger => logger?.Log(entry));
+			else
+				System.Threading.Tasks.Parallel.ForEach(_loggers, logger => logger?.Log(entry));
 		}
 		#endregion
 	}
