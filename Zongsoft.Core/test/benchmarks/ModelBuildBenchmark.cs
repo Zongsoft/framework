@@ -10,6 +10,8 @@ namespace Zongsoft.Data.Benchmarks
 	[SimpleJob(RuntimeMoniker.Net50, 1, 0, 3)]
 #elif NET6_0
 	[SimpleJob(RuntimeMoniker.Net60, 1, 0, 3)]
+#elif NET7_0
+	[SimpleJob(RuntimeMoniker.Net70, 1, 0, 3)]
 #endif
 	[MemoryDiagnoser]
 	[RPlotExporter, HtmlExporter, MarkdownExporter]
