@@ -16,18 +16,17 @@ namespace Zongsoft.Data.Benchmarks
 		public int CountryId { get; set; }
 	}
 
-	public interface IPerson
+	public abstract class Person
 	{
-		string Name { get; set; }
-		Gender? Gender { get; set; }
-		DateTime Birthdate { get; set; }
-		string BloodType { get; set; }
-		Address HomeAddress { get; set; }
+		public abstract string Name { get; set; }
+		public abstract Gender? Gender { get; set; }
+		public abstract DateTime Birthdate { get; set; }
+		public abstract string BloodType { get; set; }
+		public abstract Address HomeAddress { get; set; }
 	}
 
-	public class PersonModel : IPerson
+	public class PersonModel
 	{
-		public int PersonId { get; set; }
 		public string Name { get; set; }
 		public Gender? Gender { get; set; }
 		public DateTime Birthdate { get; set; }

@@ -23,7 +23,7 @@ namespace Zongsoft.Data.Benchmarks
 		[GlobalSetup]
 		public void Setup()
 		{
-			Model.Build<IPerson>();
+			Model.Build<Person>();
 		}
 
 		[Benchmark(Baseline = true)]
@@ -45,7 +45,7 @@ namespace Zongsoft.Data.Benchmarks
 		{
 			var count = this.Count;
 			object result = null;
-			var creator = Model.GetCreator(typeof(IPerson));
+			var creator = Model.GetCreator(typeof(Person));
 
 			for(int i = 0; i < count; i++)
 			{
@@ -59,11 +59,11 @@ namespace Zongsoft.Data.Benchmarks
 		public object Build()
 		{
 			var count = this.Count;
-			IPerson result = null;
+			Person result = null;
 
 			for(int i = 0; i < count; i++)
 			{
-				result = Model.Build<IPerson>();
+				result = Model.Build<Person>();
 			}
 
 			return result;

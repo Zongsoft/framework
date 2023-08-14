@@ -17,7 +17,7 @@ namespace Zongsoft.Data.Benchmarks
 	[RPlotExporter, HtmlExporter, MarkdownExporter]
 	public class ModelPropertySetterBenchmark
 	{
-		private IPerson _dynamic;
+		private Person _dynamic;
 		private PersonModel _native;
 
 		[Params(100, 1000, 1_0000)]
@@ -26,7 +26,7 @@ namespace Zongsoft.Data.Benchmarks
 		[GlobalSetup]
 		public void Setup()
 		{
-			_dynamic = Model.Build<IPerson>();
+			_dynamic = Model.Build<Person>();
 			_dynamic.Name = "Popeye Zhong";
 			_dynamic.Gender = Gender.Male;
 			_dynamic.Birthdate = DateTime.Now;
@@ -81,11 +81,11 @@ namespace Zongsoft.Data.Benchmarks
 
 			for(int i = 0; i < count; i++)
 			{
-				model.TrySetValue(nameof(IPerson.Name), "Popeye Zhong");
-				model.TrySetValue(nameof(IPerson.Gender), Gender.Male);
-				model.TrySetValue(nameof(IPerson.Birthdate), DateTime.Now);
-				model.TrySetValue(nameof(IPerson.BloodType), "AB");
-				model.TrySetValue(nameof(IPerson.HomeAddress), null);
+				model.TrySetValue(nameof(Person.Name), "Popeye Zhong");
+				model.TrySetValue(nameof(Person.Gender), Gender.Male);
+				model.TrySetValue(nameof(Person.Birthdate), DateTime.Now);
+				model.TrySetValue(nameof(Person.BloodType), "AB");
+				model.TrySetValue(nameof(Person.HomeAddress), null);
 			}
 		}
 	}

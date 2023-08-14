@@ -17,7 +17,7 @@ namespace Zongsoft.Data.Benchmarks
 	[RPlotExporter, HtmlExporter, MarkdownExporter]
 	public class ModelPropertyGetterBenchmark
 	{
-		private IPerson _dynamic;
+		private Person _dynamic;
 		private PersonModel _native;
 
 		[Params(100, 1000, 1_0000)]
@@ -26,7 +26,7 @@ namespace Zongsoft.Data.Benchmarks
 		[GlobalSetup]
 		public void Setup()
 		{
-			_dynamic = Model.Build<IPerson>();
+			_dynamic = Model.Build<Person>();
 			_dynamic.Name = "Popeye Zhong";
 			_dynamic.Gender = Gender.Male;
 			_dynamic.Birthdate = DateTime.Now;
@@ -96,11 +96,11 @@ namespace Zongsoft.Data.Benchmarks
 
 			for(int i = 0; i < count; i++)
 			{
-				model.TryGetValue(nameof(IPerson.Name), out name);
-				model.TryGetValue(nameof(IPerson.Gender), out gender);
-				model.TryGetValue(nameof(IPerson.Birthdate), out birthdate);
-				model.TryGetValue(nameof(IPerson.BloodType), out bloodtype);
-				model.TryGetValue(nameof(IPerson.HomeAddress), out address);
+				model.TryGetValue(nameof(Person.Name), out name);
+				model.TryGetValue(nameof(Person.Gender), out gender);
+				model.TryGetValue(nameof(Person.Birthdate), out birthdate);
+				model.TryGetValue(nameof(Person.BloodType), out bloodtype);
+				model.TryGetValue(nameof(Person.HomeAddress), out address);
 			}
 
 			return (name, gender, birthdate, bloodtype, address);
