@@ -42,7 +42,7 @@ namespace Zongsoft.Externals.Wechat.Platforms
 		{
 			uint outval = 0;
 
-			for (int i = 0; i < 4; i++)
+			for(int i = 0; i < 4; i++)
 				outval = (outval << 8) + ((inval >> (i * 8)) & 255);
 
 			return outval;
@@ -52,7 +52,7 @@ namespace Zongsoft.Externals.Wechat.Platforms
 		{
 			int outval = 0;
 
-			for (int i = 0; i < 4; i++)
+			for(int i = 0; i < 4; i++)
 				outval = (outval << 8) + ((inval >> (i * 8)) & 255);
 
 			return outval;
@@ -111,9 +111,9 @@ namespace Zongsoft.Externals.Wechat.Platforms
 			var encrypt = aes.CreateEncryptor(aes.Key, aes.IV);
 			byte[] xBuff = null;
 
-			using (var ms = new MemoryStream())
+			using(var ms = new MemoryStream())
 			{
-				using (var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
+				using(var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
 				{
 					var xXml = Encoding.UTF8.GetBytes(Input);
 					cs.Write(xXml, 0, xXml.Length);
@@ -153,9 +153,9 @@ namespace Zongsoft.Externals.Wechat.Platforms
 			//byte[] xBuff = transform.TransformFinalBlock(msg, 0, msg.Length);
 			#endregion
 
-			using (var ms = new MemoryStream())
+			using(var ms = new MemoryStream())
 			{
-				using (var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
+				using(var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
 				{
 					cs.Write(msg, 0, msg.Length);
 				}
@@ -171,14 +171,14 @@ namespace Zongsoft.Externals.Wechat.Platforms
 			int block_size = 32;
 			// 计算需要填充的位数
 			int amount_to_pad = block_size - (text_length % block_size);
-			if (amount_to_pad == 0)
+			if(amount_to_pad == 0)
 			{
 				amount_to_pad = block_size;
 			}
 			// 获得补位所用的字符
 			char pad_chr = GetCharacter(amount_to_pad);
 			string tmp = "";
-			for (int index = 0; index < amount_to_pad; index++)
+			for(int index = 0; index < amount_to_pad; index++)
 			{
 				tmp += pad_chr;
 			}
@@ -204,9 +204,9 @@ namespace Zongsoft.Externals.Wechat.Platforms
 			var decrypt = aes.CreateDecryptor(aes.Key, aes.IV);
 			byte[] xBuff = null;
 
-			using (var ms = new MemoryStream())
+			using(var ms = new MemoryStream())
 			{
-				using (var cs = new CryptoStream(ms, decrypt, CryptoStreamMode.Write))
+				using(var cs = new CryptoStream(ms, decrypt, CryptoStreamMode.Write))
 				{
 					byte[] xXml = Convert.FromBase64String(text);
 					byte[] msg = new byte[xXml.Length + 32 - xXml.Length % 32];
@@ -220,11 +220,10 @@ namespace Zongsoft.Externals.Wechat.Platforms
 
 		private static byte[] AES_Decode(byte[] decrypted)
 		{
-			int pad = (int)decrypted[decrypted.Length - 1];
-			if (pad < 1 || pad > 32)
-			{
+			int pad = decrypted[^1];
+			if(pad < 1 || pad > 32)
 				pad = 0;
-			}
+
 			byte[] res = new byte[decrypted.Length - pad];
 			Array.Copy(decrypted, 0, res, 0, decrypted.Length - pad);
 			return res;

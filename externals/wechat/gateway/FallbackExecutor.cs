@@ -43,7 +43,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 	public class FallbackExecutor : ExecutorBase<Stream, object>
 	{
 		#region 单例字段
-		public static readonly FallbackExecutor Instance = new FallbackExecutor();
+		public static readonly FallbackExecutor Instance = new();
 		#endregion
 
 		#region 构造函数

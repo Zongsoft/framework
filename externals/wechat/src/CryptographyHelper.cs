@@ -156,7 +156,7 @@ namespace Zongsoft.Externals.Wechat
 
 				// 获得补位所用的字符
 				var pad_chr = (char)(byte)(amount_to_pad & 0xFF);
-				var tmp = "";
+				var tmp = string.Empty;
 
 				for(int index = 0; index < amount_to_pad; index++)
 				{

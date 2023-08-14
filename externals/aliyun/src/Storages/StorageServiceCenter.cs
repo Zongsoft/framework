@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Externals.Aliyun.Storages
 {
@@ -53,69 +52,51 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public string GetRequestUrl(string path, bool secured = false)
-		{
-			return this.GetRequestUrl(path, secured, out _);
-		}
-
+		public string GetRequestUrl(string path, bool secured = false) => this.GetRequestUrl(path, secured, out _);
 		public string GetRequestUrl(string path, bool secured, out string resourcePath)
 		{
-			this.ResolvePath(path, out var bucketName, out resourcePath);
+			ResolvePath(path, out var bucketName, out resourcePath);
 
 			return secured ?
-				Uri.EscapeUriString(string.Format("https://{0}.{1}/{2}", bucketName, this.Path, resourcePath)) :
-				Uri.EscapeUriString(string.Format("http://{0}.{1}/{2}", bucketName, this.Path, resourcePath));
+				string.Format("https://{0}.{1}/{2}", bucketName, this.Path, Uri.EscapeDataString(resourcePath).Replace("%2F", "/")) :
+				string.Format("http://{0}.{1}/{2}", bucketName, this.Path, Uri.EscapeDataString(resourcePath).Replace("%2F", "/"));
 		}
 		#endregion
 
 		#region 内部方法
-		internal string GetBaseUrl(string path)
-		{
-			string baseName, resourcePath;
-			return this.GetBaseUrl(path, out baseName, out resourcePath);
-		}
-
+		internal string GetBaseUrl(string path) => this.GetBaseUrl(path, out _, out _);
 		internal string GetBaseUrl(string path, out string baseName, out string resourcePath)
 		{
-			this.ResolvePath(path, out baseName, out resourcePath);
-			return Uri.EscapeUriString(string.Format("http://{0}.{1}", baseName.ToLowerInvariant(), this.Path));
+			ResolvePath(path, out baseName, out resourcePath);
+			return string.Format("http://{0}.{1}", baseName.ToLowerInvariant(), this.Path);
 		}
 		#endregion
 
 		#region 静态方法
-		public static StorageServiceCenter GetInstance(ServiceCenterName name, bool isInternal = true)
+		public static StorageServiceCenter GetInstance(ServiceCenterName name, bool isInternal = true) => name switch
 		{
-			switch(name)
-			{
-				case ServiceCenterName.Beijing:
-					return isInternal ? Internal.Beijing : External.Beijing;
-				case ServiceCenterName.Qingdao:
-					return isInternal ? Internal.Qingdao : External.Qingdao;
-				case ServiceCenterName.Hangzhou:
-					return isInternal ? Internal.Hangzhou : External.Hangzhou;
-				case ServiceCenterName.Shenzhen:
-					return isInternal ? Internal.Shenzhen : External.Shenzhen;
-				case ServiceCenterName.Hongkong:
-					return isInternal ? Internal.Hongkong : External.Hongkong;
-			}
-
-			throw new NotSupportedException();
-		}
+			ServiceCenterName.Beijing => isInternal ? Internal.Beijing : External.Beijing,
+			ServiceCenterName.Qingdao => isInternal ? Internal.Qingdao : External.Qingdao,
+			ServiceCenterName.Hangzhou => isInternal ? Internal.Hangzhou : External.Hangzhou,
+			ServiceCenterName.Shenzhen => isInternal ? Internal.Shenzhen : External.Shenzhen,
+			ServiceCenterName.Hongkong => isInternal ? Internal.Hongkong : External.Hongkong,
+			_ => throw new NotSupportedException(),
+		};
 		#endregion
 
 		#region 私有方法
-		private void ResolvePath(string path, out string bucketName, out string resourcePath)
+		private static void ResolvePath(string path, out string bucketName, out string resourcePath)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException(nameof(path));
 
 			path = path.Trim();
-			var parts = path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+			var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
 			bucketName = parts[0];
 
 			if(parts.Length > 1)
-				resourcePath = string.Join("/", parts, 1, parts.Length - 1) + (path.EndsWith("/") ? "/" : string.Empty);
+				resourcePath = string.Join('/', parts, 1, parts.Length - 1) + (path.EndsWith('/') ? '/' : string.Empty);
 			else
 				resourcePath = string.Empty;
 		}
@@ -125,37 +106,37 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		public static class External
 		{
 			/// <summary>北京存储服务中心的外部访问地址</summary>
-			public static readonly StorageServiceCenter Beijing = new StorageServiceCenter(ServiceCenterName.Beijing, false);
+			public static readonly StorageServiceCenter Beijing = new(ServiceCenterName.Beijing, false);
 
 			/// <summary>青岛存储服务中心的外部访问地址</summary>
-			public static readonly StorageServiceCenter Qingdao = new StorageServiceCenter(ServiceCenterName.Qingdao, false);
+			public static readonly StorageServiceCenter Qingdao = new(ServiceCenterName.Qingdao, false);
 
 			/// <summary>杭州存储服务中心的外部访问地址</summary>
-			public static readonly StorageServiceCenter Hangzhou = new StorageServiceCenter(ServiceCenterName.Hangzhou, false);
+			public static readonly StorageServiceCenter Hangzhou = new(ServiceCenterName.Hangzhou, false);
 
 			/// <summary>深圳存储服务中心的外部访问地址</summary>
-			public static readonly StorageServiceCenter Shenzhen = new StorageServiceCenter(ServiceCenterName.Shenzhen, false);
+			public static readonly StorageServiceCenter Shenzhen = new(ServiceCenterName.Shenzhen, false);
 
 			/// <summary>香港存储服务中心的外部访问地址</summary>
-			public static readonly StorageServiceCenter Hongkong = new StorageServiceCenter(ServiceCenterName.Hongkong, false);
+			public static readonly StorageServiceCenter Hongkong = new(ServiceCenterName.Hongkong, false);
 		}
 
 		public static class Internal
 		{
 			/// <summary>北京存储服务中心的内部访问地址</summary>
-			public static readonly StorageServiceCenter Beijing = new StorageServiceCenter(ServiceCenterName.Beijing, true);
+			public static readonly StorageServiceCenter Beijing = new(ServiceCenterName.Beijing, true);
 
 			/// <summary>青岛存储服务中心的内部访问地址</summary>
-			public static readonly StorageServiceCenter Qingdao = new StorageServiceCenter(ServiceCenterName.Qingdao, true);
+			public static readonly StorageServiceCenter Qingdao = new(ServiceCenterName.Qingdao, true);
 
 			/// <summary>杭州存储服务中心的内部访问地址</summary>
-			public static readonly StorageServiceCenter Hangzhou = new StorageServiceCenter(ServiceCenterName.Hangzhou, true);
+			public static readonly StorageServiceCenter Hangzhou = new(ServiceCenterName.Hangzhou, true);
 
 			/// <summary>深圳存储服务中心的内部访问地址</summary>
-			public static readonly StorageServiceCenter Shenzhen = new StorageServiceCenter(ServiceCenterName.Shenzhen, true);
+			public static readonly StorageServiceCenter Shenzhen = new(ServiceCenterName.Shenzhen, true);
 
 			/// <summary>香港存储服务中心的内部访问地址</summary>
-			public static readonly StorageServiceCenter Hongkong = new StorageServiceCenter(ServiceCenterName.Hongkong, true);
+			public static readonly StorageServiceCenter Hongkong = new(ServiceCenterName.Hongkong, true);
 		}
 		#endregion
 	}

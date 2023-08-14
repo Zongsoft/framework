@@ -40,7 +40,7 @@ namespace Zongsoft.Externals.Aliyun
 	public class HttpAuthenticator
 	{
 		#region 常量定义
-		public const string NewLine = "\n";
+		public const char NewLine = '\n';
 		#endregion
 
 		#region 成员字段
@@ -74,7 +74,7 @@ namespace Zongsoft.Externals.Aliyun
 		#region 公共方法
 		public virtual string Signature(HttpRequestMessage request, string secret)
 		{
-			using(var algorithm = HMAC.Create("HMACSHA1"))
+			using(var algorithm = new HMACSHA1())
 			{
 				//设置散列加密算法的密钥
 				algorithm.Key = Encoding.UTF8.GetBytes(secret);
@@ -92,7 +92,7 @@ namespace Zongsoft.Externals.Aliyun
 		protected virtual string Canonicalize(HttpRequestMessage request)
 		{
 			if(request == null)
-				throw new ArgumentNullException("request");
+				throw new ArgumentNullException(nameof(request));
 
 			var headersString = this.CanonicalizeHeaders(request);
 			var resourceString = this.CanonicalizeResource(request);
@@ -125,9 +125,9 @@ namespace Zongsoft.Externals.Aliyun
 			{
 				if(this.IsCanonicalizedHeader(header.Key))
 				{
-					string value, key = header.Key.ToLowerInvariant().Trim();
+					string key = header.Key.ToLowerInvariant().Trim();
 
-					if(dictionary.TryGetValue(key, out value))
+					if(dictionary.TryGetValue(key, out var value))
 						dictionary[key] = JoinValues(value, header.Value);
 					else
 						dictionary[key] = JoinValues(null, header.Value);
@@ -136,28 +136,18 @@ namespace Zongsoft.Externals.Aliyun
 
 			foreach(var entry in dictionary)
 			{
-				text.AppendFormat("{0}:{1}{2}", entry.Key, entry.Value, NewLine);
+				text.Append($"{entry.Key}:{entry.Value}{NewLine}");
 			}
 
 			return text.ToString();
 		}
 
-		protected virtual string CanonicalizeResource(HttpRequestMessage request)
-		{
-			return null;
-		}
-
-		protected virtual bool IsCanonicalizedHeader(string name)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				return false;
-
-			return name.StartsWith("x-");
-		}
+		protected virtual string CanonicalizeResource(HttpRequestMessage request) => null;
+		protected virtual bool IsCanonicalizedHeader(string name) => !string.IsNullOrWhiteSpace(name) && name.StartsWith("x-");
 		#endregion
 
 		#region 保护方法
-		protected string CanonicalizeQuery(Uri url, Action<StringBuilder> onCanonicalized = null)
+		protected static string CanonicalizeQuery(Uri url, Action<StringBuilder> onCanonicalized = null)
 		{
 			if(url == null || string.IsNullOrEmpty(url.Query))
 				return null;
@@ -172,8 +162,8 @@ namespace Zongsoft.Externals.Aliyun
 
 				if(index > 0)
 				{
-					key = Uri.UnescapeDataString(part.Substring(0, index));
-					value = index < part.Length - 1 ? Uri.UnescapeDataString(part.Substring(index + 1)) : null;
+					key = Uri.UnescapeDataString(part[..index]);
+					value = index < part.Length - 1 ? Uri.UnescapeDataString(part[(index + 1)..]) : null;
 				}
 				else
 				{
@@ -189,30 +179,25 @@ namespace Zongsoft.Externals.Aliyun
 			foreach(var entry in dictionary)
 			{
 				if(text.Length > 0)
-					text.Append("&");
+					text.Append('&');
 
-				text.Append(Uri.EscapeDataString(entry.Key) + "=" + Uri.EscapeDataString(entry.Value));
+				text.Append($"{Uri.EscapeDataString(entry.Key)}={Uri.EscapeDataString(entry.Value)}");
 			}
 
-			if(onCanonicalized != null)
-				onCanonicalized(text);
+			onCanonicalized?.Invoke(text);
 
 			return text.ToString();
 		}
 		#endregion
 
 		#region 私有方法
-		private string JoinValues(string originalValue, IEnumerable<string> values)
+		private static string JoinValues(string originalValue, IEnumerable<string> values)
 		{
 			if(values == null)
 				return originalValue;
 
-			var result = string.Join(",", values).Trim().Trim(',');
-
-			if(!string.IsNullOrWhiteSpace(originalValue))
-				result = originalValue.Trim() + ',' + result;
-
-			return result;
+			var result = string.Join(',', values).Trim().Trim(',');
+			return string.IsNullOrWhiteSpace(originalValue) ? result : $"{originalValue.Trim()},{result}";
 		}
 		#endregion
 
@@ -220,7 +205,7 @@ namespace Zongsoft.Externals.Aliyun
 		protected class QueryStringComparer : IComparer<string>
 		{
 			#region 单例字段
-			public static readonly QueryStringComparer Ordinal = new QueryStringComparer();
+			public static readonly QueryStringComparer Ordinal = new();
 			#endregion
 
 			#region 私有构造
@@ -258,7 +243,7 @@ namespace Zongsoft.Externals.Aliyun
 			#endregion
 
 			#region 私有方法
-			private int GetCharNumber(Char chr)
+			private static int GetCharNumber(char chr)
 			{
 				if(chr >= '0' && chr <= '9')
 					return chr + 7;

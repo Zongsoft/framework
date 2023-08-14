@@ -135,7 +135,7 @@ namespace Zongsoft.Externals.Wechat
 		private struct AllocateResult
 		{
 			public Entry[] Data;
-			public bool HasData(out Entry[] data)
+			public readonly bool HasData(out Entry[] data)
 			{
 				data = this.Data;
 				return data != null && data.Length > 0;

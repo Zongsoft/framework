@@ -35,7 +35,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 	public class PushingAuthenticator : HttpAuthenticator
 	{
 		#region 单例字段
-		public static PushingAuthenticator Instance = new PushingAuthenticator();
+		public static readonly PushingAuthenticator Instance = new();
 		#endregion
 
 		#region 私有构造
@@ -53,7 +53,6 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		protected override string Canonicalize(HttpRequestMessage request)
 		{
 			var canonicalizedString = base.Canonicalize(request);
-
 			return request.Method.Method + "&%2F&" + Uri.EscapeDataString(canonicalizedString);
 		}
 
@@ -64,7 +63,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 
 		protected override string CanonicalizeResource(HttpRequestMessage request)
 		{
-			return this.CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%2A", "*").Replace("%7E", "~"));
+			return CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%2A", "*").Replace("%7E", "~"));
 		}
 		#endregion
 	}

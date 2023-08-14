@@ -58,11 +58,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency]
+		[ServiceDependency(IsRequired = true)]
 		public PushingSender Sender
 		{
 			get => _sender;
-			set => _sender = value ?? throw new ArgumentNullException();
+			set => _sender = value;
 		}
 		#endregion
 
@@ -82,11 +82,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 														  context.Expression.Options.GetValue<PushingTargetType>("targetType"),
 														  context.Expression.Options.GetValue<int>("expiry"));
 
-			var results = new List<ICommandResult>();
+			var results = new List<PushingResult>();
 
 			if(context.Parameter != null)
 			{
-				var content = this.GetContent(context.Parameter);
+				var content = GetContent(context.Parameter);
 
 				var result = this.Send(
 					context.Expression.Options.GetValue<string>("name"),
@@ -94,9 +94,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
 
 				if(result != null)
-				{
-					results.Add(result.ToCommandResult());
-				}
+					results.Add(result);
 			}
 
 			foreach(var argument in context.Expression.Arguments)
@@ -107,9 +105,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
 
 				if(result != null)
-				{
-					results.Add(result.ToCommandResult());
-				}
+					results.Add(result);
 			}
 
 			if(results.Count == 0)
@@ -135,13 +131,13 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			return result;
 		}
 
-		private string GetContent(object value)
+		private static string GetContent(object value)
 		{
 			if(value == null)
 				return null;
 
-			if(value is string)
-				return (string)value;
+			if(value is string text)
+				return text;
 
 			if(value is System.Text.StringBuilder || Zongsoft.Common.TypeExtension.IsScalarType(value.GetType()))
 				return value.ToString();

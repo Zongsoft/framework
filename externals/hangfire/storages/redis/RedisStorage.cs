@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Hangfire.Storages
 	[Service(typeof(global::Hangfire.JobStorage))]
 	public class RedisStorage : global::Hangfire.JobStorage
 	{
-		private readonly object _lock = new object();
+		private readonly object _lock = new();
 		private global::Hangfire.Redis.StackExchange.RedisStorage _storage;
 
 		public RedisStorage() { }
@@ -58,8 +58,7 @@ namespace Zongsoft.Externals.Hangfire.Storages
 				{
 					lock(_lock)
 					{
-						if(_storage == null)
-							_storage = new global::Hangfire.Redis.StackExchange.RedisStorage(GetRedisConnection());
+						_storage ??= new global::Hangfire.Redis.StackExchange.RedisStorage(GetRedisConnection());
 					}
 				}
 
@@ -108,7 +107,9 @@ namespace Zongsoft.Externals.Hangfire.Storages
 		}
 
 		public override bool LinearizableReads => this.Storage.LinearizableReads;
+#pragma warning disable CS0618 // 类型或成员已过时
 		public override IEnumerable<IServerComponent> GetComponents() => this.Storage.GetComponents();
+#pragma warning restore CS0618 // 类型或成员已过时
 		public override IMonitoringApi GetMonitoringApi() => this.Storage.GetMonitoringApi();
 		public override IStorageConnection GetConnection() => this.Storage.GetConnection();
 		public override IStorageConnection GetReadOnlyConnection() => this.Storage.GetReadOnlyConnection();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 

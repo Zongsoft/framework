@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Zongsoft.Data;
-using Zongsoft.Data.Metadata;
-
 namespace Zongsoft.Data.Metadata;
 
 internal class DataEntity : DataEntityBase

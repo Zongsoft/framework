@@ -35,7 +35,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 	public class PhoneAuthenticator : HttpAuthenticator
 	{
 		#region 单例字段
-		public static PhoneAuthenticator Instance = new PhoneAuthenticator();
+		public static readonly PhoneAuthenticator Instance = new();
 		#endregion
 
 		#region 私有构造
@@ -64,7 +64,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 		protected override string CanonicalizeResource(HttpRequestMessage request)
 		{
-			return this.CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%7E", "~"));
+			return CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%7E", "~"));
 		}
 		#endregion
 	}

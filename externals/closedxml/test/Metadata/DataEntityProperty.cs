@@ -11,7 +11,7 @@ internal abstract class DataEntityProperty : IDataEntityProperty
 	public bool IsPrimaryKey { get; set; }
 	public abstract bool IsSimplex { get; }
 	public abstract bool IsComplex { get; }
-	public bool Equals(IDataEntityProperty? other) => other != null && this.Entity == other.Entity && string.Equals(this.Name, other.Name);
+	public bool Equals(IDataEntityProperty other) => other != null && this.Entity == other.Entity && string.Equals(this.Name, other.Name);
 }
 
 internal class DataEntitySimplexProperty : DataEntityProperty, IDataEntitySimplexProperty

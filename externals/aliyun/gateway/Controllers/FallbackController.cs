@@ -91,7 +91,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 
 			if(this.Request.QueryString.HasValue)
 			{
-				text.Append("?");
+				text.Append('?');
 				text.Append(this.Request.QueryString);
 			}
 
