@@ -55,7 +55,7 @@ namespace Zongsoft.Collections
 			while(true)
 			{
 				var task = iterator.MoveNextAsync();
-				var succeed = task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
+				var succeed = task.IsCompletedSuccessfully ? task.Result : task.AsTask().GetAwaiter().GetResult();
 
 				if(succeed)
 					yield return iterator.Current;
@@ -106,15 +106,13 @@ namespace Zongsoft.Collections
 		private class TypedEnumerable<T> : IEnumerable<T>
 		{
 			#region 私有变量
-			private Func<IEnumerator<T>> _iterator;
+			private readonly Func<IEnumerator<T>> _iterator;
 			#endregion
 
 			#region 构造函数
 			public TypedEnumerable(object source)
 			{
-				var items = source as IEnumerable;
-
-				if(items != null && (source.GetType() != typeof(string) || typeof(T) == typeof(char)))
+				if(source is IEnumerable items && (source.GetType() != typeof(string) || typeof(T) == typeof(char)))
 					_iterator = () => new MultitapEnumerator(items.GetEnumerator());
 				else
 				{
@@ -214,14 +212,26 @@ namespace Zongsoft.Collections
 		{
 			private readonly IEnumerable<T> _items;
 
-            public AsyncEnumerable(IEnumerable<T> items) => _items = items;
-            public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-			{
-				if(_items == null)
-					yield break;
+			public AsyncEnumerable(IEnumerable<T> items) => _items = items;
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) => new AsyncEnumerator(_items.GetEnumerator(), cancellationToken);
 
-				foreach(var item in _items)
-					yield return item;
+			internal class AsyncEnumerator : IAsyncEnumerator<T>
+			{
+				private readonly IEnumerator<T> _source;
+				private readonly CancellationToken _cancellation;
+				public AsyncEnumerator(IEnumerator<T> source, CancellationToken cancellation)
+				{
+					_source = source;
+					_cancellation = cancellation;
+				}
+
+				public T Current => _source.Current;
+				public ValueTask<bool> MoveNextAsync() => _cancellation.IsCancellationRequested ? ValueTask.FromResult(false) : ValueTask.FromResult(_source.MoveNext());
+				public ValueTask DisposeAsync()
+				{
+					_source.Dispose();
+					return ValueTask.CompletedTask;
+				}
 			}
 		}
 		#endregion

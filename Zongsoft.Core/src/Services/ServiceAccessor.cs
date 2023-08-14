@@ -33,6 +33,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services
 {
+	[Obsolete($"Use the '{nameof(ServiceDependencyAttribute.ServiceName)}' property of '{nameof(ServiceDependencyAttribute)}' annotation class instead.")]
 	public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
 	{
 		#region 构造函数

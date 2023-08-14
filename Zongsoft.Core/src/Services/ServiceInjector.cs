@@ -40,9 +40,8 @@ namespace Zongsoft.Services
 	public static class ServiceInjector
 	{
 		#region 私有变量
-		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
-		private static readonly ConcurrentDictionary<Type, MemberInjectionDescriptor[]> _descriptors = new ConcurrentDictionary<Type, MemberInjectionDescriptor[]>();
-		private static readonly ConcurrentDictionary<Type, PropertyInfo> _options = new ConcurrentDictionary<Type, PropertyInfo>();
+		private static readonly ConcurrentDictionary<Type, MemberInjectionDescriptor[]> _descriptors = new();
+		private static readonly ConcurrentDictionary<Type, PropertyInfo> _options = new();
 		#endregion
 
 		#region 公共方法
@@ -258,11 +257,13 @@ namespace Zongsoft.Services
 
 			private static bool IsServiceAccessor(Type type, out Type accessorType)
 			{
+#pragma warning disable CS0618 // 类型或成员已过时
 				if(type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IServiceAccessor<>))
 				{
 					accessorType = typeof(ServiceAccessor<>).MakeGenericType(type.GenericTypeArguments[0]);
 					return true;
 				}
+#pragma warning restore CS0618 // 类型或成员已过时
 
 				accessorType = null;
 				return false;
