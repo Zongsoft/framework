@@ -31,24 +31,24 @@ using System;
 
 namespace Zongsoft.Common
 {
-	public static class TimeSpanExtension
+	public static class TimeSpanUtility
 	{
-		public static bool TryParse(string text, out TimeSpan value)
+		public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
+		public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)
 		{
-			if(string.IsNullOrEmpty(text) || text.Length < 2)
+			if(text.IsEmpty || text.Length < 2)
 			{
 				value = TimeSpan.Zero;
 				return false;
 			}
 
-			var span = text.AsSpan();
 			int number;
 
 			switch(text[^1])
 			{
 				case 'd':
 				case 'D':
-					if(int.TryParse(span[0..^1], out number))
+					if(int.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromDays(number);
 						return true;
@@ -57,7 +57,7 @@ namespace Zongsoft.Common
 					break;
 				case 'h':
 				case 'H':
-					if(int.TryParse(span[0..^1], out number))
+					if(int.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromHours(number);
 						return true;
@@ -65,7 +65,8 @@ namespace Zongsoft.Common
 
 					break;
 				case 'm':
-					if(int.TryParse(span[0..^1], out number))
+				case 'M':
+					if(int.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromMinutes(number);
 						return true;
@@ -73,7 +74,8 @@ namespace Zongsoft.Common
 
 					break;
 				case 's':
-					if(int.TryParse(span[0..^1], out number))
+				case 'S':
+					if(int.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromSeconds(number);
 						return true;

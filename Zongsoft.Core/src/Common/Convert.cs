@@ -163,7 +163,7 @@ namespace Zongsoft.Common
 
 			try
 			{
-				if(value is string text && type == typeof(TimeSpan) && TimeSpanExtension.TryParse(text, out var timespan))
+				if(value is string text && type == typeof(TimeSpan) && TimeSpanUtility.TryParse(text, out var timespan))
 				{
 					result = timespan;
 					return true;

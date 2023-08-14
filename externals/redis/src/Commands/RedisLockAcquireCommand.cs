@@ -60,7 +60,7 @@ namespace Zongsoft.Externals.Redis.Commands
 
 			if(context.Expression.Options.TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
 			{
-				if(!Zongsoft.Common.TimeSpanExtension.TryParse(value, out expiry))
+				if(!Zongsoft.Common.TimeSpanUtility.TryParse(value, out expiry))
 					expiry = TimeSpan.FromMinutes(1);
 			}
 

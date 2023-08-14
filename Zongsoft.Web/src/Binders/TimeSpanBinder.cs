@@ -53,7 +53,7 @@ namespace Zongsoft.Web.Binders
 			if(string.IsNullOrEmpty(value))
 				return Task.CompletedTask;
 
-			if(TimeSpanExtension.TryParse(value, out var timespan))
+			if(TimeSpanUtility.TryParse(value, out var timespan))
 				bindingContext.Result = ModelBindingResult.Success(timespan);
 			else
 				bindingContext.Result = ModelBindingResult.Failed();
