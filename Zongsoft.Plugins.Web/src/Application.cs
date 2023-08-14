@@ -33,6 +33,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
+using Zongsoft.Configuration;
+
 namespace Zongsoft.Web
 {
 	public static class Application
@@ -42,6 +44,10 @@ namespace Zongsoft.Web
 		public static WebApplication Web(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
 		{
 			var builder = new WebApplicationBuilder(name, args, configure);
+
+			//添加 web.option 宿主配置文件
+			builder.Configuration.AddOptionFile("web.option", true);
+
 			var app = builder.Build();
 
 			//初始化应用上下文（该初始化器中会加载相应的Web部件）
@@ -69,6 +75,9 @@ namespace Zongsoft.Web
 		{
 			var builder = new WebApplicationBuilder(name, args, host =>
 			{
+				//添加 web.option 宿主配置文件
+				host.ConfigureAppConfiguration(configurator => configurator.AddOptionFile("web.option", true));
+
 				Configure(host, applicate);
 				configure?.Invoke(host);
 			});
