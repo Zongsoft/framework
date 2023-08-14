@@ -1,13 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <options>
-	<option path="/Data">
-		<connectionSettings>
-			<connectionSetting connectionSetting.name="Security" driver="MySql"
-			                   value="server=127.0.0.1;username=program;password=xxxxxx;database=zongsoft;persist security info=False;Charset=utf8mb4;Convert zero Datetime=true;Allow zero Datetime=true;" />
-		</connectionSettings>
-	</option>
-
 	<option path="/Security/Membership">
 		<identity verification="none"
 		          passwordLength="0" passwordStrength="None" />
@@ -18,11 +11,11 @@
 			<attempter threshold="3" window="0:1:0" period="1:0:0" />
 
 			<expiration>
-				<scenario scenario.name="web" period="8:0:0" />
-				<scenario scenario.name="api" period="24:0:0" />
-				<scenario scenario.name="app" period="24:0:0" />
-				<scenario scenario.name="mobile" period="24:00:00" />
-				<scenario scenario.name="wechat" period="24:00:00" />
+				<scenario scenario.name="web" period="1.0:0:0" />
+				<scenario scenario.name="api" period="1.0:0:0" />
+				<scenario scenario.name="app" period="1.0:0:0" />
+				<scenario scenario.name="applet" period="1.0:0:0" />
+				<scenario scenario.name="mobile" period="1.0:0:0" />
 			</expiration>
 		</authentication>
 	</option>

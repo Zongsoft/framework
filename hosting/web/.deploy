@@ -1,3 +1,5 @@
+../.deploy/options/$(cloud)/web.$(environment).option=web.option
+
 [plugins]
 ../../Zongsoft.Plugins/Main.plugin
 
@@ -61,6 +63,3 @@
 [plugins zongsoft community]
 ../../../Zongsoft.Community/.deploy
 ../../../Zongsoft.Community/src/api/.deploy
-
-../.deploy/options/$(cloud)/Zongsoft.Community.option
-../.deploy/options/$(cloud)/Zongsoft.Community.*.option

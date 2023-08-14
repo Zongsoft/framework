@@ -2,12 +2,12 @@
 
 <options>
 	<option path="/Externals/Wechat">
-		<applets default="AppId">
-			<applet applet.name="AppId" secret="AppSecret" />
+		<applets default="MyApplet_AppId">
+			<applet applet.name="MyApplet_AppId" secret="AppSecret" />
 		</applets>
 
-		<channels default="AppId">
-			<channel channel.name="AppId" secret="AppSecret" />
+		<channels default="MyChannel_AppId">
+			<channel channel.name="MyChannel_AppId" secret="AppSecret" />
 		</channels>
 	</option>
 
@@ -17,9 +17,9 @@
 
 		<authorities default="automao.saas">
 			<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx">
-				<apps default="AppId">
-					<app name="AppId" type="applet" />
-					<app name="AppId" type="channel" />
+				<apps default="AppId_1">
+					<app app.name="AppId_1" type="applet" />
+					<app app.name="AppId_2" type="channel" />
 				</apps>
 			</authority>
 		</authorities>

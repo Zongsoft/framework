@@ -362,3 +362,7 @@ externals/grapecity/src/api/Properties/launchSettings.json
 
 # The launchSettings.json file
 **/launchSettings.json
+
+# The web.option and its deploys
+hosting/web/[Ww]eb.option
+hosting/.deploy/options/*/web.*.option
