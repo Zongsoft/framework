@@ -61,14 +61,14 @@ namespace Zongsoft.Diagnostics
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			return _factory.GetOrAdd(type.Assembly.FullName, key => new Logger(key));
+			return _factory.GetOrAdd(type.Assembly.GetName().Name, key => new Logger(key));
 		}
 		public static Logger GetLogger(Assembly assembly)
 		{
 			if(assembly == null)
 				throw new ArgumentNullException(nameof(assembly));
 
-			return _factory.GetOrAdd(assembly.FullName, key => new Logger(key));
+			return _factory.GetOrAdd(assembly.GetName().Name, key => new Logger(key));
 		}
 		#endregion
 
