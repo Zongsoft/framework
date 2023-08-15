@@ -5,17 +5,20 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
