@@ -194,16 +194,5 @@ namespace Zongsoft.Plugins
 				this.EnsureNodes(child);
 		}
 		#endregion
-
-		public class DaemonApplicationContext : PluginApplicationContext
-		{
-			public DaemonApplicationContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
-			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new DaemonWorkbench(this);
-		}
-
-		private class DaemonWorkbench : WorkbenchBase
-		{
-			public DaemonWorkbench(DaemonApplicationContext applicationContext) : base(applicationContext) { }
-		}
 	}
 }
