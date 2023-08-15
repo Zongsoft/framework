@@ -35,6 +35,11 @@ namespace Zongsoft.Configuration
 {
 	public class PluginConfigurationSource : IConfigurationSource
 	{
+		#region 私有变量
+		private readonly object _locker = new();
+		private PluginConfigurationProvider _provider;
+		#endregion
+
 		#region 构造函数
 		public PluginConfigurationSource(Zongsoft.Plugins.PluginOptions options)
 		{
@@ -43,16 +48,19 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共属性
-		public Zongsoft.Plugins.PluginOptions Options
-		{
-			get;
-		}
+		public Zongsoft.Plugins.PluginOptions Options { get; }
 		#endregion
 
 		#region 公共方法
 		public IConfigurationProvider Build(IConfigurationBuilder builder)
 		{
-			return new PluginConfigurationProvider(this);
+			if(_provider == null)
+			{
+				lock(_locker)
+					_provider ??= new PluginConfigurationProvider(this);
+			}
+
+			return _provider;
 		}
 		#endregion
 	}
