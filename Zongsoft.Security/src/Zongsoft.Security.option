@@ -7,15 +7,15 @@
 
 		<authorization roles="security,securities" />
 
-		<authentication period="4:0:0" scheme="User">
-			<attempter threshold="3" window="0:1:0" period="1:0:0" />
+		<authentication period="08:00:00">
+			<attempter threshold="3" window="00:01:00" period="01:00:00" />
 
 			<expiration>
-				<scenario scenario.name="web" period="1.0:0:0" />
-				<scenario scenario.name="api" period="1.0:0:0" />
-				<scenario scenario.name="app" period="1.0:0:0" />
-				<scenario scenario.name="applet" period="1.0:0:0" />
-				<scenario scenario.name="mobile" period="1.0:0:0" />
+				<scenario scenario.name="web" period="1.00:00:00" />
+				<scenario scenario.name="api" period="1.00:00:00" />
+				<scenario scenario.name="app" period="1.00:00:00" />
+				<scenario scenario.name="applet" period="1.00:00:00" />
+				<scenario scenario.name="mobile" period="1.00:00:00" />
 			</expiration>
 		</authentication>
 	</option>

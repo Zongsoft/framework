@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Security.Membership.Configuration
 {
@@ -38,24 +37,19 @@ namespace Zongsoft.Security.Membership.Configuration
 	public class AuthenticationOptions
 	{
 		#region 静态字段
-		public static readonly TimeSpan DefaultPeriod = TimeSpan.FromHours(4);
+		public static readonly TimeSpan DefaultPeriod = TimeSpan.FromHours(8);
 		#endregion
 
 		#region 构造函数
 		public AuthenticationOptions()
 		{
-			this.Scheme = string.Empty;
 			this.Period = DefaultPeriod;
 			this.Expiration = new Collections.NamedCollection<ExpirationScenario>(scenario => scenario.Name);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置默认的安全方案。</summary>
-		public string Scheme { get; set; }
-
 		/// <summary>获取或设置凭证的默认有效期时长。</summary>
-		[DefaultValue("4:0:0")]
 		public TimeSpan Period { get; set; }
 
 		/// <summary>获取或设置恶意检测器的配置项。</summary>
@@ -68,17 +62,13 @@ namespace Zongsoft.Security.Membership.Configuration
 		#region 公共方法
 		public TimeSpan GetPeriod(string scenario)
 		{
-			var period = DefaultPeriod;
+			var period = this.Period;
 
-			if(string.IsNullOrEmpty(scenario))
-				period = this.Period;
-			else if(this.Expiration.TryGet(scenario, out var expiration))
+			if(scenario != null && this.Expiration.TryGet(scenario, out var expiration))
 				period = expiration.Period;
 
-			if(period.TotalMinutes > 1)
-				return period;
-			else
-				return DefaultPeriod;
+			//确保期限时长不低于一分钟
+			return period.TotalMinutes > 1 ? period : TimeSpan.FromMinutes(1);
 		}
 		#endregion
 
