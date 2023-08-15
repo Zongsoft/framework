@@ -57,26 +57,15 @@ namespace Zongsoft.Web
 
 		public WebApplicationBuilder(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
 		{
-			_builder = WebApplication.CreateBuilder(new WebApplicationOptions() { ApplicationName = name, Args = args });
-			_configure = configure;
-
-			//设置环境变量
+			//注意：在.NET7.0 中必须通过 WebApplicationOptions 来设置环境变量
 			var environment = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
-			if(!string.IsNullOrEmpty(environment))
-			{
-				_builder.Host.UseEnvironment(environment);
-				_builder.WebHost.UseEnvironment(environment);
-				_builder.Environment.EnvironmentName = environment;
-			}
 
-			//创建默认的插件环境配置
-			var options = this.CreateOptions();
+			var options = string.IsNullOrWhiteSpace(environment) ?
+				new WebApplicationOptions() { ApplicationName = name, Args = args } :
+				new WebApplicationOptions() { ApplicationName = name, Args = args, EnvironmentName = environment };
 
-			//添加插件配置文件源到配置管理器中
-			((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
-
-			//注册插件服务
-			this.RegisterServices(_builder.Services, options);
+			_builder = WebApplication.CreateBuilder(options);
+			_configure = configure;
 
 			//设置服务提供程序工厂
 			_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
@@ -91,6 +80,16 @@ namespace Zongsoft.Web
 		public override WebApplication Build()
 		{
 			_configure?.Invoke(_builder);
+
+			//创建默认的插件环境配置
+			var options = this.CreateOptions();
+
+			//添加插件配置文件源到配置管理器中
+			((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
+
+			//注册插件服务
+			this.RegisterServices(_builder.Services, options);
+
 			return _builder.Build();
 		}
 

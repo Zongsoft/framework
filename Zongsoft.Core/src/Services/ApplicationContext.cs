@@ -299,36 +299,20 @@ namespace Zongsoft.Services
 		private class ApplicationEnvironment : IApplicationEnvironment
 		{
 			private readonly IHostEnvironment _environment;
-			private readonly IDictionary<string, object> _properties;
+			private readonly IDictionary<object, object> _properties;
 
 			public ApplicationEnvironment(IHostEnvironment environment, IEnumerable<KeyValuePair<object, object>> properties = null)
 			{
 				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
 
 				if(properties == null)
-					_properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+					_properties = new Dictionary<object, object>();
 				else
-					_properties = new Dictionary<string, object>(
-						properties
-							.Where(p => p.Key is string)
-							.Select(p => new KeyValuePair<string, object>((string)p.Key, p.Value)),
-						StringComparer.OrdinalIgnoreCase);
+					_properties = new Dictionary<object, object>(properties);
 			}
 
-			public string Name
-			{
-				get => _environment.EnvironmentName;
-			}
-
-			public bool HasProperties
-			{
-				get => _properties != null && _properties.Count > 0;
-			}
-
-			public IDictionary<string, object> Properties
-			{
-				get => _properties;
-			}
+			public string Name => _environment.EnvironmentName;
+			public IDictionary<object, object> Properties => _properties;
 		}
 		#endregion
 	}

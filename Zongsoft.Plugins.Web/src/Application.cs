@@ -75,12 +75,12 @@ namespace Zongsoft.Web
 		{
 			var builder = new WebApplicationBuilder(name, args, host =>
 			{
-				//添加 web.option 宿主配置文件
-				host.ConfigureAppConfiguration(configurator => configurator.AddOptionFile("web.option", true));
-
 				Configure(host, applicate);
 				configure?.Invoke(host);
 			});
+
+			//添加 web.option 宿主配置文件
+			builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, "web.option"), true);
 
 			return builder.Build();
 
