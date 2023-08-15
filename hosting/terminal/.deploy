@@ -1,3 +1,6 @@
+[bin $(Edition) $(Framework)]
+../.deploy/options/$(cloud)/app.$(environment).option=$(application).option
+
 [bin $(Edition) $(Framework) plugins]
 ../../Zongsoft.Plugins/Main.plugin
 plugins/Terminal.plugin

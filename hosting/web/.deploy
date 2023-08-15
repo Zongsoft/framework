@@ -1,4 +1,4 @@
-../.deploy/options/$(cloud)/web.$(environment).option=web.option
+../.deploy/options/$(cloud)/app.$(environment).option=web.option
 
 [plugins]
 ../../Zongsoft.Plugins/Main.plugin
