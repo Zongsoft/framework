@@ -33,6 +33,7 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting
@@ -54,11 +55,8 @@ namespace Zongsoft.Plugins.Hosting
 			//定义已注册完成的程序集
 			var registry = new HashSet<Assembly>();
 
-			foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
-			{
-				if(!assembly.IsDynamic && assembly.FullName.StartsWith("Zongsoft.") && registry.Add(assembly))
-					Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, this.Configuration);
-			}
+			//注册宿主程序集中的服务
+			Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
 
 			foreach(var plugin in tree.Plugins)
 			{
@@ -129,7 +127,6 @@ namespace Zongsoft.Plugins.Hosting
 #else
 		private readonly IHostBuilder _builder;
 		private readonly Action<IHostBuilder> _configure;
-		private IHostEnvironment _environment;
 
 		public ApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : this(name, Host.CreateDefaultBuilder(args), configure) { }
 		public ApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null)
@@ -142,12 +139,13 @@ namespace Zongsoft.Plugins.Hosting
 
 			this.Services = new ServiceCollection();
 			this.Configuration = new ConfigurationManager();
+			this.Environment = new ApplicationEnvironment(name, builder.Properties);
 
 			//初始化环境变量
 			_builder.ConfigureHostConfiguration(configurator =>
 			{
-				configurator.Properties[HostDefaults.ApplicationKey] = name;
-				configurator.Properties[HostDefaults.EnvironmentKey] = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
+				configurator.Properties[HostDefaults.ApplicationKey] = this.Environment.ApplicationName;
+				configurator.Properties[HostDefaults.EnvironmentKey] = this.Environment.EnvironmentName;
 			});
 
 			//设置服务提供程序工厂
@@ -155,28 +153,42 @@ namespace Zongsoft.Plugins.Hosting
 
 			//挂载插件宿主生命期
 			this.Services.AddSingleton<IHostLifetime, Hosting.PluginsHostLifetime>();
-
-			//添加插件配置文件源到配置管理器中
-			_builder.ConfigureAppConfiguration((ctx, configurator) =>
-			{
-				_environment = ctx.HostingEnvironment;
-				ctx.HostingEnvironment.ApplicationName = name;
-				ctx.HostingEnvironment.EnvironmentName = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
-
-				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(this.CreateOptions()));
-			});
-
-			//注册插件服务
-			_builder.ConfigureServices(services => this.RegisterServices(services, this.CreateOptions()));
 		}
 
 		public override IServiceCollection Services { get; }
 		public override ConfigurationManager Configuration { get; }
-		public override IHostEnvironment Environment => _environment;
+		public override IHostEnvironment Environment { get; }
 
 		public override IHost Build()
 		{
 			_configure?.Invoke(_builder);
+
+			_builder.ConfigureAppConfiguration((ctx, configurator) =>
+			{
+				ctx.HostingEnvironment.ApplicationName = this.Environment.ApplicationName;
+				ctx.HostingEnvironment.EnvironmentName = this.Environment.EnvironmentName;
+
+				//将当前配置管理添加到应用配置器中
+				configurator.AddConfiguration(this.Configuration);
+
+				//将插件配置文件源添加到应用配置器中
+				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(this.CreateOptions()));
+
+				//再将应用配置器中的配置源全部加入到干净的当前配置管理中
+				foreach(var source in configurator.Sources)
+				{
+					//确保不会将配置管理加入到自己以免递归栈溢出
+					if(source is ChainedConfigurationSource chained && chained.Configuration == this.Configuration)
+						continue;
+
+					//注意：以下Add(...)方法会触发source参数的IConfigurationSource.Build()方法
+					//以及其返回的IConfigurationProvider的Load()方法
+					((IConfigurationBuilder)this.Configuration).Add(source);
+				}
+			});
+
+			//注册插件服务
+			_builder.ConfigureServices(services => this.RegisterServices(services, this.CreateOptions()));
 
 			var services = this.Services;
 			if(services != null)
@@ -185,14 +197,30 @@ namespace Zongsoft.Plugins.Hosting
 					_builder.ConfigureServices(services => services.Add(service));
 			}
 
-			var configuration = this.Configuration;
-			if(configuration != null)
+			return _builder.Build();
+		}
+
+		private sealed class ApplicationEnvironment : Services.IApplicationEnvironment, IHostEnvironment
+		{
+			public ApplicationEnvironment(string applicationName, IDictionary<object, object> properties)
 			{
-				foreach(var source in ((IConfigurationBuilder)configuration).Sources)
-					_builder.ConfigureHostConfiguration(configurator => configurator.Add(source));
+				this.ApplicationName = applicationName;
+				this.EnvironmentName = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey) ?? Environments.Development;
+				this.ContentRootPath = System.Environment.CurrentDirectory;
+				this.Properties = properties ?? new Dictionary<object, object>();
+
+				this.Properties.Add(HostDefaults.ApplicationKey, this.ApplicationName);
+				this.Properties.Add(HostDefaults.EnvironmentKey, this.EnvironmentName);
+				this.Properties.Add(HostDefaults.ContentRootKey, this.ContentRootPath);
 			}
 
-			return _builder.Build();
+			public string EnvironmentName { get; set; }
+			public string ApplicationName { get; set; }
+			public string ContentRootPath { get; set; }
+			public IFileProvider ContentRootFileProvider { get; set; }
+
+			string Services.IApplicationEnvironment.Name => this.EnvironmentName;
+			public IDictionary<object, object> Properties { get; }
 		}
 #endif
 	}
