@@ -37,9 +37,7 @@ namespace Zongsoft.Configuration.Xml
 	public class XmlConfigurationProvider : FileConfigurationProvider
 	{
 		#region 构造函数
-		public XmlConfigurationProvider(XmlConfigurationSource source) : base(source)
-		{
-		}
+		public XmlConfigurationProvider(XmlConfigurationSource source) : base(source) { }
 		#endregion
 
 		#region 重写方法

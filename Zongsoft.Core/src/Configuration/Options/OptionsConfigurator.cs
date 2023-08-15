@@ -38,10 +38,7 @@ namespace Zongsoft.Configuration.Options
 	public class OptionsConfigurator<TOptions> : IConfigureNamedOptions<TOptions> where TOptions : class
 	{
 		#region 构造函数
-		public OptionsConfigurator(string name, IConfiguration configuration) : this(name, configuration, null)
-		{
-		}
-
+		public OptionsConfigurator(string name, IConfiguration configuration) : this(name, configuration, null) { }
 		public OptionsConfigurator(string name, IConfiguration configuration, Action<ConfigurationBinderOptions> configureBinder)
 		{
 			this.Name = name;
@@ -57,11 +54,7 @@ namespace Zongsoft.Configuration.Options
 		#endregion
 
 		#region 公共方法
-		public void Configure(TOptions options)
-		{
-			this.Configure(string.Empty, options);
-		}
-
+		public void Configure(TOptions options) => this.Configure(string.Empty, options);
 		public void Configure(string name, TOptions options)
 		{
 			if(string.IsNullOrEmpty(name))

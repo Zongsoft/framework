@@ -43,11 +43,7 @@ namespace Zongsoft.Configuration.Options
 		#endregion
 
 		#region 构造函数
-		public OptionsFactory(IEnumerable<IConfigureOptions<TOptions>> configures, IEnumerable<IPostConfigureOptions<TOptions>> postConfigures) : this(configures, postConfigures, validations: null)
-		{
-		}
-
-		public OptionsFactory(IEnumerable<IConfigureOptions<TOptions>> configures, IEnumerable<IPostConfigureOptions<TOptions>> postConfigures, IEnumerable<IValidateOptions<TOptions>> validations)
+		public OptionsFactory(IEnumerable<IConfigureOptions<TOptions>> configures, IEnumerable<IPostConfigureOptions<TOptions>> postConfigures, IEnumerable<IValidateOptions<TOptions>> validations = null)
 		{
 			_configurators = configures;
 			_postConfigurators = postConfigures;
@@ -98,10 +94,9 @@ namespace Zongsoft.Configuration.Options
 		{
 			var type = typeof(TOptions);
 
-			if(type.IsInterface || type.IsAbstract)
-				return Zongsoft.Data.Model.Build<TOptions>();
-
-			return Activator.CreateInstance<TOptions>();
+			return type.IsAbstract ?
+				Data.Model.Build<TOptions>() :
+				Activator.CreateInstance<TOptions>();
 		}
 		#endregion
 	}
