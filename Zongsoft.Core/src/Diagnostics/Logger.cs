@@ -70,6 +70,13 @@ namespace Zongsoft.Diagnostics
 
 			return _factory.GetOrAdd(assembly.GetName().Name, key => new Logger(key));
 		}
+		public static Logger GetLogger(string source)
+		{
+			if(string.IsNullOrEmpty(source))
+				throw new ArgumentNullException(nameof(source));
+
+			return _factory.GetOrAdd(source, key => new Logger(key));
+		}
 		#endregion
 
 		#region 日志方法
