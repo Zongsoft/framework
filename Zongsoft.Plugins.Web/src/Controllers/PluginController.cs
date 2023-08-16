@@ -99,9 +99,12 @@ namespace Zongsoft.Plugins.Web.Controllers
 				var root = plugin.PluginTree.Options.ApplicationDirectory;
 
 				if(plugin.FilePath.StartsWith(root))
-					this.FilePath = plugin.FilePath.Substring(root.Length);
+					this.FilePath = plugin.FilePath[root.Length..];
 				else
 					this.FilePath = plugin.FilePath;
+
+				if(OperatingSystem.IsWindows())
+					this.FilePath = this.FilePath.Replace('\\', '/');
 
 				this.Manifest = new PluginManifestDescriptor(plugin.Manifest);
 
