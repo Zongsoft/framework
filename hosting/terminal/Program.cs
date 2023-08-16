@@ -9,7 +9,7 @@ namespace Zongsoft.Hosting.Terminal
 		static void Main(string[] args)
 		{
 			Zongsoft.Plugins.Hosting.Application
-				.Terminal("Zongsoft.Terminal", args)
+				.Terminal(args)
 				.Run();
 		}
 	}

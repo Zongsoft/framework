@@ -36,6 +36,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="appsettings.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="plugins\Terminal.plugin">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

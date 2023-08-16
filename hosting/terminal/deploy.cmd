@@ -1,1 +1,1 @@
-dotnet deploy -cloud:aliyun -site:daemon -edition:Debug -application:Zongsoft.Terminal -framework:net7.0
+dotnet deploy -cloud:aliyun -site:daemon -edition:Debug -framework:net7.0

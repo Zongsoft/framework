@@ -15,11 +15,11 @@ namespace Zongsoft.Hosting.Web
 		public static void Main(string[] args)
 		{
 #if NET7_0_OR_GREATER
-			var app = Application.Web("Zongsoft.Web", args);
+			var app = Application.Web(args);
 			app.Map("/", async ctx => ctx.Response.Redirect("/Application"));
 			app.Run();
 #else
-			var app = Application.Web("Zongsoft.Web", args, (_, app) =>
+			var app = Application.Web(args, (_, app) =>
 				app.UseEndpoints(endpoints =>
 					endpoints.Map("/", async ctx => ctx.Response.Redirect("/Application"))
 				)
