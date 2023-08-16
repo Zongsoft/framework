@@ -28,10 +28,10 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
+using System.ComponentModel;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 
@@ -54,12 +54,12 @@ namespace Zongsoft.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			if(context.Expression.Arguments.Length < 1)
+			if(context.Expression.Arguments.Length == 0)
 			{
+				PrintApplication(context.Output);
+
 				foreach(var node in context.Executor.Root.Children)
-				{
 					PrintCommandNode(context.Output, node, 0);
-				}
 
 				return null;
 			}
@@ -92,6 +92,24 @@ namespace Zongsoft.Commands
 		#endregion
 
 		#region 静态方法
+		public static void PrintApplication(ICommandOutlet output)
+		{
+			var application = ApplicationContext.Current;
+			if(application == null)
+				return;
+
+			//打印应用名称(应用名称不会为空)
+			output.WriteLine(CommandOutletColor.Green, application.Name);
+
+			if(!string.IsNullOrWhiteSpace(application.Title))
+				output.WriteLine(CommandOutletColor.DarkGreen, application.Title);
+			if(!string.IsNullOrWhiteSpace(application.Description))
+				output.WriteLine(CommandOutletColor.DarkGray, application.Description);
+
+			//打印分隔行
+			output.WriteLine();
+		}
+
 		public static void PrintHelpInfo(ICommandOutlet output, ICommand command)
 		{
 			if(output == null || command == null)
