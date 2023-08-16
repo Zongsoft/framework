@@ -24,19 +24,19 @@ plugins/Terminal.plugin
 ../../Zongsoft.Security/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Security.option
-../.deploy/options/$(cloud)/Zongsoft.Security.*.option
+../.deploy/options/$(cloud)/Zongsoft.Security.$(environment).option
 
 [bin $(Edition) $(Framework) plugins zongsoft externals aliyun]
 ../../externals/aliyun/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.option
-../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.*.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Aliyun.$(environment).option
 
 [bin $(Edition) $(Framework) plugins zongsoft externals redis]
 ../../externals/redis/.deploy
 
 ../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.option
-../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.*.option
+../.deploy/options/$(cloud)/Zongsoft.Externals.Redis.$(environment).option
 
 [bin $(Edition) $(Framework) plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
@@ -53,4 +53,3 @@ plugins/Terminal.plugin
 
 [bin $(Edition) $(Framework) plugins zongsoft messaging kafka]
 ../../Zongsoft.Messaging.Kafka/.deploy
-
