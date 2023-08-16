@@ -91,13 +91,15 @@ namespace Zongsoft.Plugins.Hosting
 
 		public ApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null)
 		{
-			_builder = new(new HostApplicationBuilderSettings() { ApplicationName = name, Args = args, });
-			_configure = configure;
-
-			//设置环境变量
+			//注意：在.NET7.0 中必须通过 WebApplicationOptions 来设置环境变量
 			var environment = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
-			if(!string.IsNullOrEmpty(environment))
-				_builder.Environment.EnvironmentName = environment;
+
+			var options = string.IsNullOrWhiteSpace(environment) ?
+				new HostApplicationBuilderSettings() { ApplicationName = name, Args = args } :
+				new HostApplicationBuilderSettings() { ApplicationName = name, Args = args, EnvironmentName = environment };
+
+			_builder = new(options);
+			_configure = configure;
 
 			//设置服务提供程序工厂
 			_builder.ConfigureContainer(new Services.ServiceProviderFactory());
