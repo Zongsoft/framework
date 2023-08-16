@@ -89,8 +89,13 @@ namespace Zongsoft.Web
 				return false;
 
 			var parts = this.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts;
+
+			//尝试加载宿主程序集部件
 			if(!parts.Any(part => part is AssemblyPart assemblyPart && assemblyPart.Assembly == Assembly.GetEntryAssembly()))
 				parts.Add(new AssemblyPart(Assembly.GetEntryAssembly()));
+
+			//加载插件Web程序集部件
+			parts.Add(new AssemblyPart(this.GetType().Assembly));
 
 			//加载插件中的Web程序集部件
 			PopulateApplicationParts(parts, this.Plugins);
