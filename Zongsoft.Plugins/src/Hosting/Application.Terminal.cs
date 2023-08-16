@@ -45,13 +45,13 @@ namespace Zongsoft.Plugins.Hosting
 #if NET7_0
 			public TerminalApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null) : base(name, args, configure)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(name);
+				_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
 				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 			}
 #else
 			public TerminalApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(name);
+				_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
 				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 			}
 #endif
