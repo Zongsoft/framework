@@ -1,5 +1,7 @@
 var target = Argument("target", "default");
+var cloud = Argument("cloud", "aliyun");
 var edition = Argument("edition", "Debug");
+var framework = Argument("framework", "net7.0");
 var solutionFile  = "Zongsoft.Hosting.Terminal.sln";
 
 Task("clean")
@@ -36,7 +38,7 @@ Task("deploy")
 	.Description("部署插件")
 	.Does(() =>
 {
-	DotNetTool(solutionFile, "deploy", $" -site:daemon -edition:{edition} -target:net7.0");
+	DotNetTool(solutionFile, "deploy", $" -site:daemon -cloud:{cloud} -edition:{edition} -framework:{framework}");
 });
 
 Task("default")
