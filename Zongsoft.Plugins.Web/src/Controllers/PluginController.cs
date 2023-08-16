@@ -32,6 +32,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Services;
@@ -47,10 +48,8 @@ namespace Zongsoft.Plugins.Web.Controllers
 		[HttpGet]
 		public object Get([FromQuery]string path)
 		{
-			var applicationContext = ApplicationContext.Current as PluginApplicationContext;
-
-			if(applicationContext == null)
-				return this.NoContent();
+			if(ApplicationContext.Current is not PluginApplicationContext applicationContext)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			if(string.IsNullOrWhiteSpace(path))
 				return this.GetPlugins(applicationContext.Plugins);
@@ -173,7 +172,6 @@ namespace Zongsoft.Plugins.Web.Controllers
 
 				this.Name = node.Name;
 				this.Path = node.Path;
-				this.FullPath = node.FullPath;
 				this.NodeType = node.NodeType;
 				this.Value = node.UnwrapValue(ObtainMode.Never);
 
@@ -189,9 +187,8 @@ namespace Zongsoft.Plugins.Web.Controllers
 
 			#region 公共属性
 			public string Name { get; }
-			public object Value { get; }
 			public string Path { get; }
-			public string FullPath { get; }
+			public object Value { get; }
 			public PluginTreeNodeType NodeType { get; }
 			public IDictionary<string, string> Properties { get; }
 			#endregion
