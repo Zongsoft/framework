@@ -176,12 +176,7 @@ namespace Zongsoft.Plugins.Web.Controllers
 				this.Value = node.UnwrapValue(ObtainMode.Never);
 
 				if(node.HasProperties)
-				{
-					this.Properties = new Dictionary<string, string>();
-
-					foreach(var property in node.Properties)
-						this.Properties.Add(property.Name, property.RawValue);
-				}
+					this.Properties = node.Properties.Select(property => new KeyValuePair<string, string>(property.Name, property.RawValue));
 			}
 			#endregion
 
@@ -190,7 +185,7 @@ namespace Zongsoft.Plugins.Web.Controllers
 			public string Path { get; }
 			public object Value { get; }
 			public PluginTreeNodeType NodeType { get; }
-			public IDictionary<string, string> Properties { get; }
+			public IEnumerable<KeyValuePair<string, string>> Properties { get; }
 			#endregion
 		}
 		#endregion
