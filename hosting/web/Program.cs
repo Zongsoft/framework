@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
@@ -16,12 +18,12 @@ namespace Zongsoft.Hosting.Web
 		{
 #if NET7_0_OR_GREATER
 			var app = Application.Web(args);
-			app.Map("/", async ctx => ctx.Response.Redirect("/Application"));
+			app.Map("/", ctx => { ctx.Response.Redirect("/Application"); return Task.CompletedTask; });
 			app.Run();
 #else
 			var app = Application.Web(args, (_, app) =>
 				app.UseEndpoints(endpoints =>
-					endpoints.Map("/", async ctx => ctx.Response.Redirect("/Application"))
+					endpoints.Map("/", ctx => { ctx.Response.Redirect("/Application"); return Task.CompletedTask; })
 				)
 			);
 			app.Run();
