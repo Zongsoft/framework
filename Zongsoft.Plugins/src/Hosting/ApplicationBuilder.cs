@@ -41,13 +41,58 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicationBuilder<TApplication> where TApplication : IHost
 	{
+		#region 公共属性
 		public abstract IServiceCollection Services { get; }
-		public abstract ConfigurationManager Configuration { get; }
 		public abstract IHostEnvironment Environment { get; }
+		public abstract ConfigurationManager Configuration { get; }
+		#endregion
 
+		#region 抽象方法
 		public abstract TApplication Build();
+		#endregion
 
-		protected string GetApplicationName(IConfigurationRoot configuration)
+		#region 虚拟方法
+		protected virtual PluginOptions CreateOptions() => new PluginOptions(this.Environment);
+		protected virtual void RegisterServices(IServiceCollection services, PluginOptions options)
+		{
+			//获取插件树并加载它
+			var tree = PluginTree.Get(options).Load();
+
+			//定义已注册完成的程序集
+			var registry = new HashSet<Assembly>();
+
+			//注册宿主程序集中的服务
+			Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
+
+			foreach(var plugin in tree.Plugins)
+			{
+				RegisterPlugin(plugin, services, this.Configuration, registry);
+			}
+		}
+		#endregion
+
+		#region 私有方法
+		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration, ISet<Assembly> registry)
+		{
+			if(plugin == null || plugin.Status != PluginStatus.Loaded)
+				return;
+
+			foreach(var assembly in plugin.Manifest.Assemblies)
+			{
+				if(registry.Add(assembly))
+					Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, configuration);
+			}
+
+			if(plugin.HasChildren)
+			{
+				foreach(var child in plugin.Children)
+					RegisterPlugin(child, services, configuration, registry);
+			}
+		}
+		#endregion
+
+		#region 静态方法
+		protected static string GetApplicationName(IConfigurationRoot configuration)
 		{
 			if(configuration == null)
 				return null;
@@ -66,41 +111,25 @@ namespace Zongsoft.Plugins.Hosting
 			return null;
 		}
 
-		protected virtual PluginOptions CreateOptions() => new PluginOptions(this.Environment);
-		protected virtual void RegisterServices(IServiceCollection services, PluginOptions options)
+		protected static string GetApplicationName()
 		{
-			//获取插件树并加载它
-			var tree = PluginTree.Get(options).Load();
+			var filePath = Path.Combine(System.Environment.CurrentDirectory, "appsettings.json");
+			if(!File.Exists(filePath))
+				return null;
 
-			//定义已注册完成的程序集
-			var registry = new HashSet<Assembly>();
+			using var stream = File.OpenRead(filePath);
+			var settings = System.Text.Json.JsonSerializer.Deserialize<IDictionary<string, object>>(stream);
+			if(settings == null || settings.Count == 0)
+				return null;
 
-			//注册宿主程序集中的服务
-			Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
+			if(settings.TryGetValue("ApplicationName", out var value) && value != null)
+				return value.ToString();
+			if(settings.TryGetValue(HostDefaults.ApplicationKey, out value) && value != null)
+				return value.ToString();
 
-			foreach(var plugin in tree.Plugins)
-			{
-				RegisterPlugin(plugin, services, this.Configuration, registry);
-			}
+			return null;
 		}
-
-		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration, ISet<Assembly> registry)
-		{
-			if(plugin == null || plugin.Status != PluginStatus.Loaded)
-				return;
-
-			foreach(var assembly in plugin.Manifest.Assemblies)
-			{
-				if(registry.Add(assembly))
-					Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, configuration);
-			}
-
-			if(plugin.HasChildren)
-			{
-				foreach(var child in plugin.Children)
-					RegisterPlugin(child, services, configuration, registry);
-			}
-		}
+		#endregion
 	}
 
 	public class ApplicationBuilder : ApplicationBuilderBase<IHost>
@@ -170,8 +199,7 @@ namespace Zongsoft.Plugins.Hosting
 
 			//处理应用名为空的情况
 			if(string.IsNullOrEmpty(name))
-			{
-			}
+				name = GetApplicationName() ?? Assembly.GetEntryAssembly().GetName().Name;
 
 			this.Services = new ServiceCollection();
 			this.Configuration = new ConfigurationManager();
