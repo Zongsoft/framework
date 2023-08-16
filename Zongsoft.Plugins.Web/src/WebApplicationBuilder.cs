@@ -67,6 +67,19 @@ namespace Zongsoft.Web
 			_builder = WebApplication.CreateBuilder(options);
 			_configure = configure;
 
+			//处理应用名为空的情况
+			if(string.IsNullOrEmpty(name))
+			{
+				name = GetApplicationName(_builder.Configuration);
+
+				if(!string.IsNullOrEmpty(name))
+				{
+					_builder.Environment.ApplicationName = name;
+					_builder.Configuration[HostDefaults.ApplicationKey] = name;
+					_builder.Host.ConfigureHostOptions((ctx, opt) => ctx.HostingEnvironment.ApplicationName = name);
+				}
+			}
+
 			//设置服务提供程序工厂
 			_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
 

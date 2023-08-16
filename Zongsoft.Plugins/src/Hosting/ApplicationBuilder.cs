@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -45,6 +46,25 @@ namespace Zongsoft.Plugins.Hosting
 		public abstract IHostEnvironment Environment { get; }
 
 		public abstract TApplication Build();
+
+		protected string GetApplicationName(IConfigurationRoot configuration)
+		{
+			if(configuration == null)
+				return null;
+
+			foreach(var provider in configuration.Providers)
+			{
+				if(provider is FileConfigurationProvider fileProvider && fileProvider.Source != null)
+				{
+					var fileName = Path.GetFileName(fileProvider.Source.Path);
+
+					if(string.Equals(fileName, "appsettings.json", StringComparison.OrdinalIgnoreCase) && provider.TryGet(HostDefaults.ApplicationKey, out var value))
+						return value;
+				}
+			}
+
+			return null;
+		}
 
 		protected virtual PluginOptions CreateOptions() => new PluginOptions(this.Environment);
 		protected virtual void RegisterServices(IServiceCollection services, PluginOptions options)
@@ -101,6 +121,18 @@ namespace Zongsoft.Plugins.Hosting
 			_builder = new(options);
 			_configure = configure;
 
+			//处理应用名为空的情况
+			if(string.IsNullOrEmpty(name))
+			{
+				name = GetApplicationName(_builder.Configuration);
+
+				if(!string.IsNullOrEmpty(name))
+				{
+					_builder.Environment.ApplicationName = name;
+					_builder.Configuration[HostDefaults.ApplicationKey] = name;
+				}
+			}
+
 			//设置服务提供程序工厂
 			_builder.ConfigureContainer(new Services.ServiceProviderFactory());
 
@@ -133,11 +165,13 @@ namespace Zongsoft.Plugins.Hosting
 		public ApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : this(name, Host.CreateDefaultBuilder(args), configure) { }
 		public ApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
 			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 			_configure = configure;
+
+			//处理应用名为空的情况
+			if(string.IsNullOrEmpty(name))
+			{
+			}
 
 			this.Services = new ServiceCollection();
 			this.Configuration = new ConfigurationManager();

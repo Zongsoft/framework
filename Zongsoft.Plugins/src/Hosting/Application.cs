@@ -38,46 +38,54 @@ namespace Zongsoft.Plugins.Hosting
 	public static partial class Application
 	{
 #if NET7_0
+		public static IHost Daemon(Action<HostApplicationBuilder> configure = null) => Daemon(null, null, configure);
+		public static IHost Daemon(string[] args, Action<HostApplicationBuilder> configure = null) => Daemon(null, args, configure);
 		public static IHost Daemon(string name, Action<HostApplicationBuilder> configure = null) => Daemon(name, null, configure);
 		public static IHost Daemon(string name, string[] args, Action<HostApplicationBuilder> configure = null)
 		{
 			var builder = new DaemonApplicationBuilder(name, args, configure);
 
 			//添加宿主配置文件
-			builder.Configuration.AddOptionFile($"{name}.option", true);
+			builder.Configuration.AddOptionFile($"{builder.Environment.ApplicationName}.option", true);
 
 			return builder.Build();
 		}
 
+		public static IHost Terminal(Action<HostApplicationBuilder> configure = null) => Terminal(null, null, configure);
+		public static IHost Terminal(string[] args, Action<HostApplicationBuilder> configure = null) => Terminal(null, args, configure);
 		public static IHost Terminal(string name, Action<HostApplicationBuilder> configure = null) => Terminal(name, null, configure);
 		public static IHost Terminal(string name, string[] args, Action<HostApplicationBuilder> configure = null)
 		{
 			var builder = new TerminalApplicationBuilder(name, args, configure);
 
 			//添加宿主配置文件
-			builder.Configuration.AddOptionFile($"{name}.option", true);
+			builder.Configuration.AddOptionFile($"{builder.Environment.ApplicationName}.option", true);
 
 			return builder.Build();
 		}
 #else
+		public static IHost Daemon(Action<IHostBuilder> configure = null) => Daemon(null, null, configure);
+		public static IHost Daemon(string[] args, Action<IHostBuilder> configure = null) => Daemon(null, args, configure);
 		public static IHost Daemon(string name, Action<IHostBuilder> configure = null) => Daemon(name, null, configure);
 		public static IHost Daemon(string name, string[] args, Action<IHostBuilder> configure = null)
 		{
 			var builder = new DaemonApplicationBuilder(name, args, configure);
 
 			//添加宿主配置文件
-			builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{name}.option"), true);
+			builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{builder.Environment.ApplicationName}.option"), true);
 
 			return builder.Build();
 		}
 
+		public static IHost Terminal(Action<IHostBuilder> configure = null) => Terminal(null, null, configure);
+		public static IHost Terminal(string[] args, Action<IHostBuilder> configure = null) => Terminal(null, args, configure);
 		public static IHost Terminal(string name, Action<IHostBuilder> configure = null) => Terminal(name, null, configure);
 		public static IHost Terminal(string name, string[] args, Action<IHostBuilder> configure = null)
 		{
 			var builder = new TerminalApplicationBuilder(name, args, configure);
 
 			//添加宿主配置文件
-			builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{name}.option"), true);
+			builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{builder.Environment.ApplicationName}.option"), true);
 
 			return builder.Build();
 		}
