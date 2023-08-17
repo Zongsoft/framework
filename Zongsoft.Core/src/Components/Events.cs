@@ -108,6 +108,20 @@ namespace Zongsoft.Components
 				}
 			}
 		}
+
+		public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module)
+		{
+			if(module == null)
+				yield break;
+
+			var registry = GetEventRegistry(module);
+
+			if(registry != null)
+			{
+				foreach(var descriptor in registry.Events)
+					yield return descriptor;
+			}
+		}
 		#endregion
 
 		#region 私有方法
