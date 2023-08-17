@@ -9,14 +9,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", 
 	ProjectSection(SolutionItems) = preProject
 		.deploy = .deploy
 		build.cake = build.cake
-		deploy.cmd = deploy.cmd
-		deploy.sh = deploy.sh
 		deploy-development.cmd = deploy-development.cmd
 		deploy-development.sh = deploy-development.sh
 		deploy-production.cmd = deploy-production.cmd
 		deploy-production.sh = deploy-production.sh
 		deploy-test.cmd = deploy-test.cmd
 		deploy-test.sh = deploy-test.sh
+		deploy.cmd = deploy.cmd
+		deploy.sh = deploy.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guidelines", "guidelines", "{97DB1F98-1B30-4C24-9ADD-86752CCC4CA0}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\.editorconfig = ..\..\.editorconfig
 	EndProjectSection
 EndProject
 Global
