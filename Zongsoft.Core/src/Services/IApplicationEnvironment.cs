@@ -36,5 +36,9 @@ namespace Zongsoft.Services
 	{
 		string Name { get; }
 		IDictionary<object, object> Properties { get; }
+
+		public bool IsDevelopment => string.Equals(this.Name, "Development", StringComparison.OrdinalIgnoreCase);
+		public bool IsProduction => string.Equals(this.Name, "Production", StringComparison.OrdinalIgnoreCase);
+		public bool IsStaging => string.Equals(this.Name, "Staging", StringComparison.OrdinalIgnoreCase);
 	}
 }
