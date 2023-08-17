@@ -54,7 +54,7 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 静态方法
-		public static Logger GetLogger<T>(T _) => GetLogger(typeof(T));
+		public static Logger GetLogger<T>(T instance) => GetLogger(instance == null ? typeof(T) : instance.GetType());
 		public static Logger GetLogger<T>() => GetLogger(typeof(T));
 		public static Logger GetLogger(Type type)
 		{
