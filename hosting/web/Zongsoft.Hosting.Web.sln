@@ -1,9 +1,23 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29926.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33927.249
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Hosting.Web", "Zongsoft.Hosting.Web.csproj", "{ED7C225F-4F2B-4445-BC9F-C80BEB346BCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Hosting.Web", "Zongsoft.Hosting.Web.csproj", "{ED7C225F-4F2B-4445-BC9F-C80BEB346BCA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployment", "deployment", "{9228FB21-FFF2-40D9-8BA1-705AEDF9B9CB}"
+	ProjectSection(SolutionItems) = preProject
+		.deploy = .deploy
+		build.cake = build.cake
+		deploy.cmd = deploy.cmd
+		deploy.sh = deploy.sh
+		deploy-development.cmd = deploy-development.cmd
+		deploy-development.sh = deploy-development.sh
+		deploy-production.cmd = deploy-production.cmd
+		deploy-production.sh = deploy-production.sh
+		deploy-test.cmd = deploy-test.cmd
+		deploy-test.sh = deploy-test.sh
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

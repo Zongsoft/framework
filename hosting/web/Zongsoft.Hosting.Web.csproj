@@ -22,13 +22,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Remove="plugins\**" />
-		<Content Remove="plugins\**" />
-		<EmbeddedResource Remove="plugins\**" />
-		<None Remove="plugins\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
@@ -41,5 +34,25 @@
 		<Reference Include="Zongsoft.Plugins.Web">
 			<HintPath>..\..\Zongsoft.Plugins.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Plugins.Web.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="plugins\**" />
+		<Compile Remove="plugins\**" />
+		<Content Remove="plugins\**" />
+		<EmbeddedResource Remove="plugins\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove=".deploy" />
+		<None Remove="build.cake" />
+		<None Remove="deploy.cmd" />
+		<None Remove="deploy.sh" />
+		<None Remove="deploy-development.cmd" />
+		<None Remove="deploy-development.sh" />
+		<None Remove="deploy-production.cmd" />
+		<None Remove="deploy-production.sh" />
+		<None Remove="deploy-test.cmd" />
+		<None Remove="deploy-test.sh" />
 	</ItemGroup>
 </Project>

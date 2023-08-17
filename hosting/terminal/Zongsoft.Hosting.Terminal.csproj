@@ -4,10 +4,6 @@
 		<TargetFrameworks>net7.0;</TargetFrameworks>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<Folder Include="plugins\" />
-	</ItemGroup>
-
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
@@ -36,14 +32,24 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove=".deploy" />
+		<None Remove="build.cake" />
+		<None Remove="deploy.cmd" />
+		<None Remove="deploy.sh" />
+		<None Remove="deploy-development.cmd" />
+		<None Remove="deploy-development.sh" />
+		<None Remove="deploy-production.cmd" />
+		<None Remove="deploy-production.sh" />
+		<None Remove="deploy-test.cmd" />
+		<None Remove="deploy-test.sh" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Update="appsettings.json">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="plugins\Terminal.plugin">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="Zongsoft.Hosting.Terminal.option">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 </Project>
