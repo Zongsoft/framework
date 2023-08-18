@@ -2,3 +2,4 @@
 .deploy/
 [Pp]lugins/
 [Ww]eb.option
+addresses*.json
