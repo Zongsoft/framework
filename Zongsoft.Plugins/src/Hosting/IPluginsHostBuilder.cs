@@ -35,6 +35,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting
 {
+	[Obsolete("Use Application and ApplicationBuilder instead.")]
 	public interface IPluginsHostBuilder
 	{
 		IPluginsHostBuilder UseOptions(Func<HostBuilderContext, PluginOptions> initialize);

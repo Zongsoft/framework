@@ -35,6 +35,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting
 {
+	[Obsolete("Use Application and ApplicationBuilder instead.")]
 	public class PluginsHostBuilderContext : HostBuilderContext
 	{
 		#region 构造函数
