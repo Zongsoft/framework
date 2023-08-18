@@ -41,7 +41,6 @@ namespace Zongsoft.Plugins.Hosting
 	{
 		#region 私有变量
 		private CancellationTokenRegistration _applicationStartedRegistration;
-
 		private readonly PluginApplicationContext _applicationContext;
 		private readonly IHostApplicationLifetime _applicationLifetime;
 		private readonly HostOptions _hostOptions;
@@ -129,17 +128,25 @@ namespace Zongsoft.Plugins.Hosting
 				_logger.LogInformation("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
 
 			_shutdownBlock.WaitOne();
-			System.Environment.ExitCode = 0;
+			Environment.ExitCode = 0;
 		}
 		#endregion
 
 		#region 处置方法
 		public void Dispose()
 		{
-			_shutdownBlock.Set();
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
-			AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
-			_applicationStartedRegistration.Dispose();
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				_shutdownBlock.Set();
+				AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
+				_applicationStartedRegistration.Dispose();
+			}
 		}
 		#endregion
 	}
