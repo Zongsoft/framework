@@ -190,10 +190,12 @@ namespace Zongsoft.Security
 				return false;
 
 			var removed = false;
-			var claims = identity.FindAll(ClaimNames.Namespace);
 
-			foreach(var claim in claims)
-				removed |= identity.TryRemoveClaim(claim);
+			//注意：必须将结果集转成新集，因为之后的循环删除会因为集合变化导致循环异常
+			var claims = identity.FindAll(ClaimNames.Namespace).ToArray();
+
+			for(int i = 0; i < claims.Length; i++)
+				removed |= identity.TryRemoveClaim(claims[i]);
 
 			if(string.IsNullOrWhiteSpace(@namespace))
 				return removed;
