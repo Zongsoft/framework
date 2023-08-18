@@ -42,6 +42,9 @@ plugins/Terminal.plugin
 [bin $(Edition) $(Framework) plugins zongsoft externals wechat]
 ../../externals/wechat/.deploy
 
+[bin $(Edition) $(Framework) plugins zongsoft externals closedxml]
+../../externals/closedxml/.deploy
+
 [bin $(Edition) $(Framework) plugins zongsoft externals hangfire]
 ../../externals/hangfire/.deploy
 [bin $(Edition) $(Framework) plugins zongsoft externals hangfire redis]
