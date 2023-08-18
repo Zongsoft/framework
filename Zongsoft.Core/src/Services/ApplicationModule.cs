@@ -49,10 +49,7 @@ namespace Zongsoft.Services
 		#region 构造函数
 		public ApplicationModule(string name, string title = null, string description = null)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name.Trim();
+			this.Name = name == null ? string.Empty : name.Trim();
 			this.Title = title ?? this.Name;
 			this.Description = description;
 			this.Schemas = new SchemaCollection();
