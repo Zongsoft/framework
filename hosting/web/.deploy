@@ -1,4 +1,5 @@
-../.deploy/options/$(cloud)/app.$(environment).option=web.option
+../.deploy/options/$(cloud)/app.$(environment).option       = web.option
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <debug:on>
 
 [plugins]
 ../../Zongsoft.Plugins/Main.plugin

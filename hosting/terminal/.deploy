@@ -1,5 +1,6 @@
 [bin $(Edition) $(Framework)]
-../.deploy/options/$(cloud)/app.$(environment).option=$(application).option
+../.deploy/options/$(cloud)/app.$(environment).option       = $(application).option
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = $(application).option    <debug:on>
 
 [bin $(Edition) $(Framework) plugins]
 ../../Zongsoft.Plugins/Main.plugin
