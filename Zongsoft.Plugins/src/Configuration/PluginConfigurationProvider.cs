@@ -121,20 +121,6 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
-		#region 释放处置
-		public void Dispose()
-		{
-			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
-			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
-
-			foreach(var plugin in _providers.Keys)
-			{
-				if(_providers.TryRemove(plugin, out var provider))
-					provider.Dispose();
-			}
-		}
-		#endregion
-
 		#region 事件处理
 		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
 		{
@@ -148,21 +134,45 @@ namespace Zongsoft.Configuration
 		}
 		#endregion
 
+		#region 释放处置
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
+				_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
+
+				foreach(var plugin in _providers.Keys)
+				{
+					if(_providers.TryRemove(plugin, out var provider))
+						provider.Dispose();
+				}
+			}
+		}
+		#endregion
+
 		#region 私有方法
 		private bool LoadOptionFile(Zongsoft.Plugins.Plugin plugin)
 		{
 			if(_providers.ContainsKey(plugin))
 				return false;
 
-			var filePath = Path.GetDirectoryName(plugin.FilePath);
+			var directory = Path.GetDirectoryName(plugin.FilePath);
 			var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
+			var environment = _source.Options.EnvironmentName.ToLowerInvariant();
 			List<IConfigurationProvider> providers = null;
 
-			var optionFile = Path.Combine(filePath, $"{fileName}.option");
+			var optionFile = Path.Combine(directory, $"{fileName}.option");
 			if(File.Exists(optionFile))
 			{
 				if(providers == null)
-					providers = new List<IConfigurationProvider>(2);
+					providers = new List<IConfigurationProvider>(4);
 
 				providers.Add(new Xml.XmlConfigurationSource()
 				{
@@ -172,11 +182,11 @@ namespace Zongsoft.Configuration
 				}.Build(null));
 			}
 
-			optionFile = Path.Combine(filePath, $"{fileName}.{_source.Options.EnvironmentName.ToLowerInvariant()}.option");
+			optionFile = Path.Combine(directory, $"{fileName}.{environment}.option");
 			if(File.Exists(optionFile))
 			{
 				if(providers == null)
-					providers = new List<IConfigurationProvider>(2);
+					providers = new List<IConfigurationProvider>(4);
 
 				providers.Add(new Xml.XmlConfigurationSource()
 				{
@@ -184,6 +194,25 @@ namespace Zongsoft.Configuration
 					Optional = true,
 					ReloadOnChange = true,
 				}.Build(null));
+			}
+
+			//获取当前目录下的当前环境的从属配置文件
+			var slaves = GetOptionSlaveFiles(directory, fileName, _source.Options.EnvironmentName);
+
+			if(slaves != null && slaves.Length > 0)
+			{
+				if(providers == null)
+					providers = new List<IConfigurationProvider>(slaves.Length);
+
+				for(int i = 0; i < slaves.Length; i++)
+				{
+					providers.Add(new Xml.XmlConfigurationSource()
+					{
+						Path = slaves[i],
+						Optional = true,
+						ReloadOnChange = true,
+					}.Build(null));
+				}
 			}
 
 			if(providers == null || providers.Count == 0)
@@ -196,6 +225,9 @@ namespace Zongsoft.Configuration
 
 			return _providers.TryAdd(plugin, composite);
 		}
+
+		private static string[] GetOptionSlaveFiles(string directory, string fileName, string environment) =>
+			Directory.GetFiles(directory, $"{fileName}.{environment}-*.option");
 		#endregion
 	}
 }
