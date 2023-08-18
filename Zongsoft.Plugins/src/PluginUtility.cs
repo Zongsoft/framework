@@ -776,15 +776,29 @@ namespace Zongsoft.Plugins
 			if(instanceType == null)
 				return null;
 
-			if(instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(ICollection<>))
-				return instanceType.GetGenericArguments()[0];
+			if(instanceType.IsGenericType)
+			{
+				var prototype = instanceType.GetGenericTypeDefinition();
+
+				if(prototype == typeof(IDictionary<,>))
+					return instanceType.GenericTypeArguments[1];
+				if(prototype == typeof(ICollection<>))
+					return instanceType.GenericTypeArguments[0];
+			}
 
 			var contracts = instanceType.GetInterfaces();
 
 			foreach(var contract in contracts)
 			{
-				if(contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(ICollection<>))
-					return contract.GetGenericArguments()[0];
+				if(contract.IsGenericType)
+				{
+					var prototype = contract.GetGenericTypeDefinition();
+
+					if(prototype == typeof(IDictionary<,>))
+						return contract.GenericTypeArguments[1];
+					if(prototype == typeof(ICollection<>))
+						return contract.GenericTypeArguments[0];
+				}
 			}
 
 			return null;
