@@ -76,7 +76,12 @@ namespace Zongsoft.Externals.Redis
 		public RedisService(string name, IConnectionSetting settings)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+			{
+				if(settings == null || string.IsNullOrEmpty(settings.Name))
+					throw new ArgumentNullException(nameof(name));
+
+				name = settings.Name;
+			}
 
 			_name = name.Trim();
 			_settings = (settings as Configuration.RedisConnectionSetting) ?? new Configuration.RedisConnectionSetting(settings);
@@ -95,22 +100,14 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get => _name;
-		}
-
+		public string Name => _name;
 		public string Namespace
 		{
 			get => _namespace;
 			set => _namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
 		}
 
-		public int DatabaseId
-		{
-			get => _database?.Database ?? -1;
-		}
-
+		public int DatabaseId => _database?.Database ?? -1;
 		public IConnectionSetting Settings
 		{
 			get
