@@ -30,11 +30,10 @@
 using System;
 using System.IO;
 using System.Security.Claims;
-using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
-	public class CredentialPrincipal : ClaimsPrincipal
+	public class CredentialPrincipal : ClaimsPrincipal, IEquatable<CredentialPrincipal>, IEquatable<ClaimsPrincipal>
 	{
 		#region 静态字段
 		/// <summary>凭证验证的方案名。</summary>
@@ -152,6 +151,12 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 重写方法
+		public bool Equals(CredentialPrincipal other) => other != null && this.CredentialId == other.CredentialId;
+		public bool Equals(ClaimsPrincipal other) => other is CredentialPrincipal principal && this.Equals(principal);
+		public override bool Equals(object obj) => obj is CredentialPrincipal other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.CredentialId);
+		public override string ToString() => $"{this.CredentialId}@{this.Scenario}({this.Validity})";
+
 		protected override ClaimsIdentity CreateClaimsIdentity(BinaryReader reader) => new CredentialIdentity(reader);
 		protected override void WriteTo(BinaryWriter writer, byte[] data)
 		{
