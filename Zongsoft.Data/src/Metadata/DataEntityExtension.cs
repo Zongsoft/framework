@@ -55,14 +55,14 @@ namespace Zongsoft.Data.Metadata
 			IDataEntityProperty property;
 			var properties = entity.Properties;
 
-			int GetLast(int position)
+			static int GetLast(int position)
 			{
 				return position > 0 ? position + 1 : position;
 			}
 
 			while((index = path.IndexOf('.', last + 1)) > 0)
 			{
-				if(properties.TryGet(path.Substring(GetLast(last), index - GetLast(last)), out property) && property.IsComplex)
+				if(properties.TryGet(path[GetLast(last)..index], out property) && property.IsComplex)
 				{
 					var complex = (IDataEntityComplexProperty)property;
 
@@ -92,6 +92,14 @@ namespace Zongsoft.Data.Metadata
 		{
 			if(entity == null || string.IsNullOrEmpty(name))
 				return null;
+
+			var index = name.LastIndexOf('.');
+			if(index > 0)
+				return entity.Container.Entities[name[(index + 1)..], name[..index]];
+
+			if(!string.IsNullOrEmpty(entity.Namespace) &&
+				entity.Container.Entities.TryGetValue(name, entity.Namespace, out var result))
+				return result;
 
 			return entity.Container.Entities[name];
 		}
@@ -214,7 +222,7 @@ namespace Zongsoft.Data.Metadata
 				if(type == null)
 					throw new ArgumentNullException(nameof(type));
 
-				return _cache.GetOrAdd(type, t => CreateTokens(t));
+				return _cache.GetOrAdd(type, this.CreateTokens);
 			}
 			#endregion
 
@@ -234,7 +242,7 @@ namespace Zongsoft.Data.Metadata
 				{
 					foreach(var property in _entity.Properties)
 					{
-						var member = this.FindMember(type, property.Name);
+						var member = FindMember(type, property.Name);
 
 						if(member != null)
 							collection.Add(new DataEntityPropertyToken(property, member));
@@ -244,7 +252,7 @@ namespace Zongsoft.Data.Metadata
 				return collection;
 			}
 
-			private MemberInfo FindMember(Type type, string name)
+			private static MemberInfo FindMember(Type type, string name)
 			{
 				if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
 					type = underlyingType;
