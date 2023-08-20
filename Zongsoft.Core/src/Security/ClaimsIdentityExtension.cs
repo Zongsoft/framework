@@ -42,11 +42,7 @@ namespace Zongsoft.Security
 	public static class ClaimsIdentityExtension
 	{
 		#region 公共方法
-		public static bool IsAnonymous(this IIdentity identity)
-		{
-			return identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.Name);
-		}
-
+		public static bool IsAnonymous(this IIdentity identity) => identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.Name);
 		public static bool IsAdministrator(this ClaimsIdentity identity)
 		{
 			const string USER_ADMINISTRATOR = "Administrator";
@@ -61,14 +57,7 @@ namespace Zongsoft.Security
 				);
 		}
 
-		public static bool InRole(this ClaimsIdentity identity, string role)
-		{
-			if(identity == null || string.IsNullOrEmpty(role))
-				return false;
-
-			return identity.HasClaim(identity.RoleClaimType, role);
-		}
-
+		public static bool InRole(this ClaimsIdentity identity, string role) => identity != null && role != null && identity.HasClaim(identity.RoleClaimType, role);
 		public static bool InRoles(this ClaimsIdentity identity, params string[] roles)
 		{
 			if(identity == null || roles == null || roles.Length == 0)
@@ -87,11 +76,7 @@ namespace Zongsoft.Security
 			return false;
 		}
 
-		public static Claim AddRole(this ClaimsIdentity identity, string role)
-		{
-			return AddRole(identity, null, role);
-		}
-
+		public static Claim AddRole(this ClaimsIdentity identity, string role) => AddRole(identity, null, role);
 		public static Claim AddRole(this ClaimsIdentity identity, string issuer, string role)
 		{
 			if(string.IsNullOrEmpty(role))
@@ -105,11 +90,7 @@ namespace Zongsoft.Security
 			return claim;
 		}
 
-		public static void AddRoles(this ClaimsIdentity identity, IEnumerable<string> roles)
-		{
-			AddRoles(identity, null, roles);
-		}
-
+		public static void AddRoles(this ClaimsIdentity identity, IEnumerable<string> roles) => AddRoles(identity, null, roles);
 		public static void AddRoles(this ClaimsIdentity identity, string issuer, IEnumerable<string> roles)
 		{
 			if(identity == null)
@@ -128,62 +109,22 @@ namespace Zongsoft.Security
 			);
 		}
 
-		public static string GetIdentifier(this IIdentity identity)
-		{
-			return GetIdentifier(identity as ClaimsIdentity);
-		}
-
-		public static string GetIdentifier(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-		}
-
-		public static T GetIdentifier<T>(this IIdentity identity)
-		{
-			return GetIdentifier<T>(identity as ClaimsIdentity);
-		}
-
+		public static string GetIdentifier(this IIdentity identity) => GetIdentifier(identity as ClaimsIdentity);
+		public static string GetIdentifier(this ClaimsIdentity identity) => identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		public static T GetIdentifier<T>(this IIdentity identity) => GetIdentifier<T>(identity as ClaimsIdentity);
 		public static T GetIdentifier<T>(this ClaimsIdentity identity)
 		{
 			var claim = identity?.FindFirst(ClaimTypes.NameIdentifier);
 			return claim == null || string.IsNullOrEmpty(claim.Value) ? default : Common.Convert.ConvertValue<T>(claim.Value);
 		}
 
-		public static string GetEmail(this IIdentity identity)
-		{
-			return GetEmail(identity as ClaimsIdentity);
-		}
-
-		public static string GetEmail(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimTypes.Email)?.Value;
-		}
-
-		public static string GetPhone(this IIdentity identity)
-		{
-			return GetPhone(identity as ClaimsIdentity);
-		}
-
-		public static string GetPhone(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimTypes.MobilePhone)?.Value;
-		}
-
-		public static string GetNamespace(this IIdentity identity)
-		{
-			return GetNamespace(identity as ClaimsIdentity);
-		}
-
-		public static string GetNamespace(this ClaimsIdentity identity)
-		{
-			return identity?.FindFirst(ClaimNames.Namespace)?.Value;
-		}
-
-		public static bool SetNamespace(this IIdentity identity, string @namespace)
-		{
-			return SetNamespace(identity as ClaimsIdentity, @namespace);
-		}
-
+		public static string GetEmail(this IIdentity identity) => GetEmail(identity as ClaimsIdentity);
+		public static string GetEmail(this ClaimsIdentity identity) => identity?.FindFirst(ClaimTypes.Email)?.Value;
+		public static string GetPhone(this IIdentity identity) => GetPhone(identity as ClaimsIdentity);
+		public static string GetPhone(this ClaimsIdentity identity) => identity?.FindFirst(ClaimTypes.MobilePhone)?.Value;
+		public static string GetNamespace(this IIdentity identity) => GetNamespace(identity as ClaimsIdentity);
+		public static string GetNamespace(this ClaimsIdentity identity) => identity?.FindFirst(ClaimNames.Namespace)?.Value;
+		public static bool SetNamespace(this IIdentity identity, string @namespace) => SetNamespace(identity as ClaimsIdentity, @namespace);
 		public static bool SetNamespace(this ClaimsIdentity identity, string @namespace, string issuer = null, string originalIssuer = null)
 		{
 			if(identity == null)
@@ -290,7 +231,7 @@ namespace Zongsoft.Security
 				var user = (Membership.IUserModel)model;
 				user.Nickname = identity.Label;
 
-				var property = model.GetType().GetProperty("Properties");
+				var propertiesInfo = model.GetType().GetProperty("Properties");
 
 				foreach(var claim in identity.Claims)
 				{
@@ -300,7 +241,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
+							if(propertiesInfo != null && Reflector.TryGetValue(propertiesInfo, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -311,7 +252,7 @@ namespace Zongsoft.Security
 				m.TrySetValue("FullName", identity.Label);
 				m.TrySetValue("Nickname", identity.Label);
 
-				var property = model.GetType().GetProperty("Properties");
+				var propertiesInfo = model.GetType().GetProperty("Properties");
 
 				foreach(var claim in identity.Claims)
 				{
@@ -321,7 +262,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
+							if(propertiesInfo != null && Reflector.TryGetValue(propertiesInfo, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
@@ -332,7 +273,7 @@ namespace Zongsoft.Security
 				Reflector.TrySetValue(ref model, "FullName", identity.Label);
 				Reflector.TrySetValue(ref model, "Nickname", identity.Label);
 
-				var property = model.GetType().GetProperty("Properties");
+				var propertiesInfo = model.GetType().GetProperty("Properties");
 
 				foreach(var claim in identity.Claims)
 				{
@@ -342,7 +283,7 @@ namespace Zongsoft.Security
 
 						if(configured == null || !configured.Value)
 						{
-							if(property != null && Reflector.TryGetValue(property, ref model, out var value) && value is IDictionary<string, object> properties)
+							if(propertiesInfo != null && Reflector.TryGetValue(propertiesInfo, ref model, out var value) && value is IDictionary<string, object> properties)
 								ConfigureProperties(properties, claim);
 						}
 					}
