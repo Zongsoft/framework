@@ -41,7 +41,17 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		protected override DataAccess CreateAccessor(string name) => new DataAccess(name, DataEnvironment.Filters);
+		protected override DataAccess CreateAccessor(string name)
+		{
+			var result = new DataAccess(name, DataEnvironment.Filters);
+			var services = ApplicationContext.Current.Services;
+
+			if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGet(name, out var module))
+				services = module.Services;
+
+			ServiceInjector.Inject(services, result);
+			return result;
+		}
 		#endregion
 	}
 }
