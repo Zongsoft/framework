@@ -105,17 +105,18 @@ namespace Zongsoft.Data
 				}
 
 				//去掉泛型类名中关于泛型参数数量的后缀部分
-				name = type.Name.Substring(0, type.Name.IndexOf('`'));
+				name = type.Name[..type.Name.IndexOf('`')];
 			}
 
 			//处理接口命名的规范
 			if(type.IsInterface && name.Length > 1 && name[0] == 'I' && char.IsUpper(name[1]))
-				name = name.Substring(1);
+				name = name[1..];
 			//处理抽象类命名的规范
 			else if(type.IsAbstract && name.Length > 4 && name.EndsWith("Base"))
-				name = name.Substring(0, name.Length - 4);
+				name = name[..^4];
 
-			return name;
+			var module = Services.ModularServicerUtility.GetModuleName(type);
+			return string.IsNullOrEmpty(module) ? name : $"{module}.{name}";
 		}
 
 		private static bool TryGetNameFromAttribute(Type type, out string name)
