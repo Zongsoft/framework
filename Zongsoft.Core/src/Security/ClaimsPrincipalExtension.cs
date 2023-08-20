@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 
@@ -35,6 +36,30 @@ namespace Zongsoft.Security
 {
 	public static class ClaimsPrincipalExtension
 	{
+		public static ClaimsIdentity GetIdentity(this ClaimsPrincipal principal, string scheme)
+		{
+			if(principal == null)
+				throw new ArgumentNullException(nameof(principal));
+
+			if(string.IsNullOrEmpty(scheme))
+				return principal.Identity as ClaimsIdentity;
+
+			return principal.Identity is ClaimsIdentity primary && primary.AuthenticationType == scheme ?
+				primary : principal.Identities.FirstOrDefault(identity => identity.AuthenticationType == scheme);
+		}
+
+		public static ClaimsIdentity GetIdentity(this ClaimsPrincipal principal, params string[] schemes)
+		{
+			if(principal == null)
+				throw new ArgumentNullException(nameof(principal));
+
+			if(schemes == null || schemes.Length == 0)
+				return principal.Identity as ClaimsIdentity;
+
+			return principal.Identity is ClaimsIdentity primary && schemes.Contains(primary.AuthenticationType) ?
+				primary : principal.Identities.FirstOrDefault(identity => schemes.Contains(identity.AuthenticationType));
+		}
+
 		public static bool IsAnonymous(this IPrincipal principal)
 		{
 			return principal == null || principal.Identity.IsAnonymous();
