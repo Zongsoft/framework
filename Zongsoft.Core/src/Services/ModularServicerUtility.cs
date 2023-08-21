@@ -109,36 +109,10 @@ namespace Zongsoft.Services
 		#region 内部方法
 		internal static string GetModuleName(Type type)
 		{
-			if(type.Assembly.IsDynamic ||
-			   type.Assembly.FullName.StartsWith("System") ||
-			   type.Assembly.FullName.StartsWith("Microsoft"))
+			if(type.Assembly.IsDynamic)
 				return null;
 
-			var attribute = type.Assembly.GetCustomAttribute<ApplicationModuleAttribute>();
-
-			if(attribute != null)
-				return attribute.Name;
-
-			var assemblies = AppDomain.CurrentDomain.GetAssemblies()
-				.Where(
-					a => !a.IsDynamic &&
-					!a.FullName.StartsWith("System") &&
-					!a.FullName.StartsWith("Microsoft"));
-
-			foreach(var assemblyName in type.Assembly.GetReferencedAssemblies().Where(a => !a.FullName.StartsWith("System") && !a.FullName.StartsWith("Microsoft")))
-			{
-				var assembly = assemblies.FirstOrDefault(a => a.FullName == assemblyName.FullName);
-
-				if(assembly != null)
-				{
-					attribute = assembly.GetCustomAttribute<ApplicationModuleAttribute>();
-
-					if(attribute != null)
-						return attribute.Name;
-				}
-			}
-
-			return null;
+			return type.Assembly.GetCustomAttribute<ApplicationModuleAttribute>()?.Name;
 		}
 		#endregion
 
