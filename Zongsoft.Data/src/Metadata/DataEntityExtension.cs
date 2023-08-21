@@ -158,7 +158,10 @@ namespace Zongsoft.Data.Metadata
 			if(entity == null)
 				throw new ArgumentNullException(nameof(entity));
 
-			return string.IsNullOrEmpty(entity.Alias) ? entity.Name : entity.Alias;
+			if(!string.IsNullOrEmpty(entity.Alias))
+				return entity.Alias;
+
+			return string.IsNullOrEmpty(entity.Namespace) ? entity.Name : $"{entity.Namespace}_{entity.Name}";
 		}
 
 		/// <summary>
