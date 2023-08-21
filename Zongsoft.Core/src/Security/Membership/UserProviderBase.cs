@@ -58,9 +58,6 @@ namespace Zongsoft.Security.Membership
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
-
 			if(!string.IsNullOrEmpty(Mapping.Instance.User))
 				this.DataAccess.Naming.Map<TUser>(Mapping.Instance.User);
 		}
@@ -73,7 +70,8 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; protected set; }
 
-		public IDataAccess DataAccess { get; protected set;}
+		[ServiceDependency("~")]
+		public IDataAccess DataAccess { get; set;}
 
 		public IServiceProvider ServiceProvider { get; }
 		#endregion

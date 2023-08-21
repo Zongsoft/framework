@@ -41,9 +41,6 @@ namespace Zongsoft.Security.Membership
 		#region 构造函数
 		protected MemberProviderBase(IServiceProvider serviceProvider)
 		{
-			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
-
 			if(!string.IsNullOrEmpty(Mapping.Instance.Member))
 			{
 				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Member);
@@ -53,7 +50,8 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		public IDataAccess DataAccess { get; }
+		[ServiceDependency("~")]
+		public IDataAccess DataAccess { get; set; }
 		#endregion
 
 		#region 公共方法

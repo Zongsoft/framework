@@ -40,11 +40,8 @@ namespace Zongsoft.Security.Membership
 	public class PermissionProvider : IPermissionProvider
 	{
 		#region 构造函数
-		public PermissionProvider(IServiceProvider serviceProvider)
+		public PermissionProvider()
 		{
-			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
-
 			if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
 				this.DataAccess.Naming.Map<PermissionModel>(Mapping.Instance.Permission);
 			if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
@@ -53,6 +50,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
+		[ServiceDependency("~")]
 		public IDataAccess DataAccess { get; }
 		#endregion
 

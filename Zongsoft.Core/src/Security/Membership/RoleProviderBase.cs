@@ -48,16 +48,14 @@ namespace Zongsoft.Security.Membership
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-			this.DataAccess = serviceProvider.ResolveRequired<IDataAccessProvider>()
-				.GetAccessor(Mapping.Security) ?? serviceProvider.GetDataAccess(true);
-
 			if(!string.IsNullOrEmpty(Mapping.Instance.Role))
 				this.DataAccess.Naming.Map<TRole>(Mapping.Instance.Role);
 		}
 		#endregion
 
 		#region 公共属性
-		public IDataAccess DataAccess { get; protected set; }
+		[ServiceDependency("~")]
+		public IDataAccess DataAccess { get; set; }
 		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
