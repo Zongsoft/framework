@@ -55,7 +55,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public TDataAccess GetAccessor(string name)
+		public TDataAccess GetAccessor(string name = null)
 		{
 			name = GetName(name);
 

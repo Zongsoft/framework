@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
@@ -37,16 +36,12 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataAccessProvider
 	{
-		/// <summary>
-		/// 获取或创建指定应用的数据访问器。
-		/// </summary>
+		/// <summary>获取或创建指定应用的数据访问器。</summary>
 		/// <param name="name">指定的应用名。</param>
 		/// <returns>返回指定应用名的数据访问器。</returns>
-		IDataAccess GetAccessor(string name);
+		IDataAccess GetAccessor(string name = null);
 
-		/// <summary>
-		/// 尝试获取指定应用的数据访问器。
-		/// </summary>
+		/// <summary>尝试获取指定应用的数据访问器。</summary>
 		/// <param name="name">指定的应用名。</param>
 		/// <param name="accessor">返回指定的名称的数据访问器，如果为空则表示该应用没有数据访问器。</param>
 		/// <returns>返回一个值，指示指定名称的数据访问器是否存在。</returns>
