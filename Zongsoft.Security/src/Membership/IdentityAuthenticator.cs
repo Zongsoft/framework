@@ -31,12 +31,10 @@ using System;
 using System.Linq;
 
 using Zongsoft.Data;
-using Zongsoft.Services;
 using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IAuthenticator))]
 	public class IdentityAuthenticator : IdentityAuthenticatorBase
 	{
 		#region 公共属性

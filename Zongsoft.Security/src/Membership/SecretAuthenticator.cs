@@ -31,20 +31,14 @@ using System;
 using System.Linq;
 
 using Zongsoft.Data;
-using Zongsoft.Services;
 using Zongsoft.Configuration.Options;
 
 namespace Zongsoft.Security.Membership
 {
-	[Service(typeof(IAuthenticator))]
 	public class SecretAuthenticator : SecretAuthenticatorBase
 	{
-		#region 成员字段
-		private readonly IServiceProvider _serviceProvider;
-		#endregion
-
 		#region 构造函数
-		public SecretAuthenticator(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		public SecretAuthenticator() { }
 		#endregion
 
 		#region 公共属性
@@ -56,7 +50,7 @@ namespace Zongsoft.Security.Membership
 		protected override IUserModel GetUser(string identifier)
 		{
 			ICondition criteria = Utility.GetIdentityCondition(identifier);
-			return _serviceProvider.GetDataAccess().Select<IUserModel>(Mapping.Instance.User, criteria).FirstOrDefault();
+			return Module.Current.Accessor.Select<IUserModel>(Mapping.Instance.User, criteria).FirstOrDefault();
 		}
 
 		protected override TimeSpan GetPeriod(string scenario)
