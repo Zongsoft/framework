@@ -36,13 +36,8 @@ namespace Zongsoft.Collections
 	public abstract class NamedCollectionBase<T> : ReadOnlyNamedCollectionBase<T>, ICollection<T>, INamedCollection<T>
 	{
 		#region 构造函数
-		protected NamedCollectionBase()
-		{
-		}
-
-		protected NamedCollectionBase(StringComparer comparer) : base(comparer)
-		{
-		}
+		protected NamedCollectionBase() { }
+		protected NamedCollectionBase(StringComparer comparer) : base(comparer) { }
 		#endregion
 
 		#region 公共属性
@@ -54,28 +49,15 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 公共方法
-		public void Clear()
-		{
-			this.ClearItems();
-		}
-
-		public void Add(T item)
-		{
-			this.AddItem(item);
-		}
-
-		public bool Remove(string name)
-		{
-			return this.RemoveItem(name);
-		}
+		public void Clear() => this.ClearItems();
+		public void Add(T item) => this.AddItem(item);
+		public bool Remove(string name) => this.RemoveItem(name);
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void ClearItems()
-		{
-			this.InnerDictionary.Clear();
-		}
-
+		protected virtual void AddItem(T item) => this.InnerDictionary.Add(this.GetKeyForItem(item), item);
+		protected virtual bool RemoveItem(string name) => this.InnerDictionary.Remove(name);
+		protected virtual void ClearItems() => this.InnerDictionary.Clear();
 		protected virtual void SetItem(string name, T value)
 		{
 			var key = this.GetKeyForItem(value);
@@ -86,36 +68,12 @@ namespace Zongsoft.Collections
 
 			this.InnerDictionary[name] = value;
 		}
-
-		protected virtual void AddItem(T item)
-		{
-			this.InnerDictionary.Add(this.GetKeyForItem(item), item);
-		}
-
-		protected virtual bool RemoveItem(string name)
-		{
-			return this.InnerDictionary.Remove(name);
-		}
 		#endregion
 
 		#region 显式实现
-		bool ICollection<T>.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		bool ICollection<T>.Contains(T item)
-		{
-			return this.InnerDictionary.ContainsKey(this.GetKeyForItem(item));
-		}
-
-		bool ICollection<T>.Remove(T item)
-		{
-			return this.InnerDictionary.Remove(this.GetKeyForItem(item));
-		}
+		bool ICollection<T>.IsReadOnly => false;
+		bool ICollection<T>.Contains(T item) => this.InnerDictionary.ContainsKey(this.GetKeyForItem(item));
+		bool ICollection<T>.Remove(T item) => this.InnerDictionary.Remove(this.GetKeyForItem(item));
 		#endregion
 	}
 }
