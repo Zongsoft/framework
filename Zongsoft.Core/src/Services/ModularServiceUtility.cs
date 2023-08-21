@@ -28,15 +28,13 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Services
 {
-	internal static class ModularServicerUtility
+	internal static class ModularServiceUtility
 	{
 		#region 常量定义
 		private const string ASSEMBLY_NAME = "Zongsoft.Dynamics.Services";
@@ -57,7 +55,7 @@ namespace Zongsoft.Services
 		public static bool TryGetModularServiceType(object target, Type contractType, out Type modularType)
 		{
 			modularType = null;
-			var module = GetModuleName(target.GetType());
+			var module = ServiceUtility.Modular.GetModuleName(target.GetType());
 			return !string.IsNullOrEmpty(module) && _cache.TryGetValue(new ModularServiceKey(module, contractType), out modularType);
 		}
 
@@ -103,16 +101,6 @@ namespace Zongsoft.Services
 		{
 			var modularType = GetModularServiceType(module, contractType);
 			return (IModularService)Activator.CreateInstance(modularType, new object[] { serviceType });
-		}
-		#endregion
-
-		#region 内部方法
-		internal static string GetModuleName(Type type)
-		{
-			if(type.Assembly.IsDynamic)
-				return null;
-
-			return type.Assembly.GetCustomAttribute<ApplicationModuleAttribute>()?.Name;
 		}
 		#endregion
 

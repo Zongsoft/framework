@@ -95,7 +95,7 @@ namespace Zongsoft.Services
 				//解析出要获取的服务类型
 				var elementType = serviceType.GenericTypeArguments[0];
 
-				if(ModularServicerUtility.TryGetModularServiceType(_name, elementType, out var modularType))
+				if(ModularServiceUtility.TryGetModularServiceType(_name, elementType, out var modularType))
 				{
 					var modulars = _provider.GetServices(modularType).Cast<IModularService>();
 
@@ -121,7 +121,7 @@ namespace Zongsoft.Services
 
 			//获取单个模块化类型
 			//注意：如果当前模块服务容器没有找到指定的服务则再从应用服务容器中获取指定类型的服务
-			if(ModularServicerUtility.TryGetModularServiceType(_name, serviceType, out var contractType))
+			if(ModularServiceUtility.TryGetModularServiceType(_name, serviceType, out var contractType))
 				return ((IModularService)_provider.GetService(contractType)).GetValue(_provider) ?? this.GetServiceBacktrack(serviceType);
 
 			return this.GetServiceBacktrack(serviceType);
