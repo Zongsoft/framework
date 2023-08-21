@@ -28,11 +28,10 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Reflection;
 using System.Linq.Expressions;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -59,27 +58,6 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 解析方法
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider serviceProvider, bool required = false)
-		{
-			return GetDataAccess(serviceProvider, null, required);
-		}
-
-		public static Data.IDataAccess GetDataAccess(this IServiceProvider serviceProvider, string name, bool required = false)
-		{
-			if(serviceProvider.GetRequiredService<Data.IDataAccessProvider>().TryGetAccessor(name, out var data))
-				return data;
-
-			if(required)
-			{
-				if(string.IsNullOrEmpty(name))
-					throw new InvalidOperationException($"Unable to acquire the default data accessor.");
-				else
-					throw new InvalidOperationException($"Unable to acquire the data accessor with the name ‘{name}’.");
-			}
-
-			return null;
-		}
-
 		public static object Resolve(this IServiceProvider serviceProvider, string name)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -102,35 +80,23 @@ namespace Zongsoft.Services
 			throw new InvalidOperationException($"The service named '{name}' does not exist.");
 		}
 
-		public static T Resolve<T>(this IServiceProvider serviceProvider, object parameter = null)
-		{
-			return parameter == null ? serviceProvider.GetService<T>() : serviceProvider.MatchService<T>(parameter);
-		}
+		public static T Resolve<T>(this IServiceProvider serviceProvider, object parameter = null) =>
+			parameter == null ? serviceProvider.GetService<T>() : serviceProvider.MatchService<T>(parameter);
 
-		public static T ResolveRequired<T>(this IServiceProvider serviceProvider, object parameter = null)
-		{
-			return parameter == null ? serviceProvider.GetRequiredService<T>() : serviceProvider.MatchService<T>(parameter) ?? throw new InvalidOperationException($"No service for type '{typeof(T)}' has been registered.");
-		}
+		public static T ResolveRequired<T>(this IServiceProvider serviceProvider, object parameter = null) =>
+			parameter == null ? serviceProvider.GetRequiredService<T>() : serviceProvider.MatchService<T>(parameter) ?? throw new InvalidOperationException($"No service for type '{typeof(T)}' has been registered.");
 
-		public static object Resolve(this IServiceProvider serviceProvider, Type serviceType, object parameter = null)
-		{
-			return parameter == null ? serviceProvider.GetService(serviceType) : serviceProvider.MatchService(serviceType, parameter);
-		}
+		public static object Resolve(this IServiceProvider serviceProvider, Type serviceType, object parameter = null) =>
+			parameter == null ? serviceProvider.GetService(serviceType) : serviceProvider.MatchService(serviceType, parameter);
 
-		public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter)
-		{
-			return parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
-		}
+		public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter) =>
+			parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 
-		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null)
-		{
-			return parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
-		}
+		public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null) =>
+			parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
 
-		public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType, object parameter = null)
-		{
-			return parameter == null ? serviceProvider.GetServices(serviceType) : serviceProvider.MatchServices(serviceType, parameter);
-		}
+		public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType, object parameter = null) =>
+			parameter == null ? serviceProvider.GetServices(serviceType) : serviceProvider.MatchServices(serviceType, parameter);
 		#endregion
 
 		#region 服务匹配
