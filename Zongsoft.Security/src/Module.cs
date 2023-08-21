@@ -27,13 +27,15 @@
  * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+using Zongsoft.Data;
+using Zongsoft.Services;
+using Zongsoft.Components;
 
-[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Module.NAME)]
+[assembly: ApplicationModule(Zongsoft.Security.Module.NAME)]
 
 namespace Zongsoft.Security
 {
-	public sealed class Module : Zongsoft.Services.ApplicationModule
+	public sealed class Module : ApplicationModule<Module.EventRegistry>
 	{
 		#region 常量定义
 		/// <summary>表示安全模块的名称常量值。</summary>
@@ -42,11 +44,27 @@ namespace Zongsoft.Security
 
 		#region 单例字段
 		/// <summary>表示安全模块的单例字段。</summary>
-		public static readonly Module Current = new Module();
+		public static readonly Module Current = new();
 		#endregion
 
 		#region 私有构造
 		private Module() : base(NAME, Zongsoft.Security.Properties.Resources.Security_Title, Zongsoft.Security.Properties.Resources.Security_Description) { }
+		#endregion
+
+		#region 公共属性
+		private IDataAccess _accessor;
+		public IDataAccess Accessor => _accessor ??= this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
+		#endregion
+
+		#region 嵌套子类
+		public sealed class EventRegistry : EventRegistryBase
+		{
+			#region 构造函数
+			public EventRegistry() : base(NAME)
+			{
+			}
+			#endregion
+		}
 		#endregion
 	}
 }

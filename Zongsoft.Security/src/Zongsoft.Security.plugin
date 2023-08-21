@@ -19,25 +19,14 @@
 
 	<extension path="/Workbench/Modules">
 		<object name="Security" value="{static:Zongsoft.Security.Module.Current, Zongsoft.Security}">
+			<expose name="Accessor" value="{path:../@Accessor}">
+				<expose name="Filters" value="{path:../@Filters}" />
+			</expose>
+
+			<expose name="Events" value="{path:../@Events}" />
 			<expose name="Schemas" value="{path:../@Schemas}" />
+			<expose name="Properties" value="{path:../@Properties}" />
 		</object>
-	</extension>
-
-	<extension path="/Workbench/Modules/Security/Schemas">
-		<object name="Role" title="{res:Role.Title}" description="{res:Role.Description}" visible="false">
-			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
-			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
-		</object>
-
-		<object name="User" title="{res:User.Title}" description="{res:User.Description}" visible="false">
-			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
-			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
-		</object>
-	</extension>
-
-	<!-- 挂载数据访问器 -->
-	<extension path="/Workbench/Data/Accessors">
-		<object name="Security" />
 	</extension>
 
 	<!-- 挂载数据访问映射 -->
@@ -58,6 +47,24 @@
 		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">
 			<expose name="Filters" value="{path:../@Filters}" />
 			<object name="Default" value="{srv:~@Security}" />
+		</object>
+	</extension>
+
+	<!-- 挂载安全鉴证器 -->
+	<extension path="/Workbench/Security/Authentication/Authenticators">
+		<object name="Identity" type="Zongsoft.Security.Membership.IdentityAuthenticator, Zongsoft.Security" />
+		<object name="Secretor" type="Zongsoft.Security.Membership.SecretAuthenticator, Zongsoft.Security" />
+	</extension>
+
+	<extension path="/Workbench/Modules/Security/Schemas">
+		<object name="Role" title="{res:Role.Title}" description="{res:Role.Description}" visible="false">
+			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
+			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
+		</object>
+
+		<object name="User" title="{res:User.Title}" description="{res:User.Description}" visible="false">
+			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
+			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
 		</object>
 	</extension>
 </plugin>
