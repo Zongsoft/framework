@@ -69,39 +69,22 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 属性声明
-		/// <summary>
-		/// 获取数据访问的应用（子系统/业务模块）名。
-		/// </summary>
+		/// <summary>获取数据访问的应用（子系统/业务模块）名。</summary>
 		string Name { get; }
 
-		/// <summary>
-		/// 获取数据访问名映射器。
-		/// </summary>
+		/// <summary>获取数据访问名映射器。</summary>
 		IDataAccessNaming Naming { get; }
 
-		/// <summary>
-		/// 获取数据模式解析器。
-		/// </summary>
+		/// <summary>获取数据模式解析器。</summary>
 		ISchemaParser Schema { get; }
 
-		/// <summary>
-		/// 获取或设置数据序号提供程序。
-		/// </summary>
+		/// <summary>获取或设置数据序号提供程序。</summary>
 		Common.ISequence Sequence { get; set; }
 
-		/// <summary>
-		/// 获取数据访问器的元数据容器。
-		/// </summary>
+		/// <summary>获取数据访问器的元数据容器。</summary>
 		Metadata.IDataMetadataContainer Metadata { get; }
 
-		/// <summary>
-		/// 获取或设置数据验证器。
-		/// </summary>
-		IDataValidator Validator { get; set; }
-
-		/// <summary>
-		/// 获取数据访问的过滤器集合。
-		/// </summary>
+		/// <summary>获取数据访问的过滤器集合。</summary>
 		ICollection<object> Filters { get; }
 		#endregion
 

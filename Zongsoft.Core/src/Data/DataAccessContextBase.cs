@@ -63,7 +63,7 @@ namespace Zongsoft.Data
 		public IDataAccess DataAccess { get; }
 
 		/// <summary>获取当前上下文关联的用户主体。</summary>
-		public System.Security.Claims.ClaimsPrincipal Principal { get => Services.ApplicationContext.Current?.Principal; }
+		public System.Security.Claims.ClaimsPrincipal Principal => Services.ApplicationContext.Current?.Principal;
 
 		/// <summary>获取当前数据访问操作的选项对象。</summary>
 		public TOptions Options { get; }

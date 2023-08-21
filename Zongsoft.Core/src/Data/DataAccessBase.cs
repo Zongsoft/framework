@@ -106,7 +106,7 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置数据序号生成器。</summary>
 		public Common.ISequence Sequence
 		{
-			get => _sequence ?? (_sequence = this.CreateSequence());
+			get => _sequence ??= this.CreateSequence();
 			set => _sequence = value ?? throw new ArgumentNullException();
 		}
 
@@ -116,9 +116,6 @@ namespace Zongsoft.Data
 
 		/// <summary>获取数据访问器的元数据容器。</summary>
 		public abstract Metadata.IDataMetadataContainer Metadata { get; }
-
-		/// <summary>获取或设置数据访问的验证器。</summary>
-		public IDataValidator Validator { get; set; }
 
 		/// <summary>获取数据访问过滤器集合。</summary>
 		public ICollection<object> Filters { get => _filters; }
@@ -3064,15 +3061,8 @@ namespace Zongsoft.Data
 			return sequence;
 		}
 
-		protected virtual void OnFiltering(IDataAccessContextBase context)
-		{
-			_filters.InvokeFiltering(context);
-		}
-
-		protected virtual void OnFiltered(IDataAccessContextBase context)
-		{
-			_filters.InvokeFiltered(context);
-		}
+		protected virtual void OnFiltering(IDataAccessContextBase context) => _filters.InvokeFiltering(context);
+		protected virtual void OnFiltered(IDataAccessContextBase context) => _filters.InvokeFiltered(context);
 		#endregion
 
 		#region 抽象方法

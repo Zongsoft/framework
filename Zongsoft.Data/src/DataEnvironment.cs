@@ -48,6 +48,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private static IDataAccessProvider _accessors;
 		private static IDataProviderFactory _providers;
+		private static IDataValidatorProvider _validators;
 		private static IDataPopulatorProviderFactory _populators;
 		private static readonly ICollection<IDataMetadataLoader> _loaders;
 		private static readonly INamedCollection<IDataDriver> _drivers;
@@ -59,6 +60,7 @@ namespace Zongsoft.Data
 		{
 			_accessors = DataAccessProvider.Instance;
 			_providers = DataProviderFactory.Instance;
+			_validators = DataValidatorProvider.Instance;
 			_populators = DataPopulatorProviderFactory.Instance;
 			_drivers = new NamedCollection<IDataDriver>(p => p.Name, StringComparer.OrdinalIgnoreCase);
 			_filters = new DataAccessFilterCollection();
@@ -77,6 +79,12 @@ namespace Zongsoft.Data
 		{
 			get => _providers;
 			set => _providers = value ?? throw new ArgumentNullException();
+		}
+
+		public static IDataValidatorProvider Validators
+		{
+			get => _validators;
+			set => _validators = value ?? throw new ArgumentNullException();
 		}
 
 		public static IDataPopulatorProviderFactory Populators

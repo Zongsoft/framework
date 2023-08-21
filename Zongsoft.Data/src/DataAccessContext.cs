@@ -64,6 +64,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -102,6 +103,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -121,6 +123,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -157,6 +160,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -177,6 +181,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -197,6 +202,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -217,6 +223,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 
@@ -237,6 +244,7 @@ namespace Zongsoft.Data
 			this.Aliaser = new Common.Expressions.Aliaser();
 			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
+			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
 		#endregion
 

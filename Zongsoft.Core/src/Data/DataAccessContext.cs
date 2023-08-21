@@ -54,11 +54,11 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置判断操作的条件。</summary>
 		public ICondition Criteria { get; set; }
 
-		/// <summary>获取判断操作的结果，即指定条件的数据是否存在。</summary>
+		/// <summary>获取或设置判断操作的结果，即指定条件的数据是否存在。</summary>
 		public bool Result { get; set; }
 
-		/// <summary>获取当前判断操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前判断操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -139,14 +139,14 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置聚合操作的结果。</summary>
 		public object Result { get; set; }
 
-		/// <summary>获取或设置聚合操作的条件。</summary>
-		public ICondition Criteria { get; set; }
-
 		/// <summary>获取聚合操作的聚合元素。</summary>
 		public DataAggregate Aggregate { get; }
 
-		/// <summary>获取当前聚合操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置聚合操作的条件。</summary>
+		public ICondition Criteria { get; set; }
+
+		/// <summary>获取或设置当前聚合操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -215,8 +215,8 @@ namespace Zongsoft.Data
 		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>获取当前递增(减)操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前递增(减)操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -241,10 +241,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDataMutateContextBase.IsMultiple
-		{
-			get => false;
-		}
+		bool IDataMutateContextBase.IsMultiple => false;
 		#endregion
 	}
 
@@ -360,8 +357,8 @@ namespace Zongsoft.Data
 			set => _result = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>获取当前查询操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前查询操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -406,8 +403,8 @@ namespace Zongsoft.Data
 		/// <summary>获取写入操作的选项对象。</summary>
 		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
 
-		/// <summary>获取当前删除操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前删除操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -486,8 +483,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>获取当前新增操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前新增操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 	}
 
@@ -546,8 +543,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>获取当前更新操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前更新操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -613,8 +610,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		/// <summary>获取当前写入操作的验证器。</summary>
-		public virtual IDataValidator Validator => this.DataAccess.Validator;
+		/// <summary>获取或设置当前写入操作的验证器。</summary>
+		public IDataValidator Validator { get; init; }
 		#endregion
 	}
 
