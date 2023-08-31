@@ -107,7 +107,6 @@ namespace Zongsoft.Distributing
 			if(disposing)
 			{
 				var task = this.ExitAsync();
-
 				if(task.IsCompletedSuccessfully)
 					return;
 
@@ -126,7 +125,6 @@ namespace Zongsoft.Distributing
 			if(disposing)
 			{
 				var task = this.ExitAsync();
-
 				if(task.IsCompletedSuccessfully)
 					return;
 
@@ -142,7 +140,7 @@ namespace Zongsoft.Distributing
 			{
 				var manager = Interlocked.Exchange(ref _manager, null);
 
-				if(manager != null)
+				if(manager != null && _heldTime.HasValue)
 					return manager.ReleaseAsync(this.Key, this.Token, cancellation);
 			}
 

@@ -36,6 +36,27 @@ namespace Zongsoft.Distributing
 	/// <summary>
 	/// 表示分布式锁的接口。
 	/// </summary>
+	/// <example>
+	/// <code>
+	/// class MyService
+	/// {
+	/// 	[ServiceDependency("~")]
+	/// 	public IDistributedLockManager Locker { get; set; }
+	/// 
+	/// 	async Task FooAsync(MyModel model, CancellationToken cancellation)
+	/// 	{
+	/// 		using var locker = await this.Locker.AcquireAsync($"{nameof(MyService)}:{model.Key}", TimeSpan.FromSencods(60), cancellation);
+	/// 		await locker.EnterAsync(cancellation);
+	/// 
+	/// 		//TODO: Some business code implementation.
+	/// 
+	/// 
+	/// 		//Optional: Manually release the distributed lock.
+	/// 		await locker.DisposeAsync();
+	/// 	}
+	/// }
+	/// </code>
+	/// </example>
 	public interface IDistributedLock : IDisposable, IAsyncDisposable
 	{
 		/// <summary>获取分布式锁的标识。</summary>
