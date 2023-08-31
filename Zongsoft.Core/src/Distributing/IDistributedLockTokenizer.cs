@@ -34,7 +34,7 @@ namespace Zongsoft.Distributing
 	public interface IDistributedLockTokenizer
 	{
 		string Name { get; }
-		ReadOnlyMemory<byte> Tokenize();
+		byte[] Tokenize();
 		string GetString(ReadOnlySpan<byte> value);
 	}
 }

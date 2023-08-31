@@ -42,14 +42,14 @@ namespace Zongsoft.Distributing
 		private class GuidNormalizer : IDistributedLockTokenizer
 		{
 			public string Name { get => "Guid"; }
-			public ReadOnlyMemory<byte> Tokenize() => System.Guid.NewGuid().ToByteArray();
+			public byte[] Tokenize() => System.Guid.NewGuid().ToByteArray();
 			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : (new Guid(value)).ToString("N");
 		}
 
 		private class RandomNormalizer : IDistributedLockTokenizer
 		{
 			public string Name { get => "Random"; }
-			public ReadOnlyMemory<byte> Tokenize() => BitConverter.GetBytes(Zongsoft.Common.Randomizer.GenerateUInt64());
+			public byte[] Tokenize() => BitConverter.GetBytes(Zongsoft.Common.Randomizer.GenerateUInt64());
 			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : BitConverter.ToUInt64(value).ToString("X");
 		}
 		#endregion
