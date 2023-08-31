@@ -45,7 +45,7 @@ namespace Zongsoft.Distributing
 	/// 
 	/// 	async Task FooAsync(MyModel model, CancellationToken cancellation)
 	/// 	{
-	/// 		using var locker = await this.Locker.AcquireAsync($"{nameof(MyService)}:{model.Key}", TimeSpan.FromSencods(60), cancellation);
+	/// 		using var locker = await this.Locker.AcquireAsync($"LOCKER:{nameof(MyService)}:{model.Key}", TimeSpan.FromSeconds(60), cancellation);
 	/// 		await locker.EnterAsync(cancellation);
 	/// 
 	/// 		//TODO: Some business code implementation.
