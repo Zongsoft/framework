@@ -47,7 +47,7 @@ namespace Zongsoft.Distributing
 				throw new ArgumentNullException(nameof(manager));
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
-            if(token == null || token.Length == 0)
+			if(token == null || token.Length == 0)
 				throw new ArgumentNullException(nameof(token));
 
 			_manager = manager;
@@ -151,9 +151,23 @@ namespace Zongsoft.Distributing
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => this.Token == null ?
-			$"{this.Key}({this.Expiry})" :
-			$"{this.Key}:{Convert.ToHexString(this.Token)}({this.Expiry})";
+		public override string ToString() => _heldTime == null ?
+			$"{this.Key}={GetTokenString(this.Token)}({this.Expiry})" :
+			$"{this.Key}={GetTokenString(this.Token)}({this.Expiry}@{_heldTime:HH:mm:ss})";
+
+		private static string GetTokenString(byte[] token)
+		{
+			if(token == null || token.Length == 0)
+				return string.Empty;
+
+			return token.Length switch
+			{
+				2 => BitConverter.ToUInt16(token).ToString(),
+				4 => BitConverter.ToUInt32(token).ToString(),
+				8 => BitConverter.ToUInt64(token).ToString(),
+				_ => Convert.ToHexString(token),
+			};
+		}
 		#endregion
 	}
 }
