@@ -38,7 +38,7 @@ namespace Zongsoft.Externals.Redis.Commands
 {
 	[DisplayName("Text.RedisLockAcquireCommand.Name")]
 	[Description("Text.RedisLockAcquireCommand.Description")]
-	[CommandOption(COMMAND_EXPIRY_OPTION, typeof(string), "1m", false, "")]
+	[CommandOption(COMMAND_EXPIRY_OPTION, typeof(string), "60s", false, "")]
 	public class RedisLockAcquireCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
@@ -82,7 +82,7 @@ namespace Zongsoft.Externals.Redis.Commands
 		#endregion
 
 		#region 私有方法
-		private void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockTokenizer tokenizer)
+		private static void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockTokenizer tokenizer)
 		{
 			var content = CommandOutletContent.Create(CommandOutletColor.Gray, $"[{index}] ")
 				.Append(CommandOutletColor.DarkGreen, key);
@@ -94,13 +94,13 @@ namespace Zongsoft.Externals.Redis.Commands
 			else
 			{
 				content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(tokenizer, locker.Token)}")
-				       .Append(CommandOutletColor.DarkMagenta, $" {locker.Expiry}");
+				       .Append(CommandOutletColor.DarkMagenta, $" {nameof(locker.IsHeld)}:{locker.IsHeld}");
 			}
 
 			output.WriteLine(content);
 		}
 
-		private string GetTokenString(IDistributedLockTokenizer tokenizer, byte[] token)
+		private static string GetTokenString(IDistributedLockTokenizer tokenizer, byte[] token)
 		{
 			return tokenizer == null || token == null || token.Length == 0 ? null : tokenizer.GetString(token);
 		}

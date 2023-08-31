@@ -778,10 +778,7 @@ namespace Zongsoft.Externals.Redis
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetKey(string key)
-		{
-			return string.IsNullOrEmpty(_namespace) ? key : _namespace + ":" + key;
-		}
+		private string GetKey(string key) => string.IsNullOrEmpty(_namespace) ? key : $"{_namespace}:{key}";
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static When GetWhen(CacheRequisite requisite)

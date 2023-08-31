@@ -48,7 +48,20 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan duration, CancellationToken cancellation = default)
+		async ValueTask<TimeSpan?> IDistributedLockManager.GetExpiryAsync(string key, CancellationToken cancellation)
+		{
+			if(string.IsNullOrEmpty(key))
+				return null;
+
+			cancellation.ThrowIfCancellationRequested();
+
+			//确保连接成功
+			await this.ConnectAsync(cancellation);
+
+			return await _database.KeyTimeToLiveAsync(GetKey(key), CommandFlags.None);
+		}
+
+		public async ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -56,27 +69,49 @@ namespace Zongsoft.Externals.Redis
 			cancellation.ThrowIfCancellationRequested();
 
 			//确保连接成功
-			this.Connect();
+			await this.ConnectAsync(cancellation);
 
 			var tokenizer = this.Tokenizer ??= DistributedLockTokenizer.Random;
 			var token = tokenizer.Tokenize();
 
-			return await _database.StringSetAsync(key, token, duration, When.NotExists, CommandFlags.None) ?
-				new DistributedLock(this, key, token.ToArray(), DateTime.UtcNow.Add(duration)) : null;
+			return await _database.StringSetAsync(GetKey(key), token, expiry, When.NotExists, CommandFlags.None) ?
+				new DistributedLock(this, key, token, expiry, true) :
+				new DistributedLock(this, key, token, expiry, false);
 		}
 
-		public async ValueTask<bool> ReleaseAsync(string key, ReadOnlyMemory<byte> token, CancellationToken cancellation = default)
+		internal async ValueTask<bool> AcquireAsync(string key, byte[] token, TimeSpan expiry, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			cancellation.ThrowIfCancellationRequested();
+
+			//确保连接成功
+			await this.ConnectAsync(cancellation);
+
+			return await _database.StringSetAsync(GetKey(key), token, expiry, When.NotExists, CommandFlags.None);
+		}
+
+		public async ValueTask<bool> ReleaseAsync(string key, byte[] token, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(key) || token == null || token.Length == 0)
 				return false;
 
 			cancellation.ThrowIfCancellationRequested();
 
 			//确保连接成功
-			this.Connect();
+			await this.ConnectAsync(cancellation);
 
 			var result = await _database.ScriptEvaluateAsync(RELEASE_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { token });
 			return ((int)result) != 0;
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class DistributedLock : DistributedLockBase<RedisService>
+		{
+			public DistributedLock(RedisService service, string key, byte[] token, TimeSpan expiry, bool isHeld) : base(service, key, token, expiry, isHeld) { }
+			protected override ValueTask<bool> OnEnterAsync(CancellationToken cancellation) => this.Manager?.AcquireAsync(this.Key, this.Token, this.Expiry, cancellation) ?? ValueTask.FromResult(false);
 		}
 		#endregion
 	}
