@@ -42,7 +42,7 @@ namespace Zongsoft.Data.Metadata
 	public static class DataEntityExtension
 	{
 		#region 私有变量
-		private static readonly ConcurrentDictionary<IDataEntity, EntityTokenCache> _cache = new ConcurrentDictionary<IDataEntity, EntityTokenCache>();
+		private static readonly ConcurrentDictionary<IDataEntity, EntityTokenCache> _cache = new();
 		#endregion
 
 		#region 公共方法
@@ -193,7 +193,7 @@ namespace Zongsoft.Data.Metadata
 		{
 			#region 成员字段
 			private readonly IDataEntity _entity;
-			private readonly ConcurrentDictionary<Type, IReadOnlyNamedCollection<DataEntityPropertyToken>> _cache = new ConcurrentDictionary<Type, IReadOnlyNamedCollection<DataEntityPropertyToken>>();
+			private readonly ConcurrentDictionary<Type, IReadOnlyNamedCollection<DataEntityPropertyToken>> _cache = new();
 			#endregion
 
 			#region 构造函数

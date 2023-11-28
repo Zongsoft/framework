@@ -28,29 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Data.Metadata.Profiles
 {
-	public class MetadataFileException : Exception, ISerializable
+	public class MetadataFileException : Exception
 	{
 		#region 构造函数
-		public MetadataFileException()
-		{
-		}
-
-		public MetadataFileException(string message) : base(message)
-		{
-		}
-
-		public MetadataFileException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		protected MetadataFileException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		public MetadataFileException() { }
+		public MetadataFileException(string message) : base(message) { }
+		public MetadataFileException(string message, Exception innerException) : base(message, innerException) { }
 		#endregion
 	}
 }
