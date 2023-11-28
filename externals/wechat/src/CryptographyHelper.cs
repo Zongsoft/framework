@@ -107,35 +107,29 @@ namespace Zongsoft.Externals.Wechat
 				Array.Copy(data, 0, buffer, nonceArray.Length + lengthArray.Length, data.Length);
 				Array.Copy(identityArray, 0, buffer, nonceArray.Length + lengthArray.Length + data.Length, identityArray.Length);
 
-				var algorithm = new RijndaelManaged()
-				{
-					IV = iv,
-					Key = key,
-					KeySize = 256,
-					BlockSize = 128,
-					Mode = CipherMode.CBC,
-					Padding = PaddingMode.None, //PaddingMode.PKCS7
-				};
+				using var algorithm = Aes.Create();
+				algorithm.IV = iv;
+				algorithm.Key = key;
+				algorithm.KeySize = 256;
+				algorithm.BlockSize = 128;
+				algorithm.Mode = CipherMode.CBC;
+				algorithm.Padding = PaddingMode.None;
 
-				var encryptor = algorithm.CreateEncryptor(algorithm.Key, algorithm.IV);
-				byte[] xBuff = null;
-
-				byte[] msg = new byte[buffer.Length + 32 - buffer.Length % 32];
-				Array.Copy(buffer, msg, buffer.Length);
+				using var encryptor = algorithm.CreateEncryptor(algorithm.Key, algorithm.IV);
+				byte[] result = new byte[buffer.Length + 32 - buffer.Length % 32];
+				Array.Copy(buffer, result, buffer.Length);
 				byte[] padding = KCS7Encoder(buffer.Length);
-				Array.Copy(padding, 0, msg, buffer.Length, padding.Length);
+				Array.Copy(padding, 0, result, buffer.Length, padding.Length);
 
 				using(var ms = new MemoryStream())
 				{
 					using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
 					{
-						cs.Write(msg, 0, msg.Length);
+						cs.Write(result, 0, result.Length);
 					}
 
-					xBuff = ms.ToArray();
+					return ms.ToArray();
 				}
-
-				return xBuff;
 			}
 
 			public static byte[] Decrypt(string identity, string password, byte[] data)

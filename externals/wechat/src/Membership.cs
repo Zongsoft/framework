@@ -78,7 +78,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<IEnumerable<string>> AllocateAsync(string templateId, IEnumerable<string> codes, CancellationToken cancellation = default)
+		public static async ValueTask<IEnumerable<string>> AllocateAsync(string templateId, IEnumerable<string> codes, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(templateId))
 				throw new ArgumentNullException(nameof(templateId));
@@ -91,7 +91,7 @@ namespace Zongsoft.Externals.Wechat
 				Enumerable.Empty<string>();
 		}
 
-		public async ValueTask ObsoleteAsync(string templateId, string code, CancellationToken cancellation = default)
+		public static async ValueTask ObsoleteAsync(string templateId, string code, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(templateId))
 				throw new ArgumentNullException(nameof(templateId));
@@ -134,7 +134,12 @@ namespace Zongsoft.Externals.Wechat
 		#region 嵌套结构
 		private struct AllocateResult
 		{
-			public Entry[] Data;
+            public AllocateResult(params Entry[] data)
+            {
+				this.Data = data;
+            }
+
+            public Entry[] Data;
 			public readonly bool HasData(out Entry[] data)
 			{
 				data = this.Data;
@@ -143,7 +148,13 @@ namespace Zongsoft.Externals.Wechat
 
 			public struct Entry
 			{
-				public string Code;
+                public Entry(string code, string result = null)
+                {
+                    this.Code = code;
+					this.Result = result;
+                }
+
+                public string Code;
 				public string Result;
 			}
 		}

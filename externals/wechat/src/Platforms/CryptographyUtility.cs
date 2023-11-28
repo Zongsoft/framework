@@ -99,35 +99,9 @@ namespace Zongsoft.Externals.Wechat.Platforms
 		#endregion
 
 		#region 私有方法
-		private static string AES_Encrypt(string Input, byte[] iv, byte[] key)
-		{
-			using var aes = new RijndaelManaged();
-			aes.KeySize = 256;
-			aes.BlockSize = 128;
-			aes.Padding = PaddingMode.PKCS7;
-			aes.Mode = CipherMode.CBC;
-			aes.Key = key;
-			aes.IV = iv;
-			var encrypt = aes.CreateEncryptor(aes.Key, aes.IV);
-			byte[] xBuff = null;
-
-			using(var ms = new MemoryStream())
-			{
-				using(var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
-				{
-					var xXml = Encoding.UTF8.GetBytes(Input);
-					cs.Write(xXml, 0, xXml.Length);
-				}
-
-				xBuff = ms.ToArray();
-			}
-
-			return Convert.ToBase64String(xBuff);
-		}
-
 		private static string AES_Encrypt(byte[] Input, byte[] iv, byte[] key)
 		{
-			using var aes = new RijndaelManaged();
+			using var aes = Aes.Create();
 			//秘钥的大小，以位为单位
 			aes.KeySize = 256;
 			//支持的块大小
@@ -194,7 +168,7 @@ namespace Zongsoft.Externals.Wechat.Platforms
 
 		private static byte[] AES_Decrypt(string text, byte[] iv, byte[] key)
 		{
-			using var aes = new RijndaelManaged();
+			using var aes = Aes.Create();
 			aes.KeySize = 256;
 			aes.BlockSize = 128;
 			aes.Mode = CipherMode.CBC;
