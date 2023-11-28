@@ -49,9 +49,11 @@ namespace Zongsoft.Web.Security
 		#endregion
 
 		#region 构造函数
-		public CredentialAuthenticationHandler(IOptionsMonitor<CredentialAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
-		{
-		}
+#if NET8_0_OR_GREATER
+		public CredentialAuthenticationHandler(IOptionsMonitor<CredentialAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder) { }
+#else
+		public CredentialAuthenticationHandler(IOptionsMonitor<CredentialAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock) { }
+#endif
 		#endregion
 
 		#region 重写方法
@@ -60,7 +62,7 @@ namespace Zongsoft.Web.Security
 			if(this.Request.Headers.TryGetValue(HeaderNames.Authorization, out var header))
 			{
 				if(header.Count > 0 && header[0].StartsWith(this.Scheme.Name + " ", StringComparison.OrdinalIgnoreCase))
-					_credentialId = header[0].Substring(this.Scheme.Name.Length).Trim();
+					_credentialId = header[0][this.Scheme.Name.Length..].Trim();
 			}
 
 			return Task.CompletedTask;
@@ -88,7 +90,7 @@ namespace Zongsoft.Web.Security
 			if(properties != null && properties.Parameters.Count > 0)
 			{
 				if(properties.Parameters.TryGetValue("Reason", out var reason) && reason != null)
-					this.Response.Headers.Add("X-Security-Reason", reason.ToString());
+					this.Response.Headers.Append("X-Security-Reason", reason.ToString());
 
 				if(properties.Parameters.TryGetValue("Message", out var message) && message != null)
 				{

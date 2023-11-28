@@ -233,8 +233,8 @@ namespace Zongsoft.Externals.Wechat.Paying
 					return (null, key[1..].ToString());
 				case > 0:
 					return index == key.Length - 1 ?
-						(key.Slice(0, index).ToString(), null) :
-						(key.Slice(0, index).ToString(), key[(index + 1)..].ToString());
+						(key[..index].ToString(), null) :
+						(key[..index].ToString(), key[(index + 1)..].ToString());
 			}
 		}
 	}

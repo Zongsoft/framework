@@ -53,8 +53,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 
 			if(page.TotalCount > 0)
 			{
-				this.Response.Headers.Add("X-Paging", page.ToString());
-				this.Response.Headers.Add("X-Pagination", page.ToString());
+				this.Response.Headers.Append("X-Paging", page.ToString());
+				this.Response.Headers.Append("X-Pagination", page.ToString());
 
 				return this.Ok(result);
 			}
@@ -77,8 +77,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 
 			if(page.TotalCount > 0)
 			{
-				this.Response.Headers.Add("X-Paging", page.ToString());
-				this.Response.Headers.Add("X-Pagination", page.ToString());
+				this.Response.Headers.Append("X-Paging", page.ToString());
+				this.Response.Headers.Append("X-Pagination", page.ToString());
 
 				return this.Ok(result);
 			}

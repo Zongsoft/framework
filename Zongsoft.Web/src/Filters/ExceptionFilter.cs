@@ -49,7 +49,7 @@ namespace Zongsoft.Web.Filters
 			switch(context.Exception)
 			{
 				case AuthenticationException authentication:
-					context.HttpContext.Response.Headers.Add("X-Security-Error", authentication.Reason.ToString());
+					context.HttpContext.Response.Headers.Append("X-Security-Error", authentication.Reason.ToString());
 					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
 					{
 						Title = authentication.Reason,
@@ -59,7 +59,7 @@ namespace Zongsoft.Web.Filters
 
 					break;
 				case SecurityException securityException:
-					context.HttpContext.Response.Headers.Add("X-Security-Error", securityException.Reason.ToString());
+					context.HttpContext.Response.Headers.Append("X-Security-Error", securityException.Reason.ToString());
 					context.Result = new ObjectResult(new ValidationProblemDetails(context.ModelState)
 					{
 						Title = securityException.Reason,
@@ -126,8 +126,8 @@ namespace Zongsoft.Web.Filters
 					});
 
 					break;
-				case NotSupportedException unsupported:
-				case NotImplementedException unimplemented:
+				case NotSupportedException:
+				case NotImplementedException:
 					context.Result = new StatusCodeResult(StatusCodes.Status501NotImplemented);
 					break;
 				default:
