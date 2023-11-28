@@ -28,35 +28,16 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Externals.Wechat
 {
 	public class WechatException : ApplicationException
 	{
 		#region 构造函数
-		public WechatException(string message) : base(message)
-		{
-		}
-
-		public WechatException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		public WechatException(int code, string message) : base(message)
-		{
-			this.Code = code;
-		}
-
-		public WechatException(int code, string message, Exception innerException) : base(message, innerException)
-		{
-			this.Code = code;
-		}
-
-		protected WechatException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.Code = info.GetInt32(nameof(this.Code));
-		}
+		public WechatException(string message) : base(message) { }
+		public WechatException(string message, Exception innerException) : base(message, innerException) { }
+		public WechatException(int code, string message) : base(message) => this.Code = code;
+		public WechatException(int code, string message, Exception innerException) : base(message, innerException) => this.Code = code;
 		#endregion
 
 		#region 公共属性
@@ -64,21 +45,12 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			//添加序列化成员
-			info.AddValue(nameof(this.Code), this.Code);
-
-			//调用基类同名方法
-			base.GetObjectData(info, context);
-		}
-
 		public override string ToString()
 		{
 			if(this.Code == 0)
 				return base.ToString();
 			else
-				return $"[{this.Code}] " + base.ToString();
+				return $"[{this.Code}] {base.ToString()}";
 		}
 		#endregion
 	}

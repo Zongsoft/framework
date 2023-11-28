@@ -28,43 +28,19 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Plugins
 {
 	public class PluginFileException : PluginException
 	{
 		#region 构造函数
-		public PluginFileException(string message) : base(message)
-		{
-		}
-
-		public PluginFileException(string fileName, string message) : base(message, null)
-		{
-			this.FileName = fileName;
-		}
-
-		public PluginFileException(string fileName, string message, Exception innerException) : base(message, innerException)
-		{
-			this.FileName = fileName;
-		}
-
-		protected PluginFileException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.FileName = info.GetString(nameof(FileName));
-		}
+		public PluginFileException(string message) : base(message) { }
+		public PluginFileException(string fileName, string message) : base(message, null) => this.FileName = fileName;
+		public PluginFileException(string fileName, string message, Exception innerException) : base(message, innerException) => this.FileName = fileName;
 		#endregion
 
 		#region 公共属性
 		public string FileName { get; }
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-			info.AddValue(nameof(FileName), this.FileName);
-		}
 		#endregion
 	}
 }
