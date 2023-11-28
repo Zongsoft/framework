@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
@@ -59,20 +58,6 @@ namespace Zongsoft.Data
 			this.Name = name;
 			this.Value = value;
 		}
-
-		protected DataArgumentException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.Name = info.GetString(nameof(Name));
-			var typeName = info.GetString($"$type");
-
-			if(typeName != null)
-			{
-				var type = Type.GetType(typeName, false);
-
-				if(type != null)
-					this.Value = info.GetValue(nameof(Value), type);
-			}
-		}
 		#endregion
 
 		#region 公共属性
@@ -84,31 +69,14 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		public static DataArgumentException Unnamed(object value, string message = null) => new DataArgumentException(string.Empty, value, message);
+		public static DataArgumentException Unnamed(object value, string message = null) => new(string.Empty, value, message);
 		#endregion
 
 		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-			info.AddValue(nameof(Name), this.Name);
-
-			var value = this.Value;
-
-			if(value != null)
-			{
-				info.AddValue("$type", value.GetType().AssemblyQualifiedName);
-				info.AddValue(nameof(Value), value);
-			}
-		}
-
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Name))
-				return this.Value?.ToString();
-			else
-				return this.Name + "=" + this.Value;
-		}
+		public override string ToString() =>
+			string.IsNullOrEmpty(this.Name) ?
+			this.Value?.ToString() :
+			$"{this.Name}={this.Value}";
 		#endregion
 	}
 }

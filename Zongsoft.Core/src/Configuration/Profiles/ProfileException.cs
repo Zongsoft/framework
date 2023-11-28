@@ -28,29 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Configuration.Profiles
 {
 	public class ProfileException : Exception
 	{
 		#region 构造函数
-		public ProfileException()
-		{
-		}
-
-		public ProfileException(string message) : base(message)
-		{
-		}
-
-		public ProfileException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		protected ProfileException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		public ProfileException() { }
+		public ProfileException(string message) : base(message) { }
+		public ProfileException(string message, Exception innerException) : base(message, innerException) { }
 		#endregion
 	}
 }

@@ -28,29 +28,15 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Services
 {
-	[Serializable]
 	public class CommandExpressionException : ApplicationException
 	{
 		#region 构造函数
-		public CommandExpressionException()
-		{
-		}
-
-		public CommandExpressionException(string message) : base(message)
-		{
-		}
-
-		public CommandExpressionException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		protected CommandExpressionException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		public CommandExpressionException() { }
+		public CommandExpressionException(string message) : base(message) { }
+		public CommandExpressionException(string message, Exception innerException) : base(message, innerException) { }
 		#endregion
 	}
 }

@@ -28,29 +28,15 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Configuration
 {
-	[Serializable]
 	public class ConfigurationException : ApplicationException
 	{
 		#region 构造函数
-		public ConfigurationException()
-		{
-		}
-
-		public ConfigurationException(string message) : base(message)
-		{
-		}
-
-		public ConfigurationException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		protected ConfigurationException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		public ConfigurationException() { }
+		public ConfigurationException(string message) : base(message) { }
+		public ConfigurationException(string message, Exception innerException) : base(message, innerException) { }
 		#endregion
 	}
 }

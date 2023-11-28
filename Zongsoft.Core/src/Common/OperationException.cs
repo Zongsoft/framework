@@ -28,21 +28,18 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Common
 {
 	/// <summary>
 	/// 表示操作失败的异常类。
 	/// </summary>
-	[Serializable]
 	public class OperationException : ApplicationException
 	{
 		#region 构造函数
 		public OperationException() : base(Properties.Resources.OperationException_Unknown_Message) => this.Reason = nameof(Unknown);
 		public OperationException(string reason, string message) : base(message, null) => this.Reason = string.IsNullOrEmpty(reason) ? throw new ArgumentNullException(nameof(reason)) : reason;
 		public OperationException(string reason, string message, Exception innerException) : base(message, innerException) => this.Reason = string.IsNullOrEmpty(reason) ? throw new ArgumentNullException(nameof(reason)) : reason;
-		protected OperationException(SerializationInfo info, StreamingContext context) : base(info, context) => this.Reason = info.GetString(nameof(Reason));
 		#endregion
 
 		#region 公共属性
@@ -61,14 +58,6 @@ namespace Zongsoft.Common
 		public bool IsUnprocessed => this.Reason == nameof(Unprocessed);
 		/// <summary>获取一个值，指示当前异常是否为“不支持该操作”的操作异常。</summary>
 		public bool IsUnsupported => this.Reason == nameof(Unsupported);
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-			info.AddValue(nameof(Reason), this.Reason);
-		}
 		#endregion
 
 		#region 静态方法

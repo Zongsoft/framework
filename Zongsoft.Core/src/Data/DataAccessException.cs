@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
@@ -49,12 +48,6 @@ namespace Zongsoft.Data
 			this.Code = code;
 			this.DriverName = driverName;
 		}
-
-		protected DataAccessException(SerializationInfo info, StreamingContext context)
-		{
-			this.Code = info.GetInt32(nameof(Code));
-			this.DriverName = info.GetString(nameof(DriverName));
-		}
 		#endregion
 
 		#region 公共属性
@@ -73,17 +66,9 @@ namespace Zongsoft.Data
 		public override string ToString()
 		{
 			if(string.IsNullOrEmpty(this.Message))
-				return this.DriverName + ":" + this.Code.ToString();
+				return $"{this.DriverName}:{this.Code}";
 			else
-				return this.DriverName + ":" + this.Code.ToString() + Environment.NewLine + this.Message;
-		}
-
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-
-			info.AddValue(nameof(Code), Code);
-			info.AddValue(nameof(DriverName), DriverName);
+				return $"{this.DriverName}:{this.Code}{Environment.NewLine}{this.Message}";
 		}
 		#endregion
 	}

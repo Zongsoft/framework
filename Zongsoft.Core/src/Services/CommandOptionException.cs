@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Services
 {
@@ -36,21 +35,13 @@ namespace Zongsoft.Services
 	public class CommandOptionException : Zongsoft.Services.CommandException
 	{
 		#region 构造函数
-		public CommandOptionException(string optionName) : this(optionName, null)
-		{
-		}
-
+		public CommandOptionException(string optionName) : this(optionName, null) { }
 		public CommandOptionException(string optionName, string message) : base(message)
 		{
 			if(string.IsNullOrEmpty(optionName))
 				throw new ArgumentNullException(nameof(optionName));
 
 			this.OptionName = optionName.Trim();
-		}
-
-		protected CommandOptionException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.OptionName = info.GetString(nameof(OptionName));
 		}
 		#endregion
 
@@ -67,17 +58,6 @@ namespace Zongsoft.Services
 				var message = base.Message;
 				return string.IsNullOrEmpty(message) ? string.Format(Properties.Resources.Text_InvalidCommandOption, this.OptionName) : message;
 			}
-		}
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			//调用基类同名方法
-			base.GetObjectData(info, context);
-
-			//将定义的属性值加入持久化信息集中
-			info.AddValue(nameof(OptionName), this.OptionName);
 		}
 		#endregion
 	}

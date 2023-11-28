@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Services
 {
@@ -38,11 +37,6 @@ namespace Zongsoft.Services
 		public CommandNotFoundException(string path)
 		{
 			this.Path = path ?? string.Empty;
-		}
-
-		protected CommandNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.Path = info.GetString(nameof(Path));
 		}
 		#endregion
 
@@ -60,17 +54,6 @@ namespace Zongsoft.Services
 			{
 				return string.Format(Properties.Resources.Text_CommandNotFound, this.Path);
 			}
-		}
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			//调用基类同名方法
-			base.GetObjectData(info, context);
-
-			//将定义的属性值加入持久化信息集中
-			info.AddValue(nameof(Path), this.Path);
 		}
 		#endregion
 	}

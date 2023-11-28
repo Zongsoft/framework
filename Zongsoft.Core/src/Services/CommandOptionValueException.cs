@@ -28,11 +28,9 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Services
 {
-	[Serializable]
 	public class CommandOptionValueException : CommandOptionException
 	{
 		#region 构造函数
@@ -41,26 +39,10 @@ namespace Zongsoft.Services
 		{
 			this.OptionValue = optionValue;
 		}
-
-		protected CommandOptionValueException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.OptionValue = info.GetValue(nameof(OptionValue), typeof(object));
-		}
 		#endregion
 
 		#region 公共属性
 		public object OptionValue { get; }
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			//调用基类同名方法
-			base.GetObjectData(info, context);
-
-			//将定义的属性值加入持久化信息集中
-			info.AddValue(nameof(OptionValue), this.OptionValue);
-		}
 		#endregion
 	}
 }

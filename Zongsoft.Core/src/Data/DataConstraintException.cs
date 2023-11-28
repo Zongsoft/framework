@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
@@ -47,24 +46,11 @@ namespace Zongsoft.Data
 		{
 			this.Field = field;
 		}
-
-		protected DataConstraintException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.Field = info.GetString(nameof(Field));
-		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取或设置不符合约束的字段名。</summary>
 		public string Field { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-			info.AddValue(nameof(Field), this.Field);
-		}
 		#endregion
 	}
 }

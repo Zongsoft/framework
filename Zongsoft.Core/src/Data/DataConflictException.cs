@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Data
 {
@@ -45,13 +44,6 @@ namespace Zongsoft.Data
 			this.Value = value;
 			this.Fields = fields;
 		}
-
-		protected DataConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			this.Key = info.GetString(nameof(Key));
-			this.Value = info.GetString(nameof(Value));
-			this.Fields = info.GetValue(nameof(Fields), typeof(string[])) as string[];
-		}
 		#endregion
 
 		#region 公共属性
@@ -63,17 +55,6 @@ namespace Zongsoft.Data
 
 		/// <summary>获取或设置冲突的字段名数组。</summary>
 		public string[] Fields { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override void GetObjectData(SerializationInfo info, StreamingContext context)
-		{
-			base.GetObjectData(info, context);
-
-			info.AddValue(nameof(Key), this.Key);
-			info.AddValue(nameof(Value), this.Value);
-			info.AddValue(nameof(Fields), this.Fields);
-		}
 		#endregion
 	}
 }
