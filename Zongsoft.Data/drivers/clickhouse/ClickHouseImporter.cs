@@ -60,7 +60,7 @@ namespace Zongsoft.Data.ClickHouse
 			if(records == null)
 				return;
 
-			bulker.WriteToServerAsync(records, context.Members).ConfigureAwait(false).GetAwaiter().GetResult();
+			bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 
 		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
@@ -73,7 +73,7 @@ namespace Zongsoft.Data.ClickHouse
 			if(records == null)
 				return;
 
-			await bulker.WriteToServerAsync(records, context.Members, cancellation);
+			await bulker.WriteToServerAsync(records, cancellation);
 		}
 		#endregion
 
@@ -83,8 +83,12 @@ namespace Zongsoft.Data.ClickHouse
 		private static ClickHouseBulkCopy GetBulker(DataImportContext context)
 		{
 			var connection = GetConnection(context);
-			var bulker = new ClickHouseBulkCopy(connection);
-			bulker.DestinationTableName = context.Entity.GetTableName();
+			var bulker = new ClickHouseBulkCopy(connection)
+			{
+				DestinationTableName = context.Entity.GetTableName(),
+				ColumnNames = context.Members,
+			};
+
 			return bulker;
 		}
 
