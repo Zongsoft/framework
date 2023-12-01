@@ -52,16 +52,12 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前Web应用程序的上下文对象。
-		/// </summary>
+		/// <summary>获取当前Web应用程序的上下文对象。</summary>
 		public HttpContext HttpContext
 		{
 			get
 			{
-				if(_http == null)
-					_http = this.Services.GetRequiredService<IHttpContextAccessor>();
-
+				_http ??= this.Services.GetRequiredService<IHttpContextAccessor>();
 				return _http.HttpContext;
 			}
 		}
@@ -74,9 +70,7 @@ namespace Zongsoft.Web
 		{
 			get
 			{
-				if(_session == null)
-					_session = new SessionCollection(this.Services.GetRequiredService<IHttpContextAccessor>());
-
+				_session ??= new SessionCollection(this.Services.GetRequiredService<IHttpContextAccessor>());
 				return _session;
 			}
 		}
