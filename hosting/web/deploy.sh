@@ -1,3 +1,3 @@
 #!/bin/sh
 
-dotnet deploy -cloud:aliyun -edition:Debug -framework:net7.0
+dotnet deploy -cloud:aliyun -edition:Debug -framework:net8.0

@@ -1,1 +1,1 @@
-dotnet deploy -cloud:aliyun -edition:Debug -debug:off -environment:development -framework:net7.0
+dotnet deploy -cloud:aliyun -edition:Debug -debug:off -environment:development -framework:net8.0

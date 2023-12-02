@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var cloud = Argument("cloud", "aliyun");
 var edition = Argument("edition", "Debug");
-var framework = Argument("framework", "net7.0");
+var framework = Argument("framework", "net8.0");
 var solutionFile  = "Zongsoft.Hosting.Terminal.sln";
 
 Task("clean")
