@@ -37,7 +37,7 @@ namespace Zongsoft.Plugins.Hosting
 {
 	public static partial class Application
 	{
-#if NET7_0
+#if NET7_0_OR_GREATER
 		public static IHost Daemon(Action<HostApplicationBuilder> configure = null) => Daemon(null, null, configure);
 		public static IHost Daemon(string[] args, Action<HostApplicationBuilder> configure = null) => Daemon(null, args, configure);
 		public static IHost Daemon(string name, Action<HostApplicationBuilder> configure = null) => Daemon(name, null, configure);

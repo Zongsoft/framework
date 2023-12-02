@@ -39,7 +39,7 @@ namespace Zongsoft.Web
 {
 	public static class Application
 	{
-#if NET7_0
+#if NET7_0_OR_GREATER
 		public static WebApplication Web(Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, null, configure);
 		public static WebApplication Web(string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, args, configure);
 		public static WebApplication Web(string name, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(name, null, configure);

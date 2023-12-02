@@ -134,7 +134,7 @@ namespace Zongsoft.Plugins.Hosting
 
 	public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 	{
-#if NET7_0
+#if NET7_0_OR_GREATER
 		private readonly HostApplicationBuilder _builder;
 		private readonly Action<HostApplicationBuilder> _configure;
 

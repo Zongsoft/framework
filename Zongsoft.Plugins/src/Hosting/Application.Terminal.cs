@@ -42,7 +42,7 @@ namespace Zongsoft.Plugins.Hosting
 	{
 		private sealed class TerminalApplicationBuilder : ApplicationBuilder
 		{
-#if NET7_0
+#if NET7_0_OR_GREATER
 			public TerminalApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null) : base(name, args, configure)
 			{
 				_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);

@@ -49,7 +49,7 @@ using Zongsoft.Security;
 
 namespace Zongsoft.Web
 {
-#if NET7_0
+#if NET7_0_OR_GREATER
 	public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
 	{
 		private readonly Microsoft.AspNetCore.Builder.WebApplicationBuilder _builder;
