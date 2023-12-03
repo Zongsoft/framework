@@ -57,79 +57,48 @@ namespace Zongsoft.Terminals
 		{
 			_syncRoot = new object();
 
-			Console.TreatControlCAsInput = false;
-			Console.CancelKeyPress += this.Console_CancelKeyPress;
+			if(!System.Diagnostics.Debugger.IsAttached)
+			{
+				Console.TreatControlCAsInput = false;
+				Console.CancelKeyPress += this.Console_CancelKeyPress;
+			}
 		}
 		#endregion
 
 		#region 公共属性
 		public TextReader Input
 		{
-			get
-			{
-				return Console.In;
-			}
-			set
-			{
-				Console.SetIn(value);
-			}
+			get => Console.In;
+			set => Console.SetIn(value);
 		}
 
 		public TextWriter Output
 		{
-			get
-			{
-				return Console.Out;
-			}
-			set
-			{
-				Console.SetOut(value);
-			}
+			get => Console.Out;
+			set => Console.SetOut(value);
 		}
 
 		public TextWriter Error
 		{
-			get
-			{
-				return Console.Error;
-			}
-			set
-			{
-				Console.SetError(value);
-			}
+			get => Console.Error;
+			set => Console.SetError(value);
 		}
 
 		public CommandOutletColor BackgroundColor
 		{
-			get
-			{
-				return this.ConvertColor(Console.BackgroundColor, CommandOutletColor.Black);
-			}
-			set
-			{
-				Console.BackgroundColor = ConvertColor(value, ConsoleColor.Black);
-			}
+			get => ConvertColor(Console.BackgroundColor, CommandOutletColor.Black);
+			set => Console.BackgroundColor = ConvertColor(value, ConsoleColor.Black);
 		}
 
 		public CommandOutletColor ForegroundColor
 		{
-			get
-			{
-				return this.ConvertColor(Console.ForegroundColor, CommandOutletColor.White);
-			}
-			set
-			{
-				Console.ForegroundColor = ConvertColor(value, ConsoleColor.White);
-			}
+			get => ConvertColor(Console.ForegroundColor, CommandOutletColor.White);
+			set => Console.ForegroundColor = ConvertColor(value, ConsoleColor.White);
 		}
 		#endregion
 
 		#region 公共方法
-		public void Clear()
-		{
-			Console.Clear();
-		}
-
+		public void Clear() => Console.Clear();
 		public void Reset()
 		{
 			//激发“Resetting”事件
@@ -315,23 +284,11 @@ namespace Zongsoft.Terminals
 		#region 显式实现
 		Encoding ICommandOutlet.Encoding
 		{
-			get
-			{
-				return Console.OutputEncoding;
-			}
-			set
-			{
-				Console.OutputEncoding = value;
-			}
+			get => Console.OutputEncoding;
+			set => Console.OutputEncoding = value;
 		}
 
-		TextWriter ICommandOutlet.Writer
-		{
-			get
-			{
-				return Console.Out;
-			}
-		}
+		TextWriter ICommandOutlet.Writer => Console.Out;
 		#endregion
 
 		#region 激发事件
@@ -368,21 +325,17 @@ namespace Zongsoft.Terminals
 		#endregion
 
 		#region 私有方法
-		private CommandOutletColor ConvertColor(ConsoleColor color, CommandOutletColor defaultColor)
+		private static CommandOutletColor ConvertColor(ConsoleColor color, CommandOutletColor defaultColor)
 		{
-			CommandOutletColor result;
-
-			if(Enum.TryParse<CommandOutletColor>(color.ToString(), out result))
+			if(Enum.TryParse<CommandOutletColor>(color.ToString(), out var result))
 				return result;
 			else
 				return defaultColor;
 		}
 
-		private ConsoleColor ConvertColor(CommandOutletColor color, ConsoleColor defaultColor)
+		private static ConsoleColor ConvertColor(CommandOutletColor color, ConsoleColor defaultColor)
 		{
-			ConsoleColor result;
-
-			if(Enum.TryParse<ConsoleColor>(color.ToString(), out result))
+			if(Enum.TryParse<ConsoleColor>(color.ToString(), out var result))
 				return result;
 			else
 				return defaultColor;
@@ -405,7 +358,7 @@ namespace Zongsoft.Terminals
 				while(content != null)
 				{
 					//设置片段内容指定的颜色值
-					this.ForegroundColor = content.Color.HasValue ? content.Color.Value : foregroundColor.Value;
+					this.ForegroundColor = content.Color ?? foregroundColor.Value;
 
 					//输出指定的片段内容文本
 					Console.Write(content.Text);
