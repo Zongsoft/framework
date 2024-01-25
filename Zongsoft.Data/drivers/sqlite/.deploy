@@ -1,7 +1,7 @@
 Zongsoft.Data.SQLite.plugin
 bin/$(Edition)/$(Framework)/Zongsoft.Data.SQLite.*
 
-%NUGET_PACKAGES%/microsoft.data.sqlite.core/8.0.0/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/microsoft.data.sqlite.core/8.0.1/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/sqlitepclraw.core/2.1.6/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/sqlitepclraw.bundle_e_sqlite3/2.1.6/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/sqlitepclraw.provider.e_sqlite3/2.1.6/lib/netstandard2.0/*.dll
