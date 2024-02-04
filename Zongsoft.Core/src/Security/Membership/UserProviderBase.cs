@@ -319,7 +319,7 @@ namespace Zongsoft.Security.Membership
 			user.Status = status;
 			user.Description = string.IsNullOrEmpty(description) ? null : description;
 
-			switch(MembershipUtility.GetIdentityType(identity))
+			switch(UserIdentityTypeUtility.Detect(identity))
 			{
 				case UserIdentityType.Name:
 					user.Name = identity;
@@ -425,7 +425,7 @@ namespace Zongsoft.Security.Membership
 			if(index <= 0 || index == token.Length - 1)
 				throw new ArgumentException("Invalid authority argument value.", nameof(token));
 
-			var type = MembershipUtility.GetIdentityType(identity);
+			var type = UserIdentityTypeUtility.Detect(identity);
 			var user = this.CreateUser(parameters);
 			user.Namespace = string.IsNullOrWhiteSpace(@namespace) ? null : @namespace.Trim();
 

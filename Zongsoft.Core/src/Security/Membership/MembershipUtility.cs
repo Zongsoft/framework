@@ -396,37 +396,18 @@ namespace Zongsoft.Security.Membership
 		internal static Condition GetIdentityCondition(string identity) => GetIdentityCondition(identity, out _);
 		internal static Condition GetIdentityCondition(string identity, out UserIdentityType identityType)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
-				throw new ArgumentNullException(nameof(identity));
-
-			if(identity.Contains('@'))
+			switch(UserIdentityTypeUtility.Detect(identity))
 			{
-				identityType = UserIdentityType.Email;
-				return Condition.Equal(nameof(IUserModel.Email), identity);
+				case UserIdentityType.Email:
+					identityType = UserIdentityType.Email;
+					return Condition.Equal(nameof(IUserModel.Email), identity);
+				case UserIdentityType.Phone:
+					identityType = UserIdentityType.Phone;
+					return Condition.Equal(nameof(IUserModel.Phone), identity);
+				default:
+					identityType = UserIdentityType.Name;
+					return Condition.Equal(nameof(IUserModel.Name), identity);
 			}
-
-			if(identity.IsDigits(out var digits))
-			{
-				identityType = UserIdentityType.Phone;
-				return Condition.Equal(nameof(IUserModel.Phone), digits);
-			}
-
-			identityType = UserIdentityType.Name;
-			return Condition.Equal(nameof(IUserModel.Name), identity);
-		}
-
-		internal static UserIdentityType GetIdentityType(string identity)
-		{
-			if(string.IsNullOrEmpty(identity))
-				throw new ArgumentNullException(nameof(identity));
-
-			if(identity.Contains('@'))
-				return UserIdentityType.Email;
-
-			if(identity.IsDigits())
-				return UserIdentityType.Phone;
-
-			return UserIdentityType.Name;
 		}
 		#endregion
 
