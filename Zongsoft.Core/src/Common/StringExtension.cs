@@ -134,12 +134,10 @@ namespace Zongsoft.Common
 			return collection.Any(item => string.Equals(item, text, comparisonType));
 		}
 
-		public static bool IsDigits(this string text)
-		{
-			return IsDigits(text, out _);
-		}
-
-		public static bool IsDigits(this string text, out string digits)
+		public static bool IsDigits(this string text) => IsDigits(text.AsSpan(), out _);
+		public static bool IsDigits(this string text, out string digits) => IsDigits(text.AsSpan(), out digits);
+		public static bool IsDigits(this ReadOnlySpan<char> text) => IsDigits(text, out _);
+		public static bool IsDigits(this ReadOnlySpan<char> text, out string digits)
 		{
 			digits = null;
 
@@ -151,7 +149,7 @@ namespace Zongsoft.Common
 
 			for(int i = 0; i < text.Length; i++)
 			{
-				if(char.IsWhiteSpace(text, i))
+				if(char.IsWhiteSpace(text[i]))
 				{
 					isDivied = start >= 0;
 					continue;
@@ -174,7 +172,7 @@ namespace Zongsoft.Common
 
 			if(start >= 0)
 			{
-				digits = text.Substring(start, count);
+				digits = text.Slice(start, count).ToString();
 				return true;
 			}
 
