@@ -30,6 +30,8 @@
 using System;
 using System.ComponentModel;
 
+using Zongsoft.Common;
+
 namespace Zongsoft.Security.Membership
 {
 	public enum UserIdentityType
@@ -37,5 +39,23 @@ namespace Zongsoft.Security.Membership
 		Name,
 		Email,
 		Phone,
+	}
+
+	public static class UserIdentityTypeUtility
+	{
+		public static UserIdentityType Detect(string identity) => string.IsNullOrEmpty(identity) ? throw new ArgumentNullException(nameof(identity)) : Detect(identity.AsSpan());
+		public static UserIdentityType Detect(ReadOnlySpan<char> identity)
+		{
+			if(identity.IsEmpty)
+				throw new ArgumentNullException(nameof(identity));
+
+			if(identity.Contains('@'))
+				return UserIdentityType.Email;
+
+			if((identity[0] == '+' && identity[1..].IsDigits()) || identity.IsDigits())
+				return UserIdentityType.Phone;
+
+			return UserIdentityType.Name;
+		}
 	}
 }
