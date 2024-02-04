@@ -58,19 +58,5 @@ namespace Zongsoft.Security.Membership
 			identityType = UserIdentityType.Name;
 			return Condition.Equal(nameof(IUserModel.Name), identity);
 		}
-
-		internal static UserIdentityType GetIdentityType(string identity)
-		{
-			if(string.IsNullOrEmpty(identity))
-				throw new ArgumentNullException(nameof(identity));
-
-			if(identity.Contains('@'))
-				return UserIdentityType.Email;
-
-			if(identity.IsDigits())
-				return UserIdentityType.Phone;
-
-			return UserIdentityType.Name;
-		}
 	}
 }
