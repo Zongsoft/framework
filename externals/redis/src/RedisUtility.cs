@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 using StackExchange.Redis;
 
@@ -122,6 +124,24 @@ namespace Zongsoft.Externals.Redis
 			}
 
 			return RedisValue.Null;
+		}
+
+		internal static IEnumerable<RedisKey> Scan(this IServer server, int database, string pattern)
+		{
+			var cursor = 0L;
+			var offset = 0;
+
+			do
+			{
+				var keys = server.Keys(database, pattern, cursor: cursor, pageOffset: offset);
+
+				foreach(var key in keys)
+					yield return key;
+
+				var scanning = (IScanningCursor)keys;
+				cursor = scanning.Cursor;
+				offset = scanning.PageOffset;
+			} while(cursor != 0);
 		}
 	}
 

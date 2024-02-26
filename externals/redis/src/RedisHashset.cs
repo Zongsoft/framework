@@ -66,26 +66,6 @@ namespace Zongsoft.Externals.Redis
 		public void Clear() => _database.KeyDelete(_name);
 		public bool Contains(string item) => item != null && _database.SetContains(_name, item);
 
-		void ICollection<string>.CopyTo(string[] array, int arrayIndex)
-		{
-			if(array == null || array.Length == 0)
-				return;
-
-			if(arrayIndex < 0 || arrayIndex >= array.Length)
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-			var items = _database.SetMembers(_name).AsSpan();
-
-			for(int i = 0; i < items.Length; i++)
-			{
-				var destinationIndex = arrayIndex + i;
-				if(destinationIndex >= array.Length)
-					break;
-
-				array[destinationIndex] = (string)items[i];
-			}
-		}
-
 		public void ExceptWith(IEnumerable<string> items)
 		{
 			var temp = _name + ":" + Randomizer.GenerateString();
@@ -113,39 +93,32 @@ namespace Zongsoft.Externals.Redis
 			transaction.Execute();
 		}
 
-		public void UnionWith(IEnumerable<string> items)
-		{
-			this.AddRange(items);
-		}
+		public void UnionWith(IEnumerable<string> items) => this.AddRange(items);
+		public bool IsProperSubsetOf(IEnumerable<string> other) => throw new NotImplementedException();
+		public bool IsProperSupersetOf(IEnumerable<string> other) => throw new NotImplementedException();
+		public bool IsSubsetOf(IEnumerable<string> other) => throw new NotImplementedException();
+		public bool IsSupersetOf(IEnumerable<string> other) => throw new NotImplementedException();
+		public bool Overlaps(IEnumerable<string> other) => throw new NotImplementedException();
+		public bool SetEquals(IEnumerable<string> other) => throw new NotImplementedException();
 
-		public bool IsProperSubsetOf(IEnumerable<string> other)
+		void ICollection<string>.CopyTo(string[] array, int arrayIndex)
 		{
-			throw new NotImplementedException();
-		}
+			if(array == null || array.Length == 0)
+				return;
 
-		public bool IsProperSupersetOf(IEnumerable<string> other)
-		{
-			throw new NotImplementedException();
-		}
+			if(arrayIndex < 0 || arrayIndex >= array.Length)
+				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 
-		public bool IsSubsetOf(IEnumerable<string> other)
-		{
-			throw new NotImplementedException();
-		}
+			var items = _database.SetMembers(_name).AsSpan();
 
-		public bool IsSupersetOf(IEnumerable<string> other)
-		{
-			throw new NotImplementedException();
-		}
+			for(int i = 0; i < items.Length; i++)
+			{
+				var destinationIndex = arrayIndex + i;
+				if(destinationIndex >= array.Length)
+					break;
 
-		public bool Overlaps(IEnumerable<string> other)
-		{
-			throw new NotImplementedException();
-		}
-
-		public bool SetEquals(IEnumerable<string> other)
-		{
-			throw new NotImplementedException();
+				array[destinationIndex] = (string)items[i];
+			}
 		}
 
 		public IEnumerator<string> GetEnumerator() => _database.SetScan(_name).Select(p => p.ToString()).GetEnumerator();

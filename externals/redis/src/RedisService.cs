@@ -125,6 +125,29 @@ namespace Zongsoft.Externals.Redis
 		}
 		#endregion
 
+		#region 内部属性
+		internal IServer Server
+		{
+			get
+			{
+				//确保连接成功
+				this.Connect();
+				return _connection.GetServer(_database.IdentifyEndpoint());
+			}
+		}
+
+		internal IDatabase Database
+		{
+			get
+			{
+				if(_database == null)
+					this.Connect();
+
+				return _database;
+			}
+		}
+		#endregion
+
 		#region 公共方法
 		public void Use(int databaseId)
 		{
@@ -152,23 +175,23 @@ namespace Zongsoft.Externals.Redis
 				_database = _connection.GetDatabase(databaseId);
 		}
 
-		public IEnumerable<string> Find(string pattern, int count = 100)
+		public IEnumerable<string> Find(string pattern)
 		{
 			//确保连接成功
 			this.Connect();
 
 			return _connection.GetServer(_database.IdentifyEndpoint())
-				.Keys(_database.Database, pattern, count)
+				.Scan(_database.Database, pattern)
 				.Select(key => (string)key);
 		}
 
-		public async Task<IEnumerable<string>> FindAsync(string pattern, int count = 100, CancellationToken cancellation = default)
+		public async Task<IEnumerable<string>> FindAsync(string pattern, CancellationToken cancellation = default)
 		{
 			//确保连接成功
 			await this.ConnectAsync(cancellation);
 
 			return _connection.GetServer(_database.IdentifyEndpoint())
-				.Keys(_database.Database, pattern, count)
+				.Scan(_database.Database, pattern)
 				.Select(key => (string)key);
 		}
 
@@ -222,6 +245,73 @@ namespace Zongsoft.Externals.Redis
 				RedisType.SortedSet => RedisEntryType.SortedSet,
 				RedisType.Stream => RedisEntryType.Stream,
 				_ => RedisEntryType.None,
+			};
+		}
+
+		public object GetEntry(string key) => this.GetEntry(key, out RedisEntryType _);
+		public object GetEntry(string key, out RedisEntryType entryType)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			this.Connect();
+
+			var entryKey = GetKey(key);
+			entryType = _database.KeyType(entryKey) switch
+			{
+				RedisType.String => RedisEntryType.String,
+				RedisType.Hash => RedisEntryType.Dictionary,
+				RedisType.List => RedisEntryType.List,
+				RedisType.Set => RedisEntryType.Set,
+				RedisType.SortedSet => RedisEntryType.SortedSet,
+				RedisType.Stream => RedisEntryType.Stream,
+				_ => RedisEntryType.None,
+			};
+
+			return entryType switch
+			{
+				RedisEntryType.String => _database.StringGet(entryKey),
+				RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
+				RedisEntryType.List => throw new NotSupportedException(),
+				RedisEntryType.Set => new RedisHashset(_database, entryKey),
+				RedisEntryType.SortedSet => throw new NotSupportedException(),
+				RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
+				_ => null,
+			};
+		}
+
+		public object GetEntry(string key, out TimeSpan? expiry) => this.GetEntry(key, out _, out expiry);
+		public object GetEntry(string key, out RedisEntryType entryType, out TimeSpan? expiry)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			this.Connect();
+
+			var entryKey = GetKey(key);
+			expiry = _database.KeyTimeToLive(entryKey);
+			entryType = _database.KeyType(entryKey) switch
+			{
+				RedisType.String => RedisEntryType.String,
+				RedisType.Hash => RedisEntryType.Dictionary,
+				RedisType.List => RedisEntryType.List,
+				RedisType.Set => RedisEntryType.Set,
+				RedisType.SortedSet => RedisEntryType.SortedSet,
+				RedisType.Stream => RedisEntryType.Stream,
+				_ => RedisEntryType.None,
+			};
+
+			return entryType switch
+			{
+				RedisEntryType.String => _database.StringGet(entryKey),
+				RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
+				RedisEntryType.List => throw new NotSupportedException(),
+				RedisEntryType.Set => new RedisHashset(_database, entryKey),
+				RedisEntryType.SortedSet => throw new NotSupportedException(),
+				RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
+				_ => null,
 			};
 		}
 
@@ -383,6 +473,32 @@ namespace Zongsoft.Externals.Redis
 
 			return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 		}
+
+		public IDictionary<string, string> CreateDictionary(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Connect();
+
+			if(_database.KeyExists(name))
+				throw new InvalidOperationException($"The specified '{name}' key already exists.");
+
+			return new RedisDictionary(_database, name);
+		}
+
+		public ISet<string> CreateHashset(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Connect();
+
+			if(_database.KeyExists(name))
+				throw new InvalidOperationException($"The specified '{name}' key already exists.");
+
+			return new RedisHashset(_database, name);
+		}
 		#endregion
 
 		#region 缓存实现
@@ -492,6 +608,8 @@ namespace Zongsoft.Externals.Redis
 
 			if(typeof(T) == typeof(ISet<string>))
 				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+			if(typeof(T) == typeof(IDictionary<string, string>))
+				return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
 
 			return _database.StringGet(GetKey(key)).GetValue<T>();
 		}
@@ -515,6 +633,12 @@ namespace Zongsoft.Externals.Redis
 				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
 			}
 
+			if(typeof(T) == typeof(IDictionary<string, string>))
+			{
+				expiry = _database.KeyTimeToLive(GetKey(key));
+				return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
+			}
+
 			var result = _database.StringGetWithExpiry(GetKey(key));
 			expiry = result.Expiry;
 			return result.Value.GetValue<T>();
@@ -535,6 +659,8 @@ namespace Zongsoft.Externals.Redis
 
 			if(typeof(T) == typeof(ISet<string>))
 				return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+			if(typeof(T) == typeof(IDictionary<string, string>))
+				return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
 
 			return (await _database.StringGetAsync(GetKey(key))).GetValue<T>();
 		}
@@ -555,6 +681,9 @@ namespace Zongsoft.Externals.Redis
 			if(typeof(T) == typeof(ISet<string>))
 				return ((T)(ISet<string>)new RedisHashset(_database, GetKey(key)), await _database.KeyTimeToLiveAsync(GetKey(key)));
 
+			if(typeof(T) == typeof(IDictionary<string, string>))
+				return ((T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key)), await _database.KeyTimeToLiveAsync(GetKey(key)));
+
 			var result = await _database.StringGetWithExpiryAsync(GetKey(key));
 			return (result.Value.GetValue<T>(), result.Expiry);
 		}
@@ -570,6 +699,12 @@ namespace Zongsoft.Externals.Redis
 			if(typeof(T) == typeof(ISet<string>))
 			{
 				value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				return true;
+			}
+
+			if(typeof(T) == typeof(IDictionary<string, string>))
+			{
+				value = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
 				return true;
 			}
 
@@ -589,6 +724,13 @@ namespace Zongsoft.Externals.Redis
 			if(typeof(T) == typeof(ISet<string>))
 			{
 				value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				expiry = _database.KeyTimeToLive(GetKey(key));
+				return true;
+			}
+
+			if(typeof(T) == typeof(IDictionary<string, string>))
+			{
+				value = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
 				expiry = _database.KeyTimeToLive(GetKey(key));
 				return true;
 			}
@@ -615,6 +757,12 @@ namespace Zongsoft.Externals.Redis
 			if(typeof(T) == typeof(ISet<string>))
 			{
 				var hashset = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+				return (true, hashset);
+			}
+
+			if(typeof(T) == typeof(IDictionary<string, string>))
+			{
+				var hashset = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
 				return (true, hashset);
 			}
 
@@ -846,12 +994,8 @@ namespace Zongsoft.Externals.Redis
 			}
 		}
 
-		private Task ConnectAsync(CancellationToken cancellation = default)
-		{
-			return ConnectAsync(-1, cancellation);
-		}
-
-		private async Task ConnectAsync(int databaseId = -1, CancellationToken cancellation = default)
+		private Task ConnectAsync(CancellationToken cancellation = default) => this.ConnectAsync(-1, cancellation);
+		private async Task ConnectAsync(int databaseId, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
 

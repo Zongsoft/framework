@@ -180,6 +180,18 @@
   <data name="Text.RedisInfoCommand.Name" xml:space="preserve">
     <value>信息命令</value>
   </data>
+  <data name="Text.RedisLockAcquireCommand.Description" xml:space="preserve">
+    <value>请求获取一个或多个分布式锁。</value>
+  </data>
+  <data name="Text.RedisLockAcquireCommand.Name" xml:space="preserve">
+    <value>获取锁命令</value>
+  </data>
+  <data name="Text.RedisLockReleaseCommand.Description" xml:space="preserve">
+    <value>释放一个或多个分布式锁。</value>
+  </data>
+  <data name="Text.RedisLockReleaseCommand.Name" xml:space="preserve">
+    <value>释放锁命令</value>
+  </data>
   <data name="Text.RedisRemoveCommand.Description" xml:space="preserve">
     <value>删除一个或多个对应键名的项目。</value>
   </data>

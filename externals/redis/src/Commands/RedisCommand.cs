@@ -41,14 +41,10 @@ namespace Zongsoft.Externals.Redis.Commands
 	{
 		#region 成员字段
 		private RedisService _redis;
-		private readonly IServiceProvider _services;
 		#endregion
 
 		#region 构造函数
-		public RedisCommand(IServiceProvider services) : base("Redis")
-		{
-			_services = services ?? throw new ArgumentNullException(nameof(services));
-		}
+		public RedisCommand() : base("Redis") { }
 		#endregion
 
 		#region 公共属性
@@ -65,10 +61,7 @@ namespace Zongsoft.Externals.Redis.Commands
 			var name = context.Expression.Options.GetValue<string>("name");
 
 			if(!string.IsNullOrEmpty(name))
-			{
-				var provider = (RedisServiceProvider)_services.GetService(typeof(RedisServiceProvider)) ?? throw new InvalidOperationException("Missing the required RedisProvider.");
-				_redis = provider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
-			}
+				_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
 
 			if(_redis == null)
 				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoRedis);

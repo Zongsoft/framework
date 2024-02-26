@@ -44,9 +44,7 @@ namespace Zongsoft.Externals.Redis.Commands
 		#endregion
 
 		#region 构造函数
-		public RedisSetCommand() : base("Set")
-		{
-		}
+		public RedisSetCommand() : base("Set") { }
 		#endregion
 
 		#region 执行方法

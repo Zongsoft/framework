@@ -39,9 +39,7 @@ namespace Zongsoft.Externals.Redis.Commands
 	public class RedisGetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
 	{
 		#region 构造函数
-		public RedisGetCommand() : base("Get")
-		{
-		}
+		public RedisGetCommand() : base("Get") { }
 		#endregion
 
 		#region 执行方法
@@ -56,19 +54,16 @@ namespace Zongsoft.Externals.Redis.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				var entry = redis.GetValue(context.Expression.Arguments[i], out var expiry);
-
-				if(entry == null)
+				if(!redis.Exists(context.Expression.Arguments[i]))
 				{
 					context.Output.WriteLine(Services.CommandOutletColor.Red, $"The '{context.Expression.Arguments[i]}' entry is not existed.");
 				}
 				else
 				{
+					var entry = redis.GetEntry(context.Expression.Arguments[i], out var entryType, out var expiry);
 					result.Add(entry);
 
-					var entryType = redis.GetEntryType(context.Expression.Arguments[i]);
 					context.Output.Write(Services.CommandOutletColor.DarkGray, $"[{entryType}] ");
-
 					if(expiry.HasValue)
 						context.Output.Write(Services.CommandOutletColor.DarkCyan, expiry.Value.ToString() + " ");
 
@@ -78,23 +73,23 @@ namespace Zongsoft.Externals.Redis.Commands
 							context.Output.WriteLine(entry);
 							break;
 						case RedisEntryType.Dictionary:
-							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' dictionary have {((IDictionary)entry).Count} entries.");
+							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' dictionary have {((IDictionary<string, string>)entry).Count} entries.");
 
-							foreach(DictionaryEntry item in (IDictionary)entry)
+							foreach(KeyValuePair<string, string> item in (IDictionary<string, string>)entry)
 							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{(++index).ToString()}] ");
-								context.Output.Write(Services.CommandOutletColor.DarkGreen, item.Key.ToString());
-								context.Output.Write(Services.CommandOutletColor.Cyan, " : ");
-								context.Output.WriteLine(Services.CommandOutletColor.DarkGreen, item.Value.ToString());
+								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
+								context.Output.Write(Services.CommandOutletColor.DarkGreen, item.Key);
+								context.Output.Write(Services.CommandOutletColor.Magenta, " : ");
+								context.Output.WriteLine(Services.CommandOutletColor.DarkGreen, item.Value);
 							}
 
 							break;
 						case RedisEntryType.List:
-							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' list(queue) have {((Zongsoft.Collections.IQueue)entry).Count} entries.");
+							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' list(queue) have {((ICollection<string>)entry).Count} entries.");
 
 							foreach(object item in (IEnumerable)entry)
 							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{(++index).ToString()}] ");
+								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
 
 								if(item == null)
 									context.Output.WriteLine(Services.CommandOutletColor.DarkGray, "NULL");
@@ -109,7 +104,7 @@ namespace Zongsoft.Externals.Redis.Commands
 
 							foreach(object item in (IEnumerable)entry)
 							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{(++index).ToString()}] ");
+								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
 
 								if(item == null)
 									context.Output.WriteLine(Services.CommandOutletColor.DarkGray, "NULL");

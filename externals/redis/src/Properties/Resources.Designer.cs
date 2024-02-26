@@ -250,6 +250,42 @@ namespace Zongsoft.Externals.Redis.Properties {
         }
         
         /// <summary>
+        ///   查找类似 请求获取一个或多个分布式锁。 的本地化字符串。
+        /// </summary>
+        internal static string Text_RedisLockAcquireCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.RedisLockAcquireCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 获取锁命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_RedisLockAcquireCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.RedisLockAcquireCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 释放一个或多个分布式锁。 的本地化字符串。
+        /// </summary>
+        internal static string Text_RedisLockReleaseCommand_Description {
+            get {
+                return ResourceManager.GetString("Text.RedisLockReleaseCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 释放锁命令 的本地化字符串。
+        /// </summary>
+        internal static string Text_RedisLockReleaseCommand_Name {
+            get {
+                return ResourceManager.GetString("Text.RedisLockReleaseCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 删除一个或多个对应键名的项目。 的本地化字符串。
         /// </summary>
         internal static string Text_RedisRemoveCommand_Description {

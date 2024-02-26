@@ -29,6 +29,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 namespace Zongsoft.Externals.Redis.Commands
 {
@@ -55,9 +56,11 @@ namespace Zongsoft.Externals.Redis.Commands
 
 			//查找指定模式的键名集
 			var result = RedisCommand.GetRedis(context.CommandNode)
-				.Find(
-					context.Expression.Arguments[0],
-					context.Expression.Options.GetValue<int>(COUNT_OPTION));
+				.Find(context.Expression.Arguments[0]);
+
+			var count = context.Expression.Options.GetValue<int>(COUNT_OPTION);
+			if(count > 0)
+				result = result.Take(count);
 
 			//定义遍历序号
 			var index = 1;

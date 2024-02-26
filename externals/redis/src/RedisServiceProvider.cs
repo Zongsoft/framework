@@ -47,7 +47,7 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 公共方法
-		public RedisService GetRedis(string name)
+		public static RedisService GetRedis(string name)
 		{
 			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSetting(key)));
 
@@ -72,9 +72,9 @@ namespace Zongsoft.Externals.Redis
 		#endregion
 
 		#region 显式实现
-		ISequence IServiceProvider<ISequence>.GetService(string name) => this.GetRedis(name);
-		IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => this.GetRedis(name);
-		IDistributedLockManager IServiceProvider<IDistributedLockManager>.GetService(string name) => this.GetRedis(name);
+		ISequence IServiceProvider<ISequence>.GetService(string name) => GetRedis(name);
+		IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetRedis(name);
+		IDistributedLockManager IServiceProvider<IDistributedLockManager>.GetService(string name) => GetRedis(name);
 		#endregion
 	}
 }
