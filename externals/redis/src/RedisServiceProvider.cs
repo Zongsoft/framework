@@ -49,6 +49,9 @@ namespace Zongsoft.Externals.Redis
 		#region 公共方法
 		public static RedisService GetRedis(string name)
 		{
+			if(ApplicationContext.Current?.Configuration == null)
+				return null;
+
 			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSetting(key)));
 
 			static IConnectionSetting GetConnectionSetting(string name)
@@ -57,7 +60,7 @@ namespace Zongsoft.Externals.Redis
 				if(settings == null || settings.Count == 0)
 					throw new ConfigurationException($"Missing redis connection settings.");
 
-				if(!string.IsNullOrEmpty(name) && settings.TryGet(name, "redis", out var setting))
+				if(!string.IsNullOrEmpty(name) && settings.TryGet(name, Configuration.RedisConnectionSetting.DRIVER, out var setting))
 					return setting;
 
 				setting = settings.GetDefault();
