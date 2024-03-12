@@ -32,7 +32,7 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security.Membership
 {
-	public abstract class UserIdentityBase<TIdentity> : IUserIdentity, IEquatable<TIdentity> where TIdentity : class, IUserIdentity
+	public abstract class UserIdentityBase : IUserIdentity, IEquatable<IUserIdentity>
 	{
 		#region 静态变量
 		private static readonly Caching.MemoryCache _cache = new();
@@ -51,10 +51,10 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 静态方法
-		protected static TIdentity Get(Func<ClaimsIdentity, TIdentity> transform) => Get((Services.ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, string.Empty, transform);
-		protected static TIdentity Get(string scheme, Func<ClaimsIdentity, TIdentity> transform) => Get((Services.ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, scheme, transform);
-		protected static TIdentity Get(CredentialPrincipal principal, Func<ClaimsIdentity, TIdentity> transform) => Get(principal, string.Empty, transform);
-		protected static TIdentity Get(CredentialPrincipal principal, string scheme, Func<ClaimsIdentity, TIdentity> transform)
+		protected static TIdentity Get<TIdentity>(Func<ClaimsIdentity, TIdentity> transform) where TIdentity : class, IUserIdentity => Get((Services.ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, string.Empty, transform);
+		protected static TIdentity Get<TIdentity>(string scheme, Func<ClaimsIdentity, TIdentity> transform) where TIdentity : class, IUserIdentity => Get((Services.ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, scheme, transform);
+		protected static TIdentity Get<TIdentity>(CredentialPrincipal principal, Func<ClaimsIdentity, TIdentity> transform) where TIdentity : class, IUserIdentity => Get(principal, string.Empty, transform);
+		protected static TIdentity Get<TIdentity>(CredentialPrincipal principal, string scheme, Func<ClaimsIdentity, TIdentity> transform) where TIdentity : class, IUserIdentity
 		{
 			if(principal == null || principal.CredentialId == null)
 				return null;
@@ -78,7 +78,6 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 重写方法
-		public bool Equals(TIdentity user) => user != null && user.UserId == this.UserId;
 		public bool Equals(IUserIdentity user) => user != null && user.UserId == this.UserId;
 		public override bool Equals(object obj) => this.Equals(obj as IUserIdentity);
 		public override int GetHashCode() => (int)this.UserId;
