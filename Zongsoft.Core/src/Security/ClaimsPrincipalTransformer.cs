@@ -110,7 +110,7 @@ namespace Zongsoft.Security
 					return transformer.Transform(identity);
 			}
 
-			return null;
+			return identity.AsModel<Membership.IUserModel>();
 		}
 		#endregion
 	}
