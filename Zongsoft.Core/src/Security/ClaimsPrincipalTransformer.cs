@@ -34,9 +34,6 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
 
-using Zongsoft.Security;
-using Zongsoft.Security.Membership;
-
 namespace Zongsoft.Security
 {
 	[DefaultMember(nameof(Transformers))]
@@ -113,7 +110,7 @@ namespace Zongsoft.Security
 					return transformer.Transform(identity);
 			}
 
-			return identity.AsModel<IUserModel>();
+			return null;
 		}
 		#endregion
 	}
