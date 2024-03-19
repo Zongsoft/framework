@@ -2,7 +2,7 @@ src/Zongsoft.Externals.Redis.plugin
 src/Zongsoft.Externals.Redis.option
 src/bin/$(Edition)/$(Framework)/Zongsoft.Externals.Redis.*
 
-%NUGET_PACKAGES%/stackexchange.redis/2.7.20/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/stackexchange.redis/2.7.33/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll
-%NUGET_PACKAGES%/microsoft.bcl.asyncinterfaces/6.0.0/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/microsoft.bcl.asyncinterfaces/8.0.0/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/system.io.pipelines/5.0.1/lib/netstandard2.0/*.dll
