@@ -81,7 +81,7 @@ namespace Zongsoft.Security
 
 		#region 公共属性
 		/// <summary>获取秘密内容的缓存容器。</summary>
-		[ServiceDependency("Security", IsRequired = true)]
+		[ServiceDependency(IsRequired = true)]
 		public IDistributedCache Cache { get; set; }
 
 		/// <summary>获取或设置秘密内容的默认过期时长（默认为30分钟），不能设置为零。</summary>
