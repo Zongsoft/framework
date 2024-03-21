@@ -39,6 +39,10 @@ namespace Zongsoft.Security.Membership
 {
 	public static class MembershipUtility
 	{
+		#region 常量定义
+		internal const string Security = nameof(Security);
+		#endregion
+
 		#region 公共方法
 		public static bool InRoles(IDataAccess dataAccess, IRoleModel role, params string[] roleNames)
 		{

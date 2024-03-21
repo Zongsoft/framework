@@ -53,13 +53,14 @@ namespace Zongsoft.Security.Membership
 		public event EventHandler<ChangedEventArgs> Changed;
 		#endregion
 
+		#region 成员字段
+		private IDataAccess _dataAccess;
+		#endregion
+
 		#region 构造函数
 		protected UserProviderBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
-			if(!string.IsNullOrEmpty(Mapping.Instance.User))
-				this.DataAccess.Naming.Map<TUser>(Mapping.Instance.User);
 		}
 		#endregion
 
@@ -70,8 +71,22 @@ namespace Zongsoft.Security.Membership
 		[ServiceDependency]
 		public IAttempter Attempter { get; protected set; }
 
-		[ServiceDependency("~")]
-		public IDataAccess DataAccess { get; set;}
+		public IDataAccess DataAccess
+		{
+			get
+			{
+				if(_dataAccess == null)
+				{
+					_dataAccess = this.ServiceProvider.ResolveRequired<IDataAccessProvider>().GetAccessor(MembershipUtility.Security);
+
+					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.User))
+					{
+						_dataAccess.Naming.Map<TUser>(Mapping.Instance.User);
+					}
+				}
+				return _dataAccess;
+			}
+		}
 
 		public IServiceProvider ServiceProvider { get; }
 		#endregion

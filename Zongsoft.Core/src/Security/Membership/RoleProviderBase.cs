@@ -43,19 +43,35 @@ namespace Zongsoft.Security.Membership
 		public event EventHandler<ChangedEventArgs> Changed;
 		#endregion
 
+		#region 成员字段
+		private IDataAccess _dataAccess;
+		#endregion
+
 		#region 构造函数
 		protected RoleProviderBase(IServiceProvider serviceProvider)
 		{
 			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
-			if(!string.IsNullOrEmpty(Mapping.Instance.Role))
-				this.DataAccess.Naming.Map<TRole>(Mapping.Instance.Role);
 		}
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency("~")]
-		public IDataAccess DataAccess { get; set; }
+		public IDataAccess DataAccess
+		{
+			get
+			{
+				if(_dataAccess == null)
+				{
+					_dataAccess = this.ServiceProvider.ResolveRequired<IDataAccessProvider>().GetAccessor(MembershipUtility.Security);
+
+					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.Role))
+					{
+						_dataAccess.Naming.Map<TRole>(Mapping.Instance.Role);
+					}
+				}
+				return _dataAccess;
+			}
+		}
+
 		public IServiceProvider ServiceProvider { get; }
 		#endregion
 

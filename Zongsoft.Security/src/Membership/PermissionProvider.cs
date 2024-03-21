@@ -39,19 +39,35 @@ namespace Zongsoft.Security.Membership
 	[Service(typeof(IPermissionProvider))]
 	public class PermissionProvider : IPermissionProvider
 	{
+		#region 成员字段
+		private IDataAccess _dataAccess;
+		#endregion
+
 		#region 构造函数
-		public PermissionProvider()
-		{
-			if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
-				this.DataAccess.Naming.Map<PermissionModel>(Mapping.Instance.Permission);
-			if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
-				this.DataAccess.Naming.Map<PermissionFilterModel>(Mapping.Instance.PermissionFilter);
-		}
+		public PermissionProvider() { }
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency("~")]
-		public IDataAccess DataAccess { get; }
+		public IDataAccess DataAccess
+		{
+			get
+			{
+				if(_dataAccess == null)
+				{
+					_dataAccess = Module.Current.Accessor;
+
+					if(_dataAccess != null)
+					{
+						if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
+							_dataAccess.Naming.Map<PermissionModel>(Mapping.Instance.Permission);
+						if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
+							_dataAccess.Naming.Map<PermissionFilterModel>(Mapping.Instance.PermissionFilter);
+					}
+				}
+
+				return _dataAccess;
+			}
+		}
 		#endregion
 
 		#region 公共方法

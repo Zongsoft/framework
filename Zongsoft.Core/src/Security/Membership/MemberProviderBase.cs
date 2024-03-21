@@ -38,20 +38,37 @@ namespace Zongsoft.Security.Membership
 {
 	public abstract class MemberProviderBase<TRole, TUser> : IMemberProvider<TRole, TUser> where TRole : IRoleModel where TUser : IUserModel
 	{
+		#region 成员字段
+		private IDataAccess _dataAccess;
+		#endregion
+
 		#region 构造函数
 		protected MemberProviderBase(IServiceProvider serviceProvider)
 		{
-			if(!string.IsNullOrEmpty(Mapping.Instance.Member))
-			{
-				this.DataAccess.Naming.Map<Member>(Mapping.Instance.Member);
-				this.DataAccess.Naming.Map<Member<TRole, TUser>>(Mapping.Instance.Member);
-			}
+			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		}
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency("~")]
-		public IDataAccess DataAccess { get; set; }
+		public IDataAccess DataAccess
+		{
+			get
+			{
+				if(_dataAccess == null)
+				{
+					_dataAccess = this.ServiceProvider.ResolveRequired<IDataAccessProvider>().GetAccessor(MembershipUtility.Security);
+
+					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.Member))
+					{
+						_dataAccess.Naming.Map<Member>(Mapping.Instance.Member);
+						_dataAccess.Naming.Map<Member<TRole, TUser>>(Mapping.Instance.Member);
+					}
+				}
+				return _dataAccess;
+			}
+		}
+
+		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
 		#region 公共方法

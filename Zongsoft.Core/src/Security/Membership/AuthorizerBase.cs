@@ -53,14 +53,11 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		public IDataAccess DataAccess
-		{
-			get => _dataAccess ?? (_dataAccess = this.DataAccessProvider.GetAccessor("Security"));
-			set => _dataAccess = value ?? throw new ArgumentNullException();
-		}
+		public IDataAccess DataAccess =>
+			_dataAccess = this.ServiceProvider.ResolveRequired<IDataAccessProvider>().GetAccessor(MembershipUtility.Security);
 
-		[ServiceDependency(IsRequired = true)]
-		public IDataAccessProvider DataAccessProvider { get; set; }
+		[ServiceDependency]
+		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
 		#region 公共方法
