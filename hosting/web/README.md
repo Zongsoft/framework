@@ -2,9 +2,9 @@
 
 ### 站点绑定
 
-Visual Studio 默认使用 IIS Express 作为Web服务器，且默认只绑定了 `localhost` 的主机名，这就意味着无法通过IP或其他自定义域名进行访问，可通过如下操作添加其他绑定。
+如果在 **V**isual **S**tudio 使用 IIS Express 作为 Web 服务器，它默认只绑定了 `localhost` 的主机名，这就意味着无法通过IP或其他自定义域名进行访问，可通过如下操作添加其他绑定。
 
-在Web宿主项目中的 `.vs` 目录中的 `config` 子目录中，有名为 `applicationhost.config` 配置文件，打开它后，找到如下节点：
+在 Web 宿主项目中的 `.vs` 目录中的 `config` 子目录中，有名为 `applicationhost.config` 配置文件，打开它后，找到如下节点：
 
 ```plain
 system.applicationHost/sites/site[name=xxxx]/bindings
@@ -27,7 +27,7 @@ netsh http show urlacl
 
 IIS Express 服务器默认限制了HTTP的请求内容大小，这会导致在上传较大文件时请求被拒绝，通过如下方式可重置默认限制值。
 
-在Web宿主项目中的 `.vs` 目录中的 `config` 子目录中，有名为 `applicationhost.config` 配置文件，打开它后，找到如下节点：
+在 Web 宿主项目中的 `.vs` 目录中的 `config` 子目录中，有名为 `applicationhost.config` 配置文件，打开它后，找到如下节点：
 
 ```plain
 system.webServer/security/requestFiltering
@@ -38,7 +38,7 @@ system.webServer/security/requestFiltering
 <requestLimits maxAllowedContentLength="524288000" />
 ```
 
-然后修改Web宿主项目的 Web.config 文件中的如下配置节：
+然后修改 Web 宿主项目的 `Web.config` 文件中的如下配置节：
 ```xml
 <system.web>
 	<httpRuntime maxRequestLength="524288000" />
@@ -60,24 +60,24 @@ system.webServer/security/requestFiltering
 
 #### 配置文件
 
-应该根据配置内容的环境相关性来定义配置文件，相应的环境名作为配置文件名的尾部。下面以 **Zongsoft.Security** 插件的配置文件为例进行说明：
+应该根据配置内容的环境相关性来定义配置文件，相应的环境名作为配置文件名的尾部。下面以 _**Z**ongsoft.**S**ecurity_ 插件的配置文件为例进行说明：
 
 - `Zongsoft.Security.option`
-> 表示环境无关的配置文件，其配置作为其他环境有关性配置的缺省值；
+	> 表示环境无关的配置文件，其配置作为其他环境有关性配置的缺省值；
 
 - `Zongsoft.Security.test.option`
-> 表示**测试环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**测试数据库**并且使用的是**内网地址**等。
+	> 表示**测试环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**测试数据库**并且使用的是**内网地址**等。
 - `Zongsoft.Security.production.option`
-> 表示**生产环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**生产数据库**并且使用的是**内网地址**等。
+	> 表示**生产环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**生产数据库**并且使用的是**内网地址**等。
 - `Zongsoft.Security.development.option`
-> 表示**开发环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**开发数据库**并且使用的是**内网地址**等。
+	> 表示**开发环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**开发数据库**并且使用的是**内网地址**等。
 
 - `Zongsoft.Security.debug_test.option`
-> 表示**测试环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**测试数据库**并且使用的是**外网地址**等。
+	> 表示**测试环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**测试数据库**并且使用的是**外网地址**等。
 - `Zongsoft.Security.debug_production.option`
-> 表示**生产环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**生产数据库**并且使用的是**外网地址**等。
+	> 表示**生产环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**生产数据库**并且使用的是**外网地址**等。
 - `Zongsoft.Security.debug_development.option`
-> 表示**开发环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**开发数据库**并且使用的是**外网地址**等。
+	> 表示**开发环境**有关的配置文件，譬如该配置文件内的数据库连接字符串指向的是**开发数据库**并且使用的是**外网地址**等。
 
 
 #### 目录结构
@@ -85,7 +85,7 @@ system.webServer/security/requestFiltering
 关于 `.deploy` 部署目录的大致结构如下：
 
 - `certificates` 证书文件的部署目录
-> 注：证书文件一般与部署平台无关，因此该目录下无需再创建相应部署平台的子目录。
+	> 注：证书文件一般与部署平台无关，因此该目录下无需再创建相应部署平台的子目录。
 
 - `options` 配置文件的部署目录
 	- `azure` 微软云的配置文件目录
