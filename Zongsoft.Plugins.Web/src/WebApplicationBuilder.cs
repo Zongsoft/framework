@@ -163,7 +163,7 @@ namespace Zongsoft.Web
 					options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
 					options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
 					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
-					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.ComplexModelBinderProvider());
+					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
 				});
 		}
 	}

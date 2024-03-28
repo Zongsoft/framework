@@ -28,47 +28,22 @@
  */
 
 using System;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Zongsoft.Web.Binders
 {
-	public class ComplexModelBinder<T> : IModelBinder where T : struct, IEquatable<T>, IComparable<T>
+	[Zongsoft.Services.Service]
+	public class MixtureModelBinderProvider : IModelBinderProvider
 	{
-		#region 委托定义
-		private delegate bool TryParseDelegate(string text, out Data.Complex<T> value);
-		#endregion
-
-		#region 私有变量
-		private readonly TryParseDelegate _TryParse_;
-		#endregion
-
-		#region 构造函数
-		public ComplexModelBinder()
+		public IModelBinder GetBinder(ModelBinderProviderContext context)
 		{
-			var method = typeof(Data.Complex<T>).GetMethod(nameof(Data.Complex<T>.TryParse));
-			_TryParse_ = (TryParseDelegate)method.CreateDelegate(typeof(TryParseDelegate));
+			var modelType = context.Metadata.UnderlyingOrModelType;
+
+			if(modelType.IsGenericType && modelType.GenericTypeArguments.Length == 1 && modelType.GetGenericTypeDefinition() == typeof(Zongsoft.Data.Mixture<>))
+				return (IModelBinder)Activator.CreateInstance(typeof(MixtureModelBinder<>).MakeGenericType(modelType.GenericTypeArguments[0]));
+
+			return null;
 		}
-		#endregion
-
-		#region 公共方法
-		public Task BindModelAsync(ModelBindingContext context)
-		{
-			var value = context.ValueProvider.GetValue(context.ModelName);
-
-			if(string.IsNullOrEmpty(value.FirstValue))
-				context.Result = ModelBindingResult.Success(default(Data.Complex<T>));
-			else
-			{
-				if(_TryParse_.Invoke(value.FirstValue, out var complex))
-					context.Result = ModelBindingResult.Success(complex);
-				else
-					context.ModelState.TryAddModelError(context.ModelName, $"The specified '{context.ModelName}' parameter value '{value.FirstValue}' cannot be converted to the Complex<{typeof(T).FullName}> type.");
-			}
-
-			return Task.CompletedTask;
-		}
-		#endregion
 	}
 }
