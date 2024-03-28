@@ -233,8 +233,8 @@ namespace Zongsoft.Data
 				{
 					var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
-					if(propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Complex<>))
-						this.Converter = (IConditionConverter)Activator.CreateInstance(typeof(ComplexConverter<>).MakeGenericType(propertyType.GenericTypeArguments[0]));
+					if(propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Mixture<>))
+						this.Converter = (IConditionConverter)Activator.CreateInstance(typeof(MixtureConverter<>).MakeGenericType(propertyType.GenericTypeArguments[0]));
 				}
 			}
 

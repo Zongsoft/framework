@@ -32,22 +32,22 @@ using System.Linq;
 
 namespace Zongsoft.Data
 {
-	public readonly struct Complex<T> : IEquatable<Complex<T>> where T : struct, IEquatable<T>, IComparable<T>
+	public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEquatable<T>, IComparable<T>
 	{
 		#region 构造函数
-		public Complex(T value)
+		public Mixture(T value)
 		{
 			this.Array = null;
 			this.Range = new Range<T>(value);
 		}
 
-		public Complex(T[] array)
+		public Mixture(T[] array)
 		{
 			this.Array = array;
 			this.Range = default;
 		}
 
-		public Complex(Range<T> range)
+		public Mixture(Range<T> range)
 		{
 			this.Array = null;
 			this.Range = range;
@@ -64,7 +64,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Complex<T> other)
+		public bool Equals(Mixture<T> other)
 		{
 			if(this.Array != null && this.Array.Length > 0)
 			{
@@ -82,7 +82,7 @@ namespace Zongsoft.Data
 
 			return this.Range.Equals(other.Range);
 		}
-		public override bool Equals(object obj) => obj is Complex<T> other && this.Equals(other);
+		public override bool Equals(object obj) => obj is Mixture<T> other && this.Equals(other);
 
 		public override int GetHashCode()
 		{
@@ -108,42 +108,42 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 解析方法
-		public static bool TryParse(string text, out Complex<T> result)
+		public static bool TryParse(string text, out Mixture<T> result)
 		{
 			if(Range<T>.TryParse(text, out var range))
-				result = new Complex<T>(range);
+				result = new Mixture<T>(range);
 			else
-				result = new Complex<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
+				result = new Mixture<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
 
 			return result.HasValue;
 		}
 		#endregion
 
 		#region 符号重写
-		public static bool operator ==(Complex<T> left, Complex<T> right) => left.Equals(right);
-		public static bool operator !=(Complex<T> left, Complex<T> right) => !(left == right);
+		public static bool operator ==(Mixture<T> left, Mixture<T> right) => left.Equals(right);
+		public static bool operator !=(Mixture<T> left, Mixture<T> right) => !(left == right);
 		#endregion
 	}
 
-	public static class ComplexUtility
+	public static class MixtureUtility
 	{
-		public static Condition ToCondition<T>(this Complex<T> complex, string name) where T : struct, IEquatable<T>, IComparable<T>
+		public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct, IEquatable<T>, IComparable<T>
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			if(complex.Array != null && complex.Array.Length > 0)
-				return Condition.In(name, complex.Array);
+			if(mixture.Array != null && mixture.Array.Length > 0)
+				return Condition.In(name, mixture.Array);
 
-			if(complex.Range.HasValue)
-				return Condition.Between(name, complex.Range);
+			if(mixture.Range.HasValue)
+				return Condition.Between(name, mixture.Range);
 
 			return null;
 		}
 	}
 
-	public class ComplexConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+	public class MixtureConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
 	{
-		public ICondition Convert(ConditionConverterContext context) => context.Value is Complex<T> complex ? complex.ToCondition(context.GetFullName()) : null;
+		public ICondition Convert(ConditionConverterContext context) => context.Value is Mixture<T> mixture ? mixture.ToCondition(context.GetFullName()) : null;
 	}
 }

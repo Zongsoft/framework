@@ -446,7 +446,7 @@ namespace Zongsoft.Serialization
 		{
 			public override bool CanConvert(Type type)
 			{
-				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.Complex<>);
+				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.Mixture<>);
 			}
 
 			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
@@ -455,7 +455,7 @@ namespace Zongsoft.Serialization
 				return (JsonConverter)Activator.CreateInstance(converterType);
 			}
 
-			private class ComplexConverter<T> : JsonConverter<Data.Complex<T>> where T : struct, IEquatable<T>, IComparable<T>
+			private class ComplexConverter<T> : JsonConverter<Data.Mixture<T>> where T : struct, IEquatable<T>, IComparable<T>
 			{
 				private static readonly Common.StringExtension.TryParser<T> _parser = Type.GetTypeCode(typeof(T)) switch
 				{
@@ -475,10 +475,10 @@ namespace Zongsoft.Serialization
 					_ => null,
 				};
 
-				public override Data.Complex<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+				public override Data.Mixture<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 				{
 					if(reader.TokenType == JsonTokenType.Number)
-						return new Data.Complex<T>(reader.GetValue<T>());
+						return new Data.Mixture<T>(reader.GetValue<T>());
 
 					if(reader.TokenType == JsonTokenType.String)
 					{
@@ -490,10 +490,10 @@ namespace Zongsoft.Serialization
 						if(parts.Length == 1)
 						{
 							if(_parser(parts[0], out var value))
-								return new Data.Complex<T>(value);
+								return new Data.Mixture<T>(value);
 
 							if(Data.Range.TryParse<T>(parts[0], out var range))
-								return new Data.Complex<T>(range);
+								return new Data.Mixture<T>(range);
 
 							throw new JsonException();
 						}
@@ -508,7 +508,7 @@ namespace Zongsoft.Serialization
 								throw new JsonException();
 						}
 
-						return new Data.Complex<T>(array);
+						return new Data.Mixture<T>(array);
 					}
 
 					if(reader.TokenType == JsonTokenType.StartArray)
@@ -526,13 +526,13 @@ namespace Zongsoft.Serialization
 								throw new JsonException();
 						}
 
-						return new Data.Complex<T>(list.ToArray());
+						return new Data.Mixture<T>(list.ToArray());
 					}
 
 					throw new JsonException();
 				}
 
-				public override void Write(Utf8JsonWriter writer, Data.Complex<T> value, JsonSerializerOptions options)
+				public override void Write(Utf8JsonWriter writer, Data.Mixture<T> value, JsonSerializerOptions options)
 				{
 					writer.WriteStringValue(value.ToString());
 				}
