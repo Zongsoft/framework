@@ -1996,8 +1996,7 @@ namespace Zongsoft.Data
 		/// <returns>处理后的条件。</returns>
 		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, string filter, IDataOptions options)
 		{
-			var validator = this.Validator;
-			return validator == null ? criteria : validator.Validate(this, method, criteria, filter, options);
+			return this.Validator?.Validate(this, method, criteria, filter, options) ?? criteria;
 		}
 
 		/// <summary>
