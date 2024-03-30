@@ -60,7 +60,7 @@ namespace Zongsoft.Data
 		public readonly Range<T> Range;
 
 		public bool HasValue => (this.Array != null && this.Array.Length > 0) || this.Range.HasValue;
-		public bool IsEmpty => this.Array == null || this.Array.Length == 0 || this.Range.IsEmpty;
+		public bool IsEmpty => (this.Array == null || this.Array.Length == 0) && this.Range.IsEmpty;
 		#endregion
 
 		#region 重写方法
