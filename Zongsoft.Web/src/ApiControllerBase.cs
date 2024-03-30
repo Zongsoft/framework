@@ -51,12 +51,14 @@ namespace Zongsoft.Web
 		#region 成员字段
 		private TService _dataService;
 		private IServiceProvider _serviceProvider;
+		private DataOptionsBuilder _options;
 		#endregion
 
 		#region 构造函数
 		protected ApiControllerBase(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+			_options = new DataOptionsBuilder(this);
 		}
 		#endregion
 
@@ -79,9 +81,9 @@ namespace Zongsoft.Web
 		#region 公共方法
 		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
-		public virtual IActionResult Count(string key, [FromQuery]string filter = null)
+		public virtual IActionResult Count(string key)
 		{
-			return this.Content(this.DataService.Count(key, null, new DataAggregateOptions(filter)).ToString());
+			return this.Content(this.DataService.Count(key, null, _options.Count()).ToString());
 		}
 
 		[HttpPost("[action]")]
@@ -91,15 +93,15 @@ namespace Zongsoft.Web
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel)).ToString());
+			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel), null, _options.Count()).ToString());
 		}
 
 		[HttpGet("{key}/[action]")]
 		[HttpGet("[action]/{key:required}")]
-		public virtual IActionResult Exists(string key, [FromQuery]string filter = null)
+		public virtual IActionResult Exists(string key)
 		{
-			return this.DataService.Exists(key, new DataExistsOptions(filter)) ?
-			       this.NoContent() : this.NotFound();
+			return this.DataService.Exists(key, _options.Exists()) ?
+				   this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[action]")]
@@ -109,12 +111,12 @@ namespace Zongsoft.Web
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.DataService.Exists(Criteria.Transform(criteria as IModel)) ?
-			       this.NoContent() : this.NotFound();
+			return this.DataService.Exists(Criteria.Transform(criteria as IModel), _options.Exists()) ?
+				   this.NoContent() : this.NotFound();
 		}
 
 		[HttpGet("[action]/{**keyword}")]
-		public virtual IActionResult Search(string keyword, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual IActionResult Search(string keyword, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
 		{
 			var searcher = this.DataService.Searcher;
 
@@ -124,17 +126,17 @@ namespace Zongsoft.Web
 			if(string.IsNullOrWhiteSpace(keyword))
 				return this.BadRequest("Missing keyword for search.");
 
-			return this.Paginate(searcher.Search(keyword, this.GetSchema(), page ?? Paging.Page(1), filter, sort));
+			return this.Paginate(searcher.Search(keyword, this.GetSchema(), page ?? Paging.Page(1), null, sort));
 		}
 
 		[HttpGet("{key?}")]
-		public virtual IActionResult Get(string key, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual IActionResult Get(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
 		{
-			return this.Paginate(this.OnGet(key, filter, page, sort));
+			return this.Paginate(this.OnGet(key, page, sort));
 		}
 
 		[HttpDelete("{key?}")]
-		public virtual async Task<IActionResult> Delete(string key, [FromQuery]string filter = null)
+		public virtual async Task<IActionResult> Delete(string key)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -155,7 +157,7 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += this.OnDelete(part, filter);
+							count += this.OnDelete(part);
 
 						transaction.Commit();
 					}
@@ -164,11 +166,11 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return this.OnDelete(key, filter) > 0 ? this.NoContent() : this.NotFound();
+			return this.OnDelete(key) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost]
-		public virtual IActionResult Create([FromBody]TModel model)
+		public virtual IActionResult Create([FromBody] TModel model)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -210,7 +212,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut]
-		public virtual IActionResult Upsert([FromBody]TModel model)
+		public virtual IActionResult Upsert([FromBody] TModel model)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -223,7 +225,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPatch("{key}")]
-		public virtual IActionResult Update(string key, [FromBody]TModel model)
+		public virtual IActionResult Update(string key, [FromBody] TModel model)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -237,39 +239,42 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> Query([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual async Task<IActionResult> Query([FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.Paginate(this.DataService.Select(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), sort));
+			var result = this.DataService.Select(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), _options.Select(), sort);
+			return this.Paginate(result);
 		}
 		#endregion
 
 		#region 导入导出
 		[HttpPost("[action]")]
-		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery]string format = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanImport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var count = this.DataService is IDataImportable importable ? await importable.ImportAsync(file.OpenReadStream(), format, null, cancellation) : 0;
+			var count = this.DataService is IDataImportable importable ?
+				await importable.ImportAsync(file.OpenReadStream(), format, _options.Import(), cancellation) : 0;
+
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
 		[HttpGet("[action]")]
 		[HttpGet("{key}/[action]")]
-		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery]string format = null, [FromQuery]string filter = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			if(this.DataService is IDataExportable exportable)
 			{
-				var data = string.IsNullOrEmpty(key) ? null : this.OnGet(key, filter, page, sort);
+				var data = string.IsNullOrEmpty(key) ? null : this.OnGet(key, page, sort);
 				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
+				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, _options.Export(), cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
 			}
@@ -278,7 +283,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]")]
-		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery]string format = null, [FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExportAsync([FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -296,7 +301,7 @@ namespace Zongsoft.Web
 					sort);
 
 				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, null, cancellation);
+				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, _options.Export(), cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
 			}
@@ -305,7 +310,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpGet("[action]/{template}/{key?}")]
-		public virtual async ValueTask<IActionResult> ExportAsync(string template, string key, [FromQuery]string format = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExportAsync(string template, string key, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -313,7 +318,7 @@ namespace Zongsoft.Web
 			if(this.DataService is IDataExportable exportable)
 			{
 				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, template, key, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
+				await exportable.ExportAsync(output, template, key, this.GetParameters(DataServiceMethod.Export()), format, _options.Export(), cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, template);
 			}
@@ -322,7 +327,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]/{template}")]
-		public virtual async ValueTask<IActionResult> ExportAsync(string template, [FromQuery]string format = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExportAsync(string template, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -335,7 +340,7 @@ namespace Zongsoft.Web
 			if(this.DataService is IDataExportable exportable)
 			{
 				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, template, criteria, Http.HttpRequestUtility.GetParameters(this.Request), format, null, cancellation);
+				await exportable.ExportAsync(output, template, criteria, this.GetParameters(DataServiceMethod.Export()), format, _options.Export(), cancellation);
 				output.Seek(0, System.IO.SeekOrigin.Begin);
 				return this.File(output, this.Request.Headers.Accept, template);
 			}
@@ -431,31 +436,33 @@ namespace Zongsoft.Web
 				throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual object OnGet(string key, string filter, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);
+
+		protected virtual object OnGet(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), new DataSelectOptions(filter, parameters), sortings);
+			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), _options.Get(parameters), sortings);
 		}
 
-		protected virtual int OnDelete(string key, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual int OnDelete(string key, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return string.IsNullOrWhiteSpace(key) ? 0 : this.DataService.Delete(key, this.GetSchema(), new DataDeleteOptions(filter, parameters));
+			return string.IsNullOrWhiteSpace(key) ? 0 : this.DataService.Delete(key, this.GetSchema(), _options.Delete(parameters));
 		}
 
 		protected virtual int OnCreate(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Insert(model, this.GetSchema(), DataInsertOptions.Parameter(parameters));
+			return this.DataService.Insert(model, this.GetSchema(), _options.Insert(parameters));
 		}
 
 		protected virtual int OnUpdate(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			return string.IsNullOrWhiteSpace(key) ?
-				this.DataService.Update(model, this.GetSchema(), DataUpdateOptions.Parameter(parameters)) :
-				this.DataService.Update(key, model, this.GetSchema(), DataUpdateOptions.Parameter(parameters));
+				this.DataService.Update(model, this.GetSchema(), _options.Update(parameters)) :
+				this.DataService.Update(key, model, this.GetSchema(), _options.Update(parameters));
 		}
 
 		protected virtual int OnUpsert(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.Upsert(model, this.GetSchema(), DataUpsertOptions.Parameter(parameters));
+			return this.DataService.Upsert(model, this.GetSchema(), _options.Upsert(parameters));
 		}
 		#endregion
 
@@ -494,6 +501,25 @@ namespace Zongsoft.Web
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private string[] GetExportMembers() => this.Request.Headers.TryGetValue("X-Export-Members", out var content) && content.Count > 0 ?
 			content.ToString().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
+		#endregion
+
+		#region 嵌套子类
+		private class DataOptionsBuilder
+		{
+			private readonly ApiControllerBase<TModel, TService> _controller;
+			public DataOptionsBuilder(ApiControllerBase<TModel, TService> controller) => _controller = controller;
+
+			public DataSelectOptions Get(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Get()).Concat(parameters ?? []));
+			public DataSelectOptions Select(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Select()).Concat(parameters ?? []));
+			public DataDeleteOptions Delete(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Delete()).Concat(parameters ?? []));
+			public DataInsertOptions Insert(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Insert()).Concat(parameters ?? []));
+			public DataUpsertOptions Upsert(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Upsert()).Concat(parameters ?? []));
+			public DataUpdateOptions Update(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Update()).Concat(parameters ?? []));
+			public DataExistsOptions Exists(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Exists()).Concat(parameters ?? []));
+			public DataExportOptions Export(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Export()).Concat(parameters ?? []));
+			public DataImportOptions Import(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Import()).Concat(parameters ?? []));
+			public DataAggregateOptions Count(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Count()).Concat(parameters ?? []));
+		}
 		#endregion
 	}
 }
