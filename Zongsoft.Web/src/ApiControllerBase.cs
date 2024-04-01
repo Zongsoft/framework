@@ -162,7 +162,7 @@ namespace Zongsoft.Web
 						transaction.Commit();
 					}
 
-					return count > 0 ? (IActionResult)this.Content(count.ToString()) : this.NotFound();
+					return count > 0 ? this.Content(count.ToString()) : this.NotFound();
 				}
 			}
 
