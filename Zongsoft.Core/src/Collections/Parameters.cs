@@ -80,19 +80,27 @@ namespace Zongsoft.Collections
 				dictionary.Clear();
 		}
 
-		public bool Contains(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
+		public readonly bool Contains(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
+		public readonly object GetValue(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var value) ? value : null;
+		public readonly T GetValue<T>(string name, T defaultValue) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var value) ?
+			Common.Convert.ConvertValue<T>(value) : defaultValue;
 
-		public bool TryGetValue(string name, out object value)
+		public readonly bool TryGetValue(string name, out object value)
 		{
-			value = null;
+			value = default;
 			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out value);
 		}
 
-		public bool HasValue(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
-		public bool HasValue(string name, out object value)
+		public readonly bool TryGetValue<T>(string name, out T value)
 		{
-			value = null;
-			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out value);
+			if(_owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var result))
+			{
+				value = Common.Convert.ConvertValue<T>(result);
+				return true;
+			}
+
+			value = default;
+			return false;
 		}
 
 		public void SetValue(string name, object value)
