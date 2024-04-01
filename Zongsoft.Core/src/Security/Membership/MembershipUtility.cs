@@ -445,13 +445,10 @@ namespace Zongsoft.Security.Membership
 				if(x == null)
 					return y == null;
 				else
-					return y == null ? false : x.RoleId == y.RoleId;
+					return y != null && x.RoleId == y.RoleId;
 			}
 
-			public int GetHashCode(TRole role)
-			{
-				return (int)role.RoleId;
-			}
+			public int GetHashCode(TRole role) => (int)role.RoleId;
 		}
 
 		private class AuthorizationState : IEquatable<AuthorizationState>
