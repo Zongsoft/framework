@@ -34,6 +34,6 @@ namespace Zongsoft.Data
 {
 	public interface IDataSearcherConditioner
 	{
-		ICondition Resolve(string method, string keyword, string filter = null, IDataOptions options = null);
+		ICondition Resolve(string method, string keyword, IDataOptions options = null);
 	}
 }

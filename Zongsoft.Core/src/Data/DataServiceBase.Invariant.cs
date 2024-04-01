@@ -187,7 +187,7 @@ namespace Zongsoft.Data
 			}
 
 			//修整过滤条件
-			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
 
 			//修正数据模式对象
 			schema = this.Schematic(schema, data.GetType());

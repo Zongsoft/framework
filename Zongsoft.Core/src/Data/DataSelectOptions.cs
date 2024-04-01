@@ -40,9 +40,6 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置一个值，指示是否进行去重查询。</summary>
 		bool IsDistinct { get; set; }
 
-		/// <summary>获取或设置过滤表达式文本。</summary>
-		string Filter { get; set; }
-
 		/// <summary>获取或设置一个值，指示是否禁用对子集的延迟加载。</summary>
 		bool LazySuppressed { get; set; }
 
@@ -59,15 +56,11 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataSelectOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataSelectOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
 		/// <inheritdoc />
 		public bool IsDistinct { get; set; }
-
-		/// <inheritdoc />
-		public string Filter { get; set; }
 
 		/// <inheritdoc />
 		public bool LazySuppressed { get; set; }
@@ -94,43 +87,29 @@ namespace Zongsoft.Data
 		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个去重的查询选项构建器。</summary>
-		/// <param name="filter">查询过滤表达式。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder Distinct(string filter = null) => new(filter) { IsDistinct = true };
+		public static Builder Distinct(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters) { IsDistinct = true };
 
 		/// <summary>创建一个禁用延迟加载的查询选项构建器。</summary>
 		/// <param name="distinct">指示是否进行去重查询。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressLazy(bool distinct = false) => new((string)null)
-		{
-			IsDistinct = distinct,
-			LazySuppressed = true,
-		};
-
-		/// <summary>创建一个禁用延迟加载的查询选项构建器。</summary>
-		/// <param name="filter">查询过滤表达式。</param>
-		/// <param name="distinct">指示是否进行去重查询。</param>
-		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressLazy(string filter, bool distinct = false) => new(filter)
+		public static Builder SuppressLazy(bool distinct, IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters)
 		{
 			IsDistinct = distinct,
 			LazySuppressed = true,
 		};
 
 		/// <summary>创建一个禁用数据验证器的查询选项构建器。</summary>
-		/// <param name="distinct">指示是否进行去重查询。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(bool distinct = false) => new((string)null)
-		{
-			IsDistinct = distinct,
-			ValidatorSuppressed = true,
-		};
+		public static Builder SuppressValidator(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters) { ValidatorSuppressed = true };
 
 		/// <summary>创建一个禁用数据验证器的查询选项构建器。</summary>
-		/// <param name="filter">查询过滤表达式。</param>
 		/// <param name="distinct">指示是否进行去重查询。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(string filter, bool distinct = false) => new(filter)
+		public static Builder SuppressValidator(bool distinct, IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters)
 		{
 			IsDistinct = distinct,
 			ValidatorSuppressed = true,
@@ -140,12 +119,7 @@ namespace Zongsoft.Data
 		#region 嵌套子类
 		public class Builder : DataOptionsBuilder<DataSelectOptions>
 		{
-			#region 成员字段
-			private string _filter;
-			#endregion
-
 			#region 构造函数
-			public Builder(string filter) => _filter = filter;
 			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
 			#endregion
 
@@ -159,7 +133,6 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 设置方法
-			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
@@ -172,7 +145,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 构建方法
-			public override DataSelectOptions Build() => new DataSelectOptions(_filter, this.Parameters)
+			public override DataSelectOptions Build() => new DataSelectOptions(this.Parameters)
 			{
 				IsDistinct = this.IsDistinct,
 				LazySuppressed = this.LazySuppressed,

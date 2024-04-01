@@ -37,9 +37,6 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataAggregateOptions : IDataOptions
 	{
-		/// <summary>获取或设置过滤表达式文本。</summary>
-		string Filter { get; set; }
-
 		/// <summary>
 		/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
 		/// </summary>
@@ -53,13 +50,9 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataAggregateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataAggregateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		#endregion
 
 		#region 公共属性
-		/// <inheritdoc />
-		public string Filter { get; set; }
-
 		/// <inheritdoc />
 		public bool ValidatorSuppressed { get; set; }
 		#endregion
@@ -82,9 +75,9 @@ namespace Zongsoft.Data
 		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个禁用数据验证器的聚合选项构建器。</summary>
-		/// <param name="filter">指定的过滤表达式。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(string filter = null) => new(filter)
+		public static Builder SuppressValidator(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters)
 		{
 			ValidatorSuppressed = true
 		};
@@ -93,12 +86,7 @@ namespace Zongsoft.Data
 		#region 嵌套子类
 		public class Builder : DataOptionsBuilder<DataAggregateOptions>
 		{
-			#region 成员字段
-			private string _filter;
-			#endregion
-
 			#region 构造函数
-			public Builder(string filter) => _filter = filter;
 			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
 			#endregion
 
@@ -108,7 +96,6 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 设置方法
-			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
@@ -117,7 +104,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 构建方法
-			public override DataAggregateOptions Build() => new DataAggregateOptions(_filter, this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
+			public override DataAggregateOptions Build() => new DataAggregateOptions(this.Parameters) { ValidatorSuppressed = this.ValidatorSuppressed, };
 			#endregion
 
 			#region 类型转换

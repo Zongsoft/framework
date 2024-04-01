@@ -38,12 +38,12 @@ namespace Zongsoft.Data
 	/// <typeparam name="TModel">关于搜索服务对应的数据模型类型。</typeparam>
 	public interface IDataSearcher<TModel> : IDataSearcher
 	{
-		new IEnumerable<TModel> Search(string keyword, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, IDataOptions options, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, string filter = null, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
+		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
 	}
 }

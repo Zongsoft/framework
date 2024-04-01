@@ -48,15 +48,15 @@ namespace Zongsoft.Data
 		/// </summary>
 		IDataSearcherConditioner Conditioner { get; }
 
-		int Count(string keyword, string filter = null, IDataOptions options = null);
-		bool Exists(string keyword, string filter = null, IDataOptions options = null);
+		int Count(string keyword, IDataOptions options = null);
+		bool Exists(string keyword, IDataOptions options = null);
 
-		IEnumerable Search(string keyword, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, IDataOptions options, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, Paging paging, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, IDataOptions options, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, Paging paging, string filter = null, params Sorting[] sortings);
-		IEnumerable Search(string keyword, string schema, Paging paging, IDataOptions options, string filter = null, params Sorting[] sortings);
+		IEnumerable Search(string keyword, params Sorting[] sortings);
+		IEnumerable Search(string keyword, IDataOptions options, params Sorting[] sortings);
+		IEnumerable Search(string keyword, Paging paging, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
+		IEnumerable Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
 	}
 }

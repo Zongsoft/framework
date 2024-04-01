@@ -448,7 +448,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Exists(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options);
 
 			//执行存在操作
 			return this.OnExists(criteria, options);
@@ -518,7 +518,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Count(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options);
 
 			//执行聚合操作
 			return this.OnAggregate<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0;
@@ -587,7 +587,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Aggregate(function), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options);
 
 			//执行聚合操作
 			return this.OnAggregate<TValue>(new DataAggregate(function, member), criteria, options);
@@ -628,7 +628,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Increment(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options);
 
 			//执行递增操作
 			return this.OnIncrement(member, criteria, interval, options);
@@ -749,7 +749,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//修整删除条件
-			criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options);
 
 			//执行删除操作
 			return this.OnDelete(criteria, this.GetSchema(schema), options);
@@ -1223,7 +1223,7 @@ namespace Zongsoft.Data
 			}
 
 			//修整过滤条件
-			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
 
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
@@ -1354,7 +1354,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1427,7 +1427,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1503,7 +1503,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1587,7 +1587,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1679,7 +1679,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1779,7 +1779,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGet(criteria, this.GetSchema(schema), options);
@@ -1840,7 +1840,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelect(criteria, this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
@@ -1927,7 +1927,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelect<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TModel)), paging, sortings, options);
@@ -1991,12 +1991,11 @@ namespace Zongsoft.Data
 		/// </summary>
 		/// <param name="method">方法的类型。</param>
 		/// <param name="criteria">查询条件。</param>
-		/// <param name="filter">暂时保留。</param>
 		/// <param name="options">执行方法的可选项。</param>
 		/// <returns>处理后的条件。</returns>
-		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, string filter, IDataOptions options)
+		protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, IDataOptions options)
 		{
-			return this.Validator?.Validate(this, method, criteria, filter, options) ?? criteria;
+			return this.Validator?.Validate(this, method, criteria, options) ?? criteria;
 		}
 
 		/// <summary>

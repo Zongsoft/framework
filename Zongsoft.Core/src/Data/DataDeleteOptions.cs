@@ -37,8 +37,6 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataDeleteOptions : IDataMutateOptions
 	{
-		/// <summary>获取或设置过滤表达式文本。</summary>
-		string Filter { get; set; }
 	}
 
 	/// <summary>
@@ -48,12 +46,6 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataDeleteOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataDeleteOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
-		#endregion
-
-		#region 公共属性
-		/// <inheritdoc />
-		public string Filter { get; set; }
 		#endregion
 
 		#region 静态方法
@@ -74,25 +66,19 @@ namespace Zongsoft.Data
 		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个禁用数据验证器的删除选项构建器。</summary>
-		/// <param name="filter">删除过滤表达式。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(string filter = null) => new(filter) { ValidatorSuppressed = true };
+		public static Builder SuppressValidator(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters) { ValidatorSuppressed = true };
 		#endregion
 
 		#region 嵌套子类
 		public class Builder : DataMutateOptionsBuilder<DataDeleteOptions>
 		{
-			#region 成员字段
-			private string _filter;
-			#endregion
-
 			#region 构造函数
-			public Builder(string filter) => _filter = filter;
 			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
 			#endregion
 
 			#region 设置方法
-			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
@@ -101,7 +87,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 构建方法
-			public override DataDeleteOptions Build() => new DataDeleteOptions(_filter, this.Parameters)
+			public override DataDeleteOptions Build() => new DataDeleteOptions(this.Parameters)
 			{
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};

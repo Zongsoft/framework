@@ -50,9 +50,6 @@ namespace Zongsoft.Data
 	/// </summary>
 	public interface IDataUpdateOptions : IDataMutateOptions
 	{
-		/// <summary>获取或设置过滤表达式文本。</summary>
-		string Filter { get; set; }
-
 		/// <summary>获取或设置更新行为。</summary>
 		UpdateBehaviors Behaviors { get; set; }
 	}
@@ -64,19 +61,10 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataUpdateOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
-		public DataUpdateOptions(string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Filter = filter;
 		public DataUpdateOptions(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) => this.Behaviors = behaviors;
-		public DataUpdateOptions(UpdateBehaviors behaviors, string filter, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters)
-		{
-			this.Filter = filter;
-			this.Behaviors = behaviors;
-		}
 		#endregion
 
 		#region 公共属性
-		/// <inheritdoc />
-		public string Filter { get; set; }
-
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
 		#endregion
@@ -99,33 +87,34 @@ namespace Zongsoft.Data
 		public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 		/// <summary>创建一个禁用数据验证器的更新选项构建器。</summary>
-		/// <param name="filter">更新过滤表达式。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(string filter = null) => new(filter) { ValidatorSuppressed = true };
+		public static Builder SuppressValidator(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters) { ValidatorSuppressed = true };
 
 		/// <summary>创建一个禁用数据验证器的更新选项构建器。</summary>
-		/// <param name="filter">更新过滤表达式。</param>
 		/// <param name="behaviors">指定的更新操作行为。</param>
+		/// <param name="parameters">指定的附加参数集。</param>
 		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-		public static Builder SuppressValidator(UpdateBehaviors behaviors, string filter = null) => new(behaviors, filter) { ValidatorSuppressed = true };
+		public static Builder SuppressValidator(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> parameters = null) => new(behaviors, parameters) { ValidatorSuppressed = true };
 		#endregion
 
 		#region 嵌套子类
 		public class Builder : DataMutateOptionsBuilder<DataUpdateOptions>
 		{
 			#region 成员字段
-			private string _filter;
 			private UpdateBehaviors _behaviors;
 			#endregion
 
 			#region 构造函数
-			public Builder(string filter) => _filter = filter;
-			public Builder(UpdateBehaviors behaviors, string filter = null) { _behaviors = behaviors; _filter = filter; }
 			public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
+			public Builder(UpdateBehaviors behaviors, IEnumerable<KeyValuePair<string, object>> parameters = null)
+			{
+				_behaviors = behaviors;
+				this.Parameter(parameters);
+			}
 			#endregion
 
 			#region 设置方法
-			public Builder Filter(string filter) { _filter = filter; return this; }
 			public Builder Behaviors(UpdateBehaviors behaviors) { _behaviors = behaviors; return this; }
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
@@ -135,7 +124,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 构建方法
-			public override DataUpdateOptions Build() => new DataUpdateOptions(_behaviors, _filter, this.Parameters)
+			public override DataUpdateOptions Build() => new DataUpdateOptions(_behaviors, this.Parameters)
 			{
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};

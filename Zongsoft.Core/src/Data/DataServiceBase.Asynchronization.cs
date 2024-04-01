@@ -130,7 +130,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Exists(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options);
 
 			//执行存在操作
 			return this.OnExistsAsync(criteria, options, cancellation);
@@ -205,7 +205,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Aggregate(function), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options);
 
 			//执行聚合操作
 			return this.OnAggregateAsync<TValue>(new DataAggregate(function, member), criteria, options, cancellation);
@@ -233,7 +233,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Increment(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options);
 
 			//执行递增操作
 			return this.OnIncrementAsync(member, criteria, interval, options, cancellation);
@@ -364,7 +364,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Delete(), options);
 
 			//修整删除条件
-			criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options);
 
 			//执行删除操作
 			return this.OnDeleteAsync(criteria, this.GetSchema(schema), options, cancellation);
@@ -821,7 +821,7 @@ namespace Zongsoft.Data
 			}
 
 			//修整过滤条件
-			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
 
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
@@ -929,7 +929,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -990,7 +990,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -1062,7 +1062,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -1150,7 +1150,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -1254,7 +1254,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -1374,7 +1374,7 @@ namespace Zongsoft.Data
 				this.Authorize(DataServiceMethod.Get(), options);
 
 				//修整查询条件
-				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options.Filter, options);
+				criteria = this.OnValidate(DataServiceMethod.Get(), criteria, options);
 
 				//执行单条查询方法
 				return this.OnGetAsync(criteria, this.GetSchema(schema), options, cancellation).ContinueWith(task => (object)task.Result);
@@ -1433,7 +1433,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelectAsync(criteria, this.GetSchema(schema, typeof(TModel)), paging, sortings, options, cancellation);
@@ -1485,7 +1485,7 @@ namespace Zongsoft.Data
 			this.Authorize(DataServiceMethod.Select(), options);
 
 			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options.Filter, options);
+			criteria = this.OnValidate(DataServiceMethod.Select(), criteria, options);
 
 			//执行查询方法
 			return this.OnSelectAsync<T>(grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.GetSchema(schema, typeof(TModel)), paging, sortings, options, cancellation);
