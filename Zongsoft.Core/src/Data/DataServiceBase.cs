@@ -33,6 +33,8 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Data
 {
 	[System.Reflection.DefaultMember(nameof(Filters))]
@@ -299,10 +301,22 @@ namespace Zongsoft.Data
 		public virtual bool CanUpdate { get => _mutability.HasValue ? _mutability.Value.Updatable : (this.Service?.CanUpdate ?? true); }
 		public virtual bool CanUpsert { get => _mutability.HasValue ? _mutability.Value.Upsertable : (this.Service != null && this.CanInsert && this.CanUpdate); }
 
-		[Services.ServiceDependency("~")]
 		public IDataAccess DataAccess
 		{
-			get => _dataAccess ?? this.Service?.DataAccess;
+			get
+			{
+				if(_dataAccess == null)
+				{
+					if(this.Service != null)
+						return this.Service.DataAccess;
+
+					var provider = _serviceProvider?.Resolve<IDataAccessProvider>();
+					if(provider != null)
+						_dataAccess = provider.GetAccessor(ServiceUtility.Modular.GetModuleName(this.GetType()));
+				}
+
+				return _dataAccess;
+			}
 			set => _dataAccess = value ?? throw new ArgumentNullException();
 		}
 
