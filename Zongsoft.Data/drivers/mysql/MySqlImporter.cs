@@ -183,7 +183,7 @@ namespace Zongsoft.Data.MySql
 			writer.Close();
 			file.Dispose();
 
-#if NET7_0_OR_GREATER
+#if NET6_0_OR_GREATER
 			context.Count = await bulker.LoadAsync(null, cancellation);
 #else
 			context.Count = await bulker.LoadAsync(cancellation);
