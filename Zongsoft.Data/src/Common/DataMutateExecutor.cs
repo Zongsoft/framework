@@ -438,8 +438,10 @@ namespace Zongsoft.Data.Common
 				if(data == null)
 					return;
 
-				if(this.PrincipalValue == null && this.ForeignProperty.Nullable)
-					Utility.TrySetMemberValue(ref data, this.ForeignProperty.Name, this.PrincipalValue);
+				if(this.PrincipalValue == null && !this.ForeignProperty.Nullable)
+					return;
+
+				Utility.TrySetMemberValue(ref data, this.ForeignProperty.Name, this.PrincipalValue);
 			}
 		}
 		#endregion
