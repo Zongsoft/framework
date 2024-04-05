@@ -8,7 +8,7 @@
 
 	<xs:element name="schema">
 		<xs:annotation>
-			<xs:documentation xml:lang="zh">根节点。</xs:documentation>
+			<xs:documentation xml:lang="zh">数据映射根节点。</xs:documentation>
 		</xs:annotation>
 
 		<xs:complexType>
