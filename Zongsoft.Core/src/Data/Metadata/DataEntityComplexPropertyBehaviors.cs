@@ -42,6 +42,6 @@ namespace Zongsoft.Data.Metadata
 		None = 0,
 
 		/// <summary>主表</summary>
-		Master = 1,
+		Principal = 1,
 	}
 }
