@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -61,12 +63,25 @@ namespace Zongsoft.Web
 		{
 			if(context == null)
 				throw new ArgumentNullException(nameof(context));
-
 			if(controller == null)
 				throw new ArgumentNullException(nameof(controller));
 
 			if(controller is IDisposable disposable)
 				disposable.Dispose();
+		}
+
+		public ValueTask ReleaseAsync(ControllerContext context, object controller)
+		{
+			if(context == null)
+				throw new ArgumentNullException(nameof(context));
+			if(controller == null)
+				throw new ArgumentNullException(nameof(controller));
+
+			if(controller is IAsyncDisposable disposable)
+				return disposable.DisposeAsync();
+
+			this.Release(context, controller);
+			return default;
 		}
 	}
 }
