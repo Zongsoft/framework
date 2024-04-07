@@ -29,6 +29,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,11 +37,20 @@ namespace Zongsoft.Web
 {
 	public class ControllerFeatureProvider : Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider
 	{
-		private const string CONTROLLER_SUFFIX = "Controller";
+		#region 静态属性
+		/// <summary>获取忽略的控制器类型集。</summary>
+		public static ICollection<Type> Ignores { get; } = new HashSet<Type>();
+		#endregion
 
+		#region 重写风法
 		protected override bool IsController(TypeInfo typeInfo) => IsControllerType(typeInfo);
+		#endregion
+
+		#region 静态方法
 		internal static bool IsControllerType(Type type)
 		{
+			const string CONTROLLER_SUFFIX = "Controller";
+
 			if(!type.IsClass)
 				return false;
 
@@ -66,7 +76,11 @@ namespace Zongsoft.Web
 			   !type.IsDefined(typeof(ControllerNameAttribute)))
 				return false;
 
+			if(Ignores.Contains(type))
+				return false;
+
 			return true;
 		}
+		#endregion
 	}
 }
