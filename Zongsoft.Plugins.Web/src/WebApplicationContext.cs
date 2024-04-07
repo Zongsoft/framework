@@ -85,8 +85,24 @@ namespace Zongsoft.Web
 
 			var manager = this.Services.GetRequiredService<ApplicationPartManager>();
 
-			//添加自定义的控制器提供程序
-			manager.FeatureProviders.Add(this.Services.GetRequiredService<IApplicationFeatureProvider<ControllerFeature>>());
+			//获取所有自定义功能提供程序
+			var features = this.Services.GetServices<IApplicationFeatureProvider>();
+
+			//添加自定义功能提供程序到应用管理器中
+			if(features.Any())
+			{
+				//查找系统内置的默认控制器提供程序
+				var builtin = manager.FeatureProviders.SingleOrDefault(feature => feature is Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider);
+
+				foreach(var feature in features)
+				{
+					//如果当前功能提供程序是新的控制器提供程序则将内置的控制器提供程序移除
+					if(builtin != null && feature is Zongsoft.Web.ControllerFeatureProvider)
+						manager.FeatureProviders.Remove(builtin);
+
+					manager.FeatureProviders.Add(feature);
+				}
+			}
 
 			//尝试加载宿主程序集部件
 			if(!manager.ApplicationParts.Any(part => part is AssemblyPart assemblyPart && assemblyPart.Assembly == Assembly.GetEntryAssembly()))
