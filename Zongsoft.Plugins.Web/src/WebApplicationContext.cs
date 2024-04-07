@@ -35,6 +35,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -82,17 +83,20 @@ namespace Zongsoft.Web
 			if(!base.Initialize())
 				return false;
 
-			var parts = this.Services.GetRequiredService<ApplicationPartManager>().ApplicationParts;
+			var manager = this.Services.GetRequiredService<ApplicationPartManager>();
+
+			//添加自定义的控制器提供程序
+			manager.FeatureProviders.Add(this.Services.GetRequiredService<IApplicationFeatureProvider<ControllerFeature>>());
 
 			//尝试加载宿主程序集部件
-			if(!parts.Any(part => part is AssemblyPart assemblyPart && assemblyPart.Assembly == Assembly.GetEntryAssembly()))
-				parts.Add(new AssemblyPart(Assembly.GetEntryAssembly()));
+			if(!manager.ApplicationParts.Any(part => part is AssemblyPart assemblyPart && assemblyPart.Assembly == Assembly.GetEntryAssembly()))
+				manager.ApplicationParts.Add(new AssemblyPart(Assembly.GetEntryAssembly()));
 
-			//加载插件Web程序集部件
-			parts.Add(new AssemblyPart(this.GetType().Assembly));
+			//加载Zongsoft.Plugins.Web程序集部件
+			manager.ApplicationParts.Add(new AssemblyPart(this.GetType().Assembly));
 
 			//加载插件中的Web程序集部件
-			PopulateApplicationParts(parts, this.Plugins);
+			PopulateApplicationParts(manager.ApplicationParts, this.Plugins);
 
 			//返回初始化成功
 			return true;

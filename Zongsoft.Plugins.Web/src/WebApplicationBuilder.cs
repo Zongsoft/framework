@@ -30,12 +30,10 @@
 using System;
 using System.Linq;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -139,6 +137,8 @@ namespace Zongsoft.Web
 		{
 			services.AddHttpContextAccessor();
 			services.AddSingleton<IControllerActivator, ControllerActivator>();
+			services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
+			services.AddSingleton<IApplicationFeatureProvider<ControllerFeature>, ControllerFeatureProvider>();
 			services.AddAuthentication(CredentialPrincipal.Scheme).AddCredentials();
 
 			services.AddCors(options => options.AddDefaultPolicy(builder =>
