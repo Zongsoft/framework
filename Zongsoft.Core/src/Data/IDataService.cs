@@ -81,6 +81,9 @@ namespace Zongsoft.Data
 		/// <summary>获取数据服务注解。</summary>
 		DataServiceAttribute Attribute { get; }
 
+		/// <summary>获取父数据服务。</summary>
+		IDataService Service { get; }
+
 		/// <summary>获取数据访问接口。</summary>
 		IDataAccess DataAccess { get; }
 

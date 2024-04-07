@@ -326,7 +326,8 @@ namespace Zongsoft.Data
 			set => _searcher = value ?? throw new ArgumentNullException();
 		}
 
-		public virtual System.Security.Claims.ClaimsPrincipal Principal => Services.ApplicationContext.Current?.Principal;
+		public IDataService Service { get; }
+		public virtual System.Security.Claims.ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 		public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
 		IDataServiceValidator IDataService.Validator { get => this.Validator; }
@@ -337,11 +338,6 @@ namespace Zongsoft.Data
 			get => _serviceProvider ?? this.Service?.ServiceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
 		}
-		#endregion
-
-		#region 保护属性
-		/// <summary>获取父数据服务。</summary>
-		protected IDataService Service { get; }
 		#endregion
 
 		#region 授权验证
