@@ -63,7 +63,7 @@ namespace Zongsoft.Web
 		{
 			if(controller.ControllerType.IsNested)
 			{
-				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType, controller.ControllerName);
+				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType);
 				var module = Zongsoft.Services.ServiceUtility.Modular.GetModuleName(controller.ControllerType);
 
 				if(string.IsNullOrEmpty(module))
@@ -87,12 +87,13 @@ namespace Zongsoft.Web
 				}
 			}
 
-			controller.RouteValues["controller"] = string.IsNullOrEmpty(this.Name) ? controller.ControllerName : this.Name;
+			if(!string.IsNullOrEmpty(this.Name))
+				controller.ControllerName = controller.RouteValues["controller"] = this.Name;
 		}
 		#endregion
 
 		#region 私有方法
-		private static string GetAncestorPath(Type controllerType, string controllerName)
+		private static string GetAncestorPath(Type controllerType)
 		{
 			if(controllerType == null || !controllerType.IsNested)
 				return null;
@@ -108,17 +109,18 @@ namespace Zongsoft.Web
 				type = type.DeclaringType;
 			}
 
-			return string.Join('/', stack.Select(type => GetControllerName(type, controllerName)));
+			return string.Join('/', stack.Select(GetControllerName));
 		}
 
-		private static string GetControllerName(Type controllerType, string defaultName)
+		private static string GetControllerName(Type controllerType)
 		{
 			var attribute = controllerType.GetCustomAttribute<ControllerNameAttribute>(true);
 
 			if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
 				return attribute.Name;
-			else
-				return defaultName;
+
+			return controllerType.Name.Length > 10 && controllerType.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase) ?
+			       controllerType.Name[..^10] : controllerType.Name;
 		}
 		#endregion
 	}
