@@ -94,6 +94,13 @@ namespace Zongsoft.Data
 		IServiceProvider ServiceProvider { get; }
 		#endregion
 
+		#region 获取服务
+		/// <summary>获取指定类型的嵌套子服务类。</summary>
+		/// <typeparam name="TService">指定要获取的嵌套子服务类型。</typeparam>
+		/// <returns>返回的指定类型的子服务，否则返回空(null)。</returns>
+		TService GetService<TService>() where TService : class, IDataService;
+		#endregion
+
 		#region 执行方法
 		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null);
 		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null);

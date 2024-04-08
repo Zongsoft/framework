@@ -68,6 +68,7 @@ namespace Zongsoft.Data
 		private IDataAccess _dataAccess;
 		private IDataSearcher<TModel> _searcher;
 		private IServiceProvider _serviceProvider;
+		private Dictionary<Type, IDataService> _subservices;
 		private readonly DataServiceAttribute _attribute;
 		private readonly DataServiceMutability? _mutability;
 		private readonly DataServiceFilterCollection<TModel> _filters;
@@ -82,6 +83,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(IServiceProvider serviceProvider, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider)
@@ -105,6 +109,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider, mutability)
@@ -131,6 +138,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(string name, IServiceProvider serviceProvider, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider)
@@ -158,6 +168,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider, mutability)
@@ -181,6 +194,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(IDataService service, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service)
@@ -204,6 +220,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service, mutability)
@@ -231,6 +250,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(string name, IDataService service, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service)
@@ -258,6 +280,9 @@ namespace Zongsoft.Data
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
+
+			//初始化嵌套子服务集
+			this.InitializeSubservices();
 		}
 
 		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service, mutability)
@@ -340,6 +365,42 @@ namespace Zongsoft.Data
 			get => _serviceProvider ?? this.Service?.ServiceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
 		}
+		#endregion
+
+		#region 获取服务
+		private void InitializeSubservices()
+		{
+			var nestedTypes = this.GetType().GetNestedTypes().Where(type => type.IsNested && type.IsNestedPublic && type.IsClass && type is IDataService);
+			var serviceDescriptors = nestedTypes.GroupBy(
+				type => (IDataService)Activator.CreateInstance(type, new[] { this }),
+				type =>
+				{
+					var contracts = new List<Type>() { type };
+					var baseType = type.BaseType;
+					while(baseType != null && baseType != typeof(DataServiceBase<>) && baseType != typeof(object))
+					{
+						contracts.Add(baseType);
+						baseType = baseType.BaseType;
+					}
+					return contracts;
+				}).ToArray();
+
+			if(serviceDescriptors.Length > 0)
+			{
+				_subservices = new Dictionary<Type, IDataService>();
+
+				for(int i = 0; i < serviceDescriptors.Length; i++)
+				{
+					foreach(var serviceDescriptor in serviceDescriptors[i])
+					{
+						foreach(var contract in serviceDescriptor)
+							_subservices.Add(contract, serviceDescriptors[i].Key);
+					}
+				}
+			}
+		}
+
+		public TService GetService<TService>() where TService : class, IDataService => _subservices != null && _subservices.TryGetValue(typeof(TService), out var result) ? (TService)result : default;
 		#endregion
 
 		#region 授权验证
@@ -1895,15 +1956,7 @@ namespace Zongsoft.Data
 
 		#region 默认排序
 		private Sorting[] _defaultSortings;
-
-		private Sorting[] GetDefaultSortings()
-		{
-			if(_defaultSortings == null)
-				_defaultSortings = GetSortings() ?? Array.Empty<Sorting>();
-
-			return _defaultSortings;
-		}
-
+		private Sorting[] GetDefaultSortings() => _defaultSortings ??= this.GetSortings() ?? Array.Empty<Sorting>();
 		protected virtual Sorting[] GetSortings()
 		{
 			var sortings = _attribute?.GetSortings();
