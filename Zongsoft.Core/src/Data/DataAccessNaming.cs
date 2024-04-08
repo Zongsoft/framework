@@ -115,7 +115,7 @@ namespace Zongsoft.Data
 			else if(type.IsAbstract && name.Length > 4 && name.EndsWith("Base"))
 				name = name[..^4];
 
-			var module = Services.ServiceUtility.Modular.GetModuleName(type);
+			var module = Services.ApplicationModuleAttribute.Find(type)?.Name;
 			return string.IsNullOrEmpty(module) ? name : $"{module}.{name}";
 		}
 

@@ -291,7 +291,7 @@ namespace Zongsoft.Services
 
 			private static IApplicationModule GetApplicationModule(Type type)
 			{
-				var moduleName = ServiceUtility.Modular.GetModuleName(type);
+				var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
 
 				if(!string.IsNullOrEmpty(moduleName) && ApplicationContext.Current.Modules.TryGet(moduleName, out var module))
 					return module;

@@ -314,7 +314,7 @@ namespace Zongsoft.Data
 
 					var provider = _serviceProvider?.Resolve<IDataAccessProvider>();
 					if(provider != null)
-						_dataAccess = provider.GetAccessor(ServiceUtility.Modular.GetModuleName(this.GetType()));
+						_dataAccess = provider.GetAccessor(ApplicationModuleAttribute.Find(this.GetType())?.Name);
 				}
 
 				return _dataAccess;

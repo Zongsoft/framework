@@ -152,7 +152,7 @@ namespace Zongsoft.Services
 			if(attribute.Contracts != null)
 			{
 				var contracts = attribute.Contracts;
-				var moduleName = ServiceUtility.Modular.GetModuleName(type);
+				var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
 
 				if(!string.IsNullOrEmpty(moduleName))
 				{
@@ -175,7 +175,7 @@ namespace Zongsoft.Services
 			if(string.IsNullOrEmpty(members))
 				return;
 
-			var moduleName = ServiceUtility.Modular.GetModuleName(type);
+			var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
 
 			foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
 			{

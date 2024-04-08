@@ -103,7 +103,7 @@ namespace Zongsoft.Services
 
 		#region 内部方法
 		internal bool IsApplicationProvider => this.Provider == "/" || this.Provider == "*";
-		internal string GetServiceName(Type type) => this.ServiceName == "~" || this.ServiceName == "." ? ServiceUtility.Modular.GetModuleName(type) : this.ServiceName;
+		internal string GetServiceName(Type type) => this.ServiceName == "~" || this.ServiceName == "." ? ApplicationModuleAttribute.Find(type)?.Name : this.ServiceName;
 		#endregion
 	}
 }

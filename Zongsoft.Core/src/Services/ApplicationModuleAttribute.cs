@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Reflection;
 
 namespace Zongsoft.Services
 {
 	[AttributeUsage(AttributeTargets.Assembly)]
 	public class ApplicationModuleAttribute : Attribute
 	{
+		#region 构造函数
 		public ApplicationModuleAttribute(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
@@ -41,10 +43,68 @@ namespace Zongsoft.Services
 
 			this.Name = name;
 		}
+		#endregion
 
-		/// <summary>
-		/// 获取应用模块的名称。
-		/// </summary>
+		#region 公共属性
+		/// <summary>获取应用模块的名称。</summary>
 		public string Name { get; }
+		#endregion
+
+		#region 静态方法
+		public static ApplicationModuleAttribute Find(Type type) => Find(type?.Assembly);
+		public static ApplicationModuleAttribute Find(Assembly assembly)
+		{
+			if(assembly == null || assembly.IsDynamic)
+				return null;
+
+			var attribute = assembly.GetCustomAttribute<ApplicationModuleAttribute>();
+			if(attribute != null)
+				return attribute;
+
+			/*
+			 * 关于模块化依赖的约定：
+			 * 如果指定类型所在的程序集没有定义应用模块注解，则尝试从其引用的程序集中找到它的“主程序集”作为应用模块的定义者。
+			 * 
+			 * 示例：
+			 *	- Automao.Common.Web
+			 *	- Automao.Common.Services
+			 *	对于上两个程序集而言，约定其“主程序集”名称为：`Automao.Common`。
+			 */
+
+			var name = assembly.GetName().Name;
+			var index = name.LastIndexOf('.');
+
+			if(index > 0)
+			{
+				var findable = name[..index];
+				var assemblies = assembly.GetReferencedAssemblies();
+
+				for(int i = 0; i < assemblies.Length; i++)
+				{
+					if(assemblies[i].Name != findable)
+						continue;
+
+					var found = Match(assemblies[i]);
+					if(found != null)
+						return found.GetCustomAttribute<ApplicationModuleAttribute>();
+				}
+			}
+
+			return null;
+
+			static Assembly Match(AssemblyName name)
+			{
+				var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+				for(int i = 0; i < assemblies.Length; ++i)
+				{
+					if(assemblies[i].GetName().Name == name.Name)
+						return assemblies[i];
+				}
+
+				return null;
+			}
+		}
+		#endregion
 	}
 }

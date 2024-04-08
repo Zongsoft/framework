@@ -55,7 +55,7 @@ namespace Zongsoft.Services
 		public static bool TryGetModularServiceType(object target, Type contractType, out Type modularType)
 		{
 			modularType = null;
-			var module = ServiceUtility.Modular.GetModuleName(target.GetType());
+			var module = ApplicationModuleAttribute.Find(target.GetType())?.Name;
 			return !string.IsNullOrEmpty(module) && _cache.TryGetValue(new ModularServiceKey(module, contractType), out modularType);
 		}
 

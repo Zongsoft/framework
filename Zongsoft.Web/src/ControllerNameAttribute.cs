@@ -64,7 +64,7 @@ namespace Zongsoft.Web
 			if(controller.ControllerType.IsNested)
 			{
 				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType);
-				var module = Zongsoft.Services.ServiceUtility.Modular.GetModuleName(controller.ControllerType);
+				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
 				if(string.IsNullOrEmpty(module))
 				{
@@ -78,7 +78,7 @@ namespace Zongsoft.Web
 			}
 			else if(this.IsModular)
 			{
-				var module = Zongsoft.Services.ServiceUtility.Modular.GetModuleName(controller.ControllerType);
+				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
 				if(!string.IsNullOrEmpty(module))
 				{

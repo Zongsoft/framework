@@ -79,7 +79,7 @@ namespace Zongsoft.Data.Common
 						break;
 					default:
 						var @namespace = GetNamespace(context);
-						var module = ServiceUtility.Modular.GetModuleName(validator.GetType());
+						var module = ApplicationModuleAttribute.Find(validator.GetType())?.Name;
 
 						if(string.IsNullOrEmpty(module))
 						{
