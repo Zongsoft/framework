@@ -177,6 +177,7 @@ namespace Zongsoft.Data
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
+			_mutability = DataServiceMutability.All;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
@@ -226,6 +227,7 @@ namespace Zongsoft.Data
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
 			_filters = _filters = new DataServiceFilterCollection<TModel>(this);
+			_mutability = DataServiceMutability.All;
 
 			//创建数据搜索器
 			_searcher = new DataSearcher<TModel>(this);
