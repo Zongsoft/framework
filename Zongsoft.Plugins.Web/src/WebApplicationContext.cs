@@ -92,7 +92,7 @@ namespace Zongsoft.Web
 			if(features.Any())
 			{
 				//查找系统内置的默认控制器提供程序
-				var builtin = manager.FeatureProviders.SingleOrDefault(feature => feature is Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider);
+				var builtin = manager.FeatureProviders.FirstOrDefault(feature => feature is Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider);
 
 				foreach(var feature in features)
 				{

@@ -498,7 +498,7 @@ namespace Zongsoft.Common
 
 			var elementType = type.IsArray ? type.GetElementType() : type;
 			var code = Type.GetTypeCode(elementType);
-			var alias = string.Empty;
+			string alias;
 
 			if(code != TypeCode.Object)
 			{
@@ -677,7 +677,7 @@ namespace Zongsoft.Common
 					return typeof(void);
 			}
 
-			if(!typeName.Contains("."))
+			if(!typeName.Contains('.'))
 				typeName = "System." + typeName;
 
 			return Type.GetType(typeName, throwOnError, ignoreCase);

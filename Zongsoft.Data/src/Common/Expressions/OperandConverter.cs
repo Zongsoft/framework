@@ -61,7 +61,7 @@ namespace Zongsoft.Data.Common.Expressions
 					type = this.GetOperandValueType(context, binary);
 
 					return type == typeof(string) ?
-						(IExpression)MethodExpression.Function("concat",
+						MethodExpression.Function("concat",
 							this.Convert(context, statement, binary.Left),
 							this.Convert(context, statement, binary.Right)) :
 						new BinaryExpression(
@@ -69,7 +69,7 @@ namespace Zongsoft.Data.Common.Expressions
 							this.Convert(context, statement, binary.Left),
 							this.Convert(context, statement, binary.Right));
 				case Operand.FunctionOperand.CastFunction casting:
-					return casting.ConversionType.IsDecimal() ?
+					return casting.ConversionType.IsFloating() ?
 						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Precision, casting.Scale, casting.Style) :
 						new CastFunctionExpression(this.Convert(context, statement, casting.Value), casting.ConversionType, casting.Length, casting.Style);
 				case Operand.FunctionOperand function:
@@ -101,9 +101,9 @@ namespace Zongsoft.Data.Common.Expressions
 				case Operand.FieldOperand field:
 					return this.GetOperandType(context, field.Name);
 				case Operand.UnaryOperand unary:
-					return GetOperandValueType(context, unary.Operand);
+					return this.GetOperandValueType(context, unary.Operand);
 				case Operand.BinaryOperand binary:
-					return GetOperandValueType(context, binary);
+					return this.GetOperandValueType(context, binary);
 			}
 
 			var type = operand.GetType();
@@ -119,12 +119,12 @@ namespace Zongsoft.Data.Common.Expressions
 			if(binary == null)
 				return null;
 
-			var type1 = GetOperandValueType(context, binary.Left);
+			var type1 = this.GetOperandValueType(context, binary.Left);
 
 			if(type1 == typeof(string))
 				return typeof(string);
 
-			var type2 = GetOperandValueType(context, binary.Right);
+			var type2 = this.GetOperandValueType(context, binary.Right);
 
 			if(type2 == typeof(string))
 				return typeof(string);

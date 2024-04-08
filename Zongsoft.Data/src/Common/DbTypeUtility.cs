@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -57,7 +57,9 @@ namespace Zongsoft.Data.Common
 			_ => throw new NotSupportedException("Invalid DbType."),
 		};
 
-		public static bool IsDecimal(this DbType dbType) => dbType switch
+		public static bool IsNumeric(this DbType dbType) => IsInteger(dbType) || IsFloating(dbType);
+
+		public static bool IsFloating(this DbType dbType) => dbType switch
 		{
 			DbType.Single => true,
 			DbType.Double => true,
