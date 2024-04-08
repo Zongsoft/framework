@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +39,7 @@ using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
 {
-	[System.Reflection.DefaultMember(nameof(Schemas))]
+	[DefaultMember(nameof(Schemas))]
 	public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	{
 		#region 成员字段
@@ -92,10 +93,7 @@ namespace Zongsoft.Services
 			GC.SuppressFinalize(this);
 		}
 
-		protected virtual void Dispose(bool disposing)
-		{
-			_services?.Dispose();
-		}
+		protected virtual void Dispose(bool disposing) => _services?.Dispose();
 		#endregion
 
 		#region 重写方法
