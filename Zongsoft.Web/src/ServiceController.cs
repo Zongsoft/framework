@@ -47,14 +47,14 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{key}/[action]")]
-		[HttpGet("[action]/{key:required}")]
+		[HttpGet("[area]/[controller]/{key:required}/[action]")]
+		[HttpGet("[area]/[controller]/[action]/{key?}")]
 		public virtual IActionResult Count(string key)
 		{
 			return this.Content(this.DataService.Count(key, null, this.OptionsBuilder.Count()).ToString());
 		}
 
-		[HttpPost("[action]")]
+		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async Task<IActionResult> Count()
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -64,15 +64,15 @@ namespace Zongsoft.Web
 			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count()).ToString());
 		}
 
-		[HttpGet("{key}/[action]")]
-		[HttpGet("[action]/{key:required}")]
+		[HttpGet("[area]/[controller]/{key:required}/[action]")]
+		[HttpGet("[area]/[controller]/[action]/{key?}")]
 		public virtual IActionResult Exists(string key)
 		{
 			return this.DataService.Exists(key, this.OptionsBuilder.Exists()) ?
 				   this.NoContent() : this.NotFound();
 		}
 
-		[HttpPost("[action]")]
+		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async Task<IActionResult> Exists()
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -83,13 +83,13 @@ namespace Zongsoft.Web
 				   this.NoContent() : this.NotFound();
 		}
 
-		[HttpGet("{key?}")]
+		[HttpGet("[area]/[controller]/{key?}")]
 		public virtual IActionResult Get(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
 		{
 			return this.Paginate(this.OnGet(key, page, sort));
 		}
 
-		[HttpDelete("{key?}")]
+		[HttpDelete("[area]/[controller]/{key?}")]
 		public virtual async Task<IActionResult> Delete(string key)
 		{
 			if(!this.CanDelete)
@@ -123,7 +123,7 @@ namespace Zongsoft.Web
 			return this.OnDelete(key) > 0 ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPost]
+		[HttpPost("[area]/[controller]")]
 		public virtual IActionResult Create([FromBody] TModel model)
 		{
 			if(!this.CanCreate)
@@ -165,7 +165,7 @@ namespace Zongsoft.Web
 			return this.Conflict();
 		}
 
-		[HttpPut]
+		[HttpPut("[area]/[controller]")]
 		public virtual IActionResult Upsert([FromBody] TModel model)
 		{
 			if(!this.CanUpsert)
@@ -178,7 +178,7 @@ namespace Zongsoft.Web
 			return this.OnUpsert(model) > 0 ? this.Ok(model) : this.Conflict();
 		}
 
-		[HttpPatch("{key}")]
+		[HttpPatch("[area]/[controller]/{key}")]
 		public virtual IActionResult Update(string key, [FromBody] TModel model)
 		{
 			if(!this.CanUpdate)
@@ -192,7 +192,7 @@ namespace Zongsoft.Web
 				this.NoContent() : this.NotFound();
 		}
 
-		[HttpPost("[action]")]
+		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async Task<IActionResult> Query([FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)

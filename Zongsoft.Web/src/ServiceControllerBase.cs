@@ -73,7 +73,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 导入导出
-		[HttpPost("[action]")]
+		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanImport)
@@ -85,8 +85,7 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpGet("[action]")]
-		[HttpGet("{key}/[action]")]
+		[HttpGet("[area]/[controller]/{key?}/[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -104,7 +103,7 @@ namespace Zongsoft.Web
 			return this.NoContent();
 		}
 
-		[HttpPost("[action]")]
+		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync([FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -131,7 +130,7 @@ namespace Zongsoft.Web
 			return this.NoContent();
 		}
 
-		[HttpGet("[action]/{template}/{key?}")]
+		[HttpGet("[area]/[controller]/[action]/{template}/{key?}")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string template, string key, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -148,7 +147,7 @@ namespace Zongsoft.Web
 			return this.NoContent();
 		}
 
-		[HttpPost("[action]/{template}")]
+		[HttpPost("[area]/[controller]/[action]/{template}")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string template, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
