@@ -358,11 +358,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 执行方法
-		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null)
-		{
-			return this.Execute<T>(name, inParameters, out _, options);
-		}
-
+		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.Execute<T>(name, inParameters, out _, options);
 		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 		{
 			//构建数据操作的选项对象
@@ -380,11 +376,7 @@ namespace Zongsoft.Data
 			return this.DataAccess.Execute<T>(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 		}
 
-		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null)
-		{
-			return this.ExecuteScalar(name, inParameters, out _, options);
-		}
-
+		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.ExecuteScalar(name, inParameters, out _, options);
 		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 		{
 			//构建数据操作的选项对象
@@ -404,49 +396,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public bool Exists(string key, DataExistsOptions options = null)
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options);
-		}
-
-		public bool Exists<TKey1>(TKey1 key1, DataExistsOptions options = null) where TKey1 : IEquatable<TKey1>
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options);
-		}
-
+		public bool Exists(string key, DataExistsOptions options = null) => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options);
+		public bool Exists<TKey1>(TKey1 key1, DataExistsOptions options = null)
+			where TKey1 : IEquatable<TKey1> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options);
 		public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options);
 		public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options);
 		public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options);
 		public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options);
-		}
+			where TKey5 : IEquatable<TKey5> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options);
 
 		public bool Exists(ICondition criteria, DataExistsOptions options = null)
 		{
@@ -474,49 +444,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 聚合方法
-		public int Count(string key, string member = null, DataAggregateOptions options = null)
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options);
-		}
-
-		public int Count<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options);
-		}
-
+		public int Count(string key, string member = null, DataAggregateOptions options = null) => this.Count(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options);
+		public int Count<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null)
+			where TKey1 : IEquatable<TKey1> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options);
 		public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options);
 		public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options);
 		public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options);
 		public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options);
-		}
+			where TKey5 : IEquatable<TKey5> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options);
 
 		public int Count(ICondition criteria = null, string member = null, DataAggregateOptions options = null)
 		{
@@ -537,55 +485,33 @@ namespace Zongsoft.Data
 		public int Count(Data.Condition criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
 		public int Count(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
 
-		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
-		}
-
+		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null)
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options);
 		public TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options);
 		public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options);
 		public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options);
 		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options);
 		public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
-		}
+			where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options);
 
 		public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 		{
@@ -613,21 +539,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		public long Decrement(string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Decrement(member, criteria, 1, options);
-		}
-
-		public long Decrement(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null)
-		{
-			return this.Increment(member, criteria, -interval, options);
-		}
-
-		public long Increment(string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Increment(member, criteria, 1, options);
-		}
-
+		public long Decrement(string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(member, criteria, 1, options);
+		public long Decrement(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null) => this.Increment(member, criteria, -interval, options);
+		public long Increment(string member, ICondition criteria, DataIncrementOptions options) => this.Increment(member, criteria, 1, options);
 		public long Increment(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null)
 		{
 			//构建数据操作的选项对象
@@ -651,101 +565,55 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 删除方法
-		public int Delete(string key, DataDeleteOptions options = null)
-		{
-			return this.Delete(key, null, options);
-		}
-
-		public int Delete(string key, string schema, DataDeleteOptions options = null)
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options);
-		}
+		public int Delete(string key, DataDeleteOptions options = null) => this.Delete(key, null, options);
+		public int Delete(string key, string schema, DataDeleteOptions options = null) => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options);
 
 		public int Delete<TKey1>(TKey1 key1, DataDeleteOptions options = null)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.Delete(key1, null, options);
-		}
-
+			where TKey1 : IEquatable<TKey1> => this.Delete(key1, null, options);
 		public int Delete<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options);
-		}
+			where TKey1 : IEquatable<TKey1> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options);
 
 		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Delete(key1, key2, null, options);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.Delete(key1, key2, null, options);
 		public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options);
-		}
+			where TKey2 : IEquatable<TKey2> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options);
 
 		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Delete(key1, key2, key3, null, options);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.Delete(key1, key2, key3, null, options);
 		public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options);
-		}
+			where TKey3 : IEquatable<TKey3> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options);
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Delete(key1, key2, key3, key4, null, options);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.Delete(key1, key2, key3, key4, null, options);
 		public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options);
-		}
+			where TKey4 : IEquatable<TKey4> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options);
 
 		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Delete(key1, key2, key3, key4, key5, null, options);
-		}
-
+			where TKey5 : IEquatable<TKey5> => this.Delete(key1, key2, key3, key4, key5, null, options);
 		public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataDeleteOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options);
-		}
+			where TKey5 : IEquatable<TKey5> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options);
 
-		public int Delete(ICondition criteria, DataDeleteOptions options = null)
-		{
-			return this.Delete(criteria, null, options);
-		}
-
+		public int Delete(ICondition criteria, DataDeleteOptions options = null) => this.Delete(criteria, null, options);
 		public int Delete(ICondition criteria, string schema, DataDeleteOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -780,11 +648,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 插入方法
-		public int Insert(object data, DataInsertOptions options = null)
-		{
-			return this.Insert(data, string.Empty, options);
-		}
-
+		public int Insert(object data, DataInsertOptions options = null) => this.Insert(data, string.Empty, options);
 		public int Insert(object data, string schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -812,11 +676,16 @@ namespace Zongsoft.Data
 			return this.OnInsert(dictionary, schematic, options);
 		}
 
-		public int InsertMany(IEnumerable items, DataInsertOptions options = null)
+		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
 		{
-			return this.InsertMany(items, string.Empty, options);
+			if(data == null || data.Data == null || !data.HasChanges())
+				return 0;
+
+			//执行数据引擎的插入操作
+			return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 		}
 
+		public int InsertMany(IEnumerable items, DataInsertOptions options = null) => this.InsertMany(items, string.Empty, options);
 		public int InsertMany(IEnumerable items, string schema, DataInsertOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -847,15 +716,6 @@ namespace Zongsoft.Data
 			return this.OnInsertMany(dictionares, schematic, options);
 		}
 
-		protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
-		{
-			if(data == null || data.Data == null || !data.HasChanges())
-				return 0;
-
-			//执行数据引擎的插入操作
-			return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
-		}
-
 		protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options)
 		{
 			if(items == null)
@@ -863,6 +723,134 @@ namespace Zongsoft.Data
 
 			//执行数据引擎的插入操作
 			return this.DataAccess.InsertMany(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
+		}
+
+		public int InsertMany(string key, IEnumerable items, DataInsertOptions options = null) => this.InsertMany(key, items, null, options);
+		public int InsertMany(string key, IEnumerable items, string schema, DataInsertOptions options = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureInsert(options);
+
+			if(items == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.InsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var dictionary = this.OnModel(key, item, options);
+
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
+			}
+
+			return dictionaries.Count > 0 ? this.OnInsertMany(dictionaries, schematic, options) : 0;
+		}
+
+		public int InsertMany<TKey1>(TKey1 key1, IEnumerable items, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1> => this.InsertMany(key1, items, null, options);
+		public int InsertMany<TKey1>(TKey1 key1, IEnumerable items, string schema, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1>
+		{
+			return this.InsertMany(new object[] { key1 }, items, schema, options);
+		}
+
+		public int InsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.InsertMany(key1, key2, items, null, options);
+		public int InsertMany<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataInsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+		{
+			return this.InsertMany(new object[] { key1, key2 }, items, schema, options);
+		}
+
+		public int InsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.InsertMany(key1, key2, key3, items, null, options);
+		public int InsertMany<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataInsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+		{
+			return this.InsertMany(new object[] { key1, key2, key3 }, items, schema, options);
+		}
+
+		public int InsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.InsertMany(key1, key2, key3, key4, items, null, options);
+		public int InsertMany<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataInsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+		{
+			return this.InsertMany(new object[] { key1, key2, key3, key4 }, items, schema, options);
+		}
+
+		public int InsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataInsertOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.InsertMany(key1, key2, key3, key4, key5, items, null, options);
+		public int InsertMany<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataInsertOptions options = null)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5>
+		{
+			return this.InsertMany(new object[] { key1, key2, key3, key4, key5 }, items, schema, options);
+		}
+
+		protected int InsertMany(object[] values, IEnumerable items, string schema, DataInsertOptions options = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureInsert(options);
+
+			if(values == null || values.Length == 0)
+				throw new DataArgumentException(nameof(values));
+
+			if(items == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.InsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var dictionary = this.OnModel(values, item, options);
+
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
+			}
+
+			return dictionaries.Count > 0 ? this.OnInsertMany(dictionaries, schematic, options) : 0;
 		}
 		#endregion
 
@@ -974,12 +962,11 @@ namespace Zongsoft.Data
 					continue;
 
 				//处理数据模型
-				var model = this.OnModel(key, item);
-				if(model == null)
-					continue;
+				var dictionary = this.OnModel(key, item, options);
 
-				var dictionary = DataDictionary.GetDictionary<TModel>(model);
-				dictionaries.Add(dictionary);
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
 
 				//验证待复写的数据
 				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
@@ -1045,13 +1032,13 @@ namespace Zongsoft.Data
 			return this.UpsertMany(new object[] { key1, key2, key3, key4, key5 }, items, schema, reset, options);
 		}
 
-		protected int UpsertMany(object[] keys, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
+		protected int UpsertMany(object[] values, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
 
-			if(keys == null || keys.Length == 0)
-				throw new DataArgumentException(nameof(keys));
+			if(values == null || values.Length == 0)
+				throw new DataArgumentException(nameof(values));
 
 			if(items == null)
 				return 0;
@@ -1075,130 +1062,75 @@ namespace Zongsoft.Data
 					continue;
 
 				//处理数据模型
-				var model = this.OnModel(keys, item);
-				if(model == null)
-					continue;
+				var dictionary = this.OnModel(values, item, options);
 
-				var dictionary = DataDictionary.GetDictionary<TModel>(model);
-				dictionaries.Add(dictionary);
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
 
 				//验证待复写的数据
 				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
 			}
 
 			if(reset && this.CanDelete)
-				this.Delete(this.OnCondition(DataServiceMethod.Delete(), keys, out _));
+				this.Delete(this.OnCondition(DataServiceMethod.Delete(), values, out _));
 
 			return dictionaries.Count > 0 ? this.OnUpsertMany(dictionaries, schematic, options) : 0;
 		}
 		#endregion
 
 		#region 更新方法
-		public int Update(string key, object data, DataUpdateOptions options = null)
-		{
-			return this.Update(key, data, null, options);
-		}
-
-		public int Update(string key, object data, string schema, DataUpdateOptions options = null)
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options);
-		}
+		public int Update(string key, object data, DataUpdateOptions options = null) => this.Update(key, data, null, options);
+		public int Update(string key, object data, string schema, DataUpdateOptions options = null) => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options);
 
 		public int Update<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.Update(key1, null, data, options);
-		}
-
+			where TKey1 : IEquatable<TKey1> => this.Update(key1, null, data, options);
 		public int Update<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, out _), schema, options);
-		}
+			where TKey1 : IEquatable<TKey1> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, out _), schema, options);
 
 		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Update(key1, key2, null, data, options);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.Update(key1, key2, null, data, options);
 		public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options);
-		}
+			where TKey2 : IEquatable<TKey2> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options);
 
 		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Update(key1, key2, key3, null, data, options);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.Update(key1, key2, key3, null, data, options);
 		public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options);
-		}
+			where TKey3 : IEquatable<TKey3> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options);
 
 		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Update(key1, key2, key3, key4, null, data, options);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.Update(key1, key2, key3, key4, null, data, options);
 		public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options);
-		}
+			where TKey4 : IEquatable<TKey4> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options);
 
 		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Update(key1, key2, key3, key4, key5, null, data, options);
-		}
-
+			where TKey5 : IEquatable<TKey5> => this.Update(key1, key2, key3, key4, key5, null, data, options);
 		public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, DataUpdateOptions options = null)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options);
-		}
+			where TKey5 : IEquatable<TKey5> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options);
 
-		public int Update(object data, DataUpdateOptions options = null)
-		{
-			return this.Update(data, (ICondition)null, string.Empty, options);
-		}
-
-		public int Update(object data, string schema, DataUpdateOptions options = null)
-		{
-			return this.Update(data, (ICondition)null, schema, options);
-		}
-
-		public int Update(object data, ICondition criteria, DataUpdateOptions options = null)
-		{
-			return this.Update(data, criteria, string.Empty, options);
-		}
-
+		public int Update(object data, DataUpdateOptions options = null) => this.Update(data, (ICondition)null, string.Empty, options);
+		public int Update(object data, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)null, schema, options);
+		public int Update(object data, ICondition criteria, DataUpdateOptions options = null) => this.Update(data, criteria, string.Empty, options);
 		public int Update(object data, ICondition criteria, string schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -1268,11 +1200,7 @@ namespace Zongsoft.Data
 			return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
 		}
 
-		public int UpdateMany(IEnumerable items, DataUpdateOptions options = null)
-		{
-			return this.UpdateMany(items, string.Empty, options);
-		}
-
+		public int UpdateMany(IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(items, string.Empty, options);
 		public int UpdateMany(IEnumerable items, string schema, DataUpdateOptions options = null)
 		{
 			//确认是否可以执行该操作
@@ -1996,9 +1924,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 校验方法
-		/// <summary>
-		/// 进行条件验证，适用于<c>Select</c>，<c>Update</c>，<c>Upsert</c>，<c>Delete</c>等方法。
-		/// </summary>
+		/// <summary>条件验证方法，适用于<c>Select</c>，<c>Update</c>，<c>Upsert</c>，<c>Delete</c>等方法。</summary>
 		/// <param name="method">方法的类型。</param>
 		/// <param name="criteria">查询条件。</param>
 		/// <param name="options">执行方法的可选项。</param>
@@ -2008,9 +1934,7 @@ namespace Zongsoft.Data
 			return this.Validator?.Validate(this, method, criteria, options) ?? criteria;
 		}
 
-		/// <summary>
-		/// 进行数据验证，适用于<c>Insert</c>，<c>Update</c>，<c>Upsert</c>等方法。
-		/// </summary>
+		/// <summary>数据验证方法，适用于<c>Insert</c>，<c>Update</c>，<c>Upsert</c>等方法。</summary>
 		/// <param name="method">方法的类型。</param>
 		/// <param name="schema">数据模式。</param>
 		/// <param name="data">待验证的数据。</param>
@@ -2024,16 +1948,10 @@ namespace Zongsoft.Data
 		#region 触发过滤
 		protected void OnFiltered(DataServiceMethod method, object result, params object[] arguments) => this.OnFiltered(method, null, result, arguments);
 		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFiltered(method, context, null, arguments);
-		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments)
-		{
-			_filters.OnFiltered(method, context, result, arguments);
-		}
+		protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments) => _filters.OnFiltered(method, context, result, arguments);
 
 		protected bool OnFiltering(DataServiceMethod method, params object[] arguments) => this.OnFiltering(method, null, arguments);
-		protected bool OnFiltering(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments)
-		{
-			return _filters.OnFiltering(method, context, null, arguments);
-		}
+		protected bool OnFiltering(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => _filters.OnFiltering(method, context, null, arguments);
 		#endregion
 
 		#region 激发事件
@@ -2259,14 +2177,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 模型转换
-		protected virtual TModel OnModel(string key, object item) => string.IsNullOrWhiteSpace(key) ? default : this.OnModel(key.Split('-', StringSplitOptions.TrimEntries), item);
-		protected virtual TModel OnModel(object[] values, object item) => throw new NotSupportedException();
+		protected virtual IDataDictionary<TModel> OnModel(string key, object item, IDataMutateOptions options) => string.IsNullOrWhiteSpace(key) ? default : this.OnModel(key.Split('-', StringSplitOptions.TrimEntries), item, options);
+		protected virtual IDataDictionary<TModel> OnModel(object[] values, object item, IDataMutateOptions options)
+		{
+			var dictionary = DataDictionary.GetDictionary<TModel>(item);
+
+			if(values == null || values.Length == 0)
+				return dictionary;
+
+			var entity = this.Service == null ? this.GetEntity() : this.Service.GetEntity();
+			if(entity == null || entity.Key == null || entity.Key.Length != values.Length)
+				return dictionary;
+
+			for(int i = 0; i < values.Length; i++)
+				dictionary.TrySetValue(entity.Key[i].Name, ConvertValue(values[i], entity.Key[i].Type));
+
+			return dictionary;
+		}
 		#endregion
 
 		#region 条件转换
-		/// <summary>
-		/// 将指定的键值文本转换为操作条件。
-		/// </summary>
+		/// <summary>将指定的键值文本转换为操作条件。</summary>
 		/// <param name="method">指定的操作方法。</param>
 		/// <param name="key">指定的键值文本。</param>
 		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
@@ -2284,9 +2215,7 @@ namespace Zongsoft.Data
 			return this.OnCondition(method, Common.StringExtension.Slice(key, '-').ToArray(), out singular);
 		}
 
-		/// <summary>
-		/// 将指定的键值数组转换为操作条件。
-		/// </summary>
+		/// <summary>将指定的键值数组转换为操作条件。</summary>
 		/// <param name="method">指定的操作方法。</param>
 		/// <param name="values">指定的键值数组。</param>
 		/// <param name="singular">输出一个值，指示转换后的操作条件作用结果是否为必定为单个对象。</param>
@@ -2346,44 +2275,25 @@ namespace Zongsoft.Data
 		}
 
 		private ICondition ConvertKey<TKey1>(DataServiceMethod method, TKey1 key1, out bool singular)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.OnCondition(method, new object[] { key1 }, out singular);
-		}
-
+			where TKey1 : IEquatable<TKey1> => this.OnCondition(method, new object[] { key1 }, out singular);
 		private ICondition ConvertKey<TKey1, TKey2>(DataServiceMethod method, TKey1 key1, TKey2 key2, out bool singular)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.OnCondition(method, new object[] { key1, key2 }, out singular);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.OnCondition(method, new object[] { key1, key2 }, out singular);
 		private ICondition ConvertKey<TKey1, TKey2, TKey3>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, out bool singular)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.OnCondition(method, new object[] { key1, key2, key3 }, out singular);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.OnCondition(method, new object[] { key1, key2, key3 }, out singular);
 		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, out bool singular)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.OnCondition(method, new object[] { key1, key2, key3, key4 }, out singular);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.OnCondition(method, new object[] { key1, key2, key3, key4 }, out singular);
 		private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4, TKey5>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, out bool singular)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.OnCondition(method, new object[] { key1, key2, key3, key4, key5 }, out singular);
-		}
+			where TKey5 : IEquatable<TKey5> => this.OnCondition(method, new object[] { key1, key2, key3, key4, key5 }, out singular);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private ISchema GetSchema(string expression, Type type = null, bool immutable = false)
@@ -2489,8 +2399,10 @@ namespace Zongsoft.Data
 				case DbType.Time:
 				case DbType.DateTime:
 				case DbType.DateTime2:
-				case DbType.DateTimeOffset:
 					return Common.Convert.ConvertValue<DateTime>(value);
+				case DbType.DateTimeOffset:
+					return Common.Convert.ConvertValue<DateTimeOffset>(value);
+				case DbType.Xml:
 				case DbType.AnsiString:
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
@@ -2507,33 +2419,25 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个匿名用户的数据服务授权验证器。
-		/// </summary>
+		/// <summary>创建一个匿名用户的数据服务授权验证器。</summary>
 		/// <param name="isReadOnly">指定一个值，指示是否只允许读取操作。</param>
 		/// <returns>返回创建的数据服务授权验证器。</returns>
 		public static IDataServiceAuthorizer<TModel> Anonymous(bool isReadOnly) =>
 			isReadOnly ? AnonymousAuthorizer.ReadOnly : AnonymousAuthorizer.Default;
 
-		/// <summary>
-		/// 创建一个匿名用户的数据服务授权验证器。
-		/// </summary>
+		/// <summary>创建一个匿名用户的数据服务授权验证器。</summary>
 		/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
 		/// <returns>返回创建的数据服务授权验证器。</returns>
 		public static IDataServiceAuthorizer<TModel> Anonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
 			authorize == null ? AnonymousAuthorizer.Default : new AnonymousAuthorizer(authorize);
 
-		/// <summary>
-		/// 创建一个非匿名用户的数据服务授权验证器。
-		/// </summary>
+		/// <summary>创建一个非匿名用户的数据服务授权验证器。</summary>
 		/// <param name="isReadOnly">指定一个值，指示是否只允许读取操作。</param>
 		/// <returns>返回创建的数据服务授权验证器。</returns>
 		public static IDataServiceAuthorizer<TModel> Nonanonymous(bool isReadOnly) =>
 			isReadOnly ? NonanonymousAuthorizer.ReadOnly : NonanonymousAuthorizer.Default;
 
-		/// <summary>
-		/// 创建一个非匿名用户的数据服务授权验证器。
-		/// </summary>
+		/// <summary>创建一个非匿名用户的数据服务授权验证器。</summary>
 		/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
 		/// <returns>返回创建的数据服务授权验证器。</returns>
 		public static IDataServiceAuthorizer<TModel> Nonanonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>

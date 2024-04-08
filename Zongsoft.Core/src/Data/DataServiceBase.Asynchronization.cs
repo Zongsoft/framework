@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Data;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -76,49 +75,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public Task<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options, cancellation);
-		}
-
-		public Task<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options, cancellation);
-		}
-
+		public Task<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options, cancellation);
+		public Task<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options, cancellation);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options, cancellation);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options, cancellation);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options, cancellation);
-		}
+			where TKey5 : IEquatable<TKey5> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options, cancellation);
 
 		public Task<bool> ExistsAsync(ICondition criteria, DataExistsOptions options = null, CancellationToken cancellation = default)
 		{
@@ -144,55 +121,33 @@ namespace Zongsoft.Data
 
 		#region 聚合方法
 		public Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null, CancellationToken cancellation = default)
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options, cancellation);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options, cancellation);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options, cancellation);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options, cancellation);
-		}
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options, cancellation);
 
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options, cancellation);
-		}
-
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5>
-			where TValue : struct, IEquatable<TValue>
-		{
-			return this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options, cancellation);
-		}
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options, cancellation);
 
 		public Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TValue : struct, IEquatable<TValue>
@@ -218,11 +173,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		public Task<long> IncrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default)
-		{
-			return this.IncrementAsync(member, criteria, 1, options, cancellation);
-		}
-
+		public Task<long> IncrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(member, criteria, 1, options, cancellation);
 		public Task<long> IncrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default)
 		{
 			//构建数据操作的选项对象
@@ -239,15 +190,8 @@ namespace Zongsoft.Data
 			return this.OnIncrementAsync(member, criteria, interval, options, cancellation);
 		}
 
-		public Task<long> DecrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default)
-		{
-			return this.DecrementAsync(member, criteria, 1, options, cancellation);
-		}
-
-		public Task<long> DecrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.IncrementAsync(member, criteria, -interval, options, cancellation);
-		}
+		public Task<long> DecrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.DecrementAsync(member, criteria, 1, options, cancellation);
+		public Task<long> DecrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default) => this.IncrementAsync(member, criteria, -interval, options, cancellation);
 
 		protected virtual Task<long> OnIncrementAsync(string member, ICondition criteria, int interval, DataIncrementOptions options, CancellationToken cancellation)
 		{
@@ -256,101 +200,55 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 删除方法
-		public Task<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.DeleteAsync(key, null, options, cancellation);
-		}
-
-		public Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options, cancellation);
-		}
+		public Task<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(key, null, options, cancellation);
+		public Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1>(TKey1 key1, DataDeleteOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.DeleteAsync(key1, null, options, cancellation);
-		}
-
+			where TKey1 : IEquatable<TKey1> => this.DeleteAsync(key1, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options, cancellation);
-		}
+			where TKey1 : IEquatable<TKey1> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.DeleteAsync(key1, key2, null, options, cancellation);
-		}
-
+			where TKey2 : IEquatable<TKey2> => this.DeleteAsync(key1, key2, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options, cancellation);
-		}
+			where TKey2 : IEquatable<TKey2> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.DeleteAsync(key1, key2, key3, null, options, cancellation);
-		}
-
+			where TKey3 : IEquatable<TKey3> => this.DeleteAsync(key1, key2, key3, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options, cancellation);
-		}
+			where TKey3 : IEquatable<TKey3> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.DeleteAsync(key1, key2, key3, key4, null, options, cancellation);
-		}
-
+			where TKey4 : IEquatable<TKey4> => this.DeleteAsync(key1, key2, key3, key4, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options, cancellation);
-		}
+			where TKey4 : IEquatable<TKey4> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.DeleteAsync(key1, key2, key3, key4, key5, null, options, cancellation);
-		}
-
+			where TKey5 : IEquatable<TKey5> => this.DeleteAsync(key1, key2, key3, key4, key5, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5>
-		{
-			return this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options, cancellation);
-		}
+			where TKey5 : IEquatable<TKey5> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options, cancellation);
 
-		public Task<int> DeleteAsync(ICondition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.DeleteAsync(criteria, null, options, cancellation);
-		}
-
+		public Task<int> DeleteAsync(ICondition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(criteria, null, options, cancellation);
 		public Task<int> DeleteAsync(ICondition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -385,11 +283,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 插入方法
-		public Task<int> InsertAsync(object data, DataInsertOptions options = null, CancellationToken cancellation = default)
-		{
-			return this.InsertAsync(data, string.Empty, options, cancellation);
-		}
-
+		public Task<int> InsertAsync(object data, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertAsync(data, string.Empty, options, cancellation);
 		public Task<int> InsertAsync(object data, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -417,11 +311,16 @@ namespace Zongsoft.Data
 			return this.OnInsertAsync(dictionary, schematic, options, cancellation);
 		}
 
-		public Task<int> InsertManyAsync(IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+		protected virtual Task<int> OnInsertAsync(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options, CancellationToken cancellation)
 		{
-			return this.InsertManyAsync(items, string.Empty, options, cancellation);
+			if(data == null || data.Data == null || !data.HasChanges())
+				return Task.FromResult(0);
+
+			//执行数据引擎的插入操作
+			return this.DataAccess.InsertAsync(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
 		}
 
+		public Task<int> InsertManyAsync(IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(items, string.Empty, options, cancellation);
 		public Task<int> InsertManyAsync(IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -452,15 +351,6 @@ namespace Zongsoft.Data
 			return this.OnInsertManyAsync(dictionares, schematic, options, cancellation);
 		}
 
-		protected virtual Task<int> OnInsertAsync(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options, CancellationToken cancellation)
-		{
-			if(data == null || data.Data == null || !data.HasChanges())
-				return Task.FromResult(0);
-
-			//执行数据引擎的插入操作
-			return this.DataAccess.InsertAsync(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
-		}
-
 		protected virtual Task<int> OnInsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
 		{
 			if(items == null)
@@ -469,11 +359,139 @@ namespace Zongsoft.Data
 			//执行数据引擎的插入操作
 			return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
 		}
+
+		public Task<int> InsertManyAsync(string key, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(key, items, null, options, cancellation);
+		public Task<int> InsertManyAsync(string key, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+		{
+			//确认是否可以执行该操作
+			this.EnsureInsert(options);
+
+			if(items == null)
+				return Task.FromResult(0);
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.InsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var dictionary = this.OnModel(key, item, options);
+
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
+			}
+
+			return dictionaries.Count > 0 ? this.OnInsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
+		}
+
+		public Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1> => this.InsertManyAsync(key1, items, null, options, cancellation);
+		public Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1> => this.InsertManyAsync(new object[] { key1 }, items, schema, options, cancellation);
+
+		public Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2> => this.InsertManyAsync(key1, key2, items, null, options, cancellation);
+		public Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2> => this.InsertManyAsync(new object[] { key1, key2 }, items, schema, options, cancellation);
+
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3> => this.InsertManyAsync(key1, key2, key3, items, null, options, cancellation);
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3> => this.InsertManyAsync(new object[] { key1, key2, key3 }, items, schema, options, cancellation);
+
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4> => this.InsertManyAsync(key1, key2, key3, key4, items, null, options, cancellation);
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4> => this.InsertManyAsync(new object[] { key1, key2, key3, key4 }, items, schema, options, cancellation);
+
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5> => this.InsertManyAsync(key1, key2, key3, key4, key5, items, null, options, cancellation);
+		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5> => this.InsertManyAsync(new object[] { key1, key2, key3, key4, key5 }, items, schema, options, cancellation);
+
+		protected Task<int> InsertManyAsync(object[] values, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+		{
+			//确认是否可以执行该操作
+			this.EnsureInsert(options);
+
+			if(values == null || values.Length == 0)
+				throw new DataArgumentException(nameof(values));
+
+			if(items == null)
+				return Task.FromResult(0);
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataInsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.InsertMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var dictionary = this.OnModel(values, item, options);
+
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
+
+				//验证待复写的数据
+				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
+			}
+
+			return dictionaries.Count > 0 ? this.OnInsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
+		}
 		#endregion
 
 		#region 增改方法
-		public Task<int> UpsertAsync(object data, DataUpsertOptions options = null, CancellationToken cancellation = default) =>
-			this.UpsertAsync(data, string.Empty, options, cancellation);
+		public Task<int> UpsertAsync(object data, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertAsync(data, string.Empty, options, cancellation);
 		public Task<int> UpsertAsync(object data, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -501,8 +519,16 @@ namespace Zongsoft.Data
 			return this.OnUpsertAsync(dictionary, schematic, options, cancellation);
 		}
 
-		public Task<int> UpsertManyAsync(IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) =>
-			this.UpsertManyAsync(items, string.Empty, options, cancellation);
+		protected virtual Task<int> OnUpsertAsync(IDataDictionary<TModel> data, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
+		{
+			if(data == null || data.Data == null || !data.HasChanges())
+				return Task.FromResult(0);
+
+			//执行数据引擎的复写操作
+			return this.DataAccess.UpsertAsync(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
+		}
+
+		public Task<int> UpsertManyAsync(IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(items, string.Empty, options, cancellation);
 		public Task<int> UpsertManyAsync(IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -533,12 +559,18 @@ namespace Zongsoft.Data
 			return this.OnUpsertManyAsync(dictionares, schematic, options, cancellation);
 		}
 
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) =>
-			this.UpsertManyAsync(key, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) =>
-			this.UpsertManyAsync(key, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) =>
-			this.UpsertManyAsync(key, items, schema, false, options, cancellation);
+		protected virtual Task<int> OnUpsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
+		{
+			if(items == null)
+				return Task.FromResult(0);
+
+			//执行数据引擎的复写操作
+			return this.DataAccess.UpsertManyAsync(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
+		}
+
+		public Task<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, null, false, options, cancellation);
+		public Task<int> UpsertManyAsync(string key, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, null, reset, options, cancellation);
+		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, schema, false, options, cancellation);
 		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -566,12 +598,11 @@ namespace Zongsoft.Data
 					continue;
 
 				//处理数据模型
-				var model = this.OnModel(key, item);
-				if(model == null)
-					continue;
+				var dictionary = this.OnModel(key, item, options);
 
-				var dictionary = DataDictionary.GetDictionary<TModel>(model);
-				dictionaries.Add(dictionary);
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
 
 				//验证待复写的数据
 				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
@@ -668,31 +699,13 @@ namespace Zongsoft.Data
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5> => this.UpsertManyAsync(new object[] { key1, key2, key3, key4, key5 }, items, schema, reset, options, cancellation);
 
-		protected virtual Task<int> OnUpsertAsync(IDataDictionary<TModel> data, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
-		{
-			if(data == null || data.Data == null || !data.HasChanges())
-				return Task.FromResult(0);
-
-			//执行数据引擎的复写操作
-			return this.DataAccess.UpsertAsync(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
-		}
-
-		protected virtual Task<int> OnUpsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			//执行数据引擎的复写操作
-			return this.DataAccess.UpsertManyAsync(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
-		}
-
-		protected Task<int> UpsertManyAsync(object[] keys, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
+		protected Task<int> UpsertManyAsync(object[] values, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
 			this.EnsureUpsert(options);
 
-			if(keys == null || keys.Length == 0)
-				throw new DataArgumentException(nameof(keys));
+			if(values == null || values.Length == 0)
+				throw new DataArgumentException(nameof(values));
 
 			if(items == null)
 				return Task.FromResult(0);
@@ -716,29 +729,26 @@ namespace Zongsoft.Data
 					continue;
 
 				//处理数据模型
-				var model = this.OnModel(keys, item);
-				if(model == null)
-					continue;
+				var dictionary = this.OnModel(values, item, options);
 
-				var dictionary = DataDictionary.GetDictionary<TModel>(model);
-				dictionaries.Add(dictionary);
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
 
 				//验证待复写的数据
 				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
 			}
 
 			if(reset && this.CanDelete)
-				this.Delete(this.OnCondition(DataServiceMethod.Delete(), keys, out _));
+				this.Delete(this.OnCondition(DataServiceMethod.Delete(), values, out _));
 
 			return dictionaries.Count > 0 ? this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
 		}
 		#endregion
 
 		#region 更新方法
-		public Task<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateAsync(key, data, null, options, cancellation);
-		public Task<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options, cancellation);
+		public Task<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(key, data, null, options, cancellation);
+		public Task<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options, cancellation);
 
 		public Task<int> UpdateAsync<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1> => this.UpdateAsync(key1, null, data, options, cancellation);
@@ -781,12 +791,9 @@ namespace Zongsoft.Data
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options, cancellation);
 
-		public Task<int> UpdateAsync(object data, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateAsync(data, (ICondition)null, string.Empty, options, cancellation);
-		public Task<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateAsync(data, (ICondition)null, schema, options, cancellation);
-		public Task<int> UpdateAsync(object data, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateAsync(data, criteria, string.Empty, options, cancellation);
+		public Task<int> UpdateAsync(object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, string.Empty, options, cancellation);
+		public Task<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, schema, options, cancellation);
+		public Task<int> UpdateAsync(object data, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, criteria, string.Empty, options, cancellation);
 		public Task<int> UpdateAsync(object data, ICondition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -848,8 +855,15 @@ namespace Zongsoft.Data
 		public Task<int> UpdateAsync(object data, ConditionCollection criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
 		public Task<int> UpdateAsync(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
 
-		public Task<int> UpdateManyAsync(IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) =>
-			this.UpdateManyAsync(items, string.Empty, options, cancellation);
+		protected virtual Task<int> OnUpdateAsync(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options, CancellationToken cancellation)
+		{
+			if(data == null || data.Data == null || !data.HasChanges())
+				return Task.FromResult(0);
+
+			return this.DataAccess.UpdateAsync(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx), cancellation);
+		}
+
+		public Task<int> UpdateManyAsync(IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateManyAsync(items, string.Empty, options, cancellation);
 		public Task<int> UpdateManyAsync(IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 		{
 			//确认是否可以执行该操作
@@ -878,14 +892,6 @@ namespace Zongsoft.Data
 			}
 
 			return this.OnUpdateManyAsync(dictionares, schematic, options, cancellation);
-		}
-
-		protected virtual Task<int> OnUpdateAsync(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options, CancellationToken cancellation)
-		{
-			if(data == null || data.Data == null || !data.HasChanges())
-				return Task.FromResult(0);
-
-			return this.DataAccess.UpdateAsync(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx), cancellation);
 		}
 
 		protected virtual Task<int> OnUpdateManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpdateOptions options, CancellationToken cancellation)
