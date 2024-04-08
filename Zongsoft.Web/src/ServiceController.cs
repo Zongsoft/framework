@@ -391,37 +391,6 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
-		protected virtual IEnumerable<TModel> Populate(string key, IEnumerable<TModel> data)
-		{
-			if(string.IsNullOrEmpty(key))
-				yield break;
-
-			if(this.DataService.Service.DataAccess.Metadata.Entities.TryGetValue(this.DataService.Service.Name, out var entity))
-			{
-				var parts = key.Split('-', StringSplitOptions.TrimEntries);
-				if(parts.Length != entity.Key.Length)
-					throw new InvalidOperationException($"");
-
-				var values = new object[parts.Length];
-				for(int i = 0; i < parts.Length; i++)
-				{
-					values[i] = Common.Convert.ConvertValue(parts[i], Common.TypeExtension.GetType(entity.Key[i].Type.ToString()));
-				}
-
-				foreach(var item in data)
-				{
-					var current = item;
-
-					for(int j = 0; j < parts.Length; j++)
-						Zongsoft.Reflection.Reflector.TrySetValue(ref current, entity.Key[j].Name, values[j]);
-
-					yield return current;
-				}
-			}
-
-			yield break;
-		}
-
 		protected virtual object OnGet(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
 			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings);
@@ -434,12 +403,12 @@ namespace Zongsoft.Web
 
 		protected virtual int OnCreate(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.InsertMany(this.Populate(key, data), this.GetSchema(), this.OptionsBuilder.Insert(parameters));
+			return this.DataService.InsertMany(key, data, this.GetSchema(), this.OptionsBuilder.Insert(parameters));
 		}
 
 		protected virtual int OnUpsert(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.UpsertMany(this.Populate(key, data), this.GetSchema(), this.OptionsBuilder.Upsert(parameters));
+			return this.DataService.UpsertMany(key, data, this.GetSchema(), this.OptionsBuilder.Upsert(parameters));
 		}
 
 		protected virtual int OnUpdate(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
