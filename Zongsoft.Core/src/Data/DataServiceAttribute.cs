@@ -32,6 +32,9 @@ using System.Linq;
 
 namespace Zongsoft.Data
 {
+	/// <summary>
+	/// 表示数据服务的注解类。
+	/// </summary>
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
 	public class DataServiceAttribute : Attribute
 	{
@@ -46,7 +49,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置查询条件实体类型。</summary>
+		/// <summary>获取或设置查询或过滤条件的实体类型。</summary>
 		public Type Criteria { get; set; }
 
 		/// <summary>获取或设置排序规则。注：成员之间以逗号分隔。</summary>
@@ -60,6 +63,24 @@ namespace Zongsoft.Data
 				return null;
 
 			return Common.StringExtension.Slice<Sorting>(this.Sortings, ',', Sorting.TryParse).ToArray();
+		}
+		#endregion
+	}
+
+	/// <summary>
+	/// 表示数据服务的注解类。
+	/// </summary>
+	/// <typeparam name="TCriteria">数据服务的查询或过滤条件的实体类型。</typeparam>
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
+	public class DataServiceAttribute<TCriteria> : DataServiceAttribute where TCriteria : class, IModel
+	{
+		#region 构造函数
+		/// <summary>构造一个数据服务注解。</summary>
+		/// <param name="sortings">指定的默认排序规则。</param>
+		public DataServiceAttribute(params string[] sortings) : base(typeof(TCriteria))
+		{
+			if(sortings != null && sortings.Length > 0)
+				this.Sortings = string.Join(',', sortings);
 		}
 		#endregion
 	}
