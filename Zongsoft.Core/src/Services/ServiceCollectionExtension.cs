@@ -165,7 +165,8 @@ namespace Zongsoft.Services
 
 				for(var i = 0; i < contracts.Length; i++)
 				{
-					services.AddSingleton(contracts[i], services => services.GetService(type));
+					if(contracts[i] != type)
+						services.AddSingleton(contracts[i], services => services.GetService(type));
 				}
 			}
 		}
