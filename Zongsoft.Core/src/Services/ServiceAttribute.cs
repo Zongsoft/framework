@@ -54,4 +54,29 @@ namespace Zongsoft.Services
 		public string Members { get; set; }
 		#endregion
 	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	public class ServiceAttribute<TContract>(string name = null) : ServiceAttribute(name, typeof(TContract))
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	public class ServiceAttribute<TContract1, TContract2>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2))
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	public class ServiceAttribute<TContract1, TContract2, TContract3>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3))
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4))
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+	public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4, TContract5>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4), typeof(TContract5))
+	{
+	}
 }
