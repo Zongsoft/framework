@@ -35,11 +35,7 @@ namespace Zongsoft.Services
 	public class ServiceAttribute : Attribute
 	{
 		#region 构造函数
-		public ServiceAttribute(params Type[] contracts)
-		{
-			this.Contracts = contracts;
-		}
-
+		public ServiceAttribute(params Type[] contracts) : this(null, contracts) { }
 		public ServiceAttribute(string name, params Type[] contracts)
 		{
 			this.Name = name;

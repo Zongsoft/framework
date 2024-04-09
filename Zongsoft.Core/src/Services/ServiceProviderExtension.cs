@@ -51,7 +51,7 @@ namespace Zongsoft.Services
 				return false;
 
 			if(name.Length > 7 && name.EndsWith("Service"))
-				_naming.TryAdd(name.Substring(0, name.Length - 7), serviceType);
+				_naming.TryAdd(name[..^7], serviceType);
 
 			return _naming.TryAdd(name, serviceType);
 		}
