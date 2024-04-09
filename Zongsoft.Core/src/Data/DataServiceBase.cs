@@ -370,14 +370,27 @@ namespace Zongsoft.Data
 		#region 获取服务
 		private void InitializeSubservices()
 		{
-			var nestedTypes = this.GetType().GetNestedTypes().Where(type => type.IsNested && type.IsNestedPublic && type.IsClass && type is IDataService);
+			static IEnumerable<Type> GetNestedTypes(Type type)
+			{
+				while(type != null && !type.IsGenericType && type != typeof(object))
+				{
+					var nestedTypes = type.GetNestedTypes().Where(type => type.IsNestedPublic && type.IsClass && !type.IsAbstract && typeof(IDataService).IsAssignableFrom(type));
+
+					foreach(var nestedType in nestedTypes)
+						yield return nestedType;
+
+					type = type.BaseType;
+				}
+			}
+
+			var nestedTypes = GetNestedTypes(this.GetType());
 			var serviceDescriptors = nestedTypes.GroupBy(
-				type => (IDataService)Activator.CreateInstance(type, new[] { this }),
+				type => (IDataService)Activator.CreateInstance(type, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, new[] { this }, null),
 				type =>
 				{
 					var contracts = new List<Type>() { type };
 					var baseType = type.BaseType;
-					while(baseType != null && baseType != typeof(DataServiceBase<>) && baseType != typeof(object))
+					while(baseType != null && !baseType.IsGenericType && baseType != typeof(object))
 					{
 						contracts.Add(baseType);
 						baseType = baseType.BaseType;
@@ -391,10 +404,12 @@ namespace Zongsoft.Data
 
 				for(int i = 0; i < serviceDescriptors.Length; i++)
 				{
+					var subservice = serviceDescriptors[i].Key;
+
 					foreach(var serviceDescriptor in serviceDescriptors[i])
 					{
 						foreach(var contract in serviceDescriptor)
-							_subservices.Add(contract, serviceDescriptors[i].Key);
+							_subservices.Add(contract, subservice);
 					}
 				}
 			}
