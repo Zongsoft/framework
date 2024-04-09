@@ -268,7 +268,55 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
-		protected virtual TService GetService() => (TService)this.ServiceProvider.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
+		protected virtual TService GetService()
+		{
+			/*
+			 * 注：对于嵌套子服务的解析需要从其顶级服务类按嵌套层次依次获取其子服务。
+			 */
+
+			if(typeof(TService).IsNested)
+			{
+				/*
+				 * 注：为单层嵌套子服务的执行性能考量，下面针对单层嵌套与多层嵌套分别进行处理。
+				 */
+
+				if(typeof(TService).DeclaringType.IsNested)
+				{
+					var type = typeof(TService);
+					var stack = new Stack<Type>();
+
+					while(type.IsNested)
+					{
+						stack.Push(type);
+						type = type.DeclaringType;
+					}
+
+					if(this.ServiceProvider.GetService(type) is IDataService service)
+					{
+						while(service != null && stack.TryPop(out type))
+						{
+							service = service.GetService(type);
+						}
+
+						if(service is TService result)
+							return result;
+					}
+				}
+				else
+				{
+					if(this.ServiceProvider.GetService(typeof(TService).DeclaringType) is IDataService service)
+					{
+						var result = service.GetService<TService>();
+
+						if(result != null)
+							return result;
+					}
+				}
+			}
+
+			return (TService)this.ServiceProvider.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
+		}
+
 		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);
 		protected virtual object GetExportData(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings);
 		#endregion
