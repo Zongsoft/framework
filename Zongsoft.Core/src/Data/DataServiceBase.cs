@@ -100,7 +100,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability? mutability)
 		{
 			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
@@ -114,13 +114,13 @@ namespace Zongsoft.Data
 			this.InitializeSubservices();
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider, mutability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability? mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(serviceProvider, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(serviceProvider, mutability)
+		protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability? mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(serviceProvider, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -155,7 +155,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability? mutability)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -173,13 +173,13 @@ namespace Zongsoft.Data
 			this.InitializeSubservices();
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider, mutability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability? mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, serviceProvider, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, serviceProvider, mutability)
+		protected DataServiceBase(string name, IServiceProvider serviceProvider, DataServiceMutability? mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, serviceProvider, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -211,7 +211,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceMutability mutability)
+		protected DataServiceBase(IDataService service, DataServiceMutability? mutability)
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
@@ -225,13 +225,13 @@ namespace Zongsoft.Data
 			this.InitializeSubservices();
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service, mutability)
+		protected DataServiceBase(IDataService service, DataServiceMutability? mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(service, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(IDataService service, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(service, mutability)
+		protected DataServiceBase(IDataService service, DataServiceMutability? mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(service, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
@@ -267,7 +267,7 @@ namespace Zongsoft.Data
 			this.Validator = validator;
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability? mutability)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -285,13 +285,13 @@ namespace Zongsoft.Data
 			this.InitializeSubservices();
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service, mutability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability? mutability, IDataServiceValidator<TModel> validator, IDataServiceAuthorizer<TModel> authorizer = null) : this(name, service, mutability)
 		{
 			this.Validator = validator;
 			this.Authorizer = authorizer;
 		}
 
-		protected DataServiceBase(string name, IDataService service, DataServiceMutability mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, service, mutability)
+		protected DataServiceBase(string name, IDataService service, DataServiceMutability? mutability, IDataServiceAuthorizer<TModel> authorizer, IDataServiceValidator<TModel> validator = null) : this(name, service, mutability)
 		{
 			this.Authorizer = authorizer;
 			this.Validator = validator;
