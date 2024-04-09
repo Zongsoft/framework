@@ -30,9 +30,11 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Services;
 
 namespace Zongsoft.Data
@@ -385,18 +387,57 @@ namespace Zongsoft.Data
 
 			var nestedTypes = GetNestedTypes(this.GetType());
 			var serviceDescriptors = nestedTypes.GroupBy(
-				type => (IDataService)Activator.CreateInstance(type, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, new[] { this }, null),
+				type =>
+				{
+					object[] args = null;
+
+					foreach(var constructor in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic))
+					{
+						var parameters = constructor.GetParameters();
+
+						switch(parameters.Length)
+						{
+							case 0:
+								continue;
+							case 1:
+								if(parameters[0].ParameterType.IsAssignableFrom(this.GetType()))
+									args = new[] { this };
+								break;
+							default:
+								if(parameters[0].ParameterType.IsAssignableFrom(this.GetType()))
+								{
+									args = new object[parameters.Length];
+									args[0] = this;
+
+									for(int i = 1; i < parameters.Length; i++)
+									{
+										args[i] = parameters[i].ParameterType.GetDefaultValue();
+									}
+								}
+
+								break;
+						}
+
+						if(args != null && args.Length > 0)
+							break;
+					}
+
+					return (IDataService)Activator.CreateInstance(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, args, null);
+				},
 				type =>
 				{
 					var contracts = new List<Type>() { type };
 					var baseType = type.BaseType;
+
 					while(baseType != null && !baseType.IsGenericType && baseType != typeof(object))
 					{
 						contracts.Add(baseType);
 						baseType = baseType.BaseType;
 					}
+
 					return contracts;
-				}).ToArray();
+				}
+			).ToArray();
 
 			if(serviceDescriptors.Length > 0)
 			{
@@ -405,6 +446,8 @@ namespace Zongsoft.Data
 				for(int i = 0; i < serviceDescriptors.Length; i++)
 				{
 					var subservice = serviceDescriptors[i].Key;
+					if(subservice == null)
+						continue;
 
 					foreach(var serviceDescriptor in serviceDescriptors[i])
 					{
