@@ -92,6 +92,11 @@ namespace Zongsoft.Data
 
 		/// <summary>获取服务提供程序。</summary>
 		IServiceProvider ServiceProvider { get; }
+
+		/// <summary>获取一个值，指示数据服务是否可写（“可删”或“可增”或“可改”）。</summary>
+		bool IsMutable => this.CanDelete || this.CanInsert || this.CanUpdate;
+		/// <summary>获取一个值，指示数据服务是否不可写（“不可删”且“不可增”且“不可改”）。</summary>
+		bool IsImmutable => !(this.CanDelete || this.CanInsert || this.CanUpdate);
 		#endregion
 
 		#region 获取服务
