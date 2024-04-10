@@ -98,21 +98,6 @@ namespace Zongsoft.Data
 
 		Task<int> InsertManyAsync(string key, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default);
 		Task<int> InsertManyAsync(string key, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
-
-		Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-		Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-
-		Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-		Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
-		Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 		#endregion
 
 		#region 增改方法
@@ -123,34 +108,7 @@ namespace Zongsoft.Data
 		Task<int> UpsertManyAsync(IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
 
 		Task<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string key, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default);
 		Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default);
-
-		Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-		Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-		Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-		Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
-
-		Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-		Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-		Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-		Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
-		Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
 		#endregion
 
 		#region 更新方法

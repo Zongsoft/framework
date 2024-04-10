@@ -299,11 +299,11 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.Insert(), options);
 
-			//将当前插入数据对象转换成数据字典
-			var dictionary = DataDictionary.GetDictionary<TModel>(data);
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
+
+			//将当前插入数据对象转换成数据字典
+			var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
 			//验证待新增的数据
 			this.OnValidate(DataServiceMethod.Insert(), schematic, dictionary, options);
@@ -336,28 +336,17 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.InsertMany(), options);
 
-			//将当前插入数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-			foreach(var dictionary in dictionares)
+			//将当前新增数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
 			{
 				//验证待新增的数据
 				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-			}
+			});
 
-			return this.OnInsertManyAsync(dictionares, schematic, options, cancellation);
-		}
-
-		protected virtual Task<int> OnInsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			//执行数据引擎的插入操作
-			return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
+			return this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
 		}
 
 		public Task<int> InsertManyAsync(string key, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(key, items, null, options, cancellation);
@@ -376,117 +365,29 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.InsertMany(), options);
 
-			//定义转换后的数据字典列表
-			var dictionaries = new List<IDataDictionary<TModel>>();
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-			foreach(var item in items)
+			//将当前新增数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
 			{
-				if(item == null)
-					continue;
-
 				//处理数据模型
-				var dictionary = this.OnModel(key, item, options);
-
-				//添加数据字典到集合中
-				if(dictionary != null && dictionary.HasChanges())
-					dictionaries.Add(dictionary);
+				this.OnModel(key, dictionary, options);
 
 				//验证待新增的数据
 				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-			}
+			});
 
-			return dictionaries.Count > 0 ? this.OnInsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
+			return this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
 		}
 
-		public Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.InsertManyAsync(key1, items, null, options, cancellation);
-		public Task<int> InsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.InsertManyAsync(new object[] { key1 }, items, schema, options, cancellation);
-
-		public Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.InsertManyAsync(key1, key2, items, null, options, cancellation);
-		public Task<int> InsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.InsertManyAsync(new object[] { key1, key2 }, items, schema, options, cancellation);
-
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.InsertManyAsync(key1, key2, key3, items, null, options, cancellation);
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.InsertManyAsync(new object[] { key1, key2, key3 }, items, schema, options, cancellation);
-
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.InsertManyAsync(key1, key2, key3, key4, items, null, options, cancellation);
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.InsertManyAsync(new object[] { key1, key2, key3, key4 }, items, schema, options, cancellation);
-
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.InsertManyAsync(key1, key2, key3, key4, key5, items, null, options, cancellation);
-		public Task<int> InsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.InsertManyAsync(new object[] { key1, key2, key3, key4, key5 }, items, schema, options, cancellation);
-
-		protected Task<int> InsertManyAsync(object[] values, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+		protected virtual Task<int> OnInsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
 		{
-			//确认是否可以执行该操作
-			this.EnsureInsert(options);
-
-			if(values == null || values.Length == 0)
-				throw new DataArgumentException(nameof(values));
-
 			if(items == null)
 				return Task.FromResult(0);
 
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataInsertOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.InsertMany(), options);
-
-			//定义转换后的数据字典列表
-			var dictionaries = new List<IDataDictionary<TModel>>();
-
-			//解析数据模式表达式
-			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-			foreach(var item in items)
-			{
-				if(item == null)
-					continue;
-
-				//处理数据模型
-				var dictionary = this.OnModel(values, item, options);
-
-				//添加数据字典到集合中
-				if(dictionary != null && dictionary.HasChanges())
-					dictionaries.Add(dictionary);
-
-				//验证待复写的数据
-				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-			}
-
-			return dictionaries.Count > 0 ? this.OnInsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
+			//执行数据引擎的插入操作
+			return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
 		}
 		#endregion
 
@@ -507,13 +408,13 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.Upsert(), options);
 
-			//将当前复写数据对象转换成数据字典
-			var dictionary = DataDictionary.GetDictionary<TModel>(data);
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, data.GetType());
 
-			//验证待复写的数据
+			//将当前增改数据对象转换成数据字典
+			var dictionary = DataDictionary.GetDictionary<TModel>(data);
+
+			//验证待增改的数据
 			this.OnValidate(DataServiceMethod.Upsert(), schematic, dictionary, options);
 
 			return this.OnUpsertAsync(dictionary, schematic, options, cancellation);
@@ -524,7 +425,7 @@ namespace Zongsoft.Data
 			if(data == null || data.Data == null || !data.HasChanges())
 				return Task.FromResult(0);
 
-			//执行数据引擎的复写操作
+			//执行数据引擎的增改操作
 			return this.DataAccess.UpsertAsync(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
 		}
 
@@ -544,19 +445,49 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.UpsertMany(), options);
 
-			//将当前复写数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			//将当前增改数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
+			{
+				//验证待增改的数据
+				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
+			});
+
+			return this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation);
+		}
+
+		public Task<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, null, options, cancellation);
+		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
+		{
+			//确认是否可以执行该操作
+			this.EnsureUpsert(options);
+
+			if(items == null)
+				return Task.FromResult(0);
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpsertOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.UpsertMany(), options);
 
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-			foreach(var dictionary in dictionares)
+			//将当前增改数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
 			{
-				//验证待复写的数据
-				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
-			}
+				//处理数据模型
+				this.OnModel(key, dictionary, options);
 
-			return this.OnUpsertManyAsync(dictionares, schematic, options, cancellation);
+				//验证待增改的数据
+				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
+			});
+
+			return this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation);
 		}
 
 		protected virtual Task<int> OnUpsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
@@ -564,185 +495,8 @@ namespace Zongsoft.Data
 			if(items == null)
 				return Task.FromResult(0);
 
-			//执行数据引擎的复写操作
+			//执行数据引擎的增改操作
 			return this.DataAccess.UpsertManyAsync(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
-		}
-
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(key, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync(string key, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-		{
-			//确认是否可以执行该操作
-			this.EnsureUpsert(options);
-
-			if(items == null)
-				return Task.FromResult(0);
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataUpsertOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.UpsertMany(), options);
-
-			//定义转换后的数据字典列表
-			var dictionaries = new List<IDataDictionary<TModel>>();
-
-			//解析数据模式表达式
-			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-			foreach(var item in items)
-			{
-				if(item == null)
-					continue;
-
-				//处理数据模型
-				var dictionary = this.OnModel(key, item, options);
-
-				//添加数据字典到集合中
-				if(dictionary != null && dictionary.HasChanges())
-					dictionaries.Add(dictionary);
-
-				//验证待复写的数据
-				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
-			}
-
-			if(reset && this.CanDelete)
-				this.Delete(key, schema);
-
-			return dictionaries.Count > 0 ? this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
-		}
-
-		public Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.UpsertManyAsync(key1, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.UpsertManyAsync(key1, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.UpsertManyAsync(key1, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1>(TKey1 key1, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.UpsertManyAsync(new object[] { key1 }, items, schema, reset, options, cancellation);
-
-		public Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.UpsertManyAsync(key1, key2, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.UpsertManyAsync(key1, key2, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.UpsertManyAsync(key1, key2, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.UpsertManyAsync(new object[] { key1, key2 }, items, schema, reset, options, cancellation);
-
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.UpsertManyAsync(key1, key2, key3, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.UpsertManyAsync(key1, key2, key3, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.UpsertManyAsync(key1, key2, key3, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.UpsertManyAsync(new object[] { key1, key2, key3 }, items, schema, reset, options, cancellation);
-
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.UpsertManyAsync(key1, key2, key3, key4, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.UpsertManyAsync(key1, key2, key3, key4, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.UpsertManyAsync(key1, key2, key3, key4, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.UpsertManyAsync(new object[] { key1, key2, key3, key4 }, items, schema, reset, options, cancellation);
-
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.UpsertManyAsync(key1, key2, key3, key4, key5, items, null, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.UpsertManyAsync(key1, key2, key3, key4, key5, items, null, reset, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.UpsertManyAsync(key1, key2, key3, key4, key5, items, schema, false, options, cancellation);
-		public Task<int> UpsertManyAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.UpsertManyAsync(new object[] { key1, key2, key3, key4, key5 }, items, schema, reset, options, cancellation);
-
-		protected Task<int> UpsertManyAsync(object[] values, IEnumerable items, string schema, bool reset, DataUpsertOptions options = null, CancellationToken cancellation = default)
-		{
-			//确认是否可以执行该操作
-			this.EnsureUpsert(options);
-
-			if(values == null || values.Length == 0)
-				throw new DataArgumentException(nameof(values));
-
-			if(items == null)
-				return Task.FromResult(0);
-
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataUpsertOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.UpsertMany(), options);
-
-			//定义转换后的数据字典列表
-			var dictionaries = new List<IDataDictionary<TModel>>();
-
-			//解析数据模式表达式
-			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-			foreach(var item in items)
-			{
-				if(item == null)
-					continue;
-
-				//处理数据模型
-				var dictionary = this.OnModel(values, item, options);
-
-				//添加数据字典到集合中
-				if(dictionary != null && dictionary.HasChanges())
-					dictionaries.Add(dictionary);
-
-				//验证待复写的数据
-				this.OnValidate(DataServiceMethod.UpsertMany(), schematic, dictionary, options);
-			}
-
-			if(reset && this.CanDelete)
-				this.Delete(this.OnCondition(DataServiceMethod.Delete(), values, out _));
-
-			return dictionaries.Count > 0 ? this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
 		}
 		#endregion
 
@@ -879,19 +633,17 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.UpdateMany(), options);
 
-			//将当前更新数据集合对象转换成数据字典集合
-			var dictionares = DataDictionary.GetDictionaries<TModel>(items);
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-			foreach(var dictionary in dictionares)
+			//将当前更新数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
 			{
 				//验证待更新的数据
 				this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
-			}
+			});
 
-			return this.OnUpdateManyAsync(dictionares, schematic, options, cancellation);
+			return this.OnUpdateManyAsync(dictionaries, schematic, options, cancellation);
 		}
 
 		public Task<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, null, options, cancellation);
@@ -910,29 +662,20 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.UpdateMany(), options);
 
-			//定义转换后的数据字典列表
-			var dictionaries = new List<IDataDictionary<TModel>>();
-
 			//解析数据模式表达式
 			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-			foreach(var item in items)
+			//将当前更新数据集合对象转换成数据字典集合
+			var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
 			{
-				if(item == null)
-					continue;
-
 				//处理数据模型
-				var dictionary = this.OnModel(key, item, options);
-
-				//添加数据字典到集合中
-				if(dictionary != null && dictionary.HasChanges())
-					dictionaries.Add(dictionary);
+				this.OnModel(key, dictionary, options);
 
 				//验证待更新的数据
 				this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
-			}
+			});
 
-			return dictionaries.Count > 0 ? this.OnUpdateManyAsync(dictionaries, schematic, options, cancellation) : Task.FromResult(0);
+			return this.OnUpdateManyAsync(dictionaries, schematic, options, cancellation);
 		}
 
 		protected virtual Task<int> OnUpdateManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpdateOptions options, CancellationToken cancellation)
