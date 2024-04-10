@@ -29,10 +29,10 @@
 
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 
 using Zongsoft.Reflection;
 
@@ -99,51 +99,75 @@ namespace Zongsoft.Data
 			return new ModelDictionary<T>(model);
 		}
 
-		public static IEnumerable<IDataDictionary> GetDictionaries(IEnumerable items)
+		public static IEnumerable<IDataDictionary> GetDictionaries(IEnumerable items, Action<IDataDictionary> handle = null)
 		{
 			if(items == null)
 				throw new ArgumentNullException(nameof(items));
 
+			static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
+			{
+				handle?.Invoke(dictionary);
+				return dictionary;
+			}
+
 			foreach(var item in items)
 			{
 				if(item != null)
-					yield return GetDictionary(item);
+					yield return Invoke(GetDictionary(item), handle);
 			}
 		}
 
-		public static IEnumerable<IDataDictionary> GetDictionaries(IEnumerable<IModel> models)
+		public static IEnumerable<IDataDictionary> GetDictionaries(IEnumerable<IModel> models, Action<IDataDictionary> handle = null)
 		{
 			if(models == null)
 				throw new ArgumentNullException(nameof(models));
 
+			static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
+			{
+				handle?.Invoke(dictionary);
+				return dictionary;
+			}
+
 			foreach(var model in models)
 			{
 				if(model != null)
-					yield return GetDictionary(model);
+					yield return Invoke(GetDictionary(model), handle);
 			}
 		}
 
-		public static IEnumerable<IDataDictionary<T>> GetDictionaries<T>(IEnumerable items)
+		public static IEnumerable<IDataDictionary<T>> GetDictionaries<T>(IEnumerable items, Action<IDataDictionary<T>> handle = null)
 		{
 			if(items == null)
 				throw new ArgumentNullException(nameof(items));
 
+			static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
+			{
+				handle?.Invoke(dictionary);
+				return dictionary;
+			}
+
 			foreach(var item in items)
 			{
 				if(item != null)
-					yield return GetDictionary<T>(item);
+					yield return Invoke(GetDictionary<T>(item), handle);
 			}
 		}
 
-		public static IEnumerable<IDataDictionary<T>> GetDictionaries<T>(IEnumerable<IModel> models)
+		public static IEnumerable<IDataDictionary<T>> GetDictionaries<T>(IEnumerable<IModel> models, Action<IDataDictionary<T>> handle = null)
 		{
 			if(models == null)
 				throw new ArgumentNullException(nameof(models));
 
+			static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
+			{
+				handle?.Invoke(dictionary);
+				return dictionary;
+			}
+
 			foreach(var model in models)
 			{
 				if(model != null)
-					yield return GetDictionary<T>(model);
+					yield return Invoke(GetDictionary<T>(model), handle);
 			}
 		}
 		#endregion
