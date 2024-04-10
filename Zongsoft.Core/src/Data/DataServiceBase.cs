@@ -39,7 +39,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Data
 {
-	[System.Reflection.DefaultMember(nameof(Filters))]
+	[DefaultMember(nameof(Filters))]
 	public partial class DataServiceBase<TModel> : IDataService<TModel>
 	{
 		#region 事件定义
@@ -324,11 +324,11 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public DataServiceAttribute Attribute { get => _attribute; }
-		public virtual bool CanDelete { get => _mutability.HasValue ? _mutability.Value.Deletable : (this.Service?.CanDelete ?? false); }
-		public virtual bool CanInsert { get => _mutability.HasValue ? _mutability.Value.Insertable : (this.Service?.CanInsert ?? true); }
-		public virtual bool CanUpdate { get => _mutability.HasValue ? _mutability.Value.Updatable : (this.Service?.CanUpdate ?? true); }
-		public virtual bool CanUpsert { get => _mutability.HasValue ? _mutability.Value.Upsertable : (this.Service != null && this.CanInsert && this.CanUpdate); }
+		public DataServiceAttribute Attribute => _attribute;
+		public virtual bool CanInsert => _mutability.HasValue ? _mutability.Value.Insertable : (this.Service?.CanInsert ?? true);
+		public virtual bool CanUpdate => _mutability.HasValue ? _mutability.Value.Updatable : (this.Service?.CanUpdate ?? true);
+		public virtual bool CanUpsert => _mutability.HasValue ? _mutability.Value.Upsertable : this.CanInsert && this.CanUpdate;
+		public virtual bool CanDelete => _mutability.HasValue ? _mutability.Value.Deletable : this.Service != null && this.Service.IsMutable; //在未定义Mutability时，只要依赖的主服务可写则该子服务(即Service属性不为空)可删
 
 		public IDataAccess DataAccess
 		{
@@ -359,14 +359,18 @@ namespace Zongsoft.Data
 		public virtual System.Security.Claims.ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 		public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
 		public IDataServiceValidator<TModel> Validator { get; protected set; }
-		IDataServiceValidator IDataService.Validator { get => this.Validator; }
-		public ICollection<IDataServiceFilter<TModel>> Filters { get => _filters; }
+		IDataServiceValidator IDataService.Validator => this.Validator;
+		public ICollection<IDataServiceFilter<TModel>> Filters => _filters;
 
 		public IServiceProvider ServiceProvider
 		{
 			get => _serviceProvider ?? this.Service?.ServiceProvider;
 			set => _serviceProvider = value ?? throw new ArgumentNullException();
 		}
+		#endregion
+
+		#region 保护属性
+		protected DataServiceMutability? Mutability => _mutability;
 		#endregion
 
 		#region 获取服务
@@ -391,7 +395,7 @@ namespace Zongsoft.Data
 				{
 					object[] args = null;
 
-					foreach(var constructor in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic))
+					foreach(var constructor in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
 					{
 						var parameters = constructor.GetParameters();
 
