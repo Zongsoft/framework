@@ -63,29 +63,17 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个正序的排序设置项。
-		/// </summary>
+		/// <summary>创建一个正序的排序设置项。</summary>
 		/// <param name="name">指定的排序项名称。</param>
 		/// <returns>返回创建成果的排序设置项实例。</returns>
-		public static Sorting Ascending(string name)
-		{
-			return new Sorting(name, SortingMode.Ascending);
-		}
+		public static Sorting Ascending(string name) => new Sorting(name, SortingMode.Ascending);
 
-		/// <summary>
-		/// 创建一个倒序的排序设置项。
-		/// </summary>
+		/// <summary>创建一个倒序的排序设置项。</summary>
 		/// <param name="name">指定的排序项名称。</param>
 		/// <returns>返回创建成果的排序设置项实例。</returns>
-		public static Sorting Descending(string name)
-		{
-			return new Sorting(name, SortingMode.Descending);
-		}
+		public static Sorting Descending(string name) => new Sorting(name, SortingMode.Descending);
 
-		/// <summary>
-		/// 将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。
-		/// </summary>
+		/// <summary>将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>
 		/// <param name="text">待解析的排序设置规则文本。</param>
 		/// <returns>返回解析成功的<see cref="Sorting"/>排序设置。</returns>
 		/// <exception cref="ArgumentException">当指定的<paramref name="text"/>参数值不符合排序设置格式。</exception>
@@ -101,9 +89,7 @@ namespace Zongsoft.Data
 			throw new ArgumentException("Invalid sorting format.");
 		}
 
-		/// <summary>
-		/// 尝试将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。
-		/// </summary>
+		/// <summary>尝试将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>
 		/// <param name="text">待解析的排序设置规则文本。</param>
 		/// <param name="value">输出参数，表示解析成功的<see cref="Sorting"/>排序设置。</param>
 		/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
@@ -163,31 +149,13 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Sorting other)
-		{
-			return string.Equals(other._name, _name, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((Sorting)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(_name.ToUpperInvariant());
-		}
-
-		public override string ToString()
-		{
-			return _mode == SortingMode.Descending ? "-" + _name : _name;
-		}
+		public bool Equals(Sorting other) => _mode == other._mode && string.Equals(_name, other._name, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is Sorting other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(_name.ToUpperInvariant());
+		public override string ToString() => _mode == SortingMode.Descending ? "-" + _name : _name;
 		#endregion
 
-		#region 操作符重载
+		#region 符号重载
 		public static Sorting[] operator +(Sorting[] sortings, Sorting value)
 		{
 			if(sortings == null || sortings.Length == 0)

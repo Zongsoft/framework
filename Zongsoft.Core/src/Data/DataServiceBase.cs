@@ -2024,6 +2024,7 @@ namespace Zongsoft.Data
 		{
 			var sortings = _attribute?.GetSortings();
 
+			//如果没有定义 DataServiceAttribute 且是主服务，则默认主键倒序
 			if((sortings == null || sortings.Length == 0) && this.Service == null)
 			{
 				var keys = this.DataAccess.Metadata.Entities[this.Name].Key;

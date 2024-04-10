@@ -102,7 +102,7 @@ namespace Zongsoft.Data
 		#region 获取服务
 		/// <summary>获取指定类型的嵌套子服务。</summary>
 		/// <typeparam name="TService">指定要获取的嵌套子服务类型。</typeparam>
-		/// <returns>如果查找成功则返回的指定类型的子服务，否则返回空(<c>null</c>)。</returns>
+		/// <returns>如果查找成功则返回指定类型的子服务，否则返回空(<c>null</c>)。</returns>
 		TService GetService<TService>() where TService : class, IDataService;
 
 		/// <summary>获取指定类型的嵌套子服务。</summary>
