@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
@@ -39,9 +40,8 @@ namespace Zongsoft.Data
 	public class DataServiceAttribute : Attribute
 	{
 		#region 构造函数
-		public DataServiceAttribute() { }
-		public DataServiceAttribute(string sortings) => this.Sortings = sortings;
-		public DataServiceAttribute(Type criteria, string sortings = null)
+		public DataServiceAttribute(params string[] sortings) => this.Sortings = sortings;
+		public DataServiceAttribute(Type criteria, params string[] sortings)
 		{
 			this.Criteria = criteria;
 			this.Sortings = sortings;
@@ -52,17 +52,30 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置查询或过滤条件的实体类型。</summary>
 		public Type Criteria { get; set; }
 
-		/// <summary>获取或设置排序规则。注：成员之间以逗号分隔。</summary>
-		public string Sortings { get; set; }
+		/// <summary>获取或设置排序规则。</summary>
+		public string[] Sortings { get; set; }
+
+		/// <summary>获取一个值，指示是否包含排序规则。</summary>
+		public bool HasSortings => this.Sortings != null && this.Sortings.Length > 0;
 		#endregion
 
 		#region 公共方法
 		public Sorting[] GetSortings()
 		{
-			if(string.IsNullOrEmpty(this.Sortings))
+			var sortings = this.Sortings;
+
+			if(sortings == null || sortings.Length == 0)
 				return null;
 
-			return Common.StringExtension.Slice<Sorting>(this.Sortings, ',', Sorting.TryParse).ToArray();
+			var result = new HashSet<Sorting>(sortings.Length);
+
+			for(int i = 0; i < sortings.Length; i++)
+			{
+				if(Sorting.TryParse(sortings[i], out var sorting))
+					result.Add(sorting);
+			}
+
+			return result.Count > 0 ? result.ToArray() : null;
 		}
 		#endregion
 	}
@@ -71,17 +84,10 @@ namespace Zongsoft.Data
 	/// 表示数据服务的注解类。
 	/// </summary>
 	/// <typeparam name="TCriteria">数据服务的查询或过滤条件的实体类型。</typeparam>
+	/// <remarks>构造一个数据服务注解。</remarks>
+	/// <param name="sortings">指定的默认排序规则。</param>
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
-	public class DataServiceAttribute<TCriteria> : DataServiceAttribute where TCriteria : class, IModel
+	public class DataServiceAttribute<TCriteria>(params string[] sortings) : DataServiceAttribute(typeof(TCriteria), sortings) where TCriteria : class, IModel
 	{
-		#region 构造函数
-		/// <summary>构造一个数据服务注解。</summary>
-		/// <param name="sortings">指定的默认排序规则。</param>
-		public DataServiceAttribute(params string[] sortings) : base(typeof(TCriteria))
-		{
-			if(sortings != null && sortings.Length > 0)
-				this.Sortings = string.Join(',', sortings);
-		}
-		#endregion
 	}
 }
