@@ -415,7 +415,9 @@ namespace Zongsoft.Data
 
 									for(int i = 1; i < parameters.Length; i++)
 									{
-										args[i] = parameters[i].ParameterType.GetDefaultValue();
+										args[i] = parameters[i].HasDefaultValue ?
+											parameters[i].DefaultValue :
+											parameters[i].ParameterType.GetDefaultValue();
 									}
 								}
 
