@@ -175,6 +175,9 @@ namespace Zongsoft.Data
 
 		Task<int> UpdateManyAsync(IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default);
 		Task<int> UpdateManyAsync(IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+		Task<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default);
+		Task<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 查询方法

@@ -885,7 +885,7 @@ namespace Zongsoft.Data
 				if(dictionary != null && dictionary.HasChanges())
 					dictionaries.Add(dictionary);
 
-				//验证待复写的数据
+				//验证待新增的数据
 				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
 			}
 
@@ -972,7 +972,7 @@ namespace Zongsoft.Data
 				if(dictionary != null && dictionary.HasChanges())
 					dictionaries.Add(dictionary);
 
-				//验证待复写的数据
+				//验证待新增的数据
 				this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
 			}
 
@@ -1355,6 +1355,47 @@ namespace Zongsoft.Data
 			}
 
 			return this.OnUpdateMany(dictionares, schematic, options);
+		}
+
+		public int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(key, items, null, options);
+		public int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null)
+		{
+			//确认是否可以执行该操作
+			this.EnsureUpdate(options);
+
+			if(items == null)
+				return 0;
+
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataUpdateOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.UpdateMany(), options);
+
+			//定义转换后的数据字典列表
+			var dictionaries = new List<IDataDictionary<TModel>>();
+
+			//解析数据模式表达式
+			var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				//处理数据模型
+				var dictionary = this.OnModel(key, item, options);
+
+				//添加数据字典到集合中
+				if(dictionary != null && dictionary.HasChanges())
+					dictionaries.Add(dictionary);
+
+				//验证待更新的数据
+				this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
+			}
+
+			return dictionaries.Count > 0 ? this.OnUpdateMany(dictionaries, schematic, options) : 0;
 		}
 
 		protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpdateOptions options)
@@ -2478,7 +2519,7 @@ namespace Zongsoft.Data
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private void EnsureUpsert(IDataUpsertOptions options)
 		{
-			if(!(this.CanInsert && this.CanUpdate && this.CanUpsert) && !Options.Allowed(options))
+			if(!this.CanUpsert && !Options.Allowed(options))
 				throw new InvalidOperationException("The upsert operation is not allowed.");
 		}
 

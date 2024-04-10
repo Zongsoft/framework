@@ -413,7 +413,7 @@ namespace Zongsoft.Web
 
 		protected virtual int OnUpdate(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
 		{
-			return this.DataService.UpdateMany(data, this.GetSchema(), this.OptionsBuilder.Update(parameters));
+			return this.DataService.UpdateMany(key, data, this.GetSchema(), this.OptionsBuilder.Update(parameters));
 		}
 		#endregion
 	}

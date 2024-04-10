@@ -261,6 +261,9 @@ namespace Zongsoft.Data
 
 		int UpdateMany(IEnumerable items, DataUpdateOptions options = null);
 		int UpdateMany(IEnumerable items, string schema, DataUpdateOptions options = null);
+
+		int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null);
+		int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null);
 		#endregion
 
 		#region 查询方法
