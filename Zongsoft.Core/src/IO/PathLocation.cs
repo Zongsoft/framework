@@ -51,7 +51,7 @@ namespace Zongsoft.IO
 		public string Path { get; }
 		public string Url { get; }
 
-		[System.Text.Json.Serialization.JsonIgnore]
+		[JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool IsEmpty { get => string.IsNullOrEmpty(this.Path); }
 		#endregion
@@ -68,7 +68,7 @@ namespace Zongsoft.IO
 		public static bool operator !=(PathLocation left, PathLocation right) => !(left == right);
 
 		public static implicit operator string(PathLocation location) => location.Path;
-		public static explicit operator PathLocation(string path) => new PathLocation(path);
+		public static implicit operator PathLocation(string path) => new PathLocation(path);
 		#endregion
 
 		#region 类型转换
