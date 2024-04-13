@@ -30,9 +30,10 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 using Zongsoft.IO;
 using Zongsoft.Services;
@@ -497,17 +498,15 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 					using(var sourceStream = await sourceClient.DownloadAsync(source))
 					{
-						using(var uploader = destinationClient.GetUploader(destination))
+						await using(var uploader = destinationClient.GetUploader(destination))
 						{
 							var buffer = new byte[1024 * 64];
 							var bytesRead = 0;
 
 							while((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
 							{
-								uploader.Write(buffer, 0, bytesRead);
+								await uploader.UploadAsync(buffer, 0, bytesRead);
 							}
-
-							uploader.Flush();
 						}
 					}
 				}
@@ -537,17 +536,15 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 					using(var sourceStream = await sourceClient.DownloadAsync(source))
 					{
-						using(var uploader = destinationClient.GetUploader(destination))
+						await using(var uploader = destinationClient.GetUploader(destination))
 						{
 							var buffer = new byte[1024 * 64];
 							var bytesRead = 0;
 
 							while((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
 							{
-								uploader.Write(buffer, 0, bytesRead);
+								await uploader.UploadAsync(buffer, 0, bytesRead);
 							}
-
-							uploader.Flush();
 						}
 					}
 
@@ -662,126 +659,77 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			{
 				#region 成员字段
 				private StorageUploader _uploader;
-				private long _length;
 				#endregion
 
 				#region 构造函数
-				internal StorageFileStream(StorageUploader uploader)
-				{
-					_uploader = uploader;
-				}
+				internal StorageFileStream(StorageUploader uploader) => _uploader = uploader;
 				#endregion
 
 				#region 公共属性
-				public override bool CanRead
-				{
-					get
-					{
-						return false;
-					}
-				}
-
-				public override bool CanSeek
-				{
-					get
-					{
-						return false;
-					}
-				}
-
-				public override bool CanWrite
-				{
-					get
-					{
-						return true;
-					}
-				}
-
-				public override long Length
-				{
-					get
-					{
-						var uploader = _uploader;
-
-						if(uploader != null)
-							return uploader.Length;
-
-						return _length;
-					}
-				}
-
+				public override bool CanRead => false;
+				public override bool CanSeek => false;
+				public override bool CanWrite => true;
+				public override long Length => _uploader?.Count ?? 0;
 				public override long Position
 				{
-					get
-					{
-						//确认当前流是否可用
-						var uploader = this.EnsureUploader();
-
-						return uploader.Position;
-					}
-					set
-					{
-						throw new NotSupportedException();
-					}
+					get => -1;
+					set => throw new NotSupportedException();
 				}
 				#endregion
 
 				#region 公共方法
-				public override void Flush()
-				{
-					//确认当前流是否可用
-					var uploader = this.EnsureUploader();
-
-					uploader.Flush();
-				}
-
-				public override int Read(byte[] buffer, int offset, int count)
-				{
-					throw new NotSupportedException();
-				}
-
-				public override long Seek(long offset, SeekOrigin origin)
-				{
-					throw new NotSupportedException();
-				}
-
-				public override void SetLength(long value)
-				{
-					throw new NotSupportedException();
-				}
+				public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+				public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+				public override void SetLength(long value) => throw new NotSupportedException();
 
 				public override void Write(byte[] buffer, int offset, int count)
 				{
-					//确认当前流是否可用
 					var uploader = this.EnsureUploader();
+					uploader.UploadAsync(buffer, offset, count).GetAwaiter().GetResult();
+				}
 
-					uploader.Write(buffer, offset, count);
+				public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
+				{
+					var uploader = this.EnsureUploader();
+					return uploader.UploadAsync(buffer, offset, count, cancellation);
+				}
+
+				public override void Flush()
+				{
+					var uploader = this.EnsureUploader();
+					uploader.FlushAsync().GetAwaiter().GetResult();
+				}
+
+				public override Task FlushAsync(CancellationToken cancellation)
+				{
+					var uploader = this.EnsureUploader();
+					return uploader.FlushAsync(cancellation);
 				}
 				#endregion
 
 				#region 释放资源
+				public override ValueTask DisposeAsync()
+				{
+					var uploader = Interlocked.Exchange(ref _uploader, null);
+					return uploader == null ? default : uploader.DisposeAsync();
+				}
+
 				protected override void Dispose(bool disposing)
 				{
-					var uploader = System.Threading.Interlocked.Exchange(ref _uploader, null);
+					var uploader = Interlocked.Exchange(ref _uploader, null);
+					if(uploader == null)
+						return;
 
-					if(uploader != null)
-					{
-						_length = uploader.Length;
-						uploader.Dispose();
-					}
+					var task = uploader.DisposeAsync();
+					if(task.IsCompleted)
+						return;
+
+					task.GetAwaiter().GetResult();
 				}
 				#endregion
 
 				#region 私有方法
-				private StorageUploader EnsureUploader()
-				{
-					var uploader = _uploader;
-
-					if(uploader == null)
-						throw new ObjectDisposedException(typeof(StorageFileStream).FullName);
-
-					return uploader;
-				}
+				private StorageUploader EnsureUploader() => _uploader ?? throw new ObjectDisposedException(typeof(StorageFileStream).FullName);
 				#endregion
 			}
 			#endregion
