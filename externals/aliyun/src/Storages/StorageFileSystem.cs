@@ -45,9 +45,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 	{
 		#region 成员字段
 		private Options.StorageOptions _options;
-		private StorageFileProvider _file;
-		private StorageDirectoryProvider _directory;
-		private ConcurrentDictionary<string, StorageClient> _pool;
+		private readonly StorageFileProvider _file;
+		private readonly StorageDirectoryProvider _directory;
+		private readonly ConcurrentDictionary<string, StorageClient> _pool;
 		#endregion
 
 		#region 构造函数
@@ -60,23 +60,10 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取文件目录系统的方案，始终返回“zfs.oss”。
-		/// </summary>
-		public string Scheme
-		{
-			get => "zfs.oss";
-		}
-
-		public IFile File
-		{
-			get => _file;
-		}
-
-		public IDirectory Directory
-		{
-			get => _directory;
-		}
+		/// <summary>获取文件目录系统的方案，始终返回“zfs.oss”。</summary>
+		public string Scheme => "zfs.oss";
+		public IFile File => _file;
+		public IDirectory Directory => _directory;
 
 		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/OSS")]
 		public Options.StorageOptions Options
@@ -183,11 +170,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			#endregion
 
 			#region 公共方法
-			public bool Create(string path, IDictionary<string, object> properties = null)
-			{
-				return Utility.ExecuteTask(() => this.CreateAsync(path, properties));
-			}
-
+			public bool Create(string path, IDictionary<string, object> properties = null) => Utility.ExecuteTask(() => this.CreateAsync(path, properties));
 			public Task<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -195,14 +178,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.CreateAsync(directory, properties);
 			}
 
-			public bool Delete(string path, bool recursive = false)
-			{
-				if(recursive)
-					throw new NotSupportedException();
-
-				return Utility.ExecuteTask(() => this.DeleteAsync(path, recursive));
-			}
-
+			public bool Delete(string path, bool recursive = false) => Utility.ExecuteTask(() => this.DeleteAsync(path, recursive));
 			public Task<bool> DeleteAsync(string path, bool recursive = false)
 			{
 				if(recursive)
@@ -213,21 +189,13 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.DeleteAsync(directory);
 			}
 
-			public void Move(string source, string destination)
-			{
-				throw new NotSupportedException();
-			}
-
+			public void Move(string source, string destination) => throw new NotSupportedException();
 			public Task MoveAsync(string source, string destination)
 			{
 				throw new NotSupportedException();
 			}
 
-			public bool Exists(string path)
-			{
-				return Utility.ExecuteTask(() => this.ExistsAsync(path));
-			}
-
+			public bool Exists(string path) => Utility.ExecuteTask(() => this.ExistsAsync(path));
 			public Task<bool> ExistsAsync(string path)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -235,25 +203,16 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.ExistsAsync(directory);
 			}
 
-			public Zongsoft.IO.DirectoryInfo GetInfo(string path)
-			{
-				return Utility.ExecuteTask(() => this.GetInfoAsync(path));
-			}
-
+			public Zongsoft.IO.DirectoryInfo GetInfo(string path) => Utility.ExecuteTask(() => this.GetInfoAsync(path));
 			public async Task<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
 				var client = _fileSystem.GetClient(bucketName);
 				var properties = await client.GetExtendedPropertiesAsync(directory);
-
 				return this.GenerateInfo(path, properties);
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties)
-			{
-				return Utility.ExecuteTask(() => this.SetInfoAsync(path, properties));
-			}
-
+			public bool SetInfo(string path, IDictionary<string, object> properties) => Utility.ExecuteTask(() => this.SetInfoAsync(path, properties));
 			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -261,11 +220,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.SetExtendedPropertiesAsync(directory, properties);
 			}
 
-			public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path)
-			{
-				return this.GetChildren(path, null, false);
-			}
-
+			public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
 			public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -274,11 +229,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return Utility.ExecuteTask(() => this.GetChildrenAsync(path, pattern, recursive));
 			}
 
-			public Task<IEnumerable<Zongsoft.IO.PathInfo>> GetChildrenAsync(string path)
-			{
-				return this.GetChildrenAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<Zongsoft.IO.PathInfo>> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
 			public async Task<IEnumerable<Zongsoft.IO.PathInfo>> GetChildrenAsync(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -287,7 +238,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				var directory = this.EnsurePatternPath(path, pattern, out var bucketName);
 				var client = _fileSystem.GetClient(bucketName);
 
-				var result = await client.SearchAsync(directory, p => _fileSystem.GetUrl(p));
+				var result = await client.SearchAsync(directory, _fileSystem.GetUrl);
 
 				if(result == null)
 					return Enumerable.Empty<Zongsoft.IO.PathInfo>();
@@ -295,11 +246,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return result;
 			}
 
-			public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path)
-			{
-				return this.GetDirectories(path, null, false);
-			}
-
+			public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
 			public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -308,11 +255,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return Utility.ExecuteTask(() => this.GetDirectoriesAsync(path, pattern, recursive));
 			}
 
-			public Task<IEnumerable<Zongsoft.IO.DirectoryInfo>> GetDirectoriesAsync(string path)
-			{
-				return this.GetDirectoriesAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<Zongsoft.IO.DirectoryInfo>> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
 			public async Task<IEnumerable<Zongsoft.IO.DirectoryInfo>> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -321,7 +264,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				var directory = this.EnsurePatternPath(path, pattern, out var bucketName);
 				var client = _fileSystem.GetClient(bucketName);
 
-				var result = await client.SearchAsync(directory, p => _fileSystem.GetUrl(p));
+				var result = await client.SearchAsync(directory, _fileSystem.GetUrl);
 
 				if(result == null)
 					return Enumerable.Empty<Zongsoft.IO.DirectoryInfo>();
@@ -329,11 +272,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return result.Where(item => item.IsDirectory).Select(item => (Zongsoft.IO.DirectoryInfo)item);
 			}
 
-			public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path)
-			{
-				return this.GetFiles(path, null, false);
-			}
-
+			public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
 			public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -342,11 +281,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return Utility.ExecuteTask(() => this.GetFilesAsync(path, pattern, recursive));
 			}
 
-			public Task<IEnumerable<Zongsoft.IO.FileInfo>> GetFilesAsync(string path)
-			{
-				return this.GetFilesAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<Zongsoft.IO.FileInfo>> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
 			public async Task<IEnumerable<Zongsoft.IO.FileInfo>> GetFilesAsync(string path, string pattern, bool recursive = false)
 			{
 				if(recursive)
@@ -355,7 +290,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				var directory = this.EnsurePatternPath(path, pattern, out var bucketName);
 				var client = _fileSystem.GetClient(bucketName);
 
-				var result = await client.SearchAsync(directory, p => _fileSystem.GetUrl(p));
+				var result = await client.SearchAsync(directory, _fileSystem.GetUrl);
 
 				if(result == null)
 					return Enumerable.Empty<Zongsoft.IO.FileInfo>();
@@ -435,11 +370,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			#endregion
 
 			#region 公共方法
-			public bool Delete(string path)
-			{
-				return Utility.ExecuteTask(() => this.DeleteAsync(path));
-			}
-
+			public bool Delete(string path) => Utility.ExecuteTask(() => this.DeleteAsync(path));
 			public Task<bool> DeleteAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -447,11 +378,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.DeleteAsync(path);
 			}
 
-			public bool Exists(string path)
-			{
-				return Utility.ExecuteTask(() => this.ExistsAsync(path));
-			}
-
+			public bool Exists(string path) => Utility.ExecuteTask(() => this.ExistsAsync(path));
 			public Task<bool> ExistsAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -459,21 +386,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.ExistsAsync(path);
 			}
 
-			public void Copy(string source, string destination)
-			{
-				this.Copy(source, destination, false);
-			}
-
-			public void Copy(string source, string destination, bool overwrite)
-			{
-				this.CopyAsync(source, destination, overwrite).Wait();
-			}
-
-			public Task CopyAsync(string source, string destination)
-			{
-				return this.CopyAsync(source, destination, false);
-			}
-
+			public void Copy(string source, string destination) => this.Copy(source, destination, false);
+			public void Copy(string source, string destination, bool overwrite) => this.CopyAsync(source, destination, overwrite).Wait();
+			public Task CopyAsync(string source, string destination) => this.CopyAsync(source, destination, false);
 			public async Task CopyAsync(string source, string destination, bool overwrite)
 			{
 				source = this.EnsureFilePath(source, out var sourceBucket);
@@ -505,18 +420,14 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 							while((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
 							{
-								await uploader.UploadAsync(buffer, 0, bytesRead);
+								await uploader.WriteAsync(buffer, 0, bytesRead);
 							}
 						}
 					}
 				}
 			}
 
-			public void Move(string source, string destination)
-			{
-				this.MoveAsync(source, destination).Wait();
-			}
-
+			public void Move(string source, string destination) => this.MoveAsync(source, destination).Wait();
 			public async Task MoveAsync(string source, string destination)
 			{
 				source = this.EnsureFilePath(source, out var sourceBucket);
@@ -543,7 +454,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 							while((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
 							{
-								await uploader.UploadAsync(buffer, 0, bytesRead);
+								await uploader.WriteAsync(buffer, 0, bytesRead);
 							}
 						}
 					}
@@ -552,11 +463,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				}
 			}
 
-			public Zongsoft.IO.FileInfo GetInfo(string path)
-			{
-				return Utility.ExecuteTask(() => this.GetInfoAsync(path));
-			}
-
+			public Zongsoft.IO.FileInfo GetInfo(string path) => Utility.ExecuteTask(() => this.GetInfoAsync(path));
 			public async Task<Zongsoft.IO.FileInfo> GetInfoAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -567,11 +474,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return this.GenerateInfo(path, properties);
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties)
-			{
-				return Utility.ExecuteTask(() => this.SetInfoAsync(path, properties));
-			}
-
+			public bool SetInfo(string path, IDictionary<string, object> properties) => Utility.ExecuteTask(() => this.SetInfoAsync(path, properties));
 			public async Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -579,21 +482,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return await client.SetExtendedPropertiesAsync(path, properties);
 			}
 
-			public Stream Open(string path, IDictionary<string, object> properties = null)
-			{
-				return this.Open(path, FileMode.Open, FileAccess.Read, FileShare.None, properties);
-			}
-
-			public Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null)
-			{
-				return this.Open(path, mode, FileAccess.Read, FileShare.None, properties);
-			}
-
-			public Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null)
-			{
-				return this.Open(path, mode, access, FileShare.None, properties);
-			}
-
+			public Stream Open(string path, IDictionary<string, object> properties = null) => this.Open(path, FileMode.Open, FileAccess.Read, FileShare.None, properties);
+			public Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null) => this.Open(path, mode, FileAccess.Read, FileShare.None, properties);
+			public Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null) => this.Open(path, mode, access, FileShare.None, properties);
 			public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -685,13 +576,13 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				public override void Write(byte[] buffer, int offset, int count)
 				{
 					var uploader = this.EnsureUploader();
-					uploader.UploadAsync(buffer, offset, count).GetAwaiter().GetResult();
+					uploader.WriteAsync(buffer, offset, count).GetAwaiter().GetResult();
 				}
 
 				public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 				{
 					var uploader = this.EnsureUploader();
-					return uploader.UploadAsync(buffer, offset, count, cancellation);
+					return uploader.WriteAsync(buffer, offset, count, cancellation);
 				}
 
 				public override void Flush()
@@ -724,7 +615,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 					if(task.IsCompleted)
 						return;
 
-					task.GetAwaiter().GetResult();
+					task.AsTask().GetAwaiter().GetResult();
 				}
 				#endregion
 

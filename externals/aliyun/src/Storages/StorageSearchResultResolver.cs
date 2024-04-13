@@ -47,22 +47,16 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#region 构造函数
 		public StorageSearchResultResolver(StorageServiceCenter serviceCenter, HttpClient client, Func<string, string> getUrl = null)
 		{
-			if(serviceCenter == null)
-				throw new ArgumentNullException("serviceCenter");
-
-			if(client == null)
-				throw new ArgumentNullException("client");
-
-			_client = client;
-			_serviceCenter = serviceCenter;
+			_client = client ?? throw new ArgumentNullException(nameof(client));
+			_serviceCenter = serviceCenter ?? throw new ArgumentNullException(nameof(serviceCenter));
 			_getUrl = getUrl;
 		}
 		#endregion
 
 		#region 公共属性
-		public HttpClient Client { get => _client; }
-		public StorageServiceCenter ServiceCenter { get => _serviceCenter; }
-		internal Func<string, string> UrlThunk { get => _getUrl; }
+		public HttpClient Client => _client;
+		public StorageServiceCenter ServiceCenter => _serviceCenter;
+		internal Func<string, string> UrlThunk => _getUrl;
 		#endregion
 
 		#region 解析方法

@@ -29,6 +29,8 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Buffers;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -38,42 +40,49 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Storages
 {
-	public class StorageUploader : MarshalByRefObject, IAsyncDisposable
+	internal class StorageUploader : IAsyncDisposable
 	{
 		#region 常量定义
-		//注意：阿里云OSS批量上传的要求是每个包大小必须是100KB~5GB
-		private const int MINIMUM_BUFFER_SIZE = 100 * 1024;
-		private const int MAXIMUM_BUFFER_SIZE = 100 * 1024 * 1024;
-		private const int DEFAULT_BUFFER_SIZE = 512 * 1024;
+		//定义批量上传失败的重试次数
+		private const int RETRY_COUNT = 2;
 
+		//定义最大的缓存区大小
+		private const int MAXIMUM_BUFFER_SIZE = 10 * 1024 * 1024;
+
+		//定义默认的缓存区大小（注：不能低于阿里云OSS要求的最小批量包大小）
+		private const int DEFAULT_MULTIPART_SIZE = 512 * 1024;
+
+		//定义阿里云OSS批量上传要求每次批量包的大小不能低于100KB
+		private const int MINIMUM_MULTIPART_SIZE = 100 * 1024;
+
+		//定义解析批量上传初始化操作结果的正则表达式
 		private static readonly Regex _Initiate_Regex_ = new(@"\<UploadId\>(?<value>\w+)\<\/UploadId\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
-		#region 私有字段
+		#region 私有变量
 		private int _disposed;
 		private string _identifier;
 		private readonly string _path;
-		private ArraySegment<byte> _data;
-		private readonly int _blockSize;
-		private long _count;
-		private StorageClient _client;
-		private StorageMultipart?[] _multiparts;
+		private byte[] _buffer;
+		private readonly int _bufferSize;
+		private int _bufferedCount;
+		private readonly StorageClient _client;
+		private List<StorageMultipart> _multiparts;
 		private readonly IDictionary<string, object> _extendedProperties;
 		#endregion
 
 		#region 构造函数
-		public StorageUploader(StorageClient client, string path) : this(client, path, null, DEFAULT_BUFFER_SIZE) { }
-		public StorageUploader(StorageClient client, string path, int bufferSize) : this(client, path, null, bufferSize) { }
-		public StorageUploader(StorageClient client, string path, IDictionary<string, object> extendedProperties, int bufferSize = DEFAULT_BUFFER_SIZE)
+		public StorageUploader(StorageClient client, string path, int bufferSize = DEFAULT_MULTIPART_SIZE) : this(client, path, null, bufferSize) { }
+		public StorageUploader(StorageClient client, string path, IDictionary<string, object> extendedProperties, int bufferSize = DEFAULT_MULTIPART_SIZE)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException(nameof(path));
 			if(bufferSize > MAXIMUM_BUFFER_SIZE)
 				throw new ArgumentOutOfRangeException(nameof(bufferSize));
 
-			_path = path.Trim().TrimEnd('/', '\\');
+			_bufferSize = Math.Max(bufferSize, MINIMUM_MULTIPART_SIZE);
 			_client = client ?? throw new ArgumentNullException(nameof(client));
-			_blockSize = Math.Max(bufferSize, MINIMUM_BUFFER_SIZE);
+			_path = path.TrimEnd('/', '\\');
 			_extendedProperties = extendedProperties;
 		}
 		#endregion
@@ -81,127 +90,124 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#region 公共属性
 		public string Identifier => _identifier;
 		public string Path => _path;
-		public long Count => _count;
+		public long Count => _multiparts == null ? 0 : _multiparts.Sum(part => part.Count);
 		#endregion
 
 		#region 公共方法
-		public Task<long> UploadAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.UploadAsync(data, offset, -1, cancellation);
-		public async Task<long> UploadAsync(byte[] data, int offset, int count, CancellationToken cancellation = default)
+		public Task WriteAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.WriteAsync(data, offset, -1, cancellation);
+		public async Task WriteAsync(byte[] data, int offset, int count, CancellationToken cancellation = default)
 		{
 			//确认当前是否可用的
 			this.EnsureDisposed();
 
-			if(data == null)
-				throw new ArgumentNullException(nameof(data));
+			//如果发送的数据为空则返回
+			if(data == null || data.Length == 0)
+				return;
 
+			//确保指定的偏移量没有超出范围
 			if(offset < 0 || offset >= data.Length)
 				throw new ArgumentOutOfRangeException(nameof(offset));
 
+			//确保指定的写数量没有超出范围
 			if(count < 0)
 				count = data.Length - offset;
 			else if(offset + count > data.Length)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			_identifier = await this.InitiateAsync(cancellation);
+			/*
+			 * 注意：无论待写入数据量是否满足最小批量上传大小，都必须先进行初始化，
+			 *      因为后续的 Flush、Complete、Abort 都依赖该初始化后的标识！
+			 */
 			if(string.IsNullOrEmpty(_identifier))
-				return 0L;
-
-			_data = new ArraySegment<byte>(data, offset, count);
-			_multiparts = new StorageMultipart?[(int)Math.Ceiling((double)count / _blockSize)];
-
-			for(int i = 0; i < _multiparts.Length; i++)
 			{
-				var multipart = this.GetMultipart(i);
-				multipart.Checksum = await this.FlushAsync(multipart, 1, cancellation);
+				//初始化批量上传并设置批量上传标识
+				_identifier = await this.InitiateAsync(cancellation);
+				if(string.IsNullOrEmpty(_identifier))
+					return;
 
-				if(string.IsNullOrEmpty(multipart.Checksum))
-				{
-					await this.AbortAsync(cancellation);
-					return 0;
-				}
-
-				_count += multipart.Count;
-				_multiparts[i] = multipart;
+				//初始化缓存区
+				_buffer = ArrayPool<byte>.Shared.Rent(_bufferSize);
+				//初始化上传成功的分部列表
+				_multiparts = new();
 			}
 
-			await this.CompleteAsync(cancellation);
-			return _count;
+			//如果写入的数据量与已缓存量还不够最小批次的发送量，则将写入数据追加到缓存区
+			if(_bufferedCount + count < MINIMUM_MULTIPART_SIZE)
+			{
+				//将写入数据复制到缓存区
+				Buffer.BlockCopy(data, offset, _buffer, _bufferedCount, count);
+
+				//更新缓存的字节数
+				_bufferedCount += count;
+
+				return;
+			}
+
+			StorageMultipart multipart;
+
+			//如果缓存区没有缓存的数据
+			if(_bufferedCount == 0)
+			{
+				multipart = new StorageMultipart(_multiparts.Count, data, offset, count);
+			}
+			else
+			{
+				//如果缓存区的剩余空间大于待写入的数据量，则只需将待写入数据追加到缓存区
+				if(count <= _buffer.Length - _bufferedCount)
+				{
+					Buffer.BlockCopy(data, offset, _buffer, _bufferedCount, count);
+				}
+				else //待写入的数据量比缓存区剩余数据区要多，则将原缓存区进行扩容
+				{
+					var original = _buffer;
+
+					//重新申请一块新的缓存区
+					_buffer = ArrayPool<byte>.Shared.Rent(_bufferedCount + count);
+
+					Buffer.BlockCopy(original, 0, _buffer, 0, _bufferedCount);
+					Buffer.BlockCopy(data, offset, _buffer, _bufferedCount, count);
+
+					//将原缓存区归还给缓存池
+					ArrayPool<byte>.Shared.Return(original);
+				}
+
+				//更新缓存的数据量
+				_bufferedCount += count;
+				//构建待批量上传的片段
+				multipart = new StorageMultipart(_multiparts.Count, _buffer, 0, _bufferedCount);
+			}
+
+			//将批量上传片段进行上传
+			await this.FlushAsync(multipart, cancellation);
 		}
 
-		public async Task<long> FlushAsync(CancellationToken cancellation = default)
+		public Task<long> FlushAsync(CancellationToken cancellation = default)
 		{
 			//确认当前是否可用的
 			this.EnsureDisposed();
 
-			long count = 0;
+			if(string.IsNullOrEmpty(_identifier) || _buffer == null || _bufferedCount == 0)
+				return Task.FromResult(0L);
 
-			for(int i = 0; i < _multiparts.Length; i++)
-			{
-				if(_multiparts[i] == null)
-				{
-					var multipart = this.GetMultipart(i);
-					multipart.Checksum = await this.FlushAsync(multipart, 1, cancellation);
+			//构建待批量上传的片段
+			var multipart = new StorageMultipart(_multiparts.Count, _buffer, 0, _bufferedCount);
 
-					if(!string.IsNullOrEmpty(multipart.Checksum))
-					{
-						_multiparts[i] = multipart;
-						count += multipart.Count;
-					}
-				}
-				else
-					count += _multiparts[i].Value.Count;
-			}
-
-			return _count = count;
-		}
-
-		public async Task<bool> CompleteAsync(CancellationToken cancellation = default)
-		{
-			var text = new StringBuilder("<CompleteMultipartUpload>");
-
-			for(int i = 0; i < _multiparts.Length; i++)
-			{
-				var multipart = _multiparts[i];
-
-				if(multipart != null)
-					text.Append($"<Part><PartNumber>{multipart.Value.Index + 1}</PartNumber><ETag>\"{multipart.Value.Checksum}\"</ETag></Part>");
-			}
-
-			text.Append("</CompleteMultipartUpload>");
-
-			var response = await _client.HttpClient.PostAsync(
-				_client.ServiceCenter.GetRequestUrl(_path + "?uploadId=" + _identifier),
-				new StringContent(text.ToString()),
-				cancellation);
-
-			return response.IsSuccessStatusCode || await this.AbortAsync(cancellation);
-		}
-
-		public async Task<bool> AbortAsync(CancellationToken cancellation = default)
-		{
-			try
-			{
-				_client.HttpClient.DefaultRequestHeaders.ConnectionClose = true;
-				return (await _client.HttpClient.DeleteAsync(_client.ServiceCenter.GetRequestUrl(_path + "?uploadId=" + _identifier), cancellation)).IsSuccessStatusCode;
-			}
-			catch
-			{
-				return false;
-			}
+			//将批量上传片段进行上传
+			return this.FlushAsync(multipart, cancellation);
 		}
 		#endregion
 
 		#region 私有方法
-		private StorageMultipart GetMultipart(int index)
+		private void Done()
 		{
-			if(index < 0 || index >= _multiparts.Length)
-				throw new ArgumentOutOfRangeException(nameof(index));
+			_identifier = null;
+			_bufferedCount = 0;
 
-			var offset = (index * _blockSize);
-			var remainder = _data.Count % _blockSize;
-			var count = (index == _multiparts.Length - 1) ? (remainder == 0 ? _blockSize : remainder) : _blockSize;
-
-			return new(index, new ArraySegment<byte>(_data.Array, _data.Offset + offset, count));
+			if(_buffer != null)
+			{
+				ArrayPool<byte>.Shared.Return(_buffer);
+				_buffer = null;
+			}
 		}
 
 		private async Task<string> InitiateAsync(CancellationToken cancellation)
@@ -223,7 +229,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return match.Success ? match.Groups["value"].Value : null;
 		}
 
-		private async Task<string> FlushAsync(StorageMultipart multipart, int retries, CancellationToken cancellation = default)
+		private async Task<string> UploadAsync(StorageMultipart multipart, int retries, CancellationToken cancellation = default)
 		{
 			//创建请求
 			var request = _client.CreateHttpRequest(HttpMethod.Put, _path + $"?partNumber={multipart.Index + 1}&uploadId={_identifier}", _extendedProperties);
@@ -236,7 +242,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			//上传数据段
 			var response = await _client.HttpClient.SendAsync(request, cancellation);
 
-			//如果应答成功，则获取其返回的上传段的唯一标识
+			//如果应答成功，则获取其返回的上传片段的校验标识
 			if(response.IsSuccessStatusCode)
 				return multipart.Checksum = response.Headers.ETag.Tag;
 
@@ -245,7 +251,76 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return null;
 
 			await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(10, 999)), cancellation);
-			return await this.FlushAsync(multipart, retries - 1, cancellation);
+			return await this.UploadAsync(multipart, retries - 1, cancellation);
+		}
+
+		private async Task<long> FlushAsync(StorageMultipart multipart, CancellationToken cancellation = default)
+		{
+			//批量上传当前片段(支持失败重试)
+			multipart.Checksum = await this.UploadAsync(multipart, RETRY_COUNT, cancellation);
+
+			//如果发送失败，则取消整个批量上传并返回
+			if(string.IsNullOrEmpty(multipart.Checksum))
+			{
+				await this.AbortAsync(cancellation);
+				return 0L;
+			}
+
+			//重置缓存数量
+			_bufferedCount = 0;
+			//将发送成功的片段加入到列表中
+			_multiparts.Add(multipart);
+			//返回发送成功的字节数
+			return multipart.Count;
+		}
+
+		private async Task<bool> CompleteAsync(CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(_identifier) || _multiparts == null || _multiparts.Count == 0)
+				return false;
+
+			var text = new StringBuilder("<CompleteMultipartUpload>");
+
+			for(int i = 0; i < _multiparts.Count; i++)
+			{
+				text.Append($"<Part><PartNumber>{_multiparts[i].Index + 1}</PartNumber><ETag>\"{_multiparts[i].Checksum}\"</ETag></Part>");
+			}
+
+			text.Append("</CompleteMultipartUpload>");
+
+			var response = await _client.HttpClient.PostAsync(
+				_client.ServiceCenter.GetRequestUrl(_path + "?uploadId=" + _identifier),
+				new StringContent(text.ToString()),
+				cancellation);
+
+			if(response.IsSuccessStatusCode)
+			{
+				this.Done();
+				return true;
+			}
+
+			return await this.AbortAsync(cancellation);
+		}
+
+		private async Task<bool> AbortAsync(CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(_identifier))
+				return false;
+
+			try
+			{
+				_client.HttpClient.DefaultRequestHeaders.ConnectionClose = true;
+				var response = await _client.HttpClient.DeleteAsync(_client.ServiceCenter.GetRequestUrl($"{_path}?uploadId={_identifier}"), cancellation);
+
+				if(response.IsSuccessStatusCode)
+					this.Done();
+
+				return response.IsSuccessStatusCode;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		private void EnsureDisposed()
@@ -276,7 +351,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				//确认提交整个上传操作
 				await this.CompleteAsync();
 			}
-			finally
+			catch
 			{
 			}
 		}
@@ -286,24 +361,35 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		internal struct StorageMultipart
 		{
 			#region 成员字段
-			private readonly int _index;
 			private string _checksum;
+			private readonly int _index;
 			private readonly ArraySegment<byte> _data;
 			#endregion
 
 			#region 构造函数
-			internal StorageMultipart(int index, ArraySegment<byte> data)
+			public StorageMultipart(int index, byte[] data, int offset, int count)
 			{
 				_index = index;
-				_data = data;
+				_data = new ArraySegment<byte>(data, offset, count);
+				this.Offset = offset;
+				this.Count = count;
 			}
 			#endregion
 
 			#region 公共属性
+			/// <summary>获取批量上传的序号（从零开始）。</summary>
 			public int Index => _index;
+
+			/// <summary>获取批量上传的数据段。</summary>
 			public byte[] Data => _data.Array;
-			public int Offset => _data.Offset;
-			public int Count => _data.Count;
+
+			//注意：该属性不能通过Data属性动态获取，因为Data属性所指向的缓存可能已经被释放。
+			public int Offset { get; }
+
+			//注意：该属性不能通过Data属性动态获取，因为Data属性所指向的缓存可能已经被释放。
+			public int Count { get; }
+
+			/// <summary>获取或设置上传成功的校验标识。</summary>
 			public string Checksum
 			{
 				get => _checksum;

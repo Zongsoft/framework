@@ -72,11 +72,6 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public StorageUploader GetUploader(string path) => new StorageUploader(this, path);
-		public StorageUploader GetUploader(string path, int bufferSize) => new StorageUploader(this, path, bufferSize);
-		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties) => new StorageUploader(this, path, extendedProperties);
-		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties, int bufferSize) => new StorageUploader(this, path, extendedProperties, bufferSize);
-
 		public async Task<bool> CopyAsync(string source, string destination)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Put, _serviceCenter.GetRequestUrl(destination));
@@ -170,7 +165,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			}
 
 			string baseName, resourcePath;
-			var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?list-type=2&prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=%2F&max-keys=21";
+			var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?list-type=2&prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=/&max-keys=100";
 			var response = await _http.GetAsync(url);
 
 			//确保返回的内容是成功
@@ -182,6 +177,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 内部方法
+		internal StorageUploader GetUploader(string path, int bufferSize = 0) => new StorageUploader(this, path, bufferSize);
+		internal StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties, int bufferSize = 0) => new StorageUploader(this, path, extendedProperties, bufferSize);
+
 		internal HttpRequestMessage CreateHttpRequest(HttpMethod method, string path, IDictionary<string, object> extendedProperties = null)
 		{
 			var request = new HttpRequestMessage(method, _serviceCenter.GetRequestUrl(path));
