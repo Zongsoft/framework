@@ -52,6 +52,7 @@ namespace Zongsoft.Web
 		private const string EXTENDED_PROPERTY_PREFIX = "x-zfs-";
 		private const string EXTENDED_PROPERTY_NAME = "Name";
 		private const string EXTENDED_PROPERTY_FILENAME = "FileName";
+		private const string EXTENDED_PROPERTY_FILETYPE = "FileType";
 		#endregion
 
 		#region 成员字段
@@ -60,11 +61,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 构造函数
-		public WebFileAccessor()
-		{
-			_mapping = Http.MimeMapper.Default;
-		}
-
+		public WebFileAccessor() => _mapping = Http.MimeMapper.Default;
 		public WebFileAccessor(string basePath)
 		{
 			_mapping = Http.MimeMapper.Default;
@@ -99,9 +96,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 下载指定路径的文件。
-		/// </summary>
+		/// <summary>下载指定路径的文件。</summary>
 		/// <param name="path">指定要下载的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		public FileStreamResult Read(string path)
 		{
@@ -132,9 +127,7 @@ namespace Zongsoft.Web
 			return content;
 		}
 
-		/// <summary>
-		/// 获取指定文件的外部访问路径。
-		/// </summary>
+		/// <summary>获取指定文件的外部访问路径。</summary>
 		/// <param name="path">指定的文件相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		/// <returns>返回指定文件的外部访问路径。</returns>
 		public string GetUrl(string path)
@@ -145,9 +138,7 @@ namespace Zongsoft.Web
 			return FileSystem.GetUrl(this.GetFilePath(path));
 		}
 
-		/// <summary>
-		/// 获取指定路径的文件描述信息。
-		/// </summary>
+		/// <summary>获取指定路径的文件描述信息。</summary>
 		/// <param name="path">指定要获取的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		/// <returns>返回的指定的文件详细信息。</returns>
 		public Task<Zongsoft.IO.FileInfo> GetInfo(string path)
@@ -158,9 +149,7 @@ namespace Zongsoft.Web
 			return FileSystem.File.GetInfoAsync(this.GetFilePath(path));
 		}
 
-		/// <summary>
-		/// 删除指定相对路径的文件。
-		/// </summary>
+		/// <summary>删除指定相对路径的文件。</summary>
 		/// <param name="path">指定要删除的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		public async Task<bool> Delete(string path)
 		{
@@ -170,9 +159,7 @@ namespace Zongsoft.Web
 			return await FileSystem.File.DeleteAsync(this.GetFilePath(path));
 		}
 
-		/// <summary>
-		/// 修改指定路径的文件描述信息。
-		/// </summary>
+		/// <summary>修改指定路径的文件描述信息。</summary>
 		/// <param name="request">网络请求消息。</param>
 		/// <param name="path">指定要修改的文件相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		public async Task<bool> SetInfo(HttpRequest request, string path)
@@ -210,9 +197,7 @@ namespace Zongsoft.Web
 			return false;
 		}
 
-		/// <summary>
-		/// 将网络请求中的一个文件或多个文件写入到指定的目录中。
-		/// </summary>
+		/// <summary>将网络请求中的一个文件或多个文件写入到指定的目录中。</summary>
 		/// <param name="request">网络请求消息。</param>
 		/// <param name="directory">指定文件写入的目录路径（绝对路径以“/”斜杠符打头）；如果为空(null)或全空字符串则写入目录为<see cref="BasePath"/>属性值。</param>
 		/// <param name="configure">当文件写入前激发的通知回调。</param>
@@ -252,7 +237,7 @@ namespace Zongsoft.Web
 
 				//如果文件名为空，则生成一个以“时间戳-随机数.ext”的默认文件名
 				if(string.IsNullOrWhiteSpace(args.FileName))
-					args.FileName = string.Format("X{0}-{1}{2}", ((long)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalSeconds).ToString(), Common.Randomizer.GenerateString(), args.ExtensionAppend ? extensionName : string.Empty);
+					args.FileName = $"X{Zongsoft.Common.Timestamp.Millennium.Now:X}-{Zongsoft.Common.Randomizer.GenerateString()}{(args.ExtensionAppend ? extensionName : null)}";
 				else if(args.ExtensionAppend && !args.FileName.EndsWith(extensionName))
 					args.FileName += extensionName;
 
@@ -270,6 +255,9 @@ namespace Zongsoft.Web
 
 				//将上传的原始文件名加入到文件信息的扩展属性中
 				fileInfo.Properties.Add(EXTENDED_PROPERTY_FILENAME, file.FileName);
+
+				//将上传的原始文件类型(MIME)加入到文件信息的扩展属性中
+				fileInfo.Properties.Add(EXTENDED_PROPERTY_FILETYPE, fileType);
 
 				var headers = file.Headers;
 

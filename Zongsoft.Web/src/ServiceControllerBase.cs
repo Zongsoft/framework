@@ -198,6 +198,9 @@ namespace Zongsoft.Web
 			//依次遍历写入的文件对象
 			await foreach(var file in files)
 			{
+				if(file == null)
+					continue;
+
 				//如果上传回调方法返回真(True)则将其加入到结果集中，否则删除刚保存的文件
 				if(uploaded == null || uploaded(file))
 					return file;
@@ -239,6 +242,9 @@ namespace Zongsoft.Web
 			//依次遍历写入的文件对象
 			await foreach(var file in files)
 			{
+				if(file == null)
+					continue;
+
 				//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
 				if((item = uploaded(file)) != null)
 					result.Add(item);
