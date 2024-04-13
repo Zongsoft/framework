@@ -72,25 +72,10 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public StorageUploader GetUploader(string path)
-		{
-			return new StorageUploader(this, path);
-		}
-
-		public StorageUploader GetUploader(string path, int bufferSize)
-		{
-			return new StorageUploader(this, path, bufferSize);
-		}
-
-		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties)
-		{
-			return new StorageUploader(this, path, extendedProperties);
-		}
-
-		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties, int bufferSize)
-		{
-			return new StorageUploader(this, path, extendedProperties, bufferSize);
-		}
+		public StorageUploader GetUploader(string path) => new StorageUploader(this, path);
+		public StorageUploader GetUploader(string path, int bufferSize) => new StorageUploader(this, path, bufferSize);
+		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties) => new StorageUploader(this, path, extendedProperties);
+		public StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties, int bufferSize) => new StorageUploader(this, path, extendedProperties, bufferSize);
 
 		public async Task<bool> CopyAsync(string source, string destination)
 		{
@@ -102,10 +87,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return result.IsSuccessStatusCode;
 		}
 
-		public async Task<bool> DeleteAsync(string path)
-		{
-			return (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path))).IsSuccessStatusCode;
-		}
+		public async Task<bool> DeleteAsync(string path) => (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path))).IsSuccessStatusCode;
 
 		public async Task<Stream> DownloadAsync(string path, IDictionary<string, object> properties = null)
 		{
@@ -120,11 +102,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return await response.Content.ReadAsStreamAsync();
 		}
 
-		public Task<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null)
-		{
-			return this.CreateAsync(path, null, extendedProperties);
-		}
-
+		public Task<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null) => this.CreateAsync(path, null, extendedProperties);
 		public async Task<bool> CreateAsync(string path, Stream stream, IDictionary<string, object> extendedProperties = null)
 		{
 			var request = this.CreateHttpRequest(HttpMethod.Put, path, this.EnsureCreatedTime(extendedProperties));
@@ -263,7 +241,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 					var key = header.Key.Substring(StorageHeaders.OSS_META.Length);
 
 					if(key.Length > 0)
-						properties[key] = Uri.UnescapeDataString(string.Join("", header.Value));
+						properties[key] = string.Join("", header.Value);
 				}
 			}
 		}

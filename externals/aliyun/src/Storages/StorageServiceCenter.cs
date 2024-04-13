@@ -57,9 +57,15 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		{
 			ResolvePath(path, out var bucketName, out resourcePath);
 
+			var escapedPath = Uri.EscapeDataString(resourcePath)
+				.Replace("%26", "&")
+				.Replace("%2F", "/")
+				.Replace("%3D", "=")
+				.Replace("%3F", "?");
+
 			return secured ?
-				string.Format("https://{0}.{1}/{2}", bucketName, this.Path, Uri.EscapeDataString(resourcePath).Replace("%2F", "/")) :
-				string.Format("http://{0}.{1}/{2}", bucketName, this.Path, Uri.EscapeDataString(resourcePath).Replace("%2F", "/"));
+				string.Format("https://{0}.{1}/{2}", bucketName, this.Path, escapedPath) :
+				string.Format("http://{0}.{1}/{2}", bucketName, this.Path, escapedPath);
 		}
 		#endregion
 
