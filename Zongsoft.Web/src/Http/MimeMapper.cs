@@ -35,7 +35,8 @@ namespace Zongsoft.Web.Http
 	/// <summary>
 	/// 提供MIME类型映射的实现类。
 	/// </summary>
-	public class MimeMapper : Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider, IMimeMapper
+	[Zongsoft.Services.Service<Zongsoft.IO.IMimeMapper>]
+	public class MimeMapper : Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider, Zongsoft.IO.IMimeMapper
 	{
 		#region 单例字段
 		public static readonly MimeMapper Default = new MimeMapper();
@@ -47,7 +48,6 @@ namespace Zongsoft.Web.Http
 		#endregion
 
 		#region 公共方法
-		/// <inheritdoc cref="IMimeMapper.GetMimeType(string)" />
 		public string GetMimeType(string path) => this.TryGetContentType(path, out var type) ? type : null;
 		#endregion
 

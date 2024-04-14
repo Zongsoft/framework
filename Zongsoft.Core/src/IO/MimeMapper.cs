@@ -36,37 +36,41 @@ namespace Zongsoft.IO
 {
 	public static class Mime
 	{
+		#region 单例字段
 		public static readonly ICollection<IMimeMapper> Mappers = new List<IMimeMapper>();
+		#endregion
 
-		public static string GetMimeType(string path)
+		#region 私有变量
+		private static int _initialized;
+		#endregion
+
+		#region 公共方法
+		public static string GetMimeType(string path) => TryGetMimeType(path, out var type) ? type : null;
+		public static bool TryGetMimeType(string path, out string type)
 		{
+			type = null;
+
 			if(string.IsNullOrEmpty(path))
-				return null;
+				return false;
 
-			if(Mappers.Count == 0)
-			{
-				var mappers = (List<IMimeMapper>)Mappers;
+			var initialized = System.Threading.Interlocked.CompareExchange(ref _initialized, 1, 0);
 
-				lock(mappers)
-				{
-					if(mappers.Count == 0)
-					{
-						mappers.AddRange(ApplicationContext.Current.Services.ResolveAll<IMimeMapper>());
-						foreach(var module in ApplicationContext.Current.Modules)
-							mappers.AddRange(module.Services.ResolveAll<IMimeMapper>());
-					}
-				}
-			}
+			if(initialized == 0)
+				((List<IMimeMapper>)Mappers).AddRange(ApplicationContext.Current.Services.ResolveAll<IMimeMapper>());
 
 			foreach(var mapper in Mappers)
 			{
 				var result = mapper.GetMimeType(path);
 
 				if(!string.IsNullOrEmpty(result))
-					return result;
+				{
+					type = result;
+					return true;
+				}
 			}
 
-			return null;
+			return false;
 		}
+		#endregion
 	}
 }

@@ -35,11 +35,11 @@ using System.Collections.Generic;
 
 using Microsoft.Net.Http;
 using Microsoft.Net.Http.Headers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.IO;
 using Zongsoft.Collections;
@@ -57,7 +57,7 @@ namespace Zongsoft.Web
 
 		#region 成员字段
 		private string _basePath;
-		private Http.IMimeMapper _mapping;
+		private IMimeMapper _mapping;
 		#endregion
 
 		#region 构造函数
@@ -88,7 +88,7 @@ namespace Zongsoft.Web
 			}
 		}
 
-		public Http.IMimeMapper Mapping
+		public IMimeMapper Mapping
 		{
 			get => _mapping;
 			set => _mapping = value ?? throw new ArgumentNullException();
