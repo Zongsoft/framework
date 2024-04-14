@@ -36,6 +36,7 @@ namespace Zongsoft.Web
 		#region 构造函数
 		public WebFileAccessorOptions(string name, string path, int index)
 		{
+			this.Name = name;
 			this.Index = index;
 			this.Cancel = false;
 			this.Overwrite = false;
