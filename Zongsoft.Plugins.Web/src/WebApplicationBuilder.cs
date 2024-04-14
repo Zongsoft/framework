@@ -44,6 +44,7 @@ using Zongsoft.Web.Security;
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Hosting;
 using Zongsoft.Security;
+using Zongsoft.Services;
 
 namespace Zongsoft.Web
 {
@@ -108,7 +109,10 @@ namespace Zongsoft.Web
 		{
 			services.AddSingleton<WebApplicationContext>();
 			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
-			services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+
+			//注册 Zongsoft.Web 程序集中的服务
+			services.Register(typeof(WebUtility).Assembly, this.Configuration);
 
 			base.RegisterServices(services, options);
 			WebApplicationUtility.RegisterServices(services);
@@ -123,7 +127,10 @@ namespace Zongsoft.Web
 		{
 			services.AddSingleton<WebApplicationContext>();
 			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
-			services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+
+			//注册 Zongsoft.Web 程序集中的服务
+			services.Register(typeof(WebUtility).Assembly, this.Configuration);
 
 			base.RegisterServices(services, options);
 			WebApplicationUtility.RegisterServices(services);
