@@ -32,6 +32,7 @@ using System.IO;
 using System.Linq;
 using System.Buffers;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -213,10 +214,22 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		private async Task<string> InitiateAsync(CancellationToken cancellation)
 		{
 			//创建初始化请求包
-			var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", _client.EnsureCreatedTime(_extendedProperties));
+			var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", _client.EnsureCreation(_extendedProperties));
 
 			//保持长连接
 			request.Headers.Connection.Add("keep-alive");
+
+			//尝试设置文件类型
+			if(_extendedProperties.TryGetValue("FileType", out var value) && value is string fileType && MediaTypeHeaderValue.TryParse(fileType, out var contentType))
+			{
+				request.Content = new ByteArrayContent(Array.Empty<byte>());
+				request.Content.Headers.ContentType = contentType;
+			}
+			else if(Zongsoft.IO.Mime.TryGetMimeType(_path, out var mimeType) && MediaTypeHeaderValue.TryParse(mimeType, out contentType))
+			{
+				request.Content = new ByteArrayContent(Array.Empty<byte>());
+				request.Content.Headers.ContentType = contentType;
+			}
 
 			var response = await _client.HttpClient.SendAsync(request, cancellation);
 

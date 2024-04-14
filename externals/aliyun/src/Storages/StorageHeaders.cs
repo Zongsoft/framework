@@ -39,7 +39,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		public const string OSS_COPY_DIRECTIVE = OSS_PREFIX + "metadata-directive";
 
 		//自定义扩展属性常量
-		public const string ZFS_CREATEDTIME_PROPERTY = "CreatedTime";
+		public const string ZFS_CREATION_PROPERTY = "Creation";
 
 		//标准的HTTP头的常量
 		public const string HTTP_ETAG_PROPERTY = "HTTP:ETag";

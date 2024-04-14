@@ -53,22 +53,12 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共属性
-		public ICertificate Certificate
-		{
-			get => _certificate;
-		}
-
-		public StorageServiceCenter ServiceCenter
-		{
-			get => _serviceCenter;
-		}
+		public ICertificate Certificate => _certificate;
+		public StorageServiceCenter ServiceCenter => _serviceCenter;
 		#endregion
 
 		#region 内部属性
-		internal HttpClient HttpClient
-		{
-			get => _http;
-		}
+		internal HttpClient HttpClient => _http;
 		#endregion
 
 		#region 公共方法
@@ -100,7 +90,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		public Task<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null) => this.CreateAsync(path, null, extendedProperties);
 		public async Task<bool> CreateAsync(string path, Stream stream, IDictionary<string, object> extendedProperties = null)
 		{
-			var request = this.CreateHttpRequest(HttpMethod.Put, path, this.EnsureCreatedTime(extendedProperties));
+			var request = this.CreateHttpRequest(HttpMethod.Put, path, this.EnsureCreation(extendedProperties));
 
 			if(stream != null)
 				request.Content = new StreamContent(stream);
@@ -188,29 +178,29 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			{
 				foreach(var entry in extendedProperties)
 				{
-					if(string.IsNullOrWhiteSpace(entry.Key) || entry.Key.Contains(':'))
+					if(entry.Value == null || string.IsNullOrEmpty(entry.Key) || entry.Key.Contains(':'))
 						continue;
 
-					request.Headers.Add(StorageHeaders.OSS_META + entry.Key.Trim().ToLowerInvariant(), entry.Value == null ? string.Empty : Uri.EscapeDataString(entry.Value.ToString()));
+					request.Headers.Add(StorageHeaders.OSS_META + entry.Key.ToLowerInvariant(), Uri.EscapeDataString(entry.Value.ToString()));
 				}
 			}
 
 			return request;
 		}
 
-		internal IDictionary<string, object> EnsureCreatedTime(IDictionary<string, object> properties)
+		internal IDictionary<string, object> EnsureCreation(IDictionary<string, object> properties)
 		{
 			if(properties == null)
 			{
 				properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
 				{
-					[StorageHeaders.ZFS_CREATEDTIME_PROPERTY] = Utility.GetGmtTime()
+					[StorageHeaders.ZFS_CREATION_PROPERTY] = Utility.GetGmtTime()
 				};
 			}
 			else
 			{
-				if(!properties.ContainsKey(StorageHeaders.ZFS_CREATEDTIME_PROPERTY))
-					properties[StorageHeaders.ZFS_CREATEDTIME_PROPERTY] = Utility.GetGmtTime();
+				if(!properties.ContainsKey(StorageHeaders.ZFS_CREATION_PROPERTY))
+					properties[StorageHeaders.ZFS_CREATION_PROPERTY] = Utility.GetGmtTime();
 			}
 
 			return properties;
@@ -239,7 +229,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 					var key = header.Key.Substring(StorageHeaders.OSS_META.Length);
 
 					if(key.Length > 0)
-						properties[key] = string.Join("", header.Value);
+						properties[key] = Uri.UnescapeDataString(string.Join("", header.Value));
 				}
 			}
 		}

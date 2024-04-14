@@ -58,6 +58,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			ResolvePath(path, out var bucketName, out resourcePath);
 
 			var escapedPath = Uri.EscapeDataString(resourcePath)
+				.Replace("%23", "#")
 				.Replace("%26", "&")
 				.Replace("%2F", "/")
 				.Replace("%3D", "=")

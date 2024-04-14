@@ -332,7 +332,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 				object value;
 
-				if(properties.TryGetValue(StorageHeaders.ZFS_CREATEDTIME_PROPERTY, out value))
+				if(properties.TryGetValue(StorageHeaders.ZFS_CREATION_PROPERTY, out value))
 				{
 					if(Zongsoft.Common.Convert.TryConvertValue(value, out createdTimeOffset))
 						createdTime = createdTimeOffset.LocalDateTime;
@@ -519,7 +519,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				DateTime? createdTime = null, modifiedTime = null;
 				int size = 0;
 
-				if(properties.TryGetValue(StorageHeaders.ZFS_CREATEDTIME_PROPERTY, out var value))
+				if(properties.TryGetValue(StorageHeaders.ZFS_CREATION_PROPERTY, out var value))
 				{
 					if(Zongsoft.Common.Convert.TryConvertValue(value, out DateTimeOffset createdTimeOffset))
 						createdTime = createdTimeOffset.LocalDateTime;
