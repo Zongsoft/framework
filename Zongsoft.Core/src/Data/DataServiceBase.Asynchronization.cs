@@ -120,6 +120,47 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 聚合方法
+		public Task<int> CountAsync(string key, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options, cancellation);
+		public Task<int> CountAsync<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options, cancellation);
+		public Task<int> CountAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options, cancellation);
+		public Task<int> CountAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options, cancellation);
+		public Task<int> CountAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options, cancellation);
+		public Task<int> CountAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+			where TKey1 : IEquatable<TKey1>
+			where TKey2 : IEquatable<TKey2>
+			where TKey3 : IEquatable<TKey3>
+			where TKey4 : IEquatable<TKey4>
+			where TKey5 : IEquatable<TKey5> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options, cancellation);
+
+		public async Task<int> CountAsync(ICondition criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+		{
+			//构建数据操作的选项对象
+			if(options == null)
+				options = new DataAggregateOptions();
+
+			//进行授权验证
+			this.Authorize(DataServiceMethod.Count(), options);
+
+			//修整查询条件
+			criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options);
+
+			//执行聚合操作
+			return await this.OnAggregateAsync<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options, cancellation) ?? 0;
+		}
+
+		public Task<int> CountAsync(Data.Condition criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync((ICondition)criteria, member, options, cancellation);
+		public Task<int> CountAsync(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync((ICondition)criteria, member, options, cancellation);
+
 		public Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null, CancellationToken cancellation = default)
