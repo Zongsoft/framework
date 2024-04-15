@@ -171,7 +171,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 上传方法
-		protected async Task<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null)
+		protected async Task<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -193,7 +193,7 @@ namespace Zongsoft.Web
 					option.FileName = pathInfo.FileName;
 
 				option.Cancel = option.Index > 1;
-			});
+			}, cancellation);
 
 			//依次遍历写入的文件对象
 			await foreach(var file in files)
@@ -211,7 +211,8 @@ namespace Zongsoft.Web
 			return null;
 		}
 
-		protected async Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit = 0)
+		protected Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, CancellationToken cancellation = default) => this.UploadAsync(path, uploaded, 0, cancellation);
+		protected async Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -224,7 +225,7 @@ namespace Zongsoft.Web
 
 			//如果上传的内容为空，则返回文件信息的空集
 			if(this.Request.Body == null || this.Request.ContentLength == null || this.Request.ContentLength == 0)
-				return Enumerable.Empty<T>();
+				return Array.Empty<T>();
 
 			//将上传的文件内容依次写入到指定的目录中
 			var files = _accessor.Write(this.Request, pathInfo.GetDirectoryUrl(), option =>
@@ -234,7 +235,7 @@ namespace Zongsoft.Web
 
 				if(!option.Cancel && limit != 1 && pathInfo.IsFile)
 					option.FileName = pathInfo.FileName + "-" + Zongsoft.Common.Randomizer.GenerateString();
-			});
+			}, cancellation);
 
 			T item;
 			var result = new List<T>();
