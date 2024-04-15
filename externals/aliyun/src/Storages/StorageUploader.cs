@@ -81,7 +81,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			if(bufferSize > MAXIMUM_BUFFER_SIZE)
 				throw new ArgumentOutOfRangeException(nameof(bufferSize));
 
-			_bufferSize = Math.Max(bufferSize, MINIMUM_MULTIPART_SIZE);
+			_bufferSize = bufferSize > 0 ? Math.Max(bufferSize, MINIMUM_MULTIPART_SIZE) : DEFAULT_MULTIPART_SIZE;
 			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_path = path.TrimEnd('/', '\\');
 			_extendedProperties = extendedProperties;
@@ -194,7 +194,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			var multipart = new StorageMultipart(_multiparts.Count, _buffer, 0, _bufferedCount);
 
 			//将批量上传片段进行上传
-			return this.FlushAsync(multipart, cancellation);
+			return this.FlushAsync(multipart, cancellation).AsTask();
 		}
 		#endregion
 
@@ -211,7 +211,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			}
 		}
 
-		private async Task<string> InitiateAsync(CancellationToken cancellation)
+		private async ValueTask<string> InitiateAsync(CancellationToken cancellation)
 		{
 			//创建初始化请求包
 			var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", _client.EnsureCreation(_extendedProperties));
@@ -242,7 +242,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return match.Success ? match.Groups["value"].Value : null;
 		}
 
-		private async Task<string> UploadAsync(StorageMultipart multipart, int retries, CancellationToken cancellation = default)
+		private async ValueTask<string> UploadAsync(StorageMultipart multipart, int retries, CancellationToken cancellation = default)
 		{
 			//创建请求
 			var request = _client.CreateHttpRequest(HttpMethod.Put, _path + $"?partNumber={multipart.Index + 1}&uploadId={_identifier}", _extendedProperties);
@@ -267,7 +267,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return await this.UploadAsync(multipart, retries - 1, cancellation);
 		}
 
-		private async Task<long> FlushAsync(StorageMultipart multipart, CancellationToken cancellation = default)
+		private async ValueTask<long> FlushAsync(StorageMultipart multipart, CancellationToken cancellation = default)
 		{
 			//批量上传当前片段(支持失败重试)
 			multipart.Checksum = await this.UploadAsync(multipart, RETRY_COUNT, cancellation);
@@ -287,16 +287,33 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return multipart.Count;
 		}
 
-		private async Task<bool> CompleteAsync(CancellationToken cancellation = default)
+		private async ValueTask<bool> CompleteAsync(CancellationToken cancellation = default)
 		{
-			if(string.IsNullOrEmpty(_identifier) || _multiparts == null || _multiparts.Count == 0)
+			if(string.IsNullOrEmpty(_identifier))
 				return false;
+
+			async ValueTask<bool> FlushBufferAsync(CancellationToken cancellation)
+			{
+				if(_bufferedCount <= 0)
+					return true;
+
+				var multipart = new StorageMultipart(_multiparts == null ? 1 : _multiparts.Count + 1, _buffer, 0, _bufferedCount);
+				return (await this.FlushAsync(multipart, cancellation)) > 0;
+			}
+
+			//尝试将缓存区内的部分数据补发完成（注：补发失败则终止批量上传任务并退出）
+			if(!(await FlushBufferAsync(cancellation)))
+				return true;
 
 			var text = new StringBuilder("<CompleteMultipartUpload>");
 
 			for(int i = 0; i < _multiparts.Count; i++)
 			{
-				text.Append($"<Part><PartNumber>{_multiparts[i].Index + 1}</PartNumber><ETag>\"{_multiparts[i].Checksum}\"</ETag></Part>");
+				text.Append(
+				$"<Part>" +
+					$"<PartNumber>{_multiparts[i].Index + 1}</PartNumber>" +
+					$"<ETag>\"{_multiparts[i].Checksum}\"</ETag>" +
+				$"</Part>");
 			}
 
 			text.Append("</CompleteMultipartUpload>");
@@ -315,7 +332,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return await this.AbortAsync(cancellation);
 		}
 
-		private async Task<bool> AbortAsync(CancellationToken cancellation = default)
+		private async ValueTask<bool> AbortAsync(CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(_identifier))
 				return false;
