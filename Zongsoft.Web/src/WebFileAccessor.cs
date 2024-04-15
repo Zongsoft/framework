@@ -32,6 +32,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Microsoft.Net.Http;
 using Microsoft.Net.Http.Headers;
@@ -162,7 +163,9 @@ namespace Zongsoft.Web
 		/// <summary>修改指定路径的文件描述信息。</summary>
 		/// <param name="request">网络请求消息。</param>
 		/// <param name="path">指定要修改的文件相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
-		public async Task<bool> SetInfo(HttpRequest request, string path)
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回设置是否成功的任务。</returns>
+		public async Task<bool> SetInfo(HttpRequest request, string path, CancellationToken cancellation = default)
 		{
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
@@ -180,7 +183,7 @@ namespace Zongsoft.Web
 
 			if(request.HasFormContentType)
 			{
-				var form = await request.ReadFormAsync(new FormOptions() { });
+				var form = await request.ReadFormAsync(new FormOptions() { }, cancellation);
 
 				foreach(var field in form)
 				{
@@ -201,15 +204,16 @@ namespace Zongsoft.Web
 		/// <param name="request">网络请求消息。</param>
 		/// <param name="directory">指定文件写入的目录路径（绝对路径以“/”斜杠符打头）；如果为空(null)或全空字符串则写入目录为<see cref="BasePath"/>属性值。</param>
 		/// <param name="configure">当文件写入前激发的通知回调。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回写入成功的<see cref="Zongsoft.IO.FileInfo"/>文件描述信息实体对象集。</returns>
-		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> Write(HttpRequest request, string directory = null, Action<WebFileAccessorOptions> configure = null)
+		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> Write(HttpRequest request, string directory = null, Action<WebFileAccessorOptions> configure = null, [EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			//检测请求的内容是否为Multipart类型
 			if(!request.HasFormContentType)
 				throw new InvalidOperationException("Incorrect Content-Type: " + request.ContentType);
 
 			//从当前请求内容读取多段信息并写入文件中
-			var form = await request.ReadFormAsync();
+			var form = await request.ReadFormAsync(cancellation);
 
 			if(form.Files.Count == 0)
 				yield break;
@@ -278,7 +282,7 @@ namespace Zongsoft.Web
 					FileAccess.Write,
 					fileInfo.HasProperties ? fileInfo.Properties : null))
 				{
-					await file.CopyToAsync(stream);
+					await file.CopyToAsync(stream, cancellation);
 				}
 
 				//返回新增的文件信息实体集
