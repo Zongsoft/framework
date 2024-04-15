@@ -201,11 +201,16 @@ namespace Zongsoft.Web
 				if(file == null)
 					continue;
 
-				//如果上传回调方法返回真(True)则将其加入到结果集中，否则删除刚保存的文件
-				if(uploaded == null || uploaded(file))
-					return file;
-
-				DeleteFile(file.Path.Url);
+				try
+				{
+					//上传回调方法返回真(True)则将其加入到结果集中，否则删除刚保存的文件
+					if(uploaded == null || uploaded(file))
+						return file;
+				}
+				catch
+				{
+					DeleteFile(file.Path.Url);
+				}
 			}
 
 			return null;
@@ -237,7 +242,6 @@ namespace Zongsoft.Web
 					option.FileName = pathInfo.FileName + "-" + Zongsoft.Common.Randomizer.GenerateString();
 			}, cancellation);
 
-			T item;
 			var result = new List<T>();
 
 			//依次遍历写入的文件对象
@@ -246,11 +250,20 @@ namespace Zongsoft.Web
 				if(file == null)
 					continue;
 
-				//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
-				if((item = uploaded(file)) != null)
-					result.Add(item);
-				else
+				try
+				{
+					T entry;
+
+					//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
+					if((entry = uploaded(file)) != null)
+						result.Add(entry);
+					else
+						DeleteFile(file.Path.Url);
+				}
+				catch
+				{
 					DeleteFile(file.Path.Url);
+				}
 			}
 
 			return result;
