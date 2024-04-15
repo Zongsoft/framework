@@ -49,48 +49,50 @@ namespace Zongsoft.Web
 		#region 公共方法
 		[HttpGet("[area]/[controller]/{key:required}/[action]")]
 		[HttpGet("[area]/[controller]/[action]/{key?}")]
-		public virtual IActionResult Count(string key)
+		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
-			return this.Content(this.DataService.Count(key, null, this.OptionsBuilder.Count()).ToString());
+			return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Count()
+		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count()).ToString());
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
+
+			return this.Content(count.ToString());
 		}
 
 		[HttpGet("[area]/[controller]/{key:required}/[action]")]
 		[HttpGet("[area]/[controller]/[action]/{key?}")]
-		public virtual IActionResult Exists(string key)
+		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
-			return this.DataService.Exists(key, this.OptionsBuilder.Exists()) ?
-				   this.NoContent() : this.NotFound();
+			return await this.DataService.ExistsAsync(key, this.OptionsBuilder.Exists(), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Exists()
+		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.DataService.Exists(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists()) ?
-				   this.NoContent() : this.NotFound();
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var existed = await this.DataService.ExistsAsync(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists(), cancellation);
+
+			return existed ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpGet("[area]/[controller]/{key?}")]
-		public virtual IActionResult Get(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
+		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
-			return this.Paginate(this.OnGet(key, page, sort));
+			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation));
 		}
 
 		[HttpDelete("[area]/[controller]/{key?}")]
-		public virtual async Task<IActionResult> Delete(string key)
+		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -111,7 +113,7 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += this.OnDelete(part);
+							count += await this.OnDeleteAsync(part, null, cancellation);
 
 						transaction.Commit();
 					}
@@ -120,11 +122,11 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return this.OnDelete(key) > 0 ? this.NoContent() : this.NotFound();
+			return await this.OnDeleteAsync(key, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/[controller]")]
-		public virtual IActionResult Create([FromBody] TModel model)
+		public virtual async Task<IActionResult> CreateAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -141,12 +143,12 @@ namespace Zongsoft.Web
 					return Reflection.Reflector.TryGetValue(ref target, member, out var value) ? value : null;
 			}
 
-			if(this.OnCreate(model) > 0)
+			if(await this.OnCreateAsync(model, null, cancellation) > 0)
 			{
 				var keys = this.DataService.DataAccess.Metadata.Entities[this.DataService.Name].Key;
 
 				if(keys == null || keys.Length == 0)
-					return this.CreatedAtAction(nameof(Get), this.RouteData.Values, model);
+					return this.CreatedAtAction(nameof(GetAsync), this.RouteData.Values, model);
 
 				var text = new System.Text.StringBuilder(50);
 
@@ -159,14 +161,14 @@ namespace Zongsoft.Web
 				}
 
 				this.RouteData.Values["key"] = text.ToString();
-				return this.CreatedAtAction(nameof(Get), this.RouteData.Values, model);
+				return this.CreatedAtAction(nameof(GetAsync), this.RouteData.Values, model);
 			}
 
 			return this.Conflict();
 		}
 
 		[HttpPut("[area]/[controller]")]
-		public virtual IActionResult Upsert([FromBody] TModel model)
+		public virtual async Task<IActionResult> UpsertAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -175,11 +177,11 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			return this.OnUpsert(model) > 0 ? this.Ok(model) : this.Conflict();
+			return await this.OnUpsertAsync(model, null, cancellation) > 0 ? this.Ok(model) : this.Conflict();
 		}
 
 		[HttpPatch("[area]/[controller]/{key}")]
-		public virtual IActionResult Update(string key, [FromBody] TModel model)
+		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -188,48 +190,48 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(model))
 				return this.UnprocessableEntity();
 
-			return this.OnUpdate(key, model) > 0 ?
-				this.NoContent() : this.NotFound();
+			return await this.OnUpdateAsync(key, model, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Query([FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
+		public virtual async Task<IActionResult> QueryAsync([FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			var result = this.DataService.Select(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort, cancellation);
+
 			return this.Paginate(result);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual object OnGet(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings);
+			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings, cancellation);
 		}
 
-		protected virtual int OnDelete(string key, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return string.IsNullOrWhiteSpace(key) ? 0 : this.DataService.Delete(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters));
+			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
 		}
 
-		protected virtual int OnCreate(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnCreateAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.Insert(model, this.GetSchema(), this.OptionsBuilder.Insert(parameters));
+			return this.DataService.InsertAsync(model, this.GetSchema(), this.OptionsBuilder.Insert(parameters), cancellation);
 		}
 
-		protected virtual int OnUpdate(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnUpdateAsync(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return string.IsNullOrWhiteSpace(key) ?
-				this.DataService.Update(model, this.GetSchema(), this.OptionsBuilder.Update(parameters)) :
-				this.DataService.Update(key, model, this.GetSchema(), this.OptionsBuilder.Update(parameters));
+				this.DataService.UpdateAsync(model, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation) :
+				this.DataService.UpdateAsync(key, model, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation);
 		}
 
-		protected virtual int OnUpsert(TModel model, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnUpsertAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.Upsert(model, this.GetSchema(), this.OptionsBuilder.Upsert(parameters));
+			return this.DataService.UpsertAsync(model, this.GetSchema(), this.OptionsBuilder.Upsert(parameters), cancellation);
 		}
 		#endregion
 	}
@@ -242,58 +244,59 @@ namespace Zongsoft.Web
 
 		#region 公共方法
 		[HttpGet("[area]/[controller]/{key:required}/[action]")]
-		public virtual IActionResult Count(string key)
+		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
 
-			return this.Content(this.DataService.Count(key, null, this.OptionsBuilder.Count()).ToString());
+			return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Count()
+		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.Content(this.DataService.Count(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count()).ToString());
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
+			return this.Content(count.ToString());
 		}
 
 		[HttpGet("[area]/[controller]/[action]/{key:required}")]
-		public virtual IActionResult Exists(string key)
+		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
 
-			return this.DataService.Exists(key, this.OptionsBuilder.Exists()) ?
-				   this.NoContent() : this.NotFound();
+			return await this.DataService.ExistsAsync(key, this.OptionsBuilder.Exists(), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Exists()
+		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			return this.DataService.Exists(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists()) ?
-				   this.NoContent() : this.NotFound();
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var existed = await this.DataService.ExistsAsync(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists(), cancellation);
+
+			return existed ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpGet("[area]/{key:required}/[controller]")]
 		[HttpGet("[area]/[controller]/{key:required}")]
-		public virtual IActionResult Get(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null)
+		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
 
-			return this.Paginate(this.OnGet(key, page, sort));
+			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation));
 		}
 
 		[HttpDelete("[area]/{key:required}/[controller]")]
 		[HttpDelete("[area]/[controller]/{key?}")]
-		public virtual async Task<IActionResult> Delete(string key)
+		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -314,7 +317,7 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += this.OnDelete(part);
+							count += await this.OnDeleteAsync(part, null, cancellation);
 
 						transaction.Commit();
 					}
@@ -323,11 +326,11 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return this.OnDelete(key) > 0 ? this.NoContent() : this.NotFound();
+			return await this.OnDeleteAsync(key, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/{key:required}/[controller]")]
-		public virtual IActionResult Create(string key, [FromBody]IEnumerable<TModel> data)
+		public virtual async Task<IActionResult> CreateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -339,14 +342,14 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(data))
 				return this.UnprocessableEntity();
 
-			if(this.OnCreate(key, data) > 0)
+			if(await this.OnCreateAsync(key, data, null, cancellation) > 0)
 				return this.Created(this.Request.Path, data);
 
 			return this.Conflict();
 		}
 
 		[HttpPut("[area]/{key:required}/[controller]")]
-		public virtual IActionResult Upsert(string key, [FromBody]IEnumerable<TModel> data)
+		public virtual async Task<IActionResult> UpsertAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -358,11 +361,11 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(data))
 				return this.UnprocessableEntity();
 
-			return this.OnUpsert(key, data) > 0 ? this.Ok(data) : this.Conflict();
+			return await this.OnUpsertAsync(key, data, null, cancellation) > 0 ? this.Ok(data) : this.Conflict();
 		}
 
 		[HttpPatch("[area]/{key:required}/[controller]")]
-		public virtual IActionResult Update(string key, [FromBody]IEnumerable<TModel> data)
+		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -374,46 +377,46 @@ namespace Zongsoft.Web
 			if(!this.TryValidateModel(data))
 				return this.UnprocessableEntity();
 
-			return this.OnUpdate(key, data) > 0 ?
-				this.NoContent() : this.NotFound();
+			return await this.OnUpdateAsync(key, data, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> Query([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null)
+		public virtual async Task<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Zongsoft.Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria);
-			var result = this.DataService.Select(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort, cancellation);
+
 			return this.Paginate(result);
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual object OnGet(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings);
+			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings, cancellation);
 		}
 
-		protected virtual int OnDelete(string key, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return string.IsNullOrWhiteSpace(key) ? 0 : this.DataService.Delete(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters));
+			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
 		}
 
-		protected virtual int OnCreate(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnCreateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.InsertMany(key, data, this.GetSchema(), this.OptionsBuilder.Insert(parameters));
+			return this.DataService.InsertManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Insert(parameters), cancellation);
 		}
 
-		protected virtual int OnUpsert(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnUpsertAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.UpsertMany(key, data, this.GetSchema(), this.OptionsBuilder.Upsert(parameters));
+			return this.DataService.UpsertManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Upsert(parameters), cancellation);
 		}
 
-		protected virtual int OnUpdate(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected virtual Task<int> OnUpdateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.UpdateMany(key, data, this.GetSchema(), this.OptionsBuilder.Update(parameters));
+			return this.DataService.UpdateManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation);
 		}
 		#endregion
 	}
