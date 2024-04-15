@@ -103,7 +103,7 @@ namespace Zongsoft.Web
 			var headers = request.GetTypedHeaders();
 			var encoding = headers.ContentType?.Encoding ?? Encoding.UTF8;
 
-			if(!headers.ContentType.IsSubsetOf(TEXT))
+			if(headers.ContentType == null || !headers.ContentType.IsSubsetOf(TEXT))
 				return null;
 
 			using(var reader = new StreamReader(
