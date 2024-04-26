@@ -68,6 +68,7 @@ namespace Zongsoft.Web
 
 				if(string.IsNullOrEmpty(module))
 				{
+					controller.RouteValues["module"] = string.Empty;
 					controller.RouteValues["area"] = ancestor;
 				}
 				else
@@ -80,10 +81,15 @@ namespace Zongsoft.Web
 			{
 				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
-				if(!string.IsNullOrEmpty(module))
+				if(string.IsNullOrEmpty(module))
 				{
-					controller.RouteValues["module"] = module;
+					controller.RouteValues["area"] = string.Empty;
+					controller.RouteValues["module"] = string.Empty;
+				}
+				else
+				{
 					controller.RouteValues["area"] = module;
+					controller.RouteValues["module"] = module;
 				}
 			}
 
