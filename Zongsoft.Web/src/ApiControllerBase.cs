@@ -42,6 +42,7 @@ using Zongsoft.Data;
 namespace Zongsoft.Web
 {
 	[ApiController]
+	[Obsolete($"Please use {nameof(ServiceController<TModel, TService>)} class instead.")]
 	public class ApiControllerBase<TModel, TService> : ControllerBase where TService : class, IDataService<TModel>
 	{
 		#region 单例字段
