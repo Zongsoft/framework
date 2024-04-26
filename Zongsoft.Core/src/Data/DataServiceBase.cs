@@ -458,7 +458,7 @@ namespace Zongsoft.Data
 					foreach(var serviceDescriptor in serviceDescriptors[i])
 					{
 						foreach(var contract in serviceDescriptor)
-							_subservices.Add(contract, subservice);
+							_subservices.TryAdd(contract, subservice);
 					}
 				}
 			}
