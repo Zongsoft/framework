@@ -53,9 +53,8 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 构造函数
-		protected ServiceControllerBase(IServiceProvider serviceProvider)
+		protected ServiceControllerBase()
 		{
-			this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			this.OptionsBuilder = new DataOptionsBuilder(this);
 		}
 		#endregion
@@ -68,7 +67,6 @@ namespace Zongsoft.Web
 		protected virtual bool CanImport => this.DataService is IDataImportable importable && importable.CanImport;
 		protected virtual bool CanExport => this.DataService is IDataExportable exportable && exportable.CanExport;
 		protected TService DataService => _dataService ??= this.GetService() ?? throw new InvalidOperationException("Missing required data service.");
-		protected IServiceProvider ServiceProvider { get; }
 		internal DataOptionsBuilder OptionsBuilder { get; }
 		#endregion
 
@@ -311,7 +309,7 @@ namespace Zongsoft.Web
 						type = type.DeclaringType;
 					}
 
-					if(this.ServiceProvider.GetService(type) is IDataService service)
+					if(this.HttpContext.RequestServices.GetService(type) is IDataService service)
 					{
 						while(service != null && stack.TryPop(out type))
 						{
@@ -324,7 +322,7 @@ namespace Zongsoft.Web
 				}
 				else
 				{
-					if(this.ServiceProvider.GetService(typeof(TService).DeclaringType) is IDataService service)
+					if(this.HttpContext.RequestServices.GetService(typeof(TService).DeclaringType) is IDataService service)
 					{
 						var result = service.GetService<TService>();
 
@@ -334,7 +332,7 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return (TService)this.ServiceProvider.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
+			return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
 		}
 
 		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);

@@ -42,10 +42,6 @@ namespace Zongsoft.Web
 {
 	public class ServiceController<TModel, TService> : ServiceControllerBase<TModel, TService> where TService : class, IDataService<TModel>
 	{
-		#region 构造函数
-		protected ServiceController(IServiceProvider serviceProvider) : base(serviceProvider) { }
-		#endregion
-
 		#region 公共方法
 		[HttpGet("[area]/[controller]/{key:required}/[action]")]
 		[HttpGet("[area]/[controller]/[action]/{key?}")]
@@ -238,10 +234,6 @@ namespace Zongsoft.Web
 
 	public class SubserviceController<TModel, TService> : ServiceControllerBase<TModel, TService> where TService : class, IDataService<TModel>
 	{
-		#region 构造函数
-		protected SubserviceController(IServiceProvider serviceProvider) : base(serviceProvider) { }
-		#endregion
-
 		#region 公共方法
 		[HttpGet("[area]/[controller]/{key:required}/[action]")]
 		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
