@@ -144,7 +144,7 @@ namespace Zongsoft.Web
 				var keys = this.DataService.DataAccess.Metadata.Entities[this.DataService.Name].Key;
 
 				if(keys == null || keys.Length == 0)
-					return this.CreatedAtAction(nameof(GetAsync), this.RouteData.Values, model);
+					return this.CreatedAtAction("Get", this.RouteData.Values, model);
 
 				var text = new System.Text.StringBuilder(50);
 
@@ -157,7 +157,7 @@ namespace Zongsoft.Web
 				}
 
 				this.RouteData.Values["key"] = text.ToString();
-				return this.CreatedAtAction(nameof(GetAsync), this.RouteData.Values, model);
+				return this.CreatedAtAction("Get", this.RouteData.Values, model);
 			}
 
 			return this.Conflict();
