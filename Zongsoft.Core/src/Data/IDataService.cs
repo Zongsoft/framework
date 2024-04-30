@@ -103,12 +103,12 @@ namespace Zongsoft.Data
 		/// <summary>获取指定类型的嵌套子服务。</summary>
 		/// <typeparam name="TService">指定要获取的嵌套子服务类型。</typeparam>
 		/// <returns>如果查找成功则返回指定类型的子服务，否则返回空(<c>null</c>)。</returns>
-		TService GetService<TService>() where TService : class, IDataService;
+		TService GetSubservice<TService>() where TService : class, IDataService;
 
 		/// <summary>获取指定类型的嵌套子服务。</summary>
 		/// <param name="type">指定要获取的嵌套子服务类型。</param>
 		/// <returns>如果查找成功则返回指定类型的子服务，否则返回空(<c>null</c>)。</returns>
-		IDataService GetService(Type type);
+		IDataService GetSubservice(Type type);
 		#endregion
 
 		#region 执行方法

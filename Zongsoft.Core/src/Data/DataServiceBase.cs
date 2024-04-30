@@ -464,8 +464,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public IDataService GetService(Type type) => type != null && _subservices != null && _subservices.TryGetValue(type, out var result) ? result : null;
-		public TService GetService<TService>() where TService : class, IDataService => _subservices != null && _subservices.TryGetValue(typeof(TService), out var result) ? (TService)result : default;
+		public IDataService GetSubservice(Type type) => type != null && _subservices != null && _subservices.TryGetValue(type, out var result) ? result : null;
+		public TService GetSubservice<TService>() where TService : class, IDataService => _subservices != null && _subservices.TryGetValue(typeof(TService), out var result) ? (TService)result : default;
 		#endregion
 
 		#region 授权验证
