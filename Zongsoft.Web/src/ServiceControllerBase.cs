@@ -313,7 +313,7 @@ namespace Zongsoft.Web
 					{
 						while(service != null && stack.TryPop(out type))
 						{
-							service = service.GetService(type);
+							service = service.GetSubservice(type);
 						}
 
 						if(service is TService result)
@@ -324,7 +324,7 @@ namespace Zongsoft.Web
 				{
 					if(this.HttpContext.RequestServices.GetService(typeof(TService).DeclaringType) is IDataService service)
 					{
-						var result = service.GetService<TService>();
+						var result = service.GetSubservice<TService>();
 
 						if(result != null)
 							return result;
