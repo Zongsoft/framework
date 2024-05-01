@@ -55,9 +55,7 @@ namespace Zongsoft.Web
 				if(paging == null || Paging.IsDisabled(paging))
 					return null;
 
-				return paging.PageIndex.ToString() + "/" +
-					   paging.PageCount.ToString() + "(" +
-					   paging.TotalCount.ToString() + ")";
+				return $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
 			}
 
 			if(data == null)

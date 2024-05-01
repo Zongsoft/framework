@@ -274,11 +274,7 @@ namespace Zongsoft.Data.Common
 				_context = context ?? throw new ArgumentNullException(nameof(context));
 				_statement = statement ?? throw new ArgumentNullException(nameof(statement));
 				_command = command ?? throw new ArgumentNullException(nameof(command));
-
-				if(paginate != null)
-					_paginate = paginate;
-				else
-					_paginate = (key, paging) => this.OnPaginated(key, paging);
+				_paginate = paginate ?? this.OnPaginated;
 			}
 			#endregion
 
@@ -558,28 +554,16 @@ namespace Zongsoft.Data.Common
 			#endregion
 		}
 
-		private struct SlaveToken
+		private readonly struct SlaveToken(SchemaMember schema, IEnumerable<DataSelectExecutor.ParameterToken> parameters)
 		{
-			public readonly SchemaMember Schema;
-			public readonly IEnumerable<ParameterToken> Parameters;
-
-			public SlaveToken(SchemaMember schema, IEnumerable<ParameterToken> parameters)
-			{
-				this.Schema = schema;
-				this.Parameters = parameters;
-			}
+			public readonly SchemaMember Schema = schema;
+			public readonly IEnumerable<ParameterToken> Parameters = parameters;
 		}
 
-		private struct ParameterToken
+		private readonly struct ParameterToken(string name, int ordinal)
 		{
-			public readonly string Name;
-			public readonly int Ordinal;
-
-			public ParameterToken(string name, int ordinal)
-			{
-				this.Name = name;
-				this.Ordinal = ordinal;
-			}
+			public readonly string Name = name;
+			public readonly int Ordinal = ordinal;
 		}
 		#endregion
 	}
