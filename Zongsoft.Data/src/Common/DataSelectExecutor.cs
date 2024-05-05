@@ -64,7 +64,18 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
-			context.Result = CreateResults(context.ModelType, context, statement, command, null, 0);
+
+			if(context.Paging != null && context.Paging.Enabled)
+			{
+				var reader = command.ExecuteReader();
+
+				if(reader.Read())
+					context.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+
+				reader.NextResult();
+			}
+
+			context.Result = CreateResults(context.ModelType, context, statement, command.ExecuteReader(), 0);
 
 			return false;
 		}
@@ -159,13 +170,23 @@ namespace Zongsoft.Data.Common
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
 		}
 
-		protected virtual Task<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
+		protected virtual async Task<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
-			context.Result = CreateResults(context.ModelType, context, statement, command, null, 0);
 
-			return Task.FromResult(false);
+			if(context.Paging != null && context.Paging.Enabled)
+			{
+				var reader = await command.ExecuteReaderAsync(cancellation);
+
+				if(await reader.ReadAsync(cancellation))
+					context.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+
+				await reader.NextResultAsync(cancellation);
+			}
+
+			context.Result = CreateResults(context.ModelType, context, statement, await command.ExecuteReaderAsync(cancellation), 0);
+			return false;
 		}
 
 		protected virtual async Task<bool> OnExecuteAsync(DataInsertContext context, SelectStatement statement, CancellationToken cancellation)
@@ -241,40 +262,34 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginator, int skip = 0)
+		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip = 0)
 		{
 			return (IEnumerable)System.Activator.CreateInstance(
 				typeof(LazyCollection<>).MakeGenericType(elementType),
 				new object[]
 				{
-					context, statement, command, paginator, skip
+					context, statement, reader, skip
 				});
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class LazyCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable, IPageable
+		private class LazyCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
 		{
-			#region 公共事件
-			public event EventHandler<PagingEventArgs> Paginated;
-			#endregion
-
 			#region 成员变量
 			private readonly int _skip;
-			private readonly DbCommand _command;
+			private readonly DbDataReader _reader;
 			private readonly DataSelectContext _context;
 			private readonly SelectStatement _statement;
-			private readonly Action<string, Paging> _paginate;
 			#endregion
 
 			#region 构造函数
-			public LazyCollection(DataSelectContext context, SelectStatement statement, DbCommand command, Action<string, Paging> paginate, int skip)
+			public LazyCollection(DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip)
 			{
 				_skip = skip;
 				_context = context ?? throw new ArgumentNullException(nameof(context));
 				_statement = statement ?? throw new ArgumentNullException(nameof(statement));
-				_command = command ?? throw new ArgumentNullException(nameof(command));
-				_paginate = paginate ?? this.OnPaginated;
+				_reader = reader ?? throw new ArgumentNullException(nameof(reader));
 			}
 			#endregion
 
@@ -283,23 +298,9 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 遍历迭代
-			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
-			{
-				var iterator = (IAsyncEnumerator<T>)new LazyIterator(_context, _statement, await _command.ExecuteReaderAsync(cancellation), _paginate, _skip);
-
-				while(await iterator.MoveNextAsync())
-					yield return iterator.Current;
-			}
-
-			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _paginate, _skip);
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation) => new LazyIterator(_context, _statement, _reader, _skip);
+			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _reader, _skip);
 			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-			#endregion
-
-			#region 激发事件
-			protected virtual void OnPaginated(string key, Paging paging)
-			{
-				this.Paginated?.Invoke(this, new PagingEventArgs(key, paging));
-			}
 			#endregion
 
 			#region 数据迭代
@@ -307,7 +308,6 @@ namespace Zongsoft.Data.Common
 			{
 				#region 成员变量
 				private DbDataReader _reader;
-				private Action<string, Paging> _paginate;
 				private readonly int _skip;
 				private readonly IDataPopulator _populator;
 				private readonly DataSelectContext _context;
@@ -316,7 +316,7 @@ namespace Zongsoft.Data.Common
 				#endregion
 
 				#region 构造函数
-				public LazyIterator(DataSelectContext context, SelectStatement statement, DbDataReader reader, Action<string, Paging> paginate, int skip)
+				public LazyIterator(DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip)
 				{
 					var entity = context.Entity;
 
@@ -333,7 +333,6 @@ namespace Zongsoft.Data.Common
 					_context = context;
 					_statement = statement;
 					_reader = reader;
-					_paginate = paginate;
 					_skip = skip;
 					_slaves = GetSlaves(_context, _statement, _reader);
 
@@ -442,7 +441,7 @@ namespace Zongsoft.Data.Common
 							}
 
 							//创建一个新的查询结果集
-							var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _paginate, _skip + 1);
+							var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command.ExecuteReader(), _skip + 1);
 
 							//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
 							if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
@@ -505,24 +504,7 @@ namespace Zongsoft.Data.Common
 					var reader = Interlocked.Exchange(ref _reader, null);
 
 					if(reader != null)
-					{
-						try
-						{
-							//处理分页的总记录数
-							if(_statement.Paging != null && _statement.Paging.PageSize > 0)
-							{
-								if(reader.NextResult() && reader.Read())
-								{
-									_statement.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-									_paginate?.Invoke(_statement.Alias, _statement.Paging);
-								}
-							}
-						}
-						finally
-						{
-							reader.Dispose();
-						}
-					}
+						reader.Dispose();
 				}
 
 				public async ValueTask DisposeAsync()
@@ -530,24 +512,7 @@ namespace Zongsoft.Data.Common
 					var reader = Interlocked.Exchange(ref _reader, null);
 
 					if(reader != null)
-					{
-						try
-						{
-							//处理分页的总记录数
-							if(_statement.Paging != null && _statement.Paging.PageSize > 0)
-							{
-								if(await reader.NextResultAsync() && await reader.ReadAsync())
-								{
-									_statement.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-									_paginate?.Invoke(_statement.Alias, _statement.Paging);
-								}
-							}
-						}
-						finally
-						{
-							await reader.DisposeAsync();
-						}
-					}
+						await reader.DisposeAsync();
 				}
 				#endregion
 			}
