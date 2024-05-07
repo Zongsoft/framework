@@ -84,7 +84,8 @@ namespace Zongsoft.Web
 		[HttpGet("[area]/[controller]/{key?}")]
 		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
-			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation));
+			page ??= Paging.Page(1);
+			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation), page);
 		}
 
 		[HttpDelete("[area]/[controller]/{key?}")]
@@ -195,10 +196,11 @@ namespace Zongsoft.Web
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
+			page ??= Paging.Page(1);
 			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort, cancellation);
+			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation);
 
-			return this.Paginate(result);
+			return this.Paginate(result, page);
 		}
 		#endregion
 
@@ -283,7 +285,8 @@ namespace Zongsoft.Web
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
 
-			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation));
+			page ??= Paging.Page(1);
+			return this.Paginate(await this.OnGetAsync(key, page, sort, null, cancellation), page);
 		}
 
 		[HttpDelete("[area]/{key:required}/[controller]")]
@@ -378,10 +381,11 @@ namespace Zongsoft.Web
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
+			page ??= Paging.Page(1);
 			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Select(), sort, cancellation);
+			var result = await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation);
 
-			return this.Paginate(result);
+			return this.Paginate(result, page);
 		}
 		#endregion
 

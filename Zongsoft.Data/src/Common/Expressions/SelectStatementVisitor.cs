@@ -58,6 +58,18 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected override void OnVisiting(ExpressionVisitorContext context, SelectStatement statement)
 		{
+			if(!string.IsNullOrEmpty(statement.Alias))
+				context.WriteLine($"/* {statement.Alias} */");
+
+			//调用基类同名方法
+			base.OnVisiting(context, statement);
+		}
+
+		protected override void OnVisited(ExpressionVisitorContext context, SelectStatement statement)
+		{
+			if(context.Depth == 0)
+				context.WriteLine(";");
+
 			if(statement.Paging != null && statement.Paging.Enabled)
 			{
 				/*
@@ -91,18 +103,6 @@ namespace Zongsoft.Data.Common.Expressions
 					context.WriteLine(") AS __wrapping__");
 				}
 			}
-
-			if(!string.IsNullOrEmpty(statement.Alias))
-				context.WriteLine($"/* {statement.Alias} */");
-
-			//调用基类同名方法
-			base.OnVisiting(context, statement);
-		}
-
-		protected override void OnVisited(ExpressionVisitorContext context, SelectStatement statement)
-		{
-			if(context.Depth == 0)
-				context.WriteLine(";");
 
 			//调用基类同名方法
 			base.OnVisited(context, statement);

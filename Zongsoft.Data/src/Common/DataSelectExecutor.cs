@@ -65,18 +65,17 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			//如果启用了分页，则先获取分页信息
 			if(context.Paging != null && context.Paging.Enabled)
 			{
-				var reader = command.ExecuteReader();
+				using var reader = command.ExecuteReader();
 
-				if(reader.Read())
+				//注意：分页结果位于数据查询集的后面，具体参考 SelectStatementVisitor 类
+				if(reader.NextResult() && reader.Read())
 					context.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-
-				reader.NextResult();
 			}
 
-			context.Result = CreateResults(context.ModelType, context, statement, command.ExecuteReader(), 0);
-
+			context.Result = CreateResults(context.ModelType, context, statement, command, 0);
 			return false;
 		}
 
@@ -175,17 +174,17 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			//如果启用了分页，则先获取分页信息
 			if(context.Paging != null && context.Paging.Enabled)
 			{
-				var reader = await command.ExecuteReaderAsync(cancellation);
+				using var reader = await command.ExecuteReaderAsync(cancellation);
 
-				if(await reader.ReadAsync(cancellation))
+				//注意：分页结果位于数据查询集的后面，具体参考 SelectStatementVisitor 类
+				if(await reader.NextResultAsync(cancellation) && await reader.ReadAsync(cancellation))
 					context.Paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-
-				await reader.NextResultAsync(cancellation);
 			}
 
-			context.Result = CreateResults(context.ModelType, context, statement, await command.ExecuteReaderAsync(cancellation), 0);
+			context.Result = CreateResults(context.ModelType, context, statement, command, 0);
 			return false;
 		}
 
@@ -262,13 +261,13 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip = 0)
+		private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, int skip = 0)
 		{
 			return (IEnumerable)System.Activator.CreateInstance(
 				typeof(LazyCollection<>).MakeGenericType(elementType),
 				new object[]
 				{
-					context, statement, reader, skip
+					context, statement, command, skip
 				});
 		}
 		#endregion
@@ -278,18 +277,18 @@ namespace Zongsoft.Data.Common
 		{
 			#region 成员变量
 			private readonly int _skip;
-			private readonly DbDataReader _reader;
+			private readonly DbCommand _command;
 			private readonly DataSelectContext _context;
 			private readonly SelectStatement _statement;
 			#endregion
 
 			#region 构造函数
-			public LazyCollection(DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip)
+			public LazyCollection(DataSelectContext context, SelectStatement statement, DbCommand command, int skip)
 			{
 				_skip = skip;
 				_context = context ?? throw new ArgumentNullException(nameof(context));
 				_statement = statement ?? throw new ArgumentNullException(nameof(statement));
-				_reader = reader ?? throw new ArgumentNullException(nameof(reader));
+				_command = command ?? throw new ArgumentNullException(nameof(command));
 			}
 			#endregion
 
@@ -298,9 +297,15 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 遍历迭代
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation) => new LazyIterator(_context, _statement, _reader, _skip);
-			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _reader, _skip);
 			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _skip);
+			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
+			{
+				var iterator = new LazyIterator(_context, _statement, await _command.ExecuteReaderAsync(cancellation), _skip);
+
+				while(await iterator.MoveNextAsync())
+					yield return iterator.Current;
+			}
 			#endregion
 
 			#region 数据迭代
@@ -441,7 +446,7 @@ namespace Zongsoft.Data.Common
 							}
 
 							//创建一个新的查询结果集
-							var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command.ExecuteReader(), _skip + 1);
+							var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
 
 							//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
 							if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))

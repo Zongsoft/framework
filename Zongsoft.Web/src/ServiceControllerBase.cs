@@ -29,9 +29,10 @@
 
 using System;
 using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -269,19 +270,25 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 保护方法
-		protected IActionResult Paginate(object data)
+		protected IActionResult Paginate(object data, Paging paging)
 		{
 			if(data == null)
 				return this.NotFound();
 
+			if(paging != null && paging.TotalCount > 0)
+				this.Response.Headers.TryAdd("X-Pagination", $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})");
+
 			if(data is IActionResult result)
 				return result;
+
+			if(data is ICollection collection && collection.Count == 0)
+				return this.NoContent();
 
 			//如果模型类型是值类型并且结果数据类型是该值类型并且结果数据等于空值，则返回HTTP状态为无内容
 			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
 				return this.NoContent();
 
-			return WebUtility.Paginate(data);
+			return this.Ok(data);
 		}
 		#endregion
 
