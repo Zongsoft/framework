@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -102,10 +103,19 @@ namespace Zongsoft.Security.Web.Controllers
 
 		[HttpGet("{name?}")]
 		[HttpGet("{namespace:required}:{name:required}")]
-		public Task<IActionResult> Get(string @namespace, string name, [FromQuery] Paging page = null)
+		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging page = null)
 		{
-			if (string.IsNullOrEmpty(name) || name == "*")
-				return Task.FromResult(WebUtility.Paginate(this.RoleProvider.GetRoles(@namespace, page ?? Paging.Page(1))));
+			if(string.IsNullOrEmpty(name) || name == "*")
+			{
+				page ??= Paging.Page(1);
+
+				var roles = this.RoleProvider.GetRoles(@namespace, page);
+				if(roles == null || !roles.Any())
+					return Task.FromResult((IActionResult)this.NoContent());
+
+				this.Response.Headers.TryAdd("X-Pagination", $"{page.PageIndex}/{page.PageCount}({page.TotalCount})");
+				return Task.FromResult((IActionResult)this.Ok(roles));
+			}
 
 			var result = this.RoleProvider.GetRole(name, @namespace);
 
@@ -117,7 +127,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("{id}")]
 		public Task<IActionResult> Delete(uint id)
 		{
-			if (id == 0)
+			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.RoleProvider.Delete(id) > 0 ?
@@ -130,12 +140,12 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var ids = Common.StringExtension.Slice<uint>(content, new[] { ',', '|' }, uint.TryParse).ToArray();
 
-			if (ids == null || ids.Length == 0)
+			if(ids == null || ids.Length == 0)
 				return this.BadRequest();
 
 			return this.RoleProvider.Delete(ids) > 0 ?
@@ -144,15 +154,12 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[HttpPost]
-		[ProducesResponseType(StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status409Conflict)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public ActionResult<TRole> Create([FromBody] TRole model)
 		{
-			if (model == null)
+			if(model == null)
 				return this.BadRequest();
 
-			if (this.RoleProvider.Create(model))
+			if(this.RoleProvider.Create(model))
 				return this.CreatedAtAction(nameof(Get), new { id = model.RoleId }, model);
 
 			return this.Conflict();
@@ -162,7 +169,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpPatch("{id:required}")]
 		public Task<IActionResult> Update(uint id, [FromBody] TRole model)
 		{
-			if (id == 0)
+			if(id == 0)
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.RoleProvider.Update(id, model) ?
@@ -176,7 +183,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.RoleProvider.SetNamespace(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
@@ -188,7 +195,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.RoleProvider.SetName(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
@@ -200,7 +207,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.RoleProvider.SetNickname(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
@@ -212,7 +219,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			return this.RoleProvider.SetDescription(id, content) ? (IActionResult)this.NoContent() : this.NotFound();
@@ -231,7 +238,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("exists/{namespace}:{name}")]
 		public Task<IActionResult> Exists(string @namespace, string name)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			if(string.IsNullOrWhiteSpace(name))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.RoleProvider.Exists(name, @namespace) ?
@@ -269,7 +276,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var members = Zongsoft.Common.StringExtension.Slice<uint>(content, ',', uint.TryParse).Select(roleId => new Member(roleId, id, MemberType.Role));
@@ -327,7 +334,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpGet("Authorizes/{id}")]
 		public IActionResult Authorizes(uint id)
 		{
-			if (id == 0)
+			if(id == 0)
 				return this.BadRequest();
 
 			return this.Ok(this.Authorizer.Authorizes(id, MemberType.Role).Select(p =>
@@ -360,7 +367,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("{id}/Permission/{target}:{actionId}")]
 		public Task<IActionResult> RemovePermission(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
+			if(string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissions(id, MemberType.Role, target, actionId) > 0 ?
@@ -399,7 +406,7 @@ namespace Zongsoft.Security.Web.Controllers
 		[HttpDelete("{id}/Permission.Filter/{target}:{actionId}")]
 		public Task<IActionResult> RemovePermissionFilter(uint id, string target, string actionId)
 		{
-			if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
+			if(string.IsNullOrEmpty(target) || string.IsNullOrEmpty(actionId))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
 			return this.PermissionProvider.RemovePermissionFilters(id, MemberType.Role, target, actionId) > 0 ?
