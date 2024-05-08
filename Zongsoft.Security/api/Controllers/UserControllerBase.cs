@@ -107,13 +107,11 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			if(string.IsNullOrEmpty(identity) || identity == "*")
 			{
-				page ??= Paging.Page(1);
-
-				var users = this.UserProvider.GetUsers(@namespace, page);
+				var users = this.UserProvider.GetUsers(@namespace, page ??= Paging.Page(1));
 				if(users == null || !users.Any())
 					return Task.FromResult((IActionResult)this.NoContent());
 
-				this.Response.Headers.TryAdd("X-Pagination", $"{page.PageIndex}/{page.PageCount}({page.TotalCount})");
+				this.Response.Headers.TryAdd("X-Pagination", page.ToString());
 				return Task.FromResult((IActionResult)this.Ok(users));
 			}
 
