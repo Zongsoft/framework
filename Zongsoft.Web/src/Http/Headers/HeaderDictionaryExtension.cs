@@ -31,30 +31,33 @@ using System;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Headers;
-using Microsoft.AspNetCore.Http.Extensions;
 
 namespace Zongsoft.Web.Http.Headers
 {
 	public static class HeaderDictionaryExtension
 	{
-		private static readonly string X_Schema_Header = "x-data-schema";
-		private static readonly string X_Paging_Header = "x-data-paging";
+		private static readonly string X_Schema_Header     = "X-Data-Schema";
+		private static readonly string X_Pagination_Header = "X_Pagination";
 
 		public static string GetDataSchema(this IHeaderDictionary headers)
 		{
 			return headers.TryGetValue(X_Schema_Header, out var value) ? (string)value : null;
 		}
 
-		public static void SetDataPaging(this IHeaderDictionary headers, Zongsoft.Data.Paging paging)
+		/// <summary>设置分页信息头。</summary>
+		/// <param name="headers">待设置的头集合。</param>
+		/// <param name="paging">待设置的分页信息。</param>
+		/// <returns>如果指定的分页信息位于数据页内则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		public static bool SetPagination(this IHeaderDictionary headers, Zongsoft.Data.Paging paging)
 		{
-			if(paging == null || Zongsoft.Data.Paging.IsDisabled(paging))
-				headers.Remove(X_Paging_Header);
+			var result = paging != null && paging.PageCount > 0 && paging.PageSize > 0;
+
+			if(result)
+				headers[X_Pagination_Header] = paging.ToString();
 			else
-				headers[X_Paging_Header] =
-				    paging.PageIndex.ToString() + "/" +
-				    paging.PageCount.ToString() + "(" +
-				    paging.TotalCount.ToString() + ")";
+				headers.Remove(X_Pagination_Header);
+
+			return result && paging.PageIndex <= paging.PageCount;
 		}
 	}
 }

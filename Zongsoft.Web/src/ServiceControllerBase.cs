@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Http;
 
 using Zongsoft.IO;
 using Zongsoft.Data;
+using Zongsoft.Web.Http.Headers;
 
 namespace Zongsoft.Web
 {
@@ -270,25 +271,21 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 保护方法
+		protected IActionResult Paginate(Paging paging, object data) => this.Paginate(data, paging);
 		protected IActionResult Paginate(object data, Paging paging)
 		{
 			if(data == null)
 				return this.NotFound();
 
-			if(paging != null && paging.TotalCount > 0)
-				this.Response.Headers.TryAdd("X-Pagination", $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})");
-
 			if(data is IActionResult result)
 				return result;
-
-			if(data is ICollection collection && collection.Count == 0)
-				return this.NoContent();
 
 			//如果模型类型是值类型并且结果数据类型是该值类型并且结果数据等于空值，则返回HTTP状态为无内容
 			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
 				return this.NoContent();
 
-			return this.Ok(data);
+			//设置响应的分页头，并返回响应结果
+			return paging == null || this.Response.Headers.SetPagination(paging) ? this.Ok(data) : this.NoContent();
 		}
 		#endregion
 

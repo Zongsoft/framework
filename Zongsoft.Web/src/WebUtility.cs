@@ -30,14 +30,14 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections;
-using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Data;
+using Zongsoft.Web.Http.Headers;
 
 namespace Zongsoft.Web
 {
@@ -48,6 +48,25 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 公共方法
+		public static IActionResult Paginate(this ControllerBase controller, Paging paging, object data) => Paginate(controller, data, paging);
+		public static IActionResult Paginate(this ControllerBase controller, object data, Paging paging)
+		{
+			ArgumentNullException.ThrowIfNull(controller);
+
+			if(data == null)
+				return new NotFoundResult();
+
+			if(data is IActionResult result)
+				return result;
+
+			//如果数据类型是值类型并且其值等于默认值，则返回HTTP状态为无内容
+			if(data.GetType().IsValueType && object.Equals(data, Zongsoft.Common.TypeExtension.GetDefaultValue(data.GetType())))
+				return new NoContentResult();
+
+			//设置响应的分页头，并返回响应结果
+			return paging == null || controller.Response.Headers.SetPagination(paging) ? new OkObjectResult(data) : new NoContentResult();
+		}
+
 		public static async Task<string> ReadAsStringAsync(this HttpRequest request)
 		{
 			if(request == null)

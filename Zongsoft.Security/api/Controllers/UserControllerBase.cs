@@ -106,14 +106,7 @@ namespace Zongsoft.Security.Web.Controllers
 		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging page = null)
 		{
 			if(string.IsNullOrEmpty(identity) || identity == "*")
-			{
-				var users = this.UserProvider.GetUsers(@namespace, page ??= Paging.Page(1));
-				if(users == null || !users.Any())
-					return Task.FromResult((IActionResult)this.NoContent());
-
-				this.Response.Headers.TryAdd("X-Pagination", page.ToString());
-				return Task.FromResult((IActionResult)this.Ok(users));
-			}
+				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.UserProvider.GetUsers(@namespace, page)));
 
 			var result = this.UserProvider.GetUser(identity, @namespace);
 
