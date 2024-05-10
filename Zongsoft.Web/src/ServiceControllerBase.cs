@@ -118,8 +118,11 @@ namespace Zongsoft.Web
 				var data = this.DataService.Select(
 					Criteria.Transform(criteria as IModel),
 					this.GetSchema(),
-					page ?? Paging.Page(1),
+					page ??= Paging.First(),
 					sort);
+
+				//设置响应分页头
+				this.Response.Headers.SetPagination(page);
 
 				var output = new System.IO.MemoryStream();
 				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, this.OptionsBuilder.Export(), cancellation);
@@ -340,7 +343,7 @@ namespace Zongsoft.Web
 		}
 
 		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);
-		protected virtual object GetExportData(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.DataService.Get(key, this.GetSchema(), page ?? Paging.Page(1), this.OptionsBuilder.Get(parameters), sortings);
+		protected virtual object GetExportData(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.DataService.Get(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings);
 		#endregion
 
 		#region 私有方法
