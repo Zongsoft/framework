@@ -37,7 +37,7 @@ namespace Zongsoft.Web.Http.Headers
 	public static class HeaderDictionaryExtension
 	{
 		private static readonly string X_Schema_Header     = "X-Data-Schema";
-		private static readonly string X_Pagination_Header = "X_Pagination";
+		private static readonly string X_Pagination_Header = "X-Pagination";
 
 		public static string GetDataSchema(this IHeaderDictionary headers)
 		{
