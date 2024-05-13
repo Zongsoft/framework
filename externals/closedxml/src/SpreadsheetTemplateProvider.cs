@@ -76,12 +76,12 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 公共方法
-		public IDataTemplate GetTemplate(string name, string type = null)
+		public IDataTemplate GetTemplate(string name, string format = null)
 		{
 			if(!_initialized)
 				this.Initialize();
 
-			return _templates.TryGetValue(name, out var template) && (string.IsNullOrEmpty(type) || string.Equals(type, template.Type, StringComparison.OrdinalIgnoreCase)) ? template : null;
+			return _templates.TryGetValue(name, out var template) && (string.IsNullOrEmpty(format) || template.Format.Equals(format)) ? template : null;
 		}
 		#endregion
 
@@ -89,8 +89,8 @@ namespace Zongsoft.Externals.ClosedXml
 		IDataTemplate IServiceProvider<IDataTemplate>.GetService(string name) => this.GetTemplate(name);
 		bool IMatchable.Match(object parameter) => parameter switch
 		{
-			string format => SpreadsheetFormat.IsFormat(format),
-			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			string format => Spreadsheet.Format.Equals(format),
+			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
 			_ => false,
 		};
 		#endregion

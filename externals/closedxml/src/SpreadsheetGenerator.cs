@@ -51,7 +51,8 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 公共属性
-		public string Name => SpreadsheetFormat.Name;
+		public string Name => Spreadsheet.Format.Name;
+		public DataArchiveFormat Format => Spreadsheet.Format;
 		#endregion
 
 		#region 公共方法
@@ -214,7 +215,16 @@ namespace Zongsoft.Externals.ClosedXml
 				for(int i = 0; i < fields.Length; i++)
 				{
 					var field = fields[i];
-					if(model.Properties.TryGetValue(field.Name, out var property))
+
+					if(field.Name == "*")
+					{
+						foreach(var property in model.Properties)
+						{
+							if(property.Field == null || property.Field.IsSimplex)
+								yield return new TableColumn(index++, property);
+						}
+					}
+					else if(model.Properties.TryGetValue(field.Name, out var property))
 						yield return new TableColumn(index++, property, field);
 				}
 			}
@@ -322,8 +332,8 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 服务匹配
 		bool Services.IMatchable.Match(object parameter) => parameter switch
 		{
-			string format => SpreadsheetFormat.IsFormat(format),
-			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			string format => Spreadsheet.Format.Equals(format),
+			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
 			_ => false,
 		};
 		#endregion

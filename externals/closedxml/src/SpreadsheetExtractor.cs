@@ -47,7 +47,8 @@ namespace Zongsoft.Externals.ClosedXml
 	public class SpreadsheetExtractor : IDataArchiveExtractor, Services.IMatchable
 	{
 		#region 公共属性
-		public string Name => SpreadsheetFormat.Name;
+		public string Name => Spreadsheet.Format.Name;
+		public DataArchiveFormat Format => Spreadsheet.Format;
 		#endregion
 
 		#region 公共方法
@@ -111,8 +112,8 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 服务匹配
 		bool Services.IMatchable.Match(object parameter) => parameter switch
 		{
-			string format => SpreadsheetFormat.IsFormat(format),
-			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			string format => Spreadsheet.Format.Equals(format),
+			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
 			_ => false,
 		};
 		#endregion

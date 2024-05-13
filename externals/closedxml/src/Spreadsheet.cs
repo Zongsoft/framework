@@ -31,13 +31,8 @@ using System;
 
 namespace Zongsoft.Externals.ClosedXml
 {
-	public static class SpreadsheetFormat
+	public static class Spreadsheet
 	{
-		public const string Name = "Spreadsheet";
-		public const string Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-		public static bool IsFormat(string text) =>
-			string.Equals(text, Name, StringComparison.OrdinalIgnoreCase) ||
-			string.Equals(text, Type, StringComparison.OrdinalIgnoreCase);
+		public static readonly Data.Templates.DataArchiveFormat Format = new("Spreadsheet", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
 	}
 }

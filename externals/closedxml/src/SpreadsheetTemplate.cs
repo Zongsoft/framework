@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.ClosedXml
 
 		#region 公共属性
 		public string Name { get; }
-		public string Type => SpreadsheetFormat.Name;
+		public DataArchiveFormat Format => Spreadsheet.Format;
 		public string FilePath { get; }
 		public string Title { get; set; }
 		public string Description { get; set; }

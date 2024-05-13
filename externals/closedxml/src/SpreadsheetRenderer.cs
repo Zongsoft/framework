@@ -45,7 +45,8 @@ namespace Zongsoft.Externals.ClosedXml
 	public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 	{
 		#region 公共属性
-		public string Name => SpreadsheetFormat.Name;
+		public string Name => Spreadsheet.Format.Name;
+		public DataArchiveFormat Format => Spreadsheet.Format;
 		#endregion
 
 		#region 模板渲染
@@ -60,11 +61,11 @@ namespace Zongsoft.Externals.ClosedXml
 				throw new ArgumentNullException(nameof(template));
 
 			//确保模板类型是受支持的电子表格类型
-			if(!SpreadsheetFormat.IsFormat(template.Type))
-				throw new InvalidOperationException($"Unsupported template type: '{template.Type}'.");
+			if(!Spreadsheet.Format.Equals(template.Format))
+				throw new InvalidOperationException($"Unsupported template format: '{template.Format}'.");
 
 			//确保指定的渲染格式是受支持的电子表格类型
-			if(!string.IsNullOrEmpty(format) && SpreadsheetFormat.IsFormat(format))
+			if(!string.IsNullOrEmpty(format) && Spreadsheet.Format.Equals(format))
 				throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
 
 			using var stream = template.Open();
@@ -93,8 +94,8 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 服务匹配
 		bool Services.IMatchable.Match(object parameter) => parameter switch
 		{
-			string format => SpreadsheetFormat.IsFormat(format),
-			IDataTemplate template => SpreadsheetFormat.IsFormat(template.Type),
+			string format => Spreadsheet.Format.Equals(format),
+			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
 			_ => false,
 		};
 		#endregion
