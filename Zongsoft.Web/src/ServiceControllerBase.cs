@@ -80,7 +80,7 @@ namespace Zongsoft.Web
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			return this.Paginate(page ??= Paging.First(), await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation));
+			return this.Paginate(page ??= Paging.First(), await this.OnQueryAsync(criteria, page, sort, null, cancellation));
 		}
 		#endregion
 
@@ -106,7 +106,7 @@ namespace Zongsoft.Web
 
 			if(this.DataService is IDataExportable exportable)
 			{
-				var data = this.OnGetAsync(key, page ??= Paging.First(), sort, null, cancellation);
+				var data = await this.OnGetAsync(key, page ??= Paging.First(), sort, null, cancellation);
 
 				//设置响应分页头
 				this.Response.Headers.SetPagination(page);
@@ -115,7 +115,7 @@ namespace Zongsoft.Web
 				return await this.OnExportAsync(exportable, data, format, cancellation);
 			}
 
-			return this.NoContent();
+			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
 		[HttpPost("[area]/[controller]/[action]")]
@@ -130,11 +130,9 @@ namespace Zongsoft.Web
 			if(this.DataService is IDataExportable exportable)
 			{
 				var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation);
-				var data = this.DataService.Select(
-					Criteria.Transform(criteria as IModel),
-					this.GetSchema(),
+				var data = await this.OnQueryAsync(criteria,
 					page ??= Paging.First(),
-					sort);
+					sort, null, cancellation);
 
 				//设置响应分页头
 				this.Response.Headers.SetPagination(page);
@@ -143,7 +141,7 @@ namespace Zongsoft.Web
 				return await this.OnExportAsync(exportable, data, format, cancellation);
 			}
 
-			return this.NoContent();
+			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
 		[HttpGet("[area]/[controller]/[action]/{template}/{argument?}")]
@@ -343,9 +341,14 @@ namespace Zongsoft.Web
 			return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings, cancellation);
+			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sort, cancellation);
+		}
+
+		protected virtual Task<IEnumerable<TModel>> OnQueryAsync(object criteria, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		{
+			return this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation);
 		}
 
 		protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, object data, string format, CancellationToken cancellation)
