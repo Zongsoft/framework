@@ -42,6 +42,10 @@ namespace Zongsoft.Data
 		Code,
 		/// <summary>名称</summary>
 		Name,
+		/// <summary>性别</summary>
+		Gender,
+		/// <summary>生日</summary>
+		Birthday,
 		/// <summary>邮箱</summary>
 		Email,
 		/// <summary>电话</summary>
