@@ -35,14 +35,14 @@ namespace Zongsoft.Data.Templates
 {
 	internal static class DataTemplateUtility
 	{
-		public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string type = null)
+		public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string format = null)
 		{
 			if(serviceProvider == null)
 				throw new ArgumentNullException(nameof(serviceProvider));
 
 			foreach(var provider in serviceProvider.ResolveAll<IDataTemplateProvider>())
 			{
-				var template = provider.GetTemplate(name, type);
+				var template = provider.GetTemplate(name, format);
 
 				if(template != null)
 					return template;

@@ -38,8 +38,8 @@ namespace Zongsoft.Data.Templates
 	{
 		/// <summary>获取指定名称及类型的数据模板。</summary>
 		/// <param name="name">指定的模板名称。</param>
-		/// <param name="type">指定的模板类型。</param>
+		/// <param name="format">指定的模板格式。</param>
 		/// <returns>如果获取成功则返回对应的数据模板，否则返回空(<c>null</c>)。</returns>
-		IDataTemplate GetTemplate(string name, string type = null);
+		IDataTemplate GetTemplate(string name, string format = null);
 	}
 }

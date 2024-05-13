@@ -43,6 +43,9 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取提取器名称。</summary>
 		string Name { get; }
 
+		/// <summary>获取提取器格式。</summary>
+		DataArchiveFormat Format { get; }
+
 		/// <summary>从数据流中提取数据。</summary>
 		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
 		/// <param name="input">待提取的数据流。</param>

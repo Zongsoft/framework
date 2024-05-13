@@ -42,6 +42,9 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取生成器名称。</summary>
 		string Name { get; }
 
+		/// <summary>获取生成器格式。</summary>
+		DataArchiveFormat Format { get; }
+
 		/// <summary>将指定的数据写入到输出流中。</summary>
 		/// <param name="output">待写入的数据流。</param>
 		/// <param name="model">对应的模型描述器。</param>

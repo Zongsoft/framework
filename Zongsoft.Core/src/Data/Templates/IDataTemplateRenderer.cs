@@ -43,6 +43,9 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取渲染器名称。</summary>
 		string Name { get; }
 
+		/// <summary>获取渲染器格式。</summary>
+		DataArchiveFormat Format { get; }
+
 		/// <summary>渲染指定数据模板到输出流中。</summary>
 		/// <param name="output">指定的渲染输出的数据流。</param>
 		/// <param name="template">指定的数据模型。</param>
