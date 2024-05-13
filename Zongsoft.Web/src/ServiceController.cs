@@ -188,24 +188,9 @@ namespace Zongsoft.Web
 
 			return await this.OnUpdateAsync(key, model, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
-
-		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> QueryAsync([FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
-		{
-			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
-				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
-
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			return this.Paginate(page ??= Paging.First(), await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation));
-		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
-		{
-			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings, cancellation);
-		}
-
 		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
@@ -369,24 +354,9 @@ namespace Zongsoft.Web
 
 			return await this.OnUpdateAsync(key, data, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
-
-		[HttpPost("[area]/[controller]/[action]")]
-		public virtual async Task<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
-		{
-			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
-				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
-
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			return this.Paginate(page ??= Paging.First(), await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation));
-		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
-		{
-			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings, cancellation);
-		}
-
 		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);

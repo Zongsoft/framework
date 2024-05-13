@@ -72,6 +72,18 @@ namespace Zongsoft.Web
 		internal DataOptionsBuilder OptionsBuilder { get; }
 		#endregion
 
+		#region 查询方法
+		[HttpPost("[area]/[controller]/[action]")]
+		public virtual async Task<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		{
+			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
+
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			return this.Paginate(page ??= Paging.First(), await this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation));
+		}
+		#endregion
+
 		#region 导入导出
 		[HttpPost("[area]/[controller]/[action]")]
 		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
@@ -85,7 +97,8 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpGet("[area]/[controller]/{key?}/[action]")]
+		[HttpGet("[area]/[controller]/[action]")]
+		[HttpGet("[area]/[controller]/{key}/[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -93,11 +106,13 @@ namespace Zongsoft.Web
 
 			if(this.DataService is IDataExportable exportable)
 			{
-				var data = string.IsNullOrEmpty(key) ? null : this.GetExportData(key, page, sort);
-				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, this.OptionsBuilder.Export(), cancellation);
-				output.Seek(0, System.IO.SeekOrigin.Begin);
-				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+				var data = this.OnGetAsync(key, page ??= Paging.First(), sort, null, cancellation);
+
+				//设置响应分页头
+				this.Response.Headers.SetPagination(page);
+
+				//执行数据导出操作
+				return await this.OnExportAsync(exportable, data, format, cancellation);
 			}
 
 			return this.NoContent();
@@ -124,30 +139,23 @@ namespace Zongsoft.Web
 				//设置响应分页头
 				this.Response.Headers.SetPagination(page);
 
-				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, data, this.GetExportMembers(), format, this.OptionsBuilder.Export(), cancellation);
-				output.Seek(0, System.IO.SeekOrigin.Begin);
-				return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+				//执行数据导出操作
+				return await this.OnExportAsync(exportable, data, format, cancellation);
 			}
 
 			return this.NoContent();
 		}
 
-		[HttpGet("[area]/[controller]/[action]/{template}/{key?}")]
-		public virtual async ValueTask<IActionResult> ExportAsync(string template, string key, [FromQuery] string format = null, CancellationToken cancellation = default)
+		[HttpGet("[area]/[controller]/[action]/{template}/{argument?}")]
+		public virtual async ValueTask<IActionResult> ExportAsync(string template, string argument, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 			if(this.DataService is IDataExportable exportable)
-			{
-				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, template, key, this.GetParameters(DataServiceMethod.Export()), format, this.OptionsBuilder.Export(), cancellation);
-				output.Seek(0, System.IO.SeekOrigin.Begin);
-				return this.File(output, this.Request.Headers.Accept, template);
-			}
-
-			return this.NoContent();
+				return await this.OnExportAsync(exportable, template, argument, format, cancellation);
+			else
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
 		[HttpPost("[area]/[controller]/[action]/{template}")]
@@ -159,17 +167,10 @@ namespace Zongsoft.Web
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation);
-
 			if(this.DataService is IDataExportable exportable)
-			{
-				var output = new System.IO.MemoryStream();
-				await exportable.ExportAsync(output, template, criteria, this.GetParameters(DataServiceMethod.Export()), format, this.OptionsBuilder.Export(), cancellation);
-				output.Seek(0, System.IO.SeekOrigin.Begin);
-				return this.File(output, this.Request.Headers.Accept, template);
-			}
-
-			return this.NoContent();
+				return await this.OnExportAsync(exportable, template, await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation), format, cancellation);
+			else
+				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 		#endregion
 
@@ -342,8 +343,28 @@ namespace Zongsoft.Web
 			return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
 		}
 
+		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		{
+			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings, cancellation);
+		}
+
+		protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, object data, string format, CancellationToken cancellation)
+		{
+			var output = new System.IO.MemoryStream();
+			await exportable.ExportAsync(output, data, this.GetExportFields(), format, this.OptionsBuilder.Export(), cancellation);
+			output.Seek(0, System.IO.SeekOrigin.Begin);
+			return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+		}
+
+		protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, string template, object argument, string format, CancellationToken cancellation)
+		{
+			var output = new System.IO.MemoryStream();
+			await exportable.ExportAsync(output, template, argument, this.GetParameters(DataServiceMethod.Export()), format, this.OptionsBuilder.Export(), cancellation);
+			output.Seek(0, System.IO.SeekOrigin.Begin);
+			return this.File(output, this.Request.Headers.Accept, template);
+		}
+
 		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);
-		protected virtual object GetExportData(string key, Paging page, Sorting[] sortings, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.DataService.Get(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sortings);
 		#endregion
 
 		#region 私有方法
@@ -359,10 +380,10 @@ namespace Zongsoft.Web
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		internal string GetSchema() => Http.Headers.HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
+		internal string GetSchema() => HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string[] GetExportMembers() => this.Request.Headers.TryGetValue("X-Export-Members", out var content) && content.Count > 0 ?
+		private string[] GetExportFields() => this.Request.Headers.TryGetValue("X-Export-Fields", out var content) && content.Count > 0 ?
 			content.ToString().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
 		#endregion
 
