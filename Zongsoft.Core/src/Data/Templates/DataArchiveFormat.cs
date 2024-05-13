@@ -32,9 +32,9 @@ using System;
 namespace Zongsoft.Data.Templates
 {
 	/// <summary>
-	/// 表示数据文件格式的结构。
+	/// 表示数据文件格式的类。
 	/// </summary>
-	public readonly struct DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatable<string>
+	public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatable<string>
 	{
 		#region 构造函数
 		public DataArchiveFormat(string name, string type, string extension = null)
