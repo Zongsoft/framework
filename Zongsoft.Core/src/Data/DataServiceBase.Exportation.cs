@@ -60,8 +60,8 @@ namespace Zongsoft.Data
 			this.OnExport(output, data, members, format, options);
 		}
 
-		public ValueTask ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, data, null, format, options, cancellation);
-		public ValueTask ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, data, null, format, options, cancellation);
+		public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 		{
 			if(output == null)
 				throw new ArgumentNullException(nameof(output));
@@ -73,18 +73,22 @@ namespace Zongsoft.Data
 			return this.OnExportAsync(output, data, members, format, options, cancellation);
 		}
 
-		protected virtual void OnExport(Stream output, object data, string[] members, string format, DataExportOptions options)
+		protected virtual DataArchiveFormat OnExport(Stream output, object data, string[] members, string format, DataExportOptions options)
 		{
 			var generator = this.ServiceProvider.Resolve<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
-			var task = generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members))).AsTask();
+			var task = generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)));
+
 			if(!task.IsCompletedSuccessfully)
-				task.GetAwaiter().GetResult();
+				task.AsTask().GetAwaiter().GetResult();
+
+			return generator.Format;
 		}
 
-		protected virtual ValueTask OnExportAsync(Stream output, object data, string[] members, string format, DataExportOptions options, CancellationToken cancellation)
+		protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, object data, string[] members, string format, DataExportOptions options, CancellationToken cancellation)
 		{
 			var generator = this.ServiceProvider.Resolve<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
-			return generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)), cancellation);
+			await generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)), cancellation);
+			return generator.Format;
 		}
 		#endregion
 
@@ -113,8 +117,8 @@ namespace Zongsoft.Data
 			this.OnExport(output, templateObject, model.Data, model.Parameters, options);
 		}
 
-		public ValueTask ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, template, argument, null, format, options, cancellation);
-		public ValueTask ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
+		public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, template, argument, null, format, options, cancellation);
+		public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 		{
 			if(output == null)
 				throw new ArgumentNullException(nameof(output));
@@ -163,20 +167,22 @@ namespace Zongsoft.Data
 			return model;
 		}
 
-		protected virtual void OnExport(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
+		protected virtual DataArchiveFormat OnExport(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
 		{
 			var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template);
-			var task = renderer.RenderAsync(output, template, data, parameters).AsTask();
+			var task = renderer.RenderAsync(output, template, data, parameters);
+
 			if(!task.IsCompletedSuccessfully)
-				task.GetAwaiter().GetResult();
+				task.AsTask().GetAwaiter().GetResult();
+
+			return renderer.Format;
 		}
 
-		protected virtual ValueTask OnExportAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
+		protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
 		{
-			var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template) ??
-				throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
-
-			return renderer.RenderAsync(output, template, data, parameters, cancellation);
+			var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template) ?? throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
+			await renderer.RenderAsync(output, template, data, parameters, cancellation);
+			return renderer.Format;
 		}
 		#endregion
 	}

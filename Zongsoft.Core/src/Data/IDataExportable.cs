@@ -45,12 +45,12 @@ namespace Zongsoft.Data
 
 		void Export(Stream output, object data, string format = null, DataExportOptions options = null);
 		void Export(Stream output, object data, string[] members, string format = null, DataExportOptions options = null);
-		ValueTask ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-		ValueTask ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 
 		void Export(Stream output, string template, object argument, string format = null, DataExportOptions options = null);
 		void Export(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null);
-		ValueTask ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-		ValueTask ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 	}
 }
