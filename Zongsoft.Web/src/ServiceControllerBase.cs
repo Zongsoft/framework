@@ -354,17 +354,17 @@ namespace Zongsoft.Web
 		protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, object data, string format, CancellationToken cancellation)
 		{
 			var output = new System.IO.MemoryStream();
-			await exportable.ExportAsync(output, data, this.GetExportFields(), format, this.OptionsBuilder.Export(), cancellation);
+			var result = await exportable.ExportAsync(output, data, this.GetExportFields(), format, this.OptionsBuilder.Export(), cancellation);
 			output.Seek(0, System.IO.SeekOrigin.Begin);
-			return this.File(output, this.Request.Headers.Accept, this.DataService.Name);
+			return this.File(output, result.Type, this.DataService.Name + result.Extension);
 		}
 
 		protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, string template, object argument, string format, CancellationToken cancellation)
 		{
 			var output = new System.IO.MemoryStream();
-			await exportable.ExportAsync(output, template, argument, this.GetParameters(DataServiceMethod.Export()), format, this.OptionsBuilder.Export(), cancellation);
+			var result = await exportable.ExportAsync(output, template, argument, this.GetParameters(DataServiceMethod.Export()), format, this.OptionsBuilder.Export(), cancellation);
 			output.Seek(0, System.IO.SeekOrigin.Begin);
-			return this.File(output, this.Request.Headers.Accept, template);
+			return this.File(output, result.Type, template + result.Extension);
 		}
 
 		protected virtual IEnumerable<KeyValuePair<string, object>> GetParameters(DataServiceMethod method) => Http.HttpRequestUtility.GetParameters(this.Request);
