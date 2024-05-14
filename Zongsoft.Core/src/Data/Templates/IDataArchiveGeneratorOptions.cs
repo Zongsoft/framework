@@ -36,14 +36,10 @@ namespace Zongsoft.Data.Templates
 	/// </summary>
 	public interface IDataArchiveGeneratorOptions
 	{
+		/// <summary>获取或设置生成格式化器。</summary>
+		IDataArchiveFormatter Formatter { get; set; }
+
 		/// <summary>获取或设置生成的字段数组。</summary>
 		DataArchiveField[] Fields { get; set; }
-
-		/// <summary>格式化目标对象的指定属性值。</summary>
-		/// <param name="target">待格式化的目标对象。</param>
-		/// <param name="property">待格式化的目标属性。</param>
-		/// <returns>返回格式化后的属性值。</returns>
-		/// <remarks>数据文件生成器会对每条数据生成目标记录时候会回调该方法，并将其格式化的结果作为最终结果写入到目标记录的相应单元内。</remarks>
-		object Format(object target, ModelPropertyDescriptor property);
 	}
 }

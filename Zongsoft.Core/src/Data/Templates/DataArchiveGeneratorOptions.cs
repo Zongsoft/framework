@@ -53,22 +53,8 @@ namespace Zongsoft.Data.Templates
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置生成格式化器。</summary>
 		public IDataArchiveFormatter Formatter { get; set; }
-		/// <inheritdoc />
 		public DataArchiveField[] Fields { get; set; }
-		#endregion
-
-		#region 公共方法
-		public virtual object Format(object target, ModelPropertyDescriptor property)
-		{
-			var formatter = this.Formatter;
-
-			if(formatter == null)
-				return Reflection.Reflector.GetValue(property.Member, ref target);
-			else
-				return formatter.Format(target, property);
-		}
 		#endregion
 	}
 }
