@@ -74,7 +74,7 @@ namespace Zongsoft.Externals.ClosedXml
 
 			using var workbook = new XLWorkbook();
 			var worksheet = workbook.AddWorksheet(model.Title ?? model.Name);
-			worksheet.Style.Font.SetFontSize(12);
+			worksheet.Style.Font.SetFontSize(11);
 			worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 
 			if(columns.Length > 5)
@@ -152,8 +152,8 @@ namespace Zongsoft.Externals.ClosedXml
 
 			//设置数据字段标题行样式
 			worksheet.Row(3).Height = 30;
-			worksheet.Row(3).Style.Font.SetFontSize(13);
-			worksheet.Row(3).Style.Font.SetBold(true);
+			worksheet.Row(3).Style.Font.SetFontSize(12);
+			worksheet.Row(3).Style.Font.SetBold(false);
 			worksheet.Row(3).Style.Font.SetFontColor(XLColor.Navy);
 			worksheet.Row(3).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 			worksheet.Row(3).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
