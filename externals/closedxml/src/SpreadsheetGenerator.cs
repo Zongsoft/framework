@@ -32,6 +32,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -39,6 +40,7 @@ using ClosedXML;
 using ClosedXML.Excel;
 
 using Zongsoft.Data;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Externals.ClosedXml
@@ -215,6 +217,8 @@ namespace Zongsoft.Externals.ClosedXml
 				for(int i = 0; i < fields.Length; i++)
 				{
 					var field = fields[i];
+					if(field == null)
+						continue;
 
 					if(field.Name == "*")
 					{
@@ -224,8 +228,8 @@ namespace Zongsoft.Externals.ClosedXml
 								yield return new TableColumn(index++, property);
 						}
 					}
-					else if(model.Properties.TryGetValue(field.Name, out var property))
-						yield return new TableColumn(index++, property, field);
+					else
+						yield return new TableColumn(index++, model, field);
 				}
 			}
 			else
@@ -300,7 +304,7 @@ namespace Zongsoft.Externals.ClosedXml
 				var cell = worksheet.Cell(row, index++);
 
 				//获取当前列对应的属性值
-				var value = GetValue(ref record, column.Property, options);
+				var value = GetValue(ref record, column, options);
 
 				//设置字段内容
 				if(value != null)
@@ -324,8 +328,8 @@ namespace Zongsoft.Externals.ClosedXml
 				range.Style.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
 			}
 
-			static object GetValue(ref object target, ModelPropertyDescriptor property, IDataArchiveGeneratorOptions options) =>
-				options != null ? options.Format(target, property) : Reflection.Reflector.TryGetValue(ref target, property.Name, out var value) ? value : null;
+			static object GetValue(ref object target, TableColumn column, IDataArchiveGeneratorOptions options) =>
+				options?.Formatter != null ? options.Formatter.Format(target, column.Property) : column.GetValue(ref target);
 		}
 		#endregion
 
@@ -341,21 +345,79 @@ namespace Zongsoft.Externals.ClosedXml
 		#region 嵌套子类
 		private readonly struct TableColumn
 		{
-			public TableColumn(int index, ModelPropertyDescriptor property, DataArchiveField field = null)
+			private readonly Reflection.Expressions.IMemberExpression _expression;
+
+			public TableColumn(int index, ModelPropertyDescriptor property)
 			{
+				if(property == null)
+					throw new ArgumentNullException(nameof(property));
+
 				this.Index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index));
-				this.Property = property ?? throw new ArgumentNullException(nameof(property));
-				this.Field = field;
+				this.Label = property.Label;
+				this.Description = property.Description;
+				this.Property = property;
 			}
 
-			public readonly int Index;
-			public readonly ModelPropertyDescriptor Property;
-			public readonly DataArchiveField Field;
+			public TableColumn(int index, ModelDescriptor model, DataArchiveField descriptor)
+			{
+				if(model == null)
+					throw new ArgumentNullException(nameof(model));
+				if(descriptor == null)
+					throw new ArgumentNullException(nameof(descriptor));
 
-			public string Name => this.Property.Name;
+				this.Index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index));
+				this.Label = descriptor?.Label;
+				this.Description = descriptor?.Description;
+
+				if(Reflection.Expressions.MemberExpression.TryParse(descriptor.Name, out var expression))
+				{
+					_expression = expression;
+
+					while(expression != null)
+					{
+						if(expression.ExpressionType == Reflection.Expressions.MemberExpressionType.Identifier &&
+						   model.Properties.TryGetValue(((Reflection.Expressions.IdentifierExpression)expression).Name, out var property))
+						{
+							this.Property = property;
+
+							if(string.IsNullOrEmpty(this.Label))
+								this.Label = property.Label;
+							if(string.IsNullOrEmpty(this.Description))
+								this.Description = property.Description;
+
+							if(property.Field.IsComplex)
+								model = ((IDataEntityComplexProperty)property.Field).Foreign.GetDescriptor(GetMemberType(property.Member));
+						}
+
+						expression = expression.Next;
+					}
+				}
+
+				static Type GetMemberType(MemberInfo member) => member.MemberType switch
+				{
+					MemberTypes.Field => ((FieldInfo)member).FieldType,
+					MemberTypes.Property => ((PropertyInfo)member).PropertyType,
+					MemberTypes.Method => ((MethodInfo)member).ReturnType,
+					_ => null,
+				};
+			}
+
 			public Type Type => this.Property.Type;
-			public string Label => string.IsNullOrEmpty(this.Field?.Label) ? this.Property.Label : this.Field.Label;
-			public string Description => string.IsNullOrEmpty(this.Field?.Description) ? this.Property.Description : this.Field.Description;
+			public string Name => this.Property.Name;
+			public readonly int Index;
+			public readonly string Label;
+			public readonly string Description;
+			public readonly ModelPropertyDescriptor Property;
+
+			public object GetValue(ref object target)
+			{
+				if(target == null || string.IsNullOrEmpty(this.Name))
+					return null;
+
+				return _expression == null ?
+					Reflection.Reflector.TryGetValue(ref target, this.Name, out var value) ? value : null :
+					Reflection.Expressions.MemberExpressionEvaluator.Default.GetValue(_expression, target);
+			}
 		}
 		#endregion
 	}
