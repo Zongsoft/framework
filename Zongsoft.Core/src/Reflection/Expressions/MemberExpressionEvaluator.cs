@@ -63,11 +63,7 @@ namespace Zongsoft.Reflection.Expressions
 			return result;
 		}
 
-		public void SetValue(IMemberExpression expression, object origin, object value, Action<MemberContext> evaluate = null)
-		{
-			this.SetValue(expression, origin, _ => value, evaluate);
-		}
-
+		public void SetValue(IMemberExpression expression, object origin, object value, Action<MemberContext> evaluate = null) => this.SetValue(expression, origin, _ => value, evaluate);
 		public void SetValue(IMemberExpression expression, object origin, Func<MemberContext, object> valueFactory, Action<MemberContext> evaluate = null)
 		{
 			if(expression == null)
@@ -156,10 +152,7 @@ namespace Zongsoft.Reflection.Expressions
 			return Reflector.GetValue(context.Member, ref context.Owner, context.Parameters);
 		}
 
-		protected virtual void SetMemberValue(MemberContext context)
-		{
-			Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
-		}
+		protected virtual void SetMemberValue(MemberContext context) => Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
 		#endregion
 
 		#region 私有方法
@@ -180,48 +173,22 @@ namespace Zongsoft.Reflection.Expressions
 		#endregion
 
 		#region 嵌套结构
-		public class MemberContext
+		public class MemberContext(int index, object origin, object target, IMemberExpression expression)
 		{
-			public int Index;
 			public int Depth;
-			public object Origin;
-			public object Owner;
+			public int Index = index;
+			public object Origin = origin;
+			public object Owner = target;
 			public object Value;
 			public MemberInfo Member;
-			public IMemberExpression Expression;
+			public IMemberExpression Expression = expression;
 			public object[] Parameters;
 			public MemberContext Parent;
 
-			public MemberContext(int index, object origin, object target, IMemberExpression expression)
-			{
-				this.Depth = 0;
-				this.Index = index;
-				this.Origin = origin;
-				this.Owner = target;
-				this.Expression = expression;
-				this.Member = null;
-				this.Parameters = null;
-			}
-
-			public int Indent()
-			{
-				return ++this.Depth;
-			}
-
-			public int Dedent()
-			{
-				return --this.Depth;
-			}
-
-			public bool HasValue
-			{
-				get;
-			}
-
-			public bool HasNext
-			{
-				get => this.Expression.Next != null;
-			}
+			public int Indent() => ++this.Depth;
+			public int Dedent() => --this.Depth;
+			public bool HasValue => this.Value != null;
+			public bool HasNext => this.Expression.Next != null;
 
 			public MemberContext Next()
 			{
