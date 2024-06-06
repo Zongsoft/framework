@@ -151,11 +151,14 @@ namespace Zongsoft.Data
 		#region 重写方法
 		public bool Equals(Sorting other) => _mode == other._mode && string.Equals(_name, other._name, StringComparison.OrdinalIgnoreCase);
 		public override bool Equals(object obj) => obj is Sorting other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(_name.ToUpperInvariant());
+		public override int GetHashCode() => HashCode.Combine(_mode, _name.ToUpperInvariant());
 		public override string ToString() => _mode == SortingMode.Descending ? "-" + _name : _name;
 		#endregion
 
 		#region 符号重载
+		public static bool operator ==(Sorting left, Sorting right) => left.Equals(right);
+		public static bool operator !=(Sorting left, Sorting right) => !(left == right);
+
 		public static Sorting[] operator +(Sorting[] sortings, Sorting value)
 		{
 			if(sortings == null || sortings.Length == 0)
