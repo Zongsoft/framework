@@ -264,7 +264,7 @@ namespace Zongsoft.Data
 
 				public string Name => string.Empty;
 				public string Text => _expression;
-				public Type ModelType => null;
+				public Type Type => null;
 				public bool IsEmpty => true;
 				public bool IsReadOnly { get => true; set => throw new InvalidOperationException(); }
 
