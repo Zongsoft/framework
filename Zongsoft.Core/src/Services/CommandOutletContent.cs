@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Text;
 
 namespace Zongsoft.Services
 {
@@ -62,39 +63,21 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置内容段文本。
-		/// </summary>
+		/// <summary>获取或设置内容段文本。</summary>
 		public string Text
 		{
-			get
-			{
-				return _text;
-			}
-			set
-			{
-				_text = value;
-			}
+			get => _text;
+			set => _text = value;
 		}
 
-		/// <summary>
-		/// 获取或设置内容段的文本颜色。
-		/// </summary>
+		/// <summary>获取或设置内容段的文本颜色。</summary>
 		public CommandOutletColor? Color
 		{
-			get
-			{
-				return _color;
-			}
-			set
-			{
-				_color = value;
-			}
+			get => _color;
+			set => _color = value;
 		}
 
-		/// <summary>
-		/// 获取当前内容链的首段。
-		/// </summary>
+		/// <summary>获取当前内容链的首段。</summary>
 		public CommandOutletContent First
 		{
 			get
@@ -110,9 +93,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取当前内容链的末段。
-		/// </summary>
+		/// <summary>获取当前内容链的末段。</summary>
 		public CommandOutletContent Last
 		{
 			get
@@ -128,27 +109,11 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取当前内容链的下一段。
-		/// </summary>
-		public CommandOutletContent Next
-		{
-			get
-			{
-				return _next;
-			}
-		}
+		/// <summary>获取当前内容链的下一段。</summary>
+		public CommandOutletContent Next => _next;
 
-		/// <summary>
-		/// 获取当前内容链的上一段。
-		/// </summary>
-		public CommandOutletContent Previous
-		{
-			get
-			{
-				return _previous;
-			}
-		}
+		/// <summary>获取当前内容链的上一段。</summary>
+		public CommandOutletContent Previous => _previous;
 		#endregion
 
 		#region 公共方法
@@ -434,25 +399,38 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个指定文本的新内容段。
-		/// </summary>
+		/// <summary>创建一个指定文本的新内容段。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新创建的内容段。</returns>
-		public static CommandOutletContent Create(string text)
-		{
-			return new CommandOutletContent(null, text);
-		}
+		public static CommandOutletContent Create(string text) => new(null, text);
 
-		/// <summary>
-		/// 创建一个指定颜色和文本的新内容段。
-		/// </summary>
+		/// <summary>创建一个指定颜色和文本的新内容段。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新创建的内容段。</returns>
-		public static CommandOutletContent Create(CommandOutletColor color, string text)
+		public static CommandOutletContent Create(CommandOutletColor color, string text) => new(null, text, color);
+
+		/// <summary>获取指定输出内容的全文。</summary>
+		/// <param name="content">指定的输出内容。</param>
+		/// <returns>返回输出内容的全文。</returns>
+		public static string GetFullText(CommandOutletContent content)
 		{
-			return new CommandOutletContent(null, text, color);
+			if(content == null)
+				return null;
+
+			if(content.Previous == null && content.Next == null)
+				return content.Text;
+
+			var current = content.First;
+			var fulltext = new StringBuilder();
+
+			while(current != null)
+			{
+				fulltext.Append(current.Text);
+				current = current.Next;
+			}
+
+			return fulltext.ToString();
 		}
 		#endregion
 	}
