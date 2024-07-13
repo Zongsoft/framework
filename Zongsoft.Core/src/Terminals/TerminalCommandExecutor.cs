@@ -259,67 +259,33 @@ namespace Zongsoft.Terminals
 		[Serializable]
 		public class ExitException : ApplicationException
 		{
-			#region 成员变量
-			private int _exitCode;
-			#endregion
-
 			#region 构造函数
-			public ExitException()
+			public ExitException() { }
+			public ExitException(int exitCode, string message = null) : base(message)
 			{
-			}
-
-			public ExitException(int exitCode)
-			{
-				_exitCode = exitCode;
+				this.ExitCode = exitCode;
 			}
 			#endregion
 
 			#region 公共属性
-			public int ExitCode
-			{
-				get
-				{
-					return _exitCode;
-				}
-			}
+			public int ExitCode { get; }
 			#endregion
 		}
 
 		public class ExitEventArgs : EventArgs
 		{
-			#region 成员变量
-			private bool _cancel;
-			private int _exitCode;
-			#endregion
-
 			#region 构造函数
-			public ExitEventArgs(int exitCode) : this(exitCode, false)
-			{
-			}
-
+			public ExitEventArgs(int exitCode) : this(exitCode, false) { }
 			public ExitEventArgs(int exitCode, bool cancel)
 			{
-				_cancel = cancel;
-				_exitCode = exitCode;
+				this.Cancel = cancel;
+				this.ExitCode = exitCode;
 			}
 			#endregion
 
 			#region 公共属性
-			public bool Cancel
-			{
-				get
-				{
-					return _cancel;
-				}
-			}
-
-			public int ExitCode
-			{
-				get
-				{
-					return _exitCode;
-				}
-			}
+			public bool Cancel { get; }
+			public int ExitCode { get; }
 			#endregion
 		}
 		#endregion
