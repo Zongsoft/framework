@@ -64,20 +64,15 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 公共属性
-		public virtual Profile Profile
+		public virtual Profile Profile => _owner switch
 		{
-			get => _owner as Profile;
-		}
+			Profile profile => profile,
+			ProfileItem item => item.Profile,
+			_ => null,
+		};
 
-		public abstract ProfileItemType ItemType
-		{
-			get;
-		}
-
-		public int LineNumber
-		{
-			get => _lineNumber;
-		}
+		public abstract ProfileItemType ItemType { get; }
+		public int LineNumber => _lineNumber;
 		#endregion
 
 		#region 保护属性
@@ -99,9 +94,7 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnOwnerChanged(object owner)
-		{
-		}
+		protected virtual void OnOwnerChanged(object owner) { }
 		#endregion
 	}
 }

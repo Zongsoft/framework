@@ -61,11 +61,7 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get => _name;
-		}
-
+		public string Name => _name;
 		public string FullName
 		{
 			get
@@ -79,16 +75,8 @@ namespace Zongsoft.Configuration.Profiles
 			}
 		}
 
-		public ProfileSection Parent
-		{
-			get => base.Owner as ProfileSection;
-		}
-
-		public ICollection<ProfileItem> Items
-		{
-			get => _items;
-		}
-
+		public ProfileSection Parent => base.Owner as ProfileSection;
+		public ICollection<ProfileItem> Items => _items;
 		public Collections.INamedCollection<ProfileEntry> Entries
 		{
 			get
@@ -122,10 +110,7 @@ namespace Zongsoft.Configuration.Profiles
 			}
 		}
 
-		public override ProfileItemType ItemType
-		{
-			get => ProfileItemType.Section;
-		}
+		public override ProfileItemType ItemType => ProfileItemType.Section;
 		#endregion
 
 		#region 重写方法

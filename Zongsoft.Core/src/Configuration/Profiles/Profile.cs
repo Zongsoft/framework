@@ -37,12 +37,12 @@ using System.Text;
 namespace Zongsoft.Configuration.Profiles
 {
 	/// <summary>
-	/// 提供了对 Microsoft 的INI文件格式的各项操作。
+	/// 提供了对INI文件格式的各项操作。
 	/// </summary>
 	/// <remarks>
-	///		<para>INI文件就是简单的文本文件，只不过这种文本文件要遵循一定的INI文件格式，其扩展名通常为“.ini”、“.cfg”、“.conf”。</para>
+	///		<para>INI文件就是简单的文本文件，只不过这种文本文件要遵循一定的INI文件格式，其扩展名通常为“.ini”、“.cfg”、“.conf”等。</para>
 	///		<para>INI文件中的每一行文本为一个元素单位，其类型分别为 Section(节)、Entry/Parameter(条目/参数)、Comment(注释)。</para>
-	///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；可以省略值的部分。譬如：name=value 或者只有名称的“条目”：name。注意：在同一个设置节中，各个条目的名称必须唯一。</para>
+	///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；值在等号右边，值的内容可省略。譬如：name=value 或者只有名称部分。注意：在同一个设置节中，条目名称必须唯一。</para>
 	///		<para>Section: 所有的“条目”都是以“节”为单位结合在一起的。“节”名字都被方括号包围着。在“节”声明后的所有“条目”都是属于该“节”。对于一个“节”没有明显的结束标志符，一个“节”的开始就是上一个“节”的结束。</para>
 	///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
 	///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的。所有的注释语句不管多长都是独占一行直到结束的，在注释符和行结束符之间的所有内容都是被忽略的。</para>
@@ -127,7 +127,7 @@ namespace Zongsoft.Configuration.Profiles
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
-			Profile profile = new Profile(stream is FileStream ? ((FileStream)stream).Name : string.Empty);
+			Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
 			ProfileSection section = null;
 
 			using(var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
@@ -247,9 +247,7 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 操作方法
-		/// <summary>
-		/// 获取指定路径的配置数据。
-		/// </summary>
+		/// <summary>获取指定路径的配置数据。</summary>
 		/// <param name="path">指定的配置项路径，路径是以“/”斜杠分隔的文本。</param>
 		/// <returns>如果找到则返回配置结果，否则返回空(null)。</returns>
 		/// <remarks>

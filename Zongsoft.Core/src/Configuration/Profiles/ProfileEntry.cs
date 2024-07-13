@@ -54,18 +54,9 @@ namespace Zongsoft.Configuration.Profiles
 
 		#region 公共属性
 		public string Name { get; }
-
 		public string Value { get; set; }
-
-		public ProfileSection Section
-		{
-			get => base.Owner as ProfileSection;
-		}
-
-		public override ProfileItemType ItemType
-		{
-			get => ProfileItemType.Entry;
-		}
+		public ProfileSection Section => base.Owner as ProfileSection;
+		public override ProfileItemType ItemType => ProfileItemType.Entry;
 		#endregion
 
 		#region 重写方法
