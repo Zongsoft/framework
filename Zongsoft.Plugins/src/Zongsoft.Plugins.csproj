@@ -7,6 +7,7 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageTags>addin;plugin;plug-in;pluggable;</PackageTags>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Plugins</RepositoryUrl>
 	</PropertyGroup>
@@ -37,6 +38,11 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\Main.plugin" Link="Main.plugin" Pack="true" PackagePath="\plugins" />
+		<None Include="..\Zongsoft.Plugins.xsd" Link="Zongsoft.Plugins.xsd" Pack="true" PackagePath="\plugins" />
 	</ItemGroup>
 
 	<ItemGroup>
