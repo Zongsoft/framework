@@ -4,7 +4,7 @@
 	<option path="/Data">
 		<connectionSettings default="Zongsoft">
 			<connectionSetting connectionSetting.name="Zongsoft" driver="MySql"
-			                   value="Server=xxxxx.mysql.rds.aliyuncs.com;UserName=program;Password=xxxxxx;Database=zongsoft;Charset=utf8mb4;ConvertZeroDatetime=true;AllowZeroDateTime=true;AllowLoadLocalInfile=true;SslMode=none;" />
+			                   value="Server=xxxxx.mysql.rds.aliyuncs.com;UserName=program;Password=xxxxxx;Database=zongsoft;Charset=utf8mb4;ConvertZeroDatetime=true;AllowZeroDateTime=true;AllowLoadLocalInfile=true;AllowPublicKeyRetrieval=true;SslMode=none;" />
 
 			<connectionSetting connectionSetting.name="Zongsoft#ClickHouse" driver="ClickHouse"
 			                   value="Host=127.0.0.1;Port=8123;UserName=program;Password=xxxxxx;Database=zongsoft;Compression=True" />
