@@ -1,0 +1,67 @@
+@credentialId=774349482509KKHYJ
+@namespace=1
+
+###
+
+# 用户列表
+
+GET /Security/Users HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
+###
+
+# 用户详情
+# @prompt id 用户编号
+
+GET /Security/Users/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+X-Data-Schema: *
+
+###
+
+# 用户详情
+# @prompt identity 用户标识
+
+GET /Security/Users/{{namespace}}:{{identity}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+X-Data-Schema: *
+
+###
+
+# 用户存在
+# @prompt id 用户编号
+
+GET /Security/Users/{{id}}/Exists HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+X-Data-Schema: *
+
+###
+
+# 用户存在
+# @prompt identity 用户标识
+
+GET /Security/Users/Exists/{{namespace}}:{{identity}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+X-Data-Schema: *
+
+###
+
+# 用户新增
+# @prompt username 用户名称
+# @prompt password 用户密码
+
+POST /Security/Users HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+X-Password: {{password}}
+
+{
+  "Name":"{{username}}"
+}
+
+###

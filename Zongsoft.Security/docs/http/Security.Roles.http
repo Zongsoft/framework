@@ -1,0 +1,12 @@
+@credentialId=774349482509KKHYJ
+@namespace=1
+
+###
+
+# 角色列表
+
+GET /Security/Roles HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
+###
