@@ -286,8 +286,17 @@ namespace Zongsoft.Web
 			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
 				return this.NoContent();
 
-			//设置响应的分页头，并返回响应结果
-			return paging == null || this.Response.Headers.SetPagination(paging) ? this.Ok(data) : this.NoContent();
+			/*
+			 * 特别说明：应避免使用 Enumerable.Any() 方法来判断结果数据集是否为空，
+			 * 因为该扩展方法会对 Enumerator 进行释放操作，而结果数据集内部特定 DbDataReader 实现者的关闭动作可能会将关联的 DbConnection 也释放掉，
+			 * 而这些操作将会导致 Response 对数据集的获取因为数据连接失效而失败。
+			 */
+
+			//设置响应的分页头
+			this.Response.Headers.SetPagination(paging);
+
+			//返回数据
+			return this.Ok(data);
 		}
 		#endregion
 
