@@ -35,6 +35,8 @@ using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 
 using Zongsoft.Data;
 
@@ -266,7 +268,7 @@ namespace Zongsoft.Web
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
 
-			return this.Paginate(page ??= Paging.First(), await this.OnGetAsync(key, page, sort, null, cancellation));
+			return this.Paginate(page ??= Paging.First(), await this.OnGetAsync(key, page, sort, this.GetParameters(), cancellation));
 		}
 
 		[HttpDelete("[area]/{key:required}/[controller]")]
@@ -292,7 +294,7 @@ namespace Zongsoft.Web
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
-							count += await this.OnDeleteAsync(part, null, cancellation);
+							count += await this.OnDeleteAsync(part, this.GetParameters(), cancellation);
 
 						transaction.Commit();
 					}
@@ -301,7 +303,7 @@ namespace Zongsoft.Web
 				}
 			}
 
-			return await this.OnDeleteAsync(key, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
+			return await this.OnDeleteAsync(key, this.GetParameters(), cancellation) > 0 ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[area]/{key:required}/[controller]")]
@@ -375,6 +377,16 @@ namespace Zongsoft.Web
 		protected virtual Task<int> OnUpdateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.UpdateManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation);
+		}
+		#endregion
+
+		#region 私有方法
+		private KeyValuePair<string, object>[] GetParameters()
+		{
+			if(this.HttpContext.GetEndpoint() is RouteEndpoint route)
+				return [new KeyValuePair<string, object>("Service", route.RoutePattern.PathSegments[^1].Parts[0].PartKind == RoutePatternPartKind.Parameter ? this.DataService.Name : this.DataService.Service?.Name)];
+
+			return null;
 		}
 		#endregion
 	}
