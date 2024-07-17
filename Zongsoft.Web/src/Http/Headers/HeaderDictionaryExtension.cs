@@ -47,7 +47,7 @@ namespace Zongsoft.Web.Http.Headers
 		/// <summary>设置分页信息头。</summary>
 		/// <param name="headers">待设置的头集合。</param>
 		/// <param name="paging">待设置的分页信息。</param>
-		/// <returns>如果指定的分页信息位于数据页内则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		/// <returns>如果分页数大于零则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 		public static bool SetPagination(this IHeaderDictionary headers, Zongsoft.Data.Paging paging)
 		{
 			var result = paging != null && paging.PageCount > 0 && paging.PageSize > 0;
@@ -57,7 +57,7 @@ namespace Zongsoft.Web.Http.Headers
 			else
 				headers.Remove(X_Pagination_Header);
 
-			return result && paging.PageIndex <= paging.PageCount;
+			return result;
 		}
 	}
 }
