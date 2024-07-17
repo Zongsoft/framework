@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Data.TDengine"
+        title="Zongsoft.Data.TDengine Plugin"
+        author="Popeye Zhong(zongsoft@qq.com)"
+        version="1.0"
+        copyright="Copyright (C) 2015-2024 Zongsoft Corporation. All rights reserved."
+        description="Created Date: 2024-07-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Data.TDengine" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Data/Drivers">
+		<object name="TDengine" type="Zongsoft.Data.TDengine.TDengineDriver, Zongsoft.Data.TDengine" />
+	</extension>
+</plugin>
