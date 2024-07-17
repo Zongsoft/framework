@@ -75,27 +75,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public Task<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, out _), options, cancellation);
+		public Task<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, out _), options, cancellation);
+			where TKey1 : IEquatable<TKey1> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, options, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, out _), options, cancellation);
+			where TKey2 : IEquatable<TKey2> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, options, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, out _), options, cancellation);
+			where TKey3 : IEquatable<TKey3> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, options, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, out _), options, cancellation);
+			where TKey4 : IEquatable<TKey4> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, options, out _), options, cancellation);
 		public Task<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, out _), options, cancellation);
+			where TKey5 : IEquatable<TKey5> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, options, out _), options, cancellation);
 
 		public Task<bool> ExistsAsync(ICondition criteria, DataExistsOptions options = null, CancellationToken cancellation = default)
 		{
@@ -120,27 +120,27 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 聚合方法
-		public Task<int> CountAsync(string key, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key, out _), member, options, cancellation);
+		public Task<int> CountAsync(string key, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key, options, out _), member, options, cancellation);
 		public Task<int> CountAsync<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, out _), member, options, cancellation);
+			where TKey1 : IEquatable<TKey1> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, options, out _), member, options, cancellation);
 		public Task<int> CountAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, out _), member, options, cancellation);
+			where TKey2 : IEquatable<TKey2> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, options, out _), member, options, cancellation);
 		public Task<int> CountAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, out _), member, options, cancellation);
+			where TKey3 : IEquatable<TKey3> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, options, out _), member, options, cancellation);
 		public Task<int> CountAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, out _), member, options, cancellation);
+			where TKey4 : IEquatable<TKey4> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, options, out _), member, options, cancellation);
 		public Task<int> CountAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, out _), member, options, cancellation);
+			where TKey5 : IEquatable<TKey5> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, options, out _), member, options, cancellation);
 
 		public async Task<int> CountAsync(ICondition criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 		{
@@ -162,33 +162,33 @@ namespace Zongsoft.Data
 		public Task<int> CountAsync(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync((ICondition)criteria, member, options, cancellation);
 
 		public Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null, CancellationToken cancellation = default)
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, options, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, options, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, options, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, options, out _), options, cancellation);
 
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, options, out _), options, cancellation);
 		public Task<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
 			where TKey5 : IEquatable<TKey5>
-			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, out _), options, cancellation);
+			where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, options, out _), options, cancellation);
 
 		public Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
 			where TValue : struct, IEquatable<TValue>
@@ -242,19 +242,19 @@ namespace Zongsoft.Data
 
 		#region 删除方法
 		public Task<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(key, null, options, cancellation);
-		public Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, out _), schema, options, cancellation);
+		public Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1>(TKey1 key1, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1> => this.DeleteAsync(key1, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, out _), schema, options, cancellation);
+			where TKey1 : IEquatable<TKey1> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2> => this.DeleteAsync(key1, key2, null, options, cancellation);
 		public Task<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, out _), schema, options, cancellation);
+			where TKey2 : IEquatable<TKey2> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
@@ -263,7 +263,7 @@ namespace Zongsoft.Data
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, out _), schema, options, cancellation);
+			where TKey3 : IEquatable<TKey3> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
@@ -274,7 +274,7 @@ namespace Zongsoft.Data
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, out _), schema, options, cancellation);
+			where TKey4 : IEquatable<TKey4> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
@@ -287,7 +287,7 @@ namespace Zongsoft.Data
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, out _), schema, options, cancellation);
+			where TKey5 : IEquatable<TKey5> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, options, out _), schema, options, cancellation);
 
 		public Task<int> DeleteAsync(ICondition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(criteria, null, options, cancellation);
 		public Task<int> DeleteAsync(ICondition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
@@ -543,18 +543,18 @@ namespace Zongsoft.Data
 
 		#region 更新方法
 		public Task<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(key, data, null, options, cancellation);
-		public Task<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, out _), schema, options, cancellation);
+		public Task<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options, cancellation);
 
 		public Task<int> UpdateAsync<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1> => this.UpdateAsync(key1, null, data, options, cancellation);
 		public Task<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
-			where TKey1 : IEquatable<TKey1> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, out _), schema, options, cancellation);
+			where TKey1 : IEquatable<TKey1> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, options, out _), schema, options, cancellation);
 		public Task<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2> => this.UpdateAsync(key1, key2, null, data, options, cancellation);
 		public Task<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
-			where TKey2 : IEquatable<TKey2> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, out _), schema, options, cancellation);
+			where TKey2 : IEquatable<TKey2> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, options, out _), schema, options, cancellation);
 		public Task<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
@@ -562,7 +562,7 @@ namespace Zongsoft.Data
 		public Task<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
-			where TKey3 : IEquatable<TKey3> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, out _), schema, options, cancellation);
+			where TKey3 : IEquatable<TKey3> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, options, out _), schema, options, cancellation);
 		public Task<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
@@ -572,7 +572,7 @@ namespace Zongsoft.Data
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
-			where TKey4 : IEquatable<TKey4> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, out _), schema, options, cancellation);
+			where TKey4 : IEquatable<TKey4> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, options, out _), schema, options, cancellation);
 		public Task<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 			where TKey1 : IEquatable<TKey1>
 			where TKey2 : IEquatable<TKey2>
@@ -584,7 +584,7 @@ namespace Zongsoft.Data
 			where TKey2 : IEquatable<TKey2>
 			where TKey3 : IEquatable<TKey3>
 			where TKey4 : IEquatable<TKey4>
-			where TKey5 : IEquatable<TKey5> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, out _), schema, options, cancellation);
+			where TKey5 : IEquatable<TKey5> => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, options, out _), schema, options, cancellation);
 
 		public Task<int> UpdateAsync(object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, string.Empty, options, cancellation);
 		public Task<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, schema, options, cancellation);
@@ -752,7 +752,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key, options, out var singular);
 
 			if(singular)
 			{
@@ -813,7 +813,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, options, out var singular);
 
 			if(singular)
 			{
@@ -885,7 +885,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, options, out var singular);
 
 			if(singular)
 			{
@@ -973,7 +973,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, options, out var singular);
 
 			if(singular)
 			{
@@ -1077,7 +1077,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, options, out var singular);
 
 			if(singular)
 			{
@@ -1197,7 +1197,7 @@ namespace Zongsoft.Data
 			if(options == null)
 				options = new DataSelectOptions();
 
-			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, key5, out var singular);
+			var criteria = this.ConvertKey(DataServiceMethod.Get(), key1, key2, key3, key4, key5, options, out var singular);
 
 			if(singular)
 			{
