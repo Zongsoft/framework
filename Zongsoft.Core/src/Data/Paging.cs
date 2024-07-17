@@ -76,7 +76,8 @@ namespace Zongsoft.Data
 		public bool Enabled => _pageSize > 0 && _pageIndex > 0;
 
 		/// <summary>获取一个值，指示分页结果是否为空集。</summary>
-		public bool IsEmpty => _totalCount <= 0;
+		/// <remarks>注意：只有当<see cref="TotalCount"/>等于零，本属性才会返回真(<c>True</c>)。</remarks>
+		public bool IsEmpty => _totalCount == 0;
 
 		/// <summary>获取或设置页大小，如果该属性值为零则表示不分页。</summary>
 		public int PageSize
