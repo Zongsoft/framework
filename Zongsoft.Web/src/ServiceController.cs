@@ -95,6 +95,8 @@ namespace Zongsoft.Web
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
+			var count = 0;
+
 			if(string.IsNullOrWhiteSpace(key))
 			{
 				var content = await this.Request.ReadAsStringAsync();
@@ -106,8 +108,6 @@ namespace Zongsoft.Web
 
 				if(parts != null && parts.Any())
 				{
-					var count = 0;
-
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
@@ -116,11 +116,12 @@ namespace Zongsoft.Web
 						transaction.Commit();
 					}
 
-					return count > 0 ? this.Content(count.ToString()) : this.NotFound();
+					return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 				}
 			}
 
-			return await this.OnDeleteAsync(key, null, cancellation) > 0 ? this.NoContent() : this.NotFound();
+			count = await this.OnDeleteAsync(key, null, cancellation);
+			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
 		[HttpPost("[area]/[controller]")]
@@ -278,6 +279,8 @@ namespace Zongsoft.Web
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
+			var count = 0;
+
 			if(string.IsNullOrWhiteSpace(key))
 			{
 				var content = await this.Request.ReadAsStringAsync();
@@ -289,8 +292,6 @@ namespace Zongsoft.Web
 
 				if(parts != null && parts.Any())
 				{
-					var count = 0;
-
 					using(var transaction = new Zongsoft.Transactions.Transaction())
 					{
 						foreach(var part in parts)
@@ -299,11 +300,12 @@ namespace Zongsoft.Web
 						transaction.Commit();
 					}
 
-					return count > 0 ? this.Content(count.ToString()) : this.NotFound();
+					return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 				}
 			}
 
-			return await this.OnDeleteAsync(key, this.GetParameters(), cancellation) > 0 ? this.NoContent() : this.NotFound();
+			count = await this.OnDeleteAsync(key, this.GetParameters(), cancellation);
+			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
 		[HttpPost("[area]/{key:required}/[controller]")]

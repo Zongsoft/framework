@@ -277,7 +277,7 @@ namespace Zongsoft.Web
 		protected IActionResult Paginate(object data, Paging paging)
 		{
 			if(data == null)
-				return this.NotFound();
+				return this.NoContent();
 
 			if(data is IActionResult result)
 				return result;
