@@ -48,20 +48,14 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 方法定义
-		/// <summary>
-		/// 启动重试。
-		/// </summary>
+		/// <summary>启动重试。</summary>
 		void Run();
 
-		/// <summary>
-		/// 停止重试。
-		/// </summary>
+		/// <summary>停止重试。</summary>
 		/// <param name="clean">指定是否清空积压的重试队列，如果为真则清空重试队列，否则不清理。</param>
 		void Stop(bool clean);
 
-		/// <summary>
-		/// 将指定的调度处理加入到重试队列。
-		/// </summary>
+		/// <summary>将指定的调度处理加入到重试队列。</summary>
 		/// <param name="handler">指定要重试的处理器。</param>
 		/// <param name="context">指定要重试的处理上下文对象。</param>
 		/// <param name="exception">指定导致要重试的异常。</param>

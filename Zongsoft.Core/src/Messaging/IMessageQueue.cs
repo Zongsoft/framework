@@ -31,8 +31,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Components;
-
 namespace Zongsoft.Messaging
 {
 	/// <summary>

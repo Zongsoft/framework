@@ -2,4 +2,4 @@ src/Zongsoft.Net.plugin
 src/Zongsoft.Net.option
 src/bin/$(Edition)/$(Framework)/Zongsoft.Net.*
 
-%NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.2/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll

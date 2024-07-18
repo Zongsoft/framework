@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   ÖÓ·å(Popeye Zhong) <zongsoft@gmail.com>
+ *   é’Ÿå³°(Popeye Zhong) <zongsoft@gmail.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
