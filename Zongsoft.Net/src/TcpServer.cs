@@ -178,7 +178,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args)
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 		{
 			var channels = _channels;
 
@@ -209,11 +209,15 @@ namespace Zongsoft.Net
 			}
 
 			channels.Listen(this.Address = new IPEndPoint(address, port));
+
+			//返回完成任务
+			return Task.CompletedTask;
 		}
 
-		protected override void OnStop(string[] args)
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 		{
 			_channels?.Stop();
+			return Task.CompletedTask;
 		}
 		#endregion
 

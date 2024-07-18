@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -134,22 +136,22 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args)
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 		{
 			//初始化调度记录
 			this.Initialize(null);
 
 			//调用基类同名方法
-			base.OnStart(args);
+			return base.OnStartAsync(args, cancellation);
 		}
 
-		protected override void OnStop(string[] args)
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 		{
 			//清空所有调度数据
 			this.Unschedule();
 
 			//调用基类同名方法
-			base.OnStop(args);
+			return base.OnStopAsync(args, cancellation);
 		}
 		#endregion
 

@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Hangfire;
@@ -66,21 +67,23 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args)
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation = default)
 		{
 			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
 			{
 				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{System.Environment.MachineName}",
 				SchedulePollingInterval = TimeSpan.FromSeconds(5),
 			}, this.Storage ?? JobStorage.Current);
+
+			return Task.CompletedTask;
 		}
 
-		protected override void OnStop(string[] args)
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation = default)
 		{
 			var server = Interlocked.Exchange(ref _server, null);
+			server?.Dispose();
 
-			if(server != null)
-				server.Dispose();
+			return Task.CompletedTask;
 		}
 		#endregion
 	}

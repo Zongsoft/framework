@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.Generic;
 
@@ -52,7 +53,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 启停方法
-		protected override void OnStart(string[] args)
+		protected async override Task OnStartAsync(string[] args, CancellationToken cancellation)
 		{
 			var queue = this.Queue ?? throw new InvalidOperationException($"Missing the required message queue.");
 			var options = this.GetSubscriptionOptions(out var filters);
@@ -60,7 +61,7 @@ namespace Zongsoft.Messaging
 
 			foreach(var filter in filters)
 			{
-				var consumer = queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options).GetAwaiter().GetResult();
+				var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
 
 				if(consumer != null)
 					consumers.Add(consumer);
@@ -74,7 +75,7 @@ namespace Zongsoft.Messaging
 
 					if(!string.IsNullOrEmpty(filter.Topic))
 					{
-						var consumer = queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options).GetAwaiter().GetResult();
+						var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
 
 						if(consumer != null)
 							consumers.Add(consumer);
@@ -85,14 +86,14 @@ namespace Zongsoft.Messaging
 			_subscribers = consumers.ToArray();
 		}
 
-		protected override void OnStop(string[] args)
+		protected async override Task OnStopAsync(string[] args, CancellationToken cancellation)
 		{
 			var subscribers = Interlocked.Exchange(ref _subscribers, null);
 
 			if(subscribers != null)
 			{
 				for(int i = 0; i < subscribers.Length; i++)
-					subscribers[i].UnsubscribeAsync().GetAwaiter().GetResult();
+					await subscribers[i].UnsubscribeAsync(cancellation);
 			}
 		}
 		#endregion
@@ -108,7 +109,7 @@ namespace Zongsoft.Messaging
 				return new MessageSubscribeOptions(option.Subscription.Reliability, option.Subscription.Fallback);
 			}
 
-			filters = Array.Empty<Options.QueueSubscriptionFilter>();
+			filters = [];
 			return null;
 		}
 		#endregion

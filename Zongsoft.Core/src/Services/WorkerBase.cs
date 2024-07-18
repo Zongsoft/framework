@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Services
 {
@@ -59,10 +60,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		protected WorkerBase() : this(null)
-		{
-		}
-
+		protected WorkerBase() : this(null) { }
 		protected WorkerBase(string name)
 		{
 			_name = string.IsNullOrWhiteSpace(name) ? this.GetType().Name : name.Trim();
@@ -74,34 +72,18 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置工作器的名称。
-		/// </summary>
+		/// <summary>获取或设置工作器的名称。</summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
-			protected set
-			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value;
-			}
+			get => _name;
+			protected set => _name = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取或设置是否禁用当前工作器。
-		/// </summary>
+		/// <summary>获取或设置是否禁用当前工作器。</summary>
 		/// <remarks>如果当前工作器</remarks>
 		public bool Enabled
 		{
-			get
-			{
-				return _enabled;
-			}
+			get => _enabled;
 			set
 			{
 				if(_enabled == value)
@@ -114,15 +96,10 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置工作器工作器是否可以暂停和继续。
-		/// </summary>
+		/// <summary>获取或设置工作器工作器是否可以暂停和继续。</summary>
 		public bool CanPauseAndContinue
 		{
-			get
-			{
-				return _canPauseAndContinue;
-			}
+			get => _canPauseAndContinue;
 			protected set
 			{
 				if(_state != (int)WorkerState.Stopped)
@@ -132,20 +109,13 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取工作器的状态。
-		/// </summary>
-		public WorkerState State
-		{
-			get
-			{
-				return (WorkerState)_state;
-			}
-		}
+		/// <summary>获取工作器的状态。</summary>
+		public WorkerState State => (WorkerState)_state;
 		#endregion
 
 		#region 公共方法
-		public void Start(params string[] args)
+		public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+		public async Task StartAsync(string[] args, CancellationToken cancellation = default)
 		{
 			//如果不可用或当前状态不是已停止则返回
 			if(!_enabled || _state != (int)WorkerState.Stopped)
@@ -163,7 +133,7 @@ namespace Zongsoft.Services
 				_state = (int)WorkerState.Starting;
 
 				//调用启动抽象方法，以执行实际的启动操作
-				this.OnStart(args);
+				await this.OnStartAsync(args, cancellation);
 
 				//更新当前状态为“运行中”
 				_state = (int)WorkerState.Running;
@@ -187,7 +157,8 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public void Stop(params string[] args)
+		public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+		public async Task StopAsync(string[] args, CancellationToken cancellation = default)
 		{
 			if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
 				return;
@@ -206,7 +177,7 @@ namespace Zongsoft.Services
 				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Stopping);
 
 				//调用停止抽象方法，以执行实际的停止操作
-				this.OnStop(args);
+				await this.OnStopAsync(args, cancellation);
 
 				//更新当前状态为已停止
 				_state = (int)WorkerState.Stopped;
@@ -231,7 +202,8 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public void Pause()
+		public void Pause() => this.PauseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+		public async Task PauseAsync(CancellationToken cancellation = default)
 		{
 			//如果不可用则退出
 			if(!_enabled)
@@ -258,7 +230,7 @@ namespace Zongsoft.Services
 				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Pausing);
 
 				//执行暂停操作
-				this.OnPause();
+				await this.OnPauseAsync(cancellation);
 
 				//更新当前状态为“已经暂停”
 				_state = (int)WorkerState.Paused;
@@ -283,7 +255,8 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public void Resume()
+		public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+		public async Task ResumeAsync(CancellationToken cancellation = default)
 		{
 			//如果不可用则退出
 			if(!_enabled)
@@ -310,7 +283,7 @@ namespace Zongsoft.Services
 				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Resuming);
 
 				//执行恢复操作
-				this.OnResume();
+				await this.OnResumeAsync(cancellation);
 
 				_state = (int)WorkerState.Running;
 
@@ -336,26 +309,14 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 抽象方法
-		protected abstract void OnStart(string[] args);
-		protected abstract void OnStop(string[] args);
-
-		protected virtual void OnPause()
-		{
-		}
-
-		protected virtual void OnResume()
-		{
-		}
+		protected abstract Task OnStartAsync(string[] args, CancellationToken cancellation);
+		protected abstract Task OnStopAsync(string[] args, CancellationToken cancellation);
+		protected virtual Task OnPauseAsync(CancellationToken cancellation) => Task.CompletedTask;
+		protected virtual Task OnResumeAsync(CancellationToken cancellation) => Task.CompletedTask;
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(_enabled)
-				return $"[{_state}] {_name}";
-			else
-				return $"[{_state}](Disabled) {_name}";
-		}
+		public override string ToString() => _enabled ? $"[{_state}] {_name}" : $"[{_state}](Disabled) {_name}";
 		#endregion
 
 		#region 事件激发
@@ -366,11 +327,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 释放资源
-		protected virtual void Dispose(bool disposing)
-		{
-			this.Stop();
-		}
-
+		protected virtual void Dispose(bool disposing) => this.Stop();
 		void IDisposable.Dispose()
 		{
 			var original = Interlocked.Exchange(ref _disposing, DISPOSED_FLAG);

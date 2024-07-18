@@ -221,16 +221,19 @@ namespace Zongsoft.Scheduling
 		#endregion
 
 		#region 重写方法
-		protected override void OnStart(string[] args)
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 		{
 			//扫描调度集
 			this.Scan();
 
 			//启动失败重试队列
 			_retriever.Run();
+
+			//返回完成任务
+			return Task.CompletedTask;
 		}
 
-		protected override void OnStop(string[] args)
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 		{
 			//将待触发的启动器置空
 			var launcher = Interlocked.Exchange(ref _launcher, null);
@@ -241,9 +244,12 @@ namespace Zongsoft.Scheduling
 
 			//停止失败重试队列并清空所有待重试项
 			_retriever.Stop(true);
+
+			//返回完成任务
+			return Task.CompletedTask;
 		}
 
-		protected override void OnPause()
+		protected override Task OnPauseAsync(CancellationToken cancellation)
 		{
 			//将待触发的启动器置空
 			var launcher = Interlocked.Exchange(ref _launcher, null);
@@ -254,32 +260,28 @@ namespace Zongsoft.Scheduling
 
 			//停止失败重试队列
 			_retriever.Stop(false);
+
+			//返回完成任务
+			return Task.CompletedTask;
 		}
 
-		protected override void OnResume()
+		protected override Task OnResumeAsync(CancellationToken cancellation)
 		{
 			//扫描调度集
 			this.Scan();
 
 			//启动失败重试队列
 			_retriever.Run();
+
+			//返回完成任务
+			return Task.CompletedTask;
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ScheduleToken CreateSchedule(long scheduleId, IHandler handler, ITrigger trigger, object data)
-		{
-			return new ScheduleToken(scheduleId, handler, trigger, data);
-		}
-
-		protected virtual IHandlerContext CreateContext(ScheduleToken schedule, string eventId, DateTime timestamp, int index)
-		{
-			return new HandlerContext(this, schedule.ScheduleId, schedule.Trigger, eventId, timestamp, index, schedule.Data);
-		}
-
-		protected virtual void OnRetrieverChanged(IRetriever newRetriever, IRetriever oldRetriever)
-		{
-		}
+		protected virtual ScheduleToken CreateSchedule(long scheduleId, IHandler handler, ITrigger trigger, object data) => new ScheduleToken(scheduleId, handler, trigger, data);
+		protected virtual IHandlerContext CreateContext(ScheduleToken schedule, string eventId, DateTime timestamp, int index) => new HandlerContext(this, schedule.ScheduleId, schedule.Trigger, eventId, timestamp, index, schedule.Data);
+		protected virtual void OnRetrieverChanged(IRetriever newRetriever, IRetriever oldRetriever) { }
 		#endregion
 
 		#region 扫描方法
@@ -463,7 +465,7 @@ namespace Zongsoft.Scheduling
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.Error(ex);
+				Zongsoft.Diagnostics.Logger.GetLogger<Scheduler>().Error(ex);
 			}
 		}
 
