@@ -136,7 +136,7 @@ namespace Zongsoft.Messaging.Mqtt
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
-			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload, (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
+			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.PayloadSegment.ToArray(), (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
 			{
 				Identity = args.ClientId
 			};
@@ -161,7 +161,7 @@ namespace Zongsoft.Messaging.Mqtt
 			var message = new MqttApplicationMessage()
 			{
 				Topic = topic,
-				Payload = data.ToArray(),
+				PayloadSegment = data.ToArray(),
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
@@ -180,7 +180,7 @@ namespace Zongsoft.Messaging.Mqtt
 			var message = new MqttApplicationMessage()
 			{
 				Topic = topic,
-				Payload = data.ToArray(),
+				PayloadSegment = data.ToArray(),
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
