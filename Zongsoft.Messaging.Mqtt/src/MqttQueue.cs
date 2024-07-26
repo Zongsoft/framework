@@ -69,7 +69,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 公共属性
-		public IEnumerable<MqttSubscriber> Subscribers { get => _subscribers.SelectMany(subscriber => subscriber.Value); }
+		public IEnumerable<MqttSubscriber> Subscribers => _subscribers.SelectMany(subscriber => subscriber.Value);
 		#endregion
 
 		#region 订阅方法
@@ -136,7 +136,7 @@ namespace Zongsoft.Messaging.Mqtt
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
-			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.PayloadSegment.ToArray(), (cancellation) => new ValueTask(args.AcknowledgeAsync(cancellation)))
+			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.PayloadSegment.ToArray(), cancellation => new ValueTask(args.AcknowledgeAsync(cancellation)))
 			{
 				Identity = args.ClientId
 			};

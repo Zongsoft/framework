@@ -139,7 +139,7 @@ namespace Zongsoft.Messaging
 
 			public ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
 			{
-				_handler?.Invoke(message);
+				_handler.Invoke(message);
 				return ValueTask.CompletedTask;
 			}
 		}

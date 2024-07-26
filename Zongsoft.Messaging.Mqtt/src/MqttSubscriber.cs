@@ -37,19 +37,15 @@ namespace Zongsoft.Messaging.Mqtt
 {
 	public class MqttSubscriber : MessageConsumerBase, IEquatable<MqttSubscriber>
 	{
-		#region 成员字段
-		private readonly MqttQueue _queue;
-		#endregion
-
 		#region 构造函数
 		public MqttSubscriber(MqttQueue queue, string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, tags, options, handler)
 		{
-			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
+			this.Queue = queue ?? throw new ArgumentNullException(nameof(queue));
 		}
 		#endregion
 
 		#region 公共属性
-		public MqttQueue Queue { get => _queue; }
+		public MqttQueue Queue { get; }
 		#endregion
 
 		#region 订阅方法
@@ -64,7 +60,7 @@ namespace Zongsoft.Messaging.Mqtt
 		{
 			foreach(var topic in topics)
 			{
-				await _queue.UnsubscribeAsync(topic);
+				await this.Queue.UnsubscribeAsync(topic);
 			}
 		}
 		#endregion
@@ -72,7 +68,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 重写方法
 		public bool Equals(MqttSubscriber other) => string.Equals(this.Topics, other.Topics) && string.Equals(this.Tags, other.Tags);
 		public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
-		public override int GetHashCode() => HashCode.Combine(_queue, this.Topics, this.Tags);
+		public override int GetHashCode() => HashCode.Combine(this.Queue, this.Topics, this.Tags);
 		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topics}:{string.Join(',', this.Tags)}" : string.Join(',', this.Topics);
 		#endregion
 	}
