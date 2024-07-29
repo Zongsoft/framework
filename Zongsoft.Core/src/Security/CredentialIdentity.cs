@@ -47,13 +47,11 @@ namespace Zongsoft.Security
 
 			_name = name.Trim();
 
-			if(string.IsNullOrEmpty(issuer))
-				issuer = ClaimsIdentity.DefaultIssuer;
+			//尝试设置身份签发者的Claim
+			if(!string.IsNullOrEmpty(issuer))
+				base.AddClaim(new Claim(ClaimTypes.System, issuer, ClaimValueTypes.String, issuer, originalIssuer, this));
 
-			if(string.IsNullOrEmpty(originalIssuer))
-				originalIssuer = issuer;
-
-			base.AddClaim(new Claim(ClaimTypes.System, issuer, ClaimValueTypes.String, issuer, originalIssuer, this));
+			//设置身份名称对应的Claim
 			base.AddClaim(new Claim(base.NameClaimType, _name, ClaimValueTypes.String, issuer, originalIssuer, this));
 		}
 
