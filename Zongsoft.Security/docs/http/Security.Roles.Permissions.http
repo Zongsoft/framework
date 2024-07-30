@@ -1,0 +1,52 @@
+### 权限列表
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Permissions HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 权限列表(指定目标)
+# @prompt id     角色编号
+# @prompt target 授权目标
+GET /Security/Roles/{{id}}/Permissions/{{target}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置权限
+# @prompt id      角色编号
+# @prompt target  授权目标
+# @prompt action  授权操作
+# @prompt granted 是否授予(true:授予,false:拒绝)
+PUT /Security/Roles/{{id}}/Permissions HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+[
+	{
+		"Target":"{{target}}",
+		"Action":"{{action}}",
+		"Granted":"{{granted}}"
+	}
+]
+
+### 删除权限
+# @prompt id     角色编号
+# @prompt target 授权目标
+# @prompt action 授权操作
+DELETE /Security/Roles/{{id}}/Permission/{{target}}:{{action}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 删除权限集
+# @prompt id     角色编号
+# @prompt target 授权目标
+# @prompt action 授权操作
+DELETE /Security/Roles/{{id}}/Permissions HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+[
+	{
+		"Target":"{{target}}",
+		"Action":"{{action}}"
+	}
+]

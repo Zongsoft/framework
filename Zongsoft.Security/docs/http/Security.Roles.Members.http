@@ -1,0 +1,63 @@
+### 成员列表
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Members HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置角色成员(用户成员)
+# @prompt roleId   角色编号
+# @prompt memberId 成员编号(用户成员编号)
+PUT /Security/Roles/{{roleId}}/Member/User:{{memberId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置角色成员(角色成员)
+# @prompt roleId   角色编号
+# @prompt memberId 成员编号(角色成员编号)
+PUT /Security/Roles/{{roleId}}/Member/Role:{{memberId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置角色成员集
+# @prompt roleId     角色编号
+# @prompt memberType 成员类型(0:用户,1:角色)
+# @prompt memberId   成员编号
+PUT /Security/Roles/{{roleId}}/Members HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+[
+	{
+		"MemberId":{{memberId}},
+		"MemberType":"{{memberType}}"
+	}
+]
+
+### 删除角色成员(用户成员)
+# @prompt roleId   角色编号
+# @prompt memberId 成员编号(用户成员编号)
+DELETE /Security/Roles/{{roleId}}/Member/User:{{memberId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 删除角色成员(角色成员)
+# @prompt roleId   角色编号
+# @prompt memberId 成员编号(角色成员编号)
+DELETE /Security/Roles/{{roleId}}/Member/Role:{{memberId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 删除角色成员集
+# @prompt roleId     角色编号
+# @prompt memberType 成员类型(0:用户,1:角色)
+# @prompt memberId   成员编号
+DELETE /Security/Roles/{{roleId}}/Members HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+[
+	{
+		"MemberId":{{memberId}},
+		"MemberType":"{{memberType}}"
+	}
+]

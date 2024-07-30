@@ -1,12 +1,114 @@
-@credentialId=774349482509KKHYJ
-@namespace=1
-
-###
-
-# 角色列表
-
+### 角色列表
 GET /Security/Roles HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{credentialId}}
+Authorization: Credential {{$dotenv credentialId}}
 
-###
+### 角色详情
+# @prompt id 角色编号
+GET /Security/Roles/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+X-Data-Schema: *
+
+### 角色详情(角色名称)
+# @prompt namespace 命名空间
+# @prompt name      角色名称
+GET /Security/Roles/{{namespace}}:{{name}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+X-Data-Schema: *
+
+### 角色存在
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Exists HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 角色存在
+# @prompt namespace 命名空间
+# @prompt identity  角色标识
+GET /Security/Roles/Exists/{{namespace}}:{{identity}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 角色新增
+# @prompt name 角色名称
+POST /Security/Roles HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+{
+  "Name":"{{name}}"
+}
+
+### 删除角色
+# @prompt id 角色编号
+DELETE /Security/Roles/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 删除角色(批量)
+DELETE /Security/Roles HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: text/plain
+
+404,444
+
+### 修改角色
+# @prompt id          角色编号
+# @prompt nickname    角色昵称
+# @prompt description 角色备注
+PATCH /Security/Roles/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+{
+  "Nickname":"{{nickname}}",
+  "Description":"{{description}}"
+}
+
+### 修改角色名称
+# @prompt id   角色编号
+# @prompt name 角色名称
+PATCH /Security/Roles/{{id}}/Name HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: text/plain
+
+{{name}}
+
+### 角色父级角色
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Roles HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 角色祖先角色
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Ancestors HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 角色是否在指定的角色内
+# @prompt id    角色编号
+# @prompt roles 角色名称(以逗号分隔)
+GET /Security/Roles/{{id}}/In/{{roles}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置角色的父级角色
+# @prompt id    角色编号
+# @prompt roles 角色编号(以逗号分隔)
+PUT /Security/Roles/{{id}}/Roles HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: text/plain
+
+{{roles}}
+
+### 获取角色的最终授权集
+# @prompt id      角色编号
+GET /Security/Roles/{{id}}/Authorizes HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}

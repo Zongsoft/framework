@@ -1,10 +1,7 @@
-###
-
-# 身份标识登录
+### 身份标识登录
 # @name signin
 # @prompt identity 身份标识
 # @prompt password 登录密码
-
 POST /Security/Authentication/Signin?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 
@@ -23,14 +20,11 @@ Host: {{host}}:{{port}}
 @email={{signin.response.body.$.identity.email}}
 @phone={{signin.response.body.$.identity.phone}}
 
-###
-
-# 验证码登录
+### 验证码登录
 # @name signin
 # @prompt token  令牌号
 # @prompt phone  手机号
 # @prompt secret 验证码
-
 POST http://{{url}}/Security/Authentication/Signin/Secret/{{token}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
@@ -47,9 +41,7 @@ Content-Type: text/plain
 @email={{signin.response.body.$.identity.email}}
 @phone={{signin.response.body.$.identity.phone}}
 
-###
-
-# 支付宝登录
+### 支付宝登录
 # @name signin
 # @prompt broker 代理号（支付宝）
 # @prompt token  令牌值
@@ -70,9 +62,7 @@ Content-Type: text/plain
 @email={{signin.response.body.$.identity.email}}
 @phone={{signin.response.body.$.identity.phone}}
 
-###
-
-# 微信小程序登录
+### 微信小程序登录
 # @prompt applet 小程序编号
 # @prompt token  小程序令牌
 
@@ -92,12 +82,9 @@ Content-Type: text/plain
 @email={{signin.response.body.$.identity.email}}
 @phone={{signin.response.body.$.identity.phone}}
 
-###
-
-# 微信公众号登录
+### 微信公众号登录
 # @prompt channel 公众号编号
 # @prompt token   公众号令牌
-
 POST /Security/Authentication/Signin/Wechat/channel:{{channel}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
@@ -114,66 +101,41 @@ Content-Type: text/plain
 @email={{signin.response.body.$.identity.email}}
 @phone={{signin.response.body.$.identity.phone}}
 
-###
-
-# 续约
+### 续约
 # @name renew
-
 POST /Security/Authentication/Renew/{{renewalToken}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-###
-
-# 注销登出
+### 注销登出
 # @name signout
-
 POST /Security/Authentication/Signout HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-###
-
-# 安全验证（手机）
+### 安全验证（手机）
 # @name secret
 # @prompt phone   手机号码
 # @prompt channel 验证通道
 # @prompt captcha 人机令牌
-
 POST /Security/Authentication/Secret/phone:{{phone}}?channel={{channel}} HTTP/1.1
 Host: {{host}}:{{port}}
 X-Security-Captcha: {{captcha}}
 
-###
-
-# 安全验证（邮箱）
+### 安全验证（邮箱）
 # @name secret
 # @prompt email   邮箱地址
 # @prompt captcha 人机令牌
-
 POST /Security/Authentication/Secret/email:{{email}} HTTP/1.1
 Host: {{host}}:{{port}}
 X-Security-Captcha: {{captcha}}
 
-###
-
-# 安全校验
+### 安全校验
 # @name verify
 # @prompt token  验证令牌
 # @prompt code   校验码值
-
 POST /Security/Authentication/Verify/{{token}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
 {{code}}
-
-###
-
-# 用户列表
-
-GET /Security/Users HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{credentialId}}
-
-###
