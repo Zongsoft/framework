@@ -61,6 +61,15 @@ namespace Zongsoft.Plugins.Hosting
 			//定义已注册完成的程序集
 			var registry = new HashSet<Assembly>();
 
+			//注册宿主程序依赖的程序集中的服务
+			foreach(var assemblyName in Assembly.GetEntryAssembly().GetReferencedAssemblies())
+			{
+				var assembly = GetAssembly(assemblyName, AppDomain.CurrentDomain.GetAssemblies());
+
+				if(assembly != null)
+					Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, this.Configuration);
+			}
+
 			//注册宿主程序集中的服务
 			Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
 
@@ -72,6 +81,17 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 私有方法
+		private static Assembly GetAssembly(AssemblyName name, Assembly[] assemblies)
+		{
+			for(int i = 0; i < assemblies.Length; i++)
+			{
+				if(assemblies[i].FullName == name.FullName)
+					return assemblies[i];
+			}
+
+			return null;
+		}
+
 		private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration, ISet<Assembly> registry)
 		{
 			if(plugin == null || plugin.Status != PluginStatus.Loaded)
