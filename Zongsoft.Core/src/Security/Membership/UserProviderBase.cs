@@ -66,10 +66,10 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		[ServiceDependency]
-		public ISecretor Secretor { get; protected set; }
+		public ISecretor Secretor { get; set; }
 
 		[ServiceDependency]
-		public IAttempter Attempter { get; protected set; }
+		public IAttempter Attempter { get; set; }
 
 		public IDataAccess DataAccess
 		{
@@ -658,7 +658,7 @@ namespace Zongsoft.Security.Membership
 				this.OnValidatePassword(newPassword);
 
 				//更新用户的新密码
-				return this.SetPassword(GetUserId(userId), newPassword);
+				return this.SetPassword(userId, newPassword);
 			}
 
 			//重置密码校验失败，抛出异常

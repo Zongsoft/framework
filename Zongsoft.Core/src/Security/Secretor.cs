@@ -51,12 +51,16 @@ namespace Zongsoft.Security
 		#region 成员字段
 		private TimeSpan _expiry;
 		private TimeSpan _period;
+		private IDistributedCache _cache;
 		private ISecretor.SecretTransmitter _transmitter;
+		private IServiceProvider _serviceProvider;
 		#endregion
 
 		#region 构造函数
 		public Secretor(IServiceProvider serviceProvider)
 		{
+			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
 			//设置属性的默认值
 			_expiry = TimeSpan.FromMinutes(DEFAULT_EXPIRY_MINUTES);
 			_period = TimeSpan.FromSeconds(DEFAULT_PERIOD_SECONDS);
@@ -67,6 +71,8 @@ namespace Zongsoft.Security
 
 		public Secretor(IDistributedCache cache, IServiceProvider serviceProvider)
 		{
+			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
 			//设置缓存容器
 			this.Cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
@@ -81,8 +87,11 @@ namespace Zongsoft.Security
 
 		#region 公共属性
 		/// <summary>获取秘密内容的缓存容器。</summary>
-		[ServiceDependency(IsRequired = true)]
-		public IDistributedCache Cache { get; set; }
+		public IDistributedCache Cache
+		{
+			get => _cache ??= _serviceProvider.Resolve<IDistributedCache>() ?? _serviceProvider.ResolveRequired<IServiceProvider<IDistributedCache>>().GetService();
+			set => _cache = value ?? throw new ArgumentNullException(nameof(value));
+		}
 
 		/// <summary>获取或设置秘密内容的默认过期时长（默认为30分钟），不能设置为零。</summary>
 		public TimeSpan Expiry
@@ -323,9 +332,11 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 私有变量
+			private volatile int _initialization;
 			private readonly ISecretor _secretor;
 			private readonly IDictionary<string, ICaptcha> _captchas;
 			private readonly IDictionary<string, ITransmitter> _transmitters;
+			private readonly IServiceProvider _serviceProvider;
 			#endregion
 
 			#region 构造函数
@@ -334,14 +345,15 @@ namespace Zongsoft.Security
 				_secretor = secretor ?? throw new ArgumentNullException(nameof(secretor));
 				_captchas = new Dictionary<string, ICaptcha>(StringComparer.OrdinalIgnoreCase);
 				_transmitters = new Dictionary<string, ITransmitter>(StringComparer.OrdinalIgnoreCase);
-
-				this.Initialize(serviceProvider);
+				_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			}
 			#endregion
 
 			#region 公共方法
 			public override async ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel, string extra, CancellationToken cancellation)
 			{
+				this.Initialize(_serviceProvider);
+
 				if(!string.IsNullOrEmpty(scheme) && !string.IsNullOrEmpty(destination) && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
 					if(!captcha.IsEmpty)
@@ -369,6 +381,10 @@ namespace Zongsoft.Security
 			#region 私有方法
 			private void Initialize(IServiceProvider serviceProvider)
 			{
+				var initialization = Interlocked.CompareExchange(ref _initialization, 1, 0);
+				if(initialization != 0)
+					return;
+
 				var captchas = serviceProvider.ResolveAll<ICaptcha>();
 				if(captchas != null)
 				{
@@ -396,10 +412,9 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 嵌套结构
-			private struct SecretTemplateData
+			private readonly struct SecretTemplateData(string code)
 			{
-				public SecretTemplateData(string code) => this.Code = code;
-				public string Code { get; }
+				public readonly string Code = code;
 			}
 			#endregion
 		}
