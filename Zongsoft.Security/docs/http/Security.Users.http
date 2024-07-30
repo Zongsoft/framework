@@ -113,7 +113,7 @@ Content-Type: text/plain
 
 {{phone}}
 
-### 修改用户电话
+### 修改用户状态
 # @prompt id     用户编号
 # @prompt status 用户状态
 PATCH /Security/Users/{{id}}/Status/{{status}} HTTP/1.1
@@ -122,10 +122,15 @@ Authorization: Credential {{$dotenv credentialId}}
 
 ### 判断用户是否设置了密码
 # @prompt id     用户编号
-# @prompt status 用户状态
 GET /Security/Users/{{id}}/Password HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
+
+### 判断用户是否设置了密码(无需登录)
+# @prompt namespace 命名空间
+# @prompt identity  用户标识
+GET /Security/Users/{{namespace}}:{{identity}}/Password HTTP/1.1
+Host: {{host}}:{{port}}
 
 ### 修改用户密码
 # @prompt id          用户编号
@@ -159,6 +164,7 @@ Authorization: Credential {{$dotenv credentialId}}
 PUT /Security/Users/{{id}}/Password/Answers HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
 
 {
   "Password":"{{password}}",
@@ -182,13 +188,11 @@ Host: {{host}}:{{port}}
 # @prompt token    重置令牌
 # @prompt secret   重置密钥
 # @prompt password 设置密码
-POST /Security/Users/Password/Reset/{{token}} HTTP/1.1
+POST /Security/Users/Password/Reset/{{token}}?secret={{secret}} HTTP/1.1
 Host: {{host}}:{{port}}
+Content-Type: text/plain
 
-{
-  "Secret":"{{secret}}",
-  "Password":"{{password}}"
-}
+{{password}}
 
 ### 重置密码(通过密码问答)
 # @prompt namespace 命名空间
@@ -199,6 +203,7 @@ Host: {{host}}:{{port}}
 # @prompt password  设置密码
 POST /Security/Users/{{namespace}}:{{identity}}/Password/Reset HTTP/1.1
 Host: {{host}}:{{port}}
+Content-Type: application/json
 
 {
   "Answers":["{{answer1}}","{{answer2}}","{{answer3}}"],
@@ -234,15 +239,15 @@ Content-Type: text/plain
 
 {{roles}}
 
+### 获取用户的最终授权集
+# @prompt id      用户编号
+GET /Security/Users/{{id}}/Authorizes HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
 ### 用户的是否具有指定资源的授权
 # @prompt id      用户编号
 # @prompt resouce 授权资源(格式：<target>:<action>)
 GET /Security/Users/{{id}}/Authorize/{{resouce}} HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
-
-### 获取用户的最终授权集
-# @prompt id      用户编号
-GET /Security/Users/{{id}}/Authorizes HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
