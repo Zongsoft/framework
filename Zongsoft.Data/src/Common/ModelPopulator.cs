@@ -30,6 +30,7 @@
 using System;
 using System.Data;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Zongsoft.Data.Common
 {
@@ -67,27 +68,35 @@ namespace Zongsoft.Data.Common
 
 		private object Populate(IDataRecord record, Func<IDataRecord, object> creator, IEnumerable<MemberMapping> tokens)
 		{
-			object entity = null;
+			object model = null;
+
+			if(tokens == null || !tokens.Any())
+			{
+				if(record.FieldCount > 0)
+					model = record.GetValue(0);
+
+				return model;
+			}
 
 			foreach(var token in tokens)
 			{
 				if(token.Ordinal >= 0)
 				{
-					if(entity == null)
-						entity = creator(record);
+					if(model == null)
+						model = creator(record);
 
-					token.Member.Populate(ref entity, record, token.Ordinal);
+					token.Member.Populate(ref model, record, token.Ordinal);
 				}
 				else if(CanPopulate(record, token))
 				{
-					if(entity == null)
-						entity = creator(record);
+					if(model == null)
+						model = creator(record);
 
-					token.Member.SetValue(ref entity, this.Populate(record, this.GetCreator(token.Member.Type), token.Children));
+					token.Member.SetValue(ref model, this.Populate(record, this.GetCreator(token.Member.Type), token.Children));
 				}
 			}
 
-			return entity;
+			return model;
 		}
 		#endregion
 
@@ -184,6 +193,14 @@ namespace Zongsoft.Data.Common
 		private static T Populate(IDataRecord record, IEnumerable<MemberMapping> members)
 		{
 			T model = default;
+
+			if(members == null || !members.Any())
+			{
+				if(record.FieldCount > 0)
+					model = record.GetValue(0) is T value ? value : default;
+
+				return model;
+			}
 
 			foreach(var member in members)
 			{
