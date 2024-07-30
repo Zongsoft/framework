@@ -74,24 +74,32 @@ namespace Zongsoft.Security.Membership
 		#region 公共方法
 		public IEnumerable<TRole> GetAncestors(uint memberId, MemberType memberType)
 		{
-			switch(memberType)
+			//获取指定成员对应的命名空间值
+			var value = memberType switch
 			{
-				case MemberType.User:
-					var user = this.DataAccess.Select<TUser>(Condition.Equal(nameof(IUserModel.UserId), memberId)).FirstOrDefault();
-					return user == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, user);
-				case MemberType.Role:
-					var role = this.DataAccess.Select<TRole>(Condition.Equal(nameof(IRoleModel.RoleId), memberId)).FirstOrDefault();
-					return role == null ? null : MembershipUtility.GetAncestors<TRole>(this.DataAccess, role);
-				default:
-					return null;
-			}
+				MemberType.User => this.DataAccess.Select<object>(Mapping.Instance.User, Condition.Equal(nameof(IUserModel.UserId), memberId), Mapping.Instance.Namespace.GetField(Mapping.Instance.User), Paging.Limit(1)).FirstOrDefault(),
+				MemberType.Role => this.DataAccess.Select<object>(Mapping.Instance.Role, Condition.Equal(nameof(IRoleModel.RoleId), memberId), Mapping.Instance.Namespace.GetField(Mapping.Instance.Role), Paging.Limit(1)).FirstOrDefault(),
+				_ => null,
+			};
+
+			return MembershipUtility.GetAncestors<TRole>(this.DataAccess, memberId, memberType, value);
 		}
 
 		public IEnumerable<TRole> GetRoles(uint memberId, MemberType memberType)
 		{
+			//获取指定成员对应的命名空间值
+			var value = memberType switch
+			{
+				MemberType.User => this.DataAccess.Select<object>(Mapping.Instance.User, Condition.Equal(nameof(IUserModel.UserId), memberId), Mapping.Instance.Namespace.GetField(Mapping.Instance.User), Paging.Limit(1)).FirstOrDefault(),
+				MemberType.Role => this.DataAccess.Select<object>(Mapping.Instance.Role, Condition.Equal(nameof(IRoleModel.RoleId), memberId), Mapping.Instance.Namespace.GetField(Mapping.Instance.Role), Paging.Limit(1)).FirstOrDefault(),
+				_ => null,
+			};
+
 			return this.DataAccess.Select<Member<TRole, TUser>>(
-				Condition.Equal(nameof(Member.MemberId), memberId) & Condition.Equal(nameof(Member.MemberType), memberType),
-				"*, Role{*}").Map(p => p.Role);
+				Condition.Equal(nameof(Member.MemberId), memberId) &
+				Condition.Equal(nameof(Member.MemberType), memberType) &
+				Condition.Equal($"{nameof(Member.Role)}.{Mapping.Instance.Namespace.GetField(Mapping.Instance.Role)}", value),
+				$"*, {nameof(Member.Role)}" + "{*}").Map(p => p.Role);
 		}
 
 		public IEnumerable<Member<TRole, TUser>> GetMembers(uint roleId, string schema = null)

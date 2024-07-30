@@ -580,10 +580,12 @@ namespace Zongsoft.Security.Membership
 				this.SetPassword(userId, PasswordUtility.HashPassword(newPassword, passwordSalt), passwordSalt);
 		}
 
-		public uint ForgetPassword(string identity, string @namespace = null)
+		public string ForgetPassword(string identity, string @namespace = null)
 		{
 			if(string.IsNullOrEmpty(identity))
 				throw new ArgumentNullException(nameof(identity));
+
+			var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing the required secretor.");
 
 			//解析用户标识的查询条件
 			var condition = MembershipUtility.GetIdentityCondition(identity, out var identityType);
@@ -596,7 +598,9 @@ namespace Zongsoft.Security.Membership
 			var user = this.DataAccess.Select<IUserModel>(condition & this.GetNamespace(@namespace)).FirstOrDefault();
 
 			if(user == null)
-				return 0;
+				return null;
+
+			var token = Randomizer.GenerateString();
 
 			switch(identityType)
 			{
@@ -606,7 +610,7 @@ namespace Zongsoft.Security.Membership
 						throw new InvalidOperationException("The user's email is unset.");
 
 					//生成校验密文
-					var secret = this.Secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
+					var secret = secretor.Generate($"{KEY_FORGET_SECRET}:{token}", user.UserId.ToString());
 
 					//发送忘记密码的邮件通知
 					CommandExecutor.Default.Execute($"email.send -template:{KEY_AUTHENTICATION_TEMPLATE} {user.Email}", new
@@ -622,7 +626,7 @@ namespace Zongsoft.Security.Membership
 						throw new InvalidOperationException("The user's phone-number is unset.");
 
 					//生成校验密文
-					secret = this.Secretor.Generate($"{KEY_FORGET_SECRET}:{user.UserId}");
+					secret = secretor.Generate($"{KEY_FORGET_SECRET}:{token}", user.UserId.ToString());
 
 					//发送忘记密码的短信通知
 					CommandExecutor.Default.Execute($"phone.send -template:{KEY_AUTHENTICATION_TEMPLATE} {user.Phone}", new
@@ -636,17 +640,19 @@ namespace Zongsoft.Security.Membership
 					throw new SecurityException("Invalid user identity for the forget password operation.");
 			}
 
-			//返回执行成功的用户编号
-			return user.UserId;
+			//返回执行密码重置令牌
+			return token;
 		}
 
-		public bool ResetPassword(uint userId, string secret, string newPassword = null)
+		public bool ResetPassword(string token, string secret, string newPassword = null)
 		{
-			if(string.IsNullOrEmpty(secret))
+			if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
 				return false;
 
+			var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing the required secretor.");
+
 			//如果重置密码的校验码验证成功
-			if(this.Secretor.Verify($"{KEY_FORGET_SECRET}:{userId}", secret))
+			if(secretor.Verify($"{KEY_FORGET_SECRET}:{token}", secret, out var extra) && uint.TryParse(extra, out var userId))
 			{
 				//确认新密码是否符合密码规则
 				this.OnValidatePassword(newPassword);
@@ -842,7 +848,7 @@ namespace Zongsoft.Security.Membership
 			return question.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 		}
 
-		protected virtual IList<byte[]> GetSecretAnswer(string identity, string @namespace, out uint userId)
+		protected virtual IReadOnlyList<byte[]> GetSecretAnswer(string identity, string @namespace, out uint userId)
 		{
 			var record = this.DataAccess.Select<UserSecretRecord>(
 				this.DataAccess.Naming.Get<TUser>(),
@@ -860,13 +866,13 @@ namespace Zongsoft.Security.Membership
 			{
 				var count = record.SecretAnswer[0];
 
-				if(count > 0)
+				if(count > 0 && count <= 5)
 				{
 					var answers = new List<byte[]>(count);
+					var buffer = new byte[(record.SecretAnswer.Length - 1) / count];
 
 					for(int i = 0; i < count; i++)
 					{
-						var buffer = new byte[record.SecretAnswer.Length / count];
 						Array.Copy(record.SecretAnswer, i * buffer.Length + 1, buffer, 0, buffer.Length);
 						answers.Add(buffer);
 					}
@@ -885,8 +891,8 @@ namespace Zongsoft.Security.Membership
 			{
 				return this.DataAccess.Update<TUser>(new
 				{
-					PasswordQuestion = DBNull.Value,
-					PasswordAnswer = DBNull.Value
+					SecretQuestion = DBNull.Value,
+					SecretAnswer = DBNull.Value
 				}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 			}
 
@@ -896,7 +902,7 @@ namespace Zongsoft.Security.Membership
 			if(questions.Length > 5)
 				throw new ArgumentOutOfRangeException(nameof(questions));
 
-			var buffer = new List<byte>(100)
+			var buffer = new List<byte>(61)
 			{
 				(byte)answers.Length
 			};
@@ -906,8 +912,8 @@ namespace Zongsoft.Security.Membership
 
 			return this.DataAccess.Update<TUser>(new
 			{
-				PasswordQuestion = string.Join('\n', questions),
-				PasswordAnswer = buffer
+				SecretQuestion = string.Join('\n', questions),
+				SecretAnswer = buffer.ToArray()
 			}, Condition.Equal(nameof(IUserModel.UserId), userId)) > 0;
 		}
 
@@ -968,10 +974,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Condition GetNamespace(string @namespace)
-		{
-			return Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TUser>(), @namespace);
-		}
+		private Condition GetNamespace(string @namespace) => Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TUser>(), @namespace);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static uint GetUserId(uint userId)
@@ -1015,16 +1018,12 @@ namespace Zongsoft.Security.Membership
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static long GetPasswordSalt()
-		{
-			return Math.Abs(Randomizer.GenerateInt64());
-		}
+		private static long GetPasswordSalt() => Math.Abs(Randomizer.GenerateInt64());
 
-		private static byte[] GetPasswordAnswerSalt(uint userId, int index)
-		{
-			return Encoding.ASCII.GetBytes(string.Format("Zongsoft.Security.User:{0}:Password.Answer[{1}]", userId.ToString(), index.ToString()));
-		}
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static byte[] GetPasswordAnswerSalt(uint userId, int index) => Encoding.ASCII.GetBytes($"Zongsoft.Security.User:{userId}:Password.Answer[{index}]");
 
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static byte[] HashPasswordAnswer(string answer, uint userId, int index)
 		{
 			if(string.IsNullOrEmpty(answer))

@@ -91,7 +91,7 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{id:long}")]
+		[HttpGet("{id:required}")]
 		public Task<IActionResult> Get(uint id)
 		{
 			var user = this.UserProvider.GetUser(id);
@@ -101,14 +101,13 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpGet("{identity?}")]
-		[HttpGet("{namespace:required}:{identity:required}")]
-		public Task<IActionResult> Get(string @namespace, string identity, [FromQuery]Paging page = null)
+		[HttpGet("{identifier?}")]
+		public Task<IActionResult> Get(string identifier, [FromQuery] Paging page = null)
 		{
-			if(string.IsNullOrEmpty(identity) || identity == "*")
-				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.UserProvider.GetUsers(@namespace, page)));
+			if(!IdentityQualifier.TryParse(identifier, out var identity) || (string.IsNullOrEmpty(identity.Identity) || identity.Identity == "*"))
+				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.UserProvider.GetUsers(identity.Namespace, page)));
 
-			var result = this.UserProvider.GetUser(identity, @namespace);
+			var result = this.UserProvider.GetUser(identity.Identity, identity.Namespace);
 
 			return result != null ?
 				Task.FromResult((IActionResult)this.Ok(result)) :
@@ -174,9 +173,9 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
+		[HttpPatch("Namespace")]
 		[HttpPatch("{id}/Namespace")]
-		[HttpPatch("Namespace/{id?}")]
-		public async Task<IActionResult> SetNamespace(uint id)
+		public async Task<IActionResult> SetNamespace(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -186,9 +185,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetNamespace(id, content) ? this.NoContent() : this.NotFound();
 		}
 
+		[HttpPatch("Name")]
 		[HttpPatch("{id}/Name")]
-		[HttpPatch("Name/{id?}")]
-		public async Task<IActionResult> SetName(uint id)
+		public async Task<IActionResult> SetName(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -198,10 +197,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetName(id, content) ? this.NoContent() : this.NotFound();
 		}
 
-		[Authorize]
+		[HttpPatch("Nickname")]
 		[HttpPatch("{id}/Nickname")]
-		[HttpPatch("Nickname/{id?}")]
-		public async Task<IActionResult> SetNickname(uint id)
+		public async Task<IActionResult> SetNickname(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -211,9 +209,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetNickname(id, content) ? this.NoContent() : this.NotFound();
 		}
 
+		[HttpPatch("Email")]
 		[HttpPatch("{id}/Email")]
-		[HttpPatch("Email/{id?}")]
-		public async Task<IActionResult> SetEmail(uint id)
+		public async Task<IActionResult> SetEmail(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -223,9 +221,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetEmail(id, content, true) ? this.NoContent() : this.NotFound();
 		}
 
+		[HttpPatch("Phone")]
 		[HttpPatch("{id}/Phone")]
-		[HttpPatch("Phone/{id?}")]
-		public async Task<IActionResult> SetPhone(uint id)
+		public async Task<IActionResult> SetPhone(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -235,9 +233,9 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetPhone(id, content, true) ? this.NoContent() : this.NotFound();
 		}
 
+		[HttpPatch("Description")]
 		[HttpPatch("{id}/Description")]
-		[HttpPatch("Description/{id?}")]
-		public async Task<IActionResult> SetDescription(uint id)
+		public async Task<IActionResult> SetDescription(uint id = 0)
 		{
 			var content = await this.Request.ReadAsStringAsync();
 
@@ -247,8 +245,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.UserProvider.SetDescription(id, content) ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPatch("{id}/Status/{value}")]
 		[HttpPatch("Status/{value}")]
+		[HttpPatch("{id}/Status/{value}")]
 		public Task<IActionResult> SetStatus(uint id, UserStatus value)
 		{
 			return this.UserProvider.SetStatus(id, value) ?
@@ -256,9 +254,8 @@ namespace Zongsoft.Security.Web.Controllers
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
-		[HttpHead("{id}")]
-		[HttpGet("{id}/exists")]
-		[HttpGet("exists")]
+		[HttpHead("{id:required}")]
+		[HttpGet("{id:required}/exists")]
 		public Task<IActionResult> Exists(uint id)
 		{
 			return this.UserProvider.Exists(id) ?
@@ -290,8 +287,8 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 密码处理
-		[HttpGet("{id}/Password.Has")]
-		[HttpGet("Password.Has")]
+		[HttpGet("Password")]
+		[HttpGet("Password/Has")]
 		public Task<IActionResult> HasPassword(uint id = 0)
 		{
 			return this.UserProvider.HasPassword(id) ?
@@ -300,21 +297,26 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[AllowAnonymous]
-		[HttpGet("Password.Has/{identity}")]
-		[HttpGet("Password.Has/{namespace:required}:{identity}")]
-		public Task<IActionResult> HasPassword(string @namespace, string identity)
+		[HttpGet("{identifier:required}/Password")]
+		[HttpGet("{identifier:required}/Password/Has")]
+		public Task<IActionResult> HasPassword(string identifier)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if(string.IsNullOrEmpty(identifier))
+				return this.HasPassword(0U);
+			if(uint.TryParse(identifier, out var id))
+				return this.HasPassword(id);
+
+			if(!IdentityQualifier.TryParse(identifier, out var identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.UserProvider.HasPassword(identity, @namespace) ?
+			return this.UserProvider.HasPassword(identity.Identity, identity.Namespace) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
 
 		[Authorize]
-		[HttpPut("{id}/Password.Change")]
-		[HttpPut("Password.Change")]
+		[HttpPut("{id}/Password/Change")]
+		[HttpPut("Password/Change")]
 		public Task<IActionResult> ChangePassword(uint id, [FromBody] PasswordChangeEntity password)
 		{
 			return this.UserProvider.ChangePassword(id, password.OldPassword, password.NewPassword) ?
@@ -323,51 +325,49 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[AllowAnonymous]
-		[HttpPost("Password.Forget/{identity}")]
-		[HttpPost("Password.Forget/{namespace:required}:{identity}")]
-		public Task<IActionResult> ForgetPassword(string @namespace, string identity)
+		[HttpPost("{identifier:required}/Password/Forget")]
+		public Task<IActionResult> ForgetPassword(string identifier)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if(!IdentityQualifier.TryParse(identifier, out var identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var id = this.UserProvider.ForgetPassword(identity, @namespace);
+			var token = this.UserProvider.ForgetPassword(identity.Identity, identity.Namespace);
 
-			return id > 0 ?
-				Task.FromResult((IActionResult)this.Ok(id)) :
-				Task.FromResult((IActionResult)this.NotFound());
+			return string.IsNullOrEmpty(token) ?
+				Task.FromResult((IActionResult)this.NotFound()) :
+				Task.FromResult((IActionResult)this.Content(token));
 		}
 
 		[AllowAnonymous]
-		[HttpPost("{id}/Password.Reset")]
-		[HttpPost("Password.Reset")]
-		public Task<IActionResult> ResetPassword(uint id, [FromBody] PasswordResetEntity content)
+		[HttpPost("Password/Reset/{token:required}")]
+		public async Task<IActionResult> ResetPassword(string token, [FromQuery] string secret)
 		{
-			if(string.IsNullOrWhiteSpace(content.Secret))
-				return Task.FromResult((IActionResult)this.BadRequest());
+			if(string.IsNullOrWhiteSpace(secret))
+				return this.BadRequest();
 
-			return this.UserProvider.ResetPassword(id, content.Secret, content.Password) ?
-				Task.FromResult((IActionResult)this.NoContent()) :
-				Task.FromResult((IActionResult)this.BadRequest());
+			var password = await this.Request.ReadAsStringAsync();
+
+			return this.UserProvider.ResetPassword(token, secret, password) ?
+				this.NoContent() :
+				this.NotFound();
 		}
 
 		[AllowAnonymous]
-		[HttpPost("Password.Reset/{identity}")]
-		[HttpPost("Password.Reset/{namespace:required}:{identity}")]
-		public Task<IActionResult> ResetPassword(string @namespace, string identity, [FromBody] PasswordResetEntity content)
+		[HttpPost("{identifier:required}/Password/Reset")]
+		public Task<IActionResult> ResetPassword(string identifier, [FromBody] PasswordResetEntity content)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if(!IdentityQualifier.TryParse(identifier, out var identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			if(content.PasswordAnswers == null || content.PasswordAnswers.Length < 3)
+			if(content.Answers == null || content.Answers.Length < 3)
 				Task.FromResult(this.BadRequest());
 
-			return this.UserProvider.ResetPassword(identity, @namespace, content.PasswordAnswers, content.Password) ?
+			return this.UserProvider.ResetPassword(identity.Identity, identity.Namespace, content.Answers, content.Password) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.BadRequest());
 		}
 
-		[HttpGet("{id}/Password.Questions")]
-		[HttpGet("Password.Questions")]
+		[HttpGet("Password/Questions")]
 		public Task<IActionResult> GetPasswordQuestions(uint id = 0)
 		{
 			var result = this.UserProvider.GetPasswordQuestions(id);
@@ -388,14 +388,18 @@ namespace Zongsoft.Security.Web.Controllers
 		}
 
 		[AllowAnonymous]
-		[HttpGet("Password.Questions/{identity}")]
-		[HttpGet("Password.Questions/{namespace:required}:{identity}")]
-		public Task<IActionResult> GetPasswordQuestions(string @namespace, string identity)
+		[HttpGet("{identifier:required}/Password/Questions")]
+		public Task<IActionResult> GetPasswordQuestions(string identifier)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
+			if(string.IsNullOrEmpty(identifier))
+				return this.GetPasswordQuestions(0U);
+			if(uint.TryParse(identifier, out var id))
+				return this.GetPasswordQuestions(id);
+
+			if(!IdentityQualifier.TryParse(identifier, out var identity))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			var result = this.UserProvider.GetPasswordQuestions(identity, @namespace);
+			var result = this.UserProvider.GetPasswordQuestions(identity.Identity, identity.Namespace);
 
 			//如果返回的结果为空表示指定的表示的用户不存在
 			if(result == null)
@@ -412,8 +416,8 @@ namespace Zongsoft.Security.Web.Controllers
 			return Task.FromResult((IActionResult)this.NoContent());
 		}
 
-		[HttpPut("{id}/Password.Answers")]
-		[HttpPut("Password.Answers")]
+		[HttpPut("{id}/Password/Answers")]
+		[HttpPut("Password/Answers")]
 		public Task<IActionResult> SetPasswordQuestionsAndAnswers(uint id, [FromBody] PasswordQuestionsAndAnswersEntity content)
 		{
 			return this.UserProvider.SetPasswordQuestionsAndAnswers(id, content.Password, content.Questions, content.Answers) ?
@@ -424,18 +428,16 @@ namespace Zongsoft.Security.Web.Controllers
 
 		#region 成员操作
 		[HttpGet("{id}/Ancestors")]
-		[HttpGet("Ancestors/{id:required}")]
 		public Task<IActionResult> GetAncestors(uint id)
 		{
 			var roles = this.MemberProvider.GetAncestors(id, MemberType.User);
 
-			return roles != null && roles.Any() ?
+			return roles != null ?
 				Task.FromResult((IActionResult)this.Ok(roles)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
 		[HttpGet("{id}/Roles")]
-		[HttpGet("Roles/{id?}")]
 		public Task<IActionResult> GetRoles(uint id = 0)
 		{
 			if(id == 0)
@@ -443,13 +445,12 @@ namespace Zongsoft.Security.Web.Controllers
 
 			var roles = this.MemberProvider.GetRoles(id, MemberType.User);
 
-			return roles != null && roles.Any() ?
+			return roles != null ?
 				Task.FromResult((IActionResult)this.Ok(roles)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
 
 		[HttpPut("{id}/Roles")]
-		[HttpPut("Roles/{id}")]
 		public async Task<IActionResult> SetRoles(uint id)
 		{
 			var content = await this.Request.ReadAsStringAsync();
@@ -461,14 +462,14 @@ namespace Zongsoft.Security.Web.Controllers
 			return this.MemberProvider.SetMembers(members) > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetRoles), new { id }, members) : this.NotFound();
 		}
 
-		[HttpGet("{id}/In/{roles:required}")]
 		[HttpGet("In/{roles:required}")]
+		[HttpGet("{id}/In/{roles:required}")]
 		public Task<IActionResult> InRole(uint id, string roles)
 		{
 			if(string.IsNullOrWhiteSpace(roles))
 				return Task.FromResult((IActionResult)this.BadRequest());
 
-			return this.Authorizer.InRoles(id, Common.StringExtension.Slice(roles, ',', '|').ToArray()) ?
+			return this.Authorizer.InRoles(id, Zongsoft.Common.StringExtension.Slice(roles, ',', '|').ToArray()) ?
 				Task.FromResult((IActionResult)this.NoContent()) :
 				Task.FromResult((IActionResult)this.NotFound());
 		}
@@ -609,9 +610,8 @@ namespace Zongsoft.Security.Web.Controllers
 
 		public struct PasswordResetEntity
 		{
-			public string Secret { get; set; }
 			public string Password { get; set; }
-			public string[] PasswordAnswers { get; set; }
+			public string[] Answers { get; set; }
 		}
 
 		public struct PasswordQuestionsAndAnswersEntity

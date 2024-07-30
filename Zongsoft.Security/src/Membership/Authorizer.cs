@@ -143,7 +143,7 @@ namespace Zongsoft.Security.Membership
 
 			return MembershipUtility.InRoles(
 				this.DataAccess,
-				this.GetUser(userId, "UserId, Name, Namespace"),
+				this.GetUser(userId, $"{nameof(IUserModel.UserId)},{nameof(IUserModel.Name)},{Mapping.Instance.Namespace.GetField(Mapping.Instance.User)}"),
 				roleNames);
 		}
 

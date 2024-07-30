@@ -88,9 +88,7 @@ namespace Zongsoft.Security.Membership
 			return false;
 		}
 
-		/// <summary>
-		/// 获取指定角色的所有上级角色集。
-		/// </summary>
+		/// <summary>获取指定角色的所有上级角色集。</summary>
 		/// <param name="dataAccess">数据访问服务。</param>
 		/// <param name="role">指定的角色对象。</param>
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
@@ -115,9 +113,7 @@ namespace Zongsoft.Security.Membership
 				out flats, out hierarchies);
 		}
 
-		/// <summary>
-		/// 获取指定用户的所有上级角色集。
-		/// </summary>
+		/// <summary>获取指定用户的所有上级角色集。</summary>
 		/// <param name="dataAccess">数据访问服务。</param>
 		/// <param name="user">指定的用户对象。</param>
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
@@ -142,9 +138,7 @@ namespace Zongsoft.Security.Membership
 				out flats, out hierarchies);
 		}
 
-		/// <summary>
-		/// 获取指定用户的所有上级角色集。
-		/// </summary>
+		/// <summary>获取指定用户的所有上级角色集。</summary>
 		/// <param name="dataAccess">数据访问服务。</param>
 		/// <param name="identity">指定的身份标识。</param>
 		/// <param name="flats">输出参数，表示所隶属的所有上级角色集，该集已经去除重复。</param>
@@ -169,9 +163,7 @@ namespace Zongsoft.Security.Membership
 				out flats, out hierarchies);
 		}
 
-		/// <summary>
-		/// 获取指定用户或角色的上级角色集。
-		/// </summary>
+		/// <summary>获取指定用户或角色的上级角色集。</summary>
 		/// <param name="dataAccess">数据访问服务。</param>
 		/// <param name="memberId">成员编号（用户或角色）。</param>
 		/// <param name="memberType">成员类型，表示<paramref name="memberId"/>对应的成员类型。</param>
@@ -217,58 +209,16 @@ namespace Zongsoft.Security.Membership
 			return flats.Count;
 		}
 
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IRoleModel role) where TRole : IRoleModel
+		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, object @namespace) where TRole : IRoleModel
 		{
 			if(dataAccess == null)
 				throw new ArgumentNullException(nameof(dataAccess));
 
-			if(role == null)
-				throw new ArgumentNullException(nameof(role));
-
-			//获取角色表的命名空间字段名
-			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
-
 			return GetAncestors<TRole>(
 				dataAccess,
-				role.RoleId,
-				MemberType.Role,
-				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(role)));
-		}
-
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, IUserModel user) where TRole : IRoleModel
-		{
-			if(dataAccess == null)
-				throw new ArgumentNullException(nameof(dataAccess));
-
-			if(user == null)
-				throw new ArgumentNullException(nameof(user));
-
-			//获取角色表的命名空间字段名
-			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
-
-			return GetAncestors<TRole>(
-				dataAccess,
-				user.UserId,
-				MemberType.User,
-				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(user)));
-		}
-
-		public static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, ClaimsIdentity identity) where TRole : IRoleModel
-		{
-			if(dataAccess == null)
-				throw new ArgumentNullException(nameof(dataAccess));
-
-			if(identity == null)
-				throw new ArgumentNullException(nameof(identity));
-
-			//获取角色表的命名空间字段名
-			var field = Mapping.Instance.Namespace.GetField(Mapping.Instance.Role);
-
-			return GetAncestors<TRole>(
-				dataAccess,
-				identity.GetIdentifier<uint>(),
-				MemberType.User,
-				Condition.Equal("Role." + field, Mapping.Instance.Namespace.GetNamespace(identity)));
+				memberId,
+				memberType,
+				Condition.Equal($"Role.{Mapping.Instance.Namespace.GetField(Mapping.Instance.Role)}", @namespace));
 		}
 
 		private static IEnumerable<TRole> GetAncestors<TRole>(IDataAccess dataAccess, uint memberId, MemberType memberType, Condition filter) where TRole : IRoleModel
