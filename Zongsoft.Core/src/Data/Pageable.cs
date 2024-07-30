@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -82,7 +83,7 @@ namespace Zongsoft.Data
 			var pageable = source as IPageable;
 
 			if(pageable == null)
-				throw new ArgumentException($"The specified data source does not implement the '{nameof(IPageable)}' interface.");
+				return source.Select(map);
 
 			var collectionType = typeof(MappedCollection<,>).MakeGenericType(typeof(TSource), typeof(TResult));
 			return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, new object[] { source, map });
