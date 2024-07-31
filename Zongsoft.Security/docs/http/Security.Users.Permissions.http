@@ -15,7 +15,7 @@ Authorization: Credential {{$dotenv credentialId}}
 # @prompt id      用户编号
 # @prompt target  授权目标
 # @prompt action  授权操作
-# @prompt granted 是否授予(true:授予,false:拒绝)
+# @prompt granted 是否授予(true:授予,false:拒绝,null:忽略)
 PUT /Security/Users/{{id}}/Permissions HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
@@ -24,7 +24,7 @@ Authorization: Credential {{$dotenv credentialId}}
 	{
 		"Target":"{{target}}",
 		"Action":"{{action}}",
-		"Granted":"{{granted}}"
+		"Granted":{{granted}}
 	}
 ]
 
