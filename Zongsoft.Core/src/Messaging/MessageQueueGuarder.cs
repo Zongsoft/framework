@@ -55,7 +55,13 @@ namespace Zongsoft.Messaging
 		#region 启停方法
 		protected async override Task OnStartAsync(string[] args, CancellationToken cancellation)
 		{
-			var queue = this.Queue ?? throw new InvalidOperationException($"Missing the required message queue.");
+			var queue = this.Queue;
+			if(queue == null)
+			{
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Name)}' property is null.");
+				return;
+			}
+
 			var options = this.GetSubscriptionOptions(out var filters);
 			var consumers = new List<IMessageConsumer>();
 
@@ -101,9 +107,9 @@ namespace Zongsoft.Messaging
 		#region 私有方法
 		private MessageSubscribeOptions GetSubscriptionOptions(out IEnumerable<Options.QueueSubscriptionFilter> filters)
 		{
-			var options = this.Options ?? ApplicationContext.Current?.Configuration?.GetOption<Options.QueueOptionsCollection>("Messaging");
+			var options = this.Options ?? ApplicationContext.Current?.Configuration?.GetOption<Options.QueueOptionsCollection>("Messaging/Queues");
 
-			if(options != null && options.TryGet(this.Queue.Name, out var option) && option.Subscription != null)
+			if(options != null && options.TryGetValue(this.Queue.Name, out var option) && option.Subscription != null)
 			{
 				filters = option.Subscription.Filters ?? Array.Empty<Options.QueueSubscriptionFilter>();
 				return new MessageSubscribeOptions(option.Subscription.Reliability, option.Subscription.Fallback);

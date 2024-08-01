@@ -28,11 +28,19 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Messaging.Options
 {
-	public class QueueOptionsCollection : Collections.NamedCollectionBase<QueueOptions>
+	public class QueueOptionsCollection : KeyedCollection<string, QueueOptions>
 	{
 		protected override string GetKeyForItem(QueueOptions item) => item.Name;
+		protected override void InsertItem(int index, QueueOptions item)
+		{
+			if(item == null || item.Name == null)
+				return;
+
+			base.InsertItem(index, item);
+		}
 	}
 }
