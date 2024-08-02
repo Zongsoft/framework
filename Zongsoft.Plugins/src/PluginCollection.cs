@@ -38,38 +38,23 @@ namespace Zongsoft.Plugins
 	/// </summary>
 	public class PluginCollection : Zongsoft.Collections.NamedCollectionBase<Plugin>
 	{
-		#region 成员变量
-		private Plugin _owner;
-		#endregion
-
 		#region 构造函数
 		internal PluginCollection(Plugin owner = null) : base(StringComparer.OrdinalIgnoreCase)
 		{
-			_owner = owner;
+			this.Owner = owner;
 		}
 		#endregion
 
 		#region 公共属性
-		public Plugin Owner
-		{
-			get
-			{
-				return _owner;
-			}
-		}
+		public Plugin Owner { get; }
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(Plugin item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(Plugin item) => item.Name;
 		#endregion
 
 		#region 内部方法
-		/// <summary>
-		/// 将指定的插件对象加入当前的集合中。
-		/// </summary>
+		/// <summary>将指定的插件对象加入当前的集合中。</summary>
 		/// <param name="item">带加入的插件对象。</param>
 		/// <param name="thorwExceptionOnDuplicationName">指示当前的插件名如果在集合中已经存在是否抛出异常。</param>
 		/// <returns>添加成功则返回真(True)，否则返回假(False)。</returns>
@@ -79,9 +64,9 @@ namespace Zongsoft.Plugins
 		internal bool Add(Plugin item, bool thorwExceptionOnDuplicationName)
 		{
 			if(item == null)
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
-			if(item.Parent != null && (!object.ReferenceEquals(item.Parent, _owner)))
+			if(item.Parent != null && (!object.ReferenceEquals(item.Parent, this.Owner)))
 				throw new InvalidOperationException();
 
 			if(this.Contains(item.Name))

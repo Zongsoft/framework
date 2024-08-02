@@ -77,7 +77,7 @@ namespace Zongsoft.Plugins
 	///		
 	///		<list type="number">
 	///			<item>
-	///				<description>从插件根目录中以插件文件名排序依次预加载插件，预加载成功的根插件进入跟插件集合中。</description>
+	///				<description>从插件根目录中以插件文件名排序依次预加载插件，预加载成功的根插件进入根插件集合中。</description>
 	///			</item>
 	///			<item>
 	///				<description>如果预加载插件成功的插件是主插件，则完整的加载它。</description>
@@ -124,7 +124,7 @@ namespace Zongsoft.Plugins
 		public event EventHandler<PluginUnloadingEventArgs> PluginUnloading;
 		#endregion
 
-		#region 成员变量
+		#region 成员字段
 		private readonly PluginResolver _resolver;
 		private readonly PluginCollection _plugins;
 		#endregion
@@ -138,16 +138,12 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取加载的根插件对象集。
-		/// </summary>
-		public PluginCollection Plugins { get => _plugins; }
+		/// <summary>获取加载的根插件对象集。</summary>
+		public PluginCollection Plugins => _plugins;
 		#endregion
 
 		#region 加载方法
-		/// <summary>
-		/// 应用指定的加载配置进行插件加载。
-		/// </summary>
+		/// <summary>应用指定的加载配置进行插件加载。</summary>
 		/// <param name="options">指定的加载配置对象。</param>
 		/// <remarks>
 		///		<para>使用不同的<see cref="Zongsoft.Plugins.PluginOptions"/>设置项多次加载，会导致最后一次加载覆盖上次加载的插件结构，这有可能会影响您的插件应用对构件或服务的获取路径，从而导致不可预知的结果。</para>
@@ -187,9 +183,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 卸载所有插件。
-		/// </summary>
+		/// <summary>卸载所有插件。</summary>
 		internal void Unload()
 		{
 			if(_plugins == null || _plugins.Count < 1)
@@ -204,9 +198,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 卸载指定的插件。
-		/// </summary>
+		/// <summary>卸载指定的插件。</summary>
 		/// <param name="plugin">指定要卸载的插件。</param>
 		/// <remarks>
 		///		<para>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</para>
@@ -325,7 +317,7 @@ namespace Zongsoft.Plugins
 			}
 
 			//定义子插件的父插件，默认为当前插件目录的父插件
-			Plugin ownerPlugin = parent;
+			var ownerPlugin = parent;
 
 			//如果当前插件目录下有主插件则所有子插件的父为第一个主插件
 			if(masters.Count > 0)
@@ -353,7 +345,7 @@ namespace Zongsoft.Plugins
 			this.OnPluginLoading(new PluginLoadingEventArgs(filePath, options));
 
 			//解析插件清单
-			Plugin plugin = _resolver.ResolvePluginOnlyManifest(filePath, parent);
+			var plugin = _resolver.ResolvePluginOnlyManifest(filePath, parent);
 
 			if(plugin == null)
 				return null;
@@ -519,37 +511,13 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
-		#region 事件方法
-		private void OnLoaded(PluginLoadEventArgs args)
-		{
-			this.Loaded?.Invoke(this, args);
-		}
-
-		private void OnLoading(PluginLoadEventArgs args)
-		{
-			this.Loading?.Invoke(this, args);
-		}
-
-		private void OnPluginLoaded(PluginLoadedEventArgs args)
-		{
-			this.PluginLoaded?.Invoke(this, args);
-		}
-
-		private void OnPluginLoading(PluginLoadingEventArgs args)
-		{
-			this.PluginLoading?.Invoke(this, args);
-		}
-
-		private void OnPluginUnloaded(PluginUnloadedEventArgs args)
-		{
-			this.PluginUnloaded?.Invoke(this, args);
-		}
-
-		private void OnPluginUnloading(PluginUnloadingEventArgs args)
-		{
-			this.PluginUnloading?.Invoke(this, args);
-		}
-
+		#region 激发事件
+		private void OnLoaded(PluginLoadEventArgs args) => this.Loaded?.Invoke(this, args);
+		private void OnLoading(PluginLoadEventArgs args) => this.Loading?.Invoke(this, args);
+		private void OnPluginLoaded(PluginLoadedEventArgs args) => this.PluginLoaded?.Invoke(this, args);
+		private void OnPluginLoading(PluginLoadingEventArgs args) => this.PluginLoading?.Invoke(this, args);
+		private void OnPluginUnloaded(PluginUnloadedEventArgs args) => this.PluginUnloaded?.Invoke(this, args);
+		private void OnPluginUnloading(PluginUnloadingEventArgs args) => this.PluginUnloading?.Invoke(this, args);
 		private bool OnPluginUnloading(Plugin plugin)
 		{
 			PluginUnloadingEventArgs args = new PluginUnloadingEventArgs(plugin);
