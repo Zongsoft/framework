@@ -44,10 +44,29 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
+		public static int GetCount()
+		{
+			var context = ApplicationContext.Current;
+			if(context == null || context.Modules.Count == 0)
+				return 0;
+
+			int count = 0;
+
+			foreach(var module in context.Modules)
+			{
+				var registry = GetEventRegistry(module);
+				count += registry == null ? 0 : registry.Events.Count;
+			}
+
+			return count;
+		}
+
 		public static EventDescriptor GetEvent(string qualifiedName) => GetEvent(qualifiedName, out _);
 		public static EventDescriptor GetEvent(string qualifiedName, out EventRegistryBase registry)
 		{
-			if(string.IsNullOrEmpty(qualifiedName))
+			var context = ApplicationContext.Current;
+
+			if(context == null || string.IsNullOrEmpty(qualifiedName))
 			{
 				registry = null;
 				return null;
@@ -55,7 +74,7 @@ namespace Zongsoft.Components
 
 			(var moduleName, var eventName) = Parse(qualifiedName);
 
-			if(ApplicationContext.Current.Modules.TryGet(moduleName, out var applicationModule))
+			if(context.Modules.TryGet(moduleName, out var applicationModule))
 			{
 				registry = GetEventRegistry(applicationModule);
 
@@ -83,7 +102,11 @@ namespace Zongsoft.Components
 
 		public static IEnumerable<EventDescriptor> GetEvents()
 		{
-			if(ApplicationContext.Current.Modules.TryGet(string.Empty, out var common))
+			var context = ApplicationContext.Current;
+			if(context == null || context.Modules.Count == 0)
+				yield break;
+
+			if(context.Modules.TryGet(string.Empty, out var common))
 			{
 				var registry = GetEventRegistry(common);
 
@@ -94,7 +117,7 @@ namespace Zongsoft.Components
 				}
 			}
 
-			foreach(var module in ApplicationContext.Current.Modules)
+			foreach(var module in context.Modules)
 			{
 				if(string.IsNullOrEmpty(module.Name))
 					continue;
@@ -109,18 +132,17 @@ namespace Zongsoft.Components
 			}
 		}
 
-		public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module)
+		public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module) => GetEvents(module, out _);
+		public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module, out EventRegistryBase registry)
 		{
 			if(module == null)
-				yield break;
-
-			var registry = GetEventRegistry(module);
-
-			if(registry != null)
 			{
-				foreach(var descriptor in registry.Events)
-					yield return descriptor;
+				registry = null;
+				return [];
 			}
+
+			registry = GetEventRegistry(module);
+			return registry == null ?[] : registry.Events;
 		}
 		#endregion
 

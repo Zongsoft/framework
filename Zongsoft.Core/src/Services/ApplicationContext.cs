@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -102,10 +102,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public virtual string Name
-		{
-			get => this.Services.GetService<IHostEnvironment>()?.ApplicationName;
-		}
+		public virtual string Name => this.Services.GetService<IHostEnvironment>()?.ApplicationName;
 
 		public string Title
 		{
@@ -119,15 +116,8 @@ namespace Zongsoft.Services
 			protected set => _description = value;
 		}
 
-		public virtual string ApplicationPath
-		{
-			get => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
-		}
-
-		public virtual IConfigurationRoot Configuration
-		{
-			get => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
-		}
+		public virtual string ApplicationPath => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
+		public virtual IConfigurationRoot Configuration => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
 
 		public virtual IApplicationEnvironment Environment
 		{
@@ -153,19 +143,14 @@ namespace Zongsoft.Services
 			}
 		}
 
-		public virtual ClaimsPrincipal Principal
-		{
-			get => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
-		}
-
+		public virtual ClaimsPrincipal Principal => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		public virtual IServiceProvider Services => _services;
 		public virtual Collections.INamedCollection<object> Session { get; init; }
+		public Components.EventManager Events => Components.EventManager.Global;
 		public Collections.INamedCollection<IApplicationModule> Modules { get; }
 		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
-
 		public ICollection<IApplicationInitializer> Initializers => _initializers;
 		public ICollection<IWorker> Workers => _workers;
-
 		public IDictionary<string, object> Properties { get; }
 		#endregion
 

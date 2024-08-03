@@ -39,6 +39,11 @@
 		<!-- 挂载文件目录系统 -->
 		<object name="FileSystem" value="{static:Zongsoft.IO.FileSystem.Providers, Zongsoft.Core}" />
 
+		<!-- 挂载当前应用的全局事件管理器 -->
+		<object name="Events" value="{path:/Workspace/Environment/ApplicationContext@Events}">
+			<expose name="Filters" value="{path:../@Filters}" />
+		</object>
+
 		<!-- 将默认的命令执行器挂载到插件树 -->
 		<object name="Executor" value="{static:Zongsoft.Services.CommandExecutor.Default, Zongsoft.Core}">
 			<!-- 将默认命令执行器的根节点暴露出来 -->

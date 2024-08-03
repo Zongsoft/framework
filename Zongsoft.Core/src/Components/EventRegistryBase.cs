@@ -97,13 +97,25 @@ namespace Zongsoft.Components
 			{
 				var context = this.GetContext(name, argument, parameters);
 
+				//依次执行全局事件过滤器
+				foreach(var filter in EventManager.Global.Filters)
+					await this.OnFiltering(filter, context, cancellation);
+
+				//依次执行当前事件库中的过滤器
 				foreach(var filter in this.Filters)
 					await this.OnFiltering(filter, context, cancellation);
 
+				//调用事件处理程序集
 				await descriptor.HandleAsync(argument, parameters, cancellation);
 
+				//依次执行当前事件库中的过滤器
 				foreach(var filter in this.Filters)
 					await this.OnFiltered(filter, context, cancellation);
+
+				//依次执行全局事件过滤器
+				foreach(var filter in EventManager.Global.Filters)
+					await this.OnFiltered(filter, context, cancellation);
+
 			}
 
 			throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
