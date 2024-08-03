@@ -36,18 +36,18 @@ namespace Zongsoft.Data
 	public class ConditionCollection : System.Collections.ObjectModel.Collection<ICondition>, ICondition, IEquatable<ConditionCollection>
 	{
 		#region 成员字段
-		private ConditionCombination _conditionCombination;
+		private ConditionCombination _combination;
 		#endregion
 
 		#region 构造函数
-		public ConditionCollection(ConditionCombination conditionCombination)
+		public ConditionCollection(ConditionCombination combination)
 		{
-			_conditionCombination = conditionCombination;
+			_combination = combination;
 		}
 
-		internal ConditionCollection(ConditionCombination conditionCombination, ICondition condition)
+		internal ConditionCollection(ConditionCombination combination, ICondition condition)
 		{
-			_conditionCombination = conditionCombination;
+			_combination = combination;
 
 			if(condition != null)
 				this.Add(condition);
@@ -55,7 +55,7 @@ namespace Zongsoft.Data
 
 		internal ConditionCollection(ConditionCombination conditionCombination, ICondition a, ICondition b)
 		{
-			_conditionCombination = conditionCombination;
+			_combination = conditionCombination;
 
 			if(a != null)
 				this.Add(a);
@@ -65,7 +65,7 @@ namespace Zongsoft.Data
 
 		private ConditionCollection(ConditionCombination conditionCombination, IEnumerable<ICondition> items)
 		{
-			_conditionCombination = conditionCombination;
+			_combination = conditionCombination;
 
 			if(items != null)
 			{
@@ -84,8 +84,8 @@ namespace Zongsoft.Data
 		/// </summary>
 		public ConditionCombination Combination
 		{
-			get => _conditionCombination;
-			set => _conditionCombination = value;
+			get => _combination;
+			set => _combination = value;
 		}
 		#endregion
 
@@ -122,16 +122,8 @@ namespace Zongsoft.Data
 			return conditions;
 		}
 
-		public static ConditionCollection operator &(ICondition condition, ConditionCollection conditions)
-		{
-			return And(condition, conditions);
-		}
-
-		public static ConditionCollection operator &(ConditionCollection conditions, Condition condition)
-		{
-			return And(conditions, condition);
-		}
-
+		public static ConditionCollection operator &(ICondition condition, ConditionCollection conditions) => And(condition, conditions);
+		public static ConditionCollection operator &(ConditionCollection conditions, Condition condition) => And(conditions, condition);
 		public static ConditionCollection operator &(ConditionCollection left, ConditionCollection right)
 		{
 			if(left == null)
@@ -143,16 +135,8 @@ namespace Zongsoft.Data
 			return And(left, right);
 		}
 
-		public static ConditionCollection operator |(ICondition condition, ConditionCollection conditions)
-		{
-			return Or(condition, conditions);
-		}
-
-		public static ConditionCollection operator |(ConditionCollection conditions, Condition condition)
-		{
-			return Or(conditions, condition);
-		}
-
+		public static ConditionCollection operator |(ICondition condition, ConditionCollection conditions) => Or(condition, conditions);
+		public static ConditionCollection operator |(ConditionCollection conditions, Condition condition) => Or(conditions, condition);
 		public static ConditionCollection operator |(ConditionCollection left, ConditionCollection right)
 		{
 			if(left == null)
@@ -166,11 +150,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 静态方法
-		public static ConditionCollection And(params ICondition[] items)
-		{
-			return And((IEnumerable<ICondition>)items);
-		}
-
+		public static ConditionCollection And(params ICondition[] items) => And((IEnumerable<ICondition>)items);
 		public static ConditionCollection And(IEnumerable<ICondition> items)
 		{
 			var conditions = new ConditionCollection(ConditionCombination.And);
@@ -181,11 +161,7 @@ namespace Zongsoft.Data
 			return conditions;
 		}
 
-		public static ConditionCollection Or(params ICondition[] items)
-		{
-			return Or((IEnumerable<ICondition>)items);
-		}
-
+		public static ConditionCollection Or(params ICondition[] items) => Or((IEnumerable<ICondition>)items);
 		public static ConditionCollection Or(IEnumerable<ICondition> items)
 		{
 			var conditions = new ConditionCollection(ConditionCombination.Or);
@@ -313,9 +289,7 @@ namespace Zongsoft.Data
 			return count;
 		}
 
-		/// <summary>
-		/// 创建一个与当前集合内容相同的新条件集，并将指定的条件项追加到新集中。
-		/// </summary>
+		/// <summary>创建一个与当前集合内容相同的新条件集，并将指定的条件项追加到新集中。</summary>
 		/// <param name="items">要追加的条件项数组。</param>
 		/// <returns>返回新建的条件集合。</returns>
 		public ConditionCollection Append(params ICondition[] items)
@@ -326,9 +300,7 @@ namespace Zongsoft.Data
 			return new ConditionCollection(this.Combination, this.Items.Concat(items.Where(item => item != null)));
 		}
 
-		/// <summary>
-		/// 创建一个与当前集合内容相同的新条件集，并将指定的条件项置顶到新集中。
-		/// </summary>
+		/// <summary>创建一个与当前集合内容相同的新条件集，并将指定的条件项置顶到新集中。</summary>
 		/// <param name="items">要置顶的条件项数组。</param>
 		/// <returns>返回新建的条件集合。</returns>
 		public ConditionCollection Prepend(params ICondition[] items)
@@ -414,9 +386,10 @@ namespace Zongsoft.Data
 
 			return HashCode.Combine(this.Combination, code);
 		}
+
 		public override string ToString()
 		{
-			var combiner = _conditionCombination.ToString().ToUpperInvariant();
+			var combiner = _combination.ToString().ToUpperInvariant();
 
 			if(this.Count < 1)
 				return combiner;

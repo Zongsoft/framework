@@ -28,48 +28,32 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Common
 {
-	public class PredicationCollection : System.Collections.ObjectModel.Collection<IPredication>, IPredication
+	public class PredicationCollection : Collection<IPredication>, IPredication
 	{
 		#region 成员字段
-		private PredicationCombination _combine;
+		private PredicationCombination _combination;
 		#endregion
 
 		#region 构造函数
-		public PredicationCollection() : this(PredicationCombination.Or)
-		{
-		}
-
-		public PredicationCollection(PredicationCombination combine)
-		{
-			_combine = combine;
-		}
+		public PredicationCollection() : this(PredicationCombination.Or) { }
+		public PredicationCollection(PredicationCombination combination) => _combination = combination;
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置断言集合内各断言的逻辑组合方式。
-		/// </summary>
+		/// <summary>获取或设置断言集合内各断言的逻辑组合方式。</summary>
 		public PredicationCombination Combination
 		{
-			get
-			{
-				return _combine;
-			}
-			set
-			{
-				_combine = value;
-			}
+			get => _combination;
+			set => _combination = value;
 		}
 		#endregion
 
 		#region 断言方法
-		/// <summary>
-		/// 对断言集合内的所有断言进行遍历断言调用，并根据<see cref="Combination"/>属性值进行组合判断。
-		/// </summary>
+		/// <summary>对断言集合内的所有断言进行遍历断言调用，并根据<see cref="Combination"/>属性值进行组合判断。</summary>
 		/// <param name="parameter">对断言集合内所有断言调用时的传入参数。</param>
 		/// <returns>集合内所有断言的组合结果，如果集合为空则始终返回真(true)。</returns>
 		/// <remarks>
@@ -89,17 +73,17 @@ namespace Zongsoft.Common
 
 				if(predication.Predicate(parameter))
 				{
-					if(_combine == PredicationCombination.Or)
+					if(_combination == PredicationCombination.Or)
 						return true;
 				}
 				else
 				{
-					if(_combine == PredicationCombination.And)
+					if(_combination == PredicationCombination.And)
 						return false;
 				}
 			}
 
-			return _combine == PredicationCombination.Or ? false : true;
+			return _combination == PredicationCombination.Or ? false : true;
 		}
 		#endregion
 	}

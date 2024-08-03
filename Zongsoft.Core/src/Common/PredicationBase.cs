@@ -34,7 +34,7 @@ namespace Zongsoft.Common
 	public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 	{
 		#region 成员字段
-		private string _name;
+		private readonly string _name;
 		#endregion
 
 		#region 构造函数
@@ -48,29 +48,16 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 公共属性
-		public virtual string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		public virtual string Name => _name;
 		#endregion
 
 		#region 断言方法
 		public abstract bool Predicate(T parameter);
-
-		bool IPredication.Predicate(object parameter)
-		{
-			return this.Predicate(this.ConvertParameter(parameter));
-		}
+		bool IPredication.Predicate(object parameter) => this.Predicate(this.ConvertParameter(parameter));
 		#endregion
 
 		#region 虚拟方法
-		protected virtual T ConvertParameter(object parameter)
-		{
-			return Zongsoft.Common.Convert.ConvertValue<T>(parameter);
-		}
+		protected virtual T ConvertParameter(object parameter) => Zongsoft.Common.Convert.ConvertValue<T>(parameter);
 		#endregion
 
 		#region 服务匹配
@@ -79,10 +66,7 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return string.Format("{0} ({1})", this.Name, this.GetType());
-		}
+		public override string ToString() => $"{this.Name} ({this.GetType().Name})";
 		#endregion
 	}
 }

@@ -28,41 +28,27 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Common
 {
-	public class PredicationCollection<T> : System.Collections.ObjectModel.Collection<IPredication<T>>, IPredication<T>
+	public class PredicationCollection<T> : Collection<IPredication<T>>, IPredication<T>
 	{
 		#region 成员字段
-		private PredicationCombination _combine;
+		private PredicationCombination _combination;
 		#endregion
 
 		#region 构造函数
-		public PredicationCollection() : this(PredicationCombination.Or)
-		{
-		}
-
-		public PredicationCollection(PredicationCombination combine)
-		{
-			_combine = combine;
-		}
+		public PredicationCollection() : this(PredicationCombination.Or) { }
+		public PredicationCollection(PredicationCombination combination) => _combination = combination;
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置断言集合内各断言的逻辑组合方式。
-		/// </summary>
+		/// <summary>获取或设置断言集合内各断言的逻辑组合方式。</summary>
 		public PredicationCombination Combination
 		{
-			get
-			{
-				return _combine;
-			}
-			set
-			{
-				_combine = value;
-			}
+			get => _combination;
+			set => _combination = value;
 		}
 		#endregion
 
@@ -88,28 +74,20 @@ namespace Zongsoft.Common
 
 				if(predication.Predicate(parameter))
 				{
-					if(_combine == PredicationCombination.Or)
+					if(_combination == PredicationCombination.Or)
 						return true;
 				}
 				else
 				{
-					if(_combine == PredicationCombination.And)
+					if(_combination == PredicationCombination.And)
 						return false;
 				}
 			}
 
-			return _combine == PredicationCombination.Or ? false : true;
+			return _combination == PredicationCombination.Or ? false : true;
 		}
 
-		bool IPredication.Predicate(object parameter)
-		{
-			T stronglyParameter;
-
-			if(this.TryConertParameter(parameter, out stronglyParameter))
-				return this.Predicate(stronglyParameter);
-
-			return false;
-		}
+		bool IPredication.Predicate(object parameter) => this.TryConertParameter(parameter, out var stronglyParameter) && this.Predicate(stronglyParameter);
 		#endregion
 	}
 }
