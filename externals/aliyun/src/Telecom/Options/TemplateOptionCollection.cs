@@ -28,15 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Aliyun.Telecom.Options
 {
-	public class TemplateOptionCollection : Collections.NamedCollectionBase<TemplateOption>
+	public class TemplateOptionCollection() : KeyedCollection<string, TemplateOption>(StringComparer.OrdinalIgnoreCase)
 	{
-		protected override string GetKeyForItem(TemplateOption item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(TemplateOption template) => template.Name;
 	}
 }

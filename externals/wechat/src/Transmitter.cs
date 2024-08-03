@@ -59,13 +59,8 @@ namespace Zongsoft.Externals.Wechat
 			{
 				if(_descriptor == null)
 				{
-					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()))
-					{
-						Channels = new TransmitterDescriptor.ChannelDescriptorCollection
-						{
-							new ("Message", Properties.Resources.TemplateMessage),
-						}
-					};
+					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()));
+					_descriptor.Channel("Message", Properties.Resources.TemplateMessage);
 				}
 
 				return _descriptor;

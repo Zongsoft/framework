@@ -49,24 +49,16 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置电信运营商区域。
-		/// </summary>
+		/// <summary>获取或设置电信运营商区域。</summary>
 		public ServiceCenterName? Region { get; set; }
 
-		/// <summary>
-		/// 获取或设置关联的凭证名。
-		/// </summary>
+		/// <summary>获取或设置关联的凭证名。</summary>
 		public string Certificate { get; set; }
 
-		/// <summary>
-		/// 获取电信短信服务配置。
-		/// </summary>
+		/// <summary>获取电信短信服务配置。</summary>
 		public TelecomMessageOption Message { get; }
 
-		/// <summary>
-		/// 获取电信语音服务配置。
-		/// </summary>
+		/// <summary>获取电信语音服务配置。</summary>
 		public TelecomVoiceOption Voice { get; }
 		#endregion
 
@@ -85,11 +77,9 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 			#endregion
 
 			#region 公共属性
-			/// <summary>
-			/// 获取短信模板配置项集合。
-			/// </summary>
+			/// <summary>获取短信模板配置项集合。</summary>
 			[Configuration.ConfigurationProperty("")]
-			public Collections.INamedCollection<TemplateOption> Templates { get; }
+			public TemplateOptionCollection Templates { get; }
 			#endregion
 		}
 
@@ -107,32 +97,20 @@ namespace Zongsoft.Externals.Aliyun.Telecom.Options
 			#endregion
 
 			#region 公共属性
-			/// <summary>
-			/// 获取或设置语音号码数组。
-			/// </summary>
+			/// <summary>获取或设置语音号码数组。</summary>
 			[TypeConverter(typeof(NumbersConverter))]
 			public string[] Numbers { get; set; }
 
-			/// <summary>
-			/// 获取语音模板配置项集合。
-			/// </summary>
+			/// <summary>获取语音模板配置项集合。</summary>
 			[Configuration.ConfigurationProperty("")]
-			public Collections.INamedCollection<TemplateOption> Templates { get; }
+			public TemplateOptionCollection Templates { get; }
 			#endregion
 
 			#region 类型转换
 			private class NumbersConverter : TypeConverter
 			{
-				public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-				{
-					return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-				}
-
-				public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-				{
-					return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
-				}
-
+				public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+				public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 				public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 				{
 					if(value is string text)

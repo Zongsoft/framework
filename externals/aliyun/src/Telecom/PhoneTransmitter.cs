@@ -69,14 +69,15 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			{
 				if(_descriptor == null)
 				{
-					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()))
-					{
-						Channels = new TransmitterDescriptor.ChannelDescriptorCollection
-						{
-							new (MESSAGE_CHANNEL, Properties.Resources.Text_Phone_Message),
-							new (VOICE_CHANNEL, Properties.Resources.Text_Phone_Voice),
-						}
-					};
+					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()));
+
+					var channel = _descriptor.Channel(MESSAGE_CHANNEL, Properties.Resources.Text_Phone_Message);
+					foreach(var template in this.Phone.Options.Message.Templates)
+						channel.Template(template.Name);
+
+					channel = _descriptor.Channel(VOICE_CHANNEL, Properties.Resources.Text_Phone_Voice);
+					foreach(var template in this.Phone.Options.Voice.Templates)
+						channel.Template(template.Name);
 				}
 
 				return _descriptor;

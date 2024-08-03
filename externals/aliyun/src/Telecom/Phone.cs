@@ -76,9 +76,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 拨打交互电话到指定的手机号。
-		/// </summary>
+		/// <summary>拨打交互电话到指定的手机号。</summary>
 		/// <param name="name">指定的语音模板名称。</param>
 		/// <param name="destination">目标手机号。</param>
 		/// <param name="argument">交互语音呼叫参数对象。</param>
@@ -107,7 +105,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				caller = options.Voice.Numbers[Common.Randomizer.GenerateInt32() % options.Voice.Numbers.Length];
 
 			//获取指定名称的语音模板配置，如果获取失败则抛出异常
-			if(!options.Message.Templates.TryGet(name, out var template))
+			if(!options.Voice.Templates.TryGetValue(name, out var template))
 				throw new InvalidOperationException($"The specified '{name}' voice template is not existed.");
 
 			//获取当前电信服务的凭证
@@ -166,9 +164,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			return await this.GetResultAsync(response.Content);
 		}
 
-		/// <summary>
-		/// 拨打电话到指定的手机号。
-		/// </summary>
+		/// <summary>拨打电话到指定的手机号。</summary>
 		/// <param name="name">指定的语音模板名称。</param>
 		/// <param name="destination">目标手机号。</param>
 		/// <param name="parameter">语音呼叫模板参数对象。</param>
@@ -198,7 +194,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				caller = options.Voice.Numbers[Common.Randomizer.GenerateInt32() % options.Voice.Numbers.Length];
 
 			//获取指定名称的语音模板配置，如果获取失败则抛出异常
-			if(!options.Message.Templates.TryGet(name, out var template))
+			if(!options.Voice.Templates.TryGetValue(name, out var template))
 				throw new InvalidOperationException($"The specified '{name}' voice template is not existed.");
 
 			//获取当前电信服务的凭证
@@ -245,9 +241,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			return await this.GetResultAsync(response.Content);
 		}
 
-		/// <summary>
-		/// 发送短信到指定的手机号，支持多发。
-		/// </summary>
+		/// <summary>发送短信到指定的手机号，支持多发。</summary>
 		/// <param name="name">指定的短信模板名称。</param>
 		/// <param name="destinations">目标手机号码集。</param>
 		/// <param name="parameter">短信模板参数对象。</param>
@@ -275,7 +269,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				throw new InvalidOperationException($"Missing required telecom sms option.");
 
 			//获取指定名称的短信模板配置，如果获取失败则抛出异常
-			if(!options.Message.Templates.TryGet(name, out var template))
+			if(!options.Message.Templates.TryGetValue(name, out var template))
 				throw new InvalidOperationException($"The specified '{name}' sms template is not existed.");
 
 			//获取当前电信服务的凭证
