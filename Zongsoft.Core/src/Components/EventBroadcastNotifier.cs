@@ -96,7 +96,7 @@ namespace Zongsoft.Components
 		#region 虚拟方法
 		protected virtual ITransmitter GetTransmitter(IEventSubscriptionNotification notification) => (this.Services ?? ApplicationContext.Current.Services).Resolve<ITransmitter>(notification.Notifier);
 		protected virtual ValueTask NotifyAsync(IEventSubscriptionNotification notification, CancellationToken cancellation) =>
-			this.GetTransmitter(notification)?.TransmitAsync(notification.Destination, notification.Template, notification.Argument, notification.Channel, cancellation) ?? ValueTask.CompletedTask;
+			this.GetTransmitter(notification)?.TransmitAsync(notification.Destination, notification.Channel, notification.Template, notification.Argument, cancellation) ?? ValueTask.CompletedTask;
 		#endregion
 	}
 }

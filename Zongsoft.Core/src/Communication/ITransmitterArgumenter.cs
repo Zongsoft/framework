@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,32 +28,20 @@
  */
 
 using System;
-using System.Threading;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Communication
 {
-	public class EventSubscriptionNotificationCollection : KeyedCollection<string, IEventSubscriptionNotification>, IAsyncEnumerable<IEventSubscriptionNotification>
+	/// <summary>
+	/// 提供发送器模板参数转换功能的接口。
+	/// </summary>
+	public interface ITransmitterArgumenter
 	{
-		public EventSubscriptionNotificationCollection() : base(StringComparer.OrdinalIgnoreCase, 3) { }
-
-		public async IAsyncEnumerator<IEventSubscriptionNotification> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-		{
-			IEventSubscriptionNotification n = null;
-
-			System.Data.Common.DbCommand command = null;
-			var reader = await command.ExecuteReaderAsync(cancellationToken);
-			while(await reader.ReadAsync(cancellationToken))
-			{
-				yield return Zongsoft.Data.Model.Build<IEventSubscriptionNotification>(notification =>
-				{
-				});
-			}
-
-			yield return n;
-		}
-
-		protected override string GetKeyForItem(IEventSubscriptionNotification item) => $"{item.Notifier}:{item.Channel}";
+		/// <summary>将指定的数据转换为模板参数。</summary>
+		/// <param name="transmitter">指定的发送器对象。</param>
+		/// <param name="channel">指定的发送通道。</param>
+		/// <param name="template">指定的模板名称。</param>
+		/// <param name="data">指定的待转换的参数对象。</param>
+		/// <returns>返回转换后的对象。</returns>
+		object GetArgument(ITransmitter transmitter, string channel, string template, object data);
 	}
 }

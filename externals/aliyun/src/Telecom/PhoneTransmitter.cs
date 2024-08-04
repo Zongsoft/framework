@@ -34,7 +34,6 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Collections;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
@@ -42,7 +41,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 	[DisplayName("PhoneTransmitter.Title")]
 	[Description("PhoneTransmitter.Description")]
 	[Service(typeof(ITransmitter))]
-	public class PhoneTransmitter : ITransmitter
+	public class PhoneTransmitter : ITransmitter, IMatchable, IMatchable<string>
 	{
 		#region 常量定义
 		private const string MESSAGE_CHANNEL = "message";
@@ -58,7 +57,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共属性
-		public string Name { get => "Phone"; }
+		public string Name => "Phone";
 
 		[ServiceDependency(IsRequired = true)]
 		public Phone Phone { get; set; }
@@ -72,12 +71,22 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 					_descriptor = new TransmitterDescriptor(this.Name, AnnotationUtility.GetDisplayName(this.GetType()), AnnotationUtility.GetDescription(this.GetType()));
 
 					var channel = _descriptor.Channel(MESSAGE_CHANNEL, Properties.Resources.Text_Phone_Message);
-					foreach(var template in this.Phone.Options.Message.Templates)
-						channel.Template(template.Name);
+					foreach(var option in this.Phone.Options.Message.Templates)
+					{
+						var template = channel.Template(option.Name);
+
+						foreach(var parameter in option.Parameters)
+							template.Parameter(parameter.Name, parameter.Title, parameter.Description);
+					}
 
 					channel = _descriptor.Channel(VOICE_CHANNEL, Properties.Resources.Text_Phone_Voice);
-					foreach(var template in this.Phone.Options.Voice.Templates)
-						channel.Template(template.Name);
+					foreach(var option in this.Phone.Options.Voice.Templates)
+					{
+						var template = channel.Template(option.Name);
+
+						foreach(var parameter in option.Parameters)
+							template.Parameter(parameter.Name, parameter.Title, parameter.Description);
+					}
 				}
 
 				return _descriptor;
@@ -86,7 +95,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 公共方法
-		public async ValueTask TransmitAsync(string destination, string template, object data, string channel, CancellationToken cancellation)
+		public async ValueTask TransmitAsync(string destination, string channel, string template, object data, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
@@ -98,6 +107,11 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			else
 				throw new ArgumentException($"Unsupported ‘{channel}’ channel.", nameof(channel));
 		}
+		#endregion
+
+		#region 服务匹配
+		public bool Match(string name) => string.Equals(name, this.Name, StringComparison.OrdinalIgnoreCase);
+		bool IMatchable.Match(object parameter) => parameter is string name && this.Equals(name);
 		#endregion
 	}
 }

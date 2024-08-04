@@ -50,15 +50,15 @@ namespace Zongsoft.Communication
 		/// <param name="argument">指定的模板参数。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的异步操作任务。</returns>
-		ValueTask TransmitAsync(string destination, string template, object argument, CancellationToken cancellation = default) => this.TransmitAsync(destination, template, argument, null, cancellation);
+		ValueTask TransmitAsync(string destination, string template, object argument, CancellationToken cancellation = default) => this.TransmitAsync(destination, null, template, argument, cancellation);
 
 		/// <summary>发送模板信息到指定的接收者。</summary>
 		/// <param name="destination">指定的接收的目的地。</param>
+		/// <param name="channel">指定的通道标识。</param>
 		/// <param name="template">指定的模板标识。</param>
 		/// <param name="argument">指定的模板参数。</param>
-		/// <param name="channel">指定的通道标识。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的异步操作任务。</returns>
-		ValueTask TransmitAsync(string destination, string template, object argument, string channel, CancellationToken cancellation = default);
+		ValueTask TransmitAsync(string destination, string channel, string template, object argument, CancellationToken cancellation = default);
 	}
 }

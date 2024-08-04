@@ -369,7 +369,7 @@ namespace Zongsoft.Security
 					var value = _secretor.Generate(token, null, extra);
 
 					//发送验证码到目的地
-					await transmitter.TransmitAsync(destination, template, new SecretTemplateData(value), channel, cancellation);
+					await transmitter.TransmitAsync(destination, channel, template, new SecretTemplateData(value), cancellation);
 
 					return token;
 				}

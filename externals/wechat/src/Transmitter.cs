@@ -41,7 +41,7 @@ namespace Zongsoft.Externals.Wechat
 	[DisplayName("Transmitter.Title")]
 	[Description("Transmitter.Description")]
 	[Service(typeof(ITransmitter))]
-	public class Transmitter : ITransmitter
+	public class Transmitter : ITransmitter, IMatchable, IMatchable<string>
 	{
 		#region 成员字段
 		private TransmitterDescriptor _descriptor;
@@ -69,7 +69,7 @@ namespace Zongsoft.Externals.Wechat
 		#endregion
 
 		#region 公共方法
-		public async ValueTask TransmitAsync(string destination, string template, object data, string channel, CancellationToken cancellation)
+		public async ValueTask TransmitAsync(string destination, string channel, string template, object data, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(destination))
 				throw new ArgumentNullException(nameof(destination));
@@ -85,6 +85,11 @@ namespace Zongsoft.Externals.Wechat
 
 			await channelObject.Messager.SendAsync(destination[(index + 1)..], template, data, cancellation: cancellation);
 		}
+		#endregion
+
+		#region 服务匹配
+		public bool Match(string name) => string.Equals(name, this.Name, StringComparison.OrdinalIgnoreCase);
+		bool IMatchable.Match(object parameter) => parameter is string name && this.Equals(name);
 		#endregion
 	}
 }

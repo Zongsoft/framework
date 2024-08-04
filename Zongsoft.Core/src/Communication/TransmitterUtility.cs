@@ -31,25 +31,36 @@ using System;
 
 namespace Zongsoft.Communication
 {
-	public static class TransmitterDescriptorUtility
+	public static class TransmitterUtility
 	{
-		public static TransmitterDescriptor.ChannelDescriptor Channel(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
+		public static TransmitterChannelDescriptor Channel(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
 		{
 			if(descriptor == null || name == null)
 				return null;
 
-			var channel = new TransmitterDescriptor.ChannelDescriptor(name, title, description);
+			var channel = new TransmitterChannelDescriptor(name, title, description);
 			descriptor.Channels.Add(channel);
 			return channel;
 		}
 
-		public static TransmitterDescriptor.ChannelDescriptor Template(this TransmitterDescriptor.ChannelDescriptor channel, string name, string title = null, string description = null)
+		public static TransmitterTemplateDescriptor Template(this TransmitterChannelDescriptor channel, string name, string title = null, string description = null)
 		{
 			if(channel == null || name == null)
 				return null;
 
-			channel.Templates.Add(new TransmitterDescriptor.ChannelDescriptor.Template(name, title, description));
-			return channel;
+			var template = new TransmitterTemplateDescriptor(name, title, description);
+			channel.Templates.Add(template);
+			return template;
+		}
+
+		public static TransmitterTemplateParameterDescriptor Parameter(this TransmitterTemplateDescriptor template, string name, string title = null, string description = null)
+		{
+			if(template == null || name == null)
+				return null;
+
+			var parameter = new TransmitterTemplateParameterDescriptor(name, title, description);
+			template.Parameters.Add(parameter);
+			return parameter;
 		}
 	}
 }
