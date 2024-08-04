@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Globalization;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -82,6 +85,7 @@ namespace Zongsoft.Communication
 		/// <summary>
 		/// 表示发送处理器参数的类。
 		/// </summary>
+		[TypeConverter(typeof(ArgumentConverter))]
 		public class Argument
 		{
 			#region 构造函数
@@ -97,6 +101,7 @@ namespace Zongsoft.Communication
 			}
 			#endregion
 
+			#region 公共参数
 			/// <summary>获取或设置发送器的名称。</summary>
 			public string Name { get; set; }
 			/// <summary>获取或设置发送通道。</summary>
@@ -107,6 +112,50 @@ namespace Zongsoft.Communication
 			public object Parameter { get; set; }
 			/// <summary>获取或设置发送目的地。</summary>
 			public string Destination { get; set; }
+			#endregion
+		}
+
+		private class ArgumentConverter : TypeConverter
+		{
+			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || sourceType == typeof(byte[]) || sourceType == typeof(Stream);
+			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || destinationType == typeof(byte[]) || destinationType == typeof(Stream);
+
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+			{
+				return value switch
+				{
+					string text => Serialization.Serializer.Json.Deserialize<Argument>(text),
+					byte[] data => Serialization.Serializer.Json.Deserialize<Argument>(data),
+					Stream stream => Serialization.Serializer.Json.Deserialize<Argument>(stream),
+					_ => null,
+				};
+			}
+
+			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+			{
+				if(value == null)
+					return null;
+
+				if(destinationType == typeof(string))
+					return Serialization.Serializer.Json.Serialize(value);
+
+				if(destinationType == typeof(byte[]))
+				{
+					using var stream = new MemoryStream();
+					Serialization.Serializer.Json.Serialize(stream, value);
+					return stream.ToArray();
+				}
+
+				if(destinationType == typeof(Stream))
+				{
+					var stream = new MemoryStream();
+					Serialization.Serializer.Json.Serialize(stream, value);
+					stream.Position = 0;
+					return stream;
+				}
+
+				return null;
+			}
 		}
 		#endregion
 	}
