@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,7 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Communication
 {
-	public class TransmitterDescriptor : IEquatable<TransmitterDescriptor>
+	public partial class TransmitterDescriptor : IEquatable<TransmitterDescriptor>
 	{
 		#region 构造函数
 		public TransmitterDescriptor(string name, string title = null, string description = null)
@@ -41,6 +41,7 @@ namespace Zongsoft.Communication
 			this.Title = title;
 			this.Description = description;
 			this.Channels = new();
+			this.Templates = new();
 		}
 		#endregion
 
@@ -48,7 +49,8 @@ namespace Zongsoft.Communication
 		public string Name { get; }
 		public string Title { get; set; }
 		public string Description { get; set; }
-		public TransmitterChannelDescriptorCollection Channels { get; }
+		public ChannelCollection Channels { get; }
+		public TemplateCollection Templates { get; }
 		#endregion
 
 		#region 重写方法
