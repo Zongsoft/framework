@@ -36,9 +36,7 @@ namespace Zongsoft.Services
 	/// </summary>
 	public interface IMatchable
 	{
-		/// <summary>
-		/// 指示当前对象是否匹配指定参数的条件约束。
-		/// </summary>
+		/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>
 		/// <param name="parameter">指定是否匹配逻辑的参数。</param>
 		/// <returns>如果当前对象符合<paramref name="parameter"/>参数的匹配规则，则为真(true)；否则为假(false)。</returns>
 		bool Match(object parameter);
@@ -49,9 +47,7 @@ namespace Zongsoft.Services
 	/// </summary>
 	public interface IMatchable<in T>
 	{
-		/// <summary>
-		/// 指示当前对象是否匹配指定参数的条件约束。
-		/// </summary>
+		/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>
 		/// <param name="parameter">指定是否匹配逻辑的参数。</param>
 		/// <returns>如果当前对象符合<paramref name="parameter"/>参数的匹配规则，则为真(true)；否则为假(false)。</returns>
 		bool Match(T parameter);
