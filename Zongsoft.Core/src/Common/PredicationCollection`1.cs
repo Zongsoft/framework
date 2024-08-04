@@ -35,28 +35,21 @@ namespace Zongsoft.Common
 	public class PredicationCollection<T> : Collection<IPredication<T>>, IPredication<T>
 	{
 		#region 成员字段
-		private PredicationCombination _combination;
+		private readonly PredicationCombination _combination;
 		#endregion
 
 		#region 构造函数
-		public PredicationCollection() : this(PredicationCombination.Or) { }
+		public PredicationCollection() : this(PredicationCombination.And) { }
 		public PredicationCollection(PredicationCombination combination) => _combination = combination;
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取或设置断言集合内各断言的逻辑组合方式。</summary>
-		public PredicationCombination Combination
-		{
-			get => _combination;
-			set => _combination = value;
-		}
+		public PredicationCombination Combination => _combination;
 		#endregion
 
 		#region 参数转换
-		protected virtual bool TryConertParameter(object parameter, out T result)
-		{
-			return Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
-		}
+		protected virtual bool TryConertParameter(object parameter, out T result) => Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
 		#endregion
 
 		#region 断言方法
