@@ -83,7 +83,7 @@ namespace Zongsoft.Components
 			if(argument == null)
 				return default;
 
-			return argument is TArgument result ? result : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
+			return Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
 		}
 		#endregion
 	}
