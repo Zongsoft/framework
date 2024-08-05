@@ -36,8 +36,8 @@ namespace Zongsoft.Components
 {
 	public interface IExecutor
 	{
-		void Execute(object argument, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		void Execute(object argument, IDictionary<string, object> parameters = null);
 		ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
-		ValueTask ExecuteAsync(object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
+		ValueTask ExecuteAsync(object argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
 	}
 }

@@ -52,7 +52,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 执行方法
-		public TResult Execute(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.Execute(this.CreateContext(argument, parameters));
+		public TResult Execute(TArgument argument, IDictionary<string, object> parameters = null) => this.Execute(this.CreateContext(argument, parameters));
 		protected TResult Execute(IExecutorContext<TArgument, TResult> context)
 		{
 			var task = this.ExecuteAsync(context, default);
@@ -62,7 +62,7 @@ namespace Zongsoft.Components
 		}
 
 		public ValueTask<TResult> ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
-		public ValueTask<TResult> ExecuteAsync(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
+		public ValueTask<TResult> ExecuteAsync(TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
 		protected async ValueTask<TResult> ExecuteAsync(IExecutorContext<TArgument, TResult> context, CancellationToken cancellation = default)
 		{
 			var filters = this.Filters;
@@ -160,7 +160,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 显式实现
-		void IExecutor.Execute(object data, IEnumerable<KeyValuePair<string, object>> parameters)
+		void IExecutor.Execute(object data, IDictionary<string, object> parameters)
 		{
 			if(data == null)
 				this.Execute(default, parameters);
@@ -194,7 +194,7 @@ namespace Zongsoft.Components
 					break;
 			}
 		}
-		async ValueTask IExecutor.ExecuteAsync(object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation)
+		async ValueTask IExecutor.ExecuteAsync(object data, IDictionary<string, object> parameters, CancellationToken cancellation)
 		{
 			switch(data)
 			{
@@ -214,17 +214,17 @@ namespace Zongsoft.Components
 			}
 		}
 
-		bool IHandler.CanHandle(object data, IEnumerable<KeyValuePair<string, object>> parameters) => data switch
+		bool IHandler.CanHandle(object data, IDictionary<string, object> parameters) => data switch
 		{
 			TArgument argument => this.CanExecute(argument, parameters),
 			IExecutorContext<TArgument, TResult> context => this.CanExecute(context),
 			_ => false,
 		};
-		bool IHandler<TArgument, TResult>.CanHandle(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanExecute(argument, parameters);
+		bool IHandler<TArgument, TResult>.CanHandle(TArgument argument, IDictionary<string, object> parameters) => this.CanExecute(argument, parameters);
 		async ValueTask IHandler.HandleAsync(object caller, object data, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-		async ValueTask IHandler.HandleAsync(object caller, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+		async ValueTask IHandler.HandleAsync(object caller, object data, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
 		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
-		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
+		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
 		#endregion
 	}
 }

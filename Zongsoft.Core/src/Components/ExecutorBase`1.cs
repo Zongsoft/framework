@@ -52,7 +52,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 执行方法
-		public void Execute(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => this.Execute(this.CreateContext(argument, parameters));
+		public void Execute(TArgument argument, IDictionary<string, object> parameters = null) => this.Execute(this.CreateContext(argument, parameters));
 		protected void Execute(IExecutorContext<TArgument> context)
 		{
 			var task = this.ExecuteAsync(context, default);
@@ -61,7 +61,7 @@ namespace Zongsoft.Components
 		}
 
 		public ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
-		public ValueTask ExecuteAsync(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
+		public ValueTask ExecuteAsync(TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
 		protected async ValueTask ExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
 		{
 			var filters = this.Filters;
@@ -83,8 +83,8 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 虚拟方法
-		protected abstract IExecutorContext<TArgument> CreateContext(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters);
-		protected virtual IExecutorContext<TArgument> CreateContext(object data, IEnumerable<KeyValuePair<string, object>> parameters) => data switch
+		protected abstract IExecutorContext<TArgument> CreateContext(TArgument argument, IDictionary<string, object> parameters);
+		protected virtual IExecutorContext<TArgument> CreateContext(object data, IDictionary<string, object> parameters) => data switch
 		{
 			IExecutorContext<TArgument> context => context,
 			TArgument argument => this.CreateContext(argument, parameters),
@@ -92,7 +92,7 @@ namespace Zongsoft.Components
 		};
 		protected virtual IHandler GetHandler(IExecutorContext<TArgument> context) => this.Locator?.Locate(context);
 
-		protected bool CanExecute(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanExecute(this.CreateContext(argument, parameters));
+		protected bool CanExecute(TArgument argument, IDictionary<string, object> parameters) => this.CanExecute(this.CreateContext(argument, parameters));
 		protected bool CanExecute(IExecutorContext<TArgument> context) => this.CanExecute(context, out _);
 		protected virtual bool CanExecute(IExecutorContext<TArgument> context, out IHandler handler)
 		{
@@ -139,7 +139,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 显式实现
-		void IExecutor.Execute(object data, IEnumerable<KeyValuePair<string, object>> parameters)
+		void IExecutor.Execute(object data, IDictionary<string, object> parameters)
 		{
 			if(data == null)
 				this.Execute(default, parameters);
@@ -160,24 +160,24 @@ namespace Zongsoft.Components
 			IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
 			_ => data == null ? this.ExecuteAsync(default, null, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
 		};
-		ValueTask IExecutor.ExecuteAsync(object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => data switch
+		ValueTask IExecutor.ExecuteAsync(object data, IDictionary<string, object> parameters, CancellationToken cancellation) => data switch
 		{
 			TArgument argument => this.ExecuteAsync(argument, parameters, cancellation),
 			IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
 			_ => data == null ? this.ExecuteAsync(default, parameters, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
 		};
 
-		bool IHandler.CanHandle(object data, IEnumerable<KeyValuePair<string, object>> parameters) => data switch
+		bool IHandler.CanHandle(object data, IDictionary<string, object> parameters) => data switch
 		{
 			TArgument argument => this.CanExecute(argument, parameters),
 			IExecutorContext<TArgument> context => this.CanExecute(context),
 			_ => false,
 		};
-		bool IHandler<TArgument>.CanHandle(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanExecute(argument, parameters);
+		bool IHandler<TArgument>.CanHandle(TArgument argument, IDictionary<string, object> parameters) => this.CanExecute(argument, parameters);
 		ValueTask IHandler.HandleAsync(object caller, object data, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-		ValueTask IHandler.HandleAsync(object caller, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+		ValueTask IHandler.HandleAsync(object caller, object data, IDictionary<string, object> parameters, CancellationToken cancellation) => this.ExecuteAsync(CreateContext(data, parameters), cancellation);
 		ValueTask IHandler<TArgument>.HandleAsync(object caller, TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
-		ValueTask IHandler<TArgument>.HandleAsync(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
+		ValueTask IHandler<TArgument>.HandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
 		#endregion
 	}
 }

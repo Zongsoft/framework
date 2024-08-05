@@ -156,8 +156,8 @@ namespace Zongsoft.Components.Tests
 				#endregion
 
 				#region 公共方法
-				public void OnCreated(CreatedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-				public void OnStatusChanged(StatusChangedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				public void OnCreated(CreatedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
 				#endregion
 			}
 
@@ -177,8 +177,8 @@ namespace Zongsoft.Components.Tests
 				#endregion
 
 				#region 公共方法
-				public void OnCreated(CreatedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-				public void OnStatusChanged(StatusChangedArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				public void OnCreated(CreatedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
 				#endregion
 			}
 		}

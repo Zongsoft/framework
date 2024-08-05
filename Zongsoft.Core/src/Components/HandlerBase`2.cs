@@ -47,8 +47,8 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanHandle(TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) => argument != null;
-		public virtual TResult Handle(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public virtual bool CanHandle(TArgument argument, IDictionary<string, object> parameters = null) => argument != null;
+		public virtual TResult Handle(object caller, TArgument argument, IDictionary<string, object> parameters = null)
 		{
 			var task = this.HandleAsync(caller, argument, null, CancellationToken.None);
 
@@ -59,12 +59,12 @@ namespace Zongsoft.Components
 		}
 
 		public ValueTask<TResult> HandleAsync(object caller, TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(caller, argument, null, cancellation);
-		public ValueTask<TResult> HandleAsync(object caller, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask<TResult> HandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(parameters == null)
 				return this.OnHandleAsync(caller, argument, null, cancellation);
 			else
-				return this.OnHandleAsync(caller, argument, parameters is IDictionary<string, object> dictionary ? dictionary : new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase), cancellation);
+				return this.OnHandleAsync(caller, argument, parameters, cancellation);
 		}
 		#endregion
 
@@ -73,9 +73,9 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object argument, IEnumerable<KeyValuePair<string, object>> parameters) => this.CanHandle(this.Convert(argument), parameters);
+		bool IHandler.CanHandle(object argument, IDictionary<string, object> parameters) => this.CanHandle(this.Convert(argument), parameters);
 		async ValueTask IHandler.HandleAsync(object caller, object argument, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(argument), null, cancellation);
-		async ValueTask IHandler.HandleAsync(object caller, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
+		async ValueTask IHandler.HandleAsync(object caller, object argument, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
 		#endregion
 
 		#region 参数转换

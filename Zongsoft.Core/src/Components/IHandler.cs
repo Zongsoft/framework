@@ -43,7 +43,7 @@ namespace Zongsoft.Components
 		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="parameters">当前处理的参数集。</param>
 		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
-		bool CanHandle(object argument, IEnumerable<KeyValuePair<string, object>> parameters = null);
+		bool CanHandle(object argument, IDictionary<string, object> parameters = null);
 
 		/// <summary>异步处理执行请求。</summary>
 		/// <param name="caller">处理程序的调用者。</param>
@@ -58,6 +58,6 @@ namespace Zongsoft.Components
 		/// <param name="parameters">当前处理的参数集。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask HandleAsync(object caller, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default);
+		ValueTask HandleAsync(object caller, object argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
 	}
 }

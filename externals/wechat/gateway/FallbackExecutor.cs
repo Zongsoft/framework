@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -60,7 +61,7 @@ namespace Zongsoft.Externals.Wechat.Gateway
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			return this.ExecuteAsync(request.Body, request.GetParameters(), cancellation);
+			return this.ExecuteAsync(request.Body, request.GetParameters().ToDictionary(entry => entry.Key, entry => entry.Value), cancellation);
 		}
 		#endregion
 

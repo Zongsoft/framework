@@ -80,7 +80,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 激发方法
-		protected void Raise<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected void Raise<TArgument>(string name, TArgument argument, IDictionary<string, object> parameters = null)
 		{
 			var task = RaiseAsync(name, argument, parameters);
 			if(!task.IsCompletedSuccessfully)
@@ -88,7 +88,7 @@ namespace Zongsoft.Components
 		}
 
 		protected ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));

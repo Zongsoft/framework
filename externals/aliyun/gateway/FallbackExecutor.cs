@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Web.Http;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Aliyun.Gateway
 {
@@ -60,7 +62,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			return this.ExecuteAsync(request.Body, request.GetParameters(), cancellation);
+			return this.ExecuteAsync(request.Body, request.GetParameters().ToDictionary(entry => entry.Key, entry => entry.Value), cancellation);
 		}
 		#endregion
 

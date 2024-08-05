@@ -360,7 +360,7 @@ namespace Zongsoft.Components
 			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : IEnumerable<KeyValuePair<string, object>>
+		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : IDictionary<string, object>
 		{
 			private readonly EventDescriptor<TArgument> _descriptor;
 			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
