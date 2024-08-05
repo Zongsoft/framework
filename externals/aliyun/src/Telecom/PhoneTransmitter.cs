@@ -111,7 +111,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 
 		#region 服务匹配
 		public bool Match(string name) => string.Equals(name, this.Name, StringComparison.OrdinalIgnoreCase);
-		bool IMatchable.Match(object parameter) => parameter is string name && this.Equals(name);
+		bool IMatchable.Match(object parameter) => parameter is string name && this.Match(name);
 		#endregion
 	}
 }
