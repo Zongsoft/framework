@@ -87,6 +87,10 @@ namespace Zongsoft.Collections
 		}
 		#endregion
 
+		#region 类型转换
+		public static implicit operator Parameters(Dictionary<string, object> parameters) => new(parameters);
+		#endregion
+
 		#region 公共方法
 		public void Clear() => _cache?.Clear();
 
