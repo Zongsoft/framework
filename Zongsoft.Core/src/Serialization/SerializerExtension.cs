@@ -48,5 +48,9 @@ namespace Zongsoft.Serialization
 		public static T Deserialize<T>(this ISerializer serializer, byte[] buffer, int offset, int count, SerializationOptions options = null) => count > 0 ?
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, offset, count), options) :
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer), options);
+
+		public static System.Text.Json.JsonSerializerOptions ToOptions() => Serializer.JsonSerializerWrapper.DefaultOptions;
+		public static System.Text.Json.JsonSerializerOptions ToOptions(this SerializationOptions options) => Serializer.JsonSerializerWrapper.GetOptions(options);
+		public static System.Text.Json.JsonSerializerOptions ToOptions(this TextSerializationOptions options) => Serializer.JsonSerializerWrapper.GetOptions(options);
 	}
 }

@@ -34,29 +34,14 @@ namespace Zongsoft.Serialization
 	public class TextSerializationOptions : SerializationOptions
 	{
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，指示序列化后的文本是否保持缩进风格。
-		/// </summary>
-		public bool Indented
-		{
-			get; set;
-		}
+		/// <summary>获取或设置一个值，指示序列化后的文本是否保持缩进风格。</summary>
+		public bool Indented { get; set; }
 
-		/// <summary>
-		/// 获取或设置一个值，指示序列化的文本是否保持强类型信息。
-		/// </summary>
-		public bool Typed
-		{
-			get; set;
-		}
+		/// <summary>获取或设置一个值，指示序列化的文本是否保持强类型信息。</summary>
+		public bool Typed { get; set; }
 
-		/// <summary>
-		/// 获取或设置一个值，指示序列化成员的命名转换方式。
-		/// </summary>
-		public SerializationNamingConvention NamingConvention
-		{
-			get; set;
-		}
+		/// <summary>获取或设置一个值，指示序列化成员的命名转换方式。</summary>
+		public SerializationNamingConvention NamingConvention { get; set; }
 		#endregion
 
 		#region 静态方法

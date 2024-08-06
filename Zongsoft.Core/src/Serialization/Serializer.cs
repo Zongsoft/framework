@@ -54,7 +54,7 @@ namespace Zongsoft.Serialization
 		#endregion
 
 		#region 嵌套子类
-		private class JsonSerializerWrapper : ITextSerializer
+		internal class JsonSerializerWrapper : ITextSerializer
 		{
 			#region 单例字段
 			public static readonly JsonSerializerWrapper Instance = new JsonSerializerWrapper();
@@ -195,7 +195,7 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 私有方法
-			private static JsonSerializerOptions GetOptions(SerializationOptions options)
+			internal static JsonSerializerOptions GetOptions(SerializationOptions options)
 			{
 				if(options == null)
 					return DefaultOptions;
@@ -230,7 +230,7 @@ namespace Zongsoft.Serialization
 				};
 			}
 
-			private static JsonSerializerOptions GetOptions(TextSerializationOptions options)
+			internal static JsonSerializerOptions GetOptions(TextSerializationOptions options)
 			{
 				if(options == null)
 					return DefaultOptions;

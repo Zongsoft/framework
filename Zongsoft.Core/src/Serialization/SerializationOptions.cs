@@ -39,28 +39,20 @@ namespace Zongsoft.Serialization
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置最大的序列化深度，默认为零(不限制)。
-		/// </summary>
+		/// <summary>获取或设置最大的序列化深度，默认为零(不限制)。</summary>
 		public int MaximumDepth
 		{
 			get => _maximumDepth;
 			set => _maximumDepth = Math.Max(0, value);
 		}
 
-		/// <summary>
-		/// 获取或设置一个值，指示是否忽略空值(null)。
-		/// </summary>
+		/// <summary>获取或设置一个值，指示是否忽略空值(null)。</summary>
 		public bool IgnoreNull { get; set; }
 
-		/// <summary>
-		/// 获取或设置一个值，指示是否忽略空集和空字符串。
-		/// </summary>
+		/// <summary>获取或设置一个值，指示是否忽略空集和空字符串。</summary>
 		public bool IgnoreEmpty { get; set; }
 
-		/// <summary>
-		/// 获取或设置一个值，指示是否忽略零。
-		/// </summary>
+		/// <summary>获取或设置一个值，指示是否忽略零。</summary>
 		public bool IgnoreZero { get; set; }
 
 		/// <summary>获取或设置一个值，指示是否包含字段。</summary>
