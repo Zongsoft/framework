@@ -38,11 +38,7 @@ namespace Zongsoft.Common
 {
 	public static class TypeExtension
 	{
-		public static bool IsAssignableFrom(this Type type, Type instanceType)
-		{
-			return IsAssignableFrom(type, instanceType, null);
-		}
-
+		public static bool IsAssignableFrom(this Type type, Type instanceType) => IsAssignableFrom(type, instanceType, null);
 		public static bool IsAssignableFrom(this Type type, Type instanceType, out IEnumerable<Type> genericTypes)
 		{
 			var list = new List<Type>();
@@ -250,31 +246,12 @@ namespace Zongsoft.Common
 			return false;
 		}
 
-		public static bool IsEnumerable(this Type type)
-		{
-			return typeof(IEnumerable).IsAssignableFrom(type) || IsAssignableFrom(typeof(IEnumerable<>), type);
-		}
+		public static bool IsEnumerable(this Type type) => typeof(IEnumerable).IsAssignableFrom(type) || IsAssignableFrom(typeof(IEnumerable<>), type);
+		public static bool IsCollection(this Type type) => typeof(ICollection).IsAssignableFrom(type) || IsAssignableFrom(typeof(ICollection<>), type);
+		public static bool IsList(this Type type) => typeof(IList).IsAssignableFrom(type) || IsAssignableFrom(typeof(IList<>), type);
+		public static bool IsHashset(this Type type) => IsAssignableFrom(typeof(ISet<>), type);
 
-		public static bool IsCollection(this Type type)
-		{
-			return typeof(ICollection).IsAssignableFrom(type) || IsAssignableFrom(typeof(ICollection<>), type);
-		}
-
-		public static bool IsList(this Type type)
-		{
-			return typeof(IList).IsAssignableFrom(type) || IsAssignableFrom(typeof(IList<>), type);
-		}
-
-		public static bool IsHashset(this Type type)
-		{
-			return IsAssignableFrom(typeof(ISet<>), type);
-		}
-
-		public static bool IsDictionary(this Type type)
-		{
-			return typeof(IDictionary).IsAssignableFrom(type) || IsAssignableFrom(typeof(IDictionary<,>), type);
-		}
-
+		public static bool IsDictionary(this Type type) => typeof(IDictionary).IsAssignableFrom(type) || IsAssignableFrom(typeof(IDictionary<,>), type);
 		public static bool IsDictionary(this object instance, out IEnumerable<DictionaryEntry> entries)
 		{
 			entries = null;
@@ -347,7 +324,6 @@ namespace Zongsoft.Common
 		}
 
 		public static bool IsNullable(this Type type) => type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
-
 		public static bool IsNullable(this Type type, out Type underlyingType)
 		{
 			if(type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -360,21 +336,9 @@ namespace Zongsoft.Common
 			return false;
 		}
 
-		public static Type GetListElementType(this Type type)
-		{
-			return GetElementType(type, typeof(IList<>), typeof(IList));
-		}
-
-		public static Type GetCollectionElementType(this Type type)
-		{
-			return GetElementType(type, typeof(ICollection<>), typeof(ICollection));
-		}
-
-		public static Type GetElementType(this Type type)
-		{
-			return GetElementType(type, typeof(IEnumerable<>), typeof(IEnumerable));
-		}
-
+		public static Type GetListElementType(this Type type) => GetElementType(type, typeof(IList<>), typeof(IList));
+		public static Type GetCollectionElementType(this Type type) => GetElementType(type, typeof(ICollection<>), typeof(ICollection));
+		public static Type GetElementType(this Type type) => GetElementType(type, typeof(IEnumerable<>), typeof(IEnumerable));
 		private static Type GetElementType(Type type, Type genericDefinitionInterface, Type collectionInterface)
 		{
 			if(type == null)
@@ -446,11 +410,7 @@ namespace Zongsoft.Common
 			};
 		}
 
-		public static MethodInfo GetMethod(this Type type, string name, Type[] parameterTypes)
-		{
-			return GetMethod(type, name, parameterTypes, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-		}
-
+		public static MethodInfo GetMethod(this Type type, string name, Type[] parameterTypes) => GetMethod(type, name, parameterTypes, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
 		public static MethodInfo GetMethod(this Type type, string name, Type[] parameterTypes, BindingFlags bindingFlags)
 		{
 			var members = type.FindMembers(MemberTypes.Method, bindingFlags, (m, _) =>
@@ -486,17 +446,14 @@ namespace Zongsoft.Common
 			return (MethodInfo)members[0];
 		}
 
-		public static string GetTypeAlias<T>()
-		{
-			return GetTypeAlias(typeof(T));
-		}
-
+		public static string GetTypeAlias<T>() => GetTypeAlias(typeof(T));
 		public static string GetTypeAlias(this Type type)
 		{
 			if(type == null)
 				return null;
 
 			var elementType = type.IsArray ? type.GetElementType() : type;
+			elementType = IsNullable(elementType, out var underlyingType) ? underlyingType : elementType;
 			var code = Type.GetTypeCode(elementType);
 			string alias;
 
@@ -507,12 +464,19 @@ namespace Zongsoft.Common
 			else
 			{
 				if(type == typeof(object))
-					alias = "object";
+					alias = nameof(Object);
 				else if(type == typeof(Guid))
-					alias = "guid";
+					alias = nameof(Guid);
+				else if(type == typeof(TimeSpan))
+					alias = nameof(TimeSpan);
+				else if(type == typeof(DateTimeOffset))
+					alias = nameof(DateTimeOffset);
 				else
 					return type.AssemblyQualifiedName;
 			}
+
+			if(underlyingType != null)
+				alias += '?';
 
 			if(type.IsArray)
 				alias += "[]";
@@ -535,24 +499,33 @@ namespace Zongsoft.Common
 					return typeof(string[]);
 
 				case "int":
+				case "int32":
 					return typeof(int);
 				case "int?":
+				case "int32?":
 					return typeof(int?);
 				case "int[]":
+				case "int32[]":
 					return typeof(int[]);
 
 				case "long":
+				case "int64":
 					return typeof(long);
 				case "long?":
+				case "int64?":
 					return typeof(long?);
 				case "long[]":
+				case "int64[]":
 					return typeof(long[]);
 
 				case "short":
+				case "int16":
 					return typeof(short);
 				case "short?":
+				case "int16?":
 					return typeof(short?);
 				case "short[]":
+				case "int16[]":
 					return typeof(short[]);
 
 				case "byte":
@@ -607,24 +580,33 @@ namespace Zongsoft.Common
 					return typeof(double[]);
 
 				case "uint":
+				case "uint32":
 					return typeof(uint);
 				case "uint?":
+				case "uint32?":
 					return typeof(uint?);
 				case "uint[]":
+				case "uint32[]":
 					return typeof(uint[]);
 
 				case "ulong":
+				case "uint64":
 					return typeof(ulong);
 				case "ulong?":
+				case "uint64?":
 					return typeof(ulong?);
 				case "ulong[]":
+				case "uint64[]":
 					return typeof(ulong[]);
 
 				case "ushort":
+				case "uint16":
 					return typeof(ushort);
 				case "ushort?":
+				case "uint16?":
 					return typeof(ushort?);
 				case "ushort[]":
+				case "uint16[]":
 					return typeof(ushort[]);
 
 				case "sbyte":
@@ -653,6 +635,13 @@ namespace Zongsoft.Common
 				case "time[]":
 				case "datetime[]":
 					return typeof(DateTime[]);
+
+				case "datetimeoffset":
+					return typeof(DateTimeOffset);
+				case "datetimeoffset?":
+					return typeof(DateTimeOffset?);
+				case "datetimeoffset[]":
+					return typeof(DateTimeOffset[]);
 
 				case "timespan":
 					return typeof(TimeSpan);
