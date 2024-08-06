@@ -105,7 +105,14 @@ namespace Zongsoft.Collections
 		private object GetValue(object key)
 		{
 			var parameters = _cache;
-			return parameters != null && parameters.TryGetValue(key ?? string.Empty, out var value) ? value : null;
+			if(parameters == null)
+				return null;
+
+			object value;
+
+			return key is Type type ?
+				parameters.TryGetValue(type, out value) ? value : this.Find(type):
+				parameters.TryGetValue(key ?? string.Empty, out value) ? value : null;
 		}
 
 		public bool TryGetValue<T>(out T value)
@@ -126,7 +133,12 @@ namespace Zongsoft.Collections
 		{
 			value = null;
 			var parameters = _cache;
-			return parameters != null && parameters.TryGetValue(key ?? string.Empty, out value);
+			if(parameters == null)
+				return false;
+
+			return key is Type type ?
+				parameters.TryGetValue(type, out value) ? true : this.Find(type, out value) :
+				parameters.TryGetValue(key ?? string.Empty, out value);
 		}
 
 		public void SetValue(object value) => this.SetValue(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
@@ -223,6 +235,27 @@ namespace Zongsoft.Collections
 				if(index >= array.Length)
 					break;
 			}
+		}
+		#endregion
+
+		#region 私有方法
+		private object Find(Type type) => this.Find(type, out var value) ? value : null;
+		private bool Find(Type type, out object value)
+		{
+			if(type != null)
+			{
+				foreach(var entry in _cache)
+				{
+					if(entry.Key is Type keyType && type.IsAssignableFrom(keyType))
+					{
+						value = entry.Value;
+						return true;
+					}
+				}
+			}
+
+			value = null;
+			return false;
 		}
 		#endregion
 
