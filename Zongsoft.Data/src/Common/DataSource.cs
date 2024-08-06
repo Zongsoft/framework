@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data.Common
@@ -63,7 +64,7 @@ namespace Zongsoft.Data.Common
 			_connectionString = connectionSetting.Value;
 			_driverName = connectionSetting.Driver;
 			this.Mode = DataAccessMode.All;
-			this.Properties = new Collections.Parameters(this);
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 			if(connectionSetting.HasProperties)
 			{
@@ -81,7 +82,7 @@ namespace Zongsoft.Data.Common
 				foreach(var property in connectionSetting.Properties)
 				{
 					if(!string.Equals(property.Key, nameof(Mode), StringComparison.OrdinalIgnoreCase))
-						this.Properties.SetValue(property.Key, property.Value);
+						this.Properties[property.Key] = property.Value;
 				}
 			}
 		}
@@ -97,7 +98,7 @@ namespace Zongsoft.Data.Common
 			_connectionString = connectionString;
 			_driverName = driverName;
 			this.Mode = DataAccessMode.All;
-			this.Properties = new Collections.Parameters(this);
+			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -105,7 +106,7 @@ namespace Zongsoft.Data.Common
 		public string Name => _name;
 		public string ConnectionString => _connectionString;
 		public DataAccessMode Mode { get; set; }
-		public Collections.Parameters Properties { get; }
+		public IDictionary<string, object> Properties { get; }
 
 		public IDataDriver Driver
 		{

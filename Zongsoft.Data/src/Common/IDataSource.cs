@@ -53,6 +53,6 @@ namespace Zongsoft.Data.Common
 		FeatureCollection Features { get; }
 
 		/// <summary>获取扩展属性集。</summary>
-		Collections.Parameters Properties { get; }
+		IDictionary<string, object> Properties { get; }
 	}
 }
