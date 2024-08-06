@@ -80,15 +80,18 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 激发方法
-		protected void Raise<TArgument>(string name, TArgument argument, Collections.Parameters parameters = null)
+		protected bool Raise<TArgument>(string name, TArgument argument, Collections.Parameters parameters = null)
 		{
-			var task = RaiseAsync(name, argument, parameters);
-			if(!task.IsCompletedSuccessfully)
-				task.AsTask().GetAwaiter().GetResult();
+			var task = this.RaiseAsync(name, argument, parameters);
+
+			if(task.IsCompletedSuccessfully)
+				return task.Result;
+			else
+				return task.AsTask().GetAwaiter().GetResult();
 		}
 
-		protected ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+		protected ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
+		protected async ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -116,9 +119,12 @@ namespace Zongsoft.Components
 				foreach(var filter in EventManager.Global.Filters)
 					await this.OnFiltered(filter, context, cancellation);
 
+				//返回激发成功
+				return true;
 			}
 
-			throw new InvalidOperationException($"The '{name}' event to raise is undefined.");
+			//返回激发失败
+			return false;
 		}
 		#endregion
 
