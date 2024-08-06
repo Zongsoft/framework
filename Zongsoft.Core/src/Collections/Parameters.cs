@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -35,7 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
-	public class Parameters : IDictionary<object, object>
+	public partial class Parameters : IDictionary<object, object>
 	{
 		#region 成员字段
 		private int _initialization;
@@ -76,7 +76,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 静态方法
-		public static Parameters Parameter(string name, object value) => new([ new KeyValuePair<string, object>(name ?? string.Empty, value) ]);
+		public static Parameters Parameter(string name, object value) => new([new KeyValuePair<string, object>(name ?? string.Empty, value)]);
 		public static Parameters Parameter(object value) => Parameter(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
 		public static Parameters Parameter<T>(object value) => Parameter(typeof(T), value);
 		public static Parameters Parameter(Type type, object value)
@@ -104,7 +104,18 @@ namespace Zongsoft.Collections
 			return parameters != null && parameters.TryGetValue(key ?? string.Empty, out var value) ? value : null;
 		}
 
-		public bool TryGetValue<T>(out object value) => this.TryGetValue((object)typeof(T), out value);
+		public bool TryGetValue<T>(out T value)
+		{
+			if(this.TryGetValue((object)typeof(T), out var result))
+			{
+				value = (T)result;
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
 		public bool TryGetValue(Type type, out object value) => this.TryGetValue((object)type, out value);
 		public bool TryGetValue(string name, out object value) => this.TryGetValue((object)(name ?? string.Empty), out value);
 		private bool TryGetValue(object key, out object value)
@@ -256,32 +267,5 @@ namespace Zongsoft.Collections
 			}
 		}
 		#endregion
-	}
-
-	public static class ParametersUtility
-	{
-		public static Parameters Parameter(this Parameters parameters, string name, object value)
-		{
-			parameters.SetValue(name, value);
-			return parameters;
-		}
-
-		public static Parameters Parameter(this Parameters parameters, Type type, object value)
-		{
-			parameters.SetValue(type, value);
-			return parameters;
-		}
-
-		public static Parameters Parameter<T>(this Parameters parameters, object value)
-		{
-			parameters.SetValue<T>(value);
-			return parameters;
-		}
-
-		public static Parameters Parameter(this Parameters parameters, object value)
-		{
-			parameters.SetValue(value);
-			return parameters;
-		}
 	}
 }
