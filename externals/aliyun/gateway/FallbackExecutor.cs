@@ -67,8 +67,8 @@ namespace Zongsoft.Externals.Aliyun.Gateway
 		#endregion
 
 		#region 重写方法
-		protected override IExecutorContext<Stream, object> CreateContext(Stream request, IEnumerable<KeyValuePair<string, object>> parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
-		protected override IHandler GetHandler(IExecutorContext<Stream, object> context) => context.HasParameters && context.Parameters.TryGetValue("name", out var value) && value is string name && this.Handlers.TryGetValue(name, out var handler) ? handler : null;
+		protected override IExecutorContext<Stream, object> CreateContext(Stream request, Parameters parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
+		protected override IHandler GetHandler(IExecutorContext<Stream, object> context) => context.Parameters.TryGetValue("name", out var value) && value is string name && this.Handlers.TryGetValue(name, out var handler) ? handler : null;
 		#endregion
 	}
 }

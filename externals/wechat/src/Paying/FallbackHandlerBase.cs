@@ -38,6 +38,7 @@ using System.Collections.Generic;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -72,7 +73,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask OnHandleAsync(object caller, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation)
+		protected override async ValueTask OnHandleAsync(object caller, Stream stream, Parameters parameters, CancellationToken cancellation)
 		{
 			var request = await this.GetRequestAsync(stream, parameters, cancellation);
 			await this.OnHandleAsync(caller, request, parameters, cancellation);
@@ -81,7 +82,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		#region 抽象方法
 		internal protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask OnHandleAsync(object caller, TRequest request, Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 虚拟方法
@@ -136,7 +137,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask<TResult> OnHandleAsync(object caller, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation)
+		protected override async ValueTask<TResult> OnHandleAsync(object caller, Stream stream, Parameters parameters, CancellationToken cancellation)
 		{
 			var request = await this.GetRequestAsync(stream, parameters, cancellation);
 			return await this.OnHandleAsync(caller, request, parameters, cancellation);
@@ -145,7 +146,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 		#region 抽象方法
 		internal protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask<TResult> OnHandleAsync(object caller, TRequest request, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask<TResult> OnHandleAsync(object caller, TRequest request, Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 虚拟方法
@@ -171,17 +172,17 @@ namespace Zongsoft.Externals.Wechat.Paying
 
 	internal static class FallbackHandlerUtility
 	{
-		public static ValueTask<TRequest> GetRequestAsync<TRequest>(this FallbackHandlerBase<TRequest> handler, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public static ValueTask<TRequest> GetRequestAsync<TRequest>(this FallbackHandlerBase<TRequest> handler, Stream stream, Parameters parameters, CancellationToken cancellation = default)
 		{
 			return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
 		}
 
-		public static ValueTask<TRequest> GetRequestAsync<TRequest, TResult>(this FallbackHandlerBase<TRequest, TResult> handler, Stream stream, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public static ValueTask<TRequest> GetRequestAsync<TRequest, TResult>(this FallbackHandlerBase<TRequest, TResult> handler, Stream stream, Parameters parameters, CancellationToken cancellation = default)
 		{
 			return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
 		}
 
-		private static async ValueTask<TRequest> GetRequestAsync<TRequest>(Stream stream, IDictionary<string, object> parameters, Func<string, string, IAuthority> authorityThunk, Func<string, Type> typeThunk, CancellationToken cancellation = default)
+		private static async ValueTask<TRequest> GetRequestAsync<TRequest>(Stream stream, Parameters parameters, Func<string, string, IAuthority> authorityThunk, Func<string, Type> typeThunk, CancellationToken cancellation = default)
 		{
 			if(stream == null)
 				return default;

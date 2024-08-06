@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Diagnostics;
 
 namespace Zongsoft.Externals.Hangfire.Samples
@@ -12,7 +12,7 @@ namespace Zongsoft.Externals.Hangfire.Samples
 	{
 		private int _count = 0;
 
-		protected override ValueTask OnHandleAsync(object caller, object request, IDictionary<string, object> parameters, CancellationToken cancellation)
+		protected override ValueTask OnHandleAsync(object caller, object request, Parameters parameters, CancellationToken cancellation)
 		{
 			if(request == null)
 				request = $"Count:{Interlocked.Increment(ref _count)}";
