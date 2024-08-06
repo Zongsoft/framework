@@ -256,21 +256,21 @@ namespace Zongsoft.Components.Tests
 			public Action<MyRequest> Action1_Generic { get; set; }
 			public Action<object, object> Action2_Object { get; set; }
 			public Action<object, MyRequest> Action2_Generic { get; set; }
-			public Action<object, object, IDictionary<string, object>> Action3_Object { get; set; }
-			public Action<object, MyRequest, IDictionary<string, object>> Action3_Generic { get; set; }
+			public Action<object, object, Collections.Parameters> Action3_Object { get; set; }
+			public Action<object, MyRequest, Collections.Parameters> Action3_Generic { get; set; }
 
 			public void OnAction0() => this.Action0?.Invoke();
 			public void OnAction1_Object() => this.Action1_Object?.Invoke("request");
 			public void OnAction1_Generic() => this.Action1_Generic?.Invoke(new MyRequest());
 			public void OnAction2_Object() => this.Action2_Object?.Invoke(this, "request");
 			public void OnAction2_Generic() => this.Action2_Generic?.Invoke(this, new MyRequest());
-			public void OnAction3_Object() => this.Action3_Object?.Invoke(this, "request", new Dictionary<string, object>());
-			public void OnAction3_Generic() => this.Action3_Generic?.Invoke(this, new MyRequest(), new Dictionary<string, object>());
+			public void OnAction3_Object() => this.Action3_Object?.Invoke(this, "request", Collections.Parameters.Parameter("Unnamed"));
+			public void OnAction3_Generic() => this.Action3_Generic?.Invoke(this, new MyRequest(), Collections.Parameters.Parameter("Unnamed"));
 		}
 
 		public class MyEventHandler1 : HandlerBase<EventArgs>
 		{
-			protected override ValueTask OnHandleAsync(object caller, EventArgs request, IDictionary<string, object> parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(object caller, EventArgs request, Collections.Parameters parameters, CancellationToken cancellation)
 			{
 				throw new MyHandlerException(request, parameters);
 			}
@@ -278,7 +278,7 @@ namespace Zongsoft.Components.Tests
 
 		public class MyEventHandler2 : HandlerBase<MyEventArgs>
 		{
-			protected override ValueTask OnHandleAsync(object caller, MyEventArgs request, IDictionary<string, object> parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(object caller, MyEventArgs request, Collections.Parameters parameters, CancellationToken cancellation)
 			{
 				throw new MyHandlerException(request, parameters);
 			}
@@ -286,7 +286,7 @@ namespace Zongsoft.Components.Tests
 
 		public class MyHandlerObject : HandlerBase<object>
 		{
-			protected override ValueTask OnHandleAsync(object caller, object request, IDictionary<string, object> parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(object caller, object request, Collections.Parameters parameters, CancellationToken cancellation)
 			{
 				throw new MyHandlerException(request, parameters);
 			}
@@ -294,7 +294,7 @@ namespace Zongsoft.Components.Tests
 
 		public class MyHandlerGeneric : HandlerBase<MyRequest>
 		{
-			protected override ValueTask OnHandleAsync(object caller, MyRequest request, IDictionary<string, object> parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(object caller, MyRequest request, Collections.Parameters parameters, CancellationToken cancellation)
 			{
 				throw new MyHandlerException(request, parameters);
 			}
@@ -302,14 +302,14 @@ namespace Zongsoft.Components.Tests
 
 		public class MyHandlerException : ApplicationException
 		{
-            public MyHandlerException(object request, IDictionary<string, object> parameters = null) : base($"The handler error.")
+            public MyHandlerException(object request, Collections.Parameters parameters = null) : base($"The handler error.")
             {
 				this.Request = request;
 				this.Parameters = parameters;
             }
 
             public object Request { get; }
-			public IDictionary<string, object> Parameters { get; }
+			public Collections.Parameters Parameters { get; }
 		}
 	}
 }

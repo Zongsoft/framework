@@ -63,7 +63,7 @@ namespace Zongsoft.Components
 				return;
 
 			//根据收到的消息解析出其对应的事件参数
-			(var argument, IDictionary<string, object> parameters) = Events.Marshaler.Unmarshal(name, message.Data);
+			(var argument, Collections.Parameters parameters) = Events.Marshaler.Unmarshal(name, message.Data);
 
 			//定义异步通知操作的任务集
 			var tasks = new List<Task>();

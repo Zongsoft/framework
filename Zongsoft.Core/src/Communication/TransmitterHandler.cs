@@ -47,7 +47,7 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 公共方法
-		protected override ValueTask OnHandleAsync(object caller, Argument argument, IDictionary<string, object> parameters, CancellationToken cancellation)
+		protected override ValueTask OnHandleAsync(object caller, Argument argument, Collections.Parameters parameters, CancellationToken cancellation)
 		{
 			if(argument == null)
 				return ValueTask.CompletedTask;

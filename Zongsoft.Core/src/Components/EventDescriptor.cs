@@ -85,9 +85,9 @@ namespace Zongsoft.Components
 
 		#region 处理方法
 		public ValueTask HandleAsync(CancellationToken cancellation = default) => this.HandleAsync(null, null, cancellation);
-		public ValueTask HandleAsync(IDictionary<string, object> parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
+		public ValueTask HandleAsync(Collections.Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
 		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync(object argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 
@@ -116,7 +116,7 @@ namespace Zongsoft.Components
 
 		#region 处理方法
 		public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync(TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 

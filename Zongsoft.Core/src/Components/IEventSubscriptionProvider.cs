@@ -35,6 +35,6 @@ namespace Zongsoft.Components
 {
 	public interface IEventSubscriptionProvider
 	{
-		IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string qualifiedName, object argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
+		IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string qualifiedName, object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 	}
 }

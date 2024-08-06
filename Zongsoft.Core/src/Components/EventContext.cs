@@ -34,23 +34,13 @@ namespace Zongsoft.Components
 {
 	public class EventContext
 	{
-		#region 成员字段
-		private IDictionary<string, object> _parameters;
-		#endregion
-
 		#region 构造函数
-		public EventContext(EventRegistryBase registry, string name, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public EventContext(EventRegistryBase registry, string name, Collections.Parameters parameters = null)
 		{
 			this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 			this.Name = name;
 			this.QualifiedName = string.IsNullOrEmpty(registry.Name) ? name : $"{registry.Name}:{name}";
-
-			if(parameters != null)
-			{
-				_parameters = parameters is IDictionary<string, object> dictionary ?
-					dictionary :
-					new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
-			}
+			this.Parameters = parameters ?? new Collections.Parameters();
 		}
 		#endregion
 
@@ -60,27 +50,14 @@ namespace Zongsoft.Components
 		public EventRegistryBase Registry { get; }
 		public string Name { get; }
 		public string QualifiedName { get; }
-
-		[System.Text.Json.Serialization.JsonIgnore]
-		[Serialization.SerializationMember(Ignored = true)]
-		public bool HasParameters { get => _parameters != null; }
-		public IDictionary<string, object> Parameters
-		{
-			get
-			{
-				if(_parameters == null)
-					System.Threading.Interlocked.CompareExchange(ref _parameters, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _parameters;
-			}
-		}
+		public Collections.Parameters Parameters { get; }
 		#endregion
 	}
 
 	public class EventContext<TArgument> : EventContext
 	{
 		#region 构造函数
-		public EventContext(EventRegistryBase registry, string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(registry, name, parameters)
+		public EventContext(EventRegistryBase registry, string name, TArgument argument, Collections.Parameters parameters = null) : base(registry, name, parameters)
 		{
 			this.Argument = argument;
 		}

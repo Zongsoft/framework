@@ -80,7 +80,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 激发方法
-		protected void Raise<TArgument>(string name, TArgument argument, IDictionary<string, object> parameters = null)
+		protected void Raise<TArgument>(string name, TArgument argument, Collections.Parameters parameters = null)
 		{
 			var task = RaiseAsync(name, argument, parameters);
 			if(!task.IsCompletedSuccessfully)
@@ -88,7 +88,7 @@ namespace Zongsoft.Components
 		}
 
 		protected ValueTask RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => RaiseAsync(name, argument, null, cancellation);
-		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		protected async ValueTask RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -123,7 +123,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 内部方法
-		internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters) => new EventContext<TArgument>(this, name, argument, parameters);
+		internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Collections.Parameters parameters) => new EventContext<TArgument>(this, name, argument, parameters);
 		#endregion
 
 		#region 过滤方法

@@ -40,14 +40,8 @@ namespace Zongsoft.Components
 		/// <summary>获取处理本次执行请求的执行器。</summary>
 		IExecutor Executor { get; }
 
-		/// <summary>获取扩展参数集是否有内容。</summary>
-		/// <remarks>
-		///		<para>在不确定参数集是否含有内容之前，建议先使用该属性来检测。</para>
-		/// </remarks>
-		bool HasParameters { get; }
-
 		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
-		IDictionary<string, object> Parameters { get; }
+		Collections.Parameters Parameters { get; }
 
 		/// <summary>获取执行请求对象。</summary>
 		object Argument { get; }

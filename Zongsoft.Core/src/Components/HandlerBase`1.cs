@@ -31,7 +31,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
@@ -46,8 +45,8 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanHandle(TArgument argument, IDictionary<string, object> parameters = null) => argument != null;
-		public virtual void Handle(object caller, TArgument argument, IDictionary<string, object> parameters = null)
+		public virtual bool CanHandle(TArgument argument, Collections.Parameters parameters = null) => argument != null;
+		public virtual void Handle(object caller, TArgument argument, Collections.Parameters parameters = null)
 		{
 			var task = this.HandleAsync(caller, argument, parameters, CancellationToken.None);
 
@@ -58,7 +57,7 @@ namespace Zongsoft.Components
 		}
 
 		public ValueTask HandleAsync(object caller, TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(caller, argument, null, cancellation);
-		public ValueTask HandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(object caller, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(parameters == null)
 				return this.OnHandleAsync(caller, argument, null, cancellation);
@@ -68,13 +67,13 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 抽象方法
-		protected abstract ValueTask OnHandleAsync(object caller, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask OnHandleAsync(object caller, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object argument, IDictionary<string, object> parameters) => this.CanHandle(this.Convert(argument), parameters);
+		bool IHandler.CanHandle(object argument, Collections.Parameters parameters) => this.CanHandle(this.Convert(argument), parameters);
 		ValueTask IHandler.HandleAsync(object caller, object argument, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(argument), null, cancellation);
-		ValueTask IHandler.HandleAsync(object caller, object argument, IDictionary<string, object> parameters, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
+		ValueTask IHandler.HandleAsync(object caller, object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
 		#endregion
 
 		#region 参数转换

@@ -37,41 +37,36 @@ namespace Zongsoft.Components
 	{
 		#region 成员字段
 		private Exception _exception;
-		private IDictionary<string, object> _parameters;
 		#endregion
 
 		#region 构造函数
-		protected ExecutorContextBase(IExecutor executor, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		protected ExecutorContextBase(IExecutor executor)
 		{
 			this.Executor = executor;
+			this.Parameters = new Collections.Parameters();
+		}
 
-			if(parameters != null)
-			{
-				_parameters = parameters is IDictionary<string, object> dictionary ?
-					dictionary :
-					new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
-			}
+		protected ExecutorContextBase(IExecutor executor, Collections.Parameters parameters)
+		{
+			this.Executor = executor;
+			this.Parameters = parameters ?? new Collections.Parameters();
+		}
+
+		protected ExecutorContextBase(IExecutor executor, IEnumerable<KeyValuePair<string, object>> parameters)
+		{
+			this.Executor = executor;
+			this.Parameters = new Collections.Parameters(parameters);
 		}
 		#endregion
 
 		#region 公共属性
 		public IExecutor Executor { get; }
-		public bool HasParameters { get => _parameters != null; }
-		public IDictionary<string, object> Parameters
-		{
-			get
-			{
-				if(_parameters == null)
-					System.Threading.Interlocked.CompareExchange(ref _parameters, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _parameters;
-			}
-		}
+		public Collections.Parameters Parameters { get; }
 		#endregion
 
 		#region 显式实现
 		protected abstract object GetArgument();
-		object IExecutorContext.Argument { get => this.GetArgument(); }
+		object IExecutorContext.Argument => this.GetArgument();
 		#endregion
 
 		#region 公共方法

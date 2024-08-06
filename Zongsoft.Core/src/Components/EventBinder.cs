@@ -211,7 +211,7 @@ namespace Zongsoft.Components
 		{
 			const string EVENT_BINDING_ERROR_MESSAGE = @"The bound event argument type do not match.";
 
-			static bool IsParametersType(Type type) => typeof(IEnumerable<KeyValuePair<string, object>>).IsAssignableFrom(type);
+			static bool IsParametersType(Type type) => typeof(Collections.Parameters).IsAssignableFrom(type);
 
 			if(delegateType == typeof(Action))
 			{
@@ -257,7 +257,7 @@ namespace Zongsoft.Components
 						var adapter = Activator.CreateInstance(
 							typeof(ActionAdapterWithCaller<,>).MakeGenericType(delegateType.GenericTypeArguments[1], delegateType.GenericTypeArguments[2]),
 							new object[] { descriptor });
-						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object, IDictionary<string, object>>.Raise));
+						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object, Collections.Parameters>.Raise));
 						return (adapter, trigger);
 					}
 				}
@@ -360,7 +360,7 @@ namespace Zongsoft.Components
 			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : IDictionary<string, object>
+		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : Collections.Parameters
 		{
 			private readonly EventDescriptor<TArgument> _descriptor;
 			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;

@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Services;
+using Zongsoft.Collections;
 
 using Xunit;
-using System.Threading.Tasks;
-using System.Threading;
 
 namespace Zongsoft.Components.Tests
 {
@@ -76,33 +77,57 @@ namespace Zongsoft.Components.Tests
 			descriptor.Handlers.Remove(changedHandler);
 			Assert.DoesNotContain(changedHandler, descriptor.Handlers);
 
-			static void OnCreate() => ModuleB.Current.Events.Target1.OnCreated(new("MyMessage"), new Dictionary<string, object> { { "MyInteger", 100 } });
-			static void OnStatusChanged() => ModuleB.Current.Events.Target1.OnStatusChanged(new(1, "MyStatusChanged"), new Dictionary<string, object> { { "MyInteger", 200 } });
+			static void OnCreate() => ModuleB.Current.Events.Target1.OnCreated(new("MyMessage"), Parameters.Parameter("MyInteger", 100));
+			static void OnStatusChanged() => ModuleB.Current.Events.Target1.OnStatusChanged(new(1, "MyStatusChanged"), Parameters.Parameter("MyInteger", 200));
 		}
 
 		[Fact]
 		public void TestUnmarshalEvent()
 		{
-			var json = @"{""Argument"":{""Message"":""MyMessage""},""Parameters"":{""MyInteger"":100}}";
+			var json = """
+			{
+				"Argument": {
+					"Message": "MyMessage"
+				},
+				"Parameters":
+				{
+					"MyString": "StringValue",
+					"MyInt32": {
+						"$type": "int",
+						"value": 100
+					}
+				}
+			}
+			""";
+
 			var data = System.Text.Encoding.UTF8.GetBytes(json);
 
 			(var argument, var parameters) = Events.Marshaler.Unmarshal("ModuleB:Target1.Created", data);
 
 			Assert.NotNull(argument);
 			Assert.IsType<CreatedArgument>(argument);
+			Assert.Equal("MyMessage", ((CreatedArgument)argument).Message);
 
 			Assert.NotNull(parameters);
 			Assert.NotEmpty(parameters);
+
+			Assert.True(parameters.TryGetValue("MyInt32", out var value));
+			Assert.True(value is int);
+			Assert.Equal(100, (int)value);
+
+			Assert.True(parameters.TryGetValue("mystring", out value));
+			Assert.True(value is string);
+			Assert.Equal("StringValue", (string)value);
 		}
 
 		private class CreatedHandler : HandlerBase<CreatedArgument>
 		{
-			protected override ValueTask OnHandleAsync(object caller, CreatedArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => throw new NotImplementedException();
+			protected override ValueTask OnHandleAsync(object caller, CreatedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 		}
 
 		private class StatusChangedHandler : HandlerBase<StatusChangedArgument>
 		{
-			protected override ValueTask OnHandleAsync(object caller, StatusChangedArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation) => throw new NotImplementedException();
+			protected override ValueTask OnHandleAsync(object caller, StatusChangedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 		}
 	}
 
@@ -156,8 +181,8 @@ namespace Zongsoft.Components.Tests
 				#endregion
 
 				#region 公共方法
-				public void OnCreated(CreatedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-				public void OnStatusChanged(StatusChangedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				public void OnCreated(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, Parameters parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
 				#endregion
 			}
 
@@ -177,8 +202,8 @@ namespace Zongsoft.Components.Tests
 				#endregion
 
 				#region 公共方法
-				public void OnCreated(CreatedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-				public void OnStatusChanged(StatusChangedArgument argument, IDictionary<string, object> parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+				public void OnCreated(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Created.Name, argument, parameters);
+				public void OnStatusChanged(StatusChangedArgument argument, Parameters parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
 				#endregion
 			}
 		}

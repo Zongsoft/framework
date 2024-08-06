@@ -37,6 +37,6 @@ namespace Zongsoft.Components
 		public EventLocator(EventRegistryBase registry) : base(registry) { }
 
 		protected override string GetName(IExecutorContext context) =>
-			context.HasParameters && context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
+			context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
 	}
 }

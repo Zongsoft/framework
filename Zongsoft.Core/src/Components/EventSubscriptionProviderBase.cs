@@ -52,12 +52,12 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 获取方法
-		IAsyncEnumerable<IEventSubscription> IEventSubscriptionProvider.GetSubscriptionsAsync(string qualifiedName, object argument, IDictionary<string, object> parameters, CancellationToken cancellation) => GetSubscriptionsAsync(qualifiedName, Convert(argument), parameters, cancellation);
-		public abstract IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string qualifiedName, TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
+		IAsyncEnumerable<IEventSubscription> IEventSubscriptionProvider.GetSubscriptionsAsync(string qualifiedName, object argument, Collections.Parameters parameters, CancellationToken cancellation) => GetSubscriptionsAsync(qualifiedName, Convert(argument), parameters, cancellation);
+		public abstract IAsyncEnumerable<IEventSubscription> GetSubscriptionsAsync(string qualifiedName, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 		#endregion
 
 		#region 参数转换
-		protected virtual TArgument Convert(object argument) => argument is TArgument value ? value : default;
+		protected virtual TArgument Convert(object argument) => Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : default;
 		#endregion
 	}
 }

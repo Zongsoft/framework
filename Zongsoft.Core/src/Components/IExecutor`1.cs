@@ -30,14 +30,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
 	public interface IExecutor<in TArgument> : IExecutor
 	{
-		void Execute(TArgument argument, IDictionary<string, object> parameters = null);
+		void Execute(TArgument argument, Collections.Parameters parameters = null);
 		ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default);
-		ValueTask ExecuteAsync(TArgument argument, IDictionary<string, object> parameters, CancellationToken cancellation = default);
+		ValueTask ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 	}
 }

@@ -192,7 +192,7 @@ namespace Zongsoft.Components
 		#region 嵌套子类
 		public static class Marshaler
 		{
-			private static readonly ConcurrentDictionary<Type, Func<object, ValueTuple<object, IDictionary<string, object>>>> _accessors = new();
+			private static readonly ConcurrentDictionary<Type, Func<object, ValueTuple<object, Collections.Parameters>>> _accessors = new();
 
 			public static byte[] Marshal(EventContext context)
 			{
@@ -201,13 +201,13 @@ namespace Zongsoft.Components
 
 				var argument = context.GetArgument();
 				var content = argument == null ?
-					Serialization.Serializer.Json.Serialize(new EventToken(context.HasParameters ? context.Parameters : null)) :
-					Serialization.Serializer.Json.Serialize(Activator.CreateInstance(typeof(EventToken<>).MakeGenericType(argument.GetType()), argument, context.HasParameters ? context.Parameters : null));
+					Serialization.Serializer.Json.Serialize(new EventToken(context.Parameters)) :
+					Serialization.Serializer.Json.Serialize(Activator.CreateInstance(typeof(EventToken<>).MakeGenericType(argument.GetType()), argument, context.Parameters));
 
 				return System.Text.Encoding.UTF8.GetBytes(content);
 			}
 
-			public static (object argument, IDictionary<string, object> parameters) Unmarshal(string name, byte[] data)
+			public static (object argument, Collections.Parameters parameters) Unmarshal(string name, byte[] data)
 			{
 				if(data == null || data.Length == 0)
 					return default;
@@ -226,9 +226,9 @@ namespace Zongsoft.Components
 					var field2 = result.GetType().GetField(nameof(EventToken<object>.Parameters), BindingFlags.Instance | BindingFlags.Public);
 					var parameter = Expression.Parameter(typeof(object));
 					var converter = Expression.Convert(parameter, typeof(EventToken<>).MakeGenericType(type));
-					var constructor = typeof(ValueTuple<object, IDictionary<string, object>>).GetConstructor(new[] { typeof(object), typeof(IDictionary<string, object>) });
+					var constructor = typeof(ValueTuple<object, Collections.Parameters>).GetConstructor(new[] { typeof(object), typeof(Collections.Parameters) });
 					var tuple = Expression.New(constructor, Expression.Field(converter, field1), Expression.Field(converter, field2));
-					return Expression.Lambda<Func<object, ValueTuple<object, IDictionary<string, object>>>>(tuple, parameter).Compile();
+					return Expression.Lambda<Func<object, ValueTuple<object, Collections.Parameters>>>(tuple, parameter).Compile();
 				});
 
 				return accessor.Invoke(result);
@@ -241,19 +241,19 @@ namespace Zongsoft.Components
 
 			private struct EventToken
 			{
-				public EventToken(IDictionary<string, object> parameters) => this.Parameters = parameters;
-				public IDictionary<string, object> Parameters;
+				public EventToken(Collections.Parameters parameters) => this.Parameters = parameters;
+				public Collections.Parameters Parameters;
 			}
 
 			private struct EventToken<TArgument>
 			{
-				public EventToken(TArgument argument, IDictionary<string, object> parameters)
+				public EventToken(TArgument argument, Collections.Parameters parameters)
 				{
 					this.Argument = argument;
 					this.Parameters = parameters;
 				}
 				public TArgument Argument;
-				public IDictionary<string, object> Parameters;
+				public Collections.Parameters Parameters;
 			}
 		}
 		#endregion
