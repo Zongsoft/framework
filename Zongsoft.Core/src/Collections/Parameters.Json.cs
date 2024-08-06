@@ -235,7 +235,7 @@ namespace Zongsoft.Collections
 										else if(type == typeof(ReadOnlyMemory<byte>))
 											return reader.TryGetBytesFromBase64(out var buffer) ? new ReadOnlyMemory<byte>(buffer) : ReadOnlyMemory<byte>.Empty;
 
-										return JsonSerializer.Deserialize(ref reader, type, Serialization.SerializerExtension.ToOptions());
+										return JsonSerializer.Deserialize(ref reader, type, Serialization.SerializerExtension.GetOptions());
 								}
 							}
 						}

@@ -48,7 +48,7 @@ namespace Zongsoft.Collections
 		{
 			_initialization = 0;
 
-			if(parameters != null)
+			if(parameters != null && parameters.Any())
 				_cache = new(parameters.Select(entry => new KeyValuePair<object, object>(entry.Key ?? string.Empty, entry.Value)), Comparer.Instance);
 		}
 		#endregion
@@ -246,7 +246,7 @@ namespace Zongsoft.Collections
 			{
 				foreach(var entry in _cache)
 				{
-					if(entry.Key is Type keyType && type.IsAssignableFrom(keyType))
+					if(entry.Key is Type key && type.IsAssignableFrom(key))
 					{
 						value = entry.Value;
 						return true;
