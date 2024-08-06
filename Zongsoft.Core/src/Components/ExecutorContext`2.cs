@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
@@ -36,6 +35,17 @@ namespace Zongsoft.Components
 	public class ExecutorContext<TArgument, TResult> : ExecutorContextBase, IExecutorContext<TArgument, TResult>
 	{
 		#region 构造函数
+		public ExecutorContext(IExecutor executor, TArgument argument, Collections.Parameters parameters = null) : base(executor, parameters)
+		{
+			this.Argument = argument;
+		}
+
+		public ExecutorContext(IExecutor executor, TResult result, TArgument argument, Collections.Parameters parameters = null) : base(executor, parameters)
+		{
+			this.Result = result;
+			this.Argument = argument;
+		}
+
 		public ExecutorContext(IExecutor executor, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
 		{
 			this.Argument = argument;
