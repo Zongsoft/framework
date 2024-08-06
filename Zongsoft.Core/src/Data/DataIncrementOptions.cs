@@ -45,7 +45,9 @@ namespace Zongsoft.Data
 	public class DataIncrementOptions : DataMutateOptions, IDataIncrementOptions
 	{
 		#region 构造函数
-		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataIncrementOptions() { }
+		public DataIncrementOptions(Collections.Parameters parameters) : base(parameters) { }
+		public DataIncrementOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
 		#region 静态方法

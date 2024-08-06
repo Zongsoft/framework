@@ -29,147 +29,259 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Collections
 {
-	public struct Parameters : IEnumerable<KeyValuePair<string, object>>
+	public class Parameters : IDictionary<object, object>
 	{
-		#region 常量字段
-		private const int SHRINK_COUNT = 1000; //收缩的数量底线
-		private const int SHRINK_SINCE = 30;   //收缩的时长间隔（单位：秒）
-		#endregion
-
-		#region 静态字段
-		private static readonly ConcurrentDictionary<WeakReference, Dictionary<string, object>> _cache = new();
-		#endregion
-
 		#region 成员字段
-		private readonly WeakReference _owner;
+		private int _initialization;
+		private Dictionary<object, object> _cache;
 		#endregion
 
 		#region 构造函数
-		public Parameters(object owner, IEnumerable<KeyValuePair<string, object>> parameters = null)
+		public Parameters() { }
+		public Parameters(IEnumerable<KeyValuePair<string, object>> parameters)
 		{
-			if(owner == null)
-				throw new ArgumentNullException(nameof(owner));
+			_initialization = 0;
 
-			_owner = new WeakReference(owner);
-
-			if(parameters != null && parameters.Any())
-				_cache.TryAdd(_owner, new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase));
+			if(parameters != null)
+				_cache = new(parameters.Select(entry => new KeyValuePair<object, object>(entry.Key ?? string.Empty, entry.Value)), Comparer.Instance);
 		}
 		#endregion
 
 		#region 公共属性
-		public int Count { get => _owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary) ? dictionary.Count : 0; }
-		public bool IsEmpty { get => !_owner.IsAlive || !_cache.TryGetValue(_owner, out var dictionary) || dictionary.Count == 0; }
+		public int Count => _cache?.Count ?? 0;
+		public bool IsEmpty => _cache == null || _cache.Count == 0;
+		public bool HasValue => _cache != null && _cache.Count > 0;
+
 		public object this[string name]
 		{
-			get => _owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary) ? dictionary[name] : null;
+			get => this.GetValue(name);
 			set => this.SetValue(name, value);
+		}
+		public object this[Type type]
+		{
+			get => this.GetValue(type);
+			set => this.SetValue(type, value);
+		}
+		object IDictionary<object, object>.this[object key]
+		{
+			get => this.GetValue(key);
+			set => this.SetValue(key, value);
+		}
+		#endregion
+
+		#region 静态方法
+		public static Parameters Parameter(string name, object value) => new([ new KeyValuePair<string, object>(name ?? string.Empty, value) ]);
+		public static Parameters Parameter(object value) => Parameter(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
+		public static Parameters Parameter<T>(object value) => Parameter(typeof(T), value);
+		public static Parameters Parameter(Type type, object value)
+		{
+			var parameters = new Parameters();
+			parameters.SetValue(type, value);
+			return parameters;
 		}
 		#endregion
 
 		#region 公共方法
-		public void Clear()
+		public void Clear() => _cache?.Clear();
+
+		public bool Contains<T>() => this.Contains((object)typeof(T));
+		public bool Contains(Type type) => this.Contains((object)type);
+		public bool Contains(string name) => this.Contains((object)(name ?? string.Empty));
+		private bool Contains(object key) => key != null && _cache != null && _cache.ContainsKey(key);
+
+		public object GetValue(Type type) => this.GetValue((object)type);
+		public object GetValue(string name) => this.GetValue((object)name);
+		public T GetValue<T>(T defaultValue = default) => (T)(this.GetValue((object)typeof(T)) ?? defaultValue);
+		private object GetValue(object key)
 		{
-			if(_owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary))
-				dictionary.Clear();
+			var parameters = _cache;
+			return parameters != null && parameters.TryGetValue(key ?? string.Empty, out var value) ? value : null;
 		}
 
-		public readonly bool Contains(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.ContainsKey(name);
-		public readonly object GetValue(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var value) ? value : null;
-		public readonly T GetValue<T>(string name, T defaultValue) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var value) ?
-			Common.Convert.ConvertValue<T>(value) : defaultValue;
-
-		public readonly bool TryGetValue(string name, out object value)
-		{
-			value = default;
-			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out value);
-		}
-
-		public readonly bool TryGetValue<T>(string name, out T value)
-		{
-			if(_owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.TryGetValue(name, out var result))
-			{
-				value = Common.Convert.ConvertValue<T>(result);
-				return true;
-			}
-
-			value = default;
-			return false;
-		}
-
-		public void SetValue(string name, object value)
-		{
-			if(name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			if(!_owner.IsAlive)
-				return;
-
-			if(_cache.Count > SHRINK_COUNT)
-				Shrink();
-
-			var dictionary = _cache.GetOrAdd(_owner, _ => new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase));
-			dictionary[name] = value;
-		}
-
-		public void SetValue(IEnumerable<KeyValuePair<string, object>> parameters)
-		{
-			if(parameters == null || !parameters.Any())
-				return;
-
-			if(!_owner.IsAlive)
-				return;
-
-			if(_cache.Count > SHRINK_COUNT)
-				Shrink();
-
-			var dictionary = _cache.GetOrAdd(_owner, _ => new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase));
-			foreach(var parameter in parameters)
-				dictionary[parameter.Key] = parameter.Value;
-		}
-
-		public bool Remove(string name) => _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.Remove(name);
-		public bool Remove(string name, out object value)
+		public bool TryGetValue<T>(out object value) => this.TryGetValue((object)typeof(T), out value);
+		public bool TryGetValue(Type type, out object value) => this.TryGetValue((object)type, out value);
+		public bool TryGetValue(string name, out object value) => this.TryGetValue((object)(name ?? string.Empty), out value);
+		private bool TryGetValue(object key, out object value)
 		{
 			value = null;
-			return _owner.IsAlive && name != null && _cache.TryGetValue(_owner, out var dictionary) && dictionary.Remove(name, out value);
+			var parameters = _cache;
+			return parameters != null && parameters.TryGetValue(key ?? string.Empty, out value);
+		}
+
+		public void SetValue(object value) => this.SetValue(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
+		public void SetValue<T>(object value) => this.SetValue(typeof(T), value);
+		public void SetValue(Type type, object value)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			if(value == null)
+			{
+				if(type.IsValueType && !Common.TypeExtension.IsNullable(type))
+					throw new ArgumentException($"The specified parameter value is null, but the declared type is not the Nullable type.");
+			}
+			else
+			{
+				if(!type.IsAssignableFrom(value.GetType()))
+					throw new ArgumentException($"The specified parameter value cannot be converted to the declared type '{type.FullName}'.");
+			}
+
+			this.SetValue((object)type, value);
+		}
+
+		public void SetValue(string name, object value) => this.SetValue((object)name ?? string.Empty, value);
+		private void SetValue(object key, object value)
+		{
+			if(key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			if(_cache == null)
+			{
+				var initialized = Interlocked.Exchange(ref _initialization, 1);
+				if(initialized == 0)
+					_cache = new(Comparer.Instance);
+			}
+
+			_cache[key] = value;
+		}
+
+		public void SetValue(IEnumerable<KeyValuePair<string, object>> values)
+		{
+			if(values == null)
+				return;
+
+			foreach(var entry in values)
+				this.SetValue(entry.Key, entry.Value);
+		}
+
+		public void SetValue(IEnumerable<KeyValuePair<Type, object>> values)
+		{
+			if(values == null)
+				return;
+
+			foreach(var entry in values)
+				this.SetValue(entry.Key, entry.Value);
+		}
+
+		public bool Remove<T>() => this.Remove((object)typeof(T));
+		public bool Remove<T>(out object value) => this.Remove((object)typeof(T), out value);
+		public bool Remove(Type type) => this.Remove((object)type);
+		public bool Remove(Type type, out object value) => this.Remove((object)type, out value);
+		public bool Remove(string name) => this.Remove((object)name);
+		public bool Remove(string name, out object value) => this.Remove((object)name, out value);
+		private bool Remove(object key) => _cache != null && _cache.Remove(key);
+		private bool Remove(object key, out object value)
+		{
+			value = null;
+			return _cache != null && _cache.Remove(key, out value);
 		}
 		#endregion
 
-		#region 收缩方法
-		private static long _timestamp;
-		private static void Shrink()
+		#region 显式实现
+		bool ICollection<KeyValuePair<object, object>>.IsReadOnly => false;
+		ICollection<object> IDictionary<object, object>.Keys => _cache == null ? [] : _cache.Keys;
+		ICollection<object> IDictionary<object, object>.Values => _cache == null ? [] : _cache.Values;
+		void IDictionary<object, object>.Add(object key, object value) => this.SetValue(key, value);
+		bool IDictionary<object, object>.Remove(object key) => this.Remove(key);
+		bool IDictionary<object, object>.TryGetValue(object key, out object value) => this.TryGetValue(key, out value);
+		bool IDictionary<object, object>.ContainsKey(object key) => key != null && _cache != null && _cache.ContainsKey(key);
+		void ICollection<KeyValuePair<object, object>>.Add(KeyValuePair<object, object> entry) => this.SetValue(entry.Key, entry.Value);
+		bool ICollection<KeyValuePair<object, object>>.Contains(KeyValuePair<object, object> entry) => this.Contains(entry.Key);
+		bool ICollection<KeyValuePair<object, object>>.Remove(KeyValuePair<object, object> entry) => this.Remove(entry.Key);
+		void ICollection<KeyValuePair<object, object>>.CopyTo(KeyValuePair<object, object>[] array, int index)
 		{
-			//如果距离上次收缩的时间低于指定秒数，则忽略本次收缩请求
-			if(_timestamp > 0 && Environment.TickCount64 - _timestamp < SHRINK_SINCE * 1000)
+			if(array == null) throw new ArgumentNullException(nameof(array));
+			if(index < 0 || index >= array.Length) throw new ArgumentOutOfRangeException(nameof(index));
+
+			if(_cache == null)
 				return;
 
-			foreach(var key in _cache.Keys)
+			foreach(var parameter in _cache)
 			{
-				if(!key.IsAlive)
-					_cache.TryRemove(key, out _);
+				array[index++] = parameter;
+				if(index >= array.Length)
+					break;
 			}
-
-			_timestamp = Environment.TickCount64;
 		}
 		#endregion
 
 		#region 枚举遍历
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+		public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
 		{
-			if(_owner.IsAlive && _cache.TryGetValue(_owner, out var dictionary))
+			var parameters = _cache;
+
+			if(parameters != null)
 			{
-				foreach(var entry in dictionary)
+				foreach(var entry in parameters)
 					yield return entry;
 			}
 		}
 		#endregion
+
+		#region 嵌套子类
+		private class Comparer : IEqualityComparer<object>
+		{
+			public static readonly Comparer Instance = new();
+
+			public new bool Equals(object x, object y)
+			{
+				if(x == null)
+					return y == null;
+
+				if(y == null)
+					return false;
+
+				if(x.GetType() != y.GetType())
+					return false;
+
+				if(x.GetType() == typeof(string))
+					return string.Equals((string)x, (string)y, StringComparison.OrdinalIgnoreCase);
+
+				return object.Equals(x, y);
+			}
+
+			public int GetHashCode(object obj)
+			{
+				if(obj == null)
+					return 0;
+
+				return obj is string text ? text.ToUpperInvariant().GetHashCode() : obj.GetHashCode();
+			}
+		}
+		#endregion
+	}
+
+	public static class ParametersUtility
+	{
+		public static Parameters Parameter(this Parameters parameters, string name, object value)
+		{
+			parameters.SetValue(name, value);
+			return parameters;
+		}
+
+		public static Parameters Parameter(this Parameters parameters, Type type, object value)
+		{
+			parameters.SetValue(type, value);
+			return parameters;
+		}
+
+		public static Parameters Parameter<T>(this Parameters parameters, object value)
+		{
+			parameters.SetValue<T>(value);
+			return parameters;
+		}
+
+		public static Parameters Parameter(this Parameters parameters, object value)
+		{
+			parameters.SetValue(value);
+			return parameters;
+		}
 	}
 }

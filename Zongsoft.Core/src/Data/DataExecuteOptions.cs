@@ -44,6 +44,7 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataExecuteOptions() { }
+		public DataExecuteOptions(Collections.Parameters parameters) : base(parameters) { }
 		public DataExecuteOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 

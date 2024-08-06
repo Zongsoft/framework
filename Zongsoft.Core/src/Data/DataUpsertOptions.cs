@@ -54,6 +54,7 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataUpsertOptions() { }
+		public DataUpsertOptions(Collections.Parameters parameters) : base(parameters) { }
 		public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 

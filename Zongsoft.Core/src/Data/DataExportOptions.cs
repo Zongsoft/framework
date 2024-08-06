@@ -46,7 +46,8 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataExportOptions() { }
-		public DataExportOptions(IEnumerable<KeyValuePair<string, object>> parameters = null) : base(parameters) { }
+		public DataExportOptions(Collections.Parameters parameters) : base(parameters) { }
+		public DataExportOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
 		#endregion
 
 		#region 静态方法
