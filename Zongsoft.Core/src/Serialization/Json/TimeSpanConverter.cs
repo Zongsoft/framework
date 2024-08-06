@@ -28,29 +28,20 @@
  */
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace Zongsoft.Serialization
+namespace Zongsoft.Serialization.Json;
+
+public class TimeSpanConverter : JsonConverter<TimeSpan>
 {
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = true)]
-	public class SerializationMemberAttribute : Attribute
+	public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		#region 构造函数
-		public SerializationMemberAttribute() { }
-		public SerializationMemberAttribute(string name)
-		{
-			this.Name = name == null ? string.Empty : name.Trim();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置序列化后的成员名称，如果为空(null)或空字符串("")则取对应的成员本身的名称。</summary>
-		public string Name { get; set; }
-
-		/// <summary>获取或设置成员序列化方向。</summary>
-		public SerializationDirection Direction { get; set; }
-
-		/// <summary>获取或设置是否忽略序列化成员。</summary>
-		public bool Ignored { get; set; }
-		#endregion
+		if(reader.TokenType == JsonTokenType.Number)
+			return TimeSpan.FromSeconds(reader.GetDouble());
+		else
+			return TimeSpan.Parse(reader.GetString());
 	}
+
+	public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
 }

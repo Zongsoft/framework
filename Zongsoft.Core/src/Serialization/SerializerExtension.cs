@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization
 {
@@ -49,8 +51,103 @@ namespace Zongsoft.Serialization
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, offset, count), options) :
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer), options);
 
-		public static System.Text.Json.JsonSerializerOptions ToOptions() => Serializer.JsonSerializerWrapper.DefaultOptions;
-		public static System.Text.Json.JsonSerializerOptions ToOptions(this SerializationOptions options) => Serializer.JsonSerializerWrapper.GetOptions(options);
-		public static System.Text.Json.JsonSerializerOptions ToOptions(this TextSerializationOptions options) => Serializer.JsonSerializerWrapper.GetOptions(options);
+		public static JsonSerializerOptions GetOptions() => new JsonSerializerOptions()
+		{
+			NumberHandling = JsonNumberHandling.AllowReadingFromString,
+			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+			PropertyNameCaseInsensitive = true,
+			IgnoreReadOnlyProperties = false,
+			IncludeFields = true,
+			Converters =
+			{
+				new Json.TimeSpanConverter(),
+				new JsonStringEnumConverter(),
+				new Json.ModelConverterFactory(),
+				new Json.RangeConverterFactory(),
+				new Json.MixtureConverterFactory(),
+			},
+		};
+
+		public static JsonSerializerOptions ToOptions(this SerializationOptions options)
+		{
+			if(options == null)
+				return GetOptions();
+
+			if(options is TextSerializationOptions text)
+				return ToOptions(text);
+
+			var ignores = JsonIgnoreCondition.Never;
+
+			if(options.IgnoreNull)
+				ignores = JsonIgnoreCondition.WhenWritingNull;
+			else if(options.IgnoreZero)
+				ignores = JsonIgnoreCondition.WhenWritingDefault;
+
+			return new JsonSerializerOptions()
+			{
+				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+				PropertyNameCaseInsensitive = true,
+				MaxDepth = options.MaximumDepth,
+				NumberHandling = JsonNumberHandling.AllowReadingFromString,
+				DefaultIgnoreCondition = ignores,
+				IgnoreReadOnlyProperties = false,
+				IncludeFields = options.IncludeFields,
+				Converters =
+				{
+					new Json.TimeSpanConverter(),
+					new JsonStringEnumConverter(),
+					new Json.ModelConverterFactory(),
+					new Json.RangeConverterFactory(),
+					new Json.MixtureConverterFactory(),
+				},
+			};
+		}
+
+		public static JsonSerializerOptions ToOptions(this TextSerializationOptions options)
+		{
+			if(options == null)
+				return GetOptions();
+
+			JsonNamingPolicy naming = null;
+
+			switch(options.NamingConvention)
+			{
+				case SerializationNamingConvention.Camel:
+					naming = JsonNamingPolicy.CamelCase;
+					break;
+				case SerializationNamingConvention.Pascal:
+					naming = Json.NamingConvention.Pascal;
+					break;
+			}
+
+			var ignores = JsonIgnoreCondition.Never;
+
+			if(options.IgnoreNull)
+				ignores = JsonIgnoreCondition.WhenWritingNull;
+			else if(options.IgnoreZero)
+				ignores = JsonIgnoreCondition.WhenWritingDefault;
+
+			return new JsonSerializerOptions()
+			{
+				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+				PropertyNameCaseInsensitive = true,
+				MaxDepth = options.MaximumDepth,
+				WriteIndented = options.Indented,
+				NumberHandling = JsonNumberHandling.AllowReadingFromString,
+				DefaultIgnoreCondition = ignores,
+				IgnoreReadOnlyProperties = false,
+				PropertyNamingPolicy = naming,
+				DictionaryKeyPolicy = naming,
+				IncludeFields = options.IncludeFields,
+				Converters =
+				{
+					new Json.TimeSpanConverter(),
+					new JsonStringEnumConverter(naming),
+					new Json.ModelConverterFactory(),
+					new Json.RangeConverterFactory(),
+					new Json.MixtureConverterFactory(),
+				},
+			};
+		}
 	}
 }

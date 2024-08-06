@@ -28,48 +28,34 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization.Json;
 
-public class ByteArrayConverter : JsonConverter<byte[]>
+public class ModelConverterFactory : JsonConverterFactory
 {
-	public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override bool CanConvert(Type type) => (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
+	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => (JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(type));
+
+	private class ModelConverter<T> : JsonConverter<T> where T : class
 	{
-		if(reader.TokenType == JsonTokenType.Null)
-			return null;
+		private static readonly ConcurrentDictionary<Type, Type> _mapping_ = new ConcurrentDictionary<Type, Type>();
 
-		if(reader.TokenType == JsonTokenType.String)
-			return reader.GetBytesFromBase64();
-
-		if(reader.TokenType == JsonTokenType.StartArray)
+		public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
-			var list = new System.Collections.Generic.List<byte>();
-
-			while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-			{
-				list.Add(reader.GetByte());
-			}
-
-			return list.ToArray();
+			var actualType = _mapping_.GetOrAdd(type, key => Data.Model.Build<T>().GetType());
+			return (T)JsonSerializer.Deserialize(ref reader, actualType, options);
 		}
 
-		return null;
-	}
-
-	public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
-	{
-		if(value == null)
-			writer.WriteNullValue();
-		else
+		public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 		{
-			writer.WriteStartArray();
-
-			for(int i = 0; i < value.Length; i++)
-				writer.WriteNumberValue(value[i]);
-
-			writer.WriteEndArray();
+			if(value == null)
+				writer.WriteNullValue();
+			else
+				JsonSerializer.Serialize(writer, value, typeof(object), options);
 		}
 	}
 }

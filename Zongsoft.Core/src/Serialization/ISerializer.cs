@@ -42,70 +42,54 @@ namespace Zongsoft.Serialization
 		/// <summary>获取默认的序列化选项。</summary>
 		SerializationOptions Options { get; }
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		object Deserialize(Stream stream, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="type">反序列化的结果类型。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		object Deserialize(Stream stream, Type type, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		T Deserialize<T>(Stream stream, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		object Deserialize(ReadOnlySpan<byte> buffer, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="type">反序列化的结果类型。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <returns>反序列化的结果。</returns>
 		T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <param name="cancellationToken">异步取消标记。</param>
 		/// <returns>反序列化的结果。</returns>
 		ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="type">反序列化的结果类型。</param>
 		/// <param name="options">反序列化的设置。</param>
@@ -113,9 +97,7 @@ namespace Zongsoft.Serialization
 		/// <returns>反序列化的结果。</returns>
 		ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="stream"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
@@ -123,18 +105,14 @@ namespace Zongsoft.Serialization
 		/// <returns>反序列化的结果。</returns>
 		ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="options">反序列化的设置。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>反序列化的异步结果。</returns>
 		ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellation = default);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="type">反序列化的结果类型。</param>
 		/// <param name="options">反序列化的设置。</param>
@@ -142,9 +120,7 @@ namespace Zongsoft.Serialization
 		/// <returns>反序列化的异步结果。</returns>
 		ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null, CancellationToken cancellation = default);
 
-		/// <summary>
-		/// 反序列化指定<paramref name="buffer"/>包含的对象。
-		/// </summary>
+		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
 		/// <param name="buffer">待反序列化的缓存区。</param>
 		/// <param name="options">反序列化的设置。</param>
@@ -152,18 +128,14 @@ namespace Zongsoft.Serialization
 		/// <returns>反序列化的异步结果。</returns>
 		ValueTask<T> DeserializeAsync<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellation = default);
 
-		/// <summary>
-		/// 将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。
-		/// </summary>
+		/// <summary>将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。</summary>
 		/// <param name="stream">要将对象序列化到的流。</param>
 		/// <param name="graph">待序列化的目标对象。</param>
 		/// <param name="type">待序列化的目标类型。</param>
 		/// <param name="options">序列化的选项设置。</param>
 		void Serialize(Stream stream, object graph, Type type = null, SerializationOptions options = null);
 
-		/// <summary>
-		/// 将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。
-		/// </summary>
+		/// <summary>将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。</summary>
 		/// <param name="stream">要将对象序列化到的流。</param>
 		/// <param name="graph">待序列化的目标对象。</param>
 		/// <param name="type">待序列化的目标类型。</param>

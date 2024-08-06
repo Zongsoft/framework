@@ -29,47 +29,61 @@
 
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization.Json;
 
-public class ByteArrayConverter : JsonConverter<byte[]>
+internal static class NamingConvention
 {
-	public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public static readonly JsonNamingPolicy Camel = new LetterCaseNamingPolicy(chr => char.ToLowerInvariant(chr));
+	public static readonly JsonNamingPolicy Pascal = new LetterCaseNamingPolicy(chr => char.ToUpperInvariant(chr));
+
+	private class LetterCaseNamingPolicy : JsonNamingPolicy
 	{
-		if(reader.TokenType == JsonTokenType.Null)
-			return null;
+		#region 成员字段
+		private readonly Func<char, char> _converter;
+		#endregion
 
-		if(reader.TokenType == JsonTokenType.String)
-			return reader.GetBytesFromBase64();
-
-		if(reader.TokenType == JsonTokenType.StartArray)
+		#region 构造函数
+		public LetterCaseNamingPolicy(Func<char, char> converter)
 		{
-			var list = new System.Collections.Generic.List<byte>();
+			_converter = converter ?? throw new ArgumentNullException(nameof(converter));
+		}
+		#endregion
 
-			while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+		#region 公共方法
+		public override string ConvertName(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return name;
+
+			char[] chars = name.ToCharArray();
+			FixCasing(chars, _converter);
+			return new string(chars);
+		}
+		#endregion
+
+		#region 私有方法
+		private static void FixCasing(Span<char> chars, Func<char, char> converter)
+		{
+			var initial = true;
+
+			for(int i = 0; i < chars.Length; i++)
 			{
-				list.Add(reader.GetByte());
+				if(initial)
+				{
+					if(char.IsLetter(chars[i]))
+					{
+						chars[i] = converter(chars[i]);
+						initial = false;
+					}
+				}
+				else
+				{
+					if(!char.IsLetterOrDigit(chars[i]) && chars[i] != '_')
+						initial = true;
+				}
 			}
-
-			return list.ToArray();
 		}
-
-		return null;
-	}
-
-	public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
-	{
-		if(value == null)
-			writer.WriteNullValue();
-		else
-		{
-			writer.WriteStartArray();
-
-			for(int i = 0; i < value.Length; i++)
-				writer.WriteNumberValue(value[i]);
-
-			writer.WriteEndArray();
-		}
+		#endregion
 	}
 }
