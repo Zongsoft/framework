@@ -41,7 +41,8 @@ namespace Zongsoft.Communication
 		/// <param name="channel">指定的发送通道。</param>
 		/// <param name="template">指定的模板名称。</param>
 		/// <param name="data">指定的待转换的参数对象。</param>
+		/// <param name="parameters">指定的参数集合。</param>
 		/// <returns>返回转换后的对象。</returns>
-		object GetArgument(ITransmitter transmitter, string channel, string template, object data);
+		object GetArgument(ITransmitter transmitter, string channel, string template, object data, Collections.Parameters parameters);
 	}
 }

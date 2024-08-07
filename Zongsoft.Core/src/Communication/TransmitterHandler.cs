@@ -33,7 +33,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
@@ -66,7 +65,7 @@ namespace Zongsoft.Communication
 				var argumenter = _serviceProvider.Resolve<ITransmitterArgumenter>(argument);
 
 				if(argumenter != null)
-					argument.Parameter = argumenter.GetArgument(transmitter, channel?.Name ?? argument.Channel, argument.Template, parameters);
+					argument.Parameter = argumenter.GetArgument(transmitter, channel?.Name ?? argument.Channel, argument.Template, argument.Parameter, parameters);
 				else
 					argument.Parameter = parameters;
 			}
