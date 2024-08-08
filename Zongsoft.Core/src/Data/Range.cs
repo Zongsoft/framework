@@ -215,6 +215,7 @@ namespace Zongsoft.Data
 			public static Range<DateTime> Day(DateTime date) => new Range<DateTime>(date.Date, new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999));
 			public static Range<DateTime> Day(int year, int month, int day) => new Range<DateTime>(new DateTime(year, month, day), new DateTime(year, month, day, 23, 59, 59, 999));
 			public static Range<DateTime> Today() => Day(DateTime.Today);
+			public static Range<DateTime> Tomorrow() => Day(DateTime.Today.AddDays(1));
 			public static Range<DateTime> Yesterday() => Day(DateTime.Today.AddDays(-1));
 
 			public static Range<DateTime> ThisWeek()
@@ -225,10 +226,24 @@ namespace Zongsoft.Data
 				return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 			}
 
+			public static Range<DateTime> LastWeek()
+			{
+				var today = DateTime.Today;
+				var days = (int)today.DayOfWeek;
+				var firstday = today.AddDays(-(days == 0 ? 6 : days - 1) - 7);
+				return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
+			}
+
 			public static Range<DateTime> ThisMonth()
 			{
 				var today = DateTime.Today;
 				return Month(today.Year, today.Month);
+			}
+
+			public static Range<DateTime> LastMonth()
+			{
+				var last = DateTime.Today.AddMonths(-1);
+				return Month(last.Year, last.Month);
 			}
 
 			public static Range<DateTime> ThisYear() => Year(DateTime.Today.Year);

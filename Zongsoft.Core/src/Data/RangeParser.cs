@@ -475,12 +475,18 @@ namespace Zongsoft.Data
 			{
 				case "today":
 					return new DateTimeRangeParserResult(Range.Timing.Today());
+				case "tomorrow":
+					return new DateTimeRangeParserResult(Range.Timing.Tomorrow());
 				case "yesterday":
 					return new DateTimeRangeParserResult(Range.Timing.Yesterday());
 				case "thisweek":
 					return new DateTimeRangeParserResult(Range.Timing.ThisWeek());
+				case "lastweek":
+					return new DateTimeRangeParserResult(Range.Timing.LastWeek());
 				case "thismonth":
 					return new DateTimeRangeParserResult(Range.Timing.ThisMonth());
+				case "lastmonth":
+					return new DateTimeRangeParserResult(Range.Timing.LastMonth());
 				case "thisyear":
 					return new DateTimeRangeParserResult(Range.Timing.ThisYear());
 				case "lastyear":
