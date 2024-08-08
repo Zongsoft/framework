@@ -36,15 +36,12 @@ namespace Zongsoft.Expressions.Tokenization
 	public abstract class LiteralTokenizerBase : ITokenizer
 	{
 		#region 成员字段
-		private bool _ignoreCase;
+		private readonly bool _ignoreCase;
 		private string[] _literals;
 		#endregion
 
 		#region 构造函数
-		protected LiteralTokenizerBase(params string[] literals) : this(false, literals)
-		{
-		}
-
+		protected LiteralTokenizerBase(params string[] literals) : this(false, literals) { }
 		protected LiteralTokenizerBase(bool ignoreCase, params string[] literals)
 		{
 			if(literals == null)
@@ -56,27 +53,11 @@ namespace Zongsoft.Expressions.Tokenization
 		#endregion
 
 		#region 保护属性
-		protected bool IgnoreCase
-		{
-			get
-			{
-				return _ignoreCase;
-			}
-		}
-
+		protected bool IgnoreCase => _ignoreCase;
 		protected string[] Literals
 		{
-			get
-			{
-				return _literals;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_literals = value;
-			}
+			get => _literals;
+			set => _literals = value ?? throw new ArgumentNullException(nameof(value));
 		}
 		#endregion
 

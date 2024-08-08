@@ -97,16 +97,11 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 构造函数
-		protected SymbolToken(string symbol) : base(TokenType.Symbol, symbol)
-		{
-		}
+		protected SymbolToken(string symbol) : base(TokenType.Symbol, symbol) { }
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return this.Value.ToString();
-		}
+		public override string ToString() => this.Value.ToString();
 		#endregion
 
 		#region 静态方法

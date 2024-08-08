@@ -34,16 +34,11 @@ namespace Zongsoft.Expressions.Tokenization
 	public class KeywordTokenizer : LiteralTokenizerBase
 	{
 		#region 构造函数
-		public KeywordTokenizer(params string[] keywords) : base(false, keywords)
-		{
-		}
+		public KeywordTokenizer(bool ignoreCase, params string[] keywords) : base(ignoreCase, keywords) { }
 		#endregion
 
 		#region 重写方法
-		protected override Token CreateToken(string literal)
-		{
-			return new Token(TokenType.Keyword, literal);
-		}
+		protected override Token CreateToken(string literal) => new Token(TokenType.Keyword, literal);
 		#endregion
 	}
 }

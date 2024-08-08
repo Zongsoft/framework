@@ -42,10 +42,7 @@ namespace Zongsoft.Expressions.Tokenization
 		#endregion
 
 		#region 重写方法
-		protected override Token CreateToken(string literal)
-		{
-			return SymbolToken.GetToken(literal);
-		}
+		protected override Token CreateToken(string literal) => SymbolToken.GetToken(literal);
 		#endregion
 	}
 }

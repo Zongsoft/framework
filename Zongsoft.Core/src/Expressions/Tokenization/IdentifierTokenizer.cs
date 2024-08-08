@@ -45,7 +45,7 @@ namespace Zongsoft.Expressions.Tokenization
 			var chr = (char)valueRead;
 			var identifier = string.Empty;
 
-			if(!this.IsIdentifierBeginning(chr))
+			if(!IsIdentifierBeginning(chr))
 				return TokenResult.Fail(-1);
 
 			identifier += chr;
@@ -66,10 +66,7 @@ namespace Zongsoft.Expressions.Tokenization
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool IsIdentifierBeginning(char chr)
-		{
-			return char.IsLetter(chr) || chr == '_';
-		}
+		private static bool IsIdentifierBeginning(char chr) => char.IsLetter(chr) || chr == '_';
 		#endregion
 	}
 }

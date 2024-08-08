@@ -74,7 +74,7 @@ namespace Zongsoft.Expressions
 			foreach(var tokenizer in _lexer.Tokenizers)
 			{
 				//跳过中间的所有空白字符
-				this.SkipWhitespaces(_reader);
+				SkipWhitespaces(_reader);
 
 				//执行分词操作
 				var result = tokenizer.Tokenize((TextReader)_reader);
@@ -94,7 +94,7 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 私有方法
-		private void SkipWhitespaces(ITokenReader reader)
+		private static void SkipWhitespaces(ITokenReader reader)
 		{
 			int value;
 
@@ -110,6 +110,7 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 遍历方法
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<Token> GetEnumerator()
 		{
 			Token token;
@@ -118,11 +119,6 @@ namespace Zongsoft.Expressions
 			{
 				yield return token;
 			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 		#endregion
 
@@ -137,11 +133,7 @@ namespace Zongsoft.Expressions
 		#region 嵌套子类
 		internal interface ITokenReader : IDisposable
 		{
-			int Position
-			{
-				get;
-			}
-
+			int Position { get; }
 			int Seek(int offset, SeekOrigin origin);
 			int Peek();
 			int Read();
@@ -149,28 +141,15 @@ namespace Zongsoft.Expressions
 
 		private class TokenStreamReader : StreamReader, ITokenReader
 		{
-			public TokenStreamReader(Stream stream) : base(stream)
-			{
-			}
-
-			public int Position
-			{
-				get
-				{
-					return (int)this.BaseStream.Position;
-				}
-			}
-
-			public int Seek(int offset, SeekOrigin origin)
-			{
-				return (int)this.BaseStream.Seek(offset, origin);
-			}
+			public TokenStreamReader(Stream stream) : base(stream) { }
+			public int Position => (int)this.BaseStream.Position;
+			public int Seek(int offset, SeekOrigin origin) => (int)this.BaseStream.Seek(offset, origin);
 		}
 
 		private class TokenStringReader : TextReader, ITokenReader
 		{
 			#region 成员字段
-			private string _text;
+			private readonly string _text;
 			private int _position;
 			#endregion
 
@@ -188,10 +167,7 @@ namespace Zongsoft.Expressions
 			#region 公共属性
 			public int Position
 			{
-				get
-				{
-					return _position;
-				}
+				get => _position;
 				set
 				{
 					if(value < -1)

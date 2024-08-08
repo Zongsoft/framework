@@ -89,7 +89,7 @@ namespace Zongsoft.Expressions.Tokenization
 		#endregion
 
 		#region 私有方法
-		private bool EscapeChar(char chr, out char escapedChar)
+		private static bool EscapeChar(char chr, out char escapedChar)
 		{
 			escapedChar = '\0';
 

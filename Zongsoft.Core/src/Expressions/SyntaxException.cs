@@ -34,17 +34,9 @@ namespace Zongsoft.Expressions
 	public class SyntaxException : Exception
 	{
 		#region 构造函数
-		public SyntaxException()
-		{
-		}
-
-		public SyntaxException(string message) : base(message)
-		{
-		}
-
-		public SyntaxException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
+		public SyntaxException() { }
+		public SyntaxException(string message) : base(message) { }
+		public SyntaxException(string message, Exception innerException) : base(message, innerException) { }
 		#endregion
 	}
 }

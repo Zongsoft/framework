@@ -61,27 +61,10 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取词素的类型。
-		/// </summary>
-		public TokenType Type
-		{
-			get
-			{
-				return _type;
-			}
-		}
-
-		/// <summary>
-		/// 获取词素的值。
-		/// </summary>
-		public object Value
-		{
-			get
-			{
-				return _value;
-			}
-		}
+		/// <summary>获取词素的类型。</summary>
+		public TokenType Type => _type;
+		/// <summary>获取词素的值。</summary>
+		public object Value => _value;
 		#endregion
 
 		#region 重写方法

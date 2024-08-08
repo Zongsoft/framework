@@ -58,14 +58,14 @@ namespace Zongsoft.Expressions.Tokenization
 					number += chr;
 				else if(chr == '.')
 				{
-					if(number.Contains("."))
+					if(number.Contains('.'))
 						throw new SyntaxException("Illegal numeric literal, it contains multiple dot(.) symbol.");
 
 					number += chr;
 				}
 				else if(chr == 'L')
 				{
-					if(number.Contains("."))
+					if(number.Contains('.'))
 						throw new SyntaxException("Illegal long integer suffix symbol(L), because it's a float numeric literal.");
 
 					return new TokenResult(0, new Token(TokenType.Constant, long.Parse(number)));
@@ -87,22 +87,18 @@ namespace Zongsoft.Expressions.Tokenization
 					if(number[number.Length - 1] == '.')
 						throw new SyntaxException("Illegal numeric literal, cann't end with a dot(.) symbol.");
 
-					return new TokenResult(-1, this.CreateToken(number));
+					return new TokenResult(-1, CreateToken(number));
 				}
 			}
 
-			return new TokenResult(0, this.CreateToken(number));
+			return new TokenResult(0, CreateToken(number));
 		}
 		#endregion
 
 		#region 私有方法
-		private Token CreateToken(string value)
-		{
-			if(value.Contains("."))
-				return new Token(TokenType.Constant, double.Parse(value));
-
-			return new Token(TokenType.Constant, int.Parse(value));
-		}
+		private static Token CreateToken(string value) => value.Contains('.') ?
+			new Token(TokenType.Constant, double.Parse(value)) :
+			new Token(TokenType.Constant, int.Parse(value));
 		#endregion
 	}
 }

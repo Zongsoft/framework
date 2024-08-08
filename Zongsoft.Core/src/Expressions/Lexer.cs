@@ -42,14 +42,10 @@ namespace Zongsoft.Expressions
 		public static readonly Lexer Instance = new Lexer();
 		#endregion
 
-		#region 成员字段
-		private IList<ITokenizer> _tokenizers;
-		#endregion
-
 		#region 构造函数
 		public Lexer()
 		{
-			_tokenizers = new List<ITokenizer>()
+			this.Tokenizers = new List<ITokenizer>()
 			{
 				new Tokenization.NullTokenizer(),
 				new Tokenization.NumberTokenizer(),
@@ -62,13 +58,7 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 公共属性
-		public IList<ITokenizer> Tokenizers
-		{
-			get
-			{
-				return _tokenizers;
-			}
-		}
+		public IList<ITokenizer> Tokenizers { get; }
 		#endregion
 
 		#region 公共方法

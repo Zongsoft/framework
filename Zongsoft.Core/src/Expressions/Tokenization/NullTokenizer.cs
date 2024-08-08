@@ -34,16 +34,11 @@ namespace Zongsoft.Expressions.Tokenization
 	public class NullTokenizer : LiteralTokenizerBase
 	{
 		#region 构造函数
-		public NullTokenizer() : base(true, "null")
-		{
-		}
+		public NullTokenizer() : base(true, "null") { }
 		#endregion
 
 		#region 重写方法
-		protected override Token CreateToken(string literal)
-		{
-			return Token.Null;
-		}
+		protected override Token CreateToken(string literal) => Token.Null;
 		#endregion
 	}
 }
