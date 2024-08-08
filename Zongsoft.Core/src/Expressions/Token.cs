@@ -34,7 +34,7 @@ namespace Zongsoft.Expressions
 	/// <summary>
 	/// 表示词素的类。
 	/// </summary>
-	public class Token
+	public class Token : IEquatable<Token>
 	{
 		#region 静态字段
 		/// <summary>表示空(null)的词素。</summary>
@@ -68,26 +68,10 @@ namespace Zongsoft.Expressions
 		#endregion
 
 		#region 重写方法
-		public override int GetHashCode()
-		{
-			if(_value == null)
-				return _type.GetHashCode();
-			else
-				return _type.GetHashCode() ^ _value.GetHashCode();
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return _type == ((Token)obj).Type && _value == ((Token)obj).Value;
-		}
-
-		public override string ToString()
-		{
-			return $"{_type}: {_value}";
-		}
+		public bool Equals(Token other) => other.Type == _type && other.Value == _value;
+		public override bool Equals(object obj) => obj is Token other && this.Equals(other);
+		public override int GetHashCode() => _value == null ? _type.GetHashCode() : HashCode.Combine(_type, _value);
+		public override string ToString() => $"[{_type}]{_value}";
 		#endregion
 	}
 }

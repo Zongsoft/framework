@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Reflection;
 
 namespace Zongsoft.Expressions
 {
