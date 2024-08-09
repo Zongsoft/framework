@@ -141,21 +141,23 @@ namespace Zongsoft.Collections
 				parameters.TryGetValue(key ?? string.Empty, out value);
 		}
 
-		public void SetValue(object value) => this.SetValue(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
+		public void SetValue(object value) => this.SetValue(value?.GetType(), value);
 		public void SetValue<T>(object value) => this.SetValue(typeof(T), value);
 		public void SetValue(Type type, object value)
 		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
 			if(value == null)
 			{
+				if(type == null)
+					return;
+
 				if(type.IsValueType && !Common.TypeExtension.IsNullable(type))
 					throw new ArgumentException($"The specified parameter value is null, but the declared type is not the Nullable type.");
 			}
 			else
 			{
-				if(!type.IsAssignableFrom(value.GetType()))
+				if(type == null)
+					type = value.GetType();
+				else if(!type.IsAssignableFrom(value.GetType()))
 					throw new ArgumentException($"The specified parameter value cannot be converted to the declared type '{type.FullName}'.");
 			}
 
