@@ -45,6 +45,11 @@ namespace Zongsoft.Messaging
 		private IMessageConsumer[] _subscribers;
 		#endregion
 
+		#region 构造函数
+		public MessageQueueGuarder() { }
+		public MessageQueueGuarder(string name) : base(name) { }
+		#endregion
+
 		#region 公共属性
 		[TypeConverter(typeof(MessageQueueConverter))]
 		public IMessageQueue Queue { get; set; }
