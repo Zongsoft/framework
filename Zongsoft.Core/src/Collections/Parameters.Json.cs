@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -40,6 +38,7 @@ namespace Zongsoft.Collections
 	{
 		private class ParametersConverter : JsonConverter<Parameters>
 		{
+			#region 公共方法
 			public override Parameters Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 			{
 				if(reader.TokenType != JsonTokenType.StartObject)
@@ -150,28 +149,11 @@ namespace Zongsoft.Collections
 
 				writer.WriteEndObject();
 			}
+			#endregion
 
-			private static string GetTypeName(Type type) => Common.TypeExtension.GetTypeAlias(GetModelType(type));
-			private static Type GetModelType(Type type)
-			{
-				if(type.IsAbstract || !type.Assembly.IsDynamic)
-					return type;
-
-				if(type.BaseType != null && type.BaseType != typeof(object))
-					return type.BaseType;
-
-				var contracts = type.GetInterfaces();
-
-				for(int i = 0; i < contracts.Length; i++)
-				{
-					var contract = contracts[i];
-					if(contract != typeof(Data.IModel) && contract != typeof(System.ComponentModel.INotifyPropertyChanged) && contract != typeof(System.ComponentModel.INotifyPropertyChanging))
-						return contract;
-				}
-
-				return typeof(Dictionary<string, object>);
-			}
-
+			#region 私有方法
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private static string GetTypeName(Type type) => Common.TypeExtension.GetTypeAlias(Data.Model.GetModelType(type));
 			private static object GetParameterValue(ref Utf8JsonReader reader)
 			{
 				Type type = null;
@@ -244,6 +226,7 @@ namespace Zongsoft.Collections
 
 				return null;
 			}
+			#endregion
 		}
 	}
 }
