@@ -71,7 +71,7 @@ namespace Zongsoft.Net
 		#region 数据处理
 		internal ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation) => this.Server.Packetizer.PackAsync(writer, package, cancellation);
 		internal bool Unpack(ref ReadOnlySequence<byte> data, out T package) => this.Server.Packetizer.Unpack(ref data, out package);
-		internal ValueTask HandleAsync(TcpServerChannel<T> channel, in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(channel, package, cancellation) ?? ValueTask.FromCanceled(cancellation);
+		internal ValueTask HandleAsync(TcpServerChannel<T> channel, in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
 		#endregion
 
 		#region 内部方法

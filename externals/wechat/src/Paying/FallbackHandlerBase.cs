@@ -60,29 +60,29 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 公共方法
-		public ValueTask HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) =>
-			this.OnHandleAsync(caller, request, null, cancellation);
+		public ValueTask HandleAsync(TRequest request, CancellationToken cancellation = default) =>
+			this.OnHandleAsync(request, null, cancellation);
 
-		public ValueTask HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(parameters != null && parameters.Any())
-				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters), cancellation);
+				return this.OnHandleAsync(request, new Dictionary<string, object>(parameters), cancellation);
 			else
-				return this.OnHandleAsync(caller, request, null, cancellation);
+				return this.OnHandleAsync(request, null, cancellation);
 		}
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask OnHandleAsync(object caller, Stream stream, Parameters parameters, CancellationToken cancellation)
+		protected override async ValueTask OnHandleAsync(Stream stream, Parameters parameters, CancellationToken cancellation)
 		{
 			var request = await this.GetRequestAsync(stream, parameters, cancellation);
-			await this.OnHandleAsync(caller, request, parameters, cancellation);
+			await this.OnHandleAsync(request, parameters, cancellation);
 		}
 		#endregion
 
 		#region 抽象方法
 		internal protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask OnHandleAsync(object caller, TRequest request, Parameters parameters, CancellationToken cancellation);
+		protected abstract ValueTask OnHandleAsync(TRequest request, Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 虚拟方法
@@ -124,29 +124,27 @@ namespace Zongsoft.Externals.Wechat.Paying
 		#endregion
 
 		#region 公共方法
-		public ValueTask<TResult> HandleAsync(object caller, TRequest request, CancellationToken cancellation = default) =>
-			this.OnHandleAsync(caller, request, null, cancellation);
-
-		public ValueTask<TResult> HandleAsync(object caller, TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		public ValueTask<TResult> HandleAsync(TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(request, null, cancellation);
+		public ValueTask<TResult> HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			if(parameters != null && parameters.Any())
-				return this.OnHandleAsync(caller, request, new Dictionary<string, object>(parameters), cancellation);
+				return this.OnHandleAsync(request, new Dictionary<string, object>(parameters), cancellation);
 			else
-				return this.OnHandleAsync(caller, request, null, cancellation);
+				return this.OnHandleAsync(request, null, cancellation);
 		}
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask<TResult> OnHandleAsync(object caller, Stream stream, Parameters parameters, CancellationToken cancellation)
+		protected override async ValueTask<TResult> OnHandleAsync(Stream stream, Parameters parameters, CancellationToken cancellation)
 		{
 			var request = await this.GetRequestAsync(stream, parameters, cancellation);
-			return await this.OnHandleAsync(caller, request, parameters, cancellation);
+			return await this.OnHandleAsync(request, parameters, cancellation);
 		}
 		#endregion
 
 		#region 抽象方法
 		internal protected abstract Type GetRequestType(string format);
-		protected abstract ValueTask<TResult> OnHandleAsync(object caller, TRequest request, Parameters parameters, CancellationToken cancellation);
+		protected abstract ValueTask<TResult> OnHandleAsync(TRequest request, Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 虚拟方法

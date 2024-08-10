@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
@@ -40,11 +39,11 @@ namespace Zongsoft.Components
 		/// <summary>获取处理本次执行请求的执行器。</summary>
 		IExecutor Executor { get; }
 
-		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
-		Collections.Parameters Parameters { get; }
-
 		/// <summary>获取执行请求对象。</summary>
 		object Argument { get; }
+
+		/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
+		Collections.Parameters Parameters { get; }
 
 		/// <summary>设置一个异常。</summary>
 		/// <param name="exception">发生的异常对象。</param>

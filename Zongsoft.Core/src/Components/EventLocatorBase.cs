@@ -62,8 +62,8 @@ namespace Zongsoft.Components
 		{
 			private readonly EventDescriptor _descriptor;
 			public EventHandler(EventDescriptor descriptor) => _descriptor = descriptor;
-			public ValueTask HandleAsync(object caller, object request, CancellationToken cancellation = default) => this.HandleAsync(caller, request, null, cancellation);
-			public ValueTask HandleAsync(object caller, object request, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(request, parameters, cancellation);
+			public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+			public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(argument, parameters, cancellation);
 		}
 		#endregion
 	}

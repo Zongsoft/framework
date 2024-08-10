@@ -55,12 +55,12 @@ namespace Zongsoft.Externals.Hangfire
 					if(string.IsNullOrEmpty(options.Identifier))
 						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, CancellationToken.None), cron.Expression);
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, CancellationToken.None), cron.Expression);
 					return options.Identifier;
 				case TriggerOptions.Latency latency:
-					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(this, name, CancellationToken.None), latency.Duration);
+					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, CancellationToken.None), latency.Duration);
 				default:
-					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(this, name, CancellationToken.None));
+					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, CancellationToken.None));
 			}
 		}
 
@@ -75,12 +75,12 @@ namespace Zongsoft.Externals.Hangfire
 					if(string.IsNullOrEmpty(options.Identifier))
 						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), cron.Expression);
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), cron.Expression);
 					return options.Identifier;
 				case TriggerOptions.Latency latency:
-					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None), latency.Duration);
+					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), latency.Duration);
 				default:
-					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(this, name, parameter, CancellationToken.None));
+					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None));
 			}
 		}
 
@@ -108,7 +108,7 @@ namespace Zongsoft.Externals.Hangfire
 		#region 嵌套子类
 		private static class HandlerFactory
 		{
-			public static async Task HandleAsync(object caller, string name, CancellationToken cancellation)
+			public static async Task HandleAsync(string name, CancellationToken cancellation)
 			{
 				var count = 0L;
 
@@ -117,7 +117,7 @@ namespace Zongsoft.Externals.Hangfire
 					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
 					{
 						count++;
-						await handler.HandleAsync(caller, null, cancellation);
+						await handler.HandleAsync(null, cancellation);
 					}
 				}
 
@@ -125,7 +125,7 @@ namespace Zongsoft.Externals.Hangfire
 					Zongsoft.Diagnostics.Logger.GetLogger(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
 			}
 
-			public static async Task HandleAsync<TParameter>(object caller, string name, TParameter parameter, CancellationToken cancellation)
+			public static async Task HandleAsync<TParameter>(string name, TParameter parameter, CancellationToken cancellation)
 			{
 				var count = 0L;
 
@@ -136,9 +136,9 @@ namespace Zongsoft.Externals.Hangfire
 						count++;
 
 						if(handler is IHandler<TParameter> strong)
-							await strong.HandleAsync(caller, parameter, cancellation);
+							await strong.HandleAsync(parameter, cancellation);
 						else
-							await handler.HandleAsync(caller, parameter, cancellation);
+							await handler.HandleAsync(parameter, cancellation);
 					}
 				}
 

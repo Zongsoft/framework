@@ -41,18 +41,16 @@ namespace Zongsoft.Components
 	public interface IHandler<in TArgument, TResult> : IHandler
 	{
 		/// <summary>异步处理执行请求。</summary>
-		/// <param name="caller">处理程序的调用者。</param>
 		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask<TResult> HandleAsync(object caller, TArgument argument, CancellationToken cancellation = default);
+		ValueTask<TResult> HandleAsync(TArgument argument, CancellationToken cancellation = default);
 
 		/// <summary>异步处理执行请求。</summary>
-		/// <param name="caller">处理程序的调用者。</param>
 		/// <param name="argument">当前处理的请求对象。</param>
 		/// <param name="parameters">当前处理的参数集。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		ValueTask<TResult> HandleAsync(object caller, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+		ValueTask<TResult> HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 	}
 }

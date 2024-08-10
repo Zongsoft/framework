@@ -122,12 +122,12 @@ namespace Zongsoft.Components.Tests
 
 		private class CreatedHandler : HandlerBase<CreatedArgument>
 		{
-			protected override ValueTask OnHandleAsync(object caller, CreatedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
+			protected override ValueTask OnHandleAsync(CreatedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 		}
 
 		private class StatusChangedHandler : HandlerBase<StatusChangedArgument>
 		{
-			protected override ValueTask OnHandleAsync(object caller, StatusChangedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
+			protected override ValueTask OnHandleAsync(StatusChangedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 		}
 	}
 

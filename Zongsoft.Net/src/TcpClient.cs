@@ -142,7 +142,7 @@ namespace Zongsoft.Net
 			var handler = this.Handler;
 
 			if(handler != null)
-				await handler.HandleAsync(this, payload, cancellation);
+				await handler.HandleAsync(payload, cancellation);
 		}
 		#endregion
 	}

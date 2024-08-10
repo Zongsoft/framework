@@ -104,7 +104,7 @@ namespace Zongsoft.Components.Tests
 		public void TestAction1_Generic()
 		{
 			var name = nameof(_trigger.Action1_Generic);
-			var descriptor = new EventDescriptor<MyRequest>(name);
+			var descriptor = new EventDescriptor<MyArgument>(name);
 			Assert.Equal(name, descriptor.Name);
 			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
@@ -150,7 +150,7 @@ namespace Zongsoft.Components.Tests
 		public void TestAction2_Generic()
 		{
 			var name = nameof(_trigger.Action2_Generic);
-			var descriptor = new EventDescriptor<MyRequest>(name);
+			var descriptor = new EventDescriptor<MyArgument>(name);
 			Assert.Equal(name, descriptor.Name);
 			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
@@ -196,7 +196,7 @@ namespace Zongsoft.Components.Tests
 		public void TestAction3_Generic()
 		{
 			var name = nameof(_trigger.Action3_Generic);
-			var descriptor = new EventDescriptor<MyRequest>(name);
+			var descriptor = new EventDescriptor<MyArgument>(name);
 			Assert.Equal(name, descriptor.Name);
 			Assert.Null(descriptor.Title);
 			Assert.Null(descriptor.Description);
@@ -215,10 +215,10 @@ namespace Zongsoft.Components.Tests
 			Assert.Null(_trigger.Action3_Generic);
 		}
 
-		public class MyRequest
+		public class MyArgument
 		{
-			public MyRequest() { }
-			public MyRequest(string name, object value)
+			public MyArgument() { }
+			public MyArgument(string name, object value)
 			{
 				this.Name = name;
 				this.Value = value;
@@ -253,62 +253,62 @@ namespace Zongsoft.Components.Tests
 
 			public Action Action0 { get; set; }
 			public Action<object> Action1_Object { get; set; }
-			public Action<MyRequest> Action1_Generic { get; set; }
+			public Action<MyArgument> Action1_Generic { get; set; }
 			public Action<object, object> Action2_Object { get; set; }
-			public Action<object, MyRequest> Action2_Generic { get; set; }
+			public Action<object, MyArgument> Action2_Generic { get; set; }
 			public Action<object, object, Collections.Parameters> Action3_Object { get; set; }
-			public Action<object, MyRequest, Collections.Parameters> Action3_Generic { get; set; }
+			public Action<object, MyArgument, Collections.Parameters> Action3_Generic { get; set; }
 
 			public void OnAction0() => this.Action0?.Invoke();
 			public void OnAction1_Object() => this.Action1_Object?.Invoke("request");
-			public void OnAction1_Generic() => this.Action1_Generic?.Invoke(new MyRequest());
+			public void OnAction1_Generic() => this.Action1_Generic?.Invoke(new MyArgument());
 			public void OnAction2_Object() => this.Action2_Object?.Invoke(this, "request");
-			public void OnAction2_Generic() => this.Action2_Generic?.Invoke(this, new MyRequest());
+			public void OnAction2_Generic() => this.Action2_Generic?.Invoke(this, new MyArgument());
 			public void OnAction3_Object() => this.Action3_Object?.Invoke(this, "request", Collections.Parameters.Parameter("Unnamed"));
-			public void OnAction3_Generic() => this.Action3_Generic?.Invoke(this, new MyRequest(), Collections.Parameters.Parameter("Unnamed"));
+			public void OnAction3_Generic() => this.Action3_Generic?.Invoke(this, new MyArgument(), Collections.Parameters.Parameter("Unnamed"));
 		}
 
 		public class MyEventHandler1 : HandlerBase<EventArgs>
 		{
-			protected override ValueTask OnHandleAsync(object caller, EventArgs request, Collections.Parameters parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(EventArgs argument, Collections.Parameters parameters, CancellationToken cancellation)
 			{
-				throw new MyHandlerException(request, parameters);
+				throw new MyHandlerException(argument, parameters);
 			}
 		}
 
 		public class MyEventHandler2 : HandlerBase<MyEventArgs>
 		{
-			protected override ValueTask OnHandleAsync(object caller, MyEventArgs request, Collections.Parameters parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(MyEventArgs argument, Collections.Parameters parameters, CancellationToken cancellation)
 			{
-				throw new MyHandlerException(request, parameters);
+				throw new MyHandlerException(argument, parameters);
 			}
 		}
 
 		public class MyHandlerObject : HandlerBase<object>
 		{
-			protected override ValueTask OnHandleAsync(object caller, object request, Collections.Parameters parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation)
 			{
-				throw new MyHandlerException(request, parameters);
+				throw new MyHandlerException(argument, parameters);
 			}
 		}
 
-		public class MyHandlerGeneric : HandlerBase<MyRequest>
+		public class MyHandlerGeneric : HandlerBase<MyArgument>
 		{
-			protected override ValueTask OnHandleAsync(object caller, MyRequest request, Collections.Parameters parameters, CancellationToken cancellation)
+			protected override ValueTask OnHandleAsync(MyArgument argument, Collections.Parameters parameters, CancellationToken cancellation)
 			{
-				throw new MyHandlerException(request, parameters);
+				throw new MyHandlerException(argument, parameters);
 			}
 		}
 
 		public class MyHandlerException : ApplicationException
 		{
-            public MyHandlerException(object request, Collections.Parameters parameters = null) : base($"The handler error.")
+            public MyHandlerException(object argument, Collections.Parameters parameters = null) : base($"The handler error.")
             {
-				this.Request = request;
+				this.Argument = argument;
 				this.Parameters = parameters;
             }
 
-            public object Request { get; }
+            public object Argument { get; }
 			public Collections.Parameters Parameters { get; }
 		}
 	}

@@ -93,7 +93,7 @@ namespace Zongsoft.Components
 
 			foreach(var handler in this.Handlers)
 			{
-				tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
+				tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
 			}
 
 			return new ValueTask(Task.WhenAll(tasks));
@@ -123,9 +123,9 @@ namespace Zongsoft.Components
 			foreach(var handler in this.Handlers)
 			{
 				if(handler is IHandler<TArgument> generic)
-					tasks.Add(generic.HandleAsync(this, argument, parameters, cancellation).AsTask());
+					tasks.Add(generic.HandleAsync(argument, parameters, cancellation).AsTask());
 				else
-					tasks.Add(handler.HandleAsync(this, argument, parameters, cancellation).AsTask());
+					tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
 			}
 
 			return new ValueTask(Task.WhenAll(tasks));

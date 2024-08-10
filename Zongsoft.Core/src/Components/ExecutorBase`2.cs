@@ -101,22 +101,22 @@ namespace Zongsoft.Components
 			switch(executor)
 			{
 				case IHandler<TArgument> handler:
-					await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
 					break;
 				case IHandler<TArgument, TResult> handler:
-					context.Result = await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					context.Result = await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
 					break;
 				case IHandler<IExecutorContext> handler:
-					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					await handler.HandleAsync(context, context.Parameters, cancellation);
 					break;
 				case IHandler<IExecutorContext<TArgument>> handler:
-					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					await handler.HandleAsync(context, context.Parameters, cancellation);
 					break;
 				case IHandler<IExecutorContext<TArgument, TResult>> handler:
-					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					await handler.HandleAsync(context, context.Parameters, cancellation);
 					break;
 				case IHandler handler:
-					await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
 					break;
 			}
 
@@ -181,10 +181,10 @@ namespace Zongsoft.Components
 					break;
 			}
 		}
-		async ValueTask IHandler.HandleAsync(object caller, object data, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-		async ValueTask IHandler.HandleAsync(object caller, object data, Collections.Parameters parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
-		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
-		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
+		async ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, null), cancellation);
+		async ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
+		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
 		#endregion
 	}
 }
