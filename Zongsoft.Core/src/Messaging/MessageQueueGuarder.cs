@@ -58,7 +58,7 @@ namespace Zongsoft.Messaging
 			var queue = this.Queue;
 			if(queue == null)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Name)}' property is null.");
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Queue)}' property is null.");
 				return;
 			}
 
