@@ -57,32 +57,35 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public static Type GetModelType(object model)
+		public static Type GetModelType(object model) => GetModelType(model?.GetType());
+		public static Type GetModelType(Type modelType)
 		{
-			if(model == null)
+			if(modelType == null)
 				return null;
 
-			var type = model.GetType();
+			if(Common.TypeExtension.IsNullable(modelType, out var underlyingType))
+				modelType = underlyingType;
 
-			if(type.Assembly.IsDynamic)
+			if(modelType.Assembly.IsDynamic)
 			{
-				if(type.BaseType != null && type.BaseType != typeof(object))
-					return type.BaseType;
+				if(modelType.BaseType != null && modelType.BaseType != typeof(object))
+					return modelType.BaseType;
 
-				var contracts = type.GetInterfaces();
+				var contracts = modelType.GetInterfaces();
 
 				for(int i = 0; i < contracts.Length; i++)
 				{
 					var contract = contracts[i];
 
-					if(contract != typeof(System.ComponentModel.INotifyPropertyChanged) &&
+					if(contract != typeof(IModel) &&
+					   contract != typeof(System.ComponentModel.INotifyPropertyChanged) &&
 					   contract != typeof(System.ComponentModel.INotifyPropertyChanging) &&
 					   contract != typeof(IDisposable) && contract != typeof(IAsyncDisposable))
 						return contract;
 				}
 			}
 
-			return type;
+			return modelType;
 		}
 
 		public static TModel Build<TModel>() => (TModel)GetCreator(typeof(TModel))();
