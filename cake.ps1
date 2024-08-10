@@ -16,6 +16,7 @@
 [string]$project_closedxml       = 'externals/closedxml/build.cake'
 [string]$project_grapecity       = 'externals/grapecity/build.cake'
 [string]$project_hangfire        = 'externals/hangfire/build.cake'
+[string]$project_scriban         = 'externals/scriban/build.cake'
 
 [string]$project_administratives = '../Administratives/build.cake'
 
@@ -72,6 +73,9 @@ dotnet cake $project_closedxml $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_hangfire $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_hangfire $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_scriban $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_scriban $CAKE_ARGS $ARGS
 
 if(Test-Path $project_administratives)
 {

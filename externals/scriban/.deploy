@@ -1,0 +1,5 @@
+src/Zongsoft.Externals.Scriban.plugin
+src/Zongsoft.Externals.Scriban.option
+src/bin/$(Edition)/$(Framework)/Zongsoft.Externals.Scriban.*
+
+%NUGET_PACKAGES%/scriban/5.10.0/lib/netstandard2.0/*.dll
