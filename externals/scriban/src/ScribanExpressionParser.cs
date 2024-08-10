@@ -38,12 +38,26 @@ namespace Zongsoft.Externals.Scriban;
 
 public class ScribanExpressionParser : IExpressionParser
 {
+	#region 静态常量
+	private static readonly ParserOptions _parserOptions = new()
+	{
+		LiquidFunctionsToScriban = true,
+	};
+
+	private static readonly LexerOptions _lexerOptions = new()
+	{
+		Lang = ScriptLang.Default,
+		Mode = ScriptMode.ScriptOnly,
+	};
+	#endregion
+
+	#region 解析方法
 	public IExpression Parse(ReadOnlySpan<char> text) => new ScribanExpression(Template.Parse(text.ToString(), null, null, new LexerOptions() { Mode = ScriptMode.ScriptOnly }));
 	public bool TryParse(ReadOnlySpan<char> text, out IExpression result)
 	{
 		try
 		{
-			var template = Template.Parse(text.ToString(), null, null, new LexerOptions() { Mode = ScriptMode.ScriptOnly });
+			var template = Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions);
 			result = new ScribanExpression(template);
 			return true;
 		}
@@ -53,4 +67,5 @@ public class ScribanExpressionParser : IExpressionParser
 			return false;
 		}
 	}
+	#endregion
 }
