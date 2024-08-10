@@ -37,7 +37,7 @@ namespace Zongsoft.Services
 	/// 这是工作器的基类。
 	/// </summary>
 	/// <remarks>
-	///		<para>该实现提供了对<see cref="OnStart(string[])"/>、<see cref="OnStop(string[])"/>、<see cref="OnPause"/>、<see cref="OnResume"/>这四个方法之间的线程重入的隔离。</para>
+	///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
 	///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
 	/// </remarks>
 	public abstract class WorkerBase : IWorker, IDisposable
