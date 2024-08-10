@@ -46,7 +46,6 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 公共方法
-		public virtual bool CanHandle(TArgument argument, Collections.Parameters parameters = null) => argument != null;
 		public virtual TResult Handle(object caller, TArgument argument, Collections.Parameters parameters = null)
 		{
 			var task = this.HandleAsync(caller, argument, null, CancellationToken.None);
@@ -72,7 +71,6 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 显式实现
-		bool IHandler.CanHandle(object argument, Collections.Parameters parameters) => this.CanHandle(this.Convert(argument), parameters);
 		async ValueTask IHandler.HandleAsync(object caller, object argument, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(argument), null, cancellation);
 		async ValueTask IHandler.HandleAsync(object caller, object argument, Collections.Parameters parameters, CancellationToken cancellation) => await this.HandleAsync(caller, this.Convert(argument), parameters, cancellation);
 		#endregion

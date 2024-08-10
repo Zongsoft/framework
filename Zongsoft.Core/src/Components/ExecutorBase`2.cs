@@ -94,58 +94,30 @@ namespace Zongsoft.Components
 			_ => throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
 		};
 		protected virtual IHandler GetHandler(IExecutorContext<TArgument, TResult> context) => this.Locator?.Locate(context);
-
-		protected bool CanExecute(TArgument argument, Collections.Parameters parameters) => this.CanExecute(this.CreateContext(argument, parameters));
-		protected bool CanExecute(IExecutorContext<TArgument, TResult> context) => this.CanExecute(context, out _);
-		protected virtual bool CanExecute(IExecutorContext<TArgument, TResult> context, out IHandler handler)
-		{
-			if(context == null)
-			{
-				handler = null;
-				return false;
-			}
-
-			handler = this.GetHandler(context);
-			if(handler == null)
-				return false;
-
-			return handler switch
-			{
-				IHandler<TArgument> matched => matched.CanHandle(context.Argument, context.Parameters),
-				IHandler<TArgument, TResult> matched => matched.CanHandle(context.Argument, context.Parameters),
-				IHandler<IExecutorContext> matched => matched.CanHandle(context, context.Parameters),
-				IHandler<IExecutorContext<TArgument>> matched => matched.CanHandle(context, context.Parameters),
-				IHandler<IExecutorContext<TArgument,	TArgument>> matched => matched.CanHandle(context, context.Parameters),
-				IHandler matched => matched.CanHandle(context.Argument, context.Parameters),
-				_ => false,
-			};
-		}
-
 		protected virtual async ValueTask<TResult> OnExecuteAsync(IExecutorContext<TArgument, TResult> context, CancellationToken cancellation = default)
 		{
-			if(this.CanExecute(context, out var executor))
+			var executor = this.GetHandler(context);
+
+			switch(executor)
 			{
-				switch(executor)
-				{
-					case IHandler<TArgument> handler:
-						await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
-						break;
-					case IHandler<TArgument, TResult> handler:
-						context.Result = await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
-						break;
-					case IHandler<IExecutorContext> handler:
-						await handler.HandleAsync(this, context, context.Parameters, cancellation);
-						break;
-					case IHandler<IExecutorContext<TArgument>> handler:
-						await handler.HandleAsync(this, context, context.Parameters, cancellation);
-						break;
-					case IHandler<IExecutorContext<TArgument, TResult>> handler:
-						await handler.HandleAsync(this, context, context.Parameters, cancellation);
-						break;
-					case IHandler handler:
-						await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
-						break;
-				}
+				case IHandler<TArgument> handler:
+					await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					break;
+				case IHandler<TArgument, TResult> handler:
+					context.Result = await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					break;
+				case IHandler<IExecutorContext> handler:
+					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					break;
+				case IHandler<IExecutorContext<TArgument>> handler:
+					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					break;
+				case IHandler<IExecutorContext<TArgument, TResult>> handler:
+					await handler.HandleAsync(this, context, context.Parameters, cancellation);
+					break;
+				case IHandler handler:
+					await handler.HandleAsync(this, context.Argument, context.Parameters, cancellation);
+					break;
 			}
 
 			return context.Result;
@@ -209,14 +181,6 @@ namespace Zongsoft.Components
 					break;
 			}
 		}
-
-		bool IHandler.CanHandle(object data, Collections.Parameters parameters) => data switch
-		{
-			TArgument argument => this.CanExecute(argument, parameters),
-			IExecutorContext<TArgument, TResult> context => this.CanExecute(context),
-			_ => false,
-		};
-		bool IHandler<TArgument, TResult>.CanHandle(TArgument argument, Collections.Parameters parameters) => this.CanExecute(argument, parameters);
 		async ValueTask IHandler.HandleAsync(object caller, object data, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, null), cancellation);
 		async ValueTask IHandler.HandleAsync(object caller, object data, Collections.Parameters parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
 		ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(object caller, TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);

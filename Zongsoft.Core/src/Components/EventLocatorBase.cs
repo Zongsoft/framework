@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components
 {
@@ -63,7 +62,6 @@ namespace Zongsoft.Components
 		{
 			private readonly EventDescriptor _descriptor;
 			public EventHandler(EventDescriptor descriptor) => _descriptor = descriptor;
-			public bool CanHandle(object request, Collections.Parameters parameters = null) => _descriptor.Handlers.Count > 0;
 			public ValueTask HandleAsync(object caller, object request, CancellationToken cancellation = default) => this.HandleAsync(caller, request, null, cancellation);
 			public ValueTask HandleAsync(object caller, object request, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(request, parameters, cancellation);
 		}

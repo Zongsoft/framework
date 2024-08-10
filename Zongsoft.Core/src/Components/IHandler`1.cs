@@ -39,12 +39,6 @@ namespace Zongsoft.Components
 	/// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
 	public interface IHandler<in TArgument> : IHandler
 	{
-		/// <summary>确认当前处理程序能否处理本次执行请求。</summary>
-		/// <param name="argument">当前处理的请求对象。</param>
-		/// <param name="parameters">当前处理的参数集。</param>
-		/// <returns>如果能处理本次执行请求则返回真(true)，否则返回假(false)。</returns>
-		bool CanHandle(TArgument argument, Collections.Parameters parameters = null);
-
 		/// <summary>异步处理执行请求。</summary>
 		/// <param name="caller">处理程序的调用者。</param>
 		/// <param name="argument">当前处理的请求对象。</param>

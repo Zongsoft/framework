@@ -31,8 +31,8 @@ using System;
 
 namespace Zongsoft.Components
 {
-	public interface IHandleable<TRequest, TResult> : IHandleable
+	public interface IHandleable<TArgument, TResult> : IHandleable
 	{
-		new IHandler<TRequest, TResult> Handler { get; set; }
+		new IHandler<TArgument, TResult> Handler { get; set; }
 	}
 }
