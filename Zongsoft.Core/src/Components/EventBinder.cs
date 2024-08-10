@@ -241,7 +241,7 @@ namespace Zongsoft.Components
 
 					var adapter = Activator.CreateInstance(
 						typeof(EventHandlerAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
-						new object[] { descriptor });
+						[descriptor]);
 					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(EventHandlerAdapter<EventArgs>.Raise));
 					return (adapter, trigger);
 				}
@@ -256,7 +256,7 @@ namespace Zongsoft.Components
 					{
 						var adapter = Activator.CreateInstance(
 							typeof(ActionAdapterWithCaller<,>).MakeGenericType(delegateType.GenericTypeArguments[1], delegateType.GenericTypeArguments[2]),
-							new object[] { descriptor });
+							[descriptor]);
 						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object, Collections.Parameters>.Raise));
 						return (adapter, trigger);
 					}
@@ -271,7 +271,7 @@ namespace Zongsoft.Components
 					{
 						var adapter = Activator.CreateInstance(
 							typeof(ActionAdapterWithCaller<>).MakeGenericType(delegateType.GenericTypeArguments[1]),
-							new object[] { descriptor });
+							[descriptor]);
 						var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object>.Raise));
 						return (adapter, trigger);
 					}
@@ -284,7 +284,7 @@ namespace Zongsoft.Components
 
 					var adapter = Activator.CreateInstance(
 						typeof(ActionAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
-						new object[] { descriptor });
+						[descriptor]);
 					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter<object>.Raise));
 					return (adapter, trigger);
 				}
@@ -317,6 +317,9 @@ namespace Zongsoft.Components
 
 		private static void Complete(this ValueTask task)
 		{
+			if(task.IsCompletedSuccessfully)
+				return;
+
 			if(task.IsCompleted)
 			{
 				var exception = task.AsTask().Exception;
@@ -339,46 +342,40 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 嵌套子类
-		private class ActionAdapter
+		private class ActionAdapter(EventDescriptor descriptor)
 		{
-			private readonly EventDescriptor _descriptor;
-			public ActionAdapter(EventDescriptor descriptor) => _descriptor = descriptor;
+			private readonly EventDescriptor _descriptor = descriptor;
 			public void Raise() => _descriptor.HandleAsync().Complete();
 		}
 
-		private class ActionAdapter<TArgument>
+		private class ActionAdapter<TArgument>(EventDescriptor<TArgument> descriptor)
 		{
-			private readonly EventDescriptor<TArgument> _descriptor;
-			public ActionAdapter(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
+			private readonly EventDescriptor<TArgument> _descriptor = descriptor;
 			public void Raise(TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapterWithCaller<TArgument>
+		private class ActionAdapterWithCaller<TArgument>(EventDescriptor<TArgument> descriptor)
 		{
-			private readonly EventDescriptor<TArgument> _descriptor;
-			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
-			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
+			private readonly EventDescriptor<TArgument> _descriptor = descriptor;
+			public void Raise(object _, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class ActionAdapterWithCaller<TArgument, TParameters> where TParameters : Collections.Parameters
+		private class ActionAdapterWithCaller<TArgument, TParameters>(EventDescriptor<TArgument> descriptor) where TParameters : Collections.Parameters
 		{
-			private readonly EventDescriptor<TArgument> _descriptor;
-			public ActionAdapterWithCaller(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
-			public void Raise(object sender, TArgument argument, TParameters parameters) => _descriptor.HandleAsync(argument, parameters).Complete();
+			private readonly EventDescriptor<TArgument> _descriptor = descriptor;
+			public void Raise(object _, TArgument argument, TParameters parameters) => _descriptor.HandleAsync(argument, parameters).Complete();
 		}
 
-		private class EventHandlerAdapter
+		private class EventHandlerAdapter(EventDescriptor<EventArgs> descriptor)
 		{
-			private readonly EventDescriptor<EventArgs> _descriptor;
-			public EventHandlerAdapter(EventDescriptor<EventArgs> descriptor) => _descriptor = descriptor;
-			public void Raise(object sender, EventArgs argument) => _descriptor.HandleAsync(argument).Complete();
+			private readonly EventDescriptor<EventArgs> _descriptor = descriptor;
+			public void Raise(object _, EventArgs argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 
-		private class EventHandlerAdapter<TArgument> where TArgument : EventArgs
+		private class EventHandlerAdapter<TArgument>(EventDescriptor<TArgument> descriptor) where TArgument : EventArgs
 		{
-			private readonly EventDescriptor<TArgument> _descriptor;
-			public EventHandlerAdapter(EventDescriptor<TArgument> descriptor) => _descriptor = descriptor;
-			public void Raise(object sender, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
+			private readonly EventDescriptor<TArgument> _descriptor = descriptor;
+			public void Raise(object _, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
 		}
 		#endregion
 	}
