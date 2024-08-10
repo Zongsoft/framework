@@ -85,6 +85,18 @@ namespace Zongsoft.Collections
 			parameters.SetValue(type, value);
 			return parameters;
 		}
+		public static Parameters Parameter(Parameters parameters)
+		{
+			var result = new Parameters();
+
+			if(parameters != null)
+			{
+				foreach(var parameter in parameters)
+					result.SetValue(parameter.Key, parameter.Value);
+			}
+
+			return result;
+		}
 		#endregion
 
 		#region 类型转换
@@ -196,6 +208,17 @@ namespace Zongsoft.Collections
 
 			foreach(var entry in values)
 				this.SetValue(entry.Key, entry.Value);
+		}
+
+		public Parameters Append(Parameters parameters)
+		{
+			if(parameters != null)
+			{
+				foreach(var entry in parameters)
+					this.SetValue(entry.Key, entry.Value);
+			}
+
+			return this;
 		}
 
 		public bool Remove<T>() => this.Remove((object)typeof(T));
