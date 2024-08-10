@@ -28,13 +28,23 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Expressions
 {
+	/// <summary>
+	/// 提供表达式解析功能的接口。
+	/// </summary>
 	public interface IExpressionParser
 	{
+		/// <summary>解析表达式。</summary>
+		/// <param name="text">指定的表达式文本。</param>
+		/// <returns>返回解析成功的表达式。</returns>
 		IExpression Parse(ReadOnlySpan<char> text);
+
+		/// <summary>尝试解析表达式。</summary>
+		/// <param name="text">指定的表达式文本。</param>
+		/// <param name="result">输出参数，表示解析成功后的表达式。</param>
+		/// <returns>返回一个布尔值，如果为真(<c>True</c>)则表示解析成功，否则表示失败。</returns>
 		bool TryParse(ReadOnlySpan<char> text, out IExpression result);
 	}
 }

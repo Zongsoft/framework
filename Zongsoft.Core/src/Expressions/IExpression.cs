@@ -32,8 +32,14 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Expressions
 {
+	/// <summary>
+	/// 表示表达式的接口。
+	/// </summary>
 	public interface IExpression
 	{
+		/// <summary>计算表达式。</summary>
+		/// <param name="variables">指定的表达式的变量集。</param>
+		/// <returns>返回的计算结果。</returns>
 		object Evaluate(IDictionary<string, object> variables = null);
 	}
 }
