@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 using StackExchange.Redis;
@@ -66,21 +65,21 @@ namespace Zongsoft.Externals.Redis
 
 			if(idle > 0)
 				args = string.IsNullOrEmpty(consumer) ?
-					new object[] { key, group, "IDLE", idle, minimum, maximum, count } :
-					new object[] { key, group, "IDLE", idle, minimum, maximum, count, consumer };
+					[key, group, "IDLE", idle, minimum, maximum, count] :
+					[key, group, "IDLE", idle, minimum, maximum, count, consumer];
 			else
 				args = string.IsNullOrEmpty(consumer) ?
-					new object[] { key, group, minimum, maximum, count } :
-					new object[] { key, group, minimum, maximum, count, consumer };
+					[key, group, minimum, maximum, count] :
+					[key, group, minimum, maximum, count, consumer];
 
 			var result = database.Execute(@"XPENDING", args);
 
-			if(result == null || result.IsNull || result.Type != ResultType.MultiBulk)
-				return Array.Empty<RedisQueuePendingMessageInfo>();
+			if(result == null || result.IsNull || result.Resp2Type != ResultType.Array)
+				return [];
 
 			var infos = (RedisResult[])result;
 			if(infos == null || infos.Length == 0)
-				return Array.Empty<RedisQueuePendingMessageInfo>();
+				return [];
 
 			var pendings = new RedisQueuePendingMessageInfo[infos.Length];
 
@@ -149,10 +148,10 @@ namespace Zongsoft.Externals.Redis
 	{
 		public RedisQueuePendingMessageInfo(RedisValue messageId, RedisValue consumer, long idleTimeInMs = 0L, int deliveryCount = 0)
 		{
-			MessageId = messageId;
-			Consumer = consumer;
-			IdledDuration = idleTimeInMs > 0 ? TimeSpan.FromMilliseconds(idleTimeInMs) : TimeSpan.Zero;
-			DeliveryCount = deliveryCount;
+			this.MessageId = messageId;
+			this.Consumer = consumer;
+			this.IdledDuration = idleTimeInMs > 0 ? TimeSpan.FromMilliseconds(idleTimeInMs) : TimeSpan.Zero;
+			this.DeliveryCount = deliveryCount;
 		}
 
 		public RedisValue MessageId { get; }
