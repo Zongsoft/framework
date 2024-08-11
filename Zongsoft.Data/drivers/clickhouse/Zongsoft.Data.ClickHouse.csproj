@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ClickHouse.Client" Version="6.8.1" />
+		<PackageReference Include="ClickHouse.Client" Version="7.5.0" />
 	</ItemGroup>
 
 	<ItemGroup>
