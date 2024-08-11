@@ -59,8 +59,8 @@ namespace Zongsoft.Services
 			{
 				var type = exportedType.GetTypeInfo();
 
-				//如果是非公共类（含抽象类）则忽略
-				if(type.IsNotPublic || !type.IsClass || (type.IsAbstract && !type.IsSealed))
+				//如果是非公共类、抽象类、嵌套类、泛型原型类则忽略
+				if(type.IsNotPublic || !type.IsClass || type.IsNested || (type.IsAbstract && !type.IsSealed) || (type.IsGenericType && type.IsGenericTypeDefinition))
 					continue;
 
 				//使用 IServiceRegistration 服务注册器注册服务
@@ -68,11 +68,14 @@ namespace Zongsoft.Services
 					continue;
 
 				//获取服务注册注解
-				var attribute = type.GetCustomAttribute<ServiceAttribute>(true);
+				var attributes = type.GetCustomAttributes<ServiceAttribute>(true);
 
 				//尝试注册服务
-				if(attribute != null)
-					RegisterServices(services, type, attribute);
+				foreach(var attribute in attributes)
+				{
+					if(attribute != null)
+						RegisterServices(services, type, attribute);
+				}
 
 				//尝试注入配置
 				if(configuration != null)
@@ -138,9 +141,11 @@ namespace Zongsoft.Services
 		{
 			if(type.IsAbstract)
 			{
+				//如果是静态类则进行静态成员注册
 				if(type.IsSealed)
 					RegisterStaticMember(services, type, attribute.Members);
 
+				//如果是抽象类则返回
 				return;
 			}
 
