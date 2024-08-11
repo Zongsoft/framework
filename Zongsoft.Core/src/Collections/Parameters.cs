@@ -76,6 +76,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 静态方法
+		public static Parameters Parameter() => new();
 		public static Parameters Parameter(string name, object value) => new([new KeyValuePair<string, object>(name ?? string.Empty, value)]);
 		public static Parameters Parameter(object value) => Parameter(value != null ? value.GetType() : throw new ArgumentNullException(nameof(value)), value);
 		public static Parameters Parameter<T>(object value) => Parameter(typeof(T), value);
