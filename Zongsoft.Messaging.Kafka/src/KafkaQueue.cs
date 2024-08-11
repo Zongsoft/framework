@@ -28,15 +28,11 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Confluent.Kafka;
 
-using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
@@ -67,7 +63,7 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 订阅方法
-		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			var subscriber = new KafkaSubscriber(this, topics, handler, options);
 			await subscriber.SubscribeAsync(cancellation);

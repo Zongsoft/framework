@@ -33,8 +33,8 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
@@ -53,7 +53,7 @@ namespace Zongsoft.Messaging
 		#region 公共属性
 		[TypeConverter(typeof(MessageQueueConverter))]
 		public IMessageQueue Queue { get; set; }
-		public IMessageHandler Handler { get; set; }
+		public IHandler<Message> Handler { get; set; }
 		public Options.QueueOptionsCollection Options { get; set; }
 		#endregion
 

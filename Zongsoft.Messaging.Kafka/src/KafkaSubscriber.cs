@@ -42,7 +42,7 @@ namespace Zongsoft.Messaging.Kafka
 		private Poller _poller;
 		private IConsumer<string, byte[]> _consumer;
 
-		public KafkaSubscriber(KafkaQueue queue, string topics, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
+		public KafkaSubscriber(KafkaQueue queue, string topics, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
 		{
 			if(queue == null)
 				throw new ArgumentNullException(nameof(queue));
@@ -117,24 +117,12 @@ namespace Zongsoft.Messaging.Kafka
 				consumer.Dispose();
 		}
 
-		private class Poller : MessagePollerBase
+		private class Poller(KafkaSubscriber subscriber) : MessagePollerBase
 		{
-			private KafkaSubscriber _subscriber;
+			private KafkaSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 
-			public Poller(KafkaSubscriber subscriber)
-			{
-				_subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-			}
-
-			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
-			{
-				return _subscriber?.Receive(options, cancellation) ?? Message.Empty;
-			}
-
-			protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
-			{
-				return _subscriber?.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
-			}
+			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation) => _subscriber?.Receive(options, cancellation) ?? Message.Empty;
+			protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation) => _subscriber?.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
 
 			protected override void Dispose(bool disposing)
 			{

@@ -33,12 +33,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Messaging.Mqtt
 {
 	public class MqttSubscriber : MessageConsumerBase, IEquatable<MqttSubscriber>
 	{
 		#region 构造函数
-		public MqttSubscriber(MqttQueue queue, string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, tags, options, handler)
+		public MqttSubscriber(MqttQueue queue, string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, tags, options, handler)
 		{
 			this.Queue = queue ?? throw new ArgumentNullException(nameof(queue));
 		}
@@ -51,11 +53,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 订阅方法
 		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
 
-		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
-		{
-			return ValueTask.CompletedTask;
-		}
-
+		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.CompletedTask;
 		protected override async ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
 		{
 			foreach(var topic in topics)

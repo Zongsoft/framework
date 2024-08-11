@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Messaging;
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 using StackExchange.Redis;
@@ -66,7 +67,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			var subscriber = new RedisSubscriber(this, topics, handler, options);
 			await subscriber.SubscribeAsync(cancellation);

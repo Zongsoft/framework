@@ -55,7 +55,7 @@ namespace Zongsoft.Components
 			task.AsTask().GetAwaiter().GetResult();
 		}
 
-		public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, Collections.Parameters.Parameter(), cancellation);
 		public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(parameters == null)

@@ -32,6 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Messaging
 {
 	/// <summary>
@@ -50,7 +52,7 @@ namespace Zongsoft.Messaging
 		bool IsSubscribed { get; }
 
 		/// <summary>获取消息处理器。</summary>
-		IMessageHandler Handler { get; }
+		IHandler<Message> Handler { get; }
 
 		/// <summary>获取订阅选项设置。</summary>
 		MessageSubscribeOptions Options { get; }

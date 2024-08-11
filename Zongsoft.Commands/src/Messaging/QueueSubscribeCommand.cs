@@ -34,6 +34,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Commands
 {
@@ -83,7 +85,7 @@ namespace Zongsoft.Messaging.Commands
 		#endregion
 
 		#region 嵌套子类
-		private class QueueHandler : IMessageHandler
+		private class QueueHandler : HandlerBase<Message>
 		{
 			private int _count;
 			private readonly bool _acknowledgeable;
@@ -97,7 +99,7 @@ namespace Zongsoft.Messaging.Commands
 				_acknowledgeable = context.Expression.Options.GetValue<bool>("acknowledgeable");
 			}
 
-			public async ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
+			protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 			{
 				var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
 				var content = CommandOutletContent
@@ -115,7 +117,7 @@ namespace Zongsoft.Messaging.Commands
 				content.Append(
 					_format == QueueMessageFormat.Text ?
 					Encoding.UTF8.GetString(message.Data) :
-					Convert.ToBase64String(message.Data)
+					System.Convert.ToBase64String(message.Data)
 				);
 
 				if(_acknowledgeable)

@@ -36,8 +36,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Messaging;
+using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -256,16 +256,10 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		}
 		#endregion
 
-		private class MessageQueueConsumer : MessageConsumerBase, IEquatable<MessageQueueConsumer>
+		private class MessageQueueConsumer(MessageQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase(handler, options), IEquatable<MessageQueueConsumer>
 		{
-			private MessageQueue _queue;
-			private MessageQueuePoller _poller;
-
-			public MessageQueueConsumer(MessageQueue queue, IMessageHandler handler, MessageSubscribeOptions options = null) : base(handler, options)
-			{
-				_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-				_poller = new MessageQueuePoller(queue, handler);
-			}
+			private MessageQueue _queue = queue ?? throw new ArgumentNullException(nameof(queue));
+			private MessageQueuePoller _poller = new(queue, handler);
 
 			internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
 
@@ -298,22 +292,19 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			protected override void Dispose(bool disposing)
 			{
 				if(disposing)
-					_poller.Stop();
+					_poller?.Stop();
+
+				_queue = null;
+				_poller = null;
 
 				base.Dispose(disposing);
 			}
 		}
 
-		private class MessageQueuePoller : MessagePollerBase
+		private class MessageQueuePoller(MessageQueue queue, IHandler<Message> handler) : MessagePollerBase
 		{
-			private readonly MessageQueue _queue;
-			private readonly IMessageHandler _handler;
-
-			public MessageQueuePoller(MessageQueue queue, IMessageHandler handler)
-			{
-				_queue = queue;
-				_handler = handler;
-			}
+			private readonly MessageQueue _queue = queue;
+			private readonly IHandler<Message> _handler = handler;
 
 			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 			{

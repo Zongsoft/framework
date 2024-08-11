@@ -35,8 +35,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Messaging;
+using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
@@ -66,7 +66,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			return ValueTask.FromResult<IMessageConsumer>(null);
 		}

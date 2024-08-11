@@ -33,6 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
@@ -87,10 +88,10 @@ namespace Zongsoft.Messaging
 		public ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(null, null, new HandlerAdapter(handler), options, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, CancellationToken cancellation = default) =>
+		public ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(null, null, handler, null, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
+		public ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(null, null, handler, options, cancellation);
 
 		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, CancellationToken cancellation = default) =>
@@ -99,10 +100,10 @@ namespace Zongsoft.Messaging
 		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, null, new HandlerAdapter(handler), options, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IMessageHandler handler, CancellationToken cancellation = default) =>
+		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, null, handler, null, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
+		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, null, handler, options, cancellation);
 
 		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, Action<Message> handler, CancellationToken cancellation = default) =>
@@ -111,10 +112,10 @@ namespace Zongsoft.Messaging
 		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, tags, new HandlerAdapter(handler), options, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, CancellationToken cancellation = default) =>
+		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, CancellationToken cancellation = default) =>
 			this.SubscribeAsync(topics, tags, handler, null, cancellation);
 
-		public abstract ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IMessageHandler handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+		public abstract ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 		#endregion
 
 		#region 资源释放
@@ -128,18 +129,13 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 嵌套子类
-		private class HandlerAdapter : IMessageHandler
+		private class HandlerAdapter(Action<Message> handler) : HandlerBase<Message>
 		{
-			private readonly Action<Message> _handler;
+			private readonly Action<Message> _handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
-			public HandlerAdapter(Action<Message> handler)
+			protected override ValueTask OnHandleAsync(Message argument, Parameters parameters, CancellationToken cancellation)
 			{
-				_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-			}
-
-			public ValueTask HandleAsync(Message message, CancellationToken cancellation = default)
-			{
-				_handler.Invoke(message);
+				_handler.Invoke(argument);
 				return ValueTask.CompletedTask;
 			}
 		}

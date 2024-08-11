@@ -29,13 +29,13 @@
 
 using System;
 using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Messaging;
+using Zongsoft.Components;
 
 using StackExchange.Redis;
 
@@ -73,7 +73,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 构造函数
-		public RedisSubscriber(RedisQueue queue, string topics, IMessageHandler handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
+		public RedisSubscriber(RedisQueue queue, string topics, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_group = queue.ConnectionSetting.Values.Group;
@@ -122,20 +122,9 @@ namespace Zongsoft.Externals.Redis.Messaging
 			}
 		}
 
-		protected override ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
-		{
-			return ValueTask.CompletedTask;
-		}
-
-		protected override void OnSubscribed()
-		{
-			_poller?.Start();
-		}
-
-		protected override void OnUnsubscribed()
-		{
-			_poller?.Stop();
-		}
+		protected override ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation) => ValueTask.CompletedTask;
+		protected override void OnSubscribed() => _poller?.Start();
+		protected override void OnUnsubscribed() => _poller?.Stop();
 		#endregion
 
 		#region 内部方法
@@ -327,14 +316,9 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 嵌套子类
-		private class Poller : MessagePollerBase
+		private class Poller(RedisSubscriber subscriber) : MessagePollerBase
 		{
-			private RedisSubscriber _subscriber;
-
-			public Poller(RedisSubscriber subscriber)
-			{
-				_subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-			}
+			private RedisSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 
 			protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 			{

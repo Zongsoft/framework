@@ -33,6 +33,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+using Zongsoft.Collections;
+
 namespace Zongsoft.Messaging
 {
 	public abstract class MessageConsumerBase : IMessageConsumer
@@ -41,19 +44,19 @@ namespace Zongsoft.Messaging
 		private bool _subscribed;
 		private string[] _topics;
 		private string[] _tags;
-		private IMessageHandler _handler;
+		private IHandler<Message> _handler;
 		private MessageSubscribeOptions _options;
 		#endregion
 
 		#region 构造函数
-		protected MessageConsumerBase(IMessageHandler handler, MessageSubscribeOptions options = null)
+		protected MessageConsumerBase(IHandler<Message> handler, MessageSubscribeOptions options = null)
 		{
 			_handler = handler;
 			_options = options;
 		}
 
-		protected MessageConsumerBase(string topics, string tags, IMessageHandler handler = null) : this(topics, tags, null, handler) { }
-		protected MessageConsumerBase(string topics, string tags, MessageSubscribeOptions options, IMessageHandler handler = null)
+		protected MessageConsumerBase(string topics, string tags, IHandler<Message> handler = null) : this(topics, tags, null, handler) { }
+		protected MessageConsumerBase(string topics, string tags, MessageSubscribeOptions options, IHandler<Message> handler = null)
 		{
 			_topics = Slice(topics);
 			_tags = Slice(tags);
@@ -61,8 +64,8 @@ namespace Zongsoft.Messaging
 			_handler = handler;
 		}
 
-		protected MessageConsumerBase(IEnumerable<string> topics, string tags, IMessageHandler handler = null) : this(topics, tags, null, handler) { }
-		protected MessageConsumerBase(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, IMessageHandler handler = null)
+		protected MessageConsumerBase(IEnumerable<string> topics, string tags, IHandler<Message> handler = null) : this(topics, tags, null, handler) { }
+		protected MessageConsumerBase(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, IHandler<Message> handler = null)
 		{
 			_topics = topics == null ? Array.Empty<string>() : topics.ToArray();
 			_tags = tags.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -96,7 +99,7 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		public IMessageHandler Handler
+		public IHandler<Message> Handler
 		{
 			get => _handler;
 			protected set
