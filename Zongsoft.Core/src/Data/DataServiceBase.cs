@@ -39,8 +39,9 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Data
 {
+	[Service<IDataService>]
 	[DefaultMember(nameof(Filters))]
-	public partial class DataServiceBase<TModel> : IDataService<TModel>
+	public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IMatchable, IMatchable<string>
 	{
 		#region 事件定义
 		public event EventHandler<DataGettedEventArgs<TModel>> Getted;
@@ -2379,19 +2380,25 @@ namespace Zongsoft.Data
 			authorize == null ? NonanonymousAuthorizer.Default : new NonanonymousAuthorizer(authorize);
 		#endregion
 
+		#region 服务匹配
+		protected virtual bool OnMatch(object argument) => argument is string name && this.OnMatch(name);
+		protected virtual bool OnMatch(string name) => string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase);
+		bool IMatchable.Match(object argument) => this.OnMatch(argument);
+		bool IMatchable<string>.Match(string argument) => this.OnMatch(argument);
+		#endregion
+
 		#region 嵌套子类
 		public sealed class Condition : Zongsoft.Data.Condition.Builder<TModel>
 		{
 			private Condition() { }
 		}
 
-		private class AnonymousAuthorizer : IDataServiceAuthorizer<TModel>
+		private class AnonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) : IDataServiceAuthorizer<TModel>
 		{
 			public static readonly AnonymousAuthorizer Default = new AnonymousAuthorizer(null);
 			public static readonly AnonymousAuthorizer ReadOnly = new AnonymousAuthorizer((service, method, options) => method.IsReading);
 
-			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize;
-			public AnonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) => _authorize = authorize;
+			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize = authorize;
 
 			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
 			{
@@ -2400,13 +2407,12 @@ namespace Zongsoft.Data
 			}
 		}
 
-		private class NonanonymousAuthorizer : IDataServiceAuthorizer<TModel>
+		private class NonanonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) : IDataServiceAuthorizer<TModel>
 		{
 			public static readonly NonanonymousAuthorizer Default = new NonanonymousAuthorizer(null);
 			public static readonly NonanonymousAuthorizer ReadOnly = new NonanonymousAuthorizer((service, method, options) => method.IsReading);
 
-			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize;
-			public NonanonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) => _authorize = authorize;
+			private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize = authorize;
 
 			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
 			{
