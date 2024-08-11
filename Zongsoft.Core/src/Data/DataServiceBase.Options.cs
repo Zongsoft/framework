@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public partial class DataServiceBase<TModel>
+	partial class DataServiceBase<TModel>
 	{
 		/// <summary>表示数据服务操作选项构建的入口。</summary>
 		public static class Options

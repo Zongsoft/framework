@@ -36,7 +36,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Data
 {
-	public partial class DataServiceBase<TModel>
+	partial class DataServiceBase<TModel>
 	{
 		#region 执行方法
 		public Task<IEnumerable<T>> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default)

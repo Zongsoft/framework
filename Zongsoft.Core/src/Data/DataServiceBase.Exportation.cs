@@ -40,7 +40,7 @@ using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Data
 {
-	public partial class DataServiceBase<TModel> : IDataExportable
+	partial class DataServiceBase<TModel> : IDataExportable
 	{
 		#region 公共属性
 		public virtual bool CanExport => true;

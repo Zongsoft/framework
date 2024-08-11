@@ -40,7 +40,7 @@ using Zongsoft.Data.Templates;
 
 namespace Zongsoft.Data
 {
-	public partial class DataServiceBase<TModel> : IDataImportable
+	partial class DataServiceBase<TModel> : IDataImportable
 	{
 		public virtual bool CanImport => this.CanInsert;
 

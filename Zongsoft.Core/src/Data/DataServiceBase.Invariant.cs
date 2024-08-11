@@ -32,7 +32,7 @@ using System.Collections;
 
 namespace Zongsoft.Data
 {
-	public partial class DataServiceBase<TModel>
+	partial class DataServiceBase<TModel>
 	{
 		#region 插入方法
 		protected int Insert(object data, ISchema schema, DataInsertOptions options = null)
