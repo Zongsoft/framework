@@ -221,11 +221,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 执行方法
-		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
-		{
-			return this.Execute<T>(name, inParameters, out _, options, executing, executed);
-		}
-
+		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, inParameters, out _, options, executing, executed);
 		public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -273,7 +269,7 @@ namespace Zongsoft.Data
 			//再次更新返回参数值
 			outParameters = context.OutParameters;
 
-			var result = this.ToEnumerable<T>(context.Result);
+			var result = ToEnumerable<T>(context.Result);
 
 			//处置上下文资源
 			context.Dispose();
@@ -314,7 +310,7 @@ namespace Zongsoft.Data
 			if(executed != null)
 				executed(context);
 
-			var result = this.ToEnumerable<T>(context.Result);
+			var result = ToEnumerable<T>(context.Result);
 
 			//处置上下文资源
 			context.Dispose();
@@ -323,11 +319,7 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
-		{
-			return this.ExecuteScalar(name, inParameters, out _, options, executing, executed);
-		}
-
+		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, inParameters, out _, options, executing, executed);
 		public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -430,11 +422,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 存在方法
-		public bool Exists<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
-		{
-			return this.Exists(this.GetName<T>(), criteria, options, existing, existed);
-		}
-
+		public bool Exists<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null) => this.Exists(this.GetName<T>(), criteria, options, existing, existed);
 		public bool Exists(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -476,9 +464,7 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default) =>
-			this.ExistsAsync(this.GetName<T>(), criteria, options, existing, existed, cancellation);
-
+		public Task<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default) => this.ExistsAsync(this.GetName<T>(), criteria, options, existing, existed, cancellation);
 		public async Task<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -525,31 +511,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 聚合方法
-		public int Count<T>(ICondition criteria = null, string member = null, DataAggregateOptions options = null)
-		{
-			return this.Aggregate<int>(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
-		}
-
-		public int Count(string name, ICondition criteria = null, string member = null, DataAggregateOptions options = null)
-		{
-			return this.Aggregate<int>(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
-		}
-
-		public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
-		}
-
-		public TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated);
-		}
-
-		public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
-		{
-			return this.Aggregate<TValue>(name, new DataAggregate(function, member), criteria, options, null, null);
-		}
-
+		public int Count<T>(ICondition criteria = null, string member = null, DataAggregateOptions options = null) => this.Aggregate<int>(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
+		public int Count(string name, ICondition criteria = null, string member = null, DataAggregateOptions options = null) => this.Aggregate<int>(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
+		public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
+		public TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated);
+		public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member), criteria, options, null, null);
 		public TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>
 		{
 			if(string.IsNullOrEmpty(name))
@@ -591,15 +557,9 @@ namespace Zongsoft.Data
 			return value;
 		}
 
-		public Task<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> =>
-			this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null, cancellation);
-
-		public Task<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> =>
-			this.AggregateAsync<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated, cancellation);
-
-		public Task<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> =>
-			this.AggregateAsync<TValue>(name, new DataAggregate(function, member), criteria, options, null, null, cancellation);
-
+		public Task<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null, cancellation);
+		public Task<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated, cancellation);
+		public Task<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, new DataAggregate(function, member), criteria, options, null, null, cancellation);
 		public async Task<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>
 		{
 			if(string.IsNullOrEmpty(name))
@@ -646,41 +606,13 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 递增方法
-		public long Increment<T>(string member, ICondition criteria)
-		{
-			return this.Increment(this.GetName<T>(), member, criteria, 1, null, null, null);
-		}
-
-		public long Increment<T>(string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Increment(this.GetName<T>(), member, criteria, 1, options, null, null);
-		}
-
-		public long Increment<T>(string member, ICondition criteria, int interval)
-		{
-			return this.Increment(this.GetName<T>(), member, criteria, interval, null, null, null);
-		}
-
-		public long Increment<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
-		{
-			return this.Increment(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented);
-		}
-
-		public long Increment(string name, string member, ICondition criteria)
-		{
-			return this.Increment(name, member, criteria, 1, null, null, null);
-		}
-
-		public long Increment(string name, string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Increment(name, member, criteria, 1, options, null, null);
-		}
-
-		public long Increment(string name, string member, ICondition criteria, int interval)
-		{
-			return this.Increment(name, member, criteria, interval, null, null, null);
-		}
-
+		public long Increment<T>(string member, ICondition criteria) => this.Increment(this.GetName<T>(), member, criteria, 1, null, null, null);
+		public long Increment<T>(string member, ICondition criteria, DataIncrementOptions options) => this.Increment(this.GetName<T>(), member, criteria, 1, options, null, null);
+		public long Increment<T>(string member, ICondition criteria, int interval) => this.Increment(this.GetName<T>(), member, criteria, interval, null, null, null);
+		public long Increment<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null) => this.Increment(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented);
+		public long Increment(string name, string member, ICondition criteria) => this.Increment(name, member, criteria, 1, null, null, null);
+		public long Increment(string name, string member, ICondition criteria, DataIncrementOptions options) => this.Increment(name, member, criteria, 1, options, null, null);
+		public long Increment(string name, string member, ICondition criteria, int interval) => this.Increment(name, member, criteria, interval, null, null, null);
 		public long Increment(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -725,21 +657,13 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, CancellationToken cancellation = default) =>
-			this.IncrementAsync(this.GetName<T>(), member, criteria, 1, null, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) =>
-			this.IncrementAsync(this.GetName<T>(), member, criteria, 1, options, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, CancellationToken cancellation = default) =>
-			this.IncrementAsync(this.GetName<T>(), member, criteria, interval, null, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default) =>
-			this.IncrementAsync(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented, cancellation);
-
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, CancellationToken cancellation = default) =>
-			this.IncrementAsync(name, member, criteria, 1, null, null, null, cancellation);
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) =>
-			this.IncrementAsync(name, member, criteria, 1, options, null, null, cancellation);
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) =>
-			this.IncrementAsync(name, member, criteria, interval, null, null, null, cancellation);
+		public Task<long> IncrementAsync<T>(string member, ICondition criteria, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, 1, null, null, null, cancellation);
+		public Task<long> IncrementAsync<T>(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, 1, options, null, null, cancellation);
+		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, interval, null, null, null, cancellation);
+		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented, cancellation);
+		public Task<long> IncrementAsync(string name, string member, ICondition criteria, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, 1, null, null, null, cancellation);
+		public Task<long> IncrementAsync(string name, string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, 1, options, null, null, cancellation);
+		public Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, interval, null, null, null, cancellation);
 		public async Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -784,81 +708,26 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public long Decrement<T>(string member, ICondition criteria)
-		{
-			return this.Decrement(this.GetName<T>(), member, criteria, 1, null, null, null);
-		}
-
-		public long Decrement<T>(string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Decrement(this.GetName<T>(), member, criteria, 1, options, null, null);
-		}
-
-		public long Decrement<T>(string member, ICondition criteria, int interval)
-		{
-			return this.Decrement(this.GetName<T>(), member, criteria, interval, null, null, null);
-		}
-
-		public long Decrement<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
-		{
-			return this.Increment(this.GetName<T>(), member, criteria, -interval, options, decrementing, decremented);
-		}
-
-		public long Decrement(string name, string member, ICondition criteria)
-		{
-			return this.Decrement(name, member, criteria, 1, null, null, null);
-		}
-
-		public long Decrement(string name, string member, ICondition criteria, DataIncrementOptions options)
-		{
-			return this.Decrement(name, member, criteria, 1, options, null, null);
-		}
-
-		public long Decrement(string name, string member, ICondition criteria, int interval)
-		{
-			return this.Decrement(name, member, criteria, interval, null, null, null);
-		}
-
-		public long Decrement(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null)
-		{
-			return this.Increment(name, member, criteria, -interval, options, decrementing, decremented);
-		}
+		public long Decrement<T>(string member, ICondition criteria) => this.Decrement(this.GetName<T>(), member, criteria, 1, null, null, null);
+		public long Decrement<T>(string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(this.GetName<T>(), member, criteria, 1, options, null, null);
+		public long Decrement<T>(string member, ICondition criteria, int interval) => this.Decrement(this.GetName<T>(), member, criteria, interval, null, null, null);
+		public long Decrement<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null) => this.Increment(this.GetName<T>(), member, criteria, -interval, options, decrementing, decremented);
+		public long Decrement(string name, string member, ICondition criteria) => this.Decrement(name, member, criteria, 1, null, null, null);
+		public long Decrement(string name, string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(name, member, criteria, 1, options, null, null);
+		public long Decrement(string name, string member, ICondition criteria, int interval) => this.Decrement(name, member, criteria, interval, null, null, null);
+		public long Decrement(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null) => this.Increment(name, member, criteria, -interval, options, decrementing, decremented);
 
 		protected abstract void OnIncrement(DataIncrementContextBase context);
 		protected abstract Task OnIncrementAsync(DataIncrementContextBase context, CancellationToken cancellation);
 		#endregion
 
 		#region 删除方法
-		public int Delete<T>(ICondition criteria, string schema = null)
-		{
-			return this.Delete(this.GetName<T>(), criteria, schema, null, null, null);
-		}
-
-		public int Delete<T>(ICondition criteria, DataDeleteOptions options)
-		{
-			return this.Delete(this.GetName<T>(), criteria, string.Empty, options, null, null);
-		}
-
-		public int Delete<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
-		{
-			return this.Delete(this.GetName<T>(), criteria, schema, options, deleting, deleted);
-		}
-
-		public int Delete(string name, ICondition criteria, string schema = null)
-		{
-			return this.Delete(name, criteria, schema, null, null, null);
-		}
-
-		public int Delete(string name, ICondition criteria, DataDeleteOptions options)
-		{
-			return this.Delete(name, criteria, string.Empty, options, null, null);
-		}
-
-		public int Delete(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
-		{
-			return this.Delete(name, criteria, this.Schema.Parse(name, schema), options, deleting, deleted);
-		}
-
+		public int Delete<T>(ICondition criteria, string schema = null) => this.Delete(this.GetName<T>(), criteria, schema, null, null, null);
+		public int Delete<T>(ICondition criteria, DataDeleteOptions options) => this.Delete(this.GetName<T>(), criteria, string.Empty, options, null, null);
+		public int Delete<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null) => this.Delete(this.GetName<T>(), criteria, schema, options, deleting, deleted);
+		public int Delete(string name, ICondition criteria, string schema = null) => this.Delete(name, criteria, schema, null, null, null);
+		public int Delete(string name, ICondition criteria, DataDeleteOptions options) => this.Delete(name, criteria, string.Empty, options, null, null);
+		public int Delete(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null) => this.Delete(name, criteria, this.Schema.Parse(name, schema), options, deleting, deleted);
 		public int Delete(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -900,19 +769,12 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> DeleteAsync<T>(ICondition criteria, string schema = null, CancellationToken cancellation = default) =>
-			this.DeleteAsync(this.GetName<T>(), criteria, schema, null, null, null, cancellation);
-		public Task<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) =>
-			this.DeleteAsync(this.GetName<T>(), criteria, String.Empty, options, null, null, cancellation);
-		public Task<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default) =>
-			this.DeleteAsync(this.GetName<T>(), criteria, schema, options, deleting, deleted, cancellation);
-
-		public Task<int> DeleteAsync(string name, ICondition criteria, string schema = null, CancellationToken cancellation = default) =>
-			this.DeleteAsync(name, criteria, schema, null, null, null, cancellation);
-		public Task<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) =>
-			this.DeleteAsync(name, criteria, string.Empty, options, null, null, cancellation);
-		public Task<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default) =>
-			this.DeleteAsync(name, criteria, this.Schema.Parse(name, schema), options, deleting, deleted, cancellation);
+		public Task<int> DeleteAsync<T>(ICondition criteria, string schema = null, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, schema, null, null, null, cancellation);
+		public Task<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, String.Empty, options, null, null, cancellation);
+		public Task<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, schema, options, deleting, deleted, cancellation);
+		public Task<int> DeleteAsync(string name, ICondition criteria, string schema = null, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, schema, null, null, null, cancellation);
+		public Task<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, string.Empty, options, null, null, cancellation);
+		public Task<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, this.Schema.Parse(name, schema), options, deleting, deleted, cancellation);
 		public async Task<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -959,90 +821,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 插入方法
-		public int Insert<T>(T data)
-		{
-			if(data == null)
-				return 0;
+		public int Insert<T>(T data) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
+		public int Insert<T>(T data, DataInsertOptions options) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
+		public int Insert<T>(T data, string schema) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, null, null, null);
+		public int Insert<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
+		public int Insert<T>(object data) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
+		public int Insert<T>(object data, DataInsertOptions options) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
+		public int Insert<T>(object data, string schema) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, null, null, null);
+		public int Insert<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
 
-			return this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
-		}
-
-		public int Insert<T>(T data, DataInsertOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
-		}
-
-		public int Insert<T>(T data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, schema, null, null, null);
-		}
-
-		public int Insert<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
-		}
-
-		public int Insert<T>(object data)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
-		}
-
-		public int Insert<T>(object data, DataInsertOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
-		}
-
-		public int Insert<T>(object data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, schema, null, null, null);
-		}
-
-		public int Insert<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
-		}
-
-		public int Insert(string name, object data)
-		{
-			return this.Insert(name, data, string.Empty, null, null, null);
-		}
-
-		public int Insert(string name, object data, DataInsertOptions options)
-		{
-			return this.Insert(name, data, string.Empty, options, null, null);
-		}
-
-		public int Insert(string name, object data, string schema)
-		{
-			return this.Insert(name, data, schema, null, null, null);
-		}
-
-		public int Insert(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			return this.Insert(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted);
-		}
-
+		public int Insert(string name, object data) => this.Insert(name, data, string.Empty, null, null, null);
+		public int Insert(string name, object data, DataInsertOptions options) => this.Insert(name, data, string.Empty, options, null, null);
+		public int Insert(string name, object data, string schema) => this.Insert(name, data, schema, null, null, null);
+		public int Insert(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => this.Insert(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted);
 		public int Insert(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1087,90 +878,19 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> InsertAsync<T>(T data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
+		public Task<int> InsertAsync<T>(T data, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertAsync<T>(T data, DataInsertOptions options, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertAsync<T>(T data, string schema, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
+		public Task<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
+		public Task<int> InsertAsync<T>(object data, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertAsync<T>(object data, DataInsertOptions options, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertAsync<T>(object data, string schema, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
+		public Task<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
 
-			return this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(T data, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(T data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(object data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(object data, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(object data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
-		}
-
-		public Task<int> InsertAsync(string name, object data, CancellationToken cancellation = default)
-		{
-			return this.InsertAsync(name, data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync(string name, object data, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			return this.InsertAsync(name, data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync(string name, object data, string schema, CancellationToken cancellation = default)
-		{
-			return this.InsertAsync(name, data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			return this.InsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted, cancellation);
-		}
-
+		public Task<int> InsertAsync(string name, object data, CancellationToken cancellation = default) => this.InsertAsync(name, data, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertAsync(string name, object data, DataInsertOptions options, CancellationToken cancellation = default) => this.InsertAsync(name, data, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertAsync(string name, object data, string schema, CancellationToken cancellation = default) => this.InsertAsync(name, data, schema, null, null, null, cancellation);
+		public Task<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => this.InsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted, cancellation);
 		public async Task<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1215,90 +935,18 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public int InsertMany<T>(IEnumerable<T> items)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable<T> items, DataInsertOptions options)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable<T> items, string schema)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
-		}
-
-		public int InsertMany<T>(IEnumerable items)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable items, DataInsertOptions options)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable items, string schema)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int InsertMany<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			if(items == null)
-				return 0;
-
-			return this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
-		}
-
-		public int InsertMany(string name, IEnumerable items)
-		{
-			return this.InsertMany(name, items, string.Empty, null, null, null);
-		}
-
-		public int InsertMany(string name, IEnumerable items, DataInsertOptions options)
-		{
-			return this.InsertMany(name, items, string.Empty, options, null, null);
-		}
-
-		public int InsertMany(string name, IEnumerable items, string schema)
-		{
-			return this.InsertMany(name, items, schema, null, null, null);
-		}
-
-		public int InsertMany(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-		{
-			return this.InsertMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted);
-		}
-
+		public int InsertMany<T>(IEnumerable<T> items) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int InsertMany<T>(IEnumerable<T> items, DataInsertOptions options) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int InsertMany<T>(IEnumerable<T> items, string schema) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
+		public int InsertMany<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
+		public int InsertMany<T>(IEnumerable items) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int InsertMany<T>(IEnumerable items, DataInsertOptions options) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int InsertMany<T>(IEnumerable items, string schema) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
+		public int InsertMany<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
+		public int InsertMany(string name, IEnumerable items) => this.InsertMany(name, items, string.Empty, null, null, null);
+		public int InsertMany(string name, IEnumerable items, DataInsertOptions options) => this.InsertMany(name, items, string.Empty, options, null, null);
+		public int InsertMany(string name, IEnumerable items, string schema) => this.InsertMany(name, items, schema, null, null, null);
+		public int InsertMany(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => this.InsertMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted);
 		public int InsertMany(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1343,90 +991,18 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
-		}
-
-		public Task<int> InsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default)
-		{
-			return this.InsertManyAsync(name, items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync(string name, IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default)
-		{
-			return this.InsertManyAsync(name, items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			return this.InsertManyAsync(name, items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
-		{
-			return this.InsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted, cancellation);
-		}
-
+		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
+		public Task<int> InsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, string.Empty, null, null, null, cancellation);
+		public Task<int> InsertManyAsync(string name, IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, string.Empty, options, null, null, cancellation);
+		public Task<int> InsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, schema, null, null, null, cancellation);
+		public Task<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted, cancellation);
 		public async Task<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1476,90 +1052,20 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 增改方法
-		public int Upsert<T>(T data)
-		{
-			if(data == null)
-				return 0;
+		public int Upsert<T>(T data) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, null, null, null);
+		public int Upsert<T>(T data, DataUpsertOptions options) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, options, null, null);
+		public int Upsert<T>(T data, string schema) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, schema, null, null, null);
+		public int Upsert<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, schema, options, upserting, upserted);
 
-			return this.Upsert(this.GetName<T>(), data, string.Empty, null, null, null);
-		}
+		public int Upsert<T>(object data) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, null, null, null);
+		public int Upsert<T>(object data, DataUpsertOptions options) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, options, null, null);
+		public int Upsert<T>(object data, string schema) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, schema, null, null, null);
+		public int Upsert<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, schema, options, upserting, upserted);
 
-		public int Upsert<T>(T data, DataUpsertOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, string.Empty, options, null, null);
-		}
-
-		public int Upsert<T>(T data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, schema, null, null, null);
-		}
-
-		public int Upsert<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, schema, options, upserting, upserted);
-		}
-
-		public int Upsert<T>(object data)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, string.Empty, null, null, null);
-		}
-
-		public int Upsert<T>(object data, DataUpsertOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, string.Empty, options, null, null);
-		}
-
-		public int Upsert<T>(object data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, schema, null, null, null);
-		}
-
-		public int Upsert<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Upsert(this.GetName<T>(), data, schema, options, upserting, upserted);
-		}
-
-		public int Upsert(string name, object data)
-		{
-			return this.Upsert(name, data, string.Empty, null, null, null);
-		}
-
-		public int Upsert(string name, object data, DataUpsertOptions options)
-		{
-			return this.Upsert(name, data, string.Empty, options, null, null);
-		}
-
-		public int Upsert(string name, object data, string schema)
-		{
-			return this.Upsert(name, data, schema, null, null, null);
-		}
-
-		public int Upsert(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			return this.Upsert(name, data, this.Schema.Parse(name, schema, data.GetType()), options, upserting, upserted);
-		}
-
+		public int Upsert(string name, object data) => this.Upsert(name, data, string.Empty, null, null, null);
+		public int Upsert(string name, object data, DataUpsertOptions options) => this.Upsert(name, data, string.Empty, options, null, null);
+		public int Upsert(string name, object data, string schema) => this.Upsert(name, data, schema, null, null, null);
+		public int Upsert(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => this.Upsert(name, data, this.Schema.Parse(name, schema, data.GetType()), options, upserting, upserted);
 		public int Upsert(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1604,89 +1110,19 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> UpsertAsync<T>(T data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
+		public Task<int> UpsertAsync<T>(T data, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(T data, DataUpsertOptions options, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(T data, string schema, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, schema, options, upserting, upserted, cancellation);
+		public Task<int> UpsertAsync<T>(object data, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(object data, DataUpsertOptions options, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(object data, string schema, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
+		public Task<int> UpsertAsync<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => data == null ? Task.FromResult(0) : this.UpsertAsync(this.GetName<T>(), data, schema, options, upserting, upserted, cancellation);
 
-			return this.UpsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(T data, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(T data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, schema, options, upserting, upserted, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(object data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(object data, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(object data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpsertAsync(this.GetName<T>(), data, schema, options, upserting, upserted, cancellation);
-		}
-
-		public Task<int> UpsertAsync(string name, object data, CancellationToken cancellation = default)
-		{
-			return this.UpsertAsync(name, data, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync(string name, object data, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpsertAsync(name, data, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync(string name, object data, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpsertAsync(name, data, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertAsync(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			return this.UpsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, upserting, upserted, cancellation);
-		}
+		public Task<int> UpsertAsync(string name, object data, CancellationToken cancellation = default) => this.UpsertAsync(name, data, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertAsync(string name, object data, DataUpsertOptions options, CancellationToken cancellation = default) => this.UpsertAsync(name, data, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertAsync(string name, object data, string schema, CancellationToken cancellation = default) => this.UpsertAsync(name, data, schema, null, null, null, cancellation);
+		public Task<int> UpsertAsync(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => this.UpsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, upserting, upserted, cancellation);
 
 		public async Task<int> UpsertAsync(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
 		{
@@ -1732,90 +1168,19 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public int UpsertMany<T>(IEnumerable<T> items)
-		{
-			if(items == null)
-				return 0;
+		public int UpsertMany<T>(IEnumerable<T> items) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int UpsertMany<T>(IEnumerable<T> items, DataUpsertOptions options) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int UpsertMany<T>(IEnumerable<T> items, string schema) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, schema, null, null, null);
+		public int UpsertMany<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, schema, options, upserting, upserted);
+		public int UpsertMany<T>(IEnumerable items) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int UpsertMany<T>(IEnumerable items, DataUpsertOptions options) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int UpsertMany<T>(IEnumerable items, string schema) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, schema, null, null, null);
+		public int UpsertMany<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => items == null ? 0 : this.UpsertMany(this.GetName<T>(), items, schema, options, upserting, upserted);
 
-			return this.UpsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable<T> items, DataUpsertOptions options)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable<T> items, string schema)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, schema, options, upserting, upserted);
-		}
-
-		public int UpsertMany<T>(IEnumerable items)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable items, DataUpsertOptions options)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable items, string schema)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int UpsertMany<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			if(items == null)
-				return 0;
-
-			return this.UpsertMany(this.GetName<T>(), items, schema, options, upserting, upserted);
-		}
-
-		public int UpsertMany(string name, IEnumerable items)
-		{
-			return this.UpsertMany(name, items, string.Empty, null, null, null);
-		}
-
-		public int UpsertMany(string name, IEnumerable items, DataUpsertOptions options)
-		{
-			return this.UpsertMany(name, items, string.Empty, options, null, null);
-		}
-
-		public int UpsertMany(string name, IEnumerable items, string schema)
-		{
-			return this.UpsertMany(name, items, schema, null, null, null);
-		}
-
-		public int UpsertMany(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
-		{
-			return this.UpsertMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, upserting, upserted);
-		}
-
+		public int UpsertMany(string name, IEnumerable items) => this.UpsertMany(name, items, string.Empty, null, null, null);
+		public int UpsertMany(string name, IEnumerable items, DataUpsertOptions options) => this.UpsertMany(name, items, string.Empty, options, null, null);
+		public int UpsertMany(string name, IEnumerable items, string schema) => this.UpsertMany(name, items, schema, null, null, null);
+		public int UpsertMany(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null) => this.UpsertMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, upserting, upserted);
 		public int UpsertMany(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1860,90 +1225,20 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
+		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, DataUpsertOptions options, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, schema, options, upserting, upserted, cancellation);
 
-			return this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
+		public Task<int> UpsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => items == null ? Task.FromResult(0) : this.UpsertManyAsync(this.GetName<T>(), items, schema, options, upserting, upserted, cancellation);
 
-		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, schema, options, upserting, upserted, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			if(items == null)
-				return Task.FromResult(0);
-
-			return this.UpsertManyAsync(this.GetName<T>(), items, schema, options, upserting, upserted, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default)
-		{
-			return this.UpsertManyAsync(name, items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync(string name, IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpsertManyAsync(name, items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpsertManyAsync(name, items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
-		{
-			return this.UpsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, upserting, upserted, cancellation);
-		}
-
+		public Task<int> UpsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default) => this.UpsertManyAsync(name, items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync(string name, IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default) => this.UpsertManyAsync(name, items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default) => this.UpsertManyAsync(name, items, schema, null, null, null, cancellation);
+		public Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default) => this.UpsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, upserting, upserted, cancellation);
 		public async Task<int> UpsertManyAsync(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -1993,174 +1288,32 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 更新方法
-		public int Update<T>(T data)
-		{
-			if(data == null)
-				return 0;
+		public int Update<T>(T data) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
+		public int Update<T>(T data, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
+		public int Update<T>(T data, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, null, null, null);
+		public int Update<T>(T data, string schema, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, options, null, null);
+		public int Update<T>(T data, ICondition criteria) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
+		public int Update<T>(T data, ICondition criteria, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
+		public int Update<T>(T data, ICondition criteria, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
+		public int Update<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
 
-			return this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
-		}
+		public int Update<T>(object data) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
+		public int Update<T>(object data, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
+		public int Update<T>(object data, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, null, null, null);
+		public int Update<T>(object data, string schema, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, options, null, null);
+		public int Update<T>(object data, ICondition criteria) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
+		public int Update<T>(object data, ICondition criteria, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
+		public int Update<T>(object data, ICondition criteria, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
+		public int Update<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
 
-		public int Update<T>(T data, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
-		}
-
-		public int Update<T>(T data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, schema, null, null, null);
-		}
-
-		public int Update<T>(T data, string schema, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, schema, options, null, null);
-		}
-
-		public int Update<T>(T data, ICondition criteria)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
-		}
-
-		public int Update<T>(T data, ICondition criteria, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
-		}
-
-		public int Update<T>(T data, ICondition criteria, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
-		}
-
-		public int Update<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
-		}
-
-		public int Update<T>(object data)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
-		}
-
-		public int Update<T>(object data, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
-		}
-
-		public int Update<T>(object data, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, schema, null, null, null);
-		}
-
-		public int Update<T>(object data, string schema, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, null, schema, options, null, null);
-		}
-
-		public int Update<T>(object data, ICondition criteria)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
-		}
-
-		public int Update<T>(object data, ICondition criteria, DataUpdateOptions options)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
-		}
-
-		public int Update<T>(object data, ICondition criteria, string schema)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
-		}
-
-		public int Update<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			if(data == null)
-				return 0;
-
-			return this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
-		}
-
-		public int Update(string name, object data)
-		{
-			return this.Update(name, data, null, string.Empty, null, null, null);
-		}
-
-		public int Update(string name, object data, DataUpdateOptions options)
-		{
-			return this.Update(name, data, null, string.Empty, options, null, null);
-		}
-
-		public int Update(string name, object data, string schema)
-		{
-			return this.Update(name, data, null, schema, null, null, null);
-		}
-
-		public int Update(string name, object data, string schema, DataUpdateOptions options)
-		{
-			return this.Update(name, data, null, schema, options, null, null);
-		}
-
-		public int Update(string name, object data, ICondition criteria)
-		{
-			return this.Update(name, data, criteria, string.Empty, null, null, null);
-		}
-
-		public int Update(string name, object data, ICondition criteria, DataUpdateOptions options)
-		{
-			return this.Update(name, data, criteria, string.Empty, options, null, null);
-		}
-
-		public int Update(string name, object data, ICondition criteria, string schema)
-		{
-			return this.Update(name, data, criteria, schema, null, null, null);
-		}
-
-		public int Update(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			return this.Update(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated);
-		}
-
+		public int Update(string name, object data) => this.Update(name, data, null, string.Empty, null, null, null);
+		public int Update(string name, object data, DataUpdateOptions options) => this.Update(name, data, null, string.Empty, options, null, null);
+		public int Update(string name, object data, string schema) => this.Update(name, data, null, schema, null, null, null);
+		public int Update(string name, object data, string schema, DataUpdateOptions options) => this.Update(name, data, null, schema, options, null, null);
+		public int Update(string name, object data, ICondition criteria) => this.Update(name, data, criteria, string.Empty, null, null, null);
+		public int Update(string name, object data, ICondition criteria, DataUpdateOptions options) => this.Update(name, data, criteria, string.Empty, options, null, null);
+		public int Update(string name, object data, ICondition criteria, string schema) => this.Update(name, data, criteria, schema, null, null, null);
+		public int Update(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.Update(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated);
 		public int Update(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2205,174 +1358,55 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> UpdateAsync<T>(T data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
+		public Task<int> UpdateAsync<T>(T data, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, string schema, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, string schema, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, schema, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, ICondition criteria, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
+		public Task<int> UpdateAsync<T>(object data, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, string schema, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, schema, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, ICondition criteria, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			data == null ? Task.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
 
-			return this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, string schema, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, schema, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, ICondition criteria, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, null, schema, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, ICondition criteria, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			if(data == null)
-				return Task.FromResult(0);
-
-			return this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, null, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, null, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, null, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, null, schema, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, ICondition criteria, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, criteria, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, criteria, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, criteria, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			return this.UpdateAsync(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated, cancellation);
-		}
-
+		public Task<int> UpdateAsync(string name, object data, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, null, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, null, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, string schema, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, null, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, null, schema, options, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, ICondition criteria, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, criteria, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, criteria, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, criteria, schema, null, null, null, cancellation);
+		public Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			this.UpdateAsync(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated, cancellation);
 		public async Task<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2417,66 +1451,19 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public int UpdateMany<T>(IEnumerable<T> items)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
+		public int UpdateMany<T>(IEnumerable<T> items) => this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options) => this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int UpdateMany<T>(IEnumerable<T> items, string schema) => this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
+		public int UpdateMany<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
+		public int UpdateMany<T>(IEnumerable items) => this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
+		public int UpdateMany<T>(IEnumerable items, DataUpdateOptions options) => this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
+		public int UpdateMany<T>(IEnumerable items, string schema) => this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
+		public int UpdateMany<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
 
-		public int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int UpdateMany<T>(IEnumerable<T> items, string schema)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int UpdateMany<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
-		}
-
-		public int UpdateMany<T>(IEnumerable items)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
-		}
-
-		public int UpdateMany<T>(IEnumerable items, DataUpdateOptions options)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
-		}
-
-		public int UpdateMany<T>(IEnumerable items, string schema)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
-		}
-
-		public int UpdateMany<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			return this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
-		}
-
-		public int UpdateMany(string name, IEnumerable items)
-		{
-			return this.UpdateMany(name, items, string.Empty, null, null, null);
-		}
-
-		public int UpdateMany(string name, IEnumerable items, DataUpdateOptions options)
-		{
-			return this.UpdateMany(name, items, string.Empty, options, null, null);
-		}
-
-		public int UpdateMany(string name, IEnumerable items, string schema)
-		{
-			return this.UpdateMany(name, items, schema, null, null, null);
-		}
-
-		public int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-		{
-			return this.UpdateMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated);
-		}
-
+		public int UpdateMany(string name, IEnumerable items) => this.UpdateMany(name, items, string.Empty, null, null, null);
+		public int UpdateMany(string name, IEnumerable items, DataUpdateOptions options) => this.UpdateMany(name, items, string.Empty, options, null, null);
+		public int UpdateMany(string name, IEnumerable items, string schema) => this.UpdateMany(name, items, schema, null, null, null);
+		public int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated);
 		public int UpdateMany(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2521,66 +1508,31 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
+		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
 
-		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(name, items, string.Empty, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(name, items, string.Empty, options, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(name, items, schema, null, null, null, cancellation);
-		}
-
-		public Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-		{
-			return this.UpdateManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated, cancellation);
-		}
-
+		public Task<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(name, items, string.Empty, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(name, items, string.Empty, options, null, null, cancellation);
+		public Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(name, items, schema, null, null, null, cancellation);
+		public Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+			this.UpdateManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated, cancellation);
 		public async Task<int> UpdateManyAsync(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2630,106 +1582,47 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 普通查询
-		public IEnumerable<T> Select<T>(DataSelectOptions options = null, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), null, string.Empty, null, options, sortings, null, null);
-		}
+		public IEnumerable<T> Select<T>(DataSelectOptions options = null, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), null, string.Empty, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, schema, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, schema, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, schema, paging, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(this.GetName<T>(), criteria, schema, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected) =>
+			this.Select<T>(this.GetName<T>(), criteria, schema, paging, options, sortings, selecting, selected);
 
-		public IEnumerable<T> Select<T>(ICondition criteria, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, string.Empty, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, string schema, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, schema, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, schema, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
-		{
-			return this.Select<T>(this.GetName<T>(), criteria, schema, paging, options, sortings, selecting, selected);
-		}
-
-		public IEnumerable<T> Select<T>(string name, DataSelectOptions options = null, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, null, string.Empty, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, string.Empty, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, string.Empty, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, string.Empty, paging, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, string.Empty, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, schema, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, schema, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, schema, paging, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, criteria, schema, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
-		{
-			return this.Select<T>(name, criteria, this.Schema.Parse(name, schema, typeof(T)), paging, options, sortings, selecting, selected);
-		}
-
+		public IEnumerable<T> Select<T>(string name, DataSelectOptions options = null, params Sorting[] sortings) =>
+			this.Select<T>(name, null, string.Empty, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, string.Empty, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, string.Empty, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, string.Empty, paging, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, string.Empty, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, schema, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, schema, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, schema, paging, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, criteria, schema, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected) =>
+			this.Select<T>(name, criteria, this.Schema.Parse(name, schema, typeof(T)), paging, options, sortings, selecting, selected);
 		public IEnumerable<T> Select<T>(string name, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2837,61 +1730,28 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 分组查询
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, string.Empty, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, string.Empty, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options = null, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, string.Empty, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, schema, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, schema, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, null, schema, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, Paging paging, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, criteria, (ISchema)null, paging, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, criteria, schema, null, null, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, criteria, schema, null, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings)
-		{
-			return this.Select<T>(name, grouping, criteria, schema, paging, options, sortings, null, null);
-		}
-
-		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
-		{
-			return this.Select<T>(name, grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.Schema.Parse(name, schema, typeof(T)), paging, options, sortings, selecting, selected);
-		}
-
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, string.Empty, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, string.Empty, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options = null, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, string.Empty, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, schema, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, schema, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, null, schema, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, Paging paging, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, criteria, (ISchema)null, paging, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, criteria, schema, null, null, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, criteria, schema, null, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options = null, params Sorting[] sortings) =>
+			this.Select<T>(name, grouping, criteria, schema, paging, options, sortings, null, null);
+		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected) =>
+			this.Select<T>(name, grouping, criteria, string.IsNullOrWhiteSpace(schema) ? null : this.Schema.Parse(name, schema, typeof(T)), paging, options, sortings, selecting, selected);
 		public IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -2992,7 +1852,7 @@ namespace Zongsoft.Data
 			if(selected != null)
 				selected(context);
 
-			var result = this.ToEnumerable<T>(context.Result);
+			var result = ToEnumerable<T>(context.Result);
 
 			//处置上下文资源
 			context.Dispose();
@@ -3027,7 +1887,7 @@ namespace Zongsoft.Data
 			if(selected != null)
 				selected(context);
 
-			var result = this.ToEnumerable<T>(context.Result);
+			var result = ToEnumerable<T>(context.Result);
 
 			//处置上下文资源
 			context.Dispose();
@@ -3041,6 +1901,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 虚拟方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private string GetName<T>() => this.GetName(typeof(T));
 		protected virtual string GetName(Type type)
 		{
 			var name = _naming.Get(type);
@@ -3080,16 +1942,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnError(DataAccessErrorEventArgs args)
-		{
-			this.Error?.Invoke(this, args);
-		}
-
-		protected virtual void OnExecuted(DataExecuteContextBase context)
-		{
-			this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
-		}
-
+		protected virtual void OnError(DataAccessErrorEventArgs args) => this.Error?.Invoke(this, args);
+		protected virtual void OnExecuted(DataExecuteContextBase context) => this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
 		protected virtual bool OnExecuting(DataExecuteContextBase context)
 		{
 			var e = this.Executing;
@@ -3102,11 +1956,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnExisted(DataExistContextBase context)
-		{
-			this.Existed?.Invoke(this, new DataExistedEventArgs(context));
-		}
-
+		protected virtual void OnExisted(DataExistContextBase context) => this.Existed?.Invoke(this, new DataExistedEventArgs(context));
 		protected virtual bool OnExisting(DataExistContextBase context)
 		{
 			var e = this.Existing;
@@ -3119,11 +1969,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnAggregated(DataAggregateContextBase context)
-		{
-			this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
-		}
-
+		protected virtual void OnAggregated(DataAggregateContextBase context) => this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
 		protected virtual bool OnAggregating(DataAggregateContextBase context)
 		{
 			var e = this.Aggregating;
@@ -3136,11 +1982,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnIncremented(DataIncrementContextBase context)
-		{
-			this.Incremented?.Invoke(this, new DataIncrementedEventArgs(context));
-		}
-
+		protected virtual void OnIncremented(DataIncrementContextBase context) => this.Incremented?.Invoke(this, new DataIncrementedEventArgs(context));
 		protected virtual bool OnIncrementing(DataIncrementContextBase context)
 		{
 			var e = this.Incrementing;
@@ -3153,11 +1995,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnImported(DataImportContextBase context)
-		{
-			this.Imported?.Invoke(this, new DataImportedEventArgs(context));
-		}
-
+		protected virtual void OnImported(DataImportContextBase context) => this.Imported?.Invoke(this, new DataImportedEventArgs(context));
 		protected virtual bool OnImporting(DataImportContextBase context)
 		{
 			var e = this.Importing;
@@ -3170,11 +2008,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnDeleted(DataDeleteContextBase context)
-		{
-			this.Deleted?.Invoke(this, new DataDeletedEventArgs(context));
-		}
-
+		protected virtual void OnDeleted(DataDeleteContextBase context) => this.Deleted?.Invoke(this, new DataDeletedEventArgs(context));
 		protected virtual bool OnDeleting(DataDeleteContextBase context)
 		{
 			var e = this.Deleting;
@@ -3187,11 +2021,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnInserted(DataInsertContextBase context)
-		{
-			this.Inserted?.Invoke(this, new DataInsertedEventArgs(context));
-		}
-
+		protected virtual void OnInserted(DataInsertContextBase context) => this.Inserted?.Invoke(this, new DataInsertedEventArgs(context));
 		protected virtual bool OnInserting(DataInsertContextBase context)
 		{
 			var e = this.Inserting;
@@ -3204,11 +2034,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnUpserted(DataUpsertContextBase context)
-		{
-			this.Upserted?.Invoke(this, new DataUpsertedEventArgs(context));
-		}
-
+		protected virtual void OnUpserted(DataUpsertContextBase context) => this.Upserted?.Invoke(this, new DataUpsertedEventArgs(context));
 		protected virtual bool OnUpserting(DataUpsertContextBase context)
 		{
 			var e = this.Upserting;
@@ -3221,11 +2047,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnUpdated(DataUpdateContextBase context)
-		{
-			this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
-		}
-
+		protected virtual void OnUpdated(DataUpdateContextBase context) => this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
 		protected virtual bool OnUpdating(DataUpdateContextBase context)
 		{
 			var e = this.Updating;
@@ -3238,11 +2060,7 @@ namespace Zongsoft.Data
 			return args.Cancel;
 		}
 
-		protected virtual void OnSelected(DataSelectContextBase context)
-		{
-			this.Selected?.Invoke(this, new DataSelectedEventArgs(context));
-		}
-
+		protected virtual void OnSelected(DataSelectContextBase context) => this.Selected?.Invoke(this, new DataSelectedEventArgs(context));
 		protected virtual bool OnSelecting(DataSelectContextBase context)
 		{
 			var e = this.Selecting;
@@ -3258,16 +2076,7 @@ namespace Zongsoft.Data
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetName<T>()
-		{
-			return this.GetName(typeof(T));
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private IEnumerable<T> ToEnumerable<T>(object result)
-		{
-			return Collections.Enumerable.Enumerate<T>(result);
-		}
+		private static IEnumerable<T> ToEnumerable<T>(object result) => Collections.Enumerable.Enumerate<T>(result);
 		#endregion
 	}
 }
