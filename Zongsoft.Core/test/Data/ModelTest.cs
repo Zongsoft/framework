@@ -30,6 +30,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the IPerson interface.
 			var person = Model.Build<Zongsoft.Tests.IPerson>();
 			Assert.NotNull(person);
+			Assert.Equal(typeof(IPerson), Model.GetModelType(person));
 			this.TestPersonInterfaceCore(person);
 		}
 
@@ -39,6 +40,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the IEmployee interface.
 			var employee = Model.Build<Zongsoft.Tests.IEmployee>();
 			Assert.NotNull(employee);
+			Assert.Equal(typeof(IEmployee), Model.GetModelType(employee));
 			this.TestEmployeeInterfaceCore(employee);
 		}
 
@@ -48,6 +50,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the ICustomer interface.
 			var customer = Model.Build<Zongsoft.Tests.ICustomer>();
 			Assert.NotNull(customer);
+			Assert.Equal(typeof(ICustomer), Model.GetModelType(customer));
 			this.TestCustomerInterfaceCore(customer);
 		}
 
@@ -57,6 +60,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the ISpecialEmployee interface.
 			var special = Model.Build<Zongsoft.Tests.ISpecialEmployee>();
 			Assert.NotNull(special);
+			Assert.Equal(typeof(ISpecialEmployee), Model.GetModelType(special));
 			this.TestSpecialEmployeeInterfaceCore(special);
 		}
 
@@ -74,6 +78,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the PersonBase abstract class.
 			var person = Model.Build<Zongsoft.Tests.PersonBase>();
 			Assert.NotNull(person);
+			Assert.Equal(typeof(PersonBase), Model.GetModelType(person));
 			this.TestPersonClassCore(person);
 		}
 
@@ -83,6 +88,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the EmployeeBase abstract class.
 			var employee = Model.Build<Zongsoft.Tests.EmployeeBase>();
 			Assert.NotNull(employee);
+			Assert.Equal(typeof(EmployeeBase), Model.GetModelType(employee));
 			this.TestEmployeeClassCore(employee);
 		}
 
@@ -92,6 +98,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the CustomerBase abstract class.
 			var customer = Model.Build<Zongsoft.Tests.CustomerBase>();
 			Assert.NotNull(customer);
+			Assert.Equal(typeof(CustomerBase), Model.GetModelType(customer));
 			this.TestCustomerClassCore(customer);
 		}
 
@@ -101,6 +108,7 @@ namespace Zongsoft.Data.Tests
 			// Dynamically build an instance of the SpecialEmployeeBase abstract class.
 			var special = Model.Build<Zongsoft.Tests.SpecialEmployeeBase>();
 			Assert.NotNull(special);
+			Assert.Equal(typeof(SpecialEmployeeBase), Model.GetModelType(special));
 			this.TestSpecialEmployeeClassCore(special);
 		}
 		#endregion

@@ -46,14 +46,14 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 成员字段
-		private static readonly ReaderWriterLockSlim _locker = new ReaderWriterLockSlim();
-		private static readonly Dictionary<Type, Func<object>> _cache = new Dictionary<Type, Func<object>>();
+		private static readonly ReaderWriterLockSlim _locker = new();
+		private static readonly Dictionary<Type, Func<object>> _cache = new();
 
 		private static readonly AssemblyBuilder _assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndCollect);
 		private static readonly ModuleBuilder _module = _assembly.DefineDynamicModule(ASSEMBLY_NAME);
 
-		private static readonly ModelAbstractEmitter _abstractEmitter = new ModelAbstractEmitter(_module);
-		private static readonly ModelContractEmitter _contractEmitter = new ModelContractEmitter(_module);
+		private static readonly ModelAbstractEmitter _abstractEmitter = new(_module);
+		private static readonly ModelContractEmitter _contractEmitter = new(_module);
 		#endregion
 
 		#region 公共方法
@@ -63,25 +63,19 @@ namespace Zongsoft.Data
 			if(modelType == null)
 				return null;
 
-			if(Common.TypeExtension.IsNullable(modelType, out var underlyingType))
-				modelType = underlyingType;
-
 			if(modelType.Assembly.IsDynamic)
 			{
-				if(modelType.BaseType != null && modelType.BaseType != typeof(object))
-					return modelType.BaseType;
-
-				var contracts = modelType.GetInterfaces();
-
-				for(int i = 0; i < contracts.Length; i++)
+				//注意：由于 ModelTypeAttribute 是 internal 而非 public 可见性，
+				//导致 modelType.GetCustomAttribute(...) 和 Attribute.GetCustomAttribute(...) 方法获取不到注解，因而只能采用下面的方式获取。
+				foreach(var annotation in modelType.CustomAttributes)
 				{
-					var contract = contracts[i];
+					if(annotation.AttributeType == typeof(ModelTypeAttribute) && annotation.ConstructorArguments.Count > 0)
+					{
+						var argument = annotation.ConstructorArguments[0];
 
-					if(contract != typeof(IModel) &&
-					   contract != typeof(System.ComponentModel.INotifyPropertyChanged) &&
-					   contract != typeof(System.ComponentModel.INotifyPropertyChanging) &&
-					   contract != typeof(IDisposable) && contract != typeof(IAsyncDisposable))
-						return contract;
+						if(argument.Value != null && argument.Value is Type type)
+							return type;
+					}
 				}
 			}
 
@@ -279,11 +273,7 @@ namespace Zongsoft.Data
 		public class PropertyAttribute : Attribute
 		{
 			#region 构造函数
-			public PropertyAttribute()
-			{
-				this.Mode = PropertyImplementationMode.Default;
-			}
-
+			public PropertyAttribute() : this(PropertyImplementationMode.Default, null) { }
 			public PropertyAttribute(PropertyImplementationMode mode, Type type = null)
 			{
 				this.Mode = mode;
@@ -292,32 +282,21 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			/// <summary>
-			/// 获取扩展方法的静态类的类型或属性的具体类型，具体含义由<see cref="Mode"/>属性值确定。
-			/// </summary>
-			public Type Type
-			{
-				get;
-			}
+			/// <summary>获取扩展方法的静态类的类型或属性的具体类型，具体含义由<see cref="Mode"/>属性值确定。</summary>
+			public Type Type { get; }
 
-			/// <summary>
-			/// 获取或设置实体属性代码的实现方式。
-			/// </summary>
-			public PropertyImplementationMode Mode
-			{
-				get;
-				set;
-			}
+			/// <summary>获取或设置实体属性代码的实现方式。</summary>
+			public PropertyImplementationMode Mode { get; set; }
 
-			/// <summary>
-			/// 获取或设置属性是否以显式实现方式生成。
-			/// </summary>
-			public bool IsExplicitImplementation
-			{
-				get;
-				set;
-			}
+			/// <summary>获取或设置属性是否以显式实现方式生成。</summary>
+			public bool IsExplicitImplementation { get; set; }
 			#endregion
+		}
+
+		[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+		internal class ModelTypeAttribute(Type modelType) : Attribute
+		{
+			public readonly Type ModelType = modelType;
 		}
 		#endregion
 	}

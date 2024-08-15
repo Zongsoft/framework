@@ -66,10 +66,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护属性
-		protected ModuleBuilder Module
-		{
-			get => _module;
-		}
+		protected ModuleBuilder Module => _module;
 		#endregion
 
 		#region 公共方法
@@ -79,10 +76,13 @@ namespace Zongsoft.Data
 
 			//如果是首次编译，则首先生成属性标记类型
 			if(PROPERTY_TOKEN_TYPE == null)
-				GeneratePropertyTokenClass();
+				this.GeneratePropertyTokenClass();
 
 			//生成类型构建器
 			var builder = this.Build(type, GetClassName(type));
+
+			//生成模型类型的注解
+			GenerateModelTypeAnnotation(builder, type);
 
 			//获取数据模型的属性集，以及确认“INotifyPropertyChanged”接口的激发方法或事件字段
 			var properties = this.GetProperties(type, builder, out var propertyChanged);
@@ -105,32 +105,32 @@ namespace Zongsoft.Data
 				mask = builder.DefineField(MASK_VARIABLE, typeof(byte[]), FieldAttributes.Private);
 
 			//生成属性定义以及嵌套子类
-			GenerateProperties(builder, mask, properties, propertyChanged, out var methods);
+			this.GenerateProperties(builder, mask, properties, propertyChanged, out var methods);
 
 			//生成构造函数
 			GenerateConstructor(builder, countWritable, mask, properties);
 
 			//生成静态构造函数
-			GenerateTypeInitializer(builder, properties, methods, out var names, out var tokens);
+			this.GenerateTypeInitializer(builder, properties, methods, out var names, out var tokens);
 
 			//生成“GetCount”方法
-			GenerateGetCountMethod(builder, mask, countWritable);
+			this.GenerateGetCountMethod(builder, mask, countWritable);
 
 			//生成“Reset”方法
-			GenerateResetMethod(builder, mask, tokens);
-			GenerateResetManyMethod(builder, mask, tokens);
+			this.GenerateResetMethod(builder, mask, tokens);
+			this.GenerateResetManyMethod(builder, mask, tokens);
 
 			//生成“HasChanges”方法
-			GenerateHasChangesMethod(builder, mask, names, tokens);
+			this.GenerateHasChangesMethod(builder, mask, names, tokens);
 
 			//生成“GetChanges”方法
-			GenerateGetChangesMethod(builder, mask, names, tokens);
+			this.GenerateGetChangesMethod(builder, mask, names, tokens);
 
 			//生成“TryGetValue”方法
-			GenerateTryGetValueMethod(builder, mask, tokens);
+			this.GenerateTryGetValueMethod(builder, mask, tokens);
 
 			//生成“TrySetValue”方法
-			GenerateTrySetValueMethod(builder, tokens);
+			this.GenerateTrySetValueMethod(builder, tokens);
 
 			//构建类型
 			type = builder.CreateType();
@@ -1970,6 +1970,13 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
+		private static void GenerateModelTypeAnnotation(TypeBuilder builder, Type type)
+		{
+			var constructor = typeof(Model.ModelTypeAttribute).GetConstructor([typeof(Type)]);
+			var annotation = new CustomAttributeBuilder(constructor, [type]);
+			builder.SetCustomAttribute(annotation);
+		}
+
 		private static void LoadDefaultValue(ILGenerator generator, Type type, object value = null)
 		{
 			if(type.IsValueType && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -2288,77 +2295,17 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			public bool IsReadOnly
-			{
-				get
-				{
-					return _property.CanRead && !_property.CanWrite;
-				}
-			}
-
-			public bool CanRead
-			{
-				get
-				{
-					return _property.CanRead;
-				}
-			}
-
-			public bool CanWrite
-			{
-				get
-				{
-					return _property.CanWrite;
-				}
-			}
-
-			public string Name
-			{
-				get
-				{
-					return _property.Name;
-				}
-			}
-
-			public Type DeclaringType
-			{
-				get
-				{
-					return _property.DeclaringType;
-				}
-			}
-
-			public Type PropertyType
-			{
-				get
-				{
-					return _property.PropertyType;
-				}
-			}
-
-			public MethodInfo GetMethod
-			{
-				get
-				{
-					return _property.GetMethod;
-				}
-			}
-
-			public MethodInfo SetMethod
-			{
-				get
-				{
-					return _property.SetMethod;
-				}
-			}
-
-			public Model.PropertyAttribute Metadata
-			{
-				get
-				{
-					return _metadata;
-				}
-			}
+			public bool IsReadOnly => _property.CanRead && !_property.CanWrite;
+			public bool CanRead => _property.CanRead;
+			public bool CanWrite => _property.CanWrite;
+			public string Name => _property.Name;
+			public Type DeclaringType => _property.DeclaringType;
+			public Type PropertyType => _property.PropertyType;
+			public MethodInfo GetMethod => _property.GetMethod;
+			public MethodInfo SetMethod => _property.SetMethod;
+			public Model.PropertyAttribute Metadata => _metadata;
+			public bool HasDefaultValue => _defaultAttribute != null;
+			public DefaultValueAttribute DefaultValueAttribute => _defaultAttribute;
 
 			public bool SingletonFactoryEnabled
 			{
@@ -2374,52 +2321,27 @@ namespace Zongsoft.Data
 							_metadata.Type != null && _metadata.Type.IsAbstract && _metadata.Type.IsSealed);
 				}
 			}
-
-			public bool HasDefaultValue
-			{
-				get
-				{
-					return _defaultAttribute != null;
-				}
-			}
-
-			public DefaultValueAttribute DefaultValueAttribute
-			{
-				get
-				{
-					return _defaultAttribute;
-				}
-			}
 			#endregion
 
 			#region 公共方法
-			public string GetName()
-			{
-				return this.IsExplicitImplementation ?
-					   _property.DeclaringType.FullName + "." + _property.Name :
-					   _property.Name;
-			}
+			public string GetName() => this.IsExplicitImplementation ?
+			   _property.DeclaringType.FullName + '.' + _property.Name :
+			   _property.Name;
 
-			public string GetFieldName(string suffix = null)
-			{
-				return "$" + (this.IsExplicitImplementation ?
-					   _property.DeclaringType.FullName + "." + _property.Name :
-					   _property.Name) + suffix;
-			}
+			public string GetFieldName(string suffix = null) => '$' +
+				(this.IsExplicitImplementation ?
+				_property.DeclaringType.FullName + '.' + _property.Name :
+				_property.Name) + suffix;
 
-			public string GetGetterName()
-			{
-				return this.IsExplicitImplementation ?
-					   _property.DeclaringType.FullName + "." + _property.GetMethod.Name :
-					   _property.GetMethod.Name;
-			}
+			public string GetGetterName() => this.IsExplicitImplementation ?
+				_property.DeclaringType.FullName + '.' + _property.GetMethod.Name :
+				_property.GetMethod.Name;
 
-			public string GetSetterName()
-			{
-				return this.IsExplicitImplementation ?
-					   _property.DeclaringType.FullName + "." + _property.SetMethod.Name :
-					   _property.SetMethod.Name;
-			}
+			public string GetSetterName() => this.IsExplicitImplementation ?
+				_property.DeclaringType.FullName + '.' + _property.SetMethod.Name :
+				_property.SetMethod.Name;
+
+			public IList<CustomAttributeData> GetCustomAttributesData() => _property.GetCustomAttributesData();
 
 			public MethodInfo GetSingletonFactory()
 			{
@@ -2444,36 +2366,19 @@ namespace Zongsoft.Data
 
 				return method;
 			}
-
-			public IList<CustomAttributeData> GetCustomAttributesData()
-			{
-				return _property.GetCustomAttributesData();
-			}
 			#endregion
 		}
 
-		private struct MethodToken
+		private readonly struct MethodToken(MethodBuilder getMethod, MethodBuilder setMethod)
 		{
-			public MethodToken(MethodBuilder getMethod, MethodBuilder setMethod)
-			{
-				this.GetMethod = getMethod;
-				this.SetMethod = setMethod;
-			}
-
-			public readonly MethodBuilder GetMethod;
-			public readonly MethodBuilder SetMethod;
+			public readonly MethodBuilder GetMethod = getMethod;
+			public readonly MethodBuilder SetMethod = setMethod;
 		}
 		#endregion
 	}
 
-	internal class ModelContractEmitter : ModelEmitterBase
+	internal class ModelContractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
 	{
-		#region 构造函数
-		public ModelContractEmitter(ModuleBuilder module) : base(module)
-		{
-		}
-		#endregion
-
 		#region 重写方法
 		protected override TypeBuilder Build(Type type, string name)
 		{
@@ -2748,14 +2653,8 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	internal class ModelAbstractEmitter : ModelEmitterBase
+	internal class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
 	{
-		#region 构造函数
-		public ModelAbstractEmitter(ModuleBuilder module) : base(module)
-		{
-		}
-		#endregion
-
 		#region 重写方法
 		protected override TypeBuilder Build(Type type, string name)
 		{
@@ -2871,58 +2770,37 @@ namespace Zongsoft.Data
 			return propertyBuilder;
 		}
 
-		protected override MethodBuilder DefineResetMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
-				base.DefineResetMethod(builder);
-		}
+		protected override MethodBuilder DefineResetMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
+			base.DefineResetMethod(builder);
 
-		protected override MethodBuilder DefineResetManyMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string[]) }) :
-				base.DefineResetManyMethod(builder);
-		}
+		protected override MethodBuilder DefineResetManyMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string[]) }) :
+			base.DefineResetManyMethod(builder);
 
-		protected override MethodBuilder DefineGetCountMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ?
-				this.DefineOverrideMethod(builder, nameof(IModel.GetCount)) :
-				base.DefineGetCountMethod(builder);
-		}
+		protected override MethodBuilder DefineGetCountMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+			DefineOverrideMethod(builder, nameof(IModel.GetCount)) :
+			base.DefineGetCountMethod(builder);
 
-		protected override MethodBuilder DefineHasChangesMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.HasChanges), new Type[] { typeof(string[]) }) :
-				base.DefineHasChangesMethod(builder);
-		}
+		protected override MethodBuilder DefineHasChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.HasChanges), new Type[] { typeof(string[]) }) :
+			base.DefineHasChangesMethod(builder);
 
-		protected override MethodBuilder DefineGetChangesMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.GetChanges)) :
-				base.DefineGetChangesMethod(builder);
-		}
+		protected override MethodBuilder DefineGetChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.GetChanges)) :
+			base.DefineGetChangesMethod(builder);
 
-		protected override MethodBuilder DefineTryGetValueMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.TryGetValue), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
-				base.DefineTryGetValueMethod(builder);
-		}
+		protected override MethodBuilder DefineTryGetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.TryGetValue), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
+			base.DefineTryGetValueMethod(builder);
 
-		protected override MethodBuilder DefineTrySetValueMethod(TypeBuilder builder)
-		{
-			return IsImplement<IModel>(builder.BaseType) ? 
-				this.DefineOverrideMethod(builder, nameof(IModel.TrySetValue), new Type[] { typeof(string), typeof(object) }) :
-				base.DefineTrySetValueMethod(builder);
-		}
+		protected override MethodBuilder DefineTrySetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+			DefineOverrideMethod(builder, nameof(IModel.TrySetValue), new Type[] { typeof(string), typeof(object) }) :
+			base.DefineTrySetValueMethod(builder);
 		#endregion
 
 		#region 私有方法
-		private MethodBuilder DefineOverrideMethod(TypeBuilder builder, string name, Type[] parameterTypes = null)
+		private static MethodBuilder DefineOverrideMethod(TypeBuilder builder, string name, Type[] parameterTypes = null)
 		{
 			var method = Zongsoft.Common.TypeExtension.GetMethod(builder.BaseType, name, parameterTypes, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -2955,19 +2833,10 @@ namespace Zongsoft.Data
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private bool IsImplement<TContract>(Type type) where TContract : class
-		{
-			if(type == null)
-				return false;
-
-			return type.GetInterface(typeof(TContract).FullName) == typeof(TContract);
-		}
+		private static bool IsImplement<TContract>(Type type) where TContract : class => type != null && type.GetInterface(typeof(TContract).FullName) == typeof(TContract);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private MethodAttributes GetMethodModifier(MethodAttributes attributes)
-		{
-			return attributes & (MethodAttributes)7;
-		}
+		private static MethodAttributes GetMethodModifier(MethodAttributes attributes) => attributes & (MethodAttributes)7;
 		#endregion
 	}
 }
