@@ -30,8 +30,9 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-using Zongsoft.Collections;
+using Zongsoft.Services;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Metadata.Profiles;
@@ -42,7 +43,7 @@ namespace Zongsoft.Data
 	/// 提供数据访问操作的环境信息。
 	/// </summary>
 	[DefaultMember(nameof(Accessors))]
-	[Services.Service(Members = "Accessors,Filters")]
+	[Service(Members = $"{nameof(Accessors)},{nameof(Filters)}")]
 	public static class DataEnvironment
 	{
 		#region 成员字段
@@ -51,7 +52,7 @@ namespace Zongsoft.Data
 		private static IDataValidatorProvider _validators;
 		private static IDataPopulatorProviderFactory _populators;
 		private static readonly ICollection<IDataMetadataLoader> _loaders;
-		private static readonly INamedCollection<IDataDriver> _drivers;
+		private static readonly KeyedCollection<string, IDataDriver> _drivers;
 		private static readonly DataAccessFilterCollection _filters;
 		#endregion
 
@@ -62,7 +63,7 @@ namespace Zongsoft.Data
 			_providers = DataProviderFactory.Instance;
 			_validators = DataValidatorProvider.Instance;
 			_populators = DataPopulatorProviderFactory.Instance;
-			_drivers = new NamedCollection<IDataDriver>(p => p.Name, StringComparer.OrdinalIgnoreCase);
+			_drivers = new DataDriverCollection();
 			_filters = new DataAccessFilterCollection();
 			_loaders = new List<IDataMetadataLoader>() { MetadataFileLoader.Default };
 		}
@@ -94,7 +95,7 @@ namespace Zongsoft.Data
 		}
 
 		public static ICollection<IDataMetadataLoader> Loaders => _loaders;
-		public static INamedCollection<IDataDriver> Drivers => _drivers;
+		public static KeyedCollection<string, IDataDriver> Drivers => _drivers;
 		public static DataAccessFilterCollection Filters => _filters;
 		#endregion
 	}

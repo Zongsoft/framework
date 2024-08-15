@@ -113,12 +113,7 @@ namespace Zongsoft.Data.Common
 			get
 			{
 				if(_driver == null && !string.IsNullOrEmpty(_driverName))
-				{
-					if(DataEnvironment.Drivers.TryGet(_driverName, out var driver))
-						_driver = driver;
-					else
-						throw new DataException($"The '{_driverName}' data driver does not exist.");
-				}
+					_driver = DataEnvironment.Drivers.TryGetValue(_driverName, out var driver) ? driver : throw new DataException($"The '{_driverName}' data driver does not exist.");
 
 				return _driver;
 			}

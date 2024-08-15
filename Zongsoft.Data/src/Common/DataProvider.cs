@@ -252,27 +252,19 @@ namespace Zongsoft.Data.Common
 			return exception;
 		}
 
-		protected virtual void OnExecuting(IDataAccessContext context)
-		{
-			this.Executing?.Invoke(this, new DataAccessEventArgs(context));
-		}
-
-		protected virtual void OnExecuted(IDataAccessContext context)
-		{
-			this.Executed?.Invoke(this, new DataAccessEventArgs(context));
-		}
+		protected virtual void OnExecuting(IDataAccessContext context) => this.Executing?.Invoke(this, new DataAccessEventArgs(context));
+		protected virtual void OnExecuted(IDataAccessContext context) => this.Executed?.Invoke(this, new DataAccessEventArgs(context));
 		#endregion
 
 		#region 嵌套子类
-		private class DataAccessEventArgs : DataAccessEventArgs<IDataAccessContext>
+		private class DataAccessEventArgs(IDataAccessContext context) : DataAccessEventArgs<IDataAccessContext>(context)
 		{
-			public DataAccessEventArgs(IDataAccessContext context) : base(context) { }
 		}
 
 		private class DataExecutor : IDataExecutor
 		{
 			#region 单例字段
-			public static readonly DataExecutor Instance = new DataExecutor();
+			public static readonly DataExecutor Instance = new();
 			#endregion
 
 			#region 成员字段
@@ -308,10 +300,10 @@ namespace Zongsoft.Data.Common
 				var continued = statement switch
 				{
 					SelectStatement select => _select.Execute(context, select),
-					DeleteStatement delete => _delete.Execute(context, delete),
 					InsertStatement insert => _insert.Execute(context, insert),
 					UpdateStatement update => _update.Execute(context, update),
 					UpsertStatement upsert => _upsert.Execute(context, upsert),
+					DeleteStatement delete => _delete.Execute(context, delete),
 					ExistStatement exist => _exist.Execute(context, exist),
 					AggregateStatement aggregate => _aggregate.Execute(context, aggregate),
 					ExecutionStatement execution => _execution.Execute(context, execution),
@@ -330,10 +322,10 @@ namespace Zongsoft.Data.Common
 				var continued = statement switch
 				{
 					SelectStatement select => await _select.ExecuteAsync(context, select, cancellation),
-					DeleteStatement delete => await _delete.ExecuteAsync(context, delete, cancellation),
 					InsertStatement insert => await _insert.ExecuteAsync(context, insert, cancellation),
 					UpdateStatement update => await _update.ExecuteAsync(context, update, cancellation),
 					UpsertStatement upsert => await _upsert.ExecuteAsync(context, upsert, cancellation),
+					DeleteStatement delete => await _delete.ExecuteAsync(context, delete, cancellation),
 					ExistStatement exist => await _exist.ExecuteAsync(context, exist, cancellation),
 					AggregateStatement aggregate => await _aggregate.ExecuteAsync(context, aggregate, cancellation),
 					ExecutionStatement execution => await _execution.ExecuteAsync(context, execution, cancellation),
@@ -349,20 +341,16 @@ namespace Zongsoft.Data.Common
 			#endregion
 		}
 
-		private class DataMultiplexer : IDataMultiplexer
+		private class DataMultiplexer(string name) : IDataMultiplexer
 		{
 			#region 成员字段
-			private readonly string _name;
+			private readonly string _name = name;
 			private IDataSourceSelector _selector;
-			#endregion
-
-			#region 构造函数
-			public DataMultiplexer(string name) => _name = name;
 			#endregion
 
 			#region 公共属性
 			public IDataSourceProvider Provider => DataSourceProvider.Default;
-			public IDataSourceSelector Selector { get; }
+			public IDataSourceSelector Selector => _selector;
 			#endregion
 
 			#region 公共方法
