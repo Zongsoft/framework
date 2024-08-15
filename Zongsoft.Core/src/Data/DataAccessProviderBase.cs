@@ -30,6 +30,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
@@ -40,13 +41,13 @@ namespace Zongsoft.Data
 	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, IServiceProvider<TDataAccess>, ICollection<TDataAccess> where TDataAccess : class, IDataAccess
 	{
 		#region 成员字段
-		private readonly Collections.INamedCollection<TDataAccess> _accesses;
+		private readonly DataAccessCollection _accesses;
 		#endregion
 
 		#region 构造函数
 		protected DataAccessProviderBase()
 		{
-			_accesses = new Collections.NamedCollection<TDataAccess>(p => p.Name, StringComparer.OrdinalIgnoreCase);
+			_accesses = new DataAccessCollection();
 		}
 		#endregion
 
@@ -59,12 +60,12 @@ namespace Zongsoft.Data
 		{
 			name = GetName(name);
 
-			if(_accesses.TryGet(name, out var accessor))
+			if(_accesses.TryGetValue(name, out var accessor))
 				return accessor;
 
 			lock(_accesses)
 			{
-				if(_accesses.TryGet(name, out accessor))
+				if(_accesses.TryGetValue(name, out accessor))
 					return accessor;
 
 				_accesses.Add(accessor = this.CreateAccessor(name));
@@ -86,7 +87,7 @@ namespace Zongsoft.Data
 				}
 			}
 
-			if(_accesses.TryGet(name, out var result))
+			if(_accesses.TryGetValue(name, out var result))
 			{
 				accessor = result;
 				return true;
@@ -150,6 +151,13 @@ namespace Zongsoft.Data
 		#region 枚举遍历
 		public IEnumerator<TDataAccess> GetEnumerator() => _accesses.GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => _accesses.GetEnumerator();
+		#endregion
+
+		#region 嵌套子类
+		private class DataAccessCollection() : KeyedCollection<string, TDataAccess>(StringComparer.OrdinalIgnoreCase)
+		{
+			protected override string GetKeyForItem(TDataAccess accessor) => accessor.Name;
+		}
 		#endregion
 	}
 }
