@@ -52,13 +52,12 @@ public class ScribanExpressionParser : IExpressionParser
 	#endregion
 
 	#region 解析方法
-	public IExpression Parse(ReadOnlySpan<char> text) => new ScribanExpression(Template.Parse(text.ToString(), null, null, new LexerOptions() { Mode = ScriptMode.ScriptOnly }));
+	public IExpression Parse(ReadOnlySpan<char> text) => new ScribanExpression(Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions));
 	public bool TryParse(ReadOnlySpan<char> text, out IExpression result)
 	{
 		try
 		{
-			var template = Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions);
-			result = new ScribanExpression(template);
+			result = new ScribanExpression(Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions));
 			return true;
 		}
 		catch
