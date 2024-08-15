@@ -35,10 +35,7 @@ namespace Zongsoft.Data
 	public class ModelAttribute : Attribute
 	{
 		#region 构造函数
-		public ModelAttribute(string name)
-		{
-			this.Name = name;
-		}
+		public ModelAttribute(string name) => this.Name = name;
 		#endregion
 
 		#region 公共属性
