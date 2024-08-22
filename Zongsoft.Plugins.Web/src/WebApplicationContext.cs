@@ -134,7 +134,7 @@ namespace Zongsoft.Web
 			{
 				var assemblies = plugin.Manifest.Assemblies;
 
-				for(int i = 0; i < assemblies.Length; i++)
+				for(int i = 0; i < assemblies.Count; i++)
 				{
 					if(IsWebAssembly(assemblies[i]))
 						parts.Add(new AssemblyPart(assemblies[i]));

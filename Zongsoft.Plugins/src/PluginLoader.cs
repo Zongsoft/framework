@@ -38,7 +38,7 @@ namespace Zongsoft.Plugins
 	/// 关于插件加载的功能。
 	/// </summary>
 	/// <remarks>
-	///		<para>插件加载器根据一系列策略进行插件加载，可以通过<seealso cref="Zongsoft.Plugins.PluginLoader.Plugins"/>或<seealso cref="Zongsoft.Plugins.PluginTree.Plugins"/>属性获取加载成功的所有根插件集。</para>
+	///		<para>插件加载器根据一系列策略进行插件加载，可以通过<seealso cref="Zongsoft.Plugins.PluginLoader.Topmosts"/>或<seealso cref="Zongsoft.Plugins.PluginTree.Plugins"/>属性获取加载成功的所有根插件集。</para>
 	///		<para>关于插件加载中的相关定义如下：</para>
 	///		<list type="table">
 	///			<item>
@@ -126,20 +126,20 @@ namespace Zongsoft.Plugins
 
 		#region 成员字段
 		private readonly PluginResolver _resolver;
-		private readonly PluginCollection _plugins;
+		private readonly PluginCollection _topmosts;
 		#endregion
 
 		#region 构造函数
 		internal PluginLoader(PluginResolver resolver)
 		{
 			_resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-			_plugins = new PluginCollection();
+			_topmosts = new PluginCollection();
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取加载的根插件对象集。</summary>
-		public PluginCollection Plugins => _plugins;
+		/// <summary>获取加载的顶级插件对象集。</summary>
+		public PluginCollection Topmosts => _topmosts;
 		#endregion
 
 		#region 加载方法
@@ -165,13 +165,13 @@ namespace Zongsoft.Plugins
 				this.OnLoading(new PluginLoadEventArgs(options));
 
 				//清空插件列表
-				_plugins.Clear();
+				_topmosts.Clear();
 
 				//预加载插件目录下的所有插件文件
 				this.PreloadPluginFiles(options.PluginsPath, null, options);
 
 				//正式加载所有插件
-				this.LoadPlugins(_plugins, options);
+				this.LoadPlugins(_topmosts, options);
 
 				//激发“Loaded”事件
 				this.OnLoaded(new PluginLoadEventArgs(options));
@@ -186,11 +186,11 @@ namespace Zongsoft.Plugins
 		/// <summary>卸载所有插件。</summary>
 		internal void Unload()
 		{
-			if(_plugins == null || _plugins.Count < 1)
+			if(_topmosts == null || _topmosts.Count < 1)
 				return;
 
-			var plugins = new Plugin[_plugins.Count];
-			_plugins.CopyTo(plugins, 0);
+			var plugins = new Plugin[_topmosts.Count];
+			_topmosts.CopyTo(plugins, 0);
 
 			foreach(var plugin in plugins)
 			{
@@ -224,7 +224,7 @@ namespace Zongsoft.Plugins
 			}
 
 			//获取指定插件的直隶从属插件集
-			IEnumerable<Plugin> slaves = plugin.GetSlaves(false);
+			var slaves = plugin.GetSlaves(false);
 
 			//递归卸载附属插件
 			foreach(Plugin slave in slaves)
@@ -242,8 +242,8 @@ namespace Zongsoft.Plugins
 			this.UnloadFixedElements(plugin);
 
 			//将指定卸载的插件从当前根插件列表中删除
-			if(_plugins != null && plugin.Parent == null)
-				_plugins.Remove(plugin.Name);
+			if(_topmosts != null && plugin.Parent == null)
+				_topmosts.Remove(plugin.Name);
 
 			//设置插件状态
 			plugin.Status = PluginStatus.Unloaded;
@@ -355,16 +355,16 @@ namespace Zongsoft.Plugins
 
 			if(parent == null)
 			{
-				if(_plugins.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
+				if(_topmosts.Any(p => string.Equals(p.Name, plugin.Name, StringComparison.OrdinalIgnoreCase)))
 					throw new PluginFileException(plugin.FilePath, $"The name is '{plugin.Name}' of plugin was exists. it's path is: '{plugin.FilePath}'");
 
 				//将预加载的插件对象加入到根插件的集合中
-				_plugins.Add(plugin);
+				_topmosts.Add(plugin);
 			}
 			else
 			{
 				//将预加载的插件对象加入到父插件的子集中，如果返回假则表示加载失败
-				if(!parent.Children.Add(plugin, false))
+				if(!parent.Children.TryAdd(plugin))
 					throw new PluginFileException(plugin.FilePath, $"The name is '{plugin.Name}' of plugin was exists. it's path is: '{plugin.FilePath}'");
 			}
 
@@ -393,7 +393,7 @@ namespace Zongsoft.Plugins
 			catch(Exception ex)
 			{
 				if(plugin.Parent == null)
-					_plugins.Remove(plugin.Name);
+					_topmosts.Remove(plugin.Name);
 				else
 					plugin.Parent.Children.Remove(plugin.Name);
 
@@ -415,7 +415,7 @@ namespace Zongsoft.Plugins
 				//确保同级插件栈内的所有插件一定都是未加载的插件
 				if(plugin.Status == PluginStatus.Loading)
 				{
-					//如果是隐藏式插件，则先忽略它，放待最后再来加载
+					//如果是隐藏式插件，则先忽略它，待最后再来加载
 					if(plugin.IsHidden)
 					{
 						hidden = plugin;
@@ -423,7 +423,7 @@ namespace Zongsoft.Plugins
 					else
 					{
 						this.TryPushToStack(plugin, stack);
-						this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), options);
+						this.LoadPlugin(stack, plugins.Find, options);
 					}
 				}
 			}
@@ -439,7 +439,7 @@ namespace Zongsoft.Plugins
 			if(hidden != null)
 			{
 				this.TryPushToStack(hidden, stack);
-				this.LoadPlugin(stack, pluginName => (plugins.TryGet(pluginName, out var found) ? found : null), options);
+				this.LoadPlugin(stack, plugins.Find, options);
 			}
 		}
 
