@@ -30,7 +30,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace Zongsoft.Plugins
 {
@@ -51,18 +50,12 @@ namespace Zongsoft.Plugins
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		}
 
-		/// <summary>
-		/// 构造插件设置对象。
-		/// </summary>
+		/// <summary>构造插件设置对象。</summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="environmentName">指定的环境名。</param>
-		public PluginOptions(string applicationDirectory, string environmentName) : this(applicationDirectory, environmentName, null)
-		{
-		}
+		public PluginOptions(string applicationDirectory, string environmentName) : this(applicationDirectory, environmentName, null) { }
 
-		/// <summary>
-		/// 构造插件设置对象。
-		/// </summary>
+		/// <summary>构造插件设置对象。</summary>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="pluginsDirectoryName">插件目录名，非完整路径。默认为“plugins”。</param>
 		/// <param name="environmentName">指定的环境名。</param>
@@ -93,19 +86,13 @@ namespace Zongsoft.Plugins
 		#region 公共属性
 		public string EnvironmentName { get; }
 
-		/// <summary>
-		/// 获取应用程序目录的完全限定路径，该属性值由构造函数注入。
-		/// </summary>
+		/// <summary>获取应用程序目录的完全限定路径，该属性值由构造函数注入。</summary>
 		public string ApplicationDirectory { get; }
 
-		/// <summary>
-		/// 获取插件目录的完全限定路径。
-		/// </summary>
+		/// <summary>获取插件目录的完全限定路径。</summary>
 		public string PluginsPath { get; }
 
-		/// <summary>
-		/// 获取扩展属性集。
-		/// </summary>
+		/// <summary>获取扩展属性集。</summary>
 		public IDictionary<string, object> Properties { get; }
 		#endregion
 
@@ -128,38 +115,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		public bool Equals(PluginOptions other)
-		{
-			if(other == null)
-				return false;
-
-			var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD) ?
-				StringComparison.Ordinal :
-				StringComparison.OrdinalIgnoreCase;
-
-			return string.Equals(this.PluginsPath, other.PluginsPath, comparison);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((PluginOptions)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-				return HashCode.Combine(this.PluginsPath);
-			else
-				return HashCode.Combine(this.PluginsPath.ToLowerInvariant());
-		}
-
-		public override string ToString()
-		{
-			return this.PluginsPath;
-		}
+		public bool Equals(PluginOptions other) => other != null && string.Equals(this.PluginsPath, other.PluginsPath);
+		public override bool Equals(object obj) => obj is PluginOptions other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.PluginsPath);
+		public override string ToString() => this.PluginsPath;
 		#endregion
 	}
 }

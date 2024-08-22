@@ -57,7 +57,7 @@ namespace Zongsoft.Plugins
 			if(plugin == null)
 				throw new ArgumentNullException(nameof(plugin));
 
-			using(XmlReader reader = this.GetReader(plugin.FilePath))
+			using(XmlReader reader = GetReader(plugin.FilePath))
 			{
 				if(reader == null)
 					return;
@@ -75,7 +75,7 @@ namespace Zongsoft.Plugins
 
 				plugin.Manifest.Author = reader.GetAttribute("author");
 				plugin.Manifest.Title = reader.GetAttribute("title");
-				plugin.Manifest.Version = this.ParseVersion(reader.GetAttribute("version"));
+				plugin.Manifest.Version = ParseVersion(reader.GetAttribute("version"));
 				plugin.Manifest.Copyright = reader.GetAttribute("copyright");
 				plugin.Manifest.Description = reader.GetAttribute("description");
 
@@ -87,16 +87,16 @@ namespace Zongsoft.Plugins
 					switch(reader.Name)
 					{
 						case "manifest":
-							this.MoveToEndElement(reader);
+							MoveToEndElement(reader);
 							break;
 						case "parsers":
-							this.ResolveParsers(reader, plugin);
+							ResolveParsers(reader, plugin);
 							break;
 						case "builders":
-							this.ResolveBuilders(reader, plugin);
+							ResolveBuilders(reader, plugin);
 							break;
 						case "extension":
-							this.ResolveExtension(reader, plugin);
+							ResolveExtension(reader, plugin);
 							break;
 						default:
 							throw new PluginFileException("Invalid '" + reader.Name + "' of element in this plugin file.");
@@ -107,7 +107,7 @@ namespace Zongsoft.Plugins
 
 		public Plugin ResolvePluginOnlyManifest(string filePath, Plugin parent)
 		{
-			using(XmlReader reader = this.GetReader(filePath))
+			using(XmlReader reader = GetReader(filePath))
 			{
 				if(reader == null)
 					return null;
@@ -128,7 +128,7 @@ namespace Zongsoft.Plugins
 
 				plugin.Manifest.Author = reader.GetAttribute("author");
 				plugin.Manifest.Title = reader.GetAttribute("title");
-				plugin.Manifest.Version = this.ParseVersion(reader.GetAttribute("version"));
+				plugin.Manifest.Version = ParseVersion(reader.GetAttribute("version"));
 				plugin.Manifest.Copyright = reader.GetAttribute("copyright");
 				plugin.Manifest.Description = reader.GetAttribute("description");
 
@@ -140,7 +140,7 @@ namespace Zongsoft.Plugins
 					switch(reader.Name)
 					{
 						case "manifest":
-							this.ResolveManifest(reader, plugin);
+							ResolveManifest(reader, plugin);
 
 							if(reader.NodeType == XmlNodeType.EndElement)
 								reader.Read();
@@ -167,7 +167,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 局部解析
-		private void ResolveManifest(XmlReader reader, Plugin plugin)
+		private static void ResolveManifest(XmlReader reader, Plugin plugin)
 		{
 			if(reader.Name != "manifest")
 				return;
@@ -179,13 +179,13 @@ namespace Zongsoft.Plugins
 				switch(reader.Name)
 				{
 					case "assemblies":
-						this.ResolveAssemblies(reader.ReadSubtree(), plugin);
+						ResolveAssemblies(reader.ReadSubtree(), plugin);
 						break;
 					case "dependencies":
 						if(plugin.IsHidden)
 							throw new PluginFileException($"The dependencies cannot be defined in the '{plugin.FilePath}' hidden plugin file.");
 
-						this.ResolveDependencies(reader.ReadSubtree(), plugin);
+						ResolveDependencies(reader.ReadSubtree(), plugin);
 						break;
 					default:
 						throw new PluginFileException("Invalid '" + reader.Name + "' of Manifest element in this plugin file.");
@@ -193,7 +193,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		private void ResolveAssemblies(XmlReader reader, Plugin plugin)
+		private static void ResolveAssemblies(XmlReader reader, Plugin plugin)
 		{
 			if(reader.ReadState == ReadState.Initial)
 				reader.Read();
@@ -213,7 +213,7 @@ namespace Zongsoft.Plugins
 			} while(reader.ReadToNextSibling("assembly"));
 		}
 
-		private void ResolveDependencies(XmlReader reader, Plugin plugin)
+		private static void ResolveDependencies(XmlReader reader, Plugin plugin)
 		{
 			if(reader.ReadState == ReadState.Initial)
 				reader.Read();
@@ -230,7 +230,7 @@ namespace Zongsoft.Plugins
 			} while(reader.ReadToNextSibling("dependency"));
 		}
 
-		private void ResolveParsers(XmlReader reader, Plugin plugin)
+		private static void ResolveParsers(XmlReader reader, Plugin plugin)
 		{
 			if(reader.Name == "parsers")
 				reader.Read();
@@ -244,7 +244,7 @@ namespace Zongsoft.Plugins
 			} while(reader.ReadToNextSibling("parser"));
 		}
 
-		private void ResolveBuilders(XmlReader reader, Plugin plugin)
+		private static void ResolveBuilders(XmlReader reader, Plugin plugin)
 		{
 			if(reader.Name == "builders")
 				reader.Read();
@@ -276,7 +276,7 @@ namespace Zongsoft.Plugins
 
 					if(reader.NodeType == XmlNodeType.Element)
 					{
-						if(this.IsExtendElement(reader.Name))
+						if(IsExtendElement(reader.Name))
 							this.ResolveExtendedElement(reader, plugin, path);
 						else
 							this.ResolveBuiltin(reader, plugin, path);
@@ -324,10 +324,10 @@ namespace Zongsoft.Plugins
 						if(builtin.BuiltinType == null)
 							throw new PluginException(string.Format("This '{0}' ExtendElement dependencied builtin-type is null.", reader.Name));
 
-						this.ResolveBuiltinConstructor(reader, builtin.BuiltinType.Constructor);
+						ResolveBuiltinConstructor(reader, builtin.BuiltinType.Constructor);
 						break;
 					default:
-						this.ResolveBuiltinBehavior(reader, builtin, parts[1]);
+						ResolveBuiltinBehavior(reader, builtin, parts[1]);
 						break;
 				}
 			}
@@ -365,7 +365,7 @@ namespace Zongsoft.Plugins
 			if(reader == null || reader.NodeType != XmlNodeType.Element)
 				return null;
 
-			Builtin builtin = plugin.CreateBuiltin(reader.Name, reader.GetAttribute("name"));
+			var builtin = plugin.CreateBuiltin(reader.Name, reader.GetAttribute("name"));
 
 			//设置当前构件的其他属性并将构件对象挂载到插件树中，该方法不会引起读取器的位置或状态变化。
 			this.UpdateBuiltin(path, builtin, reader);
@@ -403,7 +403,7 @@ namespace Zongsoft.Plugins
 			{
 				if(reader.NodeType == XmlNodeType.Element)
 				{
-					if(this.IsExtendElement(reader.Name))
+					if(IsExtendElement(reader.Name))
 						this.ResolveExtendedElement(reader, builtin);
 					else
 						this.ResolveBuiltin(reader, builtin);
@@ -447,7 +447,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 私有方法
-		private void ResolveBuiltinConstructor(XmlReader reader, BuiltinTypeConstructor constructor)
+		private static void ResolveBuiltinConstructor(XmlReader reader, BuiltinTypeConstructor constructor)
 		{
 			try
 			{
@@ -478,7 +478,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		private void ResolveBuiltinBehavior(XmlReader reader, Builtin builtin, string behaviorName)
+		private static void ResolveBuiltinBehavior(XmlReader reader, Builtin builtin, string behaviorName)
 		{
 			var behavior = builtin.Behaviors.Add(behaviorName);
 
@@ -505,7 +505,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		private XmlReader GetReader(string filePath)
+		private static XmlReader GetReader(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
 				throw new ArgumentNullException("filePath");
@@ -525,7 +525,7 @@ namespace Zongsoft.Plugins
 			return XmlReader.Create(filePath, settings);
 		}
 
-		private Version ParseVersion(string version)
+		private static Version ParseVersion(string version)
 		{
 			if(string.IsNullOrWhiteSpace(version))
 				return new Version(1, 0);
@@ -533,7 +533,7 @@ namespace Zongsoft.Plugins
 			return new Version(version);
 		}
 
-		private void MoveToEndElement(XmlReader reader)
+		private static void MoveToEndElement(XmlReader reader)
 		{
 			if(reader == null || reader.ReadState != ReadState.Interactive || reader.IsEmptyElement)
 				return;
@@ -547,7 +547,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		private bool IsExtendElement(string elementName)
+		private static bool IsExtendElement(string elementName)
 		{
 			if(string.IsNullOrWhiteSpace(elementName))
 				throw new ArgumentNullException("elementName");

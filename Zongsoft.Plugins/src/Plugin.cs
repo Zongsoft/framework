@@ -39,7 +39,7 @@ namespace Zongsoft.Plugins
 	/// <summary>
 	/// 关于插件的描述信息。
 	/// </summary>
-	public class Plugin
+	public class Plugin : IEquatable<Plugin>
 	{
 		#region 成员字段
 		private readonly PluginTree _pluginTree;
@@ -57,9 +57,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		/// <summary>
-		/// 创建插件对象。
-		/// </summary>
+		/// <summary>创建插件对象。</summary>
 		/// <param name="pluginTree">依附的插件树对象。</param>
 		/// <param name="name">插件名称，该名称必须在同级插件中唯一。</param>
 		/// <param name="filePath">插件文件路径(完整路径)。</param>
@@ -90,37 +88,29 @@ namespace Zongsoft.Plugins
 
 		#region 公共属性
 		/// <summary>获取插件树对象。</summary>
-		public PluginTree PluginTree { get => _pluginTree;}
+		public PluginTree PluginTree => _pluginTree;
 
 		/// <summary>获取插件名。</summary>
-		public string Name { get => _name; }
+		public string Name => _name;
 
 		/// <summary>获取插件的文件路径，该属性值为完全限定路径格式，即包含完整路径和文件名。</summary>
-		public string FilePath { get => _filePath; }
+		public string FilePath => _filePath;
 
 		/// <summary>获取插件清单描述对象。</summary>
-		public PluginManifest Manifest { get => _manifest; }
+		public PluginManifest Manifest => _manifest;
 
-		/// <summary>
-		/// 获取当前插件是否为隐藏式插件文件。
-		/// </summary>
+		/// <summary>获取当前插件是否为隐藏式插件文件。</summary>
 		/// <remarks>
 		///		<para>注意：隐藏式插件不可成为主插件，即对应的<see cref="IsMaster"/>属性始终为假(False)。</para>
 		///		<para>注意：隐藏式插件文件中不能定义依赖项。</para>
 		/// </remarks>
-		public bool IsHidden { get => _isHidden; }
+		public bool IsHidden => _isHidden;
 
 		/// <summary>获取当前插件是否为主插件，即没有依赖项的插件。</summary>
-		public bool IsMaster
-		{
-			get => (!_isHidden) && (this.Manifest.Dependencies == null || this.Manifest.Dependencies.Count < 1);
-		}
+		public bool IsMaster => (!_isHidden) && (this.Manifest.Dependencies == null || this.Manifest.Dependencies.Count < 1);
 
 		/// <summary>获取当前插件是否为从插件，即含有依赖项的插件。</summary>
-		public bool IsSlave
-		{
-			get => _isHidden || (this.Manifest.Dependencies != null && this.Manifest.Dependencies.Count > 0);
-		}
+		public bool IsSlave => _isHidden || (this.Manifest.Dependencies != null && this.Manifest.Dependencies.Count > 0);
 
 		/// <summary>取当前插件的状态。</summary>
 		public PluginStatus Status
@@ -129,42 +119,33 @@ namespace Zongsoft.Plugins
 			internal set => _status = value;
 		}
 
-		/// <summary>
-		/// 获取当前插件的父插件对象。
-		/// </summary>
+		/// <summary>获取当前插件的父插件对象。</summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
-		public Plugin Parent { get => _parent; }
+		public Plugin Parent => _parent;
 
 		/// <summary>获取一个值，指示当前插件是否具有子插件集。</summary>
-		public bool HasChildren { get => _children != null && _children.Count > 0; }
+		public bool HasChildren => _children != null && _children.Count > 0;
 
-		/// <summary>
-		/// 获取当前插件的子插件集合。
-		/// </summary>
+		/// <summary>获取当前插件的子插件集合。</summary>
 		/// <remarks>关于父插件定义和父插件的搜索策略，请参考<seealso cref="Zongsoft.Plugins.PluginLoader"/>类的帮助。</remarks>
-		public PluginCollection Children { get => _children; }
+		public PluginCollection Children => _children;
 
 		/// <summary>获取当前插件中的所有构件对象。</summary>
-		public Builtin[] Builtins { get => _builtins.ToArray(); }
+		public IReadOnlyList<Builtin> Builtins => _builtins;
 
 		/// <summary>获取当前插件的所有构建器集合。</summary>
-		public BuilderElementCollection Builders { get => _builders; }
+		public BuilderElementCollection Builders => _builders;
 
 		/// <summary>获取当前插件的所有解析器元素集合。</summary>
-		public FixedElementCollection<IParser> Parsers { get => _parsers; }
+		public FixedElementCollection<IParser> Parsers => _parsers;
 		#endregion
 
 		#region 内部属性
-		internal IList<Builtin> InnerBuiltins
-		{
-			get => _builtins;
-		}
+		internal IList<Builtin> InnerBuiltins => _builtins;
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 获取指定构件的构建器。
-		/// </summary>
+		/// <summary>获取指定构件的构建器。</summary>
 		/// <param name="scheme">指定的构建器名称。</param>
 		/// <returns>如果找到对应的构建器则返回构建器对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(null)或空白字符。</exception>
@@ -189,9 +170,7 @@ namespace Zongsoft.Plugins
 				return null;
 		}
 
-		/// <summary>
-		/// 获取指定构件的解析器。
-		/// </summary>
+		/// <summary>获取指定构件的解析器。</summary>
 		/// <param name="scheme">指定的解析器名称。</param>
 		/// <returns>如果找到对应的解析器则返回解析器对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(null)或空白字符。</exception>
@@ -255,46 +234,34 @@ namespace Zongsoft.Plugins
 				return null;
 		}
 
-		/// <summary>
-		/// 获取当前插件的所有同级兄弟插件。
-		/// </summary>
+		/// <summary>获取当前插件的所有同级兄弟插件。</summary>
 		/// <returns>返回的同级兄弟插件集合，该结果集中始终不包含当前插件对象。</returns>
-		public IEnumerable<Plugin> GetSiblings()
-		{
-			return this.GetSiblings(true, true);
-		}
+		public IEnumerable<Plugin> GetSiblings() => this.GetSiblings(true, true);
 
-		/// <summary>
-		/// 获取当前插件的同级兄弟插件。
-		/// </summary>
+		/// <summary>获取当前插件的同级兄弟插件。</summary>
 		/// <param name="containsMasters">指示返回的插件集是否包含类型为主插件的兄弟插件。</param>
 		/// <param name="containsSlaves">指示返回的插件集是否包含类型为从插件的兄弟插件。</param>
 		/// <returns>返回的同级兄弟插件集合，该结果集中始终不包含当前插件对象。</returns>
-		public IEnumerable<Plugin> GetSiblings(bool containsMasters, bool containsSlaves)
+		public IEnumerable<Plugin> GetSiblings(bool containsMasters, bool containsSlaves) => this.GetSiblings(sibling =>
 		{
-			return this.GetSiblings(sibling =>
-			{
-				if(containsMasters && containsSlaves)
-					return true;
+			if(containsMasters && containsSlaves)
+				return true;
 
-				if(containsMasters)
-					return sibling.IsMaster;
-				if(containsSlaves)
-					return sibling.IsSlave;
+			if(containsMasters)
+				return sibling.IsMaster;
+			if(containsSlaves)
+				return sibling.IsSlave;
 
-				return false;
-			});
-		}
+			return false;
+		});
 
-		/// <summary>
-		/// 根据指定的判断依据获取当前插件的同级兄弟插件。
-		/// </summary>
+		/// <summary>根据指定的判断依据获取当前插件的同级兄弟插件。</summary>
 		/// <param name="match">指定要搜索的同级插件的条件，该委托返回真(True)表示传入同级插件对象符合过滤条件，否则将其排除在外。</param>
 		/// <returns>返回的同级兄弟插件集合，该结果集中始终不包含当前插件对象。</returns>
 		public IEnumerable<Plugin> GetSiblings(Predicate<Plugin> match)
 		{
-			IEnumerable<Plugin> source = (_parent == null ? _pluginTree.Plugins : _parent.Children);
-			List<Plugin> siblings = new List<Plugin>();
+			var source = (_parent == null ? _pluginTree.Plugins : _parent.Children);
+			var siblings = new List<Plugin>();
 
 			foreach(var item in source)
 			{
@@ -305,12 +272,10 @@ namespace Zongsoft.Plugins
 					siblings.Add(item);
 			}
 
-			return siblings.ToArray();
+			return siblings;
 		}
 
-		/// <summary>
-		/// 搜索当前插件的主插件集。
-		/// </summary>
+		/// <summary>搜索当前插件的主插件集。</summary>
 		/// <returns>包含当前插件依赖项中的主插件集合，如果当前插件为主插件则返回空集。</returns>
 		/// <exception cref="System.InvalidOperationException">当插件树尚未初始化，即<seealso cref="Zongsoft.Plugins.PluginTree.Status"/>属性值为<seealso cref="Zongsoft.Plugins.PluginTreeStatus.None"/>时。</exception>
 		public ICollection<Plugin> GetMasters()
@@ -321,7 +286,7 @@ namespace Zongsoft.Plugins
 			if(this.IsMaster)
 				return Array.Empty<Plugin>();
 
-			List<Plugin> masters = new List<Plugin>();
+			var masters = new List<Plugin>();
 			this.AddMasters(this, masters);
 			return masters;
 		}
@@ -340,29 +305,22 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 搜索当前插件的直隶附属插件集。
-		/// </summary>
+		/// <summary>搜索当前插件的直隶附属插件集。</summary>
 		/// <returns>只包含当前插件的直隶附属插件集合。</returns>
 		/// <exception cref="System.InvalidOperationException">当插件树尚未初始化，即<seealso cref="Zongsoft.Plugins.PluginTree.Status"/>属性值为<seealso cref="Zongsoft.Plugins.PluginTreeStatus.None"/>时。</exception>
-		public Plugin[] GetSlaves()
-		{
-			return this.GetSlaves(false);
-		}
+		public IReadOnlyList<Plugin> GetSlaves() => this.GetSlaves(false);
 
-		/// <summary>
-		/// 搜索当前插件的附属插件集。
-		/// </summary>
+		/// <summary>搜索当前插件的附属插件集。</summary>
 		/// <param name="containsAll">指示返回的结果集中是否要包含所有的间接被依赖项。</param>
 		/// <returns>包含满足搜索选项的附属插件集合。</returns>
 		/// <exception cref="System.InvalidOperationException">当插件树尚未初始化，即<seealso cref="Zongsoft.Plugins.PluginTree.Status"/>属性值为<seealso cref="Zongsoft.Plugins.PluginTreeStatus.None"/>时。</exception>
-		public Plugin[] GetSlaves(bool containsAll)
+		public IReadOnlyList<Plugin> GetSlaves(bool containsAll)
 		{
 			if(_pluginTree.Status == PluginTreeStatus.None)
 				throw new InvalidOperationException();
 
-			List<Plugin> slaves = new List<Plugin>();
-			IEnumerable<Plugin> siblings = this.GetSiblings(false, true);
+			var slaves = new List<Plugin>();
+			var siblings = this.GetSiblings(false, true);
 			AddSlaves(this, siblings, slaves);
 
 			if(containsAll && slaves.Count > 0)
@@ -371,7 +329,7 @@ namespace Zongsoft.Plugins
 					AddSlaves(slaves[i], siblings, slaves);
 			}
 
-			return slaves.ToArray();
+			return slaves;
 		}
 
 		private static void AddSlaves(Plugin master, IEnumerable<Plugin> siblings, IList<Plugin> slaves)
@@ -434,48 +392,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		/// <summary>
-		/// 重写了<seealso cref="System.Object"/>类的同名方法。
-		/// </summary>
-		/// <returns>返回当前插件的名称和文件名。</returns>
-		public override string ToString()
-		{
-			return string.Format("{0} [{1}]", _name, _filePath);
-		}
-
-		public override int GetHashCode()
-		{
-			if(_filePath == null)
-				return base.GetHashCode();
-
-			return Environment.OSVersion.Platform switch
-			{
-				PlatformID.Unix => _filePath.GetHashCode(),
-				PlatformID.MacOSX => _filePath.GetHashCode(),
-				_ => _filePath.ToLowerInvariant().GetHashCode(),
-			};
-		}
-
-		/// <summary>
-		/// 确定与指定的插件对象是否相等。
-		/// </summary>
-		/// <param name="obj">与当前插件相比较的插件对象。</param>
-		/// <returns>如果指定的<seealso cref="Zongsoft.Plugins.Plugin"/>等于当前的<seealso cref="Zongsoft.Plugins.Plugin"/>，则为 true；否则为 false。</returns>
-		/// <remarks>该相等性是按照插件的<see cref="Zongsoft.Plugins.Plugin.FilePath"/>文件名进行不区分大小写比较。</remarks>
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			var other = (Plugin)obj;
-
-			return Environment.OSVersion.Platform switch
-			{
-				PlatformID.Unix => string.Equals(_filePath, other.FilePath, StringComparison.Ordinal),
-				PlatformID.MacOSX => string.Equals(_filePath, other.FilePath, StringComparison.Ordinal),
-				_ => string.Equals(_filePath, other.FilePath, StringComparison.OrdinalIgnoreCase),
-			};
-		}
+		public override string ToString() => $"{_name} [{_filePath}]";
+		public override int GetHashCode() => string.IsNullOrEmpty(_filePath) ? 0 : _filePath.GetHashCode();
+		public bool Equals(Plugin other) => other != null && string.Equals(_filePath, other._filePath);
+		public override bool Equals(object obj) => obj is Plugin other && this.Equals(other);
 		#endregion
 
 		#region 嵌套子类
@@ -484,7 +404,7 @@ namespace Zongsoft.Plugins
 			#region 成员变量
 			private readonly Plugin _plugin;
 			private readonly List<Assembly> _assemblies;
-			private PluginDependencyCollection _dependencies;
+			private readonly PluginDependencyCollection _dependencies;
 			private AssemblyDependencyResolver _resolver;
 			#endregion
 
@@ -493,6 +413,7 @@ namespace Zongsoft.Plugins
 			{
 				_plugin = plugin;
 				_assemblies = new List<Assembly>();
+				_dependencies = new PluginDependencyCollection();
 				//_loader = new PluginAssemblyLoader(plugin);
 
 				var assemblyPath = Path.Combine(Path.GetDirectoryName(plugin.FilePath), Path.GetFileNameWithoutExtension(plugin.FilePath) + ".dll");
@@ -519,30 +440,17 @@ namespace Zongsoft.Plugins
 			public string Description { get; internal set; }
 
 			/// <summary>获取插件的宿主程序集数组。</summary>
-			public Assembly[] Assemblies { get => _assemblies.ToArray(); }
+			public IReadOnlyList<Assembly> Assemblies => _assemblies;
 
 			/// <summary>获取依赖程序集的路径解析器。</summary>
-			public AssemblyDependencyResolver Resolver { get => _resolver; }
+			public AssemblyDependencyResolver Resolver => _resolver;
 
 			/// <summary>获取一个值，指示是否有依赖项。</summary>
-			public bool HasDependencies { get => _dependencies != null && _dependencies.Count > 0; }
+			public bool HasDependencies => _dependencies != null && _dependencies.Count > 0;
 
-			/// <summary>
-			/// 获取插件的依赖项集合。
-			/// </summary>
-			/// <remarks>
-			/// 依赖项通过插件定义文件(*.plugin)中的&lt;dependencies&gt;节点进行声明。依赖项只表明插件的加载顺序，并无类型依赖的暗喻。
-			/// </remarks>
-			public PluginDependencyCollection Dependencies
-			{
-				get
-				{
-					if(_dependencies == null)
-						System.Threading.Interlocked.CompareExchange(ref _dependencies, new PluginDependencyCollection(), null);
-
-					return _dependencies;
-				}
-			}
+			/// <summary>获取插件的依赖项集合。</summary>
+			/// <remarks>依赖项通过插件定义文件(*.plugin)中的&lt;dependencies&gt;节点进行声明。依赖项只表明插件的加载顺序，并无类型依赖的暗喻。</remarks>
+			public PluginDependencyCollection Dependencies => _dependencies;
 			#endregion
 
 			#region 内部方法
@@ -623,7 +531,7 @@ namespace Zongsoft.Plugins
 
 				if(assembly == null)
 				{
-					if(_resolver == null && _plugin._manifest.Assemblies != null && _plugin._manifest.Assemblies.Length > 0)
+					if(_resolver == null && _plugin._manifest.Assemblies != null && _plugin._manifest.Assemblies.Count > 0)
 						_resolver = new AssemblyDependencyResolver(_plugin._manifest.Assemblies[0].Location);
 
 					if(_resolver != null)
@@ -679,10 +587,7 @@ namespace Zongsoft.Plugins
 				return (plugin.Parent != null) ? FindAssembly(plugin.Parent, assemblyName) : null;
 			}
 
-			private static bool MatchAssembly(AssemblyName loaded, AssemblyName unloaded)
-			{
-				return string.Equals(loaded.FullName, unloaded.FullName) && loaded.Version >= unloaded.Version;
-			}
+			private static bool MatchAssembly(AssemblyName loaded, AssemblyName unloaded) => string.Equals(loaded.FullName, unloaded.FullName) && loaded.Version >= unloaded.Version;
 			#endregion
 		}
 		#endregion

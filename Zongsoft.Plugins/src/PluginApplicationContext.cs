@@ -59,24 +59,16 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前插件上下文对应的设置。
-		/// </summary>
+		/// <summary>获取当前插件上下文对应的设置。</summary>
 		public PluginOptions Options { get; }
 
-		/// <summary>
-		/// 获取当前插件运行时的插件树。
-		/// </summary>
+		/// <summary>获取当前插件运行时的插件树。</summary>
 		public PluginTree PluginTree { get; }
 
-		/// <summary>
-		/// 获取加载的根插件集。
-		/// </summary>
+		/// <summary>获取加载的根插件集。</summary>
 		public IEnumerable<Plugin> Plugins { get => this.PluginTree.Plugins; }
 
-		/// <summary>
-		/// 获取当前应用程序的主控台(工作台)。
-		/// </summary>
+		/// <summary>获取当前应用程序的主控台(工作台)。</summary>
 		public IWorkbenchBase Workbench
 		{
 			get
@@ -108,9 +100,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 虚拟方法
-		/// <summary>
-		/// 创建一个主控台对象。
-		/// </summary>
+		/// <summary>创建一个主控台对象。</summary>
 		/// <returns>返回的主控台对象。</returns>
 		protected virtual IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 		{
@@ -158,20 +148,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 激发事件
-		internal void RaiseStarted()
-		{
-			this.OnStarted(EventArgs.Empty);
-		}
-
-		internal void RaiseStopped()
-		{
-			this.OnStopped(EventArgs.Empty);
-		}
-
-		protected virtual void OnWorkbenchCreated(EventArgs args = null)
-		{
-			this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
-		}
+		internal void RaiseStarted() => this.OnStarted(EventArgs.Empty);
+		internal void RaiseStopped() => this.OnStopped(EventArgs.Empty);
+		protected virtual void OnWorkbenchCreated(EventArgs args = null) => this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
 		#endregion
 
 		#region 私有方法

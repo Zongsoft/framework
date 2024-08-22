@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.Plugins.Parsers
@@ -40,9 +39,7 @@ namespace Zongsoft.Plugins.Parsers
 		#endregion
 
 		#region 构造函数
-		protected Parser()
-		{
-		}
+		protected Parser() { }
 		#endregion
 
 		#region 静态方法
@@ -174,16 +171,11 @@ namespace Zongsoft.Plugins.Parsers
 		#endregion
 
 		#region 获取类型
-		public virtual Type GetValueType(ParserContext context)
-		{
-			return this.Parse(context)?.GetType();
-		}
+		public virtual Type GetValueType(ParserContext context) => this.Parse(context)?.GetType();
 		#endregion
 
 		#region 抽象方法
-		/// <summary>
-		/// 解析目标对象。
-		/// </summary>
+		/// <summary>解析目标对象。</summary>
 		/// <returns>返回解析后的对象。</returns>
 		public abstract object Parse(ParserContext context);
 		#endregion

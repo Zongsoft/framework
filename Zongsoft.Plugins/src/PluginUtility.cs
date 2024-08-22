@@ -47,9 +47,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 获取类型
-		/// <summary>
-		/// 根据指定的类型限定名动态加载并返回对应的<seealso cref="System.Type"/>，如果查找失败亦不会抛出异常。
-		/// </summary>
+		/// <summary>根据指定的类型限定名动态加载并返回对应的<seealso cref="System.Type"/>，如果查找失败亦不会抛出异常。</summary>
 		/// <param name="typeFullName">要获取的类型限定名称。</param>
 		/// <returns>返回加载成功的类型对象，如果加载失败则返回空(null)。</returns>
 		public static Type GetType(string typeFullName)
@@ -57,7 +55,7 @@ namespace Zongsoft.Plugins
 			if(string.IsNullOrWhiteSpace(typeFullName))
 				return null;
 
-			Type type = GetTypeFromAlias(typeFullName);
+			Type type = Zongsoft.Common.TypeExtension.GetType(typeFullName);
 
 			if(type != null)
 				return type;
@@ -93,155 +91,6 @@ namespace Zongsoft.Plugins
 				return builtin.BuiltinType.Type;
 			else
 				return GetType(builtin.Properties.GetValue<string>("type"));
-		}
-
-		private static Type GetTypeFromAlias(string typeName)
-		{
-			if(string.IsNullOrEmpty(typeName))
-				return null;
-
-			switch(typeName.Replace(" ", "").ToLowerInvariant())
-			{
-				case "string":
-					return typeof(string);
-				case "string[]":
-					return typeof(string[]);
-
-				case "int":
-					return typeof(int);
-				case "int?":
-					return typeof(int?);
-				case "int[]":
-					return typeof(int[]);
-
-				case "long":
-					return typeof(long);
-				case "long?":
-					return typeof(long?);
-				case "long[]":
-					return typeof(long[]);
-
-				case "short":
-					return typeof(short);
-				case "short?":
-					return typeof(short?);
-				case "short[]":
-					return typeof(short[]);
-
-				case "byte":
-					return typeof(byte);
-				case "byte?":
-					return typeof(byte?);
-				case "byte[]":
-					return typeof(byte[]);
-
-				case "bool":
-				case "boolean":
-					return typeof(bool);
-				case "bool?":
-				case "boolean?":
-					return typeof(bool?);
-				case "bool[]":
-				case "boolean[]":
-					return typeof(bool[]);
-
-				case "money":
-				case "number":
-				case "numeric":
-				case "decimal":
-					return typeof(decimal);
-				case "money?":
-				case "number?":
-				case "numeric?":
-				case "decimal?":
-					return typeof(decimal?);
-				case "money[]":
-				case "number[]":
-				case "numeric[]":
-				case "decimal[]":
-					return typeof(decimal[]);
-
-				case "float":
-				case "single":
-					return typeof(float);
-				case "float?":
-				case "single?":
-					return typeof(float?);
-				case "float[]":
-				case "single[]":
-					return typeof(float[]);
-
-				case "double":
-					return typeof(double);
-				case "double?":
-					return typeof(double?);
-				case "double[]":
-					return typeof(double[]);
-
-				case "uint":
-					return typeof(uint);
-				case "uint?":
-					return typeof(uint?);
-				case "uint[]":
-					return typeof(uint[]);
-
-				case "ulong":
-					return typeof(ulong);
-				case "ulong?":
-					return typeof(ulong?);
-				case "ulong[]":
-					return typeof(ulong[]);
-
-				case "ushort":
-					return typeof(ushort);
-				case "ushort?":
-					return typeof(ushort?);
-				case "ushort[]":
-					return typeof(ushort[]);
-
-				case "sbyte":
-					return typeof(sbyte);
-				case "sbyte?":
-					return typeof(sbyte?);
-				case "sbyte[]":
-					return typeof(sbyte[]);
-
-				case "char":
-					return typeof(char);
-				case "char?":
-					return typeof(char?);
-				case "char[]":
-					return typeof(char[]);
-
-				case "date":
-				case "time":
-				case "datetime":
-					return typeof(DateTime);
-				case "date?":
-				case "time?":
-				case "datetime?":
-					return typeof(DateTime?);
-				case "date[]":
-				case "time[]":
-				case "datetime[]":
-					return typeof(DateTime[]);
-
-				case "timespan":
-					return typeof(TimeSpan);
-				case "timespan?":
-					return typeof(TimeSpan?);
-				case "timespan[]":
-					return typeof(TimeSpan[]);
-
-				case "guid":
-					return typeof(Guid);
-				case "guid?":
-					return typeof(Guid?);
-				case "guid[]":
-					return typeof(Guid[]);
-			}
-
-			return null;
 		}
 		#endregion
 
@@ -643,7 +492,10 @@ namespace Zongsoft.Plugins
 				var matched = string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
 
 				if(token != null && token.Length > 0)
-					matched &= CompareBytes(token, assembly.GetName().GetPublicKeyToken());
+				{
+					var pk = assembly.GetName().GetPublicKeyToken();
+					matched = matched && pk != null && Enumerable.SequenceEqual(token, pk);
+				}
 
 				if(matched)
 					assemblies.Add(assembly);
@@ -859,24 +711,6 @@ namespace Zongsoft.Plugins
 			}
 
 			return elementType;
-		}
-
-		private static bool CompareBytes(byte[] a, byte[] b)
-		{
-			if(a == null && b == null)
-				return true;
-			if(a == null || b == null)
-				return false;
-			if(a.Length != b.Length)
-				return false;
-
-			for(int i = 0; i < a.Length; i++)
-			{
-				if(a[i] != b[i])
-					return false;
-			}
-
-			return true;
 		}
 		#endregion
 	}

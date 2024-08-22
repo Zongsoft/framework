@@ -84,29 +84,19 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前插件树的选项。
-		/// </summary>
+		/// <summary>获取当前插件树的选项。</summary>
 		public PluginOptions Options { get; }
 
-		/// <summary>
-		/// 获取当前插件加载器对象。
-		/// </summary>
+		/// <summary>获取当前插件加载器对象。</summary>
 		public PluginLoader Loader { get; }
 
-		/// <summary>
-		/// 获取插件树中的根节点。
-		/// </summary>
+		/// <summary>获取插件树中的根节点。</summary>
 		public PluginTreeNode Root { get; }
 
-		/// <summary>
-		/// 获取加载的根插件集，如果插件树还没加载则返回空。
-		/// </summary>
-		public PluginCollection Plugins { get => this.Loader.Plugins; }
+		/// <summary>获取加载的根插件集，如果插件树还没加载则返回空。</summary>
+		public PluginCollection Plugins => this.Loader.Topmosts;
 
-		/// <summary>
-		/// 获取插件树的状态。
-		/// </summary>
+		/// <summary>获取插件树的状态。</summary>
 		public PluginTreeStatus Status { get; private set; }
 		#endregion
 
@@ -121,59 +111,33 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 查找方法
-		/// <summary>
-		/// 查找指定路径的插件树节点。
-		/// </summary>
+		/// <summary>查找指定路径的插件树节点。</summary>
 		/// <param name="path">指定的路径。</param>
 		/// <returns>如果查找成功则返回对应的插件树节点对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空格字符串。</exception>
-		public PluginTreeNode Find(string path)
-		{
-			return Root.Find(path);
-		}
-
-		public PluginTreeNode Find(params string[] paths)
-		{
-			return Root.Find(paths);
-		}
+		public PluginTreeNode Find(string path) => Root.Find(path);
+		public PluginTreeNode Find(params string[] paths) => Root.Find(paths);
 		#endregion
 
 		#region 创建节点
-		/// <summary>
-		/// 获取或创建指定路径的插件树节点。
-		/// </summary>
+		/// <summary>获取或创建指定路径的插件树节点。</summary>
 		/// <param name="path">要获取或创建的插件路径。</param>
 		/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
-		public PluginTreeNode EnsurePath(string path)
-		{
-			return this.EnsurePath(path, null, out _);
-		}
+		public PluginTreeNode EnsurePath(string path) => this.EnsurePath(path, null, out _);
 
-		/// <summary>
-		/// 获取或创建指定路径的插件树节点。
-		/// </summary>
+		/// <summary>获取或创建指定路径的插件树节点。</summary>
 		/// <param name="path">要获取或创建的插件路径。</param>
 		/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
 		/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
-		public PluginTreeNode EnsurePath(string path, string position)
-		{
-			return this.EnsurePath(path, position, out _);
-		}
+		public PluginTreeNode EnsurePath(string path, string position) => this.EnsurePath(path, position, out _);
 
-		/// <summary>
-		/// 获取或创建指定路径的插件树节点。
-		/// </summary>
+		/// <summary>获取或创建指定路径的插件树节点。</summary>
 		/// <param name="path">要获取或创建的插件路径。</param>
 		/// <param name="existed">输出参数，如果指定的路径已存在则返回真(true)，否则返回假(false)。</param>
 		/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
-		public PluginTreeNode EnsurePath(string path, out bool existed)
-		{
-			return this.EnsurePath(path, null, out existed);
-		}
+		public PluginTreeNode EnsurePath(string path, out bool existed) => this.EnsurePath(path, null, out existed);
 
-		/// <summary>
-		/// 获取或创建指定路径的插件树节点。
-		/// </summary>
+		/// <summary>获取或创建指定路径的插件树节点。</summary>
 		/// <param name="path">要获取或创建的插件路径。</param>
 		/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
 		/// <param name="existed">输出参数，如果指定的路径已存在则返回真(true)，否则返回假(false)。</param>
@@ -184,7 +148,7 @@ namespace Zongsoft.Plugins
 				throw new ArgumentNullException("path");
 
 			existed = true;
-			PluginTreeNode node = Root;
+			var node = this.Root;
 			string[] parts = path.Split('/');
 
 			for(int i = 0; i < parts.Length; i++)
@@ -193,13 +157,13 @@ namespace Zongsoft.Plugins
 
 				if(string.IsNullOrEmpty(part))
 				{
-					if(node == Root)
+					if(node == this.Root)
 						continue;
 					else
 						throw new PluginException("Invlaid '" + path + "' path.");
 				}
 
-				PluginTreeNode child = node.Children[part];
+				var child = node.Children[part];
 
 				if(child == null)
 				{
@@ -216,9 +180,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 挂载方法
-		/// <summary>
-		/// 挂载对象到插件树中。
-		/// </summary>
+		/// <summary>挂载对象到插件树中。</summary>
 		/// <param name="path">要挂载的路径。</param>
 		/// <param name="value">要挂载的对象。</param>
 		/// <returns>挂载成功则返回真(True)否则返回假(False)。</returns>
@@ -227,14 +189,9 @@ namespace Zongsoft.Plugins
 		///		<para>如果符合上面的条件，则激发<seealso cref="Zongsoft.Plugins.PluginTree.Mounting"/>事件，挂入成功后激发<seealso cref="Zongsoft.Plugins.PluginTree.Mounted"/>事件。</para>
 		///		<para>如果<paramref name="path"/>参数指定的路径不存在，则创建它并挂载由<paramref name="value"/>参数指定的对象。</para>
 		///	</remarks>
-		public bool Mount(string path, object value)
-		{
-			return this.Mount(path, value, null);
-		}
+		public bool Mount(string path, object value) => this.Mount(path, value, null);
 
-		/// <summary>
-		/// 挂载对象到插件树中。
-		/// </summary>
+		/// <summary>挂载对象到插件树中。</summary>
 		/// <param name="path">要挂载的路径。</param>
 		/// <param name="value">要挂载的对象。</param>
 		/// <param name="position">当挂载路径对应的叶子节点不存在时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
@@ -423,17 +380,8 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 事件方法
-		internal void OnMounted(PluginMountEventArgs args)
-		{
-			if(Mounted != null)
-				this.Mounted(this, args);
-		}
-
-		internal void OnMounting(PluginMountEventArgs args)
-		{
-			if(Mounting != null)
-				this.Mounting(this, args);
-		}
+		internal void OnMounted(PluginMountEventArgs args) => this.Mounted?.Invoke(this, args);
+		internal void OnMounting(PluginMountEventArgs args) => this.Mounting?.Invoke(this, args);
 		#endregion
 
 		#region 类库加载
@@ -489,9 +437,7 @@ namespace Zongsoft.Plugins
 			return this.GetOwner(this.Find(path));
 		}
 
-		/// <summary>
-		/// 获取指定节点的所有者对象。
-		/// </summary>
+		/// <summary>获取指定节点的所有者对象。</summary>
 		/// <param name="node">要获取的所有者对象的节点。</param>
 		/// <returns>返回指定节点的所有者对象，如果没有则返回空(null)。</returns>
 		/// <remarks>

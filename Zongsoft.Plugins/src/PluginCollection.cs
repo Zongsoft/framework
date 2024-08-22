@@ -28,21 +28,17 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Plugins
 {
 	/// <summary>
 	/// 表示插件集合。
 	/// </summary>
-	public class PluginCollection : Zongsoft.Collections.NamedCollectionBase<Plugin>
+	public class PluginCollection : KeyedCollection<string, Plugin>
 	{
 		#region 构造函数
-		internal PluginCollection(Plugin owner = null) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			this.Owner = owner;
-		}
+		internal PluginCollection(Plugin owner = null) : base(StringComparer.OrdinalIgnoreCase) => this.Owner = owner;
 		#endregion
 
 		#region 公共属性
@@ -50,34 +46,50 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(Plugin item) => item.Name;
+		protected override string GetKeyForItem(Plugin plugin) => plugin.Name;
+		#endregion
+
+		#region 公共方法
+		public Plugin Find(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			if(this.TryGetValue(name, out var plugin))
+				return plugin;
+
+			foreach(var item in this.Items)
+			{
+				if(item.HasChildren)
+				{
+					var found = item.Children.Find(name);
+					if(found != null)
+						return found;
+				}
+			}
+
+			return null;
+		}
 		#endregion
 
 		#region 内部方法
 		/// <summary>将指定的插件对象加入当前的集合中。</summary>
-		/// <param name="item">带加入的插件对象。</param>
-		/// <param name="thorwExceptionOnDuplicationName">指示当前的插件名如果在集合中已经存在是否抛出异常。</param>
+		/// <param name="plugin">带加入的插件对象。</param>
 		/// <returns>添加成功则返回真(True)，否则返回假(False)。</returns>
-		/// <exception cref="System.ArgumentNullException">当<paramref name="item"/>参数为空(null)。</exception>
-		/// <exception cref="System.InvalidOperationException">当<paramref name="item"/>参数的<see cref="Zongsoft.Plugins.Plugin.Parent"/>父插件属性不为空，并且与当前集合的所有者不是同一个引用对象。</exception>
-		/// <exception cref="Zongsoft.Plugins.PluginException">当<paramref name="thorwExceptionOnDuplicationName" />参数为真(True)，并且待加入的插件名与当前集合中插件发生重名。</exception>
-		internal bool Add(Plugin item, bool thorwExceptionOnDuplicationName)
+		/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(null)。</exception>
+		/// <exception cref="System.InvalidOperationException">当<paramref name="plugin"/>参数的<see cref="Zongsoft.Plugins.Plugin.Parent"/>父插件属性不为空，并且与当前集合的所有者不是同一个引用对象。</exception>
+		internal bool TryAdd(Plugin plugin)
 		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+			if(plugin == null)
+				throw new ArgumentNullException(nameof(plugin));
 
-			if(item.Parent != null && (!object.ReferenceEquals(item.Parent, this.Owner)))
+			if(plugin.Parent != null && (!object.ReferenceEquals(plugin.Parent, this.Owner)))
 				throw new InvalidOperationException();
 
-			if(this.Contains(item.Name))
-			{
-				if(thorwExceptionOnDuplicationName)
-					throw new PluginException(string.Format("The name is '{0}' of plugin was exists. it's path is: '{1}'", item.Name, item.FilePath));
-				else
-					return false;
-			}
+			if(this.Contains(plugin.Name))
+				return false;
 
-			base.Add(item);
+			base.Add(plugin);
 
 			//返回添加成功
 			return true;
