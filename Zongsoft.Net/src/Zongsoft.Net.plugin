@@ -2,9 +2,8 @@
 
 <plugin name="Zongsoft.Net"
         title="Zongsoft Net Plugin"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        version="4.4.0.1611"
-        copyright="Copyright (C) 2010-2016 Zongsoft Corporation. All rights reserved."
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Created Date: 2012-06-09 by Popeye Zhong">
 
 	<manifest>

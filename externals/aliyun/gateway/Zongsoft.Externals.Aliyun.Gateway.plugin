@@ -2,10 +2,9 @@
 
 <plugin name="Zongsoft.Externals.Aliyun.Gateway"
         title="Zongsoft.Externals.Aliyun.Gateway Plugin"
-        version="1.0"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        copyright="Copyright(C) Zongsoft Studio. 2015-2022. All rights reserved."
-        description="">
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Create by: Popeye Zhong at 2015-05-15">
 
 	<manifest>
 		<assemblies>

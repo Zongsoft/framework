@@ -2,8 +2,8 @@
 
 <plugin name="Zongsoft.Externals.ClosedXml"
         title="Zongsoft.Externals.ClosedXml Plugin"
-        author="Zongsoft Studio"
-        version="1.0"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Create by: Popeye Zhong at 2023-07-20" >
 
 	<manifest>

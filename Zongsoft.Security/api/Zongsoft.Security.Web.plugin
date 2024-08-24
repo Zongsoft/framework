@@ -2,9 +2,8 @@
 
 <plugin name="Zongsoft.Security.Web"
         title="Zongsoft.Security.Web Plugin"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        version="1.0"
-        copyright="Copyright (C) 2010-2020 Zongsoft Studio. All rights reserved."
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Created Date: 2017-3-15 by Popeye Zhong">
 
 	<manifest>

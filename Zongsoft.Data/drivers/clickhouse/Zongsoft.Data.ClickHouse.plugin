@@ -2,9 +2,8 @@
 
 <plugin name="Zongsoft.Data.ClickHouse"
         title="Zongsoft.Data.ClickHouse Plugin"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        version="1.0"
-        copyright="Copyright (C) 2015-2022 Zongsoft Corporation. All rights reserved."
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Created Date: 2022-08-01 by Popeye Zhong">
 
 	<manifest>

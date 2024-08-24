@@ -2,8 +2,8 @@
 
 <plugin name="Zongsoft.Externals.Scriban"
         title="Zongsoft.Externals.Scriban Plugin"
-        author="Zongsoft Studio"
-        version="1.0"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Create by: Popeye Zhong at 2024-08-10" >
 
 	<manifest>

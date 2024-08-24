@@ -2,10 +2,9 @@
 
 <plugin name="Zongsoft.Externals.Wechat.Web"
         title="Zongsoft.Externals.Wechat.Web Plugin"
-        version="1.0"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        copyright="Copyright(C) Zongsoft Studio. 2015-2020. All rights reserved."
-        description="">
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Create by: Popeye Zhong at 2015-05-15">
 
 	<manifest>
 		<assemblies>

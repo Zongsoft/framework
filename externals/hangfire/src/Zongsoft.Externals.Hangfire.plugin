@@ -2,8 +2,8 @@
 
 <plugin name="Zongsoft.Externals.Hangfire"
         title="Zongsoft.Externals.Hangfire Plugin"
-        author="Zongsoft Studio"
-        version="1.0"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Create by: Popeye Zhong at 2020-08-01" >
 
 	<manifest>
