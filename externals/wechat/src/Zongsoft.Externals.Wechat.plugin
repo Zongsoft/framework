@@ -4,7 +4,7 @@
         title="Zongsoft.Externals.Wechat Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Create by: Popeye Zhong at 2019-08-10" >
+        description="Created Date: 2019-08-10 by Popeye Zhong" >
 
 	<manifest>
 		<assemblies>

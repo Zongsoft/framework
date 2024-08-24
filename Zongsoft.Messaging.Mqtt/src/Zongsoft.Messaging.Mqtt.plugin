@@ -4,7 +4,7 @@
         title="Zongsoft.Messaging.Mqtt Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Create by: Popeye Zhong at 2021-09-21" >
+        description="Created Date: 2021-09-21 by Popeye Zhong" >
 
 	<manifest>
 		<assemblies>

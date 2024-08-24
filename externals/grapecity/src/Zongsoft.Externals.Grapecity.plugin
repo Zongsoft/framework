@@ -4,7 +4,8 @@
         title="Zongsoft.Externals.Grapecity Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Create by: Popeye Zhong at 2021-06-15">
+        description="Created Date: 2021-06-15 by Popeye Zhong">
+
 	<manifest>
 		<assemblies>
 			<assembly name="Zongsoft.Externals.Grapecity" />
