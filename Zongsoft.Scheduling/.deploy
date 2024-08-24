@@ -1,3 +1,0 @@
-src/Zongsoft.Scheduling.option
-src/Zongsoft.Scheduling.plugin
-src/bin/$(Edition)/$(Framework)/Zongsoft.Scheduling.*
