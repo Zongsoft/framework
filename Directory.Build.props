@@ -24,6 +24,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="$(MSBuildThisFileDirectory)zongsoft-logo.png" Pack="true" PackagePath="\" Visible="true" />
+		<None Include="$(MSBuildThisFileDirectory)zongsoft-logo.png" Pack="true" PackagePath="\" Visible="false" />
 	</ItemGroup>
 </Project>

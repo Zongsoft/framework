@@ -39,7 +39,7 @@ using Microsoft.AspNetCore.Http;
 
 using Zongsoft.IO;
 using Zongsoft.Data;
-using Zongsoft.Web.Http.Headers;
+using Zongsoft.Web.Http;
 
 namespace Zongsoft.Web
 {
