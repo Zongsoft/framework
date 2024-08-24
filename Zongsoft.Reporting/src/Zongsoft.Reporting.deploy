@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Reporting.plugin
+lib/$(Framework)/Zongsoft.Reporting.*

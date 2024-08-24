@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.1.0.0</Version>
+		<Version>6.1.0.0</Version>
 		<Product>Zongsoft Plugins Development Library</Product>
 		<Description>This is a framework about plugin application development.</Description>
 		<RootNamespace>Zongsoft.Plugins</RootNamespace>
@@ -15,10 +15,6 @@
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Zongsoft.Plugins.xml" />
-	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0" />
@@ -41,8 +37,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\Main.plugin" Link="Main.plugin" Pack="true" PackagePath="\plugins" />
-		<None Include="..\Zongsoft.Plugins.xsd" Link="Zongsoft.Plugins.xsd" Pack="true" PackagePath="\plugins" />
+		<None Include="..\$(MSBuildProjectName).xsd" Pack="true" PackagePath="\schemas" />
+		<None Include="..\plugins\Main.plugin" Pack="true" PackagePath="\plugins" />
+		<None Include="..\plugins\Terminal.plugin" Pack="true" PackagePath="\plugins" />
 	</ItemGroup>
 
 	<ItemGroup>

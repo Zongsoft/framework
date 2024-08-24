@@ -1,5 +1,5 @@
-Zongsoft.Data.MySql.plugin
-bin/$(Edition)/$(Framework)/Zongsoft.Data.MySql.*
+artifacts/Zongsoft.Data.MySql.plugin
+lib/$(Framework)/Zongsoft.Data.MySql.*
 
 %NUGET_PACKAGES%/mysql.data/8.3.0/lib/netstandard2.1/*.dll                   <framework:net6.0^>
 %NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll                  <framework:net5.0>

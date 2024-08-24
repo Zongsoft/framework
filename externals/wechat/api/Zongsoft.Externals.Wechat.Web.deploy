@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Externals.Wechat.Web.plugin
+lib/$(Framework)/Zongsoft.Externals.Wechat.Web.*

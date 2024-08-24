@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Data.plugin
+lib/$(Framework)/Zongsoft.Data.*

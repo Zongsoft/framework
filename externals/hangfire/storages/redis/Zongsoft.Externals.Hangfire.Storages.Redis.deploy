@@ -1,9 +1,7 @@
-Zongsoft.Externals.Hangfire.Storages.Redis.plugin
-Zongsoft.Externals.Hangfire.Storages.Redis.option
-bin/$(Edition)/$(Framework)/Zongsoft.Externals.Hangfire.Storages.Redis.*
+artifacts/Zongsoft.Externals.Hangfire.Storages.Redis.plugin
+lib/$(Framework)/Zongsoft.Externals.Hangfire.Storages.Redis.*
 
 %NUGET_PACKAGES%/hangfire.redis.stackexchange/1.9.0/lib/netstandard2.1/*.dll
-
 %NUGET_PACKAGES%/stackexchange.redis/2.6.122/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/microsoft.bcl.asyncinterfaces/6.0.0/lib/netstandard2.1/*.dll

@@ -1,4 +1,0 @@
-Zongsoft.Externals.Wechat.Gateway.option
-Zongsoft.Externals.Wechat.Gateway.plugin
-
-bin/$(Edition)/$(Framework)/Zongsoft.Externals.Wechat.Gateway.*

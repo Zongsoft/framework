@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>5.1.0.0</Version>
+		<Version>1.0.0.0</Version>
 		<Product>Zongsoft GrapeCity Web Library</Product>
 		<Description>This is a web library about GrapeCity SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Grapecity</RootNamespace>
@@ -10,10 +10,6 @@
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/grapecity/api</RepositoryUrl>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Zongsoft.Externals.Grapecity.Web.xml" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="..\.gclicx" Link=".gclicx" />
@@ -36,5 +32,10 @@
 		<Reference Include="Zongsoft.Reporting">
 			<HintPath>..\..\..\Zongsoft.Reporting\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Reporting.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 </Project>

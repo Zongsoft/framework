@@ -1,4 +1,0 @@
-Zongsoft.Security.Web.option
-Zongsoft.Security.Web.plugin
-
-bin/$(Edition)/$(Framework)/Zongsoft.Security.Web.*

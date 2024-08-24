@@ -1,21 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.1.0.0</Version>
+		<Version>6.0.0.0</Version>
 		<Product>Zongsoft Net Library</Product>
+		<Description>This is a library about network program development.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Net</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Zongsoft.Net.xml" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Pipelines.Sockets.Unofficial" Version="2.2.8" />
@@ -28,9 +25,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
-			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>

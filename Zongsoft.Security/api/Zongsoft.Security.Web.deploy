@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Security.Web.plugin
+lib/$(Framework)/Zongsoft.Security.Web.*

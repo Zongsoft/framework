@@ -1,5 +1,5 @@
-Zongsoft.Data.MsSql.plugin
-bin/$(Edition)/$(Framework)/Zongsoft.Data.MsSql.*
+artifacts/Zongsoft.Data.MsSql.plugin
+lib/$(Framework)/Zongsoft.Data.MsSql.*
 
 %NUGET_PACKAGES%/microsoft.win32.registry/5.0.0/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/system.data.sqlclient/4.8.6/lib/netstandard2.0/*.dll

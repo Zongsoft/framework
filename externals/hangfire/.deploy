@@ -1,6 +1,0 @@
-src/Zongsoft.Externals.Hangfire.plugin
-src/Zongsoft.Externals.Hangfire.option
-src/bin/$(Edition)/$(Framework)/Zongsoft.Externals.Hangfire.*
-
-%NUGET_PACKAGES%/hangfire.core/1.8.4/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/newtonsoft.json/11.0.1/lib/netstandard2.0/*.dll

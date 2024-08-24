@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.1.0.0</Version>
+		<Version>6.0.0.0</Version>
 		<Product>Zongsoft Reporting Library</Product>
 		<Description>This is a base class library that provides reporting.</Description>
 		<RootNamespace>Zongsoft.Reporting</RootNamespace>
@@ -14,6 +14,11 @@
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">

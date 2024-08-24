@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.1.0.0</Version>
+		<Version>0.1.0.0</Version>
 		<Product>Zongsoft OpenXml Library</Product>
 		<Description>This is a library about OpenXml SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.OpenXml</RootNamespace>
@@ -15,10 +15,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Zongsoft.Externals.OpenXml.xml" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
 	</ItemGroup>
 
@@ -28,4 +24,8 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
 </Project>

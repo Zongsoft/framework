@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>5.1.0.0</Version>
+		<Version>6.0.0.0</Version>
 		<Product>Zongsoft Wechat Web Library</Product>
 		<Description>This is a web api library about Wechat.</Description>
 		<IsPackable>true</IsPackable>
@@ -18,5 +18,10 @@
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 </Project>

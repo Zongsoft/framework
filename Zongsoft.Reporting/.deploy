@@ -1,5 +1,0 @@
-src/Zongsoft.Reporting.option
-src/Zongsoft.Reporting.plugin
-src/Zongsoft.Reporting.mapping
-
-src/bin/$(Edition)/$(Framework)/Zongsoft.Reporting.*

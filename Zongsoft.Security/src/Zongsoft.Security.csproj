@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.1.0.0</Version>
+		<Version>6.0.0.0</Version>
 		<Product>Zongsoft Security Library</Product>
 		<Description>This is a class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -16,13 +16,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Zongsoft.Security.xml" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).mapping" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Commands.plugin
+lib/$(Framework)/Zongsoft.Commands.*

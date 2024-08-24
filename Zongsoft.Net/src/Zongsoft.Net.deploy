@@ -1,0 +1,4 @@
+artifacts/Zongsoft.Net.plugin
+lib/$(Framework)/Zongsoft.Net.*
+
+%NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll

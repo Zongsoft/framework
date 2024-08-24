@@ -1,3 +1,0 @@
-src/Zongsoft.Commands.plugin
-src/Zongsoft.Commands.option
-src/bin/$(Edition)/$(Framework)/Zongsoft.Commands.*

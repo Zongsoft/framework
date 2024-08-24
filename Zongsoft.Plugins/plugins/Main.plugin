@@ -2,9 +2,8 @@
 
 <plugin name="Main"
         title="Main Plugin"
-        author="Popeye Zhong(zongsoft@qq.com)"
-        version="5.0.0"
-        copyright="Copyright (C) 2012-2020 Zongsoft Corporation. All rights reserved."
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
         description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2020-04-25 by Popeye Zhong.">
 
 	<builders>

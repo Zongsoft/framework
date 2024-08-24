@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>5.1.0.0</Version>
+		<Version>6.1.0.0</Version>
 		<Product>Zongsoft Web Library</Product>
 		<Description>This is a base class library that provides web development.</Description>
 		<RootNamespace>Zongsoft.Web</RootNamespace>
@@ -15,10 +15,6 @@
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Zongsoft.Web.xml" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>5.2.0.0</Version>
+		<Version>6.0.0.0</Version>
 		<Product>Zongsoft Wechat Library</Product>
 		<Description>This is a library about Wechat SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Wechat</RootNamespace>
@@ -13,10 +13,6 @@
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Zongsoft.Externals.Wechat.xml" />
-	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
@@ -46,6 +42,12 @@
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
 	<ItemGroup>

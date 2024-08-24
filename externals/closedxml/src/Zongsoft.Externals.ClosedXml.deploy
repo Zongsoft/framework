@@ -1,6 +1,5 @@
-src/Zongsoft.Externals.ClosedXml.plugin
-src/Zongsoft.Externals.ClosedXml.option
-src/bin/$(Edition)/$(Framework)/Zongsoft.Externals.ClosedXml.*
+artifacts/Zongsoft.Externals.ClosedXml.plugin
+lib/$(Framework)/Zongsoft.Externals.ClosedXml.*
 
 %NUGET_PACKAGES%/closedxml/0.101.0/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/closedxml.report/0.2.8/lib/netstandard2.1/*.dll

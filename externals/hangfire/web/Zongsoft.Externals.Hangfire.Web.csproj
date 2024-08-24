@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>5.0.0.0</Version>
+		<Version>1.0.0.0</Version>
 		<Product>Zongsoft Hangfire Web Library</Product>
 		<Description>This is a library about Hangfire SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire.Web</RootNamespace>
@@ -22,4 +22,8 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
 </Project>

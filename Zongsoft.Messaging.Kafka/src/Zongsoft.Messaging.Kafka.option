@@ -4,7 +4,7 @@
 	<option path="/Messaging">
 		<connectionSettings>
 			<connectionSetting connectionSetting.name="kafka" driver="kafka"
-			                   value="server=127.0.0.1;username=guest;password=xxx;client=client1;group=group1" />
+			                   value="server=127.0.0.1;username=program;password=xxxxxx;client=client1;group=group1" />
 		</connectionSettings>
 	</option>
 </options>

@@ -15,10 +15,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Zongsoft.Externals.Scriban.xml" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Scriban" Version="5.10.0" />
 	</ItemGroup>
 
@@ -28,4 +24,8 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
 </Project>

@@ -1,7 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>1.0.0.0</Version>
+		<Product>Zongsoft Hangfire Samples</Product>
+		<Description>This is a sample for the Hangfire.</Description>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/hangfire/samples</RepositoryUrl>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 </Project>
