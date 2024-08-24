@@ -746,7 +746,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "zongsoft@gmail.com"
+							"raw": "zongsoft@qq.com"
 						},
 						"url": {
 							"raw": "http://{{url}}/Security/Users/{{userId}}/Email",

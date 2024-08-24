@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
  *

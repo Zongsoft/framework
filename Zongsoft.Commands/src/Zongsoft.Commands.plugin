@@ -2,7 +2,7 @@
 
 <plugin name="Zongsoft.Commands"
         title="Zongsoft Commands Plugin"
-        author="Popeye Zhong(9555843@qq.com)"
+        author="Popeye Zhong(zongsoft@qq.com)"
         version="4.4.0.1611"
         copyright="Copyright (C) 2010-2016 Zongsoft Corporation. All rights reserved."
         description="Created Date: 2012-06-09 by Popeye Zhong">

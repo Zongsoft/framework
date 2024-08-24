@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   ÖÓ·å(Popeye Zhong) <zongsoft@gmail.com>
+ *   ï¿½Ó·ï¿½(Popeye Zhonzongsoft@qq.com.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -33,16 +33,16 @@ using System.ComponentModel;
 namespace Zongsoft.Data
 {
 	/// <summary>
-	/// ±íÊ¾Ìõ¼þµÄ×éºÏ·½Ê½¡£
+	/// ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Ê½ï¿½ï¿½
 	/// </summary>
 	public enum ConditionCombination
 	{
-		/// <summary>Ìõ¼þ¡°Óë¡±×éºÏ¡£</summary>
-		[Description("¡¸Óë¡¹×éºÏ")]
+		/// <summary>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë¡±ï¿½ï¿½Ï¡ï¿½</summary>
+		[Description("ï¿½ï¿½ï¿½ë¡¹ï¿½ï¿½ï¿½")]
 		And,
 
-		/// <summary>Ìõ¼þ¡°»ò¡±×éºÏ¡£</summary>
-		[Description("¡¸»ò¡¹×éºÏ")]
+		/// <summary>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¡ï¿½</summary>
+		[Description("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
 		Or
 	}
 }

@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   ÖÓ·å(Popeye Zhong) <zongsoft@gmail.com>
+ *   ï¿½Ó·ï¿½(Popeye Zhonzongsoft@qq.com.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -35,13 +35,13 @@ namespace Zongsoft.ComponentModel
 {
 	public class CustomBooleanConverter : BooleanConverter
 	{
-		#region ³ÉÔ±±äÁ¿
+		#region ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½
 		private string _trueString;
 		private string _falseString;
 		#endregion
 
-		#region ¹¹Ôìº¯Êý
-		public CustomBooleanConverter() : this("ÊÇ", "·ñ")
+		#region ï¿½ï¿½ï¿½ìº¯ï¿½ï¿½
+		public CustomBooleanConverter() : this("ï¿½ï¿½", "ï¿½ï¿½")
 		{
 		}
 
@@ -59,7 +59,7 @@ namespace Zongsoft.ComponentModel
 		}
 		#endregion
 
-		#region ¹«¹²ÊôÐÔ
+		#region ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		[LocalizableAttribute(true)]
 		public string TrueString
 		{
@@ -99,7 +99,7 @@ namespace Zongsoft.ComponentModel
 		}
 		#endregion
 
-		#region ÖØÐ´·½·¨
+		#region ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½
 		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 		{
 			if(value is string)
@@ -149,7 +149,7 @@ namespace Zongsoft.ComponentModel
 		}
 		#endregion
 
-		#region Ë½ÓÐ·½·¨
+		#region Ë½ï¿½Ð·ï¿½ï¿½ï¿½
 		private bool IsNullable(Type propertyType)
 		{
 			if(propertyType == null)

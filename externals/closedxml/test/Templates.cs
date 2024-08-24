@@ -24,7 +24,7 @@ internal class Templates
 				new(101, "Popeye", "Popeye Zhong", Gender.Male)
 				{
 					Phone ="18912345678",
-					Email="zongsoft@gmail.com"
+					Email="zongsoft@qq.com"
 				},
 				new(102, "Grape", "Grape Liu", Gender.Female, new DateTime(1983, 1, 23)),
 				new(103, "Elsa", "Elsa Zhong", Gender.Female, new DateTime(2015, 3, 23)),
