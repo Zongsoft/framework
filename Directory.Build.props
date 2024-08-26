@@ -2,9 +2,9 @@
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
-		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<Authors>Zongsoft Studio(zongsoft@qq.com)</Authors>
 		<Company>Zongsoft Studio</Company>
-		<Copyright>Copyright(C) Zongsoft Studio 2010-2022. All rights reserved.</Copyright>
+		<Copyright>Copyright(C) Zongsoft Studio 2010-2025. All rights reserved.</Copyright>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
