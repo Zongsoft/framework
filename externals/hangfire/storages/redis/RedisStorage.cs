@@ -35,7 +35,6 @@ using Hangfire.Server;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Logging;
-using Hangfire.Annotations;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
@@ -43,13 +42,14 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Externals.Hangfire.Storages
 {
 	[Service(typeof(global::Hangfire.JobStorage))]
-	public class RedisStorage : global::Hangfire.JobStorage
+	public class RedisStorage : global::Hangfire.JobStorage, IEquatable<RedisStorage>
 	{
+		#region 成员字段
 		private readonly object _lock = new();
 		private global::Hangfire.Redis.StackExchange.RedisStorage _storage;
+		#endregion
 
-		public RedisStorage() { }
-
+		#region 公共属性
 		public global::Hangfire.Redis.StackExchange.RedisStorage Storage
 		{
 			get
@@ -65,7 +65,9 @@ namespace Zongsoft.Externals.Hangfire.Storages
 				return _storage;
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private static ConnectionSetting GetConnectionSetting(ConnectionSettingCollection settings)
 		{
 			if(settings == null || settings.Count == 0)
@@ -105,7 +107,9 @@ namespace Zongsoft.Externals.Hangfire.Storages
 			var connectionString = entries.Any() ? $"{host},{string.Join(',', entries)}" : host;
 			return StackExchange.Redis.ConfigurationOptions.Parse(connectionString, true);
 		}
+		#endregion
 
+		#region 重写方法
 		public override bool LinearizableReads => this.Storage.LinearizableReads;
 #pragma warning disable CS0618 // 类型或成员已过时
 		public override IEnumerable<IServerComponent> GetComponents() => this.Storage.GetComponents();
@@ -114,10 +118,12 @@ namespace Zongsoft.Externals.Hangfire.Storages
 		public override IStorageConnection GetConnection() => this.Storage.GetConnection();
 		public override IStorageConnection GetReadOnlyConnection() => this.Storage.GetReadOnlyConnection();
 		public override IEnumerable<IStateHandler> GetStateHandlers() => this.Storage.GetStateHandlers();
-		public override bool HasFeature([NotNull] string featureId) => this.Storage.HasFeature(featureId);
-		public override void WriteOptionsToLog(ILog logger) => this.Storage.WriteOptionsToLog(logger);
-		public override bool Equals(object obj) => this.Storage.Equals(obj);
+		public override bool HasFeature(string featureId) => this.Storage.HasFeature(featureId);
+		public override void WriteOptionsToLog(ILog logger) => _storage?.WriteOptionsToLog(logger);
+		public bool Equals(RedisStorage other) => other != null && other._storage == this._storage;
+		public override bool Equals(object obj) => obj is RedisStorage other && this.Storage.Equals(other);
 		public override int GetHashCode() => this.Storage.GetHashCode();
-		public override string ToString() => this.Storage.ToString();
+		public override string ToString() => _storage == null ? this.GetType().FullName : _storage.ToString();
+		#endregion
 	}
 }

@@ -1,5 +1,5 @@
 artifacts/Zongsoft.Externals.Hangfire.Web.plugin
 lib/$(Framework)/Zongsoft.Externals.Hangfire.Web.*
 
-%NUGET_PACKAGES%/hangfire.netcore/1.8.4/lib/netstandard2.1/*.dll
-%NUGET_PACKAGES%/hangfire.aspnetcore/1.8.4/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/hangfire.netcore/1.8.12/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/hangfire.aspnetcore/1.8.12/lib/netstandard2.0/*.dll

@@ -1,8 +1,8 @@
 artifacts/Zongsoft.Externals.Hangfire.Storages.Redis.plugin
 lib/$(Framework)/Zongsoft.Externals.Hangfire.Storages.Redis.*
 
-%NUGET_PACKAGES%/hangfire.redis.stackexchange/1.9.0/lib/netstandard2.1/*.dll
-%NUGET_PACKAGES%/stackexchange.redis/2.6.122/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/hangfire.redis.stackexchange/1.9.3/lib/netstandard2.0/*.dll
+%NUGET_PACKAGES%/stackexchange.redis/2.6.111/lib/netstandard2.0/*.dll
 %NUGET_PACKAGES%/pipelines.sockets.unofficial/2.2.8/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/microsoft.bcl.asyncinterfaces/6.0.0/lib/netstandard2.1/*.dll
 %NUGET_PACKAGES%/system.io.pipelines/5.0.1/lib/netstandard2.0/*.dll
