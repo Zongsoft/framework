@@ -148,7 +148,10 @@ namespace Zongsoft.Services
 				//激发“StateChanged”事件
 				this.OnStateChanged(nameof(Start), WorkerState.Stopped, ex);
 
-				throw;
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
+				else
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 			}
 			finally
 			{
@@ -193,7 +196,10 @@ namespace Zongsoft.Services
 				//激发“StateChanged”事件
 				this.OnStateChanged(nameof(Stop), (WorkerState)originalState, ex);
 
-				throw;
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
+				else
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 			}
 			finally
 			{
@@ -246,7 +252,10 @@ namespace Zongsoft.Services
 				//激发“StateChanged”事件
 				this.OnStateChanged(nameof(Pause), (WorkerState)originalState, ex);
 
-				throw;
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
+				else
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 			}
 			finally
 			{
@@ -298,7 +307,10 @@ namespace Zongsoft.Services
 				//激发“StateChanged”事件
 				this.OnStateChanged(nameof(Resume), (WorkerState)originalState, ex);
 
-				throw;
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
+				else
+					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 			}
 			finally
 			{
