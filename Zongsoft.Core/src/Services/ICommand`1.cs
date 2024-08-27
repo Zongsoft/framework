@@ -31,10 +31,9 @@ using System;
 
 namespace Zongsoft.Services
 {
-	public interface ICommand<in TContext> : ICommand
+	public interface ICommand<in TArgument> : ICommand
 	{
-		bool CanExecute(TContext context);
-
-		object Execute(TContext context);
+		bool CanExecute(TArgument argument);
+		object Execute(TArgument argument);
 	}
 }

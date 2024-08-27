@@ -56,61 +56,22 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取一个值，指示命令执行是否成功。
-		/// </summary>
-		public bool Succeed
-		{
-			get
-			{
-				return _succeed;
-			}
-		}
+		/// <summary>获取一个值，指示命令执行是否成功。</summary>
+		public bool Succeed => _succeed;
 
-		/// <summary>
-		/// 获取命令执行失败的代码。
-		/// </summary>
-		public string Code
-		{
-			get
-			{
-				return _code;
-			}
-		}
+		/// <summary>获取命令执行失败的代码。</summary>
+		public string Code => _code;
 
-		/// <summary>
-		/// 获取命令执行失败的消息。
-		/// </summary>
-		public string Message
-		{
-			get
-			{
-				return _message;
-			}
-		}
+		/// <summary>获取命令执行失败的消息。</summary>
+		public string Message => _message;
 
-		/// <summary>
-		/// 获取命令执行的结果。
-		/// </summary>
-		public object Result
-		{
-			get
-			{
-				return _result;
-			}
-		}
+		/// <summary>获取命令执行的结果。</summary>
+		public object Result => _result;
 		#endregion
 
 		#region 静态方法
-		public static CommandResult Success(object result, string message = null, string code = null)
-		{
-			return new CommandResult(true, result, code, message);
-		}
-
-		public static CommandResult Failure(string code, string message, object result = null)
-		{
-			return new CommandResult(false, result, code, message);
-		}
+		public static CommandResult Success(object result, string message = null, string code = null) => new CommandResult(true, result, code, message);
+		public static CommandResult Failure(string code, string message, object result = null) => new CommandResult(false, result, code, message);
 		#endregion
 	}
 }

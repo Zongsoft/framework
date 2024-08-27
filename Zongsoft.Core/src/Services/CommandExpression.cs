@@ -97,62 +97,13 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public Zongsoft.IO.PathAnchor Anchor
-		{
-			get
-			{
-				return _anchor;
-			}
-		}
-
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
-
-		public string Path
-		{
-			get
-			{
-				return _path;
-			}
-		}
-
-		public string FullPath
-		{
-			get
-			{
-				return _fullPath;
-			}
-		}
-
-		public CommandOptionCollection Options
-		{
-			get
-			{
-				return _options;
-			}
-		}
-
-		public string[] Arguments
-		{
-			get
-			{
-				return _arguments;
-			}
-		}
-
-		public int Index
-		{
-			get
-			{
-				return _index;
-			}
-		}
-
+		public Zongsoft.IO.PathAnchor Anchor => _anchor;
+		public string Name => _name;
+		public string Path => _path;
+		public string FullPath => _fullPath;
+		public CommandOptionCollection Options => _options;
+		public string[] Arguments => _arguments;
+		public int Index => _index;
 		public CommandExpression Next
 		{
 			get
@@ -190,10 +141,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 解析方法
-		public static CommandExpression Parse(string text)
-		{
-			return CommandExpressionParser.Instance.Parse(text);
-		}
+		public static CommandExpression Parse(string text) => CommandExpressionParser.Instance.Parse(text);
 		#endregion
 
 		#region 重写方法

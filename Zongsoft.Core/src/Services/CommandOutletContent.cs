@@ -117,9 +117,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 追加一个空行段。
-		/// </summary>
+		/// <summary>追加一个空行段。</summary>
 		/// <returns>返回当前内容段。</returns>
 		public CommandOutletContent AppendLine()
 		{
@@ -133,9 +131,7 @@ namespace Zongsoft.Services
 			return this;
 		}
 
-		/// <summary>
-		/// 追加一个指定文本的内容段。
-		/// </summary>
+		/// <summary>追加一个指定文本的内容段。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回当前内容段。</returns>
 		public CommandOutletContent AppendLine(string text)
@@ -146,9 +142,7 @@ namespace Zongsoft.Services
 				return this.Append(text + Environment.NewLine);
 		}
 
-		/// <summary>
-		/// 追加一个指定颜色和文本的内容段。
-		/// </summary>
+		/// <summary>追加一个指定颜色和文本的内容段。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回当前内容段。</returns>
@@ -160,9 +154,7 @@ namespace Zongsoft.Services
 				return this.Append(color, text + Environment.NewLine);
 		}
 
-		/// <summary>
-		/// 追加一个指定文本的内容段。
-		/// </summary>
+		/// <summary>追加一个指定文本的内容段。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回当前内容段。</returns>
 		public CommandOutletContent Append(string text)
@@ -180,9 +172,7 @@ namespace Zongsoft.Services
 			return this;
 		}
 
-		/// <summary>
-		/// 追加一个指定颜色和文本的内容段。
-		/// </summary>
+		/// <summary>追加一个指定颜色和文本的内容段。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回当前内容段。</returns>
@@ -201,9 +191,7 @@ namespace Zongsoft.Services
 			return this;
 		}
 
-		/// <summary>
-		/// 追加一个指定的内容段。
-		/// </summary>
+		/// <summary>追加一个指定的内容段。</summary>
 		/// <param name="content">指定的内容段。</param>
 		/// <returns>返回当前内容段。</returns>
 		public CommandOutletContent Append(CommandOutletContent content)
@@ -221,9 +209,7 @@ namespace Zongsoft.Services
 			return this;
 		}
 
-		/// <summary>
-		/// 新增一个指定文本的内容段，并作为当前内容链的首部返回。
-		/// </summary>
+		/// <summary>新增一个指定文本的内容段，并作为当前内容链的首部返回。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新增的首部内容段。</returns>
 		public CommandOutletContent Prepend(string text)
@@ -238,9 +224,7 @@ namespace Zongsoft.Services
 			return first.BeforeCore(null, text);
 		}
 
-		/// <summary>
-		/// 新增一个指定颜色和文本的内容段，并作为当前内容链的首部返回。
-		/// </summary>
+		/// <summary>新增一个指定颜色和文本的内容段，并作为当前内容链的首部返回。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新增的首部内容段。</returns>
@@ -256,9 +240,7 @@ namespace Zongsoft.Services
 			return first.BeforeCore(color, text);
 		}
 
-		/// <summary>
-		/// 将指定内容段置为当前内容链的首部。
-		/// </summary>
+		/// <summary>将指定内容段置为当前内容链的首部。</summary>
 		/// <param name="content">指定的内容段。</param>
 		/// <returns>返回当前内容链的新首部。</returns>
 		public CommandOutletContent Prepend(CommandOutletContent content)
@@ -273,67 +255,37 @@ namespace Zongsoft.Services
 			return first.BeforeCore(content);
 		}
 
-		/// <summary>
-		/// 在当前内容段后面添加一个指定文本的内容段。
-		/// </summary>
+		/// <summary>在当前内容段后面添加一个指定文本的内容段。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新添加的内容段。</returns>
-		public CommandOutletContent After(string text)
-		{
-			return this.AfterCore(null, text);
-		}
+		public CommandOutletContent After(string text) => this.AfterCore(null, text);
 
-		/// <summary>
-		/// 在当前内容段后面添加一个指定颜色和文本的内容段。
-		/// </summary>
+		/// <summary>在当前内容段后面添加一个指定颜色和文本的内容段。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新添加的内容段。</returns>
-		public CommandOutletContent After(CommandOutletColor color, string text)
-		{
-			return this.AfterCore(color, text);
-		}
+		public CommandOutletContent After(CommandOutletColor color, string text) => this.AfterCore(color, text);
 
-		/// <summary>
-		/// 将指定的内容段添加到当前内容段后面。
-		/// </summary>
+		/// <summary>将指定的内容段添加到当前内容段后面。</summary>
 		/// <param name="content">指定的内容段。</param>
 		/// <returns>返回新添加的内容段。</returns>
-		public CommandOutletContent After(CommandOutletContent content)
-		{
-			return this.AfterCore(content);
-		}
+		public CommandOutletContent After(CommandOutletContent content) => this.AfterCore(content);
 
-		/// <summary>
-		/// 在当前内容段前面插入一个指定文本的内容段。
-		/// </summary>
+		/// <summary>在当前内容段前面插入一个指定文本的内容段。</summary>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新插入的内容段。</returns>
-		public CommandOutletContent Before(string text)
-		{
-			return this.BeforeCore(null, text);
-		}
+		public CommandOutletContent Before(string text) => this.BeforeCore(null, text);
 
-		/// <summary>
-		/// 在当前内容段前面插入一个指定颜色和文本的内容段。
-		/// </summary>
+		/// <summary>在当前内容段前面插入一个指定颜色和文本的内容段。</summary>
 		/// <param name="color">指定的内容文本颜色。</param>
 		/// <param name="text">指定的内容文本。</param>
 		/// <returns>返回新插入的内容段。</returns>
-		public CommandOutletContent Before(CommandOutletColor color, string text)
-		{
-			return this.BeforeCore(color, text);
-		}
+		public CommandOutletContent Before(CommandOutletColor color, string text) => this.BeforeCore(color, text);
 
-		/// <summary>
-		/// 将指定的内容段插入到当前内容段前面。
-		/// </summary>
+		/// <summary>将指定的内容段插入到当前内容段前面。</summary>
 		/// <param name="content">指定的内容段。</param>
 		/// <returns>返回新插入的内容段。</returns>
-		public CommandOutletContent Before(CommandOutletContent content)
-		{
-			return this.BeforeCore(content);
-		}
+		public CommandOutletContent Before(CommandOutletContent content) => this.BeforeCore(content);
 		#endregion
 
 		#region 私有方法

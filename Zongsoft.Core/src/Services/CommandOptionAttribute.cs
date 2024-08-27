@@ -46,14 +46,11 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		public CommandOptionAttribute(string name) : this(name, null)
-		{
-		}
-
+		public CommandOptionAttribute(string name) : this(name, null) { }
 		public CommandOptionAttribute(string name, Type type)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			_name = name.Trim();
 			_type = type;
@@ -62,14 +59,11 @@ namespace Zongsoft.Services
 			_description = string.Empty;
 		}
 
-		public CommandOptionAttribute(string name, Type type, object defaultValue, string description) : this(name, type, defaultValue, false, description)
-		{
-		}
-
+		public CommandOptionAttribute(string name, Type type, object defaultValue, string description) : this(name, type, defaultValue, false, description) { }
 		public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if(type == null)
 				_defaultValue = defaultValue;
@@ -84,41 +78,20 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取命令选项的名称。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取命令选项的名称。</summary>
+		public string Name => _name;
 
-		/// <summary>
-		/// 获取或设置命令选项是否必需的，默认值为假(false)。
-		/// </summary>
+		/// <summary>获取或设置命令选项是否必需的，默认值为假(false)。</summary>
 		public bool Required
 		{
-			get
-			{
-				return _required;
-			}
-			set
-			{
-				_required = value;
-			}
+			get => _required;
+			set => _required = value;
 		}
 
-		/// <summary>
-		/// 获取或设置命令选项的值类型，如果返回空则表示当前选项没有值。
-		/// </summary>
+		/// <summary>获取或设置命令选项的值类型，如果返回空则表示当前选项没有值。</summary>
 		public Type Type
 		{
-			get
-			{
-				return _type;
-			}
+			get => _type;
 			set
 			{
 				if(_type == value)
@@ -131,9 +104,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取命令选项的值类型转换器。
-		/// </summary>
+		/// <summary>获取命令选项的值类型转换器。</summary>
 		public TypeConverter Converter
 		{
 			get
@@ -150,15 +121,10 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置命令选项值的类型转换器的类型。
-		/// </summary>
+		/// <summary>获取或设置命令选项值的类型转换器的类型。</summary>
 		public Type ConverterType
 		{
-			get
-			{
-				return _converterType;
-			}
+			get => _converterType;
 			set
 			{
 				if(_converterType == value)
@@ -172,15 +138,10 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置命令选项的默认值。
-		/// </summary>
+		/// <summary>获取或设置命令选项的默认值。</summary>
 		public object DefaultValue
 		{
-			get
-			{
-				return _defaultValue;
-			}
+			get => _defaultValue;
 			set
 			{
 				if(_type != null)
@@ -198,19 +159,11 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置命令选项的文本描述。
-		/// </summary>
+		/// <summary>获取或设置命令选项的文本描述。</summary>
 		public string Description
 		{
-			get
-			{
-				return _description;
-			}
-			set
-			{
-				_description = value ?? string.Empty;
-			}
+			get => _description;
+			set => _description = value ?? string.Empty;
 		}
 		#endregion
 	}

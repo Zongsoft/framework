@@ -64,10 +64,7 @@ namespace Zongsoft.Services
 
 		public CommandTreeNode(ICommand command, CommandTreeNode parent = null) : base(command.Name, parent)
 		{
-			if(command == null)
-				throw new ArgumentNullException("command");
-
-			_command = command;
+			_command = command ?? throw new ArgumentNullException(nameof(command));
 			_children = new CommandTreeNodeCollection(this);
 		}
 		#endregion
@@ -75,36 +72,17 @@ namespace Zongsoft.Services
 		#region 公共属性
 		public ICommand Command
 		{
-			get
-			{
-				return _command;
-			}
-			set
-			{
-				_command = value;
-			}
+			get => _command;
+			set => _command = value;
 		}
 
 		public ICommandLoader Loader
 		{
-			get
-			{
-				return _loader;
-			}
-			set
-			{
-				_loader = value;
-			}
+			get => _loader;
+			set => _loader = value;
 		}
 
-		public CommandTreeNode Parent
-		{
-			get
-			{
-				return (CommandTreeNode)this.InnerParent;
-			}
-		}
-
+		public CommandTreeNode Parent => (CommandTreeNode)this.InnerParent;
 		public CommandTreeNodeCollection Children
 		{
 			get
@@ -119,9 +97,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 查找指定的命令路径的命令节点。
-		/// </summary>
+		/// <summary>查找指定的命令路径的命令节点。</summary>
 		/// <param name="path">指定的命令路径。</param>
 		/// <returns>返回查找的结果，如果为空则表示没有找到指定路径的<see cref="CommandTreeNode"/>命令节点。</returns>
 		/// <remarks>
@@ -168,17 +144,17 @@ namespace Zongsoft.Services
 
 			//向上查找（往根节点方向）
 			if(rooting)
-				return this.FindUp(this, node => node._command == command);
+				return FindUp(this, node => node._command == command);
 
 			//确保当前加载器已经被加载过
 			this.EnsureChildren();
 
-			return this.FindDown(this, node => node._command == command);
+			return FindDown(this, node => node._command == command);
 		}
 
 		public TCommand Find<TCommand>(bool rooting = false) where TCommand : class, ICommand
 		{
-			Predicate<CommandTreeNode> predicate = node =>
+			static bool Predicate(CommandTreeNode node)
 			{
 				var command = node._command;
 
@@ -189,16 +165,16 @@ namespace Zongsoft.Services
 					return typeof(TCommand).IsAssignableFrom(command.GetType());
 				else
 					return typeof(TCommand) == command.GetType();
-			};
+			}
 
 			//向上查找（往根节点方向）
 			if(rooting)
-				return (TCommand)this.FindUp(this, predicate)?._command;
+				return (TCommand)FindUp(this, Predicate)?._command;
 
 			//确保当前加载器已经被加载过
 			this.EnsureChildren();
 
-			return (TCommand)this.FindDown(this, predicate)?._command;
+			return (TCommand)FindDown(this, Predicate)?._command;
 		}
 
 		public CommandTreeNode Find(Predicate<CommandTreeNode> predicate, bool rooting = false)
@@ -208,27 +184,19 @@ namespace Zongsoft.Services
 
 			//向上查找（往根节点方向）
 			if(rooting)
-				return this.FindUp(this, predicate);
+				return FindUp(this, predicate);
 
 			//确保当前加载器已经被加载过
 			this.EnsureChildren();
 
-			return this.FindDown(this, predicate);
+			return FindDown(this, predicate);
 		}
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return this.FullPath;
-		}
-
 		protected override Collections.HierarchicalNode GetChild(string name)
 		{
-			if(_children != null && _children.TryGet(name, out var child))
-				return child;
-
-			return null;
+			return _children != null && _children.TryGet(name, out var child) ? child : null;
 		}
 
 		protected override void LoadChildren()
@@ -238,10 +206,12 @@ namespace Zongsoft.Services
 			if(loader != null && (!loader.IsLoaded))
 				loader.Load(this);
 		}
+
+		public override string ToString() => this.FullPath;
 		#endregion
 
 		#region 私有方法
-		private CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
+		private static CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
 		{
 			if(current == null || predicate == null)
 				return null;
@@ -257,7 +227,7 @@ namespace Zongsoft.Services
 			return null;
 		}
 
-		private CommandTreeNode FindDown(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
+		private static CommandTreeNode FindDown(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
 		{
 			if(current == null || predicate == null)
 				return null;
@@ -267,7 +237,7 @@ namespace Zongsoft.Services
 
 			foreach(var child in current._children)
 			{
-				if(this.FindDown(child, predicate) != null)
+				if(FindDown(child, predicate) != null)
 					return child;
 			}
 

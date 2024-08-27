@@ -34,27 +34,15 @@ namespace Zongsoft.Services
 	public class CommandNotFoundException : CommandException
 	{
 		#region 构造函数
-		public CommandNotFoundException(string path)
-		{
-			this.Path = path ?? string.Empty;
-		}
+		public CommandNotFoundException(string path) => this.Path = path ?? string.Empty;
 		#endregion
 
 		#region 公共属性
-		public string Path
-		{
-			get;
-		}
+		public string Path { get; }
 		#endregion
 
 		#region 重写属性
-		public override string Message
-		{
-			get
-			{
-				return string.Format(Properties.Resources.Text_CommandNotFound, this.Path);
-			}
-		}
+		public override string Message => string.Format(Properties.Resources.Text_CommandNotFound, this.Path);
 		#endregion
 	}
 }

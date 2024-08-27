@@ -35,16 +35,8 @@ namespace Zongsoft.Services
 {
 	public interface ICommandOutlet
 	{
-		Encoding Encoding
-		{
-			get;
-			set;
-		}
-
-		TextWriter Writer
-		{
-			get;
-		}
+		Encoding Encoding { get; set; }
+		TextWriter Writer { get; }
 
 		void Write(string text);
 		void Write(object value);

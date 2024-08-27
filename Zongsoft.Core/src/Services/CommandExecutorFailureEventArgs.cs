@@ -34,30 +34,13 @@ namespace Zongsoft.Services
 	[Serializable]
 	public class CommandExecutorFailureEventArgs : Zongsoft.Diagnostics.FailureEventArgs
 	{
-		#region 成员字段
-		private CommandExecutorContext _context;
-		#endregion
-
 		#region 构造函数
-		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false)
-		{
-			_context = context;
-		}
-
-		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled)
-		{
-			_context = context;
-		}
+		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false) => this.Context = context;
+		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled) => this.Context = context;
 		#endregion
 
 		#region 公共属性
-		public CommandExecutorContext Context
-		{
-			get
-			{
-				return _context;
-			}
-		}
+		public CommandExecutorContext Context { get; }
 		#endregion
 	}
 }

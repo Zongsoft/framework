@@ -111,17 +111,17 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 执行方法
-		public object Execute(string commandText, object parameter = null)
+		public object Execute(string expression, object argument = null)
 		{
-			if(string.IsNullOrWhiteSpace(commandText))
-				throw new ArgumentNullException(nameof(commandText));
+			if(string.IsNullOrWhiteSpace(expression))
+				throw new ArgumentNullException(nameof(expression));
 
 			CommandExecutorContext context = null;
 
 			try
 			{
 				//创建命令执行器上下文对象
-				context = this.CreateExecutorContext(commandText, parameter);
+				context = this.CreateExecutorContext(expression, argument);
 
 				if(context == null)
 					throw new InvalidOperationException("Create executor context failed.");
@@ -290,20 +290,9 @@ namespace Zongsoft.Services
 			return args.ExceptionHandled;
 		}
 
-		protected virtual void OnFailed(CommandExecutorFailureEventArgs args)
-		{
-			this.Failed?.Invoke(this, args);
-		}
-
-		protected virtual void OnExecuting(CommandExecutorExecutingEventArgs args)
-		{
-			this.Executing?.Invoke(this, args);
-		}
-
-		protected virtual void OnExecuted(CommandExecutorExecutedEventArgs args)
-		{
-			this.Executed?.Invoke(this, args);
-		}
+		protected virtual void OnFailed(CommandExecutorFailureEventArgs args) => this.Failed?.Invoke(this, args);
+		protected virtual void OnExecuting(CommandExecutorExecutingEventArgs args) => this.Executing?.Invoke(this, args);
+		protected virtual void OnExecuted(CommandExecutorExecutedEventArgs args) => this.Executed?.Invoke(this, args);
 		#endregion
 
 		#region 私有方法

@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Services
 {
@@ -45,9 +44,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 判断命令是否可被执行。
-		/// </summary>
+		/// <summary>判断命令是否可被执行。</summary>
 		/// <param name="context">判断命令是否可被执行的上下文对象。</param>
 		/// <returns>如果返回真(true)则表示命令可被执行，否则表示不可执行。</returns>
 		/// <remarks>
@@ -56,9 +53,7 @@ namespace Zongsoft.Services
 		/// </remarks>
 		public virtual bool CanExecute(TContext context) => base.CanExecute(context);
 
-		/// <summary>
-		/// 执行命令。
-		/// </summary>
+		/// <summary>执行命令。</summary>
 		/// <param name="context">执行命令的上下文对象。</param>
 		/// <returns>返回执行的返回结果。</returns>
 		/// <remarks>
@@ -69,7 +64,6 @@ namespace Zongsoft.Services
 
 		#region 抽象方法
 		protected virtual TContext CreateContext(object parameter) => parameter as TContext;
-
 		protected abstract object OnExecute(TContext context);
 		#endregion
 

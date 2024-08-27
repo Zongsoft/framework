@@ -59,9 +59,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 私有构造
-		private CommandExpressionParser()
-		{
-		}
+		private CommandExpressionParser() { }
 		#endregion
 
 		#region 解析方法
@@ -344,25 +342,7 @@ namespace Zongsoft.Services
 			return new KeyValuePair<string, string>(key, value);
 		}
 
-		private static bool IsQuote(char chr)
-		{
-			return (chr == '"' || chr == '\'');
-		}
-
-		private static char EscapeChar(char chr)
-		{
-			switch(chr)
-			{
-				case 's':
-					return ' ';
-				case 't':
-					return '\t';
-				case '\\':
-					return '\\';
-				default:
-					return '\0';
-			}
-		}
+		private static bool IsQuote(char chr) => (chr == '"' || chr == '\'');
 		#endregion
 	}
 }

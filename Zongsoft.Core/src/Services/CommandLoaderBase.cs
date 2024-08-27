@@ -39,9 +39,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		protected CommandLoaderBase()
-		{
-		}
+		protected CommandLoaderBase() { }
 		#endregion
 
 		#region 成员字段
@@ -49,13 +47,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public bool IsLoaded
-		{
-			get
-			{
-				return _isLoaded;
-			}
-		}
+		public bool IsLoaded => _isLoaded;
 		#endregion
 
 		#region 公共方法
@@ -75,9 +67,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 抽象方法
-		/// <summary>
-		/// 执行加载命令的实际操作。
-		/// </summary>
+		/// <summary>执行加载命令的实际操作。</summary>
 		/// <param name="node">待加载的命令树节点。</param>
 		/// <returns>如果加载成功则返回真(true)，否则返回假(false)。</returns>
 		protected abstract bool OnLoad(CommandTreeNode node);

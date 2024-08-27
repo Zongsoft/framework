@@ -28,9 +28,9 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Linq;
 
 namespace Zongsoft.Services
 {
@@ -65,13 +65,9 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _items.Count;
-			}
-		}
+		public int Count => _items.Count;
+		public ICollection<string> Keys => _items.Keys;
+		public ICollection<string> Values => _items.Values;
 
 		public string this[string key]
 		{
@@ -88,43 +84,19 @@ namespace Zongsoft.Services
 				throw new KeyNotFoundException($"The '{key}' command option is undefined.");
 			}
 		}
-
-		public ICollection<string> Keys
-		{
-			get
-			{
-				return _items.Keys;
-			}
-		}
-
-		public ICollection<string> Values
-		{
-			get
-			{
-				return _items.Values;
-			}
-		}
 		#endregion
 
 		#region 公共方法
-		public bool Contains(string name)
-		{
-			return _items.ContainsKey(name);
-		}
-
+		public bool Contains(string name) => _items.ContainsKey(name);
 		public object GetValue(string name)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			string value;
-
-			if(_items.TryGetValue(name, out value))
+			if(_items.TryGetValue(name, out var value))
 				return value;
 
-			CommandOptionAttribute attribute;
-
-			if(_attributes != null && _attributes.TryGetValue(name, out attribute))
+			if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
 				return attribute.DefaultValue;
 			else
 				throw new KeyNotFoundException($"The '{name}' command option is undefined.");
@@ -135,14 +107,10 @@ namespace Zongsoft.Services
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			string value;
-
-			if(_items.TryGetValue(name, out value))
+			if(_items.TryGetValue(name, out var value))
 				return Common.Convert.ConvertValue<T>(value);
 
-			CommandOptionAttribute attribute;
-
-			if(_attributes != null && _attributes.TryGetValue(name, out attribute))
+			if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
 				return Common.Convert.ConvertValue<T>(attribute.DefaultValue);
 			else
 				throw new KeyNotFoundException($"The '{name}' command option is undefined.");
@@ -153,13 +121,9 @@ namespace Zongsoft.Services
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			string result;
-
-			if(_items.TryGetValue(name, out result))
+			if(_items.TryGetValue(name, out var result))
 			{
-				CommandOptionAttribute attribute;
-
-				if(_attributes != null && _attributes.TryGetValue(name, out attribute))
+				if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
 					value = attribute.Type == null ? result : Common.Convert.ConvertValue(result, attribute.Type);
 				else
 					value = result;
@@ -176,15 +140,13 @@ namespace Zongsoft.Services
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			string result;
-
-			if(_items.TryGetValue(name, out result))
+			if(_items.TryGetValue(name, out var result))
 			{
 				value = Common.Convert.ConvertValue<T>(result);
 				return true;
 			}
 
-			value = default(T);
+			value = default;
 			return false;
 		}
 		#endregion
@@ -239,9 +201,7 @@ namespace Zongsoft.Services
 			if(_attributes == null)
 				return;
 
-			CommandOptionAttribute attribute;
-
-			if(!_attributes.TryGetValue(name, out attribute))
+			if(!_attributes.TryGetValue(name, out var attribute))
 				throw new CommandOptionException($"The '{name}' command option is not declared.");
 
 			if(attribute.Type == null)
@@ -263,24 +223,15 @@ namespace Zongsoft.Services
 			}
 			else
 			{
-				object temp;
-
-				if(!Common.Convert.TryConvertValue(value, attribute.Type, out temp))
+				if(!Common.Convert.TryConvertValue(value, attribute.Type, out _))
 					throw new CommandOptionValueException(name, value);
 			}
 		}
 		#endregion
 
 		#region 枚举遍历
-		IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
+		IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator() => _items.GetEnumerator();
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _items.GetEnumerator();
 		#endregion
 
 		#region 嵌套子类

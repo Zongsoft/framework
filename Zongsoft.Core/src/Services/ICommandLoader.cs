@@ -40,17 +40,10 @@ namespace Zongsoft.Services
 	/// </remarks>
 	public interface ICommandLoader
 	{
-		/// <summary>
-		/// 获取一个值表示当前加载器是否已经加载完成。
-		/// </summary>
-		bool IsLoaded
-		{
-			get;
-		}
+		/// <summary>获取一个值表示当前加载器是否已经加载完成。</summary>
+		bool IsLoaded { get; }
 
-		/// <summary>
-		/// 将命令加载到指定的命令树节点中。
-		/// </summary>
+		/// <summary>将命令加载到指定的命令树节点中。</summary>
 		/// <param name="node">要挂载的命令树节点。</param>
 		/// <remarks>
 		///		<para>对实现者的提醒：应该确保该方法的实现是线程安全的。</para>

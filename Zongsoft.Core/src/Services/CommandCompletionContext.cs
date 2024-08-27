@@ -50,30 +50,14 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前命令的执行结果。
-		/// </summary>
-		public object Result
-		{
-			get
-			{
-				return _result;
-			}
-		}
+		/// <summary>获取当前命令的执行结果。</summary>
+		public object Result => _result;
 
-		/// <summary>
-		/// 获取命令执行中发生的异常。
-		/// </summary>
+		/// <summary>获取命令执行中发生的异常。</summary>
 		public Exception Exception
 		{
-			get
-			{
-				return _exception;
-			}
-			internal set
-			{
-				_exception = value;
-			}
+			get => _exception;
+			internal set => _exception = value;
 		}
 		#endregion
 	}

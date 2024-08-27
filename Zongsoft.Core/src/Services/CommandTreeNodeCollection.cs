@@ -36,9 +36,7 @@ namespace Zongsoft.Services
 	public class CommandTreeNodeCollection : Zongsoft.Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
 	{
 		#region 构造函数
-		public CommandTreeNodeCollection(CommandTreeNode owner) : base(owner)
-		{
-		}
+		public CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
 		#endregion
 
 		#region 公共方法
@@ -97,26 +95,12 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(CommandTreeNode item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(CommandTreeNode node) => node.Name;
 		#endregion
 
 		#region 接口实现
-		bool ICollection<ICommand>.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		void ICollection<ICommand>.Add(ICommand item)
-		{
-			this.Add(item);
-		}
-
+		bool ICollection<ICommand>.IsReadOnly => false;
+		void ICollection<ICommand>.Add(ICommand command) => this.Add(command);
 		IEnumerator<ICommand> IEnumerable<ICommand>.GetEnumerator()
 		{
 			var iterator = base.GetEnumerator();

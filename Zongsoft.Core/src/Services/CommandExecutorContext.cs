@@ -62,90 +62,32 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前命令执行器对象。
-		/// </summary>
-		public ICommandExecutor Executor
-		{
-			get
-			{
-				return _executor;
-			}
-		}
+		/// <summary>获取当前命令执行器对象。</summary>
+		public ICommandExecutor Executor => _executor;
 
-		/// <summary>
-		/// 获取当前命令执行器的命令表达式。
-		/// </summary>
-		public CommandExpression Expression
-		{
-			get
-			{
-				return _expression;
-			}
-		}
+		/// <summary>获取当前命令执行器的命令表达式。</summary>
+		public CommandExpression Expression => _expression;
 
-		/// <summary>
-		/// 获取从命令执行器传入的参数值。
-		/// </summary>
-		public object Parameter
-		{
-			get
-			{
-				return _parameter;
-			}
-		}
+		/// <summary>获取从命令执行器传入的参数值。</summary>
+		public object Parameter => _parameter;
 
-		/// <summary>
-		/// 获取或设置命令执行器的最终结果。
-		/// </summary>
+		/// <summary>获取或设置命令执行器的最终结果。</summary>
 		public object Result
 		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				_result = value;
-			}
+			get => _result;
+			set => _result = value;
 		}
 
-		/// <summary>
-		/// 获取当前命令执行器的标准输出器。
-		/// </summary>
-		public ICommandOutlet Output
-		{
-			get
-			{
-				return _executor.Output;
-			}
-		}
+		/// <summary>获取当前命令执行器的标准输出器。</summary>
+		public ICommandOutlet Output => _executor.Output;
 
-		/// <summary>
-		/// 获取当前命令执行器的错误输出器。
-		/// </summary>
-		public TextWriter Error
-		{
-			get
-			{
-				return _executor.Error;
-			}
-		}
+		/// <summary>获取当前命令执行器的错误输出器。</summary>
+		public TextWriter Error => _executor.Error;
 
-		/// <summary>
-		/// 获取一个值，指示命令执行会话是否包含状态字典。
-		/// </summary>
-		public bool HasStates
-		{
-			get
-			{
-				return _states != null && _states.Count > 0;
-			}
-		}
+		/// <summary>获取一个值，指示命令执行会话是否包含状态字典。</summary>
+		public bool HasStates => _states != null && _states.Count > 0;
 
-		/// <summary>
-		/// 获取当前命令执行会话的状态字典。
-		/// </summary>
+		/// <summary>获取当前命令执行会话的状态字典。</summary>
 		public IDictionary<string, object> States
 		{
 			get

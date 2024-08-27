@@ -34,36 +34,19 @@ namespace Zongsoft.Services
 	[Serializable]
 	public class CommandExecutorEventArgs : EventArgs
 	{
-		#region 成员字段
-		private CommandExecutorContext _context;
-		#endregion
-
 		#region 构造函数
 		public CommandExecutorEventArgs(CommandExecutorContext context)
 		{
-			_context = context ?? throw new ArgumentNullException(nameof(context));
+			this.Context = context ?? throw new ArgumentNullException(nameof(context));
 		}
 		#endregion
 
 		#region 公共属性
-		public CommandExecutorContext Context
-		{
-			get
-			{
-				return _context;
-			}
-		}
-
+		public CommandExecutorContext Context { get; }
 		public object Result
 		{
-			get
-			{
-				return _context.Result;
-			}
-			set
-			{
-				_context.Result = value;
-			}
+			get => this.Context.Result;
+			set => this.Context.Result = value;
 		}
 		#endregion
 	}

@@ -46,11 +46,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		public string OptionName
-		{
-			get;
-		}
-
+		public string OptionName { get; }
 		public override string Message
 		{
 			get

@@ -35,9 +35,7 @@ namespace Zongsoft.Services
 	public class CommandExecutorExecutedEventArgs : CommandExecutorEventArgs
 	{
 		#region 构造函数
-		public CommandExecutorExecutedEventArgs(CommandExecutorContext context) : base(context)
-		{
-		}
+		public CommandExecutorExecutedEventArgs(CommandExecutorContext context) : base(context) { }
 		#endregion
 	}
 }

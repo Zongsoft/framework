@@ -34,29 +34,12 @@ namespace Zongsoft.Services
 	[Serializable]
 	public class CommandExecutorExecutingEventArgs : CommandExecutorEventArgs
 	{
-		#region 成员字段
-		private bool _cancel;
-		#endregion
-
 		#region 构造函数
-		public CommandExecutorExecutingEventArgs(CommandExecutorContext context, bool cancel = false) : base(context)
-		{
-			_cancel = cancel;
-		}
+		public CommandExecutorExecutingEventArgs(CommandExecutorContext context, bool cancel = false) : base(context) => this.Cancel = cancel;
 		#endregion
 
 		#region 公共属性
-		public bool Cancel
-		{
-			get
-			{
-				return _cancel;
-			}
-			set
-			{
-				_cancel = value;
-			}
-		}
+		public bool Cancel { get; set; }
 		#endregion
 	}
 }

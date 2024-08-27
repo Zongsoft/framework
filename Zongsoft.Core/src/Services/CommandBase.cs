@@ -48,14 +48,8 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 构造函数
-		protected CommandBase() : this(null, true)
-		{
-		}
-
-		protected CommandBase(string name) : this(name, true)
-		{
-		}
-
+		protected CommandBase() : this(null, true) { }
+		protected CommandBase(string name) : this(name, true) { }
 		protected CommandBase(string name, bool enabled)
 		{
 			_enabled = enabled;
@@ -65,22 +59,17 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置命令的名称。
-		/// </summary>
+		/// <summary>获取或设置命令的名称。</summary>
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 			protected set
 			{
 				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 
-				if(value.Contains(".") || value.Contains("/"))
-					throw new ArgumentException();
+				if(value.Contains('.') || value.Contains('/'))
+					throw new ArgumentException(nameof(value));
 
 				if(string.Equals(_name, value.Trim(), StringComparison.Ordinal))
 					return;
@@ -88,19 +77,14 @@ namespace Zongsoft.Services
 				_name = value.Trim();
 
 				//激发“PropertyChanged”事件
-				this.OnPropertyChanged("Name");
+				this.OnPropertyChanged(nameof(Name));
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置当前命令的断言对象，该断言决定当前命令是否可用。
-		/// </summary>
+		/// <summary>获取或设置当前命令的断言对象，该断言决定当前命令是否可用。</summary>
 		public Common.IPredication Predication
 		{
-			get
-			{
-				return _predication;
-			}
+			get => _predication;
 			set
 			{
 				if(_predication == value)
@@ -113,18 +97,13 @@ namespace Zongsoft.Services
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置当前命令是否可用。
-		/// </summary>
+		/// <summary>获取或设置当前命令是否可用。</summary>
 		/// <remarks>
 		///		该属性作为当前命令是否可被执行的备选方案，命令是否可被执行由<see cref="CanExecute"/>方法决定，该方法的不同实现方式可能导致不同的判断逻辑。有关默认的判断逻辑请参考<seealso cref="CanExecute"/>方法的帮助。
 		/// </remarks>
 		public bool Enabled
 		{
-			get
-			{
-				return _enabled;
-			}
+			get => _enabled;
 			set
 			{
 				if(_enabled == value)
@@ -142,45 +121,14 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 虚拟方法
-		/// <summary>
-		/// 判断命令是否为指定要匹配的名称。
-		/// </summary>
-		/// <param name="parameter">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
-		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
-		protected virtual bool IsMatch(object parameter) => parameter != null && string.Equals(_name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
-
-		protected virtual void OnEnabledChanged(EventArgs e)
-		{
-			this.EnabledChanged?.Invoke(this, e);
-		}
-
-		protected virtual void OnExecuted(CommandExecutedEventArgs e)
-		{
-			this.Executed?.Invoke(this, e);
-		}
-
-		protected virtual void OnExecuting(CommandExecutingEventArgs e)
-		{
-			this.Executing?.Invoke(this, e);
-		}
-
-		protected virtual void OnPropertyChanged(string propertyName)
-		{
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-		#endregion
-
-		#region 虚拟方法
-		/// <summary>
-		/// 判断命令是否可被执行。
-		/// </summary>
-		/// <param name="parameter">判断命令是否可被执行的参数对象。</param>
+		/// <summary>判断命令是否可被执行。</summary>
+		/// <param name="argument">判断命令是否可被执行的参数对象。</param>
 		/// <returns>如果返回真(true)则表示命令可被执行，否则表示不可执行。</returns>
 		/// <remarks>
 		///		<para>本方法为虚拟方法，可由子类更改基类的默认实现方式。</para>
 		///		<para>如果<seealso cref="Predication"/>属性为空(null)，则返回<see cref="Enabled"/>属性值；否则返回由<see cref="Predication"/>属性指定的断言对象的断言方法的值。</para>
 		/// </remarks>
-		protected virtual bool CanExecute(object parameter)
+		protected virtual bool CanExecute(object argument)
 		{
 			var predication = this.Predication;
 
@@ -189,25 +137,28 @@ namespace Zongsoft.Services
 				return this.Enabled;
 
 			//返回断言对象的断言测试的值
-			return this.Enabled && predication.Predicate(parameter);
+			return this.Enabled && predication.Predicate(argument);
 		}
 
-		/// <summary>
-		/// 执行命令。
-		/// </summary>
-		/// <param name="parameter">执行命令的参数。</param>
+		/// <summary>判断命令是否为指定要匹配的名称。</summary>
+		/// <param name="argument">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
+		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
+		protected virtual bool IsMatch(object argument) => argument != null && string.Equals(_name, argument.ToString(), StringComparison.OrdinalIgnoreCase);
+
+		/// <summary>执行命令。</summary>
+		/// <param name="argument">执行命令的参数。</param>
 		/// <returns>返回执行的返回结果。</returns>
 		/// <remarks>
 		///		<para>本方法的实现中首先调用<see cref="CanExecute"/>方法，以确保阻止非法的调用。</para>
 		/// </remarks>
-		protected virtual object Execute(object parameter)
+		protected virtual object Execute(object argument)
 		{
 			//在执行之前首先判断是否可以执行
-			if(!this.CanExecute(parameter))
+			if(!this.CanExecute(argument))
 				return null;
 
 			//创建事件参数对象
-			var executingArgs = this.CreateExecutingEventArgs(parameter);
+			var executingArgs = CreateExecutingEventArgs(argument);
 			//激发“Executing”事件
 			this.OnExecuting(executingArgs);
 
@@ -221,12 +172,12 @@ namespace Zongsoft.Services
 			try
 			{
 				//执行具体的工作
-				result = this.OnExecute(parameter);
+				result = this.OnExecute(argument);
 			}
 			catch(AggregateException ex)
 			{
 				//创建事件参数对象
-				executedArgs = this.CreateExecutedEventArgs(parameter, ex.InnerException);
+				executedArgs = CreateExecutedEventArgs(argument, ex.InnerException);
 
 				//激发“Executed”事件
 				this.OnExecuted(executedArgs);
@@ -239,7 +190,7 @@ namespace Zongsoft.Services
 			catch(Exception ex)
 			{
 				//创建事件参数对象
-				executedArgs = this.CreateExecutedEventArgs(parameter, ex);
+				executedArgs = CreateExecutedEventArgs(argument, ex);
 
 				//激发“Executed”事件
 				this.OnExecuted(executedArgs);
@@ -251,67 +202,65 @@ namespace Zongsoft.Services
 			}
 
 			//创建事件参数对象
-			executedArgs = this.CreateExecutedEventArgs(parameter, result);
+			executedArgs = CreateExecutedEventArgs(argument, result);
 
 			//激发“Executed”事件
-			this.OnExecuted(executedArgs);
+			OnExecuted(executedArgs);
 
 			//返回执行成功的结果
 			return executedArgs.Result;
 		}
+
+		protected virtual void OnEnabledChanged(EventArgs e) => this.EnabledChanged?.Invoke(this, e);
+		protected virtual void OnExecuted(CommandExecutedEventArgs e) => this.Executed?.Invoke(this, e);
+		protected virtual void OnExecuting(CommandExecutingEventArgs e) => this.Executing?.Invoke(this, e);
+		protected virtual void OnPropertyChanged(string propertyName) => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		#endregion
 
 		#region 抽象方法
-		protected abstract object OnExecute(object parameter);
+		protected abstract object OnExecute(object argument);
 		#endregion
 
 		#region 事件参数
-		private CommandExecutingEventArgs CreateExecutingEventArgs(object parameter)
+		private static CommandExecutingEventArgs CreateExecutingEventArgs(object argument)
 		{
-			if(parameter is CommandContext)
-				return new CommandExecutingEventArgs((CommandContext)parameter);
-
-			return new CommandExecutingEventArgs(parameter);
+			return argument is CommandContext context ?
+				new CommandExecutingEventArgs(context) :
+				new CommandExecutingEventArgs(argument);
 		}
 
-		private CommandExecutedEventArgs CreateExecutedEventArgs(object parameter, object result)
+		private static CommandExecutedEventArgs CreateExecutedEventArgs(object argument, object result)
 		{
-			if(parameter is CommandContext)
-				return new CommandExecutedEventArgs((CommandContext)parameter, result);
-
-			return new CommandExecutedEventArgs(parameter, result);
+			return argument is CommandContext context ?
+				new CommandExecutedEventArgs(context, result) :
+				new CommandExecutedEventArgs(argument, result);
 		}
 
-		private CommandExecutedEventArgs CreateExecutedEventArgs(object parameter, Exception exception)
+		private static CommandExecutedEventArgs CreateExecutedEventArgs(object argument, Exception exception)
 		{
-			if(parameter is CommandContext)
-				return new Services.CommandExecutedEventArgs((CommandContext)parameter, exception);
-
-			return new CommandExecutedEventArgs(parameter, exception);
+			return argument is CommandContext context ?
+				new CommandExecutedEventArgs(context, exception) :
+				new CommandExecutedEventArgs(argument, exception);
 		}
 		#endregion
 
 		#region 显式实现
-		bool ICommand.CanExecute(object parameter) => this.CanExecute(parameter);
-		object ICommand.Execute(object parameter) => this.Execute(parameter);
+		bool ICommand.CanExecute(object argument) => this.CanExecute(argument);
+		object ICommand.Execute(object argument) => this.Execute(argument);
 
-		/// <summary>
-		/// 判断命令是否可被执行。
-		/// </summary>
-		/// <param name="parameter">判断命令是否可被执行的参数。</param>
+		/// <summary>判断命令是否可被执行。</summary>
+		/// <param name="argument">判断命令是否可被执行的参数。</param>
 		/// <returns>如果返回真(true)则表示命令可被执行，否则表示不可执行。</returns>
 		/// <remarks>
 		///		<para>本显式实现为调用<see cref="CanExecute"/>虚拟方法。</para>
 		/// </remarks>
-		bool Common.IPredication.Predicate(object parameter) => this.CanExecute(parameter);
+		bool Common.IPredication.Predicate(object argument) => this.CanExecute(argument);
 
-		/// <summary>
-		/// 判断命令是否为指定要匹配的名称。
-		/// </summary>
-		/// <param name="parameter">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
+		/// <summary>判断命令是否为指定要匹配的名称。</summary>
+		/// <param name="argument">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
 		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
 		/// <remarks>该显式实现为调用<see cref="IsMatch"/>虚拟方法。</remarks>
-		bool IMatchable.Match(object parameter) => this.IsMatch(parameter);
+		bool IMatchable.Match(object argument) => this.IsMatch(argument);
 		#endregion
 	}
 }
