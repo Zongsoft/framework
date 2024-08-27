@@ -88,12 +88,7 @@ namespace Zongsoft.Collections
 		#region 重写方法
 		protected override HierarchicalNode GetChild(string name)
 		{
-			var children = _children;
-
-			if(children != null && children.TryGet(name, out var child))
-				return child;
-
-			return null;
+			return _children != null && _children.TryGetValue(name, out var result) ? result : null;
 		}
 		#endregion
 	}

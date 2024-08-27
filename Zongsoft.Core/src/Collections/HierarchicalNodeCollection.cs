@@ -28,54 +28,42 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Collections
 {
 	[Serializable]
-	public class HierarchicalNodeCollection<T> : NamedCollectionBase<T> where T : HierarchicalNode
+	public class HierarchicalNodeCollection<T> : KeyedCollection<string, T> where T : HierarchicalNode
 	{
 		#region 成员变量
-		private T _owner;
+		private readonly T _owner;
 		#endregion
 
 		#region 构造函数
-		protected HierarchicalNodeCollection(T owner)
-		{
-			_owner = owner;
-		}
+		protected HierarchicalNodeCollection(T owner) : base(StringComparer.OrdinalIgnoreCase) => _owner = owner;
 		#endregion
 
 		#region 保护属性
-		protected T Owner
-		{
-			get
-			{
-				return _owner;
-			}
-		}
+		protected T Owner => _owner;
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(T item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(T item) => item.Name;
 
-		protected override void AddItem(T item)
+		protected override void InsertItem(int index, T item)
 		{
 			if(item != null)
 				item.InnerParent = _owner;
 
-			base.AddItem(item);
+			base.InsertItem(index, item);
 		}
 
-		protected override void SetItem(string name, T item)
+		protected override void SetItem(int index, T item)
 		{
 			if(item != null)
 				item.InnerParent = _owner;
 
-			base.SetItem(name, item);
+			base.SetItem(index, item);
 		}
 		#endregion
 	}

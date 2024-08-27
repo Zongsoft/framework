@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Common.Expressions
 {
@@ -84,5 +84,10 @@ namespace Zongsoft.Data.Common.Expressions
 			return $"{this.Name} {this.DbType} {(this.Nullable ? "NULL" : "NOT NULL")}";
 		}
 		#endregion
+	}
+
+	public class FieldDefinitionCollection() : KeyedCollection<string, FieldDefinition>(StringComparer.OrdinalIgnoreCase)
+	{
+		protected override string GetKeyForItem(FieldDefinition field) => field.Name;
 	}
 }

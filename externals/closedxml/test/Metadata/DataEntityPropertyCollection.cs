@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Data;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata;
 
-internal class DataEntityPropertyCollection : NamedCollectionBase<IDataEntityProperty>, IDataEntityPropertyCollection
+internal class DataEntityPropertyCollection : KeyedCollection<string, IDataEntityProperty>, IDataEntityPropertyCollection
 {
-    public DataEntityPropertyCollection(IDataEntity entity) => this.Entity = entity;
+    public DataEntityPropertyCollection(IDataEntity entity) : base(StringComparer.OrdinalIgnoreCase) => this.Entity = entity;
     public IDataEntity Entity { get; }
     protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
-	protected override void AddItem(IDataEntityProperty property)
+	protected override void InsertItem(int index, IDataEntityProperty property)
 	{
 		if(property == null)
 			throw new ArgumentNullException(nameof(property));
 
 		((DataEntityProperty)property).Entity = this.Entity;
-		base.AddItem(property);
+		base.InsertItem(index, property);
 	}
-	protected override void SetItem(string name, IDataEntityProperty value)
+	protected override void SetItem(int index, IDataEntityProperty value)
 	{
         if(value == null)
 			throw new ArgumentNullException(nameof(value));
 
 		((DataEntityProperty)value).Entity = this.Entity;
-        base.SetItem(name, value);
+        base.SetItem(index, value);
 	}
 }
 

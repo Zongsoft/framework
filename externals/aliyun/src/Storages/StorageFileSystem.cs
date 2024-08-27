@@ -91,7 +91,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			var options = this.EnsureOptions();
 
 			//获取当前路径对应的存储器配置项，注：BucketName即为路径中的第一节
-			options.Buckets.TryGet(path.Segments[0], out var bucket);
+			options.Buckets.TryGetValue(path.Segments[0], out var bucket);
 
 			//获取当前路径对应的服务区域
 			var region = this.GetRegion(bucket);
@@ -119,7 +119,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			var options = this.EnsureOptions();
 
 			//获取指定名称的存储器配置项
-			options.Buckets.TryGet(bucketName, out var bucket);
+			options.Buckets.TryGetValue(bucketName, out var bucket);
 
 			var region = this.GetRegion(bucket);
 			var center = StorageServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);
@@ -140,7 +140,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			if(string.IsNullOrWhiteSpace(certificate))
 				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.GetCertificate(certificate);
 		}
 
 		private ServiceCenterName GetRegion(Options.BucketOption bucket)

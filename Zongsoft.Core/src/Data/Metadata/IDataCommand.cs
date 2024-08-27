@@ -62,7 +62,7 @@ namespace Zongsoft.Data.Metadata
 		CommandMutability Mutability { get; set; }
 
 		/// <summary>获取数据命令的参数集合。</summary>
-		Collections.INamedCollection<IDataCommandParameter> Parameters { get; }
+		DataCommandParameterCollection Parameters { get; }
 
 		/// <summary>获取数据命令的脚本对象。</summary>
 		IDataCommandScriptor Scriptor { get; }

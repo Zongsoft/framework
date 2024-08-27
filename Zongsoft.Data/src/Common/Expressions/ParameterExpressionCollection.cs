@@ -28,11 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class ParameterExpressionCollection : Collections.NamedCollectionBase<ParameterExpression>
+	public class ParameterExpressionCollection() : KeyedCollection<string, ParameterExpression>(StringComparer.OrdinalIgnoreCase)
 	{
 		#region 私有变量
 		private int _index;
@@ -42,25 +42,21 @@ namespace Zongsoft.Data.Common.Expressions
 		public ParameterExpression Add(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input)
 		{
 			var parameter = Expression.Parameter(name, type, direction);
-			this.AddItem(parameter);
+			this.Add(parameter);
 			return parameter;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(ParameterExpression item)
-		{
-			return item.Name;
-		}
-
-		protected override void AddItem(ParameterExpression item)
+		protected override string GetKeyForItem(ParameterExpression item) => item.Name;
+		protected override void InsertItem(int index, ParameterExpression item)
 		{
 			//处理下参数名为空或问号(?)的情况
 			if(string.IsNullOrEmpty(item.Name) || item.Name == ParameterExpression.Anonymous)
 				item.Name = "p" + System.Threading.Interlocked.Increment(ref _index).ToString();
 
 			//调用基类同名方法
-			base.AddItem(item);
+			base.InsertItem(index, item);
 		}
 		#endregion
 	}

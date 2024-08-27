@@ -42,18 +42,14 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 私有构造
-		private LocalFileSystem()
-		{
-		}
+		private LocalFileSystem() { }
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取本地文件目录系统的方案，始终返回“zfs.local”。</summary>
-		public string Scheme { get => "zfs.local"; }
-
-		public IFile File { get => LocalFileProvider.Instance; }
-
-		public IDirectory Directory { get => LocalDirectoryProvider.Instance; }
+		public string Scheme => "zfs.local";
+		public IFile File => LocalFileProvider.Instance;
+		public IDirectory Directory => LocalDirectoryProvider.Instance;
 		#endregion
 
 		#region 公共方法

@@ -74,7 +74,7 @@ namespace Zongsoft.Components
 
 			(var moduleName, var eventName) = Parse(qualifiedName);
 
-			if(context.Modules.TryGet(moduleName, out var applicationModule))
+			if(context.Modules.TryGetValue(moduleName, out var applicationModule))
 			{
 				registry = GetEventRegistry(applicationModule);
 
@@ -106,7 +106,7 @@ namespace Zongsoft.Components
 			if(context == null || context.Modules.Count == 0)
 				yield break;
 
-			if(context.Modules.TryGet(string.Empty, out var common))
+			if(context.Modules.TryGetValue(string.Empty, out var common))
 			{
 				var registry = GetEventRegistry(common);
 

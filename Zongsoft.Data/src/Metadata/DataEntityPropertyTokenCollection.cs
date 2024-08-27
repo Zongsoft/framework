@@ -30,29 +30,10 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Metadata
 {
-	public class SourceCollection : KeyedCollection<string, ISource>
+	public class DataEntityPropertyTokenCollection() : KeyedCollection<string, DataEntityPropertyToken>(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 构造函数
-		public SourceCollection(params ISource[] items) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			if(items != null && items.Length > 0)
-			{
-				foreach(var item in items)
-					this.Add(item);
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(ISource item)
-		{
-			if(item is JoinClause join)
-				return join.Name;
-			else
-				return item.Alias ?? item.ToString();
-		}
-		#endregion
+		protected override string GetKeyForItem(DataEntityPropertyToken token) => token.Property.Name;
 	}
 }

@@ -90,7 +90,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			var options = this.EnsureOptions();
 
 			//获取指定名称的短信模板配置，如果获取失败则抛出异常
-			if(!options.Apps.TryGet(name, out var app))
+			if(!options.Apps.TryGetValue(name, out var app))
 				throw new InvalidOperationException($"The specified '{name}' app is not existed.");
 
 			//获取当前短信模板关联的凭证
@@ -168,7 +168,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			if(string.IsNullOrWhiteSpace(certificate))
 				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.GetCertificate(certificate);
 		}
 
 		private ServiceCenterName GetRegion(Options.PushingAppOption app)

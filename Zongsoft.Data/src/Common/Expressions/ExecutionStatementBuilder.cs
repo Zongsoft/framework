@@ -50,7 +50,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				foreach(var entry in context.InParameters)
 				{
-					if(statement.Parameters.TryGet(entry.Key, out var parameter))
+					if(statement.Parameters.TryGetValue(entry.Key, out var parameter))
 						parameter.Value = entry.Value;
 				}
 			}

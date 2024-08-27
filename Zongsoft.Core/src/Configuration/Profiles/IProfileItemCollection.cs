@@ -30,46 +30,34 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Configuration.Profiles
 {
-	/// <summary>
-	/// 表示命名集合基类的接口。
-	/// </summary>
-	/// <typeparam name="T">集合成员的类型。</typeparam>
-	public interface IReadOnlyNamedCollection<T> : IReadOnlyCollection<T>
+	public interface IProfileItemCollection<T> : IReadOnlyCollection<T> where T : ProfileItem
 	{
-		/// <summary>获取集合中所有的键(名称)集。</summary>
-		IEnumerable<string> Keys { get; }
-
-		/// <summary>
-		/// 只读索引器，获取指定名称的元素。
-		/// </summary>
+		/// <summary>只读索引器，获取指定名称的元素。</summary>
 		/// <param name="name">指定要获取的元素名。</param>
 		/// <returns>返回指定名称的元素对象，如果没有找到则抛出<seealso cref="KeyNotFoundException"/>异常。</returns>
 		/// <exception cref="KeyNotFoundException">当指定<paramref name="name"/>名称的元素不存在则激发该异常。</exception>
 		T this[string name] { get; }
 
-		/// <summary>
-		/// 判断当前集合是否包含指定名称的元素。
-		/// </summary>
+		/// <summary>判断当前集合是否包含指定名称的元素。</summary>
 		/// <param name="name">指定要判断的元素名。</param>
 		/// <returns>如果指定名称的元素是存在的则返回真(True)，否则返回假(False)。</returns>
 		bool Contains(string name);
 
-		/// <summary>
-		/// 获取指定名称的元素。
-		/// </summary>
-		/// <param name="name">指定要获取的元素名。</param>
-		/// <returns>返回指定名称的元素对象，如果没有找到则抛出<seealso cref="KeyNotFoundException"/>异常。</returns>
-		/// <exception cref="KeyNotFoundException">当指定<paramref name="name"/>名称的元素不存在则激发该异常。</exception>
-		T Get(string name);
-
-		/// <summary>
-		/// 尝试获取指定名称的元素。
-		/// </summary>
+		/// <summary>尝试获取指定名称的元素。</summary>
 		/// <param name="name">指定要获取的元素名。</param>
 		/// <param name="value">输出参数，包含指定名称的元素对象。</param>
 		/// <returns>返回一个值，指示指定名称的元素是否获取成功。</returns>
-		bool TryGet(string name, out T value);
+		bool TryGetValue(string name, out T value);
+
+		/// <summary>新增指定的元素。</summary>
+		/// <param name="value">指定要新增的元素。</param>
+		void Add(T value);
+
+		/// <summary>删除指定名称的元素。</summary>
+		/// <param name="name">指定要删除的元素名。</param>
+		/// <returns>如果删除成功则返回真（True），否则返回假（False）。</returns>
+		bool Remove(string name);
 	}
 }

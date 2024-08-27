@@ -32,8 +32,6 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-using Zongsoft.Collections;
-
 namespace Zongsoft.Data.Metadata
 {
 	/// <summary>
@@ -62,7 +60,7 @@ namespace Zongsoft.Data.Metadata
 
 			while((index = path.IndexOf('.', last + 1)) > 0)
 			{
-				if(properties.TryGet(path[GetLast(last)..index], out property) && property.IsComplex)
+				if(properties.TryGetValue(path[GetLast(last)..index], out property) && property.IsComplex)
 				{
 					var complex = (IDataEntityComplexProperty)property;
 
@@ -82,7 +80,7 @@ namespace Zongsoft.Data.Metadata
 				last = index;
 			}
 
-			if(properties.TryGet(path.Substring(GetLast(last)), out property))
+			if(properties.TryGetValue(path.Substring(GetLast(last)), out property))
 				return property;
 
 			throw new InvalidOperationException($"The specified '{path}' member does not exist in the '{entity}' entity.");
@@ -170,7 +168,7 @@ namespace Zongsoft.Data.Metadata
 		/// <param name="entity">指定的实体元素。</param>
 		/// <param name="type">指定的数据类型，即实体元素对应到的输入或输出的数据类型。</param>
 		/// <returns>返回实体元素对应指定数据类型的成员标记集。</returns>
-		public static IReadOnlyNamedCollection<DataEntityPropertyToken> GetTokens(this IDataEntity entity, Type type)
+		public static DataEntityPropertyTokenCollection GetTokens(this IDataEntity entity, Type type)
 		{
 			if(entity == null)
 				throw new ArgumentNullException(nameof(entity));
@@ -193,7 +191,7 @@ namespace Zongsoft.Data.Metadata
 		{
 			#region 成员字段
 			private readonly IDataEntity _entity;
-			private readonly ConcurrentDictionary<Type, IReadOnlyNamedCollection<DataEntityPropertyToken>> _cache = new();
+			private readonly ConcurrentDictionary<Type, DataEntityPropertyTokenCollection> _cache = new();
 			#endregion
 
 			#region 构造函数
@@ -220,7 +218,7 @@ namespace Zongsoft.Data.Metadata
 			#endregion
 
 			#region 公共方法
-			public IReadOnlyNamedCollection<DataEntityPropertyToken> GetTokens(Type type)
+			public DataEntityPropertyTokenCollection GetTokens(Type type)
 			{
 				if(type == null)
 					throw new ArgumentNullException(nameof(type));
@@ -230,9 +228,9 @@ namespace Zongsoft.Data.Metadata
 			#endregion
 
 			#region 私有方法
-			private IReadOnlyNamedCollection<DataEntityPropertyToken> CreateTokens(Type type)
+			private DataEntityPropertyTokenCollection CreateTokens(Type type)
 			{
-				var collection = new NamedCollection<DataEntityPropertyToken>(m => m.Property.Name);
+				var collection = new DataEntityPropertyTokenCollection();
 
 				if(type == null || type == typeof(object) || Zongsoft.Common.TypeExtension.IsDictionary(type))
 				{

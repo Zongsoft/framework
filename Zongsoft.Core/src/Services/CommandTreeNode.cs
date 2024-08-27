@@ -196,7 +196,7 @@ namespace Zongsoft.Services
 		#region 重写方法
 		protected override Collections.HierarchicalNode GetChild(string name)
 		{
-			return _children != null && _children.TryGet(name, out var child) ? child : null;
+			return _children != null && _children.TryGetValue(name, out var child) ? child : null;
 		}
 
 		protected override void LoadChildren()

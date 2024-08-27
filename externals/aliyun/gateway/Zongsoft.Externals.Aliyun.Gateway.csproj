@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>6.0.0.0</Version>
+		<Version>6.2.0.0</Version>
 		<Product>Zongsoft Aliyun Gateway Library</Product>
 		<Description>This is a library about Aliyun Gateway.</Description>
 		<IsPackable>true</IsPackable>

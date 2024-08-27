@@ -430,7 +430,7 @@ namespace Zongsoft.Plugins
 				return module.Services;
 
 			if(builtin.Node != null && builtin.Node.Parent != null &&
-				ApplicationContext.Current.Modules.TryGet(builtin.Node.Parent.Name, out module))
+				ApplicationContext.Current.Modules.TryGetValue(builtin.Node.Parent.Name, out module))
 			{
 				return module.Services;
 			}

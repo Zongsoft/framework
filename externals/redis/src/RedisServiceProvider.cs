@@ -60,7 +60,7 @@ namespace Zongsoft.Externals.Redis
 				if(settings == null || settings.Count == 0)
 					throw new ConfigurationException($"Missing redis connection settings.");
 
-				if(!string.IsNullOrEmpty(name) && settings.TryGet(name, Configuration.RedisConnectionSetting.DRIVER, out var setting))
+				if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSetting.DRIVER, out var setting))
 					return setting;
 
 				setting = settings.GetDefault();

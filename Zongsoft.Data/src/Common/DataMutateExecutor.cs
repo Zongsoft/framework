@@ -342,7 +342,7 @@ namespace Zongsoft.Data.Common
 			{
 				var link = complex.Links[i];
 
-				if(!statement.HasParameters || !statement.Parameters.TryGet(link.ForeignKey.Name, out var parameter))
+				if(!statement.HasParameters || !statement.Parameters.TryGetValue(link.ForeignKey.Name, out var parameter))
 					continue;
 
 				if(link.ForeignKey.Sequence == null)
@@ -357,7 +357,7 @@ namespace Zongsoft.Data.Common
 
 					parameter.Value = refer;
 				}
-				else if(statement.Schema.HasChildren && statement.Schema.Children.TryGet(link.ForeignKey.Name, out var member))
+				else if(statement.Schema.HasChildren && statement.Schema.Children.TryGetValue(link.ForeignKey.Name, out var member))
 				{
 					/*
 					 * 如果复合属性的外链字段含序号器(自增)，链接参数值不能直接绑定必须通过执行器动态绑定

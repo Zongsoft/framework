@@ -148,7 +148,7 @@ namespace Zongsoft.Data.Metadata
 
 					for(int i = 0; i < references.Length; i++)
 					{
-						if(this.Entity.Properties.TryGet(_referenceNames[i], out var property) && property.IsSimplex)
+						if(this.Entity.Properties.TryGetValue(_referenceNames[i], out var property) && property.IsSimplex)
 							references[i] = (IDataEntitySimplexProperty)property;
 						else
 						{
@@ -315,7 +315,7 @@ namespace Zongsoft.Data.Metadata
 						{
 							var entity = _host.Entity.GetEntity(_destinationEntity);
 
-							if(entity != null && entity.Properties.TryGet(_destinationProperty, out var property) && property.IsSimplex)
+							if(entity != null && entity.Properties.TryGetValue(_destinationProperty, out var property) && property.IsSimplex)
 							{
 								_destination = ((IDataEntitySimplexProperty)property).Sequence ??
 									throw new DataException($"The '{_destinationEntity}:{_destinationProperty}' sequence referenced by the '{_host.Entity.Name}:{_host.Name}' property does not exist.");

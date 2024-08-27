@@ -28,11 +28,11 @@
  */
 
 using System;
-using System.Collections;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Plugins
 {
-	public class PluginExtendedPropertyCollection : Collections.NamedCollectionBase<PluginExtendedProperty>
+	public class PluginExtendedPropertyCollection : KeyedCollection<string, PluginExtendedProperty>
 	{
 		#region 成员变量
 		private readonly PluginElement _owner;
@@ -46,13 +46,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		public PluginElement Owner
-		{
-			get
-			{
-				return _owner;
-			}
-		}
+		public PluginElement Owner => _owner;
 		#endregion
 
 		#region 公共方法
@@ -99,10 +93,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(PluginExtendedProperty item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(PluginExtendedProperty item) => item.Name;
 		#endregion
 
 		#region 内部方法
@@ -119,7 +110,10 @@ namespace Zongsoft.Plugins
 			else
 				throw new PluginException("Invalid value of the plugin extended property.");
 
-			this.SetItem(name, property);
+			if(this.TryGetValue(name, out var item))
+				this.Dictionary[name] = property;
+			else
+				this.Add(property);
 
 			return property;
 		}
@@ -128,12 +122,12 @@ namespace Zongsoft.Plugins
 		#region 私有方法
 		private bool TryGetProperty(string name, out PluginExtendedProperty property)
 		{
-			if(this.TryGetItem(name, out property))
+			if(this.TryGetValue(name, out property))
 				return true;
 
 			if(_owner is PluginTreeNode node && node.NodeType == PluginTreeNodeType.Builtin)
 			{
-				if(((Builtin)node.Value).Properties.TryGet(name, out property))
+				if(((Builtin)node.Value).Properties.TryGetValue(name, out property))
 					return true;
 			}
 

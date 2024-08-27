@@ -64,23 +64,22 @@ namespace Zongsoft.Data.Common.Expressions
 
 		#region 公共属性
 		/// <summary>获取一个值，指示<c>Form</c>属性是否有值。</summary>
-		public bool HasFrom { get => this.From?.Count > 0; }
+		public bool HasFrom => this.From?.Count > 0;
 
 		/// <summary>获取一个数据源的集合，可以在<c>Where</c>子句中引用的字段源。</summary>
-		public INamedCollection<ISource> From { get; }
+		public SourceCollection From { get; }
 
 		/// <summary>获取或设置条件子句。</summary>
 		public IExpression Where { get; set; }
 		#endregion
 
 		#region 公共方法
-		/// <inheritdoc />
 		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntity target, string fullPath = null)
 		{
 			var clause = JoinClause.Create(source,
 			                               target,
 			                               fullPath,
-			                               name => this.From.TryGet(name, out var join) ? (JoinClause)join : null,
+			                               name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
 			                               entity => new TableIdentifier(entity, aliaser.Generate()));
 
 			if(!this.From.Contains(clause))
@@ -89,13 +88,12 @@ namespace Zongsoft.Data.Common.Expressions
 			return clause;
 		}
 
-		/// <inheritdoc />
 		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, string fullPath = null)
 		{
 			var joins = JoinClause.Create(source,
 			                              complex,
 			                              fullPath,
-			                              name => this.From.TryGet(name, out var join) ? (JoinClause)join : null,
+			                              name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
 			                              entity => new TableIdentifier(entity, aliaser.Generate()));
 
 			JoinClause last = null;
@@ -112,7 +110,6 @@ namespace Zongsoft.Data.Common.Expressions
 			return last;
 		}
 
-		/// <inheritdoc />
 		public JoinClause Join(Aliaser aliaser, ISource source, SchemaMember schema)
 		{
 			if(schema.Token.Property.IsSimplex)

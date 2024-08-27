@@ -64,7 +64,7 @@ namespace Zongsoft.Data.Metadata
 			get
 			{
 				if(_foreignKey == null)
-					_foreignKey = (IDataEntitySimplexProperty)_owner.Foreign.Properties.Get(_foreign);
+					_foreignKey = (IDataEntitySimplexProperty)_owner.Foreign.Properties[_foreign];
 
 				return _foreignKey;
 			}
@@ -87,7 +87,7 @@ namespace Zongsoft.Data.Metadata
 
 			for(int i = 0; i < parts.Length - 1; i++)
 			{
-				if(entity.Properties.TryGet(parts[i], out property) && property.IsComplex)
+				if(entity.Properties.TryGetValue(parts[i], out property) && property.IsComplex)
 				{
 					result[i] = property;
 					entity = ((IDataEntityComplexProperty)property).Foreign;
@@ -96,7 +96,7 @@ namespace Zongsoft.Data.Metadata
 					throw new DataException($"The link anchor value '{_anchor}' in the '{_owner}' complex property is invalid.");
 			}
 
-			if(entity.Properties.TryGet(parts[^1], out property) && property.IsSimplex)
+			if(entity.Properties.TryGetValue(parts[^1], out property) && property.IsSimplex)
 				result[^1] = property;
 			else
 				throw new DataException($"The link anchor value '{_anchor}' in the '{_owner}' complex property is invalid.");

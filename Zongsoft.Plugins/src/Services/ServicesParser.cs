@@ -226,7 +226,7 @@ namespace Zongsoft.Services
 			//如果指定的服务容器名则返回其指定名称的服务容器
 			if(match.Groups[PROVIDER_GROUP].Success)
 			{
-				if(ApplicationContext.Current.Modules.TryGet(match.Groups[PROVIDER_GROUP].Value, out module))
+				if(ApplicationContext.Current.Modules.TryGetValue(match.Groups[PROVIDER_GROUP].Value, out module))
 					return module.Services;
 
 				return null;
@@ -241,7 +241,7 @@ namespace Zongsoft.Services
 				return ApplicationContext.Current.Services;
 
 			//返回以当前构件的父节点名称为服务容器名的那个服务容器，如果该服务容器不存在则返回默认服务容器
-			return ApplicationContext.Current.Modules.TryGet(context.Node.Parent.Name, out module) ?
+			return ApplicationContext.Current.Modules.TryGetValue(context.Node.Parent.Name, out module) ?
 				module.Services :
 				ApplicationContext.Current.Services;
 		}

@@ -80,7 +80,7 @@ namespace Zongsoft.Services
 			_initializers = new List<IApplicationInitializer>();
 			_workers = new List<IWorker>();
 
-			this.Modules = new Collections.NamedCollection<IApplicationModule>(p => p.Name);
+			this.Modules = new ApplicationModuleCollection();
 			this.Schemas = new ComponentModel.SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
@@ -145,10 +145,10 @@ namespace Zongsoft.Services
 
 		public virtual ClaimsPrincipal Principal => Thread.CurrentPrincipal is ClaimsPrincipal principal ? principal : Security.Anonymous.Principal;
 		public virtual IServiceProvider Services => _services;
-		public virtual Collections.INamedCollection<object> Session { get; init; }
+		public virtual IDictionary<string, object> Session { get; init; }
 		public Components.EventManager Events => Components.EventManager.Global;
-		public Collections.INamedCollection<IApplicationModule> Modules { get; }
-		public Collections.INamedCollection<ComponentModel.Schema> Schemas { get; }
+		public ApplicationModuleCollection Modules { get; }
+		public ComponentModel.SchemaCollection Schemas { get; }
 		public ICollection<IApplicationInitializer> Initializers => _initializers;
 		public ICollection<IWorker> Workers => _workers;
 		public IDictionary<string, object> Properties { get; }

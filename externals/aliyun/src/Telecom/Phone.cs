@@ -325,7 +325,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			if(string.IsNullOrWhiteSpace(certificate))
 				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 			else
-				return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
+				return Aliyun.Options.GeneralOptions.Instance.Certificates.GetCertificate(certificate);
 		}
 
 		private HttpClient GetHttpClient(ICertificate certificate)

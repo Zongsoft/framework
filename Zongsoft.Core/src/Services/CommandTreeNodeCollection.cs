@@ -62,10 +62,7 @@ namespace Zongsoft.Services
 
 		public bool Contains(ICommand command)
 		{
-			if(command == null)
-				return false;
-
-			return this.ContainsName(command.Name);
+			return command != null && this.Contains(command.Name);
 		}
 
 		public void CopyTo(ICommand[] array, int arrayIndex)
@@ -87,10 +84,7 @@ namespace Zongsoft.Services
 
 		public bool Remove(ICommand command)
 		{
-			if(command == null)
-				return false;
-
-			return base.RemoveItem(command.Name);
+			return command != null && base.Remove(command.Name);
 		}
 		#endregion
 

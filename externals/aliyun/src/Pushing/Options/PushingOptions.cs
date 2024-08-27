@@ -37,33 +37,15 @@ namespace Zongsoft.Externals.Aliyun.Pushing.Options
 	/// </summary>
 	public class PushingOptions
 	{
-		public PushingOptions()
-		{
-			this.Apps = new PushingAppOptionCollection();
-		}
+		public PushingOptions() => this.Apps = new();
 
-		/// <summary>
-		/// 获取或设置移动推送运营商区域。
-		/// </summary>
-		public ServiceCenterName? Region
-		{
-			get; set;
-		}
+		/// <summary>获取或设置移动推送运营商区域。</summary>
+		public ServiceCenterName? Region { get; set; }
 
-		/// <summary>
-		/// 获取或设置关联的凭证名。
-		/// </summary>
-		public string Certificate
-		{
-			get; set;
-		}
+		/// <summary>获取或设置关联的凭证名。</summary>
+		public string Certificate { get; set; }
 
-		/// <summary>
-		/// 获取移动推送的应用配置项集合。
-		/// </summary>
-		public Collections.INamedCollection<PushingAppOption> Apps
-		{
-			get;
-		}
+		/// <summary>获取移动推送的应用配置项集合。</summary>
+		public PushingAppOptionCollection Apps { get; }
 	}
 }

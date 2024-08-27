@@ -293,7 +293,7 @@ namespace Zongsoft.Services
 			{
 				var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
 
-				if(!string.IsNullOrEmpty(moduleName) && ApplicationContext.Current.Modules.TryGet(moduleName, out var module))
+				if(!string.IsNullOrEmpty(moduleName) && ApplicationContext.Current.Modules.TryGetValue(moduleName, out var module))
 					return module;
 
 				return ApplicationContext.Current;

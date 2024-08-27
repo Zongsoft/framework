@@ -50,7 +50,7 @@ namespace Zongsoft.Configuration
 				return null;
 
 			//如果指定的连接配置名为空则获取默认项
-			var setting = string.IsNullOrEmpty(name) ? settings.GetDefault() : (settings.TryGet(name, out var value) ? value : null);
+			var setting = string.IsNullOrEmpty(name) ? settings.GetDefault() : (settings.TryGetValue(name, out var value) ? value : null);
 
 			//如果指定了连接驱动参数，则必须确保找到的连接驱动等于该驱动
 			if(setting != null && !string.IsNullOrEmpty(driver))

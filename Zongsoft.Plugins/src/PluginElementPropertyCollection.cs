@@ -28,10 +28,11 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Plugins
 {
-	public class PluginElementPropertyCollection : Collections.NamedCollectionBase<PluginElementProperty>
+	public class PluginElementPropertyCollection : KeyedCollection<string, PluginElementProperty>
 	{
 		#region 成员字段
 		private readonly PluginElement _owner;
@@ -50,29 +51,22 @@ namespace Zongsoft.Plugins
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
-			if(this.TryGetItem(name, out var property))
+			if(this.TryGetValue(name, out var property))
 				property.RawValue = rawValue;
 			else
-				this.AddItem(new PluginElementProperty(_owner, name, rawValue));
+				this.Add(new PluginElementProperty(_owner, name, rawValue));
 		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(PluginElementProperty item)
-		{
-			return item.Name;
-		}
-
-		protected override void AddItem(PluginElementProperty item)
+		protected override string GetKeyForItem(PluginElementProperty item) => item.Name;
+		protected override void InsertItem(int index, PluginElementProperty item)
 		{
 			if(item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			//设置属性的所有者
 			item.Owner = _owner;
-
-			//调用基类同名方法
-			base.AddItem(item);
+			base.InsertItem(index, item);
 		}
 		#endregion
 	}

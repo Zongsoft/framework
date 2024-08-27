@@ -32,8 +32,15 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata
 {
-	public interface IDataEntityPropertyCollection : Zongsoft.Collections.INamedCollection<IDataEntityProperty>
+	public interface IDataEntityPropertyCollection : IEnumerable<IDataEntityProperty>
 	{
+		int Count { get; }
 		IDataEntity Entity { get; }
+		IDataEntityProperty this[string name] { get; }
+
+		bool Contains(string name);
+		bool TryGetValue(string name, out IDataEntityProperty value);
+		void Add(IDataEntityProperty property);
+		bool Remove(string name);
 	}
 }

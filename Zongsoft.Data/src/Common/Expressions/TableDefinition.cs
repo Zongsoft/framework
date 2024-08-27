@@ -48,7 +48,7 @@ namespace Zongsoft.Data.Common.Expressions
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
-			this.Fields = new NamedCollection<FieldDefinition>(field => field.Name);
+			this.Fields = new();
 
 			if(fields != null)
 			{
@@ -61,44 +61,21 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取表的名称。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取表的名称。</summary>
+		public string Name { get; }
 
-		/// <summary>
-		/// 获取一个值，指示当前表是否为临时表或表变量。
-		/// </summary>
-		public bool IsTemporary
-		{
-			get;
-			private set;
-		}
+		/// <summary>获取一个值，指示当前表是否为临时表或表变量。</summary>
+		public bool IsTemporary { get; private set; }
 
-		/// <summary>
-		/// 获取表的字段定义集。
-		/// </summary>
-		public INamedCollection<FieldDefinition> Fields
-		{
-			get;
-		}
+		/// <summary>获取表的字段定义集。</summary>
+		public FieldDefinitionCollection Fields { get; }
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 创建一个指向当前表定义的标识。
-		/// </summary>
-		public TableIdentifier Identifier(string alias = null)
-		{
-			return new TableIdentifier(this, alias);
-		}
+		/// <summary>创建一个指向当前表定义的标识。</summary>
+		public TableIdentifier Identifier(string alias = null) => new TableIdentifier(this, alias);
 
-		/// <summary>
-		/// 创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。
-		/// </summary>
+		/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。</summary>
 		/// <param name="property">指定的要添加字段的单值属性元信息。</param>
 		/// <returns>返回的新增字段定义项，如果指定属性对应的字段已经存在则返回空(null)。</returns>
 		public FieldDefinition Field(IDataEntitySimplexProperty property)
@@ -122,9 +99,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return field;
 		}
 
-		/// <summary>
-		/// 创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。
-		/// </summary>
+		/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。</summary>
 		/// <param name="name">要添加字段的名称。</param>
 		/// <param name="dbType">要添加字段的数据类型。</param>
 		/// <param name="nullable">要添加字段的可空性（即字段是否允许为空），默认为允许(True)。</param>
@@ -139,9 +114,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return field;
 		}
 
-		/// <summary>
-		/// 创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。
-		/// </summary>
+		/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。</summary>
 		/// <param name="name">要添加字段的名称。</param>
 		/// <param name="dbType">要添加字段的数据类型。</param>
 		/// <param name="length">要添加字段的最大长度。</param>
@@ -161,9 +134,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return field;
 		}
 
-		/// <summary>
-		/// 创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。
-		/// </summary>
+		/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(null)。</summary>
 		/// <param name="name">要添加字段的名称。</param>
 		/// <param name="dbType">要添加字段的数据类型。</param>
 		/// <param name="precision">要添加字段的数字精度。</param>
@@ -187,32 +158,22 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个临时表的定义。
-		/// </summary>
+		/// <summary>创建一个临时表的定义。</summary>
 		/// <param name="fields">指定新建临时表的字段定义集。</param>
 		/// <returns>返回新建的临时表定义。</returns>
-		public static TableDefinition Temporary(IEnumerable<IDataEntitySimplexProperty> fields = null)
+		public static TableDefinition Temporary(IEnumerable<IDataEntitySimplexProperty> fields = null) => new TableDefinition("T_" + Zongsoft.Common.Randomizer.GenerateString(), fields)
 		{
-			return new TableDefinition("T_" + Zongsoft.Common.Randomizer.GenerateString(), fields)
-			{
-				IsTemporary = true
-			};
-		}
+			IsTemporary = true
+		};
 
-		/// <summary>
-		/// 创建一个临时表的定义。
-		/// </summary>
+		/// <summary>创建一个临时表的定义。</summary>
 		/// <param name="name">指定的要新建的临时表名。</param>
 		/// <param name="fields">指定新建临时表的字段定义集。</param>
 		/// <returns>返回新建的临时表定义。</returns>
-		public static TableDefinition Temporary(string name, IEnumerable<IDataEntitySimplexProperty> fields = null)
+		public static TableDefinition Temporary(string name, IEnumerable<IDataEntitySimplexProperty> fields = null) => new TableDefinition(name, fields)
 		{
-			return new TableDefinition(name, fields)
-			{
-				IsTemporary = true
-			};
-		}
+			IsTemporary = true
+		};
 		#endregion
 	}
 }

@@ -125,7 +125,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 				_foreign = this.Entity.GetEntity(port.Substring(0, index));
 
 				if(_foreign != null)
-					_foreignProperty = _foreign.Properties.Get(port.Substring(index + 1));
+					_foreignProperty = _foreign.Properties[port.Substring(index + 1)];
 			}
 		}
 		#endregion

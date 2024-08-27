@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Diagnostics.Configuration
 {
@@ -46,7 +47,7 @@ namespace Zongsoft.Diagnostics.Configuration
 			public IDictionary<string, string> Properties { get; set; }
 		}
 
-		public class LoggerHandlerSettingCollection : Collections.NamedCollectionBase<LoggerHandlerSetting>
+		public class LoggerHandlerSettingCollection() : KeyedCollection<string, LoggerHandlerSetting>(StringComparer.OrdinalIgnoreCase)
 		{
 			protected override string GetKeyForItem(LoggerHandlerSetting item) => item.Name;
 		}

@@ -28,15 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Aliyun.Storages.Options
 {
-	public class BucketOptionCollection : Collections.NamedCollectionBase<BucketOption>
+	public class BucketOptionCollection() : KeyedCollection<string, BucketOption>(StringComparer.OrdinalIgnoreCase)
 	{
-		protected override string GetKeyForItem(BucketOption item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(BucketOption item) => item.Name;
 	}
 }

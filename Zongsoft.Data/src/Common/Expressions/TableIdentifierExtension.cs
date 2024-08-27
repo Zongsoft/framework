@@ -68,7 +68,7 @@ namespace Zongsoft.Data.Common.Expressions
 					return ReduceResult.Failure(token);
 
 				//如果当前属性集合中不包含指定的属性，则尝试从父实体中查找
-				if(!properties.TryGet(parts[i], out property))
+				if(!properties.TryGetValue(parts[i], out property))
 				{
 					//尝试从父实体中查找指定的属性
 					property = FindBaseProperty(ref properties, parts[i], ref ancestors);
@@ -116,7 +116,7 @@ namespace Zongsoft.Data.Common.Expressions
 				if(properties == null)
 					return null;
 
-				if(!properties.TryGet(part, out var found))
+				if(!properties.TryGetValue(part, out var found))
 				{
 					found = FindBaseProperty(ref properties, part, ref ancestors);
 
@@ -148,7 +148,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			while(baseEntity != null)
 			{
-				if(baseEntity.Properties.TryGet(name, out var property))
+				if(baseEntity.Properties.TryGetValue(name, out var property))
 					return property;
 
 				baseEntity = baseEntity.GetBaseEntity();

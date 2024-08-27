@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Security.Membership.Configuration
 {
@@ -44,7 +45,7 @@ namespace Zongsoft.Security.Membership.Configuration
 		public AuthenticationOptions()
 		{
 			this.Period = DefaultPeriod;
-			this.Expiration = new Collections.NamedCollection<ExpirationScenario>(scenario => scenario.Name);
+			this.Expiration = new ExpirationScenarioCollection();
 		}
 		#endregion
 
@@ -56,7 +57,7 @@ namespace Zongsoft.Security.Membership.Configuration
 		public AttempterOptions Attempter { get; set; }
 
 		/// <summary>获取凭证过期配置集。</summary>
-		public Collections.INamedCollection<ExpirationScenario> Expiration { get; }
+		public ExpirationScenarioCollection Expiration { get; }
 		#endregion
 
 		#region 公共方法
@@ -64,7 +65,7 @@ namespace Zongsoft.Security.Membership.Configuration
 		{
 			var period = this.Period;
 
-			if(scenario != null && this.Expiration.TryGet(scenario, out var expiration))
+			if(scenario != null && this.Expiration.TryGetValue(scenario, out var expiration))
 				period = expiration.Period;
 
 			//确保期限时长不低于一分钟
@@ -83,6 +84,11 @@ namespace Zongsoft.Security.Membership.Configuration
 
 			/// <summary>获取或设置凭证的有效期时长。</summary>
 			public TimeSpan Period { get; set; }
+		}
+
+		public class ExpirationScenarioCollection() : KeyedCollection<string, ExpirationScenario>(StringComparer.OrdinalIgnoreCase)
+		{
+			protected override string GetKeyForItem(ExpirationScenario scenario) => scenario.Name;
 		}
 		#endregion
 	}

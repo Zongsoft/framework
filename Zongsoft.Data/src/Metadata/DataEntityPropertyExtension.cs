@@ -91,7 +91,7 @@ namespace Zongsoft.Data.Metadata
 			var entity = constraint.Actor == DataAssociationConstraintActor.Principal ? property.Entity : property.Foreign;
 
 			//获取指定导航属性的关联属性
-			if(!entity.Properties.TryGet(constraint.Name, out var constraintProperty))
+			if(!entity.Properties.TryGetValue(constraint.Name, out var constraintProperty))
 				throw new DataException($"The specified '{constraint.Name}' constraint does not exist in the '{property.Entity.Name}.{property.Name}' navigation property.");
 
 			//如果约束项的关联属性不是简单属性则抛出异常

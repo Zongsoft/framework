@@ -44,21 +44,21 @@ namespace Zongsoft.Configuration.Profiles
 			return item;
 		}
 
-		public static ProfileSection Add(this Collections.INamedCollection<ProfileSection> sections, string name, int lineNumber = -1)
+		public static ProfileSection Add(this IProfileItemCollection<ProfileSection> sections, string name, int lineNumber = -1)
 		{
 			var item = new ProfileSection(name, lineNumber);
 			sections.Add(item);
 			return item;
 		}
 
-		public static ProfileEntry Add(this Collections.INamedCollection<ProfileEntry> entries, string name, string value = null)
+		public static ProfileEntry Add(this IProfileItemCollection<ProfileEntry> entries, string name, string value = null)
 		{
 			var item = new ProfileEntry(name, value);
 			entries.Add(item);
 			return item;
 		}
 
-		public static ProfileEntry Add(this Collections.INamedCollection<ProfileEntry> entries, int lineNumber, string name, string value = null)
+		public static ProfileEntry Add(this IProfileItemCollection<ProfileEntry> entries, int lineNumber, string name, string value = null)
 		{
 			var item = new ProfileEntry(lineNumber, name, value);
 			entries.Add(item);

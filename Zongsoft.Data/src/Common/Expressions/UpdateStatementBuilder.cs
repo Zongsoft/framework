@@ -232,7 +232,7 @@ namespace Zongsoft.Data.Common.Expressions
 			//获取关联的源
 			ISource source = schema.Parent == null ?
 			                 statement.Table :
-			                 statement.From.Get(schema.Path);
+			                 statement.From[schema.Path];
 
 			//第一步：处理模式成员所在的继承实体的关联
 			if(schema.Ancestors != null)
@@ -260,7 +260,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 				foreach(var key in statement.Entity.Key)
 				{
-					if(!statement.Entity.GetTokens(context.ModelType).TryGet(key.Name, out var token))
+					if(!statement.Entity.GetTokens(context.ModelType).TryGetValue(key.Name, out var token))
 						throw new DataException($"No required primary key field values were specified for the updation '{statement.Entity.Name}' entity data.");
 
 					var field = statement.Table.CreateField(key);

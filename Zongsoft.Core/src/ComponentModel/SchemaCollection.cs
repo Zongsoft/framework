@@ -28,23 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.ComponentModel
 {
-	public class SchemaCollection : Zongsoft.Collections.NamedCollectionBase<Schema>
+	public class SchemaCollection : KeyedCollection<string, Schema>
 	{
 		#region 构造函数
-		public SchemaCollection() : base(StringComparer.OrdinalIgnoreCase)
-		{
-		}
+		public SchemaCollection() : base(StringComparer.OrdinalIgnoreCase) { }
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(Schema item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(Schema item) => item.Name;
 		#endregion
 	}
 }

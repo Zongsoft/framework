@@ -28,22 +28,14 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
-	public class SettingCollection : Collections.NamedCollectionBase<Setting>
+	public class SettingCollection() : KeyedCollection<string, Setting>(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 构造函数
-		public SettingCollection()
-		{
-		}
-		#endregion
-
 		#region 重写方法
-		protected override string GetKeyForItem(Setting item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(Setting item) => item.Name;
 		#endregion
 	}
 }

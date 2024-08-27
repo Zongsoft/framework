@@ -29,8 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.IO
 {
@@ -39,7 +40,7 @@ namespace Zongsoft.IO
 		#region 成员字段
 		private static readonly IFile _file;
 		private static readonly IDirectory _directory;
-		private static readonly Collections.INamedCollection<IFileSystem> _providers;
+		private static readonly FileSystemCollection _providers;
 		private static string _scheme;
 		#endregion
 
@@ -48,7 +49,7 @@ namespace Zongsoft.IO
 		{
 			_file = new FileProvider();
 			_directory = new DirectoryProvider();
-			_providers = new Collections.NamedCollection<IFileSystem>(p => p.Scheme, StringComparer.OrdinalIgnoreCase);
+			_providers = new FileSystemCollection();
 
 			//默认将本地文件系统加入到提供程序集合中
 			_providers.Add(LocalFileSystem.Instance);
@@ -56,52 +57,20 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取文件服务。
-		/// </summary>
-		public static IFile File
-		{
-			get
-			{
-				return _file;
-			}
-		}
+		/// <summary>获取文件服务。</summary>
+		public static IFile File => _file;
 
-		/// <summary>
-		/// 获取目录服务。
-		/// </summary>
-		public static IDirectory Directory
-		{
-			get
-			{
-				return _directory;
-			}
-		}
+		/// <summary>获取目录服务。</summary>
+		public static IDirectory Directory => _directory;
 
-		/// <summary>
-		/// 获取文件系统提供程序集。
-		/// </summary>
-		public static ICollection<IFileSystem> Providers
-		{
-			get
-			{
-				return _providers;
-			}
-		}
+		/// <summary>获取文件系统提供程序集。</summary>
+		public static ICollection<IFileSystem> Providers => _providers;
 
-		/// <summary>
-		/// 获取文件系统的默认方案。
-		/// </summary>
+		/// <summary>获取文件系统的默认方案。</summary>
 		public static string Scheme
 		{
-			get
-			{
-				return _scheme ?? LocalFileSystem.Instance.Scheme;
-			}
-			set
-			{
-				_scheme = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-			}
+			get => _scheme ?? LocalFileSystem.Instance.Scheme;
+			set => _scheme = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 		}
 		#endregion
 
@@ -143,7 +112,7 @@ namespace Zongsoft.IO
 			}
 
 			//尝试获取对应的文件系统提供程序
-			_providers.TryGet(scheme, out var fileSystem);
+			_providers.TryGetValue(scheme, out var fileSystem);
 
 			if(fileSystem == null)
 			{

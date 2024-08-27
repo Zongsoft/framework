@@ -34,7 +34,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Components;
-using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
@@ -62,7 +61,7 @@ namespace Zongsoft.Services
 		public string Name { get; protected set; }
 		public string Title {get; set; }
 		public string Description { get; set; }
-		public INamedCollection<Schema> Schemas { get; }
+		public SchemaCollection Schemas { get; }
 		public IDictionary<string, object> Properties { get; }
 
 		public virtual IServiceProvider Services

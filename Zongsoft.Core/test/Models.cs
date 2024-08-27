@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
 using Zongsoft.Data;
 
 namespace Zongsoft.Tests
@@ -761,14 +763,10 @@ namespace Zongsoft.Tests
 		#endregion
 	}
 
-	public class EmployeeCollection : Zongsoft.Collections.NamedCollectionBase<Employee>
+	public class EmployeeCollection : KeyedCollection<string, Employee>
 	{
 		private Department _department;
-
-		public EmployeeCollection(Department department)
-		{
-			_department = department;
-		}
+		public EmployeeCollection(Department department) => _department = department;
 
 		public void AddRange(params Employee[] employees)
 		{
@@ -782,21 +780,18 @@ namespace Zongsoft.Tests
 
 			foreach(var employee in employees)
 			{
-				this.AddItem(employee);
+				this.Add(employee);
 			}
 		}
 
-		protected override string GetKeyForItem(Employee item)
+		protected override string GetKeyForItem(Employee item) => item.Name;
+		protected override void InsertItem(int index, Employee item)
 		{
-			return item.Name;
-		}
+			if(item == null)
+				return;
 
-		protected override void AddItem(Employee item)
-		{
-			if(item != null)
-				item.Department = _department;
-
-			base.AddItem(item);
+			item.Department = _department;
+			base.InsertItem(index, item);
 		}
 	}
 

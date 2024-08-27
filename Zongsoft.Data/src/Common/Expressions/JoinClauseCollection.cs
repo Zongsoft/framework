@@ -28,15 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class JoinClauseCollection : Collections.NamedCollectionBase<JoinClause>
+	public class JoinClauseCollection() : KeyedCollection<string, JoinClause>(StringComparer.OrdinalIgnoreCase)
 	{
-		protected override string GetKeyForItem(JoinClause item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(JoinClause item) => item.Name;
 	}
 }

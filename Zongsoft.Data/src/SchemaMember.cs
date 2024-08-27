@@ -39,7 +39,7 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private SchemaMember _parent;
-		private INamedCollection<SchemaMember> _children;
+		private SchemaMemberCollection<SchemaMember> _children;
 		#endregion
 
 		#region 构造函数
@@ -57,47 +57,12 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public override string Name
-		{
-			get
-			{
-				return this.Token.Property.Name;
-			}
-		}
-
-		public DataEntityPropertyToken Token
-		{
-			get;
-		}
-
-		public SchemaMember Parent
-		{
-			get
-			{
-				return _parent;
-			}
-		}
-
-		public IEnumerable<IDataEntity> Ancestors
-		{
-			get;
-		}
-
-		public override bool HasChildren
-		{
-			get
-			{
-				return _children != null && _children.Count > 0;
-			}
-		}
-
-		public INamedCollection<SchemaMember> Children
-		{
-			get
-			{
-				return _children;
-			}
-		}
+		public override string Name => this.Token.Property.Name;
+		public DataEntityPropertyToken Token { get; }
+		public SchemaMember Parent => _parent;
+		public IEnumerable<IDataEntity> Ancestors { get; }
+		public override bool HasChildren => _children != null && _children.Count > 0;
+		public SchemaMemberCollection<SchemaMember> Children => _children;
 		#endregion
 
 		#region 重写方法
@@ -115,7 +80,7 @@ namespace Zongsoft.Data
 		{
 			child = null;
 
-			if(_children != null && _children.TryGet(name, out var schema))
+			if(_children != null && _children.TryGetValue(name, out var schema))
 			{
 				child = schema;
 				return true;
@@ -130,7 +95,7 @@ namespace Zongsoft.Data
 				throw new ArgumentNullException();
 
 			if(_children == null)
-				System.Threading.Interlocked.CompareExchange(ref _children, new NamedCollection<SchemaMember>(item => item.Name), null);
+				System.Threading.Interlocked.CompareExchange(ref _children, new SchemaMemberCollection<SchemaMember>(), null);
 
 			_children.Add(schema);
 			schema._parent = this;

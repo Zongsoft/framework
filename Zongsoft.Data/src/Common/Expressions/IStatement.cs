@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Zongsoft.Data.Metadata;
 
@@ -40,21 +40,15 @@ namespace Zongsoft.Data.Common.Expressions
 	public interface IStatement : IStatementBase
 	{
 		#region 属性定义
-		/// <summary>
-		/// 获取一个数据源的集合，可以在 Where 子句中引用的字段源。
-		/// </summary>
-		Zongsoft.Collections.INamedCollection<ISource> From { get; }
+		/// <summary>获取一个数据源的集合，可以在 Where 子句中引用的字段源。</summary>
+		SourceCollection From { get; }
 
-		/// <summary>
-		/// 获取或设置条件子句。
-		/// </summary>
+		/// <summary>获取或设置条件子句。</summary>
 		IExpression Where { get; set; }
 		#endregion
 
 		#region 方法定义
-		/// <summary>
-		/// 获取或创建指定源与实体的继承关联子句。
-		/// </summary>
+		/// <summary>获取或创建指定源与实体的继承关联子句。</summary>
 		/// <param name="aliaser">指定的别名生成器。</param>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="target">指定要创建关联子句的目标实体。</param>
@@ -62,9 +56,7 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <returns>返回已存在或新创建的继承表关联子句。</returns>
 		JoinClause Join(Aliaser aliaser, ISource source, IDataEntity target, string fullPath = null);
 
-		/// <summary>
-		/// 获取或创建指定导航属性的关联子句。
-		/// </summary>
+		/// <summary>获取或创建指定导航属性的关联子句。</summary>
 		/// <param name="aliaser">指定的别名生成器。</param>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="complex">指定要创建关联子句对应的导航属性。</param>
@@ -72,9 +64,7 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <returns>返回已存在或新创建的导航关联子句。</returns>
 		JoinClause Join(Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, string fullPath = null);
 
-		/// <summary>
-		/// 获取或创建导航属性的关联子句。
-		/// </summary>
+		/// <summary>获取或创建导航属性的关联子句。</summary>
 		/// <param name="aliaser">指定的别名生成器。</param>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="schema">指定要创建关联子句对应的数据模式成员。</param>

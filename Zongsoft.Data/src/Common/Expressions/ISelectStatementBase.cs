@@ -33,9 +33,6 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public interface ISelectStatementBase : IStatement, ISource
 	{
-		SelectClause Select
-		{
-			get;
-		}
+		SelectClause Select { get; }
 	}
 }

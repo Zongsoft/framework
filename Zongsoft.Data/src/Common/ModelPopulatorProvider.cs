@@ -91,7 +91,7 @@ namespace Zongsoft.Data.Common
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static void FillTokens(IDataEntity entity, Collections.INamedCollection<ModelMemberToken> members, ICollection<ModelPopulator.MemberMapping> tokens, string name, int ordinal)
+		private static void FillTokens(IDataEntity entity, ModelMemberTokenCollection members, ICollection<ModelPopulator.MemberMapping> tokens, string name, int ordinal)
 		{
 			int index, last = 0;
 			ModelPopulator.MemberMapping? token = null;
@@ -109,9 +109,9 @@ namespace Zongsoft.Data.Common
 				tokens = token.Value.Children;
 			}
 
-			if(members.TryGet(name.Substring(GetLast(last)), out var member))
+			if(members.TryGetValue(name.Substring(GetLast(last)), out var member))
 			{
-				if(token.HasValue && entity.Properties.Get(member.Name).IsPrimaryKey)
+				if(token.HasValue && entity.Properties[member.Name].IsPrimaryKey)
 				{
 					for(int i = 0; i < entity.Key.Length; i++)
 					{
@@ -123,7 +123,7 @@ namespace Zongsoft.Data.Common
 					}
 				}
 
-				if(entity.Properties.TryGet(member.Name, out var property) && property is IDataEntitySimplexProperty simplex)
+				if(entity.Properties.TryGetValue(member.Name, out var property) && property is IDataEntitySimplexProperty simplex)
 					member.EnsureConvertFrom(simplex.Type);
 
 				tokens.Add(new ModelPopulator.MemberMapping(entity, member, ordinal));
@@ -131,7 +131,7 @@ namespace Zongsoft.Data.Common
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static ModelPopulator.MemberMapping? FillToken(IDataEntity entity, Collections.INamedCollection<ModelMemberToken> members, ICollection<ModelPopulator.MemberMapping> tokens, string name)
+		private static ModelPopulator.MemberMapping? FillToken(IDataEntity entity, ModelMemberTokenCollection members, ICollection<ModelPopulator.MemberMapping> tokens, string name)
 		{
 			foreach(var token in tokens)
 			{
@@ -139,7 +139,7 @@ namespace Zongsoft.Data.Common
 					return token;
 			}
 
-			if(members.TryGet(name, out var member))
+			if(members.TryGetValue(name, out var member))
 			{
 				if(entity.Properties[name].IsSimplex)
 					throw new InvalidOperationException($"The '{name}' property of '{entity}' entity is not a complex(navigation) property.");
@@ -233,7 +233,7 @@ namespace Zongsoft.Data.Common
 				result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), new object[] { null });
 			else
 			{
-				if(!populator.Entity.Properties.TryGet(member.Name, out var property))
+				if(!populator.Entity.Properties.TryGetValue(member.Name, out var property))
 					throw new DataException($"The property named '{member.Name}' is undefined in the '{populator.Entity}' data entity mapping.");
 
 				if(property.IsSimplex)

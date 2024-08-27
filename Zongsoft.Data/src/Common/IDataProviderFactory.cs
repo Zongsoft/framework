@@ -37,9 +37,7 @@ namespace Zongsoft.Data.Common
 	/// </summary>
 	public interface IDataProviderFactory : IEnumerable<IDataProvider>
 	{
-		/// <summary>
-		/// 获取或创建指定应用名的数据提供程序。
-		/// </summary>
+		/// <summary>获取或创建指定应用名的数据提供程序。</summary>
 		/// <param name="name">指定要获取或创建的应用名。</param>
 		/// <returns>返回获取或创建成功的数据提供程序。</returns>
 		IDataProvider GetProvider(string name);

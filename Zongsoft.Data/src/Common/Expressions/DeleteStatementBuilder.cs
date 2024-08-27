@@ -241,7 +241,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				var clause = JoinClause.Create(table,
 											   fullPath,
-											   name => statement.From.TryGet(name, out var join) ? (JoinClause)join : null,
+											   name => statement.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
 											   entity => new TableIdentifier(entity, aliaser.Generate()));
 
 				if(!statement.From.Contains(clause))

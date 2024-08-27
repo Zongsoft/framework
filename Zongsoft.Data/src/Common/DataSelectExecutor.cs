@@ -97,7 +97,7 @@ namespace Zongsoft.Data.Common
 
 						if(schema != null)
 						{
-							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+							if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 								schema = child;
 
 							schema.Token.SetValue(context.Data, reader.GetValue(i));
@@ -127,7 +127,7 @@ namespace Zongsoft.Data.Common
 
 						if(schema != null)
 						{
-							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+							if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 								schema = child;
 
 							schema.Token.SetValue(context.Data, reader.GetValue(i));
@@ -206,7 +206,7 @@ namespace Zongsoft.Data.Common
 
 						if(schema != null)
 						{
-							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+							if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 								schema = child;
 
 							schema.Token.SetValue(context.Data, reader.GetValue(i));
@@ -236,7 +236,7 @@ namespace Zongsoft.Data.Common
 
 						if(schema != null)
 						{
-							if(schema.Token.Property.IsComplex && schema.Children.TryGet(reader.GetName(i), out var child))
+							if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 								schema = child;
 
 							schema.Token.SetValue(context.Data, reader.GetValue(i));

@@ -28,17 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata.Profiles
 {
 	/// <summary>
 	/// 表示数据实体属性元数据的集合类。
 	/// </summary>
-	public class MetadataEntityPropertyCollection : Zongsoft.Collections.NamedCollectionBase<IDataEntityProperty>, IDataEntityPropertyCollection
+	public class MetadataEntityPropertyCollection : KeyedCollection<string, IDataEntityProperty>, IDataEntityPropertyCollection
 	{
 		#region 构造函数
-		public MetadataEntityPropertyCollection(IDataEntity entity) : base()
+		public MetadataEntityPropertyCollection(IDataEntity entity) : base(StringComparer.OrdinalIgnoreCase)
 		{
 			this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
 		}
@@ -50,7 +50,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 		#region 重写方法
 		protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
-		protected override void AddItem(IDataEntityProperty item)
+		protected override void InsertItem(int index, IDataEntityProperty item)
 		{
 			if(item == null)
 				throw new ArgumentNullException(nameof(item));
@@ -62,15 +62,15 @@ namespace Zongsoft.Data.Metadata.Profiles
 				property.Entity = this.Entity;
 
 			//调用基类同名方法
-			base.AddItem(item);
+			base.InsertItem(index, item);
 		}
-		protected override void SetItem(string name, IDataEntityProperty item)
+		protected override void SetItem(int index, IDataEntityProperty item)
 		{
 			if(item is MetadataEntityProperty property)
 				property.Entity = this.Entity;
 
 			//调用基类同名方法
-			base.SetItem(name, item);
+			base.SetItem(index, item);
 		}
 		#endregion
 	}

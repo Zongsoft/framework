@@ -28,15 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Aliyun.Pushing.Options
 {
-	public class PushingAppOptionCollection : Collections.NamedCollectionBase<PushingAppOption>
+	public class PushingAppOptionCollection() : KeyedCollection<string, PushingAppOption>(StringComparer.OrdinalIgnoreCase)
 	{
-		protected override string GetKeyForItem(PushingAppOption item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(PushingAppOption item) => item.Name;
 	}
 }

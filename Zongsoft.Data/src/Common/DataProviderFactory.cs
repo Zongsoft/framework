@@ -31,8 +31,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using Zongsoft.Collections;
-
 namespace Zongsoft.Data.Common
 {
 	[System.ComponentModel.DefaultProperty(nameof(Providers))]
@@ -43,18 +41,18 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 成员字段
-		private readonly INamedCollection<IDataProvider> _providers;
+		private readonly Dictionary<string, IDataProvider> _providers;
 		#endregion
 
 		#region 构造函数
 		protected DataProviderFactory()
 		{
-			_providers = new NamedCollection<IDataProvider>(p => p.Name, StringComparer.OrdinalIgnoreCase);
+			_providers = new Dictionary<string, IDataProvider>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
-		public ICollection<IDataProvider> Providers => _providers;
+		public ICollection<IDataProvider> Providers => _providers.Values;
 		#endregion
 
 		#region 公共方法
@@ -63,15 +61,16 @@ namespace Zongsoft.Data.Common
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			if(_providers.TryGet(name, out var provider))
+			if(_providers.TryGetValue(name, out var provider))
 				return provider;
 
 			lock(_providers)
 			{
-				if(_providers.TryGet(name, out provider))
+				if(_providers.TryGetValue(name, out provider))
 					return provider;
 
-				_providers.Add(provider = this.CreateProvider(name));
+				provider = this.CreateProvider(name);
+				_providers.Add(provider.Name, provider);
 			}
 
 			return provider;
@@ -83,7 +82,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 枚举遍历
-		public IEnumerator<IDataProvider> GetEnumerator() => _providers.GetEnumerator();
+		public IEnumerator<IDataProvider> GetEnumerator() => _providers.Values.GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => _providers.GetEnumerator();
 		#endregion
 	}

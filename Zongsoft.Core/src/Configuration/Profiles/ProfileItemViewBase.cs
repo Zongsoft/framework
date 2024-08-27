@@ -33,7 +33,7 @@ using System.Collections.Specialized;
 
 namespace Zongsoft.Configuration.Profiles
 {
-	internal abstract class ProfileItemViewBase<T> : Collections.INamedCollection<T> where T : ProfileItem
+	internal abstract class ProfileItemViewBase<T> : IProfileItemCollection<T> where T : ProfileItem
 	{
 		#region 成员字段
 		private readonly ProfileItemCollection _items;
@@ -57,20 +57,8 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get => _innerDictionary.Count;
-		}
-
-		public bool IsReadOnly
-		{
-			get => false;
-		}
-
-		public IEnumerable<string> Keys
-		{
-			get => _innerDictionary.Keys;
-		}
+		public int Count => _innerDictionary.Count;
+		public IEnumerable<string> Keys => _innerDictionary.Keys;
 
 		public T this[string name]
 		{
@@ -88,30 +76,17 @@ namespace Zongsoft.Configuration.Profiles
 		public void Add(T item)
 		{
 			if(item == null)
-				throw new ArgumentNullException("item");
+				throw new ArgumentNullException(nameof(item));
 
 			_items.Add(item);
 		}
 
-		public T Get(string name)
-		{
-			if(_innerDictionary.TryGetValue(name, out var result))
-				return result;
-
-			throw new KeyNotFoundException();
-		}
-
-		public bool TryGet(string name, out T value)
-		{
-			return _innerDictionary.TryGetValue(name, out value);
-		}
+		public bool TryGetValue(string name, out T value) => _innerDictionary.TryGetValue(name, out value);
 
 		public void Clear()
 		{
-			foreach(var value in _innerDictionary.Values)
-			{
-				_items.Remove(value);
-			}
+			_innerDictionary.Clear();
+			_items.Clear();
 		}
 
 		public bool Remove(string name)
@@ -166,9 +141,7 @@ namespace Zongsoft.Configuration.Profiles
 		#region 抽象方法
 		protected abstract string GetKeyForItem(T item);
 
-		/// <summary>
-		/// 当需要过滤集合元素时调用此方法被调用。
-		/// </summary>
+		/// <summary>当需要过滤集合元素时调用此方法被调用。</summary>
 		/// <param name="item">指定要匹配的集合元素。</param>
 		/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
 		/// <remarks>
@@ -225,15 +198,11 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 遍历枚举
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<T> GetEnumerator()
 		{
 			foreach(var item in _innerDictionary.Values)
 				yield return item;
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 		#endregion
 	}

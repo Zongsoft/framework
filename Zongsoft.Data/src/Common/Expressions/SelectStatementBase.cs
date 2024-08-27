@@ -71,11 +71,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共方法
-		public FieldIdentifier CreateField(string name, string alias = null)
-		{
-			return new FieldIdentifier(this, name, alias);
-		}
-
+		public FieldIdentifier CreateField(string name, string alias = null) => new FieldIdentifier(this, name, alias);
 		public FieldIdentifier CreateField(IDataEntityProperty property)
 		{
 			if(property == null)

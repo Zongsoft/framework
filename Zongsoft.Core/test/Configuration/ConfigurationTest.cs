@@ -2,6 +2,7 @@
 using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Xunit;
 
@@ -47,7 +48,7 @@ namespace Zongsoft.Configuration
 			Assert.NotNull(settings);
 			Assert.NotEmpty(settings);
 
-			var setting = settings.Get("db1");
+			var setting = settings["db1"];
 
 			Assert.NotNull(setting);
 			Assert.Equal("db1", setting.Name);
@@ -67,7 +68,7 @@ namespace Zongsoft.Configuration
 			Assert.NotNull(settings);
 			Assert.NotEmpty(settings);
 
-			setting = settings.Get("redis");
+			setting = settings["redis"];
 
 			Assert.NotNull(setting);
 			Assert.Equal("redis", setting.Name);
@@ -187,10 +188,7 @@ namespace Zongsoft.Configuration
 	#region 选项实体
 	public class General
 	{
-		public General()
-		{
-			this.Certificates = new CertificateCollection();
-		}
+		public General() => this.Certificates = new CertificateCollection();
 
 		public string Name { get; set; }
 
@@ -207,7 +205,7 @@ namespace Zongsoft.Configuration
 		public string Secret { get; set; }
 	}
 
-	public class CertificateCollection : Zongsoft.Collections.NamedCollectionBase<Certificate>
+	public class CertificateCollection() : KeyedCollection<string, Certificate>(StringComparer.OrdinalIgnoreCase)
 	{
 		public string Default { get; set; }
 
@@ -215,7 +213,7 @@ namespace Zongsoft.Configuration
 		{
 			var name = this.Default;
 
-			if(!string.IsNullOrEmpty(name) && this.TryGet(name, out var certificate))
+			if(!string.IsNullOrEmpty(name) && this.TryGetValue(name, out var certificate))
 				return certificate;
 
 			return null;
@@ -289,7 +287,7 @@ namespace Zongsoft.Configuration
 		}
 	}
 
-	public class Notifications : Zongsoft.Collections.NamedCollectionBase<App>
+	public class Notifications() : KeyedCollection<string, App>(StringComparer.OrdinalIgnoreCase)
 	{
 		protected override string GetKeyForItem(App item) => item.Key;
 	}

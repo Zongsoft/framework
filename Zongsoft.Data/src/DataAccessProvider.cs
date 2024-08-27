@@ -46,7 +46,7 @@ namespace Zongsoft.Data
 			var result = new DataAccess(name, DataEnvironment.Filters);
 			var services = ApplicationContext.Current.Services;
 
-			if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGet(name, out var module))
+			if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGetValue(name, out var module))
 				services = module.Services;
 
 			ServiceInjector.Inject(services, result);

@@ -35,14 +35,17 @@ namespace Zongsoft.Externals.Aliyun
 	/// <summary>
 	/// 表示阿里云访问凭证提供程序的接口。
 	/// </summary>
-	public interface ICertificateProvider : Collections.INamedCollection<ICertificate>
+	public interface ICertificateProvider : IEnumerable<ICertificate>
 	{
-		/// <summary>
-		/// 获取默认凭证。
-		/// </summary>
-		ICertificate Default
-		{
-			get;
-		}
+		/// <summary>获取凭证数量。</summary>
+		int Count { get; }
+
+		/// <summary>获取默认凭证。</summary>
+		ICertificate Default { get; }
+
+		/// <summary>获取指定名称的凭证。</summary>
+		/// <param name="name">指定要获取的凭证名称。</param>
+		/// <returns>返回指定名称的凭证，如果不存在则返回空(<c>null</c>)。</returns>
+		ICertificate GetCertificate(string name);
 	}
 }

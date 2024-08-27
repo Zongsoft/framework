@@ -73,7 +73,7 @@ namespace Zongsoft.Externals.Hangfire.Storages
 			if(settings == null || settings.Count == 0)
 				return null;
 
-			if(settings.TryGet("Hangfire", out var setting))
+			if(settings.TryGetValue("Hangfire", out var setting))
 				return setting;
 
 			setting = settings.GetDefault();

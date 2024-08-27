@@ -28,12 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
-
-using Zongsoft.Collections;
 
 namespace Zongsoft.Services
 {
@@ -62,10 +60,10 @@ namespace Zongsoft.Services
 		ClaimsPrincipal Principal { get; }
 
 		/// <summary>获取当前应用程序的会话数据集。</summary>
-		INamedCollection<object> Session { get; }
+		IDictionary<string, object> Session { get; }
 
 		/// <summary>获取当前应用程序的模块集。</summary>
-		INamedCollection<IApplicationModule> Modules { get; }
+		ApplicationModuleCollection Modules { get; }
 
 		/// <summary>获取当前应用程序的初始化器集。</summary>
 		ICollection<IApplicationInitializer> Initializers { get; }

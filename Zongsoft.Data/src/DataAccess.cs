@@ -380,7 +380,7 @@ namespace Zongsoft.Data
 				if(!_provider.Metadata.Entities.TryGetValue(key.Substring(0, index), out var entity))
 					throw new ArgumentException($"The '{key.Substring(0, index)}' entity specified in the sequence key does not exist.");
 
-				if(!entity.Properties.TryGet(key.Substring(index + 1), out var found) || found.IsComplex)
+				if(!entity.Properties.TryGetValue(key.Substring(index + 1), out var found) || found.IsComplex)
 					throw new ArgumentException($"The '{key.Substring(index + 1)}' property specified in the sequence key does not exist or is not a simplex property.");
 
 				sequence = ((IDataEntitySimplexProperty)found).Sequence;

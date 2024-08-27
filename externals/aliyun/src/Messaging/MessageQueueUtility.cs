@@ -38,7 +38,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			var options = MessageUtility.GetOptions();
 			var certificate = string.Empty;
 
-			if(options.Queues.TryGet(name, out var option))
+			if(options.Queues.TryGetValue(name, out var option))
 				certificate = option.Certificate;
 
 			if(string.IsNullOrWhiteSpace(certificate))
@@ -47,7 +47,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(string.IsNullOrWhiteSpace(certificate))
 				return Aliyun.Options.GeneralOptions.Instance.Certificates.Default;
 
-			return Aliyun.Options.GeneralOptions.Instance.Certificates.Get(certificate);
+			return Aliyun.Options.GeneralOptions.Instance.Certificates.GetCertificate(certificate);
 		}
 
 		internal static string GetRequestUrl(string queueName, params string[] parts)
@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			var options = MessageUtility.GetOptions();
 			var region = options.Queues.Region ?? Aliyun.Options.GeneralOptions.Instance.Name;
 
-			if(options.Queues.TryGet(queueName, out var option) && option.Region.HasValue)
+			if(options.Queues.TryGetValue(queueName, out var option) && option.Region.HasValue)
 				region = option.Region.Value;
 
 			var center = ServiceCenter.GetInstance(region, Aliyun.Options.GeneralOptions.Instance.IsIntranet);

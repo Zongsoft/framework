@@ -28,35 +28,36 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingCollection : Collections.NamedCollectionBase<ConnectionSetting>
+	public class ConnectionSettingCollection() : KeyedCollection<string, ConnectionSetting>(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 构造函数
-		public ConnectionSettingCollection() { }
+		#region 成员字段
+		private string _default = string.Empty;
 		#endregion
 
 		#region 公共属性
-		public string Default { get; set; }
+		public string Default
+		{
+			get => _default;
+			set => _default = value ?? string.Empty;
+		}
+
+		public new ConnectionSetting this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
 		#endregion
 
 		#region 公共方法
-		public ConnectionSetting GetDefault()
-		{
-			return this.Default != null && this.TryGet(this.Default, out var setting) ? setting : null;
-		}
+		public ConnectionSetting GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
+		public bool Contains(string name, string driver) => string.IsNullOrEmpty(driver) ?
+			this.Contains(name ?? string.Empty) :
+			this.TryGetValue(name, driver, out _);
 
-		public bool Contains(string name, string driver)
+		public new bool TryGetValue(string name, out ConnectionSetting result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
+		public bool TryGetValue(string name, string driver, out ConnectionSetting result)
 		{
-			return string.IsNullOrEmpty(driver) ?
-				this.ContainsName(name) :
-				this.TryGet(name, driver, out _);
-		}
-
-		public bool TryGet(string name, string driver, out ConnectionSetting result)
-		{
-			if(this.TryGetItem(name, out result) && !string.IsNullOrEmpty(driver))
+			if(this.TryGetValue(name, out result) && result != null && !string.IsNullOrEmpty(driver))
 				result = string.Equals(result.Driver, driver, StringComparison.OrdinalIgnoreCase) ||
 				         result.Driver.EndsWith($".{driver}", StringComparison.OrdinalIgnoreCase)? result : null;
 
@@ -65,26 +66,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		protected override ConnectionSetting GetItem(string name)
-		{
-			if(string.IsNullOrEmpty(name))
-				name = this.Default ?? string.Empty;
-
-			return base.GetItem(name);
-		}
-
-		protected override bool TryGetItem(string name, out ConnectionSetting value)
-		{
-			if(string.IsNullOrEmpty(name))
-				name = this.Default ?? string.Empty;
-
-			return base.TryGetItem(name, out value);
-		}
-
-		protected override string GetKeyForItem(ConnectionSetting item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(ConnectionSetting item) => item.Name;
 		#endregion
 	}
 }

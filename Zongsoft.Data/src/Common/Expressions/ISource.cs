@@ -34,11 +34,7 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public interface ISource
 	{
-		string Alias
-		{
-			get;
-		}
-
+		string Alias { get; }
 		FieldIdentifier CreateField(string name, string alias = null);
 		FieldIdentifier CreateField(Metadata.IDataEntityProperty property);
 	}

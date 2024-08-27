@@ -103,11 +103,11 @@ namespace Zongsoft.Plugins
 		public T GetPropertyValue<T>(string propertyName, T defaultValue = default(T))
 		{
 			if(string.IsNullOrWhiteSpace(propertyName))
-				throw new ArgumentNullException("propertyName");
+				throw new ArgumentNullException(nameof(propertyName));
 
 			PluginElementProperty property;
 
-			if(_properties.TryGet(propertyName, out property))
+			if(_properties.TryGetValue(propertyName, out property))
 				return (T)property.GetValue(typeof(T), defaultValue);
 
 			return defaultValue;
@@ -116,11 +116,11 @@ namespace Zongsoft.Plugins
 		public object GetPropertyValue(string propertyName, Type valueType, object defaultValue = null)
 		{
 			if(string.IsNullOrWhiteSpace(propertyName))
-				throw new ArgumentNullException("propertyName");
+				throw new ArgumentNullException(nameof(propertyName));
 
 			PluginElementProperty property;
 
-			if(_properties.TryGet(propertyName, out property))
+			if(_properties.TryGetValue(propertyName, out property))
 				return property.GetValue(valueType, defaultValue);
 
 			return defaultValue;

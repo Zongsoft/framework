@@ -55,7 +55,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			foreach(var key in keys)
 			{
-				if(!this.Properties.TryGet(key, out var property))
+				if(!this.Properties.TryGetValue(key, out var property))
 					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity is undefined.");
 				if(property.IsComplex)
 					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity cannot be a complex(navigation) property.");

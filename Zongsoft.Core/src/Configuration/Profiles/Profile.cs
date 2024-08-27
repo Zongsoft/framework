@@ -29,10 +29,10 @@
 
 using System;
 using System.IO;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 
 namespace Zongsoft.Configuration.Profiles
 {
@@ -73,41 +73,16 @@ namespace Zongsoft.Configuration.Profiles
 				_filePath = filePath.Trim();
 
 			_items = new ProfileItemCollection(this);
+			_sections = new ProfileSectionCollection(_items);
+			_comments = new ProfileCommentCollection(_items);
 		}
 		#endregion
 
 		#region 公共属性
-		public string FilePath
-		{
-			get => _filePath;
-		}
-
-		public ICollection<ProfileItem> Items
-		{
-			get => _items;
-		}
-
-		public ICollection<ProfileComment> Comments
-		{
-			get
-			{
-				if(_comments == null)
-					System.Threading.Interlocked.CompareExchange(ref _comments, new ProfileCommentCollection(_items), null);
-
-				return _comments;
-			}
-		}
-
-		public Collections.INamedCollection<ProfileSection> Sections
-		{
-			get
-			{
-				if(_sections == null)
-					System.Threading.Interlocked.CompareExchange(ref _sections, new ProfileSectionCollection(_items), null);
-
-				return _sections;
-			}
-		}
+		public string FilePath => _filePath;
+		public ICollection<ProfileItem> Items => _items;
+		public ICollection<ProfileComment> Comments => _comments;
+		public IProfileItemCollection<ProfileSection> Sections => _sections;
 		#endregion
 
 		#region 加载方法
@@ -142,14 +117,14 @@ namespace Zongsoft.Configuration.Profiles
 					{
 						case LineType.Section:
 							var parts = content.Split(' ', '\t');
-							var sections = profile.Sections;
+							var sections = (ProfileSectionCollection)profile.Sections;
 
 							foreach(string part in parts)
 							{
-								if(!sections.TryGet(part, out section))
+								if(!sections.TryGetValue(part, out section))
 									section = sections.Add(part, lineNumber);
 
-								sections = section.Sections;
+								sections = (ProfileSectionCollection)section.Sections;
 							}
 
 							break;
@@ -166,9 +141,9 @@ namespace Zongsoft.Configuration.Profiles
 							else
 							{
 								if(index < 0)
-									section.Entries.Add(lineNumber, content);
+									((ProfileEntryCollection)section.Entries).Add(lineNumber, content);
 								else
-									section.Entries.Add(lineNumber, content.Substring(0, index), content.Substring(index + 1));
+									((ProfileEntryCollection)section.Entries).Add(lineNumber, content.Substring(0, index), content.Substring(index + 1));
 							}
 
 							break;
@@ -260,7 +235,7 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(section == null)
 			{
-				if(this.Sections.TryGet(name, out section))
+				if(this.Sections.TryGetValue(name, out section))
 					return section.Entries;
 				else
 					return null;
@@ -268,13 +243,13 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(isSectionPath)
 			{
-				if(section.Sections.TryGet(name, out section))
+				if(section.Sections.TryGetValue(name, out section))
 					return section.Entries;
 				else
 					return null;
 			}
 
-			if(section.Entries.TryGet(name, out var entry))
+			if(section.Entries.TryGetValue(name, out var entry))
 				return entry.Value;
 
 			return null;
@@ -287,8 +262,8 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(section == null)
 			{
-				if(!this.Sections.TryGet(name, out var child))
-					child = this.Sections.Add(name);
+				if(!_sections.TryGetValue(name, out var child))
+					child = _sections.Add(name);
 
 				this.UpdateEntries(child, optionObject);
 			}
@@ -296,8 +271,8 @@ namespace Zongsoft.Configuration.Profiles
 			{
 				if(isSectionPath)
 				{
-					if(!section.Sections.TryGet(name, out var child))
-						child = section.Sections.Add(name);
+					if(!section.Sections.TryGetValue(name, out var child))
+						child = ((ProfileSectionCollection)section.Sections).Add(name);
 
 					this.UpdateEntries(child, optionObject);
 				}
@@ -337,14 +312,14 @@ namespace Zongsoft.Configuration.Profiles
 			name = parts[index];
 			isSectionPath = string.IsNullOrWhiteSpace(parts[parts.Length - 1]);
 
-			var sections = this.Sections;
+			var sections = (ProfileSectionCollection)this.Sections;
 
 			for(int i = 0; i < index; i++)
 			{
 				if(string.IsNullOrWhiteSpace(parts[i]))
 					continue;
 
-				if(!sections.TryGet(parts[i], out section))
+				if(!sections.TryGetValue(parts[i], out section))
 				{
 					if(!createSectionOnNotExists)
 						return false;
@@ -352,7 +327,7 @@ namespace Zongsoft.Configuration.Profiles
 					section = sections.Add(parts[i]);
 				}
 
-				sections = section.Sections;
+				sections = (ProfileSectionCollection)section.Sections;
 			}
 
 			return true;

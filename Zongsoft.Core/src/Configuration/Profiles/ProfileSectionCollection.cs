@@ -35,9 +35,7 @@ namespace Zongsoft.Configuration.Profiles
 	internal class ProfileSectionCollection : ProfileItemViewBase<ProfileSection>
 	{
 		#region 构造函数
-		public ProfileSectionCollection(ProfileItemCollection items) : base(items)
-		{
-		}
+		public ProfileSectionCollection(ProfileItemCollection items) : base(items) { }
 		#endregion
 
 		#region 公共方法
@@ -50,15 +48,8 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(ProfileSection item)
-		{
-			return item.Name;
-		}
-
-		protected override bool OnItemMatch(ProfileItem item)
-		{
-			return item.ItemType == ProfileItemType.Section;
-		}
+		protected override string GetKeyForItem(ProfileSection item) => item.Name;
+		protected override bool OnItemMatch(ProfileItem item) => item.ItemType == ProfileItemType.Section;
 		#endregion
 	}
 }

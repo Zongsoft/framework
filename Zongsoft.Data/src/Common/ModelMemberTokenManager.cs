@@ -38,11 +38,11 @@ namespace Zongsoft.Data.Common
 	public static partial class ModelMemberTokenManager
 	{
 		#region 私有变量
-		private static readonly ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>> _cache = new ConcurrentDictionary<Type, Collections.INamedCollection<ModelMemberToken>>();
+		private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new ConcurrentDictionary<Type, ModelMemberTokenCollection>();
 		#endregion
 
 		#region 公共方法
-		public static Collections.INamedCollection<ModelMemberToken> GetMembers(Type type)
+		public static ModelMemberTokenCollection GetMembers(Type type)
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
@@ -56,7 +56,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有方法
-		private static Collections.INamedCollection<ModelMemberToken> Create(Type type)
+		private static ModelMemberTokenCollection Create(Type type)
 		{
 			//如果是字典则返回空
 			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
@@ -66,7 +66,7 @@ namespace Zongsoft.Data.Common
 				type = Zongsoft.Common.TypeExtension.GetElementType(type);
 
 			var members = FindMembers(type);
-			var tokens = new Collections.NamedCollection<ModelMemberToken>(item => item.Name);
+			var tokens = new ModelMemberTokenCollection();
 
 			foreach(var member in members)
 			{

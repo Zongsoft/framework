@@ -77,7 +77,7 @@ namespace Zongsoft.Configuration.Profiles
 
 		public ProfileSection Parent => base.Owner as ProfileSection;
 		public ICollection<ProfileItem> Items => _items;
-		public Collections.INamedCollection<ProfileEntry> Entries
+		public IProfileItemCollection<ProfileEntry> Entries
 		{
 			get
 			{
@@ -99,7 +99,7 @@ namespace Zongsoft.Configuration.Profiles
 			}
 		}
 
-		public Collections.INamedCollection<ProfileSection> Sections
+		public IProfileItemCollection<ProfileSection> Sections
 		{
 			get
 			{
@@ -123,7 +123,7 @@ namespace Zongsoft.Configuration.Profiles
 		#region 公共方法
 		public string GetEntryValue(string name)
 		{
-			if(this.Entries.TryGet(name, out var entry))
+			if(this.Entries.TryGetValue(name, out var entry))
 				return entry.Value;
 
 			return null;
@@ -131,7 +131,7 @@ namespace Zongsoft.Configuration.Profiles
 
 		public void SetEntryValue(string name, string value)
 		{
-			if(this.Entries.TryGet(name, out var entry))
+			if(this.Entries.TryGetValue(name, out var entry))
 				entry.Value = value;
 			else
 				this.Entries.Add(name, value);

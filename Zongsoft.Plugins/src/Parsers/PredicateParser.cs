@@ -61,7 +61,7 @@ namespace Zongsoft.Plugins.Parsers
 				predication = ApplicationContext.Current.Services.Resolve<IPredication>(parts[0]);
 			else
 			{
-				if(!ApplicationContext.Current.Modules.TryGet(parts[0], out var module))
+				if(!ApplicationContext.Current.Modules.TryGetValue(parts[0], out var module))
 					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
 
 				predication = module.Services.Resolve<IPredication>(parts[1]);

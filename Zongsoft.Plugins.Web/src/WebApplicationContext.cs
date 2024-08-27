@@ -67,7 +67,7 @@ namespace Zongsoft.Web
 		public override ClaimsPrincipal Principal => this.HttpContext?.User;
 
 		/// <inheritdoc />
-		public override Collections.INamedCollection<object> Session
+		public override IDictionary<string, object> Session
 		{
 			get
 			{
@@ -160,25 +160,59 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 嵌套子类
-		private class SessionCollection : Zongsoft.Collections.INamedCollection<object>
+		private class SessionCollection : IDictionary<string, object>
 		{
 			#region 成员字段
 			private readonly IHttpContextAccessor _accessor;
+			private readonly Dictionary<string, object> _dictionary;
 			#endregion
 
 			#region 构造函数
-			public SessionCollection(IHttpContextAccessor accessor) => _accessor = accessor;
+			public SessionCollection(IHttpContextAccessor accessor)
+			{
+				_accessor = accessor;
+				_dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			}
 			#endregion
 
 			#region 公共属性
-			public object this[string name] => this.TryGet(name, out var value) ? value : throw new KeyNotFoundException();
+			public ICollection<string> Keys
+			{
+				get
+				{
+					var routes = _accessor?.HttpContext?.Request?.RouteValues;
+					return routes == null ? _dictionary.Keys : _dictionary.Concat(routes).Select(entry => entry.Key).ToArray();
+				}
+			}
+
+			public ICollection<object> Values
+			{
+				get
+				{
+					var routes = _accessor?.HttpContext?.Request?.RouteValues;
+					return routes == null ? _dictionary.Values : _dictionary.Concat(routes).Select(entry => entry.Value).ToArray();
+				}
+			}
+
+			public object this[string name]
+			{
+				get => this.TryGetValue(name, out var value) ? value : throw new KeyNotFoundException();
+				set => _dictionary[name] = value;
+			}
 			#endregion
 
 			#region 公共方法
-			public bool Contains(string name) => !string.IsNullOrEmpty(name) && _accessor.HttpContext != null && _accessor.HttpContext.Request != null && _accessor.HttpContext.Request.RouteValues.ContainsKey(name);
+			public bool Contains(string name) => this.ContainsKey(name);
+			public bool ContainsKey(string name) => _dictionary.ContainsKey(name ?? string.Empty) && _accessor.HttpContext != null && _accessor.HttpContext.Request != null && _accessor.HttpContext.Request.RouteValues.ContainsKey(name ?? string.Empty);
 
-			public bool TryGet(string name, out object value)
+			public void Add(string name, object value) => _dictionary.Add(name, value);
+			public bool Remove(string name) => _dictionary.Remove(name);
+
+			public bool TryGetValue(string name, out object value)
 			{
+				if(_dictionary.TryGetValue(name, out value))
+					return true;
+
 				var request = _accessor?.HttpContext?.Request;
 
 				if(!string.IsNullOrEmpty(name) && request != null && request.RouteValues.TryGetValue(name, out value))
@@ -190,18 +224,13 @@ namespace Zongsoft.Web
 			#endregion
 
 			#region 显式实现
-			bool ICollection<object>.IsReadOnly => true;
-			int ICollection<object>.Count => _accessor?.HttpContext?.Request.RouteValues.Count ?? 0;
-			void ICollection<object>.Add(object item) => throw new NotSupportedException();
-			void ICollection<object>.Clear() => throw new NotSupportedException();
-			bool ICollection<object>.Contains(object item) => item switch { string key => this.Contains(key), KeyValuePair<string, object> pair => this.Contains(pair.Key), _ => false };
-			bool ICollection<object>.Remove(object item) => throw new NotSupportedException();
-
-			IEnumerable<string> Collections.INamedCollection<object>.Keys => _accessor?.HttpContext?.Request.RouteValues.Keys ?? Array.Empty<string>();
-			object Collections.INamedCollection<object>.Get(string name) => this.TryGet(name, out var value) ? value : throw new KeyNotFoundException();
-			bool Collections.INamedCollection<object>.Remove(string name) => throw new NotSupportedException();
-
-			void ICollection<object>.CopyTo(object[] array, int arrayIndex)
+			bool ICollection<KeyValuePair<string, object>>.IsReadOnly => true;
+			int ICollection<KeyValuePair<string, object>>.Count => _accessor?.HttpContext?.Request.RouteValues.Count ?? 0;
+			void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => throw new NotSupportedException();
+			void ICollection<KeyValuePair<string, object>>.Clear() => throw new NotSupportedException();
+			bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => this.ContainsKey(item.Key);
+			bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => throw new NotSupportedException();
+			void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
 			{
 				if(array == null)
 					throw new ArgumentNullException(nameof(array));
@@ -215,13 +244,14 @@ namespace Zongsoft.Web
 				while(iterator.MoveNext() && index++ < array.Length)
 				{
 					var entry = (KeyValuePair<string, object>)iterator.Current;
-					array[index] = entry.Key;
+					array[index] = entry;
 				}
 			}
 			#endregion
 
 			#region 遍历枚举
-			public IEnumerator<object> GetEnumerator()
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 			{
 				var request = _accessor?.HttpContext?.Request;
 
@@ -231,8 +261,6 @@ namespace Zongsoft.Web
 				foreach(var entry in _accessor.HttpContext.Request.RouteValues)
 					yield return new KeyValuePair<string, object>(entry.Key, entry.Value);
 			}
-
-			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 			#endregion
 		}
 		#endregion

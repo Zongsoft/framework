@@ -88,7 +88,7 @@ namespace Zongsoft.Security.Membership
 			var period = TimeSpan.Zero;
 
 			//获取指定场景对应的凭证有效期
-			if(this.Options != null && this.Options.Expiration.TryGet(scenario, out var option))
+			if(this.Options != null && this.Options.Expiration.TryGetValue(scenario, out var option))
 				period = option.Period;
 
 			return period > TimeSpan.Zero ? period : TimeSpan.FromHours(4);

@@ -54,9 +54,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		{
 			var options = MessageUtility.GetOptions();
 
-			if(options.Queues.TryGet(name, out var queue))
+			if(options.Queues.TryGetValue(name, out var queue))
 				return new MessageQueue(queue.Name);
-			if(options.Topics.TryGet(name, out var topic))
+			if(options.Topics.TryGetValue(name, out var topic))
 				return new MessageTopic(topic.Name);
 
 			return null;

@@ -143,7 +143,7 @@ namespace Zongsoft.Data.Common.Expressions
 			switch(parts.Length)
 			{
 				case 1:
-					if(!entity.Properties.TryGet(parts[0], out property))
+					if(!entity.Properties.TryGetValue(parts[0], out property))
 						throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
 
 					selection = new SelectStatement(entity);
@@ -152,7 +152,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 					break;
 				case 2:
-					if(!entity.Properties.TryGet(parts[0], out property))
+					if(!entity.Properties.TryGetValue(parts[0], out property))
 						throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
 
 					if(property.IsSimplex)
@@ -161,7 +161,7 @@ namespace Zongsoft.Data.Common.Expressions
 					var complex = (IDataEntityComplexProperty)property;
 
 					selection = new SelectStatement(complex.Foreign);
-					field = selection.Table.CreateField(complex.Foreign.Properties.Get(parts[1]));
+					field = selection.Table.CreateField(complex.Foreign.Properties[parts[1]]);
 					selection.Select.Members.Add(new AggregateExpression(aggregate.Function, aggregate.Distinct, field));
 
 					var conditions = ConditionExpression.And();

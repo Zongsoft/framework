@@ -66,7 +66,7 @@ namespace Zongsoft.Data.Common
 
 				for(int i = 0; i < context.Members.Length; i++)
 				{
-					if(context.Entity.Properties.TryGet(context.Members[i], out var property))
+					if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
 					{
 						if(property.IsComplex)
 							throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");

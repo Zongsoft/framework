@@ -131,10 +131,10 @@ namespace Zongsoft.Data
 
 			while(current != null)
 			{
-				if(Zongsoft.Common.TypeExtension.IsScalarType(data.EntityType) && current.Properties.TryGet(token.Name, out var property))
+				if(Zongsoft.Common.TypeExtension.IsScalarType(data.EntityType) && current.Properties.TryGetValue(token.Name, out var property))
 					return new[] { new SchemaMember(property, ancestors) };
 
-				if(current.GetTokens(data.EntityType).TryGet(token.Name, out var stub))
+				if(current.GetTokens(data.EntityType).TryGetValue(token.Name, out var stub))
 					return new []{ new SchemaMember(stub, ancestors) };
 
 				if(ancestors == null)

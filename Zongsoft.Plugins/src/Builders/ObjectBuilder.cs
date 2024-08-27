@@ -56,7 +56,7 @@ namespace Zongsoft.Plugins.Builders
 			if(type == null)
 			{
 				//尝试获取value属性值的类型
-				if(builtin.Properties.TryGet("value", out var property) && Parsers.Parser.CanParse(property.RawValue))
+				if(builtin.Properties.TryGetValue("value", out var property) && Parsers.Parser.CanParse(property.RawValue))
 					type = Parsers.Parser.GetValueType(property.RawValue, builtin);
 			}
 
@@ -70,7 +70,7 @@ namespace Zongsoft.Plugins.Builders
 				return base.Build(context);
 
 			//如果定义了value属性，则采用该属性值作为构建结果
-			if(context.Builtin.Properties.TryGet("value", out var property))
+			if(context.Builtin.Properties.TryGetValue("value", out var property))
 			{
 				if(Parsers.Parser.CanParse(property.RawValue))
 				{

@@ -31,8 +31,6 @@ using System;
 using System.IO;
 using System.Xml;
 
-using Zongsoft.Collections;
-
 namespace Zongsoft.Data.Metadata.Profiles
 {
 	public class MetadataFile
@@ -40,8 +38,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 成员字段
 		private readonly string _name;
 		private readonly string _filePath;
-		private readonly INamedCollection<MetadataEntity> _entities;
-		private readonly INamedCollection<MetadataCommand> _commands;
+		private readonly MetadataEntityCollection _entities;
+		private readonly MetadataCommandCollection _commands;
 		#endregion
 
 		#region 构造函数
@@ -51,23 +49,23 @@ namespace Zongsoft.Data.Metadata.Profiles
 				_name = name.Trim();
 
 			_filePath = filePath;
-			_entities = new NamedCollection<MetadataEntity>(p => p.Name);
-			_commands = new NamedCollection<MetadataCommand>(p => p.Name);
+			_entities = new();
+			_commands = new();
 		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取映射文件所属的应用名。</summary>
-		public string Name { get => _name; }
+		public string Name => _name;
 
 		/// <summary>获取映射文件的完整路径。</summary>
-		public string FilePath { get => _filePath; }
+		public string FilePath => _filePath;
 
 		/// <summary>获取映射文件中的实体元素集。</summary>
-		public INamedCollection<MetadataEntity> Entities { get => _entities; }
+		public MetadataEntityCollection Entities => _entities;
 
 		/// <summary>获取映射文件中的命令元素集。</summary>
-		public INamedCollection<MetadataCommand> Commands { get => _commands; }
+		public MetadataCommandCollection Commands => _commands;
 		#endregion
 
 		#region 加载方法

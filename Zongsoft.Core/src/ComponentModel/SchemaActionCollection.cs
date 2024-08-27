@@ -29,105 +29,87 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.ComponentModel
 {
-	public class SchemaActionCollection : Zongsoft.Collections.NamedCollectionBase<SchemaAction>
+	public class SchemaActionCollection : KeyedCollection<string, SchemaAction>
 	{
-		#region 私有变量
-		private readonly Dictionary<string, SchemaAction> _alias;
-		#endregion
-
 		#region 构造函数
-		public SchemaActionCollection() : base(StringComparer.OrdinalIgnoreCase)
-		{
-			_alias = new Dictionary<string, SchemaAction>(StringComparer.OrdinalIgnoreCase);
-		}
-
+		public SchemaActionCollection() : base(StringComparer.OrdinalIgnoreCase) { }
 		public SchemaActionCollection(Schema schema) : base(StringComparer.OrdinalIgnoreCase)
 		{
-			_alias = new Dictionary<string, SchemaAction>(StringComparer.OrdinalIgnoreCase);
 			this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
 		}
 		#endregion
 
 		#region 公共属性
-		public Schema Schema
-		{
-			get;
-		}
+		public Schema Schema { get; }
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(SchemaAction item)
-		{
-			return item.Name;
-		}
+		protected override string GetKeyForItem(SchemaAction item) => item.Name;
 
-		protected override bool TryGetItem(string name, out SchemaAction value)
+		protected override void InsertItem(int index, SchemaAction item)
 		{
-			return base.TryGetItem(name, out value) || _alias.TryGetValue(name, out value);
-		}
-
-		protected override void AddItem(SchemaAction item)
-		{
-			//调用基类同名方法
-			base.AddItem(item);
+			base.InsertItem(index, item);
 
 			var alias = item.Alias;
-
 			if(alias != null && alias.Length > 0)
 			{
 				for(int i = 0; i < alias.Length; i++)
-				{
-					_alias.Add(alias[i], item);
-				}
+					base.Dictionary.TryAdd(alias[i], item);
 			}
 		}
 
-		protected override void SetItem(string name, SchemaAction value)
+		protected override void SetItem(int index, SchemaAction item)
 		{
-			//调用基类同名方法
-			base.SetItem(name, value);
+			var original = base.Items[index];
 
-			var alias = value.Alias;
-
-			if(alias != null && alias.Length > 0)
+			if(original != null)
 			{
-				for(int i = 0; i < alias.Length; i++)
-				{
-					_alias[alias[i]] = value;
-				}
-			}
-		}
-
-		protected override bool RemoveItem(string name)
-		{
-			if(base.InnerDictionary.TryGetValue(name, out var item) && base.RemoveItem(name))
-			{
-				var alias = item.Alias;
-
+				var alias = original.Alias;
 				if(alias != null && alias.Length > 0)
 				{
 					for(int i = 0; i < alias.Length; i++)
 					{
-						_alias.Remove(alias[i]);
+						if(!this.Comparer.Equals(original.Name, alias[i]))
+							this.Remove(alias[i]);
 					}
 				}
-
-				return true;
 			}
 
-			return false;
+			base.SetItem(index, item);
+
+			if(item != null)
+			{
+				var alias = item.Alias;
+				if(alias != null && alias.Length > 0)
+				{
+					for(int i = 0; i < alias.Length; i++)
+						base.Dictionary.TryAdd(alias[i], item);
+				}
+			}
 		}
 
-		protected override void ClearItems()
+		protected override void RemoveItem(int index)
 		{
-			//调用基类同名方法
-			base.ClearItems();
+			var item = base.Items[index];
 
-			//清空别名集
-			_alias.Clear();
+			if(item != null)
+			{
+				base.RemoveItem(index);
+
+				var alias = item.Alias;
+				if(alias != null && alias.Length > 0)
+				{
+					for(int i = 0; i < alias.Length; i++)
+					{
+						if(!this.Comparer.Equals(item.Name, alias[i]))
+							this.Remove(alias[i]);
+					}
+				}
+			}
 		}
 		#endregion
 	}

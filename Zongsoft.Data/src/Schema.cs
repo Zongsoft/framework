@@ -36,17 +36,17 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private SchemaParser _parser;
-		private Collections.INamedCollection<SchemaMember> _members;
+		private SchemaMemberCollection<SchemaMember> _members;
 		#endregion
 
 		#region 构造函数
-		internal Schema(SchemaParser parser, string text, Metadata.IDataEntity entity, Type modelType, Collections.INamedCollection<SchemaMember> entries)
+		internal Schema(SchemaParser parser, string text, Metadata.IDataEntity entity, Type modelType, IEnumerable<SchemaMember> entries)
 		{
 			_parser = parser ?? throw new ArgumentNullException(nameof(parser));
 			this.Text = text ?? throw new ArgumentNullException(nameof(text));
 			this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
 			this.ModelType = modelType;
-			_members = entries ?? new Collections.NamedCollection<SchemaMember>(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
+			_members = new SchemaMemberCollection<SchemaMember>(entries);
 		}
 		#endregion
 
@@ -57,7 +57,7 @@ namespace Zongsoft.Data
 		public Type ModelType { get; }
 		public bool IsReadOnly { get; set; }
 		public bool IsEmpty { get => _members == null || _members.Count == 0; }
-		public Collections.INamedCollection<SchemaMember> Members { get => _members; }
+		public SchemaMemberCollection<SchemaMember> Members { get => _members; }
 		#endregion
 
 		#region 公共方法
@@ -83,7 +83,7 @@ namespace Zongsoft.Data
 				if(string.IsNullOrEmpty(parts[i]))
 					continue;
 
-				if(members.TryGet(parts[i], out var member))
+				if(members.TryGetValue(parts[i], out var member))
 					members = member.Children;
 				else
 					return false;
@@ -109,7 +109,7 @@ namespace Zongsoft.Data
 				if(string.IsNullOrEmpty(parts[i]))
 					continue;
 
-				if(members.TryGet(parts[i], out member))
+				if(members.TryGetValue(parts[i], out member))
 					members = member.Children;
 				else
 					return null;
@@ -163,7 +163,7 @@ namespace Zongsoft.Data
 			{
 				var members = owner == null ? _members : (owner.HasChildren ? owner.Children : null);
 
-				if(members != null && members.TryGet(name, out removedMember) && members.Remove(name))
+				if(members != null && members.TryGetValue(name, out removedMember) && members.Remove(name))
 				{
 					if(owner != null && !owner.HasChildren)
 						Remove(owner.Parent, owner.Name, out _);
@@ -186,14 +186,14 @@ namespace Zongsoft.Data
 
 					if(current == null)
 					{
-						if(!_members.TryGet(part, out current))
+						if(!_members.TryGetValue(part, out current))
 							return false;
 					}
 					else
 					{
 						if(current.HasChildren)
 						{
-							if(!_members.TryGet(part, out current))
+							if(!_members.TryGetValue(part, out current))
 								return false;
 						}
 						else

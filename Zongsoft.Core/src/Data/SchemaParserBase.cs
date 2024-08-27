@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data
@@ -35,9 +36,7 @@ namespace Zongsoft.Data
 	public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<TMember> where TMember : SchemaMemberBase
 	{
 		#region 构造函数
-		protected SchemaParserBase()
-		{
-		}
+		protected SchemaParserBase() { }
 		#endregion
 
 		#region 抽象方法
@@ -45,17 +44,17 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 保护方法
-		protected bool TryParse(string expression, out Collections.INamedCollection<TMember> result, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, Collections.INamedCollection<TMember> members = null)
+		protected bool TryParse(string expression, out IEnumerable<TMember> result, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, IEnumerable<TMember> members = null)
 		{
 			return (result = this.Parse(expression, mapper, null, data, members)) != null;
 		}
 
-		protected Collections.INamedCollection<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, Collections.INamedCollection<TMember> members = null)
+		protected IEnumerable<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, IEnumerable<TMember> members = null)
 		{
 			return this.Parse(expression, mapper, message => throw new DataArgumentException("$schema", message), data, members);
 		}
 
-		private Collections.INamedCollection<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, Collections.INamedCollection<TMember> members = null)
+		private IEnumerable<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, IEnumerable<TMember> members = null)
 		{
 			if(string.IsNullOrEmpty(expression))
 				return null;
@@ -464,10 +463,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 显式实现
-		ISchema ISchemaParser.Parse(string name, string expression, Type entityType)
-		{
-			return this.Parse(name, expression, entityType);
-		}
+		ISchema ISchemaParser.Parse(string name, string expression, Type entityType) => this.Parse(name, expression, entityType);
 		#endregion
 
 		#region 嵌套子类
@@ -526,7 +522,7 @@ namespace Zongsoft.Data
 			private readonly SchemaEntryToken _token;
 			private SchemaMemberBase _current;
 			private Stack<SchemaMemberBase> _stack;
-			private Collections.INamedCollection<TMember> _members;
+			private IDictionary<string, TMember> _members;
 			#endregion
 
 			#region 公共字段
@@ -536,7 +532,7 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 构造函数
-			public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, Collections.INamedCollection<TMember> members)
+			public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, IEnumerable<TMember> members)
 			{
 				_bufferIndex = 0;
 				_buffer = new char[length];
@@ -550,36 +546,20 @@ namespace Zongsoft.Data
 				this.State = State.None;
 				this.Flags = new StateVector();
 
-				_members = members ?? new Collections.NamedCollection<TMember>(item => item.Name, StringComparer.OrdinalIgnoreCase);
+				_members = members == null ?
+					new Dictionary<string, TMember>(StringComparer.OrdinalIgnoreCase) :
+					new Dictionary<string, TMember>(members.Select(member => new KeyValuePair<string, TMember>(member.Name, member)), StringComparer.OrdinalIgnoreCase);
 			}
 			#endregion
 
 			#region 公共属性
-			public SchemaMemberBase Current
-			{
-				get
-				{
-					return _current;
-				}
-			}
+			public SchemaMemberBase Current => _current;
 			#endregion
 
 			#region 公共方法
-			public void Accept()
-			{
-				_buffer[_bufferIndex++] = Character;
-			}
-
-			public void OnError(string message)
-			{
-				_onError?.Invoke(message);
-			}
-
-			public SchemaMemberBase Peek()
-			{
-				return _stack.Count > 0 ? _stack.Peek() : null;
-			}
-
+			public void Accept() => _buffer[_bufferIndex++] = Character;
+			public void OnError(string message) => _onError?.Invoke(message);
+			public SchemaMemberBase Peek() => _stack.Count > 0 ? _stack.Peek() : null;
 			public SchemaMemberBase Pop()
 			{
 				if(_stack == null || _stack.Count == 0)
@@ -591,28 +571,10 @@ namespace Zongsoft.Data
 				return _stack.Pop();
 			}
 
-			public void Push()
-			{
-				_stack.Push(_current ?? SchemaMemberBase.Ignores);
-			}
-
-			public bool IsWhitespace()
-			{
-				return char.IsWhiteSpace(Character);
-			}
-
-			public bool IsLetterOrUnderscore()
-			{
-				return (Character >= 'a' && Character <= 'z') ||
-					   (Character >= 'A' && Character <= 'Z') || Character == '_';
-			}
-
-			public bool IsLetterOrDigitOrUnderscore()
-			{
-				return (Character >= 'a' && Character <= 'z') ||
-					   (Character >= 'A' && Character <= 'Z') ||
-					   (Character >= '0' && Character <= '9') || Character == '_';
-			}
+			public void Push() => _stack.Push(_current ?? SchemaMemberBase.Ignores);
+			public bool IsWhitespace() => char.IsWhiteSpace(Character);
+			public bool IsLetterOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || Character == '_';
+			public bool IsLetterOrDigitOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || (Character >= '0' && Character <= '9') || Character == '_';
 
 			public void Exclude(string name = null)
 			{
@@ -654,7 +616,7 @@ namespace Zongsoft.Data
 
 				if(parent == null)
 				{
-					if(_members.TryGet(name, out current))
+					if(_members.TryGetValue(name, out current))
 						_current = current;
 					else
 						this.Map(name, null);
@@ -707,11 +669,7 @@ namespace Zongsoft.Data
 				return true;
 			}
 
-			public bool HasBuffer()
-			{
-				return _bufferIndex > 0;
-			}
-
+			public bool HasBuffer() => _bufferIndex > 0;
 			public string GetBuffer()
 			{
 				if(_bufferIndex == 0)
@@ -734,7 +692,7 @@ namespace Zongsoft.Data
 				return true;
 			}
 
-			public bool Complete(out Collections.INamedCollection<TMember> members)
+			public bool Complete(out IEnumerable<TMember> members)
 			{
 				members = null;
 
@@ -748,7 +706,7 @@ namespace Zongsoft.Data
 				{
 					case State.None:
 						if(_members != null && _members.Count > 0)
-							members = _members;
+							members = _members.Values;
 
 						return true;
 					case State.Asterisk:
@@ -787,7 +745,7 @@ namespace Zongsoft.Data
 						return false;
 				}
 
-				members = _members;
+				members = _members.Values;
 				return true;
 			}
 			#endregion
@@ -810,10 +768,13 @@ namespace Zongsoft.Data
 				{
 					foreach(var item in items)
 					{
-						if(_members.Contains(item.Name))
+						if(_members.ContainsKey(item.Name))
 							_current = item;
 						else
-							_members.Add((TMember)(_current = item));
+						{
+							_current = item;
+							_members.Add(item.Name, item);
+						}
 					}
 				}
 				else
@@ -841,24 +802,13 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共方法
-			public bool HasWhitespace()
-			{
-				return this.IsMarked(IDENTIFIER_WHITESPACE_FLAG);
-			}
-
-			public void HasWhitespace(bool enabled)
-			{
-				this.Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
-			}
+			public bool HasWhitespace() => this.IsMarked(IDENTIFIER_WHITESPACE_FLAG);
+			public void HasWhitespace(bool enabled) => this.Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
 			#endregion
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private bool IsMarked(int bit)
-			{
-				return (_data & bit) == bit;
-			}
-
+			private bool IsMarked(int bit) => (_data & bit) == bit;
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 			private void Mark(int bit, bool value)
 			{

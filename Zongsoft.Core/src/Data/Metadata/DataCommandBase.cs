@@ -51,7 +51,7 @@ namespace Zongsoft.Data.Metadata
 			this.Name = name.Trim();
 			this.Alias = alias;
 			this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.Trim().ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.Trim().ToLowerInvariant()}";
-			this.Parameters = new Collections.NamedCollection<IDataCommandParameter>(p => p.Name);
+			this.Parameters = new DataCommandParameterCollection();
 		}
 		#endregion
 
@@ -91,7 +91,7 @@ namespace Zongsoft.Data.Metadata
 		public CommandMutability Mutability { get; set; }
 
 		/// <summary>获取数据命令的参数集合。</summary>
-		public Collections.INamedCollection<IDataCommandParameter> Parameters { get; }
+		public DataCommandParameterCollection Parameters { get; }
 
 		/// <summary>获取数据命令的脚本对象。</summary>
 		public IDataCommandScriptor Scriptor { get; protected set; }
