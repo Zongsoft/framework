@@ -8,8 +8,8 @@
 		<IsPackable>true</IsPackable>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Core</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Core</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>
