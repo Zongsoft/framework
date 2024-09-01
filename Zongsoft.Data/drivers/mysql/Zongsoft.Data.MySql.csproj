@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.2.0.0</Version>
+		<Version>6.3.0.0</Version>
 		<Product>Zongsoft Data Driver for MySQL</Product>
 		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>

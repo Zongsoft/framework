@@ -1,19 +1,5 @@
 artifacts/Zongsoft.Data.MySql.plugin
 lib/$(Framework)/Zongsoft.Data.MySql.*
 
-%NUGET_PACKAGES%/mysql.data/8.3.0/lib/netstandard2.1/*.dll                   <framework:net6.0^>
-%NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll                  <framework:net5.0>
-
-%NUGET_PACKAGES%/portable.bouncycastle/1.9.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/google.protobuf/3.21.9/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/k4os.compression.lz4/1.3.5/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/k4os.compression.lz4.streams/1.3.5/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/k4os.hash.xxhash/1.0.8/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.buffers/4.5.1/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.runtime.compilerservices.unsafe/6.0.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.security.accesscontrol/5.0.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.text.encoding.codepages/4.4.0/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/system.configuration.configurationmanager/4.4.1/lib/netstandard2.0/*.dll
-
-%NUGET_PACKAGES%/system.security.permissions/4.7.0/lib/netstandard2.0/*.dll  <framework:net6.0^>
-%NUGET_PACKAGES%/system.security.permissions/4.4.1/lib/netstandard2.0/*.dll  <framework:net5.0>
+nuget:MySql.Data@8.3.0   <framework:net6.0^>
+nuget:MySql.Data@6.10.9  <framework:net5.0>

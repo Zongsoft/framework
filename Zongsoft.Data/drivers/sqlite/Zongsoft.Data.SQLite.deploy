@@ -1,7 +1,4 @@
 artifacts/Zongsoft.Data.SQLite.plugin
 lib/$(Framework)/Zongsoft.Data.SQLite.*
 
-%NUGET_PACKAGES%/microsoft.data.sqlite.core/8.0.1/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/sqlitepclraw.core/2.1.6/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/sqlitepclraw.bundle_e_sqlite3/2.1.6/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/sqlitepclraw.provider.e_sqlite3/2.1.6/lib/netstandard2.0/*.dll
+nuget:Microsoft.Data.Sqlite.Core@8.0.1

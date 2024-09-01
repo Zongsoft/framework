@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Externals.OpenXml.plugin
 lib/$(Framework)/Zongsoft.Externals.OpenXml.*
 
-%NUGET_PACKAGES%/documentformat.openxml/2.20.0/lib/netstandard2.0/*.dll
+nuget:DocumentFormat.OpenXml@2.20.0

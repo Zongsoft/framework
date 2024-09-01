@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Externals.Lua.plugin
 lib/$(Framework)/Zongsoft.Externals.Lua.*
 
-%NUGET_PACKAGES%/lua/1.7.3/lib/netstandard2.0/*.dll
+nuget:Lua@1.7.3

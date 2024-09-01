@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Externals.Scriban.plugin
 lib/$(Framework)/Zongsoft.Externals.Scriban.*
 
-%NUGET_PACKAGES%/scriban/5.10.0/lib/netstandard2.0/*.dll
+nuget:Scriban@5.10.0

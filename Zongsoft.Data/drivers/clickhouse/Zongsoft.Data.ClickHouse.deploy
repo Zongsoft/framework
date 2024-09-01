@@ -1,5 +1,4 @@
 artifacts/Zongsoft.Data.ClickHouse.plugin
 lib/$(Framework)/Zongsoft.Data.ClickHouse.*
 
-%NUGET_PACKAGES%/clickhouse.client/7.5.0/lib/netstandard2.1/*.dll
-%NUGET_PACKAGES%/nodatime/3.1.11/lib/netstandard2.0/*.dll
+nuget:ClickHouse.Client@7.5.0

@@ -2,5 +2,4 @@ artifacts/Zongsoft.Externals.Hangfire.plugin
 artifacts/Zongsoft.Externals.Hangfire-daemon.plugin    <site:daemon>
 lib/$(Framework)/Zongsoft.Externals.Hangfire.*
 
-%NUGET_PACKAGES%/hangfire.core/1.8.12/lib/netstandard2.0/*.dll
-%NUGET_PACKAGES%/newtonsoft.json/11.0.1/lib/netstandard2.0/*.dll
+nuget:Hangfire.Core@1.8.12
