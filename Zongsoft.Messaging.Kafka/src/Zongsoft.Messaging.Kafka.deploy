@@ -3,3 +3,4 @@ artifacts/Zongsoft.Messaging.Kafka.option
 lib/$(Framework)/Zongsoft.Messaging.Kafka.*
 
 nuget:Confluent.Kafka@1.9.3
+nuget:LibrdKafka.Redist
