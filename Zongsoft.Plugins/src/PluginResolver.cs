@@ -309,7 +309,7 @@ namespace Zongsoft.Plugins
 		private void ResolveExtendedElement(XmlReader reader, Builtin builtin)
 		{
 			if(builtin == null)
-				throw new ArgumentNullException("builtin");
+				throw new ArgumentNullException(nameof(builtin));
 
 			var parts = reader.Name.Split('.');
 
@@ -525,13 +525,7 @@ namespace Zongsoft.Plugins
 			return XmlReader.Create(filePath, settings);
 		}
 
-		private static Version ParseVersion(string version)
-		{
-			if(string.IsNullOrWhiteSpace(version))
-				return new Version(1, 0);
-
-			return new Version(version);
-		}
+		private static Version ParseVersion(string version) => version != null && Version.TryParse(version, out var result) ? result : null;
 
 		private static void MoveToEndElement(XmlReader reader)
 		{

@@ -406,6 +406,7 @@ namespace Zongsoft.Plugins
 			private readonly List<Assembly> _assemblies;
 			private readonly PluginDependencyCollection _dependencies;
 			private AssemblyDependencyResolver _resolver;
+			private Version _version;
 			#endregion
 
 			#region 构造函数
@@ -431,7 +432,27 @@ namespace Zongsoft.Plugins
 			public string Author { get; internal set; }
 
 			/// <summary>获取插件的版本信息。</summary>
-			public Version Version { get; internal set; }
+			public Version Version
+			{
+				get
+				{
+					if(_version == null)
+					{
+						var assemblyPath = Path.Combine(Path.GetDirectoryName(_plugin.FilePath), Path.GetFileNameWithoutExtension(_plugin.FilePath) + ".dll");
+
+						if(File.Exists(assemblyPath))
+						{
+							var info = System.Diagnostics.FileVersionInfo.GetVersionInfo(assemblyPath);
+							_version = info == null ? new Version(0, 0, 0) : new Version(info.FileMajorPart, info.FileMinorPart, info.FileBuildPart, info.FilePrivatePart);
+						}
+						else
+							_version = new Version();
+					}
+
+					return _version;
+				}
+				internal set => _version = value;
+			}
 
 			/// <summary>获取插件的版权声明。</summary>
 			public string Copyright { get; internal set; }
