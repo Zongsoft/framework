@@ -303,7 +303,7 @@ namespace Zongsoft.Plugins
 
 			if(target is IWorker worker && worker.Enabled)
 			{
-				worker.Start();
+				ThreadPool.QueueUserWorkItem(state => ((IWorker)state).Start(), worker);
 				this.ApplicationContext.Workers.Add(worker);
 			}
 
