@@ -60,66 +60,61 @@ namespace Zongsoft.Plugins.Commands
 			int index = 0;
 
 			foreach(var plugin in _pluginTree.Plugins)
-			{
-				this.WritePlugin(context.Output, plugin, 0, index++);
-			}
+				WritePlugin(context.Output, plugin, 0, index++);
 
 			return _pluginTree.Plugins;
 		}
 		#endregion
 
 		#region 私有方法
-		private void WritePlugin(ICommandOutlet output, Plugin plugin, int depth, int index)
+		private static void WritePlugin(ICommandOutlet output, Plugin plugin, int depth, int index)
 		{
 			if(plugin == null)
 				return;
 
 			var indent = depth > 0 ? new string('\t', depth) : string.Empty;
+			var content = CommandOutletContent.Create(CommandOutletColor.DarkMagenta, $"{indent}[{(index + 1)}] ").Append(plugin.Name);
 
-			output.Write(CommandOutletColor.DarkMagenta, indent + "[{0}] ", index + 1);
-			output.Write(plugin.Name);
+			if(plugin.Manifest.Version.Major > 0 || plugin.Manifest.Version.Minor > 0 || plugin.Manifest.Version.Build > 0 || plugin.Manifest.Version.Revision > 0)
+			{
+				content.Append(CommandOutletColor.DarkGray, "@")
+				       .Append(CommandOutletColor.Blue, plugin.Manifest.Version.ToString());
+			}
 
 			if(plugin.IsMaster)
-				output.WriteLine(CommandOutletColor.DarkCyan, " (Master)");
+				content.AppendLine(CommandOutletColor.DarkCyan, " (master)");
 			else
-				output.WriteLine();
+				content.AppendLine();
 
-			output.Write(indent);
-
-			var directoryName = this.GetCurrentDirectoryName(plugin.FilePath);
+			content.Append(indent);
+			var directoryName = GetCurrentDirectoryName(plugin.FilePath);
 
 			if(!string.IsNullOrEmpty(directoryName))
 			{
-				output.Write(CommandOutletColor.DarkGreen, "{0}", directoryName);
-				output.Write("/");
+				content.Append(CommandOutletColor.DarkGreen, directoryName);
+				content.Append("/");
 			}
 
-			output.Write(CommandOutletColor.DarkYellow, Path.GetFileName(plugin.FilePath));
+			content.Append(CommandOutletColor.DarkYellow, Path.GetFileName(plugin.FilePath));
 
-			if(System.IO.File.Exists(plugin.FilePath))
+			if(File.Exists(plugin.FilePath))
 			{
-				var fileInfo = new System.IO.FileInfo(plugin.FilePath);
-				output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", fileInfo.LastWriteTime);
+				var fileInfo = new FileInfo(plugin.FilePath);
+				content.Append(CommandOutletColor.DarkGray, $" [{fileInfo.LastWriteTime}]");
 			}
-			else
-			{
-				output.WriteLine();
-			}
+
+			output.WriteLine(content);
 
 			if(plugin.Children.Count > 0)
 			{
 				var childIndex = 0;
 
 				foreach(var child in plugin.Children)
-				{
-					this.WritePlugin(output, child, depth + 1, childIndex);
-				}
-
-				output.WriteLine();
+					WritePlugin(output, child, depth + 1, childIndex++);
 			}
 		}
 
-		private string GetCurrentDirectoryName(string filePath)
+		private static string GetCurrentDirectoryName(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
 				return string.Empty;
