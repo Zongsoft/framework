@@ -11,10 +11,4 @@
 			<assembly name="Zongsoft.Externals.Lua" />
 		</assemblies>
 	</manifest>
-
-	<extension path="/Workbench/Expressions">
-		<object name="Lua" type="Zongsoft.Externals.Lua.LuaExpressionParser, Zongsoft.Externals.Lua">
-			<object.property name="Default" target="{type:Zongsoft.Expressions.Expression, Zongsoft.Core}" value="{path:.}" />
-		</object>
-	</extension>
 </plugin>
