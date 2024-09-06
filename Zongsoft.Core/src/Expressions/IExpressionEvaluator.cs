@@ -32,25 +32,18 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Expressions
 {
-	public static class Expression
+	/// <summary>
+	/// 表示表达式运算器的接口。
+	/// </summary>
+	public interface IExpressionEvaluator
 	{
-		#region 公共属性
-		public static IExpressionParser Default { get; set; }
-		#endregion
+		/// <summary>获取全局变量集合。</summary>
+		IDictionary<string, object> Global { get; }
 
-		#region 公共方法
-		public static IExpression Parse(ReadOnlySpan<char> text) => Default?.Parse(text);
-		public static bool TryParse(ReadOnlySpan<char> text, out IExpression result)
-		{
-			var parser = Default;
-			if(parser != null)
-				return parser.TryParse(text, out result);
-
-			result = null;
-			return false;
-		}
-
-		public static object Evaluate(ReadOnlySpan<char> text, IDictionary<string, object> variables = null) => Parse(text)?.Evaluate(variables);
-		#endregion
+		/// <summary>运算表达式。</summary>
+		/// <param name="expression">指定的表达式文本。</param>
+		/// <param name="variables">指定的环境变量集。</param>
+		/// <returns>返回的表达式结果。</returns>
+		object Evaluate(string expression, IDictionary<string, object> variables = null);
 	}
 }
