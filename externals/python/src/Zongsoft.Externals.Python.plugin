@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Python"
+        title="Zongsoft.Externals.Python Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Created Date: 2024-08-10 by Popeye Zhong" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Python" />
+		</assemblies>
+	</manifest>
+</plugin>
