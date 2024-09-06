@@ -28,16 +28,25 @@
  */
 
 using System;
-
-using Zongsoft.Expressions;
+using System.Collections;
+using System.Collections.Generic;
 
 using Scriban;
 using Scriban.Parsing;
+using Scriban.Runtime;
+
+using Zongsoft.Services;
+using Zongsoft.Expressions;
 
 namespace Zongsoft.Externals.Scriban;
 
-public class ScribanExpressionParser : IExpressionParser
+[Service<IExpressionEvaluator>(NAME)]
+public class ScribanExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatchable<string>
 {
+	#region 常量定义
+	private const string NAME = "Scriban";
+	#endregion
+
 	#region 静态常量
 	private static readonly ParserOptions _parserOptions = new()
 	{
@@ -51,20 +60,40 @@ public class ScribanExpressionParser : IExpressionParser
 	};
 	#endregion
 
-	#region 解析方法
-	public IExpression Parse(ReadOnlySpan<char> text) => new ScribanExpression(Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions));
-	public bool TryParse(ReadOnlySpan<char> text, out IExpression result)
+	#region 构造函数
+	public ScribanExpressionEvaluator() => this.Global = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 公共属性
+	public IDictionary<string, object> Global { get; }
+	#endregion
+
+	#region 公共方法
+	public object Evaluate(string expression, IDictionary<string, object> variables = null)
 	{
-		try
+		if(string.IsNullOrEmpty(expression))
+			return null;
+
+		var template = Template.Parse(expression, null, _parserOptions, _lexerOptions);
+		var parameters = new ScriptObject(variables.Count, StringComparer.OrdinalIgnoreCase);
+
+		foreach(var variable in this.Global)
 		{
-			result = new ScribanExpression(Template.Parse(text.ToString(), null, _parserOptions, _lexerOptions));
-			return true;
+			parameters.SetValue(variable.Key, variable.Value, false);
 		}
-		catch
+
+		if(variables != null)
 		{
-			result = null;
-			return false;
+			foreach(var variable in variables)
+				parameters.SetValue(variable.Key, variable.Value, false);
 		}
+
+		return template.Evaluate(new TemplateContext(parameters));
 	}
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable.Match(object argument) => argument is string name && this.Match(name);
+	public bool Match(string name) => string.Equals(name, NAME, StringComparison.OrdinalIgnoreCase);
 	#endregion
 }

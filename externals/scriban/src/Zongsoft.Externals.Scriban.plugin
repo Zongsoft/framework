@@ -11,10 +11,4 @@
 			<assembly name="Zongsoft.Externals.Scriban" />
 		</assemblies>
 	</manifest>
-
-	<extension path="/Workbench/Expressions">
-		<object name="Scriban" type="Zongsoft.Externals.Scriban.ScribanExpressionParser, Zongsoft.Externals.Scriban">
-			<object.property name="Default" target="{type:Zongsoft.Expressions.Expression, Zongsoft.Core}" value="{path:.}" />
-		</object>
-	</extension>
 </plugin>
