@@ -80,9 +80,8 @@ namespace Zongsoft.Net
 
 			internal protected override TcpServerChannel<ReadOnlySequence<byte>> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new SizedChannel(this.Channels, transport, address);
 
-			private class SizedChannel : TcpServerChannel<ReadOnlySequence<byte>>
+			private class SizedChannel(TcpServerChannelManager<ReadOnlySequence<byte>> manager, IDuplexPipe transport, IPEndPoint address) : TcpServerChannel<ReadOnlySequence<byte>>(manager, transport, address)
 			{
-				public SizedChannel(TcpServerChannelManager<ReadOnlySequence<byte>> manager, IDuplexPipe transport, IPEndPoint address) : base(manager, transport, address) { }
 				protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
 				{
 					return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
@@ -94,7 +93,7 @@ namespace Zongsoft.Net
 	public class TcpServer<T> : ListenerBase<T>, ISender<T>
 	{
 		#region 成员字段
-		private IPacketizer<T> _packetizer;
+		private readonly IPacketizer<T> _packetizer;
 		private TcpServerChannelManager<T> _channels;
 		#endregion
 
@@ -109,8 +108,8 @@ namespace Zongsoft.Net
 
 		#region 公共属性
 		public IPEndPoint Address { get; set; }
-		public override IPacketizer<T> Packetizer { get => _packetizer; }
-		public TcpServerChannelManager<T> Channels { get => _channels; }
+		public override IPacketizer<T> Packetizer => _packetizer;
+		public TcpServerChannelManager<T> Channels => _channels;
 		#endregion
 
 		#region 接受方法
@@ -173,8 +172,8 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 虚拟方法
-		protected virtual TcpServerChannelManager<T> CreateChannels() => new TcpServerChannelManager<T>(this);
-		internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new TcpServerChannel<T>(_channels, transport, address);
+		protected virtual TcpServerChannelManager<T> CreateChannels() => new(this);
+		internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new(_channels, transport, address);
 		#endregion
 
 		#region 重写方法

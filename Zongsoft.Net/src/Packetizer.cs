@@ -37,10 +37,15 @@ namespace Zongsoft.Net
 {
 	internal class HeadlessPacketizer : Zongsoft.Communication.IPacketizer<IMemoryOwner<byte>>
 	{
-		public static readonly HeadlessPacketizer Instance = new HeadlessPacketizer();
+		#region 单例字段
+		public static readonly HeadlessPacketizer Instance = new();
+		#endregion
 
+		#region 私有构造
 		private HeadlessPacketizer() { }
+		#endregion
 
+		#region 公共方法
 		public ValueTask PackAsync(IBufferWriter<byte> writer, in IMemoryOwner<byte> package, CancellationToken cancellation = default)
 		{
 			if(package != null)
@@ -54,6 +59,7 @@ namespace Zongsoft.Net
 			package = Zongsoft.Common.Buffer.Lease(data);
 			return true;
 		}
+		#endregion
 	}
 
 	internal class HeadedPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
@@ -63,11 +69,11 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 单例字段
-		public static readonly HeadedPacketizer Instance = new HeadedPacketizer();
+		public static readonly HeadedPacketizer Instance = new();
 		#endregion
 
 		#region 公共属性
-		public string Name { get => nameof(HeadedPacketizer); }
+		public string Name => nameof(HeadedPacketizer);
 		#endregion
 
 		#region 打包方法

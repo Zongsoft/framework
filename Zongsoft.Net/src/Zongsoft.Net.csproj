@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<Version>6.3.0.0</Version>
 		<Product>Zongsoft Net Library</Product>
-		<Description>This is a library about network program development.</Description>
+		<Description>This is a high-performance network development library.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

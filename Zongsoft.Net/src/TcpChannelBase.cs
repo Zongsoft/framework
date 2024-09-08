@@ -64,10 +64,10 @@ namespace Zongsoft.Net
 
 		#region 公共属性
 		public EndPoint Address { get; }
-		public bool IsClosed { get => _transport == null; }
-		public long TotalBytesSent { get => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesSent : 0; }
-		public long TotalBytesReceived { get => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesReceived : 0; }
-		protected IDuplexPipe Transport { get => _transport; }
+		public bool IsClosed => _transport == null;
+		public long TotalBytesSent => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesSent : 0;
+		public long TotalBytesReceived => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesReceived : 0;
+		protected IDuplexPipe Transport => _transport;
 		#endregion
 
 		#region 初始化器
@@ -104,7 +104,7 @@ namespace Zongsoft.Net
 			}
 
 			if(!_singleWriter.Wait(0, cancellation))
-				return SendSlowAsync(package, cancellation);
+				return this.SendSlowAsync(package, cancellation);
 
 			bool release = true;
 
@@ -153,7 +153,7 @@ namespace Zongsoft.Net
 			}
 
 			if(!_singleWriter.Wait(0, cancellation))
-				return SendSlowAsync(data, cancellation);
+				return this.SendSlowAsync(data, cancellation);
 
 			bool release = true;
 
@@ -190,9 +190,8 @@ namespace Zongsoft.Net
 			}
 		}
 
-		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
-
 		ValueTask Zongsoft.Communication.ISender.SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation) => this.SendAsync(data, cancellation);
+		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
 		#endregion
 
 		#region 协议解析
@@ -252,7 +251,6 @@ namespace Zongsoft.Net
 		}
 
 		protected abstract ValueTask OnReceiveAsync(in T package);
-
 		protected virtual void OnReceiving() { }
 		#endregion
 

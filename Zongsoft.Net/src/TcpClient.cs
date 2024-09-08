@@ -44,7 +44,7 @@ namespace Zongsoft.Net
 	public static class TcpClient
 	{
 		public static readonly TcpClient<IMemoryOwner<byte>> Headless = new HeadlessClient();
-		public static readonly TcpClient<ReadOnlySequence<byte>> Headed = new SizedClient();
+		public static readonly TcpClient<ReadOnlySequence<byte>> Headed = new HeadedClient();
 
 		private class HeadlessClient : TcpClient<IMemoryOwner<byte>>, ISender
 		{
@@ -53,17 +53,16 @@ namespace Zongsoft.Net
 			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 		}
 
-		private class SizedClient : TcpClient<ReadOnlySequence<byte>>, ISender
+		private class HeadedClient : TcpClient<ReadOnlySequence<byte>>, ISender
 		{
-			public SizedClient() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+			public HeadedClient() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
 			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
 			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 
 			protected override TcpClientChannel<ReadOnlySequence<byte>> CreateChannel(SocketConnection connection, EndPoint address) => new SizedChannel(this, connection, address);
 
-			private class SizedChannel : TcpClientChannel<ReadOnlySequence<byte>>
+			private class SizedChannel(TcpClient<ReadOnlySequence<byte>> client, SocketConnection connection, EndPoint address) : TcpClientChannel<ReadOnlySequence<byte>>(client, connection, address)
 			{
-				public SizedChannel(TcpClient<ReadOnlySequence<byte>> client, SocketConnection connection, EndPoint address) : base(client, connection, address) { }
 				protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
 				{
 					return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
@@ -89,9 +88,13 @@ namespace Zongsoft.Net
 		public EndPoint Address { get; set; }
 		public IHandler<T> Handler { get; set; }
 		public IPacketizer<T> Packetizer { get; }
-		public long TotalBytesSent { get => _channel?.TotalBytesSent ?? 0; }
-		public long TotalBytesReceived { get => _channel?.TotalBytesReceived ?? 0; }
-		IHandler IHandleable.Handler { get => this.Handler; set => this.Handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
+		public long TotalBytesSent => _channel?.TotalBytesSent ?? 0;
+		public long TotalBytesReceived => _channel?.TotalBytesReceived ?? 0;
+		IHandler IHandleable.Handler
+		{
+			get => this.Handler;
+			set => this.Handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match.");
+		}
 		#endregion
 
 		#region 连接方法
@@ -119,7 +122,7 @@ namespace Zongsoft.Net
 				channel.Close();
 		}
 
-		protected virtual TcpClientChannel<T> CreateChannel(SocketConnection connection, EndPoint address) => new TcpClientChannel<T>(this, connection, address);
+		protected virtual TcpClientChannel<T> CreateChannel(SocketConnection connection, EndPoint address) => new(this, connection, address);
 		#endregion
 
 		#region 发送方法

@@ -55,19 +55,12 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 公共属性
-		public TcpClient<T> Client { get => _client; }
+		public TcpClient<T> Client => _client;
 		#endregion
 
 		#region 协议解析
-		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation)
-		{
-			return _client.Packetizer.PackAsync(writer, package, cancellation);
-		}
-
-		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package)
-		{
-			return _client.Packetizer.Unpack(ref data, out package);
-		}
+		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation) => _client.Packetizer.PackAsync(writer, package, cancellation);
+		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _client.Packetizer.Unpack(ref data, out package);
 		#endregion
 
 		#region 接收数据

@@ -50,7 +50,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 保护属性
-		protected TcpServerChannelManager<T> Manager { get => _manager; }
+		protected TcpServerChannelManager<T> Manager => _manager;
 		#endregion
 
 		#region 开启接收
@@ -64,10 +64,7 @@ namespace Zongsoft.Net
 			return ValueTask.CompletedTask;
 		}
 
-		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package)
-		{
-			return _manager.Unpack(ref data, out package);
-		}
+		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _manager.Unpack(ref data, out package);
 		#endregion
 
 		#region 接收数据
