@@ -209,25 +209,96 @@ namespace Zongsoft.Data.Common
 		#region 虚拟方法
 		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, DbDataReader reader)
 		{
-			if(context is DataIncrementContextBase increment)
+			switch(context)
 			{
-				if(reader.Read())
-					increment.Result = reader.IsDBNull(0) ? 0 : (long)Convert.ChangeType(reader.GetValue(0), TypeCode.Int64);
-				else
-					return false;
+				case DataDeleteContext deletion when deletion.Options.HasReturning(out var returning):
+					if(reader.Read())
+					{
+						foreach(var name in returning.Keys)
+							returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					}
+					break;
+				case DataInsertContext insertion when insertion.Options.HasReturning(out var returning):
+					if(reader.Read())
+					{
+						foreach(var name in returning.Keys)
+							returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					}
+					break;
+				case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
+					if(reader.Read())
+					{
+						for(int i = 0; i < reader.FieldCount; i++)
+						{
+							var fieldName = reader.GetName(i);
+							var index = fieldName.IndexOf(':');
+
+							if(index < 0)
+							{
+								if(returning.Newer.ContainsKey(fieldName))
+									returning.Newer[fieldName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+								continue;
+							}
+
+							var prefix = fieldName[..index];
+							var key = fieldName[(index + 1)..];
+
+							if(string.Equals(prefix, "Newer", StringComparison.OrdinalIgnoreCase) && returning.Newer.ContainsKey(key))
+								returning.Newer[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+							else if(string.Equals(prefix, "Older", StringComparison.OrdinalIgnoreCase) && returning.Older.ContainsKey(key))
+								returning.Older[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+						}
+					}
+					break;
 			}
 
 			return true;
 		}
-
 		protected virtual async Task<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 		{
-			if(context is DataIncrementContextBase increment)
+			switch(context)
 			{
-				if(await reader.ReadAsync(cancellation))
-					increment.Result = await reader.IsDBNullAsync(0, cancellation) ? 0 : (long)Convert.ChangeType(reader.GetValue(0), TypeCode.Int64);
-				else
-					return false;
+				case DataDeleteContext deletion when deletion.Options.HasReturning(out var returning):
+					if(await reader.ReadAsync(cancellation))
+					{
+						foreach(var name in returning.Keys)
+							returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					}
+					break;
+				case DataInsertContext insertion when insertion.Options.HasReturning(out var returning):
+					if(await reader.ReadAsync(cancellation))
+					{
+						foreach(var name in returning.Keys)
+							returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					}
+					break;
+				case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
+					if(await reader.ReadAsync(cancellation))
+					{
+						for(int i = 0; i < reader.FieldCount; i++)
+						{
+							var fieldName = reader.GetName(i);
+							var index = fieldName.IndexOf(':');
+
+							if(index < 0)
+							{
+								if(returning.Newer.ContainsKey(fieldName))
+									returning.Newer[fieldName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+								continue;
+							}
+
+							var prefix = fieldName[..index];
+							var key = fieldName[(index + 1)..];
+
+							if(string.Equals(prefix, "Newer", StringComparison.OrdinalIgnoreCase) && returning.Newer.ContainsKey(key))
+								returning.Newer[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+							else if(string.Equals(prefix, "Older", StringComparison.OrdinalIgnoreCase) && returning.Older.ContainsKey(key))
+								returning.Older[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+						}
+					}
+					break;
 			}
 
 			return true;

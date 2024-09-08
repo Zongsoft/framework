@@ -42,7 +42,6 @@ namespace Zongsoft.Data.Common.Expressions
 		private IStatementBuilder<DataExistContext> _exist;
 		private IStatementBuilder<DataExecuteContext> _execution;
 		private IStatementBuilder<DataAggregateContext> _aggregate;
-		private IStatementBuilder<DataIncrementContext> _increment;
 
 		private IStatementBuilder<DataSelectContext> _select;
 		private IStatementBuilder<DataDeleteContext> _delete;
@@ -79,8 +78,6 @@ namespace Zongsoft.Data.Common.Expressions
 					return this.GetBuilder(ref _execution, () => this.CreateExecutionStatementBuilder()).Build((DataExecuteContext)context);
 				case DataAccessMethod.Aggregate:
 					return this.GetBuilder(ref _aggregate, () => this.CreateAggregateStatementBuilder()).Build((DataAggregateContext)context);
-				case DataAccessMethod.Increment:
-					return this.GetBuilder(ref _increment, () => this.CreateIncrementStatementBuilder()).Build((DataIncrementContext)context);
 				default:
 					throw new DataException($"Unsupported data access '{context.Method}' operation.");
 			}
@@ -114,11 +111,6 @@ namespace Zongsoft.Data.Common.Expressions
 		protected abstract IStatementBuilder<DataExistContext> CreateExistStatementBuilder();
 		protected abstract IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder();
 		protected abstract IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder();
-
-		protected virtual IStatementBuilder<DataIncrementContext> CreateIncrementStatementBuilder()
-		{
-			return new IncrementStatementBuilder();
-		}
 		#endregion
 	}
 }

@@ -53,8 +53,6 @@ namespace Zongsoft.Data.Common
 					return this.OnExecute(insertion, statement);
 				case DataUpsertContext upsertion:
 					return this.OnExecute(upsertion, statement);
-				case DataIncrementContext increment:
-					return this.OnExecute(increment, statement);
 			}
 
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
@@ -138,17 +136,6 @@ namespace Zongsoft.Data.Common
 
 			return true;
 		}
-
-		protected virtual bool OnExecute(DataIncrementContext context, SelectStatement statement)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			//执行命令
-			context.Result = Zongsoft.Common.Convert.ConvertValue<long>(command.ExecuteScalar());
-
-			return true;
-		}
 		#endregion
 
 		#region 异步执行
@@ -162,8 +149,6 @@ namespace Zongsoft.Data.Common
 					return this.OnExecuteAsync(insertion, statement, cancellation);
 				case DataUpsertContext upsertion:
 					return this.OnExecuteAsync(upsertion, statement, cancellation);
-				case DataIncrementContext increment:
-					return this.OnExecuteAsync(increment, statement, cancellation);
 			}
 
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
@@ -246,17 +231,6 @@ namespace Zongsoft.Data.Common
 			}
 
 			return true;
-		}
-
-		protected virtual Task<bool> OnExecuteAsync(DataIncrementContext context, SelectStatement statement, CancellationToken cancellation)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			//执行命令
-			context.Result = Zongsoft.Common.Convert.ConvertValue<long>(command.ExecuteScalar());
-
-			return Task.FromResult(true);
 		}
 		#endregion
 

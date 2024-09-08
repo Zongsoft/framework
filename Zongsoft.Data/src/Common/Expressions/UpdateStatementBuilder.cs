@@ -72,6 +72,56 @@ namespace Zongsoft.Data.Common.Expressions
 			if(statement.Fields.Count == 0)
 				throw new DataException($"The update statement is missing a required set clause.");
 
+			if(context.Options.Returning != null && context.Options.Returning.HasValue)
+			{
+				if(context.Source.Features.Support(Feature.Updation.Outputting))
+				{
+					if(context.Options.Returning.HasNewer)
+					{
+						foreach(var newer in context.Options.Returning.Newer.Keys)
+						{
+							var field = statement.Table.CreateField(newer);
+							statement.Returning.Append(field, ReturningClause.ReturningMode.Inserted);
+						}
+					}
+
+					if(context.Options.Returning.HasOlder)
+					{
+						foreach(var older in context.Options.Returning.Older.Keys)
+						{
+							var field = statement.Table.CreateField(older);
+							statement.Returning.Append(field, ReturningClause.ReturningMode.Deleted);
+						}
+					}
+				}
+				else if(context.Options.Returning.HasNewer)
+				{
+					if(context.Options.Returning.HasOlder)
+						throw new DataOperationException($"The {context.Source.Name} data source does not support returning the old values in the update operation.");
+
+					var slave = new SelectStatement();
+
+					foreach(var from in statement.From)
+						slave.From.Add(from);
+
+					slave.Where = statement.Where;
+
+					//注：由于从属语句的WHERE子句只是简单的指向父语句的WHERE子句，
+					//因此必须手动将父语句的参数依次添加到从属语句中。
+					foreach(var parameter in statement.Parameters)
+					{
+						slave.Parameters.Add(parameter);
+					}
+
+					foreach(var newer in context.Options.Returning.Newer.Keys)
+					{
+						slave.Select.Members.Add(statement.Table.CreateField(newer));
+					}
+
+					statement.Slaves.Add(slave);
+				}
+			}
+
 			yield return statement;
 		}
 		#endregion
@@ -113,24 +163,8 @@ namespace Zongsoft.Data.Common.Expressions
 
 					statement.Parameters.Add(parameter);
 
-					//如果当前的数据成员类型为递增步长类型则生成递增表达式
-					if(member.Token.MemberType == typeof(Interval))
-					{
-						/*
-						 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号数，
-						 * 因此当参数类型为无符号数并且步长为负数(递减)，则可能导致参数类型转换溢出，
-						 * 所以必须将该参数类型重置为有符号整数。
-						 */
-						parameter.DbType = System.Data.DbType.Int32;
-
-						//字段设置项的值为「字段+参数」的加法表达式
-						statement.Fields.Add(new FieldValue(field, field.Add(parameter)));
-					}
-					else
-					{
-						//字段设置项的值即为参数
-						statement.Fields.Add(new FieldValue(field, parameter));
-					}
+					//字段设置项的值即为参数
+					statement.Fields.Add(new FieldValue(field, parameter));
 				}
 			}
 			else

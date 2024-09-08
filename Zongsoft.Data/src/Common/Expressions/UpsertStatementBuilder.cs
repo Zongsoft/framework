@@ -144,23 +144,7 @@ namespace Zongsoft.Data.Common.Expressions
 								statement.Parameters.Add(parameter);
 							}
 
-							//如果当前的数据成员类型为递增步长类型则生成递增表达式
-							if(schema.Token.MemberType == typeof(Interval))
-							{
-								/*
-								 * 注：默认参数类型为对应字段的类型，而该字段类型可能为无符号整数，
-								 * 因此当参数类型为无符号整数并且步长为负数(递减)，则可能导致参数类型转换溢出，
-								 * 所以必须将该参数类型重置为有符号整数（32位整数）。
-								 */
-								parameter.DbType = System.Data.DbType.Int32;
-
-								//字段设置项的值为字段加参数的加法表达式
-								statement.Updation.Add(new FieldValue(field, field.Add(parameter)));
-							}
-							else
-							{
-								statement.Updation.Add(new FieldValue(field, parameter));
-							}
+							statement.Updation.Add(new FieldValue(field, parameter));
 						}
 					}
 					else

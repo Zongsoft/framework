@@ -115,26 +115,6 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataIncrementContext : DataIncrementContextBase, IDataMutateContext, Common.Expressions.IAliasable
-	{
-		#region 构造函数
-		public DataIncrementContext(IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, IDataIncrementOptions options = null) : base(dataAccess, name, member, criteria, interval, options)
-		{
-			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
-			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
-			this.Validator = DataEnvironment.Validators.GetValidator(this);
-		}
-		#endregion
-
-		#region 公共属性
-		public Common.Expressions.Aliaser Aliaser { get; }
-		public IDataSource Source => this.Session.Source;
-		public IDataProvider Provider { get; }
-		public DataSession Session { get; }
-		#endregion
-	}
-
 	public class DataImportContext : DataImportContextBase
 	{
 		#region 构造函数

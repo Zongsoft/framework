@@ -89,11 +89,6 @@ namespace Zongsoft.Data
 		protected override Task OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
-		#region 递增方法
-		protected override void OnIncrement(DataIncrementContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnIncrementAsync(DataIncrementContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
 		#region 删除方法
 		protected override void OnDelete(DataDeleteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
 		protected override Task OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
@@ -164,9 +159,6 @@ namespace Zongsoft.Data
 
 		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) =>
 			new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
-
-		protected override DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options) =>
-			new DataIncrementContext(this, name, member, criteria.Flatten(), interval, options);
 
 		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options) =>
 			new DataImportContext(this, name, data, members, options);
