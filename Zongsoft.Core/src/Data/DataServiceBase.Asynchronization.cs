@@ -213,33 +213,6 @@ namespace Zongsoft.Data
 		}
 		#endregion
 
-		#region 递增方法
-		public Task<long> IncrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(member, criteria, 1, options, cancellation);
-		public Task<long> IncrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataIncrementOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Increment(), options);
-
-			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options);
-
-			//执行递增操作
-			return this.OnIncrementAsync(member, criteria, interval, options, cancellation);
-		}
-
-		public Task<long> DecrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.DecrementAsync(member, criteria, 1, options, cancellation);
-		public Task<long> DecrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default) => this.IncrementAsync(member, criteria, -interval, options, cancellation);
-
-		protected virtual Task<long> OnIncrementAsync(string member, ICondition criteria, int interval, DataIncrementOptions options, CancellationToken cancellation)
-		{
-			return this.DataAccess.IncrementAsync(this.Name, member, criteria, interval, options, ctx => this.OnIncrementing(ctx), ctx => this.OnIncremented(ctx), cancellation);
-		}
-		#endregion
-
 		#region 删除方法
 		public Task<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(key, null, options, cancellation);
 		public Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, options, out _), schema, options, cancellation);

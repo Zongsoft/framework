@@ -49,8 +49,6 @@ namespace Zongsoft.Data
 		public event EventHandler<DataExistingEventArgs> Existing;
 		public event EventHandler<DataAggregatedEventArgs> Aggregated;
 		public event EventHandler<DataAggregatingEventArgs> Aggregating;
-		public event EventHandler<DataIncrementedEventArgs> Incremented;
-		public event EventHandler<DataIncrementingEventArgs> Incrementing;
 		public event EventHandler<DataImportedEventArgs> Imported;
 		public event EventHandler<DataImportingEventArgs> Importing;
 		public event EventHandler<DataDeletedEventArgs> Deleted;
@@ -603,122 +601,6 @@ namespace Zongsoft.Data
 
 		protected abstract void OnAggregate(DataAggregateContextBase context);
 		protected abstract Task OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation);
-		#endregion
-
-		#region 递增方法
-		public long Increment<T>(string member, ICondition criteria) => this.Increment(this.GetName<T>(), member, criteria, 1, null, null, null);
-		public long Increment<T>(string member, ICondition criteria, DataIncrementOptions options) => this.Increment(this.GetName<T>(), member, criteria, 1, options, null, null);
-		public long Increment<T>(string member, ICondition criteria, int interval) => this.Increment(this.GetName<T>(), member, criteria, interval, null, null, null);
-		public long Increment<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null) => this.Increment(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented);
-		public long Increment(string name, string member, ICondition criteria) => this.Increment(name, member, criteria, 1, null, null, null);
-		public long Increment(string name, string member, ICondition criteria, DataIncrementOptions options) => this.Increment(name, member, criteria, 1, options, null, null);
-		public long Increment(string name, string member, ICondition criteria, int interval) => this.Increment(name, member, criteria, interval, null, null, null);
-		public long Increment(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(string.IsNullOrEmpty(member))
-				throw new ArgumentNullException(nameof(member));
-
-			//创建数据访问上下文对象
-			var context = this.CreateIncrementContext(name, member, criteria, interval, options);
-
-			//处理数据访问操作前的回调
-			if(incrementing != null && incrementing(context))
-				return context.Result;
-
-			//激发“Incrementing”事件
-			if(this.OnIncrementing(context))
-				return context.Result;
-
-			//调用数据访问过滤器前事件
-			this.OnFiltering(context);
-
-			//执行递增操作方法
-			this.OnIncrement(context);
-
-			//调用数据访问过滤器后事件
-			this.OnFiltered(context);
-
-			//激发“Incremented”事件
-			this.OnIncremented(context);
-
-			//处理数据访问操作后的回调
-			if(incremented != null)
-				incremented(context);
-
-			var result = context.Result;
-
-			//处置上下文资源
-			context.Dispose();
-
-			//返回最终的结果
-			return result;
-		}
-
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, 1, null, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, 1, options, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, interval, null, null, null, cancellation);
-		public Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default) => this.IncrementAsync(this.GetName<T>(), member, criteria, interval, options, incrementing, incremented, cancellation);
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, 1, null, null, null, cancellation);
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, 1, options, null, null, cancellation);
-		public Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => this.IncrementAsync(name, member, criteria, interval, null, null, null, cancellation);
-		public async Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(string.IsNullOrEmpty(member))
-				throw new ArgumentNullException(nameof(member));
-
-			//创建数据访问上下文对象
-			var context = this.CreateIncrementContext(name, member, criteria, interval, options);
-
-			//处理数据访问操作前的回调
-			if(incrementing != null && incrementing(context))
-				return context.Result;
-
-			//激发“Incrementing”事件
-			if(this.OnIncrementing(context))
-				return context.Result;
-
-			//调用数据访问过滤器前事件
-			this.OnFiltering(context);
-
-			//执行递增操作方法
-			await this.OnIncrementAsync(context, cancellation);
-
-			//调用数据访问过滤器后事件
-			this.OnFiltered(context);
-
-			//激发“Incremented”事件
-			this.OnIncremented(context);
-
-			//处理数据访问操作后的回调
-			if(incremented != null)
-				incremented(context);
-
-			var result = context.Result;
-
-			//处置上下文资源
-			context.Dispose();
-
-			//返回最终的结果
-			return result;
-		}
-
-		public long Decrement<T>(string member, ICondition criteria) => this.Decrement(this.GetName<T>(), member, criteria, 1, null, null, null);
-		public long Decrement<T>(string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(this.GetName<T>(), member, criteria, 1, options, null, null);
-		public long Decrement<T>(string member, ICondition criteria, int interval) => this.Decrement(this.GetName<T>(), member, criteria, interval, null, null, null);
-		public long Decrement<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null) => this.Increment(this.GetName<T>(), member, criteria, -interval, options, decrementing, decremented);
-		public long Decrement(string name, string member, ICondition criteria) => this.Decrement(name, member, criteria, 1, null, null, null);
-		public long Decrement(string name, string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(name, member, criteria, 1, options, null, null);
-		public long Decrement(string name, string member, ICondition criteria, int interval) => this.Decrement(name, member, criteria, interval, null, null, null);
-		public long Decrement(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null) => this.Increment(name, member, criteria, -interval, options, decrementing, decremented);
-
-		protected abstract void OnIncrement(DataIncrementContextBase context);
-		protected abstract Task OnIncrementAsync(DataIncrementContextBase context, CancellationToken cancellation);
 		#endregion
 
 		#region 删除方法
@@ -1932,7 +1814,6 @@ namespace Zongsoft.Data
 		protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options);
 		protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options);
 		protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options);
-		protected abstract DataIncrementContextBase CreateIncrementContext(string name, string member, ICondition criteria, int interval, IDataIncrementOptions options);
 		protected abstract DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options);
 		protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options);
 		protected abstract DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options);
@@ -1978,19 +1859,6 @@ namespace Zongsoft.Data
 				return false;
 
 			var args = new DataAggregatingEventArgs(context);
-			e(this, args);
-			return args.Cancel;
-		}
-
-		protected virtual void OnIncremented(DataIncrementContextBase context) => this.Incremented?.Invoke(this, new DataIncrementedEventArgs(context));
-		protected virtual bool OnIncrementing(DataIncrementContextBase context)
-		{
-			var e = this.Incrementing;
-
-			if(e == null)
-				return false;
-
-			var args = new DataIncrementingEventArgs(context);
 			e(this, args);
 			return args.Cancel;
 		}

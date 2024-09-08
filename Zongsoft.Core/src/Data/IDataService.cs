@@ -45,8 +45,6 @@ namespace Zongsoft.Data
 		event EventHandler<DataExistingEventArgs> Existing;
 		event EventHandler<DataAggregatedEventArgs> Aggregated;
 		event EventHandler<DataAggregatingEventArgs> Aggregating;
-		event EventHandler<DataIncrementedEventArgs> Incremented;
-		event EventHandler<DataIncrementingEventArgs> Incrementing;
 		event EventHandler<DataDeletedEventArgs> Deleted;
 		event EventHandler<DataDeletingEventArgs> Deleting;
 		event EventHandler<DataInsertedEventArgs> Inserted;
@@ -146,14 +144,6 @@ namespace Zongsoft.Data
 		TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue>;
 		TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue>;
 		TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
-		#endregion
-
-		#region 递增方法
-		long Increment(string member, ICondition criteria, DataIncrementOptions options);
-		long Increment(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null);
-
-		long Decrement(string member, ICondition criteria, DataIncrementOptions options);
-		long Decrement(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null);
 		#endregion
 
 		#region 删除方法

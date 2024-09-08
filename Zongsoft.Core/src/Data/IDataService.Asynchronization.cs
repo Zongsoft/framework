@@ -70,14 +70,6 @@ namespace Zongsoft.Data
 		Task<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 		#endregion
 
-		#region 递增方法
-		Task<long> IncrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default);
-		Task<long> IncrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default);
-
-		Task<long> DecrementAsync(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default);
-		Task<long> DecrementAsync(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null, CancellationToken cancellation = default);
-		#endregion
-
 		#region 删除方法
 		Task<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default);
 		Task<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default);

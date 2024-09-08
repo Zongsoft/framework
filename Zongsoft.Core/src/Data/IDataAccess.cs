@@ -52,8 +52,6 @@ namespace Zongsoft.Data
 		event EventHandler<DataExistingEventArgs> Existing;
 		event EventHandler<DataAggregatedEventArgs> Aggregated;
 		event EventHandler<DataAggregatingEventArgs> Aggregating;
-		event EventHandler<DataIncrementedEventArgs> Incremented;
-		event EventHandler<DataIncrementingEventArgs> Incrementing;
 		event EventHandler<DataDeletedEventArgs> Deleted;
 		event EventHandler<DataDeletingEventArgs> Deleting;
 		event EventHandler<DataImportedEventArgs> Imported;
@@ -139,38 +137,6 @@ namespace Zongsoft.Data
 
 		Task<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 		Task<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
-		#endregion
-
-		#region 递增方法
-		long Increment<T>(string member, ICondition criteria);
-		long Increment<T>(string member, ICondition criteria, DataIncrementOptions options);
-		long Increment<T>(string member, ICondition criteria, int interval);
-		long Increment<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
-
-		long Increment(string name, string member, ICondition criteria);
-		long Increment(string name, string member, ICondition criteria, DataIncrementOptions options);
-		long Increment(string name, string member, ICondition criteria, int interval);
-		long Increment(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null);
-
-		Task<long> IncrementAsync<T>(string member, ICondition criteria, CancellationToken cancellation = default);
-		Task<long> IncrementAsync<T>(string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default);
-		Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, CancellationToken cancellation = default);
-		Task<long> IncrementAsync<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default);
-
-		Task<long> IncrementAsync(string name, string member, ICondition criteria, CancellationToken cancellation = default);
-		Task<long> IncrementAsync(string name, string member, ICondition criteria, DataIncrementOptions options, CancellationToken cancellation = default);
-		Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default);
-		Task<long> IncrementAsync(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> incrementing = null, Action<DataIncrementContextBase> incremented = null, CancellationToken cancellation = default);
-
-		long Decrement<T>(string member, ICondition criteria);
-		long Decrement<T>(string member, ICondition criteria, DataIncrementOptions options);
-		long Decrement<T>(string member, ICondition criteria, int interval);
-		long Decrement<T>(string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
-
-		long Decrement(string name, string member, ICondition criteria);
-		long Decrement(string name, string member, ICondition criteria, DataIncrementOptions options);
-		long Decrement(string name, string member, ICondition criteria, int interval);
-		long Decrement(string name, string member, ICondition criteria, int interval, DataIncrementOptions options, Func<DataIncrementContextBase, bool> decrementing = null, Action<DataIncrementContextBase> decremented = null);
 		#endregion
 
 		#region 删除方法

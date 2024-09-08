@@ -45,6 +45,14 @@ namespace Zongsoft.Data
 
 		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 		bool SequenceRetrieverSuppressed { get; set; }
+
+		/// <summary>获取或设置新增操作的返回设置。</summary>
+		DataInsertReturning Returning { get; set; }
+
+		/// <summary>获取当前新增操作是否指定了返回设置。</summary>
+		/// <param name="returning">输出参数，返回指定的返回设置。</param>
+		/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
+		bool HasReturning(out DataInsertReturning returning);
 	}
 
 	/// <summary>
@@ -65,9 +73,24 @@ namespace Zongsoft.Data
 		public bool SequenceSuppressed { get; set; }
 		/// <inheritdoc />
 		public bool SequenceRetrieverSuppressed { get; set; }
+		/// <inheritdoc />
+		public DataInsertReturning Returning { get; set; }
+		#endregion
+
+		#region 公共方法
+		public bool HasReturning(out DataInsertReturning returning)
+		{
+			returning = this.Returning;
+			return returning != null && returning.HasValue;
+		}
 		#endregion
 
 		#region 静态方法
+		/// <summary>创建一个带返回设置的数据操作选项构建器。</summary>
+		/// <param name="names">指定的新增后的返回成员名数组。</param>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder Return(params string[] names) => new(null) { Returning = new DataInsertReturning(names) };
+
 		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 		/// <param name="name">指定的参数名称。</param>
 		/// <param name="value">指定的参数值。</param>
@@ -117,9 +140,42 @@ namespace Zongsoft.Data
 
 			/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 			public bool SequenceRetrieverSuppressed { get; set; }
+
+			/// <summary>获取或设置新增操作的返回设置。</summary>
+			public DataInsertReturning Returning { get; set; }
 			#endregion
 
 			#region 设置方法
+			public Builder Return(params string[] names)
+			{
+				if(names == null || names.Length == 0)
+					this.Returning = null;
+				else if(this.Returning == null)
+					this.Returning = new(names);
+				else
+				{
+					for(int i = 0; i < names.Length; i++)
+						this.Returning.Add(names[i]);
+				}
+
+				return this;
+			}
+
+			public Builder Return(IEnumerable<string> names)
+			{
+				if(names == null)
+					this.Returning = null;
+				else if(this.Returning == null)
+					this.Returning = new(names);
+				else
+				{
+					foreach(var name in names)
+						this.Returning.Add(name);
+				}
+
+				return this;
+			}
+
 			public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 			public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 			public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
@@ -130,12 +186,13 @@ namespace Zongsoft.Data
 			public Builder SuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = true; return this; }
 			public Builder UnsuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = false; return this; }
 			public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
-			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
+			public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this;}
 			#endregion
 
 			#region 构建方法
 			public override DataInsertOptions Build() => new DataInsertOptions(this.Parameters)
 			{
+				Returning = this.Returning,
 				ConstraintIgnored = this.ConstraintIgnored,
 				SequenceSuppressed = this.SequenceSuppressed,
 				SequenceRetrieverSuppressed = this.SequenceRetrieverSuppressed,

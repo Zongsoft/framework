@@ -52,6 +52,14 @@ namespace Zongsoft.Data
 	{
 		/// <summary>获取或设置更新行为。</summary>
 		UpdateBehaviors Behaviors { get; set; }
+
+		/// <summary>获取或设置更新操作的返回设置。</summary>
+		DataUpdateReturning Returning { get; set; }
+
+		/// <summary>获取当前更新操作是否指定了返回设置。</summary>
+		/// <param name="returning">输出参数，返回指定的返回设置。</param>
+		/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
+		bool HasReturning(out DataUpdateReturning returning);
 	}
 
 	/// <summary>
@@ -59,6 +67,10 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	{
+		#region 静态字段
+		private static readonly Lazy<ReturningBuilder> _returning = new(() => new ReturningBuilder());
+		#endregion
+
 		#region 构造函数
 		public DataUpdateOptions() { }
 		public DataUpdateOptions(Collections.Parameters parameters) : base(parameters) { }
@@ -71,9 +83,25 @@ namespace Zongsoft.Data
 		#region 公共属性
 		/// <inheritdoc />
 		public UpdateBehaviors Behaviors { get; set; }
+		/// <inheritdoc />
+		public DataUpdateReturning Returning { get; set; }
+		#endregion
+
+		#region 公共方法
+		public bool HasReturning(out DataUpdateReturning returning)
+		{
+			returning = this.Returning;
+			return returning != null && returning.HasValue;
+		}
 		#endregion
 
 		#region 静态方法
+		/// <summary>创建一个带返回设置的数据操作选项构建器。</summary>
+		/// <param name="newer">指定的更新后的成员名集合。</param>
+		/// <param name="older">指定的更新前的成员名集合。</param>
+		/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+		public static Builder Return(IEnumerable<string> newer = null, IEnumerable<string> older = null) => new(new DataUpdateReturning(newer, older));
+
 		/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 		/// <param name="name">指定的参数名称。</param>
 		/// <param name="value">指定的参数值。</param>
@@ -107,6 +135,7 @@ namespace Zongsoft.Data
 		{
 			#region 成员字段
 			private UpdateBehaviors _behaviors;
+			private ReturningBuilder _returningBuilder;
 			#endregion
 
 			#region 构造函数
@@ -116,6 +145,20 @@ namespace Zongsoft.Data
 				_behaviors = behaviors;
 				this.Parameter(parameters);
 			}
+			public Builder(DataUpdateReturning returning, IEnumerable<KeyValuePair<string, object>> parameters = null)
+			{
+				this.ReturningSetting = returning;
+				this.Parameter(parameters);
+			}
+			#endregion
+
+			#region 公共属性
+			/// <summary>获取更新操作的返回设置构建器。</summary>
+			public ReturningBuilder Returning => _returningBuilder ??= new ReturningBuilder(this);
+			#endregion
+
+			#region 内部属性
+			internal DataUpdateReturning ReturningSetting { get; set; }
 			#endregion
 
 			#region 设置方法
@@ -130,12 +173,86 @@ namespace Zongsoft.Data
 			#region 构建方法
 			public override DataUpdateOptions Build() => new DataUpdateOptions(_behaviors, this.Parameters)
 			{
+				Returning = this.ReturningSetting,
 				ValidatorSuppressed = this.ValidatorSuppressed,
 			};
 			#endregion
 
 			#region 类型转换
 			public static implicit operator DataUpdateOptions(Builder builder) => builder.Build();
+			#endregion
+		}
+
+		public sealed class ReturningBuilder
+		{
+			#region 私有字段
+			private readonly Builder _builder;
+			#endregion
+
+			#region 构造函数
+			public ReturningBuilder(Builder builder = null) => _builder = builder ?? new Builder(null);
+			#endregion
+
+			#region 公共方法
+			public Builder Newer(params string[] names)
+			{
+				if(names == null)
+					_builder.ReturningSetting = null;
+				else if(_builder.ReturningSetting == null)
+					_builder.ReturningSetting = new DataUpdateReturning(names, null);
+				else
+				{
+					for(int i = 0; i < names.Length; i++)
+						_builder.ReturningSetting.Newer.Add(names[i], null);
+				}
+
+				return _builder;
+			}
+
+			public Builder Newer(IEnumerable<string> names)
+			{
+				if(names == null)
+					_builder.ReturningSetting = null;
+				else if(_builder.ReturningSetting == null)
+					_builder.ReturningSetting = new DataUpdateReturning(names, null);
+				else
+				{
+					foreach(var name in names)
+						_builder.ReturningSetting.Newer.Add(name, null);
+				}
+
+				return _builder;
+			}
+
+			public Builder Older(params string[] names)
+			{
+				if(names == null)
+					_builder.ReturningSetting = null;
+				else if(_builder.ReturningSetting == null)
+					_builder.ReturningSetting = new DataUpdateReturning(null, names);
+				else
+				{
+					for(int i = 0; i < names.Length; i++)
+						_builder.ReturningSetting.Older.Add(names[i], null);
+				}
+
+				return _builder;
+			}
+
+			public Builder Older(IEnumerable<string> names)
+			{
+				if(names == null)
+					_builder.ReturningSetting = null;
+				else if(_builder.ReturningSetting == null)
+					_builder.ReturningSetting = new DataUpdateReturning(null, names);
+				else
+				{
+					foreach(var name in names)
+						_builder.ReturningSetting.Older.Add(name, null);
+				}
+
+				return _builder;
+			}
 			#endregion
 		}
 		#endregion

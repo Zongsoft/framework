@@ -45,9 +45,6 @@ namespace Zongsoft.Data
 		/// <summary>聚合方法</summary>
 		Aggregate,
 
-		/// <summary>递增递减</summary>
-		Increment,
-
 		/// <summary>导入方法</summary>
 		Import,
 

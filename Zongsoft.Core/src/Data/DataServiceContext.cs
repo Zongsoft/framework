@@ -77,16 +77,15 @@ namespace Zongsoft.Data
 
 			return context.AccessContext switch
 			{
-				DataExecuteContextBase execution => execution.Result,
-				DataExistContextBase existing => existing.Result,
-				DataAggregateContextBase aggregate => aggregate.Result,
-				DataIncrementContextBase increment => increment.Result,
-				DataImportContextBase importing => importing.Count,
 				DataSelectContextBase selection => selection.Result,
 				DataInsertContextBase insertion => insertion.Count,
 				DataUpsertContextBase upsertion => upsertion.Count,
 				DataUpdateContextBase updation => updation.Count,
 				DataDeleteContextBase deletion => deletion.Count,
+				DataImportContextBase importing => importing.Count,
+				DataExistContextBase existing => existing.Result,
+				DataExecuteContextBase execution => execution.Result,
+				DataAggregateContextBase aggregate => aggregate.Result,
 				_ => context._result,
 			};
 		}
@@ -107,9 +106,6 @@ namespace Zongsoft.Data
 					break;
 				case DataAggregateContextBase aggregate:
 					aggregate.Result = value;
-					break;
-				case DataIncrementContextBase increment:
-					increment.Result = (long)value;
 					break;
 				case DataImportContextBase importing:
 					importing.Count = (int)value;

@@ -66,8 +66,6 @@ namespace Zongsoft.Data
 		public static DataServiceMethod Aggregate(DataAggregateFunction aggregate) => new DataServiceMethod(aggregate.ToString(), DataAccessMethod.Aggregate, false);
 		public static DataServiceMethod Exists() => new DataServiceMethod(DataAccessMethod.Exists);
 		public static DataServiceMethod Execute() => new DataServiceMethod(DataAccessMethod.Execute);
-		public static DataServiceMethod Increment() => new DataServiceMethod(nameof(Increment), DataAccessMethod.Increment, false);
-		public static DataServiceMethod Decrement() => new DataServiceMethod(nameof(Decrement), DataAccessMethod.Increment, false);
 		public static DataServiceMethod Import() => new DataServiceMethod(nameof(Import), DataAccessMethod.Import, true);
 		public static DataServiceMethod Export() => new DataServiceMethod(nameof(Export), DataAccessMethod.Select, true);
 		public static DataServiceMethod Select(string name = null) => new DataServiceMethod(name, DataAccessMethod.Select, false);
@@ -110,8 +108,7 @@ namespace Zongsoft.Data
 			this.Kind == DataAccessMethod.Insert ||
 			this.Kind == DataAccessMethod.Update ||
 			this.Kind == DataAccessMethod.Upsert ||
-			this.Kind == DataAccessMethod.Import ||
-			this.Kind == DataAccessMethod.Increment;
+			this.Kind == DataAccessMethod.Import;
 		#endregion
 
 		#region 重写符号

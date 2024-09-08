@@ -52,8 +52,6 @@ namespace Zongsoft.Data
 		public event EventHandler<DataExistingEventArgs> Existing;
 		public event EventHandler<DataAggregatedEventArgs> Aggregated;
 		public event EventHandler<DataAggregatingEventArgs> Aggregating;
-		public event EventHandler<DataIncrementedEventArgs> Incremented;
-		public event EventHandler<DataIncrementingEventArgs> Incrementing;
 		public event EventHandler<DataDeletedEventArgs> Deleted;
 		public event EventHandler<DataDeletingEventArgs> Deleting;
 		public event EventHandler<DataInsertedEventArgs> Inserted;
@@ -664,32 +662,6 @@ namespace Zongsoft.Data
 		protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 		{
 			return this.DataAccess.Aggregate<TValue>(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
-		}
-		#endregion
-
-		#region 递增方法
-		public long Decrement(string member, ICondition criteria, DataIncrementOptions options) => this.Decrement(member, criteria, 1, options);
-		public long Decrement(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null) => this.Increment(member, criteria, -interval, options);
-		public long Increment(string member, ICondition criteria, DataIncrementOptions options) => this.Increment(member, criteria, 1, options);
-		public long Increment(string member, ICondition criteria, int interval = 1, DataIncrementOptions options = null)
-		{
-			//构建数据操作的选项对象
-			if(options == null)
-				options = new DataIncrementOptions();
-
-			//进行授权验证
-			this.Authorize(DataServiceMethod.Increment(), options);
-
-			//修整查询条件
-			criteria = this.OnValidate(DataServiceMethod.Increment(), criteria, options);
-
-			//执行递增操作
-			return this.OnIncrement(member, criteria, interval, options);
-		}
-
-		protected virtual long OnIncrement(string member, ICondition criteria, int interval, DataIncrementOptions options)
-		{
-			return this.DataAccess.Increment(this.Name, member, criteria, interval, options, ctx => this.OnIncrementing(ctx), ctx => this.OnIncremented(ctx));
 		}
 		#endregion
 
@@ -1979,28 +1951,6 @@ namespace Zongsoft.Data
 			}
 
 			return this.OnFiltering(DataServiceMethod.Aggregate(context.Aggregate.Function), context);
-		}
-
-		protected virtual void OnIncremented(DataIncrementContextBase context)
-		{
-			this.Incremented?.Invoke(this, new DataIncrementedEventArgs(context));
-			this.OnFiltered(DataServiceMethod.Increment(), context);
-		}
-
-		protected virtual bool OnIncrementing(DataIncrementContextBase context)
-		{
-			var e = this.Incrementing;
-
-			if(e != null)
-			{
-				var args = new DataIncrementingEventArgs(context);
-				e.Invoke(this, args);
-
-				if(args.Cancel)
-					return true;
-			}
-
-			return this.OnFiltering(DataServiceMethod.Increment(), context);
 		}
 
 		protected virtual void OnDeleted(DataDeleteContextBase context)
