@@ -42,16 +42,16 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 		#endregion
 
 		#region 重写方法
-		public override string GetValue(string key, IDictionary<string, string> values)
+		protected override bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value)
 		{
-			if(string.Equals(key, nameof(IConnectionSettingValues.Client), StringComparison.OrdinalIgnoreCase))
-				return GetClient(values);
-			if(string.Equals(key, nameof(IConnectionSettingValues.UserName), StringComparison.OrdinalIgnoreCase))
-				return GetUserName(values);
-			if(string.Equals(key, nameof(IConnectionSettingValues.Password), StringComparison.OrdinalIgnoreCase))
-				return GetPassword(values);
+			if(string.Equals(name, nameof(IConnectionSettingValues.Client), StringComparison.OrdinalIgnoreCase))
+				return Common.Convert.TryConvertValue(GetClient(values), out value);
+			if(string.Equals(name, nameof(IConnectionSettingValues.UserName), StringComparison.OrdinalIgnoreCase))
+				return Common.Convert.TryConvertValue(GetUserName(values), out value);
+			if(string.Equals(name, nameof(IConnectionSettingValues.Password), StringComparison.OrdinalIgnoreCase))
+				return Common.Convert.TryConvertValue(GetPassword(values), out value);
 
-			return values.TryGetValue(key, out var value) ? value : null;
+			return base.OnMap(name, text, values, out value);
 		}
 		#endregion
 
