@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,8 +32,8 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingOptionsMapperCollection() : KeyedCollection<string, IConnectionSettingOptionsMapper>(StringComparer.OrdinalIgnoreCase)
+	public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, ConnectionSettingDescriptor>(StringComparer.OrdinalIgnoreCase)
 	{
-		protected override string GetKeyForItem(IConnectionSettingOptionsMapper mapper) => mapper.Driver;
+		protected override string GetKeyForItem(ConnectionSettingDescriptor descriptor) => descriptor.Name;
 	}
 }

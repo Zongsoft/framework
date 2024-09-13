@@ -39,13 +39,13 @@ namespace Zongsoft.Configuration
 		/// <param name="name">指定要查找的连接配置项名称，如果为空或空字符串则表示查找默认连接配置。</param>
 		/// <param name="driver">指定要查找的连接驱动标识，如果为空或空字符串则表示忽略连接驱动匹配。</param>
 		/// <returns>如果查找成功则返回找到的连接配置项，否则返回空。</returns>
-		public static ConnectionSetting GetConnectionSetting(this Microsoft.Extensions.Configuration.IConfiguration configuration, string path, string name, string driver = null)
+		public static ConnectionSettings GetConnectionSetting(this Microsoft.Extensions.Configuration.IConfiguration configuration, string path, string name, string driver = null)
 		{
 			if(configuration == null)
 				return null;
 
 			//获取指定路径的连接配置集
-			var settings = configuration.GetOption<ConnectionSettingCollection>(string.IsNullOrEmpty(path) ? "ConnectionSettings" : path);
+			var settings = configuration.GetOption<ConnectionSettingsCollection>(string.IsNullOrEmpty(path) ? "ConnectionSettings" : path);
 			if(settings == null || settings.Count == 0)
 				return null;
 
@@ -54,10 +54,31 @@ namespace Zongsoft.Configuration
 
 			//如果指定了连接驱动参数，则必须确保找到的连接驱动等于该驱动
 			if(setting != null && !string.IsNullOrEmpty(driver))
-				return string.Equals(driver, setting.Driver, StringComparison.OrdinalIgnoreCase) ||
-				       setting.Driver.EndsWith(driver, StringComparison.OrdinalIgnoreCase) ? setting : null;
+				return setting.Driver != null && setting.IsDriver(driver) ? setting : null;
 
 			return setting;
+		}
+
+		/// <summary>判断当前连接是否为指定的驱动。</summary>
+		/// <param name="name">指定的驱动名称。</param>
+		/// <returns>如果当前连接的驱动是<paramref name="name"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		internal static bool IsDriver(this IConnectionSettingsDriver driver, string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return driver == null || driver.IsDriver(name);
+			else
+				return driver != null && driver.IsDriver(name);
+		}
+
+		/// <summary>判断当前连接是否为指定的驱动。</summary>
+		/// <param name="driver">指定的驱动。</param>
+		/// <returns>如果当前连接的驱动是<paramref name="driver"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		internal static bool IsDriver(this IConnectionSettingsDriver driver, IConnectionSettingsDriver other)
+		{
+			if(other == null)
+				return driver == null || driver.IsDriver(null);
+			else
+				return driver != null && driver.IsDriver(other.Name);
 		}
 	}
 }

@@ -57,8 +57,8 @@
 		</object>
 	</extension>
 
-	<!-- 挂载连接设置映射器集 -->
+	<!-- 挂载连接设置驱动器集合 -->
 	<extension path="/Workbench/Configuration/ConnectionSettings">
-		<object name="Mappers" value="{static:Zongsoft.Configuration.ConnectionSetting.Mappers, Zongsoft.Core}" />
+		<object name="Drivers" value="{static:Zongsoft.Configuration.ConnectionSettings.Drivers, Zongsoft.Core}" />
 	</extension>
 </plugin>

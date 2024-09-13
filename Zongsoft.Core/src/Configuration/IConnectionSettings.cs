@@ -32,14 +32,25 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public static class ConnectionSettingOptionsMapperUtility
+	/// <summary>
+	/// 表示连接设置的接口。
+	/// </summary>
+	public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>, IEnumerable<KeyValuePair<string, string>>
 	{
-		public static T Map<T>(this IConnectionSettingOptionsMapper mapper, string name, IDictionary<string, string> options)
-		{
-			if(mapper == null)
-				throw new ArgumentNullException(nameof(mapper));
+		/// <summary>获取连接的驱动。</summary>
+		IConnectionSettingsDriver Driver { get; set; }
 
-			return mapper.Map<T>(name, options, out var value) ? value : default;
-		}
+		/// <summary>获取连接设置集。</summary>
+		IConnectionSettingsOptions Options { get; }
+
+		/// <summary>判断当前连接是否为指定的驱动。</summary>
+		/// <param name="name">指定的驱动名称。</param>
+		/// <returns>如果当前连接的驱动是<paramref name="name"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this.Driver, name);
+
+		/// <summary>判断当前连接是否为指定的驱动。</summary>
+		/// <param name="driver">指定的驱动。</param>
+		/// <returns>如果当前连接的驱动是<paramref name="driver"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this.Driver, driver);
 	}
 }

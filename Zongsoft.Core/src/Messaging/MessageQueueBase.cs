@@ -41,7 +41,7 @@ namespace Zongsoft.Messaging
 	public abstract class MessageQueueBase : IMessageQueue
 	{
 		#region 构造函数
-		protected MessageQueueBase(string name, IConnectionSetting connectionSetting = null)
+		protected MessageQueueBase(string name, IConnectionSettings connectionSetting = null)
 		{
 			this.Name = name ?? string.Empty;
 			this.ConnectionSetting = connectionSetting;
@@ -50,7 +50,7 @@ namespace Zongsoft.Messaging
 
 		#region 公共属性
 		public string Name { get; }
-		public IConnectionSetting ConnectionSetting { get; set; }
+		public IConnectionSettings ConnectionSetting { get; set; }
 		#endregion
 
 		#region 生产方法

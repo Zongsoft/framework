@@ -45,7 +45,7 @@ namespace Zongsoft.Messaging
 		string Name { get; }
 
 		/// <summary>获取或设置消息队列的连接设置。</summary>
-		Configuration.IConnectionSetting ConnectionSetting { get; set; }
+		Configuration.IConnectionSettings ConnectionSetting { get; set; }
 		#endregion
 
 		#region 订阅方法

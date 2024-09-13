@@ -122,7 +122,7 @@ namespace Zongsoft.Data
 			);
 		}
 
-		private static ConnectionSettingCollection GetConnectionSettings() => ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
+		private static ConnectionSettingsCollection GetConnectionSettings() => ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
 		#endregion
 
 		#region 显式实现

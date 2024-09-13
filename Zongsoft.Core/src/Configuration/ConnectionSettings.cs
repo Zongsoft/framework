@@ -31,29 +31,29 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSetting : Setting, IConnectionSetting, IEquatable<ConnectionSetting>, IEquatable<IConnectionSetting>
+	public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<ConnectionSettings>, IEquatable<IConnectionSettings>
 	{
 		#region 静态构造
-		static ConnectionSetting()
-		{
-			Mappers = new();
-		}
+		static ConnectionSettings() => Drivers = new();
 		#endregion
 
 		#region 静态属性
-		public static ConnectionSettingOptionsMapperCollection Mappers { get; }
+		public static ConnectionSettingsDriverCollection Drivers { get; }
 		#endregion
 
 		#region 成员字段
 		private readonly ConnectionSettingOptions _options;
+		private IConnectionSettingsDriver _driver;
 		#endregion
 
 		#region 构造函数
-		public ConnectionSetting() => _options = new ConnectionSettingOptions(this);
-		public ConnectionSetting(string name, string value) : base(name, value)
+		public ConnectionSettings() => _options = new ConnectionSettingOptions(this);
+		public ConnectionSettings(string name, string value) : base(name, value)
 		{
 			_options = new ConnectionSettingOptions(this);
 
@@ -63,23 +63,30 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共属性
-		public string Driver
+		[TypeConverter(typeof(DriverConverter))]
+		public IConnectionSettingsDriver Driver
 		{
-			get => this.HasProperties && this.Properties.TryGetValue(nameof(Driver), out var value) ? value : null;
-			set => this.Properties[nameof(Driver)] = value;
+			get
+			{
+				if(_driver == null)
+				{
+					if(this.HasProperties && this.Properties.TryGetValue(nameof(Driver), out var name) && name != null)
+						_driver = Drivers.TryGetValue(name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+					else
+						_driver = ConnectionSettingsDriver.Unnamed;
+				}
+
+				return _driver;
+			}
+			set => _driver = value ?? ConnectionSettingsDriver.Unnamed;
 		}
 
-		public IConnectionSettingOptions Options => _options;
+		public IConnectionSettingsOptions Options => _options;
 		#endregion
 
 		#region 公共方法
-		public bool IsDriver(string driver)
-		{
-			if(string.IsNullOrWhiteSpace(driver))
-				return string.IsNullOrWhiteSpace(this.Driver);
-
-			return string.IsNullOrWhiteSpace(this.Driver) || string.Equals(this.Driver, driver, StringComparison.OrdinalIgnoreCase);
-		}
+		public bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this.Driver, name);
+		public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this.Driver, driver);
 		#endregion
 
 		#region 参数解析
@@ -106,17 +113,15 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		public bool Equals(IConnectionSetting setting) => setting != null &&
-			string.Equals(this.Name, setting.Name, StringComparison.OrdinalIgnoreCase) &&
-			string.Equals(this.Driver, setting.Driver, StringComparison.OrdinalIgnoreCase);
+		public bool Equals(IConnectionSettings settings) => settings != null &&
+			string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
 
-		public bool Equals(ConnectionSetting setting) => setting != null &&
-			string.Equals(this.Name, setting.Name, StringComparison.OrdinalIgnoreCase) &&
-			string.Equals(this.Driver, setting.Driver, StringComparison.OrdinalIgnoreCase);
+		public bool Equals(ConnectionSettings settings) => settings != null &&
+			string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
 
-		public override bool Equals(object obj) => obj is IConnectionSetting setting && this.Equals(setting);
-		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver.ToLowerInvariant());
-		public override string ToString() => string.IsNullOrEmpty(this.Driver) ?
+		public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
+		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver?.Name?.ToLowerInvariant());
+		public override string ToString() => this.Driver == null ?
 			$"[{this.Name}]{this.Value}" :
 			$"[{this.Name}@{this.Driver}]{this.Value}";
 		#endregion
@@ -127,17 +132,41 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 嵌套子类
-		private sealed class ConnectionSettingOptions : IConnectionSettingOptions
+		private sealed class DriverConverter : TypeConverter
+		{
+			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => new DriverProxy(value as string);
+
+			private sealed class DriverProxy(string name) : IConnectionSettingsDriver
+			{
+				private readonly string _name = name;
+
+				public string Name => _name;
+				public IConnectionSettingsDriver Driver => string.IsNullOrEmpty(_name) ? ConnectionSettingsDriver.Unnamed : Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+
+				public string Description
+				{
+					get => this.Driver.Description;
+					set => this.Driver.Description = value;
+				}
+
+				public IConnectionSettingsMapper Mapper => this.Driver.Mapper;
+				public ConnectionSettingDescriptorCollection Descriptors => this.Driver.Descriptors;
+				public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
+			}
+		}
+
+		private sealed class ConnectionSettingOptions : IConnectionSettingsOptions
 		{
 			#region 成员字段
-			private readonly IConnectionSetting _connectionSetting;
+			private readonly IConnectionSettings _connectionSettings;
 			private readonly Dictionary<string, string> _dictionary;
 			#endregion
 
 			#region 构造函数
-			public ConnectionSettingOptions(IConnectionSetting connectionSetting)
+			public ConnectionSettingOptions(IConnectionSettings connectionSetting)
 			{
-				_connectionSetting = connectionSetting;
+				_connectionSettings = connectionSetting;
 				_dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			}
 			#endregion
@@ -148,23 +177,6 @@ namespace Zongsoft.Configuration
 			{
 				get => this.GetValue(name);
 				set => this.SetValue(name, value);
-			}
-
-			public IEnumerable<KeyValuePair<string, string>> Mapping
-			{
-				get
-				{
-					if(Mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
-					{
-						foreach(var entry in _dictionary)
-							yield return new KeyValuePair<string, string>(mapper.Mapping.TryGetValue(entry.Key, out var name) ? name : entry.Key, entry.Value);
-					}
-					else
-					{
-						foreach(var entry in _dictionary)
-							yield return entry;
-					}
-				}
 			}
 			#endregion
 
@@ -256,9 +268,9 @@ namespace Zongsoft.Configuration
 
 			public bool SetValue(string name, string value)
 			{
-				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null)
 				{
-					if(!mapper.Validate(name, value))
+					if(!_connectionSettings.Driver.Mapper.Validate(name, value))
 						return false;
 				}
 
@@ -268,16 +280,16 @@ namespace Zongsoft.Configuration
 
 			public string GetValue(string name)
 			{
-				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
-					return mapper.Map<string>(name, _dictionary);
+				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
+					return _connectionSettings.Driver.Mapper.Map<string>(name, _dictionary);
 
 				return _dictionary.TryGetValue(name, out var value) ? value : null;
 			}
 
 			public T GetValue<T>(string name, T defaultValue = default)
 			{
-				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
-					return mapper.Map<T>(name, _dictionary);
+				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
+					return _connectionSettings.Driver.Mapper.Map<T>(name, _dictionary);
 
 				if(_dictionary.TryGetValue(name, out var value))
 					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
@@ -287,8 +299,8 @@ namespace Zongsoft.Configuration
 
 			public bool TryGetValue<T>(string name, out T value)
 			{
-				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
-					return mapper.Map<T>(name, _dictionary, out value);
+				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
+					return _connectionSettings.Driver.Mapper.Map<T>(name, _dictionary, out value);
 
 				if(_dictionary.TryGetValue(name, out var text))
 					return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);

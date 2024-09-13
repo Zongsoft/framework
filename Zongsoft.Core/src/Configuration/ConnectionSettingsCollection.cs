@@ -32,7 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingCollection() : KeyedCollection<string, ConnectionSetting>(StringComparer.OrdinalIgnoreCase)
+	public class ConnectionSettingsCollection() : KeyedCollection<string, ConnectionSettings>(StringComparer.OrdinalIgnoreCase)
 	{
 		#region 成员字段
 		private string _default = string.Empty;
@@ -45,28 +45,28 @@ namespace Zongsoft.Configuration
 			set => _default = value ?? string.Empty;
 		}
 
-		public new ConnectionSetting this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
+		public new ConnectionSettings this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
 		#endregion
 
 		#region 公共方法
-		public ConnectionSetting GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
+		public ConnectionSettings GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
 		public bool Contains(string name, string driver) => string.IsNullOrEmpty(driver) ?
 			this.Contains(name ?? string.Empty) :
 			this.TryGetValue(name, driver, out _);
 
-		public new bool TryGetValue(string name, out ConnectionSetting result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
-		public bool TryGetValue(string name, string driver, out ConnectionSetting result)
+		public new bool TryGetValue(string name, out ConnectionSettings result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
+		public bool TryGetValue(string name, string driver, out ConnectionSettings settings)
 		{
-			if(this.TryGetValue(name, out result) && result != null && !string.IsNullOrEmpty(driver))
-				result = string.Equals(result.Driver, driver, StringComparison.OrdinalIgnoreCase) ||
-				         result.Driver.EndsWith($".{driver}", StringComparison.OrdinalIgnoreCase)? result : null;
+			if(this.TryGetValue(name, out settings) && settings != null && !string.IsNullOrEmpty(driver))
+				settings = string.Equals(settings.Driver?.Name, driver, StringComparison.OrdinalIgnoreCase) ||
+				         (settings.Driver != null && settings.Driver.IsDriver(driver))? settings : null;
 
-			return result != null;
+			return settings != null;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(ConnectionSetting item) => item.Name;
+		protected override string GetKeyForItem(ConnectionSettings item) => item.Name;
 		#endregion
 	}
 }

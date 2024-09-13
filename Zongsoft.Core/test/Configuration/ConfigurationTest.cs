@@ -43,7 +43,7 @@ namespace Zongsoft.Configuration
 			Assert.NotNull(configuration);
 			Assert.NotEmpty(configuration.Providers);
 
-			var settings = configuration.GetOption<ConnectionSettingCollection>("/data/connectionSettings");
+			var settings = configuration.GetOption<ConnectionSettingsCollection>("/data/connectionSettings");
 
 			Assert.NotNull(settings);
 			Assert.NotEmpty(settings);
@@ -52,18 +52,16 @@ namespace Zongsoft.Configuration
 
 			Assert.NotNull(setting);
 			Assert.Equal("db1", setting.Name);
-			Assert.Equal("mysql", setting.Driver);
+			Assert.True(setting.IsDriver("mysql"));
 			Assert.Equal("db1.connectionString", setting.Value);
 
 			Assert.True(setting.HasProperties);
-			Assert.Equal(2, setting.Properties.Count);
+			Assert.Equal(1, setting.Properties.Count);
 
-			Assert.True(setting.Properties.TryGetValue("driver", out var value));
-			Assert.Equal("mysql", value);
-			Assert.True(setting.Properties.TryGetValue("mode", out value));
+			Assert.True(setting.Properties.TryGetValue("mode", out var value));
 			Assert.Equal("all", value);
 
-			settings = configuration.GetOption<ConnectionSettingCollection>("/externals/redis/connectionSettings");
+			settings = configuration.GetOption<ConnectionSettingsCollection>("/externals/redis/connectionSettings");
 
 			Assert.NotNull(settings);
 			Assert.NotEmpty(settings);

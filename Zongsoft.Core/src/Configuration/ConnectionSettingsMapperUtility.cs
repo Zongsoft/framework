@@ -32,40 +32,14 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public abstract class ConnectionSettingOptionsMapper : IConnectionSettingOptionsMapper
+	public static class ConnectionSettingsMapperUtility
 	{
-		#region 构造函数
-		protected ConnectionSettingOptionsMapper(string driver, IEnumerable<KeyValuePair<string, string>> mapping = null)
+		public static T Map<T>(this IConnectionSettingsMapper mapper, string name, IDictionary<string, string> options)
 		{
-			if(string.IsNullOrEmpty(driver))
-				throw new ArgumentNullException(nameof(driver));
+			if(mapper == null)
+				throw new ArgumentNullException(nameof(mapper));
 
-			this.Driver = driver.Trim();
-			this.Mapping = mapping == null ?
-				new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase):
-				new Dictionary<string, string>(mapping, StringComparer.OrdinalIgnoreCase);
+			return mapper.Map<T>(name, options, out var value) ? value : default;
 		}
-		#endregion
-
-		#region 公共属性
-		public string Driver { get; }
-		public IDictionary<string, string> Mapping { get; }
-		#endregion
-
-		#region 公共方法
-		public virtual bool Validate(string name, string value) => name != null;
-		public bool Map<T>(string name, IDictionary<string, string> options, out T value)
-		{
-			if(this.Mapping.ContainsKey(name) && options.TryGetValue(name, out var text))
-				return this.OnMap(name, text, options, out value);
-
-			value = default;
-			return false;
-		}
-		#endregion
-
-		#region 保护方法
-		protected virtual bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value) => Zongsoft.Common.Convert.TryConvertValue(text, out value);
-		#endregion
 	}
 }
