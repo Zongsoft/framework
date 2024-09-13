@@ -32,21 +32,16 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public abstract class ConnectionSettingValuesMapper : IConnectionSettingValuesMapper
+	public abstract class ConnectionSettingOptionsMapper : IConnectionSettingOptionsMapper
 	{
-		#region 私有字段
-		private readonly IDictionary<string, string> _keys;
-		#endregion
-
 		#region 构造函数
-		protected ConnectionSettingValuesMapper(string driver, IEnumerable<KeyValuePair<string, string>> mapping = null)
+		protected ConnectionSettingOptionsMapper(string driver, IEnumerable<KeyValuePair<string, string>> mapping = null)
 		{
 			if(string.IsNullOrEmpty(driver))
 				throw new ArgumentNullException(nameof(driver));
 
 			this.Driver = driver.Trim();
-
-			_keys = mapping == null ?
+			this.Mapping = mapping == null ?
 				new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase):
 				new Dictionary<string, string>(mapping, StringComparer.OrdinalIgnoreCase);
 		}
@@ -54,15 +49,15 @@ namespace Zongsoft.Configuration
 
 		#region 公共属性
 		public string Driver { get; }
-		public IDictionary<string, string> Mapping => _keys;
+		public IDictionary<string, string> Mapping { get; }
 		#endregion
 
 		#region 公共方法
 		public virtual bool Validate(string name, string value) => name != null;
-		public bool Map<T>(string name, IDictionary<string, string> values, out T value)
+		public bool Map<T>(string name, IDictionary<string, string> options, out T value)
 		{
-			if(_keys.ContainsKey(name) && values.TryGetValue(name, out var text))
-				return this.OnMap(name, text, values, out value);
+			if(this.Mapping.ContainsKey(name) && options.TryGetValue(name, out var text))
+				return this.OnMap(name, text, options, out value);
 
 			value = default;
 			return false;
@@ -72,16 +67,5 @@ namespace Zongsoft.Configuration
 		#region 保护方法
 		protected virtual bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value) => Zongsoft.Common.Convert.TryConvertValue(text, out value);
 		#endregion
-	}
-
-	public static class ConnectionSettingValuesMapperUtility
-	{
-		public static T Map<T>(this IConnectionSettingValuesMapper mapper, string name, IDictionary<string, string> values)
-		{
-			if(mapper == null)
-				throw new ArgumentNullException(nameof(mapper));
-
-			return mapper.Map<T>(name, values, out var value) ? value : default;
-		}
 	}
 }

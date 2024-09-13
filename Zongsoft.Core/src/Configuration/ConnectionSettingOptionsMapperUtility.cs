@@ -28,12 +28,18 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingValuesMapperCollection() : KeyedCollection<string, IConnectionSettingValuesMapper>(StringComparer.OrdinalIgnoreCase)
+	public static class ConnectionSettingOptionsMapperUtility
 	{
-		protected override string GetKeyForItem(IConnectionSettingValuesMapper mapper) => mapper.Driver;
+		public static T Map<T>(this IConnectionSettingOptionsMapper mapper, string name, IDictionary<string, string> options)
+		{
+			if(mapper == null)
+				throw new ArgumentNullException(nameof(mapper));
+
+			return mapper.Map<T>(name, options, out var value) ? value : default;
+		}
 	}
 }

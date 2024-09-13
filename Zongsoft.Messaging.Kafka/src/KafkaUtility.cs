@@ -51,11 +51,11 @@ namespace Zongsoft.Messaging.Kafka
 
 			var config = new ProducerConfig
 			{
-				ClientId = setting.Values.Client,
-				BootstrapServers = setting.Values.Server
+				ClientId = setting.Options.Client,
+				BootstrapServers = setting.Options.Server
 			};
 
-			foreach(var entry in setting.Values)
+			foreach(var entry in setting.Options)
 				config.Set(entry.Key, entry.Value);
 
 			return config;
@@ -68,12 +68,12 @@ namespace Zongsoft.Messaging.Kafka
 
 			var config = new ConsumerConfig
 			{
-				GroupId = setting.Values.Group,
-				ClientId = setting.Values.Client,
-				BootstrapServers = setting.Values.Server
+				GroupId = setting.Options.Group,
+				ClientId = setting.Options.Client,
+				BootstrapServers = setting.Options.Server
 			};
 
-			foreach(var entry in setting.Values)
+			foreach(var entry in setting.Options)
 				config.Set(entry.Key, entry.Value);
 
 			return config;

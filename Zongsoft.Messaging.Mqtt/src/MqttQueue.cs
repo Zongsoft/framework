@@ -198,7 +198,7 @@ namespace Zongsoft.Messaging.Mqtt
 			if(setting == null)
 				return this.Name;
 
-			return $"{this.Name}{Environment.NewLine}Server={setting.Values.Server};Instance={setting.Values.Instance};Client={setting.Values.Client}";
+			return $"{this.Name}{Environment.NewLine}Server={setting.Options.Server};Instance={setting.Options.Instance};Client={setting.Options.Client}";
 		}
 		#endregion
 

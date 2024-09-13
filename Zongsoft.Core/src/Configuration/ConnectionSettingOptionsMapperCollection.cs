@@ -28,32 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
-	/// <summary>
-	/// 表示连接设置值（连接字符串）映射器的接口。
-	/// </summary>
-	public interface IConnectionSettingValuesMapper
+	public class ConnectionSettingOptionsMapperCollection() : KeyedCollection<string, IConnectionSettingOptionsMapper>(StringComparer.OrdinalIgnoreCase)
 	{
-		/// <summary>获取当前连接的驱动标识。</summary>
-		string Driver { get; }
-
-		/// <summary>获取映射的键集。</summary>
-		IDictionary<string, string> Mapping { get; }
-
-		/// <summary>尝试映射转换指定键名对应的值。</summary>
-		/// <param name="name">指定的待映射的键名。</param>
-		/// <param name="values">指定的待映射的连接值集合。</param>
-		/// <param name="value">输出参数，返回映射转换成功后的值。</param>
-		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool Map<T>(string name, IDictionary<string, string> values, out T value);
-
-		/// <summary>验证待写入的键值。</summary>
-		/// <param name="name">待写入的键名。</param>
-		/// <param name="value">待写入的键值。</param>
-		/// <returns>返回验证后的新键值。</returns>
-		bool Validate(string name, string value);
+		protected override string GetKeyForItem(IConnectionSettingOptionsMapper mapper) => mapper.Driver;
 	}
 }

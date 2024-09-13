@@ -93,15 +93,15 @@ namespace Zongsoft.Externals.Hangfire.Storages
 			if(connectionSetting == null)
 				return null;
 
-			var host = connectionSetting.Values.Server;
-			if(connectionSetting.Values.Port != 0)
-				host += $":{connectionSetting.Values.Port}";
+			var host = connectionSetting.Options.Server;
+			if(connectionSetting.Options.Port != 0)
+				host += $":{connectionSetting.Options.Port}";
 
-			var entries = connectionSetting.Values.Mapping
+			var entries = connectionSetting.Options.Mapping
 					.Where(entry =>
 						!string.IsNullOrEmpty(entry.Key) &&
-						!entry.Key.Equals(nameof(ConnectionSetting.Values.Server), StringComparison.OrdinalIgnoreCase) &&
-						!entry.Key.Equals(nameof(ConnectionSetting.Values.Port), StringComparison.OrdinalIgnoreCase))
+						!entry.Key.Equals(nameof(ConnectionSetting.Options.Server), StringComparison.OrdinalIgnoreCase) &&
+						!entry.Key.Equals(nameof(ConnectionSetting.Options.Port), StringComparison.OrdinalIgnoreCase))
 					.Select(entry => $"{entry.Key}={entry.Value}");
 
 			var connectionString = entries.Any() ? $"{host},{string.Join(',', entries)}" : host;

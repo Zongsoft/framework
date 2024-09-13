@@ -44,18 +44,18 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 静态属性
-		public static ConnectionSettingValuesMapperCollection Mappers { get; }
+		public static ConnectionSettingOptionsMapperCollection Mappers { get; }
 		#endregion
 
 		#region 成员字段
-		private readonly ConnectionSettingValues _values;
+		private readonly ConnectionSettingValues _options;
 		#endregion
 
 		#region 构造函数
-		public ConnectionSetting() => _values = new ConnectionSettingValues(this);
+		public ConnectionSetting() => _options = new ConnectionSettingValues(this);
 		public ConnectionSetting(string name, string value) : base(name, value)
 		{
-			_values = new ConnectionSettingValues(this);
+			_options = new ConnectionSettingValues(this);
 
 			if(!string.IsNullOrEmpty(value))
 				this.OnValueChanged(value);
@@ -69,7 +69,7 @@ namespace Zongsoft.Configuration
 			set => this.Properties[nameof(Driver)] = value;
 		}
 
-		public IConnectionSettingValues Values => _values;
+		public IConnectionSettingOptions Options => _options;
 		#endregion
 
 		#region 公共方法
@@ -87,7 +87,7 @@ namespace Zongsoft.Configuration
 		{
 			if(string.IsNullOrEmpty(value))
 			{
-				_values.Clear();
+				_options.Clear();
 				return;
 			}
 
@@ -96,11 +96,11 @@ namespace Zongsoft.Configuration
 				var index = option.IndexOf('=');
 
 				if(index < 0)
-					_values[string.Empty] = option;
+					_options[string.Empty] = option;
 				else if(index == option.Length - 1)
-					_values[option[0..^1]] = null;
+					_options[option[0..^1]] = null;
 				else if(index > 0 && index < option.Length - 1)
-					_values[option.Substring(0, index)] = option[(index + 1)..];
+					_options[option.Substring(0, index)] = option[(index + 1)..];
 			}
 		}
 		#endregion
@@ -122,7 +122,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 嵌套子类
-		private sealed class ConnectionSettingValues : IConnectionSettingValues
+		private sealed class ConnectionSettingValues : IConnectionSettingOptions
 		{
 			#region 成员字段
 			private readonly IConnectionSetting _connectionSetting;

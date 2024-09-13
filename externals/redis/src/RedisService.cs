@@ -984,7 +984,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				if(_database == null)
 				{
-					_connection = ConnectionMultiplexer.Connect(settings.Options);
+					_connection = ConnectionMultiplexer.Connect(settings.Configuration);
 					_database = _connection.GetDatabase(databaseId);
 				}
 			}
@@ -1010,7 +1010,7 @@ namespace Zongsoft.Externals.Redis
 			{
 				if(_database == null)
 				{
-					_connection = await ConnectionMultiplexer.ConnectAsync(settings.Options);
+					_connection = await ConnectionMultiplexer.ConnectAsync(settings.Configuration);
 					_database = _connection.GetDatabase(databaseId);
 				}
 			}

@@ -34,15 +34,15 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis.Configuration
 {
-	public class RedisConnectionSettingValuesMapper : ConnectionSettingValuesMapper
+	public class RedisConnectionSettingOptionsMapper : ConnectionSettingOptionsMapper
 	{
-		public RedisConnectionSettingValuesMapper() : base(RedisConnectionSetting.DRIVER, new[]
+		public RedisConnectionSettingOptionsMapper() : base(RedisConnectionSetting.DRIVER, new[]
 		{
-			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.Client), "name"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.UserName), "user"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.Timeout), "connectTimeout"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.Database), "defaultDatabase"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingValues.Application), "serviceName"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Client), "name"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.UserName), "user"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Timeout), "connectTimeout"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Database), "defaultDatabase"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Application), "serviceName"),
 		}) { }
 	}
 }

@@ -33,9 +33,9 @@ using System.Collections.Generic;
 namespace Zongsoft.Configuration
 {
 	/// <summary>
-	/// 表示连接设置值（连接字符串）的接口。
+	/// 表示连接设置项（连接字符串）的接口。
 	/// </summary>
-	public interface IConnectionSettingValues : IEnumerable<KeyValuePair<string, string>>
+	public interface IConnectionSettingOptions : IEnumerable<KeyValuePair<string, string>>
 	{
 		#region 通用属性
 		/// <summary>获取连接字符串的键值对数量。</summary>

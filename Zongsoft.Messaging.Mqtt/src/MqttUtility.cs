@@ -52,7 +52,7 @@ namespace Zongsoft.Messaging.Mqtt
 			if(setting == null)
 				throw new ArgumentNullException(nameof(setting));
 
-			var clientId = setting.Values.Client;
+			var clientId = setting.Options.Client;
 
 			//确保ClientId不为空
 			if(string.IsNullOrWhiteSpace(clientId))
@@ -60,8 +60,8 @@ namespace Zongsoft.Messaging.Mqtt
 
 			return new MqttClientOptionsBuilder()
 				.WithClientId(clientId)
-				.WithTcpServer(setting.Values.Server)
-				.WithCredentials(setting.Values.UserName, setting.Values.Password)
+				.WithTcpServer(setting.Options.Server)
+				.WithCredentials(setting.Options.UserName, setting.Options.Password)
 				.Build();
 		}
 

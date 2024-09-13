@@ -43,7 +43,7 @@ namespace Zongsoft.Externals.Redis.Configuration
 
 		#region 成员字段
 		private readonly IConnectionSetting _connectionSetting;
-		private readonly StackExchange.Redis.ConfigurationOptions _options;
+		private readonly StackExchange.Redis.ConfigurationOptions _configuration;
 		#endregion
 
 		#region 构造函数
@@ -55,18 +55,18 @@ namespace Zongsoft.Externals.Redis.Configuration
 			if(!connectionSetting.IsDriver(DRIVER))
 				throw new ConfigurationException($"The specified '{connectionSetting}' connection settings is not a Redis configuration.");
 
-			var host = connectionSetting.Values.Server;
-			if(connectionSetting.Values.Port != 0)
-				host += $":{connectionSetting.Values.Port}";
+			var host = connectionSetting.Options.Server;
+			if(connectionSetting.Options.Port != 0)
+				host += $":{connectionSetting.Options.Port}";
 
-			var entries = connectionSetting.Values.Mapping
+			var entries = connectionSetting.Options.Mapping
 					.Where(entry =>
 						!string.IsNullOrEmpty(entry.Key) &&
-						!entry.Key.Equals(nameof(ConnectionSetting.Values.Server), StringComparison.OrdinalIgnoreCase) &&
-						!entry.Key.Equals(nameof(ConnectionSetting.Values.Port), StringComparison.OrdinalIgnoreCase))
+						!entry.Key.Equals(nameof(ConnectionSetting.Options.Server), StringComparison.OrdinalIgnoreCase) &&
+						!entry.Key.Equals(nameof(ConnectionSetting.Options.Port), StringComparison.OrdinalIgnoreCase))
 					.Select(entry => $"{entry.Key}={entry.Value}");
 
-			_options = StackExchange.Redis.ConfigurationOptions.Parse(entries.Any() ? host + ',' + string.Join(',', entries) : host, true);
+			_configuration = StackExchange.Redis.ConfigurationOptions.Parse(entries.Any() ? host + ',' + string.Join(',', entries) : host, true);
 			_connectionSetting = connectionSetting;
 		}
 		#endregion
@@ -75,13 +75,13 @@ namespace Zongsoft.Externals.Redis.Configuration
 		public string Driver { get => _connectionSetting.Driver; set => _connectionSetting.Driver = value; }
 		public string Name => _connectionSetting.Name;
 		public string Value { get => _connectionSetting.Value; set => _connectionSetting.Value = value; }
-		public IConnectionSettingValues Values => _connectionSetting.Values;
+		public IConnectionSettingOptions Options => _connectionSetting.Options;
 		public bool HasProperties => _connectionSetting.HasProperties;
 		public IDictionary<string, string> Properties => _connectionSetting.Properties;
 		#endregion
 
 		#region 内部属性
-		internal StackExchange.Redis.ConfigurationOptions Options => _options;
+		internal StackExchange.Redis.ConfigurationOptions Configuration => _configuration;
 		#endregion
 
 		#region 公共方法

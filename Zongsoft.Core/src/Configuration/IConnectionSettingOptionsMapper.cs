@@ -28,23 +28,32 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	/// <summary>
-	/// 表示连接设置的接口。
+	/// 表示连接设置项（连接字符串）映射器的接口。
 	/// </summary>
-	public interface IConnectionSetting : ISetting, IEquatable<IConnectionSetting>
+	public interface IConnectionSettingOptionsMapper
 	{
-		/// <summary>获取连接的驱动标识。</summary>
-		string Driver { get; set; }
+		/// <summary>获取当前连接的驱动标识。</summary>
+		string Driver { get; }
 
-		/// <summary>获取连接设置集。</summary>
-		IConnectionSettingOptions Options { get; }
+		/// <summary>获取映射的键集。</summary>
+		IDictionary<string, string> Mapping { get; }
 
-		/// <summary>判断当前连接是否为指定的驱动。</summary>
-		/// <param name="driver">指定的驱动标识。</param>
-		/// <returns>如果当前连接的驱动是<paramref name="driver"/>参数指定的驱动则返回真(True)，否则返回假(False)。</returns>
-		bool IsDriver(string driver);
+		/// <summary>尝试映射转换指定键名对应的值。</summary>
+		/// <param name="name">指定的待映射的键名。</param>
+		/// <param name="options">指定的待映射的连接项集合。</param>
+		/// <param name="value">输出参数，返回映射转换成功后的值。</param>
+		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		bool Map<T>(string name, IDictionary<string, string> options, out T value);
+
+		/// <summary>验证待写入的键值。</summary>
+		/// <param name="name">待写入的键名。</param>
+		/// <param name="value">待写入的键值。</param>
+		/// <returns>返回验证后的新键值。</returns>
+		bool Validate(string name, string value);
 	}
 }
