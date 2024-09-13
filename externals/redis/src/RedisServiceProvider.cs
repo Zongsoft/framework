@@ -52,15 +52,15 @@ namespace Zongsoft.Externals.Redis
 			if(ApplicationContext.Current?.Configuration == null)
 				return null;
 
-			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSetting(key)));
+			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSettings(key)));
 
-			static IConnectionSetting GetConnectionSetting(string name)
+			static IConnectionSettings GetConnectionSettings(string name)
 			{
-				var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Externals/Redis/ConnectionSettings");
+				var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings");
 				if(settings == null || settings.Count == 0)
 					throw new ConfigurationException($"Missing redis connection settings.");
 
-				if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSetting.DRIVER, out var setting))
+				if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSettingsDriver.NAME, out var setting))
 					return setting;
 
 				setting = settings.GetDefault();

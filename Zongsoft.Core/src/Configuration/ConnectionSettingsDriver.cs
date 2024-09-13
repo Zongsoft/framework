@@ -38,14 +38,16 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 构造汉数
-		public ConnectionSettingsDriver(string name, string description = null) : this(name, null, description) { }
-		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null)
+		public ConnectionSettingsDriver(string name, string description = null) : this(name, null, null, description) { }
+		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : this(name, mapper, null, description) { }
+		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
 			this.Mapper = mapper;
+			this.Modeler = modeler;
 			this.Description = description;
 			this.Descriptors = new ConnectionSettingDescriptorCollection();
 		}
@@ -55,7 +57,13 @@ namespace Zongsoft.Configuration
 		public string Name { get; }
 		public string Description { get; set; }
 		public IConnectionSettingsMapper Mapper { get; }
+		public IConnectionSettingsModeler Modeler { get; }
 		public ConnectionSettingDescriptorCollection Descriptors { get; }
+		#endregion
+
+		#region 公共方法
+		public ConnectionSettings Create(string connectionString) => new(this.Name, connectionString) { Driver = this };
+		public ConnectionSettings Create(string name, string connectionString) => new(name, connectionString) { Driver = this };
 		#endregion
 
 		#region 重写方法

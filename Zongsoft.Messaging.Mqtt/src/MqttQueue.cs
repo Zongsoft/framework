@@ -58,7 +58,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 构造函数
-		public MqttQueue(string name, IConnectionSetting connectionSetting) : base(name, connectionSetting)
+		public MqttQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 		{
 			_client = Factory.CreateManagedMqttClient();
 			_subscribers = new ConcurrentDictionary<string, ISet<MqttSubscriber>>();
@@ -101,7 +101,7 @@ namespace Zongsoft.Messaging.Mqtt
 							}
 						});
  
-						await _client.EnsureStart(this.ConnectionSetting);
+						await _client.EnsureStart(this.ConnectionSettings);
 					}
 					else
 					{
@@ -165,7 +165,7 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			var result = _client.EnsureStart(this.ConnectionSetting)
+			var result = _client.EnsureStart(this.ConnectionSettings)
 				.ContinueWith
 				(
 					(task, arg) => _client.InternalClient.PublishAsync((MqttApplicationMessage)arg),
@@ -184,7 +184,7 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			await _client.EnsureStart(this.ConnectionSetting);
+			await _client.EnsureStart(this.ConnectionSettings);
 			var result = await _client.InternalClient.PublishAsync(message, cancellation);
 			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
@@ -193,12 +193,8 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 重写方法
 		public override string ToString()
 		{
-			var setting = this.ConnectionSetting;
-
-			if(setting == null)
-				return this.Name;
-
-			return $"{this.Name}{Environment.NewLine}Server={setting.Options.Server};Instance={setting.Options.Instance};Client={setting.Options.Client}";
+			var settings = this.ConnectionSettings;
+			return settings == null ? this.Name : $"{this.Name}{Environment.NewLine}Server={settings.Server};Instance={settings.Instance};Client={settings.Client}";
 		}
 		#endregion
 

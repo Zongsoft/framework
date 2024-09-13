@@ -17,9 +17,9 @@
 		<object name="RedisProvider" type="Zongsoft.Externals.Redis.RedisServiceProvider, Zongsoft.Externals.Redis" />
 	</extension>
 
-	<!-- 挂载连接设置映射器 -->
-	<extension path="/Workbench/Configuration/ConnectionSettings/Mappers">
-		<object name="Redis" type="Zongsoft.Externals.Redis.Configuration.RedisConnectionSettingOptionsMapper, Zongsoft.Externals.Redis" />
+	<!-- 挂载连接设置驱动器 -->
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Redis" type="{static:Zongsoft.Externals.Redis.Configuration.RedisConnectionSettingsDriver.Instance, Zongsoft.Externals.Redis}" />
 	</extension>
 
 	<!-- 定义Redis命令的根节点 -->

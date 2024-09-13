@@ -28,11 +28,10 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
+using System.ComponentModel;
 
 namespace Zongsoft.Configuration
 {
@@ -47,15 +46,16 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 成员字段
-		private readonly ConnectionSettingOptions _options;
+		//private readonly ConnectionSettingOptions _options;
 		private IConnectionSettingsDriver _driver;
+		private readonly Dictionary<string, string> _options;
 		#endregion
 
 		#region 构造函数
-		public ConnectionSettings() => _options = new ConnectionSettingOptions(this);
+		public ConnectionSettings() => _options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		public ConnectionSettings(string name, string value) : base(name, value)
 		{
-			_options = new ConnectionSettingOptions(this);
+			_options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 			if(!string.IsNullOrEmpty(value))
 				this.OnValueChanged(value);
@@ -81,12 +81,154 @@ namespace Zongsoft.Configuration
 			set => _driver = value ?? ConnectionSettingsDriver.Unnamed;
 		}
 
-		public IConnectionSettingsOptions Options => _options;
+		public string this[string name]
+		{
+			get => this.GetValue(name);
+			set => this.SetValue(name, value);
+		}
+		#endregion
+
+		#region 特定属性
+		public string Group
+		{
+			get => this.GetValue(nameof(Group));
+			set => this.SetValue(nameof(Group), value);
+		}
+
+		public string Client
+		{
+			get => this.GetValue(nameof(Client));
+			set => this.SetValue(nameof(Client), value);
+		}
+
+		public string Server
+		{
+			get => this.GetValue(nameof(Server));
+			set => this.SetValue(nameof(Server), value);
+		}
+
+		public ushort Port
+		{
+			get => this.GetValue(nameof(Port), (ushort)0);
+			set => this.SetValue(nameof(Port), value.ToString());
+		}
+
+		public TimeSpan Timeout
+		{
+			get => this.GetValue(nameof(Timeout), TimeSpan.Zero);
+			set => this.SetValue(nameof(Timeout), value.ToString());
+		}
+
+		public string Charset
+		{
+			get => this.GetValue(nameof(Charset));
+			set => this.SetValue(nameof(Charset), value);
+		}
+
+		public string Encoding
+		{
+			get => this.GetValue(nameof(Encoding));
+			set => this.SetValue(nameof(Encoding), value);
+		}
+
+		public string Provider
+		{
+			get => this.GetValue(nameof(Provider));
+			set => this.SetValue(nameof(Provider), value);
+		}
+
+		public string Database
+		{
+			get => this.GetValue(nameof(Database));
+			set => this.SetValue(nameof(Database), value);
+		}
+
+		public string UserName
+		{
+			get => this.GetValue(nameof(UserName));
+			set => this.SetValue(nameof(UserName), value);
+		}
+
+		public string Password
+		{
+			get => this.GetValue(nameof(Password));
+			set => this.SetValue(nameof(Password), value);
+		}
+
+		public string Instance
+		{
+			get => this.GetValue(nameof(Instance));
+			set => this.SetValue(nameof(Instance), value);
+		}
+
+		public string Application
+		{
+			get => this.GetValue(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
+			set => this.SetValue(nameof(Application), value);
+		}
 		#endregion
 
 		#region 公共方法
-		public bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this.Driver, name);
-		public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this.Driver, driver);
+		public bool Contains(string name) => _options.ContainsKey(name);
+		public bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this, name);
+		public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this, driver);
+
+		public TModel Model<TModel>()
+		{
+			var modeler = this.Driver.Modeler;
+			if(modeler == null)
+				return default;
+
+			var model = this.Driver.Modeler.Model(this);
+			if(model == null)
+				return default;
+
+			return typeof(TModel).IsAssignableFrom(model.GetType()) ? (TModel)model :
+				throw new InvalidOperationException($"Unable to convert a connection configuration object of type '{model.GetType().FullName}' to type '{typeof(TModel).FullName}'.");
+		}
+
+		public bool SetValue(string name, string value)
+		{
+			if(this.Driver != null && this.Driver.Mapper != null)
+			{
+				if(!this.Driver.Mapper.Validate(name, value))
+					return false;
+			}
+
+			_options[name] = value;
+			return true;
+		}
+
+		public string GetValue(string name)
+		{
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
+				return this.Driver.Mapper.Map<string>(name, _options);
+
+			return _options.TryGetValue(name, out var value) ? value : null;
+		}
+
+		public T GetValue<T>(string name, T defaultValue = default)
+		{
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
+				return this.Driver.Mapper.Map<T>(name, _options);
+
+			if(_options.TryGetValue(name, out var value))
+				return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
+
+			return defaultValue;
+		}
+
+		public bool TryGetValue<T>(string name, out T value)
+		{
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
+				return this.Driver.Mapper.Map<T>(name, _options, out value);
+
+			if(_options.TryGetValue(name, out var text))
+				return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);
+
+			value = default;
+			return false;
+		}
 		#endregion
 
 		#region 参数解析
@@ -113,12 +255,8 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		public bool Equals(IConnectionSettings settings) => settings != null &&
-			string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
-
-		public bool Equals(ConnectionSettings settings) => settings != null &&
-			string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
-
+		public bool Equals(IConnectionSettings settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
+		public bool Equals(ConnectionSettings settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
 		public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver?.Name?.ToLowerInvariant());
 		public override string ToString() => this.Driver == null ?
@@ -142,7 +280,9 @@ namespace Zongsoft.Configuration
 				private readonly string _name = name;
 
 				public string Name => _name;
-				public IConnectionSettingsDriver Driver => string.IsNullOrEmpty(_name) ? ConnectionSettingsDriver.Unnamed : Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+				public IConnectionSettingsDriver Driver => string.IsNullOrEmpty(_name) ?
+					ConnectionSettingsDriver.Unnamed :
+					Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
 
 				public string Description
 				{
@@ -151,176 +291,10 @@ namespace Zongsoft.Configuration
 				}
 
 				public IConnectionSettingsMapper Mapper => this.Driver.Mapper;
+				public IConnectionSettingsModeler Modeler => this.Driver.Modeler;
 				public ConnectionSettingDescriptorCollection Descriptors => this.Driver.Descriptors;
 				public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
 			}
-		}
-
-		private sealed class ConnectionSettingOptions : IConnectionSettingsOptions
-		{
-			#region 成员字段
-			private readonly IConnectionSettings _connectionSettings;
-			private readonly Dictionary<string, string> _dictionary;
-			#endregion
-
-			#region 构造函数
-			public ConnectionSettingOptions(IConnectionSettings connectionSetting)
-			{
-				_connectionSettings = connectionSetting;
-				_dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-			}
-			#endregion
-
-			#region 通用属性
-			public int Count => _dictionary.Count;
-			public string this[string name]
-			{
-				get => this.GetValue(name);
-				set => this.SetValue(name, value);
-			}
-			#endregion
-
-			#region 特定属性
-			public string Group
-			{
-				get => this.GetValue(nameof(Group));
-				set => this.SetValue(nameof(Group), value);
-			}
-
-			public string Client
-			{
-				get => this.GetValue(nameof(Client));
-				set => this.SetValue(nameof(Client), value);
-			}
-
-			public string Server
-			{
-				get => this.GetValue(nameof(Server));
-				set => this.SetValue(nameof(Server), value);
-			}
-
-			public ushort Port
-			{
-				get => this.GetValue(nameof(Port), (ushort)0);
-				set => this.SetValue(nameof(Port), value.ToString());
-			}
-
-			public TimeSpan Timeout
-			{
-				get => this.GetValue(nameof(Timeout), TimeSpan.Zero);
-				set => this.SetValue(nameof(Timeout), value.ToString());
-			}
-
-			public string Charset
-			{
-				get => this.GetValue(nameof(Charset));
-				set => this.SetValue(nameof(Charset), value);
-			}
-
-			public string Encoding
-			{
-				get => this.GetValue(nameof(Encoding));
-				set => this.SetValue(nameof(Encoding), value);
-			}
-
-			public string Provider
-			{
-				get => this.GetValue(nameof(Provider));
-				set => this.SetValue(nameof(Provider), value);
-			}
-
-			public string Database
-			{
-				get => this.GetValue(nameof(Database));
-				set => this.SetValue(nameof(Database), value);
-			}
-
-			public string UserName
-			{
-				get => this.GetValue(nameof(UserName));
-				set => this.SetValue(nameof(UserName), value);
-			}
-
-			public string Password
-			{
-				get => this.GetValue(nameof(Password));
-				set => this.SetValue(nameof(Password), value);
-			}
-
-			public string Instance
-			{
-				get => this.GetValue(nameof(Instance));
-				set => this.SetValue(nameof(Instance), value);
-			}
-
-			public string Application
-			{
-				get => this.GetValue(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
-				set => this.SetValue(nameof(Application), value);
-			}
-			#endregion
-
-			#region 公共方法
-			public void Clear() => _dictionary.Clear();
-			public bool Contains(string name) => _dictionary.ContainsKey(name);
-			public bool Remove(string name) => _dictionary.Remove(name);
-			public bool Remove(string name, out string value) => _dictionary.Remove(name, out value);
-
-			public bool SetValue(string name, string value)
-			{
-				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null)
-				{
-					if(!_connectionSettings.Driver.Mapper.Validate(name, value))
-						return false;
-				}
-
-				_dictionary[name] = value;
-				return true;
-			}
-
-			public string GetValue(string name)
-			{
-				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
-					return _connectionSettings.Driver.Mapper.Map<string>(name, _dictionary);
-
-				return _dictionary.TryGetValue(name, out var value) ? value : null;
-			}
-
-			public T GetValue<T>(string name, T defaultValue = default)
-			{
-				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
-					return _connectionSettings.Driver.Mapper.Map<T>(name, _dictionary);
-
-				if(_dictionary.TryGetValue(name, out var value))
-					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
-
-				return defaultValue;
-			}
-
-			public bool TryGetValue<T>(string name, out T value)
-			{
-				if(_connectionSettings.Driver != null && _connectionSettings.Driver.Mapper != null && _connectionSettings.Driver.Mapper.Mapping.ContainsKey(name))
-					return _connectionSettings.Driver.Mapper.Map<T>(name, _dictionary, out value);
-
-				if(_dictionary.TryGetValue(name, out var text))
-					return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);
-
-				value = default;
-				return false;
-			}
-			#endregion
-
-			#region 重写方法
-			public override string ToString()
-			{
-				return _dictionary == null || _dictionary.Count == 0 ? string.Empty : string.Join(';', _dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
-			}
-			#endregion
-
-			#region 枚举遍历
-			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
-			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
-			#endregion
 		}
 		#endregion
 	}

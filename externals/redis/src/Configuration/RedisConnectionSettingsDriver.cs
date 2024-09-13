@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -27,28 +27,14 @@
  * along with the Zongsoft.Externals.Redis library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis.Configuration
 {
-	public class RedisServiceInfo
+	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver
 	{
-		#region 构造函数
-		public RedisServiceInfo(string name, string @namespace, int databaseId, Zongsoft.Configuration.IConnectionSettings settings)
-		{
-			this.Name = name;
-			this.Namespace = @namespace;
-			this.DatabaseId = databaseId;
-			this.Settings = settings;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string Namespace { get; }
-		public int DatabaseId { get; }
-		public Zongsoft.Configuration.IConnectionSettings Settings { get; }
-		public RedisServerDescriptor[] Servers { get; internal set; }
-		#endregion
+		internal const string NAME = "Redis";
+		public static readonly RedisConnectionSettingsDriver Instance = new();
+		private RedisConnectionSettingsDriver() : base(NAME, RedisConnectionSettingsMapper.Instance) { }
 	}
 }

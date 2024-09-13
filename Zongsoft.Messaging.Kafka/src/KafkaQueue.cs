@@ -45,9 +45,9 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 构造函数
-		public KafkaQueue(string name, IConnectionSetting connectionSetting) : base(name, connectionSetting)
+		public KafkaQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 		{
-			_producer = new ProducerBuilder<Null, byte[]>(KafkaUtility.GetProducerOptions(connectionSetting)).Build();
+			_producer = new ProducerBuilder<Null, byte[]>(KafkaUtility.GetProducerOptions(connectionSettings)).Build();
 		}
 		#endregion
 

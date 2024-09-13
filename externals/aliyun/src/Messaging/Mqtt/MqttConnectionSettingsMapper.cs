@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Aliyun library.
  *
@@ -35,20 +35,24 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 {
-	public class MqttConnectionSettingOptionsMapper : ConnectionSettingOptionsMapper
+	public sealed class MqttConnectionSettingsMapper : ConnectionSettingsMapper
 	{
-		#region 构造函数
-		public MqttConnectionSettingOptionsMapper() : base("Aliyun.Mqtt") { }
+		#region 单例字段
+		public static readonly MqttConnectionSettingsMapper Instance = new();
+		#endregion
+
+		#region 私有构造
+		private MqttConnectionSettingsMapper() { }
 		#endregion
 
 		#region 重写方法
 		protected override bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value)
 		{
-			if(string.Equals(name, nameof(IConnectionSettingOptions.Client), StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, nameof(IConnectionSettings.Client), StringComparison.OrdinalIgnoreCase))
 				return Common.Convert.TryConvertValue(GetClient(values), out value);
-			if(string.Equals(name, nameof(IConnectionSettingOptions.UserName), StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, nameof(IConnectionSettings.UserName), StringComparison.OrdinalIgnoreCase))
 				return Common.Convert.TryConvertValue(GetUserName(values), out value);
-			if(string.Equals(name, nameof(IConnectionSettingOptions.Password), StringComparison.OrdinalIgnoreCase))
+			if(string.Equals(name, nameof(IConnectionSettings.Password), StringComparison.OrdinalIgnoreCase))
 				return Common.Convert.TryConvertValue(GetPassword(values), out value);
 
 			return base.OnMap(name, text, values, out value);
@@ -58,23 +62,23 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 		#region 私有方法
 		private static string GetClient(IDictionary<string, string> values)
 		{
-			if(values.TryGetValue(nameof(IConnectionSettingOptions.Client), out var client) && !string.IsNullOrWhiteSpace(client))
+			if(values.TryGetValue(nameof(IConnectionSettings.Client), out var client) && !string.IsNullOrWhiteSpace(client))
 				return client;
 
-			if(values.TryGetValue(nameof(IConnectionSettingOptions.Group), out var group) && !string.IsNullOrWhiteSpace(group))
-				return values[nameof(IConnectionSettingOptions.Client)] = group + "@@@C" + Zongsoft.Common.Randomizer.GenerateString();
+			if(values.TryGetValue(nameof(IConnectionSettings.Group), out var group) && !string.IsNullOrWhiteSpace(group))
+				return values[nameof(IConnectionSettings.Client)] = group + "@@@C" + Zongsoft.Common.Randomizer.GenerateString();
 
 			return null;
 		}
 
 		private static string GetUserName(IDictionary<string, string> values) =>
-			values.TryGetValue(nameof(IConnectionSettingOptions.UserName), out var identity) &&
-			values.TryGetValue(nameof(IConnectionSettingOptions.Instance), out var instance) ?
+			values.TryGetValue(nameof(IConnectionSettings.UserName), out var identity) &&
+			values.TryGetValue(nameof(IConnectionSettings.Instance), out var instance) ?
 			$"Signature|{identity}|{instance}" : null;
 
 		private static string GetPassword(IDictionary<string, string> values)
 		{
-			if(!values.TryGetValue(nameof(IConnectionSettingOptions.Password), out var password) || string.IsNullOrEmpty(password))
+			if(!values.TryGetValue(nameof(IConnectionSettings.Password), out var password) || string.IsNullOrEmpty(password))
 				return null;
 
 			var client = GetClient(values);

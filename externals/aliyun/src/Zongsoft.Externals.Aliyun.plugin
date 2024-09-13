@@ -12,9 +12,9 @@
 		</assemblies>
 	</manifest>
 
-	<!-- 挂载连接设置映射器 -->
-	<extension path="/Workbench/Configuration/ConnectionSettings/Mappers">
-		<object name="Aliyun_Mqtt" type="Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettingOptionsMapper, Zongsoft.Externals.Aliyun" />
+	<!-- 挂载连接设置驱动器 -->
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Aliyun_Mqtt" type="{static:Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettingsDriver.Instance, Zongsoft.Externals.Aliyun}" />
 	</extension>
 
 	<extension path="/Workbench/FileSystem">

@@ -46,13 +46,13 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 重写方法
 		public override bool Exists(string name)
 		{
-			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/ConnectionSettings");
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>("/Messaging/ConnectionSettings");
 			return connectionSettings != null && connectionSettings.Contains(name, this.Name);
 		}
 
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSetting("/Messaging/ConnectionSettings", name, this.Name);
+			var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSettings("/Messaging/ConnectionSettings", name, this.Name);
 			if(connectionSetting == null)
 				throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
 

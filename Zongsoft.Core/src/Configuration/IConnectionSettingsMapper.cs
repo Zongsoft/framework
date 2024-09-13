@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,13 +33,10 @@ using System.Collections.Generic;
 namespace Zongsoft.Configuration
 {
 	/// <summary>
-	/// 表示连接设置项（连接字符串）映射器的接口。
+	/// 表示连接设置映射器的接口。
 	/// </summary>
 	public interface IConnectionSettingsMapper
 	{
-		/// <summary>获取当前连接的驱动标识。</summary>
-		string Driver { get; }
-
 		/// <summary>获取映射的键集。</summary>
 		IDictionary<string, string> Mapping { get; }
 

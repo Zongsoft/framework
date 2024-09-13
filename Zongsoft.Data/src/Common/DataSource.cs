@@ -52,23 +52,23 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 构造函数
-		public DataSource(Configuration.IConnectionSetting connectionSetting)
+		public DataSource(Configuration.IConnectionSettings connectionSettings)
 		{
-			if(connectionSetting == null)
-				throw new ArgumentNullException(nameof(connectionSetting));
+			if(connectionSettings == null)
+				throw new ArgumentNullException(nameof(connectionSettings));
 
-			if(string.IsNullOrWhiteSpace(connectionSetting.Driver))
-				throw new DataException($"Missing driver in the data connection string.");
+			if(connectionSettings.Driver == null || string.IsNullOrWhiteSpace(connectionSettings.Driver.Name))
+				throw new DataException($"The required driver is not specified in the database connection settings.");
 
-			_name = connectionSetting.Name;
-			_connectionString = connectionSetting.Value;
-			_driverName = connectionSetting.Driver;
+			_name = connectionSettings.Name;
+			_connectionString = connectionSettings.Value;
+			_driverName = connectionSettings.Driver.Name;
 			this.Mode = DataAccessMode.All;
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-			if(connectionSetting.HasProperties)
+			if(connectionSettings.HasProperties)
 			{
-				if(connectionSetting.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
+				if(connectionSettings.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
 				{
 					this.Mode = mode.Trim().ToLowerInvariant() switch
 					{
@@ -79,7 +79,7 @@ namespace Zongsoft.Data.Common
 					};
 				}
 
-				foreach(var property in connectionSetting.Properties)
+				foreach(var property in connectionSettings.Properties)
 				{
 					if(!string.Equals(property.Key, nameof(Mode), StringComparison.OrdinalIgnoreCase))
 						this.Properties[property.Key] = property.Value;

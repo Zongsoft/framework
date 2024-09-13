@@ -48,7 +48,7 @@ namespace Zongsoft.Data.Common
 		#region 公共方法
 		public IEnumerable<IDataSource> GetSources(string name)
 		{
-			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingCollection>("/Data/ConnectionSettings");
+			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
 
 			if(connectionSettings == null || connectionSettings.Count == 0)
 				yield break;

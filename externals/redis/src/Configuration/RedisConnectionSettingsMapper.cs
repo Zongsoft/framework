@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -34,15 +34,17 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis.Configuration
 {
-	public class RedisConnectionSettingOptionsMapper : ConnectionSettingOptionsMapper
+	public sealed class RedisConnectionSettingsMapper : ConnectionSettingsMapper
 	{
-		public RedisConnectionSettingOptionsMapper() : base(RedisConnectionSetting.DRIVER, new[]
-		{
-			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Client), "name"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.UserName), "user"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Timeout), "connectTimeout"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Database), "defaultDatabase"),
-			new KeyValuePair<string, string>(nameof(IConnectionSettingOptions.Application), "serviceName"),
-		}) { }
+		public static readonly RedisConnectionSettingsMapper Instance = new();
+
+		private RedisConnectionSettingsMapper() : base(
+		[
+			new KeyValuePair<string, string>(nameof(IConnectionSettings.Client), "name"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettings.UserName), "user"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettings.Timeout), "connectTimeout"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettings.Database), "defaultDatabase"),
+			new KeyValuePair<string, string>(nameof(IConnectionSettings.Application), "serviceName"),
+		]) { }
 	}
 }

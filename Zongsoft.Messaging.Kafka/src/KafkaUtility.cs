@@ -44,37 +44,37 @@ namespace Zongsoft.Messaging.Kafka
 {
 	internal static class KafkaUtility
 	{
-		public static ProducerConfig GetProducerOptions(IConnectionSetting setting)
+		public static ProducerConfig GetProducerOptions(IConnectionSettings settings)
 		{
-			if(setting == null)
+			if(settings == null)
 				return null;
 
 			var config = new ProducerConfig
 			{
-				ClientId = setting.Options.Client,
-				BootstrapServers = setting.Options.Server
+				ClientId = settings.Client,
+				BootstrapServers = settings.Server
 			};
 
-			foreach(var entry in setting.Options)
-				config.Set(entry.Key, entry.Value);
+			foreach(var setting in settings)
+				config.Set(setting.Key, setting.Value);
 
 			return config;
 		}
 
-		public static ConsumerConfig GetConsumerOptions(IConnectionSetting setting)
+		public static ConsumerConfig GetConsumerOptions(IConnectionSettings settings)
 		{
-			if(setting == null)
+			if(settings == null)
 				return null;
 
 			var config = new ConsumerConfig
 			{
-				GroupId = setting.Options.Group,
-				ClientId = setting.Options.Client,
-				BootstrapServers = setting.Options.Server
+				GroupId = settings.Group,
+				ClientId = settings.Client,
+				BootstrapServers = settings.Server
 			};
 
-			foreach(var entry in setting.Options)
-				config.Set(entry.Key, entry.Value);
+			foreach(var setting in settings)
+				config.Set(setting.Key, setting.Value);
 
 			return config;
 		}

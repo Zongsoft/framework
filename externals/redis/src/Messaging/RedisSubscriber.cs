@@ -76,13 +76,13 @@ namespace Zongsoft.Externals.Redis.Messaging
 		public RedisSubscriber(RedisQueue queue, string topics, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-			_group = queue.ConnectionSetting.Options.Group;
-			_client = string.IsNullOrWhiteSpace(queue.ConnectionSetting.Options.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSetting.Options.Client;
+			_group = queue.ConnectionSettings.Group;
+			_client = string.IsNullOrWhiteSpace(queue.ConnectionSettings.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSettings.Client;
 			_poller = new Poller(this);
 
 			//初始化属性值
-			this.Deadline = queue.ConnectionSetting.Options.GetValue(nameof(Deadline), 10000);
-			this.IdleTimeout = queue.ConnectionSetting.Options.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
+			this.Deadline = queue.ConnectionSettings.GetValue(nameof(Deadline), 10000);
+			this.IdleTimeout = queue.ConnectionSettings.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
 		}
 		#endregion
 

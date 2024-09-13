@@ -47,7 +47,7 @@ namespace Zongsoft.Messaging.Kafka
 			if(queue == null)
 				throw new ArgumentNullException(nameof(queue));
 
-			_consumer = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(queue.ConnectionSetting)).Build();
+			_consumer = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(queue.ConnectionSettings)).Build();
 			_poller = new Poller(this);
 		}
 

@@ -46,7 +46,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 构造函数
-		public RedisQueue(string name, IDatabase database, IConnectionSetting settings = null) : base(name, settings)
+		public RedisQueue(string name, IDatabase database, IConnectionSettings settings = null) : base(name, settings)
 		{
 			_database = database ?? throw new ArgumentNullException(nameof(database));
 		}

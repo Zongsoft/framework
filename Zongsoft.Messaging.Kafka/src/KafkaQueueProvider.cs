@@ -46,23 +46,23 @@ namespace Zongsoft.Messaging.Kafka
 		#region 重写方法
 		public override bool Exists(string name)
 		{
-			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingCollection>("/Messaging/ConnectionSettings");
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>("/Messaging/ConnectionSettings");
 			return connectionSettings != null && connectionSettings.Contains(name, this.Name);
 		}
 
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSetting("/Messaging/ConnectionSettings", name, this.Name);
-			if(connectionSetting == null)
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetConnectionSettings("/Messaging/ConnectionSettings", name, this.Name);
+			if(connectionSettings == null)
 				throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
 
 			if(settings != null)
 			{
 				foreach(var setting in settings)
-					connectionSetting.Properties[setting.Key] = setting.Value;
+					connectionSettings.Properties[setting.Key] = setting.Value;
 			}
 
-			return new KafkaQueue(name, connectionSetting);
+			return new KafkaQueue(name, connectionSettings);
 		}
 		#endregion
 	}
