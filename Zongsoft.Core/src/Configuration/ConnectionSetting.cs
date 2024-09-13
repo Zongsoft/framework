@@ -48,14 +48,14 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 成员字段
-		private readonly ConnectionSettingValues _options;
+		private readonly ConnectionSettingOptions _options;
 		#endregion
 
 		#region 构造函数
-		public ConnectionSetting() => _options = new ConnectionSettingValues(this);
+		public ConnectionSetting() => _options = new ConnectionSettingOptions(this);
 		public ConnectionSetting(string name, string value) : base(name, value)
 		{
-			_options = new ConnectionSettingValues(this);
+			_options = new ConnectionSettingOptions(this);
 
 			if(!string.IsNullOrEmpty(value))
 				this.OnValueChanged(value);
@@ -122,7 +122,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 嵌套子类
-		private sealed class ConnectionSettingValues : IConnectionSettingOptions
+		private sealed class ConnectionSettingOptions : IConnectionSettingOptions
 		{
 			#region 成员字段
 			private readonly IConnectionSetting _connectionSetting;
@@ -130,7 +130,7 @@ namespace Zongsoft.Configuration
 			#endregion
 
 			#region 构造函数
-			public ConnectionSettingValues(IConnectionSetting connectionSetting)
+			public ConnectionSettingOptions(IConnectionSetting connectionSetting)
 			{
 				_connectionSetting = connectionSetting;
 				_dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
