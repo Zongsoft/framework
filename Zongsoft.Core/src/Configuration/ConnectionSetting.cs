@@ -121,6 +121,11 @@ namespace Zongsoft.Configuration
 			$"[{this.Name}@{this.Driver}]{this.Value}";
 		#endregion
 
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _options.GetEnumerator();
+		#endregion
+
 		#region 嵌套子类
 		private sealed class ConnectionSettingOptions : IConnectionSettingOptions
 		{

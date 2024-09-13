@@ -28,13 +28,14 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	/// <summary>
 	/// 表示连接设置的接口。
 	/// </summary>
-	public interface IConnectionSetting : ISetting, IEquatable<IConnectionSetting>
+	public interface IConnectionSetting : ISetting, IEquatable<IConnectionSetting>, IEnumerable<KeyValuePair<string, string>>
 	{
 		/// <summary>获取连接的驱动标识。</summary>
 		string Driver { get; set; }
