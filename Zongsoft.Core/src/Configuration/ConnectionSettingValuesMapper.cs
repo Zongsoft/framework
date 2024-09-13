@@ -39,7 +39,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 构造函数
-		public ConnectionSettingValuesMapper(string driver, IEnumerable<KeyValuePair<string, string>> mapping = null)
+		protected ConnectionSettingValuesMapper(string driver, IEnumerable<KeyValuePair<string, string>> mapping = null)
 		{
 			if(string.IsNullOrEmpty(driver))
 				throw new ArgumentNullException(nameof(driver));
@@ -54,24 +54,34 @@ namespace Zongsoft.Configuration
 
 		#region 公共属性
 		public string Driver { get; }
+		public IDictionary<string, string> Mapping => _keys;
 		#endregion
 
 		#region 公共方法
-		public virtual string Map(string key) => key != null && _keys.TryGetValue(key, out var name) ? name : key;
-
-		public virtual string GetValue(string key, IDictionary<string, string> values)
+		public virtual bool Validate(string name, string value) => name != null;
+		public bool Map<T>(string name, IDictionary<string, string> values, out T value)
 		{
-			if(key == null)
-				return null;
+			if(_keys.ContainsKey(name) && values.TryGetValue(name, out var text))
+				return this.OnMap(name, text, values, out value);
 
-			//如果指定键有对应的映射名则首先获取映射名对应的值
-			if(_keys.TryGetValue(key, out var name) && values.TryGetValue(name, out var value))
-				return value;
-
-			return values.TryGetValue(key, out value) ? value : null;
+			value = default;
+			return false;
 		}
-
-		public virtual bool Validate(string key, string value) => key != null;
 		#endregion
+
+		#region 保护方法
+		protected virtual bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value) => Zongsoft.Common.Convert.TryConvertValue(text, out value);
+		#endregion
+	}
+
+	public static class ConnectionSettingValuesMapperUtility
+	{
+		public static T Map<T>(this IConnectionSettingValuesMapper mapper, string name, IDictionary<string, string> values)
+		{
+			if(mapper == null)
+				throw new ArgumentNullException(nameof(mapper));
+
+			return mapper.Map<T>(name, values, out var value) ? value : default;
+		}
 	}
 }

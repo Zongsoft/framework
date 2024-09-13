@@ -36,20 +36,15 @@ namespace Zongsoft.Configuration
 {
 	public class ConnectionSetting : Setting, IConnectionSetting, IEquatable<ConnectionSetting>, IEquatable<IConnectionSetting>
 	{
-		#region 静态字段
-		private static readonly Dictionary<string, IConnectionSettingValuesMapper> _mappers;
-		#endregion
-
 		#region 静态构造
 		static ConnectionSetting()
 		{
-			_mappers = new Dictionary<string, IConnectionSettingValuesMapper>(StringComparer.OrdinalIgnoreCase);
-			Mappers = new ConnectionSettingValuesMapperCollection();
+			Mappers = new();
 		}
 		#endregion
 
 		#region 静态属性
-		public static ICollection<IConnectionSettingValuesMapper> Mappers { get; }
+		public static ConnectionSettingValuesMapperCollection Mappers { get; }
 		#endregion
 
 		#region 成员字段
@@ -57,11 +52,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 构造函数
-		public ConnectionSetting()
-		{
-			_values = new ConnectionSettingValues(this);
-		}
-
+		public ConnectionSetting() => _values = new ConnectionSettingValues(this);
 		public ConnectionSetting(string name, string value) : base(name, value)
 		{
 			_values = new ConnectionSettingValues(this);
@@ -78,7 +69,7 @@ namespace Zongsoft.Configuration
 			set => this.Properties[nameof(Driver)] = value;
 		}
 
-		public IConnectionSettingValues Values { get => _values; }
+		public IConnectionSettingValues Values => _values;
 		#endregion
 
 		#region 公共方法
@@ -125,16 +116,13 @@ namespace Zongsoft.Configuration
 
 		public override bool Equals(object obj) => obj is IConnectionSetting setting && this.Equals(setting);
 		public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.Driver.ToLowerInvariant());
-		public override string ToString()
-		{
-			return string.IsNullOrEmpty(this.Driver) ?
-				$"[{this.Name}]{this.Value}" :
-				$"[{this.Name}@{this.Driver}]{this.Value}";
-		}
+		public override string ToString() => string.IsNullOrEmpty(this.Driver) ?
+			$"[{this.Name}]{this.Value}" :
+			$"[{this.Name}@{this.Driver}]{this.Value}";
 		#endregion
 
 		#region 嵌套子类
-		private class ConnectionSettingValues : IConnectionSettingValues
+		private sealed class ConnectionSettingValues : IConnectionSettingValues
 		{
 			#region 成员字段
 			private readonly IConnectionSetting _connectionSetting;
@@ -151,21 +139,20 @@ namespace Zongsoft.Configuration
 
 			#region 通用属性
 			public int Count => _dictionary.Count;
-
-			public string this[string key]
+			public string this[string name]
 			{
-				get => this.GetValue(key);
-				set => this.SetValue(key, value);
+				get => this.GetValue(name);
+				set => this.SetValue(name, value);
 			}
 
 			public IEnumerable<KeyValuePair<string, string>> Mapping
 			{
 				get
 				{
-					if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+					if(Mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
 					{
 						foreach(var entry in _dictionary)
-							yield return new KeyValuePair<string, string>(mapper.Map(entry.Key), entry.Value);
+							yield return new KeyValuePair<string, string>(mapper.Mapping.TryGetValue(entry.Key, out var name) ? name : entry.Key, entry.Value);
 					}
 					else
 					{
@@ -251,44 +238,20 @@ namespace Zongsoft.Configuration
 
 			public string Application
 			{
-				get => this.GetValue(nameof(Application));
+				get => this.GetValue(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
 				set => this.SetValue(nameof(Application), value);
 			}
 			#endregion
 
 			#region 公共方法
 			public void Clear() => _dictionary.Clear();
-			public bool Contains(string key) => _dictionary.ContainsKey(GetKey(key));
-			public bool Remove(string key) => _dictionary.Remove(GetKey(key));
-			public bool Remove(string key, out string value) => _dictionary.Remove(GetKey(key), out value);
-
-			public string GetValue(string name)
-			{
-				if(_mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
-					return mapper.GetValue(name, _dictionary);
-
-				return _dictionary.TryGetValue(name, out var value) ? value : null;
-			}
-
-			public T GetValue<T>(string name, T defaultValue = default)
-			{
-				string value;
-
-				if(_connectionSetting.Driver != null && _mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
-				{
-					value = mapper.GetValue(name, _dictionary);
-					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
-				}
-
-				if(_dictionary.TryGetValue(name, out value))
-					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
-
-				return defaultValue;
-			}
+			public bool Contains(string name) => _dictionary.ContainsKey(name);
+			public bool Remove(string name) => _dictionary.Remove(name);
+			public bool Remove(string name, out string value) => _dictionary.Remove(name, out value);
 
 			public bool SetValue(string name, string value)
 			{
-				if(_connectionSetting.Driver != null && _mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
+				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper))
 				{
 					if(!mapper.Validate(name, value))
 						return false;
@@ -297,67 +260,49 @@ namespace Zongsoft.Configuration
 				_dictionary[name] = value;
 				return true;
 			}
+
+			public string GetValue(string name)
+			{
+				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
+					return mapper.Map<string>(name, _dictionary);
+
+				return _dictionary.TryGetValue(name, out var value) ? value : null;
+			}
+
+			public T GetValue<T>(string name, T defaultValue = default)
+			{
+				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
+					return mapper.Map<T>(name, _dictionary);
+
+				if(_dictionary.TryGetValue(name, out var value))
+					return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
+
+				return defaultValue;
+			}
+
+			public bool TryGetValue<T>(string name, out T value)
+			{
+				if(_connectionSetting.Driver != null && Mappers.TryGetValue(_connectionSetting.Driver, out var mapper) && mapper.Mapping.ContainsKey(name))
+					return mapper.Map<T>(name, _dictionary, out value);
+
+				if(_dictionary.TryGetValue(name, out var text))
+					return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);
+
+				value = default;
+				return false;
+			}
 			#endregion
 
 			#region 重写方法
 			public override string ToString()
 			{
-				var dictionary = _dictionary;
-				return dictionary == null || dictionary.Count == 0 ? string.Empty : string.Join(';', dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
+				return _dictionary == null || _dictionary.Count == 0 ? string.Empty : string.Join(';', _dictionary.Select(entry => $"{entry.Key}={entry.Value}"));
 			}
-			#endregion
-
-			#region 私有方法
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetKey(string name) => _mappers.TryGetValue(_connectionSetting.Driver, out var mapper) ? mapper.Map(name) : name;
 			#endregion
 
 			#region 枚举遍历
 			public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _dictionary.GetEnumerator();
 			IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
-			#endregion
-		}
-
-		private class ConnectionSettingValuesMapperCollection : ICollection<IConnectionSettingValuesMapper>
-		{
-			#region 公共属性
-			public int Count => _mappers.Count;
-			public bool IsReadOnly => false;
-			#endregion
-
-			#region 公共方法
-			public void Clear() => _mappers.Clear();
-			public bool Contains(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.ContainsKey(item.Driver);
-			public bool Remove(IConnectionSettingValuesMapper item) => item != null && item.Driver != null && _mappers.Remove(item.Driver);
-			public void Add(IConnectionSettingValuesMapper item)
-			{
-				if(item != null && item.Driver != null)
-					_mappers.TryAdd(item.Driver, item);
-			}
-
-			public void CopyTo(IConnectionSettingValuesMapper[] array, int arrayIndex)
-			{
-				if(array == null || arrayIndex >= array.Length - 1)
-					return;
-
-				var iterator = _mappers.GetEnumerator();
-
-				for(int i = 0; i < array.Length - arrayIndex; i++)
-				{
-					while(iterator.MoveNext())
-						array[arrayIndex + i] = iterator.Current.Value;
-				}
-			}
-			#endregion
-
-			#region 枚举遍历
-			public IEnumerator<IConnectionSettingValuesMapper> GetEnumerator()
-			{
-				foreach(var mapper in _mappers)
-					yield return mapper.Value;
-			}
-
-			IEnumerator IEnumerable.GetEnumerator() => _mappers.Values.GetEnumerator();
 			#endregion
 		}
 		#endregion
