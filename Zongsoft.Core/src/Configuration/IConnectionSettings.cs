@@ -40,11 +40,13 @@ namespace Zongsoft.Configuration
 		#region 普通属性
 		/// <summary>获取连接的驱动。接口实现者应确保该属性值不会为空(<c>null</c>)。</summary>
 		IConnectionSettingsDriver Driver { get; }
+		/// <summary>获取连接设置的原始值集。</summary>
+		IDictionary<string, string> Values { get; }
 
 		/// <summary>获取或设置指定键名的值。</summary>
 		/// <param name="name">指定的连接设置项的键名。</param>
 		/// <returns>返回指定键名的设置值，如果为空(<c>null</c>)则表示指定键名的设置项不存在。</returns>
-		string this[string name] { get; set; }
+		object this[string name] { get; set; }
 		#endregion
 
 		#region 特定属性

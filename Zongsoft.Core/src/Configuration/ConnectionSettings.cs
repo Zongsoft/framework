@@ -79,8 +79,8 @@ namespace Zongsoft.Configuration
 			}
 			set => _driver = value ?? ConnectionSettingsDriver.Unnamed;
 		}
-
-		public string this[string name]
+		public IDictionary<string, string> Values => _values;
+		public object this[string name]
 		{
 			get => this.GetValue(name);
 			set => this.SetValue(name, value);
@@ -90,19 +90,19 @@ namespace Zongsoft.Configuration
 		#region 特定属性
 		public string Group
 		{
-			get => this.GetValue(nameof(Group));
+			get => this.GetValue<string>(nameof(Group));
 			set => this.SetValue(nameof(Group), value);
 		}
 
 		public string Client
 		{
-			get => this.GetValue(nameof(Client));
+			get => this.GetValue<string>(nameof(Client));
 			set => this.SetValue(nameof(Client), value);
 		}
 
 		public string Server
 		{
-			get => this.GetValue(nameof(Server));
+			get => this.GetValue<string>(nameof(Server));
 			set => this.SetValue(nameof(Server), value);
 		}
 
@@ -120,49 +120,49 @@ namespace Zongsoft.Configuration
 
 		public string Charset
 		{
-			get => this.GetValue(nameof(Charset));
+			get => this.GetValue<string>(nameof(Charset));
 			set => this.SetValue(nameof(Charset), value);
 		}
 
 		public string Encoding
 		{
-			get => this.GetValue(nameof(Encoding));
+			get => this.GetValue<string>(nameof(Encoding));
 			set => this.SetValue(nameof(Encoding), value);
 		}
 
 		public string Provider
 		{
-			get => this.GetValue(nameof(Provider));
+			get => this.GetValue<string>(nameof(Provider));
 			set => this.SetValue(nameof(Provider), value);
 		}
 
 		public string Database
 		{
-			get => this.GetValue(nameof(Database));
+			get => this.GetValue<string>(nameof(Database));
 			set => this.SetValue(nameof(Database), value);
 		}
 
 		public string UserName
 		{
-			get => this.GetValue(nameof(UserName));
+			get => this.GetValue<string>(nameof(UserName));
 			set => this.SetValue(nameof(UserName), value);
 		}
 
 		public string Password
 		{
-			get => this.GetValue(nameof(Password));
+			get => this.GetValue<string>(nameof(Password));
 			set => this.SetValue(nameof(Password), value);
 		}
 
 		public string Instance
 		{
-			get => this.GetValue(nameof(Instance));
+			get => this.GetValue<string>(nameof(Instance));
 			set => this.SetValue(nameof(Instance), value);
 		}
 
 		public string Application
 		{
-			get => this.GetValue(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
+			get => this.GetValue<string>(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
 			set => this.SetValue(nameof(Application), value);
 		}
 		#endregion
@@ -186,52 +186,53 @@ namespace Zongsoft.Configuration
 				throw new InvalidOperationException($"Unable to convert a connection configuration object of type '{model.GetType().FullName}' to type '{typeof(TModel).FullName}'.");
 		}
 
-		public bool SetValue(string name, string value)
+		public bool SetValue(string name, object value)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null)
-			{
-				if(!this.Driver.Mapper.Validate(name, value))
-					return false;
-			}
+			if(value == null)
+				return _values.Remove(name);
 
-			_values[name] = value;
+			var text = this.Driver != null && this.Driver.Mapper != null ?
+				this.Driver.Mapper.Map(name, value, _values) :
+				Common.Convert.ConvertValue<string>(value);
+
+			if(string.IsNullOrEmpty(text))
+				return _values.Remove(name);
+
+			_values[name] = text;
 			return true;
 		}
 
-		public string GetValue(string name)
+		public object GetValue(string name)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<string>(name, _values);
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+				return value;
 
-			return _values.TryGetValue(name, out var value) ? value : null;
+			return _values.TryGetValue(name, out var text) ? text : null;
 		}
 
 		public object GetValue(string name, Type type)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<object>(name, _values);
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+				return Common.Convert.ConvertValue(value, type);
 
-			return _values.TryGetValue(name, out var value) ? Common.Convert.ConvertValue(value, type) : null;
+			return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, type) : null;
 		}
 
 		public T GetValue<T>(string name, T defaultValue = default)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<T>(name, _values);
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+				return Common.Convert.ConvertValue(value, defaultValue);
 
-			if(_values.TryGetValue(name, out var value))
-				return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
-
-			return defaultValue;
+			return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, defaultValue) : defaultValue;
 		}
 
 		public bool TryGetValue<T>(string name, out T value)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<T>(name, _values, out value);
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var mappedValue))
+				return Common.Convert.TryConvertValue(mappedValue, out value);
 
 			if(_values.TryGetValue(name, out var text))
-				return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);
+				return Common.Convert.TryConvertValue(text, out value);
 
 			value = default;
 			return false;

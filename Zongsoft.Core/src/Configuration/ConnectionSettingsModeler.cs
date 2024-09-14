@@ -36,14 +36,13 @@ namespace Zongsoft.Configuration
 	public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TModel>, IConnectionSettingsModeler
 	{
 		#region 私有变量
-		private readonly IConnectionSettingsDriver _driver;
 		private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
 		#region 构造函数
 		public ConnectionSettingsModeler(IConnectionSettingsDriver driver)
 		{
-			_driver = driver ?? throw new ArgumentNullException(nameof(driver));
+			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
 			var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
 
 			for(int i = 0; i < members.Length; i++)
@@ -55,13 +54,24 @@ namespace Zongsoft.Configuration
 					_ => false,
 				};
 
-				if(usabled && driver != null && driver.Descriptors.Count > 0)
-					usabled = driver.Descriptors.Contains(members[i].Name);
-
 				if(usabled)
-					_members.Add(members[i].Name, members[i]);
+				{
+					_members.TryAdd(members[i].Name, members[i]);
+
+					if(driver != null && driver.Descriptors.Count > 0 && driver.Descriptors.TryGetValue(members[i].Name, out var descriptor))
+					{
+						_members.TryAdd(descriptor.Name, members[i]);
+
+						if(!string.IsNullOrEmpty(descriptor.Alias))
+							_members.TryAdd(descriptor.Alias, members[i]);
+					}
+				}
 			}
 		}
+		#endregion
+
+		#region 公共属性
+		public IConnectionSettingsDriver Driver { get; }
 		#endregion
 
 		#region 公共方法
@@ -71,20 +81,16 @@ namespace Zongsoft.Configuration
 			if(settings == null)
 				throw new ArgumentNullException(nameof(settings));
 
-			if(!_driver.IsDriver(settings.Driver?.Name))
-				throw new InvalidOperationException($"The {_driver.Name} connection settings modeler cannot build configuration object for {settings.Driver?.Name} driver.");
+			if(!this.Driver.IsDriver(settings.Driver?.Name))
+				throw new InvalidOperationException($"The {this.Driver.Name} connection settings modeler cannot build configuration object for {settings.Driver?.Name} driver.");
 
 			var model = this.CreateModel(settings);
-			var mapping = settings.Driver.Mapper?.Mapping;
 
 			foreach(var setting in settings)
 			{
-				var name = mapping != null && mapping.TryGetValue(setting.Key, out var original) ? original : setting.Key;
 				var type = settings.Driver.Descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
-				var value = type == null ? settings.GetValue<object>(setting.Key) : settings.GetValue<object>(setting.Key);
-
-				if(!this.OnModel(ref model, name, value) && !string.Equals(name, setting.Key, StringComparison.OrdinalIgnoreCase))
-					this.OnModel(ref model, setting.Key, value);
+				var value = type == null ? settings[setting.Key] : Common.Convert.ConvertValue(settings[setting.Key], type);
+				this.OnModel(ref model, setting.Key, value);
 			}
 
 			return model;

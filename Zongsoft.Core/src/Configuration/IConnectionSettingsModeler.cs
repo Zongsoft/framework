@@ -33,6 +33,7 @@ namespace Zongsoft.Configuration
 {
 	public interface IConnectionSettingsModeler
 	{
+		IConnectionSettingsDriver Driver { get; }
 		object Model(IConnectionSettings settings);
 	}
 

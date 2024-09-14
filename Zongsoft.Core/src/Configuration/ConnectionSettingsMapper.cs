@@ -35,59 +35,54 @@ namespace Zongsoft.Configuration
 {
 	public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 	{
+		#region 成员字段
+		private readonly IDictionary<string, string> _mapping;
+		#endregion
+
 		#region 构造函数
 		protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
 		{
-			if(driver == null)
-				throw new ArgumentNullException(nameof(driver));
+			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
 
-			this.Mapping = new Dictionary<string, string>(
+			_mapping = new Dictionary<string, string>(
 				driver.Descriptors
 					.Where(descriptor => !string.IsNullOrEmpty(descriptor.Alias))
 					.Select(descriptor => new KeyValuePair<string, string>(descriptor.Name, descriptor.Alias)),
 				StringComparer.OrdinalIgnoreCase);
 		}
-
-		protected ConnectionSettingsMapper(IEnumerable<KeyValuePair<string, string>> mapping = null)
-		{
-			this.Mapping = mapping == null ?
-				new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase):
-				new Dictionary<string, string>(mapping, StringComparer.OrdinalIgnoreCase);
-		}
 		#endregion
 
 		#region 公共属性
-		public IDictionary<string, string> Mapping { get; }
+		public IConnectionSettingsDriver Driver { get; }
 		#endregion
 
 		#region 公共方法
-		public virtual bool Validate(string name, string value) => name != null;
-		public bool Map(string name, IDictionary<string, string> values, out object value)
+		public bool Map(IDictionary<string, string> values, string name, out object value)
 		{
-			if(this.Mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
+			if(_mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
 				return this.OnMap(name, text, values, out value);
 
 			value = default;
 			return false;
 		}
-		public bool Map<T>(string name, IDictionary<string, string> values, out T value)
-		{
-			if(this.Mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
-				return this.OnMap(name, text, values, out value);
 
-			value = default;
-			return false;
+		public string Map(string name, object value, IDictionary<string, string> values)
+		{
+			return _mapping.ContainsKey(name) ? this.OnMap(name, value, values) : null;
 		}
 		#endregion
 
 		#region 保护方法
+		protected virtual string OnMap(string name, object value, IDictionary<string, string> values)
+		{
+			return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
+		}
+
 		protected virtual bool OnMap(string name, string text, IDictionary<string, string> values, out object value)
 		{
 			value = text;
 			return true;
 		}
-
-		protected virtual bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value) => Zongsoft.Common.Convert.TryConvertValue(text, out value);
 		#endregion
 	}
 }
