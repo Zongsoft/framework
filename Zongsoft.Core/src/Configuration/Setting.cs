@@ -84,11 +84,7 @@ namespace Zongsoft.Configuration
 			}
 		}
 
-		public bool HasProperties
-		{
-			get => _properties?.Count > 0;
-		}
-
+		public bool HasProperties => _properties?.Count > 0;
 		public IDictionary<string, string> Properties
 		{
 			get

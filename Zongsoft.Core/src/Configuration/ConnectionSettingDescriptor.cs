@@ -44,9 +44,9 @@ namespace Zongsoft.Configuration
 		public ConnectionSettingDescriptor(string name, string alias, Type type, object defaultValue = null, string label = null, string description = null) : this(name, alias, type, false, defaultValue, label, description) { }
 		public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue = null, string label = null, string description = null)
 		{
-			this.Name = name;
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.Alias = string.Equals(name, alias, StringComparison.OrdinalIgnoreCase) ? null : alias;
 			this.Type = type;
-			this.Alias = alias;
 			this.Required = required;
 			this.DefaultValue = defaultValue;
 			this.Label = label;

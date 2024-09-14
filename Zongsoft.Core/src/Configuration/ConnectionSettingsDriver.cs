@@ -31,10 +31,18 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingsDriver : IConnectionSettingsDriver, IEquatable<IConnectionSettingsDriver>
+	public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
 	{
 		#region 单例字段
 		internal static readonly IConnectionSettingsDriver Unnamed = new UnnamedDriver();
+		#endregion
+
+		#region 静态构造
+		static ConnectionSettingsDriver() => Descriptors = new();
+		#endregion
+
+		#region 静态属性
+		public static TDescriptors Descriptors { get; }
 		#endregion
 
 		#region 构造函数
@@ -49,16 +57,14 @@ namespace Zongsoft.Configuration
 			this.Mapper = mapper;
 			this.Modeler = modeler;
 			this.Description = description;
-			this.Descriptors = new ConnectionSettingDescriptorCollection();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
 		public string Description { get; set; }
-		public IConnectionSettingsMapper Mapper { get; }
-		public IConnectionSettingsModeler Modeler { get; }
-		public ConnectionSettingDescriptorCollection Descriptors { get; }
+		public IConnectionSettingsMapper Mapper { get; init; }
+		public IConnectionSettingsModeler Modeler { get; init; }
 		#endregion
 
 		#region 公共方法
@@ -74,10 +80,16 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 嵌套子类
-		private sealed class UnnamedDriver : ConnectionSettingsDriver
-		{
-			public UnnamedDriver() : base("Unnamed") { }
-		}
+		private sealed class UnnamedDriver() : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>("?") { }
+		#endregion
+	}
+
+	public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
+	{
+		#region 构造函数
+		public ConnectionSettingsDriver(string name, string description = null) : base(name, null, null, description) { }
+		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : base(name, mapper, null, description) { }
+		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null) : base(name, mapper, modeler, description) { }
 		#endregion
 	}
 }

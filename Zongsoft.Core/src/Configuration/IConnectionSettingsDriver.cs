@@ -31,28 +31,46 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-    /// <summary>
-    /// 表示连接设置驱动的接口。
-    /// </summary>
-    public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
-    {
-        /// <summary>获取驱动名称。</summary>
-        string Name { get; }
-        /// <summary>获取或设置驱动的描述信息。</summary>
-        string Description { get; set; }
-        /// <summary>获取连接设置映射器。</summary>
-        IConnectionSettingsMapper Mapper { get; }
-        /// <summary>获取连接设置模型器。</summary>
-        IConnectionSettingsModeler Modeler { get; }
-        /// <summary>获取连接设置项描述集。</summary>
-        ConnectionSettingDescriptorCollection Descriptors { get; }
+	/// <summary>
+	/// 表示连接设置驱动器的接口。
+	/// </summary>
+	public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
+	{
+		#region 静态属性
+		/// <summary>获取连接设置项描述器集合。</summary>
+		static ConnectionSettingDescriptorCollection Descriptors { get; }
+		#endregion
 
-        bool IsDriver(string name)
-        {
-            if(string.IsNullOrEmpty(name))
-                return string.IsNullOrEmpty(this.Name);
+		#region 实例属性
+		/// <summary>获取驱动名称。</summary>
+		string Name { get; }
+		/// <summary>获取或设置驱动的描述信息。</summary>
+		string Description { get; set; }
+		/// <summary>获取连接设置映射器。</summary>
+		IConnectionSettingsMapper Mapper { get; }
+		/// <summary>获取连接设置模型器。</summary>
+		IConnectionSettingsModeler Modeler { get; }
+		#endregion
 
-            return string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || this.Name.StartsWith($".{name}", StringComparison.OrdinalIgnoreCase);
-        }
-    }
+		#region 方法实现
+		bool IsDriver(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				return string.IsNullOrEmpty(this.Name);
+
+			return string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || this.Name.StartsWith($".{name}", StringComparison.OrdinalIgnoreCase);
+		}
+		#endregion
+	}
+
+	/// <summary>
+	/// 表示连接设置驱动器的接口。
+	/// </summary>
+	public interface IConnectionSettingsDriver<out TDescriptors> : IConnectionSettingsDriver where TDescriptors : ConnectionSettingDescriptorCollection, new()
+	{
+		#region 静态属性
+		/// <summary>获取连接设置项描述器集合。</summary>
+		static new TDescriptors Descriptors { get; }
+		#endregion
+	}
 }

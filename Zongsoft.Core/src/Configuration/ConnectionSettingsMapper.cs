@@ -28,27 +28,22 @@
  */
 
 using System;
-using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 	{
-		#region 成员字段
-		private readonly IDictionary<string, string> _mapping;
+		#region 私有变量
+		private bool _initialized = false;
+		private readonly Dictionary<string, string> _mapping = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
 		#region 构造函数
 		protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
 		{
 			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-
-			_mapping = new Dictionary<string, string>(
-				driver.Descriptors
-					.Where(descriptor => !string.IsNullOrEmpty(descriptor.Alias))
-					.Select(descriptor => new KeyValuePair<string, string>(descriptor.Name, descriptor.Alias)),
-				StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -56,18 +51,52 @@ namespace Zongsoft.Configuration
 		public IConnectionSettingsDriver Driver { get; }
 		#endregion
 
-		#region 公共方法
-		public bool Map(IDictionary<string, string> values, string name, out object value)
+		#region 初始化器
+		private void Initialize()
 		{
-			if(_mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
-				return this.OnMap(name, text, values, out value);
+			if(_initialized)
+				return;
 
-			value = default;
+			lock(_mapping)
+			{
+				if(_initialized)
+					return;
+
+				var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+					.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+					.GetValue(null);
+
+				if(descriptors != null)
+				{
+					foreach(var descriptor in descriptors)
+					{
+						if(string.IsNullOrEmpty(descriptor.Alias))
+							continue;
+
+						_mapping.Add(descriptor.Name, descriptor.Alias);
+					}
+				}
+
+				_initialized = true;
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public bool Map(string name, IDictionary<string, string> values, out object result)
+		{
+			this.Initialize();
+
+			if(_mapping.ContainsKey(name) && values.ContainsKey(name))
+				return this.OnMap(name, values, out result);
+
+			result = default;
 			return false;
 		}
 
 		public string Map(string name, object value, IDictionary<string, string> values)
 		{
+			this.Initialize();
 			return _mapping.ContainsKey(name) ? this.OnMap(name, value, values) : null;
 		}
 		#endregion
@@ -78,10 +107,16 @@ namespace Zongsoft.Configuration
 			return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
 		}
 
-		protected virtual bool OnMap(string name, string text, IDictionary<string, string> values, out object value)
+		protected virtual bool OnMap(string name, IDictionary<string, string> values, out object value)
 		{
-			value = text;
-			return true;
+			if(values.TryGetValue(name, out var text))
+			{
+				value = text;
+				return true;
+			}
+
+			value = null;
+			return false;
 		}
 		#endregion
 	}

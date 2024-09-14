@@ -36,6 +36,8 @@ namespace Zongsoft.Configuration
 	public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TModel>, IConnectionSettingsModeler
 	{
 		#region 私有变量
+		private bool _initialized = false;
+		private readonly ConnectionSettingDescriptorCollection _descriptors;
 		private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
@@ -43,35 +45,55 @@ namespace Zongsoft.Configuration
 		public ConnectionSettingsModeler(IConnectionSettingsDriver driver)
 		{
 			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-			var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-
-			for(int i = 0; i < members.Length; i++)
-			{
-				var usabled = members[i].MemberType switch
-				{
-					MemberTypes.Field => !((FieldInfo)members[i]).IsInitOnly,
-					MemberTypes.Property => ((PropertyInfo)members[i]).CanWrite,
-					_ => false,
-				};
-
-				if(usabled)
-				{
-					_members.TryAdd(members[i].Name, members[i]);
-
-					if(driver != null && driver.Descriptors.Count > 0 && driver.Descriptors.TryGetValue(members[i].Name, out var descriptor))
-					{
-						_members.TryAdd(descriptor.Name, members[i]);
-
-						if(!string.IsNullOrEmpty(descriptor.Alias))
-							_members.TryAdd(descriptor.Alias, members[i]);
-					}
-				}
-			}
 		}
 		#endregion
 
 		#region 公共属性
 		public IConnectionSettingsDriver Driver { get; }
+		#endregion
+
+		#region 初始化器
+		private void Initialize()
+		{
+			if(_initialized)
+				return;
+
+			lock(_members)
+			{
+				if(_initialized)
+					return;
+
+				var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
+				var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+					.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+					.GetValue(null);
+
+				for(int i = 0; i < members.Length; i++)
+				{
+					var usabled = members[i].MemberType switch
+					{
+						MemberTypes.Field => !((FieldInfo)members[i]).IsInitOnly,
+						MemberTypes.Property => ((PropertyInfo)members[i]).CanWrite,
+						_ => false,
+					};
+
+					if(usabled)
+					{
+						_members.TryAdd(members[i].Name, members[i]);
+
+						if(descriptors != null && descriptors.Count > 0 && descriptors.TryGetValue(members[i].Name, out var descriptor))
+						{
+							_members.TryAdd(descriptor.Name, members[i]);
+
+							if(!string.IsNullOrEmpty(descriptor.Alias))
+								_members.TryAdd(descriptor.Alias, members[i]);
+						}
+					}
+				}
+
+				_initialized = true;
+			}
+		}
 		#endregion
 
 		#region 公共方法
@@ -84,11 +106,12 @@ namespace Zongsoft.Configuration
 			if(!this.Driver.IsDriver(settings.Driver?.Name))
 				throw new InvalidOperationException($"The {this.Driver.Name} connection settings modeler cannot build configuration object for {settings.Driver?.Name} driver.");
 
+			this.Initialize();
 			var model = this.CreateModel(settings);
 
 			foreach(var setting in settings)
 			{
-				var type = settings.Driver.Descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
+				var type = _descriptors != null && _descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
 				var value = type == null ? settings[setting.Key] : Common.Convert.ConvertValue(settings[setting.Key], type);
 				this.OnModel(ref model, setting.Key, value);
 			}

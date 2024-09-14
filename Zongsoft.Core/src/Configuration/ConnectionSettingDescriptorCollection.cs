@@ -35,18 +35,61 @@ namespace Zongsoft.Configuration
 {
 	public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, ConnectionSettingDescriptor>(StringComparer.OrdinalIgnoreCase)
 	{
-		private Dictionary<string, ConnectionSettingDescriptor> _aliases;
-
+		#region 重写方法
 		protected override string GetKeyForItem(ConnectionSettingDescriptor descriptor) => descriptor.Name;
 
-		public ConnectionSettingDescriptor Add<T>(string name, string defaultValue = null, string label = null, string description = null) => this.Add(name, typeof(T), false, defaultValue, label, description);
-		public ConnectionSettingDescriptor Add<T>(string name, bool required, string defaultValue = null, string label = null, string description = null) => this.Add(name, typeof(T), required, defaultValue, label, description);
-		public ConnectionSettingDescriptor Add(string name, Type type, string defaultValue = null, string label = null, string description = null) => this.Add(name, type, false, defaultValue, label, description);
-		public ConnectionSettingDescriptor Add(string name, Type type, bool required, string defaultValue = null, string label = null, string description = null)
+		protected override void InsertItem(int index, ConnectionSettingDescriptor descriptor)
+		{
+			if(descriptor == null)
+				throw new ArgumentNullException(nameof(descriptor));
+
+			base.InsertItem(index, descriptor);
+
+			if(!string.IsNullOrEmpty(descriptor.Alias))
+				this.Dictionary.TryAdd(descriptor.Alias, descriptor);
+		}
+
+		protected override void SetItem(int index, ConnectionSettingDescriptor descriptor)
+		{
+			if(descriptor == null)
+				throw new ArgumentNullException(nameof(descriptor));
+
+			var older = this.Items[index];
+			if(!string.IsNullOrEmpty(older.Alias))
+				this.Dictionary.Remove(older.Alias);
+
+			if(!string.IsNullOrEmpty(descriptor.Alias))
+				this.Dictionary.TryAdd(descriptor.Alias, descriptor);
+
+			base.SetItem(index, descriptor);
+		}
+
+		protected override void RemoveItem(int index)
+		{
+			var older = this.Items[index];
+			if(!string.IsNullOrEmpty(older.Alias))
+				this.Dictionary.Remove(older.Alias);
+
+			base.RemoveItem(index);
+		}
+		#endregion
+
+		#region 公共方法
+		public ConnectionSettingDescriptor Add(string name, Type type, object defaultValue = null, string label = null, string description = null) => this.Add(name, type, false, defaultValue, label, description);
+		public ConnectionSettingDescriptor Add(string name, Type type, bool required, object defaultValue = null, string label = null, string description = null)
 		{
 			var descriptor = new ConnectionSettingDescriptor(name, type, required, defaultValue, label, description);
 			this.Add(descriptor);
 			return descriptor;
 		}
+
+		public ConnectionSettingDescriptor Add(string name, string alias, Type type, object defaultValue = null, string label = null, string description = null) => this.Add(name, alias, type, false, defaultValue, label, description);
+		public ConnectionSettingDescriptor Add(string name, string alias, Type type, bool required, object defaultValue = null, string label = null, string description = null)
+		{
+			var descriptor = new ConnectionSettingDescriptor(name, alias, type, required, defaultValue, label, description);
+			this.Add(descriptor);
+			return descriptor;
+		}
+		#endregion
 	}
 }

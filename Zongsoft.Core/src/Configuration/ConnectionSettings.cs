@@ -204,7 +204,7 @@ namespace Zongsoft.Configuration
 
 		public object GetValue(string name)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
 				return value;
 
 			return _values.TryGetValue(name, out var text) ? text : null;
@@ -212,7 +212,7 @@ namespace Zongsoft.Configuration
 
 		public object GetValue(string name, Type type)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
 				return Common.Convert.ConvertValue(value, type);
 
 			return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, type) : null;
@@ -220,7 +220,7 @@ namespace Zongsoft.Configuration
 
 		public T GetValue<T>(string name, T defaultValue = default)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var value))
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
 				return Common.Convert.ConvertValue(value, defaultValue);
 
 			return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, defaultValue) : defaultValue;
@@ -228,7 +228,7 @@ namespace Zongsoft.Configuration
 
 		public bool TryGetValue<T>(string name, out T value)
 		{
-			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(_values, name, out var mappedValue))
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var mappedValue))
 				return Common.Convert.TryConvertValue(mappedValue, out value);
 
 			if(_values.TryGetValue(name, out var text))
@@ -248,16 +248,19 @@ namespace Zongsoft.Configuration
 				return;
 			}
 
-			foreach(var option in Zongsoft.Common.StringExtension.Slice(value, ';'))
+			var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+			for(int i = 0; i < parts.Length; i++)
 			{
-				var index = option.IndexOf('=');
+				var part = parts[i];
+				var index = part.IndexOf('=');
 
 				if(index < 0)
-					_values[string.Empty] = option;
-				else if(index == option.Length - 1)
-					_values[option[0..^1]] = null;
-				else if(index > 0 && index < option.Length - 1)
-					_values[option.Substring(0, index)] = option[(index + 1)..];
+					_values[part.Trim()] = null;
+				else if(index == part.Length - 1)
+					_values[part[0..^1].Trim()] = null;
+				else if(index > 0 && index < part.Length - 1)
+					_values[part[..index].Trim()] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
 			}
 		}
 		#endregion
@@ -300,7 +303,7 @@ namespace Zongsoft.Configuration
 
 				public IConnectionSettingsMapper Mapper => this.Driver.Mapper;
 				public IConnectionSettingsModeler Modeler => this.Driver.Modeler;
-				public ConnectionSettingDescriptorCollection Descriptors => this.Driver.Descriptors;
+				public static ConnectionSettingDescriptorCollection Descriptors => null;
 				public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
 			}
 		}
