@@ -42,10 +42,17 @@ namespace Zongsoft.Configuration
 
 		/// <summary>尝试映射转换指定键名对应的值。</summary>
 		/// <param name="name">指定的待映射的键名。</param>
-		/// <param name="options">指定的待映射的连接项集合。</param>
+		/// <param name="values">指定的待映射的原始值集合。</param>
 		/// <param name="value">输出参数，返回映射转换成功后的值。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool Map<T>(string name, IDictionary<string, string> options, out T value);
+		bool Map(string name, IDictionary<string, string> values, out object value);
+
+		/// <summary>尝试映射转换指定键名对应的值。</summary>
+		/// <param name="name">指定的待映射的键名。</param>
+		/// <param name="values">指定的待映射的原始值集合。</param>
+		/// <param name="value">输出参数，返回映射转换成功后的值。</param>
+		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		bool Map<T>(string name, IDictionary<string, string> values, out T value);
 
 		/// <summary>验证待写入的键值。</summary>
 		/// <param name="name">待写入的键名。</param>

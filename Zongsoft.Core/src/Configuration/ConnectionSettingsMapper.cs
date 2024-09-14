@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
@@ -35,6 +36,18 @@ namespace Zongsoft.Configuration
 	public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 	{
 		#region 构造函数
+		protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
+		{
+			if(driver == null)
+				throw new ArgumentNullException(nameof(driver));
+
+			this.Mapping = new Dictionary<string, string>(
+				driver.Descriptors
+					.Where(descriptor => !string.IsNullOrEmpty(descriptor.Alias))
+					.Select(descriptor => new KeyValuePair<string, string>(descriptor.Name, descriptor.Alias)),
+				StringComparer.OrdinalIgnoreCase);
+		}
+
 		protected ConnectionSettingsMapper(IEnumerable<KeyValuePair<string, string>> mapping = null)
 		{
 			this.Mapping = mapping == null ?
@@ -49,10 +62,18 @@ namespace Zongsoft.Configuration
 
 		#region 公共方法
 		public virtual bool Validate(string name, string value) => name != null;
-		public bool Map<T>(string name, IDictionary<string, string> options, out T value)
+		public bool Map(string name, IDictionary<string, string> values, out object value)
 		{
-			if(this.Mapping.ContainsKey(name) && options.TryGetValue(name, out var text))
-				return this.OnMap(name, text, options, out value);
+			if(this.Mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
+				return this.OnMap(name, text, values, out value);
+
+			value = default;
+			return false;
+		}
+		public bool Map<T>(string name, IDictionary<string, string> values, out T value)
+		{
+			if(this.Mapping.ContainsKey(name) && values.TryGetValue(name, out var text))
+				return this.OnMap(name, text, values, out value);
 
 			value = default;
 			return false;
@@ -60,6 +81,12 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 保护方法
+		protected virtual bool OnMap(string name, string text, IDictionary<string, string> values, out object value)
+		{
+			value = text;
+			return true;
+		}
+
 		protected virtual bool OnMap<T>(string name, string text, IDictionary<string, string> values, out T value) => Zongsoft.Common.Convert.TryConvertValue(text, out value);
 		#endregion
 	}

@@ -66,7 +66,7 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(ConnectionSettings item) => item.Name;
+		protected override string GetKeyForItem(ConnectionSettings settings) => settings.Name;
 		#endregion
 	}
 }

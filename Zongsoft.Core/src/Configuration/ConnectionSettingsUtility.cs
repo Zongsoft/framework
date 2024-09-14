@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public static class ConnectionSettingUtility
+	public static class ConnectionSettingsUtility
 	{
 		#region 公共方法
 		/// <summary>获取指定的连接配置。</summary>

@@ -28,12 +28,25 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration
 {
 	public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, ConnectionSettingDescriptor>(StringComparer.OrdinalIgnoreCase)
 	{
+		private Dictionary<string, ConnectionSettingDescriptor> _aliases;
+
 		protected override string GetKeyForItem(ConnectionSettingDescriptor descriptor) => descriptor.Name;
+
+		public ConnectionSettingDescriptor Add<T>(string name, string defaultValue = null, string label = null, string description = null) => this.Add(name, typeof(T), false, defaultValue, label, description);
+		public ConnectionSettingDescriptor Add<T>(string name, bool required, string defaultValue = null, string label = null, string description = null) => this.Add(name, typeof(T), required, defaultValue, label, description);
+		public ConnectionSettingDescriptor Add(string name, Type type, string defaultValue = null, string label = null, string description = null) => this.Add(name, type, false, defaultValue, label, description);
+		public ConnectionSettingDescriptor Add(string name, Type type, bool required, string defaultValue = null, string label = null, string description = null)
+		{
+			var descriptor = new ConnectionSettingDescriptor(name, type, required, defaultValue, label, description);
+			this.Add(descriptor);
+			return descriptor;
+		}
 	}
 }

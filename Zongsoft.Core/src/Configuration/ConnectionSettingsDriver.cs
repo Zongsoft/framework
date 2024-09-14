@@ -37,7 +37,7 @@ namespace Zongsoft.Configuration
 		internal static readonly IConnectionSettingsDriver Unnamed = new UnnamedDriver();
 		#endregion
 
-		#region 构造汉数
+		#region 构造函数
 		public ConnectionSettingsDriver(string name, string description = null) : this(name, null, null, description) { }
 		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : this(name, mapper, null, description) { }
 		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null)

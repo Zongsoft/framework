@@ -28,22 +28,27 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
 	public class ConnectionSettingDescriptor
 	{
-		#region 构造汉数
-		public ConnectionSettingDescriptor(string name, string defaultValue = null, string label = null, string description = null) : this(name, typeof(string), false, defaultValue, label, description) { }
-		public ConnectionSettingDescriptor(string name, bool required, string defaultValue = null, string label = null, string description = null) : this(name, typeof(string), required, defaultValue, label, description) { }
-		public ConnectionSettingDescriptor(string name, Type type, string defaultValue = null, string label = null, string description = null) : this(name, type, false, defaultValue, label, description) { }
-		public ConnectionSettingDescriptor(string name, Type type, bool required, string defaultValue = null, string label = null, string description = null)
+		#region 构造函数
+		public ConnectionSettingDescriptor(string name, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), false, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, bool required, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), required, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, Type type, object defaultValue = null, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue = null, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description) { }
+
+		public ConnectionSettingDescriptor(string name, string alias, object defaultValue = null, string label = null, string description = null) : this(name, alias, typeof(string), false, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue = null, string label = null, string description = null) : this(name, alias, typeof(string), required, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, string alias, Type type, object defaultValue = null, string label = null, string description = null) : this(name, alias, type, false, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue = null, string label = null, string description = null)
 		{
 			this.Name = name;
 			this.Type = type;
+			this.Alias = alias;
 			this.Required = required;
-			this.Default = defaultValue;
+			this.DefaultValue = defaultValue;
 			this.Label = label;
 			this.Description = description;
 		}
@@ -54,8 +59,10 @@ namespace Zongsoft.Configuration
 		public string Name { get; }
 		/// <summary>获取连接设置项的数据类型。</summary>
 		public Type Type { get; }
+		/// <summary>获取连接设置项的别名。</summary>
+		public string Alias { get; }
 		/// <summary>获取或设置连接设置项的默认值。</summary>
-		public string Default { get; set; }
+		public object DefaultValue { get; set; }
 		/// <summary>获取或设置一个值，指示连接设置项是否为必须项。</summary>
 		public bool Required { get; set; }
 		/// <summary>获取或设置连接设置项的标题。</summary>
@@ -65,15 +72,17 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => string.IsNullOrEmpty(this.Default) ? $"{this.Type.Name}:{this.Name}" : $"{this.Type.Name}:{this.Name}={this.Default}";
+		public override string ToString() => this.DefaultValue == null ? $"[{this.Type.Name}]{this.Name}" : $"[{this.Type.Name}]{this.Name}={this.DefaultValue}";
 		#endregion
 	}
 
 	public class ConnectionSettingDescriptor<T> : ConnectionSettingDescriptor
 	{
-		#region 构造汉数
-		public ConnectionSettingDescriptor(string name, string defaultValue = null, string label = null, string description = null) : base(name, typeof(T), defaultValue, label, description) { }
-		public ConnectionSettingDescriptor(string name, bool required, string defaultValue = null, string label = null, string description = null) : base(name, typeof(T), required, defaultValue, label, description) { }
+		#region 构造函数
+		public ConnectionSettingDescriptor(string name, T defaultValue = default, string label = null, string description = null) : base(name, typeof(T), defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, bool required, T defaultValue = default, string label = null, string description = null) : base(name, typeof(T), required, defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, string alias, T defaultValue = default, string label = null, string description = null) : base(name, alias, typeof(T), defaultValue, label, description) { }
+		public ConnectionSettingDescriptor(string name, string alias, bool required, T defaultValue = default, string label = null, string description = null) : base(name, alias, typeof(T), required, defaultValue, label, description) { }
 		#endregion
 	}
 }

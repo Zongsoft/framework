@@ -46,16 +46,15 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 成员字段
-		//private readonly ConnectionSettingOptions _options;
 		private IConnectionSettingsDriver _driver;
-		private readonly Dictionary<string, string> _options;
+		private readonly Dictionary<string, string> _values;
 		#endregion
 
 		#region 构造函数
-		public ConnectionSettings() => _options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		public ConnectionSettings() => _values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		public ConnectionSettings(string name, string value) : base(name, value)
 		{
-			_options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 			if(!string.IsNullOrEmpty(value))
 				this.OnValueChanged(value);
@@ -169,9 +168,9 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共方法
-		public bool Contains(string name) => _options.ContainsKey(name);
-		public bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this, name);
-		public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this, driver);
+		public bool Contains(string name) => _values.ContainsKey(name);
+		public bool IsDriver(string name) => ConnectionSettingsUtility.IsDriver(this, name);
+		public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingsUtility.IsDriver(this, driver);
 
 		public TModel Model<TModel>()
 		{
@@ -195,24 +194,32 @@ namespace Zongsoft.Configuration
 					return false;
 			}
 
-			_options[name] = value;
+			_values[name] = value;
 			return true;
 		}
 
 		public string GetValue(string name)
 		{
 			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<string>(name, _options);
+				return this.Driver.Mapper.Map<string>(name, _values);
 
-			return _options.TryGetValue(name, out var value) ? value : null;
+			return _values.TryGetValue(name, out var value) ? value : null;
+		}
+
+		public object GetValue(string name, Type type)
+		{
+			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
+				return this.Driver.Mapper.Map<object>(name, _values);
+
+			return _values.TryGetValue(name, out var value) ? Common.Convert.ConvertValue(value, type) : null;
 		}
 
 		public T GetValue<T>(string name, T defaultValue = default)
 		{
 			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<T>(name, _options);
+				return this.Driver.Mapper.Map<T>(name, _values);
 
-			if(_options.TryGetValue(name, out var value))
+			if(_values.TryGetValue(name, out var value))
 				return Zongsoft.Common.Convert.ConvertValue<T>(value, defaultValue);
 
 			return defaultValue;
@@ -221,9 +228,9 @@ namespace Zongsoft.Configuration
 		public bool TryGetValue<T>(string name, out T value)
 		{
 			if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Mapping.ContainsKey(name))
-				return this.Driver.Mapper.Map<T>(name, _options, out value);
+				return this.Driver.Mapper.Map<T>(name, _values, out value);
 
-			if(_options.TryGetValue(name, out var text))
+			if(_values.TryGetValue(name, out var text))
 				return Zongsoft.Common.Convert.TryConvertValue<T>(text, out value);
 
 			value = default;
@@ -236,7 +243,7 @@ namespace Zongsoft.Configuration
 		{
 			if(string.IsNullOrEmpty(value))
 			{
-				_options.Clear();
+				_values.Clear();
 				return;
 			}
 
@@ -245,11 +252,11 @@ namespace Zongsoft.Configuration
 				var index = option.IndexOf('=');
 
 				if(index < 0)
-					_options[string.Empty] = option;
+					_values[string.Empty] = option;
 				else if(index == option.Length - 1)
-					_options[option[0..^1]] = null;
+					_values[option[0..^1]] = null;
 				else if(index > 0 && index < option.Length - 1)
-					_options[option.Substring(0, index)] = option[(index + 1)..];
+					_values[option.Substring(0, index)] = option[(index + 1)..];
 			}
 		}
 		#endregion
@@ -266,7 +273,7 @@ namespace Zongsoft.Configuration
 
 		#region 枚举遍历
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _options.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _values.GetEnumerator();
 		#endregion
 
 		#region 嵌套子类

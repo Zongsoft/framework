@@ -106,12 +106,12 @@ namespace Zongsoft.Configuration
 		/// <summary>判断当前连接是否为指定的驱动。</summary>
 		/// <param name="name">指定的驱动名称。</param>
 		/// <returns>如果当前连接的驱动是<paramref name="name"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool IsDriver(string name) => ConnectionSettingUtility.IsDriver(this, name);
+		bool IsDriver(string name) => ConnectionSettingsUtility.IsDriver(this, name);
 
 		/// <summary>判断当前连接是否为指定的驱动。</summary>
 		/// <param name="driver">指定的驱动。</param>
 		/// <returns>如果当前连接的驱动是<paramref name="driver"/>参数指定的驱动则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingUtility.IsDriver(this, driver);
+		bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingsUtility.IsDriver(this, driver);
 		#endregion
 	}
 }
