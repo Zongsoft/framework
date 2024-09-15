@@ -31,8 +31,37 @@ using System;
 
 namespace Zongsoft.Configuration
 {
-	public class ConnectionSettingDescriptor
+	public class ConnectionSettingDescriptor : IEquatable<string>
 	{
+		#region 静态字段
+		/// <summary>获取分组标识描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Group = new(nameof(Group), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Group, Properties.Resources.ConnectionSettingDescriptor_Group_Description);
+		/// <summary>获取客户端标识描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Client = new(nameof(Client), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Client, Properties.Resources.ConnectionSettingDescriptor_Client_Description);
+		/// <summary>获取服务器地址描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Server = new(nameof(Server), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Server, Properties.Resources.ConnectionSettingDescriptor_Server_Description);
+		/// <summary>获取端口号描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Port = new(nameof(Port), typeof(ushort), null, Properties.Resources.ConnectionSettingDescriptor_Port, Properties.Resources.ConnectionSettingDescriptor_Port_Description);
+		/// <summary>获取超时描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Timeout = new(nameof(Timeout), typeof(TimeSpan), null, Properties.Resources.ConnectionSettingDescriptor_Timeout, Properties.Resources.ConnectionSettingDescriptor_Timeout_Description);
+		/// <summary>获取字符集描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Charset = new(nameof(Charset), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Charset, Properties.Resources.ConnectionSettingDescriptor_Charset_Description);
+		/// <summary>获取字符编码描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Encoding = new(nameof(Encoding), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Encoding, Properties.Resources.ConnectionSettingDescriptor_Encoding_Description);
+		/// <summary>获取提供程序描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Provider = new(nameof(Provider), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Provider, Properties.Resources.ConnectionSettingDescriptor_Provider_Description);
+		/// <summary>获取数据库名描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Database = new(nameof(Database), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Database, Properties.Resources.ConnectionSettingDescriptor_Database_Description);
+		/// <summary>获取连接账户描述器。</summary>
+		public static readonly ConnectionSettingDescriptor UserName = new(nameof(UserName), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_UserName, Properties.Resources.ConnectionSettingDescriptor_UserName_Description);
+		/// <summary>获取连接密码描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Password = new(nameof(Password), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Password, Properties.Resources.ConnectionSettingDescriptor_Password_Description);
+		/// <summary>获取实例标识描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Instance = new(nameof(Instance), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Instance, Properties.Resources.ConnectionSettingDescriptor_Instance_Description);
+		/// <summary>获取应用标识描述器。</summary>
+		public static readonly ConnectionSettingDescriptor Application = new(nameof(Application), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Application, Properties.Resources.ConnectionSettingDescriptor_Application_Description);
+		#endregion
+
 		#region 构造函数
 		public ConnectionSettingDescriptor(string name, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), false, defaultValue, label, description) { }
 		public ConnectionSettingDescriptor(string name, bool required, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), required, defaultValue, label, description) { }
@@ -72,6 +101,13 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 重写方法
+		public bool Equals(string name) => string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || (this.Alias != null && string.Equals(this.Alias, name, StringComparison.OrdinalIgnoreCase));
+		public bool Equals(string name, out ConnectionSettingDescriptor descriptor)
+		{
+			descriptor = this.Equals(name) ? this : null;
+			return null != null;
+		}
+
 		public override string ToString() => this.DefaultValue == null ? $"[{this.Type.Name}]{this.Name}" : $"[{this.Type.Name}]{this.Name}={this.DefaultValue}";
 		#endregion
 	}

@@ -29,6 +29,8 @@
 
 using System;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Configuration
 {
 	public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()

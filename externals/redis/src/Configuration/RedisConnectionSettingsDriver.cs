@@ -27,14 +27,69 @@
  * along with the Zongsoft.Externals.Redis library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+
+using StackExchange.Redis;
+
+using Zongsoft.Common;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis.Configuration
 {
-	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver
+	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver<RedisConnectionSettingDescriptorCollection>
 	{
+		#region 常量定义
 		internal const string NAME = "Redis";
+		#endregion
+
+		#region 单例字段
 		public static readonly RedisConnectionSettingsDriver Instance = new();
-		private RedisConnectionSettingsDriver() : base(NAME, RedisConnectionSettingsMapper.Instance) { }
+		#endregion
+
+		#region 构造函数
+		public RedisConnectionSettingsDriver() : base(NAME)
+		{
+			this.Mapper = new RedisMapper(this);
+			this.Modeler = new RedisModeler(this);
+		}
+		#endregion
+
+		#region 嵌套子类
+		private sealed class RedisMapper(RedisConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver)
+		{
+		}
+
+		private sealed class RedisModeler(RedisConnectionSettingsDriver driver) : ConnectionSettingsModeler<StackExchange.Redis.ConfigurationOptions>(driver)
+		{
+			protected override bool OnModel(ref ConfigurationOptions model, string name, object value)
+			{
+				if(ConnectionSettingDescriptor.Server.Equals(name) && value is string server)
+				{
+					foreach(var part in server.Slice(';'))
+						model.EndPoints.Add(part);
+				}
+				else if(ConnectionSettingDescriptor.Timeout.Equals(name) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
+				{
+					model.ConnectTimeout = (int)duration.TotalMilliseconds;
+					model.AsyncTimeout = (int)duration.TotalMilliseconds;
+					model.SyncTimeout = (int)duration.TotalMilliseconds;
+				}
+
+				return base.OnModel(ref model, name, value);
+			}
+		}
+		#endregion
+	}
+
+	public sealed class RedisConnectionSettingDescriptorCollection : ConnectionSettingDescriptorCollection
+	{
+		public RedisConnectionSettingDescriptorCollection()
+		{
+			this.Add(nameof(ConnectionSettings.UserName), nameof(ConfigurationOptions.User), typeof(string));
+			this.Add(nameof(ConnectionSettings.Client), nameof(ConfigurationOptions.ClientName), typeof(string));
+			this.Add(nameof(ConnectionSettings.Timeout), nameof(ConfigurationOptions.ConnectTimeout), typeof(TimeSpan));
+			this.Add(nameof(ConnectionSettings.Database), nameof(ConfigurationOptions.DefaultDatabase), typeof(string));
+			this.Add(nameof(ConnectionSettings.Application), nameof(ConfigurationOptions.ServiceName), typeof(string));
+		}
 	}
 }

@@ -61,6 +61,240 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 应用名称 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Application {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Application", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的应用标识。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Application_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Application.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 字符集 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Charset {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Charset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示字符集的名称，譬如：UTF-8、GBK 等。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Charset_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Charset.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 客户端名 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Client {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Client", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接程序的客户端名称。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Client_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Client.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 数据库 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Database {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Database", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的数据名或标识。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Database_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Database.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 编码方案 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Encoding {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Encoding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示文本编码方案。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Encoding_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Encoding.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 组别标识 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Group {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Group", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 通常表示服务或连接程序所属组别。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Group_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Group.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 实例名称 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Instance {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Instance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的实例标识。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Instance_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Instance.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 密码 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Password {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Password", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的用户密码。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Password_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Password.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 端口号 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Port {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Port", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的服务器端口号。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Port_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Port.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 提供程序 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Provider {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Provider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接提供程序标识。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Provider_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Provider.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 服务器地址 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Server {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Server_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Server.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 超时 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Timeout {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Timeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接超时或相关操作的超时。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_Timeout_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.Timeout.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户名 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_UserName {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.UserName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 表示连接的用户名称。 的本地化字符串。
+        /// </summary>
+        internal static string ConnectionSettingDescriptor_UserName_Description {
+            get {
+                return ResourceManager.GetString("ConnectionSettingDescriptor.UserName.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 禁用 的本地化字符串。
         /// </summary>
         internal static string Disabled {

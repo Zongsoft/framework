@@ -13,6 +13,7 @@
 
 		<dependencies>
 			<dependency name="Zongsoft.Externals.Hangfire" />
+			<dependency name="Zongsoft.Externals.Redis" />
 		</dependencies>
 	</manifest>
 

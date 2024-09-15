@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.5.0.0</Version>
+		<Version>1.6.0.0</Version>
 		<Product>Zongsoft Hangfire Storage for Redis</Product>
 		<Description>This is a storage for Redis of the Hangfire.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire.Storages.Redis</RootNamespace>
@@ -10,25 +10,13 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/hangfire/storages</RepositoryUrl>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" Version="1.8.12" />
-		<PackageReference Include="Hangfire.Redis.StackExchange" Version="1.9.3" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.12" />
+		<PackageReference Include="Hangfire.Redis.StackExchange" VersionOverride="1.9.3" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -104,7 +104,7 @@ namespace Zongsoft.Configuration
 				throw new ArgumentNullException(nameof(settings));
 
 			if(!this.Driver.IsDriver(settings.Driver?.Name))
-				throw new InvalidOperationException($"The {this.Driver.Name} connection settings modeler cannot build configuration object for {settings.Driver?.Name} driver.");
+				throw new InvalidOperationException($"The specified '{settings}' connection settings is not a {this.Driver.Name} configuration.");
 
 			this.Initialize();
 			var model = this.CreateModel(settings);

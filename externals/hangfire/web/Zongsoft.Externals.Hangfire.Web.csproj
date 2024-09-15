@@ -12,8 +12,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" Version="1.8.12" />
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.12" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.12" />
+		<PackageReference Include="Hangfire.AspNetCore" VersionOverride="1.8.12" />
 	</ItemGroup>
 
 	<ItemGroup>

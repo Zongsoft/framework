@@ -19,9 +19,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="GrapeCity.ActiveReports" Version="15.1.8" />
-		<PackageReference Include="GrapeCity.ActiveReports.Core.Rdl" Version="2.2.5" />
-		<PackageReference Include="GrapeCity.ActiveReports.Aspnetcore.Designer" Version="15.1.8" />
+		<PackageReference Include="GrapeCity.ActiveReports" VersionOverride="15.1.8" />
+		<PackageReference Include="GrapeCity.ActiveReports.Core.Rdl" VersionOverride="2.2.5" />
+		<PackageReference Include="GrapeCity.ActiveReports.Aspnetcore.Designer" VersionOverride="15.1.8" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -15,7 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Pipelines.Sockets.Unofficial" Version="2.2.8" />
+		<PackageReference Include="Pipelines.Sockets.Unofficial" VersionOverride="2.2.8" />
 	</ItemGroup>
 
 	<ItemGroup>

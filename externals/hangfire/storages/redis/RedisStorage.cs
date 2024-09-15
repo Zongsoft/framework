@@ -44,6 +44,10 @@ namespace Zongsoft.Externals.Hangfire.Storages
 	[Service(typeof(global::Hangfire.JobStorage))]
 	public class RedisStorage : global::Hangfire.JobStorage, IEquatable<RedisStorage>
 	{
+		#region 常量定义
+		private const string DRIVER = "Redis";
+		#endregion
+
 		#region 成员字段
 		private readonly object _lock = new();
 		private global::Hangfire.Redis.StackExchange.RedisStorage _storage;
@@ -73,47 +77,21 @@ namespace Zongsoft.Externals.Hangfire.Storages
 			if(settings == null || settings.Count == 0)
 				return null;
 
-			if(settings.TryGetValue("Hangfire", out var setting))
+			if(settings.TryGetValue("Hangfire", DRIVER, out var setting))
 				return setting;
 
 			setting = settings.GetDefault();
-			if(setting != null)
+			if(setting != null && setting.IsDriver(DRIVER))
 				return setting;
 
-			return settings.FirstOrDefault(setting => setting != null && setting.IsDriver("redis"));
+			return settings.FirstOrDefault(setting => setting != null && setting.IsDriver(DRIVER));
 		}
 
 		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection() =>
 			GetRedisConnection(GetConnectionSetting(ApplicationContext.Current?.Configuration?.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings")));
-		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection(IConnectionSettings connectionSettings) =>
-			StackExchange.Redis.ConnectionMultiplexer.Connect(GetRedisConfiguration(connectionSettings));
-
-		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings connectionSettings)
-		{
-			if(connectionSettings == null)
-				return null;
-
-			if(!connectionSettings.IsDriver("redis"))
-				throw new ConfigurationException($"The specified '{connectionSettings}' connection settings is not a Redis configuration.");
-
-			var host = connectionSettings.Server;
-			if(connectionSettings.Port != 0)
-				host += $":{connectionSettings.Port}";
-
-			var entries = Enumerable.Empty<string>();
-
-			if(connectionSettings.Driver.Mapper != null && connectionSettings.Driver.Mapper.Mapping != null)
-			{
-				entries = connectionSettings.Driver.Mapper.Mapping
-					.Where(entry =>
-						!string.IsNullOrEmpty(entry.Key) &&
-						!entry.Key.Equals(nameof(ConnectionSettings.Server), StringComparison.OrdinalIgnoreCase) &&
-						!entry.Key.Equals(nameof(ConnectionSettings.Port), StringComparison.OrdinalIgnoreCase))
-					.Select(entry => $"{entry.Key}={entry.Value}");
-			}
-
-			return StackExchange.Redis.ConfigurationOptions.Parse(entries.Any() ? host + ',' + string.Join(',', entries) : host, true);
-		}
+		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection(IConnectionSettings settings) =>
+			StackExchange.Redis.ConnectionMultiplexer.Connect(GetRedisConfiguration(settings));
+		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings settings) => settings?.Model<StackExchange.Redis.ConfigurationOptions>();
 		#endregion
 
 		#region 重写方法

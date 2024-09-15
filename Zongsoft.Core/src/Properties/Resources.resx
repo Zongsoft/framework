@@ -327,4 +327,82 @@
   <data name="Text.WorkerStopCommand.Name" xml:space="preserve">
     <value>停止</value>
   </data>
+  <data name="ConnectionSettingDescriptor.Group" xml:space="preserve">
+    <value>组别标识</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Group.Description" xml:space="preserve">
+    <value>通常表示服务或连接程序所属组别。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Client" xml:space="preserve">
+    <value>客户端名</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Client.Description" xml:space="preserve">
+    <value>表示连接程序的客户端名称。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Server" xml:space="preserve">
+    <value>服务器地址</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Server.Description" xml:space="preserve">
+    <value>表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Port" xml:space="preserve">
+    <value>端口号</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Port.Description" xml:space="preserve">
+    <value>表示连接的服务器端口号。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Timeout" xml:space="preserve">
+    <value>超时</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Timeout.Description" xml:space="preserve">
+    <value>表示连接超时或相关操作的超时。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Charset" xml:space="preserve">
+    <value>字符集</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Charset.Description" xml:space="preserve">
+    <value>表示字符集的名称，譬如：UTF-8、GBK 等。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Encoding" xml:space="preserve">
+    <value>编码方案</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Encoding.Description" xml:space="preserve">
+    <value>表示文本编码方案。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Provider" xml:space="preserve">
+    <value>提供程序</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Provider.Description" xml:space="preserve">
+    <value>表示连接提供程序标识。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Database" xml:space="preserve">
+    <value>数据库</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Database.Description" xml:space="preserve">
+    <value>表示连接的数据名或标识。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.UserName" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.UserName.Description" xml:space="preserve">
+    <value>表示连接的用户名称。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Password" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Password.Description" xml:space="preserve">
+    <value>表示连接的用户密码。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Instance" xml:space="preserve">
+    <value>实例名称</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Instance.Description" xml:space="preserve">
+    <value>表示连接的实例标识。</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Application" xml:space="preserve">
+    <value>应用名称</value>
+  </data>
+  <data name="ConnectionSettingDescriptor.Application.Description" xml:space="preserve">
+    <value>表示连接的应用标识。</value>
+  </data>
 </root>

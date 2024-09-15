@@ -130,7 +130,7 @@ namespace Zongsoft.Configuration
 			{
 				protected override bool OnModel(ref MyOptions model, string name, object value)
 				{
-					if(string.Equals(name, MyDescriptorCollection.DateTime.Name, StringComparison.OrdinalIgnoreCase) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
+					if(MyDescriptorCollection.DateTime.Equals(name) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
 						model.Age = (short)(DateTime.Today.Year - birthday.Year);
 
 					return base.OnModel(ref model, name, value);

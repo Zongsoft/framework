@@ -35,6 +35,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Configuration
 {
+	[Zongsoft.Services.Service(Members = nameof(Drivers))]
 	public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<ConnectionSettings>, IEquatable<IConnectionSettings>
 	{
 		#region 静态构造
