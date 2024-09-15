@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.3.0.0</Version>
+		<Version>6.4.0.0</Version>
 		<Product>Zongsoft Plugins Development Library</Product>
 		<Description>This is a framework about plugin application development.</Description>
 		<RootNamespace>Zongsoft.Plugins</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageTags>addin;plugin;plug-in;pluggable;</PackageTags>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Plugins</RepositoryUrl>
@@ -35,8 +35,8 @@
 
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
+			<DesignTime>true</DesignTime>
+			<AutoGen>true</AutoGen>
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>
