@@ -45,7 +45,6 @@ Content-Type: text/plain
 # @name signin
 # @prompt broker 代理号（支付宝）
 # @prompt token  令牌值
-
 POST /Security/Authentication/Signin/Alipay/broker:{{broker}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
@@ -65,7 +64,6 @@ Content-Type: text/plain
 ### 微信小程序登录
 # @prompt applet 小程序编号
 # @prompt token  小程序令牌
-
 POST /Security/Authentication/Signin/Wechat/applet:{{applet}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
