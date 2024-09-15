@@ -19,7 +19,7 @@
 
 	<!-- 挂载连接设置驱动器 -->
 	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
-		<object name="Redis" type="{static:Zongsoft.Externals.Redis.Configuration.RedisConnectionSettingsDriver.Instance, Zongsoft.Externals.Redis}" />
+		<object name="Redis" value="{static:Zongsoft.Externals.Redis.Configuration.RedisConnectionSettingsDriver.Instance, Zongsoft.Externals.Redis}" />
 	</extension>
 
 	<!-- 定义Redis命令的根节点 -->

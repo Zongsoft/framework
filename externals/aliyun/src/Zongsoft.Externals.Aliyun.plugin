@@ -14,7 +14,7 @@
 
 	<!-- 挂载连接设置驱动器 -->
 	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
-		<object name="Aliyun_Mqtt" type="{static:Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettingsDriver.Instance, Zongsoft.Externals.Aliyun}" />
+		<object name="Aliyun_Mqtt" value="{static:Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettingsDriver.Instance, Zongsoft.Externals.Aliyun}" />
 	</extension>
 
 	<extension path="/Workbench/FileSystem">
