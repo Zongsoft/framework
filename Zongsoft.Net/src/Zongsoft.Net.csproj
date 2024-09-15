@@ -5,7 +5,7 @@
 		<Description>This is a high-performance network development library.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Net</RepositoryUrl>
 	</PropertyGroup>
@@ -31,8 +31,8 @@
 
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
-			<AutoGen>True</AutoGen>
-			<DesignTime>True</DesignTime>
+			<AutoGen>true</AutoGen>
+			<DesignTime>true</DesignTime>
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>

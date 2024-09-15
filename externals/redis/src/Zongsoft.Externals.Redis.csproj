@@ -5,7 +5,7 @@
 		<Description>This is a library about Redis SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Redis</RootNamespace>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/redis</RepositoryUrl>
 	</PropertyGroup>
@@ -38,8 +38,8 @@
 
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
+			<DesignTime>true</DesignTime>
+			<AutoGen>true</AutoGen>
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>

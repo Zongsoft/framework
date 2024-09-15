@@ -5,7 +5,7 @@
 		<Description>This is a storage for Redis of the Hangfire.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire.Storages.Redis</RootNamespace>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/hangfire/storages</RepositoryUrl>
 	</PropertyGroup>

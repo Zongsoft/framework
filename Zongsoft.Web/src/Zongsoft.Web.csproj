@@ -7,7 +7,7 @@
 		<RootNamespace>Zongsoft.Web</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Web</RepositoryUrl>
 	</PropertyGroup>

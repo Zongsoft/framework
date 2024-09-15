@@ -5,7 +5,7 @@
 		<Product>Zongsoft Wechat Web Library</Product>
 		<Description>This is a web api library about Wechat.</Description>
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/wechat/api</RepositoryUrl>
 	</PropertyGroup>
