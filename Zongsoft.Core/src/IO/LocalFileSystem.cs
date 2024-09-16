@@ -29,8 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.IO
@@ -70,8 +71,13 @@ namespace Zongsoft.IO
 					return true;
 			}
 
-			var driveName = path.Anchor == PathAnchor.Root && path.HasSegments ? path.Segments[0] : null;
+			if(path.Anchor != PathAnchor.Root)
+			{
+				result = path.FullPath;
+				return true;
+			}
 
+			var driveName = path.HasSegments ? path.Segments[0] : null;
 			if(string.IsNullOrEmpty(driveName))
 			{
 				result = null;
