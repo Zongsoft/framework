@@ -105,7 +105,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		public Plugin ResolvePluginOnlyManifest(string filePath, Plugin parent)
+		public Plugin ResolvePluginManifestOnly(string filePath, Plugin parent)
 		{
 			using(XmlReader reader = GetReader(filePath))
 			{

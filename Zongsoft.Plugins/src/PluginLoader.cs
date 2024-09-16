@@ -127,6 +127,7 @@ namespace Zongsoft.Plugins
 		#region 成员字段
 		private readonly PluginResolver _resolver;
 		private readonly PluginCollection _topmosts;
+		private readonly Dictionary<string, Plugin> _loadedPlugins;
 		#endregion
 
 		#region 构造函数
@@ -134,6 +135,7 @@ namespace Zongsoft.Plugins
 		{
 			_resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
 			_topmosts = new PluginCollection();
+			_loadedPlugins = new Dictionary<string, Plugin>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -166,6 +168,7 @@ namespace Zongsoft.Plugins
 
 				//清空插件列表
 				_topmosts.Clear();
+				_loadedPlugins.Clear();
 
 				//预加载插件目录下的所有插件文件
 				this.PreloadPluginFiles(options.PluginsPath, null, options);
@@ -345,7 +348,7 @@ namespace Zongsoft.Plugins
 			this.OnPluginLoading(new PluginLoadingEventArgs(filePath, options));
 
 			//解析插件清单
-			var plugin = _resolver.ResolvePluginOnlyManifest(filePath, parent);
+			var plugin = _resolver.ResolvePluginManifestOnly(filePath, parent);
 
 			if(plugin == null)
 				return null;
@@ -386,6 +389,9 @@ namespace Zongsoft.Plugins
 
 				//设置插件状态
 				plugin.Status = PluginStatus.Loaded;
+
+				//将加载完成的插件加入到完成列表中
+				_loadedPlugins.Add(plugin.Name, plugin);
 
 				//激发“PluginLoaded”事件
 				this.OnPluginLoaded(new PluginLoadedEventArgs(plugin, options));
@@ -450,7 +456,7 @@ namespace Zongsoft.Plugins
 
 			var plugin = stack.Peek();
 
-			if(IsRequiredLoad(plugin))
+			if(this.CanLoad(plugin))
 			{
 				this.LoadPluginContent(stack.Pop(), options);
 			}
@@ -458,7 +464,7 @@ namespace Zongsoft.Plugins
 			{
 				foreach(var dependency in plugin.Manifest.Dependencies)
 				{
-					if(IsRequiredLoad(dependency.Plugin))
+					if(this.CanLoad(dependency.Plugin))
 						this.LoadPluginContent(dependency.Plugin, options);
 					else
 						TryPushToStack(dependency.Plugin, stack);
@@ -469,7 +475,7 @@ namespace Zongsoft.Plugins
 				this.LoadPlugin(stack, options);
 		}
 
-		private static bool IsRequiredLoad(Plugin plugin)
+		private bool CanLoad(Plugin plugin)
 		{
 			//如果当前插件状态不是未加载状态则返回假，即表示该插件现在还不能立即加载
 			if(plugin == null || plugin.Status != PluginStatus.Loading)
@@ -481,13 +487,9 @@ namespace Zongsoft.Plugins
 				{
 					if(dependency.Plugin == null)
 					{
-						//往上查找依赖项：因为依赖项只可能是其父或同级的插件，不可能为其下级插件
-						dependency.Plugin = FindDependency(plugin.Parent, dependency.Name);
+						dependency.Plugin = _loadedPlugins.TryGetValue(dependency.Name, out var dependent) ? dependent :
+							throw new PluginException($"The '{plugin.Name}' plugin load failed. it's '{dependency.Name}' dependent plugin is not exists.");
 					}
-
-					//没有找到依赖插件则抛出异常
-					if(dependency.Plugin == null)
-						throw new PluginException($"The '{plugin.Name}' plugin load failed. it's '{dependency.Name}' dependent plugin is not exists.");
 
 					//只要有一个依赖插件未加载完成则表示该插件不能立即加载(即返回假)
 					if(dependency.Plugin.Status != PluginStatus.Loaded)
@@ -497,20 +499,6 @@ namespace Zongsoft.Plugins
 
 			//表示当前插件的所有依赖插件都已加载完成则返回真(表示可以立即加载了)
 			return true;
-		}
-
-		private static Plugin FindDependency(Plugin current, string dependentName)
-		{
-			if(current == null)
-				return null;
-
-			if(string.Equals(dependentName, current.Name, StringComparison.OrdinalIgnoreCase))
-				return current;
-
-			if(current.HasChildren && current.Children.TryGetValue(dependentName, out var child))
-				return child;
-
-			return FindDependency(current.Parent, dependentName);
 		}
 
 		private static bool TryPushToStack(Plugin plugin, Stack<Plugin> stack)
