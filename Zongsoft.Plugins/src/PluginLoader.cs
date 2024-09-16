@@ -127,7 +127,6 @@ namespace Zongsoft.Plugins
 		#region 成员字段
 		private readonly PluginResolver _resolver;
 		private readonly PluginCollection _topmosts;
-		private readonly Dictionary<string, Plugin> _loadedPlugins;
 		#endregion
 
 		#region 构造函数
@@ -135,7 +134,6 @@ namespace Zongsoft.Plugins
 		{
 			_resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
 			_topmosts = new PluginCollection();
-			_loadedPlugins = new Dictionary<string, Plugin>(StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
@@ -168,7 +166,6 @@ namespace Zongsoft.Plugins
 
 				//清空插件列表
 				_topmosts.Clear();
-				_loadedPlugins.Clear();
 
 				//预加载插件目录下的所有插件文件
 				this.PreloadPluginFiles(options.PluginsPath, null, options);
@@ -390,9 +387,6 @@ namespace Zongsoft.Plugins
 				//设置插件状态
 				plugin.Status = PluginStatus.Loaded;
 
-				//将加载完成的插件加入到完成列表中
-				_loadedPlugins.Add(plugin.Name, plugin);
-
 				//激发“PluginLoaded”事件
 				this.OnPluginLoaded(new PluginLoadedEventArgs(plugin, options));
 			}
@@ -487,7 +481,7 @@ namespace Zongsoft.Plugins
 				{
 					if(dependency.Plugin == null)
 					{
-						dependency.Plugin = _loadedPlugins.TryGetValue(dependency.Name, out var dependent) ? dependent :
+						dependency.Plugin = this.FindDependency(dependency.Name) ??
 							throw new PluginException($"The '{plugin.Name}' plugin load failed. it's '{dependency.Name}' dependent plugin is not exists.");
 					}
 
@@ -499,6 +493,36 @@ namespace Zongsoft.Plugins
 
 			//表示当前插件的所有依赖插件都已加载完成则返回真(表示可以立即加载了)
 			return true;
+		}
+
+		private Plugin FindDependency(string name)
+		{
+			foreach(var topmost in _topmosts)
+			{
+				var found = Find(topmost, name);
+				if(found != null) return found;
+			}
+
+			return null;
+
+			static Plugin Find(Plugin plugin, string name)
+			{
+				if(plugin != null && string.Equals(plugin.Name, name, StringComparison.OrdinalIgnoreCase))
+					return plugin;
+
+				if(plugin.HasChildren)
+				{
+					foreach(var child in plugin.Children)
+					{
+						var found = Find(child, name);
+
+						if(found != null)
+							return found;
+					}
+				}
+
+				return null;
+			}
 		}
 
 		private static bool TryPushToStack(Plugin plugin, Stack<Plugin> stack)
