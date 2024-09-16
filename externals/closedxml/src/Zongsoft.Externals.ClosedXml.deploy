@@ -3,3 +3,4 @@ lib/$(Framework)/Zongsoft.Externals.ClosedXml.*
 
 nuget:ClosedXml@0.101.0
 nuget:ClosedXml.Report@0.2.8
+nuget:System.IO.Packaging@8.0.0
