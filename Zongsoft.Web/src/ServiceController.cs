@@ -45,14 +45,14 @@ namespace Zongsoft.Web
 	public class ServiceController<TModel, TService> : ServiceControllerBase<TModel, TService> where TService : class, IDataService<TModel>
 	{
 		#region 公共方法
-		[HttpGet("[area]/[controller]/{key:required}/[action]")]
-		[HttpGet("[area]/[controller]/[action]/{key?}")]
+		[HttpGet("{key:required}/[action]")]
+		[HttpGet("[action]/{key?}")]
 		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
 			return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
 		}
 
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -64,14 +64,14 @@ namespace Zongsoft.Web
 			return this.Content(count.ToString());
 		}
 
-		[HttpGet("[area]/[controller]/{key:required}/[action]")]
-		[HttpGet("[area]/[controller]/[action]/{key?}")]
+		[HttpGet("{key:required}/[action]")]
+		[HttpGet("[action]/{key?}")]
 		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
 			return await this.DataService.ExistsAsync(key, this.OptionsBuilder.Exists(), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -83,13 +83,13 @@ namespace Zongsoft.Web
 			return existed ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpGet("[area]/[controller]/{key?}")]
+		[HttpGet("{key?}")]
 		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			return this.Paginate(page ??= Paging.First(), await this.OnGetAsync(key, page, sort, null, cancellation));
 		}
 
-		[HttpDelete("[area]/[controller]/{key?}")]
+		[HttpDelete("{key?}")]
 		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
@@ -124,7 +124,7 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpPost("[area]/[controller]")]
+		[HttpPost]
 		public virtual async Task<IActionResult> CreateAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
@@ -166,7 +166,7 @@ namespace Zongsoft.Web
 			return this.Conflict();
 		}
 
-		[HttpPut("[area]/[controller]")]
+		[HttpPut]
 		public virtual async Task<IActionResult> UpsertAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
@@ -179,7 +179,7 @@ namespace Zongsoft.Web
 			return await this.OnUpsertAsync(model, null, cancellation) > 0 ? this.Ok(model) : this.Conflict();
 		}
 
-		[HttpPatch("[area]/[controller]/{key}")]
+		[HttpPatch("{key}")]
 		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)
@@ -221,7 +221,7 @@ namespace Zongsoft.Web
 	public class SubserviceController<TModel, TService> : ServiceControllerBase<TModel, TService> where TService : class, IDataService<TModel>
 	{
 		#region 公共方法
-		[HttpGet("[area]/[controller]/{key:required}/[action]")]
+		[HttpGet("{key:required}/[action]")]
 		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
@@ -230,7 +230,7 @@ namespace Zongsoft.Web
 			return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
 		}
 
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -241,7 +241,7 @@ namespace Zongsoft.Web
 			return this.Content(count.ToString());
 		}
 
-		[HttpGet("[area]/[controller]/[action]/{key:required}")]
+		[HttpGet("[action]/{key:required}")]
 		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
@@ -250,7 +250,7 @@ namespace Zongsoft.Web
 			return await this.DataService.ExistsAsync(key, this.OptionsBuilder.Exists(), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -262,8 +262,8 @@ namespace Zongsoft.Web
 			return existed ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpGet("[area]/{key:required}/[controller]")]
-		[HttpGet("[area]/[controller]/{key:required}")]
+		[HttpGet("/[area]/{key:required}/[controller]")]
+		[HttpGet("{key:required}")]
 		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
@@ -272,8 +272,8 @@ namespace Zongsoft.Web
 			return this.Paginate(page ??= Paging.First(), await this.OnGetAsync(key, page, sort, this.GetParameters(), cancellation));
 		}
 
-		[HttpDelete("[area]/{key:required}/[controller]")]
-		[HttpDelete("[area]/[controller]/{key?}")]
+		[HttpDelete("/[area]/{key:required}/[controller]")]
+		[HttpDelete("{key?}")]
 		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
@@ -308,7 +308,7 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpPost("[area]/{key:required}/[controller]")]
+		[HttpPost("/[area]/{key:required}/[controller]")]
 		public virtual async Task<IActionResult> CreateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
@@ -327,7 +327,7 @@ namespace Zongsoft.Web
 			return this.Conflict();
 		}
 
-		[HttpPut("[area]/{key:required}/[controller]")]
+		[HttpPut("/[area]/{key:required}/[controller]")]
 		public virtual async Task<IActionResult> UpsertAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
@@ -343,7 +343,7 @@ namespace Zongsoft.Web
 			return await this.OnUpsertAsync(key, data, null, cancellation) > 0 ? this.Ok(data) : this.Conflict();
 		}
 
-		[HttpPatch("[area]/{key:required}/[controller]")]
+		[HttpPatch("/[area]/{key:required}/[controller]")]
 		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)

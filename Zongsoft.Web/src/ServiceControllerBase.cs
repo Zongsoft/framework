@@ -44,6 +44,7 @@ using Zongsoft.Web.Http;
 namespace Zongsoft.Web
 {
 	[ApiController]
+	[Route("[area]/[controller]")]
 	public abstract class ServiceControllerBase<TModel, TService> : ControllerBase where TService : class, IDataService<TModel>
 	{
 		#region 单例字段
@@ -55,10 +56,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 构造函数
-		protected ServiceControllerBase()
-		{
-			this.OptionsBuilder = new DataOptionsBuilder(this);
-		}
+		protected ServiceControllerBase() => this.OptionsBuilder = new DataOptionsBuilder(this);
 		#endregion
 
 		#region 属性定义
@@ -73,7 +71,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 查询方法
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async Task<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
@@ -85,7 +83,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 导入导出
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanImport)
@@ -97,8 +95,8 @@ namespace Zongsoft.Web
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
-		[HttpGet("[area]/[controller]/[action]")]
-		[HttpGet("[area]/[controller]/{key}/[action]")]
+		[HttpGet("[action]")]
+		[HttpGet("{key}/[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -118,7 +116,7 @@ namespace Zongsoft.Web
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
-		[HttpPost("[area]/[controller]/[action]")]
+		[HttpPost("[action]")]
 		public virtual async ValueTask<IActionResult> ExportAsync([FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -144,7 +142,7 @@ namespace Zongsoft.Web
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
-		[HttpGet("[area]/[controller]/[action]/{template}/{argument?}")]
+		[HttpGet("[action]/{template}/{argument?}")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string template, string argument, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
@@ -156,7 +154,7 @@ namespace Zongsoft.Web
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 		}
 
-		[HttpPost("[area]/[controller]/[action]/{template}")]
+		[HttpPost("[action]/{template}")]
 		public virtual async ValueTask<IActionResult> ExportAsync(string template, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
 			if(!this.CanExport)
