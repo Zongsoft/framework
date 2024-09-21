@@ -140,6 +140,8 @@ namespace Zongsoft.Web
 			services.AddSingleton<IControllerActivator, ControllerActivator>();
 			services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
 			services.AddSingleton<IApplicationFeatureProvider<ControllerFeature>, ControllerFeatureProvider>();
+			services.AddSingleton<IApplicationFeatureProvider, SignalR.HubFeatureProvider>();
+			services.AddSingleton<IApplicationFeatureProvider<SignalR.HubFeature>, SignalR.HubFeatureProvider>();
 			services.AddAuthentication(CredentialPrincipal.Scheme).AddCredentials();
 
 			services.AddCors(options => options.AddDefaultPolicy(builder =>

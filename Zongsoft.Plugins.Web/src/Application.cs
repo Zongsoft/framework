@@ -67,6 +67,9 @@ namespace Zongsoft.Web
 			app.UseStaticFiles();
 			app.MapControllers();
 
+			//映射 SignalR 的 Hub 实现者
+			SignalR.HubEndpointRouteBuilderExtensions.MapHubs(app);
+
 			return app;
 		}
 #else
@@ -108,7 +111,11 @@ namespace Zongsoft.Web
 					app.UseAuthentication();
 					app.UseAuthorization();
 					app.UseStaticFiles();
-					app.UseEndpoints(endpoints => endpoints.MapControllers());
+					app.UseEndpoints(endpoints =>
+					{
+						endpoints.MapControllers();
+						SignalR.HubEndpointRouteBuilderExtensions.MapHubs(endpoints);
+					});
 
 					applicate?.Invoke(ctx, app);
 				}));
