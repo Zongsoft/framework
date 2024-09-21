@@ -42,7 +42,7 @@ namespace Zongsoft.Web
 		public static ICollection<Type> Ignores { get; } = new HashSet<Type>();
 		#endregion
 
-		#region 重写风法
+		#region 重写方法
 		protected override bool IsController(TypeInfo typeInfo) => IsControllerType(typeInfo);
 		#endregion
 
