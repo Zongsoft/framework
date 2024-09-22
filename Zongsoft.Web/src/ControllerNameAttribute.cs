@@ -95,6 +95,15 @@ namespace Zongsoft.Web
 
 			if(!string.IsNullOrEmpty(this.Name))
 				controller.ControllerName = controller.RouteValues["controller"] = this.Name;
+
+			var hasRouteAttribute = controller.Selectors.Any(selector => selector.AttributeRouteModel != null);
+			if(!hasRouteAttribute)
+			{
+				controller.Selectors[0].AttributeRouteModel = new AttributeRouteModel()
+				{
+					Template = $"[area]/[controller]",
+				};
+			}
 		}
 		#endregion
 
