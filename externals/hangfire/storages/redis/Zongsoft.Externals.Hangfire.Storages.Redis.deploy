@@ -2,3 +2,4 @@ artifacts/Zongsoft.Externals.Hangfire.Storages.Redis.plugin
 lib/$(Framework)/Zongsoft.Externals.Hangfire.Storages.Redis.*
 
 nuget:Hangfire.Redis.StackExchange@1.9.3
+nuget:System.IO.Pipelines@8.0.0
