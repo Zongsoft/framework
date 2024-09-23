@@ -37,7 +37,7 @@ namespace Zongsoft.Configuration
 	{
 		#region 私有变量
 		private bool _initialized = false;
-		private readonly ConnectionSettingDescriptorCollection _descriptors;
+		private ConnectionSettingDescriptorCollection _descriptors;
 		private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
@@ -64,7 +64,7 @@ namespace Zongsoft.Configuration
 					return;
 
 				var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-				var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+				_descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
 					.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
 					.GetValue(null);
 
@@ -81,7 +81,7 @@ namespace Zongsoft.Configuration
 					{
 						_members.TryAdd(members[i].Name, members[i]);
 
-						if(descriptors != null && descriptors.Count > 0 && descriptors.TryGetValue(members[i].Name, out var descriptor))
+						if(_descriptors != null && _descriptors.Count > 0 && _descriptors.TryGetValue(members[i].Name, out var descriptor))
 						{
 							_members.TryAdd(descriptor.Name, members[i]);
 

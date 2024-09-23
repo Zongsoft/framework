@@ -78,7 +78,7 @@ namespace Zongsoft.Configuration
 
 				return _driver;
 			}
-			set => _driver = value ?? ConnectionSettingsDriver.Unnamed;
+			init => _driver = value ?? ConnectionSettingsDriver.Unnamed;
 		}
 		public IDictionary<string, string> Values => _values;
 		public object this[string name]
