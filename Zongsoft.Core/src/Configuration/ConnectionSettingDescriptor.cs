@@ -39,7 +39,7 @@ namespace Zongsoft.Configuration
 		/// <summary>获取客户端标识描述器。</summary>
 		public static readonly ConnectionSettingDescriptor Client = new(nameof(Client), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Client, Properties.Resources.ConnectionSettingDescriptor_Client_Description);
 		/// <summary>获取服务器地址描述器。</summary>
-		public static readonly ConnectionSettingDescriptor Server = new(nameof(Server), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Server, Properties.Resources.ConnectionSettingDescriptor_Server_Description);
+		public static readonly ConnectionSettingDescriptor Server = new(nameof(Server), typeof(string), true, null, Properties.Resources.ConnectionSettingDescriptor_Server, Properties.Resources.ConnectionSettingDescriptor_Server_Description);
 		/// <summary>获取端口号描述器。</summary>
 		public static readonly ConnectionSettingDescriptor Port = new(nameof(Port), typeof(ushort), null, Properties.Resources.ConnectionSettingDescriptor_Port, Properties.Resources.ConnectionSettingDescriptor_Port_Description);
 		/// <summary>获取超时描述器。</summary>

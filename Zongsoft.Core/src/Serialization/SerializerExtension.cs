@@ -60,6 +60,7 @@ namespace Zongsoft.Serialization
 			IncludeFields = true,
 			Converters =
 			{
+				new Json.TypeConverter(),
 				new Json.TimeSpanConverter(),
 				new JsonStringEnumConverter(),
 				new Json.ModelConverterFactory(),
@@ -94,6 +95,7 @@ namespace Zongsoft.Serialization
 				IncludeFields = options.IncludeFields,
 				Converters =
 				{
+					new Json.TypeConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(),
 					new Json.ModelConverterFactory(),
@@ -141,6 +143,7 @@ namespace Zongsoft.Serialization
 				IncludeFields = options.IncludeFields,
 				Converters =
 				{
+					new Json.TypeConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(naming),
 					new Json.ModelConverterFactory(),
