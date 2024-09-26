@@ -147,33 +147,33 @@ namespace Zongsoft.Data.TDengine
 
 			public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
 			{
-				DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
-				DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "text",
-				DbType.String => length > 0 ? $"nvarchar({length})" : "text",
-				DbType.StringFixedLength => length > 0 ? $"nchar({length})" : "text",
-				DbType.Binary => length > 0 ? $"varbinary({length})" : "blob",
+				DbType.AnsiString => length > 0 ? $"varchar({length})" : "varchar(16382)",
+				DbType.AnsiStringFixedLength => length > 0 ? $"varchar({length})" : "varchar(16382)",
+				DbType.String => length > 0 ? $"nchar({length})" : "nchar(4096)",
+				DbType.StringFixedLength => length > 0 ? $"nchar({length})" : "nchar(4096)",
+				DbType.Binary => length > 0 ? $"varbinary({length})" : "varbinary(16382)",
 				DbType.Boolean => "bool",
 				DbType.Byte => "unsigned tinyint",
 				DbType.SByte => "tinyint",
-				DbType.Date => "date",
-				DbType.DateTime => "datetime",
-				DbType.DateTime2 => "datetime",
-				DbType.DateTimeOffset => "datetime",
+				DbType.Date => "timestamp",
+				DbType.DateTime => "timestamp",
+				DbType.DateTime2 => "timestamp",
+				DbType.DateTimeOffset => "timestamp",
 				DbType.Guid => "binary(16)",
 				DbType.Int16 => "smallint",
 				DbType.Int32 => "int",
 				DbType.Int64 => "bigint",
 				DbType.Object => "json",
-				DbType.Time => "time",
+				DbType.Time => "timestamp",
 				DbType.UInt16 => "unsigned smallint",
 				DbType.UInt32 => "unsigned int",
 				DbType.UInt64 => "unsigned bigint",
-				DbType.Currency => precision > 0 ? $"decimal({precision},{scale})" : "decimal(12,2)",
-				DbType.Decimal => $"decimal({precision},{scale})",
-				DbType.Double => $"double({precision},{scale})",
-				DbType.Single => $"float({precision},{scale})",
-				DbType.VarNumeric => $"numeric({precision},{scale})",
-				DbType.Xml => "text",
+				DbType.Currency => "double",
+				DbType.Decimal => "double",
+				DbType.Double => "double",
+				DbType.Single => "float",
+				DbType.VarNumeric => "double",
+				DbType.Xml => "nchar(4096)",
 				_ => throw new DataException($"Unsupported '{dbType}' data type."),
 			};
 
@@ -222,13 +222,7 @@ namespace Zongsoft.Data.TDengine
 			};
 
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private static string GetSequenceName(SequenceExpression sequence)
-			{
-				if(sequence.Method != SequenceMethod.Current)
-					throw new DataException($"The TDengine driver does not support the '{sequence.Method.ToString()}' sequence function.");
-
-				return "LAST_INSERT_ID";
-			}
+			private static string GetSequenceName(SequenceExpression sequence) => throw new DataException($"The TDengine driver does not support the '{sequence.Method}' sequence function.");
 			#endregion
 		}
 

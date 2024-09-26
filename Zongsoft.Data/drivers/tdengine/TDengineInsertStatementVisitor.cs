@@ -48,10 +48,7 @@ namespace Zongsoft.Data.TDengine
 		#region 重写方法
 		protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
 		{
-			if(statement.Options.ConstraintIgnored)
-				context.Write("INSERT IGNORE INTO ");
-			else
-				context.Write("INSERT INTO ");
+			context.Write("INSERT INTO ");
 		}
 		#endregion
 	}
