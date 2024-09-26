@@ -52,10 +52,14 @@ namespace Zongsoft.Components
 				var accessor = _accessors.GetOrAdd(argumentType, type =>
 				{
 					var property = context.GetType().GetProperty(nameof(EventContext<object>.Argument), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-					var parameter = Expression.Parameter(typeof(EventContext));
+					var parameter = Expression.Parameter(typeof(EventContext), "context");
 					var converter = Expression.Convert(parameter, typeof(EventContext<>).MakeGenericType(type));
 					var invoke = Expression.Call(converter, property.GetMethod);
-					return Expression.Lambda<Func<EventContext, object>>(invoke, parameter).Compile();
+
+					var expression = type.IsValueType ?
+						Expression.Convert(invoke, typeof(object)) : (Expression)invoke;
+
+					return Expression.Lambda<Func<EventContext, object>>(expression, parameter).Compile();
 				});
 
 				return accessor.Invoke(context);
