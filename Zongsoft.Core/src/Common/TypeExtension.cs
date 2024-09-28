@@ -39,14 +39,14 @@ namespace Zongsoft.Common
 	public static class TypeExtension
 	{
 		public static bool IsAssignableFrom(this Type type, Type instanceType) => IsAssignableFrom(type, instanceType, null);
-		public static bool IsAssignableFrom(this Type type, Type instanceType, out IEnumerable<Type> genericTypes)
+		public static bool IsAssignableFrom(this Type type, Type instanceType, out IReadOnlyList<Type> genericTypes)
 		{
 			var list = new List<Type>();
 
 			if(IsAssignableFrom(type, instanceType, t =>
 			{
 				list.Add(t);
-				return false;
+				return true;
 			}))
 			{
 				genericTypes = list;

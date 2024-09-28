@@ -24,7 +24,18 @@ namespace Zongsoft.Common.Tests
 			Assert.True(Zongsoft.Common.TypeExtension.IsAssignableFrom(baseType, instanceType));
 			Assert.False(baseType.IsAssignableFrom(instanceType));
 
+			Assert.True(TypeExtension.IsAssignableFrom(typeof(IService<>), typeof(EmployeeService)));
 			Assert.True(TypeExtension.IsAssignableFrom(typeof(PersonServiceBase<>), typeof(EmployeeService)));
+
+			Assert.True(TypeExtension.IsAssignableFrom(typeof(IService<>), typeof(EmployeeService), out var genericTypes));
+			Assert.NotEmpty(genericTypes);
+			Assert.Equal(1, genericTypes.Count);
+			Assert.True(genericTypes[0] == typeof(IService<Employee>));
+
+			Assert.True(TypeExtension.IsAssignableFrom(typeof(PersonServiceBase<>), typeof(EmployeeService), out genericTypes));
+			Assert.NotEmpty(genericTypes);
+			Assert.Equal(1, genericTypes.Count);
+			Assert.True(genericTypes[0] == typeof(PersonServiceBase<Employee>));
 		}
 
 		[Fact]
@@ -73,20 +84,20 @@ namespace Zongsoft.Common.Tests
 		}
 
 		#region 嵌套子类
-		public class PersonServiceBase<T> where T : Person
+		internal interface IService<out T>
 		{
-			public virtual T GetPerson(int id)
-			{
-				throw new NotImplementedException();
-			}
+			T Get(int id);
 		}
 
-		public class EmployeeService : PersonServiceBase<Employee>
+		internal class PersonServiceBase<T> : IService<T> where T : Person
 		{
-			public override Employee GetPerson(int id)
-			{
-				throw new NotImplementedException();
-			}
+			public T Get(int id) => this.GetPerson(id);
+			public virtual T GetPerson(int id) => throw new NotImplementedException();
+		}
+
+		internal class EmployeeService : PersonServiceBase<Employee>
+		{
+			public override Employee GetPerson(int id) => new Employee(id, "Unnamed");
 		}
 		#endregion
 	}
