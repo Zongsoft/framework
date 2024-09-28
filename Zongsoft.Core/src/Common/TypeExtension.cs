@@ -252,7 +252,7 @@ namespace Zongsoft.Common
 		public static bool IsHashset(this Type type) => IsAssignableFrom(typeof(ISet<>), type);
 
 		public static bool IsDictionary(this Type type) => typeof(IDictionary).IsAssignableFrom(type) || IsAssignableFrom(typeof(IDictionary<,>), type);
-		public static bool IsDictionary(this object instance, out IEnumerable<DictionaryEntry> entries)
+		public static bool IsDictionary(object instance, out IEnumerable<DictionaryEntry> entries)
 		{
 			entries = null;
 
