@@ -459,20 +459,24 @@ namespace Zongsoft.Common
 
 			if(code != TypeCode.Object)
 			{
-				alias = code.ToString().ToLowerInvariant();
+				alias = code.ToString();
 			}
 			else
 			{
-				if(type == typeof(object))
+				if(elementType == typeof(object))
 					alias = nameof(Object);
-				else if(type == typeof(Guid))
+				else if(elementType == typeof(Guid))
 					alias = nameof(Guid);
-				else if(type == typeof(TimeSpan))
+				else if(elementType == typeof(TimeSpan))
 					alias = nameof(TimeSpan);
-				else if(type == typeof(DateTimeOffset))
+				else if(elementType == typeof(DateOnly))
+					alias = "Date";
+				else if(elementType == typeof(TimeOnly))
+					alias = "Time";
+				else if(elementType == typeof(DateTimeOffset))
 					alias = nameof(DateTimeOffset);
 				else
-					return type.AssemblyQualifiedName;
+					return elementType.AssemblyQualifiedName;
 			}
 
 			if(underlyingType != null)
@@ -624,15 +628,29 @@ namespace Zongsoft.Common
 					return typeof(char[]);
 
 				case "date":
+				case "dateonly":
+					return typeof(DateOnly);
+				case "date?":
+				case "dateonly?":
+					return typeof(DateOnly?);
+				case "date[]":
+				case "dateonly[]":
+					return typeof(DateOnly[]);
+
 				case "time":
+				case "timeonly":
+					return typeof(TimeOnly);
+				case "time?":
+				case "timeonly?":
+					return typeof(TimeOnly?);
+				case "time[]":
+				case "timeonly[]":
+					return typeof(TimeOnly[]);
+
 				case "datetime":
 					return typeof(DateTime);
-				case "date?":
-				case "time?":
 				case "datetime?":
 					return typeof(DateTime?);
-				case "date[]":
-				case "time[]":
 				case "datetime[]":
 					return typeof(DateTime[]);
 
