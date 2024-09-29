@@ -113,7 +113,8 @@ namespace Zongsoft.Common.Tests
 			Assert.Same(typeof(IDictionary<string, Gender?[]>), TypeExtension.GetType("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
 
 			var tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]>);
-			Assert.Same(tupleType, TypeExtension.GetType("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?, Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core>"));
+			Assert.Same(tupleType, TypeExtension.GetType(tupleType.FullName));
+			Assert.Same(tupleType, TypeExtension.GetType("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?, Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core >"));
 		}
 
 		[Fact]

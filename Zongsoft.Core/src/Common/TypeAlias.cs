@@ -106,7 +106,15 @@ namespace Zongsoft.Common
 			if(Types.TryGetValue(typeName, out var type) && !type.ContainsGenericParameters)
 				return type;
 
-			return TypeAliasToken.TryParse(typeName, out var token) ? token.ToType() : Type.GetType(typeName, false, true);
+			return TypeAliasParser.TryParse(typeName, out var token) ? token.ToType() : Type.GetType(typeName, false, true);
+		}
+
+		[Flags]
+		private enum TypeAliasFlags
+		{
+			None,
+			Nullable,
+			Arrayable,
 		}
 
 		private readonly struct TypeAliasToken
@@ -116,13 +124,12 @@ namespace Zongsoft.Common
 			#endregion
 
 			#region 构造函数
-			public TypeAliasToken(string name, bool isNullable, bool isArray, params TypeAliasToken[] genericArguments) : this(name, null, isNullable, isArray, genericArguments) { }
-			public TypeAliasToken(string name, string assembly, bool isNullable, bool isArray, params TypeAliasToken[] genericArguments)
+			public TypeAliasToken(string name, TypeAliasFlags flags, params TypeAliasToken[] genericArguments) : this(name, null, flags, genericArguments) { }
+			public TypeAliasToken(string name, string assembly, TypeAliasFlags flags, params TypeAliasToken[] genericArguments)
 			{
 				this.Name = name;
 				this.Assembly = assembly;
-				this.IsNullable = isNullable;
-				this.IsArray = isArray;
+				this.Flags = flags;
 				_genericArguments = genericArguments;
 			}
 			#endregion
@@ -130,13 +137,14 @@ namespace Zongsoft.Common
 			#region 公共字段
 			public readonly string Name;
 			public readonly string Assembly;
-			public readonly bool IsNullable;
-			public readonly bool IsArray;
+			public readonly TypeAliasFlags Flags;
 			#endregion
 
 			#region 公共属性
 			public readonly bool HasGenericArguments => _genericArguments != null && _genericArguments.Length > 0;
 			public readonly TypeAliasToken[] GenericArguments => _genericArguments;
+			public readonly bool Nullable => (this.Flags & TypeAliasFlags.Nullable) == TypeAliasFlags.Nullable;
+			public readonly bool Arrayable => (this.Flags & TypeAliasFlags.Arrayable) == TypeAliasFlags.Arrayable;
 			#endregion
 
 			#region 公共方法
@@ -150,172 +158,20 @@ namespace Zongsoft.Common
 
 				if(this.HasGenericArguments)
 				{
-					if(this.IsNullable)
-						result = this.IsArray ? $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>?[]" : $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>?";
+					if(this.Nullable)
+						result = this.Arrayable ? $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>?[]" : $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>?";
 					else
-						result = this.IsArray ? $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>[]" : $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>";
+						result = this.Arrayable ? $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>[]" : $"{this.Name}<{GetGenericArguments(this.GenericArguments)}>";
 				}
 				else
 				{
-					if(this.IsNullable)
-						result = this.IsArray ? $"{this.Name}?[]" : $"{this.Name}?";
+					if(this.Nullable)
+						result = this.Arrayable ? $"{this.Name}?[]" : $"{this.Name}?";
 					else
-						result = this.IsArray ? $"{this.Name}[]" : this.Name;
+						result = this.Arrayable ? $"{this.Name}[]" : this.Name;
 				}
 
 				return string.IsNullOrEmpty(this.Assembly) ? result : $"{result}@{this.Assembly}";
-			}
-			#endregion
-
-			#region 解析方法
-			public static bool TryParse(ReadOnlySpan<char> text, out TypeAliasToken result)
-			{
-				result = Parse(text);
-				return !string.IsNullOrEmpty(result.Name);
-			}
-
-			public static TypeAliasToken Parse(ReadOnlySpan<char> text, Action<string> onError = null)
-			{
-				if(text.IsEmpty)
-					return default;
-
-				var context = new AliasContext(text);
-				ReadOnlySpan<char> type, assembly;
-
-				while(context.Move())
-				{
-					switch(context.State)
-					{
-						case AliasState.None:
-							DoNone(ref context);
-							break;
-						case AliasState.Type:
-							if(DoType(ref context))
-								type = context.Reset();
-							break;
-						case AliasState.Assembly:
-							if(DoAssembly(ref context))
-								assembly = context.Reset();
-							break;
-					}
-
-					if(context.HasError(out var message))
-					{
-						onError?.Invoke(message);
-						return default;
-					}
-				}
-
-				return default;
-			}
-
-			private static void DoNone(ref AliasContext context)
-			{
-				if(context.IsLetter || context.Character == '_')
-					context.Accept(AliasState.Type);
-				else if(context.IsWhitespace)
-					context.Accept();
-				else
-					context.Error($"The type name or namespace must begin with a letter or an underscore.");
-			}
-
-			private static bool DoType(ref AliasContext context)
-			{
-				switch(context.Character)
-				{
-					case '.':
-						if(context.Move())
-						{
-							if(context.IsLetter || context.Character == '_')
-								context.Accept();
-							else
-								context.Error($"The type name or namespace must begin with a letter or an underscore.");
-						}
-						break;
-					case ',':
-					case '@':
-						context.Accept(AliasState.Assembly);
-						break;
-					case '?':
-						context.Reset(AliasState.Nullable);
-						break;
-					case '<':
-						context.Accept(AliasState.Generic);
-						break;
-					case '[':
-						context.Accept(AliasState.Array);
-						break;
-					default:
-						if(context.IsLetterOrDigit || context.Character == '_')
-							context.Accept();
-						else if(context.IsWhitespace)
-							context.Accept(AliasState.TypeFinal);
-						else
-							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
-						break;
-				}
-
-				return context.State != AliasState.Type;
-			}
-
-			private static bool DoAssembly(ref AliasContext context)
-			{
-				switch(context.Character)
-				{
-					case '.':
-						if(context.Move())
-						{
-							if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
-								context.Accept();
-							else
-								context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
-						}
-						break;
-					default:
-						if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
-							context.Accept();
-						else if(context.IsWhitespace)
-							context.Accept(AliasState.AssemblyFinal);
-						else
-							context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
-						break;
-				}
-
-				return context.State != AliasState.Assembly;
-			}
-
-			private static bool DoNullable(ref AliasContext context)
-			{
-				switch(context.Character)
-				{
-					case ',':
-					case '@':
-						context.Accept(AliasState.Assembly);
-						break;
-					case '[':
-						context.Accept(AliasState.Array);
-						break;
-					default:
-						if(context.IsWhitespace)
-							context.Accept(AliasState.TypeFinal);
-						else
-							context.Error($"Illegal character at the {context.Position}th character position.");
-						break;
-				}
-
-				return context.State != AliasState.Nullable;
-			}
-
-			private static bool DoArray(ref AliasContext context)
-			{
-				if(context.IsWhitespace)
-					context.Accept();
-				else if(context.Character == ']')
-					context.Accept(AliasState.ArrayFinal);
-				else
-					context.Error($"Illegal character at the {context.Position}th character position.");
-
-				return context.State != AliasState.Nullable;
 			}
 			#endregion
 
@@ -364,9 +220,9 @@ namespace Zongsoft.Common
 						type = type.MakeGenericType(types);
 				}
 
-				if(alias.IsNullable)
+				if(alias.Nullable)
 					type = typeof(Nullable<>).MakeGenericType(type);
-				if(alias.IsArray)
+				if(alias.Arrayable)
 					type = type.MakeArrayType();
 
 				return type;
@@ -374,18 +230,451 @@ namespace Zongsoft.Common
 			#endregion
 		}
 
+		private static class TypeAliasParser
+		{
+			#region 解析方法
+			public static bool TryParse(ReadOnlySpan<char> text, out TypeAliasToken result)
+			{
+				result = Parse(text);
+				return !string.IsNullOrEmpty(result.Name);
+			}
+
+			public static TypeAliasToken Parse(ReadOnlySpan<char> text, Action<string> onError = null)
+			{
+				if(text.IsEmpty)
+					return default;
+
+				var context = new AliasContext(text);
+				ReadOnlySpan<char> type, assembly;
+				TypeAliasFlags flags = TypeAliasFlags.None;
+
+				while(context.Move())
+				{
+					switch(context.State)
+					{
+						case AliasState.None:
+							DoNone(ref context);
+							break;
+						case AliasState.Type:
+							if(DoType(ref context))
+								type = context.Reset();
+							break;
+						case AliasState.Assembly:
+							if(DoAssembly(ref context))
+								assembly = context.Reset();
+							break;
+						case AliasState.Nullable:
+							if(DoNullable(ref context))
+								flags |= TypeAliasFlags.Nullable;
+							break;
+						case AliasState.Arrayable:
+							if(DoArrayable(ref context))
+								flags |= TypeAliasFlags.Arrayable;
+							break;
+						case AliasState.Generic:
+							DoGeneric(ref context);
+							break;
+						case AliasState.GenericFinal:
+							DoGenericFinal(ref context);
+							break;
+						case AliasState.Ending:
+							DoEnding(ref context);
+							break;
+					}
+
+					if(context.HasError(out var message))
+					{
+						onError?.Invoke(message);
+						return default;
+					}
+				}
+
+				return default;
+			}
+
+			private static void DoNone(ref AliasContext context)
+			{
+				if(context.IsLetter || context.Character == '_')
+					context.Accept(AliasState.Type);
+				else if(context.IsWhitespace)
+					context.Accept();
+				else
+					context.Error($"The type name or namespace must begin with a letter or an underscore.");
+			}
+
+			private static bool DoType(ref AliasContext context)
+			{
+				switch(context.Character)
+				{
+					case '.':
+						if(context.Move())
+						{
+							if(context.IsLetter || context.Character == '_')
+								context.Accept();
+							else
+								context.Error($"The type name or namespace must begin with a letter or an underscore.");
+						}
+						break;
+					case '@':
+						context.Accept(AliasState.Assembly);
+						break;
+					case ',':
+						if(context.Depth > 0)
+							context.Accept(AliasState.Generic);
+						else
+							context.Accept(AliasState.Assembly);
+						break;
+					case '?':
+						context.Accept(AliasState.Nullable);
+						break;
+					case '<':
+						context.Indent();
+						context.Accept(AliasState.Generic);
+						break;
+					case '>':
+						if(context.Depth > 0)
+						{
+							context.Dedent();
+							context.Accept(AliasState.GenericFinal);
+						}
+						else
+							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+						break;
+					case '[':
+						context.Accept(AliasState.Arrayable);
+						break;
+					default:
+						if(context.IsLetterOrDigit || context.Character == '_')
+							context.Accept();
+						else if(context.IsWhitespace)
+							context.Accept(AliasState.Ending);
+						else
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						break;
+				}
+
+				return context.State != AliasState.Type;
+			}
+
+			private static bool DoAssembly(ref AliasContext context)
+			{
+				switch(context.Character)
+				{
+					case '.':
+						if(context.Move())
+						{
+							if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
+								context.Accept();
+							else
+								context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						}
+						break;
+					case '>':
+						if(context.Depth > 0)
+						{
+							context.Dedent();
+							context.Accept(AliasState.GenericFinal);
+						}
+						else
+							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+						break;
+					default:
+						if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
+							context.Accept();
+						else if(context.IsWhitespace)
+							context.Accept(AliasState.Ending);
+						else
+							context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						break;
+				}
+
+				return context.State != AliasState.Assembly;
+			}
+
+			private static bool DoNullable(ref AliasContext context)
+			{
+				switch(context.Character)
+				{
+					case '@':
+						context.Accept(AliasState.Assembly);
+						break;
+					case ',':
+						if(context.Depth > 0)
+							context.Accept(AliasState.Generic);
+						else
+							context.Accept(AliasState.Assembly);
+						break;
+					case '>':
+						if(context.Depth > 0)
+						{
+							context.Dedent();
+							context.Accept(AliasState.GenericFinal);
+						}
+						else
+							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+						break;
+					case '[':
+						context.Accept(AliasState.Arrayable);
+						break;
+					default:
+						if(context.IsWhitespace)
+							context.Accept();
+						else
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						break;
+				}
+
+				return context.State != AliasState.Nullable;
+			}
+
+			private static bool DoArrayable(ref AliasContext context)
+			{
+				while(context.Move())
+				{
+					if(context.IsWhitespace)
+						context.Accept();
+					else if(context.Character == ']')
+						break;
+					else
+						context.Error($"Illegal character at the {context.Position}th character position.");
+				}
+
+				switch(context.Character)
+				{
+					case '@':
+						context.Accept(AliasState.Assembly);
+						break;
+					case ',':
+						if(context.Depth > 0)
+							context.Accept(AliasState.Generic);
+						else
+							context.Accept(AliasState.Assembly);
+						break;
+					case '>':
+						if(context.Depth > 0)
+						{
+							context.Dedent();
+							context.Accept(AliasState.GenericFinal);
+						}
+						else
+							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+						break;
+					default:
+						if(context.IsWhitespace)
+							context.Accept(AliasState.Ending);
+						else
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						break;
+				}
+
+				return context.State != AliasState.Arrayable;
+			}
+
+			private static void DoGeneric(ref AliasContext context)
+			{
+				if(context.IsWhitespace)
+					context.Accept();
+
+				switch(context.Character)
+				{
+					case '>':
+						context.Dedent();
+						context.Accept(AliasState.GenericFinal);
+						break;
+					default:
+						if(context.IsLetter || context.Character == '_')
+							context.Accept(AliasState.Type);
+						else
+							context.Error($"The type name or namespace must begin with a letter or an underscore.");
+						break;
+				}
+			}
+
+			private static void DoGenericFinal(ref AliasContext context)
+			{
+				switch(context.Character)
+				{
+					case '@':
+						context.Accept(AliasState.Assembly);
+						break;
+					case ',':
+						if(context.Depth > 0)
+							context.Accept(AliasState.Generic);
+						else
+							context.Accept(AliasState.Assembly);
+						break;
+					case '>':
+						if(context.Depth > 0)
+						{
+							context.Dedent();
+							context.Accept(AliasState.GenericFinal);
+						}
+						else
+							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+						break;
+					default:
+						if(context.IsWhitespace)
+							context.Accept();
+						else
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+						break;
+				}
+			}
+
+			private static void DoEnding(ref AliasContext context)
+			{
+				//循环跳过空白字符
+				while(context.IsWhitespace && context.Move()) { }
+
+				switch(context.Previous)
+				{
+					case AliasState.Type:
+						DoTypeEnding(ref context);
+						break;
+					case AliasState.Nullable:
+						DoNullableEnding(ref context);
+						break;
+					case AliasState.Arrayable:
+						DoArrayableEnding(ref context);
+						break;
+					case AliasState.Assembly:
+						DoAssembly(ref context);
+						break;
+				}
+
+				static void DoTypeEnding(ref AliasContext context)
+				{
+					switch(context.Character)
+					{
+						case '@':
+							context.Accept(AliasState.Assembly);
+							break;
+						case ',':
+							if(context.Depth > 0)
+								context.Accept(AliasState.Generic);
+							else
+								context.Accept(AliasState.Assembly);
+							break;
+						case '<':
+							context.Indent();
+							context.Accept(AliasState.Generic);
+							break;
+						case '>':
+							if(context.Depth > 0)
+							{
+								context.Dedent();
+								context.Accept(AliasState.GenericFinal);
+							}
+							else
+								context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+							break;
+						case '[':
+							context.Accept(AliasState.Arrayable);
+							break;
+						default:
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+							break;
+					}
+				}
+
+				static void DoNullableEnding(ref AliasContext context)
+				{
+					switch(context.Character)
+					{
+						case '@':
+							context.Accept(AliasState.Assembly);
+							break;
+						case ',':
+							if(context.Depth > 0)
+								context.Accept(AliasState.Generic);
+							else
+								context.Accept(AliasState.Assembly);
+							break;
+						case '>':
+							if(context.Depth > 0)
+							{
+								context.Dedent();
+								context.Accept(AliasState.GenericFinal);
+							}
+							else
+								context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+							break;
+						case '[':
+							context.Accept(AliasState.Arrayable);
+							break;
+						default:
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+							break;
+					}
+				}
+
+				static void DoArrayableEnding(ref AliasContext context)
+				{
+					switch(context.Character)
+					{
+						case '@':
+							context.Accept(AliasState.Assembly);
+							break;
+						case ',':
+							if(context.Depth > 0)
+								context.Accept(AliasState.Generic);
+							else
+								context.Accept(AliasState.Assembly);
+							break;
+						case '>':
+							if(context.Depth > 0)
+							{
+								context.Dedent();
+								context.Accept(AliasState.GenericFinal);
+							}
+							else
+								context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+							break;
+						default:
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+							break;
+					}
+				}
+
+				static void DoAssembly(ref  AliasContext context)
+				{
+					switch(context.Character)
+					{
+						case ',':
+							if(context.Depth > 0)
+								context.Accept(AliasState.Generic);
+							else
+								context.Error($"The assembly name is followed by invalid comma-separated content.");
+							break;
+						case '>':
+							if(context.Depth > 0)
+							{
+								context.Dedent();
+								context.Accept(AliasState.GenericFinal);
+							}
+							else
+								context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+							break;
+						default:
+							context.Error($"The type name contains the illegal character '{context.Character}', located at the {context.Position} character.");
+							break;
+					}
+				}
+			}
+			#endregion
+
+		}
+
 		private enum AliasState
 		{
 			None,
 			Type,
-			TypeFinal,
 			Generic,
 			GenericFinal,
-			Array,
-			ArrayFinal,
 			Nullable,
+			Arrayable,
 			Assembly,
-			AssemblyFinal,
+			Ending,
 		}
 
 		private ref struct AliasContext
@@ -393,8 +682,10 @@ namespace Zongsoft.Common
 			#region 私有字段
 			private readonly ReadOnlySpan<char> _text;
 			private AliasState _state;
+			private AliasState _previous;
 			private char _character;
 			private int _position;
+			private int _depth;
 			private int _count;
 			private int _whitespaces;
 			private string _errorMessage;
@@ -405,8 +696,10 @@ namespace Zongsoft.Common
 			{
 				_text = text;
 				_state = AliasState.None;
-				_position = 0;
+				_previous = AliasState.None;
 				_character = '\0';
+				_position = 0;
+				_depth = 0;
 				_count = 0;
 				_whitespaces = 0;
 				_errorMessage = null;
@@ -415,6 +708,8 @@ namespace Zongsoft.Common
 
 			#region 公共属性
 			public AliasState State => _state;
+			public AliasState Previous => _previous;
+			public int Depth => _depth;
 			public int Position => _position;
 			public char Character => _character;
 			public bool IsLetter => char.IsLetter(_character);
@@ -455,6 +750,9 @@ namespace Zongsoft.Common
 				return false;
 			}
 
+			public int Indent() => ++_depth;
+			public int Dedent() => --_depth;
+
 			public void Reset(AliasState state)
 			{
 				_count = 0;
@@ -494,7 +792,10 @@ namespace Zongsoft.Common
 				}
 
 				if(state.HasValue)
+				{
+					_previous = _state;
 					_state = state.Value;
+				}
 
 				count = _count;
 			}
