@@ -39,82 +39,86 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
-		public void TestGetType()
+		public void TestTypeAliasParse()
 		{
-			Assert.Same(typeof(void), TypeExtension.GetType("void"));
-			Assert.Same(typeof(object), TypeExtension.GetType("object"));
-			Assert.Same(typeof(object), TypeExtension.GetType("System.object"));
+			Assert.Same(typeof(void), TypeAlias.Parse("void"));
+			Assert.Same(typeof(object), TypeAlias.Parse("object"));
+			Assert.Same(typeof(object[]), TypeAlias.Parse("object []"));
+			Assert.Same(typeof(object), TypeAlias.Parse("System.object"));
+			Assert.Same(typeof(object[]), TypeAlias.Parse("System.object []"));
 
-			Assert.Same(typeof(string), TypeExtension.GetType("string"));
-			Assert.Same(typeof(string), TypeExtension.GetType("System.string"));
+			Assert.Same(typeof(string), TypeAlias.Parse("string"));
+			Assert.Same(typeof(string[]), TypeAlias.Parse("string[ ]"));
+			Assert.Same(typeof(string), TypeAlias.Parse("System.string"));
+			Assert.Same(typeof(string[]), TypeAlias.Parse("System.string [ ]"));
 
-			Assert.Same(typeof(int), TypeExtension.GetType("int"));
-			Assert.Same(typeof(int), TypeExtension.GetType("int32"));
-			Assert.Same(typeof(int), TypeExtension.GetType("System.Int32"));
-			Assert.Same(typeof(int?), TypeExtension.GetType("int?"));
-			Assert.Same(typeof(int[]), TypeExtension.GetType("int[]"));
-			Assert.Same(typeof(int?[]), TypeExtension.GetType("int?[]"));
+			Assert.Same(typeof(int), TypeAlias.Parse("int"));
+			Assert.Same(typeof(int), TypeAlias.Parse("int32"));
+			Assert.Same(typeof(int), TypeAlias.Parse("System.Int32"));
+			Assert.Same(typeof(int?), TypeAlias.Parse("int?"));
+			Assert.Same(typeof(int[]), TypeAlias.Parse("int [ ] "));
+			Assert.Same(typeof(int?[]), TypeAlias.Parse("int?[]"));
 
-			Assert.Same(typeof(Guid), TypeExtension.GetType("GUID"));
-			Assert.Same(typeof(Guid), TypeExtension.GetType("system.guid"));
-			Assert.Same(typeof(Guid?), TypeExtension.GetType("guid?"));
-			Assert.Same(typeof(Guid[]), TypeExtension.GetType("guid[]"));
-			Assert.Same(typeof(Guid?[]), TypeExtension.GetType("guid?[]"));
+			Assert.Same(typeof(Guid), TypeAlias.Parse("GUID"));
+			Assert.Same(typeof(Guid), TypeAlias.Parse("system.guid"));
+			Assert.Same(typeof(Guid?), TypeAlias.Parse("guid? "));
+			Assert.Same(typeof(Guid[]), TypeAlias.Parse("guid [] "));
+			Assert.Same(typeof(Guid?[]), TypeAlias.Parse("guid?  [ ] "));
 
-			Assert.Same(typeof(DateTime), TypeExtension.GetType("datetime"));
-			Assert.Same(typeof(DateTime?), TypeExtension.GetType("datetime?"));
-			Assert.Same(typeof(DateTime[]), TypeExtension.GetType("datetime[]"));
-			Assert.Same(typeof(DateTime?[]), TypeExtension.GetType("datetime?[]"));
+			Assert.Same(typeof(DateTime), TypeAlias.Parse("datetime"));
+			Assert.Same(typeof(DateTime?), TypeAlias.Parse("datetime?"));
+			Assert.Same(typeof(DateTime[]), TypeAlias.Parse("datetime[]"));
+			Assert.Same(typeof(DateTime?[]), TypeAlias.Parse("datetime? [ ]"));
 
-			Assert.Same(typeof(DateOnly), TypeExtension.GetType("date"));
-			Assert.Same(typeof(DateOnly), TypeExtension.GetType("dateOnly"));
-			Assert.Same(typeof(DateOnly), TypeExtension.GetType("System.DateOnly"));
-			Assert.Same(typeof(DateOnly?), TypeExtension.GetType("Date?"));
-			Assert.Same(typeof(DateOnly?), TypeExtension.GetType("DateOnly?"));
-			Assert.Same(typeof(DateOnly[]), TypeExtension.GetType("Date[]"));
-			Assert.Same(typeof(DateOnly[]), TypeExtension.GetType("DateOnly[]"));
-			Assert.Same(typeof(DateOnly?[]), TypeExtension.GetType("Date?[]"));
-			Assert.Same(typeof(DateOnly?[]), TypeExtension.GetType("DateOnly?[]"));
+			Assert.Same(typeof(DateOnly), TypeAlias.Parse("date"));
+			Assert.Same(typeof(DateOnly), TypeAlias.Parse("dateOnly"));
+			Assert.Same(typeof(DateOnly), TypeAlias.Parse("System.DateOnly"));
+			Assert.Same(typeof(DateOnly?), TypeAlias.Parse("Date?"));
+			Assert.Same(typeof(DateOnly?), TypeAlias.Parse("DateOnly?"));
+			Assert.Same(typeof(DateOnly[]), TypeAlias.Parse("Date[]"));
+			Assert.Same(typeof(DateOnly[]), TypeAlias.Parse("DateOnly[]"));
+			Assert.Same(typeof(DateOnly?[]), TypeAlias.Parse("Date?[]"));
+			Assert.Same(typeof(DateOnly?[]), TypeAlias.Parse("DateOnly?[]"));
 
-			Assert.Same(typeof(TimeOnly), TypeExtension.GetType("time"));
-			Assert.Same(typeof(TimeOnly), TypeExtension.GetType("timeOnly"));
-			Assert.Same(typeof(TimeOnly), TypeExtension.GetType("System.TimeOnly"));
-			Assert.Same(typeof(TimeOnly?), TypeExtension.GetType("Time?"));
-			Assert.Same(typeof(TimeOnly?), TypeExtension.GetType("TimeOnly?"));
-			Assert.Same(typeof(TimeOnly[]), TypeExtension.GetType("Time[]"));
-			Assert.Same(typeof(TimeOnly[]), TypeExtension.GetType("TimeOnly[]"));
-			Assert.Same(typeof(TimeOnly?[]), TypeExtension.GetType("Time?[]"));
-			Assert.Same(typeof(TimeOnly?[]), TypeExtension.GetType("TimeOnly?[]"));
+			Assert.Same(typeof(TimeOnly), TypeAlias.Parse("time"));
+			Assert.Same(typeof(TimeOnly), TypeAlias.Parse("timeOnly"));
+			Assert.Same(typeof(TimeOnly), TypeAlias.Parse("System.TimeOnly"));
+			Assert.Same(typeof(TimeOnly?), TypeAlias.Parse("Time?"));
+			Assert.Same(typeof(TimeOnly?), TypeAlias.Parse("TimeOnly?"));
+			Assert.Same(typeof(TimeOnly[]), TypeAlias.Parse("Time[]"));
+			Assert.Same(typeof(TimeOnly[]), TypeAlias.Parse("TimeOnly[]"));
+			Assert.Same(typeof(TimeOnly?[]), TypeAlias.Parse("Time?[]"));
+			Assert.Same(typeof(TimeOnly?[]), TypeAlias.Parse("TimeOnly?[]"));
 
-			Assert.Same(typeof(TimeSpan), TypeExtension.GetType("TimeSpan"));
-			Assert.Same(typeof(TimeSpan), TypeExtension.GetType("System.TimeSpan"));
-			Assert.Same(typeof(TimeSpan?), TypeExtension.GetType("timespan?"));
-			Assert.Same(typeof(TimeSpan[]), TypeExtension.GetType("timeSpan[]"));
-			Assert.Same(typeof(TimeSpan?[]), TypeExtension.GetType("timeSpan?[]"));
+			Assert.Same(typeof(TimeSpan), TypeAlias.Parse("TimeSpan"));
+			Assert.Same(typeof(TimeSpan), TypeAlias.Parse("System.TimeSpan"));
+			Assert.Same(typeof(TimeSpan?), TypeAlias.Parse("timespan?"));
+			Assert.Same(typeof(TimeSpan[]), TypeAlias.Parse("timeSpan[]"));
+			Assert.Same(typeof(TimeSpan?[]), TypeAlias.Parse("timeSpan?[]"));
 
-			Assert.Same(typeof(Gender), TypeExtension.GetType("Zongsoft.Tests.Gender, Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender?), TypeExtension.GetType("Zongsoft.Tests.Gender?, Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender[]), TypeExtension.GetType("Zongsoft.Tests.Gender[], Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender?[]), TypeExtension.GetType("Zongsoft.Tests.Gender?[], Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender), TypeAlias.Parse("Zongsoft.Tests.Gender, Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender?), TypeAlias.Parse("Zongsoft.Tests.Gender?, Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender[]), TypeAlias.Parse("Zongsoft.Tests.Gender[], Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender?[]), TypeAlias.Parse("Zongsoft.Tests.Gender?[], Zongsoft.Core.Tests"));
 
-			Assert.Same(typeof(Gender), TypeExtension.GetType("Zongsoft.Tests.Gender@Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender?), TypeExtension.GetType("Zongsoft.Tests.Gender?@Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender[]), TypeExtension.GetType("Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender?[]), TypeExtension.GetType("Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender), TypeAlias.Parse("Zongsoft.Tests.Gender@Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender?), TypeAlias.Parse("Zongsoft.Tests.Gender?@Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender[]), TypeAlias.Parse("Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender?[]), TypeAlias.Parse("Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests"));
 
-			Assert.Same(typeof(IEnumerable<Gender>), TypeExtension.GetType("IEnumerable<Zongsoft.Tests.Gender@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IEnumerable<Gender?>), TypeExtension.GetType("IEnumerable<Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IEnumerable<Gender[]>), TypeExtension.GetType("System.Collections.Generic.IEnumerable<Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IEnumerable<Gender?[]>), TypeExtension.GetType("System.Collections.Generic.IEnumerable<Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IEnumerable<Gender>), TypeAlias.Parse("IEnumerable<Zongsoft.Tests.Gender@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IEnumerable<Gender?>), TypeAlias.Parse("IEnumerable<Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IEnumerable<Gender[]>), TypeAlias.Parse("System.Collections.Generic.IEnumerable<Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IEnumerable<Gender?[]>), TypeAlias.Parse("System.Collections.Generic.IEnumerable<Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
 
-			Assert.Same(typeof(IDictionary<string, Gender>), TypeExtension.GetType("IDictionary<string, Zongsoft.Tests.Gender@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IDictionary<string, Gender?>), TypeExtension.GetType("IDictionary<string, Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IDictionary<string, Gender[]>), TypeExtension.GetType("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>"));
-			Assert.Same(typeof(IDictionary<string, Gender?[]>), TypeExtension.GetType("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IDictionary<string, Gender>), TypeAlias.Parse("IDictionary<string, Zongsoft.Tests.Gender@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IDictionary<string, Gender?>), TypeAlias.Parse("IDictionary<string, Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IDictionary<string, Gender[]>), TypeAlias.Parse("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>"));
+			Assert.Same(typeof(IDictionary<string, Gender?[]>), TypeAlias.Parse("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
 
 			var tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]>);
-			Assert.Same(tupleType, TypeExtension.GetType(tupleType.FullName));
-			Assert.Same(tupleType, TypeExtension.GetType("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?, Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core >"));
+			Assert.Same(tupleType, TypeAlias.Parse(tupleType.FullName));
+			Assert.Same(tupleType, TypeAlias.Parse("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?, Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core >"));
 		}
 
 		[Fact]
