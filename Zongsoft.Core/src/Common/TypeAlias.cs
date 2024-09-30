@@ -139,7 +139,7 @@ namespace Zongsoft.Common
 			string alias;
 			bool aliased;
 
-			if(code != TypeCode.Object)
+			if(!elementType.IsEnum && code != TypeCode.Object)
 			{
 				alias = code.ToString();
 				aliased = true;
@@ -150,7 +150,14 @@ namespace Zongsoft.Common
 				aliased = Aliases.TryGetValue(prototype, out alias);
 
 				if(!aliased)
-					alias = $"{elementType.Namespace}.{elementType.Name}";
+				{
+					var typeName = elementType.IsGenericType ?
+						elementType.Name[..(elementType.Name.Length - GetDigits(elementType.GenericTypeArguments.Length) - 1)] :
+						elementType.Name;
+
+					aliased = string.Equals(elementType.Namespace, nameof(System));
+					alias = aliased ? typeName : $"{elementType.Namespace}.{typeName}";
+				}
 
 				if(elementType.IsGenericType)
 				{
@@ -179,6 +186,33 @@ namespace Zongsoft.Common
 				alias += "[]";
 
 			return aliased ? alias : $"{alias}@{elementType.Assembly.GetName().Name}";
+		}
+
+		/// <summary>获取指定整数的十进制数的位数。</summary>
+		/// <param name="integer">指定的整数值。</param>
+		/// <returns>返回指定整数的十进制的位数。</returns>
+		private static int GetDigits(int integer)
+		{
+			if(integer < 10)
+				return 1;
+			if(integer < 100)
+				return 2;
+			if(integer < 1000)
+				return 3;
+			if(integer < 10000)
+				return 4;
+			if(integer < 100000)
+				return 5;
+			if(integer < 1000000)
+				return 6;
+			if(integer < 10000000)
+				return 7;
+			if(integer < 100000000)
+				return 8;
+			if(integer < 1000000000)
+				return 9;
+
+			return 10;
 		}
 		#endregion
 

@@ -124,7 +124,66 @@ namespace Zongsoft.Common.Tests
 		[Fact]
 		public void TestGetTypeAlias()
 		{
+			Assert.Equal("object", TypeAlias.GetAlias(typeof(object)), true);
+			Assert.Equal("object[]", TypeAlias.GetAlias(typeof(object[])), true);
+			Assert.Equal("DBNull", TypeAlias.GetAlias(typeof(DBNull)), true);
+			Assert.Equal("DBNull[]", TypeAlias.GetAlias(typeof(DBNull[])), true);
+
+			Assert.Equal("void", TypeAlias.GetAlias(typeof(void)), true);
+			Assert.Equal("string", TypeAlias.GetAlias(typeof(string)), true);
+			Assert.Equal("string[]", TypeAlias.GetAlias(typeof(string[])), true);
+
 			Assert.Equal("int32", TypeAlias.GetAlias(typeof(int)), true);
+			Assert.Equal("int32?", TypeAlias.GetAlias(typeof(int?)), true);
+			Assert.Equal("int32[]", TypeAlias.GetAlias(typeof(int[])), true);
+			Assert.Equal("int32?[]", TypeAlias.GetAlias(typeof(int?[])), true);
+
+			Assert.Equal("Date", TypeAlias.GetAlias(typeof(DateOnly)), true);
+			Assert.Equal("Date?", TypeAlias.GetAlias(typeof(DateOnly?)), true);
+			Assert.Equal("date[]", TypeAlias.GetAlias(typeof(DateOnly[])), true);
+			Assert.Equal("date?[]", TypeAlias.GetAlias(typeof(DateOnly?[])), true);
+
+			Assert.Equal("Range<Timestamp>", TypeAlias.GetAlias(typeof(Zongsoft.Data.Range<DateTimeOffset>)), true);
+			Assert.Equal("Range<Timestamp>?", TypeAlias.GetAlias(typeof(Zongsoft.Data.Range<DateTimeOffset>?)), true);
+			Assert.Equal("Range<Timestamp>[]", TypeAlias.GetAlias(typeof(Zongsoft.Data.Range<DateTimeOffset>[])), true);
+			Assert.Equal("Range<Timestamp>?[]", TypeAlias.GetAlias(typeof(Zongsoft.Data.Range<DateTimeOffset>?[])), true);
+
+			Assert.Equal("Zongsoft.Tests.Gender@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(Gender)), true);
+			Assert.Equal("Zongsoft.Tests.Gender?@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(Gender?)), true);
+			Assert.Equal("Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(Gender[])), true);
+			Assert.Equal("Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(Gender?[])), true);
+
+			Assert.Equal("IEnumerable<Zongsoft.Tests.Gender@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IEnumerable<Gender>)), true);
+			Assert.Equal("IEnumerable<Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IEnumerable<Gender?>)), true);
+			Assert.Equal("IEnumerable<Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IEnumerable<Gender[]>)), true);
+			Assert.Equal("IEnumerable<Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IEnumerable<Gender?[]>)), true);
+
+			Assert.Equal("List<Zongsoft.Tests.Gender@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(List<Gender>)), true);
+			Assert.Equal("List<Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(List<Gender?>)), true);
+			Assert.Equal("List<Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(List<Gender[]>)), true);
+			Assert.Equal("List<Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(List<Gender?[]>)), true);
+
+			Assert.Equal("IDictionary<String, Zongsoft.Tests.Gender@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IDictionary<string, Gender>)), true);
+			Assert.Equal("IDictionary<String, Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IDictionary<string, Gender?>)), true);
+			Assert.Equal("IDictionary<String, Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IDictionary<string, Gender[]>)), true);
+			Assert.Equal("IDictionary<String, Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(IDictionary<string, Gender?[]>)), true);
+
+			Assert.Equal("Dictionary<Range<DateTime>, Zongsoft.Tests.Gender@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>, Gender>)), true);
+			Assert.Equal("Dictionary<Range<DateTime>?, Zongsoft.Tests.Gender?@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>?, Gender?>)), true);
+			Assert.Equal("Dictionary<Range<DateTime>[], Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>[], Gender[]>)), true);
+			Assert.Equal("Dictionary<Range<DateTime>?[], Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>?[], Gender?[]>)), true);
+
+			var tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]>);
+			var tupleAlias = "ValueTuple<String, Date?, Byte[], Guid?[], Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]@Zongsoft.Core>";
+			Assert.Equal(tupleAlias, tupleType.GetAlias());
+
+			tupleType = typeof(Nullable<>).MakeGenericType(tupleType);
+			tupleAlias += '?';
+			Assert.Equal(tupleAlias, tupleType.GetAlias());
+
+			tupleType = tupleType.MakeArrayType();
+			tupleAlias += "[]";
+			Assert.Equal(tupleAlias, tupleType.GetAlias());
 		}
 
 		[Fact]
