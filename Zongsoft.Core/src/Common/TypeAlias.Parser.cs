@@ -89,8 +89,18 @@ namespace Zongsoft.Common
 				}
 			}
 
-			if(context.State == AliasState.Nullable)
-				flags |= TypeAliasFlags.Nullable;
+			switch(context.State)
+			{
+				case AliasState.Nullable:
+					flags |= TypeAliasFlags.Nullable;
+					break;
+				case AliasState.Type:
+					type = context.Reset();
+					break;
+				case AliasState.Assembly:
+					assembly = context.Reset();
+					break;
+			}
 
 			return new TypeAliasToken(type.ToString(), assembly.ToString(), flags);
 		}
@@ -110,9 +120,13 @@ namespace Zongsoft.Common
 			switch(context.Character)
 			{
 				case '.':
+					context.Accept();
+
 					if(context.Move())
 					{
-						if(!context.IsLetter && context.Character != '_')
+						if(context.IsLetter || context.Character == '_')
+							context.Accept();
+						else
 							context.Error($"The type name or namespace must begin with a letter or an underscore.");
 					}
 					break;
@@ -146,7 +160,7 @@ namespace Zongsoft.Common
 					break;
 				default:
 					if(context.IsLetterOrDigit || context.Character == '_')
-						;
+						context.Accept();
 					else if(context.IsWhitespace)
 						context.Accept(AliasState.Ending);
 					else
@@ -162,10 +176,12 @@ namespace Zongsoft.Common
 			switch(context.Character)
 			{
 				case '.':
+					context.Accept();
+
 					if(context.Move())
 					{
 						if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
-							;
+							context.Accept();
 						else
 							context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
 					}
@@ -181,9 +197,14 @@ namespace Zongsoft.Common
 					break;
 				default:
 					if(context.IsLetterOrDigit || context.Character == '_' || context.Character == '-')
-						;
+						context.Accept();
 					else if(context.IsWhitespace)
-						context.Accept(AliasState.Ending);
+					{
+						if(context.Count > 0)
+							context.Accept(AliasState.Ending);
+						else
+							context.Skip();
+					}
 					else
 						context.Error($"The assembly name contains the illegal character '{context.Character}', located at the {context.Position} character.");
 					break;
@@ -267,7 +288,10 @@ namespace Zongsoft.Common
 		private static void DoGeneric(ref AliasContext context)
 		{
 			if(context.IsWhitespace)
+			{
 				context.Skip();
+				return;
+			}
 
 			switch(context.Character)
 			{
@@ -602,8 +626,11 @@ namespace Zongsoft.Common
 			private AliasState _previous;
 			private char _character;
 			private int _position;
-			private int _offset;
 			private int _depth;
+			private int _count;
+			private int _whitespaces;
+			private int _skippedPrefix;
+			private int _skippedSuffix;
 			private string _errorMessage;
 			#endregion
 
@@ -615,7 +642,7 @@ namespace Zongsoft.Common
 				_previous = AliasState.None;
 				_character = '\0';
 				_position = 0;
-				_offset = 0;
+				_count = 0;
 				_depth = 0;
 				_errorMessage = null;
 			}
@@ -625,6 +652,7 @@ namespace Zongsoft.Common
 			public AliasState State => _state;
 			public AliasState Previous => _previous;
 			public int Depth => _depth;
+			public int Count => _count;
 			public int Position => _position;
 			public char Character => _character;
 			public bool IsLetter => char.IsLetter(_character);
@@ -641,6 +669,7 @@ namespace Zongsoft.Common
 					return true;
 				}
 
+				_position = _text.Length + 1;
 				_character = '\0';
 				return false;
 			}
@@ -657,16 +686,28 @@ namespace Zongsoft.Common
 
 			public ReadOnlySpan<char> Reset()
 			{
-				var result = _text.Slice(_offset, _position - _offset - 1);
-				_offset = _position;
+				var result = _text.Slice(_position - _count - _whitespaces - 1, _count);
+				_count = 0;
 				return result;
 			}
 
-			public void Skip() => _offset++;
+			public void Skip()
+			{
+				if(_count > 0)
+					_whitespaces++;
+			}
+
+			public void Accept() => this.Accept(_state);
 			public void Accept(AliasState state)
 			{
 				if(_state == state)
+				{
+					_count++;
 					return;
+				}
+
+				if(_state == AliasState.None || _state == AliasState.Generic)
+					_count++;
 
 				_previous = _state;
 				_state = state;

@@ -42,31 +42,31 @@ namespace Zongsoft.Common.Tests
 		public void TestTypeAliasParse()
 		{
 			Assert.Same(typeof(void), TypeAlias.Parse("void"));
-			Assert.Same(typeof(object), TypeAlias.Parse("object"));
+			Assert.Same(typeof(object), TypeAlias.Parse(" object"));
 			Assert.Same(typeof(object[]), TypeAlias.Parse("object []"));
 			Assert.Same(typeof(object), TypeAlias.Parse("System.object"));
 			Assert.Same(typeof(object[]), TypeAlias.Parse("System.object []"));
 
-			Assert.Same(typeof(string), TypeAlias.Parse("string"));
+			Assert.Same(typeof(string), TypeAlias.Parse(" string "));
 			Assert.Same(typeof(string[]), TypeAlias.Parse("string[ ]"));
 			Assert.Same(typeof(string), TypeAlias.Parse("System.string"));
 			Assert.Same(typeof(string[]), TypeAlias.Parse("System.string [ ]"));
 
-			Assert.Same(typeof(int), TypeAlias.Parse("int"));
+			Assert.Same(typeof(int), TypeAlias.Parse(" int "));
 			Assert.Same(typeof(int), TypeAlias.Parse("int32"));
 			Assert.Same(typeof(int), TypeAlias.Parse("System.Int32"));
-			Assert.Same(typeof(int?), TypeAlias.Parse("int?"));
+			Assert.Same(typeof(int?), TypeAlias.Parse("int? "));
 			Assert.Same(typeof(int[]), TypeAlias.Parse("int [ ] "));
-			Assert.Same(typeof(int?[]), TypeAlias.Parse("int?[]"));
+			Assert.Same(typeof(int?[]), TypeAlias.Parse(" int?[]"));
 
-			Assert.Same(typeof(Guid), TypeAlias.Parse("GUID"));
-			Assert.Same(typeof(Guid), TypeAlias.Parse("system.guid"));
+			Assert.Same(typeof(Guid), TypeAlias.Parse(" GUID"));
+			Assert.Same(typeof(Guid), TypeAlias.Parse(" system.guid"));
 			Assert.Same(typeof(Guid?), TypeAlias.Parse("guid? "));
-			Assert.Same(typeof(Guid[]), TypeAlias.Parse("guid [] "));
+			Assert.Same(typeof(Guid[]), TypeAlias.Parse(" guid [] "));
 			Assert.Same(typeof(Guid?[]), TypeAlias.Parse("guid?  [ ] "));
 
 			Assert.Same(typeof(DateTime), TypeAlias.Parse("datetime"));
-			Assert.Same(typeof(DateTime?), TypeAlias.Parse("datetime?"));
+			Assert.Same(typeof(DateTime?), TypeAlias.Parse(" datetime?"));
 			Assert.Same(typeof(DateTime[]), TypeAlias.Parse("datetime[]"));
 			Assert.Same(typeof(DateTime?[]), TypeAlias.Parse("datetime? [ ]"));
 
@@ -96,10 +96,10 @@ namespace Zongsoft.Common.Tests
 			Assert.Same(typeof(TimeSpan[]), TypeAlias.Parse("timeSpan[]"));
 			Assert.Same(typeof(TimeSpan?[]), TypeAlias.Parse("timeSpan?[]"));
 
-			Assert.Same(typeof(Gender), TypeAlias.Parse("Zongsoft.Tests.Gender, Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender), TypeAlias.Parse("Zongsoft.Tests.Gender,Zongsoft.Core.Tests"));
 			Assert.Same(typeof(Gender?), TypeAlias.Parse("Zongsoft.Tests.Gender?, Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender[]), TypeAlias.Parse("Zongsoft.Tests.Gender[], Zongsoft.Core.Tests"));
-			Assert.Same(typeof(Gender?[]), TypeAlias.Parse("Zongsoft.Tests.Gender?[], Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender[]), TypeAlias.Parse("Zongsoft.Tests.Gender[ ],Zongsoft.Core.Tests"));
+			Assert.Same(typeof(Gender?[]), TypeAlias.Parse("Zongsoft.Tests.Gender? [ ], Zongsoft.Core.Tests"));
 
 			Assert.Same(typeof(Gender), TypeAlias.Parse("Zongsoft.Tests.Gender@Zongsoft.Core.Tests"));
 			Assert.Same(typeof(Gender?), TypeAlias.Parse("Zongsoft.Tests.Gender?@Zongsoft.Core.Tests"));
