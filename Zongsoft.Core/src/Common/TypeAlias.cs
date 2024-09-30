@@ -96,6 +96,90 @@ namespace Zongsoft.Common
 			{ "IReadOnlyCollection", typeof(IReadOnlyCollection<>) },
 			{ "IReadOnlyDictionary", typeof(IReadOnlyDictionary<,>) },
 		};
+
+		private static readonly Dictionary<Type, string> Aliases = new()
+		{
+			{ typeof(void), "void" },
+			{ typeof(object), nameof(Object) },
+			{ typeof(Guid), nameof(Guid) },
+			{ typeof(TimeSpan), nameof(TimeSpan) },
+			{ typeof(DateOnly), "Date" },
+			{ typeof(TimeOnly), "Time" },
+			{ typeof(DateTimeOffset), "Timestamp" },
+			{ typeof(Zongsoft.Data.Range<>), "Range" },
+			{ typeof(Zongsoft.Data.Mixture<>), "Mixture" },
+
+			{ typeof(IList<>), nameof(IList) },
+			{ typeof(IEnumerable<>), nameof(IEnumerable) },
+			{ typeof(ICollection<>), nameof(ICollection) },
+			{ typeof(IDictionary<,>), nameof(IDictionary) },
+
+			{ typeof(List<>), "List" },
+			{ typeof(ISet<>), "ISet" },
+			{ typeof(HashSet<>), "Hashset" },
+			{ typeof(Dictionary<,>), "Dictionary" },
+
+			{ typeof(IReadOnlySet<>), "IReadOnlySet" },
+			{ typeof(IReadOnlyList<>), "IReadOnlyList" },
+			{ typeof(IReadOnlyCollection<>), "IReadOnlyCollection" },
+			{ typeof(IReadOnlyDictionary<,>), "IReadOnlyDictionary" },
+		};
+		#endregion
+
+		#region 别名方法
+		public static string GetAlias(this Type type)
+		{
+			if(type == null)
+				return null;
+
+			var elementType = type.IsArray ? type.GetElementType() : type;
+			elementType = elementType.IsNullable(out var underlyingType) ? underlyingType : elementType;
+			var code = Type.GetTypeCode(elementType);
+
+			string alias;
+			bool aliased;
+
+			if(code != TypeCode.Object)
+			{
+				alias = code.ToString();
+				aliased = true;
+			}
+			else
+			{
+				var prototype = elementType.IsGenericType ? elementType.GetGenericTypeDefinition() : elementType;
+				aliased = Aliases.TryGetValue(prototype, out alias);
+
+				if(!aliased)
+					alias = $"{elementType.Namespace}.{elementType.Name}";
+
+				if(elementType.IsGenericType)
+				{
+					alias += '<';
+
+					var arguments = elementType.GenericTypeArguments;
+					if(arguments != null && arguments.Length > 0)
+					{
+						for(int i = 0; i < arguments.Length; i++)
+						{
+							if(i > 0)
+								alias += ", ";
+
+							alias += GetAlias(arguments[i]);
+						}
+					}
+
+					alias += '>';
+				}
+			}
+
+			if(underlyingType != null)
+				alias += '?';
+
+			if(type.IsArray)
+				alias += "[]";
+
+			return aliased ? alias : $"{alias}@{elementType.Assembly.GetName().Name}";
+		}
 		#endregion
 
 		#region 解析方法

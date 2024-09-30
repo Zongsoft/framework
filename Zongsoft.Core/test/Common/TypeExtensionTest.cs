@@ -122,6 +122,12 @@ namespace Zongsoft.Common.Tests
 		}
 
 		[Fact]
+		public void TestGetTypeAlias()
+		{
+			Assert.Equal("int32", TypeAlias.GetAlias(typeof(int)), true);
+		}
+
+		[Fact]
 		public void TestGetDefaultValue()
 		{
 			Assert.Equal(0, TypeExtension.GetDefaultValue(typeof(int)));
