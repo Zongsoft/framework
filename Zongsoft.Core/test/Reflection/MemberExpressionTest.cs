@@ -8,15 +8,6 @@ namespace Zongsoft.Reflection.Expressions.Tests
 	public class MemberExpressionTest
 	{
 		[Fact]
-		public void Test()
-		{
-			Test1();
-			Test2();
-			Test3();
-			Test4();
-		}
-
-		[Fact]
 		public void Test1()
 		{
 			IMemberExpression expression;

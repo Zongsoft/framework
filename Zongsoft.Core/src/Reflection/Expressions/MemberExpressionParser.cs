@@ -41,31 +41,11 @@ namespace Zongsoft.Reflection.Expressions
 		#endregion
 
 		#region 公共方法
-		public static bool TryParse(string text, out IMemberExpression expression)
-		{
-			return (expression = Parse(text, 0, 0, null)) != null;
-		}
-
-		public static bool TryParse(string text, int start, int count, out IMemberExpression expression)
-		{
-			return (expression = Parse(text, start, count, null)) != null;
-		}
-
-		public static IMemberExpression Parse(string text)
-		{
-			return Parse(text, 0, 0, message => throw new InvalidOperationException(message));
-		}
-
-		public static IMemberExpression Parse(string text, int start, int count)
-		{
-			return Parse(text, start, count, message => throw new InvalidOperationException(message));
-		}
-
-		public static IMemberExpression Parse(string text, Action<string> onError)
-		{
-			return Parse(text, 0, 0, onError);
-		}
-
+		public static bool TryParse(string text, out IMemberExpression expression) => (expression = Parse(text, 0, 0, null)) != null;
+		public static bool TryParse(string text, int start, int count, out IMemberExpression expression) => (expression = Parse(text, start, count, null)) != null;
+		public static IMemberExpression Parse(string text) => Parse(text, 0, 0, message => throw new InvalidOperationException(message));
+		public static IMemberExpression Parse(string text, int start, int count) => Parse(text, start, count, message => throw new InvalidOperationException(message));
+		public static IMemberExpression Parse(string text, Action<string> onError) => Parse(text, 0, 0, onError);
 		public static IMemberExpression Parse(string text, int start, int count, Action<string> onError)
 		{
 			if(string.IsNullOrEmpty(text))
@@ -548,36 +528,21 @@ namespace Zongsoft.Reflection.Expressions
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static char Escape(char chr)
+		private static char Escape(char chr) => chr switch
 		{
-			switch(chr)
-			{
-				case '\\':
-					return '\\';
-				case '\'':
-					return '\'';
-				case '\"':
-					return '\"';
-				case 't':
-					return '\t';
-				case 'b':
-					return '\b';
-				case 's':
-					return ' ';
-				case 'n':
-					return '\n';
-				case 'r':
-					return '\r';
-				default:
-					return chr;
-			}
-		}
+			'\\' => '\\',
+			'\'' => '\'',
+			'\"' => '\"',
+			't' => '\t',
+			'b' => '\b',
+			's' => ' ',
+			'n' => '\n',
+			'r' => '\r',
+			_ => chr,
+		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetIllegalCharacterExceptionMessage(char chr, int position)
-		{
-			return string.Format(EXCEPTION_ILLEGAL_CHARACTER_MESSAGE, chr, position);
-		}
+		private static string GetIllegalCharacterExceptionMessage(char chr, int position) => string.Format(EXCEPTION_ILLEGAL_CHARACTER_MESSAGE, chr, position);
 		#endregion
 
 		#region 嵌套结构
@@ -626,38 +591,18 @@ namespace Zongsoft.Reflection.Expressions
 			#endregion
 
 			#region 公共方法
-			public void Accept(char? chr = null)
-			{
-				_buffer[_bufferIndex++] = chr ?? Character;
-			}
+			public void Accept(char? chr = null) => _buffer[_bufferIndex++] = chr ?? Character;
+			public readonly void OnError(string message) => _onError?.Invoke(message);
+			public readonly MemberExpression Peek() => Stack.Count > 0 ? Stack.Peek() : null;
+			public readonly bool IsWhitespace() => char.IsWhiteSpace(Character);
+			public readonly bool IsLetterOrUnderscore() =>
+				(Character >= 'a' && Character <= 'z') ||
+				(Character >= 'A' && Character <= 'Z') || Character == '_';
 
-			public void OnError(string message)
-			{
-				_onError?.Invoke(message);
-			}
-
-			public MemberExpression Peek()
-			{
-				return Stack.Count > 0 ? Stack.Peek() : null;
-			}
-
-			public bool IsWhitespace()
-			{
-				return char.IsWhiteSpace(Character);
-			}
-
-			public bool IsLetterOrUnderscore()
-			{
-				return (Character >= 'a' && Character <= 'z') ||
-				       (Character >= 'A' && Character <= 'Z') || Character == '_';
-			}
-
-			public bool IsLetterOrDigitOrUnderscore()
-			{
-				return (Character >= 'a' && Character <= 'z') ||
-				       (Character >= 'A' && Character <= 'Z') ||
-				       (Character >= '0' && Character <= '9') || Character == '_';
-			}
+			public readonly bool IsLetterOrDigitOrUnderscore() =>
+				(Character >= 'a' && Character <= 'z') ||
+				(Character >= 'A' && Character <= 'Z') ||
+				(Character >= '0' && Character <= '9') || Character == '_';
 
 			public void AppendParameterConstant(IMemberExpression owner)
 			{
@@ -777,7 +722,7 @@ namespace Zongsoft.Reflection.Expressions
 				return expression;
 			}
 
-			public State GetOwnerState()
+			public readonly State GetOwnerState()
 			{
 				if(Stack == null || Stack.Count == 0)
 					return State.Gutter;
@@ -811,7 +756,7 @@ namespace Zongsoft.Reflection.Expressions
 					case State.Identifier:
 						if(Stack == null || Stack.Count == 0)
 						{
-							var identifier = MemberExpression.Identifier(GetBufferContent());
+							var identifier = MemberExpression.Identifier(this.GetBufferContent());
 
 							if(Head == null)
 								return identifier;
@@ -841,17 +786,17 @@ namespace Zongsoft.Reflection.Expressions
 		private struct StateVector
 		{
 			#region 常量定义
-			private const int STRING_ESCAPING_FLAG = 1; //字符串是否处于转移状态(0:普通态, 1:转移态)
+			private const int STRING_ESCAPING_FLAG  = 1; //字符串是否处于转移状态(0:普通态, 1:转移态)
 			private const int STRING_QUOTATION_FLAG = 2; //字符串的引号是否为单引号(0:单引号, 1:双引号)
 
-			private const int IDENTIFIER_ATTACHING_FLAG = 4; //标识表达式是否为附加到最后一个参数的标识表达式后面(0:新增参数, 1:附加参数)
-			private const int IDENTIFIER_WHITESPACE_FLAG = 8; //标识表达式中间是否出现空白字符(0:没有, 1:有)
+			private const int IDENTIFIER_ATTACHING_FLAG  = 4; //表达式是否为附加到最后一个参数的标识表达式后面(0:新增参数, 1:附加参数)
+			private const int IDENTIFIER_WHITESPACE_FLAG = 8; //表达式中间是否出现空白字符(0:没有, 1:有)
 
-			private const int CONSTANT_TYPE_FLAG = 0x70; //常量的类型掩码范围
-			private const int CONSTANT_TYPE_INT32_FLAG = 0x10; //32位整型数常量的类型值
-			private const int CONSTANT_TYPE_INT64_FLAG = 0x20; //64位整型数常量的类型值
-			private const int CONSTANT_TYPE_SINGLE_FLAG = 0x30; //单精度浮点数常量的类型值
-			private const int CONSTANT_TYPE_DOUBLE_FLAG = 0x40; //双精度浮点数常量的类型值
+			private const int CONSTANT_TYPE_FLAG         = 0x70; //常量的类型掩码范围
+			private const int CONSTANT_TYPE_INT32_FLAG   = 0x10; //32位整型数常量的类型值
+			private const int CONSTANT_TYPE_INT64_FLAG   = 0x20; //64位整型数常量的类型值
+			private const int CONSTANT_TYPE_SINGLE_FLAG  = 0x30; //单精度浮点数常量的类型值
+			private const int CONSTANT_TYPE_DOUBLE_FLAG  = 0x40; //双精度浮点数常量的类型值
 			private const int CONSTANT_TYPE_DECIMAL_FLAG = 0x50; //Decimal 数常量的类型值
 			#endregion
 
@@ -860,59 +805,28 @@ namespace Zongsoft.Reflection.Expressions
 			#endregion
 
 			#region 公共方法
-			public bool IsEscaping()
-			{
-				return IsMarked(STRING_ESCAPING_FLAG);
-			}
+			public readonly bool IsEscaping() => IsMarked(STRING_ESCAPING_FLAG);
+			public void IsEscaping(bool enabled) => Mark(STRING_ESCAPING_FLAG, enabled);
+			public readonly bool IsAttaching() => IsMarked(IDENTIFIER_ATTACHING_FLAG);
 
-			public void IsEscaping(bool enabled)
-			{
-				Mark(STRING_ESCAPING_FLAG, enabled);
-			}
+			public void IsAttaching(bool enabled) => Mark(IDENTIFIER_ATTACHING_FLAG, enabled);
+			public readonly bool HasWhitespace() => IsMarked(IDENTIFIER_WHITESPACE_FLAG);
+			public void HasWhitespace(bool enabled) => Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
 
-			public bool IsAttaching()
+			public readonly TypeCode GetConstantType() => (_data & CONSTANT_TYPE_FLAG) switch
 			{
-				return IsMarked(IDENTIFIER_ATTACHING_FLAG);
-			}
-
-			public void IsAttaching(bool enabled)
-			{
-				Mark(IDENTIFIER_ATTACHING_FLAG, enabled);
-			}
-
-			public bool HasWhitespace()
-			{
-				return IsMarked(IDENTIFIER_WHITESPACE_FLAG);
-			}
-
-			public void HasWhitespace(bool enabled)
-			{
-				Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
-			}
-
-			public TypeCode GetConstantType()
-			{
-				switch(_data & CONSTANT_TYPE_FLAG)
-				{
-					case CONSTANT_TYPE_INT32_FLAG:
-						return TypeCode.Int32;
-					case CONSTANT_TYPE_INT64_FLAG:
-						return TypeCode.Int64;
-					case CONSTANT_TYPE_SINGLE_FLAG:
-						return TypeCode.Single;
-					case CONSTANT_TYPE_DOUBLE_FLAG:
-						return TypeCode.Double;
-					case CONSTANT_TYPE_DECIMAL_FLAG:
-						return TypeCode.Decimal;
-					default:
-						return TypeCode.String;
-				}
-			}
+				CONSTANT_TYPE_INT32_FLAG => TypeCode.Int32,
+				CONSTANT_TYPE_INT64_FLAG => TypeCode.Int64,
+				CONSTANT_TYPE_SINGLE_FLAG => TypeCode.Single,
+				CONSTANT_TYPE_DOUBLE_FLAG => TypeCode.Double,
+				CONSTANT_TYPE_DECIMAL_FLAG => TypeCode.Decimal,
+				_ => TypeCode.String,
+			};
 
 			public void SetConstantType(TypeCode type)
 			{
 				//首先，重置数字常量类型的比特区域
-				Mark(CONSTANT_TYPE_FLAG, false);
+				this.Mark(CONSTANT_TYPE_FLAG, false);
 
 				switch(type)
 				{
@@ -934,23 +848,13 @@ namespace Zongsoft.Reflection.Expressions
 				}
 			}
 
-			public char GetStringQuote()
-			{
-				return IsMarked(STRING_QUOTATION_FLAG) ? '"' : '\'';
-			}
-
-			public void SetStringQuote(char chr)
-			{
-				Mark(STRING_QUOTATION_FLAG, chr == '"');
-			}
+			public readonly char GetStringQuote() => IsMarked(STRING_QUOTATION_FLAG) ? '"' : '\'';
+			public void SetStringQuote(char chr) => Mark(STRING_QUOTATION_FLAG, chr == '"');
 			#endregion
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private bool IsMarked(int bit)
-			{
-				return (_data & bit) == bit;
-			}
+			private readonly bool IsMarked(int bit) => (_data & bit) == bit;
 
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 			private void Mark(int bit, bool value)
