@@ -229,45 +229,28 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 字节文本
-		/// <summary>
-		/// 将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。
-		/// </summary>
+		/// <summary>将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。</summary>
 		/// <param name="bytes">一个 8 位无符号字节数组。</param>
 		/// <param name="lowerCase">返回的十六进制字符串中是否使用小写字符，默认为大写。</param>
 		/// <returns>参数中元素的字符串表示形式，以十六进制文本表示。</returns>
-		public static string ToHexString(byte[] bytes, bool lowerCase = false)
-		{
-			return ToHexString(bytes, 0, 0, '\0', lowerCase);
-		}
+		public static string ToHexString(byte[] bytes, bool lowerCase = false) => ToHexString(bytes, 0, 0, '\0', lowerCase);
 
-		/// <summary>
-		/// 将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。
-		/// </summary>
+		/// <summary>将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。</summary>
 		/// <param name="bytes">一个 8 位无符号字节数组。</param>
 		/// <param name="offset">指定字节数组的起始下标。</param>
 		/// <param name="count">指定字节数组的元素个数。</param>
 		/// <param name="lowerCase">返回的十六进制字符串中是否使用小写字符，默认为大写。</param>
 		/// <returns>参数中元素的字符串表示形式，以十六进制文本表示。</returns>
-		public static string ToHexString(byte[] bytes, int offset, int count, bool lowerCase = false)
-		{
-			return ToHexString(bytes, offset, count, '\0', lowerCase);
-		}
+		public static string ToHexString(byte[] bytes, int offset, int count, bool lowerCase = false) => ToHexString(bytes, offset, count, '\0', lowerCase);
 
-		/// <summary>
-		/// 将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。
-		/// </summary>
+		/// <summary>将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。</summary>
 		/// <param name="bytes">一个 8 位无符号字节数组。</param>
 		/// <param name="separator">每字节对应的十六进制文本中间的分隔符。</param>
 		/// <param name="lowerCase">返回的十六进制字符串中是否使用小写字符，默认为大写。</param>
 		/// <returns>参数中元素的字符串表示形式，以十六进制文本表示。</returns>
-		public static string ToHexString(byte[] bytes, char separator, bool lowerCase = false)
-		{
-			return ToHexString(bytes, 0, 0, separator, lowerCase);
-		}
+		public static string ToHexString(byte[] bytes, char separator, bool lowerCase = false) => ToHexString(bytes, 0, 0, separator, lowerCase);
 
-		/// <summary>
-		/// 将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。
-		/// </summary>
+		/// <summary>将指定的字节数组转换为其用十六进制数字编码的等效字符串表示形式。</summary>
 		/// <param name="bytes">一个 8 位无符号字节数组。</param>
 		/// <param name="offset">指定字节数组的起始下标。</param>
 		/// <param name="count">指定字节数组的元素个数。</param>
@@ -312,34 +295,22 @@ namespace Zongsoft.Common
 			return (char)(alpha + (value - 10));
 		}
 
-		/// <summary>
-		/// 将指定的十六进制格式的字符串转换为等效的字节数组。
-		/// </summary>
+		/// <summary>将指定的十六进制格式的字符串转换为等效的字节数组。</summary>
 		/// <param name="text">要转换的十六进制格式的字符串。</param>
 		/// <returns>与<paramref name="text"/>等效的字节数组。</returns>
 		/// <exception cref="System.FormatException"><paramref name="text"/>参数中含有非空白字符。</exception>
 		/// <remarks>该方法的实现始终忽略<paramref name="text"/>参数中的空白字符。</remarks>
-		public static byte[] FromHexString(string text)
-		{
-			return FromHexString(text, '\0', true);
-		}
+		public static byte[] FromHexString(string text) => FromHexString(text, '\0', true);
 
-		/// <summary>
-		/// 将指定的十六进制格式的字符串转换为等效的字节数组。
-		/// </summary>
+		/// <summary>将指定的十六进制格式的字符串转换为等效的字节数组。</summary>
 		/// <param name="text">要转换的十六进制格式的字符串。</param>
 		/// <param name="separator">要过滤掉的分隔符字符。</param>
 		/// <returns>与<paramref name="text"/>等效的字节数组。</returns>
 		/// <exception cref="System.FormatException"><paramref name="text"/>参数中含有非空白字符或非指定的分隔符。</exception>
 		/// <remarks>该方法的实现始终忽略<paramref name="text"/>参数中的空白字符。</remarks>
-		public static byte[] FromHexString(string text, char separator)
-		{
-			return FromHexString(text, separator, true);
-		}
+		public static byte[] FromHexString(string text, char separator) => FromHexString(text, separator, true);
 
-		/// <summary>
-		/// 将指定的十六进制格式的字符串转换为等效的字节数组。
-		/// </summary>
+		/// <summary>将指定的十六进制格式的字符串转换为等效的字节数组。</summary>
 		/// <param name="text">要转换的十六进制格式的字符串。</param>
 		/// <param name="separator">要过滤掉的分隔符字符。</param>
 		/// <param name="throwExceptionOnFormat">指定当输入文本中含有非法字符时是否抛出<seealso cref="System.FormatException"/>异常。</param>
@@ -349,7 +320,7 @@ namespace Zongsoft.Common
 		public static byte[] FromHexString(string text, char separator, bool throwExceptionOnFormat)
 		{
 			if(string.IsNullOrEmpty(text))
-				return new byte[0];
+				return [];
 
 			var index = 0;
 			var buffer = new char[2];
@@ -373,7 +344,7 @@ namespace Zongsoft.Common
 						if(throwExceptionOnFormat)
 							throw new FormatException();
 						else
-							return new byte[0];
+							return [];
 					}
 				}
 			}
@@ -383,9 +354,7 @@ namespace Zongsoft.Common
 
 		public static bool TryParseHex(char[] characters, out byte value)
 		{
-			long number;
-
-			if(TryParseHex(characters, out number))
+			if(TryParseHex(characters, out long number))
 			{
 				if(number >= byte.MinValue && number <= byte.MaxValue)
 				{
@@ -400,9 +369,7 @@ namespace Zongsoft.Common
 
 		public static bool TryParseHex(char[] characters, out short value)
 		{
-			long number;
-
-			if(TryParseHex(characters, out number))
+			if(TryParseHex(characters, out long number))
 			{
 				if(number >= short.MinValue && number <= short.MaxValue)
 				{
@@ -417,9 +384,7 @@ namespace Zongsoft.Common
 
 		public static bool TryParseHex(char[] characters, out int value)
 		{
-			long number;
-
-			if(TryParseHex(characters, out number))
+			if(TryParseHex(characters, out long number))
 			{
 				if(number >= int.MinValue && number <= int.MaxValue)
 				{
