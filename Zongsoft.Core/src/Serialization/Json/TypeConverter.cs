@@ -41,7 +41,7 @@ public class TypeConverter : JsonConverter<Type>
 			return null;
 
 		if(reader.TokenType == JsonTokenType.String)
-			return Zongsoft.Common.TypeExtension.GetType(reader.GetString());
+			return Zongsoft.Common.TypeAlias.Parse(reader.GetString());
 
 		return null;
 	}
@@ -51,6 +51,6 @@ public class TypeConverter : JsonConverter<Type>
 		if(value == null)
 			writer.WriteNullValue();
 		else
-			writer.WriteStringValue(Zongsoft.Common.TypeExtension.GetTypeAlias(value));
+			writer.WriteStringValue(Zongsoft.Common.TypeAlias.GetAlias(value));
 	}
 }
