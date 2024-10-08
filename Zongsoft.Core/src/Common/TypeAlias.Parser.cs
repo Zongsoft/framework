@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -44,9 +45,6 @@ namespace Zongsoft.Common
 				return default;
 
 			var context = new AliasContext(text);
-			var type = ReadOnlySpan<char>.Empty;
-			var assembly = ReadOnlySpan<char>.Empty;
-			TypeAliasFlags flags = TypeAliasFlags.None;
 
 			while(context.Move())
 			{
@@ -56,23 +54,22 @@ namespace Zongsoft.Common
 						DoNone(ref context);
 						break;
 					case AliasState.Type:
-						if(DoType(ref context))
-							type = context.Reset();
+						DoType(ref context);
 						break;
 					case AliasState.Assembly:
-						if(DoAssembly(ref context))
-							assembly = context.Reset();
+						DoAssembly(ref context);
 						break;
 					case AliasState.Nullable:
-						if(DoNullable(ref context))
-							flags |= TypeAliasFlags.Nullable;
+						DoNullable(ref context);
 						break;
 					case AliasState.Arrayable:
-						if(DoArrayable(ref context))
-							flags |= TypeAliasFlags.Arrayable;
+						DoArrayable(ref context);
 						break;
 					case AliasState.Generic:
 						DoGeneric(ref context);
+						break;
+					case AliasState.GenericStart:
+						DoGenericStart(ref context);
 						break;
 					case AliasState.GenericFinal:
 						DoGenericFinal(ref context);
@@ -89,20 +86,7 @@ namespace Zongsoft.Common
 				}
 			}
 
-			switch(context.State)
-			{
-				case AliasState.Nullable:
-					flags |= TypeAliasFlags.Nullable;
-					break;
-				case AliasState.Type:
-					type = context.Reset();
-					break;
-				case AliasState.Assembly:
-					assembly = context.Reset();
-					break;
-			}
-
-			return new TypeAliasToken(type.ToString(), assembly.ToString(), flags);
+			return context.GetResult();
 		}
 
 		private static void DoNone(ref AliasContext context)
@@ -139,21 +123,17 @@ namespace Zongsoft.Common
 					else
 						context.Accept(AliasState.Assembly);
 					break;
-				case '?':
-					context.Accept(AliasState.Nullable);
-					break;
 				case '<':
-					context.Indent();
-					context.Accept(AliasState.Generic);
+					context.Accept(AliasState.GenericStart);
 					break;
 				case '>':
 					if(context.Depth > 0)
-					{
-						context.Dedent();
 						context.Accept(AliasState.GenericFinal);
-					}
 					else
 						context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+					break;
+				case '?':
+					context.Accept(AliasState.Nullable);
 					break;
 				case '[':
 					context.Accept(AliasState.Arrayable);
@@ -188,10 +168,7 @@ namespace Zongsoft.Common
 					break;
 				case '>':
 					if(context.Depth > 0)
-					{
-						context.Dedent();
 						context.Accept(AliasState.GenericFinal);
-					}
 					else
 						context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 					break;
@@ -228,10 +205,7 @@ namespace Zongsoft.Common
 					break;
 				case '>':
 					if(context.Depth > 0)
-					{
-						context.Dedent();
 						context.Accept(AliasState.GenericFinal);
-					}
 					else
 						context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 					break;
@@ -267,10 +241,7 @@ namespace Zongsoft.Common
 					break;
 				case '>':
 					if(context.Depth > 0)
-					{
-						context.Dedent();
 						context.Accept(AliasState.GenericFinal);
-					}
 					else
 						context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 					break;
@@ -293,10 +264,23 @@ namespace Zongsoft.Common
 				return;
 			}
 
+			if(context.IsLetter || context.Character == '_')
+				context.Accept(AliasState.Type);
+			else
+				context.Error($"The type name or namespace must begin with a letter or an underscore.");
+		}
+
+		private static void DoGenericStart(ref AliasContext context)
+		{
+			if(context.IsWhitespace)
+			{
+				context.Skip();
+				return;
+			}
+
 			switch(context.Character)
 			{
 				case '>':
-					context.Dedent();
 					context.Accept(AliasState.GenericFinal);
 					break;
 				default:
@@ -323,12 +307,15 @@ namespace Zongsoft.Common
 					break;
 				case '>':
 					if(context.Depth > 0)
-					{
-						context.Dedent();
 						context.Accept(AliasState.GenericFinal);
-					}
 					else
 						context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
+					break;
+				case '?':
+					context.Accept(AliasState.Nullable);
+					break;
+				case '[':
+					context.Accept(AliasState.Arrayable);
 					break;
 				default:
 					if(context.IsWhitespace)
@@ -360,7 +347,7 @@ namespace Zongsoft.Common
 					DoArrayableEnding(ref context);
 					break;
 				case AliasState.Assembly:
-					DoAssembly(ref context);
+					DoAssemblyEnding(ref context);
 					break;
 			}
 
@@ -378,15 +365,11 @@ namespace Zongsoft.Common
 							context.Accept(AliasState.Assembly);
 						break;
 					case '<':
-						context.Indent();
-						context.Accept(AliasState.Generic);
+						context.Accept(AliasState.GenericStart);
 						break;
 					case '>':
 						if(context.Depth > 0)
-						{
-							context.Dedent();
 							context.Accept(AliasState.GenericFinal);
-						}
 						else
 							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 						break;
@@ -414,10 +397,7 @@ namespace Zongsoft.Common
 						break;
 					case '>':
 						if(context.Depth > 0)
-						{
-							context.Dedent();
 							context.Accept(AliasState.GenericFinal);
-						}
 						else
 							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 						break;
@@ -445,10 +425,7 @@ namespace Zongsoft.Common
 						break;
 					case '>':
 						if(context.Depth > 0)
-						{
-							context.Dedent();
 							context.Accept(AliasState.GenericFinal);
-						}
 						else
 							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 						break;
@@ -458,7 +435,7 @@ namespace Zongsoft.Common
 				}
 			}
 
-			static void DoAssembly(ref AliasContext context)
+			static void DoAssemblyEnding(ref AliasContext context)
 			{
 				switch(context.Character)
 				{
@@ -470,10 +447,7 @@ namespace Zongsoft.Common
 						break;
 					case '>':
 						if(context.Depth > 0)
-						{
-							context.Dedent();
 							context.Accept(AliasState.GenericFinal);
-						}
 						else
 							context.Error($"Syntax error: The '>' symbol at {context.Position} character missing matching generic argument starter.");
 						break;
@@ -493,15 +467,32 @@ namespace Zongsoft.Common
 			Arrayable,
 		}
 
+		private readonly struct StackToken
+		{
+			public readonly TypeAliasToken Token;
+			public readonly int Depth;
+
+			public StackToken(int depth, ReadOnlySpan<char> type, TypeAliasFlags flags)
+			{
+				this.Depth = depth;
+				this.Token = new TypeAliasToken(type.ToString(), flags);
+			}
+			public StackToken(int depth, TypeAliasToken token)
+			{
+				this.Depth = depth;
+				this.Token = token;
+			}
+		}
+
 		private readonly struct TypeAliasToken
 		{
 			#region 成员字段
-			private readonly TypeAliasToken[] _genericArguments;
+			private readonly IList<TypeAliasToken> _genericArguments;
 			#endregion
 
 			#region 构造函数
-			public TypeAliasToken(string type, TypeAliasFlags flags, params TypeAliasToken[] genericArguments) : this(type, null, flags, genericArguments) { }
-			public TypeAliasToken(string type, string assembly, TypeAliasFlags flags, params TypeAliasToken[] genericArguments)
+			public TypeAliasToken(string type, TypeAliasFlags flags, IList<TypeAliasToken> genericArguments = null) : this(type, null, flags, genericArguments) { }
+			public TypeAliasToken(string type, string assembly, TypeAliasFlags flags, IList<TypeAliasToken> genericArguments = null)
 			{
 				this.Type = type;
 				this.Assembly = assembly;
@@ -517,14 +508,18 @@ namespace Zongsoft.Common
 			#endregion
 
 			#region 公共属性
-			public readonly bool HasGenericArguments => _genericArguments != null && _genericArguments.Length > 0;
-			public readonly TypeAliasToken[] GenericArguments => _genericArguments;
+			public readonly bool HasGenericArguments => _genericArguments != null && _genericArguments.Count > 0;
+			public readonly IList<TypeAliasToken> GenericArguments => _genericArguments;
 			public readonly bool Nullable => (this.Flags & TypeAliasFlags.Nullable) == TypeAliasFlags.Nullable;
 			public readonly bool Arrayable => (this.Flags & TypeAliasFlags.Arrayable) == TypeAliasFlags.Arrayable;
 			#endregion
 
 			#region 公共方法
 			public Type ToType() => GetType(this);
+
+			public TypeAliasToken Clone(string assembly) => new(this.Type, assembly, this.Flags, _genericArguments);
+			public TypeAliasToken Clone(TypeAliasFlags flags) => new(this.Type, this.Assembly, flags, _genericArguments);
+			public TypeAliasToken Clone(IList<TypeAliasToken> genericArguments) => new(this.Type, this.Assembly, this.Flags, genericArguments);
 			#endregion
 
 			#region 重写方法
@@ -552,17 +547,17 @@ namespace Zongsoft.Common
 			#endregion
 
 			#region 私有方法
-			private static string GetGenericArguments(TypeAliasToken[] aliases)
+			private static string GetGenericArguments(IList<TypeAliasToken> aliases)
 			{
-				if(aliases == null || aliases.Length == 0)
+				if(aliases == null || aliases.Count == 0)
 					return null;
 
-				if(aliases.Length == 1)
+				if(aliases.Count == 1)
 					return aliases[0].ToString();
 
 				var text = new StringBuilder();
 
-				for(int i = 0; i < aliases.Length; i++)
+				for(int i = 0; i < aliases.Count; i++)
 				{
 					if(i > 0)
 						text.Append(", ");
@@ -582,24 +577,24 @@ namespace Zongsoft.Common
 				{
 					var typeName = alias.Type.Contains('.') ? alias.Type : $"{nameof(System)}.{alias.Type}";
 					if(alias.HasGenericArguments)
-						typeName += $"`{alias.GenericArguments.Length}";
+						typeName += $"`{alias.GenericArguments.Count}";
 					if(!string.IsNullOrEmpty(alias.Assembly))
 						typeName = $"{typeName}, {alias.Assembly}";
 
-					type = System.Type.GetType(typeName, false, true);
+					type = System.Type.GetType(typeName, false, true).GetTypeInfo();
 				}
 
 				if(type.ContainsGenericParameters && alias.HasGenericArguments)
 				{
 					var types = alias.GenericArguments.Select(GetType).ToArray();
-					if(type.GenericTypeArguments.Length == types.Length)
-						type = type.MakeGenericType(types);
+					if(type.GenericTypeParameters.Length == types.Length)
+						type = type.MakeGenericType(types).GetTypeInfo();
 				}
 
 				if(alias.Nullable)
-					type = typeof(Nullable<>).MakeGenericType(type);
+					type = typeof(Nullable<>).MakeGenericType(type).GetTypeInfo();
 				if(alias.Arrayable)
-					type = type.MakeArrayType();
+					type = type.MakeArrayType().GetTypeInfo();
 
 				return type;
 			}
@@ -611,6 +606,7 @@ namespace Zongsoft.Common
 			None,
 			Type,
 			Generic,
+			GenericStart,
 			GenericFinal,
 			Nullable,
 			Arrayable,
@@ -629,9 +625,12 @@ namespace Zongsoft.Common
 			private int _depth;
 			private int _count;
 			private int _whitespaces;
-			private int _skippedPrefix;
-			private int _skippedSuffix;
 			private string _errorMessage;
+
+			private TypeAliasFlags _flags;
+			private ReadOnlySpan<char> _type;
+			private ReadOnlySpan<char> _assembly;
+			private readonly Stack<StackToken> _stack;
 			#endregion
 
 			#region 构造函数
@@ -645,10 +644,13 @@ namespace Zongsoft.Common
 				_count = 0;
 				_depth = 0;
 				_errorMessage = null;
+				_flags = TypeAliasFlags.None;
+				_stack = new();
 			}
 			#endregion
 
 			#region 公共属性
+			public TypeAliasFlags Flags => _flags;
 			public AliasState State => _state;
 			public AliasState Previous => _previous;
 			public int Depth => _depth;
@@ -681,10 +683,46 @@ namespace Zongsoft.Common
 				return message != null;
 			}
 
-			public int Indent() => ++_depth;
-			public int Dedent() => --_depth;
+			public TypeAliasToken GetResult()
+			{
+				if(_stack.TryPop(out var token))
+					return token.Token;
 
-			public ReadOnlySpan<char> Reset()
+				switch(_state)
+				{
+					case AliasState.Type:
+						_type = this.Reset();
+						break;
+					case AliasState.Assembly:
+						_assembly = this.Reset();
+						break;
+				}
+
+				return new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags);
+			}
+
+			private IList<TypeAliasToken> Dedent()
+			{
+				var tokens = GetStackTokens(_stack, _depth--);
+				tokens.Add(new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags));
+				return tokens;
+
+				static IList<TypeAliasToken> GetStackTokens(Stack<StackToken> stack, int depth)
+				{
+					if(stack.Count == 0 || depth < 0)
+						return [];
+
+					var result = new List<TypeAliasToken>();
+					while(stack.TryPeek(out var token) && token.Depth == depth)
+					{
+						result.Insert(0, stack.Pop().Token);
+					}
+					return result;
+				}
+			}
+
+			private TypeAliasFlags Mark(TypeAliasFlags flags) => _flags |= flags;
+			private ReadOnlySpan<char> Reset()
 			{
 				var result = _text.Slice(_position - _count - _whitespaces - 1, _count);
 				_count = 0;
@@ -706,8 +744,59 @@ namespace Zongsoft.Common
 					return;
 				}
 
-				if(_state == AliasState.None || _state == AliasState.Generic)
-					_count++;
+				switch(_state)
+				{
+					case AliasState.None:
+						_count++;
+						break;
+					case AliasState.Generic:
+						if(!_type.IsEmpty)
+							_stack.Push(new StackToken(_depth, _type, _flags));
+						_flags = TypeAliasFlags.None;
+						_count++;
+						break;
+					case AliasState.GenericStart:
+						_stack.Push(new StackToken(_depth++, _type, _flags));
+						_flags = TypeAliasFlags.None;
+						_count++;
+						break;
+					case AliasState.Type:
+						_type = this.Reset();
+						break;
+					case AliasState.Assembly:
+						_assembly = this.Reset();
+						break;
+					case AliasState.Arrayable:
+						if(_state == AliasState.GenericFinal && _stack.TryPop(out var token))
+							_stack.Push(new StackToken(token.Depth, token.Token.Clone(TypeAliasFlags.Arrayable)));
+						else
+							this.Mark(TypeAliasFlags.Arrayable);
+						break;
+				}
+
+				switch(state)
+				{
+					case AliasState.Nullable:
+						if(_state == AliasState.GenericFinal && _stack.TryPop(out var token))
+							_stack.Push(new StackToken(token.Depth, token.Token.Clone(TypeAliasFlags.Nullable)));
+						else
+							this.Mark(TypeAliasFlags.Nullable);
+						break;
+					case AliasState.GenericFinal:
+						var arguments = this.Dedent();
+
+						if(_stack.TryPop(out token))
+						{
+							token = new StackToken(token.Depth, token.Token.Clone(arguments));
+							_stack.Push(token);
+
+							_type = default;
+							_assembly = default;
+							_flags = TypeAliasFlags.None;
+						}
+
+						break;
+				}
 
 				_previous = _state;
 				_state = state;

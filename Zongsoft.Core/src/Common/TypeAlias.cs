@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -36,65 +37,65 @@ namespace Zongsoft.Common
 	public static partial class TypeAlias
 	{
 		#region 静态字段
-		private static readonly Dictionary<string, Type> Types = new(StringComparer.OrdinalIgnoreCase)
+		private static readonly Dictionary<string, TypeInfo> Types = new(StringComparer.OrdinalIgnoreCase)
 		{
-			{ nameof(Object), typeof(object) },
-			{ nameof(DBNull), typeof(DBNull) },
-			{ nameof(String), typeof(string) },
-			{ nameof(Boolean), typeof(bool) },
-			{ nameof(Guid), typeof(Guid) },
-			{ nameof(Char), typeof(char) },
-			{ nameof(Byte), typeof(byte) },
-			{ nameof(SByte), typeof(sbyte) },
-			{ nameof(Int16), typeof(short) },
-			{ nameof(UInt16), typeof(ushort) },
-			{ nameof(Int32), typeof(int) },
-			{ nameof(UInt32), typeof(uint) },
-			{ nameof(Int64), typeof(long) },
-			{ nameof(UInt64), typeof(ulong) },
-			{ nameof(Single), typeof(float) },
-			{ nameof(Double), typeof(double) },
-			{ nameof(Decimal), typeof(decimal) },
-			{ nameof(TimeSpan), typeof(TimeSpan) },
-			{ nameof(DateOnly), typeof(DateOnly) },
-			{ nameof(TimeOnly), typeof(TimeOnly) },
-			{ nameof(DateTime), typeof(DateTime) },
-			{ nameof(DateTimeOffset), typeof(DateTimeOffset) },
+			{ nameof(Object), typeof(object).GetTypeInfo() },
+			{ nameof(DBNull), typeof(DBNull).GetTypeInfo() },
+			{ nameof(String), typeof(string).GetTypeInfo() },
+			{ nameof(Boolean), typeof(bool).GetTypeInfo() },
+			{ nameof(Guid), typeof(Guid).GetTypeInfo() },
+			{ nameof(Char), typeof(char).GetTypeInfo() },
+			{ nameof(Byte), typeof(byte).GetTypeInfo() },
+			{ nameof(SByte), typeof(sbyte).GetTypeInfo() },
+			{ nameof(Int16), typeof(short).GetTypeInfo() },
+			{ nameof(UInt16), typeof(ushort).GetTypeInfo() },
+			{ nameof(Int32), typeof(int).GetTypeInfo() },
+			{ nameof(UInt32), typeof(uint).GetTypeInfo() },
+			{ nameof(Int64), typeof(long).GetTypeInfo() },
+			{ nameof(UInt64), typeof(ulong).GetTypeInfo() },
+			{ nameof(Single), typeof(float).GetTypeInfo() },
+			{ nameof(Double), typeof(double).GetTypeInfo() },
+			{ nameof(Decimal), typeof(decimal).GetTypeInfo() },
+			{ nameof(TimeSpan), typeof(TimeSpan).GetTypeInfo() },
+			{ nameof(DateOnly), typeof(DateOnly).GetTypeInfo() },
+			{ nameof(TimeOnly), typeof(TimeOnly).GetTypeInfo() },
+			{ nameof(DateTime), typeof(DateTime).GetTypeInfo() },
+			{ nameof(DateTimeOffset), typeof(DateTimeOffset).GetTypeInfo() },
 
-			{ "void", typeof(void) },
-			{ "bool", typeof(bool) },
-			{ "uuid", typeof(Guid) },
-			{ "float", typeof(float) },
-			{ "short", typeof(short) },
-			{ "ushort", typeof(ushort) },
-			{ "int", typeof(int) },
-			{ "integer", typeof(int) },
-			{ "uint", typeof(uint) },
-			{ "long", typeof(long) },
-			{ "ulong", typeof(ulong) },
-			{ "money", typeof(decimal) },
-			{ "currency", typeof(decimal) },
-			{ "date", typeof(DateOnly) },
-			{ "time", typeof(TimeOnly) },
-			{ "timestamp", typeof(DateTimeOffset) },
-			{ "binary", typeof(byte[]) },
-			{ "range", typeof(Zongsoft.Data.Range<>) },
-			{ "mixture", typeof(Zongsoft.Data.Mixture<>) },
+			{ "void", typeof(void).GetTypeInfo() },
+			{ "bool", typeof(bool).GetTypeInfo() },
+			{ "uuid", typeof(Guid).GetTypeInfo() },
+			{ "float", typeof(float).GetTypeInfo() },
+			{ "short", typeof(short).GetTypeInfo() },
+			{ "ushort", typeof(ushort).GetTypeInfo() },
+			{ "int", typeof(int).GetTypeInfo() },
+			{ "integer", typeof(int).GetTypeInfo() },
+			{ "uint", typeof(uint).GetTypeInfo() },
+			{ "long", typeof(long).GetTypeInfo() },
+			{ "ulong", typeof(ulong).GetTypeInfo() },
+			{ "money", typeof(decimal).GetTypeInfo() },
+			{ "currency", typeof(decimal).GetTypeInfo() },
+			{ "date", typeof(DateOnly).GetTypeInfo() },
+			{ "time", typeof(TimeOnly).GetTypeInfo() },
+			{ "timestamp", typeof(DateTimeOffset).GetTypeInfo() },
+			{ "binary", typeof(byte[]).GetTypeInfo() },
+			{ "range", typeof(Zongsoft.Data.Range<>).GetTypeInfo() },
+			{ "mixture", typeof(Zongsoft.Data.Mixture<>).GetTypeInfo() },
 
-			{ nameof(IList), typeof(IList<>) },
-			{ nameof(IEnumerable), typeof(IEnumerable<>) },
-			{ nameof(ICollection), typeof(ICollection<>) },
-			{ nameof(IDictionary), typeof(IDictionary<,>) },
+			{ nameof(IList), typeof(IList<>).GetTypeInfo() },
+			{ nameof(IEnumerable), typeof(IEnumerable<>).GetTypeInfo() },
+			{ nameof(ICollection), typeof(ICollection<>).GetTypeInfo() },
+			{ nameof(IDictionary), typeof(IDictionary<,>).GetTypeInfo() },
 
-			{ "List", typeof(List<>) },
-			{ "ISet", typeof(ISet<>) },
-			{ "Hashset", typeof(HashSet<>) },
-			{ "Dictionary", typeof(Dictionary<,>) },
+			{ "List", typeof(List<>).GetTypeInfo() },
+			{ "ISet", typeof(ISet<>).GetTypeInfo() },
+			{ "Hashset", typeof(HashSet<>).GetTypeInfo() },
+			{ "Dictionary", typeof(Dictionary<,>).GetTypeInfo() },
 
-			{ "IReadOnlySet", typeof(IReadOnlySet<>) },
-			{ "IReadOnlyList", typeof(IReadOnlyList<>) },
-			{ "IReadOnlyCollection", typeof(IReadOnlyCollection<>) },
-			{ "IReadOnlyDictionary", typeof(IReadOnlyDictionary<,>) },
+			{ "IReadOnlySet", typeof(IReadOnlySet<>).GetTypeInfo() },
+			{ "IReadOnlyList", typeof(IReadOnlyList<>).GetTypeInfo() },
+			{ "IReadOnlyCollection", typeof(IReadOnlyCollection<>).GetTypeInfo() },
+			{ "IReadOnlyDictionary", typeof(IReadOnlyDictionary<,>).GetTypeInfo() },
 		};
 
 		private static readonly Dictionary<Type, string> Aliases = new()
@@ -232,8 +233,11 @@ namespace Zongsoft.Common
 			if(Types.TryGetValue(typeName, out var type) && !type.ContainsGenericParameters)
 				return type;
 
+			if(typeName.IndexOfAny(['`', '=']) > 0)
+				return Type.GetType(typeName, throwException, ignoreCase);
+
 			var token = throwException ? ParseCore(typeName, message => throw new InvalidOperationException(message)) : ParseCore(typeName);
-			return string.IsNullOrEmpty(token.Type) ? Type.GetType(typeName, throwException, ignoreCase) : token.ToType();
+			return string.IsNullOrEmpty(token.Type) ? null : token.ToType();
 		}
 		#endregion
 	}
