@@ -31,7 +31,6 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Common
@@ -459,6 +458,7 @@ namespace Zongsoft.Common
 		}
 		#endregion
 
+		#region 嵌套结构
 		[Flags]
 		private enum TypeAliasFlags
 		{
@@ -467,32 +467,15 @@ namespace Zongsoft.Common
 			Arrayable,
 		}
 
-		private readonly struct StackToken
-		{
-			public readonly TypeAliasToken Token;
-			public readonly int Depth;
-
-			public StackToken(int depth, ReadOnlySpan<char> type, TypeAliasFlags flags)
-			{
-				this.Depth = depth;
-				this.Token = new TypeAliasToken(type.ToString(), flags);
-			}
-			public StackToken(int depth, TypeAliasToken token)
-			{
-				this.Depth = depth;
-				this.Token = token;
-			}
-		}
-
 		private readonly struct TypeAliasToken
 		{
 			#region 成员字段
-			private readonly IList<TypeAliasToken> _genericArguments;
+			private readonly IReadOnlyList<TypeAliasToken> _genericArguments;
 			#endregion
 
 			#region 构造函数
-			public TypeAliasToken(string type, TypeAliasFlags flags, IList<TypeAliasToken> genericArguments = null) : this(type, null, flags, genericArguments) { }
-			public TypeAliasToken(string type, string assembly, TypeAliasFlags flags, IList<TypeAliasToken> genericArguments = null)
+			public TypeAliasToken(string type, TypeAliasFlags flags, IReadOnlyList<TypeAliasToken> genericArguments = null) : this(type, null, flags, genericArguments) { }
+			public TypeAliasToken(string type, string assembly, TypeAliasFlags flags, IReadOnlyList<TypeAliasToken> genericArguments = null)
 			{
 				this.Type = type;
 				this.Assembly = assembly;
@@ -509,17 +492,16 @@ namespace Zongsoft.Common
 
 			#region 公共属性
 			public readonly bool HasGenericArguments => _genericArguments != null && _genericArguments.Count > 0;
-			public readonly IList<TypeAliasToken> GenericArguments => _genericArguments;
+			public readonly IReadOnlyList<TypeAliasToken> GenericArguments => _genericArguments;
 			public readonly bool Nullable => (this.Flags & TypeAliasFlags.Nullable) == TypeAliasFlags.Nullable;
 			public readonly bool Arrayable => (this.Flags & TypeAliasFlags.Arrayable) == TypeAliasFlags.Arrayable;
 			#endregion
 
 			#region 公共方法
 			public Type ToType() => GetType(this);
-
 			public TypeAliasToken Clone(string assembly) => new(this.Type, assembly, this.Flags, _genericArguments);
 			public TypeAliasToken Clone(TypeAliasFlags flags) => new(this.Type, this.Assembly, flags, _genericArguments);
-			public TypeAliasToken Clone(IList<TypeAliasToken> genericArguments) => new(this.Type, this.Assembly, this.Flags, genericArguments);
+			public TypeAliasToken Clone(IReadOnlyList<TypeAliasToken> genericArguments) => new(this.Type, this.Assembly, this.Flags, genericArguments);
 			#endregion
 
 			#region 重写方法
@@ -547,7 +529,7 @@ namespace Zongsoft.Common
 			#endregion
 
 			#region 私有方法
-			private static string GetGenericArguments(IList<TypeAliasToken> aliases)
+			private static string GetGenericArguments(IReadOnlyList<TypeAliasToken> aliases)
 			{
 				if(aliases == null || aliases.Count == 0)
 					return null;
@@ -612,6 +594,25 @@ namespace Zongsoft.Common
 			Arrayable,
 			Assembly,
 			Ending,
+		}
+
+		private readonly struct StackToken
+		{
+			public StackToken(int depth, ReadOnlySpan<char> type, TypeAliasFlags flags)
+			{
+				this.Depth = depth;
+				this.Token = new TypeAliasToken(type.ToString(), flags);
+			}
+			public StackToken(int depth, TypeAliasToken token)
+			{
+				this.Depth = depth;
+				this.Token = token;
+			}
+
+			public readonly TypeAliasToken Token;
+			public readonly int Depth;
+
+			public override string ToString() => $"{this.Depth}#{this.Token}";
 		}
 
 		private ref struct AliasContext
@@ -683,67 +684,15 @@ namespace Zongsoft.Common
 				return message != null;
 			}
 
-			public TypeAliasToken GetResult()
-			{
-				if(_stack.TryPop(out var token))
-					return token.Token;
-
-				switch(_state)
-				{
-					case AliasState.Type:
-						_type = this.Reset();
-						break;
-					case AliasState.Assembly:
-						_assembly = this.Reset();
-						break;
-				}
-
-				return new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags);
-			}
-
-			private IList<TypeAliasToken> Dedent()
-			{
-				var tokens = GetStackTokens(_stack, _depth--);
-				tokens.Add(new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags));
-				return tokens;
-
-				static IList<TypeAliasToken> GetStackTokens(Stack<StackToken> stack, int depth)
-				{
-					if(stack.Count == 0 || depth < 0)
-						return [];
-
-					var result = new List<TypeAliasToken>();
-					while(stack.TryPeek(out var token) && token.Depth == depth)
-					{
-						result.Insert(0, stack.Pop().Token);
-					}
-					return result;
-				}
-			}
-
-			private TypeAliasFlags Mark(TypeAliasFlags flags) => _flags |= flags;
-			private ReadOnlySpan<char> Reset()
-			{
-				var result = _text.Slice(_position - _count - _whitespaces - 1, _count);
-				_count = 0;
-				return result;
-			}
-
 			public void Skip()
 			{
 				if(_count > 0)
 					_whitespaces++;
 			}
 
-			public void Accept() => this.Accept(_state);
+			public void Accept() => _count++;
 			public void Accept(AliasState state)
 			{
-				if(_state == state)
-				{
-					_count++;
-					return;
-				}
-
 				switch(_state)
 				{
 					case AliasState.None:
@@ -767,8 +716,8 @@ namespace Zongsoft.Common
 						_assembly = this.Reset();
 						break;
 					case AliasState.Arrayable:
-						if(_state == AliasState.GenericFinal && _stack.TryPop(out var token))
-							_stack.Push(new StackToken(token.Depth, token.Token.Clone(TypeAliasFlags.Arrayable)));
+						if(_type.IsEmpty && _stack.TryPop(out var token))
+							_stack.Push(new StackToken(token.Depth, token.Token.Clone(token.Token.Flags | TypeAliasFlags.Arrayable)));
 						else
 							this.Mark(TypeAliasFlags.Arrayable);
 						break;
@@ -778,7 +727,7 @@ namespace Zongsoft.Common
 				{
 					case AliasState.Nullable:
 						if(_state == AliasState.GenericFinal && _stack.TryPop(out var token))
-							_stack.Push(new StackToken(token.Depth, token.Token.Clone(TypeAliasFlags.Nullable)));
+							_stack.Push(new StackToken(token.Depth, token.Token.Clone(token.Token.Flags | TypeAliasFlags.Nullable)));
 						else
 							this.Mark(TypeAliasFlags.Nullable);
 						break;
@@ -801,7 +750,60 @@ namespace Zongsoft.Common
 				_previous = _state;
 				_state = state;
 			}
+
+			public TypeAliasToken GetResult()
+			{
+				if(_stack.TryPop(out var token))
+					return token.Token;
+
+				switch(_state)
+				{
+					case AliasState.Type:
+						_type = this.Reset();
+						break;
+					case AliasState.Assembly:
+						_assembly = this.Reset();
+						break;
+				}
+
+				return new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags);
+			}
+			#endregion
+
+			#region 私有方法
+			private IReadOnlyList<TypeAliasToken> Dedent()
+			{
+				var tokens = GetStackTokens(_stack, _depth--);
+
+				if(!_type.IsEmpty)
+					tokens.Add(new TypeAliasToken(_type.ToString(), _assembly.ToString(), _flags));
+
+				return tokens;
+
+				static List<TypeAliasToken> GetStackTokens(Stack<StackToken> stack, int depth)
+				{
+					if(stack.Count == 0 || depth < 0)
+						return [];
+
+					var result = new List<TypeAliasToken>();
+					while(stack.TryPeek(out var token) && token.Depth == depth)
+					{
+						result.Insert(0, stack.Pop().Token);
+					}
+					return result;
+				}
+			}
+
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private TypeAliasFlags Mark(TypeAliasFlags flags) => _flags |= flags;
+			private ReadOnlySpan<char> Reset()
+			{
+				var result = _text.Slice(_position - _count - _whitespaces - 1, _count);
+				_count = 0;
+				return result;
+			}
 			#endregion
 		}
+		#endregion
 	}
 }

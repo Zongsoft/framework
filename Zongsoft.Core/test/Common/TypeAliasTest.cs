@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Zongsoft.Tests;
 
@@ -30,6 +29,13 @@ namespace Zongsoft.Common.Tests
 			Assert.Same(typeof(int?), TypeAlias.Parse("int? "));
 			Assert.Same(typeof(int[]), TypeAlias.Parse("int [ ] "));
 			Assert.Same(typeof(int?[]), TypeAlias.Parse(" int?[]"));
+
+			Assert.Same(typeof(float), TypeAlias.Parse(" float "));
+			Assert.Same(typeof(float), TypeAlias.Parse("Single"));
+			Assert.Same(typeof(float), TypeAlias.Parse("System.Single"));
+			Assert.Same(typeof(float?), TypeAlias.Parse("float? "));
+			Assert.Same(typeof(float[]), TypeAlias.Parse(" float [ ] "));
+			Assert.Same(typeof(float?[]), TypeAlias.Parse(" single?[]"));
 
 			Assert.Same(typeof(Guid), TypeAlias.Parse(" GUID"));
 			Assert.Same(typeof(Guid), TypeAlias.Parse(" system.guid"));
@@ -88,9 +94,13 @@ namespace Zongsoft.Common.Tests
 			Assert.Same(typeof(IDictionary<string, Gender[]>), TypeAlias.Parse("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>"));
 			Assert.Same(typeof(IDictionary<string, Gender?[]>), TypeAlias.Parse("System.Collections.Generic.IDictionary<string, Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>"));
 
-			var tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]>);
+			var tupleType = typeof(Tuple<ValueTuple<Zongsoft.Data.Range<int>>, ValueTuple<Zongsoft.Data.Range<DateTime>?>, ValueTuple<Zongsoft.Data.Range<DateTime>[]>, ValueTuple<Zongsoft.Data.Range<DateTime>?[]>>);
 			Assert.Same(tupleType, TypeAlias.Parse(tupleType.FullName));
-			Assert.Same(tupleType, TypeAlias.Parse("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?, Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core >"));
+			Assert.Same(tupleType, TypeAlias.Parse("Tuple<ValueTuple<Range<int>>, ValueTuple<Zongsoft.Data.Range<DateTime>?>, ValueTuple<Zongsoft.Data.Range<DateTime>[]>, ValueTuple<Range<DateTime>?[]>>"));
+
+			tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?[], Zongsoft.Data.ConditionOperator?[]>);
+			Assert.Same(tupleType, TypeAlias.Parse(tupleType.FullName));
+			Assert.Same(tupleType, TypeAlias.Parse("ValueTuple<string, date? ,binary , guid?[], RANGE<datetime>?[], Zongsoft.Data.ConditionOperator? [ ]@Zongsoft.Core >"));
 		}
 
 		[Fact]
@@ -109,6 +119,11 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal("int32?", TypeAlias.GetAlias(typeof(int?)), true);
 			Assert.Equal("int32[]", TypeAlias.GetAlias(typeof(int[])), true);
 			Assert.Equal("int32?[]", TypeAlias.GetAlias(typeof(int?[])), true);
+
+			Assert.Equal("Single", TypeAlias.GetAlias(typeof(float)), true);
+			Assert.Equal("Single?", TypeAlias.GetAlias(typeof(float?)), true);
+			Assert.Equal("Single[]", TypeAlias.GetAlias(typeof(float[])), true);
+			Assert.Equal("Single?[]", TypeAlias.GetAlias(typeof(float?[])), true);
 
 			Assert.Equal("Date", TypeAlias.GetAlias(typeof(DateOnly)), true);
 			Assert.Equal("Date?", TypeAlias.GetAlias(typeof(DateOnly?)), true);
@@ -145,8 +160,12 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal("Dictionary<Range<DateTime>[], Zongsoft.Tests.Gender[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>[], Gender[]>)), true);
 			Assert.Equal("Dictionary<Range<DateTime>?[], Zongsoft.Tests.Gender?[]@Zongsoft.Core.Tests>", TypeAlias.GetAlias(typeof(Dictionary<Zongsoft.Data.Range<DateTime>?[], Gender?[]>)), true);
 
-			var tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]>);
-			var tupleAlias = "ValueTuple<String, Date?, Byte[], Guid?[], Range<DateTime>?, Zongsoft.Data.ConditionOperator?[]@Zongsoft.Core>";
+			var tupleType = typeof(Tuple<ValueTuple<Zongsoft.Data.Range<int>>, ValueTuple<Zongsoft.Data.Range<DateTime>?>, ValueTuple<Zongsoft.Data.Range<DateTime>[]>, ValueTuple<Zongsoft.Data.Range<DateTime>?[]>>);
+			var tupleAlias = "Tuple<ValueTuple<Range<Int32>>, ValueTuple<Range<DateTime>?>, ValueTuple<Range<DateTime>[]>, ValueTuple<Range<DateTime>?[]>>";
+			Assert.Equal(tupleAlias, tupleType.GetAlias());
+
+			tupleType = typeof(ValueTuple<string, DateOnly?, byte[], Guid?[], Zongsoft.Data.Range<DateTime>?[], Zongsoft.Data.ConditionOperator?[]>);
+			tupleAlias = "ValueTuple<String, Date?, Byte[], Guid?[], Range<DateTime>?[], Zongsoft.Data.ConditionOperator?[]@Zongsoft.Core>";
 			Assert.Equal(tupleAlias, tupleType.GetAlias());
 
 			tupleType = typeof(Nullable<>).MakeGenericType(tupleType);
