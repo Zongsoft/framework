@@ -42,13 +42,32 @@ namespace Zongsoft.Web
 {
 	public static class ApplicationModelUtility
 	{
-		public static ICollection<ControllerModel> GetControllers(string module) => ApplicationContext.Current.Modules.TryGetValue(module ?? string.Empty, out var m) ? GetControllers(m) : null;
-		public static ICollection<ControllerModel> GetControllers(IApplicationModule module)
+		public static ControllerModel GetController(string module, string name) => ApplicationContext.Current.Modules.TryGetValue(module ?? string.Empty, out var applicationModule) ? GetController(applicationModule, name) : null;
+		public static ControllerModel GetController(IApplicationModule module, string name)
 		{
 			if(module == null)
 				return null;
 			if(!ApplicationContext.Current.Properties.TryGetValue(nameof(ApplicationModel), out var value) || value is not ApplicationModel applicationModel)
 				return null;
+
+			foreach(var controller in applicationModel.Controllers)
+			{
+				if(controller.RouteValues.TryGetValue("module", out var moduleName) &&
+				   string.Equals(module.Name, moduleName) &&
+				   string.Equals(controller.ControllerName, name, StringComparison.OrdinalIgnoreCase))
+					return controller;
+			}
+
+			return null;
+		}
+
+		public static ICollection<ControllerModel> GetControllers(string module) => ApplicationContext.Current.Modules.TryGetValue(module ?? string.Empty, out var applicationModule) ? GetControllers(applicationModule) : [];
+		public static ICollection<ControllerModel> GetControllers(IApplicationModule module)
+		{
+			if(module == null)
+				return [];
+			if(!ApplicationContext.Current.Properties.TryGetValue(nameof(ApplicationModel), out var value) || value is not ApplicationModel applicationModel)
+				return [];
 
 			var controllers = new List<ControllerModel>();
 
