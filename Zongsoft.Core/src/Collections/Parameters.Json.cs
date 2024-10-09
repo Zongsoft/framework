@@ -60,7 +60,7 @@ namespace Zongsoft.Collections
 							if(key != null && key.Length > 1 && key[0] == '$')
 							{
 								name = null;
-								type = Common.TypeExtension.GetType(key[1..]);
+								type = Common.TypeAlias.Parse(key[1..]);
 							}
 							else
 							{
@@ -153,7 +153,7 @@ namespace Zongsoft.Collections
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private static string GetTypeName(Type type) => Common.TypeExtension.GetTypeAlias(Data.Model.GetModelType(type));
+			private static string GetTypeName(Type type) => Common.TypeAlias.GetAlias(Data.Model.GetModelType(type));
 			private static object GetParameterValue(ref Utf8JsonReader reader)
 			{
 				Type type = null;
@@ -169,7 +169,7 @@ namespace Zongsoft.Collections
 						{
 							if(reader.Read())
 							{
-								type = Common.TypeExtension.GetType(reader.GetString());
+								type = Common.TypeAlias.Parse(reader.GetString());
 								if(type == null)
 									return null;
 							}

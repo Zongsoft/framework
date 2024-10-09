@@ -29,6 +29,7 @@
 
 using System;
 
+using Zongsoft.Common;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data
@@ -101,8 +102,8 @@ namespace Zongsoft.Data
 
 		#region 重写方法
 		public override string ToString() => string.IsNullOrEmpty(this.Namespace) ?
-			$"{this.Name}@{Zongsoft.Common.TypeExtension.GetTypeAlias(this.Type)}" :
-			$"{this.Namespace}:{this.Name}@{Zongsoft.Common.TypeExtension.GetTypeAlias(this.Type)}";
+			$"{this.Name}@{TypeAlias.GetAlias(this.Type)}" :
+			$"{this.Namespace}:{this.Name}@{TypeAlias.GetAlias(this.Type)}";
 		#endregion
 	}
 }

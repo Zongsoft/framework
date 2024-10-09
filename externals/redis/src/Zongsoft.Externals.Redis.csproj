@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.7.0.0</Version>
+		<Version>6.8.0.0</Version>
 		<Product>Zongsoft Redis Library</Product>
 		<Description>This is a library about Redis SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Redis</RootNamespace>

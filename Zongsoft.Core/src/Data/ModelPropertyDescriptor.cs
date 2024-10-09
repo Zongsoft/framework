@@ -191,8 +191,8 @@ namespace Zongsoft.Data
 
 		#region 重写方法
 		public override string ToString() => this.Role == ModelPropertyRole.None ?
-			$"{this.Name}@{TypeExtension.GetTypeAlias(this.Type)}" :
-			$"{this.Name}({this.Role})@{TypeExtension.GetTypeAlias(this.Type)}";
+			$"{this.Name}@{TypeAlias.GetAlias(this.Type)}" :
+			$"{this.Name}({this.Role})@{TypeAlias.GetAlias(this.Type)}";
 		#endregion
 	}
 }

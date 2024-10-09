@@ -324,7 +324,7 @@ namespace Zongsoft.Externals.Redis
 				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 			}
 
-			if(value.GetType().IsDictionary(out var fields))
+			if(TypeExtension.IsDictionary(value, out var fields))
 			{
 				var transaction = _database.CreateTransaction();
 
@@ -404,7 +404,7 @@ namespace Zongsoft.Externals.Redis
 					return await _database.StringSetAsync(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 			}
 
-			if(value.GetType().IsDictionary(out var fields))
+			if(TypeExtension.IsDictionary(value, out var fields))
 			{
 				var transaction = _database.CreateTransaction();
 

@@ -55,7 +55,7 @@ namespace Zongsoft.Plugins
 			if(string.IsNullOrWhiteSpace(typeFullName))
 				return null;
 
-			Type type = Zongsoft.Common.TypeExtension.GetType(typeFullName);
+			Type type = Zongsoft.Common.TypeAlias.Parse(typeFullName);
 
 			if(type != null)
 				return type;
