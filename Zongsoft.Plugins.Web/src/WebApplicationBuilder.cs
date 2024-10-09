@@ -151,6 +151,8 @@ namespace Zongsoft.Web
 				.AllowCredentials()
 				.SetIsOriginAllowed(origin => true)));
 
+			services.AddEndpointsApiExplorer();
+
 			services
 				.AddSignalR(options => { });
 
