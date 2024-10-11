@@ -391,7 +391,7 @@ namespace Zongsoft.Web
 		internal string GetSchema() => HeaderDictionaryExtension.GetDataSchema(this.Request.Headers);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string[] GetExportFields() => this.Request.Headers.TryGetValue("X-Export-Fields", out var content) && content.Count > 0 ?
+		private string[] GetExportFields() => this.Request.Headers.TryGetValue(Headers.ExportFields, out var content) && content.Count > 0 ?
 			content.ToString().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) : null;
 		#endregion
 

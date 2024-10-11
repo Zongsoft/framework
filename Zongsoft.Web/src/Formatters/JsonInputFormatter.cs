@@ -62,7 +62,7 @@ namespace Zongsoft.Web.Formatters
 		#endregion
 
 		#region 公共属性
-		public Serialization.TextSerializationOptions Options { get => _options; }
+		public Serialization.TextSerializationOptions Options => _options;
 		InputFormatterExceptionPolicy IInputFormatterExceptionPolicy.ExceptionPolicy => InputFormatterExceptionPolicy.MalformedInputExceptions;
 		#endregion
 
@@ -176,10 +176,9 @@ namespace Zongsoft.Web.Formatters
 			internal int OverflowCount => _overflowBuffer.Count;
 
 			public override void Flush() => throw new NotSupportedException();
-
 			public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
-			public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+			public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 			{
 				if(count < 0)
 					throw new ArgumentOutOfRangeException(nameof(count));
@@ -203,7 +202,7 @@ namespace Zongsoft.Web.Formatters
 
 				if(_charBuffer.Count == 0)
 				{
-					await ReadInputChars(cancellationToken);
+					await ReadInputChars(cancellation);
 				}
 
 				var operationStatus = Utf8.FromUtf16(_charBuffer, readBuffer, out var charsRead, out var bytesWritten, isFinalBlock: false);
@@ -237,7 +236,7 @@ namespace Zongsoft.Web.Formatters
 				}
 			}
 
-			private async Task ReadInputChars(CancellationToken cancellationToken)
+			private async Task ReadInputChars(CancellationToken cancellation)
 			{
 				Buffer.BlockCopy(
 					_byteBuffer.Array,
@@ -246,7 +245,7 @@ namespace Zongsoft.Web.Formatters
 					0,
 					_byteBuffer.Count);
 
-				var readBytes = await _stream.ReadAsync(_byteBuffer.Array.AsMemory(_byteBuffer.Count), cancellationToken);
+				var readBytes = await _stream.ReadAsync(_byteBuffer.Array.AsMemory(_byteBuffer.Count), cancellation);
 				_byteBuffer = new ArraySegment<byte>(_byteBuffer.Array, 0, _byteBuffer.Count + readBytes);
 
 				Debug.Assert(_charBuffer.Count == 0, "We should only expect to read more input chars once all buffered content is read");
@@ -263,20 +262,9 @@ namespace Zongsoft.Web.Formatters
 				_charBuffer = new ArraySegment<char>(_charBuffer.Array, 0, charsUsed);
 			}
 
-			public override long Seek(long offset, SeekOrigin origin)
-			{
-				throw new NotSupportedException();
-			}
-
-			public override void SetLength(long value)
-			{
-				throw new NotSupportedException();
-			}
-
-			public override void Write(byte[] buffer, int offset, int count)
-			{
-				throw new NotSupportedException();
-			}
+			public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+			public override void SetLength(long value) => throw new NotSupportedException();
+			public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
 			protected override void Dispose(bool disposing)
 			{

@@ -60,7 +60,7 @@ namespace Zongsoft.Web.Formatters
 		#endregion
 
 		#region 公共属性
-		public Serialization.TextSerializationOptions Options { get => _options; }
+		public Serialization.TextSerializationOptions Options => _options;
 		#endregion
 
 		#region 重写方法
@@ -102,7 +102,7 @@ namespace Zongsoft.Web.Formatters
 		{
 			options = _options;
 
-			if(context.Request.Headers.TryGetValue("x-json-behaviors", out var behaviors))
+			if(context.Request.Headers.TryGetValue(Http.Headers.JsonBehaviors, out var behaviors))
 				options = GetSerializationOptions(behaviors, _options);
 
 			if(encoding.CodePage == Encoding.UTF8.CodePage)
@@ -193,21 +193,12 @@ namespace Zongsoft.Web.Formatters
 			public override long Position { get; set; }
 
 			public override void Flush() => throw new NotSupportedException();
-
-			public override async Task FlushAsync(CancellationToken cancellationToken)
-			{
-				await _stream.FlushAsync(cancellationToken);
-			}
-
+			public override Task FlushAsync(CancellationToken cancellation) => _stream.FlushAsync(cancellation);
 			public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-
 			public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-
 			public override void SetLength(long value) => throw new NotSupportedException();
-
 			public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-
-			public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+			public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 			{
 				if(count <= 0)
 					throw new ArgumentOutOfRangeException(nameof(count));
@@ -217,10 +208,10 @@ namespace Zongsoft.Web.Formatters
 					throw new ArgumentOutOfRangeException(nameof(count));
 
 				var bufferSegment = new ArraySegment<byte>(buffer, offset, count);
-				return WriteAsync(bufferSegment, cancellationToken);
+				return WriteAsync(bufferSegment, cancellation);
 			}
 
-			private async Task WriteAsync( ArraySegment<byte> bufferSegment, CancellationToken cancellationToken)
+			private async Task WriteAsync( ArraySegment<byte> bufferSegment, CancellationToken cancellation)
 			{
 				var decoderCompleted = false;
 				while(!decoderCompleted)
@@ -238,12 +229,12 @@ namespace Zongsoft.Web.Formatters
 
 					if(!decoderCompleted)
 					{
-						await WriteBufferAsync(cancellationToken);
+						await WriteBufferAsync(cancellation);
 					}
 				}
 			}
 
-			private async Task WriteBufferAsync(CancellationToken cancellationToken)
+			private async Task WriteBufferAsync(CancellationToken cancellation)
 			{
 				var encoderCompleted = false;
 				var charsWritten = 0;
@@ -259,7 +250,7 @@ namespace Zongsoft.Web.Formatters
 						out var bytesUsed,
 						out encoderCompleted);
 
-					await _stream.WriteAsync(byteBuffer.AsMemory(0, bytesUsed), cancellationToken);
+					await _stream.WriteAsync(byteBuffer.AsMemory(0, bytesUsed), cancellation);
 					charsWritten += charsEncoded;
 				}
 
@@ -267,9 +258,9 @@ namespace Zongsoft.Web.Formatters
 				_charsDecoded = 0;
 			}
 
-			public async Task FinalWriteAsync(CancellationToken cancellationToken)
+			public async Task FinalWriteAsync(CancellationToken cancellation)
 			{
-				await WriteBufferAsync(cancellationToken);
+				await WriteBufferAsync(cancellation);
 				var byteBuffer = ArrayPool<byte>.Shared.Rent(_maxByteBufferSize);
 				var encoderCompleted = false;
 
@@ -283,7 +274,7 @@ namespace Zongsoft.Web.Formatters
 						out var bytesUsed,
 						out encoderCompleted);
 
-					await _stream.WriteAsync(byteBuffer.AsMemory(0, bytesUsed), cancellationToken);
+					await _stream.WriteAsync(byteBuffer.AsMemory(0, bytesUsed), cancellation);
 				}
 
 				ArrayPool<byte>.Shared.Return(byteBuffer);

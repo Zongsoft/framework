@@ -36,12 +36,9 @@ namespace Zongsoft.Web.Http
 {
     public static class HeaderDictionaryExtension
     {
-        private static readonly string X_Schema_Header = "X-Data-Schema";
-        private static readonly string X_Pagination_Header = "X-Pagination";
-
         public static string GetDataSchema(this IHeaderDictionary headers)
         {
-            return headers.TryGetValue(X_Schema_Header, out var value) ? (string)value : null;
+            return headers.TryGetValue(Headers.DataSchema, out var value) ? (string)value : null;
         }
 
         /// <summary>设置分页信息头。</summary>
@@ -53,9 +50,9 @@ namespace Zongsoft.Web.Http
             var result = paging != null && paging.PageCount > 0 && paging.PageSize > 0;
 
             if (result)
-                headers[X_Pagination_Header] = paging.ToString();
+                headers[Headers.Pagination] = paging.ToString();
             else
-                headers.Remove(X_Pagination_Header);
+                headers.Remove(Headers.Pagination);
 
             return result;
         }
