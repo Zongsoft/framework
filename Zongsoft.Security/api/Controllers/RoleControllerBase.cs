@@ -245,7 +245,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var roles = this.MemberProvider.GetAncestors(id, MemberType.Role);
 
-			return roles != null && roles.Any() ?
+			return roles != null ?
 				Task.FromResult((IActionResult)this.Ok(roles)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
@@ -256,7 +256,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var roles = this.MemberProvider.GetRoles(id, MemberType.Role);
 
-			return roles != null && roles.Any() ?
+			return roles != null ?
 				Task.FromResult((IActionResult)this.Ok(roles)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}
@@ -280,7 +280,7 @@ namespace Zongsoft.Security.Web.Controllers
 		{
 			var members = this.MemberProvider.GetMembers(id, this.Request.GetDataSchema());
 
-			return members != null && members.Any() ?
+			return members != null ?
 				Task.FromResult((IActionResult)this.Ok(members)) :
 				Task.FromResult((IActionResult)this.NoContent());
 		}

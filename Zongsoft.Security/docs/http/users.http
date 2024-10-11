@@ -36,6 +36,7 @@ Authorization: Credential {{$dotenv credentialId}}
 # @prompt password 用户密码
 POST /Security/Users HTTP/1.1
 Host: {{host}}:{{port}}
+Content-Type: application/json
 Authorization: Credential {{$dotenv credentialId}}
 X-Password: {{password}}
 
