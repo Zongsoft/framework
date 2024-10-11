@@ -149,6 +149,7 @@ namespace Zongsoft.Web
 				.AllowAnyHeader()
 				.AllowAnyMethod()
 				.AllowCredentials()
+				.WithExposedHeaders(Http.Headers.Pagination)
 				.SetIsOriginAllowed(origin => true)));
 
 			services.AddEndpointsApiExplorer();
