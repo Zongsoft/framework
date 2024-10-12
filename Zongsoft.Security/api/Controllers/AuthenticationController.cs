@@ -44,9 +44,13 @@ namespace Zongsoft.Security.Web.Controllers
 {
 	[ApiController]
 	[Area(Module.NAME)]
-	[Route("{area}/{controller}/{action}")]
+	[Route("[area]/[controller]/[action]")]
 	public class AuthenticationController : ControllerBase
 	{
+		#region 常量定义
+		private static readonly char[] InvalidDestinationCharacters = [',', ';', '|', '/', '\\'];
+		#endregion
+
 		#region 公共属性
 		[ServiceDependency]
 		public ISecretor Secretor { get; set; }
@@ -125,23 +129,10 @@ namespace Zongsoft.Security.Web.Controllers
 			if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
 				return this.BadRequest();
 
-			for(int i = 0; i < destination.Length; i++)
-			{
-				var chr = destination[i];
+			if(destination.IndexOfAny(InvalidDestinationCharacters) >= 0)
+				return this.BadRequest($"The specified destination parameter contains illegal characters.");
 
-				if(chr == ',' || chr == ';' || chr == '|' || chr == '/' || chr == '\\')
-					return this.BadRequest($"The specified destination parameter contains illegal characters.");
-			}
-
-			CaptchaToken captcha = default;
-			if(this.Request.Headers.TryGetValue("X-Security-Captcha", out var value))
-			{
-				var text = value.ToString();
-
-				if(!string.IsNullOrEmpty(text) && !CaptchaToken.TryParse(text, out captcha))
-					return this.BadRequest($"Invalid CAPTCHA format.");
-			}
-
+			var captcha = this.Request.Headers.TryGetValue(Zongsoft.Web.Http.Headers.Captcha, out var text) ? text.ToString() : null;
 			var result = await this.Secretor.Transmitter.TransmitAsync(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination, cancellation);
 			return this.Content(result);
 		}
