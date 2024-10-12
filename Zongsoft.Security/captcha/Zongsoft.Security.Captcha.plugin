@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Security.Captcha"
+        title="Zongsoft.Security.Captcha Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Created Date: 2024-10-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Security.Captcha" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Security" />
+		</dependencies>
+	</manifest>
+</plugin>

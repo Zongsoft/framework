@@ -1,0 +1,2 @@
+artifacts/Zongsoft.Security.Captcha.plugin
+lib/$(Framework)/Zongsoft.Security.Captcha.*
