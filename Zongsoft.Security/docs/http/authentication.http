@@ -21,15 +21,15 @@ Host: {{host}}:{{port}}
 @phone={{signin.response.body.$.identity.phone}}
 
 ### 验证码登录
+# 注：验证码登录需要先通过 Secret 方法获取身份验证码。
 # @name signin
 # @prompt token  令牌号
-# @prompt phone  手机号
 # @prompt secret 验证码
-POST http://{{url}}/Security/Authentication/Signin/Secret/{{token}}?scenario={{scenario}} HTTP/1.1
+POST /Security/Authentication/Signin/Secret/{{token}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{phone}}:{{secret}}
+{{secret}}
 
 ###
 
@@ -111,22 +111,48 @@ POST /Security/Authentication/Signout HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
+
+### 人机识别生成(验证码)
+# @name captcha
+# @prompt strength 验证码强度(normal|weak|strong)
+POST /Security/Captcha/authencode?strength={{strength}} HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 人机识别验证(验证码)
+# @name captcha
+# @prompt token 验证令牌
+# @prompt code  验证码值
+POST /Security/Captcha/authencode/Verify/{{token}} HTTP/1.1
+Host: {{host}}:{{port}}
+Content-Type: text/plain
+
+{{code}}
+
+
 ### 安全验证（手机）
+### 操作步骤：
+### 1. 通过人机识别接口(Captcha)发起识别；
+### 2. 通过人机识别接口(Captcha/Verify)进行验证；
+### 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
 # @name secret
 # @prompt phone   手机号码
-# @prompt channel 验证通道
-# @prompt captcha 人机令牌
+# @prompt channel 验证通道(message|voice)
+# @prompt captcha 人机识别(scheme:token)
 POST /Security/Authentication/Secret/phone:{{phone}}?channel={{channel}} HTTP/1.1
 Host: {{host}}:{{port}}
-X-Security-Captcha: {{captcha}}
+X-Captcha: {{captcha}}
 
 ### 安全验证（邮箱）
+### 操作步骤：
+### 1. 通过人机识别接口(Captcha)发起识别；
+### 2. 通过人机识别接口(Captcha/Verify)进行验证；
+### 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
 # @name secret
 # @prompt email   邮箱地址
-# @prompt captcha 人机令牌
+# @prompt captcha 人机识别(scheme:token)
 POST /Security/Authentication/Secret/email:{{email}} HTTP/1.1
 Host: {{host}}:{{port}}
-X-Security-Captcha: {{captcha}}
+X-Captcha: {{captcha}}
 
 ### 安全校验
 # @name verify
