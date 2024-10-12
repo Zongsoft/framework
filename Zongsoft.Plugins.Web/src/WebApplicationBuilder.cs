@@ -149,7 +149,7 @@ namespace Zongsoft.Web
 				.AllowAnyHeader()
 				.AllowAnyMethod()
 				.AllowCredentials()
-				.WithExposedHeaders(Http.Headers.Pagination)
+				.WithExposedHeaders(Http.Headers.Captcha, Http.Headers.Pagination)
 				.SetIsOriginAllowed(origin => true)));
 
 			services.AddEndpointsApiExplorer();

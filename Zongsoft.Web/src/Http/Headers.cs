@@ -42,4 +42,7 @@ public static class Headers
 
 	/// <summary>表示分页信息的响应头。</summary>
 	public const string Pagination = "X-Pagination";
+
+	/// <summary>表示人机识别的请求头或响应头。</summary>
+	public const string Captcha = "X-Captcha";
 }
