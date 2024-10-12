@@ -350,19 +350,24 @@ namespace Zongsoft.Security
 			#endregion
 
 			#region 公共方法
-			public override async ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, CaptchaToken captcha, string channel, string extra, CancellationToken cancellation)
+			public override async ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, string captcha, string channel, string extra, CancellationToken cancellation)
 			{
 				this.Initialize(_serviceProvider);
 
 				if(!string.IsNullOrEmpty(scheme) && !string.IsNullOrEmpty(destination) && _transmitters.TryGetValue(scheme, out var transmitter) && transmitter != null)
 				{
-					if(!captcha.IsEmpty)
+					if(!string.IsNullOrEmpty(captcha))
 					{
-						if(!_captchas.TryGetValue(captcha.Scheme, out var verifier))
-							throw new SecurityException("Captcha", $"The specified '{captcha.Scheme}' CAPTCHA is invalid.");
+						var index = captcha.IndexOfAny([':', '=', ' ', '\t']);
 
-						if(!verifier.Verify(captcha.Value, out _))
-							throw new SecurityException("Captcha", $"The '{verifier.Scheme}' CAPTCHA failed.");
+						if(index <= 0 || index >= captcha.Length - 1)
+							throw new SecurityException("Captcha", "Invalid captch format.");
+
+						if(!_captchas.TryGetValue(captcha[..index], out var verifier))
+							throw new SecurityException("Captcha", $"The specified '{captcha[..index]}' CAPTCHA is invalid.");
+
+						if(!await verifier.VerifyAsync(captcha[(index + 1)..], cancellation))
+							throw new SecurityException("Captcha", $"The specified '{verifier.Scheme}' CAPTCHA failed to validate.");
 					}
 
 					var token = GetKey(scheme, destination, template, scenario, channel);

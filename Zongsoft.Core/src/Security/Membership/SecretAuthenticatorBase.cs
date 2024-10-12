@@ -62,20 +62,13 @@ namespace Zongsoft.Security.Membership
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return await this.VerifyAsync(key, GetTicket(data), scenario, parameters, cancellation);
+			return await this.VerifyAsync(key, await GetTicketAsync(data, cancellation), scenario, parameters, cancellation);
 		}
 
 		public ValueTask<string> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
 				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Missing the required authentication token.");
-
-			var index = data.IndexOfAny(new[] { ':', '=' });
-			if(index <= 0 || index >= data.Length - 1)
-				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Illegal identity verification token format.");
-
-			var identifier = data.Substring(0, index);
-			var secret = data.Substring(index + 1);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
@@ -84,21 +77,22 @@ namespace Zongsoft.Security.Membership
 			if(attempter != null && !attempter.Verify(key))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
-			if(!this.Secretor.Verify(key, secret, out var extra))
-			{
-				//通知验证尝试失败
-				attempter?.Fail(key);
+			var secret = data.Trim();
 
-				throw new AuthenticationException(SecurityReasons.VerifyFaild);
+			if(this.Secretor.Verify(key, secret, out var extra))
+			{
+				//通知验证尝试成功，即清空验证失败记录
+				attempter?.Done(key);
+
+				//返回成功
+				return ValueTask.FromResult(extra);
 			}
 
-			//通知验证尝试成功，即清空验证失败记录
-			attempter?.Done(key);
+			//通知验证尝试失败
+			attempter?.Fail(key);
 
-			if((string.IsNullOrEmpty(extra) && string.IsNullOrEmpty(identifier)) || string.Equals(identifier, extra, StringComparison.OrdinalIgnoreCase))
-				return ValueTask.FromResult(extra);
-			else
-				throw new AuthenticationException(SecurityReasons.VerifyFaild, $"Identity verification data is inconsistent.");
+			//抛出验证失败的异常
+			throw new AuthenticationException(SecurityReasons.VerifyFaild);
 		}
 		#endregion
 
@@ -130,7 +124,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 私有方法
-		private static string GetTicket(object data)
+		private static async ValueTask<string> GetTicketAsync(object data, CancellationToken cancellation = default)
 		{
 			if(data is string text)
 				return text;
@@ -141,7 +135,7 @@ namespace Zongsoft.Security.Membership
 			if(data is Stream stream)
 			{
 				using var reader = new StreamReader(stream, Encoding.UTF8);
-				return reader.ReadToEnd();
+				return await reader.ReadToEndAsync();
 			}
 
 			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
