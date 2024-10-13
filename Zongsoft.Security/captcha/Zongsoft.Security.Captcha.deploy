@@ -1,2 +1,6 @@
 artifacts/Zongsoft.Security.Captcha.plugin
 lib/$(Framework)/Zongsoft.Security.Captcha.*
+
+nuget:SixLabors.Fonts@2.0.4
+nuget:SixLabors.ImageSharp@3.1.5
+nuget:SixLabors.ImageSharp.Drawing@2.1.4
