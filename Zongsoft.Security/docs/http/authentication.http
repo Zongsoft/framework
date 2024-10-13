@@ -122,7 +122,7 @@ Host: {{host}}:{{port}}
 # @name captcha
 # @prompt token 验证令牌
 # @prompt code  验证码值
-POST /Security/Captcha/authencode/Verify/{{token}} HTTP/1.1
+POST /Security/Captcha/authencode/Verify?token={{token}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 

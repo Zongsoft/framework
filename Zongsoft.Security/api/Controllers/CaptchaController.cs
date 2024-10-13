@@ -47,7 +47,7 @@ namespace Zongsoft.Security.Controllers
 	public class CaptchaController : ControllerBase
 	{
 		[HttpPost("{scheme}")]
-		public async Task<IActionResult> IssueAsync(string scheme, [FromQuery]string extra = null, CancellationToken cancellation = default)
+		public async Task<IActionResult> IssueAsync(string scheme, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(scheme))
 				return this.BadRequest();
