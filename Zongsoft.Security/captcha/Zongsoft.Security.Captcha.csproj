@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>1.1.0.0</Version>
+		<Version>1.1.1.0</Version>
 		<Product>Zongsoft Security Captcha Library</Product>
 		<Description>This is a verification code class library for CAPTCHA.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -26,6 +26,9 @@
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web">
+			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 </Project>

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -41,15 +41,11 @@ namespace Zongsoft.Security
 	///		<list type="bullet">
 	///			<item>
 	///				<term>[POST] /security/captcha/{scheme}</term>
-	///				<description>发起人机识别。</description>
+	///				<description>发起人机识别，返回特定 scheme 的响应内容。</description>
 	///			</item>
 	///			<item>
-	///				<term>[POST] /security/captcha/{scheme}/verify/{token}?extra={extra?}</term>
-	///				<description>请求的内容为识别的数据信息文本。</description>
-	///			</item>
-	///			<item>
-	///				<term>[GET] /security/captcha/{scheme}/{token}</term>
-	///				<description>判断指定的识别会话是否存在。</description>
+	///				<term>[POST] /security/captcha/{scheme}/verify</term>
+	///				<description>人机识别验证，请求的内容为识别的数据，如果验证成功则返回成功令牌，否则返回空。</description>
 	///			</item>
 	///		</list>
 	/// </remarks>

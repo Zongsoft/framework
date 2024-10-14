@@ -72,24 +72,24 @@ namespace Zongsoft.Security.Captcha
 			await image.SaveAsPngAsync(stream, cancellation);
 			await cache.SetValueAsync(GetKey(token), code, TimeSpan.FromMinutes(10), CacheRequisite.Always, cancellation);
 
-			return new
-			{
-				Token = token,
-				Data = stream.ToArray(),
-				Type = "image/png",
-			};
+			return new AuthencodeCaptchaResult(token, stream.ToArray(), "image/png");
 		}
 
 		public async ValueTask<string> VerifyAsync(object argument, Parameters parameters, CancellationToken cancellation = default)
 		{
-			if(argument == null || parameters == null)
+			if(argument == null)
 				return null;
 
 			var code = argument.ToString();
-			var token = parameters.TryGetValue(TOKEN_PARAMETER, out var value) ? value.ToString() : null;
-
-			if(string.IsNullOrEmpty(code) || string.IsNullOrEmpty(token))
+			if(string.IsNullOrEmpty(code))
 				return null;
+
+			var index = code.IndexOfAny([':', '=']);
+			if(index < 1 || index >= code.Length - 1)
+				return null;
+
+			var token = code[..index];
+			code = code[(index + 1)..];
 
 			var cache = this.Cache;
 			var cachedValue = await cache.GetValueAsync(GetKey(token), cancellation);
@@ -136,6 +136,16 @@ namespace Zongsoft.Security.Captcha
 		#region 服务匹配
 		bool IMatchable<string>.Match(string argument) => this.Scheme.Equals(argument, StringComparison.OrdinalIgnoreCase);
 		bool IMatchable.Match(object argument) => argument is string scheme && this.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase);
+		#endregion
+
+		#region 嵌套结构
+		internal sealed class AuthencodeCaptchaResult(string token, byte[] data, string type)
+		{
+			public readonly string Token = token;
+			public readonly byte[] Data = data;
+			public readonly string Type = type;
+			public bool HasValue => this.Data != null && this.Data.Length > 0;
+		}
 		#endregion
 	}
 }

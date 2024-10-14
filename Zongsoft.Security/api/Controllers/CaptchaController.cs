@@ -60,8 +60,16 @@ namespace Zongsoft.Security.Controllers
 				await this.Request.ReadFormAsync(cancellation) :
 				await this.Request.ReadAsStringAsync();
 
-			var result = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
-			return result == null ? this.NoContent() : this.Ok(result);
+			var data = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
+			var formatter = this.HttpContext.RequestServices.Resolve<ICaptchaFormatter<HttpContext>>(scheme);
+
+			if(formatter != null)
+				data = await formatter.FormatAsync(this.HttpContext, data, cancellation);
+
+			if(data == null)
+				return this.NoContent();
+
+			return data is IActionResult result ? result : this.Ok(data);
 		}
 
 		[HttpPost("{scheme}/[action]")]
