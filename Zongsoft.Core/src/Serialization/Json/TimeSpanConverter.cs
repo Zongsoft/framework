@@ -39,8 +39,9 @@ public class TimeSpanConverter : JsonConverter<TimeSpan>
 	{
 		if(reader.TokenType == JsonTokenType.Number)
 			return TimeSpan.FromSeconds(reader.GetDouble());
-		else
-			return TimeSpan.Parse(reader.GetString());
+
+		var text = reader.GetString();
+		return Common.TimeSpanUtility.TryParse(text, out var value) ? value : throw new InvalidOperationException($"The '{text}' value is an invalid TimeSpan type format.");
 	}
 
 	public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
