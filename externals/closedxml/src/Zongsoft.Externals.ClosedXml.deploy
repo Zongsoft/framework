@@ -1,6 +1,7 @@
 artifacts/Zongsoft.Externals.ClosedXml.plugin
 lib/$(Framework)/Zongsoft.Externals.ClosedXml.*
 
-nuget:ClosedXml@0.101.0
-nuget:ClosedXml.Report@0.2.8
-nuget:System.IO.Packaging@8.0.0
+nuget:ClosedXml@0.102.2
+nuget:ClosedXml.Report@0.2.10
+nuget:SixLabors.Fonts@2.0.4
+nuget:System.IO.Packaging@8.0.1
