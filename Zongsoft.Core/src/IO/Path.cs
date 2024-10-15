@@ -57,7 +57,7 @@ namespace Zongsoft.IO
 	///			</item>
 	///		</list>
 	/// </remarks>
-	public struct Path : IEquatable<Path>
+	public readonly struct Path : IEquatable<Path>
 	{
 		#region 成员字段
 		private readonly string _scheme;
@@ -76,65 +76,55 @@ namespace Zongsoft.IO
 
 		#region 公共属性
 		/// <summary>获取路径的文件系统<see cref="IFileSystem.Scheme"/>方案。</summary>
-		public string Scheme { get => _scheme; }
+		public string Scheme => _scheme;
 
 		/// <summary>获取路径的锚点，即路径的起始点。</summary>
-		public PathAnchor Anchor { get => _anchor; }
+		public PathAnchor Anchor => _anchor;
 
 		/// <summary>获取路径中的文件名，有关路径中文件名的定义请参考备注说明。</summary>
 		/// <remarks>
 		///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
 		/// </remarks>
-		public string FileName { get => _segments != null && _segments.Length > 0 ? _segments[^1] : null; }
+		public string FileName => _segments != null && _segments.Length > 0 ? _segments[^1] : null;
 
 		/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
-		public string FullPath { get => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments)); }
+		public string FullPath => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments));
 
-		/// <summary>
-		/// 获取路径的完整URL，该属性值包含<see cref="Scheme"/>和<see cref="FullPath"/>。
-		/// </summary>
+		/// <summary>获取路径的完整URL，该属性值包含<see cref="Scheme"/>和<see cref="FullPath"/>。</summary>
 		/// <remarks>
 		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
 		/// </remarks>
-		public string Url { get => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath; }
+		public string Url => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath;
 
 		/// <summary>获取一个值，指示是否含有<see cref="Segments"/>路径节。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-		public bool HasSegments { get => _segments != null && _segments.Length > 0; }
+		public bool HasSegments => _segments != null && _segments.Length > 0;
 
-		/// <summary>
-		/// 获取路径中各节点数组，更多内容请参考备注说明。
-		/// </summary>
+		/// <summary>获取路径中各节点数组，更多内容请参考备注说明。</summary>
 		/// <remarks>
 		///		<para>如果当前路径是一个「文件路径」，即<see cref="IsFile"/>属性为真(True)，则该数组的最后一个元素内容就是<see cref="FileName"/>的值，亦文件路径的<see cref="Segments"/>不可能为空数组，因为它至少包含一个为文件名的元素。</para>
 		///		<para>如果当前路径是一个「目录路径」，即<see cref="IsDirectory"/>属性为真(True)，并且不是空目录，则该数组的最后一个元素值为空(null)或空字符串("")。所谓“空目录”的示例如下：</para>
 		/// </remarks>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-		public string[] Segments { get => _segments; }
+		public string[] Segments => _segments;
 
-		/// <summary>
-		/// 获取一个值，指示当前路径是否为文件路径。如果返回真(True)，即表示<see cref="FileName"/>有值。
-		/// </summary>
+		/// <summary>获取一个值，指示当前路径是否为文件路径。如果返回真(True)，即表示<see cref="FileName"/>有值。</summary>
 		/// <remarks>
 		///		<para>路径如果不是以斜杠(/)结尾，则表示该路径为「文件路径」，文件路径中的<see cref="FileName"/>即为<see cref="Segments"/>数组中最后一个元素的值。</para>
 		/// </remarks>
-		public bool IsFile { get => _segments != null && _segments.Length > 0 && !string.IsNullOrEmpty(_segments[^1]); }
+		public bool IsFile => _segments != null && _segments.Length > 0 && !string.IsNullOrEmpty(_segments[^1]);
 
-		/// <summary>
-		/// 获取一个值，指示当前路径是否为目录路径。有关「目录路径」定义请参考备注说明。
-		/// </summary>
+		/// <summary>获取一个值，指示当前路径是否为目录路径。有关「目录路径」定义请参考备注说明。</summary>
 		/// <remarks>
 		///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
 		/// </remarks>
-		public bool IsDirectory { get => _segments == null || _segments.Length == 0 || string.IsNullOrEmpty(_segments[^1]); }
+		public bool IsDirectory => _segments == null || _segments.Length == 0 || string.IsNullOrEmpty(_segments[^1]);
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 获取路径的完整URL，包含 <see cref="Scheme"/> 部分。
-		/// </summary>
+		/// <summary>获取路径的完整URL，包含 <see cref="Scheme"/> 部分。</summary>
 		/// <remarks>
 		///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
 		/// </remarks>
@@ -144,21 +134,15 @@ namespace Zongsoft.IO
 		public string GetFullPath() => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments));
 
 		/// <summary>获取路径的目录地址（注：不含<see cref="Scheme"/>部分）。</summary>
-		public string GetDirectory()
-		{
-			return GetAnchorString(_anchor, true) +
-			(
-				this.IsFile ?
-				string.Join('/', _segments, 0, _segments.Length - 1) + "/" :
-				(_segments == null ? string.Empty : string.Join('/', _segments))
-			);
-		}
+		public string GetDirectory() => GetAnchorString(_anchor, true) +
+		(
+			this.IsFile ?
+			string.Join('/', _segments, 0, _segments.Length - 1) + "/" :
+			(_segments == null ? string.Empty : string.Join('/', _segments))
+		);
 
 		/// <summary>获取目录地址URL，包含 <see cref="Scheme"/> 部分。</summary>
-		public string GetDirectoryUrl()
-		{
-			return string.IsNullOrEmpty(_scheme) ? this.GetDirectory() : _scheme + ':' + this.GetDirectory();
-		}
+		public string GetDirectoryUrl() => string.IsNullOrEmpty(_scheme) ? this.GetDirectory() : _scheme + ':' + this.GetDirectory();
 		#endregion
 
 		#region 重写方法
@@ -175,20 +159,9 @@ namespace Zongsoft.IO
 			return false;
 		}
 
-		public override bool Equals(object obj)
-		{
-			return obj is Path path && this.Equals(path);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(string.IsNullOrEmpty(_scheme) ? null : _scheme.ToLowerInvariant(), _anchor, string.Join('/', _segments));
-		}
-
-		public override string ToString()
-		{
-			return this.Url;
-		}
+		public override bool Equals(object obj) => obj is Path path && this.Equals(path);
+		public override int GetHashCode() => HashCode.Combine(string.IsNullOrEmpty(_scheme) ? null : _scheme.ToLowerInvariant(), _anchor, string.Join('/', _segments));
+		public override string ToString() => this.Url;
 		#endregion
 
 		#region 符号重写
@@ -197,9 +170,7 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 解析路径。
-		/// </summary>
+		/// <summary>解析路径。</summary>
 		/// <param name="text">要解析的路径文本。</param>
 		/// <returns>返回解析成功的<see cref="Path"/>路径对象。</returns>
 		/// <exception cref="PathException">当<paramref name="text"/>参数为无效的路径格式。</exception>
@@ -216,9 +187,7 @@ namespace Zongsoft.IO
 			throw new PathException(message);
 		}
 
-		/// <summary>
-		/// 尝试解析路径。
-		/// </summary>
+		/// <summary>尝试解析路径。</summary>
 		/// <param name="text">要解析的路径文本。</param>
 		/// <param name="path">解析成功的<see cref="Path"/>路径对象。</param>
 		/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
@@ -239,9 +208,7 @@ namespace Zongsoft.IO
 			return false;
 		}
 
-		/// <summary>
-		/// 将字符串数组组合成一个路径。
-		/// </summary>
+		/// <summary>将字符串数组组合成一个路径。</summary>
 		/// <param name="paths">由路径的各部分构成的数组。</param>
 		/// <returns>组合后的路径。</returns>
 		/// <remarks>
@@ -361,22 +328,14 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 私有方法
-		private static string GetAnchorString(PathAnchor anchor, bool slashed)
+		private static string GetAnchorString(PathAnchor anchor, bool slashed) => anchor switch
 		{
-			switch(anchor)
-			{
-				case PathAnchor.Root:
-					return "/";
-				case PathAnchor.Current:
-					return slashed ? "./" : ".";
-				case PathAnchor.Parent:
-					return slashed ? "../" : "..";
-				case PathAnchor.Application:
-					return (Services.ApplicationContext.Current?.ApplicationPath ?? "~") + (slashed ? "/" : null);
-				default:
-					return string.Empty;
-			}
-		}
+			PathAnchor.Root => "/",
+			PathAnchor.Current => slashed ? "./" : ".",
+			PathAnchor.Parent => slashed ? "../" : "..",
+			PathAnchor.Application => (Services.ApplicationContext.Current?.ApplicationPath ?? "~") + (slashed ? "/" : null),
+			_ => string.Empty,
+		};
 		#endregion
 
 		#region 解析方法
