@@ -39,7 +39,7 @@ namespace Zongsoft.IO
 	public class LocalFileSystem : IFileSystem
 	{
 		#region 单例字段
-		public static readonly LocalFileSystem Instance = new LocalFileSystem();
+		public static readonly LocalFileSystem Instance = new();
 		#endregion
 
 		#region 私有构造
@@ -135,13 +135,11 @@ namespace Zongsoft.IO
 		internal sealed class LocalDirectoryProvider : IDirectory
 		{
 			#region 单例字段
-			public static readonly LocalDirectoryProvider Instance = new LocalDirectoryProvider();
+			public static readonly LocalDirectoryProvider Instance = new();
 			#endregion
 
 			#region 私有构造
-			private LocalDirectoryProvider()
-			{
-			}
+			private LocalDirectoryProvider() { }
 			#endregion
 
 			#region 公共方法
@@ -201,7 +199,6 @@ namespace Zongsoft.IO
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				System.IO.Directory.Move(sourcePath, destinationPath);
 			}
 
@@ -209,7 +206,6 @@ namespace Zongsoft.IO
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				await Task.Run(() => System.IO.Directory.Move(sourcePath, destinationPath));
 			}
 
@@ -247,24 +243,11 @@ namespace Zongsoft.IO
 				return new DirectoryInfo(info.FullName, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties)
-			{
-				throw new NotSupportedException();
-			}
+			public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
+			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
+			public IEnumerable<PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
 
-			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
-			{
-				throw new NotSupportedException();
-			}
-
-			public IEnumerable<PathInfo> GetChildren(string path)
-			{
-				return this.GetChildren(path, null, false);
-			}
-
-			/// <summary>
-			/// 获取指定路径中与搜索模式匹配的所有文件名称和目录信息的可枚举集合，还可以搜索子目录。
-			/// </summary>
+			/// <summary>获取指定路径中与搜索模式匹配的所有文件名称和目录信息的可枚举集合，还可以搜索子目录。</summary>
 			/// <param name="path">要搜索的目录。</param>
 			/// <param name="pattern">用于搜索匹配的所有文件或子目录的字符串。
 			///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件和目录。</para>
@@ -275,35 +258,25 @@ namespace Zongsoft.IO
 			public IEnumerable<PathInfo> GetChildren(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-				var entries = this.Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-
+				var entries = Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 				return new InfoEnumerator<PathInfo>(entries);
 			}
 
-			public Task<IEnumerable<PathInfo>> GetChildrenAsync(string path)
-			{
-				return this.GetChildrenAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<PathInfo>> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
 			public async Task<IEnumerable<PathInfo>> GetChildrenAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
 
 				return await Task.Run(() =>
 				{
-					var entries = this.Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+					var entries = Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 					return new InfoEnumerator<PathInfo>(entries);
 				});
 			}
 
-			public IEnumerable<DirectoryInfo> GetDirectories(string path)
-			{
-				return this.GetDirectories(path, null, false);
-			}
+			public IEnumerable<DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
 
-			/// <summary>
-			/// 返回指定路径中与搜索模式匹配的目录信息的可枚举集合，还可以搜索子目录。
-			/// </summary>
+			/// <summary>返回指定路径中与搜索模式匹配的目录信息的可枚举集合，还可以搜索子目录。</summary>
 			/// <param name="path">要搜索的目录。</param>
 			/// <param name="pattern">用于搜索匹配的所有子目录的字符串。
 			///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有目录。</para>
@@ -314,35 +287,25 @@ namespace Zongsoft.IO
 			public IEnumerable<DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-				var entries = this.Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-
+				var entries = Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 				return new InfoEnumerator<DirectoryInfo>(entries);
 			}
 
-			public Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string path)
-			{
-				return this.GetDirectoriesAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
 			public async Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
 
 				return await Task.Run(() =>
 				{
-					var entries = this.Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+					var entries = Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 					return new InfoEnumerator<DirectoryInfo>(entries);
 				});
 			}
 
-			public IEnumerable<FileInfo> GetFiles(string path)
-			{
-				return this.GetFiles(path, null, false);
-			}
+			public IEnumerable<FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
 
-			/// <summary>
-			/// 返回指定路径中与搜索模式匹配的文件信息的可枚举集合，还可以搜索子目录。
-			/// </summary>
+			/// <summary>返回指定路径中与搜索模式匹配的文件信息的可枚举集合，还可以搜索子目录。</summary>
 			/// <param name="path">要搜索的目录。</param>
 			/// <param name="pattern">用于搜索匹配的所有文件的字符串。
 			///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件。</para>
@@ -353,35 +316,30 @@ namespace Zongsoft.IO
 			public IEnumerable<FileInfo> GetFiles(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-				var entries = this.Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-
+				var entries = Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 				return new InfoEnumerator<FileInfo>(entries);
 			}
 
-			public Task<IEnumerable<FileInfo>> GetFilesAsync(string path)
-			{
-				return this.GetFilesAsync(path, null, false);
-			}
-
+			public Task<IEnumerable<FileInfo>> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
 			public async Task<IEnumerable<FileInfo>> GetFilesAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
 
 				return await Task.Run(() =>
 				{
-					var entries = this.Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+					var entries = Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 					return new InfoEnumerator<FileInfo>(entries);
 				});
 			}
 			#endregion
 
 			#region 私有方法
-			private static readonly Regex _regex = new Regex(@"(?<delimiter>[/\|\\]).+\k<delimiter>", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+			private static readonly Regex _regex = new(@"(?<delimiter>[/\|\\]).+\k<delimiter>", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
-			private IEnumerable<string> Search(string pattern, Func<string, IEnumerable<string>> searcher, Predicate<string> filter = null)
+			private static IEnumerable<string> Search(string pattern, Func<string, IEnumerable<string>> searcher, Predicate<string> filter = null)
 			{
 				var regularPattern = string.Empty;
-				IEnumerable<string> result = null;
+				IEnumerable<string> result;
 
 				if(string.IsNullOrEmpty(pattern))
 				{
@@ -450,30 +408,11 @@ namespace Zongsoft.IO
 
 				foreach(var chr in pattern)
 				{
-					switch(chr)
+					result += chr switch
 					{
-						case '.':
-						case '^':
-						case '*':
-						case '?':
-						case '+':
-						case '-':
-						case '|':
-						case '\\':
-						case '(':
-						case ')':
-						case '[':
-						case ']':
-						case '{':
-						case '}':
-						case '<':
-						case '>':
-							result += ("\\" + chr);
-							break;
-						default:
-							result += chr;
-							break;
-					}
+						'.' or '^' or '*' or '?' or '+' or '-' or '|' or '\\' or '(' or ')' or '[' or ']' or '{' or '}' or '<' or '>' => $"\\{chr}",
+						_ => chr,
+					};
 				}
 
 				return result;
@@ -481,17 +420,10 @@ namespace Zongsoft.IO
 			#endregion
 
 			#region 嵌套子类
-			private class InfoEnumerator<T> : IEnumerable<T>, IEnumerator<T> where T : PathInfo
+			private class InfoEnumerator<T>(IEnumerable<string> source) : IEnumerable<T>, IEnumerator<T> where T : PathInfo
 			{
 				#region 私有字段
-				private IEnumerator<string> _source;
-				#endregion
-
-				#region 构造函数
-				public InfoEnumerator(IEnumerable<string> source)
-				{
-					_source = source == null ? null : source.GetEnumerator();
-				}
+				private IEnumerator<string> _source = source?.GetEnumerator();
 				#endregion
 
 				#region 公共成员
@@ -526,115 +458,17 @@ namespace Zongsoft.IO
 					return false;
 				}
 
-				public void Reset()
-				{
-					if(_source != null)
-						_source.Reset();
-				}
+				public void Reset() => _source?.Reset();
 				#endregion
 
 				#region 显式实现
-				object System.Collections.IEnumerator.Current
-				{
-					get
-					{
-						return this.Current;
-					}
-				}
-
-				void IDisposable.Dispose()
-				{
-					_source = null;
-				}
+				object System.Collections.IEnumerator.Current => this.Current;
+				void IDisposable.Dispose() => _source = null;
 				#endregion
 
 				#region 枚举遍历
-				public IEnumerator<T> GetEnumerator()
-				{
-					return this;
-				}
-
-				System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-				{
-					return this;
-				}
-				#endregion
-			}
-
-			[Obsolete]
-			private class InfoEnumeratorObsoleted<T> : IEnumerable<T>, IEnumerator<T> where T : PathInfo
-			{
-				#region 私有字段
-				private int _index;
-				private string[] _items;
-				#endregion
-
-				#region 构造函数
-				public InfoEnumeratorObsoleted(string[] items)
-				{
-					_items = items;
-				}
-				#endregion
-
-				#region 公共成员
-				public T Current
-				{
-					get
-					{
-						if(_items == null || _index < 0 || _index >= _items.Length)
-							return null;
-
-						if(typeof(T) == typeof(FileInfo))
-							return LocalFileSystem.Instance.File.GetInfo(_items[_index]) as T;
-						else if(typeof(T) == typeof(DirectoryInfo))
-							return LocalFileSystem.Instance.Directory.GetInfo(_items[_index]) as T;
-						else if(typeof(T) == typeof(PathInfo))
-							return (T)new PathInfo(_items[_index], null);
-
-						throw new InvalidOperationException();
-					}
-				}
-
-				public bool MoveNext()
-				{
-					if(_items != null && ++_index < _items.Length)
-						return true;
-
-					return false;
-				}
-
-				public void Reset()
-				{
-					_index = 0;
-				}
-				#endregion
-
-				#region 显式实现
-				object System.Collections.IEnumerator.Current
-				{
-					get
-					{
-						return this.Current;
-					}
-				}
-
-				void IDisposable.Dispose()
-				{
-					_index = -1;
-					_items = null;
-				}
-				#endregion
-
-				#region 枚举遍历
-				public IEnumerator<T> GetEnumerator()
-				{
-					return this;
-				}
-
-				System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-				{
-					return this;
-				}
+				public IEnumerator<T> GetEnumerator() => this;
+				System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this;
 				#endregion
 			}
 			#endregion
@@ -643,13 +477,11 @@ namespace Zongsoft.IO
 		private sealed class LocalFileProvider : IFile
 		{
 			#region 单例字段
-			public static readonly LocalFileProvider Instance = new LocalFileProvider();
+			public static readonly LocalFileProvider Instance = new();
 			#endregion
 
 			#region 私有构造
-			private LocalFileProvider()
-			{
-			}
+			private LocalFileProvider() { }
 			#endregion
 
 			#region 公共方法
@@ -695,29 +527,19 @@ namespace Zongsoft.IO
 				return await Task.Run(() => System.IO.File.Exists(fullPath));
 			}
 
-			public void Copy(string source, string destination)
-			{
-				this.Copy(source, destination, true);
-			}
-
+			public void Copy(string source, string destination) => this.Copy(source, destination, true);
 			public void Copy(string source, string destination, bool overwrite)
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				System.IO.File.Copy(sourcePath, destinationPath, overwrite);
 			}
 
-			public Task CopyAsync(string source, string destination)
-			{
-				return this.CopyAsync(source, destination, true);
-			}
-
+			public Task CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
 			public async Task CopyAsync(string source, string destination, bool overwrite)
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				await Task.Run(() => System.IO.File.Copy(sourcePath, destinationPath, overwrite));
 			}
 
@@ -725,7 +547,6 @@ namespace Zongsoft.IO
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				System.IO.File.Move(sourcePath, destinationPath);
 			}
 
@@ -733,7 +554,6 @@ namespace Zongsoft.IO
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
-
 				await Task.Run(() => System.IO.File.Move(sourcePath, destinationPath));
 			}
 
@@ -759,15 +579,8 @@ namespace Zongsoft.IO
 				return new FileInfo(info.FullName, info.Length, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties)
-			{
-				throw new NotSupportedException();
-			}
-
-			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
-			{
-				throw new NotSupportedException();
-			}
+			public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
+			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
 
 			public Stream Open(string path, IDictionary<string, object> properties = null)
 			{
