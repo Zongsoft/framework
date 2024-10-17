@@ -475,7 +475,7 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Delete<TUser>(
 				Condition.In(nameof(IUserModel.UserId), ids) &
 				Condition.NotEqual(nameof(IUserModel.Name), IUserModel.Administrator),
-				"Members,Permissions,PermissionFilters");
+				"Permissions,PermissionFilters");
 		}
 
 		public bool Update(uint userId, TUser user)
