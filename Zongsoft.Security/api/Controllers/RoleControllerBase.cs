@@ -91,24 +91,23 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{id:long}")]
-		public Task<IActionResult> Get(uint id)
+		[HttpGet("{identifier?}")]
+		public Task<IActionResult> Get(string identifier, [FromQuery]Paging page = null)
 		{
-			var role = this.RoleProvider.GetRole(id);
+			if(string.IsNullOrEmpty(identifier) || identifier == "*")
+				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.RoleProvider.GetRoles(identifier, page)));
 
-			return role != null ?
-				Task.FromResult((IActionResult)this.Ok(role)) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
+			if(uint.TryParse(identifier, out var id))
+			{
+				var role = this.RoleProvider.GetRole(id);
 
-		[HttpGet("{name?}")]
-		[HttpGet("{namespace:required}:{name:required}")]
-		public Task<IActionResult> Get(string @namespace, string name, [FromQuery]Paging page = null)
-		{
-			if(string.IsNullOrEmpty(name) || name == "*")
-				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.RoleProvider.GetRoles(@namespace, page)));
+				return role != null ?
+					Task.FromResult((IActionResult)this.Ok(role)) :
+					Task.FromResult((IActionResult)this.NoContent());
+			}
 
-			var result = this.RoleProvider.GetRole(name, @namespace);
+			var identity = IdentityQualifier.Parse(identifier);
+			var result = this.RoleProvider.GetRole(identity.Identity, identity.Namespace);
 
 			return result != null ?
 				Task.FromResult((IActionResult)this.Ok(result)) :

@@ -91,22 +91,55 @@ namespace Zongsoft.Security.Web.Controllers
 		#endregion
 
 		#region 公共方法
-		[HttpGet("{id:required}")]
-		public Task<IActionResult> Get(uint id)
-		{
-			var user = this.UserProvider.GetUser(id);
-
-			return user != null ?
-				Task.FromResult((IActionResult)this.Ok(user)) :
-				Task.FromResult((IActionResult)this.NotFound());
-		}
-
+		/// <summary>根据标识获取用户信息。</summary>
+		/// <param name="identifier">指定的用户标识，支持用户编号、手机号码、邮箱地址，以及关联的命名空间。</param>
+		/// <param name="page">指定的分页信息。</param>
+		/// <returns>返回的用户用户信息。</returns>
+		/// <remarks>
+		/// 参数 <paramref name="identifier"/> 支持的格式及相关语义如下：
+		/// <list type="bullet">
+		///		<item>
+		///			<term>GET /Security/Users/100</term>
+		///			<description>表示获取指定<c>用户编号</c>的单条用户信息。</description>
+		///		</item>
+		///		<item>
+		///			<term>GET /Security/Users/{name}</term>
+		///			<description>表示获取指定<c>用户名称</c>的用户信息。</description>
+		///		</item>
+		///		<item>
+		///			<term>GET /Security/Users/{namespace}:{name}</term>
+		///			<description>表示获取指定<c>命名空间</c>中<c>用户名称</c>的用户信息。</description>
+		///		</item>
+		///		<item>
+		///			<term>GET /Security/Users/{namespace}:{phone}</term>
+		///			<description>表示获取指定<c>命名空间</c>中<c>手机号码</c>的用户信息。</description>
+		///		</item>
+		///		<item>
+		///			<term>GET /Security/Users/{namespace}:{email}</term>
+		///			<description>表示获取指定<c>命名空间</c>中<c>邮箱地址</c>的用户信息。</description>
+		///		</item>
+		/// </list>
+		/// <para>
+		///		由于<c>手机号码</c>与<c>用户编号</c>都是数字，因此在未指定<c>命名空间</c>时<c>手机号码</c>会被当作<c>用户编号</c>处理，可通过如下格式来避免该歧义发生：
+		///		<code>GET /Security/Users/:{phone}</code>
+		///	</para>
+		/// </remarks>
 		[HttpGet("{identifier?}")]
 		public Task<IActionResult> Get(string identifier, [FromQuery] Paging page = null)
 		{
-			if(!IdentityQualifier.TryParse(identifier, out var identity) || (string.IsNullOrEmpty(identity.Identity) || identity.Identity == "*"))
-				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.UserProvider.GetUsers(identity.Namespace, page)));
+			if(string.IsNullOrEmpty(identifier) || identifier == "*")
+				return Task.FromResult(this.Paginate(page ??= Paging.First(), this.UserProvider.GetUsers(identifier, page)));
 
+			if(uint.TryParse(identifier, out var id))
+			{
+				var user = this.UserProvider.GetUser(id);
+
+				return user != null ?
+					Task.FromResult((IActionResult)this.Ok(user)) :
+					Task.FromResult((IActionResult)this.NoContent());
+			}
+
+			var identity = IdentityQualifier.Parse(identifier);
 			var result = this.UserProvider.GetUser(identity.Identity, identity.Namespace);
 
 			return result != null ?
