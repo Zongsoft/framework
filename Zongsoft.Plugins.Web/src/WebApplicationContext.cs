@@ -37,19 +37,21 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+
+using Zongsoft.Plugins;
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Web
 {
-	public class WebApplicationContext : Zongsoft.Plugins.PluginApplicationContext
+	public class WebApplicationContext(IServiceProvider services) : Zongsoft.Plugins.PluginApplicationContext(services)
 	{
 		#region 成员字段
 		private IHttpContextAccessor _http;
 		private SessionCollection _session;
-		#endregion
 
-		#region 构造函数
-		public WebApplicationContext(IServiceProvider services) : base(services) { }
 		#endregion
 
 		#region 公共属性
@@ -63,18 +65,9 @@ namespace Zongsoft.Web
 			}
 		}
 
-		/// <inheritdoc />
+		public override string ApplicationType => "Web";
 		public override ClaimsPrincipal Principal => this.HttpContext?.User;
-
-		/// <inheritdoc />
-		public override IDictionary<string, object> Session
-		{
-			get
-			{
-				_session ??= new SessionCollection(this.Services.GetRequiredService<IHttpContextAccessor>());
-				return _session;
-			}
-		}
+		public override IDictionary<string, object> Session => _session ??= new SessionCollection(this.Services.GetRequiredService<IHttpContextAccessor>());
 		#endregion
 
 		#region 重写方法
@@ -118,14 +111,12 @@ namespace Zongsoft.Web
 			return true;
 		}
 
-		protected override Plugins.IWorkbenchBase CreateWorkbench(out Plugins.PluginTreeNode node)
-		{
-			return base.CreateWorkbench(out node) ?? new Workbench(this);
-		}
+		protected override IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties) => new WebApplicationEnvironment(environment, properties);
+		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new Workbench(this);
 		#endregion
 
 		#region 私有方法
-		private static void PopulateApplicationParts(ICollection<ApplicationPart> parts, IEnumerable<Plugins.Plugin> plugins)
+		private static void PopulateApplicationParts(ICollection<ApplicationPart> parts, IEnumerable<Plugin> plugins)
 		{
 			if(parts == null || plugins == null)
 				return;
@@ -160,7 +151,24 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 嵌套子类
-		private class SessionCollection : IDictionary<string, object>
+		private class WebApplicationEnvironment : IApplicationEnvironment, IWebEnvironment
+		{
+			private readonly IHostEnvironment _environment;
+
+			public WebApplicationEnvironment(IHostEnvironment environment, IEnumerable<KeyValuePair<object, object>> properties = null)
+			{
+				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
+				this.Properties = properties == null ? new Dictionary<object, object>() : new Dictionary<object, object>(properties);
+			}
+
+			public string Name => _environment.EnvironmentName;
+			public IDictionary<object, object> Properties { get; }
+
+			public IWebSite Site => this.Sites?.Default;
+			public IWebSiteCollection Sites => ApplicationContext.Current.Configuration.GetOption<Configuration.SiteOptionsCollection>("/Application/Sites");
+		}
+
+		private sealed class SessionCollection : IDictionary<string, object>
 		{
 			#region 成员字段
 			private readonly IHttpContextAccessor _accessor;

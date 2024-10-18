@@ -43,4 +43,6 @@ public class HostOptions : IWebHost
 
 	public string Name { get; set; }
 	public string Domain { get; set; }
+	public ushort Port { get; set; }
+	public string RootDirectory { get; set; }
 }

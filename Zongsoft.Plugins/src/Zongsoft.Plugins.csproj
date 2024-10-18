@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.6.1.0</Version>
+		<Version>6.6.2.0</Version>
 		<Product>Zongsoft Plugins Development Library</Product>
 		<Description>This is a framework about plugin application development.</Description>
 		<RootNamespace>Zongsoft.Plugins</RootNamespace>

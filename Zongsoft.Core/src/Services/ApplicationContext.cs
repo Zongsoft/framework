@@ -116,6 +116,7 @@ namespace Zongsoft.Services
 			protected set => _description = value;
 		}
 
+		public virtual string ApplicationType { get; }
 		public virtual string ApplicationPath => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
 		public virtual IConfigurationRoot Configuration => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
 
@@ -136,7 +137,7 @@ namespace Zongsoft.Services
 						return null;
 
 					var context = this.Services?.GetService<HostBuilderContext>();
-					this.Properties[nameof(this.Environment)] = environment = new ApplicationEnvironment(hosting, context?.Properties);
+					this.Properties[nameof(this.Environment)] = environment = this.CreateEnvironment(hosting, context?.Properties);
 				}
 
 				return environment;
@@ -180,6 +181,13 @@ namespace Zongsoft.Services
 		}
 		#endregion
 
+		#region 虚拟方法
+		protected virtual IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties)
+		{
+			return new ApplicationEnvironment(environment, properties);
+		}
+		#endregion
+
 		#region 初始方法
 		public virtual bool Initialize()
 		{
@@ -214,7 +222,7 @@ namespace Zongsoft.Services
 		#region 处置方法
 		public void Dispose()
 		{
-			Dispose(true);
+			this.Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 
@@ -276,7 +284,7 @@ namespace Zongsoft.Services
 			if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
 				return this.Name;
 			else
-				return string.Format("[{0}] {1}", this.Name, this.Title);
+				return $"[{this.Name}] {this.Title}";
 		}
 		#endregion
 
@@ -284,20 +292,15 @@ namespace Zongsoft.Services
 		private class ApplicationEnvironment : IApplicationEnvironment
 		{
 			private readonly IHostEnvironment _environment;
-			private readonly IDictionary<object, object> _properties;
 
 			public ApplicationEnvironment(IHostEnvironment environment, IEnumerable<KeyValuePair<object, object>> properties = null)
 			{
 				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
-
-				if(properties == null)
-					_properties = new Dictionary<object, object>();
-				else
-					_properties = new Dictionary<object, object>(properties);
+				this.Properties = properties == null ? new Dictionary<object, object>() : new Dictionary<object, object>(properties);
 			}
 
 			public string Name => _environment.EnvironmentName;
-			public IDictionary<object, object> Properties => _properties;
+			public IDictionary<object, object> Properties { get; }
 		}
 		#endregion
 	}

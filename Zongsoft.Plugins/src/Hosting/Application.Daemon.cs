@@ -73,15 +73,14 @@ namespace Zongsoft.Plugins.Hosting
 			#endregion
 		}
 
-		private sealed class DaemonApplicationContext : PluginApplicationContext
+		private sealed class DaemonApplicationContext(IServiceProvider serviceProvider) : PluginApplicationContext(serviceProvider)
 		{
-			public DaemonApplicationContext(IServiceProvider serviceProvider) : base(serviceProvider) { }
+			public override string ApplicationType => "Daemon";
 			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new DaemonWorkbench(this);
 		}
 
-		private sealed class DaemonWorkbench : WorkbenchBase
+		private sealed class DaemonWorkbench(Application.DaemonApplicationContext applicationContext) : WorkbenchBase(applicationContext)
 		{
-			public DaemonWorkbench(DaemonApplicationContext applicationContext) : base(applicationContext) { }
 		}
 	}
 }

@@ -38,4 +38,8 @@ public interface IWebHost
 	string Name { get; }
 	/// <summary>获取宿主域名。</summary>
 	string Domain { get; }
+	/// <summary>获取宿主端口号。</summary>
+	ushort Port { get; }
+	/// <summary>获取宿主根目录。</summary>
+	string RootDirectory { get; }
 }

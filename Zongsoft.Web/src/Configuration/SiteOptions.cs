@@ -48,7 +48,6 @@ public class SiteOptions : IWebSite
 	}
 
 	public string Name { get; set; }
-	string IWebSite.Domain => this.Hosts?.GetDefault()?.Domain;
 	public HostOptionsCollection Hosts { get; set; }
 	IWebHostCollection IWebSite.Hosts => this.Hosts;
 }

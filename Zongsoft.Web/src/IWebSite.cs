@@ -36,8 +36,6 @@ public interface IWebSite
 {
 	/// <summary>获取站点名称。</summary>
 	string Name { get; }
-	/// <summary>获取站点默认域名。</summary>
-	string Domain { get; }
 	/// <summary>获取站点宿主集合。</summary>
 	IWebHostCollection Hosts { get; }
 }

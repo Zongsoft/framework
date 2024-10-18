@@ -59,7 +59,7 @@ namespace Zongsoft.Plugins.Hosting
 			{
 				services.AddSingleton<TerminalApplicationContext>();
 				services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
-				services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
+				services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 
 				base.RegisterServices(services, options);
 			}
@@ -76,28 +76,16 @@ namespace Zongsoft.Plugins.Hosting
 			#endregion
 		}
 
-		private sealed class TerminalApplicationContext : PluginApplicationContext
+		private sealed class TerminalApplicationContext(IServiceProvider services) : PluginApplicationContext(services)
 		{
-			#region 构造函数
-			public TerminalApplicationContext(IServiceProvider services) : base(services) { }
-			#endregion
-
-			#region 重写方法
-			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
-			{
-				return base.CreateWorkbench(out node) ?? new TerminalWorkbench(this);
-			}
-			#endregion
+			public override string ApplicationType => "Terminal";
+			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new TerminalWorkbench(this);
 		}
 
-		private sealed class TerminalWorkbench : WorkbenchBase
+		private sealed class TerminalWorkbench(PluginApplicationContext applicationContext) : WorkbenchBase(applicationContext)
 		{
 			#region 成员字段
 			private TerminalCommandExecutor _executor;
-			#endregion
-
-			#region 构造函数
-			public TerminalWorkbench(PluginApplicationContext applicationContext) : base(applicationContext) { }
 			#endregion
 
 			#region 公共属性

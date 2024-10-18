@@ -56,6 +56,10 @@ namespace Zongsoft.Web
 		private const string EXTENDED_PROPERTY_FILETYPE = "FileType";
 		#endregion
 
+		#region 单例字段
+		public static readonly WebFileAccessor Default = new();
+		#endregion
+
 		#region 成员字段
 		private string _basePath;
 		private IMimeMapper _mapping;
@@ -225,7 +229,7 @@ namespace Zongsoft.Web
 				var file = form.Files[i];
 				var args = new WebFileAccessorOptions(file.Name, path, i) { FileName = file.FileName };
 
-				configure(args);
+				configure?.Invoke(args);
 
 				if(args.Cancel)
 					break;
