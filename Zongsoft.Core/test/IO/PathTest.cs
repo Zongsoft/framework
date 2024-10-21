@@ -104,6 +104,9 @@ namespace Zongsoft.IO.Tests
 			var selfDirectory = "./bin";
 			var parentDirectory = "../bin/Debug";
 
+			Assert.Equal("zfs.web:/localhost/wwwroot/files/photo.jpg", Path.Combine(@"zfs.web:/localhost/wwwroot/", "files/photo.jpg"));
+			Assert.Equal("zfs.web:/localhost:88/wwwroot/files/photo.jpg", Path.Combine(@"zfs.web:/localhost:88/wwwroot/", "files/photo.jpg"));
+
 			Assert.Equal("zfs.local:/data/images/bin", Path.Combine(baseDirectory, selfDirectory));
 			Assert.Equal("zfs.local:/data/bin/Debug", Path.Combine(baseDirectory, parentDirectory));
 			Assert.Equal("zfs.local:/data/images/bin/Debug", Path.Combine(baseDirectory, selfDirectory, parentDirectory));

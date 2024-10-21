@@ -273,8 +273,8 @@ namespace Zongsoft.IO
 										segments.RemoveAt(segments.Count - 1);
 									break;
 								default:
-									if(segment.Contains(":"))
-										segments.Clear();
+									//if(segment.Contains(':'))
+									//	segments.Clear();
 
 									segments.Add(segment);
 									break;
@@ -314,8 +314,8 @@ namespace Zongsoft.IO
 								segments.RemoveAt(segments.Count - 1);
 							break;
 						default:
-							if(segment.Contains(":"))
-								segments.Clear();
+							//if(segment.Contains(':'))
+							//	segments.Clear();
 
 							segments.Add(segment);
 							break;
