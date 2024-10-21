@@ -11,4 +11,8 @@
 			<assembly name="Zongsoft.Net" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/FileSystem">
+		<object name="Web" type="Zongsoft.Net.WebFileSystem, Zongsoft.Net" />
+	</extension>
 </plugin>

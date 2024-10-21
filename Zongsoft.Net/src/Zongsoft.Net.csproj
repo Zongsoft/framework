@@ -15,6 +15,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Http" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Pipelines.Sockets.Unofficial" VersionOverride="2.2.8" />
 	</ItemGroup>
 
