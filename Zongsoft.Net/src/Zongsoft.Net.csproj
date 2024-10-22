@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.3.0.0</Version>
+		<Version>6.4.0.0</Version>
 		<Product>Zongsoft Net Library</Product>
 		<Description>This is a high-performance network development library.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
