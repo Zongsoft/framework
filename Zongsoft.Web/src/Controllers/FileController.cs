@@ -38,20 +38,12 @@ using Microsoft.AspNetCore.Mvc;
 using Zongsoft.IO;
 using Zongsoft.Services;
 
-namespace Zongsoft.Web;
+namespace Zongsoft.Web.Controllers;
 
 [ApiController]
 [Route("Files")]
-public class WebFileServer : ControllerBase
+public class FileController : ControllerBase
 {
-	#region 构造函数
-	public WebFileServer() => this.Environment = ApplicationContext.Current?.Environment as IWebEnvironment;
-	#endregion
-
-	#region 公共属性
-	public IWebEnvironment Environment { get; set; }
-	#endregion
-
 	#region 公共方法
 	[HttpHead("{**path}")]
 	public ValueTask<IActionResult> GetAsync(string path, CancellationToken cancellation)
@@ -67,6 +59,7 @@ public class WebFileServer : ControllerBase
 			if(!info.Exists)
 				return ValueTask.FromResult<IActionResult>(this.NotFound());
 
+			this.Response.Headers.TryAdd("X-File-Name", info.FullName);
 			this.Response.Headers.TryAdd("X-File-Size", info.Length.ToString());
 			this.Response.Headers.TryAdd("X-File-Type", Mime.GetMimeType(physicalPath));
 			this.Response.Headers.TryAdd("X-File-Creation", info.CreationTimeUtc.ToString("s"));
@@ -141,20 +134,24 @@ public class WebFileServer : ControllerBase
 	#endregion
 
 	#region 私有方法
-	private static string GetPhysicalPath(string path) => System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, path);
+	private static string GetPhysicalPath(string path) => string.IsNullOrEmpty(path) ?
+		ApplicationContext.Current.ApplicationPath :
+		System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, path.Trim().TrimStart('/', '\\'));
 	#endregion
 
 	#region 嵌套结构
 	private struct FileInfo
 	{
-		public FileInfo(Zongsoft.IO.FileInfo info)
+		public FileInfo(IO.FileInfo info)
 		{
-			this.Size = info.Size;
-			this.Type = info.Type;
-			this.Creation = info.CreatedTime;
-			this.Modification = info.ModifiedTime;
+			Name = info.Name;
+			Size = info.Size;
+			Type = info.Type;
+			Creation = info.CreatedTime;
+			Modification = info.ModifiedTime;
 		}
 
+		public string Name;
 		public long Size;
 		public string Type;
 		public DateTimeOffset Creation;

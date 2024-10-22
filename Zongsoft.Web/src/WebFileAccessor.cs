@@ -146,7 +146,7 @@ namespace Zongsoft.Web
 		/// <summary>获取指定路径的文件描述信息。</summary>
 		/// <param name="path">指定要获取的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		/// <returns>返回的指定的文件详细信息。</returns>
-		public Task<Zongsoft.IO.FileInfo> GetInfo(string path)
+		public ValueTask<Zongsoft.IO.FileInfo> GetInfo(string path)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException(nameof(path));
@@ -156,7 +156,7 @@ namespace Zongsoft.Web
 
 		/// <summary>删除指定相对路径的文件。</summary>
 		/// <param name="path">指定要删除的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
-		public async Task<bool> Delete(string path)
+		public async ValueTask<bool> Delete(string path)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException(nameof(path));
@@ -169,7 +169,7 @@ namespace Zongsoft.Web
 		/// <param name="path">指定要修改的文件相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回设置是否成功的任务。</returns>
-		public async Task<bool> SetInfo(HttpRequest request, string path, CancellationToken cancellation = default)
+		public async ValueTask<bool> SetInfo(HttpRequest request, string path, CancellationToken cancellation = default)
 		{
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
