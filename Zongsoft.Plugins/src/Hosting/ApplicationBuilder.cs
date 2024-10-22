@@ -73,6 +73,9 @@ namespace Zongsoft.Plugins.Hosting
 			//注册宿主程序集中的服务
 			Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
 
+			//添加默认的HTTP客户端服务
+			services.AddHttpClient();
+
 			foreach(var plugin in tree.Plugins)
 			{
 				RegisterPlugin(plugin, services, this.Configuration, registry);
