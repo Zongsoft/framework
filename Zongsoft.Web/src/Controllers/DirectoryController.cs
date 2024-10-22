@@ -69,7 +69,7 @@ public class DirectoryController : ControllerBase
 
 	[HttpGet("{**path}")]
 	[HttpHead("{**path}")]
-	public ValueTask<IActionResult> GetAsync(string path, [FromQuery]string mode, [FromQuery]string pattern = null, CancellationToken cancellation = default)
+	public ValueTask<IActionResult> GetAsync(string path, [FromQuery]string mode, [FromQuery]string pattern = null, [FromQuery]bool recursive = false, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
@@ -93,18 +93,20 @@ public class DirectoryController : ControllerBase
 			if(string.IsNullOrEmpty(pattern))
 				pattern = "*";
 
+			var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
 			if(string.Equals(mode, "directory", StringComparison.OrdinalIgnoreCase) ||
 			   string.Equals(mode, "directories", StringComparison.OrdinalIgnoreCase))
-				return ValueTask.FromResult<IActionResult>(this.Ok(info.EnumerateDirectories(pattern).Select(info => new DirectoryInfo(info))));
+				return ValueTask.FromResult<IActionResult>(this.Ok(info.EnumerateDirectories(pattern, option).Select(info => new DirectoryInfo(info))));
 
 			if(string.Equals(mode, "file", StringComparison.OrdinalIgnoreCase) ||
 			   string.Equals(mode, "files", StringComparison.OrdinalIgnoreCase))
-				return ValueTask.FromResult<IActionResult>(this.Ok(info.EnumerateFiles(pattern).Select(info => new FileInfo(info))));
+				return ValueTask.FromResult<IActionResult>(this.Ok(info.EnumerateFiles(pattern, option).Select(info => new FileInfo(info))));
 
 			return ValueTask.FromResult<IActionResult>(this.Ok(new
 			{
-				Directories = info.EnumerateDirectories(pattern).Select(info => new DirectoryInfo(info)),
-				Files = info.EnumerateFiles(pattern).Select(info => new FileInfo(info)),
+				Directories = info.EnumerateDirectories(pattern, option).Select(info => new DirectoryInfo(info)),
+				Files = info.EnumerateFiles(pattern, option).Select(info => new FileInfo(info)),
 			}));
 		}
 		catch
@@ -133,11 +135,14 @@ public class DirectoryController : ControllerBase
 	{
 		public FileInfo(System.IO.FileInfo info)
 		{
-			Name = info.Name;
+			Name = info.FullName.StartsWith(ApplicationContext.Current.ApplicationPath) ? info.FullName[ApplicationContext.Current.ApplicationPath.Length..] : info.FullName;
 			Size = info.Length;
-			Type = Http.MimeMapper.Default.GetMimeType(info.FullName);
+			Type = Http.MimeMapper.Default.GetMimeType(info.Name);
 			Creation = info.CreationTimeUtc;
 			Modification = info.LastWriteTimeUtc;
+
+			if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+				Name = Name.Replace('\\', '/');
 		}
 
 		public string Name;
@@ -151,9 +156,12 @@ public class DirectoryController : ControllerBase
 	{
 		public DirectoryInfo(System.IO.DirectoryInfo info)
 		{
-			Name = info.Name;
+			Name = info.FullName.StartsWith(ApplicationContext.Current.ApplicationPath) ? info.FullName[ApplicationContext.Current.ApplicationPath.Length..] : info.FullName;
 			Creation = info.CreationTimeUtc;
 			Modification = info.LastWriteTimeUtc;
+
+			if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+				Name = Name.Replace('\\', '/');
 		}
 
 		public string Name;
