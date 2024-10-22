@@ -51,7 +51,7 @@ public class FileController : ControllerBase
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 
 		try
 		{
@@ -80,7 +80,7 @@ public class FileController : ControllerBase
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 
 		try
 		{
@@ -102,7 +102,7 @@ public class FileController : ControllerBase
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 		if(!System.IO.File.Exists(physicalPath))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
@@ -113,7 +113,7 @@ public class FileController : ControllerBase
 	[HttpPost("{**path}")]
 	public async ValueTask<IActionResult> UploadAsync(string path, CancellationToken cancellation)
 	{
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 		Directory.CreateDirectory(physicalPath);
 
 		var files = WebFileAccessor.Default.Write(this.Request, physicalPath, options => options.Overwrite = true, cancellation);
@@ -131,12 +131,6 @@ public class FileController : ControllerBase
 			_ => this.Ok(result),
 		};
 	}
-	#endregion
-
-	#region 私有方法
-	private static string GetPhysicalPath(string path) => string.IsNullOrEmpty(path) ?
-		ApplicationContext.Current.ApplicationPath :
-		System.IO.Path.Combine(ApplicationContext.Current.ApplicationPath, path.Trim().TrimStart('/', '\\'));
 	#endregion
 
 	#region 嵌套结构

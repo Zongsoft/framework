@@ -51,7 +51,7 @@ public class DirectoryController : ControllerBase
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 
 		try
 		{
@@ -74,7 +74,7 @@ public class DirectoryController : ControllerBase
 		if(string.IsNullOrEmpty(path))
 			return ValueTask.FromResult<IActionResult>(this.NotFound());
 
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 
 		try
 		{
@@ -118,16 +118,10 @@ public class DirectoryController : ControllerBase
 	[HttpPost("{**path}")]
 	public ValueTask<IActionResult> CreateAsync(string path, CancellationToken cancellation = default)
 	{
-		var physicalPath = GetPhysicalPath(path);
+		var physicalPath = Utility.GetPhysicalPath(path);
 		Directory.CreateDirectory(physicalPath);
 		return ValueTask.FromResult<IActionResult>(this.NoContent());
 	}
-	#endregion
-
-	#region 私有方法
-	private static string GetPhysicalPath(string path) => string.IsNullOrEmpty(path) ?
-		ApplicationContext.Current.ApplicationPath :
-		Path.Combine(ApplicationContext.Current.ApplicationPath, path.Trim().TrimStart('/', '\\'));
 	#endregion
 
 	#region 嵌套结构

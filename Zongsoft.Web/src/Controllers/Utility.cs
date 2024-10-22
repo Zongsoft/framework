@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2015-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -27,19 +27,17 @@
  * along with the Zongsoft.Web library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Zongsoft.Web;
+using System;
+using System.IO;
 
-/// <summary>
-/// 表示Web应用环境的接口。
-/// </summary>
-public interface IWebEnvironment
+using Zongsoft.Services;
+
+namespace Zongsoft.Web.Controllers;
+
+internal static class Utility
 {
-	/// <summary>获取Web根目录名，默认为：<c>wwwroot</c>。</summary>
-	string RootDirectory { get; }
-
-	/// <summary>获取Web应用的默认站点。</summary>
-	IWebSite Site { get; }
-
-	/// <summary>获取Web应用的站点集合。</summary>
-	IWebSiteCollection Sites { get; }
+	private static string _root;
+	private static string RootDirectory => _root ??= ApplicationContext.Current.Environment is IWebEnvironment environment ? environment.RootDirectory : "wwwroot";
+	public static string GetPhysicalPath(string path) => string.IsNullOrEmpty(path) ? Path.Combine(ApplicationContext.Current.ApplicationPath, RootDirectory) :
+		Path.Combine(ApplicationContext.Current.ApplicationPath, RootDirectory, path.Trim().TrimStart('/', '\\'));
 }

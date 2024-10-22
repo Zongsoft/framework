@@ -35,7 +35,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -155,13 +155,21 @@ namespace Zongsoft.Web
 		{
 			private readonly IHostEnvironment _environment;
 
-			public WebApplicationEnvironment(IHostEnvironment environment, IEnumerable<KeyValuePair<object, object>> properties = null)
+			public WebApplicationEnvironment(IHostEnvironment environment, IDictionary<object, object> properties = null)
 			{
 				_environment = environment ?? throw new ArgumentNullException(nameof(environment));
-				this.Properties = properties == null ? new Dictionary<object, object>() : new Dictionary<object, object>(properties);
+				this.Properties = properties ?? new Dictionary<object, object>();
+
+				if(properties != null && properties.TryGetValue(typeof(WebHostBuilderContext), out var value) && value is WebHostBuilderContext context)
+				{
+					this.RootDirectory = context.HostingEnvironment.WebRootPath.StartsWith(context.HostingEnvironment.ContentRootPath) ?
+						context.HostingEnvironment.WebRootPath[context.HostingEnvironment.ContentRootPath.Length..].Trim('/', '\\') :
+						context.HostingEnvironment.WebRootPath.Trim('/', '\\');
+				}
 			}
 
 			public string Name => _environment.EnvironmentName;
+			public string RootDirectory { get; }
 			public IDictionary<object, object> Properties { get; }
 
 			public IWebSite Site => this.Sites?.Default;
