@@ -46,9 +46,7 @@ namespace Zongsoft.IO
 		/// <summary>获取目录操作服务。</summary>
 		IDirectory Directory { get; }
 
-		/// <summary>
-		/// 获取本地路径对应的外部访问Url地址。
-		/// </summary>
+		/// <summary>获取本地路径对应的外部访问Url地址。</summary>
 		/// <param name="path">要解析的本地路径。</param>
 		/// <returns>返回对应的Url地址。</returns>
 		/// <remarks>
@@ -57,9 +55,7 @@ namespace Zongsoft.IO
 		/// </remarks>
 		string GetUrl(string path);
 
-		/// <summary>
-		/// 获取本地路径对应的外部访问Url地址。
-		/// </summary>
+		/// <summary>获取本地路径对应的外部访问Url地址。</summary>
 		/// <param name="path">要解析的<see cref="Path"/>路径对象。</param>
 		/// <returns>返回对应的Url地址。</returns>
 		/// <remarks>

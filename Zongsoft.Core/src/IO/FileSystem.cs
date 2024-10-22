@@ -170,7 +170,7 @@ namespace Zongsoft.IO
 				return service.Create(path.FullPath, properties);
 			}
 
-			public Task<bool> CreateAsync(string virtualPath, IDictionary<string, object> properties = null)
+			public ValueTask<bool> CreateAsync(string virtualPath, IDictionary<string, object> properties = null)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.CreateAsync(path.FullPath, properties);
@@ -185,10 +185,10 @@ namespace Zongsoft.IO
 				return service.Delete(path.FullPath, recursive);
 			}
 
-			public Task<bool> DeleteAsync(string virtualPath, bool recursive)
+			public ValueTask<bool> DeleteAsync(string virtualPath, bool recursive)
 			{
 				if(string.IsNullOrWhiteSpace(virtualPath))
-					return Task.FromResult(false);
+					return ValueTask.FromResult(false);
 
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.DeleteAsync(path.FullPath, recursive);
@@ -204,7 +204,7 @@ namespace Zongsoft.IO
 				services[0].Move(paths[0].FullPath, paths[1].FullPath);
 			}
 
-			public Task MoveAsync(string source, string destination)
+			public ValueTask MoveAsync(string source, string destination)
 			{
 				var services = FileSystem.GetDirectoryProviders([source, destination], out var paths);
 
@@ -223,10 +223,10 @@ namespace Zongsoft.IO
 				return service.Exists(path.FullPath);
 			}
 
-			public Task<bool> ExistsAsync(string virtualPath)
+			public ValueTask<bool> ExistsAsync(string virtualPath)
 			{
 				if(string.IsNullOrWhiteSpace(virtualPath))
-					return Task.FromResult(false);
+					return ValueTask.FromResult(false);
 
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.ExistsAsync(path.FullPath);
@@ -238,7 +238,7 @@ namespace Zongsoft.IO
 				return service.GetInfo(path.FullPath);
 			}
 
-			public Task<DirectoryInfo> GetInfoAsync(string virtualPath)
+			public ValueTask<DirectoryInfo> GetInfoAsync(string virtualPath)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.GetInfoAsync(path.FullPath);
@@ -250,7 +250,7 @@ namespace Zongsoft.IO
 				return service.SetInfo(path.FullPath, properties);
 			}
 
-			public Task<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
+			public ValueTask<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.SetInfoAsync(path.FullPath, properties);
@@ -263,8 +263,8 @@ namespace Zongsoft.IO
 				return service.GetChildren(path.FullPath, pattern, recursive);
 			}
 
-			public Task<IEnumerable<PathInfo>> GetChildrenAsync(string virtualPath) => this.GetChildrenAsync(virtualPath, null, false);
-			public Task<IEnumerable<PathInfo>> GetChildrenAsync(string virtualPath, string pattern, bool recursive = false)
+			public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath) => this.GetChildrenAsync(virtualPath, null, false);
+			public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath, string pattern, bool recursive = false)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.GetChildrenAsync(path.FullPath, pattern, recursive);
@@ -277,8 +277,8 @@ namespace Zongsoft.IO
 				return service.GetDirectories(path.FullPath, pattern, recursive);
 			}
 
-			public Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string virtualPath) => this.GetDirectoriesAsync(virtualPath, null, false);
-			public Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string virtualPath, string pattern, bool recursive = false)
+			public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath) => this.GetDirectoriesAsync(virtualPath, null, false);
+			public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath, string pattern, bool recursive = false)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.GetDirectoriesAsync(path.FullPath, pattern, recursive);
@@ -291,8 +291,8 @@ namespace Zongsoft.IO
 				return service.GetFiles(path.FullPath, pattern, recursive);
 			}
 
-			public Task<IEnumerable<FileInfo>> GetFilesAsync(string virtualPath) => this.GetFilesAsync(virtualPath, null, false);
-			public Task<IEnumerable<FileInfo>> GetFilesAsync(string virtualPath, string pattern, bool recursive = false)
+			public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath) => this.GetFilesAsync(virtualPath, null, false);
+			public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath, string pattern, bool recursive = false)
 			{
 				var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 				return service.GetFilesAsync(path.FullPath, pattern, recursive);
@@ -312,10 +312,10 @@ namespace Zongsoft.IO
 				return service.Delete(path.FullPath);
 			}
 
-			public Task<bool> DeleteAsync(string virtualPath)
+			public ValueTask<bool> DeleteAsync(string virtualPath)
 			{
 				if(string.IsNullOrWhiteSpace(virtualPath))
-					return Task.FromResult(false);
+					return ValueTask.FromResult(false);
 
 				var service = FileSystem.GetFileProvider(virtualPath, out var path);
 				return service.DeleteAsync(path.FullPath);
@@ -330,10 +330,10 @@ namespace Zongsoft.IO
 				return service.Exists(path.FullPath);
 			}
 
-			public Task<bool> ExistsAsync(string virtualPath)
+			public ValueTask<bool> ExistsAsync(string virtualPath)
 			{
 				if(string.IsNullOrWhiteSpace(virtualPath))
-					return Task.FromResult(false);
+					return ValueTask.FromResult(false);
 
 				var service = FileSystem.GetFileProvider(virtualPath, out var path);
 				return service.ExistsAsync(path.FullPath);
@@ -350,8 +350,8 @@ namespace Zongsoft.IO
 					CopyFile(services[0], paths[0].FullPath, services[1], paths[1].FullPath, overwrite);
 			}
 
-			public Task CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
-			public Task CopyAsync(string source, string destination, bool overwrite)
+			public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
+			public ValueTask CopyAsync(string source, string destination, bool overwrite)
 			{
 				var services = FileSystem.GetFileProviders([source, destination], out var paths);
 
@@ -374,18 +374,17 @@ namespace Zongsoft.IO
 				}
 			}
 
-			public Task MoveAsync(string source, string destination)
+			public async ValueTask MoveAsync(string source, string destination)
 			{
 				var services = FileSystem.GetFileProviders([source, destination], out var paths);
 
 				if(string.Equals(paths[0].Scheme, paths[1].Scheme, StringComparison.OrdinalIgnoreCase))
-					return services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath);
-
-				return Task.Run(async () =>
+					await services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath);
+				else
 				{
 					await CopyFileAsync(services[0], paths[0].FullPath, services[1], paths[1].FullPath, false);
 					services[0].Delete(paths[0].FullPath);
-				});
+				}
 			}
 
 			public FileInfo GetInfo(string virtualPath)
@@ -394,7 +393,7 @@ namespace Zongsoft.IO
 				return service.GetInfo(path.FullPath);
 			}
 
-			public Task<FileInfo> GetInfoAsync(string virtualPath)
+			public ValueTask<FileInfo> GetInfoAsync(string virtualPath)
 			{
 				var service = FileSystem.GetFileProvider(virtualPath, out var path);
 				return service.GetInfoAsync(path.FullPath);
@@ -406,7 +405,7 @@ namespace Zongsoft.IO
 				return service.SetInfo(path.FullPath, properties);
 			}
 
-			public Task<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
+			public ValueTask<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
 			{
 				var service = FileSystem.GetFileProvider(virtualPath, out var path);
 				return service.SetInfoAsync(path.FullPath, properties);
@@ -450,7 +449,7 @@ namespace Zongsoft.IO
 				}
 			}
 
-			private static async Task CopyFileAsync(IFile source, string sourcePath, IFile destination, string destinationPath, bool overwrite)
+			private static async ValueTask CopyFileAsync(IFile source, string sourcePath, IFile destination, string destinationPath, bool overwrite)
 			{
 				using var sourceStream = source.Open(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 				using var destinationStream = destination.Open(destinationPath, overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write);

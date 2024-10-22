@@ -33,6 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Zongsoft.IO
 {
@@ -153,7 +154,7 @@ namespace Zongsoft.IO
 				return System.IO.Directory.CreateDirectory(fullPath) != null;
 			}
 
-			public async Task<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
+			public async ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
 			{
 				var fullPath = GetLocalPath(path);
 
@@ -180,7 +181,7 @@ namespace Zongsoft.IO
 				}
 			}
 
-			public async Task<bool> DeleteAsync(string path, bool recursive = false)
+			public async ValueTask<bool> DeleteAsync(string path, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
 
@@ -202,7 +203,7 @@ namespace Zongsoft.IO
 				System.IO.Directory.Move(sourcePath, destinationPath);
 			}
 
-			public async Task MoveAsync(string source, string destination)
+			public async ValueTask MoveAsync(string source, string destination)
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
@@ -215,7 +216,7 @@ namespace Zongsoft.IO
 				return System.IO.Directory.Exists(fullPath);
 			}
 
-			public async Task<bool> ExistsAsync(string path)
+			public async ValueTask<bool> ExistsAsync(string path)
 			{
 				var fullPath = GetLocalPath(path);
 				return await Task.Run(() => System.IO.Directory.Exists(fullPath));
@@ -232,7 +233,7 @@ namespace Zongsoft.IO
 				return new DirectoryInfo(info.FullName, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 			}
 
-			public async Task<DirectoryInfo> GetInfoAsync(string path)
+			public async ValueTask<DirectoryInfo> GetInfoAsync(string path)
 			{
 				var fullPath = GetLocalPath(path);
 				var info = await Task.Run(() => new System.IO.DirectoryInfo(fullPath));
@@ -244,7 +245,7 @@ namespace Zongsoft.IO
 			}
 
 			public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
-			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
+			public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
 			public IEnumerable<PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
 
 			/// <summary>获取指定路径中与搜索模式匹配的所有文件名称和目录信息的可枚举集合，还可以搜索子目录。</summary>
@@ -262,16 +263,14 @@ namespace Zongsoft.IO
 				return new InfoEnumerator<PathInfo>(entries);
 			}
 
-			public Task<IEnumerable<PathInfo>> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
-			public async Task<IEnumerable<PathInfo>> GetChildrenAsync(string path, string pattern, bool recursive = false)
+			public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
+			public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-
-				return await Task.Run(() =>
-				{
-					var entries = Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-					return new InfoEnumerator<PathInfo>(entries);
-				});
+				var paths = Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+				return Zongsoft.Collections.Enumerable.Asynchronize(
+					paths.Select(path => new PathInfo(path))
+				);
 			}
 
 			public IEnumerable<DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
@@ -291,16 +290,15 @@ namespace Zongsoft.IO
 				return new InfoEnumerator<DirectoryInfo>(entries);
 			}
 
-			public Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
-			public async Task<IEnumerable<DirectoryInfo>> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
+			public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
+			public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-
-				return await Task.Run(() =>
-				{
-					var entries = Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-					return new InfoEnumerator<DirectoryInfo>(entries);
-				});
+				var paths = Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+				return Zongsoft.Collections.Enumerable.Asynchronize(
+					paths.Select(path => new System.IO.DirectoryInfo(path))
+					.Select(info => new DirectoryInfo(info.FullName, info.CreationTime, info.LastWriteTime))
+				);
 			}
 
 			public IEnumerable<FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
@@ -320,22 +318,20 @@ namespace Zongsoft.IO
 				return new InfoEnumerator<FileInfo>(entries);
 			}
 
-			public Task<IEnumerable<FileInfo>> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
-			public async Task<IEnumerable<FileInfo>> GetFilesAsync(string path, string pattern, bool recursive = false)
+			public IAsyncEnumerable<FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
+			public IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
 			{
 				var fullPath = GetLocalPath(path);
-
-				return await Task.Run(() =>
-				{
-					var entries = Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
-					return new InfoEnumerator<FileInfo>(entries);
-				});
+				var paths = Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+				return Zongsoft.Collections.Enumerable.Asynchronize(
+					paths.Select(path => new System.IO.FileInfo(path))
+					.Select(info => new FileInfo(info.FullName, info.Length, info.CreationTime, info.LastWriteTime))
+				);
 			}
 			#endregion
 
 			#region 私有方法
 			private static readonly Regex _regex = new(@"(?<delimiter>[/\|\\]).+\k<delimiter>", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-
 			private static IEnumerable<string> Search(string pattern, Func<string, IEnumerable<string>> searcher, Predicate<string> filter = null)
 			{
 				var regularPattern = string.Empty;
@@ -500,7 +496,7 @@ namespace Zongsoft.IO
 				}
 			}
 
-			public async Task<bool> DeleteAsync(string path)
+			public async ValueTask<bool> DeleteAsync(string path)
 			{
 				var fullPath = GetLocalPath(path);
 
@@ -521,7 +517,7 @@ namespace Zongsoft.IO
 				return System.IO.File.Exists(fullPath);
 			}
 
-			public async Task<bool> ExistsAsync(string path)
+			public async ValueTask<bool> ExistsAsync(string path)
 			{
 				var fullPath = GetLocalPath(path);
 				return await Task.Run(() => System.IO.File.Exists(fullPath));
@@ -535,8 +531,8 @@ namespace Zongsoft.IO
 				System.IO.File.Copy(sourcePath, destinationPath, overwrite);
 			}
 
-			public Task CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
-			public async Task CopyAsync(string source, string destination, bool overwrite)
+			public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
+			public async ValueTask CopyAsync(string source, string destination, bool overwrite)
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
@@ -550,7 +546,7 @@ namespace Zongsoft.IO
 				System.IO.File.Move(sourcePath, destinationPath);
 			}
 
-			public async Task MoveAsync(string source, string destination)
+			public async ValueTask MoveAsync(string source, string destination)
 			{
 				var sourcePath = GetLocalPath(source);
 				var destinationPath = GetLocalPath(destination);
@@ -568,7 +564,7 @@ namespace Zongsoft.IO
 				return new FileInfo(info.FullName, info.Length, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 			}
 
-			public async Task<FileInfo> GetInfoAsync(string path)
+			public async ValueTask<FileInfo> GetInfoAsync(string path)
 			{
 				var fullPath = GetLocalPath(path);
 				var info = await Task.Run(() => new System.IO.FileInfo(fullPath));
@@ -580,7 +576,7 @@ namespace Zongsoft.IO
 			}
 
 			public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
-			public Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
+			public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
 
 			public Stream Open(string path, IDictionary<string, object> properties = null)
 			{

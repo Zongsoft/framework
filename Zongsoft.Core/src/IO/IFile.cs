@@ -29,8 +29,9 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.IO
 {
@@ -39,31 +40,29 @@ namespace Zongsoft.IO
 	/// </summary>
 	public interface IFile
 	{
-		/// <summary>
-		/// 获取指定文件路径对应的<see cref="FileInfo"/>描述信息。
-		/// </summary>
+		/// <summary>获取指定文件路径对应的<see cref="FileInfo"/>描述信息。</summary>
 		/// <param name="path">指定的文件路径。</param>
-		/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(null)。</returns>
+		/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(<c>null</c>)。</returns>
 		FileInfo GetInfo(string path);
-		Task<FileInfo> GetInfoAsync(string path);
+		ValueTask<FileInfo> GetInfoAsync(string path);
 
 		bool SetInfo(string path, IDictionary<string, object> properties);
-		Task<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
+		ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
 
 		bool Delete(string path);
-		Task<bool> DeleteAsync(string path);
+		ValueTask<bool> DeleteAsync(string path);
 
 		bool Exists(string path);
-		Task<bool> ExistsAsync(string path);
+		ValueTask<bool> ExistsAsync(string path);
 
 		void Copy(string source, string destination);
 		void Copy(string source, string destination, bool overwrite);
 
-		Task CopyAsync(string source, string destination);
-		Task CopyAsync(string source, string destination, bool overwrite);
+		ValueTask CopyAsync(string source, string destination);
+		ValueTask CopyAsync(string source, string destination, bool overwrite);
 
 		void Move(string source, string destination);
-		Task MoveAsync(string source, string destination);
+		ValueTask MoveAsync(string source, string destination);
 
 		Stream Open(string path, IDictionary<string, object> properties = null);
 		Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null);
