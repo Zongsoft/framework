@@ -21,6 +21,8 @@ PROJECT_WECHAT="externals/wechat/build.cake"
 PROJECT_CLOSEDXML="externals/closedxml/build.cake"
 PROJECT_HANGFIRE="externals/hangfire/build.cake"
 PROJECT_SCRIBAN="externals/scriban/build.cake"
+PROJECT_PYTHON="externals/python/build.cake"
+PROJECT_LUA="externals/lua/build.cake"
 
 PROJECT_ADMINISTRATIVES="../Administratives/build.cake"
 
@@ -41,6 +43,8 @@ dotnet cake $PROJECT_WECHAT $CAKE_ARGS "$@"
 dotnet cake $PROJECT_CLOSEDXML $CAKE_ARGS "$@"
 dotnet cake $PROJECT_HANGFIRE $CAKE_ARGS "$@"
 dotnet cake $PROJECT_SCRIBAN $CAKE_ARGS "$@"
+dotnet cake $PROJECT_PYTHON $CAKE_ARGS "$@"
+dotnet cake $PROJECT_LUA $CAKE_ARGS "$@"
 
 if [ -f "$PROJECT_ADMINISTRATIVES" ]; then
 	dotnet cake $PROJECT_ADMINISTRATIVES $CAKE_ARGS "$@"
