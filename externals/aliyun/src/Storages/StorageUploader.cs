@@ -95,8 +95,8 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public Task WriteAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.WriteAsync(data, offset, -1, cancellation);
-		public async Task WriteAsync(byte[] data, int offset, int count, CancellationToken cancellation = default)
+		public ValueTask WriteAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.WriteAsync(data, offset, -1, cancellation);
+		public async ValueTask WriteAsync(byte[] data, int offset, int count, CancellationToken cancellation = default)
 		{
 			//确认当前是否可用的
 			this.EnsureDisposed();
@@ -182,19 +182,19 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			await this.FlushAsync(multipart, cancellation);
 		}
 
-		public Task<long> FlushAsync(CancellationToken cancellation = default)
+		public ValueTask<long> FlushAsync(CancellationToken cancellation = default)
 		{
 			//确认当前是否可用的
 			this.EnsureDisposed();
 
 			if(string.IsNullOrEmpty(_identifier) || _buffer == null || _bufferedCount == 0)
-				return Task.FromResult(0L);
+				return ValueTask.FromResult(0L);
 
 			//构建待批量上传的片段
 			var multipart = new StorageMultipart(_multiparts.Count, _buffer, 0, _bufferedCount);
 
 			//将批量上传片段进行上传
-			return this.FlushAsync(multipart, cancellation).AsTask();
+			return this.FlushAsync(multipart, cancellation);
 		}
 		#endregion
 

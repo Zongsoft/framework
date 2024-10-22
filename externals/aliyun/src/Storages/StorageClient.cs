@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public async Task<bool> CopyAsync(string source, string destination)
+		public async ValueTask<bool> CopyAsync(string source, string destination)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Put, _serviceCenter.GetRequestUrl(destination));
 
@@ -72,9 +72,9 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return result.IsSuccessStatusCode;
 		}
 
-		public async Task<bool> DeleteAsync(string path) => (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path))).IsSuccessStatusCode;
+		public async ValueTask<bool> DeleteAsync(string path) => (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path))).IsSuccessStatusCode;
 
-		public async Task<Stream> DownloadAsync(string path, IDictionary<string, object> properties = null)
+		public async ValueTask<Stream> DownloadAsync(string path, IDictionary<string, object> properties = null)
 		{
 			var response = await _http.GetAsync(_serviceCenter.GetRequestUrl(path));
 
@@ -87,8 +87,8 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return await response.Content.ReadAsStreamAsync();
 		}
 
-		public Task<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null) => this.CreateAsync(path, null, extendedProperties);
-		public async Task<bool> CreateAsync(string path, Stream stream, IDictionary<string, object> extendedProperties = null)
+		public ValueTask<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null) => this.CreateAsync(path, null, extendedProperties);
+		public async ValueTask<bool> CreateAsync(string path, Stream stream, IDictionary<string, object> extendedProperties = null)
 		{
 			var request = this.CreateHttpRequest(HttpMethod.Put, path, this.EnsureCreation(extendedProperties));
 
@@ -98,7 +98,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return (await _http.SendAsync(request)).IsSuccessStatusCode;
 		}
 
-		public async Task<bool> ExistsAsync(string path)
+		public async ValueTask<bool> ExistsAsync(string path)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Head, _serviceCenter.GetRequestUrl(path));
 
@@ -106,7 +106,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return result.IsSuccessStatusCode;
 		}
 
-		public async Task<IDictionary<string, object>> GetExtendedPropertiesAsync(string path)
+		public async ValueTask<IDictionary<string, object>> GetExtendedPropertiesAsync(string path)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Head, _serviceCenter.GetRequestUrl(path));
 			var response = await _http.SendAsync(request);
@@ -121,7 +121,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return result;
 		}
 
-		public async Task<bool> SetExtendedPropertiesAsync(string path, IDictionary<string, object> extendedProperties)
+		public async ValueTask<bool> SetExtendedPropertiesAsync(string path, IDictionary<string, object> extendedProperties)
 		{
 			if(extendedProperties == null || extendedProperties.Count < 1)
 				return false;
@@ -139,7 +139,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return (await _http.SendAsync(request)).IsSuccessStatusCode;
 		}
 
-		public async Task<StorageSearchResult> SearchAsync(string path, Func<string, string> getUrl)
+		public async ValueTask<StorageSearchResult> SearchAsync(string path, Func<string, string> getUrl)
 		{
 			if(!string.IsNullOrWhiteSpace(path))
 			{
