@@ -54,10 +54,10 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private volatile int _reads;
-		private volatile int _completedFlag;
-		private readonly AutoResetEvent _semaphore;
-		private readonly ConcurrentBag<IDbCommand> _commands;
+		private volatile int _reads; //如果当前数据驱动支持连接共享(MARS)，则表示当前数连接所关联的读取器的数量
+		private volatile int _completedFlag; //表示当前会话是否已经结束(提交或回滚)
+		private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
+		private readonly ConcurrentBag<IDbCommand> _commands; //表示待关联事务的命令对象集
 		#endregion
 
 		#region 成员字段
@@ -209,11 +209,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 内部方法
-		/// <summary>设置指定命令的数据连接和关联到必要的数据事务。</summary>
+		/// <summary>绑定指定命令的数据连接，并关联命令到该连接事务。</summary>
 		/// <param name="command">指定要绑定的命令对象。</param>
 		internal void Bind(IDbCommand command)
 		{
-			//如果已经终止则返回
+			//如果当前会话已经结束，则不允许再进行命令绑定
 			if(_completedFlag == COMPLETED_FLAG || (_ambient != null && _ambient.IsCompleted))
 				throw new DataException("The data session or ambient transaction have been completed.");
 
@@ -317,7 +317,7 @@ namespace Zongsoft.Data.Common
 		}
 		#endregion
 
-		#region 事件响应
+		#region 连接事件
 		private void Connection_StateChange(object sender, StateChangeEventArgs e)
 		{
 			var connection = (DbConnection)sender;
