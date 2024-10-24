@@ -239,10 +239,7 @@ namespace Zongsoft.Data.Common
 		{
 			return (IEnumerable)System.Activator.CreateInstance(
 				typeof(LazyCollection<>).MakeGenericType(elementType),
-				new object[]
-				{
-					context, statement, command, skip
-				});
+				[ context, statement, command, skip ]);
 		}
 		#endregion
 
@@ -427,7 +424,7 @@ namespace Zongsoft.Data.Common
 							{
 								var list = Activator.CreateInstance(
 									typeof(List<>).MakeGenericType(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType)),
-									new object[] { results });
+									[results]);
 
 								if(token.Schema.Token.MemberType.IsArray)
 									results = (IEnumerable)list.GetType().GetMethod("ToArray").Invoke(list, Array.Empty<object>());

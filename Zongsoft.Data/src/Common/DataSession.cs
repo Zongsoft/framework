@@ -61,9 +61,9 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 成员字段
+		private readonly IDataSource _source;
 		private volatile DbConnection _connection;
 		private volatile DbTransaction _transaction;
-		private readonly IDataSource _source;
 		private readonly Transactions.Transaction _ambient;
 		#endregion
 
@@ -348,27 +348,21 @@ namespace Zongsoft.Data.Common
 			if(_ambient == null)
 				return IsolationLevel.Unspecified;
 
-			switch(_ambient.IsolationLevel)
+			return _ambient.IsolationLevel switch
 			{
-				case Transactions.IsolationLevel.ReadCommitted:
-					return IsolationLevel.ReadCommitted;
-				case Transactions.IsolationLevel.ReadUncommitted:
-					return IsolationLevel.ReadUncommitted;
-				case Transactions.IsolationLevel.RepeatableRead:
-					return IsolationLevel.RepeatableRead;
-				case Transactions.IsolationLevel.Serializable:
-					return IsolationLevel.Serializable;
-				default:
-					return IsolationLevel.Unspecified;
-			}
+				Transactions.IsolationLevel.ReadCommitted => IsolationLevel.ReadCommitted,
+				Transactions.IsolationLevel.ReadUncommitted => IsolationLevel.ReadUncommitted,
+				Transactions.IsolationLevel.RepeatableRead => IsolationLevel.RepeatableRead,
+				Transactions.IsolationLevel.Serializable => IsolationLevel.Serializable,
+				_ => IsolationLevel.Unspecified,
+			};
 		}
 		#endregion
 
 		#region 嵌套子类
-		private class Enlistment : Zongsoft.Transactions.IEnlistment
+		private class Enlistment(DataSession session) : Zongsoft.Transactions.IEnlistment
 		{
-			private readonly DataSession _session;
-			public Enlistment(DataSession session) => _session = session;
+			private readonly DataSession _session = session;
 
 			public void OnEnlist(Zongsoft.Transactions.EnlistmentContext context)
 			{
@@ -463,15 +457,8 @@ namespace Zongsoft.Data.Common
 					_command.Cancel();
 			}
 
-			public override void Prepare()
-			{
-				_command.Prepare();
-			}
-
-			protected override DbParameter CreateDbParameter()
-			{
-				return _command.CreateParameter();
-			}
+			public override void Prepare() => _command.Prepare();
+			protected override DbParameter CreateDbParameter() => _command.CreateParameter();
 
 			public override object ExecuteScalar()
 			{
@@ -482,13 +469,13 @@ namespace Zongsoft.Data.Common
 				return _command.ExecuteScalar();
 			}
 
-			public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+			public override async Task<object> ExecuteScalarAsync(CancellationToken cancellation)
 			{
 				//确认数据连接已打开
-				await this.EnsureConnectAsync(cancellationToken);
+				await this.EnsureConnectAsync(cancellation);
 
 				//返回数据命令执行结果
-				return await _command.ExecuteScalarAsync(cancellationToken);
+				return await _command.ExecuteScalarAsync(cancellation);
 			}
 
 			public override int ExecuteNonQuery()
@@ -500,13 +487,13 @@ namespace Zongsoft.Data.Common
 				return _command.ExecuteNonQuery();
 			}
 
-			public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+			public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellation)
 			{
 				//确认数据连接已打开
-				await this.EnsureConnectAsync(cancellationToken);
+				await this.EnsureConnectAsync(cancellation);
 
 				//返回数据命令执行结果
-				return await _command.ExecuteNonQueryAsync(cancellationToken);
+				return await _command.ExecuteNonQueryAsync(cancellation);
 			}
 
 			protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
@@ -533,27 +520,27 @@ namespace Zongsoft.Data.Common
 				}
 			}
 
-			protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+			protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
 			{
 				//尝试进入数据会话的读取临界区。
 				//如果进入成功，则表明该会话支持多活动结果集(MARS)，或者当前操作是会话中的首个读取请求
 				if(_session.EnterRead(_command))
 				{
 					//确认数据连接已打开
-					await this.EnsureConnectAsync(cancellationToken);
+					await this.EnsureConnectAsync(cancellation);
 
 					//执行数据命令的读取方法，并构建一个会话数据读取器。
 					//注意：该读取器在关闭时会退出读取临界区，并根据会话完成状态确定是否关闭数据连接。
-					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellationToken));
+					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation));
 				}
 				else
 				{
 					//确认数据连接已打开
-					await this.EnsureConnectAsync(cancellationToken);
+					await this.EnsureConnectAsync(cancellation);
 
 					//读取临界区进入失败：执行得到一个普通的数据读取器，该读取器始终绑定到一个新的数据连接。
 					//注意：该读取器在关闭时会关闭对应的数据连接。
-					return await _command.ExecuteReaderAsync(behavior | CommandBehavior.CloseConnection, cancellationToken);
+					return await _command.ExecuteReaderAsync(behavior | CommandBehavior.CloseConnection, cancellation);
 				}
 			}
 			#endregion
@@ -570,13 +557,13 @@ namespace Zongsoft.Data.Common
 			}
 
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private Task EnsureConnectAsync(CancellationToken cancellationToken)
+			private Task EnsureConnectAsync(CancellationToken cancellation)
 			{
 				if(_command.Connection == null)
 					_session.Bind(_command);
 
 				if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-					return _command.Connection.OpenAsync(cancellationToken);
+					return _command.Connection.OpenAsync(cancellation);
 
 				return Task.CompletedTask;
 			}
@@ -649,20 +636,15 @@ namespace Zongsoft.Data.Common
 				_reader.Close();
 
 				//退出环境事务的读取临界区（即重置环境事务的读取标记）
-				var disconnectRequired = _session.ExitRead();
+				var disconnectable = _session.ExitRead();
 
 				/*
 				 * 如果数据会话已经完结，则需要关闭释放对应的数据连接。
 				 * 因为当会话完成(提交或回滚)时，如果该会话正处于读取状态(即位于读取临界区内)，
 				 * 完成操作是不会关闭数据连接的，因为读取操作还需要使用它，即该数据连接由本读取器进行关闭。
 				 */
-				if(disconnectRequired && _session.IsCompleted)
-				{
-					var connection = _connection;
-
-					if(connection != null)
-						connection.Dispose();
-				}
+				if(disconnectable && _session.IsCompleted)
+					_connection?.Dispose();
 			}
 			#endregion
 		}
