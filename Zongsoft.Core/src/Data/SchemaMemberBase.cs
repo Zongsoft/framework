@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public abstract class SchemaMemberBase
+	public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 	{
 		#region 单例字段
 		internal static readonly SchemaMemberBase Ignores = new EmptyMember();
@@ -44,10 +44,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 构造函数
-		protected SchemaMemberBase()
-		{
-		}
-
+		protected SchemaMemberBase() { }
 		protected SchemaMemberBase(string name)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -58,11 +55,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public virtual string Name
-		{
-			get;
-		}
-
+		public virtual string Name { get; }
 		public string Path
 		{
 			get
@@ -94,24 +87,9 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public Paging Paging
-		{
-			get;
-			internal set;
-		}
-
-		public Sorting[] Sortings
-		{
-			get
-			{
-				return _sortingArray;
-			}
-		}
-
-		public abstract bool HasChildren
-		{
-			get;
-		}
+		public Paging Paging { get; internal set; }
+		public Sorting[] Sortings => _sortingArray;
+		public abstract bool HasChildren { get; }
 		#endregion
 
 		#region 抽象方法
@@ -140,31 +118,10 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public bool Equals(SchemaMemberBase other)
-		{
-			if(other == null)
-				return false;
-
-			return string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != typeof(SchemaMemberBase))
-				return false;
-
-			return this.Equals((SchemaMemberBase)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return this.Name.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			return this.FullPath;
-		}
+		public bool Equals(SchemaMemberBase other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is SchemaMemberBase other && this.Equals(other);
+		public override int GetHashCode() => this.Name.ToUpperInvariant().GetHashCode();
+		public override string ToString() => this.FullPath;
 		#endregion
 
 		#region 嵌套子类
@@ -173,27 +130,11 @@ namespace Zongsoft.Data
 			public override string Name => "?";
 			public override bool HasChildren => false;
 
-			protected override SchemaMemberBase GetParent()
-			{
-				return null;
-			}
-
-			protected override void SetParent(SchemaMemberBase parent)
-			{
-			}
-
-			protected internal override void AddChild(SchemaMemberBase child)
-			{
-			}
-
-			protected internal override void ClearChildren()
-			{
-			}
-
-			protected internal override void RemoveChild(string name)
-			{
-			}
-
+			protected override SchemaMemberBase GetParent() => null;
+			protected override void SetParent(SchemaMemberBase parent) { }
+			protected internal override void AddChild(SchemaMemberBase child) { }
+			protected internal override void ClearChildren() { }
+			protected internal override void RemoveChild(string name) { }
 			protected internal override bool TryGetChild(string name, out SchemaMemberBase child)
 			{
 				child = null;
@@ -203,21 +144,10 @@ namespace Zongsoft.Data
 
 		private sealed class SortingComparer : IEqualityComparer<Sorting>
 		{
-			public static readonly SortingComparer Instance = new SortingComparer();
-
-			private SortingComparer()
-			{
-			}
-
-			public bool Equals(Sorting x, Sorting y)
-			{
-				return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-			}
-
-			public int GetHashCode(Sorting sorting)
-			{
-				return sorting.Name.ToLowerInvariant().GetHashCode();
-			}
+			public static readonly SortingComparer Instance = new();
+			private SortingComparer() { }
+			public bool Equals(Sorting x, Sorting y) => string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+			public int GetHashCode(Sorting sorting) => sorting.Name.ToLowerInvariant().GetHashCode();
 		}
 		#endregion
 	}
