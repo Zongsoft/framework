@@ -54,7 +54,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private volatile int _reads; //如果当前数据驱动支持连接共享(MARS)，则表示当前数连接所关联的读取器的数量
+		private volatile int _reading; //如果当前数据驱动支持连接共享(MARS)，则表示当前数连接所关联的读取器的数量
 		private volatile int _completedFlag; //表示当前会话是否已经结束(提交或回滚)
 		private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
 		private readonly ConcurrentBag<IDbCommand> _commands; //表示待关联事务的命令对象集
@@ -100,7 +100,7 @@ namespace Zongsoft.Data.Common
 		public bool IsCompleted => _completedFlag != NONE_FLAG;
 
 		/// <summary>获取一个值，指示当前环境事务的数据连接是否正在进行数据读取操作。</summary>
-		public bool IsReading => _reads != NONE_FLAG;
+		public bool IsReading => _reading != NONE_FLAG;
 		#endregion
 
 		#region 公共方法
@@ -194,7 +194,7 @@ namespace Zongsoft.Data.Common
 
 					//如果当前连接正在读取数据，则不要释放该数据连接（由对应的数据读取器关联的延迟加载集合负责关闭）
 					if(!this.IsReading)
-						connection.Dispose();
+						connection.Close();
 				}
 			}
 			finally
@@ -281,12 +281,12 @@ namespace Zongsoft.Data.Common
 		{
 			if(ShareConnectionSupported)
 			{
-				Interlocked.Increment(ref _reads);
+				Interlocked.Increment(ref _reading);
 				this.Bind(command, () => true);
 				return true;
 			}
 
-			var original = Interlocked.CompareExchange(ref _reads, READING_FLAG, NONE_FLAG);
+			var original = Interlocked.CompareExchange(ref _reading, READING_FLAG, NONE_FLAG);
 
 			if(original == NONE_FLAG)
 			{
@@ -303,17 +303,17 @@ namespace Zongsoft.Data.Common
 		/// <summary>退出读取临界区。</summary>
 		internal bool ExitRead()
 		{
-			if(ShareConnectionSupported && _reads > 0)
+			if(ShareConnectionSupported && _reading > 0)
 			{
-				var count = Interlocked.Decrement(ref _reads);
+				var count = Interlocked.Decrement(ref _reading);
 
 				if(count < 0)
-					Interlocked.Exchange(ref _reads, 0);
+					Interlocked.Exchange(ref _reading, 0);
 
 				return count == 0;
 			}
 
-			return Interlocked.Exchange(ref _reads, NONE_FLAG) == READING_FLAG;
+			return Interlocked.Exchange(ref _reading, NONE_FLAG) == READING_FLAG;
 		}
 		#endregion
 
@@ -644,7 +644,7 @@ namespace Zongsoft.Data.Common
 				 * 完成操作是不会关闭数据连接的，因为读取操作还需要使用它，即该数据连接由本读取器进行关闭。
 				 */
 				if(disconnectable && _session.IsCompleted)
-					_connection?.Dispose();
+					_connection?.Close();
 			}
 			#endregion
 		}
