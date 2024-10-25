@@ -44,9 +44,9 @@ namespace Zongsoft.Data.Common
 	public class DataSession : IDisposable
 	{
 		#region 常量定义
-		private const int NONE_FLAG = 0;
-		private const int READING_FLAG = 1;
-		private const int COMPLETED_FLAG = 1;
+		private const int COMPLETION_NONE = 0;
+		private const int COMPLETION_COMMIT = 1;
+		private const int COMPLETION_ROLLBACK = 2;
 		#endregion
 
 		#region 私有变量
@@ -54,8 +54,9 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private volatile int _reading; //如果当前数据驱动支持连接共享(MARS)，则表示当前数连接所关联的读取器的数量
-		private volatile int _completedFlag; //表示当前会话是否已经结束(提交或回滚)
+		private volatile int _pending;    //表示当前会话等待打开的数据读取器的数量
+		private volatile int _reading;    //表示当前会话已经打开的数据读取器的数量
+		private volatile int _completion; //表示当前会话是否已经结束(提交或回滚)的标记
 		private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
 		private readonly ConcurrentBag<IDbCommand> _commands; //表示待关联事务的命令对象集
 		#endregion
@@ -96,11 +97,11 @@ namespace Zongsoft.Data.Common
 		/// <summary>获取当前数据会话关联的数据事务。</summary>
 		public IDbTransaction Transaction => _transaction;
 
-		/// <summary>获取一个值，指示当前环境事务是否已经完成(提交或回滚)。</summary>
-		public bool IsCompleted => _completedFlag != NONE_FLAG;
+		/// <summary>获取一个值，指示当前会话是否已经完成(提交或回滚)。</summary>
+		public bool IsCompleted => _completion != COMPLETION_NONE;
 
-		/// <summary>获取一个值，指示当前环境事务的数据连接是否正在进行数据读取操作。</summary>
-		public bool IsReading => _reading != NONE_FLAG;
+		/// <summary>获取一个值，指示当前会话是否还有“待执行”的数据读取命令或“执行中”的数据读取操作。</summary>
+		public bool HasPending => _pending > 0 || _reading > 0;
 		#endregion
 
 		#region 公共方法
@@ -110,6 +111,9 @@ namespace Zongsoft.Data.Common
 		/// <returns>返回创建的数据命令对象。</returns>
 		public DbCommand Build(IDataAccessContextBase context, Expressions.IStatementBase statement)
 		{
+			if(statement is Expressions.SelectStatementBase)
+				Interlocked.Increment(ref _pending);
+
 			return new SessionCommand(this, _source.Driver.CreateCommand(context, statement));
 		}
 
@@ -157,15 +161,15 @@ namespace Zongsoft.Data.Common
 		}
 
 		/// <summary>完成当前数据会话。</summary>
-		/// <param name="commit">指定是否提交当前数据事务。</param>
+		/// <param name="committing">指定是否提交当前数据事务。</param>
 		/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
-		private bool Complete(bool? commit)
+		private bool Complete(bool committing)
 		{
 			//设置完成标记
-			var completed = Interlocked.Exchange(ref _completedFlag, COMPLETED_FLAG);
+			var completed = Interlocked.Exchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK);
 
-			//如果已经完成过则返回假(False)
-			if(completed == COMPLETED_FLAG)
+			//如果已经完成过则返回
+			if(completed != COMPLETION_NONE)
 				return false;
 
 			//等待信号量
@@ -173,29 +177,12 @@ namespace Zongsoft.Data.Common
 
 			try
 			{
-				//获取并将数据事务对象置空
-				var transaction = Interlocked.Exchange(ref _transaction, null);
+				//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
+				if(this.HasPending)
+					return true;
 
-				if(transaction != null && commit.HasValue)
-				{
-					if(commit.Value)
-						transaction.Commit();
-					else
-						transaction.Rollback();
-				}
-
-				//获取并将数据连接对象置空
-				var connection = Interlocked.Exchange(ref _connection, null);
-
-				if(connection != null)
-				{
-					//取消连接事件处理
-					connection.StateChange -= Connection_StateChange;
-
-					//如果当前连接正在读取数据，则不要释放该数据连接（由对应的数据读取器关联的延迟加载集合负责关闭）
-					if(!this.IsReading)
-						connection.Close();
-				}
+				//执行事务提交和释放资源
+				this.Destroy();
 			}
 			finally
 			{
@@ -209,25 +196,10 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 内部方法
-		/// <summary>绑定指定命令的数据连接，并关联命令到该连接事务。</summary>
+		/// <summary>绑定指定命令的数据连接，并关联命令的数据事务。</summary>
 		/// <param name="command">指定要绑定的命令对象。</param>
 		internal void Bind(IDbCommand command)
 		{
-			//如果当前会话已经结束，则不允许再进行命令绑定
-			if(_completedFlag == COMPLETED_FLAG || (_ambient != null && _ambient.IsCompleted))
-				throw new DataException("The data session or ambient transaction have been completed.");
-
-			this.Bind(command, () => ShareConnectionSupported || !this.IsReading);
-		}
-
-		private void Bind(IDbCommand command, Func<bool> sharable)
-		{
-			if(command == null)
-				throw new ArgumentNullException(nameof(command));
-
-			if(sharable == null)
-				throw new ArgumentNullException(nameof(sharable));
-
 			//等待信号量
 			_semaphore.WaitOne();
 
@@ -235,7 +207,7 @@ namespace Zongsoft.Data.Common
 			{
 				if(_connection == null)
 				{
-					lock(_semaphore)
+					lock(this)
 					{
 						if(_connection == null)
 						{
@@ -243,6 +215,8 @@ namespace Zongsoft.Data.Common
 							_connection.StateChange += Connection_StateChange;
 
 							command.Connection = _connection;
+
+							//将命令加入到待绑定事务的命令集中
 							_commands.Add(command);
 
 							return;
@@ -250,20 +224,19 @@ namespace Zongsoft.Data.Common
 					}
 				}
 
-				if(sharable())
-				{
-					command.Connection = _connection;
+				//设置当前命令的连接为当前会话的主连接
+				command.Connection = _connection;
 
-					//如果当前事务已启动则更新命令否则将命令加入到待绑定集合中
-					if(_transaction == null)
-						_commands.Add(command); //将指定的命令加入到命令集，等待事务绑定
-					else
-						command.Transaction = _transaction;
-				}
-				else
+				//如果当前事务已启动则更新命令否则将命令加入到待绑定集合中
+				if(_transaction == null)
 				{
-					command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+					if(_connection.State == ConnectionState.Open)
+						_transaction = _connection.BeginTransaction();
+					else
+						_commands.Add(command); //将命令加入到绑定事务的命令集，等待事务绑定
 				}
+
+				command.Transaction = _transaction;
 			}
 			finally
 			{
@@ -272,48 +245,72 @@ namespace Zongsoft.Data.Common
 			}
 		}
 
-		/// <summary>尝试进入读取临界区。</summary>
-		/// <returns>如果成功进入读取状态则返回真(True)，否则返回假(False)。</returns>
-		/// <remarks>
-		/// 	<p>注意：进入成功的操作者必须确保当读取完成时调用<see cref="ExitRead"/>方法以重置读取标记。</p>
-		/// </remarks>
-		internal bool EnterRead(IDbCommand command)
+		internal bool PrepareReader(IDbCommand command)
 		{
+			//递减“待执行”的数据读取器数量
+			Interlocked.Decrement(ref _pending);
+			//递增“执行中”的数据读取器数量
+			var reading = Interlocked.Increment(ref _reading);
+
 			if(ShareConnectionSupported)
 			{
-				Interlocked.Increment(ref _reading);
-				this.Bind(command, () => true);
+				this.Bind(command);
 				return true;
 			}
 
-			var original = Interlocked.CompareExchange(ref _reading, READING_FLAG, NONE_FLAG);
-
-			if(original == NONE_FLAG)
+			//如果当前会话的主连接已经被其他读取器占用则只能创建新的连接
+			if(reading > 1)
 			{
-				this.Bind(command, () => true);
-				return true;
+				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+				return false;
 			}
 			else
 			{
-				this.Bind(command, () => false);
-				return false;
+				this.Bind(command);
+				return true;
 			}
 		}
 
-		/// <summary>退出读取临界区。</summary>
-		internal bool ExitRead()
+		internal void ReleaseReader()
 		{
-			if(ShareConnectionSupported && _reading > 0)
+			//递减“执行中”的数据读取器数量
+			Interlocked.Decrement(ref _reading);
+
+			//只有当“待执行”和“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
+			if(!this.HasPending && this.IsCompleted)
+				this.Destroy();
+		}
+
+		private void Destroy()
+		{
+			//获取并将事务对象置空
+			var transaction = Interlocked.Exchange(ref _transaction, null);
+
+			if(transaction != null)
 			{
-				var count = Interlocked.Decrement(ref _reading);
-
-				if(count < 0)
-					Interlocked.Exchange(ref _reading, 0);
-
-				return count == 0;
+				//尝试提交或回滚事务
+				switch(_completion)
+				{
+					case COMPLETION_COMMIT:
+						transaction.Commit();
+						break;
+					case COMPLETION_ROLLBACK:
+						transaction.Rollback();
+						break;
+				}
 			}
 
-			return Interlocked.Exchange(ref _reading, NONE_FLAG) == READING_FLAG;
+			//获取并将主连接对象置空
+			var connection = Interlocked.Exchange(ref _connection, null);
+
+			if(connection != null)
+			{
+				//取消连接事件处理
+				connection.StateChange -= Connection_StateChange;
+
+				//释放主数据连接
+				connection.Dispose();
+			}
 		}
 		#endregion
 
@@ -382,7 +379,8 @@ namespace Zongsoft.Data.Common
 						break;
 				}
 
-				_session.Complete(commit);
+				if(commit.HasValue)
+					_session.Complete(commit.Value);
 			}
 		}
 
@@ -498,15 +496,13 @@ namespace Zongsoft.Data.Common
 
 			protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 			{
-				//尝试进入数据会话的读取临界区。
-				//如果进入成功，则表明该会话支持多活动结果集(MARS)，或者当前操作是会话中的首个读取请求
-				if(_session.EnterRead(_command))
+				//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
+				if(_session.PrepareReader(_command))
 				{
 					//确认数据连接已打开
 					this.EnsureConnect();
 
-					//执行数据命令的读取方法，并构建一个会话数据读取器。
-					//注意：该读取器在关闭时会退出读取临界区，并根据会话完成状态确定是否关闭数据连接。
+					//构建会话数据读取器，注意：该读取器关联的连接为非独享连接
 					return new SessionReader(_session, _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection));
 				}
 				else
@@ -514,23 +510,20 @@ namespace Zongsoft.Data.Common
 					//确认数据连接已打开
 					this.EnsureConnect();
 
-					//读取临界区进入失败：执行得到一个普通的数据读取器，该读取器始终绑定到一个新的数据连接。
-					//注意：该读取器在关闭时会关闭对应的数据连接。
-					return _command.ExecuteReader(behavior | CommandBehavior.CloseConnection);
+					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
+					return new SessionReader(_session, _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection), _command.Connection);
 				}
 			}
 
 			protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
 			{
-				//尝试进入数据会话的读取临界区。
-				//如果进入成功，则表明该会话支持多活动结果集(MARS)，或者当前操作是会话中的首个读取请求
-				if(_session.EnterRead(_command))
+				//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
+				if(_session.PrepareReader(_command))
 				{
 					//确认数据连接已打开
 					await this.EnsureConnectAsync(cancellation);
 
-					//执行数据命令的读取方法，并构建一个会话数据读取器。
-					//注意：该读取器在关闭时会退出读取临界区，并根据会话完成状态确定是否关闭数据连接。
+					//构建会话数据读取器，注意：该读取器关联的连接为非独享连接
 					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation));
 				}
 				else
@@ -538,9 +531,8 @@ namespace Zongsoft.Data.Common
 					//确认数据连接已打开
 					await this.EnsureConnectAsync(cancellation);
 
-					//读取临界区进入失败：执行得到一个普通的数据读取器，该读取器始终绑定到一个新的数据连接。
-					//注意：该读取器在关闭时会关闭对应的数据连接。
-					return await _command.ExecuteReaderAsync(behavior | CommandBehavior.CloseConnection, cancellation);
+					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
+					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation), _command.Connection);
 				}
 			}
 			#endregion
@@ -575,15 +567,15 @@ namespace Zongsoft.Data.Common
 			#region 成员字段
 			private readonly DataSession _session;
 			private readonly DbDataReader _reader;
-			private readonly DbConnection _connection;
+			private DbConnection _connection; //表示当前数据读取器的独享连接，如果为空则表示采用当前会话的主连接
 			#endregion
 
 			#region 构造函数
-			internal SessionReader(DataSession session, DbDataReader reader)
+			internal SessionReader(DataSession session, DbDataReader reader, DbConnection connection = null)
 			{
 				_session = session ?? throw new ArgumentNullException(nameof(session));
 				_reader = reader ?? throw new ArgumentNullException(nameof(reader));
-				_connection = session._connection;
+				_connection = connection;
 			}
 			#endregion
 
@@ -632,19 +624,20 @@ namespace Zongsoft.Data.Common
 			#region 关闭方法
 			public override void Close()
 			{
+				if(_reader.IsClosed)
+					return;
+
 				//关闭数据读取器
 				_reader.Close();
 
-				//退出环境事务的读取临界区（即重置环境事务的读取标记）
-				var disconnectable = _session.ExitRead();
+				//如果当前读取器有独享连接，则必须将该连接释放
+				_connection?.Dispose();
 
-				/*
-				 * 如果数据会话已经完结，则需要关闭释放对应的数据连接。
-				 * 因为当会话完成(提交或回滚)时，如果该会话正处于读取状态(即位于读取临界区内)，
-				 * 完成操作是不会关闭数据连接的，因为读取操作还需要使用它，即该数据连接由本读取器进行关闭。
-				 */
-				if(disconnectable && _session.IsCompleted)
-					_connection?.Close();
+				//设置当前读取器的独享连接置空
+				_connection = null;
+
+				//通知当前会话，关闭一个读取器
+				_session.ReleaseReader();
 			}
 			#endregion
 		}
