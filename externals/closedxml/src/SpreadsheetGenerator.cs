@@ -167,8 +167,12 @@ namespace Zongsoft.Externals.ClosedXml
 			//数据区起始行号
 			var row = 4;
 
+			//处理 IAsynEnumerable 异步可枚举接口类型
+			var items = Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ?
+					Collections.Enumerable.Enumerate(data, elementType) : data as IEnumerable;
+
 			//遍历生成数据区
-			if(data is IEnumerable items)
+			if(items != null)
 			{
 				foreach(var item in items)
 					GenerateRow(worksheet, row++, item, columns, options);

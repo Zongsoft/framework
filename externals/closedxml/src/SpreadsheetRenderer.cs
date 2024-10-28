@@ -73,7 +73,13 @@ namespace Zongsoft.Externals.ClosedXml
 
 			//添加报表数据
 			if(data != null)
-				report.AddVariable(data);
+			{
+				//处理 IAsynEnumerable 异步可枚举接口类型
+				var items = Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ?
+					Collections.Enumerable.Enumerate(data, elementType) : data;
+
+				report.AddVariable(items);
+			}
 
 			//添加报表参数
 			if(parameters != null)
