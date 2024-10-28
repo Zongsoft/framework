@@ -66,6 +66,40 @@ namespace Zongsoft.Collections
 		public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) =>
 			source is IAsyncEnumerable<T> enumerable ? enumerable : (source == null ? EmptyAsyncEnumerable<T>.Empty : new AsyncEnumerable<T>(source));
 
+		public static bool IsAsyncEnumerable(object source)
+		{
+			if(source == null)
+				return false;
+
+			var contracts = source.GetType().GetInterfaces();
+			for(int i = 0; i < contracts.Length; i++)
+			{
+				if(contracts[i].ContainsGenericParameters && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+					return true;
+			}
+
+			return false;
+		}
+
+		public static bool IsAsyncEnumerable(object source, out Type elementType)
+		{
+			if(source != null)
+			{
+				var contracts = source.GetType().GetInterfaces();
+				for(int i = 0; i < contracts.Length; i++)
+				{
+					if(contracts[i].ContainsGenericParameters && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+					{
+						elementType = contracts[i].GenericTypeArguments[0];
+						return true;
+					}
+				}
+			}
+
+			elementType = null;
+			return false;
+		}
+
 		public static async IAsyncEnumerable<object> Cast<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			if(source == null)
@@ -129,7 +163,7 @@ namespace Zongsoft.Collections
 			if(source == null)
 				return (IEnumerable)System.Activator.CreateInstance(typeof(EmptyEnumerable<>).MakeGenericType(elementType));
 			else
-				return (IEnumerable)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(elementType), new object[] { source });
+				return (IEnumerable)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(elementType), [source]);
 		}
 		#endregion
 
