@@ -73,8 +73,8 @@ namespace Zongsoft.IO
 			}
 		}
 
-		public static Task CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyToAsync(reader, destination, null, bufferSize);
-		public static async Task CopyToAsync(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
+		public static ValueTask CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyToAsync(reader, destination, null, bufferSize);
+		public static async ValueTask CopyToAsync(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
 		{
 			if(reader == null)
 				throw new ArgumentNullException(nameof(reader));

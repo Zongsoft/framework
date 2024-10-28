@@ -51,6 +51,6 @@ namespace Zongsoft.Communication
 		/// <param name="destination">指定通知的接受者，由具体实现者定义支持的接受者类型。</param>
 		/// <param name="settings">指定的通知设置。</param>
 		/// <returns>返回通知结果对象，由具体实现者定义。</returns>
-		Task<object> NotifyAsync(string name, object content, object destination, object settings = null);
+		ValueTask<object> NotifyAsync(string name, object content, object destination, object settings = null);
 	}
 }

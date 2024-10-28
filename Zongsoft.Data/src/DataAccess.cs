@@ -71,7 +71,7 @@ namespace Zongsoft.Data
 
 		#region 执行方法
 		protected override void OnExecute(DataExecuteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 导入方法
@@ -81,37 +81,37 @@ namespace Zongsoft.Data
 
 		#region 存在方法
 		protected override void OnExists(DataExistContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 聚合方法
 		protected override void OnAggregate(DataAggregateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 删除方法
 		protected override void OnDelete(DataDeleteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 插入方法
 		protected override void OnInsert(DataInsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 增改方法
 		protected override void OnUpsert(DataUpsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 更新方法
 		protected override void OnUpdate(DataUpdateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 查询方法
 		protected override void OnSelect(DataSelectContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override Task OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+		protected override ValueTask OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
 		#endregion
 
 		#region 模式解析

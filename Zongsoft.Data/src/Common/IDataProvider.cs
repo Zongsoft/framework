@@ -72,7 +72,7 @@ namespace Zongsoft.Data.Common
 		/// <param name="context">数据操作的上下文。</param>
 		/// <param name="cancellation">指定的异步取消标记。</param>
 		/// <returns>返回的异步操作任务。</returns>
-		Task ExecuteAsync(IDataAccessContext context, CancellationToken cancellation = default);
+		ValueTask ExecuteAsync(IDataAccessContext context, CancellationToken cancellation = default);
 
 		/// <summary>导入数据操作。</summary>
 		/// <param name="context">数据导入的上下文。</param>

@@ -41,7 +41,7 @@ namespace Zongsoft.Data.Common
 	/// <summary>
 	/// 表示数据操作的会话类。
 	/// </summary>
-	public class DataSession : IDisposable
+	public class DataSession : IDisposable, IAsyncDisposable
 	{
 		#region 常量定义
 		private const int COMPLETION_NONE = 0;
@@ -129,6 +129,18 @@ namespace Zongsoft.Data.Common
 			this.Complete(true);
 		}
 
+		/// <summary>提交当前会话事务。</summary>
+		public async ValueTask CommitAsync(CancellationToken cancellation)
+		{
+			/*
+			 * 注意：如果当前会话位于环境事务内，则提交操作必须由环境事务的 Enlistment 回调函数处理，即本方法不做任何处理。
+			 */
+			if(_ambient != null)
+				return;
+
+			await this.CompleteAsync(true, cancellation);
+		}
+
 		/// <summary>回滚当前会话事务。</summary>
 		public void Rollback()
 		{
@@ -141,7 +153,18 @@ namespace Zongsoft.Data.Common
 			this.Complete(false);
 		}
 
-		/// <summary>释放会话，如果当前会话没有完成则回滚事务。</summary>
+		/// <summary>回滚当前会话事务。</summary>
+		public async ValueTask RollbackAsync(CancellationToken cancellation)
+		{
+			/*
+			 * 注意：如果当前会话位于环境事务内，则回滚操作必须由环境事务的 Enlistment 回调函数处理，即本方法不做任何处理。
+			 */
+			if(_ambient != null)
+				return;
+
+			await this.CompleteAsync(false, cancellation);
+		}
+
 		public void Dispose()
 		{
 			this.Dispose(true);
@@ -153,6 +176,24 @@ namespace Zongsoft.Data.Common
 			if(disposing)
 			{
 				if(this.Complete(false))
+				{
+					//释放信号量资源
+					_semaphore.Dispose();
+				}
+			}
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			await this.DisposeAsync(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual async ValueTask DisposeAsync(bool disposing)
+		{
+			if(disposing)
+			{
+				if(await this.CompleteAsync(false, CancellationToken.None))
 				{
 					//释放信号量资源
 					_semaphore.Dispose();
@@ -183,6 +224,41 @@ namespace Zongsoft.Data.Common
 
 				//执行事务提交和释放资源
 				this.Destroy();
+			}
+			finally
+			{
+				//释放当前持有的信号
+				_semaphore.Set();
+			}
+
+			//返回完成成功
+			return true;
+		}
+
+		/// <summary>完成当前数据会话。</summary>
+		/// <param name="committing">指定是否提交当前数据事务。</param>
+		/// <param name="cancellation">指定的异步操作的取消标记。</param>
+		/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
+		private async ValueTask<bool> CompleteAsync(bool committing, CancellationToken cancellation)
+		{
+			//设置完成标记
+			var completed = Interlocked.Exchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK);
+
+			//如果已经完成过则返回
+			if(completed != COMPLETION_NONE)
+				return false;
+
+			//等待信号量
+			_semaphore.WaitOne();
+
+			try
+			{
+				//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
+				if(this.HasPending)
+					return true;
+
+				//执行事务提交和释放资源
+				await this.DestroyAsync(cancellation);
 			}
 			finally
 			{
@@ -281,6 +357,18 @@ namespace Zongsoft.Data.Common
 				this.Destroy();
 		}
 
+		internal ValueTask ReleaseReaderAsync(CancellationToken cancellation = default)
+		{
+			//递减“执行中”的数据读取器数量
+			Interlocked.Decrement(ref _reading);
+
+			//只有当“待执行”和“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
+			if(!this.HasPending && this.IsCompleted)
+				return this.DestroyAsync(cancellation);
+			else
+				return ValueTask.CompletedTask;
+		}
+
 		private void Destroy()
 		{
 			//获取并将事务对象置空
@@ -310,6 +398,38 @@ namespace Zongsoft.Data.Common
 
 				//释放主数据连接
 				connection.Dispose();
+			}
+		}
+
+		private async ValueTask DestroyAsync(CancellationToken cancellation)
+		{
+			//获取并将事务对象置空
+			var transaction = Interlocked.Exchange(ref _transaction, null);
+
+			if(transaction != null)
+			{
+				//尝试提交或回滚事务
+				switch(_completion)
+				{
+					case COMPLETION_COMMIT:
+						await transaction.CommitAsync(cancellation);
+						break;
+					case COMPLETION_ROLLBACK:
+						await transaction.RollbackAsync(cancellation);
+						break;
+				}
+			}
+
+			//获取并将主连接对象置空
+			var connection = Interlocked.Exchange(ref _connection, null);
+
+			if(connection != null)
+			{
+				//取消连接事件处理
+				connection.StateChange -= Connection_StateChange;
+
+				//释放主数据连接
+				await connection.DisposeAsync();
 			}
 		}
 		#endregion
@@ -638,6 +758,26 @@ namespace Zongsoft.Data.Common
 
 				//通知当前会话，关闭一个读取器
 				_session.ReleaseReader();
+			}
+
+			public override async Task CloseAsync()
+			{
+				if(_reader.IsClosed)
+					return;
+
+				//关闭数据读取器
+				await _reader.CloseAsync();
+
+				//如果当前读取器有独享连接，则必须将该连接释放
+				var connection = _connection;
+				if(connection != null)
+					await connection.DisposeAsync();
+
+				//设置当前读取器的独享连接置空
+				_connection = null;
+
+				//通知当前会话，关闭一个读取器
+				await _session.ReleaseReaderAsync();
 			}
 			#endregion
 		}

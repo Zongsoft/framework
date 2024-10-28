@@ -72,13 +72,13 @@ namespace Zongsoft.Web
 
 		#region 查询方法
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> QueryAsync([FromQuery]Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))]Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
-			return this.Paginate(page ??= Paging.First(), await this.OnQueryAsync(criteria, page, sort, null, cancellation));
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
+			return this.Paginate(page ??= Paging.First(), this.OnQueryAsync(criteria, page, sort, null, cancellation));
 		}
 		#endregion
 
@@ -128,7 +128,7 @@ namespace Zongsoft.Web
 			if(this.DataService is IDataExportable exportable)
 			{
 				var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, null, cancellation);
-				var data = await this.OnQueryAsync(criteria,
+				var data = this.OnQueryAsync(criteria,
 					page ??= Paging.First(),
 					sort, null, cancellation);
 
@@ -171,7 +171,7 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 上传方法
-		protected async Task<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null, CancellationToken cancellation = default)
+		protected async ValueTask<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -216,8 +216,8 @@ namespace Zongsoft.Web
 			return null;
 		}
 
-		protected Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, CancellationToken cancellation = default) => this.UploadAsync(path, uploaded, 0, cancellation);
-		protected async Task<IEnumerable<T>> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit, CancellationToken cancellation = default)
+		protected IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, CancellationToken cancellation = default) => this.UploadAsync(path, uploaded, 0, cancellation);
+		protected async IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(path))
 				throw new ArgumentNullException(nameof(path));
@@ -230,7 +230,7 @@ namespace Zongsoft.Web
 
 			//如果上传的内容为空，则返回文件信息的空集
 			if(this.Request.Body == null || this.Request.ContentLength == null || this.Request.ContentLength == 0)
-				return Array.Empty<T>();
+				yield break;
 
 			//将上传的文件内容依次写入到指定的目录中
 			var files = _accessor.Write(this.Request, pathInfo.GetDirectoryUrl(), option =>
@@ -242,31 +242,20 @@ namespace Zongsoft.Web
 					option.FileName = pathInfo.FileName + "-" + Zongsoft.Common.Randomizer.GenerateString();
 			}, cancellation);
 
-			var result = new List<T>();
-
 			//依次遍历写入的文件对象
 			await foreach(var file in files)
 			{
 				if(file == null)
 					continue;
 
-				try
-				{
-					T entry;
+				T entry;
 
-					//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
-					if((entry = uploaded(file)) != null)
-						result.Add(entry);
-					else
-						DeleteFile(file.Path.Url);
-				}
-				catch
-				{
+				//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
+				if((entry = uploaded(file)) != null)
+					yield return entry;
+				else
 					DeleteFile(file.Path.Url);
-				}
 			}
-
-			return result;
 		}
 		#endregion
 
@@ -346,12 +335,12 @@ namespace Zongsoft.Web
 			return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
 		}
 
-		protected virtual Task<object> OnGetAsync(string key, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<object> OnGetAsync(string key, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.GetAsync(key, this.GetSchema(), page ?? Paging.First(), this.OptionsBuilder.Get(parameters), sort, cancellation);
 		}
 
-		protected virtual Task<IEnumerable<TModel>> OnQueryAsync(object criteria, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual IAsyncEnumerable<TModel> OnQueryAsync(object criteria, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.SelectAsync(Criteria.Transform(criteria as IModel), this.GetSchema(), page, this.OptionsBuilder.Select(), sort, cancellation);
 		}

@@ -145,18 +145,18 @@ namespace Zongsoft.Serialization
 
 			public string Serialize(object graph, TextSerializationOptions options = null) => graph == null ? null : JsonSerializer.Serialize(graph, options.ToOptions());
 
-			public Task SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellationToken = default)
+			public ValueTask SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				if(graph == null)
-					return Task.CompletedTask;
+					return ValueTask.CompletedTask;
 
 				if(stream == null)
 					throw new ArgumentNullException(nameof(stream));
 
-				return JsonSerializer.SerializeAsync(stream, graph, type, options.ToOptions(), cancellationToken);
+				return new ValueTask(JsonSerializer.SerializeAsync(stream, graph, type, options.ToOptions(), cancellationToken));
 			}
 
-			public async Task<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
+			public async ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
 			{
 				if(graph == null)
 					return null;

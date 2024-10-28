@@ -139,10 +139,10 @@ namespace Zongsoft.Data
 			return 0L;
 		}
 
-		public static Task<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, null, cancellation);
-		public static Task<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, options, cancellation);
-		public static Task<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, interval, null, cancellation);
-		public static async Task<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
+		public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, null, cancellation);
+		public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, options, cancellation);
+		public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, interval, null, cancellation);
+		public static async ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
 		{
 			if(options == null)
 				options = DataUpdateOptions.Return([member]);
@@ -161,10 +161,10 @@ namespace Zongsoft.Data
 		#region 递减方法
 		public static long Decrease(this IDataService service, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(service, member, criteria, -1, options);
 		public static long Decrease(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(service, member, criteria, -interval, options);
-		public static Task<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, null, cancellation);
-		public static Task<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, options, cancellation);
-		public static Task<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, null, cancellation);
-		public static Task<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, options, cancellation);
+		public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, null, cancellation);
+		public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, options, cancellation);
+		public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, null, cancellation);
+		public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, options, cancellation);
 		#endregion
 	}
 }

@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Collections
 {
@@ -40,10 +41,8 @@ namespace Zongsoft.Collections
 		#region 公共方法
 		public static IEnumerable Empty(Type elementType)
 		{
-			if(elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-
-			return (IEnumerable)System.Activator.CreateInstance(typeof(EmptyEnumerable<>).MakeGenericType(elementType));
+			return elementType == null ? throw new ArgumentNullException(nameof(elementType)) :
+				(IEnumerable)System.Activator.CreateInstance(typeof(EmptyEnumerable<>).MakeGenericType(elementType));
 		}
 
 		public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Empty;
@@ -64,12 +63,57 @@ namespace Zongsoft.Collections
 			}
 		}
 
-		public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) => source is IAsyncEnumerable<T> enumerable ? enumerable : new AsyncEnumerable<T>(source);
+		public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) =>
+			source is IAsyncEnumerable<T> enumerable ? enumerable : (source == null ? EmptyAsyncEnumerable<T>.Empty : new AsyncEnumerable<T>(source));
+
+		public static async IAsyncEnumerable<object> Cast<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		{
+			if(source == null)
+				yield break;
+
+			var iterator = source.GetAsyncEnumerator(cancellation);
+			while(await iterator.MoveNextAsync())
+				yield return iterator.Current;
+		}
+
+		public static async IAsyncEnumerable<TDestination> Cast<TSource, TDestination>(this IAsyncEnumerable<TSource> source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		{
+			if(source == null)
+				yield break;
+
+			var iterator = source.GetAsyncEnumerator(cancellation);
+			while(await iterator.MoveNextAsync())
+			{
+				if(iterator.Current is TDestination destination)
+				yield return destination;
+			}
+		}
+
+		public static async IAsyncEnumerable<T> EnumerateAsync<T>(object source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		{
+			if(source == null)
+				yield break;
+
+			if(source is IAsyncEnumerable<T> asyncEnumerable)
+			{
+				var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
+				while(await iterator.MoveNextAsync())
+					yield return iterator.Current;
+			}
+			else if(source is IEnumerable<T> enumerable)
+			{
+				var iterator = enumerable.GetEnumerator();
+				while(iterator.MoveNext())
+					yield return iterator.Current;
+			}
+			else if(source is T element)
+				yield return element;
+		}
 
 		public static IEnumerable<T> Enumerate<T>(object source)
 		{
 			if(source == null)
-				return System.Linq.Enumerable.Empty<T>();
+				return [];
 
 			if(source is IEnumerable<T> items)
 				return items;
@@ -92,15 +136,8 @@ namespace Zongsoft.Collections
 		#region 嵌套子类
 		private class EmptyEnumerable<T> : IEnumerable<T>
 		{
-			public IEnumerator<T> GetEnumerator()
-			{
-				yield break;
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				yield break;
-			}
+			public IEnumerator<T> GetEnumerator() { yield break; }
+			IEnumerator IEnumerable.GetEnumerator() { yield break; }
 		}
 
 		private class TypedEnumerable<T> : IEnumerable<T>
@@ -130,15 +167,10 @@ namespace Zongsoft.Collections
 			#endregion
 
 			#region 迭代实现
-			private class SimulateEnumerator : IEnumerator<T>
+			private class SimulateEnumerator(T element) : IEnumerator<T>
 			{
 				private int _flag;
-				private readonly T _element;
-
-				public SimulateEnumerator(T element)
-				{
-					_element = element;
-				}
+				private readonly T _element = element;
 
 				public T Current
 				{
@@ -158,12 +190,12 @@ namespace Zongsoft.Collections
 
 				public bool MoveNext()
 				{
-					var original = System.Threading.Interlocked.CompareExchange(ref _flag, 1, 0);
+					var original = Interlocked.CompareExchange(ref _flag, 1, 0);
 
 					if(original == 0)
 						return true;
 
-					System.Threading.Interlocked.CompareExchange(ref _flag, 2, 1);
+					Interlocked.CompareExchange(ref _flag, 2, 1);
 					return false;
 				}
 
@@ -176,10 +208,10 @@ namespace Zongsoft.Collections
 				}
 			}
 
-			private class MultitapEnumerator : IEnumerator<T>
+			private class MultitapEnumerator(IEnumerator enumerator) : IEnumerator<T>
 			{
-				private readonly IEnumerator _enumerator;
-				public MultitapEnumerator(IEnumerator enumerator) => _enumerator = enumerator;
+				private readonly IEnumerator _enumerator = enumerator;
+
 				public T Current => (T)_enumerator.Current;
 				object IEnumerator.Current => _enumerator.Current;
 				public bool MoveNext() => _enumerator.MoveNext();
@@ -208,22 +240,16 @@ namespace Zongsoft.Collections
 			}
 		}
 
-		private class AsyncEnumerable<T> : IAsyncEnumerable<T>
+		private class AsyncEnumerable<T>(IEnumerable<T> items) : IAsyncEnumerable<T>
 		{
-			private readonly IEnumerable<T> _items;
+			private readonly IEnumerable<T> _items = items;
 
-			public AsyncEnumerable(IEnumerable<T> items) => _items = items;
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) => new AsyncEnumerator(_items.GetEnumerator(), cancellationToken);
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_items.GetEnumerator(), cancellation);
 
-			internal class AsyncEnumerator : IAsyncEnumerator<T>
+			private class AsyncEnumerator(IEnumerator<T> source, CancellationToken cancellation) : IAsyncEnumerator<T>
 			{
-				private readonly IEnumerator<T> _source;
-				private readonly CancellationToken _cancellation;
-				public AsyncEnumerator(IEnumerator<T> source, CancellationToken cancellation)
-				{
-					_source = source;
-					_cancellation = cancellation;
-				}
+				private readonly IEnumerator<T> _source = source;
+				private readonly CancellationToken _cancellation = cancellation;
 
 				public T Current => _source.Current;
 				public ValueTask<bool> MoveNextAsync() => _cancellation.IsCancellationRequested ? ValueTask.FromResult(false) : ValueTask.FromResult(_source.MoveNext());

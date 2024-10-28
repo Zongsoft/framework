@@ -136,7 +136,7 @@ namespace Zongsoft.Data.Common
 			this.OnExecuted(context);
 		}
 
-		public async Task ExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
+		public async ValueTask ExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
 		{
 			//激发“Executing”事件
 			this.OnExecuting(context);
@@ -154,7 +154,7 @@ namespace Zongsoft.Data.Common
 				await this.OnExecuteAsync(context, cancellation);
 
 				//尝试提交当前数据会话
-				context.Session.Commit();
+				await context.Session.CommitAsync(cancellation);
 
 				//还原当前操作的原始值
 				if(mutation != null)
@@ -163,7 +163,7 @@ namespace Zongsoft.Data.Common
 			catch(Exception ex)
 			{
 				//尝试回滚当前数据会话
-				context.Session.Rollback();
+				await context.Session.RollbackAsync(cancellation);
 
 				//激发“Error”事件
 				var handledException = this.OnError(context, ex);
@@ -212,7 +212,7 @@ namespace Zongsoft.Data.Common
 			}
 		}
 
-		protected virtual async Task OnExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
+		protected virtual async ValueTask OnExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
 		{
 			//根据上下文生成对应执行语句集
 			var statements = context.Source.Driver.Builder.Build(context);
@@ -317,7 +317,7 @@ namespace Zongsoft.Data.Common
 				}
 			}
 
-			public async Task ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
+			public async ValueTask ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
 			{
 				var continued = statement switch
 				{

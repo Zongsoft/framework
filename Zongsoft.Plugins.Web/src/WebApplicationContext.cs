@@ -162,9 +162,12 @@ namespace Zongsoft.Web
 
 				if(properties != null && properties.TryGetValue(typeof(WebHostBuilderContext), out var value) && value is WebHostBuilderContext context)
 				{
-					this.RootDirectory = context.HostingEnvironment.WebRootPath.StartsWith(context.HostingEnvironment.ContentRootPath) ?
-						context.HostingEnvironment.WebRootPath[context.HostingEnvironment.ContentRootPath.Length..].Trim('/', '\\') :
-						context.HostingEnvironment.WebRootPath.Trim('/', '\\');
+					if(string.IsNullOrEmpty(context.HostingEnvironment.WebRootPath))
+						this.RootDirectory = "wwwroot";
+					else
+						this.RootDirectory = context.HostingEnvironment.WebRootPath.StartsWith(context.HostingEnvironment.ContentRootPath) ?
+							context.HostingEnvironment.WebRootPath[context.HostingEnvironment.ContentRootPath.Length..].Trim('/', '\\') :
+							context.HostingEnvironment.WebRootPath.Trim('/', '\\');
 				}
 			}
 

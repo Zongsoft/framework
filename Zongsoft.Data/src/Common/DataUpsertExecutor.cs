@@ -65,7 +65,7 @@ namespace Zongsoft.Data.Common
 			base.OnMutating(context, statement);
 		}
 
-		protected override async Task OnMutatingAsync(IDataMutateContext context, UpsertStatement statement, CancellationToken cancellation)
+		protected override async ValueTask OnMutatingAsync(IDataMutateContext context, UpsertStatement statement, CancellationToken cancellation)
 		{
 			//如果新增实体包含序号定义项则尝试处理其中的外部序号
 			if(statement.Entity.HasSequences())
@@ -104,7 +104,7 @@ namespace Zongsoft.Data.Common
 			return base.OnMutated(context, statement, count);
 		}
 
-		protected override async Task<bool> OnMutatedAsync(IDataMutateContext context, UpsertStatement statement, int count, CancellationToken cancellation)
+		protected override async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, UpsertStatement statement, int count, CancellationToken cancellation)
 		{
 			//执行获取新增后的自增型字段值
 			if(count > 0 && statement.Sequence != null)

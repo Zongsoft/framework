@@ -47,18 +47,18 @@ namespace Zongsoft.Web
 		#region 公共方法
 		[HttpGet("{key:required}/[action]")]
 		[HttpGet("[action]/{key?}")]
-		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
 			return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
 		}
 
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
 			var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
 
 			return this.Content(count.ToString());
@@ -66,31 +66,31 @@ namespace Zongsoft.Web
 
 		[HttpGet("{key:required}/[action]")]
 		[HttpGet("[action]/{key?}")]
-		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
 			return await this.DataService.ExistsAsync(key, this.OptionsBuilder.Exists(), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
 			var existed = await this.DataService.ExistsAsync(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists(), cancellation);
 
 			return existed ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpGet("{key?}")]
-		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			return this.Paginate(page ??= Paging.First(), await this.OnGetAsync(key, page, sort, null, cancellation));
 		}
 
 		[HttpDelete("{key?}")]
-		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -125,7 +125,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost]
-		public virtual async Task<IActionResult> CreateAsync([FromBody] TModel model, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CreateAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -167,7 +167,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut]
-		public virtual async Task<IActionResult> UpsertAsync([FromBody] TModel model, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> UpsertAsync([FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -180,7 +180,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPatch("{key}")]
-		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody] TModel model, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> UpdateAsync(string key, [FromBody] TModel model, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -194,24 +194,24 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
-		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
+			return string.IsNullOrWhiteSpace(key) ? ValueTask.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnCreateAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnCreateAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.InsertAsync(model, this.GetSchema(), this.OptionsBuilder.Insert(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnUpdateAsync(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnUpdateAsync(string key, TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return string.IsNullOrWhiteSpace(key) ?
 				this.DataService.UpdateAsync(model, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation) :
 				this.DataService.UpdateAsync(key, model, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnUpsertAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnUpsertAsync(TModel model, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.UpsertAsync(model, this.GetSchema(), this.OptionsBuilder.Upsert(parameters), cancellation);
 		}
@@ -222,7 +222,7 @@ namespace Zongsoft.Web
 	{
 		#region 公共方法
 		[HttpGet("{key:required}/[action]")]
-		public virtual async Task<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
@@ -231,18 +231,18 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> CountAsync(CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CountAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
 			var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
 			return this.Content(count.ToString());
 		}
 
 		[HttpGet("[action]/{key:required}")]
-		public virtual async Task<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExistsAsync(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
@@ -251,12 +251,12 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("[action]")]
-		public virtual async Task<IActionResult> ExistsAsync(CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> ExistsAsync(CancellationToken cancellation = default)
 		{
 			if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
-			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellationToken: cancellation);
+			var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
 			var existed = await this.DataService.ExistsAsync(Criteria.Transform(criteria as IModel), this.OptionsBuilder.Exists(), cancellation);
 
 			return existed ? this.NoContent() : this.NotFound();
@@ -264,7 +264,7 @@ namespace Zongsoft.Web
 
 		[HttpGet("/[area]/{key:required}/[controller]")]
 		[HttpGet("{key:required}")]
-		public virtual async Task<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> GetAsync(string key, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(key))
 				return this.BadRequest();
@@ -274,7 +274,7 @@ namespace Zongsoft.Web
 
 		[HttpDelete("/[area]/{key:required}/[controller]")]
 		[HttpDelete("{key?}")]
-		public virtual async Task<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> DeleteAsync(string key, CancellationToken cancellation = default)
 		{
 			if(!this.CanDelete)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -309,7 +309,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPost("/[area]/{key:required}/[controller]")]
-		public virtual async Task<IActionResult> CreateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> CreateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanCreate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -328,7 +328,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPut("/[area]/{key:required}/[controller]")]
-		public virtual async Task<IActionResult> UpsertAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> UpsertAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpsert)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -344,7 +344,7 @@ namespace Zongsoft.Web
 		}
 
 		[HttpPatch("/[area]/{key:required}/[controller]")]
-		public virtual async Task<IActionResult> UpdateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
+		public virtual async ValueTask<IActionResult> UpdateAsync(string key, [FromBody]IEnumerable<TModel> data, CancellationToken cancellation = default)
 		{
 			if(!this.CanUpdate)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -361,22 +361,22 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 虚拟方法
-		protected virtual Task<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnDeleteAsync(string key, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
-			return string.IsNullOrWhiteSpace(key) ? Task.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
+			return string.IsNullOrWhiteSpace(key) ? ValueTask.FromResult(0) : this.DataService.DeleteAsync(key, this.GetSchema(), this.OptionsBuilder.Delete(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnCreateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnCreateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.InsertManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Insert(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnUpsertAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnUpsertAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.UpsertManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Upsert(parameters), cancellation);
 		}
 
-		protected virtual Task<int> OnUpdateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+		protected virtual ValueTask<int> OnUpdateAsync(string key, IEnumerable<TModel> data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
 		{
 			return this.DataService.UpdateManyAsync(key, data, this.GetSchema(), this.OptionsBuilder.Update(parameters), cancellation);
 		}

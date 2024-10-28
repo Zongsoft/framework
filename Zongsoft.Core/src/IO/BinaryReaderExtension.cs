@@ -68,7 +68,7 @@ namespace Zongsoft.IO
 			}
 		}
 
-		public static async Task CopyToAsync(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
+		public static async ValueTask CopyToAsync(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
 		{
 			if(reader == null)
 				throw new ArgumentNullException(nameof(reader));

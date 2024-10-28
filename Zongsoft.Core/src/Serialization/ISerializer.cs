@@ -85,25 +85,25 @@ namespace Zongsoft.Serialization
 		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
-		/// <param name="cancellationToken">异步取消标记。</param>
+		/// <param name="cancellation">异步取消标记。</param>
 		/// <returns>反序列化的结果。</returns>
-		ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default);
+		ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellation = default);
 
 		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="type">反序列化的结果类型。</param>
 		/// <param name="options">反序列化的设置。</param>
-		/// <param name="cancellationToken">异步取消标记。</param>
+		/// <param name="cancellation">异步取消标记。</param>
 		/// <returns>反序列化的结果。</returns>
-		ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default);
+		ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellation = default);
 
 		/// <summary>反序列化指定<paramref name="stream"/>包含的对象。</summary>
 		/// <typeparam name="T">指定的反序列化结果的泛类型。</typeparam>
 		/// <param name="stream">待反序列化的流。</param>
 		/// <param name="options">反序列化的设置。</param>
-		/// <param name="cancellationToken">异步取消标记。</param>
+		/// <param name="cancellation">异步取消标记。</param>
 		/// <returns>反序列化的结果。</returns>
-		ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default);
+		ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellation = default);
 
 		/// <summary>反序列化指定<paramref name="buffer"/>包含的对象。</summary>
 		/// <param name="buffer">待反序列化的缓存区。</param>
@@ -140,8 +140,8 @@ namespace Zongsoft.Serialization
 		/// <param name="graph">待序列化的目标对象。</param>
 		/// <param name="type">待序列化的目标类型。</param>
 		/// <param name="options">序列化的选项设置。</param>
-		/// <param name="cancellationToken">异步取消标记。</param>
+		/// <param name="cancellation">异步取消标记。</param>
 		/// <returns>返回的异步任务。</returns>
-		Task SerializeAsync(Stream stream, object graph, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default);
+		ValueTask SerializeAsync(Stream stream, object graph, Type type, SerializationOptions options = null, CancellationToken cancellation = default);
 	}
 }

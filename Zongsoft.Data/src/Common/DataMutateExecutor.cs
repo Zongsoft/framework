@@ -125,7 +125,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 异步执行
-		public Task<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation)
+		public ValueTask<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation)
 		{
 			if(context is IDataMutateContext ctx)
 				return this.OnExecuteAsync(ctx, statement, cancellation);
@@ -133,7 +133,7 @@ namespace Zongsoft.Data.Common
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
 		}
 
-		protected virtual async Task<bool> OnExecuteAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
+		protected virtual async ValueTask<bool> OnExecuteAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 		{
 			if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
 				throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
@@ -255,7 +255,7 @@ namespace Zongsoft.Data.Common
 
 			return true;
 		}
-		protected virtual async Task<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
+		protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 		{
 			switch(context)
 			{
@@ -305,10 +305,10 @@ namespace Zongsoft.Data.Common
 		}
 
 		protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count) => count > 0;
-		protected virtual Task<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, int count, CancellationToken cancellation) => Task.FromResult(count > 0);
+		protected virtual ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, int count, CancellationToken cancellation) => ValueTask.FromResult(count > 0);
 
 		protected virtual void OnMutating(IDataMutateContext context, TStatement statement) { }
-		protected virtual Task OnMutatingAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation) => Task.CompletedTask;
+		protected virtual ValueTask OnMutatingAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation) => ValueTask.CompletedTask;
 		#endregion
 
 		#region 私有方法
@@ -349,7 +349,7 @@ namespace Zongsoft.Data.Common
 			return continued;
 		}
 
-		private async Task<bool> MutateAsync(IDataMutateContext context, TStatement statement, DbCommand command, CancellationToken cancellation)
+		private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, DbCommand command, CancellationToken cancellation)
 		{
 			bool continued;
 

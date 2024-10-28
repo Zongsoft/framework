@@ -139,7 +139,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 异步执行
-		public Task<bool> ExecuteAsync(IDataAccessContext context, SelectStatement statement, CancellationToken cancellation)
+		public ValueTask<bool> ExecuteAsync(IDataAccessContext context, SelectStatement statement, CancellationToken cancellation)
 		{
 			switch(context)
 			{
@@ -154,7 +154,7 @@ namespace Zongsoft.Data.Common
 			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
 		}
 
-		protected virtual async Task<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
+		protected virtual async ValueTask<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
@@ -173,7 +173,7 @@ namespace Zongsoft.Data.Common
 			return false;
 		}
 
-		protected virtual async Task<bool> OnExecuteAsync(DataInsertContext context, SelectStatement statement, CancellationToken cancellation)
+		protected virtual async ValueTask<bool> OnExecuteAsync(DataInsertContext context, SelectStatement statement, CancellationToken cancellation)
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
@@ -203,7 +203,7 @@ namespace Zongsoft.Data.Common
 			return true;
 		}
 
-		protected virtual async Task<bool> OnExecuteAsync(DataUpsertContext context, SelectStatement statement, CancellationToken cancellation)
+		protected virtual async ValueTask<bool> OnExecuteAsync(DataUpsertContext context, SelectStatement statement, CancellationToken cancellation)
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);

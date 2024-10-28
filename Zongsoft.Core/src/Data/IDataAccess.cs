@@ -107,19 +107,19 @@ namespace Zongsoft.Data
 		#region 执行方法
 		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
 		IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
-		Task<IEnumerable<T>> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default);
 
 		object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
 		object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null);
-		Task<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default);
+		ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 存在方法
 		bool Exists<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
 		bool Exists(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null);
 
-		Task<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default);
-		Task<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default);
+		ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default);
+		ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 聚合方法
@@ -132,11 +132,11 @@ namespace Zongsoft.Data
 		TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
 		TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
 
-		Task<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
-		Task<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+		ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+		ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 
-		Task<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
-		Task<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+		ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+		ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 		#endregion
 
 		#region 删除方法
@@ -149,14 +149,14 @@ namespace Zongsoft.Data
 		int Delete(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 		int Delete(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null);
 
-		Task<int> DeleteAsync<T>(ICondition criteria, string schema = null, CancellationToken cancellation = default);
-		Task<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default);
-		Task<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema = null, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
 
-		Task<int> DeleteAsync(string name, ICondition criteria, string schema = null, CancellationToken cancellation = default);
-		Task<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default);
-		Task<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
-		Task<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema = null, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
+		ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 插入方法
@@ -176,21 +176,21 @@ namespace Zongsoft.Data
 		int Insert(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 		int Insert(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
-		Task<int> InsertAsync<T>(T data, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(T data, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(T data, string schema, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(T data, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(T data, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(T data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 
-		Task<int> InsertAsync<T>(object data, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(object data, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(object data, string schema, CancellationToken cancellation = default);
-		Task<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(object data, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(object data, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 
-		Task<int> InsertAsync(string name, object data, CancellationToken cancellation = default);
-		Task<int> InsertAsync(string name, object data, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertAsync(string name, object data, string schema, CancellationToken cancellation = default);
-		Task<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
-		Task<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync(string name, object data, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync(string name, object data, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync(string name, object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 
 		int InsertMany<T>(IEnumerable<T> items);
 		int InsertMany<T>(IEnumerable<T> items, DataInsertOptions options);
@@ -208,21 +208,21 @@ namespace Zongsoft.Data
 		int InsertMany(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 		int InsertMany(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null);
 
-		Task<int> InsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 
-		Task<int> InsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 
-		Task<int> InsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync(string name, IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
-		Task<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync(string name, IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
+		ValueTask<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 增改方法
@@ -242,21 +242,21 @@ namespace Zongsoft.Data
 		int Upsert(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 		int Upsert(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
-		Task<int> UpsertAsync<T>(T data, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(T data, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(T data, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(T data, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(T data, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(T data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(T data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 
-		Task<int> UpsertAsync<T>(object data, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(object data, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(object data, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertAsync<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(object data, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(object data, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync<T>(object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 
-		Task<int> UpsertAsync(string name, object data, CancellationToken cancellation = default);
-		Task<int> UpsertAsync(string name, object data, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertAsync(string name, object data, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertAsync(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
-		Task<int> UpsertAsync(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync(string name, object data, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync(string name, object data, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync(string name, object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync(string name, object data, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertAsync(string name, object data, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 
 		int UpsertMany<T>(IEnumerable<T> items);
 		int UpsertMany<T>(IEnumerable<T> items, DataUpsertOptions options);
@@ -274,21 +274,21 @@ namespace Zongsoft.Data
 		int UpsertMany(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 		int UpsertMany(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null);
 
-		Task<int> UpsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable<T> items, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable<T> items, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable<T> items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 
-		Task<int> UpsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync<T>(IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 
-		Task<int> UpsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string name, IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
-		Task<int> UpsertManyAsync(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync(string name, IEnumerable items, DataUpsertOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync(string name, IEnumerable items, string schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
+		ValueTask<int> UpsertManyAsync(string name, IEnumerable items, ISchema schema, DataUpsertOptions options, Func<DataUpsertContextBase, bool> upserting = null, Action<DataUpsertContextBase> upserted = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 更新方法
@@ -320,33 +320,33 @@ namespace Zongsoft.Data
 		int Update(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 		int Update(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
-		Task<int> UpdateAsync<T>(T data, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, ICondition criteria, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 
-		Task<int> UpdateAsync<T>(object data, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, ICondition criteria, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 
-		Task<int> UpdateAsync(string name, object data, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, ICondition criteria, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-		Task<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 
 		int UpdateMany<T>(IEnumerable<T> items);
 		int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options);
@@ -364,21 +364,21 @@ namespace Zongsoft.Data
 		int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 		int UpdateMany(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
 
-		Task<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 
-		Task<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 
-		Task<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-		Task<int> UpdateManyAsync(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
+		ValueTask<int> UpdateManyAsync(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 查询方法
@@ -418,74 +418,74 @@ namespace Zongsoft.Data
 		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 		IEnumerable<T> Select<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected);
 
-		Task<IEnumerable<T>> SelectAsync<T>(CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
 
-		Task<IEnumerable<T>> SelectAsync<T>(string name, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
 
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, Paging paging, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
-		Task<IEnumerable<T>> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, Paging paging, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> SelectAsync<T>(string name, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, DataSelectOptions options, Sorting[] sortings, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation = default);
 		#endregion
 	}
 }
