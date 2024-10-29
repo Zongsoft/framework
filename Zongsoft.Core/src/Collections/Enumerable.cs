@@ -152,7 +152,7 @@ namespace Zongsoft.Collections
 			if(source is IEnumerable<T> items)
 				return items;
 
-			return (IEnumerable<T>)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(typeof(T)), new object[] { source });
+			return (IEnumerable<T>)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(typeof(T)), [source]);
 		}
 
 		public static IEnumerable Enumerate(object source, Type elementType)
