@@ -47,9 +47,12 @@ namespace Zongsoft.Collections
 
 		public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Empty;
 
-		public static IEnumerable<T> Synchronize<T>(this IAsyncEnumerable<T> source)
+		public static IEnumerable<T> Synchronize<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
 		{
-			var iterator = source.GetAsyncEnumerator();
+#if NET7_0_OR_GREATER
+			return source.ToBlockingEnumerable(cancellation);
+#else
+			var iterator = source.GetAsyncEnumerator(cancellation);
 
 			while(true)
 			{
@@ -61,6 +64,7 @@ namespace Zongsoft.Collections
 				else
 					yield break;
 			}
+#endif
 		}
 
 		public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) =>
@@ -123,25 +127,21 @@ namespace Zongsoft.Collections
 			}
 		}
 
-		public static async IAsyncEnumerable<T> EnumerateAsync<T>(object source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		public static IAsyncEnumerable<T> EnumerateAsync<T>(object source, CancellationToken cancellation = default)
 		{
 			if(source == null)
-				yield break;
+				return EmptyAsyncEnumerable<T>.Empty;
 
-			if(source is IAsyncEnumerable<T> asyncEnumerable)
-			{
-				var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
-				while(await iterator.MoveNextAsync())
-					yield return iterator.Current;
-			}
-			else if(source is IEnumerable<T> enumerable)
-			{
-				var iterator = enumerable.GetEnumerator();
-				while(iterator.MoveNext())
-					yield return iterator.Current;
-			}
-			else if(source is T element)
-				yield return element;
+			if(source is IAsyncEnumerable<T> enumerable)
+				return enumerable;
+
+			if(source is IEnumerable<T> e)
+				return new AsyncEnumerable<T>(e);
+
+			else if(source is T item)
+				return new AsyncEnumerable<T>([item]);
+
+			throw new InvalidOperationException($"The '{source.GetType()}' type cannot be convert to '{typeof(IAsyncEnumerable<T>)}' type.");
 		}
 
 		public static IEnumerable<T> Enumerate<T>(object source)
@@ -165,7 +165,7 @@ namespace Zongsoft.Collections
 			else
 				return (IEnumerable)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(elementType), [source]);
 		}
-		#endregion
+#endregion
 
 		#region 嵌套子类
 		private class EmptyEnumerable<T> : IEnumerable<T>

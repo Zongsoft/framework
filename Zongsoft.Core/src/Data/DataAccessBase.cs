@@ -1774,51 +1774,21 @@ namespace Zongsoft.Data
 			return result;
 		}
 
-		private async IAsyncEnumerable<T> SelectAsync<T>(DataSelectContextBase context, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+		private IAsyncEnumerable<T> SelectAsync<T>(DataSelectContextBase context, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation)
 		{
 			//处理数据访问操作前的回调
 			if(selecting != null && selecting(context))
-			{
-				if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
-				{
-					var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
-					while(await iterator.MoveNextAsync())
-						yield return iterator.Current;
-				}
-				else if(context.Result is IEnumerable<T> enumerable)
-				{
-					var iterator = enumerable.GetEnumerator();
-					while(iterator.MoveNext())
-						yield return iterator.Current;
-				}
-
-				yield break;
-			}
+				return ToAsyncEnumerable<T>(context.Result, cancellation);
 
 			//激发“Selecting”事件，如果被中断则返回
 			if(this.OnSelecting(context))
-			{
-				if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
-				{
-					var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
-					while(await iterator.MoveNextAsync())
-						yield return iterator.Current;
-				}
-				else if(context.Result is IEnumerable<T> enumerable)
-				{
-					var iterator = enumerable.GetEnumerator();
-					while(iterator.MoveNext())
-						yield return iterator.Current;
-				}
-
-				yield break;
-			}
+				return ToAsyncEnumerable<T>(context.Result, cancellation);
 
 			//调用数据访问过滤器前事件
 			this.OnFiltering(context);
 
 			//执行数据查询操作
-			await this.OnSelectAsync(context, cancellation);
+			this.OnSelectAsync(context, cancellation).AsTask().GetAwaiter().GetResult();
 
 			//调用数据访问过滤器后事件
 			this.OnFiltered(context);
@@ -1834,10 +1804,7 @@ namespace Zongsoft.Data
 			//处置上下文资源
 			context.Dispose();
 
-			//返回最终的结果
-			var enumerator = result.GetAsyncEnumerator(cancellation);
-			while(await enumerator.MoveNextAsync())
-				yield return enumerator.Current;
+			return result;
 		}
 
 		protected abstract void OnSelect(DataSelectContextBase context);
