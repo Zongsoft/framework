@@ -43,15 +43,8 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public IExpression Operand
-		{
-			get;
-		}
-
-		public Operator Operator
-		{
-			get;
-		}
+		public IExpression Operand { get; }
+		public Operator Operator { get; }
 		#endregion
 	}
 }

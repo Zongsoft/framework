@@ -64,10 +64,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ExpressionVisitorContext CreateContext()
-		{
-			return new ExpressionVisitorContext(this);
-		}
+		protected virtual ExpressionVisitorContext CreateContext() => new ExpressionVisitorContext(this);
 
 		internal protected virtual void OnVisit(ExpressionVisitorContext context, IExpression expression)
 		{
@@ -501,16 +498,10 @@ namespace Zongsoft.Data.Common.Expressions
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetIdentifier(IIdentifier identifier)
-		{
-			return this.Dialect.GetIdentifier(identifier);
-		}
+		private string GetIdentifier(IIdentifier identifier) => this.Dialect.GetIdentifier(identifier);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetAlias(string alias)
-		{
-			return this.Dialect.GetAlias(alias);
-		}
+		private string GetAlias(string alias) => this.Dialect.GetAlias(alias);
 		#endregion
 
 		#region 嵌套子类

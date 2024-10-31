@@ -44,21 +44,9 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public IExpression Left
-		{
-			get;
-		}
-
-		public Operator Operator
-		{
-			get;
-			internal set;
-		}
-
-		public IExpression Right
-		{
-			get;
-		}
+		public IExpression Left { get; }
+		public Operator Operator { get; internal set; }
+		public IExpression Right { get; }
 		#endregion
 	}
 }

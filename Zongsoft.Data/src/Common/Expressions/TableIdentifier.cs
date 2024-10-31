@@ -56,39 +56,24 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取对应的表元数据元素，与<see cref="Table"/>属性互斥。
-		/// </summary>
+		/// <summary>获取对应的表元数据元素，与<see cref="Table"/>属性互斥。</summary>
 		public IDataEntity Entity { get; }
 
-		/// <summary>
-		/// 获取对应的表定义，与<see cref="Entity"/>属性互斥。
-		/// </summary>
+		/// <summary>获取对应的表定义，与<see cref="Entity"/>属性互斥。</summary>
 		public TableDefinition Table { get; }
 
-		/// <summary>
-		/// 获取表的物理名称（即数据库中表的名称）。
-		/// </summary>
+		/// <summary>获取表的物理名称（即数据库中表的名称）。</summary>
 		public string Name { get; }
 
-		/// <summary>
-		/// 获取或设置表标识的别名。
-		/// </summary>
+		/// <summary>获取或设置表标识的别名。</summary>
 		public string Alias { get; set; }
 
-		/// <summary>
-		/// 获取一个值，指示当前表标识是否指向一个临时表。
-		/// </summary>
-		public bool IsTemporary
-		{
-			get => this.Table != null && this.Table.IsTemporary;
-		}
+		/// <summary>获取一个值，指示当前表标识是否指向一个临时表。</summary>
+		public bool IsTemporary => this.Table != null && this.Table.IsTemporary;
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 创建一个关联当前表的字段标识。
-		/// </summary>
+		/// <summary>创建一个关联当前表的字段标识。</summary>
 		/// <param name="name">指定的字段名称。</param>
 		/// <param name="alias">指定的字段别名。</param>
 		/// <returns>返回创建成功的字段标识。</returns>
@@ -143,13 +128,7 @@ namespace Zongsoft.Data.Common.Expressions
 			       string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
 		}
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((TableIdentifier)obj);
-		}
+		public override bool Equals(object obj) => obj is TableIdentifier other && this.Equals(other);
 
 		public override int GetHashCode()
 		{

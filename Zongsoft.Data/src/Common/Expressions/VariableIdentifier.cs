@@ -46,27 +46,15 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public string Name
-		{
-			get;
-		}
-
-		public bool IsGlobal
-		{
-			get;
-		}
+		public string Name { get; }
+		public bool IsGlobal { get; }
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 创建一个全局变量标识。
-		/// </summary>
+		/// <summary>创建一个全局变量标识。</summary>
 		/// <param name="name">指定的要创建的变量名。</param>
 		/// <returns>返回新建的全局变量标识。</returns>
-		public static VariableIdentifier Global(string name)
-		{
-			return new VariableIdentifier(name, true);
-		}
+		public static VariableIdentifier Global(string name) => new VariableIdentifier(name, true);
 		#endregion
 	}
 }

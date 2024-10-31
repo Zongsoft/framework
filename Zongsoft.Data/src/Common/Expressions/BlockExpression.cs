@@ -61,28 +61,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取块级表达式的元素分割符。
-		/// </summary>
-		public BlockExpressionDelimiter Delimiter
-		{
-			get;
-		}
-
-		public int Count
-		{
-			get => _items.Count;
-		}
-
-		bool ICollection<IExpression>.IsReadOnly
-		{
-			get => false;
-		}
-
-		public IExpression this[int index]
-		{
-			get => _items[index];
-		}
+		/// <summary>获取块级表达式的元素分割符。</summary>
+		public BlockExpressionDelimiter Delimiter { get; }
+		public int Count => _items.Count;
+		bool ICollection<IExpression>.IsReadOnly => false;
+		public IExpression this[int index] => _items[index];
 		#endregion
 
 		#region 公共方法
@@ -92,49 +75,20 @@ namespace Zongsoft.Data.Common.Expressions
 				_items.Add(item);
 		}
 
-		public void Insert(int index, IExpression item)
-		{
-			_items.Insert(index, item);
-		}
-
-		public void Clear()
-		{
-			_items.Clear();
-		}
-
-		public bool Remove(IExpression item)
-		{
-			return _items.Remove(item);
-		}
-
-		public void RemoveAt(int index)
-		{
-			_items.RemoveAt(index);
-		}
+		public void Insert(int index, IExpression item) => _items.Insert(index, item);
+		public void Clear() => _items.Clear();
+		public bool Remove(IExpression item) => _items.Remove(item);
+		public void RemoveAt(int index) => _items.RemoveAt(index);
 		#endregion
 
 		#region 显式实现
-		bool ICollection<IExpression>.Contains(IExpression item)
-		{
-			return _items.Contains(item);
-		}
-
-		void ICollection<IExpression>.CopyTo(IExpression[] array, int arrayIndex)
-		{
-			_items.CopyTo(array, arrayIndex);
-		}
+		bool ICollection<IExpression>.Contains(IExpression item) => _items.Contains(item);
+		void ICollection<IExpression>.CopyTo(IExpression[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
 		#endregion
 
 		#region 迭代遍历
-		public IEnumerator<IExpression> GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _items.GetEnumerator();
-		}
+		public IEnumerator<IExpression> GetEnumerator() => _items.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
 		#endregion
 	}
 

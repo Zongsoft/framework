@@ -61,10 +61,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 公共属性
-		public IDataCommand Command { get => _command; }
+		public IDataCommand Command => _command;
 
 		/// <summary>获取命令参数的名称。</summary>
-		public string Name { get => _name; }
+		public string Name => _name;
 
 		/// <summary>获取或设置命令参数的别名。</summary>
 		public string Alias

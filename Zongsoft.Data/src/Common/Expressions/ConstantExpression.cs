@@ -38,10 +38,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 构造函数
-		private ConstantExpression()
-		{
-		}
-
+		private ConstantExpression() { }
 		public ConstantExpression(object value)
 		{
 			this.Value = value ?? throw new ArgumentNullException(nameof(value));
@@ -72,18 +69,8 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public object Value
-		{
-			get;
-		}
-
-		public Type ValueType
-		{
-			get
-			{
-				return this.Value == null ? typeof(object) : this.Value.GetType();
-			}
-		}
+		public object Value { get; }
+		public Type ValueType => this.Value == null ? typeof(object) : this.Value.GetType();
 		#endregion
 	}
 }

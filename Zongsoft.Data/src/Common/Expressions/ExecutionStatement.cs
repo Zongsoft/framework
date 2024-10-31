@@ -31,10 +31,9 @@ using System;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public class ExecutionStatement : StatementBase
+	public class ExecutionStatement(Metadata.IDataCommand command) : StatementBase
 	{
-		public ExecutionStatement(Metadata.IDataCommand command) => this.Command = command;
-		public Metadata.IDataCommand Command { get; }
-		public bool IsProcedure { get => this.Command.Type == Metadata.DataCommandType.Procedure; }
+		public Metadata.IDataCommand Command { get; } = command;
+		public bool IsProcedure => this.Command.Type == Metadata.DataCommandType.Procedure;
 	}
 }

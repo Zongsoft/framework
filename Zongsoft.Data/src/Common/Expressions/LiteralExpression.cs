@@ -48,10 +48,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return this.Text;
-		}
+		public override string ToString() => this.Text;
 		#endregion
 	}
 }

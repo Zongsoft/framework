@@ -59,11 +59,8 @@ namespace Zongsoft.Data.Common.Expressions
 
 		#region 公共属性
 		public TableIdentifier Table { get; protected set; }
-
-		public IDataEntity Entity { get => this.Table?.Entity; }
-
-		public virtual bool HasSlaves { get => _slaves != null && _slaves.Count > 0; }
-
+		public IDataEntity Entity => this.Table?.Entity;
+		public virtual bool HasSlaves => _slaves != null && _slaves.Count > 0;
 		public virtual ICollection<IStatementBase> Slaves
 		{
 			get
@@ -75,8 +72,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		public virtual bool HasParameters { get => _parameters != null && _parameters.Count > 0; }
-
+		public virtual bool HasParameters => _parameters != null && _parameters.Count > 0;
 		public virtual ParameterExpressionCollection Parameters
 		{
 			get
@@ -96,17 +92,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ParameterExpressionCollection CreateParameters()
-		{
-			return new ParameterExpressionCollection();
-		}
+		protected virtual ParameterExpressionCollection CreateParameters() => new();
 		#endregion
 
 		#region 公共方法
-		public ISelectStatementBase Subquery(TableIdentifier table)
-		{
-			return new SubqueryStatement(this, table);
-		}
+		public ISelectStatementBase Subquery(TableIdentifier table) => new SubqueryStatement(this, table);
 		#endregion
 
 		#region 嵌套子类

@@ -44,21 +44,9 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public StringBuilder Output
-		{
-			get;
-		}
-
-		public IExpression Expression
-		{
-			get;
-		}
-
-		public IExpression Result
-		{
-			get;
-			set;
-		}
+		public StringBuilder Output { get; }
+		public IExpression Expression { get; }
+		public IExpression Result { get; set; }
 		#endregion
 	}
 }

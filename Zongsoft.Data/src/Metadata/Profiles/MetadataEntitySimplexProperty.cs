@@ -39,16 +39,13 @@ namespace Zongsoft.Data.Metadata.Profiles
 	public class MetadataEntitySimplexProperty : MetadataEntityProperty, IDataEntitySimplexProperty
 	{
 		#region 静态变量
-		private static readonly Regex _regex = new Regex(@"(?<name>\w+)\s*\(\s*\)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+		private static readonly Regex _regex = new(@"(?<name>\w+)\s*\(\s*\)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
 		#region 成员字段
-		private bool _isPrimaryKey;
 		private int _length;
-		private byte _precision;
-		private byte _scale;
 		private string _valueText;
-		private IDataEntityPropertySequence _sequence;
+		private bool _isPrimaryKey;
 		private Func<object> _defaultThunk;
 		#endregion
 
@@ -60,17 +57,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取数据实体属性的字段类型。
-		/// </summary>
-		public System.Data.DbType Type
-		{
-			get;
-		}
+		/// <summary>获取数据实体属性的字段类型。</summary>
+		public DbType Type { get; }
 
-		/// <summary>
-		/// 获取或设置文本或数组属性的最大长度，单位：字节。
-		/// </summary>
+		/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
 		public int Length
 		{
 			get
@@ -81,12 +71,12 @@ namespace Zongsoft.Data.Metadata.Profiles
 				{
 					switch(this.Type)
 					{
-						case System.Data.DbType.Binary:
+						case DbType.Binary:
 							return 100;
-						case System.Data.DbType.AnsiString:
-						case System.Data.DbType.AnsiStringFixedLength:
-						case System.Data.DbType.String:
-						case System.Data.DbType.StringFixedLength:
+						case DbType.AnsiString:
+						case DbType.AnsiStringFixedLength:
+						case DbType.String:
+						case DbType.StringFixedLength:
 							return 100;
 					}
 				}
@@ -99,39 +89,13 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置数值属性的精度。
-		/// </summary>
-		public byte Precision
-		{
-			get
-			{
-				return _precision;
-			}
-			set
-			{
-				_precision = value;
-			}
-		}
+		/// <summary>获取或设置数值属性的精度。</summary>
+		public byte Precision { get; set; }
 
-		/// <summary>
-		/// 获取或设置数值属性的小数点位数。
-		/// </summary>
-		public byte Scale
-		{
-			get
-			{
-				return _scale;
-			}
-			set
-			{
-				_scale = value;
-			}
-		}
+		/// <summary>获取或设置数值属性的小数点位数。</summary>
+		public byte Scale { get; set; }
 
-		/// <summary>
-		/// 获取或设置属性的默认值。
-		/// </summary>
+		/// <summary>获取或设置属性的默认值。</summary>
 		public object DefaultValue
 		{
 			get
@@ -157,74 +121,29 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置属性是否允许为空。
-		/// </summary>
-		public bool Nullable
-		{
-			get; set;
-		}
+		/// <summary>获取或设置属性是否允许为空。</summary>
+		public bool Nullable { get; set; }
 
-		/// <summary>
-		/// 获取或设置属性是否可以参与排序。
-		/// </summary>
-		public bool Sortable
-		{
-			get; set;
-		}
+		/// <summary>获取或设置属性是否可以参与排序。</summary>
+		public bool Sortable { get; set; }
 
-		/// <summary>
-		/// 获取序号器元数据。
-		/// </summary>
-		public IDataEntityPropertySequence Sequence
-		{
-			get
-			{
-				return _sequence;
-			}
-		}
+		/// <summary>获取序号器元数据。</summary>
+		public IDataEntityPropertySequence Sequence { get; private set; }
 		#endregion
 
 		#region 重写属性
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为主键。
-		/// </summary>
-		public override bool IsPrimaryKey
-		{
-			get
-			{
-				return _isPrimaryKey;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为主键。</summary>
+		public override bool IsPrimaryKey => _isPrimaryKey;
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为复合类型。该重写方法始终返回假(False)。
-		/// </summary>
-		public override bool IsComplex
-		{
-			get
-			{
-				return false;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为复合类型。该重写方法始终返回假(<c>False</c>)。</summary>
+		public override bool IsComplex => false;
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为单值类型。该重写方法始终返回真(True)。
-		/// </summary>
-		public override bool IsSimplex
-		{
-			get
-			{
-				return true;
-			}
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为单值类型。该重写方法始终返回真(<c>True</c>)。</summary>
+		public override bool IsSimplex => true;
 		#endregion
 
 		#region 内部方法
-		internal void SetPrimaryKey()
-		{
-			_isPrimaryKey = true;
-		}
+		internal void SetPrimaryKey() => _isPrimaryKey = true;
 
 		internal void SetDefaultValue(string value)
 		{
@@ -238,24 +157,14 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			if(match.Success)
 			{
-				switch(match.Groups["name"].Value)
+				_defaultThunk = match.Groups["name"].Value switch
 				{
-					case "now":
-						_defaultThunk = GetNow;
-						break;
-					case "today":
-						_defaultThunk = GetToday;
-						break;
-					case "guid":
-					case "uuid":
-						_defaultThunk = GetGuid;
-						break;
-					case "random":
-						_defaultThunk = GetRandom;
-						break;
-					default:
-						throw new MetadataFileException($"Unrecognized {match.Groups["name"].Value} function.");
-				}
+					"now" => GetNow,
+					"today" => GetToday,
+					"guid" or "uuid" => GetGuid,
+					"random" => this.GetRandom,
+					_ => throw new MetadataFileException($"Unrecognized {match.Groups["name"].Value} function."),
+				};
 			}
 
 			_valueText = value;
@@ -266,7 +175,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			if(string.IsNullOrWhiteSpace(sequence))
 				return;
 
-			_sequence = DataEntityPropertySequence.Parse(this, sequence);
+			Sequence = DataEntityPropertySequence.Parse(this, sequence);
 		}
 		#endregion
 
@@ -275,86 +184,53 @@ namespace Zongsoft.Data.Metadata.Profiles
 		{
 			var nullable = this.Nullable ? "NULL" : "NOT NULL";
 
-			switch(this.Type)
+			return this.Type switch
 			{
 				//处理小数类型
-				case System.Data.DbType.Currency:
-				case System.Data.DbType.Decimal:
-				case System.Data.DbType.Double:
-				case System.Data.DbType.Single:
-					return $"{this.Name} {this.Type.ToString()}({_precision},{_scale}) [{nullable}]";
+				DbType.Currency or
+				DbType.Decimal or
+				DbType.Double or
+				DbType.Single => $"{this.Name} {this.Type}({this.Precision},{this.Scale}) [{nullable}]",
 
 				//处理字符串或数组类型
-				case System.Data.DbType.Binary:
-				case System.Data.DbType.AnsiString:
-				case System.Data.DbType.AnsiStringFixedLength:
-				case System.Data.DbType.String:
-				case System.Data.DbType.StringFixedLength:
-					return $"{this.Name} {this.Type.ToString()}({_length}) [{nullable}]";
-			}
+				DbType.Binary or
+				DbType.AnsiString or
+				DbType.AnsiStringFixedLength or
+				DbType.String or
+				DbType.StringFixedLength => $"{this.Name} {this.Type}({_length}) [{nullable}]",
 
-			return $"{this.Name} {this.Type.ToString()} [{nullable}]";
+				_ => $"{this.Name} {this.Type} [{nullable}]",
+			};
 		}
 		#endregion
 
 		#region 私有方法
-		private object GetToday()
+		private static object GetToday() => DateTime.Today;
+		private static object GetNow() => DateTime.Now;
+		private static object GetGuid() => Guid.NewGuid();
+		private object GetRandom() => this.Type switch
 		{
-			return DateTime.Today;
-		}
-
-		private object GetNow()
-		{
-			return DateTime.Now;
-		}
-
-		private object GetGuid()
-		{
-			return Guid.NewGuid();
-		}
-
-		private object GetRandom()
-		{
-			switch(this.Type)
-			{
-				case DbType.Byte:
-					return Zongsoft.Common.Randomizer.Generate(1)[0];
-				case DbType.SByte:
-					return (sbyte)Zongsoft.Common.Randomizer.Generate(1)[0];
-				case DbType.Int16:
-					return BitConverter.ToInt16(Zongsoft.Common.Randomizer.Generate(2), 0);
-				case DbType.UInt16:
-					return BitConverter.ToUInt16(Zongsoft.Common.Randomizer.Generate(2), 0);
-				case DbType.Int32:
-					return Zongsoft.Common.Randomizer.GenerateInt32();
-				case DbType.UInt32:
-					return (uint)Zongsoft.Common.Randomizer.GenerateInt32();
-				case DbType.Int64:
-					return Zongsoft.Common.Randomizer.GenerateInt64();
-				case DbType.UInt64:
-					return (ulong)Zongsoft.Common.Randomizer.GenerateInt64();
-				case DbType.Single:
-					return BitConverter.ToSingle(Zongsoft.Common.Randomizer.Generate(4), 0);
-				case DbType.Double:
-					return BitConverter.ToDouble(Zongsoft.Common.Randomizer.Generate(8), 0);
-				case DbType.Decimal:
-				case DbType.Currency:
-					return new Decimal(Zongsoft.Common.Randomizer.GenerateInt64());
-				case DbType.Date:
-				case DbType.Time:
-				case DbType.DateTime:
-				case DbType.DateTime2:
-					return new DateTime(Zongsoft.Common.Randomizer.GenerateInt64());
-				case DbType.DateTimeOffset:
-					return new DateTimeOffset(Zongsoft.Common.Randomizer.GenerateInt64(), TimeSpan.Zero);
-				case DbType.Binary:
-					return Zongsoft.Common.Randomizer.Generate(this.Length > 0 ? this.Length : 8);
-				case DbType.Guid:
-					return Guid.NewGuid();
-			}
-
-			return Zongsoft.Common.Randomizer.GenerateString();
-		}
+			DbType.Byte => Zongsoft.Common.Randomizer.Generate(1)[0],
+			DbType.SByte => (sbyte)Zongsoft.Common.Randomizer.Generate(1)[0],
+			DbType.Int16 => BitConverter.ToInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
+			DbType.UInt16 => BitConverter.ToUInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
+			DbType.Int32 => Zongsoft.Common.Randomizer.GenerateInt32(),
+			DbType.UInt32 => (uint)Zongsoft.Common.Randomizer.GenerateInt32(),
+			DbType.Int64 => Zongsoft.Common.Randomizer.GenerateInt64(),
+			DbType.UInt64 => (ulong)Zongsoft.Common.Randomizer.GenerateInt64(),
+			DbType.Single => BitConverter.ToSingle(Zongsoft.Common.Randomizer.Generate(4), 0),
+			DbType.Double => BitConverter.ToDouble(Zongsoft.Common.Randomizer.Generate(8), 0),
+			DbType.Decimal or
+			DbType.Currency => new Decimal(Zongsoft.Common.Randomizer.GenerateInt64()),
+			DbType.Date or
+			DbType.Time or
+			DbType.DateTime or
+			DbType.DateTime2 => new DateTime(Zongsoft.Common.Randomizer.GenerateInt64()),
+			DbType.DateTimeOffset => new DateTimeOffset(Zongsoft.Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
+			DbType.Binary => Zongsoft.Common.Randomizer.Generate(this.Length > 0 ? this.Length : 8),
+			DbType.Guid => Guid.NewGuid(),
+			_ => Zongsoft.Common.Randomizer.GenerateString(),
+		};
 		#endregion
 	}
 }

@@ -84,13 +84,13 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 		#region 重写属性
 		/// <summary>获取一个值，指示数据实体属性是否为主键。该重写方法始终返回假(False)。</summary>
-		public override bool IsPrimaryKey { get => false; }
+		public override bool IsPrimaryKey => false;
 
 		/// <summary>获取一个值，指示数据实体属性是否为复合类型。该重写方法始终返回真(True)。</summary>
-		public override bool IsComplex { get => true; }
+		public override bool IsComplex => true;
 
 		/// <summary>获取一个值，指示数据实体属性是否为单值类型。该重写方法始终返回假(False)。</summary>
-		public override bool IsSimplex { get => false; }
+		public override bool IsSimplex => false;
 		#endregion
 
 		#region 重写方法

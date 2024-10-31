@@ -55,21 +55,11 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取 Returning/Output 子句的输出(INTO)表定义，如果为空则表示无输出表。
-		/// </summary>
-		public TableDefinition Table
-		{
-			get;
-		}
+		/// <summary>获取 Returning/Output 子句的输出(INTO)表定义，如果为空则表示无输出表。</summary>
+		public TableDefinition Table { get; }
 
-		/// <summary>
-		/// 获取 Returning/Output 子句的成员字段集，如果为空集则表示全部字段。
-		/// </summary>
-		public ICollection<ReturningMember> Members
-		{
-			get;
-		}
+		/// <summary>获取 Returning/Output 子句的成员字段集，如果为空集则表示全部字段。</summary>
+		public ICollection<ReturningMember> Members { get; }
 		#endregion
 
 		#region 公共方法
@@ -88,16 +78,10 @@ namespace Zongsoft.Data.Common.Expressions
 			Inserted,
 		}
 
-		public struct ReturningMember
+		public struct ReturningMember(FieldIdentifier field, ReturningMode mode)
 		{
-			public FieldIdentifier Field;
-			public ReturningMode Mode;
-
-			public ReturningMember(FieldIdentifier field, ReturningMode mode)
-			{
-				this.Field = field;
-				this.Mode = mode;
-			}
+			public FieldIdentifier Field = field;
+			public ReturningMode Mode = mode;
 		}
 		#endregion
 	}

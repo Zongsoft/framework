@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Common.Expressions
 {
-	public struct RangeExpression : IExpression
+	public readonly struct RangeExpression : IExpression
 	{
 		#region 公共字段
 		public readonly IExpression Minimum;

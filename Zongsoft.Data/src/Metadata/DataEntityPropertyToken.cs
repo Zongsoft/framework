@@ -38,22 +38,16 @@ namespace Zongsoft.Data.Metadata
 	/// <summary>
 	/// 表示实体属性及成员信息的标记类。
 	/// </summary>
-	public struct DataEntityPropertyToken
+	public readonly struct DataEntityPropertyToken
 	{
 		#region 公共字段
-		/// <summary>
-		/// 获取属性的元数据。
-		/// </summary>
+		/// <summary>获取属性的元数据。</summary>
 		public readonly IDataEntityProperty Property;
 
-		/// <summary>
-		/// 获取属性的绑定到目标类型的成员信息，如果该字段为空(null)则表示绑定的目标类型为字典。
-		/// </summary>
+		/// <summary>获取属性的绑定到目标类型的成员信息，如果该字段为空(null)则表示绑定的目标类型为字典。</summary>
 		public readonly MemberInfo Member;
 
-		/// <summary>
-		/// 获取目标成员的类型转换器。
-		/// </summary>
+		/// <summary>获取目标成员的类型转换器。</summary>
 		public readonly TypeConverter Converter;
 		#endregion
 
@@ -67,15 +61,7 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共属性
-		public bool IsMultiple
-		{
-			get
-			{
-				return this.Property.IsComplex &&
-				       ((IDataEntityComplexProperty)this.Property).Multiplicity == DataAssociationMultiplicity.Many;
-			}
-		}
-
+		public bool IsMultiple => this.Property.IsComplex && ((IDataEntityComplexProperty)this.Property).Multiplicity == DataAssociationMultiplicity.Many;
 		public Type MemberType
 		{
 			get
@@ -83,17 +69,13 @@ namespace Zongsoft.Data.Metadata
 				if(this.Member == null)
 					return null;
 
-				switch(this.Member.MemberType)
+				return this.Member.MemberType switch
 				{
-					case MemberTypes.Field:
-						return ((FieldInfo)this.Member).FieldType;
-					case MemberTypes.Property:
-						return ((PropertyInfo)this.Member).PropertyType;
-					case MemberTypes.Method:
-						return ((MethodInfo)this.Member).ReturnType;
-				}
-
-				return null;
+					MemberTypes.Field => ((FieldInfo)this.Member).FieldType,
+					MemberTypes.Property => ((PropertyInfo)this.Member).PropertyType,
+					MemberTypes.Method => ((MethodInfo)this.Member).ReturnType,
+					_ => null,
+				};
 			}
 		}
 		#endregion
@@ -177,7 +159,7 @@ namespace Zongsoft.Data.Metadata
 		{
 			var converter = this.Converter;
 
-			if(conversionType == null || converter == null)
+			if(converter == null || conversionType == null)
 				return value;
 
 			return Zongsoft.Common.Convert.ConvertValue(value, conversionType, () => converter);

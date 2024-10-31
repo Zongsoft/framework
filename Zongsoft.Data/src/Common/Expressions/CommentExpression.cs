@@ -45,13 +45,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Text))
-				return string.Empty;
-
-			return "/* " + this.Text + " */";
-		}
+		public override string ToString() => string.IsNullOrEmpty(this.Text) ? string.Empty : $"/* {this.Text} */";
 		#endregion
 	}
 }

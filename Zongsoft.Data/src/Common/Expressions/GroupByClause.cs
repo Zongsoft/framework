@@ -39,15 +39,7 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Keys = new List<FieldIdentifier>();
 		}
 
-		public ICollection<FieldIdentifier> Keys
-		{
-			get;
-		}
-
-		public IExpression Having
-		{
-			get;
-			set;
-		}
+		public ICollection<FieldIdentifier> Keys { get; }
+		public IExpression Having { get; set; }
 	}
 }

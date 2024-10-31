@@ -42,10 +42,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		public ICollection<OrderByMember> Members
-		{
-			get;
-		}
+		public ICollection<OrderByMember> Members { get; }
 		#endregion
 
 		#region 公共方法
@@ -58,16 +55,10 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 嵌套结构
-		public struct OrderByMember
+		public struct OrderByMember(FieldIdentifier field, SortingMode mode = SortingMode.Ascending)
 		{
-			public OrderByMember(FieldIdentifier field, SortingMode mode = SortingMode.Ascending)
-			{
-				this.Field = field;
-				this.Mode = mode;
-			}
-
-			public FieldIdentifier Field;
-			public SortingMode Mode;
+			public FieldIdentifier Field = field;
+			public SortingMode Mode = mode;
 		}
 		#endregion
 	}

@@ -52,39 +52,27 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取关联子句的标识名。
-		/// </summary>
+		/// <summary>获取关联子句的标识名。</summary>
 		/// <remarks>
 		///		<para>在概念层生成中通过该属性来表示导航属性的名称。</para>
 		/// </remarks>
 		public string Name { get; }
 
-		/// <summary>
-		/// 获取关联子句的别名，即关联的目标表（源）的别名。
-		/// </summary>
+		/// <summary>获取关联子句的别名，即关联的目标表（源）的别名。</summary>
 		public string Alias { get => this.Target.Alias; }
 
-		/// <summary>
-		/// 获取关联的目标表（源）。
-		/// </summary>
+		/// <summary>获取关联的目标表（源）。</summary>
 		public ISource Target { get; }
 
-		/// <summary>
-		/// 获取关联的种类。
-		/// </summary>
+		/// <summary>获取关联的种类。</summary>
 		public JoinType Type { get; }
 
-		/// <summary>
-		/// 获取关联的连接条件集。
-		/// </summary>
+		/// <summary>获取关联的连接条件集。</summary>
 		public ConditionExpression Conditions { get; }
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 创建一个关联当前关联子句的字段标识。
-		/// </summary>
+		/// <summary>创建一个关联当前关联子句的字段标识。</summary>
 		/// <param name="name">指定的字段名称。</param>
 		/// <param name="alias">指定的字段别名。</param>
 		/// <returns>返回创建成功的字段标识。</returns>
@@ -114,27 +102,20 @@ namespace Zongsoft.Data.Common.Expressions
 			var alias = this.Alias;
 
 			if(string.IsNullOrEmpty(alias))
-				return this.Name + "@" + this.Type.ToString();
+				return $"{this.Name}@{this.Type}";
 			else
-				return this.Name + "(" + alias + ")@" + this.Type.ToString();
+				return $"{this.Name}({alias})@{this.Type}";
 		}
 		#endregion
 
 		#region 静态方法
-		/// <summary>
-		/// 获取指定继承表的关联子句名称。
-		/// </summary>
+		/// <summary>获取指定继承表的关联子句名称。</summary>
 		/// <param name="entity">指定要关联的继承表实体（父实体）。</param>
 		/// <param name="fullPath">指定的继承表所对应成员完整路径。</param>
 		/// <returns>返回关联子句的名称。</returns>
-		internal static string GetName(IDataEntity entity, string fullPath)
-		{
-			return fullPath + INHERIT_SYMBOL + entity.Name;
-		}
+		internal static string GetName(IDataEntity entity, string fullPath) => $"{fullPath}{INHERIT_SYMBOL}{entity.Name}";
 
-		/// <summary>
-		/// 获取指定导航属性的关联子句名称。
-		/// </summary>
+		/// <summary>获取指定导航属性的关联子句名称。</summary>
 		/// <param name="complex">指定要关联的导航属性。</param>
 		/// <param name="fullPath">指定的导航属性对应的成员完整路径。</param>
 		/// <returns>返回关联子句的名称。</returns>
@@ -143,9 +124,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return string.IsNullOrEmpty(fullPath) ? complex.Name : fullPath;
 		}
 
-		/// <summary>
-		/// 创建指定表与它父类（如果有的话）的继承关联子句。
-		/// </summary>
+		/// <summary>创建指定表与它父类（如果有的话）的继承关联子句。</summary>
 		/// <param name="table">指定要创建的关联子句的子表标识。</param>
 		/// <param name="fullPath">指定的 <paramref name="table"/> 参数对应的成员完整路径。</param>
 		/// <param name="targetFinder">关联目标的查找器函数。</param>
@@ -191,9 +170,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return joining;
 		}
 
-		/// <summary>
-		/// 创建指定源与实体的继承关联子句。
-		/// </summary>
+		/// <summary>创建指定源与实体的继承关联子句。</summary>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="target">指定要创建关联子句的目标实体。</param>
 		/// <param name="fullPath">指定的 <paramref name="target"/> 参数对应的目标实体关联的成员的完整路径。</param>
@@ -228,9 +205,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return joining;
 		}
 
-		/// <summary>
-		/// 创建导航属性的关联子句。
-		/// </summary>
+		/// <summary>创建导航属性的关联子句。</summary>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="complex">指定要创建关联子句对应的导航属性。</param>
 		/// <param name="fullPath">指定的 <paramref name="complex"/> 参数对应的成员完整路径。</param>
@@ -315,9 +290,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		/// <summary>
-		/// 创建导航属性的关联子句。
-		/// </summary>
+		/// <summary>创建导航属性的关联子句。</summary>
 		/// <param name="source">指定要创建关联子句的源。</param>
 		/// <param name="schema">指定要创建关联子句对应的数据模式成员。</param>
 		/// <param name="targetFinder">待创建关联子句是否存在的判断函数。</param>
@@ -336,22 +309,13 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 私有方法
-		private static TableIdentifier GetTable(ISource source)
+		private static TableIdentifier GetTable(ISource source) => source switch
 		{
-			if(source == null)
-				return null;
-
-			if(source is TableIdentifier)
-				return (TableIdentifier)source;
-
-			if(source is JoinClause join)
-				return GetTable(join.Target);
-
-			if(source is SelectStatement statement)
-				return GetTable(statement.From.FirstOrDefault());
-
-			return null;
-		}
+			TableIdentifier identifier => identifier,
+			JoinClause join => GetTable(join.Target),
+			SelectStatement select => GetTable(select.From.FirstOrDefault()),
+			_ => null,
+		};
 		#endregion
 	}
 }

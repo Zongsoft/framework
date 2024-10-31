@@ -59,52 +59,25 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取字段标识所属的源（表标识、关联子句）。
-		/// </summary>
+		/// <summary>获取字段标识所属的源（表标识、关联子句）。</summary>
 		public ISource Table { get; }
 
-		/// <summary>
-		/// 获取字段名称。
-		/// </summary>
+		/// <summary>获取字段名称。</summary>
 		public string Name { get; }
 
-		/// <summary>
-		/// 获取或设置字段标识的别名。
-		/// </summary>
+		/// <summary>获取或设置字段标识的别名。</summary>
 		public string Alias { get; set; }
 
-		/// <summary>
-		/// 获取或设置字段标识对应的实体属性标记。
-		/// </summary>
+		/// <summary>获取或设置字段标识对应的实体属性标记。</summary>
 		public Metadata.DataEntityPropertyToken Token { get; set; }
 		#endregion
 
 		#region 公共方法
-		public BinaryExpression Add(IExpression value)
-		{
-			return Expression.Add(this, value);
-		}
-
-		public BinaryExpression Subtract(IExpression value)
-		{
-			return Expression.Subtract(this, value);
-		}
-
-		public BinaryExpression Multiply(IExpression value)
-		{
-			return Expression.Multiply(this, value);
-		}
-
-		public BinaryExpression Divide(IExpression value)
-		{
-			return Expression.Divide(this, value);
-		}
-
-		public BinaryExpression Modulo(IExpression value)
-		{
-			return Expression.Modulo(this, value);
-		}
+		public BinaryExpression Add(IExpression value) => Expression.Add(this, value);
+		public BinaryExpression Subtract(IExpression value) => Expression.Subtract(this, value);
+		public BinaryExpression Multiply(IExpression value) => Expression.Multiply(this, value);
+		public BinaryExpression Divide(IExpression value) => Expression.Divide(this, value);
+		public BinaryExpression Modulo(IExpression value) => Expression.Modulo(this, value);
 		#endregion
 
 		#region 重写方法
@@ -131,9 +104,9 @@ namespace Zongsoft.Data.Common.Expressions
 			var alias = this.Alias;
 
 			if(string.IsNullOrEmpty(alias))
-				return this.Table.GetHashCode() ^ this.Name.ToUpperInvariant().GetHashCode();
+				return HashCode.Combine(this.Table, this.Name.ToUpperInvariant());
 			else
-				return this.Table.GetHashCode() ^ this.Name.ToUpperInvariant().GetHashCode() ^ alias.ToUpperInvariant().GetHashCode();
+				return HashCode.Combine(this.Table, this.Name.ToUpperInvariant(), alias.ToUpperInvariant());
 		}
 
 		public bool Equals(FieldIdentifier other)
@@ -146,13 +119,7 @@ namespace Zongsoft.Data.Common.Expressions
 			       string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
 		}
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return base.Equals((FieldIdentifier)obj);
-		}
+		public override bool Equals(object obj) => obj is FieldIdentifier other && this.Equals(other);
 		#endregion
 	}
 }
