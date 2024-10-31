@@ -104,7 +104,7 @@ namespace Zongsoft.Collections
 			return false;
 		}
 
-		public static async IAsyncEnumerable<object> Cast<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		public static async IAsyncEnumerable<object> Cast<T>(this IAsyncEnumerable<T> source, [EnumeratorCancellation] CancellationToken cancellation = default)
 		{
 			if(source == null)
 				yield break;
@@ -114,7 +114,7 @@ namespace Zongsoft.Collections
 				yield return iterator.Current;
 		}
 
-		public static async IAsyncEnumerable<TDestination> Cast<TSource, TDestination>(this IAsyncEnumerable<TSource> source, [EnumeratorCancellation]CancellationToken cancellation = default)
+		public static async IAsyncEnumerable<TDestination> Cast<TSource, TDestination>(this IAsyncEnumerable<TSource> source, [EnumeratorCancellation] CancellationToken cancellation = default)
 		{
 			if(source == null)
 				yield break;
@@ -123,7 +123,7 @@ namespace Zongsoft.Collections
 			while(await iterator.MoveNextAsync())
 			{
 				if(iterator.Current is TDestination destination)
-				yield return destination;
+					yield return destination;
 			}
 		}
 
@@ -165,7 +165,7 @@ namespace Zongsoft.Collections
 			else
 				return (IEnumerable)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(elementType), [source]);
 		}
-#endregion
+		#endregion
 
 		#region 嵌套子类
 		private class EmptyEnumerable<T> : IEnumerable<T>
