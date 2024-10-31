@@ -235,6 +235,12 @@
 			</xs:annotation>
 		</xs:attribute>
 
+		<xs:attribute name="hint" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">驱动提示，具体语法和含义由所属数据驱动定义。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
 		<xs:attribute name="field" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">字段名，如果未指定则与属性名相同。</xs:documentation>
@@ -360,6 +366,12 @@
 		<xs:attribute name="port" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">复合属性(导航属性)的目标。目标通常为实体名，但也可以是实体的复合属性（实体名与复合属性名以冒号间隔）。</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
+		<xs:attribute name="hint" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation xml:lang="zh">驱动提示，具体语法和含义由所属数据驱动定义。</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 

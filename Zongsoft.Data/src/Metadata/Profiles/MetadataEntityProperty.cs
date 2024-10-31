@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -50,91 +50,42 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取所属的数据实体。
-		/// </summary>
-		public IDataEntity Entity
-		{
-			get; internal set;
-		}
+		/// <summary>获取所属的数据实体。</summary>
+		public IDataEntity Entity { get; internal set; }
 
-		/// <summary>
-		/// 获取数据实体属性的名称。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取数据实体属性的名称。</summary>
+		public string Name { get; }
 
-		/// <summary>
-		/// 获取数据实体属性的别名。
-		/// </summary>
-		public string Alias
-		{
-			get; set;
-		}
+		/// <summary>获取数据实体属性的别名。</summary>
+		public string Alias { get; set; }
+
+		/// <summary>获取或设置实体属性的提示。</summary>
+		public string Hint { get; set; }
 
 		/// <summary>
 		/// 获取或设置数据实体属性是否为不可变属性。
 		/// 注：简单属性默认为假(False)，复合属性默认为真(True)。
 		/// </summary>
-		public bool Immutable
-		{
-			get; set;
-		}
+		public bool Immutable { get; set; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为主键。
-		/// </summary>
-		public abstract bool IsPrimaryKey
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为主键。</summary>
+		public abstract bool IsPrimaryKey { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为单值类型。
-		/// </summary>
-		public abstract bool IsSimplex
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为单值类型。</summary>
+		public abstract bool IsSimplex { get; }
 
-		/// <summary>
-		/// 获取一个值，指示数据实体属性是否为复合类型。
-		/// </summary>
-		public abstract bool IsComplex
-		{
-			get;
-		}
+		/// <summary>获取一个值，指示数据实体属性是否为复合类型。</summary>
+		public abstract bool IsComplex { get; }
 		#endregion
 
 		#region 重写方法
-		public virtual bool Equals(IDataEntityProperty other)
-		{
-			return object.Equals(this.Entity, other.Entity) &&
-			       string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-		}
+		public virtual bool Equals(IDataEntityProperty other) =>
+			object.Equals(this.Entity, other.Entity) &&
+			string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((IDataEntityProperty)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return this.Entity.GetHashCode() ^ this.Name.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			if(this.Entity == null)
-				return $"{this.Name}";
-			else
-				return $"{this.Name}@{this.Entity.Name}";
-		}
+		public override bool Equals(object obj) => obj is IDataEntityProperty other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Entity, this.Name.ToUpperInvariant());
+		public override string ToString() => this.Entity == null ? $"{this.Name}" : $"{this.Name}@{this.Entity.Name}";
 		#endregion
 	}
 }

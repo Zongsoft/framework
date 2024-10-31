@@ -59,6 +59,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 		private const string XML_NAME_ATTRIBUTE = "name";
 		private const string XML_TYPE_ATTRIBUTE = "type";
+		private const string XML_HINT_ATTRIBUTE = "hint";
 		private const string XML_ROLE_ATTRIBUTE = "role";
 		private const string XML_ALIAS_ATTRIBUTE = "alias";
 		private const string XML_FIELD_ATTRIBUTE = "field";
@@ -130,11 +131,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		public MetadataFile Resolve(XmlReader reader, string name)
-		{
-			return this.Resolve(reader, null, name);
-		}
-
+		public MetadataFile Resolve(XmlReader reader, string name) => this.Resolve(reader, null, name);
 		public MetadataFile Resolve(XmlReader reader, string filePath, string name)
 		{
 			if(reader == null)
@@ -258,6 +255,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 										   GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
 										   GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
+							Hint = GetAttributeValue<string>(reader, XML_HINT_ATTRIBUTE),
 							Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE) ?? GetAttributeValue<string>(reader, XML_FIELD_ATTRIBUTE),
 							Length = GetAttributeValue<int>(reader, XML_LENGTH_ATTRIBUTE),
 							Precision = GetAttributeValue<byte>(reader, XML_PRECISION_ATTRIBUTE),
@@ -282,6 +280,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 							reader.GetAttribute(XML_PORT_ATTRIBUTE),
 							GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 						{
+							Hint = GetAttributeValue<string>(reader, XML_HINT_ATTRIBUTE),
 							Behaviors = GetAttributeValue(reader, XML_BEHAVIORS_ATTRIBUTE, DataEntityComplexPropertyBehaviors.None),
 						};
 
@@ -289,22 +288,13 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 						if(multiplicity != null && multiplicity.Length > 0)
 						{
-							switch(multiplicity)
+							complexProperty.Multiplicity = multiplicity switch
 							{
-								case "*":
-									complexProperty.Multiplicity = DataAssociationMultiplicity.Many;
-									break;
-								case "1":
-								case "!":
-									complexProperty.Multiplicity = DataAssociationMultiplicity.One;
-									break;
-								case "?":
-								case "0..1":
-									complexProperty.Multiplicity = DataAssociationMultiplicity.ZeroOrOne;
-									break;
-								default:
-									throw new DataException($"Invalid '{multiplicity}' value of the multiplicity attribute.");
-							}
+								"*" => DataAssociationMultiplicity.Many,
+								"1" or "!" => DataAssociationMultiplicity.One,
+								"?" or "0..1" => DataAssociationMultiplicity.ZeroOrOne,
+								_ => throw new DataException($"Invalid '{multiplicity}' value of the multiplicity attribute."),
+							};
 						}
 
 						var links = new List<DataAssociationLink>();
@@ -316,10 +306,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 							if(reader.LocalName == XML_LINK_ELEMENT)
 							{
-								links.Add(
-									new DataAssociationLink(complexProperty,
+								links.Add(new DataAssociationLink(complexProperty,
 										GetAttributeValue<string>(reader, XML_PORT_ATTRIBUTE),
-										GetAttributeValue<string>(reader, XML_ANCHOR_ATTRIBUTE)));
+										GetAttributeValue<string>(reader, XML_ANCHOR_ATTRIBUTE)
+								));
 							}
 							else if(reader.LocalName == XML_CONSTRAINTS_ELEMENT)
 							{
@@ -517,10 +507,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetFullName(string name, string @namespace)
 		{
-			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(name) || name.Contains("."))
+			if(string.IsNullOrEmpty(@namespace) || string.IsNullOrEmpty(name) || name.Contains('.'))
 				return name;
 
-			return @namespace + "." + name;
+			return $"{@namespace}.{name}";
 		}
 
 		private static T GetAttributeValue<T>(XmlReader reader, string name, T defaultValue = default)
@@ -538,10 +528,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 				if(typeof(T) == typeof(string))
 					return (T)attributeValue;
 
-				T result;
-
 				//为指定名称的特性值做类型转换，如果转换失败则抛出异常
-				if(!Zongsoft.Common.Convert.TryConvertValue<T>(attributeValue, out result))
+				if(!Zongsoft.Common.Convert.TryConvertValue<T>(attributeValue, out var result))
 					throw new MetadataFileException(string.Format("Invalid value '{0}' of '{1}' attribute in '{2}' element.", attributeValue, name, elementName));
 
 				return result;
@@ -594,7 +582,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			}
 		}
 
-		private static XmlNameTable CreateXmlNameTable()
+		private static NameTable CreateXmlNameTable()
 		{
 			var nameTable = new NameTable();
 
@@ -614,6 +602,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 			nameTable.Add(XML_NAME_ATTRIBUTE);
 			nameTable.Add(XML_TYPE_ATTRIBUTE);
+			nameTable.Add(XML_HINT_ATTRIBUTE);
 			nameTable.Add(XML_ROLE_ATTRIBUTE);
 			nameTable.Add(XML_ALIAS_ATTRIBUTE);
 			nameTable.Add(XML_FIELD_ATTRIBUTE);
