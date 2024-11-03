@@ -42,24 +42,24 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 构造函数
-		protected StatementBase()
-		{
-		}
-
+		protected StatementBase() => this.Slots = new StatementSlotCollection();
 		protected StatementBase(TableIdentifier table)
 		{
 			this.Table = table ?? throw new ArgumentNullException(nameof(table));
+			this.Slots = new StatementSlotCollection();
 		}
 
 		protected StatementBase(IDataEntity entity, string alias = null)
 		{
 			this.Table = new TableIdentifier(entity, alias);
+			this.Slots = new StatementSlotCollection();
 		}
 		#endregion
 
 		#region 公共属性
 		public TableIdentifier Table { get; protected set; }
 		public IDataEntity Entity => this.Table?.Entity;
+		public StatementSlotCollection Slots { get; }
 		public virtual bool HasSlaves => _slaves != null && _slaves.Count > 0;
 		public virtual ICollection<IStatementBase> Slaves
 		{

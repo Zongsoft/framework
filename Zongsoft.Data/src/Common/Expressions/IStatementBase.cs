@@ -41,6 +41,9 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <summary>获取语句对应的主表。</summary>
 		TableIdentifier Table { get; }
 
+		/// <summary>获取当前语句的插槽集。</summary>
+		StatementSlotCollection Slots { get; }
+
 		/// <summary>获取一个值，指示当前语句是否有依附于自己的从属语句。</summary>
 		bool HasSlaves { get; }
 

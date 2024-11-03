@@ -41,11 +41,7 @@ namespace Zongsoft.Data.Common.Expressions
 	public class Statement : StatementBase, IStatement
 	{
 		#region 构造函数
-		protected Statement()
-		{
-			this.From = new SourceCollection();
-		}
-
+		protected Statement() => this.From = new SourceCollection();
 		protected Statement(ISource source)
 		{
 			this.Table = source as TableIdentifier;

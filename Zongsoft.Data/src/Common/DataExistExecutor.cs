@@ -51,6 +51,10 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
+
 			//执行命令
 			var result = command.ExecuteScalar();
 
@@ -76,6 +80,10 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//执行命令
 			var result = await command.ExecuteScalarAsync(cancellation);

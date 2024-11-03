@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -40,6 +40,8 @@ namespace Zongsoft.Data.Common
 		{
 			//创建表达式访问器
 			this.Visitor = this.CreateVisitor();
+			//创建语句插槽管理器
+			this.Slotter = this.CreateSlotter();
 
 			//创建功能特性集合
 			this.Features = new FeatureCollection();
@@ -49,6 +51,7 @@ namespace Zongsoft.Data.Common
 		#region 公共属性
 		public abstract string Name { get; }
 		public FeatureCollection Features { get; }
+		public Expressions.StatementSlotter Slotter { get; }
 		public Expressions.ExpressionVisitorBase Visitor { get; }
 		public abstract Expressions.IStatementBuilder Builder { get; }
 		#endregion
@@ -96,11 +99,8 @@ namespace Zongsoft.Data.Common
 
 		#region 保护方法
 		protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
-
-		protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression)
-		{
-			parameter.DbType = expression.DbType;
-		}
+		protected virtual Expressions.StatementSlotter CreateSlotter() => new();
+		protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.DbType;
 		#endregion
 	}
 }

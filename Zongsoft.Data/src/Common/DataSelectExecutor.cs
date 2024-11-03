@@ -63,6 +63,10 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
+
 			//如果启用了分页，则先获取分页信息
 			if(context.Paging != null && context.Paging.Enabled)
 			{
@@ -81,6 +85,10 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
@@ -111,6 +119,10 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
@@ -159,6 +171,10 @@ namespace Zongsoft.Data.Common
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
 
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
+
 			//如果启用了分页，则先获取分页信息
 			if(context.Paging != null && context.Paging.Enabled)
 			{
@@ -177,6 +193,10 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
@@ -207,6 +227,10 @@ namespace Zongsoft.Data.Common
 		{
 			//根据生成的脚本创建对应的数据命令
 			var command = context.Session.Build(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);

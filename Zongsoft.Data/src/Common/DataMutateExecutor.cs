@@ -319,6 +319,10 @@ namespace Zongsoft.Data.Common
 			//调用写入操作开始方法
 			this.OnMutating(context, statement);
 
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
+
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
 
@@ -355,6 +359,10 @@ namespace Zongsoft.Data.Common
 
 			//调用写入操作开始方法
 			this.OnMutating(context, statement);
+
+			//处理语句的插槽替换运算
+			if(context.Source.Driver is DataDriverBase driver)
+				driver.Slotter?.Evaluate(context, statement, command);
 
 			//绑定命令参数
 			statement.Bind(context, command, context.Data);
