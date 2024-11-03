@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
 using Zongsoft.Data.Metadata;
 
