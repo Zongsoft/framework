@@ -7,6 +7,7 @@ internal abstract class DataEntityProperty : IDataEntityProperty
 {
 	public IDataEntity Entity { get; internal set; }
 	public string Name { get; set; }
+	public string Hint { get; set; }
 	public bool Immutable { get; set; }
 	public bool IsPrimaryKey { get; set; }
 	public abstract bool IsSimplex { get; }
