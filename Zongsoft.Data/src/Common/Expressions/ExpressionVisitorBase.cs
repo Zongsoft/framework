@@ -158,7 +158,7 @@ namespace Zongsoft.Data.Common.Expressions
 			context.Write(this.GetIdentifier(table));
 
 			if(!string.IsNullOrEmpty(table.Alias) && !string.Equals(table.Name, table.Alias))
-				context.Write(" AS " + table.Alias);
+				context.Write($" AS {table.Alias}");
 		}
 
 		protected virtual void VisitField(ExpressionVisitorContext context, FieldIdentifier field)
@@ -190,14 +190,14 @@ namespace Zongsoft.Data.Common.Expressions
 		protected virtual void VisitVariable(ExpressionVisitorContext context, VariableIdentifier variable)
 		{
 			if(variable.IsGlobal)
-				context.Write("@@" + variable.Name);
+				context.Write($"@@{variable.Name}");
 			else
-				context.Write("@" + variable.Name);
+				context.Write($"@{variable.Name}");
 		}
 
 		protected virtual void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
 		{
-			context.Write("@" + parameter.Name);
+			context.Write($"@{parameter.Name}");
 		}
 
 		protected virtual void VisitLiteral(ExpressionVisitorContext context, LiteralExpression literal)

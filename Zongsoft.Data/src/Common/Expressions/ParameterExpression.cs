@@ -68,10 +68,7 @@ namespace Zongsoft.Data.Common.Expressions
 			this.DbType = type;
 		}
 
-		public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value)
-		{
-		}
-
+		public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value) { }
 		public ParameterExpression(FieldIdentifier field, SchemaMember schema)
 		{
 			this.Name = Anonymous;

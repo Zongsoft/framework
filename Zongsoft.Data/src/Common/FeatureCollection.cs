@@ -36,7 +36,7 @@ namespace Zongsoft.Data.Common
 	public class FeatureCollection : ICollection<Feature>
 	{
 		#region 静态常量
-		private static readonly Version ZERO_VERSION = new Version();
+		private static readonly Version ZERO_VERSION = new();
 		#endregion
 
 		#region 成员字段
@@ -58,13 +58,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _features.Count;
-			}
-		}
+		public int Count => _features.Count;
 		#endregion
 
 		#region 公共方法
@@ -126,27 +120,9 @@ namespace Zongsoft.Data.Common
 			}
 		}
 
-		public void Clear()
-		{
-			_features.Clear();
-		}
-
-		public bool Remove(Feature feature)
-		{
-			if(feature == null)
-				return false;
-
-			return this.Remove(feature.Name, feature.Version);
-		}
-
-		public bool Remove(string name)
-		{
-			if(string.IsNullOrEmpty(name))
-				return false;
-
-			return _features.Remove(name);
-		}
-
+		public void Clear() => _features.Clear();
+		public bool Remove(Feature feature) => feature != null && this.Remove(feature.Name, feature.Version);
+		public bool Remove(string name) => name != null && _features.Remove(name);
 		public bool Remove(string name, Version version)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -180,14 +156,7 @@ namespace Zongsoft.Data.Common
 			return false;
 		}
 
-		public bool Support(Feature feature)
-		{
-			if(feature == null)
-				return false;
-
-			return this.Support(feature.Name, feature.Version);
-		}
-
+		public bool Support(Feature feature) => feature != null && this.Support(feature.Name, feature.Version);
 		public bool Support(string name, Version version = null)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -226,14 +195,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 显式实现
-		bool ICollection<Feature>.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
+		bool ICollection<Feature>.IsReadOnly => false;
 		bool ICollection<Feature>.Contains(Feature feature)
 		{
 			if(feature == null)
@@ -271,6 +233,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<Feature> GetEnumerator()
 		{
 			foreach(var feature in _features)
@@ -280,11 +243,6 @@ namespace Zongsoft.Data.Common
 					yield return new Feature(feature.Key, version);
 				}
 			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 		#endregion
 	}
