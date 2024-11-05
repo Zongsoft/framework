@@ -51,6 +51,7 @@ namespace Zongsoft.Data.Common
 
 		#region 私有变量
 		private readonly bool ShareConnectionSupported;
+		private readonly bool TransactionSupported;
 		#endregion
 
 		#region 私有变量
@@ -80,6 +81,7 @@ namespace Zongsoft.Data.Common
 			if(_ambient != null)
 				_ambient.Enlist(new Enlistment(this));
 
+			this.TransactionSupported = !source.Features.Support(Feature.TransactionSuppressed);
 			this.ShareConnectionSupported = source.Features.Support(Feature.MultipleActiveResultSets);
 		}
 		#endregion
@@ -303,16 +305,20 @@ namespace Zongsoft.Data.Common
 				//设置当前命令的连接为当前会话的主连接
 				command.Connection = _connection;
 
-				//如果当前事务已启动则更新命令否则将命令加入到待绑定集合中
-				if(_transaction == null)
+				//如果驱动支持事务则进行相关事务处理
+				if(TransactionSupported)
 				{
-					if(_connection.State == ConnectionState.Open)
-						_transaction = _connection.BeginTransaction();
-					else
-						_commands.Add(command); //将命令加入到绑定事务的命令集，等待事务绑定
-				}
+					//如果当前事务已启动则更新命令否则将命令加入到待绑定集合中
+					if(_transaction == null)
+					{
+						if(_connection.State == ConnectionState.Open)
+							_transaction = _connection.BeginTransaction();
+						else
+							_commands.Add(command); //将命令加入到绑定事务的命令集，等待事务绑定
+					}
 
-				command.Transaction = _transaction;
+					command.Transaction = _transaction;
+				}
 			}
 			finally
 			{
@@ -442,12 +448,16 @@ namespace Zongsoft.Data.Common
 			switch(e.CurrentState)
 			{
 				case ConnectionState.Open:
-					_transaction = connection.BeginTransaction(GetIsolationLevel());
-
-					//依次设置待绑定命令的事务
-					while(_commands.TryTake(out var command))
+					//只有驱动支持事务才能发起事务操作
+					if(TransactionSupported)
 					{
-						command.Transaction = _transaction;
+						_transaction = connection.BeginTransaction(GetIsolationLevel());
+
+						//依次设置待绑定命令的事务
+						while(_commands.TryTake(out var command))
+						{
+							command.Transaction = _transaction;
+						}
 					}
 
 					break;

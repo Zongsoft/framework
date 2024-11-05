@@ -36,7 +36,10 @@ namespace Zongsoft.Data.Common
 		#region 单例字段
 		/// <summary>表示多活动结果集(MARS)的特性（注：目前仅 Microsoft SQL Server 2005 及其以上版本支持）。</summary>
 		/// <remarks>更多信息请参考微软文档：<see ref="https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/sql/multiple-active-result-sets-mars" />。</remarks>
-		public static readonly Feature MultipleActiveResultSets = new Feature(nameof(MultipleActiveResultSets));
+		public static readonly Feature MultipleActiveResultSets = new(nameof(MultipleActiveResultSets));
+
+		/// <summary>表示不支持数据事务功能。</summary>
+		public static readonly Feature TransactionSuppressed = new(nameof(TransactionSuppressed));
 		#endregion
 
 		#region 成员字段
@@ -66,27 +69,11 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取功能特性的名称。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取功能特性的名称。</summary>
+		public string Name => _name;
 
-		/// <summary>
-		/// 获取功能特性的版本号。
-		/// </summary>
-		public Version Version
-		{
-			get
-			{
-				return _version;
-			}
-		}
+		/// <summary>获取功能特性的版本号。</summary>
+		public Version Version => _version;
 		#endregion
 
 		#region 重写方法
@@ -104,38 +91,10 @@ namespace Zongsoft.Data.Common
 				return _version.CompareTo(other._version);
 		}
 
-		public bool Equals(Feature other)
-		{
-			if(other == null)
-				return false;
-
-			return other._name == _name &&
-			       other._version == _version;
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return base.Equals(obj);
-		}
-
-		public override int GetHashCode()
-		{
-			if(_version == null)
-				return _name.GetHashCode();
-			else
-				return _name.GetHashCode() ^ _version.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			if(_version == null)
-				return _name;
-			else
-				return _name + " (" + _version.ToString() + ")";
-		}
+		public bool Equals(Feature other) => other is not null && string.Equals(_name, other._name) && _version == other._version;
+		public override bool Equals(object obj) => obj is Feature other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(_name, _version);
+		public override string ToString() => _version == null ? _name : $"{_name}@{_version}";
 		#endregion
 
 		#region 嵌套子类
@@ -149,15 +108,11 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 公共字段
-			/// <summary>
-			/// 表示删除语句中“多表删除”的功能特性。
-			/// </summary>
-			public static readonly Feature Multitable = new Feature(FEATURE_DELETE_PREFIX + nameof(Multitable));
+			/// <summary>表示删除语句中“多表删除”的功能特性。</summary>
+			public static readonly Feature Multitable = new(FEATURE_DELETE_PREFIX + nameof(Multitable));
 
-			/// <summary>
-			/// 表示删除语句中“输出子句”的功能特性。
-			/// </summary>
-			public static readonly Feature Outputting = new Feature(FEATURE_DELETE_PREFIX + nameof(Outputting));
+			/// <summary>表示删除语句中“输出子句”的功能特性。</summary>
+			public static readonly Feature Outputting = new(FEATURE_DELETE_PREFIX + nameof(Outputting));
 			#endregion
 		}
 
@@ -171,15 +126,11 @@ namespace Zongsoft.Data.Common
 			#endregion
 
 			#region 公共字段
-			/// <summary>
-			/// 表示更新语句中“多表更新”的功能特性。
-			/// </summary>
-			public static readonly Feature Multitable = new Feature(FEATURE_UPDATE_PREFIX + nameof(Multitable));
+			/// <summary>表示更新语句中“多表更新”的功能特性。</summary>
+			public static readonly Feature Multitable = new(FEATURE_UPDATE_PREFIX + nameof(Multitable));
 
-			/// <summary>
-			/// 表示更新语句中“输出子句”的功能特性。
-			/// </summary>
-			public static readonly Feature Outputting = new Feature(FEATURE_UPDATE_PREFIX + nameof(Outputting));
+			/// <summary>表示更新语句中“输出子句”的功能特性。</summary>
+			public static readonly Feature Outputting = new(FEATURE_UPDATE_PREFIX + nameof(Outputting));
 			#endregion
 		}
 		#endregion
