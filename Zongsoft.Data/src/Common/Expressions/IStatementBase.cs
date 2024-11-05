@@ -51,9 +51,6 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <remarks>对于只是获取从属语句的使用者，应先使用<see cref="HasSlaves"/>属性进行判断成功后再使用该属性，这样可避免创建不必要的集合对象。</remarks>
 		ICollection<IStatementBase> Slaves { get; }
 
-		/// <summary>获取一个值，指示当前语句是否包含任何参数（即<see cref="Parameters"/>属性不为空并且有内容）。</summary>
-		bool HasParameters { get; }
-
 		/// <summary>获取当前语句的参数集。</summary>
 		ParameterExpressionCollection Parameters { get; }
 		#endregion

@@ -48,16 +48,26 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(ParameterExpression item) => item.Name;
-		protected override void InsertItem(int index, ParameterExpression item)
+		protected override string GetKeyForItem(ParameterExpression parameter) => parameter.Name;
+		protected override void InsertItem(int index, ParameterExpression parameter)
 		{
-			//处理下参数名为空或问号(?)的情况
-			if(string.IsNullOrEmpty(item.Name) || item.Name == ParameterExpression.Anonymous)
-				item.Name = "p" + System.Threading.Interlocked.Increment(ref _index).ToString();
+			if(parameter == null)
+				throw new ArgumentNullException(nameof(parameter));
+
+			//处理匿名参数，即参数名为空或问号(?)的参数
+			if(string.IsNullOrEmpty(parameter.Name) || parameter.Name == ParameterExpression.Anonymous)
+				this.Anonymize(System.Threading.Interlocked.Increment(ref _index), parameter);
 
 			//调用基类同名方法
-			base.InsertItem(index, item);
+			base.InsertItem(index, parameter);
 		}
+		#endregion
+
+		#region 虚拟方法
+		/// <summary>处理匿名参数。</summary>
+		/// <param name="index">匿名参数的序号，从 <c>1</c> 开始。</param>
+		/// <param name="parameter">待处理的匿名参数对象。</param>
+		protected virtual void Anonymize(int index, ParameterExpression parameter) => parameter.Name = $"p{index}";
 		#endregion
 	}
 }

@@ -40,13 +40,13 @@ namespace Zongsoft.Data.Common.Expressions
 	public abstract class SelectStatementBase : Statement, ISelectStatementBase, ISource
 	{
 		#region 构造函数
-		protected SelectStatementBase(string alias = null)
+		protected SelectStatementBase(string alias = null, ParameterExpressionCollection parameters = null) : base(parameters)
 		{
 			this.Alias = alias ?? string.Empty;
 			this.Select = new SelectClause();
 		}
 
-		protected SelectStatementBase(ISource source, string alias = null) : base(source)
+		protected SelectStatementBase(ISource source, string alias = null, ParameterExpressionCollection parameters = null) : base(source, parameters)
 		{
 			if(source == null)
 				throw new ArgumentNullException(nameof(source));
@@ -55,7 +55,7 @@ namespace Zongsoft.Data.Common.Expressions
 			this.Select = new SelectClause();
 		}
 
-		protected SelectStatementBase(IDataEntity entity, string alias = null) : base(entity, "T")
+		protected SelectStatementBase(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, "T", parameters)
 		{
 			this.Alias = alias ?? string.Empty;
 			this.Select = new SelectClause();

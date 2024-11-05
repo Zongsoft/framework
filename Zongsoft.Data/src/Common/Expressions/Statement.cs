@@ -41,8 +41,8 @@ namespace Zongsoft.Data.Common.Expressions
 	public class Statement : StatementBase, IStatement
 	{
 		#region 构造函数
-		protected Statement() => this.From = new SourceCollection();
-		protected Statement(ISource source)
+		protected Statement(ParameterExpressionCollection parameters = null) : base(parameters) => this.From = new SourceCollection();
+		protected Statement(ISource source, ParameterExpressionCollection parameters = null) : base(parameters)
 		{
 			this.Table = source as TableIdentifier;
 			this.From = new SourceCollection();
@@ -51,7 +51,7 @@ namespace Zongsoft.Data.Common.Expressions
 				this.From.Add(source);
 		}
 
-		protected Statement(IDataEntity entity, string alias = null) : base(entity, alias)
+		protected Statement(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, alias, parameters)
 		{
 			this.From = new SourceCollection();
 			this.From.Add(this.Table);

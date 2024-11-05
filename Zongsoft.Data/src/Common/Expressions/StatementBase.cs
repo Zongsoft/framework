@@ -38,21 +38,27 @@ namespace Zongsoft.Data.Common.Expressions
 	{
 		#region 成员字段
 		private ICollection<IStatementBase> _slaves;
-		private ParameterExpressionCollection _parameters;
 		#endregion
 
 		#region 构造函数
-		protected StatementBase() => this.Slots = new StatementSlotCollection();
-		protected StatementBase(TableIdentifier table)
+		protected StatementBase(ParameterExpressionCollection parameters = null)
+		{
+			this.Slots = new StatementSlotCollection();
+			this.Parameters = parameters ?? this.CreateParameters();
+		}
+
+		protected StatementBase(TableIdentifier table, ParameterExpressionCollection parameters = null)
 		{
 			this.Table = table ?? throw new ArgumentNullException(nameof(table));
 			this.Slots = new StatementSlotCollection();
+			this.Parameters = parameters ?? this.CreateParameters();
 		}
 
-		protected StatementBase(IDataEntity entity, string alias = null)
+		protected StatementBase(IDataEntity entity, string alias, ParameterExpressionCollection parameters = null)
 		{
 			this.Table = new TableIdentifier(entity, alias);
 			this.Slots = new StatementSlotCollection();
+			this.Parameters = parameters ?? this.CreateParameters();
 		}
 		#endregion
 
@@ -60,6 +66,7 @@ namespace Zongsoft.Data.Common.Expressions
 		public TableIdentifier Table { get; protected set; }
 		public IDataEntity Entity => this.Table?.Entity;
 		public StatementSlotCollection Slots { get; }
+		public ParameterExpressionCollection Parameters { get; }
 		public virtual bool HasSlaves => _slaves != null && _slaves.Count > 0;
 		public virtual ICollection<IStatementBase> Slaves
 		{
@@ -69,24 +76,6 @@ namespace Zongsoft.Data.Common.Expressions
 					System.Threading.Interlocked.CompareExchange(ref _slaves, new List<IStatementBase>(), null);
 
 				return _slaves;
-			}
-		}
-
-		public virtual bool HasParameters => _parameters != null && _parameters.Count > 0;
-		public virtual ParameterExpressionCollection Parameters
-		{
-			get
-			{
-				if(_parameters == null)
-				{
-					lock(this)
-					{
-						if(_parameters == null)
-							_parameters = this.CreateParameters();
-					}
-				}
-
-				return _parameters;
 			}
 		}
 		#endregion

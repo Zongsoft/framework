@@ -421,7 +421,7 @@ namespace Zongsoft.Data.Common
 			{
 				var link = complex.Links[i];
 
-				if(!statement.HasParameters || !statement.Parameters.TryGetValue(link.ForeignKey.Name, out var parameter))
+				if(statement.Parameters.Count == 0 || !statement.Parameters.TryGetValue(link.ForeignKey.Name, out var parameter))
 					continue;
 
 				if(link.ForeignKey.Sequence == null)
