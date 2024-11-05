@@ -34,9 +34,10 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
 	{
+		#region 公共方法
 		public IEnumerable<IStatementBase> Build(DataAggregateContext context)
 		{
-			var statement = new AggregateStatement(context.Entity);
+			var statement = this.CreateStatement(context);
 			var argument = (IExpression)null;
 
 			if(string.IsNullOrWhiteSpace(context.Aggregate.Name) || context.Aggregate.Name == "*")
@@ -52,5 +53,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 			yield return statement;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual AggregateStatement CreateStatement(DataAggregateContext context) => new(context.Entity);
+		#endregion
 	}
 }

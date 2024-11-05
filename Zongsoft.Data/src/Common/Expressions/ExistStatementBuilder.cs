@@ -34,10 +34,11 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public class ExistStatementBuilder : IStatementBuilder<DataExistContext>
 	{
+		#region 公共方法
 		public IEnumerable<IStatementBase> Build(DataExistContext context)
 		{
 			//创建存在语句
-			var statement = new ExistStatement(context.Entity);
+			var statement = this.CreateStatement(context);
 
 			//生成条件子句
 			statement.Where = statement.Where(context.Validate(), context.Aliaser);
@@ -50,5 +51,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 			yield return statement;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual ExistStatement CreateStatement(DataExistContext context) => new(context.Entity);
+		#endregion
 	}
 }

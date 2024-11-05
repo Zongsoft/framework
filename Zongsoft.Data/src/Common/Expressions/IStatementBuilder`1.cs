@@ -37,9 +37,7 @@ namespace Zongsoft.Data.Common.Expressions
 	/// </summary>
 	public interface IStatementBuilder<TContext> where TContext : IDataAccessContext
 	{
-		/// <summary>
-		/// 根据指定的数据访问上下文生成对应的数据操作语句。
-		/// </summary>
+		/// <summary>根据指定的数据访问上下文生成对应的数据操作语句。</summary>
 		/// <param name="context">指定的数据访问上下文。</param>
 		/// <returns>返回生成的数据操作语句。</returns>
 		IEnumerable<IStatementBase> Build(TContext context);

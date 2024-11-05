@@ -28,25 +28,23 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
-
-using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions
 {
 	public class ExecutionStatementBuilder : IStatementBuilder<DataExecuteContext>
 	{
+		#region 公共方法
 		public IEnumerable<IStatementBase> Build(DataExecuteContext context)
 		{
-			var statement = new ExecutionStatement(context.Command);
+			var statement = this.CreateStatement(context);
 
 			foreach(var parameter in context.Command.Parameters)
 			{
 				statement.Parameters.Add(Expression.Parameter(parameter));
 			}
 
-			if(statement.HasParameters && context.InParameters != null && context.InParameters.Count > 0)
+			if(statement.Parameters.Count > 0 && context.InParameters != null && context.InParameters.Count > 0)
 			{
 				foreach(var entry in context.InParameters)
 				{
@@ -57,5 +55,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 			yield return statement;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual ExecutionStatement CreateStatement(DataExecuteContext context) => new(context.Command);
+		#endregion
 	}
 }

@@ -39,14 +39,14 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataSelectContext context)
 		{
-			var statement = new SelectStatement(context.Entity) { Paging = context.Paging };
+			var statement = this.CreateStatement(context);
 
 			if(statement.Select != null)
 				statement.Select.IsDistinct = context.Options.IsDistinct;
 
 			//生成分组子句
 			if(context.Grouping != null)
-				this.GenerateGrouping(context.Aliaser, statement, context.Grouping);
+				GenerateGrouping(context.Aliaser, statement, context.Grouping);
 
 			//生成查询成员
 			if(context.Schema != null && !context.Schema.IsEmpty)
@@ -56,7 +56,7 @@ namespace Zongsoft.Data.Common.Expressions
 					foreach(var member in context.Schema.Members)
 					{
 						//生成数据模式对应的子句
-						this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
+						GenerateSchema(context.Aliaser, statement, statement.Table, member);
 					}
 				}
 				else
@@ -64,7 +64,7 @@ namespace Zongsoft.Data.Common.Expressions
 					foreach(var member in context.Schema.Members)
 					{
 						if(member.Token.Property.IsComplex)
-							this.GenerateSchema(context.Aliaser, statement, statement.Table, member);
+							GenerateSchema(context.Aliaser, statement, statement.Table, member);
 					}
 				}
 			}
@@ -73,14 +73,18 @@ namespace Zongsoft.Data.Common.Expressions
 			statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
 			//生成排序子句
-			this.GenerateSortings(context.Aliaser, statement, statement.Table, context.Sortings);
+			GenerateSortings(context.Aliaser, statement, statement.Table, context.Sortings);
 
 			yield return statement;
 		}
 		#endregion
 
+		#region 虚拟方法
+		protected virtual SelectStatement CreateStatement(DataSelectContext context) => new(context.Entity) { Paging = context.Paging };
+		#endregion
+
 		#region 私有方法
-		private void GenerateGrouping(Aliaser aliaser, SelectStatement statement, Grouping grouping)
+		private static void GenerateGrouping(Aliaser aliaser, SelectStatement statement, Grouping grouping)
 		{
 			if(grouping == null)
 				return;
@@ -127,7 +131,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private void GenerateSortings(Aliaser aliaser, SelectStatement statement, TableIdentifier origin, Sorting[] sortings)
+		private static void GenerateSortings(Aliaser aliaser, SelectStatement statement, TableIdentifier origin, Sorting[] sortings)
 		{
 			if(sortings == null || sortings.Length == 0)
 				return;
@@ -152,7 +156,7 @@ namespace Zongsoft.Data.Common.Expressions
 			}
 		}
 
-		private void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
+		private static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
 		{
 			if(member.Ancestors != null)
 			{
@@ -221,13 +225,13 @@ namespace Zongsoft.Data.Common.Expressions
 					}
 
 					if(member.Sortings != null)
-						this.GenerateSortings(aliaser, slave, table, member.Sortings);
+						GenerateSortings(aliaser, slave, table, member.Sortings);
 
 					if(member.HasChildren)
 					{
 						foreach(var child in member.Children)
 						{
-							this.GenerateSchema(aliaser, slave, table, child);
+							GenerateSchema(aliaser, slave, table, child);
 						}
 					}
 
@@ -267,7 +271,7 @@ namespace Zongsoft.Data.Common.Expressions
 			{
 				foreach(var child in member.Children)
 				{
-					this.GenerateSchema(aliaser, statement, origin, child);
+					GenerateSchema(aliaser, statement, origin, child);
 				}
 			}
 		}

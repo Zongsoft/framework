@@ -39,19 +39,19 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataInsertContext context)
 		{
-			return BuildInserts(context, context.Entity, null, context.Schema.Members);
+			return this.BuildInserts(context, context.Entity, null, context.Schema.Members);
 		}
 		#endregion
 
 		#region 私有方法
-		private static IEnumerable<InsertStatement> BuildInserts(IDataMutateContextBase context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+		private IEnumerable<InsertStatement> BuildInserts(IDataMutateContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 		{
 			var inherits = entity.GetInherits();
 			var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
 
 			foreach(var inherit in inherits)
 			{
-				var statement = new InsertStatement(inherit, owner);
+				var statement = this.CreateStatement(inherit, owner);
 
 				if(context is DataInsertContextBase ctx)
 					statement.Options.Apply(ctx.Options);
@@ -129,6 +129,10 @@ namespace Zongsoft.Data.Common.Expressions
 		}
 
 		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+		#endregion
+
+		#region 虚拟方法
+		protected virtual InsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
 		#endregion
 	}
 }

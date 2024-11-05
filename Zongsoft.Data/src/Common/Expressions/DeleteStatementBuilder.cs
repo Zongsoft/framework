@@ -52,14 +52,12 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 虚拟方法
-		/// <summary>
-		/// 构建支持多表删除的语句。
-		/// </summary>
+		/// <summary>构建支持多表删除的语句。</summary>
 		/// <param name="context">构建操作需要的数据访问上下文对象。</param>
 		/// <returns>返回多表删除的语句。</returns>
 		protected virtual IEnumerable<IStatementBase> BuildSimplicity(DataDeleteContext context)
 		{
-			var statement = new DeleteStatement(context.Entity);
+			var statement = this.CreateStatement(context);
 
 			//构建当前实体的继承链的关联集
 			this.Join(context.Aliaser, statement, statement.Table).ToArray();
@@ -80,14 +78,12 @@ namespace Zongsoft.Data.Common.Expressions
 			yield return statement;
 		}
 
-		/// <summary>
-		/// 构建单表删除的语句，因为不支持多表删除所以单表删除操作由多条语句以主从树形结构来表达需要进行的多批次的删除操作。
-		/// </summary>
+		/// <summary>构建单表删除的语句，因为不支持多表删除所以单表删除操作由多条语句以主从树形结构来表达需要进行的多批次的删除操作。</summary>
 		/// <param name="context">构建操作需要的数据访问上下文对象。</param>
 		/// <returns>返回的单表删除的多条语句的主句。</returns>
 		protected virtual IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
 		{
-			var statement = new DeleteStatement(context.Entity);
+			var statement = this.CreateStatement(context);
 
 			//生成条件子句
 			statement.Where = statement.Where(context.Validate(), context.Aliaser);
@@ -97,6 +93,11 @@ namespace Zongsoft.Data.Common.Expressions
 
 			yield return statement;
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual DeleteStatement CreateStatement(DataDeleteContext context) => new(context.Entity);
+		protected virtual DeleteStatement CreateStatement(IDataEntity entity) => new(entity);
 		#endregion
 
 		#region 私有方法
@@ -114,7 +115,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			while(super != null)
 			{
-				this.BuildInherit(aliaser, statement, super);
+				this.BuildInheritance(aliaser, statement, super);
 				super = super.GetBaseEntity();
 			}
 
@@ -199,7 +200,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return statement;
 		}
 
-		private DeleteStatement BuildInherit(Aliaser aliaser, DeleteStatement master, IDataEntity entity)
+		private DeleteStatement BuildInheritance(Aliaser aliaser, DeleteStatement master, IDataEntity entity)
 		{
 			var statement = new DeleteStatement(entity);
 			var reference = master.Returning.Table.Identifier();

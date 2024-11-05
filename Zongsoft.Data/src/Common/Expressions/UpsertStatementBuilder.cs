@@ -189,11 +189,8 @@ namespace Zongsoft.Data.Common.Expressions
 
 					if(conditions.Count > 0)
 					{
-						if(statement.HasParameters)
-						{
-							foreach(var parameter in statement.Parameters)
-								selection.Parameters.Add(parameter);
-						}
+						foreach(var parameter in statement.Parameters)
+							selection.Parameters.Add(parameter);
 
 						selection.Where = conditions;
 						statement.Slaves.Add(selection);
@@ -206,6 +203,10 @@ namespace Zongsoft.Data.Common.Expressions
 		}
 
 		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+		#endregion
+
+		#region 虚拟方法
+		protected virtual UpsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
 		#endregion
 	}
 }
