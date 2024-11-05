@@ -103,7 +103,7 @@ namespace Zongsoft.Data.Common.Expressions
 		/// <remarks>
 		///		<para>如果参数名为空或问号(?)表示该参数名由集合定义，当该参数被加入到语句的参数集中，该名称将被更改为特定序号的名字。可参考<see cref="StatementBase.Parameters"/>属性的集合。</para>
 		/// </remarks>
-		public string Name { get; internal set; }
+		public string Name { get; set; }
 
 		/// <summary>获取参数对应的字段标识，可能为空。</summary>
 		public FieldIdentifier Field { get; }

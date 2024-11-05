@@ -51,37 +51,22 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 构造函数
-		protected StatementBuilderBase()
-		{
-			_syncRoot = new object();
-		}
+		protected StatementBuilderBase() => _syncRoot = new object();
 		#endregion
 
 		#region 公共方法
-		public virtual IEnumerable<IStatementBase> Build(IDataAccessContext context)
+		public virtual IEnumerable<IStatementBase> Build(IDataAccessContext context) => context.Method switch
 		{
-			switch(context.Method)
-			{
-				case DataAccessMethod.Select:
-					return this.GetBuilder(ref _select, () => this.CreateSelectStatementBuilder()).Build((DataSelectContext)context);
-				case DataAccessMethod.Delete:
-					return this.GetBuilder(ref _delete, () => this.CreateDeleteStatementBuilder()).Build((DataDeleteContext)context);
-				case DataAccessMethod.Insert:
-					return this.GetBuilder(ref _insert, () => this.CreateInsertStatementBuilder()).Build((DataInsertContext)context);
-				case DataAccessMethod.Update:
-					return this.GetBuilder(ref _update, () => this.CreateUpdateStatementBuilder()).Build((DataUpdateContext)context);
-				case DataAccessMethod.Upsert:
-					return this.GetBuilder(ref _upsert, () => this.CreateUpsertStatementBuilder()).Build((DataUpsertContext)context);
-				case DataAccessMethod.Exists:
-					return this.GetBuilder(ref _exist, () => this.CreateExistStatementBuilder()).Build((DataExistContext)context);
-				case DataAccessMethod.Execute:
-					return this.GetBuilder(ref _execution, () => this.CreateExecutionStatementBuilder()).Build((DataExecuteContext)context);
-				case DataAccessMethod.Aggregate:
-					return this.GetBuilder(ref _aggregate, () => this.CreateAggregateStatementBuilder()).Build((DataAggregateContext)context);
-				default:
-					throw new DataException($"Unsupported data access '{context.Method}' operation.");
-			}
-		}
+			DataAccessMethod.Select => this.GetBuilder(ref _select, this.CreateSelectStatementBuilder).Build((DataSelectContext)context),
+			DataAccessMethod.Delete => this.GetBuilder(ref _delete, this.CreateDeleteStatementBuilder).Build((DataDeleteContext)context),
+			DataAccessMethod.Insert => this.GetBuilder(ref _insert, this.CreateInsertStatementBuilder).Build((DataInsertContext)context),
+			DataAccessMethod.Update => this.GetBuilder(ref _update, this.CreateUpdateStatementBuilder).Build((DataUpdateContext)context),
+			DataAccessMethod.Upsert => this.GetBuilder(ref _upsert, this.CreateUpsertStatementBuilder).Build((DataUpsertContext)context),
+			DataAccessMethod.Exists => this.GetBuilder(ref _exist, this.CreateExistStatementBuilder).Build((DataExistContext)context),
+			DataAccessMethod.Execute => this.GetBuilder(ref _execution, this.CreateExecutionStatementBuilder).Build((DataExecuteContext)context),
+			DataAccessMethod.Aggregate => this.GetBuilder(ref _aggregate, this.CreateAggregateStatementBuilder).Build((DataAggregateContext)context),
+			_ => throw new DataException($"Unsupported data access '{context.Method}' operation."),
+		};
 		#endregion
 
 		#region 私有方法

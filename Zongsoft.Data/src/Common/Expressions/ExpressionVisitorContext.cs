@@ -100,6 +100,12 @@ namespace Zongsoft.Data.Common.Expressions
 			_visitor.OnVisit(this, expression);
 		}
 
+		public ExpressionVisitorContext Write(char value)
+		{
+			_output.Append(value);
+			return this;
+		}
+
 		public ExpressionVisitorContext Write(string text)
 		{
 			_output.Append(text);
