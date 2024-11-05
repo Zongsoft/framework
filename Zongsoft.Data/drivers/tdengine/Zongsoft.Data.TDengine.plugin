@@ -16,6 +16,10 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="TDengine" value="{static:Zongsoft.Data.TDengine.Configuration.TDengineConnectionSettingsDriver.Instance, Zongsoft.Data.TDengine}" />
+	</extension>
+
 	<extension path="/Workbench/Data/Drivers">
 		<object name="TDengine" type="Zongsoft.Data.TDengine.TDengineDriver, Zongsoft.Data.TDengine" />
 	</extension>
