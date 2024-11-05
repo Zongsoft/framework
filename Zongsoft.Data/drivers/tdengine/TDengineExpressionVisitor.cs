@@ -46,6 +46,11 @@ namespace Zongsoft.Data.TDengine
 		#endregion
 
 		#region 重写方法
+		protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
+		{
+			context.Write("?");
+		}
+
 		protected override void VisitExists(ExpressionVisitorContext context, IExpression expression)
 		{
 			//查找当前表达式所属的语句
@@ -87,12 +92,10 @@ namespace Zongsoft.Data.TDengine
 				case InsertStatement insert:
 					TDengineInsertStatementVisitor.Instance.Visit(context, insert);
 					break;
-				case UpdateStatement update:
-					TDengineUpdateStatementVisitor.Instance.Visit(context, update);
-					break;
-				case UpsertStatement upsert:
-					TDengineUpsertStatementVisitor.Instance.Visit(context, upsert);
-					break;
+				case UpdateStatement:
+					throw new NotSupportedException();
+				case UpsertStatement:
+					throw new NotSupportedException();
 				case AggregateStatement aggregate:
 					TDengineAggregateStatementVisitor.Instance.Visit(context, aggregate);
 					break;

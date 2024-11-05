@@ -32,12 +32,20 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public sealed class TDengineParameters : ParameterExpressionCollection
 {
-	public class TDengineUpsertStatementBuilder : UpsertStatementBuilder
+	protected override void Anonymize(int index, ParameterExpression parameter)
 	{
-		#region 构造函数
-		public TDengineUpsertStatementBuilder() { }
-		#endregion
+		/*
+		 * 注意：TDengine 对参数名的首字符有不同的含义：
+		 *    $ 打头表示标签字段对应的参数；
+		 *    @ 打头表示数据字段对应的参数。
+		 */
+		if(parameter.Field.Token.Property.IsTagField())
+			parameter.Name = $"${index}";
+		else
+			parameter.Name = $"@{index}";
 	}
 }

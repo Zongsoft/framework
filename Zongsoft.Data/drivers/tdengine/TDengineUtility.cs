@@ -28,16 +28,18 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Zongsoft.Data.Common;
-using Zongsoft.Data.Common.Expressions;
+using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+internal static class TDengineUtility
 {
-	public class TDengineUpdateStatementBuilder : UpdateStatementBuilder
-	{
-		#region 构造函数
-		public TDengineUpdateStatementBuilder() { }
-		#endregion
-	}
+	public static bool IsTagField(this IDataEntityProperty property) =>
+	property != null && property.IsSimplex && property.Hint != null &&
+	(
+		string.Equals(property.Hint, "Tag", StringComparison.OrdinalIgnoreCase) ||
+		string.Equals(property.Hint, "Tagged", StringComparison.OrdinalIgnoreCase)
+	);
 }

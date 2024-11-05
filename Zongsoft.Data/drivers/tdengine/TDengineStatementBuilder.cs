@@ -37,10 +37,10 @@ namespace Zongsoft.Data.TDengine
 	public class TDengineStatementBuilder : StatementBuilderBase
 	{
 		#region 单例字段
-		public static readonly TDengineStatementBuilder Default = new TDengineStatementBuilder();
+		public static readonly TDengineStatementBuilder Default = new();
 		#endregion
 
-		#region 构造函数
+		#region 私有构造
 		private TDengineStatementBuilder() { }
 		#endregion
 
@@ -48,8 +48,8 @@ namespace Zongsoft.Data.TDengine
 		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new TDengineSelectStatementBuilder();
 		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new TDengineDeleteStatementBuilder();
 		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new TDengineInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new TDengineUpdateStatementBuilder();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new TDengineUpsertStatementBuilder();
+		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException();
+		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => throw new NotSupportedException();
 		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new TDengineAggregateStatementBuilder();
 		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new TDengineExistStatementBuilder();
 		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new TDengineExecutionStatementBuilder();

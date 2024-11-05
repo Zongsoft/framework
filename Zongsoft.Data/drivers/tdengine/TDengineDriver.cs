@@ -47,7 +47,7 @@ namespace Zongsoft.Data.TDengine
 		#endregion
 
 		#region 构造函数
-		public TDengineDriver() { }
+		public TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
 		#endregion
 
 		#region 公共属性
@@ -85,6 +85,7 @@ namespace Zongsoft.Data.TDengine
 
 		#region 保护方法
 		protected override ExpressionVisitorBase CreateVisitor() => new TDengineExpressionVisitor();
+		protected override StatementSlotter CreateSlotter() => new() { Evaluator = TDengineStatementSlotEvaluator.Instance };
 		#endregion
 	}
 }

@@ -28,16 +28,43 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public sealed class TDengineStatementSlotEvaluator : StatementSlotEvaluatorBase
 {
-	public class TDengineInsertStatementBuilder : InsertStatementBuilder
+	public static readonly TDengineStatementSlotEvaluator Instance = new();
+
+	public override string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot)
 	{
-		#region 重写方法
-		protected override InsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema, new TDengineParameters());
-		#endregion
+		if(slot == null || slot.Value == null)
+			return null;
+
+		if(context is IDataMutateContextBase ctx)
+		{
+			var data = ctx.Data;
+			var text = slot.Value switch
+			{
+				IEnumerable<IDataEntityProperty> properties => string.Join('-', properties.Select(property => Reflection.Reflector.GetValue(ref data, property.Name)?.ToString())),
+				IEnumerable<DataEntityPropertyToken> tokens => string.Join('-', tokens.Select(token => token.GetValue(data)?.ToString())),
+				_ => base.Evaluate(context, statement, slot),
+			};
+
+			if(string.IsNullOrEmpty(text))
+				return null;
+
+			return slot.Place switch
+			{
+				"Table" => $"T{text}",
+				_ => text,
+			};
+		}
+
+		return null;
 	}
 }
