@@ -47,13 +47,16 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 公共方法
 		public void Evaluate(IDataAccessContext context, IStatementBase statement, DbCommand command)
 		{
-			_regex.Replace(command.CommandText, match => this.Evaluate(context, statement, this.GetSlot(context, statement, match.Groups["placeholder"].Value)));
+			if(this.Evaluator == null)
+				return;
+
+			command.CommandText = _regex.Replace(command.CommandText, match => this.Evaluate(context, statement, this.GetSlot(context, statement, match.Groups["placeholder"].Value)));
 		}
 		#endregion
 
 		#region 虚拟方法
 		protected virtual StatementSlot GetSlot(IDataAccessContext context, IStatementBase statement, string placeholder) => statement.Slots.TryGetValue(placeholder, out var slot) ? slot : null;
-		protected virtual string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => this.Evaluator?.Evaluate(context, statement, slot);
+		protected virtual string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => slot != null && this.Evaluator != null ? this.Evaluator.Evaluate(context, statement, slot) : null;
 		#endregion
 
 		#region 显式实现

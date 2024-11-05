@@ -33,7 +33,7 @@ namespace Zongsoft.Data.Common.Expressions
 {
 	public class StatementSlot
 	{
-		public StatementSlot(string name, string place, string value)
+		public StatementSlot(string name, string place, object value)
 		{
 			this.Name = name;
 			this.Place = place;
@@ -42,8 +42,8 @@ namespace Zongsoft.Data.Common.Expressions
 
 		public string Name { get; }
 		public string Place { get; set; }
-		public string Value { get; set; }
+		public object Value { get; set; }
 
-		public override string ToString() => $"{this.Name}@{this.Place}={this.Value}";
+		public override string ToString() => string.IsNullOrEmpty(this.Place) ? this.Name : $"{this.Name}@{this.Place}";
 	}
 }
