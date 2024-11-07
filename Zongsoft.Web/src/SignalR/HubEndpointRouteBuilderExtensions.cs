@@ -72,28 +72,32 @@ namespace Zongsoft.Web.SignalR
 				var property = type.GetProperty("Options", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
 				if(property != null && property.CanRead && property.PropertyType == typeof(HttpConnectionDispatcherOptions))
-				{
-					var value = (HttpConnectionDispatcherOptions)property.GetValue(null);
+					Configure(options, (HttpConnectionDispatcherOptions)property.GetValue(null));
+			}]);
 
-					options.MinimumProtocolVersion = value.MinimumProtocolVersion;
-					options.ApplicationMaxBufferSize = value.ApplicationMaxBufferSize;
-					options.TransportMaxBufferSize = value.TransportMaxBufferSize;
-					options.TransportSendTimeout = value.TransportSendTimeout;
-					options.TransportSendTimeout = value.TransportSendTimeout;
-					options.Transports = value.Transports;
-					options.CloseOnAuthenticationExpiration = value.CloseOnAuthenticationExpiration;
-					options.LongPolling.PollTimeout = value.LongPolling.PollTimeout;
-					options.WebSockets.CloseTimeout = value.WebSockets.CloseTimeout;
-					options.WebSockets.SubProtocolSelector = value.WebSockets.SubProtocolSelector;
+			static void Configure(HttpConnectionDispatcherOptions options, HttpConnectionDispatcherOptions value)
+			{
+				if(options == null || value == null)
+					return;
+
+				options.MinimumProtocolVersion = value.MinimumProtocolVersion;
+				options.ApplicationMaxBufferSize = value.ApplicationMaxBufferSize;
+				options.TransportMaxBufferSize = value.TransportMaxBufferSize;
+				options.TransportSendTimeout = value.TransportSendTimeout;
+				options.TransportSendTimeout = value.TransportSendTimeout;
+				options.Transports = value.Transports;
+				options.CloseOnAuthenticationExpiration = value.CloseOnAuthenticationExpiration;
+				options.LongPolling.PollTimeout = value.LongPolling.PollTimeout;
+				options.WebSockets.CloseTimeout = value.WebSockets.CloseTimeout;
+				options.WebSockets.SubProtocolSelector = value.WebSockets.SubProtocolSelector;
 
 #if NET8_0_OR_GREATER
 					options.AllowStatefulReconnects = value.AllowStatefulReconnects;
 #endif
 
-					foreach(var data in value.AuthorizationData)
-						options.AuthorizationData.Add(data);
-				}
-			}]);
+				foreach(var data in value.AuthorizationData)
+					options.AuthorizationData.Add(data);
+			}
 		}
 		#endregion
 	}
