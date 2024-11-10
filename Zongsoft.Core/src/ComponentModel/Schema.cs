@@ -43,18 +43,9 @@ namespace Zongsoft.ComponentModel
 		#endregion
 
 		#region 构造函数
-		public Schema()
-		{
-		}
-
-		public Schema(string name) : this(name, name, string.Empty)
-		{
-		}
-
-		public Schema(string name, string title) : this(name, title, string.Empty)
-		{
-		}
-
+		public Schema() { }
+		public Schema(string name) : this(name, name, string.Empty) { }
+		public Schema(string name, string title) : this(name, title, string.Empty) { }
 		public Schema(string name, string title, string description)
 		{
 			if(string.IsNullOrWhiteSpace(name))
@@ -81,10 +72,7 @@ namespace Zongsoft.ComponentModel
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 			set
 			{
 				if(string.IsNullOrWhiteSpace(value))
@@ -96,10 +84,7 @@ namespace Zongsoft.ComponentModel
 
 		public string Title
 		{
-			get
-			{
-				return _title;
-			}
+			get => _title;
 			set
 			{
 				if(!string.IsNullOrEmpty(value))
@@ -129,14 +114,7 @@ namespace Zongsoft.ComponentModel
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
-		public bool HasActions
-		{
-			get
-			{
-				return _actions != null && _actions.Count > 0;
-			}
-		}
-
+		public bool HasActions => _actions != null && _actions.Count > 0;
 		public SchemaActionCollection Actions
 		{
 			get

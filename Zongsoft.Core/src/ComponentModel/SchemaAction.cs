@@ -45,14 +45,8 @@ namespace Zongsoft.ComponentModel
 		#endregion
 
 		#region 构造函数
-		public SchemaAction(string name) : this(name, null, null)
-		{
-		}
-
-		public SchemaAction(string name, string title) : this(name, title, null)
-		{
-		}
-
+		public SchemaAction(string name) : this(name, null, null) { }
+		public SchemaAction(string name, string title) : this(name, title, null) { }
 		public SchemaAction(string name, string title, string description)
 		{
 			if(string.IsNullOrWhiteSpace(name))
@@ -68,10 +62,7 @@ namespace Zongsoft.ComponentModel
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 			set
 			{
 				if(string.IsNullOrWhiteSpace(value))
@@ -90,38 +81,20 @@ namespace Zongsoft.ComponentModel
 
 		public string Title
 		{
-			get
-			{
-				return _title;
-			}
-			set
-			{
-				_title = value;
-			}
+			get => _title;
+			set => _title = value;
 		}
 
 		public string Description
 		{
-			get
-			{
-				return _description;
-			}
-			set
-			{
-				_description = value;
-			}
+			get => _description;
+			set => _description = value;
 		}
 
 		public bool Visible
 		{
-			get
-			{
-				return _visible;
-			}
-			set
-			{
-				_visible = value;
-			}
+			get => _visible;
+			set => _visible = value;
 		}
 		#endregion
 

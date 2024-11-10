@@ -37,10 +37,7 @@ namespace Zongsoft.ComponentModel
 	{
 		#region 构造函数
 		public SchemaActionCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		public SchemaActionCollection(Schema schema) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
-		}
+		public SchemaActionCollection(Schema schema) : base(StringComparer.OrdinalIgnoreCase) => this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
 		#endregion
 
 		#region 公共属性

@@ -45,20 +45,9 @@ namespace Zongsoft.ComponentModel
 		#endregion
 
 		#region 构造函数
-		public SchemaCategory()
-		{
-			_schemas = new SchemaCollection();
-		}
-
-		public SchemaCategory(string name) : base(name, name, string.Empty)
-		{
-			_schemas = new SchemaCollection();
-		}
-
-		public SchemaCategory(string name, string title, string description) : base(name, title, description)
-		{
-			_schemas = new SchemaCollection();
-		}
+		public SchemaCategory() => _schemas = new SchemaCollection();
+		public SchemaCategory(string name) : base(name, name, string.Empty) => _schemas = new SchemaCollection();
+		public SchemaCategory(string name, string title, string description) : base(name, title, description) => _schemas = new SchemaCollection();
 		#endregion
 
 		#region 公共属性
@@ -73,20 +62,11 @@ namespace Zongsoft.ComponentModel
 			}
 		}
 
-		public SchemaCollection Schemas
-		{
-			get
-			{
-				return _schemas;
-			}
-		}
+		public SchemaCollection Schemas => _schemas;
 		#endregion
 
 		#region 重写方法
-		protected override Collections.HierarchicalNode GetChild(string name)
-		{
-			return _children != null && _children.TryGetValue(name, out var child) ? child : null;
-		}
+		protected override Collections.HierarchicalNode GetChild(string name) => _children != null && _children.TryGetValue(name, out var child) ? child : null;
 		#endregion
 	}
 }

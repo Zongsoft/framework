@@ -42,9 +42,7 @@ namespace Zongsoft.ComponentModel
 		#endregion
 
 		#region 构造函数
-		public EnumConverter(Type enumType) : base(enumType)
-		{
-		}
+		public EnumConverter(Type enumType) : base(enumType) { }
 		#endregion
 
 		#region 重写方法
@@ -66,10 +64,8 @@ namespace Zongsoft.ComponentModel
 			if(value == null || System.Convert.IsDBNull(value))
 				return Zongsoft.Common.TypeExtension.GetDefaultValue(this.EnumType);
 
-			if(value is string)
+			if(value is string valueString)
 			{
-				string valueString = (string)value;
-
 				if(valueString.IndexOf(',') > 1)
 				{
 					long convertedValue = 0;
@@ -141,15 +137,13 @@ namespace Zongsoft.ComponentModel
 		#region 私有方法
 		private long GetEnumValue(string valueText, bool throwExceptions)
 		{
-			if(!TryGetEnumValue(valueText, out var result))
-			{
-				if(throwExceptions)
-					throw new FormatException(string.Format("Can not from this '{0}' string convert to '{1}' enum.", valueText, this.EnumType.AssemblyQualifiedName));
+			if(this.TryGetEnumValue(valueText, out var result))
+				return result;
 
-				return 0;
-			}
+			if(throwExceptions)
+				throw new FormatException(string.Format("Can not from this '{0}' string convert to '{1}' enum.", valueText, this.EnumType.AssemblyQualifiedName));
 
-			return result;
+			return 0;
 		}
 
 		private bool TryGetEnumValue(string valueText, out long underlyingValue)
