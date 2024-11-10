@@ -51,25 +51,10 @@ namespace Zongsoft.Common
 			return null;
 		}
 
-		public static string GetEnumAlias(this Enum enumValue)
-		{
-			if(TryGetEnumAlias(enumValue, out var alias))
-				return alias;
+		public static string GetEnumAlias(this Enum enumValue) => TryGetEnumAlias(enumValue, out var alias) ? alias : null;
+		public static string GetEnumDescription(this Enum enumValue) => TryGetEnumDescription(enumValue, out var description) ? description : null;
 
-			return null;
-		}
-
-		public static string GetEnumDescription(this Enum enumValue)
-		{
-			if(TryGetEnumDescription(enumValue, out var description))
-				return description;
-
-			return null;
-		}
-
-		/// <summary>
-		/// 获取指定枚举项对应的<see cref="EnumEntry"/>描述对象。
-		/// </summary>
+		/// <summary>获取指定枚举项对应的<see cref="EnumEntry"/>描述对象。</summary>
 		/// <param name="enumValue">要获取的枚举项。</param>
 		/// <param name="underlyingType">是否将生成的 <seealso cref="EnumEntry"/> 元素的 <seealso cref="EnumEntry.Value"/> 属性值置为 enumType 参数对应的枚举项基类型值。</param>
 		/// <returns>返回指定枚举值对应的<seealso cref="EnumEntry"/>对象。</returns>
@@ -78,10 +63,7 @@ namespace Zongsoft.Common
 			if(enumValue == null)
 				throw new ArgumentNullException(nameof(enumValue));
 
-			if(TryGetEnumEntry(enumValue, underlyingType, out var entry))
-				return entry;
-
-			throw new ArgumentException($"The specified '{enumValue}' enumeration value is undefined.");
+			return TryGetEnumEntry(enumValue, underlyingType, out var entry) ? entry : throw new ArgumentException($"The specified '{enumValue}' enumeration value is undefined.");
 		}
 
 		public static bool TryGetEnumAlias(this Enum enumValue, out string alias)
@@ -117,11 +99,7 @@ namespace Zongsoft.Common
 			return false;
 		}
 
-		public static bool TryGetEnumEntry(this Enum enumValue, out EnumEntry entry)
-		{
-			return TryGetEnumEntry(enumValue, false, out entry);
-		}
-
+		public static bool TryGetEnumEntry(this Enum enumValue, out EnumEntry entry) => TryGetEnumEntry(enumValue, false, out entry);
 		public static bool TryGetEnumEntry(this Enum enumValue, bool underlyingType, out EnumEntry entry)
 		{
 			FieldInfo field = null;
@@ -143,32 +121,20 @@ namespace Zongsoft.Common
 			return true;
 		}
 
-		/// <summary>
-		/// 获取指定枚举的描述对象数组。
-		/// </summary>
+		/// <summary>获取指定枚举的描述对象数组。</summary>
 		/// <param name="enumType">要获取的枚举类型。</param>
 		/// <param name="underlyingType">是否将生成的 <seealso cref="EnumEntry"/> 元素的 <seealso cref="EnumEntry.Value"/> 属性值置为 enumType 参数对应的枚举项基类型值。</param>
 		/// <returns>返回的枚举描述对象数组。</returns>
-		public static EnumEntry[] GetEnumEntries(Type enumType, bool underlyingType)
-		{
-			return GetEnumEntries(enumType, underlyingType, null, string.Empty);
-		}
+		public static EnumEntry[] GetEnumEntries(Type enumType, bool underlyingType) => GetEnumEntries(enumType, underlyingType, null, string.Empty);
 
-		/// <summary>
-		/// 获取指定枚举的描述对象数组。
-		/// </summary>
+		/// <summary>获取指定枚举的描述对象数组。</summary>
 		/// <param name="enumType">要获取的枚举类型，可为<seealso cref="System.Nullable"/>类型。</param>
 		/// <param name="underlyingType">是否将生成的 <seealso cref="EnumEntry"/> 元素的 <seealso cref="EnumEntry.Value"/> 属性值置为 enumType 参数对应的枚举项基类型值。</param>
 		/// <param name="nullValue">如果参数<paramref name="enumType"/>为可空类型时，该空值对应的<seealso cref="EnumEntry.Value"/>属性的值。</param>
 		/// <returns>返回的枚举描述对象数组。</returns>
-		public static EnumEntry[] GetEnumEntries(Type enumType, bool underlyingType, object nullValue)
-		{
-			return GetEnumEntries(enumType, underlyingType, nullValue, string.Empty);
-		}
+		public static EnumEntry[] GetEnumEntries(Type enumType, bool underlyingType, object nullValue) => GetEnumEntries(enumType, underlyingType, nullValue, string.Empty);
 
-		/// <summary>
-		/// 获取指定枚举的描述对象数组。
-		/// </summary>
+		/// <summary>获取指定枚举的描述对象数组。</summary>
 		/// <param name="enumType">要获取的枚举类型，可为<seealso cref="System.Nullable"/>类型。</param>
 		/// <param name="underlyingType">是否将生成的 <seealso cref="EnumEntry"/> 元素的 <seealso cref="EnumEntry.Value"/> 属性值置为 enumType 参数对应的枚举项基类型值。</param>
 		/// <param name="nullValue">如果参数<paramref name="enumType"/>为可空类型时，该空值对应的<seealso cref="EnumEntry.Value"/>属性的值。</param>
