@@ -449,7 +449,7 @@ namespace Zongsoft.Data.Common
 					{
 						if(updation == null)
 						{
-							updation = new UpdateStatement(complex.Entity);
+							updation = new UpdateStatement(complex.Entity, member.Parent);
 							statement.Slaves.Add(updation);
 
 							foreach(var key in complex.Entity.Key)

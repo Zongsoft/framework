@@ -64,7 +64,7 @@ namespace Zongsoft.Data.Common.Expressions
 						 */
 						if(parameter.Schema != null)
 						{
-							if(parameter.Schema.Parent == null)
+							if(parameter.Schema.Parent == null || !parameter.Schema.Parent.Token.IsMultiple)
 								parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
 							else
 								parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
@@ -86,7 +86,7 @@ namespace Zongsoft.Data.Common.Expressions
 			value = null;
 
 			//尝试递归解析当前成员对应的所属数据
-			data = Recursive(data, member);
+			//data = Recursive(data, member);
 
 			if(data is IModel model)
 			{
