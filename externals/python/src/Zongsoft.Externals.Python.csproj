@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0.0</Version>
+		<Version>1.1.0.0</Version>
 		<Product>Zongsoft Python Library</Product>
 		<Description>This is a library about Python SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Python</RootNamespace>

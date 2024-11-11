@@ -44,7 +44,7 @@ namespace Zongsoft.Externals.Python;
 public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatchable<string>
 {
 	#region 常量定义
-	private const string NAME = "Scriban";
+	private const string NAME = "Python";
 	#endregion
 
 	#region 静态字段
