@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35122.118
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Externals.Lua", "src\Zongsoft.Externals.Lua.csproj", "{65F22AF7-15E6-473B-B63E-F42B824AEAAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Externals.Lua", "src\Zongsoft.Externals.Lua.csproj", "{65F22AF7-15E6-473B-B63E-F42B824AEAAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Externals.Lua.Tests", "test\Zongsoft.Externals.Lua.Tests.csproj", "{A2ADDF82-1430-4E98-AB9C-8BE92800D524}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{65F22AF7-15E6-473B-B63E-F42B824AEAAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65F22AF7-15E6-473B-B63E-F42B824AEAAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65F22AF7-15E6-473B-B63E-F42B824AEAAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2ADDF82-1430-4E98-AB9C-8BE92800D524}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2ADDF82-1430-4E98-AB9C-8BE92800D524}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2ADDF82-1430-4E98-AB9C-8BE92800D524}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2ADDF82-1430-4E98-AB9C-8BE92800D524}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,8 @@
 artifacts/Zongsoft.Externals.Lua.plugin
 lib/$(Framework)/Zongsoft.Externals.Lua.*
 
-nuget:Lua@1.7.3
+nuget:NLua@1.7.3
+nuget:KeraLua@1.4.1
+
+%NUGET_PACKAGES%/keralua/1.4.1/runtimes/$(platform)-$(architecture)/native/*
+%NUGET_PACKAGES%/keralua/1.4.1/runtimes/win-$(architecture)/native/*.dll      <platform:win,windows>
