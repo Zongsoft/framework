@@ -18,9 +18,9 @@ public class PythonExpressionEvaluatorTest
 		Assert.NotNull(result);
 		Assert.Equal(3, Zongsoft.Common.Convert.ConvertValue<int>(result));
 
-		result = evaluator.Evaluate("subtract(100, 10)", null);
+		result = evaluator.Evaluate("subtract(100, 20)", null);
 		Assert.NotNull(result);
-		Assert.Equal(90, Zongsoft.Common.Convert.ConvertValue<int>(result));
+		Assert.Equal(80, Zongsoft.Common.Convert.ConvertValue<int>(result));
 
 		var variables = new Dictionary<string, object>
 		{
@@ -36,6 +36,10 @@ public class PythonExpressionEvaluatorTest
 		result = evaluator.Evaluate("add(x, 10)", variables);
 		Assert.NotNull(result);
 		Assert.Equal(110, Zongsoft.Common.Convert.ConvertValue<int>(result));
+
+		result = evaluator.Evaluate("a=70; result=subtract(x, a);", variables);
+		Assert.True(variables.TryGetValue("result", out result));
+		Assert.Equal(30, Zongsoft.Common.Convert.ConvertValue<int>(result));
 	}
 
 	private static int Add(int a, int b) => a + b;
