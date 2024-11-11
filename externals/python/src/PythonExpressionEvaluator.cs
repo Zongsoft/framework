@@ -51,8 +51,12 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 	private static readonly Lazy<ScriptEngine> _engine = new(() => IronPython.Hosting.Python.CreateEngine());
 	#endregion
 
+	#region 构造函数
+	public PythonExpressionEvaluator() => this.Global = new Variables(_engine.Value.Runtime.Globals);
+	#endregion
+
 	#region 公共属性
-	public IDictionary<string, object> Global => new Variables(_engine.Value.Runtime.Globals);
+	public IDictionary<string, object> Global { get; }
 	#endregion
 
 	#region 公共方法
@@ -60,6 +64,12 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 	{
 		if(string.IsNullOrEmpty(expression))
 			return null;
+
+		if(variables == null || variables.Count == 0)
+			return _engine.Value.Execute(expression, _engine.Value.Runtime.Globals);
+
+		foreach(var variable in this.Global)
+			variables.TryAdd(variable.Key, variable.Value);
 
 		var engine = _engine.Value;
 		var scope = engine.CreateScope(variables);
@@ -103,8 +113,14 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 				_scope.RemoveVariable(name);
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => _scope.GetItems().GetEnumerator();
-		public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => this.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+		{
+			var items = _scope.GetItems();
+
+			foreach(var item in items)
+				yield return new(item.Key, item.Value);
+		}
 	}
 	#endregion
 }

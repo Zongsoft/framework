@@ -1,4 +1,5 @@
 artifacts/Zongsoft.Externals.Python.plugin
 lib/$(Framework)/Zongsoft.Externals.Python.*
 
+nuget:System.CodeDom
 nuget:IronPython@3.4.1
