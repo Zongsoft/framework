@@ -152,6 +152,8 @@ namespace Zongsoft.Web
 				.WithExposedHeaders(Http.Headers.Captcha, Http.Headers.Pagination)
 				.SetIsOriginAllowed(origin => true)));
 
+			services.AddLocalization();
+			services.AddRequestLocalization(options => options.ApplyCurrentCultureToResponseHeaders = true);
 			services.AddEndpointsApiExplorer();
 
 			services

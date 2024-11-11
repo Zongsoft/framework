@@ -60,6 +60,7 @@ namespace Zongsoft.Web
 				app.UseDeveloperExceptionPage();
 
 			app.UseCors();
+			app.UseRequestLocalization();
 			app.UseHttpMethodOverride();
 			app.UseRouting();
 			app.UseAuthentication();
@@ -106,6 +107,7 @@ namespace Zongsoft.Web
 						app.UseDeveloperExceptionPage();
 
 					app.UseCors();
+					app.UseRequestLocalization();
 					app.UseHttpMethodOverride();
 					app.UseRouting();
 					app.UseAuthentication();
