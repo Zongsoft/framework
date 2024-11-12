@@ -86,6 +86,9 @@ namespace Zongsoft.Web
 		[HttpPost("[action]")]
 		public virtual async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
 		{
+			if(file == null || file.Length == 0)
+				return this.BadRequest();
+
 			if(!this.CanImport)
 				return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
