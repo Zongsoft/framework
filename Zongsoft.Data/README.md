@@ -27,12 +27,12 @@ Its design philosophy is to represent the data structure relationship in a decla
 
 | **Deriver** | **Project Path** | **State** |
 | --- | --- | :---: |
-MySQL | [/drivers/mysql](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/mysql) | **Available** |
-SQL Server | [/drivers/mssql](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/mssql) | **Available** |
-PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/postgres) | _Unimplemented_ |
-Oracle | [/drivers/oracle](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/oracle) | _Unimplemented_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/influx) | **Planning** |
-Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Framework/Zongsoft.Data/tree/master/drivers/elastics) | **Planning** |
+MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
+SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
+PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
+SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/influx) | _Planning_ |
+TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > Tip: If you need unimplemented drivers or commercial technical support, please contact us.([zongsoft@qq.com](mailto:zongsoft@qq.com))。
 

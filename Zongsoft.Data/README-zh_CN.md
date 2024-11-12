@@ -27,12 +27,12 @@ README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Dat
 
 | **驱动程序** | **项目路径** | **状态** |
 | --- | --- | :---: |
-MySQL | [/drivers/mysql](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/mysql) | **可用** |
-SQL Server | [/drivers/mssql](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/mssql) | **可用** |
-PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/postgres) | _待实现_ |
-Oracle | [/drivers/oracle](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/oracle) | _待实现_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/influx) | **规划中** |
-Elasticsearch | [/drives/elastics](https://github.com/Zongsoft/Zongsoft.Data/tree/master/drivers/elastics) | **规划中** |
+MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
+SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
+PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
+SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/influx) | _Planning_ |
+TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > 提示：如果需要未实现的驱动或商业技术支持，请联系我们([zongsoft@qq.com](mailto:zongsoft@qq.com))。
 
