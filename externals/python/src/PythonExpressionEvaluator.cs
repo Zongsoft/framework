@@ -65,7 +65,7 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
-		if(variables == null || variables.Count == 0)
+		if(variables == null)
 			return _engine.Value.Execute(expression, _engine.Value.Runtime.Globals);
 
 		foreach(var variable in this.Global)
