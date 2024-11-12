@@ -173,14 +173,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套子类
-		internal class DictionaryEnumerator : IDictionaryEnumerator
+		internal class DictionaryEnumerator(IEnumerator<KeyValuePair<string, object>> iterator) : IDictionaryEnumerator
 		{
-			private IEnumerator<KeyValuePair<string, object>> _iterator;
-
-			public DictionaryEnumerator(IEnumerator<KeyValuePair<string, object>> iterator)
-			{
-				_iterator = iterator;
-			}
+			private readonly IEnumerator<KeyValuePair<string, object>> _iterator = iterator;
 
 			public DictionaryEntry Entry
 			{
@@ -200,25 +195,16 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	internal class ClassicDictionary : IDataDictionary
+	internal class ClassicDictionary(IDictionary dictionary) : IDataDictionary
 	{
 		#region 成员字段
-		private readonly IDictionary _dictionary;
-		#endregion
-
-		#region 构造函数
-		public ClassicDictionary(IDictionary dictionary)
-		{
-			_dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
-		}
+		private readonly IDictionary _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
 		#endregion
 
 		#region 公共属性
-		public object Data { get => _dictionary; }
-
-		public int Count { get => _dictionary.Count; }
-
-		public bool IsEmpty { get => _dictionary.Count == 0; }
+		public object Data => _dictionary;
+		public int Count => _dictionary.Count;
+		public bool IsEmpty => _dictionary.Count == 0;
 
 		public object this[string name]
 		{
@@ -238,11 +224,7 @@ namespace Zongsoft.Data
 			return model;
 		}
 
-		public bool Contains(string name)
-		{
-			return _dictionary.Contains(name);
-		}
-
+		public bool Contains(string name) => _dictionary.Contains(name);
 		public bool HasChanges(params string[] names)
 		{
 			if(names == null || names.Length == 0)
@@ -289,24 +271,11 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public object GetValue(string name)
-		{
-			return _dictionary[name];
-		}
+		public object GetValue(string name) => _dictionary[name];
+		public TValue GetValue<TValue>(string name, TValue defaultValue) => _dictionary.Contains(name) ?
+			Zongsoft.Common.Convert.ConvertValue<TValue>(_dictionary[name]) : defaultValue;
 
-		public TValue GetValue<TValue>(string name, TValue defaultValue)
-		{
-			if(_dictionary.Contains(name))
-				return Zongsoft.Common.Convert.ConvertValue<TValue>(_dictionary[name]);
-			else
-				return defaultValue;
-		}
-
-		public void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null)
-		{
-			this.SetValue<TValue>(name, () => value, predicate);
-		}
-
+		public void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null) => this.SetValue<TValue>(name, () => value, predicate);
 		public void SetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null)
 		{
 			if(valueFactory == null)
@@ -319,7 +288,7 @@ namespace Zongsoft.Data
 				if(_dictionary.Contains(name))
 					raw = _dictionary[name];
 
-				if(!predicate(raw == null ? default(TValue) : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
+				if(!predicate(raw == null ? default : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
 					return;
 			}
 
@@ -328,13 +297,32 @@ namespace Zongsoft.Data
 
 		public bool TryGetValue<TValue>(string name, out TValue value)
 		{
-			value = default(TValue);
-
 			if(_dictionary.Contains(name))
 			{
 				try
 				{
 					value = Common.Convert.ConvertValue<TValue>(_dictionary[name]);
+					return true;
+				}
+				catch
+				{
+					value = default;
+					return false;
+				}
+			}
+
+			value = default;
+			return false;
+		}
+
+		public bool TryGetValue<TValue>(string name, Action<TValue> got)
+		{
+			if(_dictionary.Contains(name))
+			{
+				try
+				{
+					var value = _dictionary[name];
+					got?.Invoke(Common.Convert.ConvertValue<TValue>(value));
 					return true;
 				}
 				catch
@@ -346,32 +334,8 @@ namespace Zongsoft.Data
 			return false;
 		}
 
-		public bool TryGetValue<TValue>(string name, Action<TValue> got)
-		{
-			object value;
-
-			if(_dictionary.Contains(name))
-			{
-				try
-				{
-					value = _dictionary[name];
-				}
-				catch
-				{
-					return false;
-				}
-
-				got?.Invoke(Common.Convert.ConvertValue<TValue>(value));
-				return true;
-			}
-
-			return false;
-		}
-
-		public bool TrySetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null)
-		{
-			return this.TrySetValue<TValue>(name, () => value, predicate);
-		}
+		public bool TrySetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null) =>
+			this.TrySetValue<TValue>(name, () => value, predicate);
 
 		public bool TrySetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null)
 		{
@@ -385,7 +349,7 @@ namespace Zongsoft.Data
 				if(_dictionary.Contains(name))
 					raw = _dictionary[name];
 
-				if(!predicate(raw == null ? default(TValue) : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
+				if(!predicate(raw == null ? default : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
 					return false;
 			}
 
@@ -395,107 +359,25 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 接口实现
-		bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-		{
-			get
-			{
-				return _dictionary.IsReadOnly;
-			}
-		}
-
-		ICollection IDictionary.Keys
-		{
-			get
-			{
-				return _dictionary.Keys;
-			}
-		}
-
-		ICollection IDictionary.Values
-		{
-			get
-			{
-				return _dictionary.Values;
-			}
-		}
-
-		bool IDictionary.IsReadOnly
-		{
-			get
-			{
-				return _dictionary.IsReadOnly;
-			}
-		}
-
-		bool IDictionary.IsFixedSize
-		{
-			get
-			{
-				return _dictionary.IsFixedSize;
-			}
-		}
-
-		int ICollection.Count
-		{
-			get
-			{
-				return _dictionary.Count;
-			}
-		}
-
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				return _dictionary.SyncRoot;
-			}
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return _dictionary.IsSynchronized;
-			}
-		}
-
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => _dictionary.IsReadOnly;
+		ICollection IDictionary.Keys => _dictionary.Keys;
+		ICollection IDictionary.Values => _dictionary.Values;
+		bool IDictionary.IsReadOnly => _dictionary.IsReadOnly;
+		bool IDictionary.IsFixedSize => _dictionary.IsFixedSize;
+		int ICollection.Count => _dictionary.Count;
+		object ICollection.SyncRoot => _dictionary.SyncRoot;
+		bool ICollection.IsSynchronized => _dictionary.IsSynchronized;
 		object IDictionary.this[object key]
 		{
-			get
-			{
-				return _dictionary[key];
-			}
-			set
-			{
-				_dictionary[key] = value;
-			}
+			get => _dictionary[key];
+			set => _dictionary[key] = value;
 		}
 
-		bool IDictionary.Contains(object key)
-		{
-			return _dictionary.Contains(key);
-		}
-
-		void IDictionary.Add(object key, object value)
-		{
-			_dictionary.Add(key, value);
-		}
-
-		void IDictionary.Clear()
-		{
-			_dictionary.Clear();
-		}
-
-		void IDictionary.Remove(object key)
-		{
-			_dictionary.Remove(key);
-		}
-
-		void ICollection.CopyTo(Array array, int arrayIndex)
-		{
-			_dictionary.CopyTo(array, arrayIndex);
-		}
-
+		bool IDictionary.Contains(object key) => _dictionary.Contains(key);
+		void IDictionary.Add(object key, object value) => _dictionary.Add(key, value);
+		void IDictionary.Clear() => _dictionary.Clear();
+		void IDictionary.Remove(object key) => _dictionary.Remove(key);
+		void ICollection.CopyTo(Array array, int arrayIndex) => _dictionary.CopyTo(array, arrayIndex);
 		ICollection<string> IDictionary<string, object>.Keys
 		{
 			get
@@ -526,16 +408,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDictionary<string, object>.ContainsKey(string key)
-		{
-			return _dictionary.Contains(key);
-		}
-
-		void IDictionary<string, object>.Add(string key, object value)
-		{
-			_dictionary.Add(key, value);
-		}
-
+		bool IDictionary<string, object>.ContainsKey(string key) => _dictionary.Contains(key);
+		void IDictionary<string, object>.Add(string key, object value) => _dictionary.Add(key, value);
 		bool IDictionary<string, object>.Remove(string key)
 		{
 			var existed = _dictionary.Contains(key);
@@ -563,20 +437,9 @@ namespace Zongsoft.Data
 			return false;
 		}
 
-		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
-		{
-			_dictionary.Add(item.Key, item.Value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Clear()
-		{
-			_dictionary.Clear();
-		}
-
-		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
-		{
-			return _dictionary.Contains(item.Key);
-		}
+		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => _dictionary.Add(item.Key, item.Value);
+		void ICollection<KeyValuePair<string, object>>.Clear() => _dictionary.Clear();
+		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => _dictionary.Contains(item.Key);
 
 		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
 		{
@@ -601,6 +464,8 @@ namespace Zongsoft.Data
 			return existed;
 		}
 
+		IDictionaryEnumerator IDictionary.GetEnumerator() => _dictionary.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
 			foreach(DictionaryEntry entry in _dictionary)
@@ -608,27 +473,11 @@ namespace Zongsoft.Data
 				yield return new KeyValuePair<string, object>(entry.Key?.ToString(), entry.Value);
 			}
 		}
-
-		IDictionaryEnumerator IDictionary.GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}
 		#endregion
 	}
 
-	internal class ClassicDictionary<T> : ClassicDictionary, IDataDictionary<T>
+	internal class ClassicDictionary<T>(IDictionary data) : ClassicDictionary(data), IDataDictionary<T>
 	{
-		#region 构造函数
-		public ClassicDictionary(IDictionary data) : base(data)
-		{
-		}
-		#endregion
-
 		#region 公共方法
 		public T AsModel() => base.AsModel<T>();
 
@@ -639,7 +488,7 @@ namespace Zongsoft.Data
 
 		public bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value)
 		{
-			value = default(TValue);
+			value = default;
 
 			if(this.Reset(Reflection.ExpressionUtility.GetMemberName(expression), out var result))
 			{
@@ -695,25 +544,16 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	internal class GenericDictionary : IDataDictionary
+	internal class GenericDictionary(IDictionary<string, object> dictionary) : IDataDictionary
 	{
 		#region 成员字段
-		private readonly IDictionary<string, object> _dictionary;
-		#endregion
-
-		#region 构造函数
-		public GenericDictionary(IDictionary<string, object> dictionary)
-		{
-			_dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
-		}
+		private readonly IDictionary<string, object> _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
 		#endregion
 
 		#region 公共属性
-		public object Data { get => _dictionary; }
-
-		public int Count { get => _dictionary.Count; }
-
-		public bool IsEmpty { get => _dictionary.Count == 0; }
+		public object Data => _dictionary;
+		public int Count => _dictionary.Count;
+		public bool IsEmpty => _dictionary.Count == 0;
 
 		public object this[string name]
 		{
@@ -803,7 +643,7 @@ namespace Zongsoft.Data
 			{
 				_dictionary.TryGetValue(name, out var raw);
 
-				if(!predicate(raw == null ? default(TValue) : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
+				if(!predicate(raw == null ? default : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
 					return;
 			}
 
@@ -818,7 +658,7 @@ namespace Zongsoft.Data
 				return true;
 			}
 
-			value = default(TValue);
+			value = default;
 			return false;
 		}
 
@@ -847,7 +687,7 @@ namespace Zongsoft.Data
 			{
 				_dictionary.TryGetValue(name, out var raw);
 
-				if(!predicate(raw == null ? default(TValue) : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
+				if(!predicate(raw == null ? default : (typeof(TValue).IsPrimitive ? (TValue)Convert.ChangeType(raw, typeof(TValue)) : (TValue)raw)))
 					return false;
 			}
 
@@ -857,69 +697,14 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 接口实现
-		bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-		{
-			get
-			{
-				return _dictionary.IsReadOnly;
-			}
-		}
-
-		ICollection IDictionary.Keys
-		{
-			get
-			{
-				return (ICollection)_dictionary.Keys;
-			}
-		}
-
-		ICollection IDictionary.Values
-		{
-			get
-			{
-				return (ICollection)_dictionary.Values;
-			}
-		}
-
-		bool IDictionary.IsReadOnly
-		{
-			get
-			{
-				return _dictionary.IsReadOnly;
-			}
-		}
-
-		bool IDictionary.IsFixedSize
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		int ICollection.Count
-		{
-			get
-			{
-				return _dictionary.Count;
-			}
-		}
-
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				return ((ICollection)_dictionary).SyncRoot;
-			}
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return false;
-			}
-		}
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => _dictionary.IsReadOnly;
+		ICollection IDictionary.Keys => (ICollection)_dictionary.Keys;
+		ICollection IDictionary.Values => (ICollection)_dictionary.Values;
+		bool IDictionary.IsReadOnly => _dictionary.IsReadOnly;
+		bool IDictionary.IsFixedSize => false;
+		int ICollection.Count => _dictionary.Count;
+		object ICollection.SyncRoot => ((ICollection)_dictionary).SyncRoot;
+		bool ICollection.IsSynchronized => false;
 
 		object IDictionary.this[object key]
 		{
@@ -939,13 +724,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDictionary.Contains(object key)
-		{
-			if(key == null)
-				throw new ArgumentNullException(nameof(key));
-
-			return _dictionary.ContainsKey(key.ToString());
-		}
+		bool IDictionary.Contains(object key) => key != null ? _dictionary.ContainsKey(key.ToString()) : throw new ArgumentNullException(nameof(key));
 
 		void IDictionary.Add(object key, object value)
 		{
@@ -955,11 +734,7 @@ namespace Zongsoft.Data
 			_dictionary.Add(key.ToString(), value);
 		}
 
-		void IDictionary.Clear()
-		{
-			_dictionary.Clear();
-		}
-
+		void IDictionary.Clear() =>_dictionary.Clear();
 		void IDictionary.Remove(object key)
 		{
 			if(key != null)
@@ -982,72 +757,20 @@ namespace Zongsoft.Data
 			}
 		}
 
-		ICollection<string> IDictionary<string, object>.Keys
-		{
-			get
-			{
-				return _dictionary.Keys;
-			}
-		}
+		ICollection<string> IDictionary<string, object>.Keys => _dictionary.Keys;
+		ICollection<object> IDictionary<string, object>.Values => _dictionary.Values;
+		bool IDictionary<string, object>.ContainsKey(string key) => _dictionary.ContainsKey(key);
+		void IDictionary<string, object>.Add(string key, object value) =>_dictionary.Add(key, value);
+		bool IDictionary<string, object>.Remove(string key) => _dictionary.Remove(key);
+		bool IDictionary<string, object>.TryGetValue(string key, out object value) => _dictionary.TryGetValue(key, out value);
+		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => _dictionary.Add(item.Key, item.Value);
+		void ICollection<KeyValuePair<string, object>>.Clear() => _dictionary.Clear();
+		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => _dictionary.ContainsKey(item.Key);
+		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => _dictionary.CopyTo(array, arrayIndex);
+		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => _dictionary.Remove(item.Key);
 
-		ICollection<object> IDictionary<string, object>.Values
-		{
-			get
-			{
-				return _dictionary.Values;
-			}
-		}
-
-		bool IDictionary<string, object>.ContainsKey(string key)
-		{
-			return _dictionary.ContainsKey(key);
-		}
-
-		void IDictionary<string, object>.Add(string key, object value)
-		{
-			_dictionary.Add(key, value);
-		}
-
-		bool IDictionary<string, object>.Remove(string key)
-		{
-			return _dictionary.Remove(key);
-		}
-
-		bool IDictionary<string, object>.TryGetValue(string key, out object value)
-		{
-			return _dictionary.TryGetValue(key, out value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
-		{
-			_dictionary.Add(item.Key, item.Value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Clear()
-		{
-			_dictionary.Clear();
-		}
-
-		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
-		{
-			return _dictionary.ContainsKey(item.Key);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
-		{
-			_dictionary.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
-		{
-			return _dictionary.Remove(item.Key);
-		}
-
-		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}
-
+		IEnumerator IEnumerable.GetEnumerator() => _dictionary.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => _dictionary.GetEnumerator();
 		IDictionaryEnumerator IDictionary.GetEnumerator()
 		{
 			var iterator = _dictionary.GetEnumerator();
@@ -1057,22 +780,11 @@ namespace Zongsoft.Data
 			else
 				return new DataDictionary.DictionaryEnumerator(iterator);
 		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}
 		#endregion
 	}
 
-	internal class GenericDictionary<T> : GenericDictionary, IDataDictionary<T>
+	internal class GenericDictionary<T>(IDictionary<string, object> data) : GenericDictionary(data), IDataDictionary<T>
 	{
-		#region 构造函数
-		public GenericDictionary(IDictionary<string, object> data) : base(data)
-		{
-		}
-		#endregion
-
 		#region 公共方法
 		public T AsModel() => base.AsModel<T>();
 
@@ -1083,14 +795,13 @@ namespace Zongsoft.Data
 
 		public bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value)
 		{
-			value = default(TValue);
-
 			if(this.Reset(Reflection.ExpressionUtility.GetMemberName(expression), out var result))
 			{
 				value = (TValue)result;
 				return true;
 			}
 
+			value = default;
 			return false;
 		}
 
@@ -1143,7 +854,7 @@ namespace Zongsoft.Data
 	{
 		#region 成员字段
 		private object _data;
-		private readonly IDictionary<string, MemberInfo> _members;
+		private readonly Dictionary<string, MemberInfo> _members;
 		#endregion
 
 		#region 构造函数
@@ -1168,11 +879,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public object Data { get => _data; }
-
-		public int Count { get => _members.Count; }
-
-		public bool IsEmpty { get => _members.Count == 0; }
+		public object Data => _data;
+		public int Count => _members.Count;
+		public bool IsEmpty => _members.Count == 0;
 
 		public object this[string key]
 		{
@@ -1180,23 +889,16 @@ namespace Zongsoft.Data
 			set => this.SetValue(key, value);
 		}
 
-		public ICollection<string> Keys { get => _members.Keys; }
-
-		public ICollection<object> Values
+		public ICollection<string> Keys => _members.Keys;
+		public ICollection<object> Values => _members.Values.Select(member =>
 		{
-			get
+			return member.MemberType switch
 			{
-				return _members.Values.Select(member =>
-				{
-					return member.MemberType switch
-					{
-						MemberTypes.Field => ((FieldInfo)member).GetGetter().Invoke(ref _data),
-						MemberTypes.Property => ((PropertyInfo)member).GetGetter().Invoke(ref _data),
-						_ => null,
-					};
-				}).ToArray();
-			}
-		}
+				MemberTypes.Field => ((FieldInfo)member).GetGetter().Invoke(ref _data),
+				MemberTypes.Property => ((PropertyInfo)member).GetGetter().Invoke(ref _data),
+				_ => null,
+			};
+		}).ToArray();
 		#endregion
 
 		#region 公共方法
@@ -1232,21 +934,9 @@ namespace Zongsoft.Data
 			return false;
 		}
 
-		public bool Reset(string name, out object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void Reset(params string[] names)
-		{
-			throw new NotImplementedException();
-		}
-
-		public object GetValue(string name)
-		{
-			return _members[name].GetValue(ref _data);
-		}
-
+		public bool Reset(string name, out object value) => throw new NotImplementedException();
+		public void Reset(params string[] names) => throw new NotImplementedException();
+		public object GetValue(string name) => _members[name].GetValue(ref _data);
 		public TValue GetValue<TValue>(string name, TValue defaultValue)
 		{
 			if(_members.TryGetValue(name, out var member))
@@ -1255,11 +945,7 @@ namespace Zongsoft.Data
 			return defaultValue;
 		}
 
-		public void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null)
-		{
-			this.SetValue<TValue>(name, () => value, predicate);
-		}
-
+		public void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null) => this.SetValue<TValue>(name, () => value, predicate);
 		public void SetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null)
 		{
 			if(valueFactory == null)
@@ -1277,7 +963,7 @@ namespace Zongsoft.Data
 			if(_members.TryGetValue(name, out var member))
 				return Common.Convert.TryConvertValue<TValue>(member.GetValue(ref _data), out value);
 
-			value = default(TValue);
+			value = default;
 			return false;
 		}
 
@@ -1316,62 +1002,22 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 接口实现
-		bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-		{
-			get => false;
-		}
-
-		ICollection IDictionary.Keys
-		{
-			get => (ICollection)this.Keys;
-		}
-
-		ICollection IDictionary.Values
-		{
-			get => (ICollection)this.Values;
-		}
-
-		bool IDictionary.IsReadOnly
-		{
-			get => false;
-		}
-
-		bool IDictionary.IsFixedSize
-		{
-			get => false;
-		}
-
-		int ICollection.Count
-		{
-			get => this.Count;
-		}
-
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+		ICollection IDictionary.Keys => (ICollection)this.Keys;
+		ICollection IDictionary.Values => (ICollection)this.Values;
+		bool IDictionary.IsReadOnly => false;
+		bool IDictionary.IsFixedSize => false;
+		int ICollection.Count => this.Count;
 		private readonly object _syncRoot = new object();
-
-		object ICollection.SyncRoot
-		{
-			get => _syncRoot;
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get => false;
-		}
-
+		object ICollection.SyncRoot => _syncRoot;
+		bool ICollection.IsSynchronized => false;
 		object IDictionary.this[object key]
 		{
 			get => key == null ? null : this[key.ToString()];
 			set => this[key.ToString()] = value ?? throw new ArgumentNullException(nameof(key));
 		}
 
-		bool IDictionary.Contains(object key)
-		{
-			if(key == null)
-				return false;
-
-			return this.Contains(key.ToString());
-		}
-
+		bool IDictionary.Contains(object key) => key != null && this.Contains(key.ToString());
 		void IDictionary.Add(object key, object value)
 		{
 			if(key == null)
@@ -1380,11 +1026,7 @@ namespace Zongsoft.Data
 			this.SetValue(key.ToString(), value);
 		}
 
-		void IDictionary.Clear()
-		{
-			this.Reset();
-		}
-
+		void IDictionary.Clear() => this.Reset();
 		void IDictionary.Remove(object key)
 		{
 			if(key != null)
@@ -1407,46 +1049,13 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDictionary<string, object>.ContainsKey(string key)
-		{
-			return this.Contains(key);
-		}
-
-		void IDictionary<string, object>.Add(string key, object value)
-		{
-			this.SetValue(key, value);
-		}
-
-		bool IDictionary<string, object>.Remove(string key)
-		{
-			if(key != null)
-				return this.Reset(key, out _);
-
-			return false;
-		}
-
-		bool IDictionary<string, object>.TryGetValue(string key, out object value)
-		{
-			return this.TryGetValue(key, out value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
-		{
-			this.SetValue(item.Key, item.Value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Clear()
-		{
-			this.Reset();
-		}
-
-		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
-		{
-			if(item.Key == null)
-				return false;
-
-			return this.Contains(item.Key);
-		}
+		bool IDictionary<string, object>.ContainsKey(string key) => this.Contains(key);
+		void IDictionary<string, object>.Add(string key, object value) => this.SetValue(key, value);
+		bool IDictionary<string, object>.Remove(string key) => key != null && this.Reset(key, out _);
+		bool IDictionary<string, object>.TryGetValue(string key, out object value) => this.TryGetValue(key, out value);
+		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => this.SetValue(item.Key, item.Value);
+		void ICollection<KeyValuePair<string, object>>.Clear() => this.Reset();
+		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => item.Key != null && this.Contains(item.Key);
 
 		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
 		{
@@ -1464,14 +1073,9 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
-		{
-			if(item.Key == null)
-				return false;
+		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => item.Key != null && this.Reset(item.Key, out _);
 
-			return this.Reset(item.Key, out _);
-		}
-
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
 			foreach(var key in _members.Keys)
@@ -1489,40 +1093,24 @@ namespace Zongsoft.Data
 			else
 				return new DataDictionary.DictionaryEnumerator(iterator);
 		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
-		}
 		#endregion
 	}
 
-	internal class ObjectDictionary<T> : ObjectDictionary, IDataDictionary<T>
+	internal class ObjectDictionary<T>(object data) : ObjectDictionary(data), IDataDictionary<T>
 	{
-		#region 构造函数
-		public ObjectDictionary(object data) : base(data)
-		{
-		}
-		#endregion
-
 		#region 公共方法
 		public T AsModel() => (T)this.Data;
 
-		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
-		{
-			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
-		}
-
+		public bool Contains<TMember>(Expression<Func<T, TMember>> expression) => this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
 		public bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value)
 		{
-			value = default(TValue);
-
 			if(this.Reset(Reflection.ExpressionUtility.GetMemberName(expression), out var result))
 			{
 				value = (TValue)result;
 				return true;
 			}
 
+			value = default;
 			return false;
 		}
 
@@ -1571,29 +1159,20 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	internal class ModelDictionary : IDataDictionary
+	internal class ModelDictionary(IModel model) : IDataDictionary
 	{
 		#region 私有常量
 		private const string KEYNOTFOUND_EXCEPTION_MESSAGE = "The specified '{0}' key does not exist in the model dictionary.";
 		#endregion
 
 		#region 成员字段
-		private readonly IModel _model;
-		#endregion
-
-		#region 构造函数
-		public ModelDictionary(IModel model)
-		{
-			_model = model ?? throw new ArgumentNullException(nameof(model));
-		}
+		private readonly IModel _model = model ?? throw new ArgumentNullException(nameof(model));
 		#endregion
 
 		#region 公共属性
-		public object Data { get => _model; }
-
-		public int Count { get => _model.GetCount(); }
-
-		public bool IsEmpty { get => !_model.HasChanges(); }
+		public object Data => _model;
+		public int Count => _model.GetCount();
+		public bool IsEmpty => !_model.HasChanges();
 
 		public object this[string key]
 		{
@@ -1601,15 +1180,8 @@ namespace Zongsoft.Data
 			set => this.SetValue(key, value);
 		}
 
-		public ICollection<string> Keys
-		{
-			get => _model.GetChanges().Keys;
-		}
-
-		public ICollection<object> Values
-		{
-			get => _model.GetChanges().Values;
-		}
+		public ICollection<string> Keys => _model.GetChanges().Keys;
+		public ICollection<object> Values => _model.GetChanges().Values;
 		#endregion
 
 		#region 公共方法
@@ -1732,78 +1304,18 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 接口实现
-		bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		ICollection IDictionary.Keys
-		{
-			get
-			{
-				return (ICollection)this.Keys;
-			}
-		}
-
-		ICollection IDictionary.Values
-		{
-			get
-			{
-				return (ICollection)this.Values;
-			}
-		}
-
-		bool IDictionary.IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		bool IDictionary.IsFixedSize
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		int ICollection.Count
-		{
-			get
-			{
-				return _model.GetCount();
-			}
-		}
-
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+		ICollection IDictionary.Keys => (ICollection)this.Keys;
+		ICollection IDictionary.Values => (ICollection)this.Values;
+		bool IDictionary.IsReadOnly => false;
+		bool IDictionary.IsFixedSize => false;
+		int ICollection.Count => _model.GetCount();
 		private readonly object _syncRoot = new object();
-
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				return _syncRoot;
-			}
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return false;
-			}
-		}
-
+		object ICollection.SyncRoot => _syncRoot;
+		bool ICollection.IsSynchronized => false;
 		object IDictionary.this[object key]
 		{
-			get
-			{
-				return key == null ? null : this[key.ToString()];
-			}
+			get => key == null ? null : this[key.ToString()];
 			set
 			{
 				if(key == null)
@@ -1813,14 +1325,7 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDictionary.Contains(object key)
-		{
-			if(key == null)
-				return false;
-
-			return this.Contains(key.ToString());
-		}
-
+		bool IDictionary.Contains(object key) => key != null && this.Contains(key.ToString());
 		void IDictionary.Add(object key, object value)
 		{
 			if(key == null)
@@ -1829,11 +1334,7 @@ namespace Zongsoft.Data
 			this.SetValue(key.ToString(), value);
 		}
 
-		void IDictionary.Clear()
-		{
-			_model.Reset();
-		}
-
+		void IDictionary.Clear() => _model.Reset();
 		void IDictionary.Remove(object key)
 		{
 			if(key == null)
@@ -1858,43 +1359,13 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool IDictionary<string, object>.ContainsKey(string key)
-		{
-			return _model.HasChanges(key);
-		}
-
-		void IDictionary<string, object>.Add(string key, object value)
-		{
-			this.SetValue(key, value);
-		}
-
-		bool IDictionary<string, object>.Remove(string key)
-		{
-			return _model.Reset(key, out _);
-		}
-
-		bool IDictionary<string, object>.TryGetValue(string key, out object value)
-		{
-			return _model.TryGetValue(key, out value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
-		{
-			this.SetValue(item.Key, item.Value);
-		}
-
-		void ICollection<KeyValuePair<string, object>>.Clear()
-		{
-			_model.Reset();
-		}
-
-		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
-		{
-			if(item.Key == null)
-				return false;
-
-			return _model.HasChanges(item.Key);
-		}
+		bool IDictionary<string, object>.ContainsKey(string key) => _model.HasChanges(key);
+		void IDictionary<string, object>.Add(string key, object value) => this.SetValue(key, value);
+		bool IDictionary<string, object>.Remove(string key) => _model.Reset(key, out _);
+		bool IDictionary<string, object>.TryGetValue(string key, out object value) => _model.TryGetValue(key, out value);
+		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => this.SetValue(item.Key, item.Value);
+		void ICollection<KeyValuePair<string, object>>.Clear() => _model.Reset();
+		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => item.Key != null && _model.HasChanges(item.Key);
 
 		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
 		{
@@ -1912,11 +1383,9 @@ namespace Zongsoft.Data
 			}
 		}
 
-		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
-		{
-			return _model.Reset(item.Key, out _);
-		}
+		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => _model.Reset(item.Key, out _);
 
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
 			var items = _model.GetChanges();
@@ -1936,40 +1405,24 @@ namespace Zongsoft.Data
 			else
 				return new DataDictionary.DictionaryEnumerator(iterator);
 		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
-		}
 		#endregion
 	}
 
-	internal class ModelDictionary<T> : ModelDictionary, IDataDictionary<T>
+	internal class ModelDictionary<T>(IModel model) : ModelDictionary(model), IDataDictionary<T>
 	{
-		#region 构造函数
-		public ModelDictionary(IModel model) : base(model)
-		{
-		}
-		#endregion
-
 		#region 公共方法
 		public T AsModel() => (T)this.Data;
 
-		public bool Contains<TMember>(Expression<Func<T, TMember>> expression)
-		{
-			return this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
-		}
-
+		public bool Contains<TMember>(Expression<Func<T, TMember>> expression) => this.Contains(Reflection.ExpressionUtility.GetMemberName(expression));
 		public bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value)
 		{
-			value = default(TValue);
-
 			if(this.Reset(Reflection.ExpressionUtility.GetMemberName(expression), out var result))
 			{
 				value = (TValue)result;
 				return true;
 			}
 
+			value = default;
 			return false;
 		}
 
