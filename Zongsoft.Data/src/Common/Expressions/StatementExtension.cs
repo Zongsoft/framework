@@ -86,7 +86,7 @@ namespace Zongsoft.Data.Common.Expressions
 			value = null;
 
 			//尝试递归解析当前成员对应的所属数据
-			//data = Recursive(data, member);
+			data = Recursive(data, member);
 
 			if(data is IModel model)
 			{
@@ -129,10 +129,16 @@ namespace Zongsoft.Data.Common.Expressions
 				while(stack.Count > 0)
 				{
 					member = stack.Pop();
-					data = member.Token.GetValue(data);
 
-					if(data == null)
-						return null;
+					if(member.Token.TryGetValue(data, null, out var value))
+					{
+						if(value == null)
+							return null;
+
+						data = value;
+					}
+					else
+						return data;
 				}
 
 				return data;

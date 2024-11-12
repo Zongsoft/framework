@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
@@ -54,7 +55,18 @@ namespace Zongsoft.Data.Common.Expressions
 		#region 构建方法
 		public IEnumerable<IStatementBase> Build(DataUpdateContext context)
 		{
-			var statement = new UpdateStatement(context.Entity);
+			if(context.IsMultiple)
+			{
+				foreach(var item in (IEnumerable)context.Data)
+					yield return this.Build(context, item);
+			}
+			else
+				yield return this.Build(context, context.Data);
+		}
+
+		private UpdateStatement Build(DataUpdateContext context, object data)
+		{
+			var statement = this.CreateStatement(context);
 
 			//获取要更新的数据模式（模式不为空）
 			if(!context.Schema.IsEmpty)
@@ -62,7 +74,7 @@ namespace Zongsoft.Data.Common.Expressions
 				//依次生成各个数据成员的关联（包括它的子元素集）
 				foreach(var member in context.Schema.Members)
 				{
-					this.BuildSchema(context, statement, statement.Table, context.Data, member);
+					this.BuildSchema(context, statement, statement.Table, data, member);
 				}
 			}
 
@@ -122,7 +134,7 @@ namespace Zongsoft.Data.Common.Expressions
 				}
 			}
 
-			yield return statement;
+			return statement;
 		}
 		#endregion
 
@@ -202,10 +214,14 @@ namespace Zongsoft.Data.Common.Expressions
 				return;
 
 			var table = this.Join(context.Aliaser, statement, member);
+			var container = member.Token.GetValue(data);
 
 			foreach(var child in member.Children)
 			{
-				BuildSchema(context, statement, table, member.Token.GetValue(data), child);
+				if(container is IModel model && !model.HasChanges(child.Name))
+					continue;
+
+				BuildSchema(context, statement, table, container, child);
 			}
 		}
 
@@ -311,6 +327,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 			return statement.Where(context.Validate(), context.Aliaser);
 		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual UpdateStatement CreateStatement(DataUpdateContext context) => new(context.Entity);
 		#endregion
 
 		#region 嵌套子类
