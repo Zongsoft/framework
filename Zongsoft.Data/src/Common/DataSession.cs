@@ -329,6 +329,13 @@ namespace Zongsoft.Data.Common
 
 		internal bool PrepareReader(IDbCommand command)
 		{
+			//如果当前会话已经完成，则数据读取器应构建独属的连接
+			if(this.IsCompleted)
+			{
+				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+				return false;
+			}
+
 			//递减“待执行”的数据读取器数量
 			Interlocked.Decrement(ref _pending);
 			//递增“执行中”的数据读取器数量
@@ -641,7 +648,7 @@ namespace Zongsoft.Data.Common
 					this.EnsureConnect();
 
 					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
-					return new SessionReader(_session, _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection), _command.Connection);
+					return new SessionReader(_session, _command.ExecuteReader(behavior | CommandBehavior.CloseConnection), _command.Connection);
 				}
 			}
 
@@ -662,7 +669,7 @@ namespace Zongsoft.Data.Common
 					await this.EnsureConnectAsync(cancellation);
 
 					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
-					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation), _command.Connection);
+					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior | CommandBehavior.CloseConnection, cancellation), _command.Connection);
 				}
 			}
 			#endregion
