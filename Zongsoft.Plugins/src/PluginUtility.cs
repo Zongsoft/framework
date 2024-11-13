@@ -249,6 +249,12 @@ namespace Zongsoft.Plugins
 			{
 				target = BuildType(type, (Type parameterType, string parameterName, out object parameterValue) =>
 				{
+					if(parameterType == typeof(Assembly))
+					{
+						parameterValue = GetPluginAssembly(builtin.Plugin);
+						return parameterValue != null;
+					}
+
 					if(parameterType == typeof(Builtin))
 					{
 						parameterValue = builtin;
@@ -364,6 +370,12 @@ namespace Zongsoft.Plugins
 		#region 参数回调
 		internal static bool ObtainParameter(Plugin plugin, Type parameterType, string parameterName, out object parameterValue)
 		{
+			if(parameterType == typeof(Assembly))
+			{
+				parameterValue = GetPluginAssembly(plugin);
+				return parameterValue != null;
+			}
+
 			if(parameterType == typeof(Plugin))
 			{
 				parameterValue = plugin;
@@ -394,6 +406,23 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 其他方法
+		internal static Assembly GetPluginAssembly(Plugin plugin)
+		{
+			if(plugin == null)
+				return null;
+
+			if(plugin.Manifest.Assemblies.Count == 0)
+				return GetPluginAssembly(plugin.Parent);
+
+			foreach(var assembly in plugin.Manifest.Assemblies)
+			{
+				if(string.Equals(plugin.Name, assembly.GetName().Name, StringComparison.OrdinalIgnoreCase))
+					return assembly;
+			}
+
+			return plugin.Manifest.Assemblies[0];
+		}
+
 		internal static IApplicationModule FindApplicationModule(Builtin builtin)
 		{
 			if(builtin == null || builtin.Node == null || builtin.Node.Parent == null)

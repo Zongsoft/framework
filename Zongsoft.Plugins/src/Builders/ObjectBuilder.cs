@@ -32,7 +32,8 @@ using System.Linq;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
+
+using Zongsoft.Reflection;
 
 namespace Zongsoft.Plugins.Builders
 {
@@ -143,13 +144,17 @@ namespace Zongsoft.Plugins.Builders
 			//第四步：尝试容器是否实现传统的非泛型列表接口
 			if(container is IList list && !list.IsReadOnly)
 			{
-				list.Add(child);
-				return true;
+				try
+				{
+					list.Add(child);
+					return true;
+				}
+				catch { }
 			}
 
 			//第五步：尝试获取容器对象的默认属性，如果获取成功则以其默认属性作为容器
-			var defaultMember = GetDefaultMemberName(container.GetType());
-			if(defaultMember != null && defaultMember.Length > 0 && this.Append(Reflection.Reflector.GetValue(ref container, defaultMember), child, key))
+			var defaultMemberValue = GetDefaultMemberValue(ref container);
+			if(defaultMemberValue != null && this.Append(defaultMemberValue, child, key))
 				return true;
 
 			//第六步：尝试使用容器中的特定(Add/Register)方法进行追加操作
@@ -165,7 +170,7 @@ namespace Zongsoft.Plugins.Builders
 				{
 					if(parameters[0].ParameterType == typeof(string) && parameters[1].ParameterType.IsAssignableFrom(child.GetType()))
 					{
-						method.Invoke(container, new object[] { key, child });
+						method.Invoke(container, [key, child]);
 						return true;
 					}
 				}
@@ -173,7 +178,7 @@ namespace Zongsoft.Plugins.Builders
 				{
 					if(parameters[0].ParameterType.IsAssignableFrom(child.GetType()))
 					{
-						method.Invoke(container, new object[] { child });
+						method.Invoke(container, [child]);
 						return true;
 					}
 				}
@@ -181,6 +186,28 @@ namespace Zongsoft.Plugins.Builders
 
 			//上述所有步骤均未完成则返回失败
 			return false;
+		}
+
+		private static object GetDefaultMemberValue(ref object target)
+		{
+			if(target == null)
+				return null;
+
+			var member = GetDefaultMember(target.GetType());
+			if(member == null || (member.IsProperty(out var property) && property.IsIndexer()))
+				return null;
+
+			return Reflector.GetValue(member, ref target);
+		}
+
+		private static MemberInfo GetDefaultMember(Type type)
+		{
+			var name = GetDefaultMemberName(type);
+			if(string.IsNullOrEmpty(name))
+				return null;
+
+			var members = type.GetMember(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+			return members != null && members.Length > 0 ? members[0] : null;
 		}
 
 		private static string GetDefaultMemberName(Type type)
@@ -279,11 +306,11 @@ namespace Zongsoft.Plugins.Builders
 			if(contractType.IsAssignableFrom(instanceType))
 				return true;
 
-			var converter = TypeDescriptor.GetConverter(instanceType);
+			var converter = System.ComponentModel.TypeDescriptor.GetConverter(instanceType);
 			if(converter != null && converter.CanConvertTo(contractType))
 				return true;
 
-			converter = TypeDescriptor.GetConverter(contractType);
+			converter = System.ComponentModel.TypeDescriptor.GetConverter(contractType);
 			if(converter != null && converter.CanConvertFrom(instanceType))
 				return true;
 
