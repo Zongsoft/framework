@@ -50,6 +50,19 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 公共方法
+		public static bool IsProperty(this MemberInfo member, out PropertyInfo property)
+		{
+			if(member != null && member.MemberType == MemberTypes.Property)
+			{
+				property = (PropertyInfo)member;
+				return true;
+			}
+
+			property = null;
+			return false;
+		}
+
+		public static bool IsIndexer(this PropertyInfo property) => property != null && property.GetIndexParameters().Length > 0;
 
 		#region 通用目标
 		public static Getter GetGetter(this PropertyInfo property)

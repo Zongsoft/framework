@@ -50,6 +50,17 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 公共方法
+		public static bool IsField(this MemberInfo member, out FieldInfo field)
+		{
+			if(member != null && member.MemberType == MemberTypes.Field)
+			{
+				field = (FieldInfo)member;
+				return true;
+			}
+
+			field = null;
+			return false;
+		}
 
 		#region 通用目标
 		public static Getter GetGetter(this FieldInfo field)
