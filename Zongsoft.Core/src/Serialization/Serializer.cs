@@ -97,36 +97,36 @@ namespace Zongsoft.Serialization
 			public object Deserialize(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null) => JsonSerializer.Deserialize(buffer, type, options.ToOptions());
 			public T Deserialize<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null) => JsonSerializer.Deserialize<T>(buffer, options.ToOptions());
 
-			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
-				JsonSerializer.DeserializeAsync(stream, type, options.ToOptions(), cancellationToken);
-			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
-				JsonSerializer.DeserializeAsync<T>(stream, options.ToOptions(), cancellationToken);
+			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options = null, CancellationToken cancellation = default) => throw new NotImplementedException();
+			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options = null, CancellationToken cancellation = default) =>
+				JsonSerializer.DeserializeAsync(stream, type, options.ToOptions(), cancellation);
+			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options = null, CancellationToken cancellation = default) =>
+				JsonSerializer.DeserializeAsync<T>(stream, options.ToOptions(), cancellation);
 
-			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
-				JsonSerializer.DeserializeAsync(new MemoryStream(buffer.ToArray()), type, options.ToOptions(), cancellationToken);
-			public ValueTask<T> DeserializeAsync<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellationToken = default) =>
-				JsonSerializer.DeserializeAsync<T>(new MemoryStream(buffer.ToArray()), options.ToOptions(), cancellationToken);
+			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellation = default) => throw new NotImplementedException();
+			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, Type type, SerializationOptions options = null, CancellationToken cancellation = default) =>
+				JsonSerializer.DeserializeAsync(new MemoryStream(buffer.ToArray()), type, options.ToOptions(), cancellation);
+			public ValueTask<T> DeserializeAsync<T>(ReadOnlySpan<byte> buffer, SerializationOptions options = null, CancellationToken cancellation = default) =>
+				JsonSerializer.DeserializeAsync<T>(new MemoryStream(buffer.ToArray()), options.ToOptions(), cancellation);
 
 			public object Deserialize(string text, TextSerializationOptions options = null) => throw new NotImplementedException();
 			public object Deserialize(string text, Type type, TextSerializationOptions options = null) => JsonSerializer.Deserialize(text, type, options.ToOptions());
 			public T Deserialize<T>(string text, TextSerializationOptions options = null) => JsonSerializer.Deserialize<T>(text, options.ToOptions());
-			public ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+			public ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellation = default) => throw new NotImplementedException();
 
-			public ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
+			public ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellation = default)
 			{
 				using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
 				{
-					return JsonSerializer.DeserializeAsync(stream, type, options.ToOptions(), cancellationToken);
+					return JsonSerializer.DeserializeAsync(stream, type, options.ToOptions(), cancellation);
 				}
 			}
 
-			public ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
+			public ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options = null, CancellationToken cancellation = default)
 			{
 				using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
 				{
-					return JsonSerializer.DeserializeAsync<T>(stream, options.ToOptions(), cancellationToken);
+					return JsonSerializer.DeserializeAsync<T>(stream, options.ToOptions(), cancellation);
 				}
 			}
 			#endregion
@@ -145,7 +145,7 @@ namespace Zongsoft.Serialization
 
 			public string Serialize(object graph, TextSerializationOptions options = null) => graph == null ? null : JsonSerializer.Serialize(graph, options.ToOptions());
 
-			public ValueTask SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellationToken = default)
+			public ValueTask SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellation = default)
 			{
 				if(graph == null)
 					return ValueTask.CompletedTask;
@@ -153,17 +153,17 @@ namespace Zongsoft.Serialization
 				if(stream == null)
 					throw new ArgumentNullException(nameof(stream));
 
-				return new ValueTask(JsonSerializer.SerializeAsync(stream, graph, type, options.ToOptions(), cancellationToken));
+				return new ValueTask(JsonSerializer.SerializeAsync(stream, graph, type, options.ToOptions(), cancellation));
 			}
 
-			public async ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellationToken = default)
+			public async ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellation = default)
 			{
 				if(graph == null)
 					return null;
 
 				using(var stream = new MemoryStream())
 				{
-					await JsonSerializer.SerializeAsync(stream, graph, options.ToOptions(), cancellationToken);
+					await JsonSerializer.SerializeAsync(stream, graph, options.ToOptions(), cancellation);
 
 					if(stream.CanSeek)
 						stream.Position = 0;
