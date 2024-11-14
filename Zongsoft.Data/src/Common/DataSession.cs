@@ -50,12 +50,9 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 私有变量
-		private readonly bool ShareConnectionSupported;
 		private readonly bool TransactionSupported;
-		#endregion
+		private readonly bool ShareConnectionSupported;
 
-		#region 私有变量
-		private volatile int _pending;    //表示当前会话等待打开的数据读取器的数量
 		private volatile int _reading;    //表示当前会话已经打开的数据读取器的数量
 		private volatile int _completion; //表示当前会话是否已经结束(提交或回滚)的标记
 		private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
@@ -102,8 +99,8 @@ namespace Zongsoft.Data.Common
 		/// <summary>获取一个值，指示当前会话是否已经完成(提交或回滚)。</summary>
 		public bool IsCompleted => _completion != COMPLETION_NONE;
 
-		/// <summary>获取一个值，指示当前会话是否还有“待执行”的数据读取命令或“执行中”的数据读取操作。</summary>
-		public bool HasPending => _pending > 0 || _reading > 0;
+		/// <summary>获取一个值，指示当前会话是否还有“读取中或待读取”的读取器。</summary>
+		public bool IsReading => _reading > 0;
 		#endregion
 
 		#region 公共方法
@@ -113,9 +110,6 @@ namespace Zongsoft.Data.Common
 		/// <returns>返回创建的数据命令对象。</returns>
 		public DbCommand Build(IDataAccessContextBase context, Expressions.IStatementBase statement)
 		{
-			if(statement is Expressions.SelectStatementBase)
-				Interlocked.Increment(ref _pending);
-
 			return new SessionCommand(this, _source.Driver.CreateCommand(context, statement));
 		}
 
@@ -221,7 +215,7 @@ namespace Zongsoft.Data.Common
 			try
 			{
 				//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-				if(this.HasPending)
+				if(this.IsReading)
 					return true;
 
 				//执行事务提交和释放资源
@@ -256,7 +250,7 @@ namespace Zongsoft.Data.Common
 			try
 			{
 				//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-				if(this.HasPending)
+				if(this.IsReading)
 					return true;
 
 				//执行事务提交和释放资源
@@ -290,7 +284,7 @@ namespace Zongsoft.Data.Common
 						if(_connection == null)
 						{
 							_connection = _source.Driver.CreateConnection(_source.ConnectionString);
-							_connection.StateChange += Connection_StateChange;
+							_connection.StateChange += this.Connection_StateChange;
 
 							command.Connection = _connection;
 
@@ -336,8 +330,6 @@ namespace Zongsoft.Data.Common
 				return false;
 			}
 
-			//递减“待执行”的数据读取器数量
-			Interlocked.Decrement(ref _pending);
 			//递增“执行中”的数据读取器数量
 			var reading = Interlocked.Increment(ref _reading);
 
@@ -363,20 +355,20 @@ namespace Zongsoft.Data.Common
 		internal void ReleaseReader()
 		{
 			//递减“执行中”的数据读取器数量
-			Interlocked.Decrement(ref _reading);
+			var reading = Interlocked.Decrement(ref _reading);
 
-			//只有当“待执行”和“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
-			if(!this.HasPending && this.IsCompleted)
+			//只有当“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
+			if(reading <= 0 && this.IsCompleted)
 				this.Destroy();
 		}
 
 		internal ValueTask ReleaseReaderAsync(CancellationToken cancellation = default)
 		{
 			//递减“执行中”的数据读取器数量
-			Interlocked.Decrement(ref _reading);
+			var reading = Interlocked.Decrement(ref _reading);
 
-			//只有当“待执行”和“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
-			if(!this.HasPending && this.IsCompleted)
+			//只有当“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
+			if(reading <= 0 && this.IsCompleted)
 				return this.DestroyAsync(cancellation);
 			else
 				return ValueTask.CompletedTask;
@@ -407,7 +399,7 @@ namespace Zongsoft.Data.Common
 			if(connection != null)
 			{
 				//取消连接事件处理
-				connection.StateChange -= Connection_StateChange;
+				connection.StateChange -= this.Connection_StateChange;
 
 				//释放主数据连接
 				connection.Dispose();
@@ -439,7 +431,7 @@ namespace Zongsoft.Data.Common
 			if(connection != null)
 			{
 				//取消连接事件处理
-				connection.StateChange -= Connection_StateChange;
+				connection.StateChange -= this.Connection_StateChange;
 
 				//释放主数据连接
 				await connection.DisposeAsync();
@@ -767,14 +759,14 @@ namespace Zongsoft.Data.Common
 				//关闭数据读取器
 				_reader.Close();
 
-				//如果当前读取器有独享连接，则必须将该连接释放
-				_connection?.Dispose();
-
 				//设置当前读取器的独享连接置空
-				_connection = null;
+				var connection = Interlocked.Exchange(ref _connection, null);
 
-				//通知当前会话，关闭一个读取器
-				_session.ReleaseReader();
+				//如果当前读取器有独享连接，则手动处置该连接
+				if(connection != null)
+					connection.Dispose();
+				else
+					_session.ReleaseReader(); //通知当前会话释放读取器
 			}
 
 			public override async Task CloseAsync()
@@ -785,16 +777,14 @@ namespace Zongsoft.Data.Common
 				//关闭数据读取器
 				await _reader.CloseAsync();
 
-				//如果当前读取器有独享连接，则必须将该连接释放
-				var connection = _connection;
+				//设置当前读取器的独享连接置空
+				var connection = Interlocked.Exchange(ref _connection, null);
+
+				//如果当前读取器有独享连接，则手动处置该连接
 				if(connection != null)
 					await connection.DisposeAsync();
-
-				//设置当前读取器的独享连接置空
-				_connection = null;
-
-				//通知当前会话，关闭一个读取器
-				await _session.ReleaseReaderAsync();
+				else
+					await _session.ReleaseReaderAsync(); //通知当前会话释放读取器
 			}
 			#endregion
 		}

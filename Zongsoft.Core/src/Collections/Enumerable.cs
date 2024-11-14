@@ -57,12 +57,17 @@ namespace Zongsoft.Collections
 			while(true)
 			{
 				var task = iterator.MoveNextAsync();
-				var succeed = task.IsCompletedSuccessfully ? task.Result : task.AsTask().GetAwaiter().GetResult();
+				var succeed = task.IsCompletedSuccessfully ? task.Result : task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 
 				if(succeed)
 					yield return iterator.Current;
 				else
-					yield break;
+				{
+					var disposing = iterator.DisposeAsync();
+
+					if(!disposing.IsCompleted)
+						disposing.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+				}
 			}
 #endif
 		}
@@ -109,7 +114,7 @@ namespace Zongsoft.Collections
 			if(source == null)
 				yield break;
 
-			var iterator = source.GetAsyncEnumerator(cancellation);
+			await using var iterator = source.GetAsyncEnumerator(cancellation);
 			while(await iterator.MoveNextAsync())
 				yield return iterator.Current;
 		}
@@ -119,7 +124,7 @@ namespace Zongsoft.Collections
 			if(source == null)
 				yield break;
 
-			var iterator = source.GetAsyncEnumerator(cancellation);
+			await using var iterator = source.GetAsyncEnumerator(cancellation);
 			while(await iterator.MoveNextAsync())
 			{
 				if(iterator.Current is TDestination destination)
@@ -264,7 +269,7 @@ namespace Zongsoft.Collections
 		{
 			public static readonly EmptyAsyncEnumerable<T> Empty = new();
 
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) => new EmptyAsyncEnumerator();
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new EmptyAsyncEnumerator();
 
 			private class EmptyAsyncEnumerator : IAsyncEnumerator<T>
 			{

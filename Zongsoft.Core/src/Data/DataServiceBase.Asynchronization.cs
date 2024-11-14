@@ -747,7 +747,7 @@ namespace Zongsoft.Data
 		protected virtual async ValueTask<TModel> OnGetAsync(ICondition criteria, ISchema schema, DataSelectOptions options, CancellationToken cancellation)
 		{
 			var result = this.DataAccess.SelectAsync<TModel>(this.Name, criteria, schema, null, options, null, ctx => this.OnGetting(ctx), ctx => this.OnGetted(ctx), cancellation);
-			var iterator = result.GetAsyncEnumerator(cancellation);
+			await using var iterator = result.GetAsyncEnumerator(cancellation);
 			return (await iterator.MoveNextAsync()) ? iterator.Current : default;
 		}
 		#endregion

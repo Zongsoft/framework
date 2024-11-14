@@ -296,7 +296,7 @@ namespace Zongsoft.Data.Common
 			public IEnumerator<T> GetEnumerator() => new LazyIterator(_context, _statement, _command.ExecuteReader(), _skip);
 			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 			{
-				var iterator = new LazyIterator(_context, _statement, await _command.ExecuteReaderAsync(cancellation), _skip);
+				await using var iterator = new LazyIterator(_context, _statement, await _command.ExecuteReaderAsync(cancellation), _skip);
 
 				while(await iterator.MoveNextAsync())
 					yield return iterator.Current;

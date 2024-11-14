@@ -289,7 +289,7 @@ namespace Zongsoft.Data
 			{
 				if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
 				{
-					var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
+					await using var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
 					while(await iterator.MoveNextAsync())
 						yield return iterator.Current;
 				}
@@ -308,7 +308,7 @@ namespace Zongsoft.Data
 			{
 				if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
 				{
-					var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
+					await using var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
 					while(await iterator.MoveNextAsync())
 						yield return iterator.Current;
 				}
@@ -343,7 +343,7 @@ namespace Zongsoft.Data
 			context.Dispose();
 
 			//返回最终的结果
-			var enumerator = result.GetAsyncEnumerator(cancellation);
+			await using var enumerator = result.GetAsyncEnumerator(cancellation);
 			while(await enumerator.MoveNextAsync())
 				yield return enumerator.Current;
 		}
