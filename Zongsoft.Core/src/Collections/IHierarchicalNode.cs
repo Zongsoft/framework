@@ -30,51 +30,16 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+public interface IHierarchicalNode : IEquatable<IHierarchicalNode>
 {
-	public abstract class HierarchicalNodeCollection<TNode>(TNode owner) :
-		KeyedCollection<string, TNode>(StringComparer.OrdinalIgnoreCase),
-		IHierarchicalNodeCollection<TNode>
-		where TNode : IHierarchicalNode<TNode>
-	{
-		#region 成员变量
-		private readonly TNode _owner = owner;
-		#endregion
+	string Name { get; }
+	string Path { get; }
+	string FullPath { get; }
+}
 
-		#region 保护属性
-		protected TNode Owner => _owner;
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(TNode node) => node.Name;
-
-		protected override void RemoveItem(int index)
-		{
-			var node = base.Items[index];
-			this.SetOwner(default, node);
-		}
-
-		protected override void InsertItem(int index, TNode node)
-		{
-			if(node == null)
-				throw new ArgumentNullException(nameof(node));
-
-			base.InsertItem(index, node);
-			this.SetOwner(_owner, node);
-		}
-
-		protected override void SetItem(int index, TNode node)
-		{
-			if(node == null)
-				throw new ArgumentNullException(nameof(node));
-
-			base.SetItem(index, node);
-			this.SetOwner(_owner, node);
-		}
-		#endregion
-
-		#region 抽象方法
-		protected  abstract void SetOwner(TNode owner, TNode node);
-		#endregion
-	}
+public interface IHierarchicalNode<TNode> : IHierarchicalNode where TNode : IHierarchicalNode<TNode>
+{
+	IHierarchicalNodeCollection<TNode> Nodes { get; }
 }

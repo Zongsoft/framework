@@ -61,27 +61,27 @@ namespace Zongsoft.Collections
 			{
 				case PathAnchor.Root:
 					if(segments == null || segments.Length == 0)
-						this.Path = HierarchicalNode.PathSeparatorChar.ToString();
+						this.Path = HierarchicalNode.PathSeparator.ToString();
 					else
-						this.Path = HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
+						this.Path = HierarchicalNode.PathSeparator + string.Join(HierarchicalNode.PathSeparator, segments);
 					break;
 				case PathAnchor.Current:
 					if(segments == null || segments.Length == 0)
 						this.Path = ".";
 					else
-						this.Path = "." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
+						this.Path = "." + HierarchicalNode.PathSeparator + string.Join(HierarchicalNode.PathSeparator, segments);
 					break;
 				case PathAnchor.Parent:
 					if(segments == null || segments.Length == 0)
 						this.Path = "..";
 					else
-						this.Path = ".." + HierarchicalNode.PathSeparatorChar + string.Join(HierarchicalNode.PathSeparatorChar, segments);
+						this.Path = ".." + HierarchicalNode.PathSeparator + string.Join(HierarchicalNode.PathSeparator, segments);
 					break;
 				default:
 					if(segments == null || segments.Length == 0)
 						this.Path = string.Empty;
 					else
-						this.Path = string.Join(HierarchicalNode.PathSeparatorChar, Segments);
+						this.Path = string.Join(HierarchicalNode.PathSeparator, Segments);
 					break;
 			}
 		}

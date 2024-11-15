@@ -28,100 +28,88 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Serialization;
 
 namespace Zongsoft.Collections
 {
-	public abstract class HierarchicalNode<T> : HierarchicalNode where T : HierarchicalNode
+	public abstract class HierarchicalNode<TNode> : HierarchicalNode, IHierarchicalNode<TNode> where TNode : HierarchicalNode<TNode>
 	{
 		#region 构造函数
-		protected HierarchicalNode()
-		{
-			this.Title = PathSeparatorChar.ToString();
-		}
-
-		protected HierarchicalNode(string name) : this(name, name, string.Empty)
-		{
-		}
-
-		protected HierarchicalNode(string name, string title, string description) : base(name)
-		{
-			this.Title = string.IsNullOrEmpty(title) ? name : title;
-			this.Description = description;
-		}
+		protected HierarchicalNode() { }
+		protected HierarchicalNode(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性
-		public string Title
-		{
-			get; set;
-		}
-
-		public string Description
-		{
-			get; set;
-		}
+		[SerializationMember(Ignored = true)]
+		[System.Text.Json.Serialization.JsonIgnore]
+		protected abstract TNode Parent { get; }
 
 		[SerializationMember(Ignored = true)]
-		public T Parent
+		[System.Text.Json.Serialization.JsonIgnore]
+		protected abstract IHierarchicalNodeCollection<TNode> Nodes { get; }
+
+		IHierarchicalNodeCollection<TNode> IHierarchicalNode<TNode>.Nodes => this.Nodes;
+		#endregion
+
+		#region 公共方法
+		protected TNode FindRoot()
 		{
-			get
+			var current = (TNode)this;
+			var stack = new Stack<TNode>();
+
+			while(current != null)
 			{
-				return (T)base.InnerParent;
+				if(current.Parent == null)
+					return current;
+
+				//如果当前节点是否已经在遍历的栈中，则抛出循环引用的异常
+				if(stack.Contains(current))
+					throw new InvalidOperationException($"The “{this.Name}” {this.GetType().Name} has circular references in the hierarchy tree.");
+
+				//将当前节点加入到遍历栈中
+				stack.Push(current);
+
+				//指向当前节点的父节点
+				current = current.Parent;
 			}
+
+			return current;
 		}
 		#endregion
 
 		#region 公共方法
-		public T Find(string path, Func<HierarchicalNodeToken, T> step = null)
+		public TNode Find(string path, Func<HierarchicalNodeToken, TNode> step = null)
 		{
 			if(step == null)
-				return (T)base.FindNode(path, 0, 0);
+				return (TNode)base.FindNode(path, 0, 0);
 			else
-				return (T)base.FindNode(path, 0, 0, token => step(new HierarchicalNodeToken(token)));
+				return (TNode)base.FindNode(path, 0, 0, token => step(new HierarchicalNodeToken(token)));
 		}
 
-		public T Find(string path, int startIndex, int length = 0, Func<HierarchicalNodeToken, T> step = null)
+		public TNode Find(string path, int startIndex, int length = 0, Func<HierarchicalNodeToken, TNode> step = null)
 		{
 			if(step == null)
-				return (T)base.FindNode(path, startIndex, length);
+				return (TNode)base.FindNode(path, startIndex, length);
 			else
-				return (T)base.FindNode(path, startIndex, length, token => step(new HierarchicalNodeToken(token)));
+				return (TNode)base.FindNode(path, startIndex, length, token => step(new HierarchicalNodeToken(token)));
 		}
 
-		public T Find(string[] parts, Func<HierarchicalNodeToken, T> step = null)
+		public TNode Find(string[] parts, Func<HierarchicalNodeToken, TNode> step = null)
 		{
 			if(step == null)
-				return (T)base.FindNode(parts);
+				return (TNode)base.FindNode(parts);
 			else
-				return (T)base.FindNode(parts, token => step(new HierarchicalNodeToken(token)));
+				return (TNode)base.FindNode(parts, token => step(new HierarchicalNodeToken(token)));
 		}
 
-		public T Find(string[] parts, int startIndex, int count = 0, Func<HierarchicalNodeToken, T> step = null)
+		public TNode Find(string[] parts, int startIndex, int count = 0, Func<HierarchicalNodeToken, TNode> step = null)
 		{
 			if(step == null)
-				return (T)base.FindNode(parts, startIndex, count);
+				return (TNode)base.FindNode(parts, startIndex, count);
 			else
-				return (T)base.FindNode(parts, startIndex, count, token => step(new HierarchicalNodeToken(token)));
-		}
-		#endregion
-
-		#region 嵌套子类
-		public new struct HierarchicalNodeToken
-		{
-			public readonly string Name;
-			public readonly int Index;
-			public readonly T Parent;
-			public readonly T Current;
-
-			internal HierarchicalNodeToken(HierarchicalNode.HierarchicalNodeToken token)
-			{
-				this.Index = token.Index;
-				this.Name = token.Name;
-				this.Parent = token.Parent as T;
-				this.Current = token.Current as T;
-			}
+				return (TNode)base.FindNode(parts, startIndex, count, token => step(new HierarchicalNodeToken(token)));
 		}
 		#endregion
 	}

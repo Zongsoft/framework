@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,18 +29,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Zongsoft.Collections
 {
 	/// <summary>
 	/// 表示层次结构的节点类。
 	/// </summary>
-	[Serializable]
-	public abstract class HierarchicalNode
+	public abstract class HierarchicalNode : IHierarchicalNode, IEquatable<HierarchicalNode>
 	{
+		#region 常量定义
+		public const char PathSeparator = '/';
+		#endregion
+
 		#region 静态常量
-		public static readonly char[] IllegalCharacters = new char[] { '/', '\\', '*', '?', '!', '@', '#', '$', '%', '^', '&' };
-		public static readonly char PathSeparatorChar = '/';
+		public static readonly char[] IllegalCharacters = ['/', '\\', '*', '?', '!', '@', '#', '$', '%', '^', '&'];
 		#endregion
 
 		#region 私有变量
@@ -48,141 +51,66 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 成员变量
-		private string _name;
-		private string _path;
-		private HierarchicalNode _parent;
+		private readonly string _name;
+		private readonly string _path;
+		private int? _hashCode;
 		#endregion
 
 		#region 构造函数
-		protected HierarchicalNode()
+		protected HierarchicalNode() => _name = "/";
+		protected HierarchicalNode(string name)
 		{
-			_name = "/";
-		}
+			if(string.IsNullOrEmpty(name) || name == $"{PathSeparator}")
+				_name = name;
+			else
+			{
+				if(name.IndexOfAny(IllegalCharacters) >= 0)
+					throw new ArgumentException("The name contains illegal character(s).");
 
-		protected HierarchicalNode(string name, HierarchicalNode parent = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(name.IndexOfAny(IllegalCharacters) >= 0)
-				throw new ArgumentException("The name contains illegal character(s).");
-
-			_name = name.Trim();
-			_parent = parent;
+				_name = name.Trim();
+			}
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取层次结构节点的名称，名称不可为空或空字符串，根节点的名称固定为斜杠(即“/”)。
-		/// </summary>
-		public virtual string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取层次结构节点的名称，名称不可为空或空字符串，根节点的名称固定为斜杠(即“/”)。</summary>
+		public virtual string Name => _name;
 
-		/// <summary>
-		/// 获取层次结构节点的路径。
-		/// </summary>
-		/// <remarks>
-		///		<para>如果为根节点则返回空字符串("")，否则即为父节点的全路径。</para>
-		/// </remarks>
-		public string Path
-		{
-			get
-			{
-				if(_path == null)
-				{
-					if(_parent == null)
-						_path = string.Empty;
-					else
-						_path = _parent.FullPath;
-				}
+		/// <summary>获取层次结构节点的路径。</summary>
+		/// <remarks>如果为根节点则返回空字符串(<c>String.Empty</c>)，否则即为父节点的全路径。</remarks>
+		public string Path => _path ?? this.GetPath();
 
-				return _path;
-			}
-		}
-
-		/// <summary>
-		/// 获取层次结构节点的完整路径，即节点路径与名称的组合。
-		/// </summary>
+		/// <summary>获取层次结构节点的完整路径，即节点路径与名称的组合。</summary>
 		public string FullPath
 		{
 			get
 			{
 				var path = this.Path;
 
-				switch(path)
-				{
-					case "":
-						return _name;
-					default:
-						if(path.Length == 1 && path[0] == PathSeparatorChar)
-							return path + _name;
-						else
-							return path + PathSeparatorChar + _name;
-				}
-			}
-		}
+				if(string.IsNullOrEmpty(path))
+					return _name;
 
-		/// <summary>
-		/// 获取或设置层次结构节点的父节点，根节点的父节点为空(null)。
-		/// </summary>
-		internal protected HierarchicalNode InnerParent
-		{
-			get
-			{
-				return _parent;
-			}
-			set
-			{
-				if(object.ReferenceEquals(_parent, value))
-					return;
-
-				//设置父节点
-				_parent = value;
-
-				//更新层次结构节点的路径
-				_path = null;
+				if(path.Length == 1 && path[0] == PathSeparator)
+					return path + _name;
+				else
+					return path + PathSeparator + _name;
 			}
 		}
 		#endregion
 
-		#region 公共方法
-		public virtual HierarchicalNode FindRoot()
-		{
-			var current = this;
-			var stack = new Stack<HierarchicalNode>();
+		#region 重写方法
+		public bool Equals(HierarchicalNode other) => other is not null && string.Equals(this.FullPath, other.FullPath, StringComparison.OrdinalIgnoreCase);
+		public override bool Equals(object obj) => obj is HierarchicalNode other && this.Equals(other);
+		public override int GetHashCode() => _hashCode ??= this.FullPath.ToUpperInvariant().GetHashCode();
+		public override string ToString() => this.FullPath;
+		#endregion
 
-			while(current != null)
-			{
-				if(current._parent == null)
-					return current;
-
-				//如果当前节点是否已经在遍历的栈中，则抛出循环引用的异常
-				if(stack.Contains(current))
-					throw new InvalidOperationException($"Error occurred: The name as '{current.Name}' hierarchical node is circular referenced.");
-
-				//将当前节点加入到遍历栈中
-				stack.Push(current);
-
-				//指向当前节点的父节点
-				current = current._parent;
-			}
-
-			return current;
-		}
+		#region 抽象方法
+		protected abstract string GetPath();
 		#endregion
 
 		#region 保护方法
-		internal protected HierarchicalNode FindNode(string path, Func<HierarchicalNodeToken, HierarchicalNode> onStep = null)
-		{
-			return this.FindNode(path, 0, 0, onStep);
-		}
-
+		internal protected HierarchicalNode FindNode(string path, Func<HierarchicalNodeToken, HierarchicalNode> onStep = null) => this.FindNode(path, 0, 0, onStep);
 		internal protected HierarchicalNode FindNode(string path, int startIndex, int length = 0, Func<HierarchicalNodeToken, HierarchicalNode> onStep = null)
 		{
 			//注意：一定要确保空字符串路径是返回自身
@@ -207,7 +135,7 @@ namespace Zongsoft.Collections
 
 			for(int i = startIndex; i < (length > 0 ? length : path.Length - startIndex); i++)
 			{
-				if(path[i] == PathSeparatorChar)
+				if(path[i] == PathSeparator)
 				{
 					if(index++ == 0)
 					{
@@ -217,7 +145,7 @@ namespace Zongsoft.Collections
 
 					if(i - last > spaces)
 					{
-						current = this.FindStep(current, index - 1, path, i, last, spaces, onStep);
+						current = FindStep(current, index - 1, path, i, last, spaces, onStep);
 
 						if(current == null)
 							return null;
@@ -240,7 +168,7 @@ namespace Zongsoft.Collections
 			}
 
 			if(last < path.Length - spaces - 1)
-				current = this.FindStep(current, index, path, path.Length, last, spaces, onStep);
+				current = FindStep(current, index, path, path.Length, last, spaces, onStep);
 
 			return current;
 		}
@@ -250,7 +178,7 @@ namespace Zongsoft.Collections
 			if(parts == null || parts.Length == 0)
 				return null;
 
-			return this.FindNode(string.Join(PathSeparatorChar.ToString(), parts), onStep);
+			return this.FindNode(string.Join(PathSeparator.ToString(), parts), onStep);
 		}
 
 		internal protected HierarchicalNode FindNode(string[] parts, int startIndex, int count = 0, Func<HierarchicalNodeToken, HierarchicalNode> onStep = null)
@@ -264,18 +192,14 @@ namespace Zongsoft.Collections
 			if(count > 0 && count > parts.Length - startIndex)
 				throw new ArgumentOutOfRangeException(nameof(count));
 
-			return this.FindNode(string.Join(PathSeparatorChar.ToString(), parts, startIndex, (count > 0 ? count : parts.Length - startIndex)), onStep);
+			return this.FindNode(string.Join(PathSeparator.ToString(), parts, startIndex, (count > 0 ? count : parts.Length - startIndex)), onStep);
 		}
 		#endregion
 
 		#region 虚拟方法
-		/// <summary>
-		/// 确认子节点集合是否被加载，如果未曾被加载则加载子节点集合。
-		/// </summary>
+		/// <summary>确认子节点集合是否被加载，如果未曾被加载则加载子节点集合。</summary>
 		/// <returns>如果子节点集合未曾被加载则加载当前子节点集合并返回真(true)，否则返回假(false)。</returns>
-		/// <remarks>
-		///		<para>在<seealso cref="LoadChildren"/>方法中会调用该方法以确保子节点被加载。</para>
-		/// </remarks>
+		/// <remarks>在<seealso cref="LoadChildren"/>方法中会调用该方法以确保子节点被加载。</remarks>
 		protected bool EnsureChildren()
 		{
 			var childrenLoaded = System.Threading.Interlocked.Exchange(ref _childrenLoaded, 1);
@@ -286,16 +210,10 @@ namespace Zongsoft.Collections
 			return childrenLoaded == 0;
 		}
 
-		/// <summary>
-		/// 加载当前节点的子节点集合。
-		/// </summary>
-		protected virtual void LoadChildren()
-		{
-		}
+		/// <summary>加载当前节点的子节点集合。</summary>
+		protected virtual void LoadChildren() { }
 
-		/// <summary>
-		/// 获取指定名称的子节点对象。
-		/// </summary>
+		/// <summary>获取指定名称的子节点对象。</summary>
 		/// <param name="name">指定要查找的子节点名称。</param>
 		/// <returns>如果找到指定名称的子节点则返回它，否则返回空(null)。</returns>
 		protected abstract HierarchicalNode GetChild(string name);
@@ -303,7 +221,7 @@ namespace Zongsoft.Collections
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private HierarchicalNode FindStep(HierarchicalNode current, int index, string path, int position, int last, int spaces, Func<HierarchicalNodeToken, HierarchicalNode> onStep)
+		private static HierarchicalNode FindStep(HierarchicalNode current, int index, string path, int position, int last, int spaces, Func<HierarchicalNodeToken, HierarchicalNode> onStep)
 		{
 			var part = path.Substring(last, position - last - spaces);
 			HierarchicalNode parent = null;
@@ -332,7 +250,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 嵌套子类
-		internal protected struct HierarchicalNodeToken
+		internal protected readonly struct HierarchicalNodeToken
 		{
 			public readonly string Name;
 			public readonly int Index;
@@ -344,9 +262,10 @@ namespace Zongsoft.Collections
 				this.Index = index;
 				this.Name = name;
 				this.Current = current;
-
-				this.Parent = parent ?? (current != null ? current.InnerParent : null);
+				this.Parent = parent ?? (current?.InnerParent);
 			}
+
+			public override string ToString() => $"{this.Name}#{this.Index}";
 		}
 		#endregion
 	}
