@@ -15,8 +15,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.14" />
-		<PackageReference Include="Hangfire.Redis.StackExchange" VersionOverride="1.9.3" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.15" />
+		<PackageReference Include="Hangfire.Redis.StackExchange" VersionOverride="1.9.4" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -15,7 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.14" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.15" />
 	</ItemGroup>
 
 	<ItemGroup>
