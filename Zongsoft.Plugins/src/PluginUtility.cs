@@ -42,6 +42,10 @@ namespace Zongsoft.Plugins
 {
 	public static class PluginUtility
 	{
+		#region 委托定义
+		internal delegate bool ObtainParameterCallback(Type parameterType, string parameterName, out object parameterValue);
+		#endregion
+
 		#region 私有变量
 		private static volatile int _anonymousId;
 		#endregion
@@ -361,10 +365,6 @@ namespace Zongsoft.Plugins
 
 			return null;
 		}
-		#endregion
-
-		#region 委托定义
-		internal delegate bool ObtainParameterCallback(Type parameterType, string parameterName, out object parameterValue);
 		#endregion
 
 		#region 参数回调
