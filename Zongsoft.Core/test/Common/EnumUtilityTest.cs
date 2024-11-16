@@ -19,6 +19,7 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal(Gender.Female, entry.Value); //注意：entry.Value 为枚举类型
 			Assert.Equal("F", entry.Alias);
 			Assert.Equal("女士", entry.Description);
+			Assert.Equal("女士", EnumUtility.GetEnumDescription(Gender.Female));
 
 			entry = EnumUtility.GetEnumEntry(Gender.Male, true);
 
@@ -26,6 +27,7 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal(1, entry.Value); //注意：entry.Value 为枚举项的基元类型
 			Assert.Equal("M", entry.Alias);
 			Assert.Equal("男士", entry.Description);
+			Assert.Equal("男士", EnumUtility.GetEnumDescription(Gender.Male));
 		}
 
 		[Fact]

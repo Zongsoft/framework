@@ -28,56 +28,39 @@
  */
 
 using System;
-using System.Resources;
 using System.Reflection;
 
 namespace Zongsoft.Resources
 {
 	public static class ResourceUtility
 	{
-		public static string GetResourceString(this Assembly assembly, string name, string resourceName = null)
-		{
-			return GetResourceValue(assembly, name, resourceName) as string;
-		}
+		public static object GetObject<T>(this IResource resource, string name) => resource.GetObject(name, GetLocation(typeof(T)));
+		public static object GetObject(this IResource resource, string name, Type location) => resource.GetObject(name, GetLocation(location));
+		public static object GetObject(this IResource resource, string name, MemberInfo location) => resource.GetObject(name, GetLocation(location));
+		public static string GetString<T>(this IResource resource, string name) => resource.GetString(name, GetLocation(typeof(T)));
+		public static string GetString(this IResource resource, string name, Type location) => resource.GetString(name, GetLocation(location));
+		public static string GetString(this IResource resource, string name, MemberInfo location) => resource.GetString(name, GetLocation(location));
 
-		public static object GetResourceValue(this Assembly assembly, string name, string resourceName = null)
-		{
-			if(assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+		public static bool TryGetObject<T>(this IResource resource, string name, out object value) => resource.TryGetObject(name, GetLocation(typeof(T)), out value);
+		public static bool TryGetObject(this IResource resource, string name, Type location, out object value) => resource.TryGetObject(name, GetLocation(location), out value);
+		public static bool TryGetObject(this IResource resource, string name, MemberInfo location, out object value) => resource.TryGetObject(name, GetLocation(location), out value);
+		public static bool TryGetString<T>(this IResource resource, string name, out string value) => resource.TryGetString(name, GetLocation(typeof(T)), out value);
+		public static bool TryGetString(this IResource resource, string name, Type location, out string value) => resource.TryGetString(name, GetLocation(location), out value);
+		public static bool TryGetString(this IResource resource, string name, MemberInfo location, out string value) => resource.TryGetString(name, GetLocation(location), out value);
 
-			if(string.IsNullOrEmpty(name))
-				return null;
+		internal static string GetLocation(MemberInfo member) => member == null ? null : GetLocation(member.ReflectedType);
+		internal static string GetLocation(Type type) => type == null ? null : (string.IsNullOrEmpty(type.Namespace) ? type.Name : $"{type.Namespace}{Type.Delimiter}{type.Name}");
 
-			if(string.IsNullOrEmpty(resourceName))
-			{
-				var resourceNames = assembly.GetManifestResourceNames();
-				for(int i = 0; i < resourceNames.Length; i++)
-				{
-					using var reader = new ResourceReader(assembly.GetManifestResourceStream(resourceNames[i]));
-					var iterator = reader.GetEnumerator();
-					while(iterator.MoveNext())
-					{
-						if(iterator.Key is string key && string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
-							return iterator.Value;
-					}
-				}
-			}
-			else
-			{
-				using var stream = assembly.GetManifestResourceStream(resourceName);
-				if(stream == null)
-					return null;
+		public static object GetResourceObject(this Type location, string name) => ResourceAssistant.GetResource(location).GetObject(name, location);
+		public static object GetResourceObject(this MemberInfo location, string name) => ResourceAssistant.GetResource(location).GetObject(name, location);
+		public static object GetResourceObject(this Assembly assembly, string name, Type location) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
+		public static object GetResourceObject(this Assembly assembly, string name, MemberInfo location) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
+		public static object GetResourceObject(this Assembly assembly, string name, string location = null) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
 
-				using var reader = new ResourceReader(stream);
-				var iterator = reader.GetEnumerator();
-				while(iterator.MoveNext())
-				{
-					if(iterator.Key is string key && string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
-						return iterator.Value;
-				}
-			}
-
-			return null;
-		}
+		public static string GetResourceString(this Type location, string name) => ResourceAssistant.GetResource(location).GetString(name, location);
+		public static string GetResourceString(this MemberInfo location, string name) => ResourceAssistant.GetResource(location).GetString(name, location);
+		public static string GetResourceString(this Assembly assembly, string name, Type location) => ResourceAssistant.GetResource(assembly).GetString(name, location);
+		public static string GetResourceString(this Assembly assembly, string name, MemberInfo location) => ResourceAssistant.GetResource(assembly).GetString(name, location);
+		public static string GetResourceString(this Assembly assembly, string name, string location = null) => ResourceAssistant.GetResource(assembly).GetString(name, location);
 	}
 }

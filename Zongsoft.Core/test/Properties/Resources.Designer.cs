@@ -61,6 +61,24 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 女士 的本地化字符串。
+        /// </summary>
+        internal static string Gender_Female {
+            get {
+                return ResourceManager.GetString("Gender.Female", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 男士 的本地化字符串。
+        /// </summary>
+        internal static string Gender_Male {
+            get {
+                return ResourceManager.GetString("Gender.Male", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 创建完成 的本地化字符串。
         /// </summary>
         internal static string Target1_Created {
@@ -93,24 +111,6 @@ namespace Zongsoft.Properties {
         internal static string Target1_StatusChanged_Description {
             get {
                 return ResourceManager.GetString("Target1.StatusChanged.Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 女士 的本地化字符串。
-        /// </summary>
-        internal static string Text_Gender_Female {
-            get {
-                return ResourceManager.GetString("Text.Gender.Female", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 男士 的本地化字符串。
-        /// </summary>
-        internal static string Text_Gender_Male {
-            get {
-                return ResourceManager.GetString("Text.Gender.Male", resourceCulture);
             }
         }
     }

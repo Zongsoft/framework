@@ -74,11 +74,11 @@ namespace Zongsoft.Components
 
 		#region 私有方法
 		private static string GetTitle(EventRegistryBase registry, string name) =>
-			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, $"{name}.{nameof(EventDescriptor.Title)}") ??
-			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, name);
+			Resources.ResourceUtility.GetResourceString(registry.GetType(), $"{name}.{nameof(EventDescriptor.Title)}") ??
+			Resources.ResourceUtility.GetResourceString(registry.GetType(), name);
 
 		private static string GetDescription(EventRegistryBase registry, string name) =>
-			Resources.ResourceUtility.GetResourceString(registry.GetType().Assembly, $"{name}.{nameof(EventDescriptor.Description)}");
+			Resources.ResourceUtility.GetResourceString(registry.GetType(), $"{name}.{nameof(EventDescriptor.Description)}");
 		#endregion
 	}
 }

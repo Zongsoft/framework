@@ -41,7 +41,7 @@ namespace Zongsoft.Common
 				throw new ArgumentNullException(nameof(member));
 
 			var attribute = member.GetCustomAttribute<CategoryAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member.Module.Assembly, attribute.Category) ?? attribute.Category);
+			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Category) ?? attribute.Category);
 		}
 
 		public static string GetDisplayName(MemberInfo member, bool inherit = false)
@@ -50,7 +50,7 @@ namespace Zongsoft.Common
 				throw new ArgumentNullException(nameof(member));
 
 			var attribute = member.GetCustomAttribute<DisplayNameAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member.Module.Assembly, attribute.DisplayName) ?? attribute.DisplayName);
+			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.DisplayName) ?? attribute.DisplayName);
 		}
 
 		public static string GetDescription(MemberInfo member, bool inherit = false)
@@ -59,7 +59,7 @@ namespace Zongsoft.Common
 				throw new ArgumentNullException(nameof(member));
 
 			var attribute = member.GetCustomAttribute<DescriptionAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member.Module.Assembly, attribute.Description) ?? attribute.Description);
+			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Description) ?? attribute.Description);
 		}
 	}
 }

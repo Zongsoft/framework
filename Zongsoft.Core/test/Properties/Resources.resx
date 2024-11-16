@@ -129,10 +129,10 @@
   <data name="Target1.StatusChanged.Description" xml:space="preserve">
     <value>状态变更事件的描述信息。</value>
   </data>
-  <data name="Text.Gender.Female" xml:space="preserve">
+  <data name="Gender.Female" xml:space="preserve">
     <value>女士</value>
   </data>
-  <data name="Text.Gender.Male" xml:space="preserve">
+  <data name="Gender.Male" xml:space="preserve">
     <value>男士</value>
   </data>
 </root>

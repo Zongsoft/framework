@@ -179,27 +179,8 @@ namespace Zongsoft.Common
 				throw new ArgumentNullException(nameof(field));
 
 			var attribute = field.GetCustomAttribute<DescriptionAttribute>();
-			var resourceKey = attribute == null || string.IsNullOrEmpty(attribute.Description) ? $"{field.DeclaringType.Name}.{field.Name}" : attribute.Description;
-			return GetResourceString(resourceKey, field.DeclaringType.Assembly) ?? attribute?.Description;
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetResourceString(string name, Assembly assembly)
-		{
-			var names = assembly.GetManifestResourceNames();
-
-			for(int i = 0; i < names.Length; i++)
-			{
-				using var stream = assembly.GetManifestResourceStream(names[i]);
-				using var resource = new System.Resources.ResourceSet(stream);
-
-				var value = resource.GetString(name);
-
-				if(value != null)
-					return value;
-			}
-
-			return null;
+			var name = attribute == null || string.IsNullOrEmpty(attribute.Description) ? $"{field.DeclaringType.Name}.{field.Name}" : attribute.Description;
+			return Resources.ResourceUtility.GetResourceString(field, name);
 		}
 		#endregion
 	}
