@@ -105,18 +105,5 @@ namespace Zongsoft.Security.Commands
 			return rsa;
 		}
 		#endregion
-
-		#region 内部方法
-		internal static RSA FindRSA(CommandTreeNode node)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is RSACommand command)
-				return command.RSA ??= RSA.Create();
-
-			return FindRSA(node.Parent);
-		}
-		#endregion
 	}
 }

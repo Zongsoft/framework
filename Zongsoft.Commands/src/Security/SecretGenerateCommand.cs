@@ -75,7 +75,7 @@ namespace Zongsoft.Security.Commands
 		protected override object OnExecute(CommandContext context)
 		{
 			//从环境中查找秘密提供程序
-			var secretor = SecretCommand.FindSecretor(context.CommandNode);
+			var secretor = context.CommandNode.Find<SecretCommand>(true)?.Secretor;
 
 			if(secretor == null)
 				throw new CommandException("Missing required secretor for the command.");

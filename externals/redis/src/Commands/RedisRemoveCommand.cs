@@ -48,7 +48,7 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length < 1)
 				throw new Zongsoft.Services.CommandException("Invalid arguments of command.");
 
-			var redis = RedisCommand.GetRedis(context.CommandNode);
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
 
 			if(context.Expression.Arguments.Length == 1)
 				redis.Remove(context.Expression.Arguments[0]);

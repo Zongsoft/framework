@@ -65,7 +65,7 @@ namespace Zongsoft.Configuration.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var configuration = ConfigurationCommand.GetConfiguration(context.CommandNode);
+			var configuration = context.CommandNode.Find<ConfigurationCommand>(true)?.Configuration;
 
 			if(configuration == null)
 				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));

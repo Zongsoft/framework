@@ -45,7 +45,8 @@ namespace Zongsoft.Externals.Redis.Commands
 		#region 执行方法
 		protected override object OnExecute(Services.CommandContext context)
 		{
-			var count = RedisCommand.GetRedis(context.CommandNode).GetCount();
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
+			var count = redis.GetCount();
 			context.Output.WriteLine(count.ToString());
 			return count;
 		}

@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Redis.Commands
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
 			int index = 0;
-			var redis = RedisCommand.GetRedis(context.CommandNode);
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
 			var result = new List<object>(context.Expression.Arguments.Length);
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)

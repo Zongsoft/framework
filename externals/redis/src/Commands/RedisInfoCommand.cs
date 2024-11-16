@@ -47,7 +47,8 @@ namespace Zongsoft.Externals.Redis.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var info = RedisCommand.GetRedis(context.CommandNode).GetInfo();
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
+			var info = redis.GetInfo();
 			var content = CommandOutletContent
 				.Create(CommandOutletColor.DarkMagenta, "#" + info.DatabaseId.ToString() + " ")
 				.Append(info.Name);

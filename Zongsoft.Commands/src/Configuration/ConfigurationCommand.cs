@@ -79,17 +79,6 @@ namespace Zongsoft.Configuration.Commands
 		#endregion
 
 		#region 静态方法
-		internal static IConfiguration GetConfiguration(CommandTreeNode node)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is ConfigurationCommand command)
-				return command.Configuration;
-
-			return GetConfiguration(node.Parent);
-		}
-
 		internal static void Print(IConfiguration configuration, ICommandOutlet output, bool simplify, int depth)
 		{
 			if(configuration == null)

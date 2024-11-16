@@ -71,18 +71,5 @@ namespace Zongsoft.Security.Commands
 			return this.Secretor;
 		}
 		#endregion
-
-		#region 内部方法
-		internal static ISecretor FindSecretor(CommandTreeNode node)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is SecretCommand command)
-				return command.Secretor;
-
-			return FindSecretor(node.Parent);
-		}
-		#endregion
 	}
 }

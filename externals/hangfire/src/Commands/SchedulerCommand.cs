@@ -36,32 +36,21 @@ namespace Zongsoft.Externals.Hangfire.Commands
 {
 	public class SchedulerCommand : CommandBase<CommandContext>
 	{
-		#region 成员字段
-		private IScheduler _scheduler;
-		#endregion
-
 		#region 构造函数
 		public SchedulerCommand(IServiceProvider serviceProvider)
 		{
-			_scheduler = serviceProvider?.Resolve<IScheduler>();
-		}
-
-		protected override object OnExecute(CommandContext context)
-		{
-			return _scheduler;
+			this.Scheduler = serviceProvider?.Resolve<IScheduler>();
 		}
 		#endregion
 
-		#region 静态方法
-		public static IScheduler GetScheduler(CommandTreeNode node)
+		#region 公共属性
+		public IScheduler Scheduler { get; set; }
+		#endregion
+
+		#region 重写方法
+		protected override object OnExecute(CommandContext context)
 		{
-			if(node == null)
-				return null;
-
-			if(node.Command is SchedulerCommand command)
-				return command._scheduler;
-
-			return GetScheduler(node.Parent) ?? throw new InvalidOperationException("Missing required scheduler.");
+			return this.Scheduler;
 		}
 		#endregion
 	}

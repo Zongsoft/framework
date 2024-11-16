@@ -51,7 +51,7 @@ namespace Zongsoft.Security.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var rsa = RSACommand.FindRSA(context.CommandNode);
+			var rsa = context.CommandNode.Find<RSACommand>(true)?.RSA;
 
 			if(rsa == null)
 				throw new CommandException("Missing the required RSA.");

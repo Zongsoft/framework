@@ -48,7 +48,7 @@ namespace Zongsoft.Externals.Redis.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var redis = RedisCommand.GetRedis(context.CommandNode);
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
 
 			if(context.Parameter is IDistributedLock locker)
 			{

@@ -58,7 +58,8 @@ namespace Zongsoft.Externals.Redis.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				result[i] = RedisCommand.GetRedis(context.CommandNode).Decrease(context.Expression.Arguments[i], interval, seed, expiry);
+				var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
+				result[i] = redis.Decrease(context.Expression.Arguments[i], interval, seed, expiry);
 				context.Output.WriteLine(result[i].ToString());
 			}
 

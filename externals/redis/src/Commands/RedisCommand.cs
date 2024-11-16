@@ -71,18 +71,5 @@ namespace Zongsoft.Externals.Redis.Commands
 			return _redis;
 		}
 		#endregion
-
-		#region 静态方法
-		public static RedisService GetRedis(CommandTreeNode node)
-		{
-			if(node == null)
-				return null;
-
-			if(node.Command is RedisCommand command)
-				return command._redis;
-
-			return GetRedis(node.Parent) ?? throw new InvalidOperationException("Missing required redis service.");
-		}
-		#endregion
 	}
 }

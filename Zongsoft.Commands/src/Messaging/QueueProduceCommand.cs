@@ -59,7 +59,7 @@ namespace Zongsoft.Messaging.Commands
 		#region 执行方法
 		protected override object OnExecute(CommandContext context)
 		{
-			var queue = context.CommandNode.FindQueue();
+			var queue = context.CommandNode.Find<QueueCommand>(true)?.Queue;
 			if(queue == null)
 				return null;
 

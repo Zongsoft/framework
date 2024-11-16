@@ -54,9 +54,10 @@ namespace Zongsoft.Externals.Redis.Commands
 			if(context.Expression.Arguments.Length == 0)
 				throw new Zongsoft.Services.CommandException("Missing arguments.");
 
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
+
 			//查找指定模式的键名集
-			var result = RedisCommand.GetRedis(context.CommandNode)
-				.Find(context.Expression.Arguments[0]);
+			var result = redis.Find(context.Expression.Arguments[0]);
 
 			var count = context.Expression.Options.GetValue<int>(COUNT_OPTION);
 			if(count > 0)
