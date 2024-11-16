@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 using Xunit;
 
@@ -14,15 +13,15 @@ namespace Zongsoft.Collections.Tests
 		{
 			_root = new Category();
 
-			var file = _root.Children.Add("File", "File", "文件");
-			var edit = _root.Children.Add("Edit", "Edit", "编辑");
-			var help = _root.Children.Add("Help", "Help", "帮助");
+			var file = _root.Categories.Add("File");
+			var edit = _root.Categories.Add("Edit");
+			var help = _root.Categories.Add("Help");
 
-			file.Children.Add("Open", "Open", "打开");
-			file.Children.Add("Close", "Close", "关闭");
-			file.Children.Add("Save", "Save", "保存");
-			file.Children.Add("SaveAs", "SaveAs", "另存为");
-			file.Children.Add("Recents", "Recents", "最近的文件").Children.AddRange(
+			file.Categories.Add("Open");
+			file.Categories.Add("Close");
+			file.Categories.Add("Save");
+			file.Categories.Add("SaveAs");
+			file.Categories.Add("Recents").Categories.AddRange(
 				new Category("Document-1"),
 				new Category("Document-2")
 			);
@@ -30,6 +29,30 @@ namespace Zongsoft.Collections.Tests
 		#endregion
 
 		#region 测试方法
+		[Fact]
+		public void TestName()
+		{
+			Assert.True(_root.IsRoot());
+			Assert.Equal("/", _root.Name);
+			Assert.Equal(string.Empty, _root.Path);
+			Assert.Equal("/", _root.FullPath);
+
+			var category = new Category();
+			Assert.True(_root.IsRoot());
+
+			Assert.IsType<ArgumentException>(Record.Exception(() => _root.Categories.Add(category)));
+			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("/")));
+			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("ABC\\")));
+			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("ABC/DEF")));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(null)));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(string.Empty)));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(" ")));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category("\t")));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category("\n")));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category("\r")));
+			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(Environment.NewLine)));
+		}
+
 		[Fact]
 		public void TestFind()
 		{

@@ -34,15 +34,21 @@ using System.Text.RegularExpressions;
 namespace Zongsoft.Services
 {
 	[System.Reflection.DefaultMember(nameof(Children))]
-	public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode
+	[System.ComponentModel.DefaultProperty(nameof(Children))]
+	public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTreeNode>
 	{
+		#region 静态变量
+		private static readonly Regex _regex = new(@"^\s*((?<prefix>/|\.{1,2})/?)?(\s*(?<part>[^\.\\/]+|\.{2})?\s*[/.]?\s*)*", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
+		#endregion
+
 		#region 私有变量
-		private readonly Regex _regex = new Regex(@"^\s*((?<prefix>/|\.{1,2})/?)?(\s*(?<part>[^\.\\/]+|\.{2})?\s*[/.]?\s*)*", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
+		private int _childrenLoaded;
 		#endregion
 
 		#region 成员字段
 		private ICommand _command;
 		private ICommandLoader _loader;
+		private CommandTreeNode _parent;
 		private CommandTreeNodeCollection _children;
 		#endregion
 
@@ -57,12 +63,7 @@ namespace Zongsoft.Services
 			_children = new CommandTreeNodeCollection(this);
 		}
 
-		public CommandTreeNode(string name, CommandTreeNode parent) : base(name, parent)
-		{
-			_children = new CommandTreeNodeCollection(this);
-		}
-
-		public CommandTreeNode(ICommand command, CommandTreeNode parent = null) : base(command.Name, parent)
+		public CommandTreeNode(ICommand command) : base(command?.Name)
 		{
 			_command = command ?? throw new ArgumentNullException(nameof(command));
 			_children = new CommandTreeNodeCollection(this);
@@ -82,7 +83,6 @@ namespace Zongsoft.Services
 			set => _loader = value;
 		}
 
-		public CommandTreeNode Parent => (CommandTreeNode)this.InnerParent;
 		public CommandTreeNodeCollection Children
 		{
 			get
@@ -132,9 +132,9 @@ namespace Zongsoft.Services
 			}
 
 			if(parts == null)
-				parts = new string[] { path };
+				parts = [path];
 
-			return (CommandTreeNode)base.FindNode(parts, null);
+			return base.FindNode(string.Join('/', parts), null);
 		}
 
 		public CommandTreeNode Find(ICommand command, bool rooting = false)
@@ -194,12 +194,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 重写方法
-		protected override Collections.HierarchicalNode GetChild(string name)
-		{
-			return _children != null && _children.TryGetValue(name, out var child) ? child : null;
-		}
-
-		protected override void LoadChildren()
+		protected void LoadChildren()
 		{
 			var loader = _loader;
 
@@ -207,10 +202,30 @@ namespace Zongsoft.Services
 				loader.Load(this);
 		}
 
-		public override string ToString() => this.FullPath;
+		protected override CommandTreeNode Parent => _parent;
+		protected override Collections.IHierarchicalNodeCollection<CommandTreeNode> Nodes => this.Children;
+		protected override string GetPath() => _parent == null ? string.Empty : _parent.FullPath;
+		protected override void OnFinding(ReadOnlySpan<char> path) => this.EnsureChildren();
+		#endregion
+
+		#region 内部方法
+		internal void SetParent(CommandTreeNode parent) => _parent = parent;
 		#endregion
 
 		#region 私有方法
+		/// <summary>确认子节点集合是否被加载，如果未曾被加载则加载子节点集合。</summary>
+		/// <returns>如果子节点集合未曾被加载则加载当前子节点集合并返回真(true)，否则返回假(false)。</returns>
+		/// <remarks>在<seealso cref="LoadChildren"/>方法中会调用该方法以确保子节点被加载。</remarks>
+		protected bool EnsureChildren()
+		{
+			var childrenLoaded = System.Threading.Interlocked.Exchange(ref _childrenLoaded, 1);
+
+			if(childrenLoaded == 0)
+				this.LoadChildren();
+
+			return childrenLoaded == 0;
+		}
+
 		private static CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
 		{
 			if(current == null || predicate == null)

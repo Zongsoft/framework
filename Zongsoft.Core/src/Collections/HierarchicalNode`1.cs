@@ -49,7 +49,6 @@ namespace Zongsoft.Collections
 		[SerializationMember(Ignored = true)]
 		[System.Text.Json.Serialization.JsonIgnore]
 		protected abstract IHierarchicalNodeCollection<TNode> Nodes { get; }
-
 		IHierarchicalNodeCollection<TNode> IHierarchicalNode<TNode>.Nodes => this.Nodes;
 		#endregion
 
@@ -80,36 +79,120 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 公共方法
-		public TNode Find(string path, Func<HierarchicalNodeToken, TNode> step = null)
+		public TNode Find(ReadOnlySpan<char> path) => this.FindNode(path);
+		protected TNode FindNode(ReadOnlySpan<char> path, Func<HierarchicalNodeToken, TNode> onStep = null)
 		{
-			if(step == null)
-				return (TNode)base.FindNode(path, 0, 0);
-			else
-				return (TNode)base.FindNode(path, 0, 0, token => step(new HierarchicalNodeToken(token)));
-		}
+			//注意：一定要确保空字符串路径是返回自身
+			if(path.IsEmpty)
+				return (TNode)this;
 
-		public TNode Find(string path, int startIndex, int length = 0, Func<HierarchicalNodeToken, TNode> step = null)
-		{
-			if(step == null)
-				return (TNode)base.FindNode(path, startIndex, length);
-			else
-				return (TNode)base.FindNode(path, startIndex, length, token => step(new HierarchicalNodeToken(token)));
-		}
+			//准备开始查找下级节点
+			this.OnFinding(path);
 
-		public TNode Find(string[] parts, Func<HierarchicalNodeToken, TNode> step = null)
-		{
-			if(step == null)
-				return (TNode)base.FindNode(parts);
-			else
-				return (TNode)base.FindNode(parts, token => step(new HierarchicalNodeToken(token)));
-		}
+			//当前节点默认为本节点
+			TNode current = (TNode)this;
 
-		public TNode Find(string[] parts, int startIndex, int count = 0, Func<HierarchicalNodeToken, TNode> step = null)
+			int last = 0;
+			int spaces = 0;
+			int index = 0;
+
+			for(int i = 0; i < path.Length; i++)
+			{
+				if(path[i] == PathSeparator)
+				{
+					if(index++ == 0)
+					{
+						if(last == i)
+							current = this.FindRoot();
+					}
+
+					if(i - last > spaces)
+					{
+						current = FindStep(current, index - 1, path, i, last, spaces, onStep);
+
+						if(current == null)
+							return null;
+					}
+
+					spaces = -1;
+					last = i + 1;
+				}
+				else if(char.IsWhiteSpace(path[i]))
+				{
+					if(i == last)
+						last = i + 1;
+					else
+						spaces++;
+				}
+				else
+				{
+					spaces = 0;
+				}
+			}
+
+			if(last < path.Length - spaces - 1)
+				current = FindStep(current, index, path, path.Length, last, spaces, onStep);
+
+			//查找下级节点完成
+			this.OnFounded(path, current);
+
+			//返回查找到的节点
+			return current;
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual void OnFinding(ReadOnlySpan<char> path) { }
+		protected virtual void OnFounded(ReadOnlySpan<char> path, TNode node) { }
+		#endregion
+
+		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static TNode FindStep(TNode current, int index, ReadOnlySpan<char> path, int position, int last, int spaces, Func<HierarchicalNodeToken, TNode> onStep)
 		{
-			if(step == null)
-				return (TNode)base.FindNode(parts, startIndex, count);
-			else
-				return (TNode)base.FindNode(parts, startIndex, count, token => step(new HierarchicalNodeToken(token)));
+			var part = path.Slice(last, position - last - spaces);
+			TNode parent = null;
+
+			switch(part)
+			{
+				case "":
+				case ".":
+					return current;
+				case "..":
+					if(current.Parent != null)
+						current = current.Parent;
+
+					break;
+				default:
+					parent = current;
+					current = parent.Nodes.TryGetValue(part.ToString(), out var child) ? child : null;
+					break;
+			}
+
+			if(onStep != null)
+				current = onStep(new HierarchicalNodeToken(index, part, current, parent));
+
+			return current;
+		}
+		#endregion
+
+		#region 嵌套子类
+		internal protected readonly struct HierarchicalNodeToken
+		{
+			internal HierarchicalNodeToken(int index, ReadOnlySpan<char> name, TNode current, TNode parent = null)
+			{
+				this.Index = index;
+				this.Name = name.ToString();
+				this.Current = current;
+				this.Parent = parent ?? (current?.Parent);
+			}
+
+			public readonly string Name;
+			public readonly int Index;
+			public readonly TNode Parent;
+			public readonly TNode Current;
+
+			public override string ToString() => $"{this.Name}#{this.Index}";
 		}
 		#endregion
 	}

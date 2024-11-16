@@ -10,7 +10,7 @@ namespace Zongsoft.Services.Tests
 		[Fact]
 		public void TestAdd()
 		{
-			var nodes = new CommandTreeNodeCollection(null);
+			var nodes = new CommandTreeNodeCollection();
 
 			//测试增加空节点
 			Assert.NotNull(nodes.Add("Empty"));

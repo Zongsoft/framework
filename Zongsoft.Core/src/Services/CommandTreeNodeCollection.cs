@@ -33,38 +33,30 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Services
 {
-	public class CommandTreeNodeCollection : Zongsoft.Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
+	public class CommandTreeNodeCollection : Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
 	{
 		#region 构造函数
-		public CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
+		public CommandTreeNodeCollection() : base(null) { }
+		internal CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
 		#endregion
 
 		#region 公共方法
 		public CommandTreeNode Add(string name)
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
-
-			var node = new CommandTreeNode(name, this.Owner);
+			var node = new CommandTreeNode(name);
 			this.Add(node);
 			return node;
 		}
 
 		public CommandTreeNode Add(ICommand command)
 		{
-			if(command == null)
-				throw new ArgumentNullException("command");
-
-			var node = new CommandTreeNode(command, this.Owner);
+			var node = new CommandTreeNode(command ?? throw new ArgumentNullException(nameof(command)));
 			this.Add(node);
 			return node;
 		}
 
-		public bool Contains(ICommand command)
-		{
-			return command != null && this.Contains(command.Name);
-		}
-
+		public bool Remove(ICommand command) => command != null && base.Remove(command.Name);
+		public bool Contains(ICommand command) => command != null && this.Contains(command.Name);
 		public void CopyTo(ICommand[] array, int arrayIndex)
 		{
 			if(array == null)
@@ -81,15 +73,10 @@ namespace Zongsoft.Services
 					array[i] = iterator.Current?.Command;
 			}
 		}
-
-		public bool Remove(ICommand command)
-		{
-			return command != null && base.Remove(command.Name);
-		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(CommandTreeNode node) => node.Name;
+		protected override void SetOwner(CommandTreeNode owner, CommandTreeNode node) => node?.SetParent(owner);
 		#endregion
 
 		#region 接口实现
@@ -100,9 +87,7 @@ namespace Zongsoft.Services
 			var iterator = base.GetEnumerator();
 
 			while(iterator.MoveNext())
-			{
 				yield return iterator.Current?.Command;
-			}
 		}
 		#endregion
 	}

@@ -36,166 +36,70 @@ namespace Zongsoft.Reflection.Expressions
 	/// </summary>
 	public abstract class MemberExpression : IMemberExpression
 	{
-		#region 成员字段
-		private IMemberExpression _previous;
-		private IMemberExpression _next;
-		#endregion
-
 		#region 构造函数
-		protected MemberExpression()
-		{
-		}
+		protected MemberExpression() { }
 		#endregion
 
 		#region 公共属性
-		public abstract MemberExpressionType ExpressionType
-		{
-			get;
-		}
-
-		public IMemberExpression Previous
-		{
-			get
-			{
-				return _previous;
-			}
-		}
-
-		public IMemberExpression Next
-		{
-			get
-			{
-				return _next;
-			}
-		}
+		public abstract MemberExpressionType ExpressionType { get; }
+		public IMemberExpression Previous { get; private set; }
+		public IMemberExpression Next { get; private set; }
 		#endregion
 
 		#region 公共方法
 		public T Append<T>(T expression) where T : MemberExpression
 		{
-			if(expression == null)
-				throw new ArgumentNullException(nameof(expression));
-
-			_next = expression;
-			expression._previous = this;
+			this.Next = expression ?? throw new ArgumentNullException(nameof(expression));
+			expression.Previous = this;
 			return expression;
 		}
 
 		public T Prepend<T>(T expression) where T : MemberExpression
 		{
-			if(expression == null)
-				throw new ArgumentNullException(nameof(expression));
-
-			_previous = expression;
-			expression._next = this;
+			this.Previous = expression ?? throw new ArgumentNullException(nameof(expression));
+			expression.Next = this;
 			return expression;
 		}
 		#endregion
 
 		#region 解析方法
-		public static bool TryParse(string text, out IMemberExpression expression)
-		{
-			return (expression = MemberExpressionParser.Parse(text, null)) != null;
-		}
-
-		public static bool TryParse(string text, int start, int count, out IMemberExpression expression)
-		{
-			return (expression = MemberExpressionParser.Parse(text, start, count, null)) != null;
-		}
-
-		public static IMemberExpression Parse(string text)
-		{
-			return MemberExpressionParser.Parse(text, message => throw new InvalidOperationException(message));
-		}
-
-		public static IMemberExpression Parse(string text, int start, int count)
-		{
-			return MemberExpressionParser.Parse(text, start, count, message => throw new InvalidOperationException(message));
-		}
-
-		public static IMemberExpression Parse(string text, Action<string> onError)
-		{
-			return MemberExpressionParser.Parse(text, onError);
-		}
-
-		public static IMemberExpression Parse(string text, int start, int count, Action<string> onError)
-		{
-			return MemberExpressionParser.Parse(text, start, count, onError);
-		}
+		public static bool TryParse(ReadOnlySpan<char> text, out IMemberExpression expression) => (expression = MemberExpressionParser.Parse(text, null)) != null;
+		public static IMemberExpression Parse(ReadOnlySpan<char> text) => MemberExpressionParser.Parse(text, message => throw new InvalidOperationException(message));
+		public static IMemberExpression Parse(ReadOnlySpan<char> text, Action<string> onError) => MemberExpressionParser.Parse(text, onError);
 		#endregion
 
 		#region 静态方法
-		public static bool IsNull(object value)
-		{
-			return value == null || (value is ConstantExpression constant && constant.Value == null);
-		}
-
-		public static ConstantExpression Constant(object value)
-		{
-			return value == null ?
-			       ConstantExpression.Null :
-			       new ConstantExpression(value);
-		}
-
+		public static bool IsNull(object value) => value == null || (value is ConstantExpression constant && constant.Value == null);
+		public static ConstantExpression Constant(object value) => value == null ? ConstantExpression.Null : new ConstantExpression(value);
 		public static ConstantExpression Constant(string literal, TypeCode type)
 		{
 			if(literal == null)
 				return ConstantExpression.Null;
 
-			switch(type)
+			return type switch
 			{
-				case TypeCode.Boolean:
-					return new ConstantExpression(bool.Parse(literal));
-				case TypeCode.Int16:
-					return new ConstantExpression(short.Parse(literal));
-				case TypeCode.Int32:
-					return new ConstantExpression(int.Parse(literal));
-				case TypeCode.Int64:
-					return new ConstantExpression(long.Parse(literal));
-				case TypeCode.UInt16:
-					return new ConstantExpression(ushort.Parse(literal));
-				case TypeCode.UInt32:
-					return new ConstantExpression(uint.Parse(literal));
-				case TypeCode.UInt64:
-					return new ConstantExpression(ulong.Parse(literal));
-				case TypeCode.Double:
-					return new ConstantExpression(double.Parse(literal));
-				case TypeCode.Single:
-					return new ConstantExpression(float.Parse(literal));
-				case TypeCode.Decimal:
-					return new ConstantExpression(decimal.Parse(literal));
-				case TypeCode.Byte:
-					return new ConstantExpression(byte.Parse(literal));
-				case TypeCode.Char:
-					return new ConstantExpression(string.IsNullOrEmpty(literal) ? '\0' : literal[0]);
-				case TypeCode.SByte:
-					return new ConstantExpression(sbyte.Parse(literal));
-				case TypeCode.DateTime:
-					return new ConstantExpression(DateTime.Parse(literal));
-				case TypeCode.Object:
-					if(string.IsNullOrEmpty(literal) || literal.Equals("null", StringComparison.OrdinalIgnoreCase))
-						return ConstantExpression.Null;
-					else
-						return new ConstantExpression(literal);
-				default:
-					return new ConstantExpression(literal);
-			}
+				TypeCode.Boolean => new ConstantExpression(bool.Parse(literal)),
+				TypeCode.Int16 => new ConstantExpression(short.Parse(literal)),
+				TypeCode.Int32 => new ConstantExpression(int.Parse(literal)),
+				TypeCode.Int64 => new ConstantExpression(long.Parse(literal)),
+				TypeCode.UInt16 => new ConstantExpression(ushort.Parse(literal)),
+				TypeCode.UInt32 => new ConstantExpression(uint.Parse(literal)),
+				TypeCode.UInt64 => new ConstantExpression(ulong.Parse(literal)),
+				TypeCode.Double => new ConstantExpression(double.Parse(literal)),
+				TypeCode.Single => new ConstantExpression(float.Parse(literal)),
+				TypeCode.Decimal => new ConstantExpression(decimal.Parse(literal)),
+				TypeCode.Byte => new ConstantExpression(byte.Parse(literal)),
+				TypeCode.Char => new ConstantExpression(string.IsNullOrEmpty(literal) ? '\0' : literal[0]),
+				TypeCode.SByte => new ConstantExpression(sbyte.Parse(literal)),
+				TypeCode.DateTime => new ConstantExpression(DateTime.Parse(literal)),
+				TypeCode.Object => string.IsNullOrEmpty(literal) || literal.Equals("null", StringComparison.OrdinalIgnoreCase) ? ConstantExpression.Null : new ConstantExpression(literal),
+				_ => new ConstantExpression(literal),
+			};
 		}
 
-		public static MethodExpression Method(string name, params IMemberExpression[] arguments)
-		{
-			return new MethodExpression(name, arguments);
-		}
-
-		public static IndexerExpression Indexer(params IMemberExpression[] arguments)
-		{
-			return new IndexerExpression(arguments);
-		}
-
-		public static IdentifierExpression Identifier(string name)
-		{
-			return new IdentifierExpression(name);
-		}
+		public static MethodExpression Method(string name, params IMemberExpression[] arguments) => new(name, arguments);
+		public static IndexerExpression Indexer(params IMemberExpression[] arguments) => new(arguments);
+		public static IdentifierExpression Identifier(string name) => new(name);
 		#endregion
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,24 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.ComponentModel
+namespace Zongsoft.Collections;
+
+public static class HierarchicalNodeUtility
 {
-	public class SchemaCategoryCollection : Zongsoft.Collections.HierarchicalNodeCollection<SchemaCategory>
-	{
-		#region 构造函数
-		public SchemaCategoryCollection() : base(null) { }
-		public SchemaCategoryCollection(SchemaCategory owner) : base(owner) { }
-		#endregion
-
-		#region 公共方法
-		public SchemaCategory Add(string name, string title, string description)
-		{
-			var category = new SchemaCategory(name, title, description);
-			this.Add(category);
-			return category;
-		}
-		#endregion
-	}
+	/// <summary>判断指定节点是否为根节点。</summary>
+	/// <returns>如果指定节点是根节点则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	public static bool IsRoot(this IHierarchicalNode node) => node != null && (string.IsNullOrEmpty(node.Name) || (node.Name.Length == 1 && node.Name[0] == HierarchicalNode.PathSeparator));
 }

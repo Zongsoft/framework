@@ -36,34 +36,21 @@ namespace Zongsoft.Reflection.Expressions
 	{
 		#region 常量定义
 		private const string EXCEPTION_UNKNOWN_MESSAGE = "An unknown error occurred in the parser.";
-		private const string EXCEPTION_ILLEGAL_CHARACTER_MESSAGE = "The '{0}' character at the {1} is an illegal character.";
-		private const string EXCEPTION_IDENTIFIER_WHITESPACE_MESSAGE = "Contains illegal whitespace characters before the {0} character in the identifier.";
 		#endregion
 
 		#region 公共方法
-		public static bool TryParse(string text, out IMemberExpression expression) => (expression = Parse(text, 0, 0, null)) != null;
-		public static bool TryParse(string text, int start, int count, out IMemberExpression expression) => (expression = Parse(text, start, count, null)) != null;
-		public static IMemberExpression Parse(string text) => Parse(text, 0, 0, message => throw new InvalidOperationException(message));
-		public static IMemberExpression Parse(string text, int start, int count) => Parse(text, start, count, message => throw new InvalidOperationException(message));
-		public static IMemberExpression Parse(string text, Action<string> onError) => Parse(text, 0, 0, onError);
-		public static IMemberExpression Parse(string text, int start, int count, Action<string> onError)
+		public static bool TryParse(ReadOnlySpan<char> text, out IMemberExpression expression) => (expression = Parse(text, null)) != null;
+		public static IMemberExpression Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new InvalidOperationException(message));
+		public static IMemberExpression Parse(ReadOnlySpan<char> text, Action<string> onError)
 		{
-			if(string.IsNullOrEmpty(text))
+			if(text.IsEmpty)
 				return null;
-
-			if(start < 0 || start >= text.Length)
-				throw new ArgumentOutOfRangeException(nameof(start));
-
-			if(count < 1)
-				count = text.Length - start;
-			else if(count > text.Length - start)
-				throw new ArgumentOutOfRangeException(nameof(count));
 
 			//创建解析上下文对象
 			var context = new StateContext(text.Length, onError);
 
 			//状态迁移驱动
-			for(int i = start; i < start + count; i++)
+			for(int i = 0; i < text.Length; i++)
 			{
 				context.Character = text[i];
 
@@ -260,7 +247,7 @@ namespace Zongsoft.Reflection.Expressions
 						//判断标识表达式中间是否含有空白字符
 						if(context.Flags.HasWhitespace())
 						{
-							context.OnError(string.Format(EXCEPTION_IDENTIFIER_WHITESPACE_MESSAGE, position));
+							context.OnError($"Contains illegal whitespace characters before the {position} character in the identifier.");
 							return false;
 						}
 
@@ -542,7 +529,7 @@ namespace Zongsoft.Reflection.Expressions
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetIllegalCharacterExceptionMessage(char chr, int position) => string.Format(EXCEPTION_ILLEGAL_CHARACTER_MESSAGE, chr, position);
+		private static string GetIllegalCharacterExceptionMessage(char chr, int position) => $"The '{chr}' character at the {position} is an illegal character.";
 		#endregion
 
 		#region 嵌套结构

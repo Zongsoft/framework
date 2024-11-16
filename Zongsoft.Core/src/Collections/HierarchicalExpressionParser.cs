@@ -35,62 +35,27 @@ namespace Zongsoft.Collections
 {
 	public static class HierarchicalExpressionParser
 	{
-		#region 常量定义
-		private const string EXCEPTION_ILLEGAL_CHARACTER_MESSAGE = "The '{0}' character at the {1} is an illegal character.";
-		#endregion
-
 		#region 公共方法
-		public static bool TryParse(string text, out HierarchicalExpression expression)
+		public static bool TryParse(ReadOnlySpan<char> text, out HierarchicalExpression expression) => (expression = Parse(text, null)) != null;
+		public static HierarchicalExpression Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new InvalidOperationException(message));
+		public static HierarchicalExpression Parse(ReadOnlySpan<char> text, Action<string> onError)
 		{
-			return (expression = Parse(text, 0, 0, null)) != null;
-		}
-
-		public static bool TryParse(string text, int start, int count, out HierarchicalExpression expression)
-		{
-			return (expression = Parse(text, start, count, null)) != null;
-		}
-
-		public static HierarchicalExpression Parse(string text)
-		{
-			return Parse(text, 0, 0, message => throw new InvalidOperationException(message));
-		}
-
-		public static HierarchicalExpression Parse(string text, int start, int count)
-		{
-			return Parse(text, start, count, message => throw new InvalidOperationException(message));
-		}
-
-		public static HierarchicalExpression Parse(string text, Action<string> onError)
-		{
-			return Parse(text, 0, 0, onError);
-		}
-
-		public static HierarchicalExpression Parse(string text, int start, int count, Action<string> onError)
-		{
-			if(string.IsNullOrEmpty(text))
+			if(text.IsEmpty)
 				return null;
 
-			if(start < 0 || start >= text.Length)
-				throw new ArgumentOutOfRangeException(nameof(start));
-
-			if(count < 1)
-				count = text.Length - start;
-			else if(count > text.Length - start)
-				throw new ArgumentOutOfRangeException(nameof(count));
-
 			//创建解析上下文对象
-			var context = new StateContext(text.AsSpan(start, count));
+			var context = new StateContext(text);
 			Reflection.Expressions.IMemberExpression accessor = null;
 			IList<string> segments = null;
 
 			//状态迁移驱动
-			for(int i = start; i < start + count; i++)
+			for(int i = 0; i < text.Length; i++)
 			{
 				if(context.State == State.Exit)
 				{
 					var index = context.Character == '@' ? i : i - 1;
 
-					if((accessor = Reflection.Expressions.MemberExpressionParser.Parse(text, index, -1, onError)) == null)
+					if((accessor = Reflection.Expressions.MemberExpressionParser.Parse(text[index..], onError)) == null)
 						return null;
 					else
 						break;
@@ -276,24 +241,10 @@ namespace Zongsoft.Collections
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static bool Validate(char chr)
-		{
-			var iterator = HierarchicalNode.IllegalCharacters.AsSpan().GetEnumerator();
-
-			while(iterator.MoveNext())
-			{
-				if(iterator.Current == chr)
-					return false;
-			}
-
-			return true;
-		}
+		private static bool Validate(char chr) => !HierarchicalNode.IllegalCharacters.AsSpan().Contains(chr);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetIllegalCharacterExceptionMessage(char chr, int position)
-		{
-			return string.Format(EXCEPTION_ILLEGAL_CHARACTER_MESSAGE, chr, position);
-		}
+		private static string GetIllegalCharacterExceptionMessage(char chr, int position) => $"The '{chr}' character at the {position} is an illegal character.";
 		#endregion
 
 		#region 嵌套结构
@@ -336,10 +287,7 @@ namespace Zongsoft.Collections
 			#endregion
 
 			#region 公共属性
-			public bool HasWhitespaces
-			{
-				get => _whitespaces > 0;
-			}
+			public readonly bool HasWhitespaces => _whitespaces > 0;
 			#endregion
 
 			#region 公共方法
@@ -388,10 +336,7 @@ namespace Zongsoft.Collections
 
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private static bool IsDelimiter(char chr)
-			{
-				return chr == '/' || chr == '\\' || chr == '@' || chr == '[';
-			}
+			private static bool IsDelimiter(char chr) => chr == '/' || chr == '\\' || chr == '@' || chr == '[';
 			#endregion
 		}
 		#endregion

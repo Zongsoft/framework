@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,65 +31,50 @@ using System;
 
 namespace Zongsoft.Collections
 {
-	[Serializable]
-	[System.Reflection.DefaultMember(nameof(Children))]
+	[System.Reflection.DefaultMember(nameof(Categories))]
+	[System.ComponentModel.DefaultProperty(nameof(Categories))]
 	public class Category : HierarchicalNode<Category>
 	{
 		#region 成员字段
 		private bool _visible;
-		private CategoryCollection _children;
+		private Category _parent;
 		#endregion
 
 		#region 构造函数
-		public Category()
-		{
-			_visible = true;
-		}
-
-		public Category(string name) : this(name, name, string.Empty, true)
-		{
-		}
-
-		public Category(string name, string title, string description) : this(name, title, description, true)
-		{
-		}
-
-		public Category(string name, string title, string description, bool visible) : base(name, title, description)
+		public Category() => this.Categories = new(this);
+		public Category(string name) : this(name, true) { }
+		public Category(string name, bool visible) : base(name)
 		{
 			_visible = visible;
+			this.Categories = new(this);
 		}
 		#endregion
 
 		#region 公共属性
 		public bool Visible
 		{
-			get
-			{
-				return _visible;
-			}
+			get => _visible;
 			set
 			{
+				if(_visible != value)
+					return;
+
 				_visible = value;
+				this.OnPropertyChanged(nameof(this.Visible));
 			}
 		}
 
-		public CategoryCollection Children
-		{
-			get
-			{
-				if(_children == null)
-					System.Threading.Interlocked.CompareExchange(ref _children, new CategoryCollection(this), null);
-
-				return _children;
-			}
-		}
+		public CategoryCollection Categories { get; }
 		#endregion
 
 		#region 重写方法
-		protected override HierarchicalNode GetChild(string name)
-		{
-			return _children != null && _children.TryGetValue(name, out var result) ? result : null;
-		}
+		protected override Category Parent => _parent;
+		protected override IHierarchicalNodeCollection<Category> Nodes => this.Categories;
+		protected override string GetPath() => _parent == null ? string.Empty : _parent.FullPath;
+		#endregion
+
+		#region 内部方法
+		internal void SetParent(Category parent) => _parent = parent;
 		#endregion
 	}
 }

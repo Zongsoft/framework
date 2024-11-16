@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.IO;
 using Zongsoft.Reflection.Expressions;
@@ -88,37 +87,22 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取层次路径的锚定点。
-		/// </summary>
+		/// <summary>获取层次路径的锚定点。</summary>
 		public PathAnchor Anchor { get; }
 
-		/// <summary>
-		/// 获取层次表达式的路径。
-		/// </summary>
+		/// <summary>获取层次表达式的路径。</summary>
 		public string Path { get; }
 
-		/// <summary>
-		/// 获取包含构成<see cref="Path"/>路径段的数组。
-		/// </summary>
+		/// <summary>获取包含构成<see cref="Path"/>路径段的数组。</summary>
 		public string[] Segments { get; }
 
-		/// <summary>
-		/// 获取层次表达式中的成员访问表达式。
-		/// </summary>
+		/// <summary>获取层次表达式中的成员访问表达式。</summary>
 		public IMemberExpression Accessor { get; }
 		#endregion
 
 		#region 静态方法
-		public static HierarchicalExpression Parse(string text)
-		{
-			return HierarchicalExpressionParser.Parse(text);
-		}
-
-		public static bool TryParse(string text, out HierarchicalExpression result)
-		{
-			return HierarchicalExpressionParser.TryParse(text, out result);
-		}
+		public static HierarchicalExpression Parse(ReadOnlySpan<char> text) => HierarchicalExpressionParser.Parse(text);
+		public static bool TryParse(ReadOnlySpan<char> text, out HierarchicalExpression result) => HierarchicalExpressionParser.TryParse(text, out result);
 		#endregion
 	}
 }

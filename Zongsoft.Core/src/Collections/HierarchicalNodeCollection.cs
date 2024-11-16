@@ -37,7 +37,11 @@ namespace Zongsoft.Collections
 		IHierarchicalNodeCollection<TNode>
 		where TNode : IHierarchicalNode<TNode>
 	{
-		#region 成员变量
+		#region 常量定义
+		private const string ROOTED_ERROR_MESSAGE = @"The root node cannot be added to the child nodes.";
+		#endregion
+
+		#region 成员字段
 		private readonly TNode _owner = owner;
 		#endregion
 
@@ -59,6 +63,9 @@ namespace Zongsoft.Collections
 			if(node == null)
 				throw new ArgumentNullException(nameof(node));
 
+			if(node.IsRoot())
+				throw new ArgumentException(ROOTED_ERROR_MESSAGE);
+
 			base.InsertItem(index, node);
 			this.SetOwner(_owner, node);
 		}
@@ -67,6 +74,9 @@ namespace Zongsoft.Collections
 		{
 			if(node == null)
 				throw new ArgumentNullException(nameof(node));
+
+			if(node.IsRoot())
+				throw new ArgumentException(ROOTED_ERROR_MESSAGE);
 
 			base.SetItem(index, node);
 			this.SetOwner(_owner, node);
