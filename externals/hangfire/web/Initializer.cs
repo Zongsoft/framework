@@ -39,7 +39,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Hangfire.Web
 {
-	[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
+	[Service<IApplicationInitializer<IApplicationBuilder>>]
 	public class Initializer : IApplicationInitializer<IApplicationBuilder>
 	{
 		public void Initialize(IApplicationBuilder builder)

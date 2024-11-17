@@ -39,7 +39,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Hangfire.Web
 {
-	public class ServiceRegistration : IServiceRegistration
+	public class Registration : IServiceRegistration
 	{
 		public void Register(IServiceCollection services, IConfiguration configuration)
 		{

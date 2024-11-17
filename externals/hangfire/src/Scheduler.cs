@@ -33,6 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Hangfire;
+using Hangfire.Common;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
@@ -40,11 +41,16 @@ using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire
 {
-	[Service(typeof(IScheduler))]
+	[Service<IScheduler>(NAME)]
 	public class Scheduler : IScheduler
 	{
+		#region 常量定义
+		internal const string NAME = "Hangfire";
+		#endregion
+
 		#region 公共方法
-		public string Schedule(string name, ITriggerOptions options = null)
+		public ValueTask<string> ScheduleAsync(string name, CancellationToken cancellation = default) => this.ScheduleAsync(name, null, cancellation);
+		public ValueTask<string> ScheduleAsync(string name, ITriggerOptions options, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -55,16 +61,17 @@ namespace Zongsoft.Externals.Hangfire
 					if(string.IsNullOrEmpty(options.Identifier))
 						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, CancellationToken.None), cron.Expression);
-					return options.Identifier;
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, cancellation), cron.Expression);
+					return ValueTask.FromResult(options.Identifier);
 				case TriggerOptions.Latency latency:
-					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, CancellationToken.None), latency.Duration);
+					return ValueTask.FromResult(BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, cancellation), latency.Duration));
 				default:
-					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, CancellationToken.None));
+					return ValueTask.FromResult(BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, cancellation)));
 			}
 		}
 
-		public string Schedule<TParameter>(string name, TParameter parameter, ITriggerOptions options)
+		public ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.ScheduleAsync(name, argument, null, cancellation);
+		public ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, ITriggerOptions options, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -75,39 +82,41 @@ namespace Zongsoft.Externals.Hangfire
 					if(string.IsNullOrEmpty(options.Identifier))
 						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), cron.Expression);
-					return options.Identifier;
+					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, argument, cancellation), cron.Expression);
+					return ValueTask.FromResult(options.Identifier);
 				case TriggerOptions.Latency latency:
-					return BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None), latency.Duration);
+					return ValueTask.FromResult(BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, argument, cancellation), latency.Duration));
 				default:
-					return BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, parameter, CancellationToken.None));
+					return ValueTask.FromResult(BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, argument, cancellation)));
 			}
 		}
 
-		public bool Reschedule(string identifier)
+		public ValueTask<bool> RescheduleAsync(string identifier, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identifier))
-				return false;
+				return ValueTask.FromResult(false);
 
-			return BackgroundJob.Requeue(identifier);
+			return ValueTask.FromResult(BackgroundJob.Requeue(identifier));
 		}
 
-		public bool Unschedule(string identifier)
+		public ValueTask<bool> UnscheduleAsync(string identifier, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identifier))
-				return false;
+				return ValueTask.FromResult(false);
 
-			if(BackgroundJob.Delete(identifier))
-				return true;
+			if(!BackgroundJob.Delete(identifier))
+				RecurringJob.RemoveIfExists(identifier);
 
-			RecurringJob.RemoveIfExists(identifier);
-			return false;
+			return ValueTask.FromResult(true);
 		}
 		#endregion
 
 		#region 嵌套子类
 		private static class HandlerFactory
 		{
+			public static Job GetJob(string name, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, cancellation));
+			public static Job GetJob<TArgument>(string name, TArgument argument, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, argument, cancellation));
+
 			public static async Task HandleAsync(string name, CancellationToken cancellation)
 			{
 				var count = 0L;
@@ -125,7 +134,7 @@ namespace Zongsoft.Externals.Hangfire
 					Zongsoft.Diagnostics.Logger.GetLogger(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
 			}
 
-			public static async Task HandleAsync<TParameter>(string name, TParameter parameter, CancellationToken cancellation)
+			public static async Task HandleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation)
 			{
 				var count = 0L;
 
@@ -135,10 +144,10 @@ namespace Zongsoft.Externals.Hangfire
 					{
 						count++;
 
-						if(handler is IHandler<TParameter> strong)
-							await strong.HandleAsync(parameter, cancellation);
+						if(handler is IHandler<TArgument> strong)
+							await strong.HandleAsync(argument, cancellation);
 						else
-							await handler.HandleAsync(parameter, cancellation);
+							await handler.HandleAsync(argument, cancellation);
 					}
 				}
 

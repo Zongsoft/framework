@@ -28,8 +28,8 @@
  */
 
 using System;
-
-using Zongsoft.Components;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Scheduling
 {
@@ -40,26 +40,44 @@ namespace Zongsoft.Scheduling
 	{
 		/// <summary>调度作业任务。</summary>
 		/// <param name="name">任务名称或处理程序标识。</param>
-		/// <param name="options">任务触发选项。</param>
+		/// <param name="cancellation">异步操作取消标记。</param>
 		/// <returns>返回调度成功的作业标识。</returns>
-		string Schedule(string name, ITriggerOptions options = null);
+		ValueTask<string> ScheduleAsync(string name, CancellationToken cancellation = default);
 
 		/// <summary>调度作业任务。</summary>
-		/// <typeparam name="TParameter">任务参数类型。</typeparam>
 		/// <param name="name">任务名称或处理程序标识。</param>
-		/// <param name="parameter">任务处理参数。</param>
 		/// <param name="options">任务触发选项。</param>
+		/// <param name="cancellation">异步操作取消标记。</param>
 		/// <returns>返回调度成功的作业标识。</returns>
-		string Schedule<TParameter>(string name, TParameter parameter, ITriggerOptions options = null);
+		ValueTask<string> ScheduleAsync(string name, ITriggerOptions options, CancellationToken cancellation = default);
+
+		/// <summary>调度作业任务。</summary>
+		/// <typeparam name="TArgument">任务参数类型。</typeparam>
+		/// <param name="name">任务名称即处理程序标识。</param>
+		/// <param name="argument">任务处理程序的回调参数。</param>
+		/// <param name="cancellation">异步操作取消标记。</param>
+		/// <returns>返回调度成功的作业标识。</returns>
+		ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default);
+
+		/// <summary>调度作业任务。</summary>
+		/// <typeparam name="TArgument">任务参数类型。</typeparam>
+		/// <param name="name">任务名称即处理程序标识。</param>
+		/// <param name="argument">任务处理程序的回调参数。</param>
+		/// <param name="options">任务触发选项。</param>
+		/// <param name="cancellation">异步操作取消标记。</param>
+		/// <returns>返回调度成功的作业标识。</returns>
+		ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, ITriggerOptions options, CancellationToken cancellation = default);
 
 		/// <summary>触发作业调度。</summary>
 		/// <param name="identifier">要触发的作业标识。</param>
-		/// <returns>如果触发成功则返回真(True)，否则返回假(False)。</returns>
-		bool Reschedule(string identifier);
+		/// <param name="cancellation">异步操作取消标记。</param>
+		/// <returns>如果触发成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		ValueTask<bool> RescheduleAsync(string identifier, CancellationToken cancellation = default);
 
 		/// <summary>取消作业调度。</summary>
 		/// <param name="identifier">要取消的作业标识。</param>
-		/// <returns>如果取消作业成功则返回真(True)，否则返回假(False)。</returns>
-		bool Unschedule(string identifier);
+		/// <param name="cancellation">异步操作取消标记。</param>
+		/// <returns>如果取消作业成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		ValueTask<bool> UnscheduleAsync(string identifier, CancellationToken cancellation = default);
 	}
 }

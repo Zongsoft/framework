@@ -50,7 +50,7 @@ namespace Zongsoft.Scheduling
 				return cron;
 			}
 
-			return options is null ? new (expression) : new (options.Identifier, expression);
+			return options is null ? new (expression) : new(options.Identifier, expression);
 		}
 
 		public static TriggerOptions.Latency Delay(this ITriggerOptions options, TimeSpan duration)
@@ -61,7 +61,7 @@ namespace Zongsoft.Scheduling
 				return latency;
 			}
 
-			return options is null ? new (duration) : new (options.Identifier, duration);
+			return options is null ? new (duration) : new(options.Identifier, duration);
 		}
 	}
 }

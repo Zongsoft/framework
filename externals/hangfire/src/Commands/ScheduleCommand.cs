@@ -80,7 +80,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 			for(int i = 0; i < names.Length; i++)
 			{
-				result[i] = scheduler.Schedule(names[i], parameter, options);
+				result[i] = scheduler.ScheduleAsync(names[i], parameter, options).AsTask().Result;
 			}
 
 			return result;

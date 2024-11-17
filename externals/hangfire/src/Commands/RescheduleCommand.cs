@@ -50,7 +50,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				var rescheduled = scheduler.Reschedule(context.Expression.Arguments[i]);
+				var rescheduled = scheduler.RescheduleAsync(context.Expression.Arguments[i]).AsTask().Result;
 
 				context.Output.Write($"[{i + 1}] ");
 				context.Output.Write(CommandOutletColor.DarkYellow, context.Expression.Arguments[i]);

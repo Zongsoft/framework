@@ -47,13 +47,13 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 构造函数
-		public Server()
+		public Server() : base(Scheduler.NAME)
 		{
 			this.CanPauseAndContinue = false;
 			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
 		}
 
-		public Server(string name) : base(name)
+		public Server(string name) : base(name ?? Scheduler.NAME)
 		{
 			this.CanPauseAndContinue = false;
 			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
@@ -61,7 +61,6 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 公共属性
-		[ServiceDependency]
 		public JobStorage Storage { get; set; }
 		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
@@ -71,7 +70,7 @@ namespace Zongsoft.Externals.Hangfire
 		{
 			_server = new BackgroundJobServer(new BackgroundJobServerOptions()
 			{
-				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{System.Environment.MachineName}",
+				ServerName = string.Equals(this.Name, nameof(Server)) ? null : $"{this.Name}.{Environment.MachineName}",
 				SchedulePollingInterval = TimeSpan.FromSeconds(5),
 			}, this.Storage ?? JobStorage.Current);
 
@@ -82,7 +81,6 @@ namespace Zongsoft.Externals.Hangfire
 		{
 			var server = Interlocked.Exchange(ref _server, null);
 			server?.Dispose();
-
 			return Task.CompletedTask;
 		}
 		#endregion

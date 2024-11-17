@@ -41,7 +41,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Hangfire.Storages
 {
-	[Service(typeof(global::Hangfire.JobStorage))]
+	[Service<global::Hangfire.JobStorage>]
 	public class RedisStorage : global::Hangfire.JobStorage, IEquatable<RedisStorage>
 	{
 		#region 常量定义

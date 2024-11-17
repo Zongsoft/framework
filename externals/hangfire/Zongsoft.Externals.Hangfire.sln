@@ -5,6 +5,8 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Externals.Hangfire", "src\Zongsoft.Externals.Hangfire.csproj", "{8AEEC5C6-4CCF-4757-9B78-88036875616E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Externals.Hangfire.Storages.Redis", "storages\redis\Zongsoft.Externals.Hangfire.Storages.Redis.csproj", "{9FEAF25E-BDA1-4765-BB77-C71BDE696209}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{8AEEC5C6-4CCF-4757-9B78-88036875616E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AEEC5C6-4CCF-4757-9B78-88036875616E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AEEC5C6-4CCF-4757-9B78-88036875616E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FEAF25E-BDA1-4765-BB77-C71BDE696209}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FEAF25E-BDA1-4765-BB77-C71BDE696209}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FEAF25E-BDA1-4765-BB77-C71BDE696209}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FEAF25E-BDA1-4765-BB77-C71BDE696209}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
