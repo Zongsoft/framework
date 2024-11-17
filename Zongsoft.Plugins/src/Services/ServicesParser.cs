@@ -108,7 +108,7 @@ namespace Zongsoft.Services
 		private const string DELIMITER_GROUP = "delimiter";
 		private const string PROVIDER_GROUP = "provider";
 		private const string PATTERN = @"\s*(?<" + SERVICE_GROUP + @">[^@,\s]+)?\s*((?<" + DELIMITER_GROUP + @">[@,])\s*(?<" + PROVIDER_GROUP + @">[^@,\s]+)?)?\s*";
-		private readonly Regex _regex = new Regex(PATTERN, (RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace));
+		private static readonly Regex _regex = new Regex(PATTERN, (RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace));
 		#endregion
 
 		#region 重写方法
