@@ -50,7 +50,10 @@ public static class ResourceAssistant
 		if(member == null)
 			throw new ArgumentNullException(nameof(member));
 
-		var type = member.ReflectedType ?? member.DeclaringType;
+		if(member is Type type)
+			return GetResource(type);
+
+		type = member.ReflectedType ?? member.DeclaringType;
 		return type != null ? GetResource(type) : GetResource(member.GetType().Assembly);
 	}
 
