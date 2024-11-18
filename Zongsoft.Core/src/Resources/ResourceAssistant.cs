@@ -45,7 +45,15 @@ public static class ResourceAssistant
 	#endregion
 
 	#region 公共方法
-	public static IResource GetResource(MemberInfo member) => GetResource(member?.ReflectedType);
+	public static IResource GetResource(MemberInfo member)
+	{
+		if(member == null)
+			throw new ArgumentNullException(nameof(member));
+
+		var type = member.ReflectedType ?? member.DeclaringType;
+		return type != null ? GetResource(type) : GetResource(member.GetType().Assembly);
+	}
+
 	public static IResource GetResource(Type type) => GetResource(type?.Assembly);
 	public static IResource GetResource<T>() => GetResource(typeof(T).Assembly);
 	public static IResource GetResource(Assembly assembly)
