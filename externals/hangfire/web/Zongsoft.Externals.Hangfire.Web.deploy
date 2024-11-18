@@ -1,5 +1,5 @@
 artifacts/Zongsoft.Externals.Hangfire.Web.plugin
 lib/$(Framework)/Zongsoft.Externals.Hangfire.Web.*
 
-nuget:Hangfire.NetCore@1.8.12
-nuget:Hangfire.AspNetCore@1.8.12
+nuget:Hangfire.NetCore@1.8.15
+nuget:Hangfire.AspNetCore@1.8.15
