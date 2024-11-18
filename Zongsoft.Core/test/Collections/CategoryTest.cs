@@ -56,11 +56,30 @@ namespace Zongsoft.Collections.Tests
 		[Fact]
 		public void TestFind()
 		{
-			Assert.NotNull(_root.Find("File"));
-			Assert.NotNull(_root.Find(" Edit"));
-			Assert.NotNull(_root.Find(" Help "));
+			var found = _root.Find("File");
+			Assert.NotNull(found);
+			Assert.Equal("File", found.Name);
+			Assert.Equal("/", found.Path);
+			Assert.Equal("/File", found.FullPath);
 
-			Assert.NotNull(_root.Find(" File / Save"));
+			found = _root.Find("Edit");
+			Assert.NotNull(found);
+			Assert.Equal("Edit", found.Name);
+			Assert.Equal("/", found.Path);
+			Assert.Equal("/Edit", found.FullPath);
+
+			found = _root.Find("Help");
+			Assert.NotNull(found);
+			Assert.Equal("Help", found.Name);
+			Assert.Equal("/", found.Path);
+			Assert.Equal("/Help", found.FullPath);
+
+			found = _root.Find(" File / Save");
+			Assert.NotNull(found);
+			Assert.Equal("Save", found.Name);
+			Assert.Equal("/File", found.Path);
+			Assert.Equal("/File/Save", found.FullPath);
+
 			Assert.NotNull(_root.Find(" File/ Recents"));
 			Assert.NotNull(_root.Find(" File /Recents / Document-1"));
 
@@ -68,14 +87,29 @@ namespace Zongsoft.Collections.Tests
 			Assert.NotNull(_root.Find("/ File  /Recents"));
 			Assert.NotNull(_root.Find(" / File  /  Recents/Document-2"));
 
-			Assert.NotNull(_root.Find("File").Find(" Open"));
-			Assert.NotNull(_root.Find("File").Find("./ Recents"));
-			Assert.NotNull(_root.Find("File").Find("Recents").Find("Document-2  "));
+			found = _root.Find("File").Find(" Open");
+			Assert.NotNull(found);
+			Assert.Equal("Open", found.Name);
+			Assert.Equal("/File", found.Path);
+			Assert.Equal("/File/Open", found.FullPath);
 
-			var node = _root.Find("Edit").Find(".. / File / Save");
+			found = _root.Find("File").Find("./ Recents");
+			Assert.NotNull(found);
+			Assert.Equal("Recents", found.Name);
+			Assert.Equal("/File", found.Path);
+			Assert.Equal("/File/Recents", found.FullPath);
 
-			Assert.NotNull(node);
-			Assert.Equal("Save", node.Name);
+			found = _root.Find("File").Find("Recents").Find("Document-2  ");
+			Assert.NotNull(found);
+			Assert.Equal("Document-2", found.Name);
+			Assert.Equal("/File/Recents", found.Path);
+			Assert.Equal("/File/Recents/Document-2", found.FullPath);
+
+			found = _root.Find("Edit").Find(".. / File / Save");
+			Assert.NotNull(found);
+			Assert.Equal("Save", found.Name);
+			Assert.Equal("/File", found.Path);
+			Assert.Equal("/File/Save", found.FullPath);
 		}
 		#endregion
 	}
