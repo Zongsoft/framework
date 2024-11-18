@@ -80,6 +80,18 @@ namespace Zongsoft.Configuration
 			this.DefaultValue = defaultValue;
 			this.Label = label;
 			this.Description = description;
+			this.Options = new();
+
+			if(type != null && type.IsEnum)
+			{
+				var entries = Common.EnumUtility.GetEnumEntries(type, true);
+
+				if(entries != null && entries.Length > 0)
+				{
+					for(int i = 0; i < entries.Length; i++)
+						this.Options.Add(new(entries[i]));
+				}
+			}
 		}
 		#endregion
 
@@ -92,12 +104,14 @@ namespace Zongsoft.Configuration
 		public string Alias { get; }
 		/// <summary>获取或设置连接设置项的默认值。</summary>
 		public object DefaultValue { get; set; }
-		/// <summary>获取或设置一个值，指示连接设置项是否为必须项。</summary>
+		/// <summary>获取或设置一个值，指示连接设置项是否为必须设置项。</summary>
 		public bool Required { get; set; }
 		/// <summary>获取或设置连接设置项的标题。</summary>
 		public string Label { get; set; }
 		/// <summary>获取或设置连接设置项的描述。</summary>
 		public string Description { get; set; }
+		/// <summary>获取连接设置的选项集。</summary>
+		public OptionCollection Options { get; }
 		#endregion
 
 		#region 重写方法
@@ -109,6 +123,39 @@ namespace Zongsoft.Configuration
 		}
 
 		public override string ToString() => this.DefaultValue == null ? $"[{this.Type.Name}]{this.Name}" : $"[{this.Type.Name}]{this.Name}={this.DefaultValue}";
+		#endregion
+
+		#region 嵌套子类
+		public sealed class Option
+		{
+			public Option(Common.EnumEntry entry)
+			{
+				this.Name = entry.Name;
+				this.Value = entry.Value;
+				this.Label = entry.Type == null ? null : Resources.ResourceUtility.GetResourceString(entry.Type, $"{entry.Type.Name}.{entry.Name}");
+				this.Description = entry.Description;
+			}
+
+			public Option(string name, object value, string label = null, string description = null)
+			{
+				this.Name = name;
+				this.Value = value;
+				this.Label = label;
+				this.Description = description;
+			}
+
+			public string Name { get; }
+			public object Value { get; set; }
+			public string Label { get; set; }
+			public string Description { get; set; }
+
+			public override string ToString() => this.Value == null ? this.Name : $"{this.Name}={this.Value}";
+		}
+
+		public sealed class OptionCollection() : System.Collections.ObjectModel.KeyedCollection<string, Option>(StringComparer.OrdinalIgnoreCase)
+		{
+			protected override string GetKeyForItem(Option option) => option.Name;
+		}
 		#endregion
 	}
 
