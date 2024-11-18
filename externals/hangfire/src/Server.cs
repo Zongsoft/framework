@@ -47,13 +47,13 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 构造函数
-		public Server() : base(Scheduler.NAME)
+		public Server()
 		{
 			this.CanPauseAndContinue = false;
 			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
 		}
 
-		public Server(string name) : base(name ?? Scheduler.NAME)
+		public Server(string name) : base(name)
 		{
 			this.CanPauseAndContinue = false;
 			this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);

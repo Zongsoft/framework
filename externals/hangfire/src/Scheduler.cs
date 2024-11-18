@@ -41,78 +41,25 @@ using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire
 {
-	[Service<IScheduler>(NAME)]
-	public class Scheduler : IScheduler
+	[Service<IScheduler<TriggerOptions.Cron>, IScheduler>(Members = $"{nameof(Cron)}")]
+	public partial class Scheduler
 	{
-		#region 常量定义
-		internal const string NAME = "Hangfire";
-		#endregion
+		private static readonly Lazy<CronScheduler> _cron = new(() => new CronScheduler(Storage), LazyThreadSafetyMode.PublicationOnly);
+		private static readonly Lazy<LatencyScheduler> _latency = new(() => new LatencyScheduler(Storage), LazyThreadSafetyMode.PublicationOnly);
+		private static readonly Lazy<JobStorage> _storageFactory = new(() => ApplicationContext.Current.Services.Resolve<JobStorage>() ?? JobStorage.Current, LazyThreadSafetyMode.PublicationOnly);
 
-		#region 公共方法
-		public ValueTask<string> ScheduleAsync(string name, CancellationToken cancellation = default) => this.ScheduleAsync(name, null, cancellation);
-		public ValueTask<string> ScheduleAsync(string name, ITriggerOptions options, CancellationToken cancellation = default)
+		private static JobStorage _storage;
+		public static JobStorage Storage
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			switch(options)
-			{
-				case TriggerOptions.Cron cron:
-					if(string.IsNullOrEmpty(options.Identifier))
-						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
-
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, cancellation), cron.Expression);
-					return ValueTask.FromResult(options.Identifier);
-				case TriggerOptions.Latency latency:
-					return ValueTask.FromResult(BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, cancellation), latency.Duration));
-				default:
-					return ValueTask.FromResult(BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, cancellation)));
-			}
+			get => _storage ??= _storageFactory.Value;
+			set => _storage = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
-		public ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.ScheduleAsync(name, argument, null, cancellation);
-		public ValueTask<string> ScheduleAsync<TArgument>(string name, TArgument argument, ITriggerOptions options, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			switch(options)
-			{
-				case TriggerOptions.Cron cron:
-					if(string.IsNullOrEmpty(options.Identifier))
-						options.Identifier = $"X{Common.Randomizer.GenerateString()}";
-
-					RecurringJob.AddOrUpdate(options.Identifier, () => HandlerFactory.HandleAsync(name, argument, cancellation), cron.Expression);
-					return ValueTask.FromResult(options.Identifier);
-				case TriggerOptions.Latency latency:
-					return ValueTask.FromResult(BackgroundJob.Schedule(() => HandlerFactory.HandleAsync(name, argument, cancellation), latency.Duration));
-				default:
-					return ValueTask.FromResult(BackgroundJob.Enqueue(() => HandlerFactory.HandleAsync(name, argument, cancellation)));
-			}
-		}
-
-		public ValueTask<bool> RescheduleAsync(string identifier, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(identifier))
-				return ValueTask.FromResult(false);
-
-			return ValueTask.FromResult(BackgroundJob.Requeue(identifier));
-		}
-
-		public ValueTask<bool> UnscheduleAsync(string identifier, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(identifier))
-				return ValueTask.FromResult(false);
-
-			if(!BackgroundJob.Delete(identifier))
-				RecurringJob.RemoveIfExists(identifier);
-
-			return ValueTask.FromResult(true);
-		}
-		#endregion
+		public static IScheduler<TriggerOptions.Cron> Cron => _cron.Value;
+		public static IScheduler<TriggerOptions.Latency> Latency => _latency.Value;
 
 		#region 嵌套子类
-		private static class HandlerFactory
+		internal static class HandlerFactory
 		{
 			public static Job GetJob(string name, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, cancellation));
 			public static Job GetJob<TArgument>(string name, TArgument argument, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, argument, cancellation));

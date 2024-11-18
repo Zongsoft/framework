@@ -16,8 +16,4 @@
 			<dependency name="Zongsoft.Externals.Redis" />
 		</dependencies>
 	</manifest>
-
-	<extension path="/Workspace/Externals/Hangfire/Storages">
-		<object name="RedisStorage" value="{srv:Zongsoft.Externals.Hangfire.Storages.RedisStorage, Zongsoft.Externals.Hangfire.Storages.Redis}" />
-	</extension>
 </plugin>

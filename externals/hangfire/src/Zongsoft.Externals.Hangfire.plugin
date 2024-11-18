@@ -12,10 +12,6 @@
 		</assemblies>
 	</manifest>
 
-	<extension path="/Workspace/Externals/Hangfire">
-		<object name="Scheduler" value="{srv:Hangfire}" />
-	</extension>
-
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Scheduler">
 			<scheduler.command>

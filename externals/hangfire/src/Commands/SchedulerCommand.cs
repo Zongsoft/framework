@@ -36,13 +36,6 @@ namespace Zongsoft.Externals.Hangfire.Commands
 {
 	public class SchedulerCommand : CommandBase<CommandContext>
 	{
-		#region 构造函数
-		public SchedulerCommand(IServiceProvider serviceProvider)
-		{
-			this.Scheduler = serviceProvider?.Resolve<IScheduler>();
-		}
-		#endregion
-
 		#region 公共属性
 		public IScheduler Scheduler { get; set; }
 		#endregion
@@ -50,6 +43,13 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		#region 重写方法
 		protected override object OnExecute(CommandContext context)
 		{
+			if(context.Expression.Arguments.Length > 0)
+				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(context.Expression.Arguments[0]);
+			else if(context.Parameter is string name)
+				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(name);
+			else if(context.Parameter is IScheduler scheduler)
+				this.Scheduler = scheduler;
+
 			return this.Scheduler;
 		}
 		#endregion
