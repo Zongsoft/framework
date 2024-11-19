@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
@@ -59,8 +60,8 @@ namespace Zongsoft.Services
 			{
 				var type = exportedType.GetTypeInfo();
 
-				//如果是非公共类、抽象类、嵌套类、泛型原型类则忽略
-				if(type.IsNotPublic || !type.IsClass || type.IsNested || (type.IsAbstract && !type.IsSealed) || (type.IsGenericType && type.IsGenericTypeDefinition))
+				//如果是非公共类、泛型原型类则忽略
+				if(type.IsNotPublic || !type.IsClass || (type.IsGenericType && type.IsGenericTypeDefinition))
 					continue;
 
 				//使用 IServiceRegistration 服务注册器注册服务
@@ -139,15 +140,16 @@ namespace Zongsoft.Services
 
 		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
 		{
-			if(type.IsAbstract)
+			//如果是成员注册
+			if(!string.IsNullOrEmpty(attribute.Members))
 			{
-				//如果是静态类则进行静态成员注册
-				if(type.IsSealed)
-					RegisterStaticMember(services, type, attribute.Members);
-
-				//如果是抽象类则返回
+				RegisterStaticMember(services, type, attribute.Members, attribute.Contracts);
 				return;
 			}
+
+			//如果是抽象类则返回
+			if(type.IsAbstract)
+				return;
 
 			services.AddSingleton((Type)type);
 
@@ -176,7 +178,7 @@ namespace Zongsoft.Services
 			}
 		}
 
-		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members)
+		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members, Type[] contracts)
 		{
 			if(string.IsNullOrEmpty(members))
 				return;
@@ -193,11 +195,16 @@ namespace Zongsoft.Services
 
 					if(!string.IsNullOrEmpty(moduleName))
 					{
-						var modular = ModularServiceUtility.GetModularService(moduleName, property.PropertyType, value);
-						services.AddSingleton(modular.GetType(), modular);
+						foreach(var contract in GetContracts(property.PropertyType, contracts))
+						{
+							var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
+							services.AddSingleton(modular.GetType(), modular);
+						}
 					}
 
-					services.AddSingleton(property.PropertyType, value);
+					foreach(var contract in GetContracts(property.PropertyType, contracts))
+						services.AddSingleton(contract, value);
+
 					continue;
 				}
 
@@ -209,12 +216,42 @@ namespace Zongsoft.Services
 
 					if(!string.IsNullOrEmpty(moduleName))
 					{
-						var modular = ModularServiceUtility.GetModularService(moduleName, field.FieldType, value);
-						services.AddSingleton(modular.GetType(), modular);
+						foreach(var contract in GetContracts(field.FieldType, contracts))
+						{
+							var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
+							services.AddSingleton(modular.GetType(), modular);
+						}
 					}
 
-					services.AddSingleton(field.FieldType, value);
+					foreach(var contract in GetContracts(field.FieldType, contracts))
+						services.AddSingleton(contract, value);
+
 					continue;
+				}
+			}
+		}
+
+		private static IEnumerable<Type> GetContracts(Type type, Type[] contracts)
+		{
+			if(type == null)
+			{
+				if(contracts == null || contracts.Length == 0)
+					yield break;
+
+				for(int i = 0; i < contracts.Length; i++)
+					yield return contracts[i];
+			}
+			else
+			{
+				yield return type;
+
+				if(contracts != null && contracts.Length > 0)
+				{
+					for(int i = 0; i < contracts.Length; i++)
+					{
+						if(contracts[i] != type)
+							yield return contracts[i];
+					}
 				}
 			}
 		}
