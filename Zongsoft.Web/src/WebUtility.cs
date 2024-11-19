@@ -68,7 +68,7 @@ namespace Zongsoft.Web
 
 			//如果启用了分页并且结果集为空，则返回204(NoContent)
 			if(paging != null && paging.Enabled && paging.IsEmpty)
-				return new NoContentResult();
+				return new OkObjectResult(Array.Empty<object>());
 
 			//返回数据
 			return new OkObjectResult(data);

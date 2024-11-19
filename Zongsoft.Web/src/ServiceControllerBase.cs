@@ -263,29 +263,8 @@ namespace Zongsoft.Web
 		#endregion
 
 		#region 保护方法
-		protected IActionResult Paginate(Paging paging, object data) => this.Paginate(data, paging);
-		protected IActionResult Paginate(object data, Paging paging)
-		{
-			if(data == null)
-				return this.NoContent();
-
-			if(data is IActionResult result)
-				return result;
-
-			//如果模型类型是值类型并且结果数据类型是该值类型并且结果数据等于空值，则返回HTTP状态为无内容
-			if(typeof(TModel).IsValueType && data.GetType() == typeof(TModel) && EqualityComparer<TModel>.Default.Equals((TModel)data, default))
-				return this.NoContent();
-
-			//设置响应的分页头
-			this.Response.Headers.SetPagination(paging);
-
-			//如果启用了分页并且结果集为空，则返回204(NoContent)
-			if(paging != null && paging.Enabled && paging.IsEmpty)
-				return this.NoContent();
-
-			//返回数据
-			return this.Ok(data);
-		}
+		protected IActionResult Paginate(Paging paging, object data) => WebUtility.Paginate(this, data, paging);
+		protected IActionResult Paginate(object data, Paging paging) => WebUtility.Paginate(this, data, paging);
 		#endregion
 
 		#region 虚拟方法
