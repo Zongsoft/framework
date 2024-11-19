@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Zongsoft.Data.Metadata.Profiles
@@ -57,12 +58,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#endregion
 
 		#region 加载方法
-		public void Load(IDataMetadataContainer container)
+		public IEnumerable<IDataMetadataLoader.Result> Load(string name)
 		{
-			if(container == null)
-				throw new ArgumentNullException(nameof(container));
-
-			var directories = string.IsNullOrEmpty(_path) ? new[] { Services.ApplicationContext.Current?.ApplicationPath } : _path.Split('|');
+			var directories = string.IsNullOrEmpty(_path) ? [Services.ApplicationContext.Current?.ApplicationPath] : _path.Split('|');
 
 			foreach(var directory in directories)
 			{
@@ -79,16 +77,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 				foreach(var file in files)
 				{
 					//加载指定的映射文件
-					var metadata = MetadataFile.Load(file, container.Name);
+					var metadata = MetadataFile.Load(file, name);
 
-					//将加载成功的映射文件加入到容器中
-					if(metadata != null)
-					{
-						foreach(var entity in metadata.Entities)
-							container.SetEntity(entity);
-						foreach(var command in metadata.Commands)
-							container.SetCommand(command);
-					}
+					//遍历返回加载的结果
+					yield return new(metadata.Entities, metadata.Commands);
 				}
 			}
 		}

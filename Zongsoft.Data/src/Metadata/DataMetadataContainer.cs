@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Threading;
+using System.Linq;
 
 namespace Zongsoft.Data.Metadata
 {
@@ -38,15 +38,15 @@ namespace Zongsoft.Data.Metadata
 		private readonly DataCommandCollection _commands;
 		private readonly DataEntityCollection _entities;
 
-		private volatile int _initialized;
-		private ReaderWriterLockSlim _locker;
+		private bool _initialized;
+		private readonly object _locker;
 		#endregion
 
 		#region 构造函数
 		public DataMetadataContainer(string name)
 		{
 			this.Name = name ?? string.Empty;
-			_locker = new ReaderWriterLockSlim();
+			_locker = new object();
 			_entities = new DataEntityCollection(this);
 			_commands = new DataCommandCollection(this);
 		}
@@ -77,46 +77,99 @@ namespace Zongsoft.Data.Metadata
 		#region 加载方法
 		public void Reload()
 		{
-			try
+			lock(_locker)
 			{
-				if(_locker.TryEnterWriteLock(TimeSpan.FromSeconds(10)))
-				{
-					_entities.Clear();
-					_commands.Clear();
+				_entities.Clear();
+				_commands.Clear();
 
-					foreach(var loader in DataEnvironment.Loaders)
-						loader.Load(this);
-				}
-			}
-			finally
-			{
-				if(_locker.IsWriteLockHeld)
-					_locker.ExitWriteLock();
+				this.Load();
 			}
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private void Initialize()
 		{
-			if(Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
+			if(_initialized)
 				return;
 
-			try
+			lock(_locker)
 			{
-				if(_locker.TryEnterWriteLock(TimeSpan.FromSeconds(10)))
-				{
-					_entities.Clear();
-					_commands.Clear();
+				if(_initialized)
+					return;
 
-					foreach(var loader in DataEnvironment.Loaders)
-						loader.Load(this);
+				_entities.Clear();
+				_commands.Clear();
+
+				this.Load();
+
+				_initialized = true;
+			}
+		}
+		#endregion
+
+		#region 私有方法
+		private void Load()
+		{
+			foreach(var loader in DataEnvironment.Loaders)
+			{
+				var results = loader.Load(this.Name);
+
+				foreach(var result in results)
+				{
+					foreach(var command in result.Commands)
+						SetCommand(command);
+					foreach(var entity in result.Entities)
+						SetEntity(entity);
 				}
 			}
-			finally
+		}
+
+		private void SetEntity(IDataEntity entity)
+		{
+			if(entity == null)
+				return;
+
+			if(_entities.TryAdd(entity))
 			{
-				if(_locker.IsWriteLockHeld)
-					_locker.ExitWriteLock();
+				entity.Container ??= this;
+				return;
 			}
+
+			var existed = _entities[entity.Name, entity.Namespace];
+
+			foreach(var property in entity.Properties)
+			{
+				existed.Properties.Add(property);
+			}
+
+			if(!existed.HasKey && entity.HasKey)
+			{
+				if(existed is Profiles.MetadataEntity metadataEntity)
+					metadataEntity.SetKey(entity.Key.Select(key => key.Name).ToArray());
+
+				existed.Immutable = entity.Immutable;
+			}
+
+			if(string.IsNullOrEmpty(existed.Alias))
+				existed.Alias = entity.Alias;
+			if(string.IsNullOrEmpty(existed.BaseName))
+				existed.BaseName = entity.BaseName;
+			if(string.IsNullOrEmpty(existed.Driver))
+				existed.Driver = entity.Driver;
+		}
+
+		private void SetCommand(IDataCommand command)
+		{
+			if(command == null)
+				return;
+
+			if(_commands.TryAdd(command))
+			{
+				command.Container ??= this;
+				return;
+			}
+
+			throw new DataException($"The specified '{command}' data command mapping cannot be defined repeatedly.");
 		}
 		#endregion
 	}

@@ -28,11 +28,30 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata
 {
 	public interface IDataMetadataLoader
 	{
-		void Load(IDataMetadataContainer container);
+		IEnumerable<Result> Load(string name);
+
+		public readonly struct Result
+		{
+			public Result(IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
+			{
+				this.Commands = commands;
+				this.Entities = entities;
+			}
+
+			public Result(IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
+			{
+				this.Entities = entities;
+				this.Commands = commands;
+			}
+
+			public IEnumerable<IDataEntity> Entities { get; }
+			public IEnumerable<IDataCommand> Commands { get; }
+		}
 	}
 }

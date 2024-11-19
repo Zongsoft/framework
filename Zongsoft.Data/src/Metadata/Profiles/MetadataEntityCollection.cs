@@ -28,12 +28,19 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata.Profiles
 {
-    public class MetadataEntityCollection() : KeyedCollection<string, MetadataEntity>(StringComparer.OrdinalIgnoreCase)
+    public class MetadataEntityCollection() : KeyedCollection<string, MetadataEntity>(StringComparer.OrdinalIgnoreCase), IEnumerable<IDataEntity>
     {
 		protected override string GetKeyForItem(MetadataEntity entity) => entity.Name;
+
+		IEnumerator<IDataEntity> IEnumerable<IDataEntity>.GetEnumerator()
+		{
+			foreach(var entity in this)
+				yield return entity;
+		}
 	}
 }
