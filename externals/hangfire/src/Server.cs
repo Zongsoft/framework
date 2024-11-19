@@ -43,6 +43,7 @@ namespace Zongsoft.Externals.Hangfire
 	public class Server : WorkerBase
 	{
 		#region 成员字段
+		private JobStorage _storage;
 		private BackgroundJobServer _server;
 		#endregion
 
@@ -61,7 +62,12 @@ namespace Zongsoft.Externals.Hangfire
 		#endregion
 
 		#region 公共属性
-		public JobStorage Storage { get; set; }
+		public JobStorage Storage
+		{
+			get => _storage ??= ApplicationContext.Current.Services.Resolve<JobStorage>();
+			set => _storage = value ?? throw new ArgumentNullException(nameof(value));
+		}
+
 		public IDictionary<string, IHandler> Handlers { get; }
 		#endregion
 
