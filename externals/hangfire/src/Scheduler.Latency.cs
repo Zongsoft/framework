@@ -44,14 +44,32 @@ namespace Zongsoft.Externals.Hangfire;
 
 partial class Scheduler
 {
-	private sealed class LatencyScheduler(JobStorage storage) : IScheduler<TriggerOptions.Latency>, IMatchable, IMatchable<string>
+	private sealed class LatencyScheduler : IScheduler<TriggerOptions.Latency>, IMatchable, IMatchable<string>
 	{
 		#region 常量定义
 		private const string NAME = "Latency";
 		#endregion
 
 		#region 成员字段
-		private readonly BackgroundJobClient _scheduler = new(storage);
+		private BackgroundJobClient _scheduler;
+		#endregion
+
+		#region 公共属性
+		internal BackgroundJobClient Client
+		{
+			get
+			{
+				if(_scheduler != null)
+					return _scheduler;
+
+				lock(this)
+				{
+					_scheduler ??= new(Scheduler.Storage);
+				}
+
+				return _scheduler;
+			}
+		}
 		#endregion
 
 		#region 公共方法
@@ -63,7 +81,7 @@ partial class Scheduler
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
 			var job = HandlerFactory.GetJob(name, cancellation);
-			options.Identifier = _scheduler.Create(job, new ScheduledState(options.Duration));
+			options.Identifier = this.Client.Create(job, new ScheduledState(options.Duration));
 
 			return ValueTask.FromResult(options.Identifier);
 		}
@@ -76,7 +94,7 @@ partial class Scheduler
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
 			var job = HandlerFactory.GetJob(name, argument, cancellation);
-			options.Identifier = _scheduler.Create(job, new ScheduledState(options.Duration));
+			options.Identifier = this.Client.Create(job, new ScheduledState(options.Duration));
 			return ValueTask.FromResult(options.Identifier);
 		}
 
@@ -87,11 +105,11 @@ partial class Scheduler
 
 			try
 			{
-				return ValueTask.FromResult(_scheduler.Requeue(identifier));
+				return ValueTask.FromResult(this.Client.Requeue(identifier));
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger<Scheduler>().Error(ex);
+				Zongsoft.Diagnostics.Logger.GetLogger(typeof(Scheduler)).Error(ex);
 				return ValueTask.FromResult(false);
 			}
 		}
@@ -101,7 +119,7 @@ partial class Scheduler
 			if(string.IsNullOrEmpty(identifier))
 				return ValueTask.FromResult(false);
 
-			return ValueTask.FromResult(_scheduler.Delete(identifier));
+			return ValueTask.FromResult(this.Client.Delete(identifier));
 		}
 		#endregion
 

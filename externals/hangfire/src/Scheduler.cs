@@ -41,11 +41,12 @@ using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire
 {
-	[Service<IScheduler<TriggerOptions.Cron>, IScheduler>(Members = $"{nameof(Cron)}")]
+	[Service<IScheduler, IScheduler<TriggerOptions.Cron>>(Members = $"{nameof(Cron)}")]
+	[Service<IScheduler, IScheduler<TriggerOptions.Latency>>(Members = $"{nameof(Latency)}")]
 	public partial class Scheduler
 	{
-		private static readonly Lazy<CronScheduler> _cron = new(() => new CronScheduler(Storage), LazyThreadSafetyMode.PublicationOnly);
-		private static readonly Lazy<LatencyScheduler> _latency = new(() => new LatencyScheduler(Storage), LazyThreadSafetyMode.PublicationOnly);
+		private static readonly Lazy<CronScheduler> _cron = new(() => new CronScheduler(), LazyThreadSafetyMode.PublicationOnly);
+		private static readonly Lazy<LatencyScheduler> _latency = new(() => new LatencyScheduler(), LazyThreadSafetyMode.PublicationOnly);
 		private static readonly Lazy<JobStorage> _storageFactory = new(() => ApplicationContext.Current.Services.Resolve<JobStorage>() ?? JobStorage.Current, LazyThreadSafetyMode.PublicationOnly);
 
 		private static JobStorage _storage;
