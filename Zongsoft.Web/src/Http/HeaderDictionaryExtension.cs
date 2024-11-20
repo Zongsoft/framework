@@ -49,7 +49,7 @@ namespace Zongsoft.Web.Http
         {
             var result = paging != null && paging.PageCount > 0 && paging.PageSize > 0;
 
-            if (result)
+            if(result)
                 headers[Headers.Pagination] = paging.ToString();
             else
                 headers.Remove(Headers.Pagination);
