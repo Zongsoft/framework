@@ -33,6 +33,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
+using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Web
@@ -55,6 +56,11 @@ namespace Zongsoft.Web
 			//初始化应用上下文（该初始化器中会加载相应的Web部件）
 			var context = (WebApplicationContext)app.Services.GetService(typeof(WebApplicationContext));
 			context.Initialize();
+
+			//获取所有应用初始化器，并依次调用初始化方法
+			var initializers = app.Services.ResolveAll<IApplicationInitializer<IApplicationBuilder>>();
+			foreach(var initializer in initializers)
+				initializer.Initialize(app);
 
 			if(app.Environment.IsDevelopment())
 				app.UseDeveloperExceptionPage();
@@ -102,6 +108,11 @@ namespace Zongsoft.Web
 					//初始化应用上下文（该初始化器中会加载相应的Web部件）
 					var context = (WebApplicationContext)app.ApplicationServices.GetService(typeof(WebApplicationContext));
 					context.Initialize();
+
+					//获取所有应用初始化器，并依次调用初始化方法
+					var initializers = app.ApplicationServices.ResolveAll<IApplicationInitializer<IApplicationBuilder>>();
+					foreach(var initializer in initializers)
+						initializer.Initialize(app);
 
 					if(ctx.HostingEnvironment.IsDevelopment())
 						app.UseDeveloperExceptionPage();
