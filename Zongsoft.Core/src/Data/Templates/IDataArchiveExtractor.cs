@@ -49,18 +49,16 @@ namespace Zongsoft.Data.Templates
 		/// <summary>从数据流中提取数据。</summary>
 		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
 		/// <param name="input">待提取的数据流。</param>
-		/// <param name="model">对应的模型描述器。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回提取到的数据集。</returns>
-		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, CancellationToken cancellation = default);
 
 		/// <summary>从数据流中提取数据。</summary>
 		/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
 		/// <param name="input">待提取的数据流。</param>
-		/// <param name="model">对应的模型描述器。</param>
 		/// <param name="options">提取操作选项设置。</param>
 		/// <param name="cancellation">异步操作的取消标记。</param>
 		/// <returns>返回提取到的数据集。</returns>
-		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataArchiveExtractorOptions options, CancellationToken cancellation = default);
+		IAsyncEnumerable<T> ExtractAsync<T>(Stream input, IDataArchiveExtractorOptions options, CancellationToken cancellation = default);
 	}
 }

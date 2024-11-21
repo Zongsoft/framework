@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,14 +33,18 @@ namespace Zongsoft.Data.Templates
 {
 	public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
 	{
-		public DataArchiveExtractorOptions() { }
-		public DataArchiveExtractorOptions(object source, params string[] fields)
+		public DataArchiveExtractorOptions(ModelDescriptor model) : this(model, null, []){ }
+		public DataArchiveExtractorOptions(ModelDescriptor model, object source, params string[] fields)
 		{
+			this.Model = model;
 			this.Source = source;
 			this.Fields = fields;
+			this.Populator = new DataArchivePopulator();
 		}
 
+		public ModelDescriptor Model { get; }
 		public object Source { get; set; }
 		public string[] Fields { get; set; }
+		public IDataArchivePopulator Populator { get; set; }
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,23 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+public class DataArchivePopulator : IDataArchivePopulator
 {
-	/// <summary>
-	/// 表示数据文件提取选项的接口。
-	/// </summary>
-	public interface IDataArchiveExtractorOptions
-	{
-		/// <summary>获取或设置模型元信息。</summary>
-		ModelDescriptor Model {  get; }
-
-		/// <summary>获取或设置提取来源。</summary>
-		object Source { get; set; }
-
-		/// <summary>获取或设置提取的字段名集。</summary>
-		string[] Fields { get; set; }
-
-		/// <summary>获取或设置数据组装器。</summary>
-		IDataArchivePopulator Populator { get; set; }
-	}
+	public T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
+	public bool Populate<T>(ref T model, ModelPropertyDescriptor property, object value) => Reflection.Reflector.TrySetValue(ref model, property.Name, value);
 }

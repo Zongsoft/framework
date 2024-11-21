@@ -53,10 +53,8 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.Import(), options);
 
-			var settings = new DataArchiveExtractorOptions();
-			var extractor = this.ServiceProvider.Resolve<IDataArchiveExtractor>(format) ?? throw OperationException.Unfound();
-			var data = extractor.ExtractAsync<TModel>(input, this.GetDescriptor(), settings).Synchronize();
-			return this.OnImport(data, settings.Fields, options);
+			//执行导出操作
+			return this.OnImport(input, format, options);
 		}
 
 		public ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default) => this.ImportAsync(input, null, options, cancellation);
@@ -68,10 +66,36 @@ namespace Zongsoft.Data
 			//进行授权验证
 			this.Authorize(DataServiceMethod.Import(), options);
 
-			var settings = new DataArchiveExtractorOptions();
-			var extractor = this.ServiceProvider.Resolve<IDataArchiveExtractor>(format) ?? throw OperationException.Unfound();
-			var data = extractor.ExtractAsync<TModel>(input, this.GetDescriptor(), settings, cancellation);
-			return this.OnImportAsync(data, settings.Fields, options, cancellation);
+			//执行导出操作
+			return this.OnImportAsync(input, format, options, cancellation);
+		}
+
+		protected virtual IDataArchiveExtractor GetExtractor(string format, DataImportOptions options, out IDataArchiveExtractorOptions extracting)
+		{
+			if(options == null)
+				extracting = new DataArchiveExtractorOptions(this.GetDescriptor());
+			else
+			{
+				extracting = options.Parameters.GetValue<DataArchiveExtractorOptions>() ?? new DataArchiveExtractorOptions(this.GetDescriptor());
+				if(options.Parameters.TryGetValue("Import-Fileds", out var value) && value is string text)
+					extracting.Fields = text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			}
+
+			return this.ServiceProvider.Resolve<IDataArchiveExtractor>(format) ?? throw OperationException.Unfound($"");
+		}
+
+		protected virtual int OnImport(Stream input, string format, DataImportOptions options = null)
+		{
+			var extractor = this.GetExtractor(format, options, out var extracting);
+			var data = extractor.ExtractAsync<TModel>(input, extracting).Synchronize();
+			return this.OnImport(data, extracting.Fields, options);
+		}
+
+		protected virtual ValueTask<int> OnImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default)
+		{
+			var extractor = this.GetExtractor(format, options, out var extracting);
+			var data = extractor.ExtractAsync<TModel>(input, extracting, cancellation);
+			return this.OnImportAsync(data, extracting.Fields, options, cancellation);
 		}
 
 		protected virtual int OnImport(IEnumerable<TModel> items, string[] members, DataImportOptions options) => this.DataAccess.Import(this.Name, items, members, options);
