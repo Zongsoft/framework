@@ -12,7 +12,7 @@ public class MqttQueueTest
 	[Fact]
 	public void TestProduce()
 	{
-		var settings = new ConnectionSettings("MyMqtt", @"Server=192.168.2.200;UserName=program;Password=Yuanshan.MQTT@2024;Topic=Topic1");
+		var settings = new ConnectionSettings("MyMqtt", @"Server=127.0.0.1;UserName=program;Password=MyMQTT2-Password;Topic=Topic1");
 		var queue = new MqttQueue(string.Empty, settings);
 		Assert.NotNull(queue);
 

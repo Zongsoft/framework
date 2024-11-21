@@ -52,7 +52,6 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 成员字段
-		private int _subscription;
 		private IMqttClient _client;
 		private MqttClientOptions _options;
 		private readonly ConcurrentDictionary<string, ISet<MqttSubscriber>> _subscribers;
@@ -95,15 +94,14 @@ namespace Zongsoft.Messaging.Mqtt
 					if(_subscribers.TryAdd(part, new HashSet<MqttSubscriber>() { subscriber }))
 					{
 						var subscription = new MqttClientSubscribeOptions();
-						subscription.SubscriptionIdentifier = (uint)Interlocked.Increment(ref _subscription);
 						subscription.TopicFilters.Add(new MqttTopicFilter()
 						{
 							Topic = part,
 							QualityOfServiceLevel = qos,
 						});
 
-						if(!_client.IsConnected)
-							await _client.ConnectAsync(_options, cancellation);
+						//确保连接完成
+						this.EnsureConnect();
 
 						var result = await _client.SubscribeAsync(subscription, cancellation);
 					}
@@ -168,8 +166,8 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			if(!_client.IsConnected)
-				_client.ConnectAsync(_options).GetAwaiter().GetResult();
+			//确保连接完成
+			this.EnsureConnect();
 
 			var result = _client.PublishAsync(message).GetAwaiter().GetResult();
 			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
@@ -184,8 +182,8 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			if(!_client.IsConnected)
-				await _client.ConnectAsync(_options, cancellation);
+			//确保连接完成
+			this.EnsureConnect();
 
 			var result = await _client.PublishAsync(message, cancellation);
 			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
@@ -197,6 +195,22 @@ namespace Zongsoft.Messaging.Mqtt
 		{
 			var settings = this.ConnectionSettings;
 			return settings == null ? this.Name : $"{this.Name}{Environment.NewLine}Server={settings.Server};Instance={settings.Instance};Client={settings.Client}";
+		}
+		#endregion
+
+		#region 私有方法
+		private MqttClientConnectResult EnsureConnect()
+		{
+			if(_client.IsConnected)
+				return null;
+
+			lock(this)
+			{
+				if(_client.IsConnected)
+					return null;
+
+				return _client.ConnectAsync(_options).GetAwaiter().GetResult();
+			}
 		}
 		#endregion
 
