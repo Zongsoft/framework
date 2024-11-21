@@ -33,18 +33,31 @@ namespace Zongsoft.Data.Templates
 {
 	public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
 	{
-		public DataArchiveExtractorOptions(ModelDescriptor model) : this(model, null, []){ }
-		public DataArchiveExtractorOptions(ModelDescriptor model, object source, params string[] fields)
+		#region 成员字段
+		private IDataArchivePopulator _populator;
+		#endregion
+
+		#region 构造函数
+		public DataArchiveExtractorOptions(ModelDescriptor model, Collections.Parameters parameters) : this(model, parameters, null) { }
+		public DataArchiveExtractorOptions(ModelDescriptor model, Collections.Parameters parameters, object source, params string[] fields)
 		{
 			this.Model = model;
 			this.Source = source;
 			this.Fields = fields;
 			this.Populator = new DataArchivePopulator();
 		}
+		#endregion
 
+		#region 公共属性
 		public ModelDescriptor Model { get; }
 		public object Source { get; set; }
 		public string[] Fields { get; set; }
-		public IDataArchivePopulator Populator { get; set; }
+		public Collections.Parameters Parameters { get; }
+		public IDataArchivePopulator Populator
+		{
+			get => _populator ?? DataArchivePopulator.Default;
+			set => _populator = value ?? throw new ArgumentNullException(nameof(value));
+		}
+		#endregion
 	}
 }

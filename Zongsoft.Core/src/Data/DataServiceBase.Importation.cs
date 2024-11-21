@@ -72,16 +72,8 @@ namespace Zongsoft.Data
 
 		protected virtual IDataArchiveExtractor GetExtractor(string format, DataImportOptions options, out IDataArchiveExtractorOptions extracting)
 		{
-			if(options == null)
-				extracting = new DataArchiveExtractorOptions(this.GetDescriptor());
-			else
-			{
-				extracting = options.Parameters.GetValue<DataArchiveExtractorOptions>() ?? new DataArchiveExtractorOptions(this.GetDescriptor());
-				if(options.Parameters.TryGetValue("Import-Fileds", out var value) && value is string text)
-					extracting.Fields = text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-			}
-
-			return this.ServiceProvider.Resolve<IDataArchiveExtractor>(format) ?? throw OperationException.Unfound($"");
+			extracting = new DataArchiveExtractorOptions(this.GetDescriptor(), options?.Parameters);
+			return this.ServiceProvider.Resolve<IDataArchiveExtractor>(format) ?? throw OperationException.Unsupported($"The '{format}' format data archive import is not supported.");
 		}
 
 		protected virtual int OnImport(Stream input, string format, DataImportOptions options = null)

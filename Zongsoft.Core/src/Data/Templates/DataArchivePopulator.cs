@@ -33,6 +33,10 @@ namespace Zongsoft.Data.Templates;
 
 public class DataArchivePopulator : IDataArchivePopulator
 {
+	#region 单例字段
+	public static readonly DataArchivePopulator Default = new();
+	#endregion
+
 	public T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
 	public bool Populate<T>(ref T model, ModelPropertyDescriptor property, object value) => Reflection.Reflector.TrySetValue(ref model, property.Name, value);
 }

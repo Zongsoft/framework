@@ -34,5 +34,5 @@ namespace Zongsoft.Data.Templates;
 public interface IDataArchivePopulator
 {
 	T Build<T>();
-	bool Populate<T>(ref T model, ModelPropertyDescriptor property, object value);
+	bool Populate<T>(ref T target, ModelPropertyDescriptor property, object value);
 }
