@@ -42,7 +42,6 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Packets;
 using MQTTnet.Protocol;
-using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
@@ -53,14 +52,17 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 成员字段
-		private IManagedMqttClient _client;
+		private int _subscription;
+		private IMqttClient _client;
+		private MqttClientOptions _options;
 		private readonly ConcurrentDictionary<string, ISet<MqttSubscriber>> _subscribers;
 		#endregion
 
 		#region 构造函数
 		public MqttQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 		{
-			_client = Factory.CreateManagedMqttClient();
+			_client = Factory.CreateMqttClient();
+			_options = MqttUtility.GetOptions(connectionSettings);
 			_subscribers = new ConcurrentDictionary<string, ISet<MqttSubscriber>>();
 
 			//挂载消息接收事件
@@ -75,12 +77,12 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 订阅方法
 		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
-			if(tags != null && tags.Any())
+			if(tags != null && tags.Length > 0)
 				throw new ArgumentException($"The tags is not supported.");
 
 			var qos = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS();
 			var subscriber = new MqttSubscriber(this, topics, tags, handler, options);
-			var parts = topics.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			var parts = topics.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			foreach(var part in parts)
 			{
@@ -92,16 +94,18 @@ namespace Zongsoft.Messaging.Mqtt
 				{
 					if(_subscribers.TryAdd(part, new HashSet<MqttSubscriber>() { subscriber }))
 					{
-						await _client.SubscribeAsync(new[]
+						var subscription = new MqttClientSubscribeOptions();
+						subscription.SubscriptionIdentifier = (uint)Interlocked.Increment(ref _subscription);
+						subscription.TopicFilters.Add(new MqttTopicFilter()
 						{
-							new MqttTopicFilter()
-							{
-								Topic = part,
-								QualityOfServiceLevel = qos,
-							}
+							Topic = part,
+							QualityOfServiceLevel = qos,
 						});
- 
-						await _client.EnsureStart(this.ConnectionSettings);
+
+						if(!_client.IsConnected)
+							await _client.ConnectAsync(_options, cancellation);
+
+						var result = await _client.SubscribeAsync(subscription, cancellation);
 					}
 					else
 					{
@@ -126,8 +130,7 @@ namespace Zongsoft.Messaging.Mqtt
 		}
 
 		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.TryRemove(topic, out var _) ?
-			new ValueTask(_client.UnsubscribeAsync(topic)) :
-			ValueTask.CompletedTask;
+			new ValueTask(_client.UnsubscribeAsync(topic)) : ValueTask.CompletedTask;
 		#endregion
 
 		#region 接收处理
@@ -165,14 +168,11 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			var result = _client.EnsureStart(this.ConnectionSettings)
-				.ContinueWith
-				(
-					(task, arg) => _client.InternalClient.PublishAsync((MqttApplicationMessage)arg),
-					message
-				).GetAwaiter().GetResult().Result;
+			if(!_client.IsConnected)
+				_client.ConnectAsync(_options).GetAwaiter().GetResult();
 
-			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+			var result = _client.PublishAsync(message).GetAwaiter().GetResult();
+			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 
 		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
@@ -184,9 +184,11 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
 			};
 
-			await _client.EnsureStart(this.ConnectionSettings);
-			var result = await _client.InternalClient.PublishAsync(message, cancellation);
-			return result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+			if(!_client.IsConnected)
+				await _client.ConnectAsync(_options, cancellation);
+
+			var result = await _client.PublishAsync(message, cancellation);
+			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
 		}
 		#endregion
 

@@ -33,7 +33,6 @@ using System.Threading.Tasks;
 
 using MQTTnet.Client;
 using MQTTnet.Protocol;
-using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
@@ -61,37 +60,9 @@ namespace Zongsoft.Messaging.Mqtt
 			return new MqttClientOptionsBuilder()
 				.WithClientId(clientId)
 				.WithTcpServer(settings.Server)
+				.WithKeepAlivePeriod(TimeSpan.FromSeconds(10))
 				.WithCredentials(settings.UserName, settings.Password)
 				.Build();
-		}
-
-		public async static Task EnsureStart(this IManagedMqttClient client, Zongsoft.Configuration.IConnectionSettings settings = null)
-		{
-			if(client == null)
-				throw new ArgumentNullException(nameof(client));
-
-			if(client.IsStarted)
-				return;
-
-			var mqttOptions = new ManagedMqttClientOptionsBuilder()
-				.WithAutoReconnectDelay(TimeSpan.FromSeconds(10))
-				.WithClientOptions(GetOptions(settings))
-				.Build();
-
-			//开启客户端
-			await client.StartAsync(mqttOptions);
-
-			//确保客户端已连接成功
-			if(!client.IsConnected)
-			{
-				int round = 0;
-
-				//如果没有连接成功，则尝试进行等待一小会
-				while(!client.IsConnected && round++ < 10)
-				{
-					Thread.SpinWait(100 * Environment.ProcessorCount);
-				}
-			}
 		}
 	}
 }
