@@ -22,8 +22,8 @@
 		</object>
 	</extension>
 
-	<extension path="/Workspace/Scheduler">
-		<expose name="Handlers" value="{path:/Workspace/Externals/Hangfire/Server/Handlers}" />
+	<extension path="/Workbench/Scheduler">
+		<object name="Handlers" value="{path:/Workspace/Externals/Hangfire/Server/Handlers}" />
 	</extension>
 
 	<extension path="/Workbench/Startup">
