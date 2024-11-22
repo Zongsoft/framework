@@ -67,7 +67,7 @@ namespace Zongsoft.Externals.ClosedXml
 			if(options != null && (options.Fields == null || options.Fields.Length == 0))
 				options.Fields = table.Columns.Select(column => column.Name).ToArray();
 
-			return new AsyncEnumerable<T>(table);
+			return new AsyncEnumerable<T>(table, options);
 		}
 		#endregion
 
@@ -118,22 +118,24 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 嵌套子类
-		private class AsyncEnumerable<T> : IAsyncEnumerable<T>
+		private class AsyncEnumerable<T>(Table table, IDataArchiveExtractorOptions options) : IAsyncEnumerable<T>
 		{
-			private readonly Table _table;
-			public AsyncEnumerable(Table table) => _table = table;
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_table, cancellation);
+			private readonly Table _table = table;
+			private readonly IDataArchiveExtractorOptions _options = options;
+			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_table, _options, cancellation);
 
 			private class AsyncEnumerator : IAsyncEnumerator<T>
 			{
 				private int _row;
 				private Table _table;
+				private IDataArchiveExtractorOptions _options;
 				private readonly IXLRanges _ignores;
 				private readonly CancellationToken _cancellation;
 
-				public AsyncEnumerator(Table table, CancellationToken cancellation)
+				public AsyncEnumerator(Table table, IDataArchiveExtractorOptions options, CancellationToken cancellation)
 				{
 					_table = table;
+					_options = options;
 					_cancellation = cancellation;
 					_ignores = (table.Worksheet.NamedRange("Ignores") ?? table.Workbook.NamedRange("Ignores"))?.Ranges;
 				}
