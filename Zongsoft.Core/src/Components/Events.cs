@@ -207,12 +207,15 @@ namespace Zongsoft.Components
 				return System.Text.Encoding.UTF8.GetBytes(content);
 			}
 
-			public static (object argument, Collections.Parameters parameters) Unmarshal(string name, byte[] data)
+			public static (object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, byte[] data) => Unmarshal(GetEvent(qualifiedName), data);
+			public static (object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, byte[] data)
 			{
+				if(descriptor == null)
+					throw new ArgumentNullException(nameof(descriptor));
+
 				if(data == null || data.Length == 0)
 					return default;
 
-				var descriptor = Events.GetEvent(name);
 				var argumentType = GetArgumentType(descriptor);
 				var targetType = argumentType == null ? typeof(EventToken) : typeof(EventToken<>).MakeGenericType(argumentType);
 				var result = Serialization.Serializer.Json.Deserialize(data, targetType);
@@ -239,21 +242,15 @@ namespace Zongsoft.Components
 				return descriptor != null && descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
 			}
 
-			private struct EventToken
+			private struct EventToken(Collections.Parameters parameters)
 			{
-				public EventToken(Collections.Parameters parameters) => this.Parameters = parameters;
-				public Collections.Parameters Parameters;
+				public Collections.Parameters Parameters = parameters;
 			}
 
-			private struct EventToken<TArgument>
+			private struct EventToken<TArgument>(TArgument argument, Collections.Parameters parameters)
 			{
-				public EventToken(TArgument argument, Collections.Parameters parameters)
-				{
-					this.Argument = argument;
-					this.Parameters = parameters;
-				}
-				public TArgument Argument;
-				public Collections.Parameters Parameters;
+				public TArgument Argument = argument;
+				public Collections.Parameters Parameters = parameters;
 			}
 		}
 		#endregion

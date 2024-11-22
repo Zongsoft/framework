@@ -67,8 +67,8 @@ namespace Zongsoft.Messaging
 		protected MessageConsumerBase(IEnumerable<string> topics, string tags, IHandler<Message> handler = null) : this(topics, tags, null, handler) { }
 		protected MessageConsumerBase(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, IHandler<Message> handler = null)
 		{
-			_topics = topics == null ? Array.Empty<string>() : topics.ToArray();
-			_tags = tags.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			_topics = topics == null ? [] : topics.ToArray();
+			_tags = tags.Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 			_options = options;
 			_handler = handler;
 		}
@@ -123,7 +123,7 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		public bool IsSubscribed { get => _subscribed; }
+		public bool IsSubscribed => _subscribed;
 		#endregion
 
 		#region 订阅方法
@@ -206,9 +206,8 @@ namespace Zongsoft.Messaging
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string[] Slice(string text) => string.IsNullOrEmpty(text) ?
-			Array.Empty<string>() :
-			text.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		private static string[] Slice(string text) => string.IsNullOrEmpty(text) ? [] :
+			text.Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 		#endregion
 
 		#region 资源释放

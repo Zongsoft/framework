@@ -105,7 +105,7 @@ namespace Zongsoft.Messaging
 		/// <summary>获取一个值，指示消息包是否为空包。</summary>
 		[Serialization.SerializationMember(Ignored = true)]
 		[System.Text.Json.Serialization.JsonIgnore]
-		public bool IsEmpty { get => this.Data == null; }
+		public readonly bool IsEmpty => this.Data == null || this.Data.Length == 0;
 		#endregion
 
 		#region 公共方法
