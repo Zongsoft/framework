@@ -100,24 +100,11 @@ namespace Zongsoft.Components
 			{
 				var context = this.GetContext(name, argument, parameters);
 
-				//依次执行全局事件过滤器
-				foreach(var filter in EventManager.Global.Filters)
-					await this.OnFiltering(filter, context, cancellation);
+				//执行本地事件调用
+				await this.RaiseAsync(descriptor, context, cancellation);
 
-				//依次执行当前事件库中的过滤器
-				foreach(var filter in this.Filters)
-					await this.OnFiltering(filter, context, cancellation);
-
-				//调用事件处理程序集
-				await descriptor.HandleAsync(argument, parameters, cancellation);
-
-				//依次执行当前事件库中的过滤器
-				foreach(var filter in this.Filters)
-					await this.OnFiltered(filter, context, cancellation);
-
-				//依次执行全局事件过滤器
-				foreach(var filter in EventManager.Global.Filters)
-					await this.OnFiltered(filter, context, cancellation);
+				//执行事件交换器的广播通知
+				await EventExchanger.BroadcastAsync(context, cancellation);
 
 				//返回激发成功
 				return true;
@@ -125,6 +112,28 @@ namespace Zongsoft.Components
 
 			//返回激发失败
 			return false;
+		}
+
+		internal async ValueTask RaiseAsync<TArgument>(EventDescriptor descriptor, EventContext<TArgument> context, CancellationToken cancellation)
+		{
+			//依次执行全局事件过滤器
+			foreach(var filter in EventManager.Global.Filters)
+				await this.OnFiltering(filter, context, cancellation);
+
+			//依次执行当前事件库中的过滤器
+			foreach(var filter in this.Filters)
+				await this.OnFiltering(filter, context, cancellation);
+
+			//调用事件处理程序集
+			await descriptor.HandleAsync(context.Argument, context.Parameters, cancellation);
+
+			//依次执行当前事件库中的过滤器
+			foreach(var filter in this.Filters)
+				await this.OnFiltered(filter, context, cancellation);
+
+			//依次执行全局事件过滤器
+			foreach(var filter in EventManager.Global.Filters)
+				await this.OnFiltered(filter, context, cancellation);
 		}
 		#endregion
 
