@@ -31,7 +31,22 @@ using System;
 
 namespace Zongsoft.Data.Templates;
 
-public interface IDataArchivePopulator
+public interface IDataArchiveReader : IDataArchiveRecord, IDisposable
 {
-	T Populate<T>(IDataArchiveRecord record, ModelDescriptor descriptor);
+	bool IsEmpty { get; }
+	bool Read();
+}
+
+public interface IDataArchiveRecord
+{
+	int FieldCount { get; }
+
+	object this[int ordinal] { get; }
+	object this[string name] { get; }
+
+	string GetName(int ordinal);
+	object GetValue(int ordinal);
+	object GetValue(string name);
+	T GetValue<T>(int ordinal);
+	T GetValue<T>(string name);
 }

@@ -47,7 +47,7 @@ namespace Zongsoft.Data.Templates
 			this.Source = source;
 			this.Fields = fields;
 			this.Parameters = parameters ?? new();
-			this.Populator = new DataArchivePopulator();
+			this.Populator = DataArchivePopulator.Default;
 		}
 		#endregion
 
@@ -58,7 +58,7 @@ namespace Zongsoft.Data.Templates
 		public Parameters Parameters { get; }
 		public IDataArchivePopulator Populator
 		{
-			get => _populator ?? DataArchivePopulator.Default;
+			get => _populator;
 			set => _populator = value ?? throw new ArgumentNullException(nameof(value));
 		}
 		#endregion

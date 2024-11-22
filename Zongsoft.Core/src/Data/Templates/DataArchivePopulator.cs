@@ -29,6 +29,8 @@
 
 using System;
 
+using Zongsoft.Reflection;
+
 namespace Zongsoft.Data.Templates;
 
 public class DataArchivePopulator : IDataArchivePopulator
@@ -37,6 +39,24 @@ public class DataArchivePopulator : IDataArchivePopulator
 	public static readonly DataArchivePopulator Default = new();
 	#endregion
 
-	public T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
-	public bool Populate<T>(ref T model, ModelPropertyDescriptor property, object value) => Reflection.Reflector.TrySetValue(ref model, property.Name, value);
+	#region 公共方法
+	public T Populate<T>(IDataArchiveRecord record, ModelDescriptor descriptor)
+	{
+		var target = this.Build<T>();
+
+		for(int i = 0; i < record.FieldCount; i++)
+		{
+			var field = record.GetName(i);
+
+			if(descriptor.Properties.TryGetValue(field, out var property))
+				Reflector.TrySetValue(property.Member, ref target, record.GetValue(i));
+		}
+
+		return target;
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
+	#endregion
 }
