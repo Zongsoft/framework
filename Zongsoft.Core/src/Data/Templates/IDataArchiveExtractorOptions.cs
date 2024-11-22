@@ -36,7 +36,7 @@ namespace Zongsoft.Data.Templates
 	/// </summary>
 	public interface IDataArchiveExtractorOptions
 	{
-		/// <summary>获取或设置模型元信息。</summary>
+		/// <summary>获取模型元信息。</summary>
 		ModelDescriptor Model {  get; }
 
 		/// <summary>获取或设置提取来源。</summary>
@@ -44,6 +44,9 @@ namespace Zongsoft.Data.Templates
 
 		/// <summary>获取或设置提取的字段名集。</summary>
 		string[] Fields { get; set; }
+
+		/// <summary>获取上下文相关参数集合。</summary>
+		Collections.Parameters Parameters { get; }
 
 		/// <summary>获取或设置数据组装器。</summary>
 		IDataArchivePopulator Populator { get; set; }

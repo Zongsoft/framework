@@ -52,17 +52,16 @@ namespace Zongsoft.Externals.ClosedXml
 		#endregion
 
 		#region 公共方法
-		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, CancellationToken cancellation = default) => this.ExtractAsync<T>(input, model, null, cancellation);
-		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, ModelDescriptor model, IDataArchiveExtractorOptions options, CancellationToken cancellation = default)
+		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, IDataArchiveExtractorOptions options, CancellationToken cancellation = default)
 		{
 			if(input == null)
 				throw new ArgumentNullException(nameof(input));
-			if(model == null)
-				throw new ArgumentNullException(nameof(model));
+			if(options == null)
+				throw new ArgumentNullException(nameof(options));
 
 			var workbook = new XLWorkbook(input);
-			var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
-			var table = GetTable(worksheet, model, options?.Fields);
+			var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : options.Model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
+			var table = GetTable(worksheet, options.Model, options?.Fields);
 
 			//如果提取选项不为空但没有指定要提取的字段，则更新真实能提取到的字段集到选项中
 			if(options != null && (options.Fields == null || options.Fields.Length == 0))

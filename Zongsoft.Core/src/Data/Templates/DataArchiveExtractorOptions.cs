@@ -29,6 +29,8 @@
 
 using System;
 
+using Zongsoft.Collections;
+
 namespace Zongsoft.Data.Templates
 {
 	public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
@@ -38,12 +40,13 @@ namespace Zongsoft.Data.Templates
 		#endregion
 
 		#region 构造函数
-		public DataArchiveExtractorOptions(ModelDescriptor model, Collections.Parameters parameters) : this(model, parameters, null) { }
-		public DataArchiveExtractorOptions(ModelDescriptor model, Collections.Parameters parameters, object source, params string[] fields)
+		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
+		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] fields)
 		{
 			this.Model = model;
 			this.Source = source;
 			this.Fields = fields;
+			this.Parameters = parameters ?? new();
 			this.Populator = new DataArchivePopulator();
 		}
 		#endregion
@@ -52,7 +55,7 @@ namespace Zongsoft.Data.Templates
 		public ModelDescriptor Model { get; }
 		public object Source { get; set; }
 		public string[] Fields { get; set; }
-		public Collections.Parameters Parameters { get; }
+		public Parameters Parameters { get; }
 		public IDataArchivePopulator Populator
 		{
 			get => _populator ?? DataArchivePopulator.Default;

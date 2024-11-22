@@ -15,7 +15,7 @@ public class SpreadsheetExtractorTest
 		_generator.GenerateAsync(stream, Templates.User.Descriptor, Templates.User.Data).AsTask().Wait();
 		stream.Seek(0, SeekOrigin.Begin);
 
-		var result = _extractor.ExtractAsync<User>(stream, Templates.User.Descriptor).Synchronize()?.ToArray();
+		var result = _extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)).Synchronize()?.ToArray();
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(Templates.User.Data.Length, result.Length);
@@ -37,7 +37,7 @@ public class SpreadsheetExtractorTest
 		_renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage).AsTask().Wait();
 		stream.Seek(0, SeekOrigin.Begin);
 
-		var result = _extractor.ExtractAsync<AssetUsage>(stream, Templates.AssetUsage.Descriptor)
+		var result = _extractor.ExtractAsync<AssetUsage>(stream, new DataArchiveExtractorOptions(Templates.AssetUsage.Descriptor))
 			.Synchronize()
 			.Where(usage => usage.AssetId != 0)
 			.ToArray();
