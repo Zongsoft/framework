@@ -29,11 +29,10 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using ClosedXML;
 using ClosedXML.Excel;
@@ -44,15 +43,10 @@ using Zongsoft.Data.Templates;
 namespace Zongsoft.Externals.ClosedXml
 {
 	[Zongsoft.Services.Service(typeof(IDataArchiveExtractor))]
-	public class SpreadsheetExtractor : IDataArchiveExtractor, Services.IMatchable
+	public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Format.Name, Spreadsheet.Format)
 	{
-		#region 公共属性
-		public string Name => Spreadsheet.Format.Name;
-		public DataArchiveFormat Format => Spreadsheet.Format;
-		#endregion
-
-		#region 公共方法
-		public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, IDataArchiveExtractorOptions options, CancellationToken cancellation = default)
+		#region 重写方法
+		protected override IDataArchiveReader Open(Stream input, IDataArchiveExtractorOptions options)
 		{
 			if(input == null)
 				throw new ArgumentNullException(nameof(input));
@@ -60,23 +54,13 @@ namespace Zongsoft.Externals.ClosedXml
 				throw new ArgumentNullException(nameof(options));
 
 			var workbook = new XLWorkbook(input);
+			if(workbook.Worksheets.Count == 0)
+				return null;
+
 			var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : options.Model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
-			var table = GetTable(worksheet, options.Model, options?.Fields);
 
-			//如果提取选项不为空但没有指定要提取的字段，则更新真实能提取到的字段集到选项中
-			if(options != null && (options.Fields == null || options.Fields.Length == 0))
-				options.Fields = table.Columns.Select(column => column.Name).ToArray();
-
-			return new AsyncEnumerable<T>(table, options);
-		}
-		#endregion
-
-		#region 私有方法
-		private static T Create<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
-		private static Table GetTable(IXLWorksheet worksheet, ModelDescriptor model, string[] fields)
-		{
 			//根据模型名获取指定的数据区引用
-			var reference = worksheet.NamedRange(model.Name) ?? worksheet.Workbook.NamedRange(model.Name);
+			var reference = worksheet.NamedRange(options.Model.Name) ?? worksheet.Workbook.NamedRange(options.Model.Name);
 			if(reference == null || !reference.IsValid)
 				return null;
 
@@ -85,179 +69,133 @@ namespace Zongsoft.Externals.ClosedXml
 			if(dataRange == null || dataRange.IsEmpty())
 				return null;
 
-			var properties = fields == null || fields.Length == 0 ?
-				model.Properties.Where(property => property.Field == null || (property.Field.IsSimplex && !property.Field.Immutable)) :
-				fields.Select(field => field != null && model.Properties.TryGetValue(field, out var property) ? property : null).Where(property => property != null);
-
-			var columns = new List<TableColumn>(dataRange.ColumnCount());
-
-			foreach(var property in properties)
-			{
-				reference = worksheet.NamedRange(property.Name) ?? worksheet.Workbook.NamedRange(property.Name);
-				if(reference == null || !reference.IsValid)
-					continue;
-
-				var fieldRange = worksheet.Range(reference.RefersTo);
-				if(fieldRange == null || fieldRange.IsEmpty())
-					continue;
-
-				columns.Add(new(property, fieldRange.FirstColumn().ColumnNumber()));
-			}
-
-			return columns == null || columns.Count == 0 ? null : new Table(worksheet, dataRange, model, columns);
+			return new DataArchiveReader(worksheet, dataRange);
 		}
-		#endregion
-
-		#region 服务匹配
-		bool Services.IMatchable.Match(object parameter) => parameter switch
-		{
-			string format => Spreadsheet.Format.Equals(format),
-			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
-			_ => false,
-		};
 		#endregion
 
 		#region 嵌套子类
-		private class AsyncEnumerable<T>(Table table, IDataArchiveExtractorOptions options) : IAsyncEnumerable<T>
+		private sealed class DataArchiveReader : IDataArchiveReader
 		{
-			private readonly Table _table = table;
-			private readonly IDataArchiveExtractorOptions _options = options;
-			public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_table, _options, cancellation);
+			private IXLWorksheet _worksheet;
+			private IXLRange _data;
+			private int _row;
+			private readonly DataArchiveFieldCollection _fields;
 
-			private class AsyncEnumerator : IAsyncEnumerator<T>
+			public DataArchiveReader(IXLWorksheet worksheet, IXLRange data)
 			{
-				private int _row;
-				private Table _table;
-				private IDataArchiveExtractorOptions _options;
-				private readonly IXLRanges _ignores;
-				private readonly CancellationToken _cancellation;
+				_worksheet = worksheet;
+				_data = data;
+				_fields = new DataArchiveFieldCollection(data.ColumnCount());
 
-				public AsyncEnumerator(Table table, IDataArchiveExtractorOptions options, CancellationToken cancellation)
+				foreach(var reference in worksheet.NamedRanges.ValidNamedRanges())
 				{
-					_table = table;
-					_options = options;
-					_cancellation = cancellation;
-					_ignores = (table.Worksheet.NamedRange("Ignores") ?? table.Workbook.NamedRange("Ignores"))?.Ranges;
-				}
+					var range = worksheet.Range(reference.RefersTo);
 
-				public T Current
-				{
-					get
+					if(range.RowCount() == 1 && range.ColumnCount() == 1)
 					{
-						var row = _table.Range.Row(_row);
-						var result = Create<T>();
+						var index = range.FirstColumn().ColumnNumber();
 
-						foreach(var column in _table.Columns)
-						{
-							var cell = row.Cell(column.Index);
-							var value = Utility.GetCellValue(cell, column.Property);
-
-							if(value != null)
-								Reflection.Reflector.SetValue(ref result, column.Name, value);
-						}
-
-						return result;
+						if(index >= data.FirstColumn().ColumnNumber() && index <= data.LastColumn().ColumnNumber())
+							_fields.Add(reference.Name, index - 1);
 					}
 				}
+			}
 
-				public async ValueTask<bool> MoveNextAsync()
+			public bool IsEmpty => _data.IsEmpty();
+			public int FieldCount => _data.ColumnCount();
+
+			public object this[int ordinal] => this.GetValue(ordinal);
+			public object this[string name] => this.GetValue(_fields[name].Index);
+
+			public string GetName(int ordinal) => _fields[ordinal].Name;
+			public object GetValue(string name) => this.GetValue(_fields[name].Index);
+			public object GetValue(int ordinal)
+			{
+				var row = _data.Row(_row);
+				var cell = row.Cell(ordinal + 1);
+
+				if(cell == null || cell.Value.IsBlank || cell.Value.IsError || cell.IsEmpty())
+					return null;
+				else
+					return Utility.GetCellValue(cell);
+			}
+
+			public T GetValue<T>(string name) => this.GetValue<T>(_fields[name].Index);
+			public T GetValue<T>(int ordinal)
+			{
+				var value = this.GetValue(ordinal);
+				return Zongsoft.Common.Convert.ConvertValue<T>(value);
+			}
+
+			public bool Read() => _row++ < _data.RowCount();
+			public void Dispose()
+			{
+				var worksheet = Interlocked.Exchange(ref _worksheet, null);
+				if(worksheet != null)
 				{
-					if(_table == null || _cancellation.IsCancellationRequested)
-						return false;
-
-					while(_row++ < _table.Rows)
-					{
-						if(_cancellation.IsCancellationRequested)
-							break;
-
-						var row = _table.Range.Row(_row);
-
-						//跳过空行、隐藏行、忽略行
-						if(row.IsEmpty() || row.IsMerged() || IsIgnored(_ignores, row))
-							continue;
-
-						return true;
-					}
-
-					await this.DisposeAsync();
-					return false;
+					_data = null;
+					worksheet.Workbook?.Dispose();
 				}
-
-				public ValueTask DisposeAsync()
-				{
-					var table = Interlocked.Exchange(ref _table, null);
-					table?.Dispose();
-					return ValueTask.CompletedTask;
-				}
-
-				private static bool IsIgnored(IXLRanges ignores, IXLRangeRow row) => ignores != null && ignores.Contains(row.AsRange());
 			}
 		}
 
-		private sealed class Table : IDisposable
+		private sealed class DataArchiveField
+		{
+			public DataArchiveField(string name, int index)
+			{
+				this.Name = name;
+				this.Index = index;
+			}
+
+			public string Name { get; }
+			public int Index { get; }
+
+			public override string ToString() => $"[{this.Index}]{this.Name}";
+		}
+
+		private sealed class DataArchiveFieldCollection : IEnumerable<DataArchiveField>
 		{
 			#region 成员字段
-			private IXLWorksheet _worksheet;
+			private readonly DataArchiveField[] _fields;
+			private readonly Dictionary<string, int> _names;
 			#endregion
 
 			#region 构造函数
-			public Table(IXLWorksheet worksheet, IXLRange range, ModelDescriptor model, IEnumerable<TableColumn> columns = null)
+			public DataArchiveFieldCollection(int count)
 			{
-				_worksheet = worksheet ?? throw new ArgumentNullException(nameof(worksheet));
-				this.Range = range ?? throw new ArgumentNullException(nameof(range));
-				this.Model = model ?? throw new ArgumentNullException(nameof(model));
-				this.Columns = new TableColumnCollection(this);
-
-				if(columns != null)
-				{
-					foreach(var column in columns)
-					{
-						this.Columns.Add(column);
-					}
-				}
-
-				this.Rows = this.Range.RowCount();
+				_fields = new DataArchiveField[count];
+				_names = new Dictionary<string, int>(count);
 			}
 			#endregion
 
 			#region 公共属性
-			public int Rows { get; }
-			public IXLRange Range { get; }
-			public ModelDescriptor Model { get; }
-			public TableColumnCollection Columns { get; }
-			public IXLWorksheet Worksheet => _worksheet;
-			public IXLWorkbook Workbook => _worksheet?.Workbook;
+			public DataArchiveField this[int index] => index >= 0 && index < _fields.Length ? _fields[index] : throw new ArgumentOutOfRangeException(nameof(index));
+			public DataArchiveField this[string name] => _names.TryGetValue(name, out var index) ? _fields[index] : throw new KeyNotFoundException($"The specified '{name}' column name does not exist.");
 			#endregion
 
-			#region 处置方法
-			public void Dispose()
+			#region 公共方法
+			public DataArchiveField Add(string name, int index)
 			{
-				var worksheet = Interlocked.Exchange(ref _worksheet, null);
-				worksheet?.Workbook.Dispose();
+				if(string.IsNullOrEmpty(name))
+					throw new ArgumentNullException(nameof(name));
+				if(index < 0 || index >= _fields.Length)
+					throw new ArgumentOutOfRangeException(nameof(index));
+
+				_names[name] = index;
+				var field = new DataArchiveField(name, index);
+				_fields[index] = field;
+				return field;
 			}
 			#endregion
-		}
 
-		private sealed class TableColumn
-		{
-			public TableColumn(ModelPropertyDescriptor property, int index = 0)
+			#region 枚举遍历
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			public IEnumerator<DataArchiveField> GetEnumerator()
 			{
-				this.Index = index;
-				this.Property = property ?? throw new ArgumentNullException(nameof(property));
+				for(int i = 0; i < _fields.Length; i++)
+					yield return _fields[i];
 			}
-
-			public string Name => this.Property.Name;
-			public int Index { get; set; }
-			public ModelPropertyDescriptor Property { get; }
-
-			public override string ToString() => $"[{this.Index}]{this.Property.Name}";
-		}
-
-		private class TableColumnCollection : KeyedCollection<string, TableColumn>
-		{
-			private readonly Table _table;
-			public TableColumnCollection(Table table) : base(StringComparer.OrdinalIgnoreCase) => _table = table;
-			protected override string GetKeyForItem(TableColumn column) => column.Name;
+			#endregion
 		}
 		#endregion
 	}

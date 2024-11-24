@@ -51,7 +51,7 @@ namespace Zongsoft.Externals.ClosedXml
 			return Common.Convert.ConvertValue(value, property.Type);
 		}
 
-		private static object GetCellValue(this IXLCell cell)
+		public static object GetCellValue(this IXLCell cell)
 		{
 			if(cell.HasFormula)
 				return cell.GetFormattedString();
