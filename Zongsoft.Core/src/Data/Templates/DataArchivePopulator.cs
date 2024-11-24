@@ -50,6 +50,8 @@ public class DataArchivePopulator : IDataArchivePopulator
 
 			if(descriptor.Properties.TryGetValue(field, out var property))
 				Reflector.TrySetValue(property.Member, ref target, record.GetValue(i));
+			else
+				this.Unrecognize(ref target, field, record.GetValue(i));
 		}
 
 		return target;
@@ -58,5 +60,6 @@ public class DataArchivePopulator : IDataArchivePopulator
 
 	#region 虚拟方法
 	protected virtual T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
+	protected virtual void Unrecognize<T>(ref T target, string field, object value) { }
 	#endregion
 }

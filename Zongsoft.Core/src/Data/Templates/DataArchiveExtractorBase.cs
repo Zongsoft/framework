@@ -35,14 +35,31 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Templates;
 
-public abstract class DataArchiveExtractorBase : IDataArchiveExtractor
+public abstract class DataArchiveExtractorBase(string name, DataArchiveFormat format) : IDataArchiveExtractor, Services.IMatchable
 {
-	public virtual string Name { get; }
-	public virtual DataArchiveFormat Format { get; }
+	#region 公共属性
+	public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
+	public DataArchiveFormat Format { get; } = format ?? throw new ArgumentNullException(nameof(format));
+	#endregion
 
+	#region 公共方法
 	public IAsyncEnumerable<T> ExtractAsync<T>(Stream input, IDataArchiveExtractorOptions options, CancellationToken cancellation = default) => new ExtractorResult<T>(this.Open(input, options), options);
-	protected abstract IDataArchiveReader Open(Stream stream, IDataArchiveExtractorOptions options);
+	#endregion
 
+	#region 抽象方法
+	protected abstract IDataArchiveReader Open(Stream stream, IDataArchiveExtractorOptions options);
+	#endregion
+
+	#region 服务匹配
+	bool Services.IMatchable.Match(object parameter) => parameter switch
+	{
+		string format => this.Format.Equals(format),
+		IDataTemplate template => this.Format.Equals(template.Format),
+		_ => false,
+	};
+	#endregion
+
+	#region 嵌套子类
 	private sealed class ExtractorResult<T>(IDataArchiveReader reader, IDataArchiveExtractorOptions options) : IAsyncEnumerable<T>
 	{
 		private readonly IDataArchiveReader _reader = reader;
@@ -55,9 +72,10 @@ public abstract class DataArchiveExtractorBase : IDataArchiveExtractor
 			private readonly IDataArchiveReader _reader = reader;
 			private readonly IDataArchiveExtractorOptions _options = options;
 
-			public T Current => _options.Populator.Populate<T>(_reader, _options.Model);
-			public ValueTask DisposeAsync() { _reader.Dispose(); return ValueTask.CompletedTask; }
-			public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(_reader.Read());
+			public T Current => _reader == null || _options == null ? default : _options.Populator.Populate<T>(_reader, _options.Model);
+			public ValueTask DisposeAsync() { _reader?.Dispose(); return ValueTask.CompletedTask; }
+			public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(_reader != null && _reader.Read());
 		}
 	}
+	#endregion
 }

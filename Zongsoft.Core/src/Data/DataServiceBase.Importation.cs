@@ -80,14 +80,14 @@ namespace Zongsoft.Data
 		{
 			var extractor = this.GetExtractor(format, options, out var extracting);
 			var data = extractor.ExtractAsync<TModel>(input, extracting).Synchronize();
-			return this.OnImport(data, extracting.Fields, options);
+			return this.OnImport(data, extracting.Members, options);
 		}
 
 		protected virtual ValueTask<int> OnImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default)
 		{
 			var extractor = this.GetExtractor(format, options, out var extracting);
 			var data = extractor.ExtractAsync<TModel>(input, extracting, cancellation);
-			return this.OnImportAsync(data, extracting.Fields, options, cancellation);
+			return this.OnImportAsync(data, extracting.Members, options, cancellation);
 		}
 
 		protected virtual int OnImport(IEnumerable<TModel> items, string[] members, DataImportOptions options) => this.DataAccess.Import(this.Name, items, members, options);

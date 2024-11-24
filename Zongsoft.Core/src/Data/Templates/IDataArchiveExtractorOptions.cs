@@ -42,8 +42,8 @@ namespace Zongsoft.Data.Templates
 		/// <summary>获取或设置提取来源。</summary>
 		object Source { get; set; }
 
-		/// <summary>获取或设置提取的字段名集。</summary>
-		string[] Fields { get; set; }
+		/// <summary>获取或设置提取的成员集。</summary>
+		string[] Members { get; set; }
 
 		/// <summary>获取上下文相关参数集合。</summary>
 		Collections.Parameters Parameters { get; }

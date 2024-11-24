@@ -41,11 +41,11 @@ namespace Zongsoft.Data.Templates
 
 		#region 构造函数
 		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
-		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] fields)
+		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] members)
 		{
 			this.Model = model;
 			this.Source = source;
-			this.Fields = fields;
+			this.Members = members;
 			this.Parameters = parameters ?? new();
 			this.Populator = DataArchivePopulator.Default;
 		}
@@ -54,7 +54,7 @@ namespace Zongsoft.Data.Templates
 		#region 公共属性
 		public ModelDescriptor Model { get; }
 		public object Source { get; set; }
-		public string[] Fields { get; set; }
+		public string[] Members { get; set; }
 		public Parameters Parameters { get; }
 		public IDataArchivePopulator Populator
 		{
