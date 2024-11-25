@@ -374,8 +374,6 @@ namespace Zongsoft.Reflection
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
-			if(valueFactory == null)
-				throw new ArgumentNullException(nameof(valueFactory));
 
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -385,7 +383,7 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
 
-			SetValue(members[0], ref target, valueFactory(members[0].GetMemberType()), parameters);
+			SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
 		public static void SetValue<T>(this FieldInfo field, ref T target, object value)
@@ -445,8 +443,6 @@ namespace Zongsoft.Reflection
 		{
 			if(target == null)
 				throw new ArgumentNullException(nameof(target));
-			if(valueFactory == null)
-				throw new ArgumentNullException(nameof(valueFactory));
 
 			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -456,7 +452,7 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
 
-			SetValue(members[0], ref target, valueFactory(members[0].GetMemberType()), parameters);
+			SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
 		public static bool TrySetValue(this FieldInfo field, ref object target, object value)
@@ -512,8 +508,6 @@ namespace Zongsoft.Reflection
 		{
 			if(target == null)
 				return false;
-			if(valueFactory == null)
-				return false;
 
 			var type = (target as Type) ?? target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -523,7 +517,7 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				return false;
 
-			return TrySetValue(members[0], ref target, valueFactory(members[0].GetMemberType()), parameters);
+			return TrySetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
 		public static bool TrySetValue<T>(this FieldInfo field, ref T target, object value)
@@ -579,8 +573,6 @@ namespace Zongsoft.Reflection
 		{
 			if(target == null)
 				return false;
-			if(valueFactory == null)
-				return false;
 
 			var type = target.GetType();
 			var members = string.IsNullOrEmpty(name) ?
@@ -590,7 +582,7 @@ namespace Zongsoft.Reflection
 			if(members == null || members.Length == 0)
 				return false;
 
-			return TrySetValue<T>(members[0], ref target, valueFactory(members[0].GetMemberType()), parameters);
+			return TrySetValue<T>(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 		#endregion
 
