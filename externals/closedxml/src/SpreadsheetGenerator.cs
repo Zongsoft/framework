@@ -384,9 +384,9 @@ namespace Zongsoft.Externals.ClosedXml
 						{
 							this.Property = property;
 
-							if(string.IsNullOrEmpty(this.Label))
+							if(expression.Next == null && string.IsNullOrEmpty(this.Label))
 								this.Label = property.Label;
-							if(string.IsNullOrEmpty(this.Description))
+							if(expression.Next == null && string.IsNullOrEmpty(this.Description))
 								this.Description = property.Description;
 
 							if(property.Field.IsComplex)
