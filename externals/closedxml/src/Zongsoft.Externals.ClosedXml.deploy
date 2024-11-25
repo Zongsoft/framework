@@ -5,3 +5,4 @@ nuget:ClosedXml@0.102.2
 nuget:ClosedXml.Report@0.2.10
 nuget:SixLabors.Fonts@2.0.4
 nuget:System.IO.Packaging@8.0.1
+nuget:System.Linq.Dynamic.Core@1.3.8
