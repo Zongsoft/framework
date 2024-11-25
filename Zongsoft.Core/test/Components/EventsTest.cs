@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -90,6 +91,7 @@ namespace Zongsoft.Components.Tests
 			var meter = new Meter("Meter#1", new Metric("Metric.Key", "Metric.Code", 250.5));
 			var context = new EventContext<Meter>(ModuleB.Current.Events, EVENT_NAME, meter);
 			var data = Events.Marshaler.Marshal(context);
+			var json = Encoding.UTF8.GetString(data);
 
 			(var argument, var parameters) = Events.Marshaler.Unmarshal($"{ModuleB.Current.Name}:{EVENT_NAME}", data);
 			Assert.NotNull(argument);
@@ -98,7 +100,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotEmpty(((Meter)argument).Metrics);
 			Assert.Equal("Metric.Key", ((Meter)argument).Metrics[0].Key);
 			Assert.Equal("Metric.Code", ((Meter)argument).Metrics[0].Code);
-			//Assert.Equal(250.5, ((Meter)argument).Metrics[0].Value);
+			Assert.Equal(250.5, ((Meter)argument).Metrics[0].Value);
 		}
 
 		[Fact]
