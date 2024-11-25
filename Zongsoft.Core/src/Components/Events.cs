@@ -225,13 +225,29 @@ namespace Zongsoft.Components
 
 				var accessor = _accessors.GetOrAdd(argumentType, type =>
 				{
-					var field1 = result.GetType().GetField(nameof(EventToken<object>.Argument), BindingFlags.Instance | BindingFlags.Public);
-					var field2 = result.GetType().GetField(nameof(EventToken<object>.Parameters), BindingFlags.Instance | BindingFlags.Public);
-					var parameter = Expression.Parameter(typeof(object));
-					var converter = Expression.Convert(parameter, typeof(EventToken<>).MakeGenericType(type));
-					var constructor = typeof(ValueTuple<object, Collections.Parameters>).GetConstructor(new[] { typeof(object), typeof(Collections.Parameters) });
-					var tuple = Expression.New(constructor, Expression.Field(converter, field1), Expression.Field(converter, field2));
-					return Expression.Lambda<Func<object, ValueTuple<object, Collections.Parameters>>>(tuple, parameter).Compile();
+					/*
+					 * 生成的动态代码：
+					 * ValueTuple<object, Parameters> Unnamed(object target)
+					 * {
+					 *     var token = ((EventToken<XXXXX>)target);
+					 *     return new ValueTuple<object, Parameters>((object)token.Argument, token.Parameters);
+					 * }
+					 */
+					var tokenType = typeof(EventToken<>).MakeGenericType(type);
+					var parameter = Expression.Parameter(typeof(object), "target");
+					var variable = Expression.Variable(tokenType, "token");
+
+					var field1 = Expression.Field(variable, tokenType.GetField(nameof(EventToken<object>.Argument), BindingFlags.Instance | BindingFlags.Public));
+					var field2 = Expression.Field(variable, tokenType.GetField(nameof(EventToken<object>.Parameters), BindingFlags.Instance | BindingFlags.Public));
+					var constructor = typeof(ValueTuple<object, Collections.Parameters>).GetConstructor([typeof(object), typeof(Collections.Parameters)]);
+
+					var body = Expression.Block([variable],
+					[
+						Expression.Assign(variable, Expression.Convert(parameter, tokenType)),
+						Expression.New(constructor, Expression.Convert(field1, typeof(object)), field2)
+					]);
+
+					return Expression.Lambda<Func<object, ValueTuple<object, Collections.Parameters>>>(body, parameter).Compile();
 				});
 
 				return accessor.Invoke(result);

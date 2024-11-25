@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -82,6 +83,25 @@ namespace Zongsoft.Components.Tests
 		}
 
 		[Fact]
+		public void TestMarshalEvent()
+		{
+			const string EVENT_NAME = "Acquirer.Acquired";
+
+			var meter = new Meter("Meter#1", new Metric("Metric.Key", "Metric.Code", 250.5));
+			var context = new EventContext<Meter>(ModuleB.Current.Events, EVENT_NAME, meter);
+			var data = Events.Marshaler.Marshal(context);
+
+			(var argument, var parameters) = Events.Marshaler.Unmarshal($"{ModuleB.Current.Name}:{EVENT_NAME}", data);
+			Assert.NotNull(argument);
+			Assert.IsType<Meter>(argument);
+			Assert.Equal("Meter#1", ((Meter)argument).Key);
+			Assert.NotEmpty(((Meter)argument).Metrics);
+			Assert.Equal("Metric.Key", ((Meter)argument).Metrics[0].Key);
+			Assert.Equal("Metric.Code", ((Meter)argument).Metrics[0].Code);
+			//Assert.Equal(250.5, ((Meter)argument).Metrics[0].Value);
+		}
+
+		[Fact]
 		public void TestUnmarshalEvent()
 		{
 			var json = """
@@ -157,13 +177,16 @@ namespace Zongsoft.Components.Tests
 				this.Event(Target1Event.StatusChanged);
 				this.Event(Target2Event.Created);
 				this.Event(Target2Event.StatusChanged);
+				this.Event(AcquirerEvent.Acquired);
 
 				this.Target1 = new Target1Event(this);
 				this.Target2 = new Target2Event(this);
+				this.Acquirer = new AcquirerEvent(this);
 			}
 
 			public Target1Event Target1 { get; }
 			public Target2Event Target2 { get; }
+			public AcquirerEvent Acquirer { get; }
 
 			public sealed class Target1Event
 			{
@@ -206,6 +229,25 @@ namespace Zongsoft.Components.Tests
 				public bool OnStatusChanged(StatusChangedArgument argument, Parameters parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
 				#endregion
 			}
+
+			public sealed class AcquirerEvent
+			{
+				#region 静态字段
+				internal static readonly EventDescriptor<Meter> Acquired = new($"Acquirer.{nameof(Acquired)}");
+				#endregion
+
+				#region 成员字段
+				private readonly EventRegistry _registry;
+				#endregion
+
+				#region 构造函数
+				internal AcquirerEvent(EventRegistry registry) => _registry = registry;
+				#endregion
+
+				#region 公共方法
+				public bool OnAcquired(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Acquired.Name, argument, parameters);
+				#endregion
+			}
 		}
 	}
 
@@ -230,5 +272,112 @@ namespace Zongsoft.Components.Tests
 		public int Status { get; set; }
 		public DateTime Timestamp { get; set; }
 		public string Description { get; set; }
+	}
+
+	public partial struct Meter : IEquatable<Meter>
+	{
+		#region 构造函数
+		public Meter(string key, params Metric[] metrics)
+		{
+			this.Key = key;
+			this.Metrics = new MetricCollection(metrics);
+		}
+		public Meter(string key, IEnumerable<Metric> metrics)
+		{
+			this.Key = key;
+			this.Metrics = new MetricCollection(metrics);
+		}
+		#endregion
+
+		#region 公共字段
+		public string Key;
+		public MetricCollection Metrics;
+		#endregion
+
+		#region 公共属性
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
+		public bool IsEmpty => this.Metrics == null || this.Metrics.Count == 0;
+		#endregion
+
+		#region 重写方法
+		public bool Equals(Meter other) => string.Equals(this.Key, other.Key);
+		public override bool Equals(object obj) => obj is Meter other && this.Equals(other);
+		public override int GetHashCode() => string.IsNullOrEmpty(this.Key) ? 0 : this.Key.ToUpperInvariant().GetHashCode();
+		public override string ToString() => $"{this.Key}({this.Metrics.Count})";
+		#endregion
+
+		#region 重写符号
+		public static bool operator ==(Meter left, Meter right) => left.Equals(right);
+		public static bool operator !=(Meter left, Meter right) => !(left == right);
+		#endregion
+	}
+
+	public struct Metric(string key, string code, object value) : IEquatable<Metric>
+	{
+		#region 公共字段
+		public string Key = key;
+		public string Code = code;
+		public object Value = value;
+		#endregion
+
+		#region 公共属性
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
+		public bool HasValue => this.Value != null;
+		#endregion
+
+		#region 重写方法
+		public bool Equals(Metric other) => string.Equals(this.Key, other.Key);
+		public override bool Equals(object obj) => obj is Metric other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Key.ToUpperInvariant());
+		public override string ToString() => $"{this.Key}={this.Value}";
+		#endregion
+
+		#region 重写符号
+		public static bool operator ==(Metric left, Metric right) => left.Equals(right);
+		public static bool operator !=(Metric left, Metric right) => !(left == right);
+		#endregion
+	}
+
+	public class MetricCollection : KeyedCollection<string, Metric>
+	{
+		#region 构造函数
+		public MetricCollection() { }
+		public MetricCollection(IEnumerable<Metric> metrics) : base(StringComparer.OrdinalIgnoreCase)
+		{
+			if(metrics != null)
+			{
+				foreach(var metric in metrics)
+					this.Items.Add(metric);
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public Metric Add(string key, string code, object value)
+		{
+			var metric = new Metric(key, code, value);
+			this.Items.Add(metric);
+			return metric;
+		}
+
+		public bool TryAdd(string key, string code, object value, out Metric result)
+		{
+			if(Contains(key))
+			{
+				result = default;
+				return false;
+			}
+
+			result = new Metric(key, code, value);
+			this.Items.Add(result);
+			return true;
+		}
+		#endregion
+
+		#region 重写方法
+		protected override string GetKeyForItem(Metric metric) => metric.Key;
+		#endregion
 	}
 }
