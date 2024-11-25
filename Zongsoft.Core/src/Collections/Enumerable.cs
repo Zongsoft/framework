@@ -83,7 +83,7 @@ namespace Zongsoft.Collections
 			var contracts = source.GetType().GetInterfaces();
 			for(int i = 0; i < contracts.Length; i++)
 			{
-				if(contracts[i].ContainsGenericParameters && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+				if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
 					return true;
 			}
 
@@ -97,7 +97,7 @@ namespace Zongsoft.Collections
 				var contracts = source.GetType().GetInterfaces();
 				for(int i = 0; i < contracts.Length; i++)
 				{
-					if(contracts[i].ContainsGenericParameters && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+					if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
 					{
 						elementType = contracts[i].GenericTypeArguments[0];
 						return true;
@@ -194,6 +194,8 @@ namespace Zongsoft.Collections
 				{
 					if(Zongsoft.Common.Convert.TryConvertValue<T>(source, out var element))
 						_iterator = () => new SimulateEnumerator(element);
+					else if(IsAsyncEnumerable(source))
+						_iterator = () => ((IAsyncEnumerable<T>)source).Synchronize().GetEnumerator();
 					else
 						throw new InvalidOperationException($"The '{source.GetType()}' type cannot be convert to '{typeof(T)}' type.");
 				}
