@@ -43,11 +43,16 @@ namespace Zongsoft.Components;
 
 public class EventExchanger : WorkerBase
 {
+	#region 常量定义
+	private const string DEFAULT_TOPIC = "Events";
+	#endregion
+
 	#region 静态字段
 	private static readonly uint _instance = Randomizer.GenerateUInt32();
 	#endregion
 
 	#region 成员字段
+	private string _topic = DEFAULT_TOPIC;
 	private IMessageQueue _queue;
 	private IMessageConsumer _subscriber;
 	#endregion
@@ -58,6 +63,12 @@ public class EventExchanger : WorkerBase
 	{
 		get => _queue;
 		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
+	}
+
+	public string Topic
+	{
+		get => _topic;
+		set => _topic = value ?? throw new ArgumentNullException(nameof(value));
 	}
 	#endregion
 
@@ -83,7 +94,7 @@ public class EventExchanger : WorkerBase
 
 		var ticket = new ExchangerTicket(_instance, context.QualifiedName, Events.Marshaler.Marshal(context));
 		var json = await Serializer.Json.SerializeAsync(ticket, null, cancellation);
-		await queue.ProduceAsync($"Events", Encoding.UTF8.GetBytes(json), MessageEnqueueOptions.Default, cancellation);
+		await queue.ProduceAsync(this.Topic, Encoding.UTF8.GetBytes(json), MessageEnqueueOptions.Default, cancellation);
 	}
 	#endregion
 
@@ -94,7 +105,7 @@ public class EventExchanger : WorkerBase
 			throw new InvalidOperationException($"Missing required message queue.");
 
 		//订阅消息队列中的事件主题
-		_subscriber = await _queue.SubscribeAsync("Events", Handler.Instance, cancellation);
+		_subscriber = await _queue.SubscribeAsync(this.Topic, Handler.Instance, cancellation);
 	}
 
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
@@ -110,11 +121,11 @@ public class EventExchanger : WorkerBase
 	#endregion
 
 	#region 嵌套结构
-	private readonly struct ExchangerTicket(uint instance, string identifier, byte[] data)
+	private struct ExchangerTicket(uint instance, string identifier, byte[] data)
 	{
-		public readonly uint Instance = instance;
-		public readonly string Identifier = identifier;
-		public readonly byte[] Data = data;
+		public uint Instance = instance;
+		public string Identifier = identifier;
+		public byte[] Data = data;
 
 		public override string ToString() => $"{this.Identifier}@{this.Instance}";
 	}
@@ -132,7 +143,7 @@ public class EventExchanger : WorkerBase
 			var ticket = await Serializer.Json.DeserializeAsync<ExchangerTicket>(message.Data, null, cancellation);
 
 			//如果接收到的事件来源自自身则忽略该事件
-			if(ticket.Instance == _instance)
+			if(ticket.Instance == _instance || string.IsNullOrEmpty(ticket.Identifier))
 				return;
 
 			//根据事件标识获取对应的事件描述器
