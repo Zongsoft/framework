@@ -53,11 +53,11 @@ namespace Zongsoft.Messaging
 
 			if(index > 0 && index < text.Length - 1)
 			{
-				var provider = services.Resolve<IMessageQueueProvider>(text.Substring(index + 1));
+				var provider = services.Resolve<IMessageQueueProvider>(text[(index + 1)..]);
 				if(provider == null)
 					return null;
 
-				var name = text.Substring(0, index);
+				var name = text[..index];
 				return provider.Exists(name) ? provider.Queue(name) : null;
 			}
 

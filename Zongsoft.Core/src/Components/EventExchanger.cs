@@ -92,7 +92,7 @@ public class EventExchanger : WorkerBase
 		if(queue == null)
 			return;
 
-		var ticket = new ExchangerTicket(_instance, context.QualifiedName, Events.Marshaler.Marshal(context));
+		var ticket = new ExchangingTicket(_instance, context.QualifiedName, Events.Marshaler.Marshal(context));
 		var json = await Serializer.Json.SerializeAsync(ticket, null, cancellation);
 		await queue.ProduceAsync(this.Topic, Encoding.UTF8.GetBytes(json), MessageEnqueueOptions.Default, cancellation);
 	}
@@ -121,10 +121,13 @@ public class EventExchanger : WorkerBase
 	#endregion
 
 	#region 嵌套结构
-	private struct ExchangerTicket(uint instance, string identifier, byte[] data)
+	private struct ExchangingTicket(uint instance, string identifier, byte[] data)
 	{
+		/// <summary>表示事件交换器的实例号。</summary>
 		public uint Instance = instance;
+		/// <summary>表示事件的标识，即事件限定名称。</summary>
 		public string Identifier = identifier;
+		/// <summary>表示事件上下文对象的序列化数据。</summary>
 		public byte[] Data = data;
 
 		public override string ToString() => $"{this.Identifier}@{this.Instance}";
@@ -137,14 +140,20 @@ public class EventExchanger : WorkerBase
 		protected override async ValueTask OnHandleAsync(Message message, Parameters _, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)
+			{
+				await message.AcknowledgeAsync(cancellation);
 				return;
+			}
 
 			//反序列化事件上下文
-			var ticket = await Serializer.Json.DeserializeAsync<ExchangerTicket>(message.Data, null, cancellation);
+			var ticket = await Serializer.Json.DeserializeAsync<ExchangingTicket>(message.Data, null, cancellation);
 
 			//如果接收到的事件来源自自身则忽略该事件
 			if(ticket.Instance == _instance || string.IsNullOrEmpty(ticket.Identifier))
+			{
+				await message.AcknowledgeAsync(cancellation);
 				return;
+			}
 
 			//根据事件标识获取对应的事件描述器
 			var descriptor = Events.GetEvent(ticket.Identifier, out var registry);
@@ -154,6 +163,9 @@ public class EventExchanger : WorkerBase
 
 			//重放事件
 			await registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), default);
+
+			//应答消息
+			await message.AcknowledgeAsync(cancellation);
 		}
 	}
 	#endregion
