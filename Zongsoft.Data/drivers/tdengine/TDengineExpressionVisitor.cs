@@ -51,31 +51,6 @@ namespace Zongsoft.Data.TDengine
 			context.Write("?");
 		}
 
-		protected override void VisitExists(ExpressionVisitorContext context, IExpression expression)
-		{
-			//查找当前表达式所属的语句
-			var statement = context.Find<IStatement>();
-
-			//如果当前 Exists/NotExists 表达式位于查询语句，则不需要添加额外的包裹层
-			if(statement is SelectStatementBase)
-			{
-				base.VisitExists(context, expression);
-				return;
-			}
-
-			/*
-			 * 注意：由于 TDengine 不支持在 Update/Delete 等写语句中的 Exists/NotExists 子句中包含上层表别名
-			 * 解决该缺陷的小窍门是对其内部的子查询语句再包裹一个查询语句，可参考：
-			 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
-			 * https://stackoverflow.com/questions/5816840/delete-i-cant-specify-target-table
-			 * https://www.codeproject.com/Tips/831164/TDengine-can-t-specify-target-table-for-update-in-FRO
-			 */
-
-			context.Write("SELECT * FROM (");
-			base.VisitExists(context, expression);
-			context.WriteLine(") AS t_" + Zongsoft.Common.Randomizer.GenerateString());
-		}
-
 		protected override void VisitStatement(ExpressionVisitorContext context, IStatementBase statement)
 		{
 			switch(statement)
