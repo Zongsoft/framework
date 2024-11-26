@@ -320,6 +320,7 @@ namespace Zongsoft.Components.Tests
 		#region 公共字段
 		public string Key = key;
 		public string Code = code;
+		[System.Text.Json.Serialization.JsonConverter(typeof(Zongsoft.Serialization.Json.ObjectConverter))]
 		public object Value = value;
 		#endregion
 

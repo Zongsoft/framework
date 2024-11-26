@@ -61,7 +61,6 @@ namespace Zongsoft.Serialization
 			Converters =
 			{
 				new Json.TypeConverter(),
-				new Json.ObjectConverter(),
 				new Json.TimeSpanConverter(),
 				new JsonStringEnumConverter(),
 				new Json.ModelConverterFactory(),
@@ -97,7 +96,6 @@ namespace Zongsoft.Serialization
 				Converters =
 				{
 					new Json.TypeConverter(),
-					new Json.ObjectConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(),
 					new Json.ModelConverterFactory(),
@@ -146,7 +144,6 @@ namespace Zongsoft.Serialization
 				Converters =
 				{
 					new Json.TypeConverter(),
-					new Json.ObjectConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(naming),
 					new Json.ModelConverterFactory(),
