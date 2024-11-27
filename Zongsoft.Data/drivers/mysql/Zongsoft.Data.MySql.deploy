@@ -1,7 +1,7 @@
 artifacts/Zongsoft.Data.MySql.plugin
 lib/$(Framework)/Zongsoft.Data.MySql.*
 
-nuget:MySql.Data@8.3.0   <framework:net6.0^>
+nuget:MySql.Data@9.1.0   <framework:net6.0^>
 nuget:MySql.Data@6.10.9  <framework:net5.0>
 
 nuget:System.Security.Permissions

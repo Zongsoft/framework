@@ -55,8 +55,8 @@ namespace Zongsoft.Data.MySql
 				(MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
 				context.Options);
 
-			//添加导入的列名
-			bulker.Columns.AddRange(this.Members.Select(member => member.Name));
+			//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
+			bulker.Columns.AddRange(this.Members.Select(member => $"`{member.Name}`"));
 
 			using var file = File.OpenWrite(bulker.FileName);
 			using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
@@ -112,10 +112,15 @@ namespace Zongsoft.Data.MySql
 			writer.Close();
 			file.Dispose();
 
-			context.Count = bulker.Load();
-
-			//删除数据导入的临时文件
-			DeleteFile(bulker.FileName);
+			try
+			{
+				context.Count = bulker.Load();
+			}
+			finally
+			{
+				//删除数据导入的临时文件
+				DeleteFile(bulker.FileName);
+			}
 		}
 
 		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
@@ -126,8 +131,8 @@ namespace Zongsoft.Data.MySql
 				(MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
 				context.Options);
 
-			//添加导入的列名
-			bulker.Columns.AddRange(this.Members.Select(member => member.Name));
+			//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
+			bulker.Columns.AddRange(this.Members.Select(member => $"`{member.Name}`"));
 
 			using var file = File.OpenWrite(bulker.FileName);
 			using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
@@ -183,14 +188,19 @@ namespace Zongsoft.Data.MySql
 			writer.Close();
 			file.Dispose();
 
+			try
+			{
 #if NET6_0_OR_GREATER
-			context.Count = await bulker.LoadAsync(null, cancellation);
+				context.Count = await bulker.LoadAsync(null, cancellation);
 #else
-			context.Count = await bulker.LoadAsync(cancellation);
+				context.Count = await bulker.LoadAsync(cancellation);
 #endif
-
-			//删除数据导入的临时文件
-			DeleteFile(bulker.FileName);
+			}
+			finally
+			{
+				//删除数据导入的临时文件
+				DeleteFile(bulker.FileName);
+			}
 		}
 		#endregion
 
