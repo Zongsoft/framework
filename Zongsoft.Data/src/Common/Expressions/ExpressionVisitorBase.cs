@@ -508,7 +508,7 @@ namespace Zongsoft.Data.Common.Expressions
 		private class NormalDialect : IExpressionDialect
 		{
 			#region 单例字段
-			public static readonly NormalDialect Instance = new NormalDialect();
+			public static readonly NormalDialect Instance = new();
 			#endregion
 
 			#region 私有构造

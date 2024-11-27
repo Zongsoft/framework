@@ -56,7 +56,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 			//处理匿名参数，即参数名为空或问号(?)的参数
 			if(string.IsNullOrEmpty(parameter.Name) || parameter.Name == ParameterExpression.Anonymous)
-				this.Anonymize(System.Threading.Interlocked.Increment(ref _index), parameter);
+				this.Anonymize(++_index, parameter);
 
 			//调用基类同名方法
 			base.InsertItem(index, parameter);

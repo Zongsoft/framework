@@ -141,7 +141,7 @@ namespace Zongsoft.Data.Common.Expressions
 		}
 
 		/// <summary>获取一个值，指示<see cref="Value"/>属性是否被设置过。</summary>
-		public bool IsChanged { get => _hasValue; }
+		public bool IsChanged => _hasValue;
 		#endregion
 
 		#region 重写方法
