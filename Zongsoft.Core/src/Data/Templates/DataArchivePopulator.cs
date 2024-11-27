@@ -42,6 +42,7 @@ public class DataArchivePopulator : IDataArchivePopulator
 	#region 公共方法
 	public T Populate<T>(IDataArchiveRecord record, ModelDescriptor descriptor)
 	{
+		//构建数据实例
 		var target = this.Build<T>();
 
 		for(int i = 0; i < record.FieldCount; i++)
@@ -49,10 +50,13 @@ public class DataArchivePopulator : IDataArchivePopulator
 			var field = record.GetName(i);
 
 			if(descriptor.Properties.TryGetValue(field, out var property))
-				Reflector.TrySetValue(property.Member, ref target, record.GetValue(i));
+				Reflector.TrySetValue(property.Member, ref target, type => Common.Convert.ConvertValue(record.GetValue(i), type));
 			else
 				this.Unrecognize(ref target, field, record.GetValue(i));
 		}
+
+		//执行组装完成
+		this.OnPopulated(ref target, record, descriptor);
 
 		return target;
 	}
@@ -61,5 +65,6 @@ public class DataArchivePopulator : IDataArchivePopulator
 	#region 虚拟方法
 	protected virtual T Build<T>() => typeof(T).IsInterface || typeof(T).IsAbstract ? Model.Build<T>() : Activator.CreateInstance<T>();
 	protected virtual void Unrecognize<T>(ref T target, string field, object value) { }
+	protected virtual void OnPopulated<T>(ref T target, IDataArchiveRecord record, ModelDescriptor descriptor) { }
 	#endregion
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -317,7 +317,8 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 设置方法
-		public static void SetValue(this FieldInfo field, ref object target, object value)
+		public static void SetValue(this FieldInfo field, ref object target, object value) => SetValue(field, ref target, _ => value);
+		public static void SetValue(this FieldInfo field, ref object target, Func<Type, object> valueFactory)
 		{
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
@@ -325,10 +326,11 @@ namespace Zongsoft.Reflection
 			if(field.IsInitOnly)
 				throw new InvalidOperationException($"The '{field.Name}' field does not support writing.");
 
-			field.GetSetter().Invoke(ref target, value);
+			field.GetSetter().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 		}
 
-		public static void SetValue(this PropertyInfo property, ref object target, object value, params object[] parameters)
+		public static void SetValue(this PropertyInfo property, ref object target, object value, params object[] parameters) => SetValue(property, ref target, _ => value, parameters);
+		public static void SetValue(this PropertyInfo property, ref object target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
@@ -336,10 +338,11 @@ namespace Zongsoft.Reflection
 			if(!property.CanWrite)
 				throw new InvalidOperationException($"The '{property.Name}' property does not support writing.");
 
-			property.GetSetter().Invoke(ref target, value, parameters);
+			property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 		}
 
-		public static void SetValue(this MemberInfo member, ref object target, object value, params object[] parameters)
+		public static void SetValue(this MemberInfo member, ref object target, object value, params object[] parameters) => SetValue(member, ref target, _ => value, parameters);
+		public static void SetValue(this MemberInfo member, ref object target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(member == null)
 				throw new ArgumentNullException(nameof(member));
@@ -352,7 +355,7 @@ namespace Zongsoft.Reflection
 					if(field.IsInitOnly)
 						throw new InvalidOperationException($"The '{field.Name}' field does not support writing.");
 
-					field.GetSetter().Invoke(ref target, value);
+					field.GetSetter().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 
 					break;
 				case MemberTypes.Property:
@@ -361,7 +364,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						throw new InvalidOperationException($"The '{property.Name}' property does not support writing.");
 
-					property.GetSetter().Invoke(ref target, value, parameters);
+					property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 
 					break;
 				default:
@@ -369,7 +372,7 @@ namespace Zongsoft.Reflection
 			}
 		}
 
-		public static void SetValue(ref object target, string name, object value, params object[] parameters) => SetValue(ref target, name, type => value, parameters);
+		public static void SetValue(ref object target, string name, object value, params object[] parameters) => SetValue(ref target, name, _ => value, parameters);
 		public static void SetValue(ref object target, string name, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(target == null)
@@ -386,7 +389,8 @@ namespace Zongsoft.Reflection
 			SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
-		public static void SetValue<T>(this FieldInfo field, ref T target, object value)
+		public static void SetValue<T>(this FieldInfo field, ref T target, object value) => SetValue<T>(field, ref target, _ => value);
+		public static void SetValue<T>(this FieldInfo field, ref T target, Func<Type, object> valueFactory)
 		{
 			if(field == null)
 				throw new ArgumentNullException(nameof(field));
@@ -394,10 +398,11 @@ namespace Zongsoft.Reflection
 			if(field.IsInitOnly)
 				throw new InvalidOperationException($"The '{field.Name}' field does not support writing.");
 
-			field.GetSetter<T>().Invoke(ref target, value);
+			field.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 		}
 
-		public static void SetValue<T>(this PropertyInfo property, ref T target, object value, params object[] parameters)
+		public static void SetValue<T>(this PropertyInfo property, ref T target, object value, params object[] parameters) => SetValue<T>(property, ref target, _ => value, parameters);
+		public static void SetValue<T>(this PropertyInfo property, ref T target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
@@ -405,10 +410,11 @@ namespace Zongsoft.Reflection
 			if(!property.CanWrite)
 				throw new InvalidOperationException($"The '{property.Name}' property does not support writing.");
 
-			property.GetSetter<T>().Invoke(ref target, value, parameters);
+			property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 		}
 
-		public static void SetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters)
+		public static void SetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters) => SetValue<T>(member, ref target, _ => value, parameters);
+		public static void SetValue<T>(this MemberInfo member, ref T target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(member == null)
 				throw new ArgumentNullException(nameof(member));
@@ -421,7 +427,7 @@ namespace Zongsoft.Reflection
 					if(field.IsInitOnly)
 						throw new InvalidOperationException($"The '{field.Name}' field does not support writing.");
 
-					field.GetSetter<T>().Invoke(ref target, value);
+					field.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 
 					break;
 				case MemberTypes.Property:
@@ -430,7 +436,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						throw new InvalidOperationException($"The '{property.Name}' property does not support writing.");
 
-					property.GetSetter<T>().Invoke(ref target, value, parameters);
+					property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 
 					break;
 				default:
@@ -438,7 +444,7 @@ namespace Zongsoft.Reflection
 			}
 		}
 
-		public static void SetValue<T>(ref T target, string name, object value, params object[] parameters) => SetValue<T>(ref target, name, type => value, parameters);
+		public static void SetValue<T>(ref T target, string name, object value, params object[] parameters) => SetValue<T>(ref target, name, _ => value, parameters);
 		public static void SetValue<T>(ref T target, string name, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(target == null)
@@ -455,25 +461,28 @@ namespace Zongsoft.Reflection
 			SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
-		public static bool TrySetValue(this FieldInfo field, ref object target, object value)
+		public static bool TrySetValue(this FieldInfo field, ref object target, object value) => TrySetValue(field, ref target, _ => value);
+		public static bool TrySetValue(this FieldInfo field, ref object target, Func<Type, object> valueFactory)
 		{
 			if(field == null || field.IsInitOnly)
 				return false;
 
-			field.GetSetter().Invoke(ref target, value);
+			field.GetSetter().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 			return true;
 		}
 
-		public static bool TrySetValue(this PropertyInfo property, ref object target, object value, params object[] parameters)
+		public static bool TrySetValue(this PropertyInfo property, ref object target, object value, params object[] parameters) => TrySetValue(property, ref target, _ => value, parameters);
+		public static bool TrySetValue(this PropertyInfo property, ref object target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(property == null || !property.CanWrite)
 				return false;
 
-			property.GetSetter().Invoke(ref target, value, parameters);
+			property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 			return true;
 		}
 
-		public static bool TrySetValue(this MemberInfo member, ref object target, object value, params object[] parameters)
+		public static bool TrySetValue(this MemberInfo member, ref object target, object value, params object[] parameters) => TrySetValue(member, ref target, _ => value, parameters);
+		public static bool TrySetValue(this MemberInfo member, ref object target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(member == null)
 				return false;
@@ -486,7 +495,7 @@ namespace Zongsoft.Reflection
 					if(field.IsInitOnly)
 						return false;
 
-					field.GetSetter().Invoke(ref target, value);
+					field.GetSetter().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 
 					return true;
 				case MemberTypes.Property:
@@ -495,7 +504,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						return false;
 
-					property.GetSetter().Invoke(ref target, value, parameters);
+					property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 
 					return true;
 			}
@@ -503,7 +512,7 @@ namespace Zongsoft.Reflection
 			return false;
 		}
 
-		public static bool TrySetValue(ref object target, string name, object value, params object[] parameters) => TrySetValue(ref target, name, type => value, parameters);
+		public static bool TrySetValue(ref object target, string name, object value, params object[] parameters) => TrySetValue(ref target, name, _ => value, parameters);
 		public static bool TrySetValue(ref object target, string name, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(target == null)
@@ -520,25 +529,28 @@ namespace Zongsoft.Reflection
 			return TrySetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 		}
 
-		public static bool TrySetValue<T>(this FieldInfo field, ref T target, object value)
+		public static bool TrySetValue<T>(this FieldInfo field, ref T target, object value) => TrySetValue<T>(field, ref target, _ => value);
+		public static bool TrySetValue<T>(this FieldInfo field, ref T target, Func<Type, object> valueFactory)
 		{
 			if(field == null || field.IsInitOnly)
 				return false;
 
-			field.GetSetter<T>().Invoke(ref target, value);
+			field.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 			return true;
 		}
 
-		public static bool TrySetValue<T>(this PropertyInfo property, ref T target, object value, params object[] parameters)
+		public static bool TrySetValue<T>(this PropertyInfo property, ref T target, object value, params object[] parameters) => TrySetValue<T>(property, ref target, _ => value, parameters);
+		public static bool TrySetValue<T>(this PropertyInfo property, ref T target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(property == null || !property.CanWrite)
 				return false;
 
-			property.GetSetter<T>().Invoke(ref target, value, parameters);
+			property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 			return true;
 		}
 
-		public static bool TrySetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters)
+		public static bool TrySetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters) => TrySetValue<T>(member, ref target, _ => value, parameters);
+		public static bool TrySetValue<T>(this MemberInfo member, ref T target, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(member == null)
 				return false;
@@ -551,7 +563,7 @@ namespace Zongsoft.Reflection
 					if(field.IsInitOnly)
 						return false;
 
-					field.GetSetter<T>().Invoke(ref target, value);
+					field.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(field.FieldType));
 
 					return true;
 				case MemberTypes.Property:
@@ -560,7 +572,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						return false;
 
-					property.GetSetter<T>().Invoke(ref target, value, parameters);
+					property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 
 					return true;
 			}
@@ -568,7 +580,7 @@ namespace Zongsoft.Reflection
 			return false;
 		}
 
-		public static bool TrySetValue<T>(ref T target, string name, object value, params object[] parameters) => TrySetValue<T>(ref target, name, type => value, parameters);
+		public static bool TrySetValue<T>(ref T target, string name, object value, params object[] parameters) => TrySetValue<T>(ref target, name, _ => value, parameters);
 		public static bool TrySetValue<T>(ref T target, string name, Func<Type, object> valueFactory, params object[] parameters)
 		{
 			if(target == null)
