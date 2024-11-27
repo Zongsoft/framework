@@ -48,6 +48,8 @@ public class DataArchivePopulator : IDataArchivePopulator
 		for(int i = 0; i < record.FieldCount; i++)
 		{
 			var field = record.GetName(i);
+			if(string.IsNullOrEmpty(field))
+				continue;
 
 			if(descriptor.Properties.TryGetValue(field, out var property))
 				Reflector.TrySetValue(property.Member, ref target, type => Common.Convert.ConvertValue(record.GetValue(i), type));

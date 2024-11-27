@@ -107,7 +107,7 @@ namespace Zongsoft.Externals.ClosedXml
 			public object this[int ordinal] => this.GetValue(ordinal);
 			public object this[string name] => this.GetValue(_fields[name].Index);
 
-			public string GetName(int ordinal) => _fields[ordinal].Name;
+			public string GetName(int ordinal) => _fields[ordinal]?.Name;
 			public object GetValue(string name) => this.GetValue(_fields[name].Index);
 			public object GetValue(int ordinal)
 			{
