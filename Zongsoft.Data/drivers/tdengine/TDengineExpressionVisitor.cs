@@ -48,7 +48,17 @@ namespace Zongsoft.Data.TDengine
 		#region 重写方法
 		protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
 		{
-			context.Write("?");
+			/*
+			 * 注意：TDengine 对参数名的首字符有不同的含义：
+			 *    $ 打头表示标签字段对应的参数；
+			 *    @ 打头表示数据字段对应的参数。
+			 */
+			if(parameter.Field.IsTagField())
+				parameter.Name = '$' + parameter.Name;
+			else
+				parameter.Name = '@' + parameter.Name;
+
+			context.Write('?');
 		}
 
 		protected override void VisitStatement(ExpressionVisitorContext context, IStatementBase statement)

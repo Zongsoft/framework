@@ -52,8 +52,9 @@ namespace Zongsoft.Data.TDengine
 		{
 		}
 
-		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		public override ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
 		{
+			return ValueTask.CompletedTask;
 		}
 		#endregion
 	}

@@ -36,8 +36,5 @@ namespace Zongsoft.Data.TDengine
 {
 	public class TDengineInsertStatementBuilder : InsertStatementBuilder
 	{
-		#region 重写方法
-		protected override InsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema, new TDengineParameters());
-		#endregion
 	}
 }

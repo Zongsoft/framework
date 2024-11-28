@@ -36,8 +36,5 @@ namespace Zongsoft.Data.TDengine
 {
 	public class TDengineExecutionStatementBuilder : ExecutionStatementBuilder
 	{
-		#region 构造函数
-		public TDengineExecutionStatementBuilder() { }
-		#endregion
 	}
 }

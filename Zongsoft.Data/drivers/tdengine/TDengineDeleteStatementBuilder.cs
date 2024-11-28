@@ -36,8 +36,5 @@ namespace Zongsoft.Data.TDengine
 {
 	public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 	{
-		#region 构造函数
-		public TDengineDeleteStatementBuilder() { }
-		#endregion
 	}
 }

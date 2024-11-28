@@ -77,7 +77,7 @@ namespace Zongsoft.Data.TDengine
 				var field = statement.Fields[i];
 				var value = statement.Values[i];
 
-				if(field.Token.Property.IsTagField())
+				if(field.IsTagField())
 				{
 					tags.Fields.Add(field);
 					tags.Values.Add(value);
