@@ -156,24 +156,25 @@ namespace Zongsoft.Web
 			services.AddRequestLocalization(options => options.ApplyCurrentCultureToResponseHeaders = true);
 			services.AddEndpointsApiExplorer();
 
-			services
-				.AddSignalR(options => { });
+			services.AddSignalR(options =>
+			{
+				options.EnableDetailedErrors = true;
+			});
 
-			services
-				.AddControllers(options =>
-				{
-					options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
-					options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
+			services.AddControllers(options =>
+			{
+				options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+				options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
 
-					options.InputFormatters.Add(new Zongsoft.Web.Formatters.JsonInputFormatter());
-					options.OutputFormatters.Add(new Zongsoft.Web.Formatters.JsonOutputFormatter());
+				options.InputFormatters.Add(new Zongsoft.Web.Formatters.JsonInputFormatter());
+				options.OutputFormatters.Add(new Zongsoft.Web.Formatters.JsonOutputFormatter());
 
-					options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
-					options.Conventions.Add(new ApplicationModelConvention());
-					options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
-					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
-					options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
-				});
+				options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
+				options.Conventions.Add(new ApplicationModelConvention());
+				options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
+				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
+				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
+			});
 		}
 	}
 }
