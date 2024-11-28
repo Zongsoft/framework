@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Zongsoft.Caching
@@ -62,7 +63,11 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 删除方法
+#if NET7_0_OR_GREATER
+		public void Clear() => _cache.Clear();
+#else
 		public void Clear() => _cache.Compact(1.0);
+#endif
 		public bool Remove(object key)
 		{
 			if(_cache.TryGetValue(key, out _))
@@ -73,7 +78,7 @@ namespace Zongsoft.Caching
 
 			return false;
 		}
-		#endregion
+#endregion
 
 		#region 获取方法
 		public object GetValue(object key) => _cache.Get(key);
@@ -81,14 +86,251 @@ namespace Zongsoft.Caching
 
 		public bool TryGetValue(object key, out object value) => _cache.TryGetValue(key, out value);
 		public bool TryGetValue<TValue>(object key, out TValue value) => _cache.TryGetValue(key, out value);
+		#endregion
 
-		public object GetOrCreate<TValue>(object key, Func<ICacheEntry, TValue> factory) => _cache.GetOrCreate(key, factory);
-		public object GetOrCreate<TValue>(object key, Func<ICacheEntry, Task<TValue>> factory) => _cache.GetOrCreateAsync(key, factory);
+		#region 获取设置
+		public TValue GetOrCreate<TValue>(object key, Func<ICacheEntry, TValue> factory) => _cache.GetOrCreate(key, factory);
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<ICacheEntry, Task<TValue>> factory) => _cache.GetOrCreateAsync(key, factory);
+
+		public TValue GetOrCreate<TValue>(object key, Func<TValue> factory) => _cache.GetOrCreate(key, entry => factory == null ? default : factory.Invoke());
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<Task<TValue>> factory) => _cache.GetOrCreateAsync(key, entry => factory == null ? default : factory.Invoke());
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var expiration, var evicted) = factory(entry.Key);
+
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var priority, var expiration, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var priority, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var expiration, var evicted) = factory(entry.Key);
+
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var priority, var expiration, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreate(key, entry =>
+			{
+				(var value, var priority, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var expiration, var evicted) = factory(entry.Key);
+
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var priority, var expiration, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var priority, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.SlidingExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var expiration, var evicted) = factory(entry.Key);
+
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, Action<object, object, CacheEvictionReason> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var priority, var expiration, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
+
+		public Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, object State, Action<object, object, CacheEvictionReason, object> Evicted)> factory)
+		{
+			return _cache.GetOrCreateAsync(key, entry =>
+			{
+				(var value, var priority, var expiration, var state, var evicted) = factory(entry.Key);
+
+				entry.Priority = GetPriority(priority);
+				entry.AbsoluteExpiration = expiration;
+				if(evicted != null)
+					entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+
+				return value;
+			});
+		}
 		#endregion
 
 		#region 设置方法
-		public void SetValue<TValue>(object key, TValue value, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, evicted);
-		public void SetValue<TValue>(object key, TValue value, CachePriority priority, Action<object, object, CacheChangedReason> evicted = null)
+		public void SetValue<TValue>(object key, TValue value, Action<object, object, CacheEvictionReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, Action<object, object, CacheEvictionReason> evicted = null)
 		{
 			using var entry = _cache.CreateEntry(key);
 			entry.Value = value;
@@ -98,28 +340,87 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
 		}
 
-		public void SetValue<TValue>(object key, TValue value, DateTime expiry, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiry, evicted);
-		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTime expiry, Action<object, object, CacheChangedReason> evicted = null)
+		public void SetValue<TValue>(object key, TValue value, object state, Action<object, object, CacheEvictionReason, object> evicted = null) => this.SetValue(key, value, CachePriority.Normal, state, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, object state, Action<object, object, CacheEvictionReason, object> evicted = null)
 		{
 			using var entry = _cache.CreateEntry(key);
 			entry.Value = value;
 			entry.Priority = GetPriority(priority);
-			entry.AbsoluteExpiration = expiry;
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+		}
+
+		public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, Action<object, object, CacheEvictionReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiration, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTimeOffset expiration, Action<object, object, CacheEvictionReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.AbsoluteExpiration = expiration;
 
 			if(evicted != null)
 				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
 		}
 
-		public void SetValue<TValue>(object key, TValue value, TimeSpan expiry, Action<object, object, CacheChangedReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiry, evicted);
-		public void SetValue<TValue>(object key, TValue value, CachePriority priority, TimeSpan expiry, Action<object, object, CacheChangedReason> evicted = null)
+		public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, object state, Action<object, object, CacheEvictionReason, object> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTimeOffset expiration, object state, Action<object, object, CacheEvictionReason, object> evicted = null)
 		{
 			using var entry = _cache.CreateEntry(key);
 			entry.Value = value;
 			entry.Priority = GetPriority(priority);
-			entry.AbsoluteExpirationRelativeToNow = expiry;
+			entry.AbsoluteExpiration = expiration;
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+		}
+
+		public void SetValue<TValue>(object key, TValue value, TimeSpan expiration, Action<object, object, CacheEvictionReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiration, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, TimeSpan expiration, Action<object, object, CacheEvictionReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.SlidingExpiration = expiration;
 
 			if(evicted != null)
 				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+		}
+
+		public void SetValue<TValue>(object key, TValue value, TimeSpan expiration, object state, Action<object, object, CacheEvictionReason, object> evicted = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, TimeSpan expiration, object state, Action<object, object, CacheEvictionReason, object> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.SlidingExpiration = expiration;
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
+		}
+
+		public void SetValue<TValue>(object key, TValue value, IChangeToken dependency, Action<object, object, CacheEvictionReason> evicted = null) => this.SetValue(key, value, CachePriority.Normal, dependency, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, IChangeToken dependency, Action<object, object, CacheEvictionReason> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.AddExpirationToken(dependency);
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason)));
+		}
+
+		public void SetValue<TValue>(object key, TValue value, IChangeToken dependency, object state, Action<object, object, CacheEvictionReason, object> evicted = null) => this.SetValue(key, value, CachePriority.Normal, dependency, state, evicted);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, IChangeToken dependency, object state, Action<object, object, CacheEvictionReason, object> evicted = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+			entry.AddExpirationToken(dependency);
+
+			if(evicted != null)
+				entry.RegisterPostEvictionCallback((object key, object value, EvictionReason reason, object state) => evicted(key, value, GetReason(reason), state), state);
 		}
 		#endregion
 
@@ -135,13 +436,14 @@ namespace Zongsoft.Caching
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static CacheChangedReason GetReason(EvictionReason reason) => reason switch
+		private static CacheEvictionReason GetReason(EvictionReason reason) => reason switch
 		{
-			EvictionReason.Removed => CacheChangedReason.Removed,
-			EvictionReason.Expired => CacheChangedReason.Expired,
-			EvictionReason.Replaced => CacheChangedReason.Updated,
-			EvictionReason.TokenExpired => CacheChangedReason.Expired,
-			_ => CacheChangedReason.None,
+			EvictionReason.Removed => CacheEvictionReason.Removed,
+			EvictionReason.Expired => CacheEvictionReason.Expired,
+			EvictionReason.Capacity => CacheEvictionReason.Overfull,
+			EvictionReason.Replaced => CacheEvictionReason.Replaced,
+			EvictionReason.TokenExpired => CacheEvictionReason.Expired,
+			_ => CacheEvictionReason.None,
 		};
 		#endregion
 
