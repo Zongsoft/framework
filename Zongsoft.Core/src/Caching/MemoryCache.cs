@@ -50,7 +50,18 @@ namespace Zongsoft.Caching
 		#region 构造函数
 		public MemoryCache()
 		{
-			_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(Options.Create(new MemoryCacheOptions() { }));
+			_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions());
+		}
+
+		public MemoryCache(TimeSpan frequency, long sizeLimit = 0)
+		{
+			var options = new MemoryCacheOptions()
+			{
+				ExpirationScanFrequency = frequency,
+				SizeLimit = sizeLimit > 0 ? sizeLimit : null,
+			};
+
+			_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(options);
 		}
 		#endregion
 
