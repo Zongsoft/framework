@@ -31,23 +31,16 @@ using System;
 
 namespace Zongsoft.Caching;
 
-/// <summary>
-/// 表示缓存项被移除的原因。
-/// </summary>
-public enum CacheEvictionReason
+public class CacheLimitedEventArgs
 {
-	/// <summary>系统内部原因。</summary>
-	None,
+	public CacheLimitedEventArgs(int limit, int count)
+	{
+		this.Limit = limit;
+		this.Count = count;
+	}
 
-	/// <summary>因为过期被移除。</summary>
-	Expired,
+	public int Limit { get; }
+	public int Count { get; }
 
-	/// <summary>被手动删除的。</summary>
-	Removed,
-
-	/// <summary>被手动替换的。</summary>
-	Replaced,
-
-	/// <summary>溢出，超出容量。</summary>
-	Overfull,
+	public override string ToString() => $"{this.Limit}/{this.Count}";
 }
