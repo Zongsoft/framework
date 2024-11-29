@@ -175,12 +175,12 @@ namespace Zongsoft.Common
 		#region 私有方法
 		private static string GetDescription(FieldInfo field)
 		{
-			if(field == null)
-				throw new ArgumentNullException(nameof(field));
-
 			var attribute = field.GetCustomAttribute<DescriptionAttribute>();
-			var name = attribute == null || string.IsNullOrEmpty(attribute.Description) ? $"{field.DeclaringType.Name}.{field.Name}" : attribute.Description;
-			return Resources.ResourceUtility.GetResourceString(field, name);
+
+			return attribute == null || string.IsNullOrEmpty(attribute.Description) ?
+				Resources.ResourceUtility.GetResourceString(field, $"{field.DeclaringType.Name}.{field.Name}.Description") ??
+				Resources.ResourceUtility.GetResourceString(field, $"{field.DeclaringType.Name}.{field.Name}") :
+				Resources.ResourceUtility.GetResourceString(field, attribute.Description);
 		}
 		#endregion
 	}
