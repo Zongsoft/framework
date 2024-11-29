@@ -660,25 +660,8 @@ namespace Zongsoft.Caching
 			if(state != null)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
-		}
-
-		public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
-		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTimeOffset expiration, object state = null)
-		{
-			using var entry = _cache.CreateEntry(key);
-			entry.Value = value;
-			entry.Priority = GetPriority(priority);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
-
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_limit > 0 && _cache.Count >= _limit)
+				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
 		}
 
 		public void SetValue<TValue>(object key, TValue value, TimeSpan expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
@@ -694,8 +677,25 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 			}
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_limit > 0 && _cache.Count >= _limit)
+				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
+		}
+
+		public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
+		public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTimeOffset expiration, object state = null)
+		{
+			using var entry = _cache.CreateEntry(key);
+			entry.Value = value;
+			entry.Priority = GetPriority(priority);
+
+			if(expiration > DateTimeOffset.MinValue)
+			{
+				entry.AbsoluteExpiration = expiration;
+				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
+			}
+
+			if(_limit > 0 && _cache.Count >= _limit)
+				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
 		}
 
 		public void SetValue<TValue>(object key, TValue value, IChangeToken dependency, object state = null) => this.SetValue(key, value, CachePriority.Normal, dependency, state);
@@ -711,13 +711,13 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 			}
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_limit > 0 && _cache.Count >= _limit)
+				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
 		}
 		#endregion
 
 		#region 事件触发
-		private void OnLimited(int limit) => this.OnLimited(new CacheLimitedEventArgs(limit, _cache.Count));
+		private void OnLimited(int limit, int count = 0) => this.OnLimited(new CacheLimitedEventArgs(limit, count > 0 ? count : _cache.Count));
 		protected virtual void OnLimited(CacheLimitedEventArgs args) => this.Limited?.Invoke(this, args);
 
 		private void OnEvicted(object key, object value, EvictionReason reason, object state) => this.OnEvicted(new CacheEvictedEventArgs(key, value, GetReason(reason), state));
@@ -758,6 +758,16 @@ namespace Zongsoft.Caching
 
 			if(cache != null)
 			{
+				//移除“Limited”事件的所有处理函数
+				var handlers = this.Limited.GetInvocationList();
+				for(int i = 0; i < handlers.Length; i++)
+					this.Limited -= (EventHandler<CacheLimitedEventArgs>)handlers[i];
+
+				//移除“Evicted”事件的所有处理函数
+				handlers = this.Evicted.GetInvocationList();
+				for(int i = 0; i < handlers.Length; i++)
+					this.Evicted -= (EventHandler<CacheEvictedEventArgs>)handlers[i];
+
 				_scanner.Destory();
 				cache.Dispose();
 				GC.SuppressFinalize(this);
