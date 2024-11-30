@@ -48,8 +48,7 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 成员字段
-		private readonly int _limit;
-		private CacheScanner _scanner;
+		private readonly MemoryCacheOptions _options;
 		private Microsoft.Extensions.Caching.Memory.MemoryCache _cache;
 		#endregion
 
@@ -57,24 +56,17 @@ namespace Zongsoft.Caching
 		public MemoryCache() : this(TimeSpan.FromSeconds(60), 0) { }
 		public MemoryCache(TimeSpan frequency, int limit = 0)
 		{
-			//确保扫描频率不会低于1秒
-			if(frequency.Ticks < TimeSpan.TicksPerSecond)
-				frequency = TimeSpan.FromSeconds(1);
-
-			var options = new MemoryCacheOptions()
+			_options = new MemoryCacheOptions(frequency, limit);
+			_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()
 			{
-				ExpirationScanFrequency = frequency
-			};
-
-			_limit = limit > 0 ? limit : 0;
-			_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(options);
-			_scanner = new CacheScanner(_cache, frequency);
+				ExpirationScanFrequency = _options.ScanFrequency,
+			});
 		}
 		#endregion
 
 		#region 公共属性
 		public int Count => _cache.Count;
-		public CacheScanner Scanner => _scanner;
+		public MemoryCacheOptions Options => _options;
 		#endregion
 
 		#region 存在方法
@@ -116,8 +108,8 @@ namespace Zongsoft.Caching
 		{
 			var result = _cache.GetOrCreate(key, entry => factory == null ? default : factory.Invoke());
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -137,8 +129,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -159,8 +151,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -180,8 +172,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -202,8 +194,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -223,8 +215,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -245,8 +237,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -266,8 +258,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -288,8 +280,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -309,8 +301,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -331,8 +323,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -352,8 +344,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -374,8 +366,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -384,8 +376,8 @@ namespace Zongsoft.Caching
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry => factory == null ? default : factory.Invoke());
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -405,8 +397,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -427,8 +419,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -448,8 +440,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -470,8 +462,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -491,8 +483,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -513,8 +505,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -534,8 +526,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -556,8 +548,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -577,8 +569,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -599,8 +591,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -620,8 +612,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -642,8 +634,8 @@ namespace Zongsoft.Caching
 				return value;
 			});
 
-			if(_limit > 0 && _cache.Count > _limit)
-				this.OnLimited(_cache.Count - _limit);
+			if(_options.IsLimit(out var limit) && _cache.Count > limit)
+				this.OnLimited(_cache.Count - limit);
 
 			return result;
 		}
@@ -660,8 +652,8 @@ namespace Zongsoft.Caching
 			if(state != null)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
-			if(_limit > 0 && _cache.Count >= _limit)
-				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
+			if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+				this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 		}
 
 		public void SetValue<TValue>(object key, TValue value, TimeSpan expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
@@ -677,8 +669,8 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 			}
 
-			if(_limit > 0 && _cache.Count >= _limit)
-				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
+			if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+				this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 		}
 
 		public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
@@ -694,8 +686,8 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 			}
 
-			if(_limit > 0 && _cache.Count >= _limit)
-				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
+			if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+				this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 		}
 
 		public void SetValue<TValue>(object key, TValue value, IChangeToken dependency, object state = null) => this.SetValue(key, value, CachePriority.Normal, dependency, state);
@@ -711,8 +703,8 @@ namespace Zongsoft.Caching
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 			}
 
-			if(_limit > 0 && _cache.Count >= _limit)
-				this.OnLimited(_cache.Count - _limit + 1, _cache.Count + 1);
+			if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+				this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 		}
 		#endregion
 
@@ -768,43 +760,8 @@ namespace Zongsoft.Caching
 				for(int i = 0; i < handlers.Length; i++)
 					this.Evicted -= (EventHandler<CacheEvictedEventArgs>)handlers[i];
 
-				_scanner.Destory();
 				cache.Dispose();
 				GC.SuppressFinalize(this);
-			}
-		}
-		#endregion
-
-		#region 嵌套子类
-		public sealed class CacheScanner
-		{
-			private Timer _timer;
-			private readonly TimeSpan _frequency;
-			private Microsoft.Extensions.Caching.Memory.MemoryCache _cache;
-
-			internal CacheScanner(Microsoft.Extensions.Caching.Memory.MemoryCache cache, TimeSpan frequency)
-			{
-				_cache = cache ?? throw new ArgumentNullException(nameof(cache));
-				_frequency = frequency;
-				_timer = new(OnTick, _cache, Timeout.InfiniteTimeSpan, _frequency);
-			}
-
-			public void Start() => _timer.Change(TimeSpan.Zero, _frequency);
-			public void Stop() => _timer.Change(Timeout.Infinite, Timeout.Infinite);
-
-			private static void OnTick(object state)
-			{
-				((Microsoft.Extensions.Caching.Memory.MemoryCache)state).Compact(0);
-			}
-
-			internal void Destory()
-			{
-				var timer = Interlocked.Exchange(ref _timer, null);
-				if(timer != null)
-				{
-					timer.Dispose();
-					_cache = null;
-				}
 			}
 		}
 		#endregion

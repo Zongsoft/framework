@@ -13,10 +13,12 @@ internal class Program
 	static void Main(string[] args)
 	{
 		const int FREQUENCY  = 1;
-		const int EXPIRATION = 60;
+		const int EXPIRATION = 30;
 		const int LIMIT      = 5;
 
 		using var cache = new MemoryCache(TimeSpan.FromSeconds(FREQUENCY), LIMIT);
+		using var scanner = new MemoryCacheScanner(cache);
+
 		cache.Limited += Cache_Limited;
 		cache.Evicted += Cache_Evicted;
 
@@ -54,10 +56,10 @@ internal class Program
 			{
 				case "start":
 				case "restart":
-					cache.Scanner.Start();
+					scanner.Start();
 					break;
 				case "stop":
-					cache.Scanner.Stop();
+					scanner.Stop();
 					break;
 				default:
 					if(!string.IsNullOrEmpty(text))
