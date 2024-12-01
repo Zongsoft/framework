@@ -70,7 +70,7 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 存在方法
-		public bool Exists(object key) => key is not null && _cache.TryGetValue(key, out _);
+		public bool Contains(object key) => key is not null && _cache.TryGetValue(key, out _);
 		#endregion
 
 		#region 压缩方法
@@ -104,6 +104,12 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 获取设置
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法将其返回的结果作为缓存项值进行缓存。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">当指定键的缓存项不存在时，构建缓存值的方法。</param>
+		/// <returns>返回指定键的缓存值。</returns>
+		/// <remarks>提示：当指定键对应的缓存项不存在，由于本方法<paramref name="factory"/>参数返回的结果并未包含过期时间，因此如果需要指定对应的过期时间或废除依赖，请调用同名方法的其他重载。</remarks>
 		public TValue GetOrCreate<TValue>(object key, Func<TValue> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry => factory == null ? default : factory.Invoke());
@@ -114,6 +120,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -135,6 +158,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -157,6 +201,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -178,6 +243,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -200,6 +290,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -221,6 +328,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -243,6 +371,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -264,6 +413,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -286,6 +460,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, IChangeToken Dependency)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -307,6 +498,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, IChangeToken Dependency)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -329,6 +541,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, IChangeToken Dependency, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -350,6 +583,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值。</returns>
 		public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, IChangeToken Dependency, object State)> factory)
 		{
 			var result = _cache.GetOrCreate(key, entry =>
@@ -372,6 +630,12 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法将其返回的结果作为缓存项值进行缓存。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">当指定键的缓存项不存在时，构建缓存值的异步方法。</param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
+		/// <remarks>提示：当指定键对应的缓存项不存在，由于本方法<paramref name="factory"/>参数返回的结果并未包含过期时间，因此如果需要指定对应的过期时间或废除依赖，请调用同名方法的其他重载。</remarks>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<Task<TValue>> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry => factory == null ? default : factory.Invoke());
@@ -382,6 +646,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -403,6 +684,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -425,6 +727,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -446,6 +769,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的相对过期时长。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -468,6 +816,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -489,6 +854,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -511,6 +897,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -532,6 +939,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Expiration</c></term>
+		///				<description>缓存项的绝对过期时间。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -554,6 +986,23 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -575,6 +1024,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -597,6 +1067,27 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -618,6 +1109,31 @@ namespace Zongsoft.Caching
 			return result;
 		}
 
+		/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+		/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+		/// <param name="key">指定的缓存项的键。</param>
+		/// <param name="factory">
+		///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+		///		<list type="bullet">
+		///			<item>
+		///				<term><c>Value</c></term>
+		///				<description>缓存值的异步任务。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Priority</c></term>
+		///				<description>缓存项的优先级别。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>Dependency</c></term>
+		///				<description>缓存项的废除依赖。</description>
+		///			</item>
+		///			<item>
+		///				<term><c>State</c></term>
+		///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+		///			</item>
+		///		</list>
+		/// </param>
+		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
@@ -746,6 +1262,12 @@ namespace Zongsoft.Caching
 			if(object.ReferenceEquals(this, Shared))
 				return;
 
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
 			var cache = Interlocked.Exchange(ref _cache, null);
 
 			if(cache != null)
@@ -761,7 +1283,6 @@ namespace Zongsoft.Caching
 					this.Evicted -= (EventHandler<CacheEvictedEventArgs>)handlers[i];
 
 				cache.Dispose();
-				GC.SuppressFinalize(this);
 			}
 		}
 		#endregion

@@ -57,9 +57,11 @@ internal class Program
 				case "start":
 				case "restart":
 					scanner.Start();
+					Terminal.Instance.WriteLine(CommandOutletColor.DarkGreen, "The memory cache scanner has started.");
 					break;
 				case "stop":
 					scanner.Stop();
+					Terminal.Instance.WriteLine(CommandOutletColor.DarkMagenta, "The memory cache scanner has stopped.");
 					break;
 				default:
 					if(!string.IsNullOrEmpty(text))
