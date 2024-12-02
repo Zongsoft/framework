@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -55,7 +55,7 @@ namespace Zongsoft.Data.Common
 
 					var info = GetMemberInfo(context.ModelType, property.Name);
 					if(info != null)
-						members.Add(new Member(info, (Metadata.IDataEntitySimplexProperty)property));
+						members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
 				}
 
 				this.Members = members.ToArray();
@@ -73,7 +73,7 @@ namespace Zongsoft.Data.Common
 
 						var info = GetMemberInfo(context.ModelType, property.Name);
 						if(info != null)
-							members.Add(new Member(info, (Metadata.IDataEntitySimplexProperty)property));
+							members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
 					}
 				}
 
@@ -110,8 +110,11 @@ namespace Zongsoft.Data.Common
 		#region 嵌套结构
 		public struct Member
 		{
-			public Member(MemberInfo info, Metadata.IDataEntitySimplexProperty property)
+			private readonly DataImportContextBase _context;
+
+			public Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntitySimplexProperty property)
 			{
+				_context = context ?? throw new ArgumentNullException(nameof(context));
 				this.Info = info ?? throw new ArgumentNullException(nameof(info));
 				this.Property = property ?? throw new ArgumentNullException(nameof(property));
 			}
@@ -120,7 +123,16 @@ namespace Zongsoft.Data.Common
 			public readonly MemberInfo Info;
 			public readonly Metadata.IDataEntitySimplexProperty Property;
 
-			public object GetValue(ref object target) => Zongsoft.Reflection.Reflector.GetValue(this.Info, ref target);
+			public object GetValue(ref object target)
+			{
+				if(this.Property.Sequence != null && this.Property.Sequence.IsExternal)
+				{
+					if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out var value) || value == null || Zongsoft.Common.Convert.IsZero(value))
+						return _context.DataAccess.Sequencer.Increase(this.Property);
+				}
+
+				return Reflection.Reflector.GetValue(this.Info, ref target);
+			}
 		}
 		#endregion
 	}

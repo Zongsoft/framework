@@ -119,15 +119,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 序号构建
-		protected override ISequence CreateSequence()
-		{
-			var sequence = base.CreateSequence();
-
-			if(sequence == null)
-				return null;
-
-			return new DataSequenceProvider(this.Provider, sequence);
-		}
+		protected override IDataSequencer CreateSequencer() => new DataSequencer(this);
 		#endregion
 
 		#region 调用过滤
@@ -182,18 +174,18 @@ namespace Zongsoft.Data
 		#region 内部方法
 		internal long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
 		{
-			if(this.Sequence == null)
-				throw new InvalidOperationException($"Missing required sequence of the '{this.Name}' DataAccess.");
+			if(this.Sequencer == null)
+				throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
 
-			return ((DataSequenceProvider)this.Sequence).Increase(context, sequence, data);
+			return ((DataSequencer)this.Sequencer).Increase(context, sequence, data);
 		}
 
-		internal Task<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+		internal ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
 		{
-			if(this.Sequence == null)
-				throw new InvalidOperationException($"Missing required sequence of the '{this.Name}' DataAccess.");
+			if(this.Sequencer == null)
+				throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
 
-			return ((DataSequenceProvider)this.Sequence).IncreaseAsync(context, sequence, data, cancellation);
+			return ((DataSequencer)this.Sequencer).IncreaseAsync(context, sequence, data, cancellation);
 		}
 		#endregion
 
@@ -202,40 +194,63 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 嵌套子类
-		private class DataSequenceProvider : ISequence
+		private sealed class DataSequencer(DataAccess accessor) : DataSequencerBase(accessor), ISequence
 		{
 			#region 常量定义
 			private const string SEQUENCE_KEY = "Zongsoft.Sequence:";
 			#endregion
 
 			#region 成员字段
-			private readonly ISequence _sequence;
-			private readonly IDataProvider _provider;
-			#endregion
-
-			#region 构造函数
-			public DataSequenceProvider(IDataProvider provider, ISequence sequence)
-			{
-				_provider = provider ?? throw new ArgumentNullException(nameof(provider));
-				_sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
-			}
+			private readonly IDataProvider _provider = accessor.Provider;
 			#endregion
 
 			#region 公共方法
+			public override long Increase(IDataEntitySimplexProperty property, int interval = 1)
+			{
+				if(property == null)
+					throw new ArgumentNullException(nameof(property));
+
+				var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+				if(sequence.IsBuiltin)
+					return 0L;
+
+				var key = this.GetSequenceKey(null, sequence, null);
+
+				return this.Sequence.Increase(key,
+					interval == 1 ? sequence.Interval : interval,
+					sequence.Seed);
+			}
+
+			public override ValueTask<long> IncreaseAsync(IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default)
+			{
+				if(property == null)
+					throw new ArgumentNullException(nameof(property));
+
+				var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+				if(sequence.IsBuiltin)
+					return ValueTask.FromResult(0L);
+
+				var key = this.GetSequenceKey(null, sequence, null);
+
+				return this.Sequence.IncreaseAsync(key,
+					interval == 1 ? sequence.Interval : interval,
+					sequence.Seed, null, cancellation);
+			}
+
 			public long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
 			{
 				if(sequence == null)
 					throw new ArgumentNullException(nameof(sequence));
 
-				return _sequence.Increase(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
+				return this.Sequence.Increase(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
 			}
 
-			public Task<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+			public ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
 			{
 				if(sequence == null)
 					throw new ArgumentNullException(nameof(sequence));
 
-				return _sequence.IncreaseAsync(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
+				return this.Sequence.IncreaseAsync(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
 			}
 			#endregion
 
@@ -244,7 +259,7 @@ namespace Zongsoft.Data
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.Increase(key,
+				return this.Sequence.Increase(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry);
@@ -254,7 +269,7 @@ namespace Zongsoft.Data
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.Increase(key,
+				return this.Sequence.Increase(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry);
@@ -264,7 +279,7 @@ namespace Zongsoft.Data
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.Decrease(key,
+				return this.Sequence.Decrease(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry);
@@ -274,50 +289,50 @@ namespace Zongsoft.Data
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.Decrease(key,
+				return this.Sequence.Decrease(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry);
 			}
 
-			Task<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.IncreaseAsync(key,
+				return this.Sequence.IncreaseAsync(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry,
 					cancellation);
 			}
 
-			Task<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.IncreaseAsync(key,
+				return this.Sequence.IncreaseAsync(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry,
 					cancellation);
 			}
 
-			Task<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.DecreaseAsync(key,
+				return this.Sequence.DecreaseAsync(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry,
 					cancellation);
 			}
 
-			Task<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
 
-				return _sequence.DecreaseAsync(key,
+				return this.Sequence.DecreaseAsync(key,
 					interval == 1 ? sequence.Interval : interval,
 					seed == 0 ? sequence.Seed : seed,
 					expiry,
@@ -327,25 +342,25 @@ namespace Zongsoft.Data
 			void ISequence.Reset(string key, int value, TimeSpan? expiry)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
-				_sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+				this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
 			}
 
 			void ISequence.Reset(string key, double value, TimeSpan? expiry)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
-				_sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+				this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
 			}
 
-			Task ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
-				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
+				return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
 			}
 
-			Task ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
+			ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
 			{
 				key = this.GetSequenceKey(key, out var sequence);
-				return _sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
+				return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
 			}
 			#endregion
 
@@ -357,13 +372,13 @@ namespace Zongsoft.Data
 				if(string.IsNullOrEmpty(key))
 					throw new ArgumentNullException(nameof(key));
 
-				var index = key.LastIndexOfAny(new[] { ':', '.', '@' });
+				var index = key.LastIndexOfAny([':', '.', '@']);
 				object data = null;
 
 				if(index > 0 && key[index] == '@')
 				{
 					data = key.Substring(index + 1).Split(',', '|', '-');
-					index = key.LastIndexOfAny(new[] { ':', '.' }, index);
+					index = key.LastIndexOfAny([':', '.'], index);
 				}
 
 				if(index < 0)
@@ -386,7 +401,7 @@ namespace Zongsoft.Data
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 			private string GetSequenceKey(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
 			{
-				var key = SEQUENCE_KEY + sequence.Property.Entity.Name + "." + sequence.Property.Name;
+				var key = $"{SEQUENCE_KEY}{sequence.Property.Entity.Name}.{sequence.Property.Name}";
 
 				if(sequence.References != null && sequence.References.Length > 0)
 				{
