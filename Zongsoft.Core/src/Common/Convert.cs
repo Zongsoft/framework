@@ -46,6 +46,30 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 类型转换
+		public static bool IsZero(object value)
+		{
+			if(value is null)
+				return false;
+
+			return Type.GetTypeCode(value.GetType()) switch
+			{
+				TypeCode.Char => ((char)value) == '\0',
+				TypeCode.Byte => ((byte)value) == 0,
+				TypeCode.SByte => ((sbyte)value) == 0,
+				TypeCode.Int16 => ((short)value) == 0,
+				TypeCode.Int32 => ((int)value) == 0,
+				TypeCode.Int64 => ((long)value) == 0L,
+				TypeCode.UInt16 => ((ushort)value) == 0,
+				TypeCode.UInt32 => ((uint)value) == 0U,
+				TypeCode.UInt64 => ((ulong)value) == 0UL,
+				TypeCode.Single => ((float)value) == 0f,
+				TypeCode.Double => ((double)value) == 0d,
+				TypeCode.Decimal => ((decimal)value) == 0m,
+				TypeCode.Boolean => ((bool)value) == false,
+				_ => false,
+			};
+		}
+
 		public static double ToDouble(float number) => (double)(decimal)number;
 
 		public static T ConvertValue<T>(object value) => (T)ConvertValue(value, typeof(T));
