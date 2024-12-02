@@ -28,9 +28,9 @@
  */
 
 using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components
@@ -39,7 +39,10 @@ namespace Zongsoft.Components
 	public class EventDescriptor : IEquatable<EventDescriptor>
 	{
 		#region 成员字段
+		private EventRegistryBase _registry;
 		private string _qualifiedName;
+		private string _title;
+		private string _description;
 		#endregion
 
 		#region 构造函数
@@ -61,11 +64,21 @@ namespace Zongsoft.Components
 		/// <summary>获取事件名称。</summary>
 		public string Name { get; }
 		/// <summary>获取事件的限定名称。</summary>
-		public string QualifiedName { get => _qualifiedName; }
+		public string QualifiedName => _qualifiedName;
+
 		/// <summary>获取事件的显示名。</summary>
-		public string Title { get; set; }
+		public string Title
+		{
+			get => _title ?? this.GetTitle();
+			set => _title = value;
+		}
+
 		/// <summary>获取事件的描述信息。</summary>
-		public string Description { get; set; }
+		public string Description
+		{
+			get => _description ?? this.GetDescription();
+			set => _description = value;
+		}
 
 		/// <summary>获取事件处理程序集。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -74,12 +87,10 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 内部方法
-		internal string Qualified(string @namespace)
+		internal void SetRegistry(EventRegistryBase registry)
 		{
-			if(string.IsNullOrEmpty(@namespace))
-				return _qualifiedName = this.Name;
-			else
-				return _qualifiedName = $"{@namespace}:{this.Name}";
+			_registry = registry;
+			_qualifiedName = registry == null ? this.Name : $"{registry.Name}:{this.Name}";
 		}
 		#endregion
 
@@ -105,6 +116,15 @@ namespace Zongsoft.Components
 		public override bool Equals(object obj) => obj is EventDescriptor other && this.Equals(other);
 		public override int GetHashCode() => this.QualifiedName.GetHashCode();
 		public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.QualifiedName : $"{this.QualifiedName}[{this.Title}]";
+		#endregion
+
+		#region 私有方法
+		private string GetTitle() =>　_registry == null ? null :
+			Resources.ResourceUtility.GetResourceString(_registry.GetType(), $"{this.Name}.{nameof(EventDescriptor.Title)}") ??
+			Resources.ResourceUtility.GetResourceString(_registry.GetType(), this.Name);
+
+		private string GetDescription() => _registry == null ? null :
+			Resources.ResourceUtility.GetResourceString(_registry.GetType(), $"{this.Name}.{nameof(EventDescriptor.Description)}");
 		#endregion
 	}
 

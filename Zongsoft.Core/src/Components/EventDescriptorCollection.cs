@@ -49,36 +49,17 @@ namespace Zongsoft.Components
 			if(descriptor == null)
 				throw new ArgumentNullException(nameof(descriptor));
 
-			if(string.IsNullOrEmpty(descriptor.Title))
-				descriptor.Title = GetTitle(_registry, descriptor.Name);
-			if(string.IsNullOrEmpty(descriptor.Description))
-				descriptor.Description = GetDescription(_registry, descriptor.Name);
-
 			base.InsertItem(index, descriptor);
-			descriptor.Qualified(_registry.Name);
+			descriptor.SetRegistry(_registry);
 		}
 		protected override void SetItem(int index, EventDescriptor descriptor)
 		{
 			if(descriptor == null)
 				throw new ArgumentNullException(nameof(descriptor));
 
-			if(string.IsNullOrEmpty(descriptor.Title))
-				descriptor.Title = GetTitle(_registry, descriptor.Name);
-			if(string.IsNullOrEmpty(descriptor.Description))
-				descriptor.Description = GetDescription(_registry, descriptor.Name);
-
 			base.SetItem(index, descriptor);
-			descriptor.Qualified(_registry.Name);
+			descriptor.SetRegistry(_registry);
 		}
-		#endregion
-
-		#region 私有方法
-		private static string GetTitle(EventRegistryBase registry, string name) =>
-			Resources.ResourceUtility.GetResourceString(registry.GetType(), $"{name}.{nameof(EventDescriptor.Title)}") ??
-			Resources.ResourceUtility.GetResourceString(registry.GetType(), name);
-
-		private static string GetDescription(EventRegistryBase registry, string name) =>
-			Resources.ResourceUtility.GetResourceString(registry.GetType(), $"{name}.{nameof(EventDescriptor.Description)}");
 		#endregion
 	}
 }
