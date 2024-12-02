@@ -33,6 +33,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Common;
+using Zongsoft.Services;
+
 namespace Zongsoft.Data
 {
 	/// <summary>
@@ -66,7 +69,7 @@ namespace Zongsoft.Data
 		#region 成员字段
 		private string _name;
 		private ISchemaParser _schema;
-		private Common.ISequence _sequence;
+		private IDataSequencer _sequencer;
 		private IDataAccessNaming _naming;
 		private DataAccessFilterCollection _filters;
 		#endregion
@@ -101,16 +104,12 @@ namespace Zongsoft.Data
 		/// <summary>获取数据模式解析器。</summary>
 		public ISchemaParser Schema { get => _schema ?? (_schema = this.CreateSchema()); }
 
-		/// <summary>获取或设置数据序号生成器。</summary>
-		public Common.ISequence Sequence
+		/// <summary>获取或设置数据序号生成程序。</summary>
+		public IDataSequencer Sequencer
 		{
-			get => _sequence ??= this.CreateSequence();
-			set => _sequence = value ?? throw new ArgumentNullException();
+			get => _sequencer ??= this.CreateSequencer();
+			set => _sequencer = value ?? throw new ArgumentNullException();
 		}
-
-		/// <summary>获取或设置数据序号生成器提供程序。</summary>
-		[Services.ServiceDependency]
-		public Services.IServiceProvider<Common.ISequence> SequenceProvider { get; set; }
 
 		/// <summary>获取数据访问器的元数据容器。</summary>
 		public abstract Metadata.IDataMetadataContainer Metadata { get; }
@@ -1824,22 +1823,13 @@ namespace Zongsoft.Data
 			return name;
 		}
 
-		protected virtual Common.ISequence CreateSequence()
-		{
-			var sequence = this.SequenceProvider.GetService(this.Name);
-
-			if(sequence == null && !string.IsNullOrEmpty(this.Name))
-				sequence = this.SequenceProvider.GetService(string.Empty);
-
-			return sequence;
-		}
-
 		protected virtual void OnFiltering(IDataAccessContextBase context) => _filters.InvokeFiltering(context);
 		protected virtual void OnFiltered(IDataAccessContextBase context) => _filters.InvokeFiltered(context);
 		#endregion
 
 		#region 抽象方法
 		protected abstract ISchemaParser CreateSchema();
+		protected abstract IDataSequencer CreateSequencer();
 		protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options);
 		protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options);
 		protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options);
@@ -1976,6 +1966,62 @@ namespace Zongsoft.Data
 		private static IEnumerable<T> ToEnumerable<T>(object result) => Collections.Enumerable.Enumerate<T>(result);
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static IAsyncEnumerable<T> ToAsyncEnumerable<T>(object result, CancellationToken cancellation) => Collections.Enumerable.EnumerateAsync<T>(result, cancellation);
+		#endregion
+
+		#region 嵌套子类
+		protected abstract class DataSequencerBase(DataAccessBase accessor) : IDataSequencer
+		{
+			#region 成员字段
+			private ISequence _sequence;
+			private readonly DataAccessBase _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+			#endregion
+
+			#region 公共属性
+			public string Name => _accessor.Name;
+			public DataAccessBase Accessor => _accessor;
+			public ISequence Sequence => _sequence ??= this.GetSequence();
+			#endregion
+
+			#region 公共方法
+			public long Increase(string name, string field, int interval = 1) => this.Increase(this.GetProperty(name, field), interval);
+			public abstract long Increase(Metadata.IDataEntitySimplexProperty property, int interval = 1);
+
+			public ValueTask<long> IncreaseAsync(string name, string field, CancellationToken cancellation = default) => this.IncreaseAsync(name, field, 1, cancellation);
+			public ValueTask<long> IncreaseAsync(string name, string field, int interval, CancellationToken cancellation = default) => this.IncreaseAsync(this.GetProperty(name, field), interval, cancellation);
+
+			public ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, CancellationToken cancellation = default) => this.IncreaseAsync(property, 1, cancellation);
+			public abstract ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default);
+			#endregion
+
+			#region 虚拟方法
+			protected virtual ISequence GetSequence()
+			{
+				var provider = ApplicationContext.Current.Services.ResolveRequired<IServiceProvider<ISequence>>();
+
+				var sequence = provider.GetService(this.Name);
+				if(sequence == null && !string.IsNullOrEmpty(this.Name))
+					sequence = provider.GetService(string.Empty);
+
+				return sequence;
+			}
+			#endregion
+
+			#region 私有方法
+			private Metadata.IDataEntitySimplexProperty GetProperty(string name, string field)
+			{
+				if(!_accessor.Metadata.Entities.TryGetValue(name, out var entity))
+					throw new InvalidOperationException($"The entity specified with the name '{name}' does not exist.");
+
+				if(!entity.Properties.TryGetValue(field, out var property))
+					throw new InvalidOperationException($"The '{name}' entity does not contains the '{field}' property.");
+
+				if(!property.IsSimplex)
+					throw new InvalidOperationException($"This '{property.Entity.Name}.{property.Name}' property is not a simplex property and does not support sequence feature.");
+
+				return (Metadata.IDataEntitySimplexProperty)property;
+			}
+			#endregion
+		}
 		#endregion
 	}
 }

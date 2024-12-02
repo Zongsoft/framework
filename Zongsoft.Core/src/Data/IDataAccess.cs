@@ -76,8 +76,8 @@ namespace Zongsoft.Data
 		/// <summary>获取数据模式解析器。</summary>
 		ISchemaParser Schema { get; }
 
-		/// <summary>获取或设置数据序号提供程序。</summary>
-		Common.ISequence Sequence { get; set; }
+		/// <summary>获取或设置数据序号程序。</summary>
+		IDataSequencer Sequencer { get; set; }
 
 		/// <summary>获取数据访问器的元数据容器。</summary>
 		Metadata.IDataMetadataContainer Metadata { get; }
