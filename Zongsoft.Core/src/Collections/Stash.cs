@@ -36,10 +36,6 @@ namespace Zongsoft.Collections;
 
 public class Stash<T> : IDisposable
 {
-	#region 常量定义
-	private const int CAPACITY = 512;
-	#endregion
-
 	#region 成员字段
 	private int _limit;
 	private TimeSpan _period;
@@ -53,14 +49,13 @@ public class Stash<T> : IDisposable
 	#endregion
 
 	#region 构造函数
-	public Stash(Action<IEnumerable<T>> accessor, TimeSpan period, int limit = 0, int capacity = CAPACITY)
+	public Stash(Action<IEnumerable<T>> accessor, TimeSpan period, int limit = 0)
 	{
 		_accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
 		_period = period.Ticks > TimeSpan.TicksPerSecond ? period : TimeSpan.FromSeconds(1);
 		_limit = limit > 0 ? limit : 0;
 
-		_cache = new(capacity);
-
+		_cache = new(Math.Max(limit, 16));
 		_timer = new Timer(this.OnTick, null, _period, _period);
 		_semaphore = new AutoResetEvent(true);
 	}
@@ -107,11 +102,14 @@ public class Stash<T> : IDisposable
 	{
 		List<T> cache;
 
+		if(_cache.Count == 0)
+			return;
+
 		try
 		{
 			_semaphore.WaitOne();
 			cache = _cache;
-			_cache = new List<T>(CAPACITY);
+			_cache = this.CreateCache();
 		}
 		finally
 		{
@@ -121,6 +119,10 @@ public class Stash<T> : IDisposable
 		_accessor?.Invoke(cache);
 		cache.Clear();
 	}
+	#endregion
+
+	#region 私有方法
+	private List<T> CreateCache() => new(Math.Max(_limit, 16));
 	#endregion
 
 	#region 处置方法
