@@ -636,7 +636,7 @@ namespace Zongsoft.Caching
 		/// <param name="factory">当指定键的缓存项不存在时，构建缓存值的异步方法。</param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
 		/// <remarks>提示：当指定键对应的缓存项不存在，由于本方法<paramref name="factory"/>参数返回的结果并未包含过期时间，因此如果需要指定对应的过期时间或废除依赖，请调用同名方法的其他重载。</remarks>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<Task<TValue>> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<Task<TValue>> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry => factory == null ? default : factory.Invoke());
 
@@ -663,7 +663,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -705,7 +705,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -748,7 +748,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -794,7 +794,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -833,7 +833,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -875,7 +875,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -918,7 +918,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -964,7 +964,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -1003,7 +1003,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -1045,7 +1045,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -1088,7 +1088,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
@@ -1134,7 +1134,7 @@ namespace Zongsoft.Caching
 		///		</list>
 		/// </param>
 		/// <returns>返回指定键的缓存值的异步任务。</returns>
-		public async Task<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency, object State)> factory)
+		public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency, object State)> factory)
 		{
 			var result = await _cache.GetOrCreateAsync(key, entry =>
 			{
