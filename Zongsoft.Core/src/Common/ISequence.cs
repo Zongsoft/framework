@@ -67,7 +67,7 @@ namespace Zongsoft.Common
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回递增后的序列号数值。</returns>
-		Task<long> IncreaseAsync(string key, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask<long> IncreaseAsync(string key, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 		/// <summary>递增指定序列号的数值，默认递增步长为1。</summary>
 		/// <param name="key">指定递增的序列号键。</param>
@@ -76,7 +76,7 @@ namespace Zongsoft.Common
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回递增后的序列号数值。</returns>
-		Task<double> IncreaseAsync(string key, double interval, double seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask<double> IncreaseAsync(string key, double interval, double seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 		/// <summary>递减指定序列号的数值，默认递减步长为1。</summary>
 		/// <param name="key">指定递减的序列号键。</param>
@@ -101,7 +101,7 @@ namespace Zongsoft.Common
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回递减后的序列号数值。</returns>
-		Task<long> DecreaseAsync(string key, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask<long> DecreaseAsync(string key, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 		/// <summary>递减指定序列号的数值，默认递减步长为1。</summary>
 		/// <param name="key">指定递减的序列号键。</param>
@@ -110,7 +110,7 @@ namespace Zongsoft.Common
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回递减后的序列号数值。</returns>
-		Task<double> DecreaseAsync(string key, double interval, double seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask<double> DecreaseAsync(string key, double interval, double seed = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 		/// <summary>重置指定的序列号数值，如果指定键的序列号不存在则创建它。</summary>
 		/// <param name="key">指定要重置的序列号键。</param>
@@ -129,31 +129,31 @@ namespace Zongsoft.Common
 		/// <param name="value">指定要重置的序列号当前值，默认为零。</param>
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
-		Task ResetAsync(string key, int value = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask ResetAsync(string key, int value = DEFAULT_SEED_VALUE, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 		/// <summary>重置指定的序列号数值，如果指定键的序列号不存在则创建它。</summary>
 		/// <param name="key">指定要重置的序列号键。</param>
 		/// <param name="value">指定要重置的序列号当前值，默认为零。</param>
 		/// <param name="expiry">序号记录的有效时长。</param>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
-		Task ResetAsync(string key, double value, TimeSpan? expiry = null, CancellationToken cancellation = default);
+		ValueTask ResetAsync(string key, double value, TimeSpan? expiry = null, CancellationToken cancellation = default);
 		#endregion
 
 		#region 默认实现
 		long Increase(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE) => this.Increase(key, interval, seed, expiry);
 		double Increase(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE) => this.Increase(key, interval, seed, expiry);
-		Task<long> IncreaseAsync(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.IncreaseAsync(key, interval, seed, expiry, cancellation);
-		Task<double> IncreaseAsync(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.IncreaseAsync(key, interval, seed, expiry, cancellation);
+		ValueTask<long> IncreaseAsync(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.IncreaseAsync(key, interval, seed, expiry, cancellation);
+		ValueTask<double> IncreaseAsync(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.IncreaseAsync(key, interval, seed, expiry, cancellation);
 
 		long Decrease(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE) => this.Decrease(key, interval, seed, expiry);
 		double Decrease(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE) => this.Decrease(key, interval, seed, expiry);
-		Task<long> DecreaseAsync(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.DecreaseAsync(key, interval, seed, expiry, cancellation);
-		Task<double> DecreaseAsync(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.DecreaseAsync(key, interval, seed, expiry, cancellation);
+		ValueTask<long> DecreaseAsync(string key, TimeSpan expiry, int interval = DEFAULT_INTERVAL_VALUE, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.DecreaseAsync(key, interval, seed, expiry, cancellation);
+		ValueTask<double> DecreaseAsync(string key, TimeSpan expiry, double interval, double seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.DecreaseAsync(key, interval, seed, expiry, cancellation);
 
 		void Reset(string key, TimeSpan expiry, int seed = DEFAULT_SEED_VALUE) => this.Reset(key, seed, expiry);
 		void Reset(string key, TimeSpan expiry, double seed) => this.Reset(key, seed, expiry);
-		Task ResetAsync(string key, TimeSpan expiry, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.ResetAsync(key, seed, expiry, cancellation);
-		Task ResetAsync(string key, TimeSpan expiry, double seed, CancellationToken cancellation = default) => this.ResetAsync(key, seed, expiry, cancellation);
+		ValueTask ResetAsync(string key, TimeSpan expiry, int seed = DEFAULT_SEED_VALUE, CancellationToken cancellation = default) => this.ResetAsync(key, seed, expiry, cancellation);
+		ValueTask ResetAsync(string key, TimeSpan expiry, double seed, CancellationToken cancellation = default) => this.ResetAsync(key, seed, expiry, cancellation);
 		#endregion
 	}
 }
