@@ -46,6 +46,7 @@ namespace Zongsoft.Data
 		private IDataEntityProperty _field;
 		private readonly MemberInfo _member;
 		private readonly Type _type;
+		private bool _isPrimaryKey;
 		private int _length;
 		private bool _nullable;
 		private bool _immutable;
@@ -132,6 +133,9 @@ namespace Zongsoft.Data
 		/// <summary>获取属性的默认值。</summary>
 		public object DefaultValue => _defaultValue;
 
+		/// <summary>获取一个值，指示属性是否为主键或主键成员。</summary>
+		public bool IsPrimaryKey => _isPrimaryKey;
+
 		/// <summary>获取或设置属性的语义角色。</summary>
 		public ModelPropertyRole Role { get; set; }
 
@@ -172,6 +176,7 @@ namespace Zongsoft.Data
 					_length = simplex.Length;
 					_nullable = simplex.Nullable;
 					_defaultValue = simplex.DefaultValue;
+					_isPrimaryKey = simplex.IsPrimaryKey;
 				}
 			}
 		}
