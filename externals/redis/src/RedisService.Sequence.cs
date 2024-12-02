@@ -28,17 +28,10 @@
  */
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Caching;
-using Zongsoft.Configuration;
-using Zongsoft.Services;
 
 using StackExchange.Redis;
 
@@ -59,8 +52,8 @@ namespace Zongsoft.Externals.Redis
 		#region 公共方法
 		public long Decrease(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
 		public double Decrease(string key, double interval, double seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
-		public Task<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
-		public Task<double> DecreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
+		public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
+		public ValueTask<double> DecreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
 
 		public long Increase(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null)
 		{
@@ -102,7 +95,7 @@ namespace Zongsoft.Externals.Redis
 			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
-		public async Task<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
+		public async ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -122,7 +115,7 @@ namespace Zongsoft.Externals.Redis
 			return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 		}
 
-		public async Task<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
+		public async ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -164,7 +157,7 @@ namespace Zongsoft.Externals.Redis
 			_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
 		}
 
-		async Task ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
+		async ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -174,7 +167,7 @@ namespace Zongsoft.Externals.Redis
 			await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
 		}
 
-		async Task ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
+		async ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
@@ -184,6 +177,5 @@ namespace Zongsoft.Externals.Redis
 			await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
 		}
 		#endregion
-
 	}
 }
