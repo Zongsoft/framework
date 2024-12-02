@@ -69,13 +69,31 @@ namespace Zongsoft.Components
 		public EventDescriptor this[string name] => this.Events[name];
 		#endregion
 
-		#region 注册方法
+		#region 声明事件
 		protected void Event<TArgument>(EventDescriptor<TArgument> descriptor) => this.Events.Add(descriptor ?? throw new ArgumentNullException(nameof(descriptor)));
 		protected EventDescriptor Event<TArgument>(string name, string title = null, string description = null)
 		{
 			var descriptor = new EventDescriptor<TArgument>(name, title, description);
 			this.Events.Add(descriptor);
 			return descriptor;
+		}
+		#endregion
+
+		#region 注册事件
+		public bool Register<TArgument>(string name, IHandler<TArgument> handler)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+			if(handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			if(this.Events.TryGetValue(name, out var descriptor))
+			{
+				descriptor.Handlers.Add(handler);
+				return true;
+			}
+
+			return false;
 		}
 		#endregion
 
