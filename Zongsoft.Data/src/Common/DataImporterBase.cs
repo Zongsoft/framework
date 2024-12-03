@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -112,6 +113,7 @@ namespace Zongsoft.Data.Common
 		{
 			#region 私有变量
 			private readonly DataImportContextBase _context = context ?? throw new ArgumentNullException(nameof(context));
+			private readonly IDataValidator _validator = DataEnvironment.Validators.GetValidator(context);
 			#endregion
 
 			#region 公共属性
@@ -123,13 +125,49 @@ namespace Zongsoft.Data.Common
 			#region 公共方法
 			public object GetValue(ref object target)
 			{
+				object value;
+
+				//判读当前属性是否为Sequence字段
 				if(CanSequence(this.Property.Sequence))
 				{
-					if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out var value) || value == null || Zongsoft.Common.Convert.IsZero(value))
-						return _context.DataAccess.Sequencer.Increase(this.Property);
+					//获取目标的当前属性值，如果获取失败或其值为空或数字零，则递增该字段序号
+					if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out value) || value == null || Zongsoft.Common.Convert.IsZero(value))
+					{
+						//递增当前属性对应的序号
+						var id = _context.DataAccess.Sequencer.Increase(this.Property);
+
+						//尝试将递增的序号值写入到目标对象的属性
+						Reflection.Reflector.TrySetValue(this.Info, ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
+
+						//返回最新的序号值
+						return id;
+					}
 				}
 
-				return Reflection.Reflector.GetValue(this.Info, ref target);
+				//验证当前属性是否需要强制更新其值
+				if(_validator != null && _validator.OnImport(_context, this.Property, out value))
+				{
+					//尝试验证器返回的值写入到目标对象的属性
+					Reflection.Reflector.TrySetValue(this.Info, ref target, value);
+
+					//返回验证后的值
+					return GetUnderlyingType(value, this.Property.Type, this.Property.Nullable);
+				}
+
+				if(Reflection.Reflector.TryGetValue(this.Info, ref target, out value))
+					return GetUnderlyingType(value == null || value is string text && string.IsNullOrEmpty(text) ? this.Property.DefaultValue : value, this.Property.Type, this.Property.Nullable);
+				else
+					return GetUnderlyingType(this.Property.DefaultValue, this.Property.Type, this.Property.Nullable);
+
+				//处理枚举类型的值，将枚举类型转换为其基元类型
+				static object GetUnderlyingType(object value, DbType type, bool nullable)
+				{
+					if(value is not null && value.GetType().IsEnum)
+						return Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
+
+					//如果待转换的值不为空且当前字段不允许空，则尝试获取其类型的默认值
+					return value == null && !nullable ? Zongsoft.Common.TypeExtension.GetDefaultValue(DbTypeUtility.AsType(type)) : value;
+				}
 			}
 			#endregion
 

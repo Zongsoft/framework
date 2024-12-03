@@ -115,7 +115,7 @@ namespace Zongsoft.Data
 		#endregion
 	}
 
-	public class DataImportContext : DataImportContextBase
+	public class DataImportContext : DataImportContextBase, IDataAccessContext
 	{
 		#region 构造函数
 		public DataImportContext(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
