@@ -56,5 +56,8 @@ namespace Zongsoft.Data.Metadata
 
 		/// <summary>获取序号的引用的属性数组。</summary>
 		IDataEntitySimplexProperty[] References { get; }
+
+		/// <summary>获取一个值，指示是否有引用的属性。</summary>
+		bool HasReferences => this.References != null && this.References.Length > 0;
 	}
 }
