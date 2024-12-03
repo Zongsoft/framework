@@ -108,24 +108,22 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套结构
-		public struct Member
+		public readonly struct Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntitySimplexProperty property)
 		{
-			private readonly DataImportContextBase _context;
+			#region 私有变量
+			private readonly DataImportContextBase _context = context ?? throw new ArgumentNullException(nameof(context));
+			#endregion
 
-			public Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntitySimplexProperty property)
-			{
-				_context = context ?? throw new ArgumentNullException(nameof(context));
-				this.Info = info ?? throw new ArgumentNullException(nameof(info));
-				this.Property = property ?? throw new ArgumentNullException(nameof(property));
-			}
-
+			#region 公共属性
 			public string Name => this.Info.Name;
-			public readonly MemberInfo Info;
-			public readonly Metadata.IDataEntitySimplexProperty Property;
+			public readonly MemberInfo Info = info ?? throw new ArgumentNullException(nameof(info));
+			public readonly Metadata.IDataEntitySimplexProperty Property = property ?? throw new ArgumentNullException(nameof(property));
+			#endregion
 
+			#region 公共方法
 			public object GetValue(ref object target)
 			{
-				if(this.Property.Sequence != null && this.Property.Sequence.IsExternal)
+				if(CanSequence(this.Property.Sequence))
 				{
 					if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out var value) || value == null || Zongsoft.Common.Convert.IsZero(value))
 						return _context.DataAccess.Sequencer.Increase(this.Property);
@@ -133,6 +131,15 @@ namespace Zongsoft.Data.Common
 
 				return Reflection.Reflector.GetValue(this.Info, ref target);
 			}
+			#endregion
+
+			#region 私有方法
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private static bool CanSequence(Metadata.IDataEntityPropertySequence sequence) =>
+				sequence != null &&
+				sequence.IsExternal &&
+				(sequence.References == null || sequence.References.Length == 0);
+			#endregion
 		}
 		#endregion
 	}
