@@ -79,12 +79,14 @@ namespace Zongsoft.Externals.ClosedXml
 			private IXLWorksheet _worksheet;
 			private IXLRange _data;
 			private int _row;
+			private readonly int _rows;
 			private readonly DataArchiveFieldCollection _fields;
 
 			public DataArchiveReader(IXLWorksheet worksheet, IXLRange data)
 			{
 				_worksheet = worksheet;
 				_data = data;
+				_rows = data.RowCount();
 				_fields = new DataArchiveFieldCollection(data.ColumnCount());
 
 				foreach(var reference in worksheet.NamedRanges.ValidNamedRanges())
@@ -127,7 +129,16 @@ namespace Zongsoft.Externals.ClosedXml
 				return Zongsoft.Common.Convert.ConvertValue<T>(value);
 			}
 
-			public bool Read() => _row++ < _data.RowCount();
+			public bool Read()
+			{
+				while(_row < _rows && _data.Row(_row + 1).IsEmpty())
+				{
+					_row++;
+				}
+
+				return _row++ < _rows;
+			}
+
 			public void Dispose()
 			{
 				var worksheet = Interlocked.Exchange(ref _worksheet, null);
