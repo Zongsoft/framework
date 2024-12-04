@@ -46,6 +46,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 成员字段
+		private IDataImporter _importer;
 		private IDataExecutor _executor;
 		private IDataMetadataContainer _metadata;
 		private IDataMultiplexer _multiplexer;
@@ -188,14 +189,18 @@ namespace Zongsoft.Data.Common
 		#region 导入方法
 		public void Import(DataImportContext context)
 		{
-			using var importer = context.Source.Driver.CreateImporter(context);
-			importer.Import(context);
+			if(_importer == null)
+				Interlocked.CompareExchange(ref _importer, context.Source.Driver.CreateImporter(), null);
+
+			_importer.Import(context);
 		}
 
 		public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
 		{
-			using var importer = context.Source.Driver.CreateImporter(context);
-			return importer.ImportAsync(context, cancellation);
+			if(_importer == null)
+				Interlocked.CompareExchange(ref _importer, context.Source.Driver.CreateImporter(), null);
+
+			return _importer.ImportAsync(context, cancellation);
 		}
 		#endregion
 

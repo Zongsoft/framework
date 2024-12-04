@@ -80,12 +80,12 @@ namespace Zongsoft.Data.ClickHouse
 							}
 							else
 							{
-								throw new DataException($"The {ClickHouseDriver.Key} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
+								throw new DataException($"The {ClickHouseDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
 							}
 
 							break;
 						default:
-							throw new NotSupportedException($"The {ClickHouseDriver.Key} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
+							throw new NotSupportedException($"The {ClickHouseDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
 					}
 				}
 			}

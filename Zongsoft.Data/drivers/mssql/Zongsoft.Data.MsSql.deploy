@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Data.MsSql.plugin
 lib/$(Framework)/Zongsoft.Data.MsSql.*
 
-nuget:System.Data.SqlClient@4.8.6
+nuget:System.Data.SqlClient@4.9.0

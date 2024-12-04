@@ -32,14 +32,23 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common
 {
 	public abstract class DataImporterBase : IDataImporter
 	{
-		#region 构造函数
-		protected DataImporterBase(DataImportContextBase context)
+		#region 导入方法
+		public void Import(DataImportContext context) => this.OnImport(context, GetMembers(context));
+		public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default) => this.OnImportAsync(context, GetMembers(context), cancellation);
+		#endregion
+
+		#region 抽象方法
+		protected abstract void OnImport(DataImportContext context, MemberCollection members);
+		protected abstract ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default);
+		#endregion
+
+		#region 私有方法
+		private static MemberCollection GetMembers(DataImportContext context)
 		{
 			static MemberInfo GetMemberInfo(Type type, string name) =>
 				(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
@@ -47,7 +56,7 @@ namespace Zongsoft.Data.Common
 
 			if(context.Members == null || context.Members.Length == 0)
 			{
-				var members = new List<Member>(context.Entity.Properties.Count);
+				var members = new MemberCollection();
 
 				foreach(var property in context.Entity.Properties)
 				{
@@ -59,11 +68,11 @@ namespace Zongsoft.Data.Common
 						members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
 				}
 
-				this.Members = members.ToArray();
+				return members;
 			}
 			else
 			{
-				var members = new List<Member>(context.Members.Length);
+				var members = new MemberCollection();
 
 				for(int i = 0; i < context.Members.Length; i++)
 				{
@@ -78,38 +87,13 @@ namespace Zongsoft.Data.Common
 					}
 				}
 
-				this.Members = members.ToArray();
+				return members;
 			}
 		}
-		#endregion
-
-		#region 公共属性
-		public Member[] Members { get; }
-		#endregion
-
-		#region 导入方法
-		public abstract void Import(DataImportContext context);
-		public abstract ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
-		#endregion
-
-		#region 处置方法
-		public void Dispose()
-		{
-			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
-
-			if(disposed == 0)
-			{
-				this.Dispose(true);
-				GC.SuppressFinalize(this);
-			}
-		}
-
-		private volatile int _disposed;
-		protected virtual void Dispose(bool disposing) { }
 		#endregion
 
 		#region 嵌套结构
-		public readonly struct Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntitySimplexProperty property)
+		public readonly struct Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntityProperty property)
 		{
 			#region 私有变量
 			private readonly DataImportContextBase _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -119,22 +103,37 @@ namespace Zongsoft.Data.Common
 			#region 公共属性
 			public string Name => this.Info.Name;
 			public readonly MemberInfo Info = info ?? throw new ArgumentNullException(nameof(info));
-			public readonly Metadata.IDataEntitySimplexProperty Property = property ?? throw new ArgumentNullException(nameof(property));
+			public readonly Metadata.IDataEntityProperty Property = property ?? throw new ArgumentNullException(nameof(property));
 			#endregion
 
 			#region 公共方法
+			public bool IsSimplex(out Metadata.IDataEntitySimplexProperty simplex)
+			{
+				simplex = this.Property as Metadata.IDataEntitySimplexProperty;
+				return simplex != null;
+			}
+
+			public bool IsComplex(out Metadata.IDataEntityComplexProperty complex)
+			{
+				complex = this.Property as Metadata.IDataEntityComplexProperty;
+				return complex != null;
+			}
+
 			public object GetValue(ref object target)
 			{
 				object value;
 
+				if(!this.IsSimplex(out var property))
+					return null;
+
 				//判读当前属性是否为Sequence字段
-				if(CanSequence(this.Property.Sequence))
+				if(CanSequence(property.Sequence))
 				{
 					//获取目标的当前属性值，如果获取失败或其值为空或数字零，则递增该字段序号
 					if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out value) || value == null || Zongsoft.Common.Convert.IsZero(value))
 					{
 						//递增当前属性对应的序号
-						var id = _context.DataAccess.Sequencer.Increase(this.Property);
+						var id = _context.DataAccess.Sequencer.Increase(property);
 
 						//尝试将递增的序号值写入到目标对象的属性
 						Reflection.Reflector.TrySetValue(this.Info, ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
@@ -151,13 +150,13 @@ namespace Zongsoft.Data.Common
 					Reflection.Reflector.TrySetValue(this.Info, ref target, value);
 
 					//返回验证后的值
-					return GetUnderlyingType(value, this.Property.Type, this.Property.Nullable);
+					return GetUnderlyingType(value, property.Type, property.Nullable);
 				}
 
 				if(Reflection.Reflector.TryGetValue(this.Info, ref target, out value))
-					return GetUnderlyingType(value == null || value is string text && string.IsNullOrEmpty(text) ? this.Property.DefaultValue : value, this.Property.Type, this.Property.Nullable);
+					return GetUnderlyingType(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Nullable);
 				else
-					return GetUnderlyingType(this.Property.DefaultValue, this.Property.Type, this.Property.Nullable);
+					return GetUnderlyingType(property.DefaultValue, property.Type, property.Nullable);
 
 				//处理枚举类型的值，将枚举类型转换为其基元类型
 				static object GetUnderlyingType(object value, DbType type, bool nullable)
@@ -178,6 +177,11 @@ namespace Zongsoft.Data.Common
 				sequence.IsExternal &&
 				(sequence.References == null || sequence.References.Length == 0);
 			#endregion
+		}
+
+		public sealed class MemberCollection : System.Collections.ObjectModel.KeyedCollection<string, Member>
+		{
+			protected override string GetKeyForItem(Member member) => member.Name;
 		}
 		#endregion
 	}

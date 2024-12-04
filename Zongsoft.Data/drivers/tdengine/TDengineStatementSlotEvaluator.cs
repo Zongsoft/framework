@@ -60,7 +60,7 @@ public sealed class TDengineStatementSlotEvaluator : StatementSlotEvaluatorBase
 
 			return slot.Place switch
 			{
-				"Table" => $"T{text}",
+				"Table" => TDengineUtility.GetTableName(text),
 				_ => text,
 			};
 		}

@@ -117,7 +117,7 @@ namespace Zongsoft.Data.MsSql
 			#endregion
 
 			#region 公共属性
-			public string Name => MsSqlDriver.Key;
+			public string Name => MsSqlDriver.NAME;
 			#endregion
 
 			#region 公共方法

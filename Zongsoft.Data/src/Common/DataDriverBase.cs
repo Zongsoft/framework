@@ -58,7 +58,7 @@ namespace Zongsoft.Data.Common
 
 		#region 公共方法
 		public virtual Exception OnError(Exception exception) => exception;
-		public abstract IDataImporter CreateImporter(DataImportContextBase context);
+		public abstract IDataImporter CreateImporter();
 		public virtual DbConnection CreateConnection() => this.CreateConnection(string.Empty);
 		public abstract DbConnection CreateConnection(string connectionString);
 		public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);

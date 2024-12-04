@@ -141,7 +141,7 @@ namespace Zongsoft.Data.ClickHouse
 			#endregion
 
 			#region 公共属性
-			public string Name => ClickHouseDriver.Key;
+			public string Name => ClickHouseDriver.NAME;
 			#endregion
 
 			#region 公共方法

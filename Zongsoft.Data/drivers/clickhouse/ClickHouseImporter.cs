@@ -45,31 +45,27 @@ namespace Zongsoft.Data.ClickHouse
 {
 	public class ClickHouseImporter : DataImporterBase
 	{
-		#region 构造函数
-		public ClickHouseImporter(DataImportContextBase context) : base(context) { }
-		#endregion
-
 		#region 公共方法
-		public override void Import(DataImportContext context)
+		protected override void OnImport(DataImportContext context, MemberCollection members)
 		{
 			var bulker = GetBulker(context);
 			if(bulker == null)
 				return;
 
-			var records = GetRecords(context, this.Members);
+			var records = GetRecords(context, members);
 			if(records == null)
 				return;
 
 			bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 
-		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 		{
 			var bulker = GetBulker(context);
 			if(bulker == null)
 				return;
 
-			var records = GetRecords(context, this.Members);
+			var records = GetRecords(context, members);
 			if(records == null)
 				return;
 
@@ -92,9 +88,9 @@ namespace Zongsoft.Data.ClickHouse
 			return bulker;
 		}
 
-		private static IEnumerable<object[]> GetRecords(DataImportContext context, Member[] members)
+		private static List<object[]> GetRecords(DataImportContext context, MemberCollection members)
 		{
-			if(members == null || members.Length == 0)
+			if(members == null || members.Count == 0)
 				return null;
 
 			//构建导入的数据记录集
@@ -103,9 +99,9 @@ namespace Zongsoft.Data.ClickHouse
 			foreach(var item in context.Data)
 			{
 				var target = item;
-				var record = new object[members.Length];
+				var record = new object[members.Count];
 
-				for(int i = 0; i < members.Length; i++)
+				for(int i = 0; i < members.Count; i++)
 				{
 					record[i] = members[i].GetValue(ref target);
 				}

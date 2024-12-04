@@ -43,7 +43,7 @@ namespace Zongsoft.Data.ClickHouse
 	{
 		#region 公共常量
 		/// <summary>驱动程序的标识：ClickHouse。</summary>
-		public const string Key = "ClickHouse";
+		public const string NAME = "ClickHouse";
 		#endregion
 
 		#region 构造函数
@@ -51,7 +51,7 @@ namespace Zongsoft.Data.ClickHouse
 		#endregion
 
 		#region 公共属性
-		public override string Name => Key;
+		public override string Name => NAME;
 		public override IStatementBuilder Builder => ClickHouseStatementBuilder.Default;
 		#endregion
 
@@ -76,7 +76,7 @@ namespace Zongsoft.Data.ClickHouse
 		public override DbConnection CreateConnection() => new ClickHouseConnection();
 		public override DbConnection CreateConnection(string connectionString) => new ClickHouseConnection(connectionString);
 
-		public override IDataImporter CreateImporter(DataImportContextBase context) => new ClickHouseImporter(context);
+		public override IDataImporter CreateImporter() => new ClickHouseImporter();
 		#endregion
 
 		#region 保护方法

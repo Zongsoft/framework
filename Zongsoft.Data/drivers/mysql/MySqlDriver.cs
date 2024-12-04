@@ -42,7 +42,7 @@ namespace Zongsoft.Data.MySql
 	{
 		#region 公共常量
 		/// <summary>驱动程序的标识：MySql。</summary>
-		public const string Key = "MySql";
+		public const string NAME = "MySql";
 		#endregion
 
 		#region 构造函数
@@ -55,7 +55,7 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 公共属性
-		public override string Name => Key;
+		public override string Name => NAME;
 		public override IStatementBuilder Builder => MySqlStatementBuilder.Default;
 		#endregion
 
@@ -111,7 +111,7 @@ namespace Zongsoft.Data.MySql
 		public override DbConnection CreateConnection() => new MySqlConnection();
 		public override DbConnection CreateConnection(string connectionString) => new MySqlConnection(connectionString);
 
-		public override IDataImporter CreateImporter(DataImportContextBase context) => new MySqlImporter(context);
+		public override IDataImporter CreateImporter() => new MySqlImporter();
 		#endregion
 
 		#region 保护方法

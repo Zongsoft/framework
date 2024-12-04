@@ -81,9 +81,8 @@ namespace Zongsoft.Data.Common
 		DbConnection CreateConnection(string connectionString);
 
 		/// <summary>创建一个数据导入器对象。</summary>
-		/// <param name="context">指定的数据导入上下文。</param>
 		/// <returns>返回创建的数据导入器对象。</returns>
-		IDataImporter CreateImporter(DataImportContextBase context);
+		IDataImporter CreateImporter();
 		#endregion
 	}
 }

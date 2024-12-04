@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Data.ClickHouse.plugin
 lib/$(Framework)/Zongsoft.Data.ClickHouse.*
 
-nuget:ClickHouse.Client@7.5.0
+nuget:ClickHouse.Client@7.9.1

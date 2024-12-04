@@ -83,7 +83,7 @@ namespace Zongsoft.Data.TDengine
 			ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.Create(connectionString).Model<TDengineConnectionStringBuilder>()
 		};
 
-		public override IDataImporter CreateImporter(DataImportContextBase context) => new TDengineImporter(context);
+		public override IDataImporter CreateImporter() => new TDengineImporter();
 		#endregion
 
 		#region 保护方法

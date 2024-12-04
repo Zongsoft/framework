@@ -42,12 +42,8 @@ namespace Zongsoft.Data.MySql
 {
 	public class MySqlImporter : DataImporterBase
 	{
-		#region 构造函数
-		public MySqlImporter(DataImportContextBase context) : base(context) { }
-		#endregion
-
 		#region 公共方法
-		public override void Import(DataImportContext context)
+		protected override void OnImport(DataImportContext context, MemberCollection members)
 		{
 			var bulker = GetBulker(
 				context.Entity.GetTableName(),
@@ -56,18 +52,18 @@ namespace Zongsoft.Data.MySql
 				context.Options);
 
 			//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
-			bulker.Columns.AddRange(this.Members.Select(member => $"`{member.Name}`"));
+			bulker.Columns.AddRange(members.Select(member => $"`{member.Name}`"));
 
 			using var file = File.OpenWrite(bulker.FileName);
 			using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
 
 			//写入表头（字段名列表）
-			for(int i = 0; i < this.Members.Length; i++)
+			for(int i = 0; i < members.Count; i++)
 			{
 				if(i > 0)
 					writer.Write(" | ");
 
-				writer.Write(this.Members[i].Name);
+				writer.Write(members[i].Name);
 			}
 
 			//写入表头与表体的分隔行符
@@ -78,12 +74,12 @@ namespace Zongsoft.Data.MySql
 			{
 				var target = item;
 
-				for(int i = 0; i < this.Members.Length; i++)
+				for(int i = 0; i < members.Count; i++)
 				{
 					if(i > 0)
 						writer.Write(bulker.FieldTerminator);
 
-					var value = this.Members[i].GetValue(ref target);
+					var value = members[i].GetValue(ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
 						writer.Write(bulker.FieldQuotationCharacter);
@@ -123,7 +119,7 @@ namespace Zongsoft.Data.MySql
 			}
 		}
 
-		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 		{
 			var bulker = GetBulker(
 				context.Entity.GetTableName(),
@@ -132,18 +128,18 @@ namespace Zongsoft.Data.MySql
 				context.Options);
 
 			//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
-			bulker.Columns.AddRange(this.Members.Select(member => $"`{member.Name}`"));
+			bulker.Columns.AddRange(members.Select(member => $"`{member.Name}`"));
 
 			using var file = File.OpenWrite(bulker.FileName);
 			using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
 
 			//写入表头（字段名列表）
-			for(int i = 0; i < this.Members.Length; i++)
+			for(int i = 0; i < members.Count; i++)
 			{
 				if(i > 0)
 					await writer.WriteAsync(" | ");
 
-				await writer.WriteAsync(this.Members[i].Name);
+				await writer.WriteAsync(members[i].Name);
 			}
 
 			//写入表头与表体的分隔行符
@@ -154,12 +150,12 @@ namespace Zongsoft.Data.MySql
 			{
 				var target = item;
 
-				for(int i = 0; i < this.Members.Length; i++)
+				for(int i = 0; i < members.Count; i++)
 				{
 					if(i > 0)
 						await writer.WriteAsync(bulker.FieldTerminator);
 
-					var value = this.Members[i].GetValue(ref target);
+					var value = members[i].GetValue(ref target);
 
 					if(bulker.FieldQuotationCharacter != '\0')
 						await writer.WriteAsync(bulker.FieldQuotationCharacter);

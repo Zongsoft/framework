@@ -1,4 +1,4 @@
 artifacts/Zongsoft.Data.SQLite.plugin
 lib/$(Framework)/Zongsoft.Data.SQLite.*
 
-nuget:Microsoft.Data.Sqlite.Core@8.0.1
+nuget:Microsoft.Data.Sqlite.Core@9.0.0

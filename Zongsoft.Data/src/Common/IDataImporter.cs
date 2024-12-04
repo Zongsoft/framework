@@ -28,13 +28,12 @@
  */
 
 using System;
-using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common
 {
-	public interface IDataImporter : IDisposable
+	public interface IDataImporter
 	{
 		void Import(DataImportContext context);
 		ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);

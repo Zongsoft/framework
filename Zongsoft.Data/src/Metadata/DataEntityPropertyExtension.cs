@@ -37,14 +37,23 @@ namespace Zongsoft.Data.Metadata
 {
 	public static class DataEntityPropertyExtension
 	{
-		/// <summary>
-		/// 获取指定实体属性对应的字段名以及返回的别名。
-		/// </summary>
-		/// <param name="property">当前的实体属性。</param>
-		/// <param name="alias">输出参数，对应的返回别名。详细说明请参考该方法的备注说明。</param>
+		/// <summary>获取指定实体属性对应的字段名。</summary>
+		/// <param name="property">指定的实体属性。</param>
 		/// <returns>当前属性对应的字段名。</returns>
+		public static string GetFieldName(this IDataEntityProperty property)
+		{
+			if(property == null)
+				throw new ArgumentNullException(nameof(property));
+
+			return property is IDataEntitySimplexProperty simplex && !string.IsNullOrEmpty(simplex.Alias) ? simplex.Alias : property.Name;
+		}
+
+		/// <summary>获取指定实体属性对应的字段名以及返回的别名。</summary>
+		/// <param name="property">指定的实体属性。</param>
+		/// <param name="alias">输出参数，对应的返回别名。详细说明请参考该方法的备注说明。</param>
+		/// <returns>返回指定属性对应的字段名。</returns>
 		/// <remarks>
-		///		<para>注意：如果当前实体属性的字段名不同于属性名，则<paramref name="alias"/>输出参数值即为属性名，必须确保查询返回的字段标识都为对应的属性名，以便后续实体组装时进行字段与属性的匹配。</para>
+		///		<para>注意：如果指定的实体属性的字段名不同于属性名，则<paramref name="alias"/>输出参数值即为属性名，必须确保查询返回的字段标识都为对应的属性名，以便后续实体组装时进行字段与属性的匹配。</para>
 		/// </remarks>
 		public static string GetFieldName(this IDataEntityProperty property, out string alias)
 		{
@@ -67,9 +76,7 @@ namespace Zongsoft.Data.Metadata
 			}
 		}
 
-		/// <summary>
-		/// 获取指定导航属性是否有约束定义。
-		/// </summary>
+		/// <summary>获取指定导航属性是否有约束定义。</summary>
 		/// <param name="property">指定的导航属性。</param>
 		/// <returns>如果指定的导航属性定义了约束则返回真(True)，否则返回假(False)。</returns>
 		public static bool HasConstraints(this IDataEntityComplexProperty property)
@@ -77,9 +84,7 @@ namespace Zongsoft.Data.Metadata
 			return property != null && property.Constraints != null && property.Constraints.Length > 0;
 		}
 
-		/// <summary>
-		/// 获取指定导航属性约束项值的常量表达式。
-		/// </summary>
+		/// <summary>获取指定导航属性约束项值的常量表达式。</summary>
 		/// <param name="property">指定的导航属性。</param>
 		/// <param name="constraint">指定的导航属性的约束项。</param>
 		/// <returns>返回的约束项值对应关联属性数据类型的表达式。</returns>

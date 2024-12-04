@@ -43,14 +43,9 @@ namespace Zongsoft.Data.SQLite
 {
 	public class SQLiteImporter : DataImporterBase
 	{
-		#region 构造函数
-		public SQLiteImporter(DataImportContextBase context) : base(context) { }
-		#endregion
-
 		#region 公共方法
-		public override void Import(DataImportContext context)
+		protected override void OnImport(DataImportContext context, MemberCollection members)
 		{
-			var members = this.Members;
 			var command = GetCommand(context, members);
 
 			if(command == null || command.Connection == null)
@@ -64,7 +59,7 @@ namespace Zongsoft.Data.SQLite
 				{
 					var target = item;
 
-					for(int i = 0; i < members.Length; i++)
+					for(int i = 0; i < members.Count; i++)
 					{
 						command.Parameters[i].Value = members[i].GetValue(ref target);
 					}
@@ -85,9 +80,8 @@ namespace Zongsoft.Data.SQLite
 			}
 		}
 
-		public override async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 		{
-			var members = this.Members;
 			var command = GetCommand(context, members);
 
 			if(command == null || command.Connection == null)
@@ -101,7 +95,7 @@ namespace Zongsoft.Data.SQLite
 				{
 					var target = item;
 
-					for(int i = 0; i < members.Length; i++)
+					for(int i = 0; i < members.Count; i++)
 					{
 						command.Parameters[i].Value = members[i].GetValue(ref target);
 					}
@@ -124,7 +118,7 @@ namespace Zongsoft.Data.SQLite
 		#endregion
 
 		#region 私有方法
-		private static DbCommand GetCommand(DataImportContext context, Member[] members)
+		private static DbCommand GetCommand(DataImportContext context, MemberCollection members)
 		{
 			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 			var command = connection.CreateCommand();
@@ -135,8 +129,11 @@ namespace Zongsoft.Data.SQLite
 
 			foreach(var member in members)
 			{
+				if(!member.IsSimplex(out var property))
+					continue;
+
 				if(fields.Length > 0)
-					fields.Append(",");
+					fields.Append(',');
 
 				fields.Append(member.Property.GetFieldName(out var alias));
 
@@ -144,13 +141,13 @@ namespace Zongsoft.Data.SQLite
 					fields.Append($" AS '{alias}'");
 
 				if(values.Length > 0)
-					values.Append(",");
+					values.Append(',');
 
 				values.Append($"@p_{member.Name}");
 
 				var parameter = command.CreateParameter();
 				parameter.ParameterName = $"@p_{member.Name}";
-				parameter.DbType = member.Property.Type;
+				parameter.DbType = property.Type;
 				parameters.Add(parameter);
 			}
 

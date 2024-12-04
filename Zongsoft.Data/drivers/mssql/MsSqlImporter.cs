@@ -29,13 +29,11 @@
 
 using System;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 
-using Zongsoft.Reflection;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
@@ -43,49 +41,33 @@ namespace Zongsoft.Data.MsSql
 {
 	public class MsSqlImporter : DataImporterBase
 	{
-		#region 成员字段
-		private readonly DataTable _table;
-		#endregion
-
-		#region 构造函数
-		public MsSqlImporter(DataImportContextBase context) : base(context)
-		{
-			_table = new DataTable(context.Entity.GetTableName());
-
-			foreach(var member in this.Members)
-			{
-				_table.Columns.Add(member.Property.GetFieldName(out _), member.Property.Type.AsType());
-			}
-		}
-		#endregion
-
 		#region 公共方法
-		public override void Import(DataImportContext context)
+		protected override void OnImport(DataImportContext context, MemberCollection members)
 		{
 			//将数据填充到数据表中
-			FillTable(_table, context.Data, this.Members);
+			var table = GetTable(context.Entity.GetTableName(), context.Data, members);
 
-			var bulker = GetBulker(_table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
-			bulker.WriteToServer(_table);
+			var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
+			bulker.WriteToServer(table);
 
 			//设置返回值
-			context.Count = _table.Rows.Count;
+			context.Count = table.Rows.Count;
 			//清空数据表中的数据
-			_table.Rows.Clear();
+			table.Rows.Clear();
 		}
 
-		public override ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default)
+		protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 		{
 			//将数据填充到数据表中
-			FillTable(_table, context.Data, this.Members);
+			var table = GetTable(context.Entity.GetTableName(), context.Data, members);
 
-			var bulker = GetBulker(_table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
-			var task = bulker.WriteToServerAsync(_table, cancellation);
+			var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
+			var task = bulker.WriteToServerAsync(table, cancellation);
 
 			//设置返回值
-			context.Count = _table.Rows.Count;
+			context.Count = table.Rows.Count;
 			//清空数据表中的数据
-			_table.Rows.Clear();
+			table.Rows.Clear();
 
 			return new ValueTask(task);
 		}
@@ -97,13 +79,21 @@ namespace Zongsoft.Data.MsSql
 			DestinationTableName = name,
 		};
 
-		private static void FillTable(DataTable table, IEnumerable data, Member[] members)
+		private static DataTable GetTable(string name, IEnumerable data, MemberCollection members)
 		{
+			var table = new DataTable(name);
+
+			foreach(var member in members)
+			{
+				if(member.IsSimplex(out var property))
+					table.Columns.Add(member.Property.GetFieldName(out _), property.Type.AsType());
+			}
+
 			foreach(var item in data)
 			{
 				var row = table.NewRow();
 
-				for(int i = 0; i < members.Length; i++)
+				for(int i = 0; i < members.Count; i++)
 				{
 					var target = item;
 					row[members[i].Name] = members[i].GetValue(ref target);
@@ -112,6 +102,8 @@ namespace Zongsoft.Data.MsSql
 				table.Rows.Add(row);
 				table.AcceptChanges();
 			}
+
+			return table;
 		}
 		#endregion
 	}

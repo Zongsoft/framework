@@ -111,7 +111,7 @@ namespace Zongsoft.Data.SQLite
 			#endregion
 
 			#region 公共属性
-			public string Name => SQLiteDriver.Key;
+			public string Name => SQLiteDriver.NAME;
 			#endregion
 
 			#region 公共方法

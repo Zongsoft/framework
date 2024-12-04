@@ -42,7 +42,7 @@ namespace Zongsoft.Data.SQLite
 	{
 		#region 公共常量
 		/// <summary>驱动程序的标识：SQLite。</summary>
-		public const string Key = "SQLite";
+		public const string NAME = "SQLite";
 		#endregion
 
 		#region 构造函数
@@ -50,7 +50,7 @@ namespace Zongsoft.Data.SQLite
 		#endregion
 
 		#region 公共属性
-		public override string Name => Key;
+		public override string Name => NAME;
 		public override IStatementBuilder Builder => SQLiteStatementBuilder.Default;
 		#endregion
 
@@ -78,7 +78,7 @@ namespace Zongsoft.Data.SQLite
 		public override DbConnection CreateConnection() => new SqliteConnection();
 		public override DbConnection CreateConnection(string connectionString) => new SqliteConnection(connectionString);
 
-		public override IDataImporter CreateImporter(DataImportContextBase context) => new SQLiteImporter(context);
+		public override IDataImporter CreateImporter() => new SQLiteImporter();
 		#endregion
 
 		#region 保护方法

@@ -41,7 +41,7 @@ namespace Zongsoft.Data.MsSql
 	{
 		#region 公共常量
 		/// <summary>驱动程序的标识：MsSql。</summary>
-		public const string Key = "MsSql";
+		public const string NAME = "MsSql";
 		#endregion
 
 		#region 构造函数
@@ -54,7 +54,7 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 公共属性
-		public override string Name => Key;
+		public override string Name => NAME;
 		public override IStatementBuilder Builder => MsSqlStatementBuilder.Default;
 		#endregion
 
@@ -86,7 +86,7 @@ namespace Zongsoft.Data.MsSql
 		public override DbConnection CreateConnection() => new SqlConnection();
 		public override DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
 
-		public override IDataImporter CreateImporter(DataImportContextBase context) => new MsSqlImporter(context);
+		public override IDataImporter CreateImporter() => new MsSqlImporter();
 		#endregion
 
 		#region 保护方法

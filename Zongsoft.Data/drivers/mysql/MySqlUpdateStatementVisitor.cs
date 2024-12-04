@@ -80,12 +80,12 @@ namespace Zongsoft.Data.MySql
 							}
 							else
 							{
-								throw new DataException($"The {MySqlDriver.Key} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
+								throw new DataException($"The {MySqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
 							}
 
 							break;
 						default:
-							throw new NotSupportedException($"The {MySqlDriver.Key} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
+							throw new NotSupportedException($"The {MySqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
 					}
 				}
 			}

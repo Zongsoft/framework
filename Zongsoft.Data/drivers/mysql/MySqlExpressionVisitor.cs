@@ -136,7 +136,7 @@ namespace Zongsoft.Data.MySql
 			#endregion
 
 			#region 公共属性
-			public string Name => MySqlDriver.Key;
+			public string Name => MySqlDriver.NAME;
 			#endregion
 
 			#region 公共方法

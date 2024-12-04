@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.3.0.0</Version>
+		<Version>6.4.0.0</Version>
 		<Product>Zongsoft Data Driver for SQL Server</Product>
 		<Description>This is a data driver for Microsoft SQL Server of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MsSql</RootNamespace>
@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="System.Data.SqlClient" VersionOverride="4.8.6" />
+		<PackageReference Include="System.Data.SqlClient" VersionOverride="4.9.0" />
 	</ItemGroup>
 
 	<ItemGroup>

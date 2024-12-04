@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
@@ -37,6 +38,9 @@ namespace Zongsoft.Data.TDengine;
 
 internal static class TDengineUtility
 {
+	public static string GetTableName(string text) => string.IsNullOrEmpty(text) ? null : $"T{text.ToLowerInvariant()}";
+	public static string GetTableName(IEnumerable<object> values) => values == null ? null : 'T' + string.Join('-', values.Select(value => value?.ToString()))?.ToLowerInvariant();
+
 	public static bool IsTagField(this FieldIdentifier field) => field != null && IsTagField(field.Token.Property);
 	public static bool IsTagField(this IDataEntityProperty property) =>
 	property != null && property.IsSimplex && property.Hint != null &&
