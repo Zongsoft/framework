@@ -80,7 +80,7 @@ public sealed class TDengineConnectionSettingDescriptorCollection : ConnectionSe
 	public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(TDengineConnectionStringBuilder.Host), null, ConnectionSettingDescriptor.Server.Label, ConnectionSettingDescriptor.Server.Description);
 	public readonly static ConnectionSettingDescriptor<int> Port = new(nameof(Port), nameof(TDengineConnectionStringBuilder.Port), 6030, ConnectionSettingDescriptor.Port.Label, ConnectionSettingDescriptor.Port.Description);
 	public readonly static ConnectionSettingDescriptor<string> Database = new(nameof(Database), "DB", null, ConnectionSettingDescriptor.Database.Label, ConnectionSettingDescriptor.Database.Description);
-	public readonly static ConnectionSettingDescriptor<TDengineConnectionProtocol> Protocol = new(nameof(Protocol), nameof(TDengineConnectionStringBuilder.Protocol), TDengineConnectionProtocol.Native, null, null);
+	public readonly static ConnectionSettingDescriptor<TDengineConnectionProtocol> Protocol = new(nameof(Protocol), nameof(TDengineConnectionStringBuilder.Protocol), TDengineConnectionProtocol.Native);
 	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone), nameof(TDengineConnectionStringBuilder.Timezone), null, null, null);
 	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token), nameof(TDengineConnectionStringBuilder.Token), null, null, null);
 	public readonly static ConnectionSettingDescriptor<bool> AutoReconnect = new(nameof(AutoReconnect), nameof(TDengineConnectionStringBuilder.AutoReconnect), true, null, null);

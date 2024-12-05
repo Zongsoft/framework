@@ -38,12 +38,13 @@ using TDengine.Driver.Client;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
+using TDengine.Data.Client;
 
 namespace Zongsoft.Data.TDengine
 {
 	public class TDengineImporter : DataImporterBase
 	{
-		#region 公共方法
+		#region 重写方法
 		protected override void OnImport(DataImportContext context, MemberCollection members)
 		{
 			var count = 0L;
@@ -81,6 +82,8 @@ namespace Zongsoft.Data.TDengine
 				statement.Exec();
 				count += statement.Affected();
 			}
+
+			context.Count = (int)Math.Min(count, int.MaxValue);
 		}
 
 		protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
@@ -91,7 +94,7 @@ namespace Zongsoft.Data.TDengine
 		#endregion
 
 		#region 私有方法
-		private static ITDengineClient GetClient(string connectionString) => DbDriver.Open(new ConnectionStringBuilder(connectionString));
+		private static ITDengineClient GetClient(string connectionString) => DbDriver.Open(Configuration.TDengineConnectionSettingsDriver.Instance.Create(connectionString).Model<TDengineConnectionStringBuilder>());
 		#endregion
 
 		#region 嵌套子类
