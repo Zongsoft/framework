@@ -30,7 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
+
+using Microsoft.Data.SqlClient;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -44,8 +45,12 @@ namespace Zongsoft.Data.MsSql
 		public const string NAME = "MsSql";
 		#endregion
 
-		#region 构造函数
-		public MsSqlDriver()
+		#region 单例字段
+		public static readonly MsSqlDriver Instance = new();
+		#endregion
+
+		#region 私有构造
+		private MsSqlDriver()
 		{
 			//添加 MsSql(SQL Server) 支持的功能特性集
 			this.Features.Add(Feature.Deletion.Outputting);
@@ -83,8 +88,8 @@ namespace Zongsoft.Data.MsSql
 			CommandType = commandType,
 		};
 
-		public override DbConnection CreateConnection() => new SqlConnection();
-		public override DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
+		public override DbConnection CreateConnection(string connectionString = null) => new SqlConnection(connectionString);
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqlConnectionStringBuilder(connectionString);
 
 		public override IDataImporter CreateImporter() => new MsSqlImporter();
 		#endregion

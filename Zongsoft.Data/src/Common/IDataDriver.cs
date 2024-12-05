@@ -72,13 +72,14 @@ namespace Zongsoft.Data.Common
 		DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement);
 
 		/// <summary>创建一个数据连接对象。</summary>
-		/// <returns>返回创建的数据连接对象。</returns>
-		DbConnection CreateConnection();
-
-		/// <summary>创建一个数据连接对象。</summary>
 		/// <param name="connectionString">指定的连接字符串。</param>
 		/// <returns>返回创建的数据连接对象，该连接对象的连接字符串为<paramref name="connectionString"/>参数值。</returns>
-		DbConnection CreateConnection(string connectionString);
+		DbConnection CreateConnection(string connectionString = null);
+
+		/// <summary>创建一个数据连接构建器。</summary>
+		/// <param name="connectionString">指定的连接字符串。</param>
+		/// <returns>返回创建的数据连接构建器。</returns>
+		DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
 
 		/// <summary>创建一个数据导入器对象。</summary>
 		/// <returns>返回创建的数据导入器对象。</returns>

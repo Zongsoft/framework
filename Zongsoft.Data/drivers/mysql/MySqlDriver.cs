@@ -45,8 +45,12 @@ namespace Zongsoft.Data.MySql
 		public const string NAME = "MySql";
 		#endregion
 
-		#region 构造函数
-		public MySqlDriver()
+		#region 单例字段
+		public static readonly MySqlDriver Instance = new();
+		#endregion
+
+		#region 私有构造
+		private MySqlDriver()
 		{
 			//添加 MySQL 支持的功能特性集
 			this.Features.Add(Feature.Deletion.Multitable);
@@ -108,8 +112,8 @@ namespace Zongsoft.Data.MySql
 			CommandType = commandType,
 		};
 
-		public override DbConnection CreateConnection() => new MySqlConnection();
-		public override DbConnection CreateConnection(string connectionString) => new MySqlConnection(connectionString);
+		public override DbConnection CreateConnection(string connectionString = null) => new MySqlConnection(connectionString);
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new MySqlConnectionStringBuilder(connectionString);
 
 		public override IDataImporter CreateImporter() => new MySqlImporter();
 		#endregion

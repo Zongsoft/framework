@@ -21,6 +21,6 @@
 	</extension>
 
 	<extension path="/Workbench/Data/Drivers">
-		<object name="TDengine" type="Zongsoft.Data.TDengine.TDengineDriver, Zongsoft.Data.TDengine" />
+		<object name="TDengine" value="{static:Zongsoft.Data.TDengine.TDengineDriver.Instance, Zongsoft.Data.TDengine}" />
 	</extension>
 </plugin>

@@ -46,8 +46,12 @@ namespace Zongsoft.Data.ClickHouse
 		public const string NAME = "ClickHouse";
 		#endregion
 
-		#region 构造函数
-		public ClickHouseDriver() { }
+		#region 单例字段
+		public static readonly ClickHouseDriver Instance = new();
+		#endregion
+
+		#region 私有构造
+		private ClickHouseDriver() { }
 		#endregion
 
 		#region 公共属性
@@ -73,8 +77,8 @@ namespace Zongsoft.Data.ClickHouse
 		public override DbCommand CreateCommand() => new ClickHouseCommand();
 		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new ClickHouseCommand { CommandText = text, CommandType = commandType };
 
-		public override DbConnection CreateConnection() => new ClickHouseConnection();
-		public override DbConnection CreateConnection(string connectionString) => new ClickHouseConnection(connectionString);
+		public override DbConnection CreateConnection(string connectionString = null) => new ClickHouseConnection(connectionString);
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new ClickHouseConnectionStringBuilder(connectionString);
 
 		public override IDataImporter CreateImporter() => new ClickHouseImporter();
 		#endregion

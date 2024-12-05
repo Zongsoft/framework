@@ -38,7 +38,6 @@ using TDengine.Driver.Client;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
-using TDengine.Data.Client;
 
 namespace Zongsoft.Data.TDengine
 {
@@ -94,7 +93,7 @@ namespace Zongsoft.Data.TDengine
 		#endregion
 
 		#region 私有方法
-		private static ITDengineClient GetClient(string connectionString) => DbDriver.Open(Configuration.TDengineConnectionSettingsDriver.Instance.Create(connectionString).Model<TDengineConnectionStringBuilder>());
+		private static ITDengineClient GetClient(string connectionString) => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(connectionString));
 		#endregion
 
 		#region 嵌套子类

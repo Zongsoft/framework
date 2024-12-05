@@ -17,6 +17,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Data/Drivers">
-		<object name="MySql" type="Zongsoft.Data.MySql.MySqlDriver, Zongsoft.Data.MySql" />
+		<object name="MySql" value="{static:Zongsoft.Data.MySql.MySqlDriver.Instance, Zongsoft.Data.MySql}" />
 	</extension>
 </plugin>

@@ -45,8 +45,12 @@ namespace Zongsoft.Data.SQLite
 		public const string NAME = "SQLite";
 		#endregion
 
-		#region 构造函数
-		public SQLiteDriver() { }
+		#region 单例字段
+		public static readonly SQLiteDriver Instance = new();
+		#endregion
+
+		#region 私有构造
+		private SQLiteDriver() { }
 		#endregion
 
 		#region 公共属性
@@ -75,8 +79,8 @@ namespace Zongsoft.Data.SQLite
 			CommandType = commandType,
 		};
 
-		public override DbConnection CreateConnection() => new SqliteConnection();
-		public override DbConnection CreateConnection(string connectionString) => new SqliteConnection(connectionString);
+		public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnection(connectionString);
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
 
 		public override IDataImporter CreateImporter() => new SQLiteImporter();
 		#endregion

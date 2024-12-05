@@ -46,8 +46,12 @@ namespace Zongsoft.Data.TDengine
 		public const string NAME = "TDengine";
 		#endregion
 
-		#region 构造函数
-		public TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
+		#region 单例字段
+		public static readonly TDengineDriver Instance = new();
+		#endregion
+
+		#region 私有构造
+		private TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
 		#endregion
 
 		#region 公共属性
@@ -77,11 +81,13 @@ namespace Zongsoft.Data.TDengine
 			CommandType = commandType,
 		};
 
-		public override DbConnection CreateConnection() => new TDengineConnection(string.Empty);
-		public override DbConnection CreateConnection(string connectionString) => new TDengineConnection(connectionString)
+		public override DbConnection CreateConnection(string connectionString = null) => new TDengineConnection(connectionString ?? string.Empty)
 		{
 			ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.Create(connectionString).Model<TDengineConnectionStringBuilder>()
 		};
+
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+			Configuration.TDengineConnectionSettingsDriver.Instance.Create(connectionString).Model<TDengineConnectionStringBuilder>();
 
 		public override IDataImporter CreateImporter() => new TDengineImporter();
 		#endregion

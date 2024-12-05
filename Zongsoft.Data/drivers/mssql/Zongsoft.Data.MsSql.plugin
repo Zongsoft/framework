@@ -17,6 +17,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Data/Drivers">
-		<object name="MsSql" type="Zongsoft.Data.MsSql.MsSqlDriver, Zongsoft.Data.MsSql" />
+		<object name="MsSql" value="{static:Zongsoft.Data.MsSql.MsSqlDriver.Instance, Zongsoft.Data.MsSql}" />
 	</extension>
 </plugin>

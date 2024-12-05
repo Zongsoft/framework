@@ -17,6 +17,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Data/Drivers">
-		<object name="ClickHouse" type="Zongsoft.Data.ClickHouse.ClickHouseDriver, Zongsoft.Data.ClickHouse" />
+		<object name="ClickHouse" value="{static:Zongsoft.Data.ClickHouse.ClickHouseDriver.Instance, Zongsoft.Data.ClickHouse}" />
 	</extension>
 </plugin>

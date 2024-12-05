@@ -29,10 +29,11 @@
 
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
+
+using Microsoft.Data.SqlClient;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;

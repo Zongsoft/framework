@@ -17,6 +17,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Data/Drivers">
-		<object name="SQLite" type="Zongsoft.Data.SQLite.SQLiteDriver, Zongsoft.Data.SQLite" />
+		<object name="SQLite" value="{static:Zongsoft.Data.SQLite.SQLiteDriver.Instance, Zongsoft.Data.SQLite}" />
 	</extension>
 </plugin>
