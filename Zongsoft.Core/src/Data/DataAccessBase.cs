@@ -99,23 +99,23 @@ namespace Zongsoft.Data
 		}
 
 		/// <summary>获取数据访问名称映射器。</summary>
-		public IDataAccessNaming Naming { get => _naming; }
+		public IDataAccessNaming Naming => _naming;
 
 		/// <summary>获取数据模式解析器。</summary>
-		public ISchemaParser Schema { get => _schema ?? (_schema = this.CreateSchema()); }
+		public ISchemaParser Schema => _schema ??= this.CreateSchema();
 
 		/// <summary>获取或设置数据序号生成程序。</summary>
 		public IDataSequencer Sequencer
 		{
 			get => _sequencer ??= this.CreateSequencer();
-			set => _sequencer = value ?? throw new ArgumentNullException();
+			set => _sequencer = value ?? throw new ArgumentNullException(nameof(value));
 		}
 
 		/// <summary>获取数据访问器的元数据容器。</summary>
 		public abstract Metadata.IDataMetadataContainer Metadata { get; }
 
 		/// <summary>获取数据访问过滤器集合。</summary>
-		public ICollection<object> Filters { get => _filters; }
+		public ICollection<object> Filters => _filters;
 		#endregion
 
 		#region 导入方法
@@ -2002,7 +2002,7 @@ namespace Zongsoft.Data
 				if(sequence == null && !string.IsNullOrEmpty(this.Name))
 					sequence = provider.GetService(string.Empty);
 
-				return sequence;
+				return sequence ?? throw new InvalidOperationException($"Missing required Sequence service.");
 			}
 			#endregion
 
