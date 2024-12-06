@@ -1847,7 +1847,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnExecuting(DataExecuteContextBase context)
 		{
 			var e = this.Executing;
-
 			if(e == null)
 				return false;
 
@@ -1860,7 +1859,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnExisting(DataExistContextBase context)
 		{
 			var e = this.Existing;
-
 			if(e == null)
 				return false;
 
@@ -1873,7 +1871,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnAggregating(DataAggregateContextBase context)
 		{
 			var e = this.Aggregating;
-
 			if(e == null)
 				return false;
 
@@ -1886,7 +1883,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnImporting(DataImportContextBase context)
 		{
 			var e = this.Importing;
-
 			if(e == null)
 				return false;
 
@@ -1899,7 +1895,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnDeleting(DataDeleteContextBase context)
 		{
 			var e = this.Deleting;
-
 			if(e == null)
 				return false;
 
@@ -1912,7 +1907,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnInserting(DataInsertContextBase context)
 		{
 			var e = this.Inserting;
-
 			if(e == null)
 				return false;
 
@@ -1925,7 +1919,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnUpserting(DataUpsertContextBase context)
 		{
 			var e = this.Upserting;
-
 			if(e == null)
 				return false;
 
@@ -1938,7 +1931,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnUpdating(DataUpdateContextBase context)
 		{
 			var e = this.Updating;
-
 			if(e == null)
 				return false;
 
@@ -1951,7 +1943,6 @@ namespace Zongsoft.Data
 		protected virtual bool OnSelecting(DataSelectContextBase context)
 		{
 			var e = this.Selecting;
-
 			if(e == null)
 				return false;
 
