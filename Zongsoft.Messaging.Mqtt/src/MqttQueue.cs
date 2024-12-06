@@ -66,6 +66,7 @@ namespace Zongsoft.Messaging.Mqtt
 
 			//挂载消息接收事件
 			_client.ApplicationMessageReceivedAsync += OnReceivedAsync;
+			_client.DisconnectedAsync += OnDisconnectedAsync;
 		}
 		#endregion
 
@@ -147,12 +148,56 @@ namespace Zongsoft.Messaging.Mqtt
 				foreach(var subscriber in subscribers)
 				{
 					if(subscriber.IsSubscribed)
-						await subscriber.Handler?.HandleAsync(message).AsTask();
+						await InvokeHandler(subscriber.Handler, message);
 				}
 
 				//没有异常则应答
 				await args.AcknowledgeAsync(CancellationToken.None);
 			}
+
+			static async ValueTask InvokeHandler(IHandler<Message> handler, Message message)
+			{
+				if(handler == null)
+					return;
+
+				try
+				{
+					await handler.HandleAsync(message);
+				}
+				catch(Exception ex)
+				{
+					Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+				}
+			}
+		}
+
+		private async Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
+		{
+			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT-Disconnected");
+
+			var result = await _client.ConnectAsync(_options);
+			if(result.ResultCode != MqttClientConnectResultCode.Success)
+				return;
+
+			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT Reconnection OK!");
+
+			foreach(var subscribers in _subscribers.Values)
+			{
+				foreach(var subscriber in subscribers)
+				{
+					Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info($"MQTT subscriber:{subscriber.Topics[0]}");
+
+					var subscription = new MqttClientSubscribeOptions();
+					subscription.TopicFilters.Add(new MqttTopicFilter()
+					{
+						Topic = subscriber.Topics[0],
+						QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce,
+					});
+					await _client.SubscribeAsync(subscription);
+				}
+			}
+
+			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT Subscribers Final!");
 		}
 		#endregion
 
@@ -222,6 +267,8 @@ namespace Zongsoft.Messaging.Mqtt
 			if(client != null)
 			{
 				client.ApplicationMessageReceivedAsync -= OnReceivedAsync;
+				client.DisconnectedAsync -= OnDisconnectedAsync;
+
 				client.Dispose();
 			}
 		}
