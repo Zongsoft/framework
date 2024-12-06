@@ -95,6 +95,14 @@ namespace Zongsoft.Components
 
 			return false;
 		}
+
+		public bool Unregister<TArgument>(string name, IHandler<TArgument> handler)
+		{
+			if(string.IsNullOrEmpty(name) || handler == null)
+				return false;
+
+			return this.Events.TryGetValue(name, out var descriptor) && descriptor.Handlers.Remove(handler);
+		}
 		#endregion
 
 		#region 激发方法
