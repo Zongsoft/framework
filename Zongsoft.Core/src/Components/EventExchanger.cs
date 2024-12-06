@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -121,16 +123,71 @@ public class EventExchanger : WorkerBase
 	#endregion
 
 	#region 嵌套结构
-	private struct ExchangingTicket(uint instance, string identifier, byte[] data)
+	private struct ExchangingTicket
 	{
-		/// <summary>表示事件交换器的实例号。</summary>
-		public uint Instance = instance;
-		/// <summary>表示事件的标识，即事件限定名称。</summary>
-		public string Identifier = identifier;
-		/// <summary>表示事件上下文对象的序列化数据。</summary>
-		public byte[] Data = data;
+		#region 常量定义
+		//表示是否启用数据压缩的阈值
+		private const int COMPRESSION_THRESHOLD = 4 * 1024;
+		#endregion
 
-		public override string ToString() => $"{this.Identifier}@{this.Instance}";
+		#region 构造函数
+		public ExchangingTicket(uint id, string @event, byte[] data)
+		{
+			this.Exchanger = id;
+			this.Event = @event;
+			this.Data = Compress(data, out var compressed);
+			this.Compressed = compressed;
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>表示事件交换器的实例号。</summary>
+		public uint Exchanger { get; set; }
+		/// <summary>表示事件的标识，即事件限定名称。</summary>
+		public string Event { get; set; }
+		/// <summary>表示事件数据的压缩器名称。</summary>
+		public bool Compressed { get; set; }
+		/// <summary>表示事件上下文对象的序列化数据。</summary>
+		public byte[] Data { get; set; }
+		#endregion
+
+		#region 压缩方法
+		private static byte[] Compress(byte[] data, out bool compressed)
+		{
+			if(data == null || data.Length < COMPRESSION_THRESHOLD)
+			{
+				compressed = false;
+				return data;
+			}
+
+			using var source = new MemoryStream(data);
+			using var destination = new MemoryStream();
+			using var compression = new BrotliStream(destination, CompressionMode.Compress, true);
+			source.CopyTo(compression);
+			compression.Close();
+
+			destination.Seek(0, SeekOrigin.Begin);
+			compressed = true;
+			return destination.ToArray();
+		}
+
+		internal readonly byte[] Decompress()
+		{
+			if(!this.Compressed || this.Data == null || this.Data.Length == 0)
+				return this.Data;
+
+			using var source = new MemoryStream(this.Data);
+			using var destination = new MemoryStream();
+			using var compression = new BrotliStream(source, CompressionMode.Decompress);
+			compression.CopyTo(destination);
+			destination.Seek(0, SeekOrigin.Begin);
+			return destination.ToArray();
+		}
+		#endregion
+
+		#region 重写方法
+		public readonly override string ToString() => $"{this.Event}@{this.Exchanger}";
+		#endregion
 	}
 
 	private sealed class Handler : HandlerBase<Message>
@@ -149,17 +206,22 @@ public class EventExchanger : WorkerBase
 			var ticket = await Serializer.Json.DeserializeAsync<ExchangingTicket>(message.Data, null, cancellation);
 
 			//如果接收到的事件来源自自身则忽略该事件
-			if(ticket.Instance == _instance || string.IsNullOrEmpty(ticket.Identifier))
+			if(ticket.Exchanger == _instance || string.IsNullOrEmpty(ticket.Event))
 			{
 				await message.AcknowledgeAsync(cancellation);
 				return;
 			}
 
 			//根据事件标识获取对应的事件描述器
-			var descriptor = Events.GetEvent(ticket.Identifier, out var registry);
+			var descriptor = Events.GetEvent(ticket.Event, out var registry);
+			if(descriptor == null)
+				return;
+
+			//尝试解压缩
+			var data = ticket.Decompress();
 
 			//还原事件参数
-			(var argument, var parameters) = Events.Marshaler.Unmarshal(descriptor, ticket.Data);
+			(var argument, var parameters) = Events.Marshaler.Unmarshal(descriptor, data);
 
 			//重放事件
 			await registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), default);
