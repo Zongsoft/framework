@@ -37,7 +37,7 @@ public sealed class Module() : Zongsoft.Services.ApplicationModule<Module.EventR
 			#endregion
 
 			#region 公共方法
-			public bool OnAcquired(Models.Meter argument) => _registry.Raise(Acquired.Name, argument);
+			public bool OnAcquired(Models.Meter argument, Collections.Parameters parameters = null) => _registry.Raise(Acquired.Name, argument, parameters);
 			public ValueTask<bool> OnAcquiredAsync(Models.Meter argument, CancellationToken cancellation = default) => this.OnAcquiredAsync(argument, null, cancellation);
 			public ValueTask<bool> OnAcquiredAsync(Models.Meter argument, Zongsoft.Collections.Parameters parameters, CancellationToken cancellation = default) => _registry.RaiseAsync(Acquired.Name, argument, parameters, cancellation);
 			#endregion

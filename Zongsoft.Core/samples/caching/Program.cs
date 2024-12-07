@@ -48,12 +48,14 @@ internal class Program
 		var count = 0;
 		var text = string.Empty;
 
-		do
+		while(true)
 		{
-			text = Console.ReadLine();
+			text = Console.ReadLine().Trim();
 
 			switch(text)
 			{
+				case "exit":
+					return;
 				case "start":
 				case "restart":
 					scanner.Start();
@@ -68,7 +70,7 @@ internal class Program
 						cache.SetValue($"Key#{++count}", text, TimeSpan.FromSeconds(EXPIRATION), Now);
 					break;
 			}
-		} while(text != "exit");
+		}
 	}
 
 	private static void Cache_Evicted(object sender, CacheEvictedEventArgs e)
