@@ -57,7 +57,7 @@ public class MessageDequeueOptions
 public class MessageEnqueueOptions
 {
 	#region 单例字段
-	public static readonly MessageEnqueueOptions Default = new MessageEnqueueOptions();
+	public static readonly MessageEnqueueOptions Default = new();
 	#endregion
 
 	#region 构造函数

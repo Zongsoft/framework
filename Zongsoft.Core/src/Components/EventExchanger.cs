@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -38,8 +38,8 @@ using System.Threading.Tasks;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Messaging;
-using Zongsoft.Serialization;
 using Zongsoft.Collections;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Components;
 
@@ -49,17 +49,37 @@ public class EventExchanger : WorkerBase
 	private const string DEFAULT_TOPIC = "Events";
 	#endregion
 
-	#region 静态字段
-	private static readonly uint _instance = Randomizer.GenerateUInt32();
+	#region 私有变量
+	private readonly MessageEnqueueOptions _mostOnce = new(MessageReliability.MostOnce);
+	private readonly MessageEnqueueOptions _leastOnce = new(MessageReliability.LeastOnce);
+	private readonly MessageEnqueueOptions _exactlyOnce = new(MessageReliability.ExactlyOnce);
 	#endregion
 
 	#region 成员字段
-	private string _topic = DEFAULT_TOPIC;
+	private readonly uint _identifier;
+	private readonly Handler _handler;
+
+	private EventExchangerOptions _options;
 	private IMessageQueue _queue;
 	private IMessageConsumer _subscriber;
 	#endregion
 
+	#region 构造函数
+	public EventExchanger(EventExchangerOptions options = null) : this(null, options) { }
+	public EventExchanger(IMessageQueue queue, EventExchangerOptions options = null)
+	{
+		_queue = queue;
+		_options = options;
+		_identifier = Randomizer.GenerateUInt32();
+		_handler = new Handler(_identifier);
+	}
+	#endregion
+
 	#region 公共属性
+	/// <summary>获取事件交换器的实例编号。</summary>
+	public uint Identifier => _identifier;
+
+	/// <summary>获取或设置进行事件交换的消息队列。</summary>
 	[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
 	public IMessageQueue Queue
 	{
@@ -67,10 +87,11 @@ public class EventExchanger : WorkerBase
 		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
-	public string Topic
+	/// <summary>获取或设置进行事件交换器的设置选项。</summary>
+	public EventExchangerOptions Options
 	{
-		get => _topic;
-		set => _topic = value ?? throw new ArgumentNullException(nameof(value));
+		get => _options ??= new();
+		set => _options = value ?? throw new ArgumentNullException(nameof(value));
 	}
 	#endregion
 
@@ -94,9 +115,17 @@ public class EventExchanger : WorkerBase
 		if(queue == null)
 			return;
 
-		var ticket = new ExchangingTicket(_instance, context.QualifiedName, Events.Marshaler.Marshal(context));
+		var reliability = this.Options.Reliability switch
+		{
+			MessageReliability.MostOnce => _mostOnce,
+			MessageReliability.LeastOnce => _leastOnce,
+			MessageReliability.ExactlyOnce => _exactlyOnce,
+			_ => _leastOnce,
+		};
+
+		var ticket = new ExchangingTicket(_identifier, context.QualifiedName, Events.Marshaler.Marshal(context));
 		var json = await Serializer.Json.SerializeAsync(ticket, null, cancellation);
-		await queue.ProduceAsync(this.Topic, Encoding.UTF8.GetBytes(json), MessageEnqueueOptions.Default, cancellation);
+		await queue.ProduceAsync(this.Options.Topic, Encoding.UTF8.GetBytes(json), reliability, cancellation);
 	}
 	#endregion
 
@@ -107,7 +136,7 @@ public class EventExchanger : WorkerBase
 			throw new InvalidOperationException($"Missing required message queue.");
 
 		//订阅消息队列中的事件主题
-		_subscriber = await _queue.SubscribeAsync(this.Topic, Handler.Instance, cancellation);
+		_subscriber = await _queue.SubscribeAsync(this.Options.Topic, _handler, cancellation);
 	}
 
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
@@ -190,9 +219,9 @@ public class EventExchanger : WorkerBase
 		#endregion
 	}
 
-	private sealed class Handler : HandlerBase<Message>
+	private sealed class Handler(uint identifier) : HandlerBase<Message>
 	{
-		public static readonly Handler Instance = new();
+		private readonly uint _identifier = identifier;
 
 		protected override async ValueTask OnHandleAsync(Message message, Parameters _, CancellationToken cancellation)
 		{
@@ -206,9 +235,9 @@ public class EventExchanger : WorkerBase
 			var ticket = await Serializer.Json.DeserializeAsync<ExchangingTicket>(message.Data, null, cancellation);
 
 			//如果接收到的事件来源自自身则忽略该事件
-			if(ticket.Exchanger == _instance || string.IsNullOrEmpty(ticket.Event))
+			if(ticket.Exchanger == _identifier || string.IsNullOrEmpty(ticket.Event))
 			{
-				await message.AcknowledgeAsync(cancellation);
+				//await message.AcknowledgeAsync(cancellation);
 				return;
 			}
 
