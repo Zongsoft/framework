@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -48,12 +49,13 @@ namespace Zongsoft.Messaging.Mqtt
 	public class MqttQueue : MessageQueueBase
 	{
 		#region 工厂字段
-		private static readonly MqttFactory Factory = new MqttFactory();
+		private static readonly MqttFactory Factory = new();
 		#endregion
 
 		#region 成员字段
 		private IMqttClient _client;
 		private MqttClientOptions _options;
+		private AutoResetEvent _semaphore;
 		private readonly ConcurrentDictionary<string, ISet<MqttSubscriber>> _subscribers;
 		#endregion
 
@@ -63,10 +65,11 @@ namespace Zongsoft.Messaging.Mqtt
 			_client = Factory.CreateMqttClient();
 			_options = MqttUtility.GetOptions(connectionSettings);
 			_subscribers = new ConcurrentDictionary<string, ISet<MqttSubscriber>>();
+			_semaphore = new AutoResetEvent(true);
 
 			//挂载消息接收事件
-			_client.ApplicationMessageReceivedAsync += OnReceivedAsync;
-			_client.DisconnectedAsync += OnDisconnectedAsync;
+			_client.ApplicationMessageReceivedAsync += this.OnReceivedAsync;
+			_client.DisconnectedAsync += this.OnDisconnectedAsync;
 		}
 		#endregion
 
@@ -84,6 +87,9 @@ namespace Zongsoft.Messaging.Mqtt
 			var subscriber = new MqttSubscriber(this, topics, tags, handler, options);
 			var parts = topics.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
+			//确保连接完成
+			await this.EnsureConnectAsync(cancellation);
+
 			foreach(var part in parts)
 			{
 				if(_subscribers.TryGetValue(part, out var hashset))
@@ -100,9 +106,6 @@ namespace Zongsoft.Messaging.Mqtt
 							Topic = part,
 							QualityOfServiceLevel = qos,
 						});
-
-						//确保连接完成
-						this.EnsureConnect();
 
 						var result = await _client.SubscribeAsync(subscription, cancellation);
 					}
@@ -128,17 +131,73 @@ namespace Zongsoft.Messaging.Mqtt
 				await this.UnsubscribeAsync(topic);
 		}
 
-		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.TryRemove(topic, out var _) ?
-			new ValueTask(_client.UnsubscribeAsync(topic)) : ValueTask.CompletedTask;
+		internal ValueTask UnsubscribeAsync(string topic) => _subscribers.TryRemove(topic, out var _) ? new ValueTask(_client.UnsubscribeAsync(topic)) : ValueTask.CompletedTask;
 		#endregion
 
-		#region 接收处理
+		#region 发布方法
+		public string Produce(string topic, ReadOnlySpan<byte> data, MessageEnqueueOptions options = null)
+		{
+			var message = new MqttApplicationMessage()
+			{
+				Topic = topic,
+				PayloadSegment = data.ToArray(),
+				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
+			};
+
+			//确保连接完成
+			this.EnsureConnect();
+
+			try
+			{
+				if(!_client.IsConnected)
+					return null;
+
+				var result = _client.PublishAsync(message).GetAwaiter().GetResult();
+				return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+			}
+			catch(Exception ex)
+			{
+				Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+				return null;
+			}
+		}
+
+		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		{
+			var message = new MqttApplicationMessage()
+			{
+				Topic = topic,
+				PayloadSegment = data.ToArray(),
+				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
+			};
+
+			//确保连接完成
+			await this.EnsureConnectAsync(cancellation);
+
+			try
+			{
+				if(!_client.IsConnected)
+					return null;
+
+				var result = await _client.PublishAsync(message, cancellation);
+				return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+			}
+			catch(Exception ex)
+			{
+				Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+				return null;
+			}
+		}
+		#endregion
+
+		#region 事件处理
 		private async Task OnReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
 		{
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
-			var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.PayloadSegment.ToArray(), cancellation => new ValueTask(args.AcknowledgeAsync(cancellation)))
+			var data = args.ApplicationMessage.PayloadSegment.ToArray();
+			var message = new Message(args.ApplicationMessage.Topic, data, cancellation => { args.IsHandled = true; return new ValueTask(args.AcknowledgeAsync(cancellation)); })
 			{
 				Identity = args.ClientId
 			};
@@ -151,9 +210,21 @@ namespace Zongsoft.Messaging.Mqtt
 						await InvokeHandler(subscriber.Handler, message);
 				}
 
+				//设置处理完成标志
+				//args.IsHandled = true;
+
 				//没有异常则应答
-				await args.AcknowledgeAsync(CancellationToken.None);
+				//await args.AcknowledgeAsync(CancellationToken.None);
 			}
+
+			//static Task InvokeHandler(IHandler<Message> handler, Message message)
+			//{
+			//	return Task.Factory.StartNew(state =>
+			//	{
+			//		var token = (ValueTuple<IHandler<Message>, Message>)state;
+			//		return token.Item1.HandleAsync(token.Item2);
+			//	}, new ValueTuple<IHandler<Message>, Message>(handler, message));
+			//}
 
 			static async ValueTask InvokeHandler(IHandler<Message> handler, Message message)
 			{
@@ -173,67 +244,104 @@ namespace Zongsoft.Messaging.Mqtt
 
 		private async Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
 		{
-			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT-Disconnected");
+			var logger = Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>();
 
-			var result = await _client.ConnectAsync(_options);
-			if(result.ResultCode != MqttClientConnectResultCode.Success)
-				return;
+			logger.Error($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetDisconnectedMessage(args));
 
-			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT Reconnection OK!");
-
-			foreach(var subscribers in _subscribers.Values)
+			try
 			{
-				foreach(var subscriber in subscribers)
-				{
-					Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info($"MQTT subscriber:{subscriber.Topics[0]}");
+				_semaphore.WaitOne();
 
-					var subscription = new MqttClientSubscribeOptions();
-					subscription.TopicFilters.Add(new MqttTopicFilter()
+				if(_client.IsConnected)
+				{
+					logger.Error($"MQTT does not need to reconnect again because other threads have already reconnected successfully. (ThreadId:{Environment.CurrentManagedThreadId})");
+					return;
+				}
+
+				var result = await _client.ConnectAsync(_options);
+				if(result.ResultCode == MqttClientConnectResultCode.Success)
+					SpinWait.SpinUntil(() => _client.IsConnected);
+
+				if(result.ResultCode != MqttClientConnectResultCode.Success)
+				{
+					logger.Error($"MQTT Reconnected Failed. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetConnectResultInfo(result, false));
+					return;
+				}
+
+				logger.Error($"MQTT Reconnected Succeed. (ThreadId:{Environment.CurrentManagedThreadId})");
+
+				foreach(var subscribers in _subscribers.Values)
+				{
+					foreach(var subscriber in subscribers)
 					{
-						Topic = subscriber.Topics[0],
-						QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce,
-					});
-					await _client.SubscribeAsync(subscription);
+						logger.Error($"MQTT is ready to start resubscription:“{string.Join(',', subscriber.Topics)}”. (ThreadId:{Environment.CurrentManagedThreadId})");
+
+						var subscription = new MqttClientSubscribeOptions();
+						subscription.TopicFilters.Add(new MqttTopicFilter()
+						{
+							Topic = subscriber.Topics[0],
+							QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce,
+						});
+
+						var subscriptionResult = await _client.SubscribeAsync(subscription);
+						logger.Error($"MQTT resubscription complete. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetSubscribeResultInfo(subscriptionResult));
+					}
 				}
 			}
-
-			Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Info("MQTT Subscribers Final!");
-		}
-		#endregion
-
-		#region 发布方法
-		public string Produce(string topic, ReadOnlySpan<byte> data, MessageEnqueueOptions options = null)
-		{
-			var message = new MqttApplicationMessage()
+			finally
 			{
-				Topic = topic,
-				PayloadSegment = data.ToArray(),
-				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
-			};
+				_semaphore.Set();
+			}
 
-			//确保连接完成
-			this.EnsureConnect();
-
-			var result = _client.PublishAsync(message).GetAwaiter().GetResult();
-			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
-		}
-
-		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
-		{
-			var message = new MqttApplicationMessage()
+			static string GetDisconnectedMessage(MqttClientDisconnectedEventArgs args)
 			{
-				Topic = topic,
-				PayloadSegment = data.ToArray(),
-				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
-			};
+				if(args == null)
+					return string.Empty;
 
-			//确保连接完成
-			this.EnsureConnect();
+				return $"Reason: {args.Reason}({args.ReasonString})" + Environment.NewLine +
+					$"ClientWasConnected: {args.ClientWasConnected}" + Environment.NewLine +
+					$"Exception: {args.Exception}" + Environment.NewLine +
+					"Result: {" + Environment.NewLine +
+						GetConnectResultInfo(args.ConnectResult, true) + Environment.NewLine +
+					"}";
+			}
 
-			var result = await _client.PublishAsync(message, cancellation);
-			return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+			static string GetConnectResultInfo(MqttClientConnectResult result, bool indented)
+			{
+				if(result == null)
+					return string.Empty;
+
+				var indent = indented ? "\t" : string.Empty;
+
+				return $"{indent}ClientId: {result.AssignedClientIdentifier}" + Environment.NewLine +
+					$"{indent}ResultCode: {result.ResultCode}" + Environment.NewLine +
+					$"{indent}Reason: {result.ReasonString}" + Environment.NewLine +
+					$"{indent}IsSessionPresent: {result.IsSessionPresent}" + Environment.NewLine;
+			}
+
+			static string GetSubscribeResultInfo(MqttClientSubscribeResult result)
+			{
+				if(result == null)
+					return string.Empty;
+
+				var text = new StringBuilder($"PacketId: {result.PacketIdentifier}" + Environment.NewLine +
+					$"Reason: {result.ReasonString}" + Environment.NewLine +
+					$"Items:" + Environment.NewLine +
+					"{");
+
+				if(result.Items != null && result.Items.Count > 0)
+				{
+					foreach(var item in result.Items)
+					{
+						text.AppendLine($"\tResultCode:{item.ResultCode}, Topic:{item.TopicFilter?.Topic}");
+					}
+				}
+
+				text.Append('}');
+				return text.ToString();
+			}
 		}
-		#endregion
+#endregion
 
 		#region 重写方法
 		public override string ToString()
@@ -244,17 +352,51 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 私有方法
-		private MqttClientConnectResult EnsureConnect()
+		private void EnsureConnect()
 		{
 			if(_client.IsConnected)
-				return null;
+				return;
 
-			lock(this)
+			try
 			{
-				if(_client.IsConnected)
-					return null;
+				_semaphore.WaitOne();
 
-				return _client.ConnectAsync(_options).GetAwaiter().GetResult();
+				if(_client.IsConnected)
+					return;
+
+				var result = _client.ConnectAsync(_options).GetAwaiter().GetResult();
+				if(result.ResultCode == MqttClientConnectResultCode.Success)
+					SpinWait.SpinUntil(() => _client.IsConnected);
+			}
+			finally
+			{
+				_semaphore.Set();
+			}
+		}
+
+		private async ValueTask EnsureConnectAsync(CancellationToken cancellation)
+		{
+			if(_client.IsConnected)
+				return;
+
+			try
+			{
+				_semaphore.WaitOne();
+
+				if(_client.IsConnected)
+					return;
+
+				var result = await _client.ConnectAsync(_options, cancellation);
+				if(result.ResultCode == MqttClientConnectResultCode.Success)
+					SpinWait.SpinUntil(() => _client.IsConnected);
+			}
+			catch(InvalidOperationException ex)
+			{
+				SpinWait.SpinUntil(() => _client.IsConnected);
+			}
+			finally
+			{
+				_semaphore.Set();
 			}
 		}
 		#endregion
@@ -266,11 +408,11 @@ namespace Zongsoft.Messaging.Mqtt
 
 			if(client != null)
 			{
-				client.ApplicationMessageReceivedAsync -= OnReceivedAsync;
-				client.DisconnectedAsync -= OnDisconnectedAsync;
-
-				client.Dispose();
+				client.ApplicationMessageReceivedAsync -= this.OnReceivedAsync;
+				client.DisconnectedAsync -= this.OnDisconnectedAsync;
 			}
+
+			client.Dispose();
 		}
 		#endregion
 	}
