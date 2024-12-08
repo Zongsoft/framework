@@ -136,7 +136,7 @@ public class EventExchanger : WorkerBase
 			throw new InvalidOperationException($"Missing required message queue.");
 
 		//订阅消息队列中的事件主题
-		_subscriber = await _queue.SubscribeAsync(this.Options.Topic, _handler, cancellation);
+		_subscriber = await _queue.SubscribeAsync(this.Options.Topic, _handler, new MessageSubscribeOptions(_options.Reliability), cancellation);
 	}
 
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)

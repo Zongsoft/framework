@@ -59,10 +59,11 @@ namespace Zongsoft.Messaging.Mqtt
 
 			return new MqttClientOptionsBuilder()
 				.WithClientId(clientId)
-				.WithCleanStart(false)
 				.WithCleanSession(false)
+				.WithCleanStart(false)
+				.WithSessionExpiryInterval(ushort.MaxValue)
 				.WithTcpServer(settings.Server)
-				.WithKeepAlivePeriod(TimeSpan.FromSeconds(10))
+				.WithKeepAlivePeriod(TimeSpan.FromSeconds(30))
 				.WithCredentials(settings.UserName, settings.Password)
 				.WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
 				.Build();
