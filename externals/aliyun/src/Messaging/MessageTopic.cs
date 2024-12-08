@@ -40,7 +40,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Aliyun.Messaging
 {
-	public class MessageTopic : MessageQueueBase
+	public class MessageTopic : MessageQueueBase<MessageTopic.Consumer>
 	{
 		#region 常量定义
 		private readonly string MESSAGE_SEND_URL;
@@ -66,10 +66,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
-		{
-			return ValueTask.FromResult<IMessageConsumer>(null);
-		}
+		protected override ValueTask<bool> OnSubscribeAsync(Consumer subscriber, CancellationToken cancellation = default) => ValueTask.FromResult(true);
+		protected override Consumer CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new(this, topic, handler, options);
 		#endregion
 
 		#region 发送消息
@@ -108,6 +106,13 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 			if(http != null)
 				http.Dispose();
+		}
+		#endregion
+
+		#region 嵌套子类
+		public class Consumer(MessageTopic queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<MessageTopic>(queue, topic, handler, options)
+		{
+			protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
 		}
 		#endregion
 	}

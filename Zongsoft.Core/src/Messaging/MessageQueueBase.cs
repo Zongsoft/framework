@@ -31,6 +31,9 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
@@ -38,19 +41,21 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageQueueBase : IMessageQueue
+	public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubscriber : class, IMessageConsumer
 	{
 		#region 构造函数
 		protected MessageQueueBase(string name, IConnectionSettings connectionSettings = null)
 		{
 			this.Name = name ?? string.Empty;
 			this.ConnectionSettings = connectionSettings;
+			this.Subscribers = new SubscriberCollection();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
 		public IConnectionSettings ConnectionSettings { get; set; }
+		public SubscriberCollection Subscribers { get; }
 		#endregion
 
 		#region 生产方法
@@ -82,40 +87,60 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 订阅方法
-		public ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(null, null, new HandlerAdapter(handler), null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(Action<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(null, null, new HandlerAdapter(handler), null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(null, null, new HandlerAdapter(handler), options, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(null, null, handler, null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(null, null, handler, options, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, Action<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, new HandlerAdapter(handler), null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, new HandlerAdapter(handler), options, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation) =>await this.SubscribeAsync(topic, null, handler, null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, handler, options, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, Action<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), options, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, IHandler<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, handler, null, cancellation);
+		async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, handler, options, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(null, null, new HandlerAdapter(handler), options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(null, null, new HandlerAdapter(handler), null, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(null, null, new HandlerAdapter(handler), options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(null, null, handler, null, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(null, null, handler, options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, Action<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(topic, null, new HandlerAdapter(handler), null, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topic, null, new HandlerAdapter(handler), options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(topic, null, handler, null, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topic, null, handler, options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, Action<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), null, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), options, cancellation);
+		public ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, IHandler<Message> handler, CancellationToken cancellation = default) => this.SubscribeAsync(topic, tags, handler, null, cancellation);
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(null, null, handler, null, cancellation);
+		public async ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		{
+			//确保主题不为空
+			topic ??= string.Empty;
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(null, null, handler, options, cancellation);
+			if(this.Subscribers.TryGetValue(topic, out var subscriber))
+				return subscriber;
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, null, new HandlerAdapter(handler), null, cancellation);
+			if(this.Subscribers.TryAdd(topic, subscriber = this.CreateSubscriber(topic, tags, handler, options)))
+			{
+				//执行订阅操作，如果订阅成功则挂载其订阅取消事件
+				if(await this.OnSubscribeAsync(subscriber, cancellation))
+					subscriber.Unsubscribed += OnUnsubscribed;
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, null, new HandlerAdapter(handler), options, cancellation);
+				//返回新建的订阅者
+				return subscriber;
+			}
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, null, handler, null, cancellation);
+			return this.Subscribers.TryGetValue(topic, out subscriber) ? subscriber : default;
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, null, handler, options, cancellation);
+			void OnUnsubscribed(object sender, EventArgs args)
+			{
+				if(sender is IMessageConsumer subscriber && subscriber.Topic != null)
+					this.Subscribers.Remove(subscriber.Topic, out _);
+			}
+		}
 
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, Action<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, tags, new HandlerAdapter(handler), null, cancellation);
-
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, tags, new HandlerAdapter(handler), options, cancellation);
-
-		public ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, CancellationToken cancellation = default) =>
-			this.SubscribeAsync(topics, tags, handler, null, cancellation);
-
-		public abstract ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+		protected abstract ValueTask<bool> OnSubscribeAsync(TSubscriber subscriber, CancellationToken cancellation = default);
+		protected abstract TSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options);
 		#endregion
 
 		#region 资源释放
@@ -129,7 +154,33 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 嵌套子类
-		private class HandlerAdapter(Action<Message> handler) : HandlerBase<Message>
+		public sealed class SubscriberCollection : IReadOnlyCollection<TSubscriber>
+		{
+			#region 成员字段
+			private readonly ConcurrentDictionary<string, TSubscriber> _subscribers = new();
+			#endregion
+
+			#region 公共属性
+			public int Count => _subscribers.Count;
+			public TSubscriber this[string topic] => _subscribers[topic];
+			#endregion
+
+			#region 公共方法
+			public bool TryGetValue(string topic, out TSubscriber subscriber) => _subscribers.TryGetValue(topic, out subscriber);
+			#endregion
+
+			#region 内部方法
+			internal bool TryAdd(string topic, TSubscriber subscriber) => _subscribers.TryAdd(topic, subscriber);
+			internal bool Remove(string topic, out TSubscriber subscriber) => _subscribers.TryRemove(topic, out subscriber);
+			#endregion
+
+			#region 枚举遍历
+			public IEnumerator<TSubscriber> GetEnumerator() => _subscribers.Values.GetEnumerator();
+			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+			#endregion
+		}
+
+		private sealed class HandlerAdapter(Action<Message> handler) : HandlerBase<Message>
 		{
 			private readonly Action<Message> _handler = handler ?? throw new ArgumentNullException(nameof(handler));
 

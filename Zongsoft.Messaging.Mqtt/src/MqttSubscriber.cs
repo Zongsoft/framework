@@ -28,46 +28,35 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttSubscriber : MessageConsumerBase, IEquatable<MqttSubscriber>
+	public class MqttSubscriber : MessageConsumerBase<MqttQueue>, IEquatable<MqttSubscriber>
 	{
 		#region 构造函数
-		public MqttSubscriber(MqttQueue queue, string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, tags, options, handler)
+		public MqttSubscriber(MqttQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 		{
-			this.Queue = queue ?? throw new ArgumentNullException(nameof(queue));
+			this.Subscription = new();
 		}
 		#endregion
 
-		#region 公共属性
-		public MqttQueue Queue { get; }
+		#region 内部属性
+		internal MQTTnet.Client.MqttClientSubscribeOptions Subscription { get; }
 		#endregion
 
-		#region 订阅方法
-		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
-
-		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.CompletedTask;
-		protected override async ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
-		{
-			foreach(var topic in topics)
-			{
-				await this.Queue.UnsubscribeAsync(topic);
-			}
-		}
+		#region 取消订阅
+		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
 		#endregion
 
 		#region 重写方法
-		public bool Equals(MqttSubscriber other) => string.Equals(this.Topics, other.Topics) && string.Equals(this.Tags, other.Tags);
+		public bool Equals(MqttSubscriber other) => string.Equals(this.Topic, other.Topic);
 		public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
-		public override int GetHashCode() => HashCode.Combine(this.Queue, this.Topics, this.Tags);
-		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topics}:{string.Join(',', this.Tags)}" : string.Join(',', this.Topics);
+		public override int GetHashCode() => HashCode.Combine(this.Queue, this.Topic);
+		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topic}:{string.Join(',', this.Tags)}" : this.Topic;
 		#endregion
 	}
 }

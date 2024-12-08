@@ -39,7 +39,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis.Messaging
 {
-	public class RedisQueue : MessageQueueBase
+	public class RedisQueue : MessageQueueBase<RedisSubscriber>
 	{
 		#region 成员字段
 		private IDatabase _database;
@@ -67,11 +67,14 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 订阅方法
-		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		protected override ValueTask<bool> OnSubscribeAsync(RedisSubscriber subscriber, CancellationToken cancellation = default)
 		{
-			var subscriber = new RedisSubscriber(this, topics, handler, options);
-			await subscriber.SubscribeAsync(cancellation);
-			return subscriber;
+			return subscriber.SubscribeAsync(cancellation);
+		}
+
+		protected override RedisSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+		{
+			return new(this, topic, handler, options);
 		}
 		#endregion
 

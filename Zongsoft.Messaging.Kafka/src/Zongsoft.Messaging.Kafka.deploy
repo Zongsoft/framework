@@ -2,7 +2,7 @@ artifacts/Zongsoft.Messaging.Kafka.plugin
 artifacts/Zongsoft.Messaging.Kafka.option
 lib/$(Framework)/Zongsoft.Messaging.Kafka.*
 
-nuget:Confluent.Kafka@1.9.3
+nuget:Confluent.Kafka@2.6.1
 
 nuget:LibrdKafka.Redist/runtimes/linux-$(architecture)/native/*.dll  <platform:linux>
 nuget:LibrdKafka.Redist/runtimes/win-$(architecture)/native/*.dll    <platform:windows>

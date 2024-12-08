@@ -38,16 +38,18 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Kafka
 {
-	public class KafkaQueue : MessageQueueBase
+	public class KafkaQueue : MessageQueueBase<KafkaSubscriber>
 	{
 		#region 成员字段
 		private IProducer<Null, byte[]> _producer;
+		private ConsumerBuilder<string, byte[]> _builder;
 		#endregion
 
 		#region 构造函数
 		public KafkaQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 		{
 			_producer = new ProducerBuilder<Null, byte[]>(KafkaUtility.GetProducerOptions(connectionSettings)).Build();
+			_builder = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(this.ConnectionSettings));
 		}
 		#endregion
 
@@ -63,11 +65,15 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 订阅方法
-		public override async ValueTask<IMessageConsumer> SubscribeAsync(string topics, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		protected override ValueTask<bool> OnSubscribeAsync(KafkaSubscriber subscriber, CancellationToken cancellation = default)
 		{
-			var subscriber = new KafkaSubscriber(this, topics, handler, options);
-			await subscriber.SubscribeAsync(cancellation);
-			return subscriber;
+			subscriber.Subscribe(_builder.Build());
+			return ValueTask.FromResult(true);
+		}
+
+		protected override KafkaSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+		{
+			return new KafkaSubscriber(this, topic, handler, options);
 		}
 		#endregion
 
@@ -75,9 +81,10 @@ namespace Zongsoft.Messaging.Kafka
 		protected override void Dispose(bool disposing)
 		{
 			var producer = Interlocked.Exchange(ref _producer, null);
-
 			if(producer != null)
 				producer.Dispose();
+
+			_builder = null;
 		}
 		#endregion
 	}

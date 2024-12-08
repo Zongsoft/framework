@@ -28,51 +28,44 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Confluent.Kafka;
 
 namespace Zongsoft.Messaging.Kafka
 {
-	internal class KafkaSubscriber : MessageConsumerBase
+	public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	{
+		#region 成员字段
 		private Poller _poller;
 		private IConsumer<string, byte[]> _consumer;
+		#endregion
 
-		public KafkaSubscriber(KafkaQueue queue, string topics, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(topics, null, options, handler)
+		#region 构造函数
+		public KafkaSubscriber(KafkaQueue queue, string topic, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 		{
-			if(queue == null)
-				throw new ArgumentNullException(nameof(queue));
-
 			_consumer = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(queue.ConnectionSettings)).Build();
 			_poller = new Poller(this);
 		}
+		#endregion
 
-		internal ValueTask SubscribeAsync(CancellationToken cancellation) => base.SubscribeAsync(this.Topics, cancellation);
-
-		protected override ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation)
-		{
-			if(topics != null && topics.Any())
-			{
-				if(topics.Count() > 1 || topics.First() != "*")
-					throw new NotSupportedException($"This message queue does not support unsubscribing to specified topics.");
-			}
-
-			_consumer.Subscribe(topics);
-			return ValueTask.CompletedTask;
-		}
-
-		protected override ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation)
+		#region 重写方法
+		protected override void OnUnsubscribed() => _poller.Stop();
+		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
 		{
 			_consumer.Unsubscribe();
 			return ValueTask.CompletedTask;
 		}
+		#endregion
 
-		protected override void OnSubscribed() => _poller?.Start();
-		protected override void OnUnsubscribed() => _poller?.Stop();
+		#region 内部方法
+		internal void Subscribe(IConsumer<string, byte[]> consumer)
+		{
+			_consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
+			_consumer.Subscribe(this.Topic);
+			_poller.Start();
+		}
 
 		internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 		{
@@ -103,21 +96,25 @@ namespace Zongsoft.Messaging.Kafka
 				Timestamp = result.Message.Timestamp.UtcDateTime,
 			};
 		}
+		#endregion
 
+		#region 处置方法
 		protected override void Dispose(bool disposing)
 		{
+			var consumer = Interlocked.Exchange(ref _consumer, null);
+			if(consumer != null)
+				consumer.Dispose();
+
 			var poller = Interlocked.Exchange(ref _poller, null);
 			if(poller != null)
 				poller.Dispose();
 
 			base.Dispose(disposing);
-
-			var consumer = Interlocked.Exchange(ref _consumer, null);
-			if(consumer != null)
-				consumer.Dispose();
 		}
+		#endregion
 
-		private class Poller(KafkaSubscriber subscriber) : MessagePollerBase
+		#region 嵌套子类
+		private sealed class Poller(KafkaSubscriber subscriber) : MessagePollerBase
 		{
 			private KafkaSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 
@@ -130,5 +127,6 @@ namespace Zongsoft.Messaging.Kafka
 				_subscriber = null;
 			}
 		}
+		#endregion
 	}
 }

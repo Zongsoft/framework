@@ -28,180 +28,76 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageConsumerBase : IMessageConsumer
+	public abstract class MessageConsumerBase<TQueue> : IMessageConsumer where TQueue : IMessageQueue
 	{
+		#region 事件定义
+		public event EventHandler<EventArgs> Unsubscribed;
+		#endregion
+
 		#region 成员字段
-		private bool _subscribed;
-		private string[] _topics;
-		private string[] _tags;
 		private IHandler<Message> _handler;
-		private MessageSubscribeOptions _options;
+		private volatile int _unsubscribed;
 		#endregion
 
 		#region 构造函数
-		protected MessageConsumerBase(IHandler<Message> handler, MessageSubscribeOptions options = null)
+		protected MessageConsumerBase(TQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : this(queue, null, [], handler, options) { }
+		protected MessageConsumerBase(TQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : this(queue, topic, [], handler, options) { }
+		protected MessageConsumerBase(TQueue queue, string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options = null) : this(queue, topic, Slice(tags), handler, options) { }
+		protected MessageConsumerBase(TQueue queue, string topic, string[] tags, IHandler<Message> handler, MessageSubscribeOptions options = null)
 		{
-			_handler = handler;
-			_options = options;
-		}
-
-		protected MessageConsumerBase(string topics, string tags, IHandler<Message> handler = null) : this(topics, tags, null, handler) { }
-		protected MessageConsumerBase(string topics, string tags, MessageSubscribeOptions options, IHandler<Message> handler = null)
-		{
-			_topics = Slice(topics);
-			_tags = Slice(tags);
-			_options = options;
-			_handler = handler;
-		}
-
-		protected MessageConsumerBase(IEnumerable<string> topics, string tags, IHandler<Message> handler = null) : this(topics, tags, null, handler) { }
-		protected MessageConsumerBase(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, IHandler<Message> handler = null)
-		{
-			_topics = topics == null ? [] : topics.ToArray();
-			_tags = tags.Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-			_options = options;
+			this.Queue = queue ?? throw new ArgumentNullException(nameof(queue));
+			this.Topic = topic;
+			this.Tags = tags;
+			this.Options = options;
 			_handler = handler;
 		}
 		#endregion
 
 		#region 公共属性
-		public string[] Topics
-		{
-			get => _topics;
-			protected set
-			{
-				if(_subscribed)
-					throw new InvalidOperationException();
-
-				_topics = value;
-			}
-		}
-
-		public string[] Tags
-		{
-			get => _tags;
-			protected set
-			{
-				if(_subscribed)
-					throw new InvalidOperationException();
-
-				_tags = value;
-			}
-		}
-
-		public IHandler<Message> Handler
-		{
-			get => _handler;
-			protected set
-			{
-				if(_subscribed)
-					throw new InvalidOperationException();
-
-				_handler = value;
-			}
-		}
-
-		public MessageSubscribeOptions Options
-		{
-			get => _options;
-			protected set
-			{
-				if(_subscribed)
-					throw new InvalidOperationException();
-
-				_options = value;
-			}
-		}
-
-		public bool IsSubscribed => _subscribed;
+		public string Topic { get; }
+		public string[] Tags { get; }
+		public IHandler<Message> Handler => _handler;
+		public MessageSubscribeOptions Options { get; }
+		public bool IsUnsubscribed => _unsubscribed != 0;
 		#endregion
 
-		#region 订阅方法
-		protected ValueTask SubscribeAsync(string topics, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, null, cancellation);
-		protected ValueTask SubscribeAsync(string topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, null, cancellation);
-		protected ValueTask SubscribeAsync(string topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), null, options, cancellation);
-		protected ValueTask SubscribeAsync(string topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(Slice(topics), tags, options, cancellation);
-		protected ValueTask SubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, null, cancellation);
-		protected ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, CancellationToken cancellation = default) => this.SubscribeAsync(topics, tags, null, cancellation);
-		protected ValueTask SubscribeAsync(IEnumerable<string> topics, MessageSubscribeOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(topics, null, options, cancellation);
-		protected async ValueTask SubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation = default)
+		#region 保护属性
+		protected TQueue Queue { get; }
+		#endregion
+
+		#region 取消订阅
+		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
 		{
-			if(topics == null || !topics.Any())
-				topics = _topics;
-
-			//尝试取消原有订阅
-			await this.UnsubscribeAsync(topics, cancellation);
-
-			//执行订阅操作
-			await this.OnSubscribeAsync(topics, tags, options, cancellation);
-
-			//更新当前的订阅主题
-			_topics = topics == null ? Array.Empty<string>() : topics.ToArray();
-			//更新当前的订阅设置
-			_options = options;
-
-			//更新订阅标记(已订阅)
-			_subscribed = true;
-
-			//通知订阅完成
-			this.OnSubscribed();
-		}
-
-		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default) => this.UnsubscribeAsync(this.Topics, cancellation);
-		public ValueTask UnsubscribeAsync(string topics, CancellationToken cancellation = default) => this.UnsubscribeAsync(Slice(topics), cancellation);
-		public ValueTask UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default)
-		{
-			if(!_subscribed)
+			var unsubscribed = Interlocked.CompareExchange(ref _unsubscribed, 1, 0);
+			if(unsubscribed != 0)
 				return ValueTask.CompletedTask;
 
-			//取消所有订阅
-			var task = this.OnUnsubscribeAsync(topics, cancellation);
+			//执行取消订阅
+			var task = this.OnUnsubscribeAsync(cancellation);
 
 			//更新订阅标记(未订阅)
 			if(task.IsCompletedSuccessfully)
-				this.OnUnsubscribed(topics);
+				this.OnUnsubscribed();
 			else
 				task.AsTask().ContinueWith(t =>
 				{
 					if(t.IsCompletedSuccessfully)
-						this.OnUnsubscribed(topics);
+						this.OnUnsubscribed();
 				}, cancellation);
 
 			return task;
 		}
 
-		protected virtual void OnSubscribed() { }
-		protected abstract ValueTask OnSubscribeAsync(IEnumerable<string> topics, string tags, MessageSubscribeOptions options, CancellationToken cancellation);
-
-		protected virtual void OnUnsubscribed() { }
-		protected abstract ValueTask OnUnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation);
-
-		private void OnUnsubscribed(IEnumerable<string> topics)
-		{
-			if(topics == null || !topics.Any() || object.ReferenceEquals(topics, _topics))
-				_topics = null;
-			else
-				_topics = _topics?.Except(topics).ToArray();
-
-			if(_topics == null || _topics.Length == 0)
-			{
-				_tags = null;
-				_subscribed = false;
-
-				//通知子类所有订阅已全部取消
-				this.OnUnsubscribed();
-			}
-		}
+		protected virtual void OnUnsubscribed() => this.Unsubscribed?.Invoke(this, EventArgs.Empty);
+		protected abstract ValueTask OnUnsubscribeAsync(CancellationToken cancellation);
 		#endregion
 
 		#region 私有方法
@@ -224,7 +120,7 @@ namespace Zongsoft.Messaging
 				return;
 
 			if(disposing)
-				this.UnsubscribeAsync().AsTask().Wait();
+				this.UnsubscribeAsync().AsTask().ConfigureAwait(false);
 		}
 		#endregion
 	}

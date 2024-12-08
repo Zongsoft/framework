@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Components;
 
@@ -41,15 +40,19 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public interface IMessageConsumer : IDisposable
 	{
+		#region 事件定义
+		event EventHandler<EventArgs> Unsubscribed;
+		#endregion
+
 		#region 属性定义
 		/// <summary>获取订阅的消息主题。</summary>
-		string[] Topics { get; }
+		string Topic { get; }
 
 		/// <summary>获取订阅的过滤标签。</summary>
 		string[] Tags { get; }
 
-		/// <summary>获取一个值，指示消费者是否已订阅完成。</summary>
-		bool IsSubscribed { get; }
+		/// <summary>获取一个值，指示消费者是否已取消订阅。</summary>
+		bool IsUnsubscribed { get; }
 
 		/// <summary>获取消息处理器。</summary>
 		IHandler<Message> Handler { get; }
@@ -59,22 +62,10 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 订阅方法
-		/// <summary>取消所有订阅。</summary>
+		/// <summary>取消当前的订阅。</summary>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回的取消订阅异步操作任务。</returns>
 		ValueTask UnsubscribeAsync(CancellationToken cancellation = default);
-
-		/// <summary>取消订阅消息主题。</summary>
-		/// <param name="topics">指定要取消订阅的消息主题（多个主题之间以分号分隔），如果为空则表示取消所有订阅。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回的取消订阅异步操作任务。</returns>
-		ValueTask UnsubscribeAsync(string topics, CancellationToken cancellation = default);
-
-		/// <summary>取消订阅消息主题。</summary>
-		/// <param name="topics">指定要取消订阅的消息主题集，如果为空则表示取消所有订阅。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回的取消订阅异步操作任务。</returns>
-		ValueTask UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellation = default);
 		#endregion
 	}
 }
