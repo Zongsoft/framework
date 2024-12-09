@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Messaging">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="ZeroMQ" driver="ZeroMQ"
+			                   value="server=127.0.0.1;port=12345;" />
+		</connectionSettings>
+	</option>
+</options>

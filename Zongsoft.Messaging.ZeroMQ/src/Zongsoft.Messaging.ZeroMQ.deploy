@@ -1,0 +1,5 @@
+artifacts/Zongsoft.Messaging.ZeroMQ.plugin
+artifacts/Zongsoft.Messaging.ZeroMQ.option
+lib/$(Framework)/Zongsoft.Messaging.ZeroMQ.*
+
+nuget:NetMQ@4.0.1.13
