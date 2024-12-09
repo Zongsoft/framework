@@ -65,7 +65,8 @@ public class EventExchanger : WorkerBase
 	#endregion
 
 	#region 构造函数
-	public EventExchanger(EventExchangerOptions options = null) : this(null, options) { }
+	public EventExchanger() : this(null, null) { }
+	public EventExchanger(EventExchangerOptions options) : this(null, options) { }
 	public EventExchanger(IMessageQueue queue, EventExchangerOptions options = null)
 	{
 		_queue = queue;
