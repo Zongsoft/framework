@@ -10,7 +10,7 @@ namespace Zongsoft.Components.Samples;
 
 public class EventExchangerSample
 {
-	private readonly string CONNECTION_STRING = $"server=121.41.239.123;username=program;password=Program@2025!MQTT;client=Zongsoft.Sample#{Random.Shared.Next():X}";
+	private readonly string CONNECTION_STRING = $"server=192.168.2.200;username=program;password=Yuanshan.MQTT@2024;client=Zongsoft.Sample#{Random.Shared.Next():X}";
 
 	private volatile int _count;
 	private readonly Handler _handler;
