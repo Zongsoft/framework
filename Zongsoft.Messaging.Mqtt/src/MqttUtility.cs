@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using MQTTnet.Client;
 using MQTTnet.Protocol;
@@ -62,7 +60,7 @@ namespace Zongsoft.Messaging.Mqtt
 				.WithCleanSession(false)
 				.WithCleanStart(false)
 				.WithSessionExpiryInterval(ushort.MaxValue)
-				.WithTcpServer(settings.Server)
+				.WithTcpServer(settings.Server, settings.Port > 0 ? settings.Port : null)
 				.WithKeepAlivePeriod(TimeSpan.FromSeconds(30))
 				.WithCredentials(settings.UserName, settings.Password)
 				.WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)

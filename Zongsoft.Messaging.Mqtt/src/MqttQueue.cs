@@ -117,7 +117,7 @@ namespace Zongsoft.Messaging.Mqtt
 			{
 				Topic = topic,
 				PayloadSegment = data.ToArray(),
-				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtMostOnce : options.Reliability.ToQoS(),
+				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtLeastOnce : options.Reliability.ToQoS(),
 			};
 
 			//确保连接完成
@@ -177,7 +177,7 @@ namespace Zongsoft.Messaging.Mqtt
 		{
 			var logger = Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>();
 
-			logger.Error($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetDisconnectedMessage(args));
+			logger.Error($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetDisconnectedInfo(args));
 
 			try
 			{
@@ -213,7 +213,7 @@ namespace Zongsoft.Messaging.Mqtt
 				_semaphore.Set();
 			}
 
-			static string GetDisconnectedMessage(MqttClientDisconnectedEventArgs args)
+			static string GetDisconnectedInfo(MqttClientDisconnectedEventArgs args)
 			{
 				if(args == null)
 					return string.Empty;
