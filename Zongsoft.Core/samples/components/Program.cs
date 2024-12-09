@@ -33,7 +33,7 @@ internal class Program
 				case "exit":
 					return;
 				case "info":
-					Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, $"#{sample.Exchanger.Identifier} {sample.Exchanger.Queue.ConnectionSettings}");
+					Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, $"#{sample.Exchanger.Identifier}@{sample.Exchanger.Options.Topic} {sample.Exchanger.Queue.ConnectionSettings}");
 					break;
 				case "clear":
 					Console.Clear();

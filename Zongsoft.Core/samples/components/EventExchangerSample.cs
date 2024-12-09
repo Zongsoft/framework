@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace Zongsoft.Components.Samples;
 
 public class EventExchangerSample
 {
-	private readonly string CONNECTION_STRING = $"server=192.168.2.200;username=program;password=Yuanshan.MQTT@2024;client=Zongsoft.Sample#{Random.Shared.Next():X}";
+	private readonly string CONNECTION_STRING = $"server=192.168.2.200;port=5010;client=Zongsoft.Sample#{Random.Shared.Next():X}";
 
 	private volatile int _count;
 	private readonly Handler _handler;
@@ -22,7 +23,7 @@ public class EventExchangerSample
 		var queue = new MqttQueue("Mqtt", new ConnectionSettings("Mqtt", CONNECTION_STRING));
 
 		//创建事件交换器
-		this.Exchanger = new EventExchanger(queue, new EventExchangerOptions("Events"));
+		this.Exchanger = new EventExchanger(queue, new EventExchangerOptions("Samples/Events"));
 
 		this.Exchanger.Locator = (e) =>
 		{
@@ -47,6 +48,9 @@ public class EventExchangerSample
 
 	public ValueTask<bool> RaiseAsync(int round, int quantity, CancellationToken cancellation = default)
 	{
+		var stopwatch = new Stopwatch();
+		stopwatch.Start();
+
 		var result = Parallel.For(0, round > 0 ? round : int.MaxValue, new ParallelOptions { CancellationToken = cancellation }, async (index, state) =>
 		{
 			var meter = new Models.Meter($"Meter#{Interlocked.Increment(ref _count)}", $"Code#{Random.Shared.NextInt64()}");
@@ -57,6 +61,7 @@ public class EventExchangerSample
 			await Module.Current.Events.Acquirer.OnAcquiredAsync(meter, Parameters.Parameter("Exchanger", this.Exchanger.Identifier));
 		});
 
+		Console.WriteLine($"Elapsed: {stopwatch.Elapsed}");
 		return ValueTask.FromResult(result.IsCompleted);
 	}
 
