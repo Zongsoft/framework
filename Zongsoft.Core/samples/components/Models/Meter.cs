@@ -54,7 +54,9 @@ public partial struct Meter : IEquatable<Meter>
 	public bool Equals(Meter other) => string.Equals(this.Key, other.Key);
 	public override bool Equals(object obj) => obj is Meter other && this.Equals(other);
 	public override int GetHashCode() => string.IsNullOrEmpty(this.Key) ? 0 : this.Key.GetHashCode();
-	public override string ToString() => $"{this.Key}({this.Metrics.Count})";
+	public override string ToString() => string.IsNullOrEmpty(this.Code) ?
+		$"{this.Key}({this.Metrics.Count})@{this.Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}" :
+		$"{this.Key}|{this.Code}({this.Metrics.Count})@{this.Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}";
 	#endregion
 
 	#region 重写符号

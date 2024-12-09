@@ -37,7 +37,9 @@ partial struct Meter
 		public bool Equals(Metric other) => string.Equals(this.Key, other.Key);
 		public override bool Equals(object obj) => obj is Metric other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Key);
-		public override string ToString() => $"{this.Key}={this.Value}";
+		public override string ToString() => string.IsNullOrEmpty(this.Code) ?
+			$"{this.Key}={this.Value}" :
+			$"{this.Key}|{this.Code}={this.Value}";
 		#endregion
 
 		#region 重写符号

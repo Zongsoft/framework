@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,8 +21,17 @@ public class EventExchangerSample
 		//创建MQTT消息队列
 		var queue = new MqttQueue("Mqtt", new ConnectionSettings("Mqtt", CONNECTION_STRING));
 
-		//创建消息交换器并将其添加到应用上下文的工作者集合中
-		ApplicationContext.Current.Workers.Add(this.Exchanger = new EventExchanger(queue, new EventExchangerOptions("Samples/Events")));
+		//创建事件交换器
+		this.Exchanger = new EventExchanger(queue, new EventExchangerOptions("Events"));
+
+		this.Exchanger.Locator = (e) =>
+		{
+			var descriptor = Events.GetEvent($"{nameof(Module.Current.Events.Acquirer)}.{nameof(Module.EventRegistry.AcquirerEvent.Acquired)}", out var registry);
+			return (registry, descriptor);
+		};
+
+		//将事件交换器添加到应用上下文的工作者集合中
+		ApplicationContext.Current.Workers.Add(this.Exchanger);
 
 		//挂载事件处理程序
 		Module.Current.Events.Register($"{nameof(Module.Current.Events.Acquirer)}.{nameof(Module.EventRegistry.AcquirerEvent.Acquired)}", _handler = new Handler(this.Exchanger));
@@ -67,8 +77,23 @@ public class EventExchangerSample
 				return ValueTask.CompletedTask;
 			}
 
-			Console.WriteLine($"{count} : {argument}");
+			var text = new StringBuilder($"Received#{count} : {argument}");
+			FillMeterInfo(text, argument.Metrics);
+			Console.WriteLine(text.ToString());
+
 			return ValueTask.CompletedTask;
+		}
+
+		private static void FillMeterInfo(StringBuilder text, Models.Meter.MetricCollection metrics)
+		{
+			if(metrics == null || metrics.Count == 0)
+				return;
+
+			for(int i= 0; i<metrics.Count; i++)
+			{
+				text.AppendLine();
+				text.Append($"  [{i + 1}]{metrics[i]}");
+			}
 		}
 	}
 }

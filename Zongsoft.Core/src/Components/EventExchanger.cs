@@ -62,6 +62,7 @@ public class EventExchanger : WorkerBase
 	private EventExchangerOptions _options;
 	private IMessageQueue _queue;
 	private IMessageConsumer _subscriber;
+	private Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> _locator;
 	#endregion
 
 	#region 构造函数
@@ -70,9 +71,10 @@ public class EventExchanger : WorkerBase
 	public EventExchanger(IMessageQueue queue, EventExchangerOptions options = null)
 	{
 		_queue = queue;
-		_options = options;
+		_options = options ?? new();
 		_identifier = Randomizer.GenerateUInt32();
-		_handler = new Handler(_identifier);
+		_locator = Locate;
+		_handler = new Handler(this);
 	}
 	#endregion
 
@@ -91,8 +93,15 @@ public class EventExchanger : WorkerBase
 	/// <summary>获取或设置进行事件交换器的设置选项。</summary>
 	public EventExchangerOptions Options
 	{
-		get => _options ??= new();
+		get => _options;
 		set => _options = value ?? throw new ArgumentNullException(nameof(value));
+	}
+
+	/// <summary>获取或设置事件处理程序定位器。</summary>
+	public Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> Locator
+	{
+		get => _locator;
+		set => _locator = value ?? Locate;
 	}
 	#endregion
 
@@ -127,6 +136,14 @@ public class EventExchanger : WorkerBase
 		var ticket = new ExchangingTicket(_identifier, context.QualifiedName, Events.Marshaler.Marshal(context));
 		var json = await Serializer.Json.SerializeAsync(ticket, null, cancellation);
 		await queue.ProduceAsync(this.Options.Topic, Encoding.UTF8.GetBytes(json), reliability, cancellation);
+	}
+	#endregion
+
+	#region 事件定位
+	private static (EventRegistryBase Registry, EventDescriptor Descriptor) Locate(string qualifiedName)
+	{
+		var descriptor = Events.GetEvent(qualifiedName, out var registry);
+		return (registry, descriptor);
 	}
 	#endregion
 
@@ -220,9 +237,9 @@ public class EventExchanger : WorkerBase
 		#endregion
 	}
 
-	private sealed class Handler(uint identifier) : HandlerBase<Message>
+	private sealed class Handler(EventExchanger exchanger) : HandlerBase<Message>
 	{
-		private readonly uint _identifier = identifier;
+		private readonly EventExchanger _exchanger = exchanger;
 
 		protected override async ValueTask OnHandleAsync(Message message, Parameters _, CancellationToken cancellation)
 		{
@@ -236,15 +253,15 @@ public class EventExchanger : WorkerBase
 			var ticket = await Serializer.Json.DeserializeAsync<ExchangingTicket>(message.Data, null, cancellation);
 
 			//如果接收到的事件来源自自身则忽略该事件
-			if(ticket.Exchanger == _identifier || string.IsNullOrEmpty(ticket.Event))
+			if(ticket.Exchanger == _exchanger.Identifier || string.IsNullOrEmpty(ticket.Event))
 			{
 				//await message.AcknowledgeAsync(cancellation);
 				return;
 			}
 
-			//根据事件标识获取对应的事件描述器
-			var descriptor = Events.GetEvent(ticket.Event, out var registry);
-			if(descriptor == null)
+			//根据事件标识获取对应的事件登记簿及对应的事件描述器
+			(var registry, var descriptor) = _exchanger.Locator.Invoke(ticket.Event);
+			if(descriptor == null || registry == null)
 				return;
 
 			//尝试解压缩
@@ -254,7 +271,7 @@ public class EventExchanger : WorkerBase
 			(var argument, var parameters) = Events.Marshaler.Unmarshal(descriptor, data);
 
 			//重放事件
-			await registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), default);
+			await registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), cancellation);
 
 			//应答消息
 			await message.AcknowledgeAsync(cancellation);
