@@ -7,20 +7,22 @@ using System.Threading.Tasks;
 using Zongsoft.Collections;
 using Zongsoft.Configuration;
 using Zongsoft.Messaging.Mqtt;
+using Zongsoft.Messaging.ZeroMQ;
 
 namespace Zongsoft.Components.Samples;
 
 public class EventExchangerSample
 {
-	private readonly string CONNECTION_STRING = $"server=192.168.2.200;port=5010;client=Zongsoft.Sample#{Random.Shared.Next():X}";
+	private readonly string CONNECTION_STRING = $"server=127.0.0.1;port=5010;client=Zongsoft.Sample#{Random.Shared.Next():X}";
 
 	private volatile int _count;
 	private readonly Handler _handler;
 
 	public EventExchangerSample()
 	{
-		//创建MQTT消息队列
-		var queue = new MqttQueue("Mqtt", new ConnectionSettings("Mqtt", CONNECTION_STRING));
+		//创建消息队列
+		//var queue = new MqttQueue("Mqtt", new ConnectionSettings("Mqtt", CONNECTION_STRING));
+		var queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", CONNECTION_STRING));
 
 		//创建事件交换器
 		this.Exchanger = new EventExchanger(queue, new EventExchangerOptions("Samples/Events"));

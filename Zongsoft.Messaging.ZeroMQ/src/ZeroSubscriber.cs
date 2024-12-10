@@ -31,6 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using NetMQ;
+using NetMQ.Sockets;
+
 using Zongsoft.Services;
 using Zongsoft.Components;
 
@@ -38,6 +41,8 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 {
+	private volatile SubscriberSocket _consumer;
+
 	#region 构造函数
 	public ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 	{
@@ -45,9 +50,66 @@ public class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 	#endregion
 
 	#region 内部属性
+	public SubscriberSocket Consumer => _consumer;
 	#endregion
 
+	internal SubscriberSocket Subscribe(string address)
+	{
+		if(_consumer != null)
+			return _consumer;
+
+		lock(this)
+		{
+			if(_consumer == null)
+			{
+				var consumer = _consumer = new SubscriberSocket(address);
+				consumer.Options.ReceiveHighWatermark = 1000;
+				consumer.ReceiveReady += this.OnReceiveReady;
+				consumer.Connect(address);
+				consumer.Subscribe(this.Topic);
+			}
+
+			return _consumer;
+		}
+	}
+
+	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
+	{
+		var topic = args.Socket.ReceiveFrameString();
+		var data = args.Socket.ReceiveFrameBytes();
+
+		FireAndForget(this.Handler.HandleAsync(new Message(this.Topic, data)).AsTask());
+
+		//for(int i = 0; i < 1000; i++)
+		//{
+		//	if(!args.Socket.TryReceiveFrameBytes(out var data, out var more))
+		//		break;
+
+		//	FireAndForget(this.Handler.HandleAsync(new Message(this.Topic, data)).AsTask());
+
+		//	if(!more)
+		//		break;
+		//}
+
+		static async void FireAndForget(Task task)
+		{
+			try
+			{
+				await task;
+			}
+			catch { }
+		}
+	}
+
 	#region 取消订阅
-	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
+	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+	{
+		var consumer = Interlocked.Exchange(ref _consumer, null);
+
+		if(consumer != null)
+			consumer.ReceiveReady -= this.OnReceiveReady;
+
+		return ValueTask.CompletedTask;
+	}
 	#endregion
 }

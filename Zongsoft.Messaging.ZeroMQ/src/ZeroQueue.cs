@@ -44,26 +44,83 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 {
+	#region 成员字段
+	private NetMQPoller _poller;
+	private NetMQQueue<Packet> _queue;
 	private PublisherSocket _publisher;
+	#endregion
 
 	#region 构造函数
 	public ZeroQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 	{
-		_publisher = new PublisherSocket($">tcp://{connectionSettings.Server}:{connectionSettings.Port}");
+		_queue = new NetMQQueue<Packet>();
+		_queue.ReceiveReady += this.OnQueueReady;
+
+		_publisher = new PublisherSocket();
 		_publisher.Options.SendHighWatermark = 1000;
+		_publisher.Bind($"tcp://*:{connectionSettings.Port}");
+		_poller = new NetMQPoller() { _queue };
 	}
 	#endregion
 
 	#region 订阅方法
-	protected override ZeroSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => throw new NotImplementedException();
-	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default) => throw new NotImplementedException();
+	protected override ZeroSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new ZeroSubscriber(this, topic, handler, options);
+	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
+	{
+		var consumer = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:{this.ConnectionSettings.Port}");
+
+		if(consumer != null)
+		{
+			_poller.Add(consumer);
+			if(!_poller.IsRunning)
+				_poller.RunAsync();
+		}
+
+		return ValueTask.FromResult(true);
+	}
+
+	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => _poller.Remove(subscriber.Consumer);
 	#endregion
 
 	#region 发布方法
 	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
-		_publisher.SendMoreFrame(topic).SendFrame(data.ToArray());
+		_queue.Enqueue(new Packet(topic, data));
 		return ValueTask.FromResult<string>(null);
+	}
+
+	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
+	{
+		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
+		{
+			_publisher.SendMoreFrame(packet.Topic).SendFrame(packet.Data.ToArray());
+		}
+	}
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			_queue.ReceiveReady -= this.OnQueueReady;
+
+			_poller?.Stop();
+			_queue?.Dispose();
+			_publisher?.Close();
+		}
+
+		_queue = null;
+		_poller = null;
+		_publisher = null;
+	}
+	#endregion
+
+	#region 嵌套结构
+	private readonly struct Packet(string topic, ReadOnlyMemory<byte> data)
+	{
+		public readonly string Topic = topic;
+		public readonly ReadOnlyMemory<byte> Data = data;
 	}
 	#endregion
 }

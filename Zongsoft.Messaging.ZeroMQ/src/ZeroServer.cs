@@ -28,12 +28,8 @@
  */
 
 using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using NetMQ;
 using NetMQ.Sockets;
@@ -47,16 +43,17 @@ public sealed class ZeroServer : WorkerBase
 {
 	private Proxy _proxy;
 
-	public ZeroServer(string name) : base(name)
+	public ZeroServer(string name = null) : base(name)
 	{
-		var publisher = new XPublisherSocket("@tcp://127.0.0.1:1234");
-		var subscriber = new XSubscriberSocket("@tcp://127.0.0.1:5678");
+		var publisher = new XPublisherSocket("@tcp://*:1234");
+		var subscriber = new XSubscriberSocket("@tcp://*:5678");
 		_proxy = new Proxy(subscriber, publisher);
 	}
 
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		_proxy.Start();
+		var thread = new Thread(_proxy.Start) { IsBackground = true };
+		thread.Start();
 		return Task.CompletedTask;
 	}
 

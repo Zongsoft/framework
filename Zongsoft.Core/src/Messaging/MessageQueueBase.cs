@@ -41,7 +41,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubscriber : class, IMessageConsumer
+	public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubscriber : IMessageConsumer
 	{
 		#region 构造函数
 		protected MessageQueueBase(string name, IConnectionSettings connectionSettings = null)
@@ -134,13 +134,19 @@ namespace Zongsoft.Messaging
 
 			void OnUnsubscribed(object sender, EventArgs args)
 			{
-				if(sender is IMessageConsumer subscriber && subscriber.Topic != null)
-					this.Subscribers.Remove(subscriber.Topic, out _);
+				if(sender is IMessageConsumer consumer)
+				{
+					consumer.Unsubscribed -= OnUnsubscribed;
+
+					if(consumer.Topic != null && this.Subscribers.Remove(consumer.Topic, out var subscriber))
+						this.OnUnsubscribed(subscriber);
+				}
 			}
 		}
 
 		protected abstract ValueTask<bool> OnSubscribeAsync(TSubscriber subscriber, CancellationToken cancellation = default);
 		protected abstract TSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options);
+		protected virtual void OnUnsubscribed(TSubscriber subscriber) { }
 		#endregion
 
 		#region 资源释放

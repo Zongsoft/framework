@@ -100,8 +100,11 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
-		protected override void OnUnsubscribed() => _poller?.Stop();
+		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+		{
+			_poller?.Stop();
+			return ValueTask.CompletedTask;
+		}
 		#endregion
 
 		#region 内部方法

@@ -51,10 +51,10 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 重写方法
-		protected override void OnUnsubscribed() => _poller.Stop();
 		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
 		{
 			_consumer.Unsubscribe();
+			_poller.Stop();
 			return ValueTask.CompletedTask;
 		}
 		#endregion

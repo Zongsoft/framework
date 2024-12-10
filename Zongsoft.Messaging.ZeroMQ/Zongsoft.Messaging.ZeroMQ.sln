@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ", "src\Zongsoft.Messaging.ZeroMQ.csproj", "{FDF52731-8F63-49B5-8639-56C718174789}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ.Samples", "samples\Zongsoft.Messaging.ZeroMQ.Samples.csproj", "{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{FDF52731-8F63-49B5-8639-56C718174789}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FDF52731-8F63-49B5-8639-56C718174789}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FDF52731-8F63-49B5-8639-56C718174789}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

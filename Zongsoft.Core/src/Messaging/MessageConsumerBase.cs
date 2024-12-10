@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Messaging
 {
@@ -85,18 +86,22 @@ namespace Zongsoft.Messaging
 
 			//更新订阅标记(未订阅)
 			if(task.IsCompletedSuccessfully)
-				this.OnUnsubscribed();
+				InvokeUnsubscribed();
 			else
 				task.AsTask().ContinueWith(t =>
 				{
 					if(t.IsCompletedSuccessfully)
-						this.OnUnsubscribed();
+						InvokeUnsubscribed();
 				}, cancellation);
 
 			return task;
+
+			void InvokeUnsubscribed()
+			{
+				this.Unsubscribed?.Invoke(this, EventArgs.Empty);
+			}
 		}
 
-		protected virtual void OnUnsubscribed() => this.Unsubscribed?.Invoke(this, EventArgs.Empty);
 		protected abstract ValueTask OnUnsubscribeAsync(CancellationToken cancellation);
 		#endregion
 
