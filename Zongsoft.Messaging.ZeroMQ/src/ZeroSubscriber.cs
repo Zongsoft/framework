@@ -39,40 +39,55 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
+public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<ZeroQueue>(queue, topic, handler, options)
 {
-	private volatile SubscriberSocket _consumer;
-
-	#region 构造函数
-	public ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
-	{
-	}
+	#region 成员字段
+	private volatile SubscriberSocket _channel;
 	#endregion
 
 	#region 内部属性
-	public SubscriberSocket Consumer => _consumer;
+	public SubscriberSocket Channel => _channel;
 	#endregion
 
+	#region 订阅方法
 	internal SubscriberSocket Subscribe(string address)
 	{
-		if(_consumer != null)
-			return _consumer;
+		if(_channel != null)
+			return _channel;
 
 		lock(this)
 		{
-			if(_consumer == null)
+			if(_channel == null)
 			{
-				var consumer = _consumer = new SubscriberSocket(address);
-				consumer.Options.ReceiveHighWatermark = 1000;
-				consumer.ReceiveReady += this.OnReceiveReady;
-				consumer.Connect(address);
-				consumer.Subscribe(this.Topic);
+				var channel = _channel = new SubscriberSocket(address);
+				channel.Options.ReceiveHighWatermark = 1000;
+				channel.ReceiveReady += this.OnReceiveReady;
+				channel.Connect(address);
+				channel.Subscribe(this.Topic);
 			}
 
-			return _consumer;
+			return _channel;
 		}
 	}
+	#endregion
 
+	#region 取消订阅
+	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+	{
+		var channel = Interlocked.Exchange(ref _channel, null);
+
+		if(channel != null)
+		{
+			channel.ReceiveReady -= this.OnReceiveReady;
+			channel.Unsubscribe(this.Topic);
+			channel.Dispose();
+		}
+
+		return ValueTask.CompletedTask;
+	}
+	#endregion
+
+	#region 事件处理
 	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 	{
 		var topic = args.Socket.ReceiveFrameString();
@@ -99,17 +114,6 @@ public class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 			}
 			catch { }
 		}
-	}
-
-	#region 取消订阅
-	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
-	{
-		var consumer = Interlocked.Exchange(ref _consumer, null);
-
-		if(consumer != null)
-			consumer.ReceiveReady -= this.OnReceiveReady;
-
-		return ValueTask.CompletedTask;
 	}
 	#endregion
 }

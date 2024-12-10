@@ -39,17 +39,24 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public sealed class ZeroServer : WorkerBase
+public sealed class ZeroQueueServer : WorkerBase
 {
+	#region 成员字段
 	private Proxy _proxy;
+	private XPublisherSocket _publisher;
+	private XSubscriberSocket _subscriber;
+	#endregion
 
-	public ZeroServer(string name = null) : base(name)
+	#region 构造函数
+	public ZeroQueueServer(string name = null) : base(name)
 	{
-		var publisher = new XPublisherSocket("@tcp://*:1234");
-		var subscriber = new XSubscriberSocket("@tcp://*:5678");
-		_proxy = new Proxy(subscriber, publisher);
+		_publisher = new XPublisherSocket("@tcp://*:1234");
+		_subscriber = new XSubscriberSocket("@tcp://*:5678");
+		_proxy = new Proxy(_subscriber, _publisher);
 	}
+	#endregion
 
+	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
 		var thread = new Thread(_proxy.Start) { IsBackground = true };
@@ -62,4 +69,23 @@ public sealed class ZeroServer : WorkerBase
 		_proxy.Stop();
 		return Task.CompletedTask;
 	}
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			_proxy.Stop();
+			_publisher.Dispose();
+			_subscriber.Dispose();
+
+			NetMQConfig.Cleanup(false);
+		}
+
+		_proxy = null;
+		_publisher = null;
+		_subscriber = null;
+	}
+	#endregion
 }

@@ -5,7 +5,9 @@ VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ", "src\Zongsoft.Messaging.ZeroMQ.csproj", "{FDF52731-8F63-49B5-8639-56C718174789}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ.Samples", "samples\Zongsoft.Messaging.ZeroMQ.Samples.csproj", "{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ.Samples.Client", "samples\client\Zongsoft.Messaging.ZeroMQ.Samples.Client.csproj", "{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.ZeroMQ.Samples.Server", "samples\server\Zongsoft.Messaging.ZeroMQ.Samples.Server.csproj", "{26CD8CBC-C32E-4E99-A780-0E790344F465}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8F3D977-EF54-476A-8D8B-3E223AE5C73E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26CD8CBC-C32E-4E99-A780-0E790344F465}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26CD8CBC-C32E-4E99-A780-0E790344F465}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26CD8CBC-C32E-4E99-A780-0E790344F465}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26CD8CBC-C32E-4E99-A780-0E790344F465}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

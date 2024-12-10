@@ -12,15 +12,19 @@ namespace Zongsoft.Messaging.ZeroMQ.Samples;
 internal class Program
 {
 	const string TOPIC = "Topic1";
+
 	private static ZeroQueue _queue;
+	private static Handler _handler;
+
+	private static volatile int _count;
 
 	static async Task Main(string[] args)
 	{
-		var server = new ZeroServer();
-		await server.StartAsync(args);
+		Console.WriteLine("Welcome to the Client.");
+		Console.WriteLine(new string('-', 50));
 
-		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;port=5001;protocol=tcp;"));
-		await _queue.SubscribeAsync(TOPIC, new Handler());
+		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;port=5001;"));
+		_handler = new Handler();
 
 		while(true)
 		{
@@ -32,11 +36,22 @@ internal class Program
 			switch(text.ToLowerInvariant())
 			{
 				case "exit":
-					server.Stop(args);
 					_queue.Dispose();
 					return;
+				case "reset":
+					_count = 0;
+					_handler.Reset();
+					break;
 				case "clear":
 					Console.Clear();
+					break;
+				case "sub":
+				case "subscribe":
+					await _queue.SubscribeAsync(TOPIC, _handler);
+					break;
+				case "unsub":
+				case "unsubscribe":
+					await _queue.Subscribers[TOPIC].UnsubscribeAsync();
 					break;
 				default:
 					if(int.TryParse(text, out var round))
@@ -52,21 +67,20 @@ internal class Program
 		}
 	}
 
-	private static volatile int _count;
-
 	private static void SendAsync(int round = 1)
 	{
 		Parallel.For(0, round, async index =>
 		{
-			await _queue.ProduceAsync(TOPIC, Encoding.UTF8.GetBytes($"Message#{index + 1}"));
-			//Console.WriteLine($"[{Interlocked.Increment(ref _count)}].{index + 1} Sent.");
+			var count = Interlocked.Increment(ref _count);
+			await _queue.ProduceAsync(TOPIC, Encoding.UTF8.GetBytes($"Message#{count}-{index + 1}"));
+			Console.WriteLine($"[{count}].{index + 1} Sent.");
 		});
 	}
 
 	internal sealed class Handler : HandlerBase<Message>
 	{
 		private volatile int _count;
-
+		public void Reset() => _count = 0;
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)

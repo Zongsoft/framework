@@ -28,21 +28,18 @@
  */
 
 using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 using NetMQ;
 using NetMQ.Sockets;
 
-using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
+public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 {
 	#region 成员字段
 	private NetMQPoller _poller;
@@ -58,7 +55,7 @@ public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 
 		_publisher = new PublisherSocket();
 		_publisher.Options.SendHighWatermark = 1000;
-		_publisher.Bind($"tcp://*:{connectionSettings.Port}");
+		_publisher.Connect($"tcp://{connectionSettings.Server}:5678");
 		_poller = new NetMQPoller() { _queue };
 	}
 	#endregion
@@ -67,11 +64,12 @@ public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	protected override ZeroSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new ZeroSubscriber(this, topic, handler, options);
 	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		var consumer = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:{this.ConnectionSettings.Port}");
+		var channel = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:1234");
 
-		if(consumer != null)
+		if(channel != null)
 		{
-			_poller.Add(consumer);
+			_poller.Add(channel);
+
 			if(!_poller.IsRunning)
 				_poller.RunAsync();
 		}
@@ -79,7 +77,7 @@ public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		return ValueTask.FromResult(true);
 	}
 
-	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => _poller.Remove(subscriber.Consumer);
+	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => _poller.Remove(subscriber.Channel);
 	#endregion
 
 	#region 发布方法
@@ -103,11 +101,22 @@ public class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	{
 		if(disposing)
 		{
-			_queue.ReceiveReady -= this.OnQueueReady;
+			var poller = _poller;
+			if(poller != null && !poller.IsDisposed)
+				poller.Dispose();
 
-			_poller?.Stop();
-			_queue?.Dispose();
-			_publisher?.Close();
+			var queue = _queue;
+			if(queue != null && !queue.IsDisposed)
+			{
+				queue.ReceiveReady -= this.OnQueueReady;
+				queue.Dispose();
+			}
+
+			var publisher = _publisher;
+			if(publisher != null && !publisher.IsDisposed)
+				publisher.Dispose();
+
+			NetMQConfig.Cleanup(false);
 		}
 
 		_queue = null;
