@@ -61,6 +61,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			{
 				var channel = _channel = new SubscriberSocket();
 				channel.Options.ReceiveHighWatermark = 1000;
+				channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 				channel.ReceiveReady += this.OnReceiveReady;
 				channel.Connect(address);
 				channel.Subscribe(this.Queue.GetTopic(this.Topic));
@@ -74,16 +75,18 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 取消订阅
 	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
 	{
-		//必须先通过队列的注销方法将当前订阅的通道从轮询器中移除
-		this.Queue.Unregister(_channel);
+		var orginal = _channel;
 
 		//将当前通道对应设置为空
 		var channel = Interlocked.Exchange(ref _channel, null);
 
 		if(channel != null && !channel.IsDisposed)
 		{
+			//必须先通过队列的注销方法将当前订阅的通道从轮询器中移除
+			this.Queue.Unregister(orginal);
+
 			channel.ReceiveReady -= this.OnReceiveReady;
-			channel.Unsubscribe(this.Topic);
+			channel.Unsubscribe(this.Queue.GetTopic(this.Topic));
 			channel.Dispose();
 		}
 

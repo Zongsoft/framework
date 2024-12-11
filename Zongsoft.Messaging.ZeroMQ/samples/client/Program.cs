@@ -11,8 +11,6 @@ namespace Zongsoft.Messaging.ZeroMQ.Samples;
 
 internal class Program
 {
-	const string TOPIC = "Topic1";
-
 	private static ZeroQueue _queue;
 	private static Handler _handler;
 
@@ -33,13 +31,26 @@ internal class Program
 			if(string.IsNullOrEmpty(text))
 				continue;
 
-			switch(text.ToLowerInvariant())
+			var parts = text.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+			switch(parts[0].ToLowerInvariant())
 			{
 				case "exit":
 					_queue.Dispose();
 					return;
 				case "info":
 					Console.WriteLine($"[{_queue.Identifier}] {_queue.ConnectionSettings}");
+
+					if(_queue.Subscribers.Count > 0)
+					{
+						int index = 0;
+						Console.WriteLine(new string('-', 50));
+
+						foreach(var subscriber in _queue.Subscribers)
+						{
+							Console.WriteLine($"[{++index}] {subscriber.Topic}");
+						}
+					}
 					break;
 				case "reset":
 					_count = 0;
@@ -50,33 +61,45 @@ internal class Program
 					break;
 				case "sub":
 				case "subscribe":
-					await _queue.SubscribeAsync(TOPIC, _handler);
+					for(int i = 1; i < parts.Length; i++)
+						await _queue.SubscribeAsync(parts[i], _handler);
 					break;
 				case "unsub":
 				case "unsubscribe":
-					await _queue.Subscribers[TOPIC].UnsubscribeAsync();
-					break;
-				default:
-					if(int.TryParse(text, out var round))
+					for(int i = 0; i < parts.Length; i++)
 					{
+						if(_queue.Subscribers.TryGetValue(parts[i], out var subscriber))
+							await subscriber.UnsubscribeAsync();
+					}
+					break;
+				case "send":
+				case "produce":
+					if(parts.Length > 1)
+					{
+						var rounded = int.TryParse(parts[1], out var round);
 						var stopwatch = new System.Diagnostics.Stopwatch();
 						stopwatch.Start();
-						SendAsync(Math.Abs(round));
+
+						for(int i = (rounded ? 2 : 1); i < parts.Length; i++)
+							SendAsync(rounded ? Math.Max(round, 1) : 1, parts[i]);
+
 						Console.WriteLine($"Elapsed: {stopwatch.Elapsed}");
 					}
 
+					break;
+				default:
 					break;
 			}
 		}
 	}
 
-	private static void SendAsync(int round = 1)
+	private static void SendAsync(int round, string topic = null)
 	{
 		Parallel.For(0, round, async index =>
 		{
 			var count = Interlocked.Increment(ref _count);
-			await _queue.ProduceAsync(TOPIC, Encoding.UTF8.GetBytes($"Message#{count}-{index + 1}"));
-			Console.WriteLine($"[{count}].{index + 1} Sent.");
+			await _queue.ProduceAsync(topic ?? "*", Encoding.UTF8.GetBytes($"Message#{count}-{index + 1}"));
+			Console.WriteLine($"[{count}-{index + 1}] {topic} Sent.");
 		});
 	}
 
@@ -90,7 +113,7 @@ internal class Program
 				return ValueTask.CompletedTask;
 
 			var text = Encoding.UTF8.GetString(message.Data);
-			Console.WriteLine($"Received: [{Interlocked.Increment(ref _count)}]{text}");
+			Console.WriteLine($"Received: [{Interlocked.Increment(ref _count)}]{message.Topic}{Environment.NewLine}{text}");
 			return ValueTask.CompletedTask;
 		}
 	}

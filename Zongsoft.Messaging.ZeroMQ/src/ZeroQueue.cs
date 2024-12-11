@@ -64,6 +64,7 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 
 		_publisher = new PublisherSocket();
 		_publisher.Options.SendHighWatermark = 1000;
+		_publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 		_publisher.Connect($"tcp://{connectionSettings.Server}:5678");
 		_poller = new NetMQPoller() { _queue };
 	}
@@ -97,7 +98,16 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#region 发布方法
 	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
-		_queue.Enqueue(new Packet(this.GetTopic(topic), data));
+		if(string.IsNullOrEmpty(topic) || topic == "*")
+		{
+			foreach(var subscriber in this.Subscribers)
+				_queue.Enqueue(new Packet(this.GetTopic(subscriber.Topic), data));
+		}
+		else
+		{
+			_queue.Enqueue(new Packet(this.GetTopic(topic), data));
+		}
+
 		return ValueTask.FromResult<string>(null);
 	}
 
@@ -112,11 +122,21 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	internal void Unregister(SubscriberSocket channel)
 	{
 		if(channel != null && !channel.IsDisposed)
+		{
+			//将指定的通道从轮询器中删除
 			_poller.Remove(channel);
+
+			//注意：由于上述操作内部为异步，因此可能需要稍等一会确保其删除操作已完成
+			if(_poller.ContainsAsync(channel).Result)
+				Thread.Sleep(10);
+		}
 	}
 
+	/// <summary>获取要发送和订阅的消息主题。</summary>
+	/// <param name="topic">指定的原始主题。</param>
+	/// <returns>返回处理过的消息主题。</returns>
 	internal string GetTopic(string topic) => string.IsNullOrEmpty(this.ConnectionSettings.Group) ?
-		topic : $"{this.ConnectionSettings.Group}:{topic}";
+		(topic == "*" ? string.Empty : topic) : $"{this.ConnectionSettings.Group}:{(topic == "*" ? string.Empty : topic)}";
 	#endregion
 
 	#region 私有方法
