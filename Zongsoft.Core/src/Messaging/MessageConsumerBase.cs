@@ -32,8 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Collections;
-using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Messaging
 {
@@ -46,6 +44,7 @@ namespace Zongsoft.Messaging
 		#region 成员字段
 		private IHandler<Message> _handler;
 		private volatile int _unsubscribed;
+		private volatile int _disposed;
 		#endregion
 
 		#region 构造函数
@@ -68,6 +67,7 @@ namespace Zongsoft.Messaging
 		public IHandler<Message> Handler => _handler;
 		public MessageSubscribeOptions Options { get; }
 		public bool IsUnsubscribed => _unsubscribed != 0;
+		public bool IsDisposed => _disposed != 0;
 		#endregion
 
 		#region 保护属性
@@ -114,8 +114,13 @@ namespace Zongsoft.Messaging
 		#region 资源释放
 		public void Dispose()
 		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+
+			if(disposed == 0)
+			{
+				this.Dispose(true);
+				GC.SuppressFinalize(this);
+			}
 		}
 
 		protected virtual void Dispose(bool disposing)
@@ -125,7 +130,16 @@ namespace Zongsoft.Messaging
 				return;
 
 			if(disposing)
-				this.UnsubscribeAsync().AsTask().ConfigureAwait(false);
+				Unsubscribe();
+
+			async void Unsubscribe()
+			{
+				try
+				{
+					await this.UnsubscribeAsync();
+				}
+				catch { }
+			}
 		}
 		#endregion
 	}

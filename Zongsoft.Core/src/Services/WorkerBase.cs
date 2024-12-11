@@ -42,10 +42,6 @@ namespace Zongsoft.Services
 	/// </remarks>
 	public abstract class WorkerBase : IWorker, IDisposable
 	{
-		#region 常量定义
-		private const int DISPOSED_FLAG = 1;
-		#endregion
-
 		#region 事件声明
 		public event EventHandler<WorkerStateChangedEventArgs> StateChanged;
 		#endregion
@@ -55,7 +51,7 @@ namespace Zongsoft.Services
 		private bool _enabled;
 		private bool _canPauseAndContinue;
 		private int _state;
-		private int _disposing;
+		private int _disposed;
 		private readonly AutoResetEvent _semaphore;
 		#endregion
 
@@ -111,12 +107,16 @@ namespace Zongsoft.Services
 
 		/// <summary>获取工作器的状态。</summary>
 		public WorkerState State => (WorkerState)_state;
+		public bool IsDisposed => _disposed != 0;
 		#endregion
 
 		#region 公共方法
 		public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 		public async Task StartAsync(string[] args, CancellationToken cancellation = default)
 		{
+			if(this.IsDisposed)
+				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
 			//如果不可用或当前状态不是已停止则返回
 			if(!_enabled || _state != (int)WorkerState.Stopped)
 				return;
@@ -163,6 +163,9 @@ namespace Zongsoft.Services
 		public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 		public async Task StopAsync(string[] args, CancellationToken cancellation = default)
 		{
+			if(this.IsDisposed)
+				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
 			if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
 				return;
 
@@ -211,6 +214,9 @@ namespace Zongsoft.Services
 		public void Pause() => this.PauseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 		public async Task PauseAsync(CancellationToken cancellation = default)
 		{
+			if(this.IsDisposed)
+				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
 			//如果不可用则退出
 			if(!_enabled)
 				return;
@@ -267,6 +273,9 @@ namespace Zongsoft.Services
 		public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 		public async Task ResumeAsync(CancellationToken cancellation = default)
 		{
+			if(this.IsDisposed)
+				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
 			//如果不可用则退出
 			if(!_enabled)
 				return;
@@ -342,9 +351,9 @@ namespace Zongsoft.Services
 		protected virtual void Dispose(bool disposing) => this.Stop();
 		void IDisposable.Dispose()
 		{
-			var original = Interlocked.Exchange(ref _disposing, DISPOSED_FLAG);
+			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
 
-			if(original != DISPOSED_FLAG)
+			if(disposed == 0)
 			{
 				this.Dispose(true);
 				_semaphore.Dispose();

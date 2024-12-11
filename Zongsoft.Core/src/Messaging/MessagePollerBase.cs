@@ -42,13 +42,17 @@ namespace Zongsoft.Messaging
 		private CancellationTokenSource _cancellation;
 		#endregion
 
+		#region 成员字段
+		public volatile int _disposed;
+		#endregion
+
 		#region 构造函数
 		/// <summary>构建消息队列轮询器。</summary>
 		protected MessagePollerBase() { }
 		#endregion
 
 		#region 公共属性
-		/// <inheritdoc />
+		public bool IsDisposed => _disposed != 0;
 		public bool IsPolling
 		{
 			get
@@ -147,8 +151,13 @@ namespace Zongsoft.Messaging
 		#region 释放资源
 		public void Dispose()
 		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+
+			if(disposed == 0)
+			{
+				this.Dispose(true);
+				GC.SuppressFinalize(this);
+			}
 		}
 
 		protected virtual void Dispose(bool disposing)
