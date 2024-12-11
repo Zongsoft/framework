@@ -43,8 +43,8 @@ namespace Zongsoft.Messaging.ZeroMQ;
 public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 {
 	#region 私有变量
-	private ushort _publisherPort  = 5678;
-	private ushort _subscriberPort = 1234;
+	private ushort _publisherPort;
+	private ushort _subscriberPort;
 	#endregion
 
 	#region 成员字段

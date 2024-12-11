@@ -4,7 +4,7 @@
 	<option path="/Messaging">
 		<connectionSettings>
 			<connectionSetting connectionSetting.name="ZeroMQ" driver="ZeroMQ"
-			                   value="server=127.0.0.1;port=12345;" />
+			                   value="server=127.0.0.1;" />
 		</connectionSettings>
 	</option>
 </options>
