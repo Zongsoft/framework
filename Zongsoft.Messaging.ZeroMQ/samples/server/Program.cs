@@ -24,7 +24,7 @@ internal class Program
 			switch(text.ToLowerInvariant())
 			{
 				case "exit":
-					await server.StopAsync(args);
+					((IDisposable)server).Dispose();
 					return;
 				case "stop":
 					await server.StopAsync(args);

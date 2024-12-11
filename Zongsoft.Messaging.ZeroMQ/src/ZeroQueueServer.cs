@@ -43,6 +43,7 @@ public sealed class ZeroQueueServer : WorkerBase
 {
 	#region 成员字段
 	private Proxy _proxy;
+	private NetMQPoller _poller;
 	private XPublisherSocket _publisher;
 	private XSubscriberSocket _subscriber;
 	#endregion
@@ -52,15 +53,18 @@ public sealed class ZeroQueueServer : WorkerBase
 	{
 		_publisher = new XPublisherSocket("@tcp://*:1234");
 		_subscriber = new XSubscriberSocket("@tcp://*:5678");
-		_proxy = new Proxy(_subscriber, _publisher);
+		_poller = new NetMQPoller() { _subscriber, _publisher };
+		_proxy = new Proxy(_subscriber, _publisher, null, _poller);
 	}
 	#endregion
 
 	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var thread = new Thread(_proxy.Start) { IsBackground = true };
-		thread.Start();
+		if(!_poller.IsRunning)
+			_poller.RunAsync();
+
+		_proxy.Start();
 		return Task.CompletedTask;
 	}
 
@@ -76,7 +80,9 @@ public sealed class ZeroQueueServer : WorkerBase
 	{
 		if(disposing)
 		{
-			_proxy.Stop();
+			this.Stop();
+
+			_poller.Dispose();
 			_publisher.Dispose();
 			_subscriber.Dispose();
 

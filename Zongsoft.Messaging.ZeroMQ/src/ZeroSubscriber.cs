@@ -59,7 +59,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 		{
 			if(_channel == null)
 			{
-				var channel = _channel = new SubscriberSocket(address);
+				var channel = _channel = new SubscriberSocket();
 				channel.Options.ReceiveHighWatermark = 1000;
 				channel.ReceiveReady += this.OnReceiveReady;
 				channel.Connect(address);
