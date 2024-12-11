@@ -21,7 +21,7 @@ internal class Program
 		Console.WriteLine("Welcome to the Client.");
 		Console.WriteLine(new string('-', 50));
 
-		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;port=5001;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
+		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
 		_handler = new Handler();
 
 		while(true)

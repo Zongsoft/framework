@@ -42,6 +42,11 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 {
+	#region 私有变量
+	private ushort _publisherPort  = 5678;
+	private ushort _subscriberPort = 1234;
+	#endregion
+
 	#region 成员字段
 	private NetMQPoller _poller;
 	private NetMQQueue<Packet> _queue;
@@ -57,15 +62,15 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		if(string.IsNullOrEmpty(connectionSettings.Server))
 			throw new ArgumentException($"The required server address is missing in the connection settings.");
 
-		this.Identifier = GetIdentifier(connectionSettings);
+		//如果未指定远程队列服务器端口号则设置默认端口号
+		if(connectionSettings.Port == 0)
+			connectionSettings.Port = ZeroQueueServer.PORT;
+
+		//生成当前消息队列的唯一标识
+		this.Identifier = GenerateIdentifier(connectionSettings);
 
 		_queue = new NetMQQueue<Packet>();
 		_queue.ReceiveReady += this.OnQueueReady;
-
-		_publisher = new PublisherSocket();
-		_publisher.Options.SendHighWatermark = 1000;
-		_publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-		_publisher.Connect($"tcp://{connectionSettings.Server}:5678");
 		_poller = new NetMQPoller() { _queue };
 	}
 	#endregion
@@ -79,15 +84,15 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	protected override ZeroSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new ZeroSubscriber(this, topic, handler, options);
 	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		var channel = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:1234");
+		//确保初始化完成
+		this.Initialize();
 
+		//执行网络订阅方法
+		var channel = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:{_publisherPort}");
+
+		//将订阅成功的网络通道加入到轮询器中
 		if(channel != null)
-		{
 			_poller.Add(channel);
-
-			if(!_poller.IsRunning)
-				_poller.RunAsync();
-		}
 
 		return ValueTask.FromResult(true);
 	}
@@ -98,6 +103,9 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#region 发布方法
 	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
+		//确保初始化完成
+		this.Initialize();
+
 		if(string.IsNullOrEmpty(topic) || topic == "*")
 		{
 			foreach(var subscriber in this.Subscribers)
@@ -140,7 +148,74 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#endregion
 
 	#region 私有方法
-	private static string GetIdentifier(IConnectionSettings connectionSettings)
+	private void Initialize()
+	{
+		if(_publisher != null)
+			return;
+
+		var publisher = Interlocked.CompareExchange(ref _publisher, new PublisherSocket(), null);
+
+		if(publisher == null)
+		{
+			//获取网络交换器的发布和订阅端口号
+			(_publisherPort, _subscriberPort) = GetPorts(this.ConnectionSettings);
+
+			_publisher = new PublisherSocket();
+			_publisher.Options.SendHighWatermark = 1000;
+			_publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+			_publisher.Connect($"tcp://{this.ConnectionSettings.Server}:{_subscriberPort}");
+
+			//启动网络轮询器
+			if(!_poller.IsRunning)
+				_poller.RunAsync();
+		}
+
+		static (ushort publisherPort, ushort subscriberPort) GetPorts(IConnectionSettings settings)
+		{
+			using var requester = new RequestSocket($"tcp://{settings.Server}:{settings.Port}");
+
+			//发送请求获取交换器端口号
+			requester.SendFrameEmpty();
+
+			//接收返回的请求响应信息
+			var response = requester.ReceiveFrameString();
+
+			//如果响应信息为空则返回失败
+			if(string.IsNullOrEmpty(response))
+				return default;
+
+			ushort publisherPort = 0, subscriberPort = 0;
+			var entries = response.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+			foreach(var entry in entries)
+			{
+				int index = entry.IndexOf('=');
+
+				if(index > 0 && index < entry.Length - 1)
+				{
+					var span = entry.AsSpan();
+
+					switch(span[..index])
+					{
+						case "publisher":
+						case "Publisher":
+							if(ushort.TryParse(span[(index + 1)..], out var port1))
+								publisherPort = port1;
+							break;
+						case "subscriber":
+						case "Subscriber":
+							if(ushort.TryParse(span[(index + 1)..], out var port2))
+								subscriberPort = port2;
+							break;
+					}
+				}
+			}
+
+			return (publisherPort, subscriberPort);
+		}
+	}
+
+	private static string GenerateIdentifier(IConnectionSettings connectionSettings)
 	{
 		if(connectionSettings == null)
 			return Randomizer.GenerateString(10);
