@@ -90,21 +90,28 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 事件处理
 	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 	{
-		var topic = args.Socket.ReceiveFrameString();
-		var data = args.Socket.ReceiveFrameBytes();
+		var round = Math.Max(_channel.Options.Backlog, 100);
 
-		FireAndForget(this.Handler.HandleAsync(new Message(this.Topic, data)).AsTask());
+		for(int i = 0; i < round; i++)
+		{
+			if(!args.Socket.TryReceiveFrameString(out var topic, out var more))
+				break;
 
-		//for(int i = 0; i < 1000; i++)
-		//{
-		//	if(!args.Socket.TryReceiveFrameBytes(out var data, out var more))
-		//		break;
+			var identifier = Utility.Unpack(topic, out topic);
+			if(string.Equals(identifier, this.Queue.Identifier))
+			{
+				args.Socket.TrySkipFrame();
+				continue;
+			}
 
-		//	FireAndForget(this.Handler.HandleAsync(new Message(this.Topic, data)).AsTask());
+			if(!args.Socket.TryReceiveFrameBytes(out var data, out more))
+				break;
 
-		//	if(!more)
-		//		break;
-		//}
+			FireAndForget(this.Handler.HandleAsync(new Message(topic, data)).AsTask());
+
+			if(!more)
+				break;
+		}
 
 		static async void FireAndForget(Task task)
 		{

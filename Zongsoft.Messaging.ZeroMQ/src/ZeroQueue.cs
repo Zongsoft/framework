@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using NetMQ;
 using NetMQ.Sockets;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
@@ -50,6 +51,14 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#region 构造函数
 	public ZeroQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 	{
+		if(connectionSettings == null)
+			throw new ArgumentNullException(nameof(connectionSettings));
+
+		if(string.IsNullOrEmpty(connectionSettings.Server))
+			throw new ArgumentException($"The required server address is missing in the connection settings.");
+
+		this.Identifier = GetIdentifier(connectionSettings);
+
 		_queue = new NetMQQueue<Packet>();
 		_queue.ReceiveReady += this.OnQueueReady;
 
@@ -58,6 +67,11 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		_publisher.Connect($"tcp://{connectionSettings.Server}:5678");
 		_poller = new NetMQPoller() { _queue };
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前队列的唯一标识。</summary>
+	public string Identifier { get; }
 	#endregion
 
 	#region 订阅方法
@@ -90,9 +104,20 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
 	{
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
-		{
-			_publisher.SendMoreFrame(packet.Topic).SendFrame(packet.Data.ToArray());
-		}
+			_publisher.SendMoreFrame(Utility.Pack(packet.Topic, this.Identifier)).SendFrame(packet.Data.ToArray());
+	}
+	#endregion
+
+	#region 私有方法
+	private static string GetIdentifier(IConnectionSettings connectionSettings)
+	{
+		if(connectionSettings == null)
+			return Randomizer.GenerateString(10);
+
+		if(string.IsNullOrEmpty(connectionSettings.Client))
+			return string.IsNullOrEmpty(connectionSettings.Instance) ? Randomizer.GenerateString(10) : $"{connectionSettings.Instance}-{Randomizer.GenerateInt32():X}";
+		else
+			return string.IsNullOrEmpty(connectionSettings.Instance) ? $"{connectionSettings.Client}-{Randomizer.GenerateInt32():X}" : $"{connectionSettings.Client}:{connectionSettings.Instance}-{Randomizer.GenerateInt32():X}";
 	}
 	#endregion
 
