@@ -91,13 +91,13 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		return ValueTask.FromResult(true);
 	}
 
-	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => _poller.Remove(subscriber.Channel);
+	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => this.Unregister(subscriber.Channel);
 	#endregion
 
 	#region 发布方法
 	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
-		_queue.Enqueue(new Packet(topic, data));
+		_queue.Enqueue(new Packet(this.GetTopic(topic), data));
 		return ValueTask.FromResult<string>(null);
 	}
 
@@ -106,6 +106,17 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
 			_publisher.SendMoreFrame(Utility.Pack(packet.Topic, this.Identifier)).SendFrame(packet.Data.ToArray());
 	}
+	#endregion
+
+	#region 内部方法
+	internal void Unregister(SubscriberSocket channel)
+	{
+		if(channel != null && !channel.IsDisposed)
+			_poller.Remove(channel);
+	}
+
+	internal string GetTopic(string topic) => string.IsNullOrEmpty(this.ConnectionSettings.Group) ?
+		topic : $"{this.ConnectionSettings.Group}:{topic}";
 	#endregion
 
 	#region 私有方法

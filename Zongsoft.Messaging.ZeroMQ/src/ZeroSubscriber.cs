@@ -52,7 +52,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 订阅方法
 	internal SubscriberSocket Subscribe(string address)
 	{
-		if(_channel != null)
+		if(_channel != null && !_channel.IsDisposed)
 			return _channel;
 
 		lock(this)
@@ -63,7 +63,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 				channel.Options.ReceiveHighWatermark = 1000;
 				channel.ReceiveReady += this.OnReceiveReady;
 				channel.Connect(address);
-				channel.Subscribe(this.Topic);
+				channel.Subscribe(this.Queue.GetTopic(this.Topic));
 			}
 
 			return _channel;
@@ -74,9 +74,13 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 取消订阅
 	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
 	{
+		//必须先通过队列的注销方法将当前订阅的通道从轮询器中移除
+		this.Queue.Unregister(_channel);
+
+		//将当前通道对应设置为空
 		var channel = Interlocked.Exchange(ref _channel, null);
 
-		if(channel != null)
+		if(channel != null && !channel.IsDisposed)
 		{
 			channel.ReceiveReady -= this.OnReceiveReady;
 			channel.Unsubscribe(this.Topic);

@@ -23,7 +23,7 @@ internal class Program
 		Console.WriteLine("Welcome to the Client.");
 		Console.WriteLine(new string('-', 50));
 
-		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;port=5001;"));
+		_queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", "server=127.0.0.1;port=5001;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
 		_handler = new Handler();
 
 		while(true)
@@ -38,6 +38,9 @@ internal class Program
 				case "exit":
 					_queue.Dispose();
 					return;
+				case "info":
+					Console.WriteLine($"[{_queue.Identifier}] {_queue.ConnectionSettings}");
+					break;
 				case "reset":
 					_count = 0;
 					_handler.Reset();
