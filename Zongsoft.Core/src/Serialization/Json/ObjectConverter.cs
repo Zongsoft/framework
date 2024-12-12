@@ -72,7 +72,7 @@ public class ObjectConverter : JsonConverter<object>
 					else if(name == "value")
 					{
 						if(reader.Read())
-							value = GetValue(ref reader, type);
+							value = GetValue(ref reader, type, options);
 					}
 				}
 			}
@@ -105,7 +105,7 @@ public class ObjectConverter : JsonConverter<object>
 					writer.WritePropertyName("$type");
 					writer.WriteStringValue(GetTypeName(type));
 					writer.WritePropertyName("value");
-					JsonSerializer.Serialize(writer, value, options);
+					JsonSerializer.Serialize(writer, value, Data.Model.GetModelType(value), options);
 
 					writer.WriteEndObject();
 
@@ -116,7 +116,7 @@ public class ObjectConverter : JsonConverter<object>
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetTypeName(Type type) => Common.TypeAlias.GetAlias(Data.Model.GetModelType(type));
-	private static object GetValue(ref Utf8JsonReader reader, Type type)
+	private static object GetValue(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 	{
 		switch(Type.GetTypeCode(type))
 		{
@@ -161,7 +161,7 @@ public class ObjectConverter : JsonConverter<object>
 				else if(type == typeof(ReadOnlyMemory<byte>))
 					return reader.TryGetBytesFromBase64(out var buffer) ? new ReadOnlyMemory<byte>(buffer) : ReadOnlyMemory<byte>.Empty;
 
-				return JsonSerializer.Deserialize(ref reader, type, SerializerExtension.GetOptions());
+				return JsonSerializer.Deserialize(ref reader, type, options);
 		}
 	}
 }
