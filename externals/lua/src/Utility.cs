@@ -28,13 +28,32 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Lua;
 
 internal static class Utility
 {
+	public static object Convert(object value)
+	{
+		return value switch
+		{
+			NLua.LuaTable table => table.ToDictionary(),
+			_ => value
+		};
+	}
+
+	public static object[] Convert(object[] values)
+	{
+		if(values == null || values.Length == 0)
+			return values;
+
+		for(int i = 0; i < values.Length; i++)
+			values[i] = Convert(values[i]);
+
+		return values;
+	}
+
 	public static IDictionary<string, object> ToDictionary(this NLua.LuaTable table)
 	{
 		if(table == null)

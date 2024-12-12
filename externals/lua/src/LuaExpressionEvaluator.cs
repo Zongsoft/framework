@@ -32,6 +32,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Expressions;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Lua;
 
@@ -47,7 +48,10 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#endregion
 
 	#region 构造函数
-	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>();
+	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>()
+	{
+		{ "json", new Json() },
+	};
 	#endregion
 
 	#region 公共属性
@@ -80,32 +84,29 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 		}
 
 		var result = engine.DoString(expression);
-		return result != null && result.Length == 1 ? Convert(result[0]) : ConvertMany(result);
-
-		static object[] ConvertMany(object[] values)
-		{
-			if(values == null || values.Length == 0)
-				return values;
-
-			for(int i = 0; i < values.Length; i++)
-				values[i] = Convert(values[i]);
-
-			return values;
-		}
-
-		static object Convert(object value)
-		{
-			return value switch
-			{
-				NLua.LuaTable table => table.ToDictionary(),
-				_ => value
-			};
-		}
+		return result != null && result.Length == 1 ? Utility.Convert(result[0]) : Utility.Convert(result);
 	}
 	#endregion
 
 	#region 服务匹配
 	bool IMatchable.Match(object argument) => argument is string name && this.Match(name);
 	public bool Match(string name) => string.Equals(name, NAME, StringComparison.OrdinalIgnoreCase);
+	#endregion
+
+	#region 嵌套子类
+	private sealed class Json
+	{
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
+		public string serialize(object obj)
+		{
+			var target = obj is NLua.LuaTable table ? Utility.ToDictionary(table) : obj;
+			return Serializer.Json.Serialize(target);
+		}
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
+		public object deserialize(string json) => Serializer.Json.Deserialize<Dictionary<string, object>>(json);
+	}
 	#endregion
 }

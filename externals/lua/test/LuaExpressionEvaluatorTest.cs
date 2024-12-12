@@ -11,7 +11,11 @@ public class LuaExpressionEvaluatorTest
 	public void TestEvaluateResult()
 	{
 		var evaluator = new LuaExpressionEvaluator();
-		var result = evaluator.Evaluate(@"return { id = 123, name = ""MyName""};");
+		var result = evaluator.Evaluate(@"
+		result = { id = 123, name = ""MyName""};
+		result.gender = true;
+		return result;");
+
 		Assert.NotNull(result);
 		Assert.IsType<Dictionary<string, object>>(result);
 		var dictionary = (Dictionary<string, object>)result;
@@ -19,6 +23,22 @@ public class LuaExpressionEvaluatorTest
 		Assert.Equal(123L, id);
 		Assert.True(dictionary.TryGetValue("name", out var name));
 		Assert.Equal("MyName", name);
+		Assert.True(dictionary.TryGetValue("gender", out var gender));
+		Assert.IsType<bool>(gender);
+		Assert.True((bool)gender);
+	}
+
+	[Fact]
+	public void TestEvaluateJson()
+	{
+		var evaluator = new LuaExpressionEvaluator();
+
+		var result = evaluator.Evaluate(@"obj = {id = 100, name=""name""}; return json:serialize(obj);");
+		Assert.NotNull(result);
+
+		var variables = new Dictionary<string, object>() { { "text", result } };
+		result = evaluator.Evaluate(@"obj = json:deserialize(text); return obj.id;", variables);
+		Assert.NotNull(result);
 	}
 
 	[Fact]
