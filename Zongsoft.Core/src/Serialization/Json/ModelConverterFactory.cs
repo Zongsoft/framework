@@ -42,7 +42,7 @@ public class ModelConverterFactory : JsonConverterFactory
 
 	private class ModelConverter<T> : JsonConverter<T> where T : class
 	{
-		private static readonly ConcurrentDictionary<Type, Type> _mapping_ = new ConcurrentDictionary<Type, Type>();
+		private static readonly ConcurrentDictionary<Type, Type> _mapping_ = new();
 
 		public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
@@ -53,9 +53,35 @@ public class ModelConverterFactory : JsonConverterFactory
 		public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 		{
 			if(value == null)
+			{
 				writer.WriteNullValue();
+				return;
+			}
+
+			if(value is Data.IModel model)
+				WriteModel(writer, model.GetChanges(), options);
 			else
 				JsonSerializer.Serialize(writer, value, typeof(object), options);
+
+			static void WriteModel(Utf8JsonWriter writer, IEnumerable<KeyValuePair<string, object>> properties, JsonSerializerOptions options)
+			{
+				if(properties == null)
+					return;
+
+				writer.WriteStartObject();
+
+				foreach(var property in properties)
+				{
+					writer.WritePropertyName(property.Key);
+
+					if(property.Value == null || Convert.IsDBNull(property.Value))
+						writer.WriteNullValue();
+					else
+						JsonSerializer.Serialize(writer, property.Value, property.Value.GetType(), options);
+				}
+
+				writer.WriteEndObject();
+			}
 		}
 	}
 }
