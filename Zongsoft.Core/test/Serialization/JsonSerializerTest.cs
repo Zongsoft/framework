@@ -19,6 +19,7 @@ namespace Zongsoft.Serialization
 			Assert.NotEmpty(json);
 			var userResult = Serializer.Json.Deserialize<IUserModel>(json);
 			Assert.NotNull(userResult);
+			Assert.Equal(((IModel)user).GetCount(), ((IModel)userResult).GetCount());
 			Assert.True(UserComparer.Instance.Equals(user, userResult));
 
 			var credential = CreateCredential();
@@ -73,14 +74,13 @@ namespace Zongsoft.Serialization
 		[Fact]
 		public void TestSerializeDataDictionary()
 		{
-			var user = CreateUser();
-			var dictionary = DataDictionary.GetDictionary(user);
-			var json = Serializer.Json.Serialize(user);
+			var dictionary = DataDictionary.GetDictionary(CreateUser());
+			var json = Serializer.Json.Serialize(dictionary);
 			Assert.NotEmpty(json);
 
-			//var result = Serializer.Json.Deserialize<IDataDictionary<IUserModel>>(json);
-			//Assert.NotNull(result);
-			//Assert.Equal(dictionary.Count, result.Count);
+			var result = Serializer.Json.Deserialize<IDataDictionary>(json);
+			Assert.NotNull(result);
+			Assert.Equal(((ICollection)dictionary).Count, ((ICollection)result).Count);
 		}
 
 		[Fact]
@@ -97,6 +97,9 @@ namespace Zongsoft.Serialization
 				["UInt32"] = uint.MaxValue,
 				["Int64"] = long.MaxValue,
 				["UInt64"] = ulong.MaxValue,
+				["TimeSpan"] = TimeSpan.Parse("1.23:30:59.500"),
+				["Date"] = DateOnly.FromDateTime(DateTime.Now),
+				["Time"] = TimeOnly.FromDateTime(DateTime.Now),
 				["DateTime"] = DateTime.Now,
 				["DateTimeOffset"] = DateTimeOffset.UtcNow,
 				["Guid"] = Guid.NewGuid(),
@@ -112,7 +115,7 @@ namespace Zongsoft.Serialization
 			var json = Serializer.Json.Serialize(dictionary);
 			Assert.NotEmpty(json);
 
-			var result = Serializer.Json.Deserialize<IDictionary>(json);
+			var result = Serializer.Json.Deserialize<Hashtable>(json);
 			Assert.NotNull(result);
 			Assert.NotEmpty(result);
 			Assert.Equal(dictionary.Count, result.Count);
@@ -127,6 +130,14 @@ namespace Zongsoft.Serialization
 				else
 					Assert.Equal(entry.Value, value);
 			}
+
+			var model = CreateUser();
+			json = Serializer.Json.Serialize(model);
+			Assert.NotEmpty(json);
+			var result2 = Serializer.Json.Deserialize<IDictionary>(json);
+			Assert.NotNull(result2);
+			Assert.NotEmpty(result2);
+			Assert.Equal(((IModel)model).GetCount(), result2.Count);
 		}
 
 		[Fact]
@@ -143,6 +154,9 @@ namespace Zongsoft.Serialization
 				["UInt32"] = uint.MaxValue,
 				["Int64"] = long.MaxValue,
 				["UInt64"] = ulong.MaxValue,
+				["TimeSpan"] = TimeSpan.Parse("1.23:30:59.500"),
+				["Date"] = DateOnly.FromDateTime(DateTime.Now),
+				["Time"] = TimeOnly.FromDateTime(DateTime.Now),
 				["DateTime"] = DateTime.Now,
 				["DateTimeOffset"] = DateTimeOffset.UtcNow,
 				["Guid"] = Guid.NewGuid(),
@@ -172,6 +186,14 @@ namespace Zongsoft.Serialization
 				else
 					Assert.Equal(entry.Value, value);
 			}
+
+			var model = CreateUser();
+			json = Serializer.Json.Serialize(model);
+			Assert.NotEmpty(json);
+			var result2 = Serializer.Json.Deserialize<IDictionary<string, object>>(json);
+			Assert.NotNull(result2);
+			Assert.NotEmpty(result2);
+			Assert.Equal(((IModel)model).GetCount(), result2.Count);
 		}
 
 		private static IUserModel CreateUser() => Model.Build<IUserModel>(p =>
