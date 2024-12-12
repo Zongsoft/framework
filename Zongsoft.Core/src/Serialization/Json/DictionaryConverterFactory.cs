@@ -67,6 +67,9 @@ public class DictionaryConverterFactory : JsonConverterFactory
 					case JsonTokenType.False:
 						dictionary[key] = reader.GetBoolean();
 						break;
+					case JsonTokenType.Number:
+						dictionary[key] = reader.TryGetInt32(out var integer) ? integer : reader.GetDouble();
+						break;
 					case JsonTokenType.String:
 						dictionary[key] = reader.GetString();
 						break;
@@ -75,6 +78,9 @@ public class DictionaryConverterFactory : JsonConverterFactory
 						break;
 					case JsonTokenType.StartObject:
 						dictionary[key] = ObjectConverter.Default.Read(ref reader, typeof(object), options);
+						break;
+					case JsonTokenType.StartArray:
+						dictionary[key] = ObjectConverter.Default.Read(ref reader, typeof(object[]), options);
 						break;
 				}
 			}
@@ -124,6 +130,9 @@ public class DictionaryConverterFactory : JsonConverterFactory
 					case JsonTokenType.False:
 						dictionary[key] = Common.Convert.ConvertValue(reader.GetBoolean(), default(TValue));
 						break;
+					case JsonTokenType.Number:
+						dictionary[key] = Common.Convert.ConvertValue(reader.TryGetInt32(out var integer) ? integer : reader.GetDouble(), default(TValue));
+						break;
 					case JsonTokenType.String:
 						dictionary[key] = Common.Convert.ConvertValue(reader.GetString(), default(TValue));
 						break;
@@ -132,6 +141,9 @@ public class DictionaryConverterFactory : JsonConverterFactory
 						break;
 					case JsonTokenType.StartObject:
 						dictionary[key] = _reader(ref reader, options);
+						break;
+					case JsonTokenType.StartArray:
+						dictionary[key] = Common.Convert.ConvertValue(ObjectConverter.Default.Read(ref reader, typeof(object[]), options), default(TValue));
 						break;
 				}
 			}
