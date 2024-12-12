@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text.Json;
+using System.Collections;
 using System.Collections.Generic;
 
 using Xunit;
@@ -14,29 +14,24 @@ namespace Zongsoft.Serialization
 		[Fact]
 		public void TestSerialize()
 		{
-			var user = Model.Build<IUserModel>(p =>
-			{
-				p.UserId = 100;
-				p.Name = "Popeye";
-				p.Nickname = "钟少";
-			});
+			var user = CreateUser();
+			var json = Serializer.Json.Serialize(user);
+			Assert.NotEmpty(json);
+			var userResult = Serializer.Json.Deserialize<IUserModel>(json);
+			Assert.NotNull(userResult);
+			Assert.True(UserComparer.Instance.Equals(user, userResult));
 
-			var credential = new Credential()
-			{
-				CredentialId = "123",
-				RenewalToken = "666",
-				Expiration = TimeSpan.FromHours(4),
-				User = user,
-			};
-
-			var text = Serializer.Json.Serialize(credential, new TextSerializationOptions()
+			var credential = CreateCredential();
+			json = Serializer.Json.Serialize(credential, new TextSerializationOptions()
 			{
 				IgnoreNull = true,
 				Indented = true,
 				NamingConvention = SerializationNamingConvention.Camel,
 			});
-
-			Assert.NotEmpty(text);
+			Assert.NotEmpty(json);
+			var credentialResult = Serializer.Json.Deserialize<Credential>(json);
+			Assert.NotNull(credentialResult);
+			Assert.Equal(credential, credentialResult);
 		}
 
 		[Fact]
@@ -72,16 +67,170 @@ namespace Zongsoft.Serialization
 			Assert.Equal(100u, credential.User.UserId);
 			Assert.Equal("Popeye", credential.User.Name);
 			Assert.Equal("钟少", credential.User.Nickname);
+			Assert.Equal(DateTime.Parse("2020-05-12T23:33:51"), credential.User.Creation);
 		}
 
-		public class Credential
+		[Fact]
+		public void TestSerializeDataDictionary()
+		{
+			var user = CreateUser();
+			var dictionary = DataDictionary.GetDictionary(user);
+			var json = Serializer.Json.Serialize(user);
+			Assert.NotEmpty(json);
+
+			//var result = Serializer.Json.Deserialize<IDataDictionary<IUserModel>>(json);
+			//Assert.NotNull(result);
+			//Assert.Equal(dictionary.Count, result.Count);
+		}
+
+		[Fact]
+		public void TestSerializeClassicDictionary()
+		{
+			var dictionary = new Hashtable
+			{
+				["Null"] = null,
+				["Byte"] = byte.MaxValue,
+				["SByte"] = sbyte.MaxValue,
+				["Int16"] = short.MaxValue,
+				["UInt16"] = ushort.MaxValue,
+				["Int32"] = int.MaxValue,
+				["UInt32"] = uint.MaxValue,
+				["Int64"] = long.MaxValue,
+				["UInt64"] = ulong.MaxValue,
+				["DateTime"] = DateTime.Now,
+				["DateTimeOffset"] = DateTimeOffset.UtcNow,
+				["Guid"] = Guid.NewGuid(),
+				["Double"] = Double.MaxValue,
+				["Single"] = Single.MaxValue,
+				["Decimal"] = decimal.MaxValue,
+				["Boolean.True"] = true,
+				["Boolean.False"] = false,
+				["String"] = typeof(string).Name,
+				["User"] = CreateUser(),
+			};
+
+			var json = Serializer.Json.Serialize(dictionary);
+			Assert.NotEmpty(json);
+
+			var result = Serializer.Json.Deserialize<IDictionary>(json);
+			Assert.NotNull(result);
+			Assert.NotEmpty(result);
+			Assert.Equal(dictionary.Count, result.Count);
+
+			foreach(DictionaryEntry entry in dictionary)
+			{
+				Assert.True(result.Contains(entry.Key));
+				var value = result[entry.Key];
+
+				if(value is IUserModel user)
+					Assert.True(UserComparer.Instance.Equals((IUserModel)entry.Value, user));
+				else
+					Assert.Equal(entry.Value, value);
+			}
+		}
+
+		[Fact]
+		public void TestSerializeGenericDictionary()
+		{
+			var dictionary = new Dictionary<string, object>
+			{
+				["Null"] = null,
+				["Byte"] = byte.MaxValue,
+				["SByte"] = sbyte.MaxValue,
+				["Int16"] = short.MaxValue,
+				["UInt16"] = ushort.MaxValue,
+				["Int32"] = int.MaxValue,
+				["UInt32"] = uint.MaxValue,
+				["Int64"] = long.MaxValue,
+				["UInt64"] = ulong.MaxValue,
+				["DateTime"] = DateTime.Now,
+				["DateTimeOffset"] = DateTimeOffset.UtcNow,
+				["Guid"] = Guid.NewGuid(),
+				["Double"] = Double.MaxValue,
+				["Single"] = Single.MaxValue,
+				["Decimal"] = decimal.MaxValue,
+				["Boolean.True"] = true,
+				["Boolean.False"] = false,
+				["String"] = typeof(string).Name,
+				["User"] = CreateUser(),
+			};
+
+			var json = Serializer.Json.Serialize(dictionary);
+			Assert.NotEmpty(json);
+
+			var result = Serializer.Json.Deserialize<Dictionary<string, object>>(json);
+			Assert.NotNull(result);
+			Assert.NotEmpty(result);
+			Assert.Equal(dictionary.Count, result.Count);
+
+			foreach(var entry in dictionary)
+			{
+				Assert.True(result.TryGetValue(entry.Key, out var value));
+
+				if(value is IUserModel user)
+					Assert.True(UserComparer.Instance.Equals((IUserModel)entry.Value, user));
+				else
+					Assert.Equal(entry.Value, value);
+			}
+		}
+
+		private static IUserModel CreateUser() => Model.Build<IUserModel>(p =>
+		{
+			p.UserId = 100;
+			p.Name = "Popeye";
+			p.Nickname = "钟少";
+		});
+
+		private static Credential CreateCredential() => new()
+		{
+			CredentialId = "123",
+			RenewalToken = "666",
+			Expiration = TimeSpan.FromHours(4),
+			User = CreateUser(),
+		};
+
+		public class Credential : IEquatable<Credential>
 		{
 			public string CredentialId { get; set; }
 			public string RenewalToken { get; set; }
 			public TimeSpan Expiration { get; set; }
 			public int Count { get; set; }
-
 			public IUserModel User { get; set; }
+
+			public bool Equals(Credential other) => other is not null &&
+				this.CredentialId == other.CredentialId &&
+				this.RenewalToken == other.RenewalToken &&
+				this.Expiration == other.Expiration &&
+				this.Count == other.Count &&
+				UserComparer.Instance.Equals(this.User, other.User);
+
+			public override bool Equals(object obj) => obj is Credential other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.CredentialId.ToUpperInvariant(), this.RenewalToken.ToUpperInvariant());
+			public override string ToString() => $"[{this.Expiration}] {this.CredentialId} ({this.RenewalToken})";
+		}
+
+		public sealed class UserComparer : IEqualityComparer<IUserModel>
+		{
+			public static readonly UserComparer Instance = new();
+
+			public bool Equals(IUserModel x, IUserModel y)
+			{
+				if(x is null)
+					return y is null;
+				if(y is null)
+					return false;
+
+				return x.UserId == y.UserId &&
+					x.Name == y.Name &&
+					x.Nickname == y.Nickname &&
+					x.Namespace == y.Namespace &&
+					x.Email == y.Email &&
+					x.Phone == y.Phone &&
+					x.Status == y.Status &&
+					x.StatusTimestamp == y.StatusTimestamp;
+			}
+
+			public int GetHashCode(IUserModel user) => user is null ? 0 : HashCode.Combine(user.UserId, user.Name.ToUpperInvariant(), user.Namespace.ToUpperInvariant());
 		}
 	}
 }

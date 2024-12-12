@@ -67,6 +67,7 @@ namespace Zongsoft.Serialization
 				new Json.RangeConverterFactory(),
 				new Json.MixtureConverterFactory(),
 				new Json.DataDictionaryConverterFactory(),
+				new Json.DictionaryConverterFactory(),
 			},
 		};
 
@@ -103,6 +104,7 @@ namespace Zongsoft.Serialization
 					new Json.RangeConverterFactory(),
 					new Json.MixtureConverterFactory(),
 					new Json.DataDictionaryConverterFactory(),
+					new Json.DictionaryConverterFactory(),
 				},
 			};
 		}
@@ -152,6 +154,7 @@ namespace Zongsoft.Serialization
 					new Json.RangeConverterFactory(),
 					new Json.MixtureConverterFactory(),
 					new Json.DataDictionaryConverterFactory(),
+					new Json.DictionaryConverterFactory(),
 				},
 			};
 		}

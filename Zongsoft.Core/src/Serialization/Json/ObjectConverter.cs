@@ -35,6 +35,8 @@ namespace Zongsoft.Serialization.Json;
 
 public class ObjectConverter : JsonConverter<object>
 {
+	public static readonly ObjectConverter Default = new();
+
 	public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		if(reader.TokenType == JsonTokenType.Null)
@@ -155,7 +157,7 @@ public class ObjectConverter : JsonConverter<object>
 				else if(type == typeof(ReadOnlyMemory<byte>))
 					return reader.TryGetBytesFromBase64(out var buffer) ? new ReadOnlyMemory<byte>(buffer) : ReadOnlyMemory<byte>.Empty;
 
-				return JsonSerializer.Deserialize(ref reader, type, Serialization.SerializerExtension.GetOptions());
+				return JsonSerializer.Deserialize(ref reader, type, SerializerExtension.GetOptions());
 		}
 	}
 }

@@ -7,6 +7,25 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Tests
 {
+	public class PersonComparer : IEqualityComparer<IPerson>
+	{
+		public bool Equals(IPerson x, IPerson y)
+		{
+			if(x is null)
+				return y is null;
+			if(y is null)
+				return false;
+
+			return x.Name == y.Name &&
+				x.Gender == y.Gender &&
+				x.Birthdate == y.Birthdate &&
+				x.BloodType == y.BloodType &&
+				x.HomeAddress == y.HomeAddress;
+		}
+
+		public int GetHashCode(IPerson person) => person is null ? 0 : HashCode.Combine(person.Name?.ToUpperInvariant(), person.Gender, person.Birthdate, person.BloodType);
+	}
+
 	public interface IPerson : Zongsoft.Data.IModel
 	{
 		/// <summary>获取或设置人员姓名。</summary>
@@ -236,12 +255,21 @@ namespace Zongsoft.Tests
 		Male,
 	}
 
-	public class Address
+	public class Address : IEquatable<Address>
 	{
 		public string City { get; set; }
 		public string Detail { get; set; }
 		public string PostalCode { get; set; }
 		public int CountryId { get; set; }
+
+		public bool Equals(Address other) => other is not null &&
+			this.CountryId == other.CountryId &&
+			this.City == other.City &&
+			this.PostalCode == other.PostalCode;
+
+		public override bool Equals(object obj) => obj is Address address && this.Equals(address);
+		public override int GetHashCode() => HashCode.Combine(this.CountryId, this.City?.ToUpperInvariant(), this.PostalCode?.ToUpperInvariant());
+		public override string ToString() => $"[{this.CountryId}] {this.City}({this.PostalCode})";
 	}
 
 	public class Department
