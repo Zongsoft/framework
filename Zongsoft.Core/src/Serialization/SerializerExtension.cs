@@ -51,7 +51,7 @@ namespace Zongsoft.Serialization
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, offset, count), options) :
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer), options);
 
-		public static JsonSerializerOptions GetOptions() => new JsonSerializerOptions()
+		public static JsonSerializerOptions GetOptions() => new()
 		{
 			NumberHandling = JsonNumberHandling.AllowReadingFromString,
 			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -61,6 +61,8 @@ namespace Zongsoft.Serialization
 			Converters =
 			{
 				new Json.TypeConverter(),
+				new Json.DateOnlyConverter(),
+				new Json.TimeOnlyConverter(),
 				new Json.TimeSpanConverter(),
 				new JsonStringEnumConverter(),
 				new Json.ModelConverterFactory(),
@@ -98,6 +100,8 @@ namespace Zongsoft.Serialization
 				Converters =
 				{
 					new Json.TypeConverter(),
+					new Json.DateOnlyConverter(),
+					new Json.TimeOnlyConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(),
 					new Json.ModelConverterFactory(),
@@ -148,6 +152,8 @@ namespace Zongsoft.Serialization
 				Converters =
 				{
 					new Json.TypeConverter(),
+					new Json.DateOnlyConverter(),
+					new Json.TimeOnlyConverter(),
 					new Json.TimeSpanConverter(),
 					new JsonStringEnumConverter(naming),
 					new Json.ModelConverterFactory(),
