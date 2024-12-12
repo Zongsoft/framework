@@ -137,13 +137,11 @@ namespace Zongsoft.Serialization
 				if(graph == null)
 					return;
 
-				using(Utf8JsonWriter writer = new Utf8JsonWriter(stream))
-				{
-					JsonSerializer.Serialize(writer, graph, type ?? graph.GetType(), options.ToOptions());
-				}
+				using Utf8JsonWriter writer = new Utf8JsonWriter(stream);
+				JsonSerializer.Serialize(writer, graph, GetSerializeType(type ?? graph.GetType()), options.ToOptions());
 			}
 
-			public string Serialize(object graph, TextSerializationOptions options = null) => graph == null ? null : JsonSerializer.Serialize(graph, options.ToOptions());
+			public string Serialize(object graph, TextSerializationOptions options = null) => graph == null ? null : JsonSerializer.Serialize(graph, GetSerializeType(graph), options.ToOptions());
 
 			public ValueTask SerializeAsync(Stream stream, object graph, Type type = null, SerializationOptions options = null, CancellationToken cancellation = default)
 			{
@@ -153,7 +151,7 @@ namespace Zongsoft.Serialization
 				if(stream == null)
 					throw new ArgumentNullException(nameof(stream));
 
-				return new ValueTask(JsonSerializer.SerializeAsync(stream, graph, type, options.ToOptions(), cancellation));
+				return new ValueTask(JsonSerializer.SerializeAsync(stream, graph, GetSerializeType(type ?? graph.GetType()), options.ToOptions(), cancellation));
 			}
 
 			public async ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellation = default)
@@ -163,7 +161,7 @@ namespace Zongsoft.Serialization
 
 				using(var stream = new MemoryStream())
 				{
-					await JsonSerializer.SerializeAsync(stream, graph, options.ToOptions(), cancellation);
+					await JsonSerializer.SerializeAsync(stream, graph, GetSerializeType(graph), options.ToOptions(), cancellation);
 
 					if(stream.CanSeek)
 						stream.Position = 0;
@@ -174,6 +172,11 @@ namespace Zongsoft.Serialization
 					}
 				}
 			}
+
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private static Type GetSerializeType(Type type) => Data.Model.GetModelType(type);
+			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+			private static Type GetSerializeType(object graph) => Data.Model.GetModelType(graph);
 			#endregion
 		}
 		#endregion
