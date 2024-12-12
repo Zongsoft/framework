@@ -30,6 +30,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 
@@ -37,16 +38,14 @@ namespace Zongsoft.Serialization.Json;
 
 public class DataDictionaryConverterFactory : JsonConverterFactory
 {
-	public override bool CanConvert(Type type) => type is IDataDictionary;
+	public override bool CanConvert(Type type) => typeof(IDataDictionary).IsAssignableFrom(type);
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => new DataDictionaryConverter();
 
 	private class DataDictionaryConverter : JsonConverter<IDataDictionary>
 	{
-		private static readonly ObjectConverter _converter = new();
-
 		public override IDataDictionary Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
-			var data = _converter.Read(ref reader, typeof(object), options);
+			var data = ObjectConverter.Default.Read(ref reader, typeof(IDictionary<string, object>), options);
 			return data == null ? null : DataDictionary.GetDictionary(data);
 		}
 
@@ -55,7 +54,7 @@ public class DataDictionaryConverterFactory : JsonConverterFactory
 			if(value == null || value.Data == null)
 				writer.WriteNullValue();
 			else
-				_converter.Write(writer, value.Data, options);
+				ObjectConverter.Default.Write(writer, value.Data, options);
 		}
 	}
 }
