@@ -75,16 +75,17 @@ namespace Zongsoft.Collections
 								parameters.SetValue(type, null);
 							break;
 						case JsonTokenType.True:
-							if(type == null)
-								parameters.SetValue(name, true);
-							else
-								parameters.SetValue(type, true);
-							break;
 						case JsonTokenType.False:
 							if(type == null)
-								parameters.SetValue(name, false);
+								parameters.SetValue(name, reader.GetBoolean());
 							else
-								parameters.SetValue(type, false);
+								parameters.SetValue(type, reader.GetBoolean());
+							break;
+						case JsonTokenType.Number:
+							if(type == null)
+								parameters.SetValue(name, reader.TryGetInt32(out var integer) ? integer : reader.GetDouble());
+							else
+								parameters.SetValue(type, reader.TryGetInt32(out var integer) ? integer : reader.GetDouble());
 							break;
 						case JsonTokenType.String:
 							if(type == null)
@@ -94,9 +95,9 @@ namespace Zongsoft.Collections
 							break;
 						case JsonTokenType.StartObject:
 							if(type == null)
-								parameters.SetValue(name, GetParameterValue(ref reader));
+								parameters.SetValue(name, GetParameterValue(ref reader, options));
 							else
-								parameters.SetValue(type, GetParameterValue(ref reader));
+								parameters.SetValue(type, GetParameterValue(ref reader, options));
 							break;
 					}
 
@@ -138,7 +139,7 @@ namespace Zongsoft.Collections
 								writer.WritePropertyName("$type");
 								writer.WriteStringValue(GetTypeName(type));
 								writer.WritePropertyName("value");
-								JsonSerializer.Serialize(writer, parameter.Value, options);
+								JsonSerializer.Serialize(writer, parameter.Value, Data.Model.GetModelType(parameter.Value), options);
 
 								writer.WriteEndObject();
 
@@ -154,7 +155,7 @@ namespace Zongsoft.Collections
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 			private static string GetTypeName(Type type) => Common.TypeAlias.GetAlias(Data.Model.GetModelType(type));
-			private static object GetParameterValue(ref Utf8JsonReader reader)
+			private static object GetParameterValue(ref Utf8JsonReader reader, JsonSerializerOptions options)
 			{
 				Type type = null;
 				var root = reader.CurrentDepth;
@@ -210,6 +211,10 @@ namespace Zongsoft.Collections
 									default:
 										if(type == typeof(DateTimeOffset))
 											return reader.TryGetDateTimeOffset(out var dateTimeOffset) ? dateTimeOffset : DateTimeOffset.MinValue;
+										else if(type == typeof(DateOnly))
+											return reader.TokenType == JsonTokenType.Number ? DateOnly.FromDayNumber(reader.GetInt32()) : DateOnly.Parse(reader.GetString());
+										else if(type == typeof(TimeOnly))
+											return reader.TokenType == JsonTokenType.Number ? new TimeOnly(reader.GetInt64()) : TimeOnly.Parse(reader.GetString());
 										else if(type == typeof(Guid))
 											return reader.TryGetGuid(out var guid) ? guid : Guid.Empty;
 										else if(type == typeof(byte[]))
@@ -217,7 +222,7 @@ namespace Zongsoft.Collections
 										else if(type == typeof(ReadOnlyMemory<byte>))
 											return reader.TryGetBytesFromBase64(out var buffer) ? new ReadOnlyMemory<byte>(buffer) : ReadOnlyMemory<byte>.Empty;
 
-										return JsonSerializer.Deserialize(ref reader, type, Serialization.SerializerExtension.GetOptions());
+										return JsonSerializer.Deserialize(ref reader, type, options);
 								}
 							}
 						}
