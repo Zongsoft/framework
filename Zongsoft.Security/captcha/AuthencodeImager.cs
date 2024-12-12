@@ -43,26 +43,28 @@ namespace Zongsoft.Security;
 public static class AuthencodeImager
 {
 	#region 公共方法
-	public static Image<Rgba32> Generate(string code, int width = 100, int height = 40)
+	public static Image<Rgba32> Generate(string code, int width = 120, int height = 50)
 	{
 		if(string.IsNullOrEmpty(code))
 			return null;
 
 		//构建指定大小的图像
 		var image = new Image<Rgba32>(width, height);
+		var points = new PointF[code.Length];
 
-		//定义验证码字形走向的贝塞尔路径
-		var builder = new PathBuilder().AddCubicBezier(
-			new PointF(width * Math.Min(Random.Shared.NextSingle(), 0.1f), height * Math.Min(Random.Shared.NextSingle(), 0.5f)),
-			new PointF(width * 0.4f, 0),
-			new PointF(width * 0.8f, height),
-			new PointF(width * Math.Max(Random.Shared.NextSingle(), 0.9f), height * Math.Max(Random.Shared.NextSingle(), 0.9f))
-		);
+		//计算每个字符的宽度
+		var cellWith = (float)Math.Floor((double)width / code.Length);
+		//依次设置每个字符的位置
+		for(int i = 0; i < points.Length; i++)
+		{
+			points[i] = new PointF((cellWith * i) + (cellWith / 2), Random.Shared.Next(10, height - 10));
+		}
 
-		var path = builder.Build();
+		//构建验证码的绘制路径
+		var path = new PathBuilder().AddLines(points).Build();
 
 		//定义验证码字符的渲染设置
-		var options = new RichTextOptions(GetFont(18))
+		var options = new RichTextOptions(GetFont((int)Math.Floor((width * height) / code.Length * 0.024)))
 		{
 			WrappingLength = path.ComputeLength(),
 			VerticalAlignment = VerticalAlignment.Center,
@@ -70,13 +72,13 @@ public static class AuthencodeImager
 			Path = path,
 		};
 
-		//按照定义的贝塞尔路径生成验证码字形
+		//按照定义的路径生成验证码字形
 		IPathCollection glyphs = TextBuilder.GenerateGlyphs(code, path, options);
 
 		image.Mutate(context => context
 			.Fill(Color.White)
 			.DrawBackgroundNoises(width, height)
-			.Draw(Brushes.BackwardDiagonal(Color.White, Color.Gray), 2, path)
+			.Draw(Brushes.BackwardDiagonal(Color.White, Color.Gray), 3, path)
 			.DrawText(options, code, Brushes.Percent10(Color.LightGray, Color.Black))
 			.DrawForegroundNoises(width, height)
 		);
@@ -121,7 +123,7 @@ public static class AuthencodeImager
 		for(int i = 0; i < count; i++)
 		{
 			var point = new PointF(Random.Shared.Next(width), Random.Shared.Next(height));
-			context.DrawLine(GetColor(), 1, point, point);
+			context.DrawLine(GetColor(), Random.Shared.Next(1, 3), point, point);
 		}
 
 		return context;
@@ -137,7 +139,7 @@ public static class AuthencodeImager
 
 		//绘制随机字符
 		for(int i = 0; i < text.Length; i++)
-			context.DrawText(text[i].ToString(), GetFont(), Brushes.Solid(GetColor()), new PointF(Random.Shared.Next(width), Random.Shared.Next(height)));
+			context.DrawText(text[i].ToString(), GetFont(Random.Shared.Next(20, 28)), Brushes.Solid(GetColor()), new PointF(Random.Shared.Next(width - 20), Random.Shared.Next(height - 20)));
 
 		return context;
 	}
@@ -155,13 +157,13 @@ public static class AuthencodeImager
 				new ColorStop(0.5f, Color.LightGray),
 				new ColorStop(1.0f, Color.Gray));
 
-			context.DrawLine(brush, (Random.Shared.Next() % 2) + 1, point1, point2);
+			context.DrawLine(brush, Random.Shared.Next(1, 3), point1, point2);
 		}
 
 		return context;
 	}
 
-	private static IImageProcessingContext DrawArcs(this IImageProcessingContext context, int width, int height, int count = 5)
+	private static IImageProcessingContext DrawArcs(this IImageProcessingContext context, int width, int height, int count = 10)
 	{
 		var builder = new PathBuilder();
 
@@ -171,7 +173,7 @@ public static class AuthencodeImager
 			var x = Random.Shared.Next(width - radius);
 			var y = Random.Shared.Next(height - radius);
 			var rectangle = new Rectangle(x, y, radius, radius);
-			builder.AddArc(rectangle, Random.Shared.Next(360), 0, Random.Shared.Next(100, 360));
+			builder.AddArc(rectangle, Random.Shared.Next(300), 0, Random.Shared.Next(100, 360));
 
 			var brush = new LinearGradientBrush(
 				new PointF(x, y),
@@ -181,13 +183,13 @@ public static class AuthencodeImager
 				new ColorStop(0.5f, Color.LightGray),
 				new ColorStop(1.0f, Color.Gray));
 
-			context.Draw(brush, (radius % 2) + 1, builder.Build());
+			context.Draw(brush, Random.Shared.Next(1, 3), builder.Build());
 			builder.Clear();
 
 			//构建并绘制随机的小圆圈
 			radius = Random.Shared.Next(3, 8);
 			builder.AddArc(Random.Shared.Next(width), Random.Shared.Next(height), radius, radius, 0, 0, 360);
-			context.Draw(GetColor(), (radius % 2) + 1, builder.Build());
+			context.Draw(GetColor(), Random.Shared.Next(1, 3), builder.Build());
 			builder.Clear();
 		}
 

@@ -64,7 +64,7 @@ namespace Zongsoft.Security.Captcha
 		{
 			var cache = this.Cache;
 			var token = Randomizer.GenerateString(12);
-			var code = Randomizer.GenerateString(6);
+			var code = Randomizer.GenerateString(4);
 
 			using var image = AuthencodeImager.Generate(code);
 			using var stream = new MemoryStream(8 * 1024);
