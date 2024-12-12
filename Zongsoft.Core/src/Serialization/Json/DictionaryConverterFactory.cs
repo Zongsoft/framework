@@ -37,7 +37,9 @@ namespace Zongsoft.Serialization.Json;
 
 public class DictionaryConverterFactory : JsonConverterFactory
 {
-	public override bool CanConvert(Type type) => typeof(IDictionary).IsAssignableFrom(type) || Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type);
+	private readonly HashSet<Type> _ignores = new([typeof(Collections.Parameters)]);
+
+	public override bool CanConvert(Type type) => !_ignores.Contains(type) && (typeof(IDictionary).IsAssignableFrom(type) || Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type));
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
 	{
 		if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type, out var genericTypes))
