@@ -138,7 +138,7 @@ namespace Zongsoft.Collections
 								writer.WritePropertyName("$type");
 								writer.WriteStringValue(GetTypeName(type));
 								writer.WritePropertyName("value");
-								JsonSerializer.Serialize(writer, parameter.Value);
+								JsonSerializer.Serialize(writer, parameter.Value, options);
 
 								writer.WriteEndObject();
 
