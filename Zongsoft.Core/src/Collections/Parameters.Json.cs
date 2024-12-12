@@ -119,33 +119,7 @@ namespace Zongsoft.Collections
 					else
 						writer.WritePropertyName(parameter.Key.ToString());
 
-					if(parameter.Value == null || System.Convert.IsDBNull(parameter.Value))
-						writer.WriteNullValue();
-					else
-					{
-						type = Common.TypeExtension.IsNullable(parameter.Value.GetType(), out var underlyingType) ? underlyingType : parameter.Value.GetType();
-
-						switch(Type.GetTypeCode(type))
-						{
-							case TypeCode.String:
-								writer.WriteStringValue((string)parameter.Value);
-								break;
-							case TypeCode.Boolean:
-								writer.WriteBooleanValue((bool)parameter.Value);
-								break;
-							default:
-								writer.WriteStartObject();
-
-								writer.WritePropertyName("$type");
-								writer.WriteStringValue(GetTypeName(type));
-								writer.WritePropertyName("value");
-								JsonSerializer.Serialize(writer, parameter.Value, Data.Model.GetModelType(parameter.Value), options);
-
-								writer.WriteEndObject();
-
-								break;
-						}
-					}
+					Serialization.Json.ObjectConverter.Default.Write(writer, parameter.Value, options);
 				}
 
 				writer.WriteEndObject();

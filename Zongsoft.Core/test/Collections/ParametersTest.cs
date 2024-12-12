@@ -3,6 +3,9 @@ using System.Text.Json;
 
 using Xunit;
 
+using Zongsoft.Components;
+using Zongsoft.Serialization;
+
 using Zongsoft.Tests;
 
 namespace Zongsoft.Collections.Tests
@@ -55,11 +58,11 @@ namespace Zongsoft.Collections.Tests
 				.Parameter("MyBuffer", data)
 				.Parameter(model);
 
-			var json = JsonSerializer.Serialize(parameters);
+			var json = Serializer.Json.Serialize(parameters);
 			Assert.NotNull(json);
 			Assert.NotEmpty(json);
 
-			var result = JsonSerializer.Deserialize<Parameters>(json);
+			var result = Serializer.Json.Deserialize<Parameters>(json);
 			Assert.NotNull(result);
 			Assert.NotEmpty(result);
 
