@@ -55,7 +55,7 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#endregion
 
 	#region 公共方法
-	public object Evaluate(string expression, IDictionary<string, object> variables)
+	public object Evaluate(string expression, IDictionary<string, object> variables = null)
 	{
 		static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable)
 		{
@@ -80,7 +80,27 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 		}
 
 		var result = engine.DoString(expression);
-		return result != null && result.Length == 1 ? result[0] : result;
+		return result != null && result.Length == 1 ? Convert(result[0]) : ConvertMany(result);
+
+		static object[] ConvertMany(object[] values)
+		{
+			if(values == null || values.Length == 0)
+				return values;
+
+			for(int i = 0; i < values.Length; i++)
+				values[i] = Convert(values[i]);
+
+			return values;
+		}
+
+		static object Convert(object value)
+		{
+			return value switch
+			{
+				NLua.LuaTable table => table.ToDictionary(),
+				_ => value
+			};
+		}
 	}
 	#endregion
 

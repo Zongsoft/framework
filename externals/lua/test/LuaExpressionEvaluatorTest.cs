@@ -8,7 +8,21 @@ namespace Zongsoft.Externals.Lua.Tests;
 public class LuaExpressionEvaluatorTest
 {
 	[Fact]
-	public void TestEvaluate()
+	public void TestEvaluateResult()
+	{
+		var evaluator = new LuaExpressionEvaluator();
+		var result = evaluator.Evaluate(@"return { id = 123, name = ""MyName""};");
+		Assert.NotNull(result);
+		Assert.IsType<Dictionary<string, object>>(result);
+		var dictionary = (Dictionary<string, object>)result;
+		Assert.True(dictionary.TryGetValue("id", out var id));
+		Assert.Equal(123L, id);
+		Assert.True(dictionary.TryGetValue("name", out var name));
+		Assert.Equal("MyName", name);
+	}
+
+	[Fact]
+	public void TestEvaluateInvoke()
 	{
 		var evaluator = new LuaExpressionEvaluator();
 		evaluator.Global["add"] = Add;
