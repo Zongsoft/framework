@@ -37,8 +37,16 @@ public class LuaExpressionEvaluatorTest
 		Assert.NotNull(result);
 
 		var variables = new Dictionary<string, object>() { { "text", result } };
-		result = evaluator.Evaluate(@"obj = json:deserialize(text); return obj.id;", variables);
+		result = evaluator.Evaluate(@"obj = json:deserialize(text); obj.id=200; return obj;", variables);
 		Assert.NotNull(result);
+		Assert.IsAssignableFrom<IDictionary<string, object>>(result);
+
+		if(result is IDictionary<string, object> dictionary)
+		{
+			Assert.Equal(2, dictionary.Count);
+			Assert.Equal(200L, dictionary["id"]);
+			Assert.Equal("name", dictionary["name"]);
+		}
 	}
 
 	[Fact]
