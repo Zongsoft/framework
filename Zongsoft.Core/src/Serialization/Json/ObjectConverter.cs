@@ -150,10 +150,6 @@ public class ObjectConverter : JsonConverter<object>
 			default:
 				if(type == typeof(DateTimeOffset))
 					return reader.TryGetDateTimeOffset(out var dateTimeOffset) ? dateTimeOffset : DateTimeOffset.MinValue;
-				else if(type == typeof(DateOnly))
-					return reader.TokenType == JsonTokenType.Number ? DateOnly.FromDayNumber(reader.GetInt32()) : DateOnly.Parse(reader.GetString());
-				else if(type == typeof(TimeOnly))
-					return reader.TokenType == JsonTokenType.Number ? new TimeOnly(reader.GetInt64()) : TimeOnly.Parse(reader.GetString());
 				else if(type == typeof(Guid))
 					return reader.TryGetGuid(out var guid) ? guid : Guid.Empty;
 				else if(type == typeof(byte[]))
