@@ -30,9 +30,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Collections.Generic;
 
 namespace Zongsoft.Security
 {
@@ -58,7 +58,7 @@ namespace Zongsoft.Security
 				return null;
 
 			var type = principal.GetType();
-			var dictionary = new Dictionary<string, object>();
+			var result = new Result();
 
 			if(type != typeof(ClaimsPrincipal) && type != typeof(GenericPrincipal))
 			{
@@ -70,18 +70,18 @@ namespace Zongsoft.Security
 				foreach(var property in properties)
 				{
 					if(property.PropertyType == typeof(TimeSpan))
-						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
+						result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
 					else
-						dictionary.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
+						result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
 				}
 			}
 
 			if(principal.Identity != null)
 			{
 				if(transform == null)
-					dictionary.Add(nameof(ClaimsPrincipal.Identity), this.OnTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+					result.Add(nameof(ClaimsPrincipal.Identity), this.OnTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 				else
-					dictionary.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+					result.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 			}
 
 			if(principal.Identities != null)
@@ -94,10 +94,10 @@ namespace Zongsoft.Security
 						Identity = transform == null ? this.OnTransform(identity) : transform(identity)
 					});
 
-				dictionary.Add(nameof(ClaimsPrincipal.Identities), identities);
+				result.Add(nameof(ClaimsPrincipal.Identities), identities);
 			}
 
-			return new Result(dictionary);
+			return result;
 		}
 		#endregion
 
@@ -114,39 +114,11 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
-		[System.Text.Json.Serialization.JsonConverter(typeof(Result.ResultConverter))]
-		private sealed class Result(IDictionary<string, object> dictionary)
+		#region 嵌套子类
+		/// <summary>为避免自定义的字典JSON序列化器对 <see cref="Dictionary{TKey, TValue}"/> 类型的序列化处理，特封装此类。</summary>
+		private sealed class Result : Dictionary<string, object>
 		{
-			private readonly IDictionary<string, object> Dictionary = dictionary;
-			private bool IsEmpty => this.Dictionary == null || this.Dictionary.Count == 0;
-
-			public sealed class ResultConverter : System.Text.Json.Serialization.JsonConverter<Result>
-			{
-				public override Result Read(ref System.Text.Json.Utf8JsonReader reader, Type type, System.Text.Json.JsonSerializerOptions options)
-				{
-					var dictionary = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(ref reader, options);
-					return new(dictionary);
-				}
-
-				public override void Write(System.Text.Json.Utf8JsonWriter writer, Result value, System.Text.Json.JsonSerializerOptions options)
-				{
-					if(value == null || value.IsEmpty)
-					{
-						writer.WriteNullValue();
-						return;
-					}
-
-					writer.WriteStartObject();
-
-					foreach(var entry in value.Dictionary)
-					{
-						Serialization.JsonWriterExtension.WritePropertyName(writer, entry.Key, options);
-						System.Text.Json.JsonSerializer.Serialize(writer, entry.Value, options);
-					}
-
-					writer.WriteEndObject();
-				}
-			}
 		}
+		#endregion
 	}
 }
