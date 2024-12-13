@@ -97,7 +97,7 @@ namespace Zongsoft.Security
 				dictionary.Add(nameof(ClaimsPrincipal.Identities), identities);
 			}
 
-			return dictionary;
+			return new Result(dictionary);
 		}
 		#endregion
 
@@ -113,5 +113,40 @@ namespace Zongsoft.Security
 			return identity.AsModel<Membership.IUserModel>();
 		}
 		#endregion
+
+		[System.Text.Json.Serialization.JsonConverter(typeof(Result.ResultConverter))]
+		private sealed class Result(IDictionary<string, object> dictionary)
+		{
+			private readonly IDictionary<string, object> Dictionary = dictionary;
+			private bool IsEmpty => this.Dictionary == null || this.Dictionary.Count == 0;
+
+			public sealed class ResultConverter : System.Text.Json.Serialization.JsonConverter<Result>
+			{
+				public override Result Read(ref System.Text.Json.Utf8JsonReader reader, Type type, System.Text.Json.JsonSerializerOptions options)
+				{
+					var dictionary = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(ref reader, options);
+					return new(dictionary);
+				}
+
+				public override void Write(System.Text.Json.Utf8JsonWriter writer, Result value, System.Text.Json.JsonSerializerOptions options)
+				{
+					if(value == null || value.IsEmpty)
+					{
+						writer.WriteNullValue();
+						return;
+					}
+
+					writer.WriteStartObject();
+
+					foreach(var entry in value.Dictionary)
+					{
+						Serialization.JsonWriterExtension.WritePropertyName(writer, entry.Key, options);
+						System.Text.Json.JsonSerializer.Serialize(writer, entry.Value, options);
+					}
+
+					writer.WriteEndObject();
+				}
+			}
+		}
 	}
 }

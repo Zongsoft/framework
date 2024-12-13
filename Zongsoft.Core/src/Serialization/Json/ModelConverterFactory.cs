@@ -72,7 +72,7 @@ public class ModelConverterFactory : JsonConverterFactory
 
 				foreach(var property in properties)
 				{
-					writer.WritePropertyName(property.Key);
+					writer.WritePropertyName(property.Key, options);
 
 					if(property.Value == null || Convert.IsDBNull(property.Value))
 						writer.WriteNullValue();

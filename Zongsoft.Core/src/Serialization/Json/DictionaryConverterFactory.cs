@@ -37,17 +37,10 @@ namespace Zongsoft.Serialization.Json;
 
 public class DictionaryConverterFactory : JsonConverterFactory
 {
-	private readonly HashSet<Type> _ignores = new([typeof(Collections.Parameters)]);
-
-	public override bool CanConvert(Type type) => !_ignores.Contains(type) && (typeof(IDictionary).IsAssignableFrom(type) || Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type));
-	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
-	{
-		if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type, out var genericTypes))
-			return (JsonConverter)Activator.CreateInstance(
-				typeof(GenericDictionaryConverter<,>).MakeGenericType([genericTypes[0].GenericTypeArguments[0], genericTypes[0].GenericTypeArguments[1]]));
-
-		return ClassicDictionaryConverter.Instance;
-	}
+	public override bool CanConvert(Type type) => type == typeof(Hashtable) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>));
+	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => type.IsGenericType ?
+		(JsonConverter)Activator.CreateInstance(typeof(GenericDictionaryConverter<,>).MakeGenericType(type.GenericTypeArguments[0], type.GenericTypeArguments[1])) :
+		ClassicDictionaryConverter.Instance;
 
 	private class ClassicDictionaryConverter : JsonConverter<IDictionary>
 	{
@@ -101,7 +94,7 @@ public class DictionaryConverterFactory : JsonConverterFactory
 			writer.WriteStartObject();
 			foreach(DictionaryEntry entry in dictionary)
 			{
-				writer.WritePropertyName(entry.Key.ToString());
+				writer.WritePropertyName(entry.Key.ToString(), options);
 				ObjectConverter.Default.Write(writer, entry.Value, options);
 			}
 			writer.WriteEndObject();
@@ -164,7 +157,7 @@ public class DictionaryConverterFactory : JsonConverterFactory
 			writer.WriteStartObject();
 			foreach(var entry in dictionary)
 			{
-				writer.WritePropertyName(entry.Key.ToString());
+				writer.WritePropertyName(entry.Key.ToString(), options);
 				ObjectConverter.Default.Write(writer, entry.Value, options);
 			}
 			writer.WriteEndObject();
