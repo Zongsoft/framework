@@ -77,7 +77,22 @@ public class ModelConverterFactory : JsonConverterFactory
 					if(property.Value == null || Convert.IsDBNull(property.Value))
 						writer.WriteNullValue();
 					else
-						JsonSerializer.Serialize(writer, property.Value, Data.Model.GetModelType(property.Value), options);
+					{
+						var value = property.Value;
+						var type = Data.Model.GetModelType(value);
+
+						//如果属性值是异步流，则必须将其作为同步流处理（因为JSON序列化器的Serialize方法只支持同步流）
+						if(Collections.Enumerable.IsAsyncEnumerable(value, out var elementType))
+						{
+							type = typeof(IEnumerable<>).MakeGenericType(elementType);
+
+							//如果属性值未实现同步流接口，则必须将其用同步器进行包装
+							if(!type.IsAssignableFrom(value.GetType()))
+								value = Collections.Enumerable.Enumerate(value, elementType);
+						}
+
+						JsonSerializer.Serialize(writer, value, type, options);
+					}
 				}
 
 				writer.WriteEndObject();

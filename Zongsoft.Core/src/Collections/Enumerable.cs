@@ -62,12 +62,16 @@ namespace Zongsoft.Collections
 				if(succeed)
 					yield return iterator.Current;
 				else
-				{
-					var disposing = iterator.DisposeAsync();
+					Dispose(iterator);
+			}
 
-					if(!disposing.IsCompleted)
-						disposing.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+			static async void Dispose(IAsyncEnumerator<T> enumerator)
+			{
+				try
+				{
+					await enumerator.DisposeAsync();
 				}
+				catch { }
 			}
 #endif
 		}
