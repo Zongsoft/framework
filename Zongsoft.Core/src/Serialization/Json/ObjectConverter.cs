@@ -105,7 +105,7 @@ public class ObjectConverter : JsonConverter<object>
 					writer.WritePropertyName("$type");
 					writer.WriteStringValue(GetTypeName(type));
 					writer.WritePropertyName("value");
-					JsonSerializer.Serialize(writer, value, Data.Model.GetModelType(value), options);
+					writer.WriteObject(value, options);
 
 					writer.WriteEndObject();
 
