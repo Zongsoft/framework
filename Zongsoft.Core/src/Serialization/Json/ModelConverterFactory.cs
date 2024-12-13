@@ -77,7 +77,7 @@ public class ModelConverterFactory : JsonConverterFactory
 					if(property.Value == null || Convert.IsDBNull(property.Value))
 						writer.WriteNullValue();
 					else
-						JsonSerializer.Serialize(writer, property.Value, property.Value.GetType(), options);
+						JsonSerializer.Serialize(writer, property.Value, Data.Model.GetModelType(property.Value), options);
 				}
 
 				writer.WriteEndObject();
