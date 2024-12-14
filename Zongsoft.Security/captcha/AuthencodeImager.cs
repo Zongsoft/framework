@@ -45,8 +45,13 @@ public static class AuthencodeImager
 	#region 公共方法
 	public static Image<Rgba32> Generate(string code, int width = 120, int height = 50)
 	{
-		if(string.IsNullOrEmpty(code))
+		if(string.IsNullOrEmpty(code) || code.Length < 3)
 			return null;
+
+		if(width < 60)
+			throw new ArgumentOutOfRangeException(nameof(width));
+		if(height < 20)
+			throw new ArgumentOutOfRangeException(nameof(height));
 
 		//构建指定大小的图像
 		var image = new Image<Rgba32>(width, height);
@@ -63,13 +68,35 @@ public static class AuthencodeImager
 		//构建验证码的绘制路径
 		var path = new PathBuilder().AddLines(points).Build();
 
-		//定义验证码字符的渲染设置
-		var options = new RichTextOptions(GetFont((int)Math.Floor((width * height) / code.Length * 0.024)))
+		//设置字符的渲染刷子
+		var brush = new LinearGradientBrush(points[0], points[^1], GradientRepetitionMode.None, [new ColorStop(0, Color.Navy), new ColorStop(0.5f, Color.Maroon), new ColorStop(1, Color.Navy)]);
+
+		//定义验证码各字符的格式
+		var runs = new RichTextRun[code.Length];
+
+		//设置每个验证码字符的格式
+		for(int i = 0; i < code.Length; i++)
+		{
+			//设置字符的字体大小为标准大小的80%至120%之间
+			runs[i] = new RichTextRun() { Start = i, End = i + 1, Font = GetFont(GetFontSize(Random.Shared.Next(80, 120) / 100f)) };
+
+			//设置字符的画笔（空心字）
+			if(Random.Shared.Next() % code.Length == i)
+				runs[i].Pen = Pens.DashDotDot(brush, 1);
+		}
+
+		//确保验证码字符中至少有一个空心字
+		if(!runs.Any(run => run.Pen != null))
+			runs[Random.Shared.Next() % runs.Length].Pen = Pens.DashDotDot(brush, 1);
+
+		//定义字符的渲染设置
+		var options = new RichTextOptions(GetFont(GetFontSize()))
 		{
 			WrappingLength = path.ComputeLength(),
 			VerticalAlignment = VerticalAlignment.Center,
 			HorizontalAlignment = HorizontalAlignment.Left,
 			Path = path,
+			TextRuns = runs,
 		};
 
 		//按照定义的路径生成验证码字形
@@ -79,11 +106,14 @@ public static class AuthencodeImager
 			.Fill(Color.White)
 			.DrawBackgroundNoises(width, height)
 			.Draw(Brushes.BackwardDiagonal(Color.White, Color.Gray), 3, path)
-			.DrawText(options, code, Brushes.Percent10(Color.LightGray, Color.Black))
+			.DrawText(options, code, brush)                                             //绘制渐进色背景的文字
+			.DrawText(options, code, Brushes.Percent10(Color.White, Color.Transparent)) //绘制渐进色背景文字上的白点
 			.DrawForegroundNoises(width, height)
 		);
 
 		return image;
+
+		int GetFontSize(float ratio = 1) => (int)Math.Floor((width * height) / code.Length * 0.022 * ratio);
 	}
 	#endregion
 
@@ -97,7 +127,7 @@ public static class AuthencodeImager
 		return Color.FromRgba(r, g, b, 128);
 	}
 
-	private static Font GetFont(int size = 18, FontStyle style = FontStyle.Bold)
+	private static Font GetFont(int size = 24, FontStyle style = FontStyle.Bold)
 	{
 		string name;
 
@@ -118,8 +148,10 @@ public static class AuthencodeImager
 			return SystemFonts.Families.First().CreateFont(size, style);
 	}
 
-	private static IImageProcessingContext DrawForegroundNoises(this IImageProcessingContext context, int width, int height, int count = 100)
+	private static IImageProcessingContext DrawForegroundNoises(this IImageProcessingContext context, int width, int height)
 	{
+		var count = (int)Math.Floor(width * height * 0.01);
+
 		for(int i = 0; i < count; i++)
 		{
 			var point = new PointF(Random.Shared.Next(width), Random.Shared.Next(height));
@@ -135,16 +167,26 @@ public static class AuthencodeImager
 		context.DrawArcs(width, height);
 
 		//生成随机字符
-		var text = Zongsoft.Common.Randomizer.GenerateString(15).AsSpan();
+		var text = Common.Randomizer.GenerateString(10).AsSpan();
 
-		//绘制随机字符
 		for(int i = 0; i < text.Length; i++)
-			context.DrawText(text[i].ToString(), GetFont(Random.Shared.Next(20, 28)), Brushes.Solid(GetColor()), new PointF(Random.Shared.Next(width - 20), Random.Shared.Next(height - 20)));
+		{
+			//计算字体大小
+			var fontSize = Random.Shared.Next(18, 28);
+
+			//绘制随机字符
+			context.DrawText(
+				text[i].ToString(),
+				GetFont(fontSize),
+				Brushes.Solid(GetColor()),
+				new PointF(Random.Shared.Next(width - fontSize - 5), Random.Shared.Next(height - fontSize - 5))
+			);
+		}
 
 		return context;
 	}
 
-	private static IImageProcessingContext DrawLines(this IImageProcessingContext context, int width, int height, int count = 20)
+	private static IImageProcessingContext DrawLines(this IImageProcessingContext context, int width, int height, int count = 10)
 	{
 		for(int i = 0; i < count; i++)
 		{
@@ -153,17 +195,16 @@ public static class AuthencodeImager
 
 			var brush = new LinearGradientBrush(point1, point2,
 				GradientRepetitionMode.None,
-				new ColorStop(0, Color.White),
-				new ColorStop(0.5f, Color.LightGray),
-				new ColorStop(1.0f, Color.Gray));
+				new ColorStop(0, Color.Gray),
+				new ColorStop(1, GetColor()));
 
-			context.DrawLine(brush, Random.Shared.Next(1, 3), point1, point2);
+			context.DrawLine(brush, Random.Shared.Next(1, 2), point1, point2);
 		}
 
 		return context;
 	}
 
-	private static IImageProcessingContext DrawArcs(this IImageProcessingContext context, int width, int height, int count = 10)
+	private static IImageProcessingContext DrawArcs(this IImageProcessingContext context, int width, int height, int count = 5)
 	{
 		var builder = new PathBuilder();
 
@@ -179,9 +220,8 @@ public static class AuthencodeImager
 				new PointF(x, y),
 				new PointF(x + radius, y + radius),
 				GradientRepetitionMode.None,
-				new ColorStop(0, Color.White),
-				new ColorStop(0.5f, Color.LightGray),
-				new ColorStop(1.0f, Color.Gray));
+				new ColorStop(0, Color.LightGray),
+				new ColorStop(1, GetColor()));
 
 			context.Draw(brush, Random.Shared.Next(1, 3), builder.Build());
 			builder.Clear();
@@ -189,7 +229,7 @@ public static class AuthencodeImager
 			//构建并绘制随机的小圆圈
 			radius = Random.Shared.Next(3, 8);
 			builder.AddArc(Random.Shared.Next(width), Random.Shared.Next(height), radius, radius, 0, 0, 360);
-			context.Draw(GetColor(), Random.Shared.Next(1, 3), builder.Build());
+			context.Draw(GetColor(), Random.Shared.Next(1, 2), builder.Build());
 			builder.Clear();
 		}
 
