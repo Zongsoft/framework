@@ -127,7 +127,7 @@ public static class AuthencodeImager
 		return Color.FromRgba(r, g, b, 128);
 	}
 
-	private static Font GetFont(int size = 24, FontStyle style = FontStyle.Bold)
+	private static Font GetFont(int size, FontStyle style = FontStyle.Bold)
 	{
 		string name;
 
