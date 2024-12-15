@@ -40,6 +40,12 @@
 
 		<!-- 挂载当前应用的全局事件管理器 -->
 		<object name="Events" value="{path:/Workspace/Environment/ApplicationContext@Events}">
+			<!-- 挂载事件交换器 -->
+			<object name="Exchanger" value="{static:Zongsoft.Components.EventExchanger.Instance, Zongsoft.Core}">
+				<expose name="Channels" value="{path:../@Channels}" />
+			</object>
+
+			<!-- 挂载全局事件过滤器集 -->
 			<expose name="Filters" value="{path:../@Filters}" />
 		</object>
 
@@ -60,5 +66,10 @@
 	<!-- 挂载连接设置驱动器集合 -->
 	<extension path="/Workbench/Configuration/ConnectionSettings">
 		<object name="Drivers" value="{static:Zongsoft.Configuration.ConnectionSettings.Drivers, Zongsoft.Core}" />
+	</extension>
+
+	<!-- 挂载后台工作者程序 -->
+	<extension path="/Workbench/Startup">
+		<object name="EventExchanger" value="{path:/Workbench/Events/Exchanger}" />
 	</extension>
 </plugin>
