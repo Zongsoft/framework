@@ -71,10 +71,6 @@ namespace Zongsoft.Messaging
 		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default) => this.CloseAsync(cancellation);
 		#endregion
 
-		#region 重写方法
-		protected override async ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancelToken) => await this.Queue.ProduceAsync(this.Topic, data, null, cancelToken);
-		#endregion
-
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string[] Slice(string text) => string.IsNullOrEmpty(text) ? [] :

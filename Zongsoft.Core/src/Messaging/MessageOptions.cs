@@ -69,6 +69,7 @@ public class MessageEnqueueOptions
 		this.Expiry = TimeSpan.Zero;
 		this.Priority = priority;
 		this.Reliability = reliability;
+		this.Properties = new Collections.Parameters();
 	}
 	#endregion
 
@@ -84,5 +85,8 @@ public class MessageEnqueueOptions
 
 	/// <summary>获取或设置消息的可靠性。</summary>
 	public MessageReliability Reliability { get; set; }
+
+	/// <summary>获取入队操作选项的属性集。</summary>
+	public Zongsoft.Collections.Parameters Properties { get; }
 	#endregion
 }
