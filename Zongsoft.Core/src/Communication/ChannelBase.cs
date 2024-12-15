@@ -36,7 +36,7 @@ namespace Zongsoft.Communication
 	/// <summary>
 	/// 定义通道基本功能的抽象基类。
 	/// </summary>
-	public abstract class ChannelBase : IChannel, ISender, IAsyncDisposable
+	public abstract class ChannelBase : IChannel, IAsyncDisposable
 	{
 		#region 事件定义
 		public event EventHandler Closed;
@@ -66,18 +66,6 @@ namespace Zongsoft.Communication
 		public bool IsClosed => _status == CLOSED_STATUS;
 		/// <summary>获取一个值，指示当前通道是否已经被释放。</summary>
 		public bool IsDisposed => _semaphore == null;
-		#endregion
-
-		#region 发送方法
-		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-		{
-			if(this.IsClosed)
-				throw new InvalidOperationException($"The channel is closed.");
-
-			return this.OnSendAsync(data, cancellation);
-		}
-
-		protected abstract ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancelToken);
 		#endregion
 
 		#region 激发事件

@@ -40,7 +40,7 @@ using Zongsoft.Communication;
 
 namespace Zongsoft.Net
 {
-	public abstract class TcpChannelBase<T> : ChannelBase, ISender<T>
+	public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 	{
 		#region 私有变量
 		private bool _initialized;
@@ -141,7 +141,7 @@ namespace Zongsoft.Net
 			}
 		}
 
-		protected override ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 		{
 			async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
 			{
