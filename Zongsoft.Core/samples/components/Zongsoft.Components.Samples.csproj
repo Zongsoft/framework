@@ -15,15 +15,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="NetMQ" VersionOverride="4.0.1.13" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
-		<Reference Include="Zongsoft.Messaging.Mqtt">
-			<HintPath>..\..\..\Zongsoft.Messaging.Mqtt\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.Mqtt.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Messaging.ZeroMQ">
 			<HintPath>..\..\..\Zongsoft.Messaging.ZeroMQ\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.ZeroMQ.dll</HintPath>

@@ -33,7 +33,8 @@ internal class Program
 				case "exit":
 					return;
 				case "info":
-					Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, $"#{sample.Exchanger.Identifier}@{sample.Exchanger.Options.Topic} {sample.Exchanger.Queue.ConnectionSettings}");
+					foreach(var channel in EventExchanger.Instance.Channels)
+						Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, $"{channel}");
 					break;
 				case "clear":
 					Console.Clear();
@@ -44,11 +45,11 @@ internal class Program
 					break;
 				case "start":
 				case "restart":
-					sample.Exchanger.Start();
+					EventExchanger.Instance.Start();
 					Terminal.Instance.WriteLine(CommandOutletColor.DarkGreen, "The event exchanger has started.");
 					break;
 				case "stop":
-					sample.Exchanger.Stop();
+					EventExchanger.Instance.Stop();
 					Terminal.Instance.WriteLine(CommandOutletColor.DarkMagenta, "The event exchanger has stopped.");
 					break;
 				default:
