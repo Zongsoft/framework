@@ -33,12 +33,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
-using Zongsoft.Messaging;
 using Zongsoft.Collections;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.Components;
 
+[System.Reflection.DefaultMember(nameof(Channels))]
+[System.ComponentModel.DefaultProperty(nameof(Channels))]
 public sealed class EventExchanger : WorkerBase
 {
 	#region 单例字段
@@ -59,15 +59,15 @@ public sealed class EventExchanger : WorkerBase
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取事件交换通道集合。</summary>
+	public ICollection<IEventChannel> Channels => _channels;
+
 	/// <summary>获取或设置事件处理程序定位器。</summary>
 	public Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> Locator
 	{
 		get => _locator;
 		set => _locator = value ?? Locate;
 	}
-
-	/// <summary>获取事件交换通道集合。</summary>
-	public ICollection<IEventChannel> Channels => _channels;
 	#endregion
 
 	#region 公共方法
