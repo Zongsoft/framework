@@ -51,9 +51,9 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 		{
-			_consumer.Unsubscribe();
+			_consumer.Close();
 			_poller.Stop();
 			return ValueTask.CompletedTask;
 		}
@@ -99,7 +99,7 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 处置方法
-		protected override void Dispose(bool disposing)
+		protected override ValueTask DisposeAsync(bool disposing)
 		{
 			var consumer = Interlocked.Exchange(ref _consumer, null);
 			if(consumer != null)
@@ -109,7 +109,7 @@ namespace Zongsoft.Messaging.Kafka
 			if(poller != null)
 				poller.Dispose();
 
-			base.Dispose(disposing);
+			return base.DisposeAsync(disposing);
 		}
 		#endregion
 

@@ -73,7 +73,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#endregion
 
 	#region 取消订阅
-	protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
 		var orginal = _channel;
 

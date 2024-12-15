@@ -163,8 +163,8 @@ public class EventExchanger : WorkerBase
 
 		if(subscriber != null)
 		{
-			await subscriber.UnsubscribeAsync(cancellation);
-			subscriber.Dispose();
+			await subscriber.CloseAsync(cancellation);
+			await subscriber.DisposeAsync();
 		}
 	}
 	#endregion

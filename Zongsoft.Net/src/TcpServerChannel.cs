@@ -94,10 +94,6 @@ namespace Zongsoft.Net
 		}
 		#endregion
 
-		#region 发送方法
-		internal ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
-		#endregion
-
 		#region 关闭处理
 		protected override void OnClosed() => _manager.Remove(this);
 		#endregion

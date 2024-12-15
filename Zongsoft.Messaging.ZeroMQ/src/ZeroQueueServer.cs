@@ -138,7 +138,7 @@ public sealed class ZeroQueueServer : WorkerBase
 	{
 		if(disposing)
 		{
-			this.Stop();
+			base.Dispose(disposing);
 
 			_poller.Dispose();
 			_publisher.Dispose();

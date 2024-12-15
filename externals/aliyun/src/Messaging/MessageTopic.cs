@@ -112,7 +112,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 嵌套子类
 		public class Consumer(MessageTopic queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<MessageTopic>(queue, topic, handler, options)
 		{
-			protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
+			protected override ValueTask OnCloseAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
 		}
 		#endregion
 	}

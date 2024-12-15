@@ -41,7 +41,7 @@ using Pipelines.Sockets.Unofficial;
 
 namespace Zongsoft.Net
 {
-	public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>, IDisposable
+	public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>
 	{
 		#region 成员字段
 		private readonly ConcurrentBag<TcpServerChannel<T>> _channels;
@@ -87,11 +87,24 @@ namespace Zongsoft.Net
 		#region 处置方法
 		protected override void Dispose(bool disposing)
 		{
-			foreach(var channel in _channels)
-				channel.Dispose();
+			while(_channels.TryTake(out var channel))
+			{
+				DisposeAsync(channel);
+			}
 
-			_channels.Clear();
 			base.Dispose(disposing);
+
+			static async void DisposeAsync(TcpServerChannel<T> channel)
+			{
+				if(channel == null || channel.IsDisposed)
+					return;
+
+				try
+				{
+					await channel.DisposeAsync();
+				}
+				catch { }
+			}
 		}
 		#endregion
 	}

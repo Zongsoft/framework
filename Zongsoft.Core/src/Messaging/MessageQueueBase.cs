@@ -129,7 +129,7 @@ namespace Zongsoft.Messaging
 			{
 				//执行订阅操作，如果订阅成功则挂载其订阅取消事件
 				if(await this.OnSubscribeAsync(subscriber, cancellation))
-					subscriber.Unsubscribed += OnUnsubscribed;
+					subscriber.Closed += OnClosed;
 
 				//返回新建的订阅者
 				return subscriber;
@@ -137,11 +137,11 @@ namespace Zongsoft.Messaging
 
 			return this.Subscribers.TryGetValue(topic, out subscriber) ? subscriber : default;
 
-			void OnUnsubscribed(object sender, EventArgs args)
+			void OnClosed(object sender, EventArgs args)
 			{
 				if(sender is IMessageConsumer consumer)
 				{
-					consumer.Unsubscribed -= OnUnsubscribed;
+					consumer.Closed -= OnClosed;
 
 					if(consumer.Topic != null && this.Subscribers.Remove(consumer.Topic, out var subscriber))
 						this.OnUnsubscribed(subscriber);

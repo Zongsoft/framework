@@ -32,27 +32,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging
 {
 	/// <summary>
 	/// 表示消息消费者的接口。
 	/// </summary>
-	public interface IMessageConsumer : IDisposable
+	public interface IMessageConsumer : IChannel
 	{
-		#region 事件定义
-		event EventHandler<EventArgs> Unsubscribed;
-		#endregion
-
 		#region 属性定义
 		/// <summary>获取订阅的消息主题。</summary>
 		string Topic { get; }
 
 		/// <summary>获取订阅的过滤标签。</summary>
 		string[] Tags { get; }
-
-		/// <summary>获取一个值，指示消费者是否已取消订阅。</summary>
-		bool IsUnsubscribed { get; }
 
 		/// <summary>获取消息处理器。</summary>
 		IHandler<Message> Handler { get; }

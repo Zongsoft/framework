@@ -49,7 +49,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 取消订阅
-		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
 		#endregion
 
 		#region 重写方法

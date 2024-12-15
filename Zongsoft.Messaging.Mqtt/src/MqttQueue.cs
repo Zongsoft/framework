@@ -148,7 +148,7 @@ namespace Zongsoft.Messaging.Mqtt
 				Identity = args.ClientId
 			};
 
-			if(this.Subscribers.TryGetValue(message.Topic, out var subscriber) && !subscriber.IsUnsubscribed)
+			if(this.Subscribers.TryGetValue(message.Topic, out var subscriber) && !subscriber.IsClosed)
 				await InvokeHandler(subscriber.Handler, message);
 
 			ValueTask AcknowledgeAsync(CancellationToken cancellation)

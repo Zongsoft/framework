@@ -36,14 +36,12 @@ using System.Threading.Tasks;
 
 using Pipelines.Sockets.Unofficial;
 
+using Zongsoft.Communication;
+
 namespace Zongsoft.Net
 {
-	public abstract class TcpChannelBase<T> : IDisposable, Zongsoft.Communication.IChannel, Zongsoft.Communication.ISender, Zongsoft.Communication.ISender<T>
+	public abstract class TcpChannelBase<T> : ChannelBase, ISender<T>
 	{
-		#region 事件定义
-		public event EventHandler Closed;
-		#endregion
-
 		#region 私有变量
 		private bool _initialized;
 		private readonly SemaphoreSlim _singleWriter;
@@ -64,7 +62,6 @@ namespace Zongsoft.Net
 
 		#region 公共属性
 		public EndPoint Address { get; }
-		public bool IsClosed => _transport == null;
 		public long TotalBytesSent => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesSent : 0;
 		public long TotalBytesReceived => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesReceived : 0;
 		protected IDuplexPipe Transport => _transport;
@@ -144,7 +141,7 @@ namespace Zongsoft.Net
 			}
 		}
 
-		protected ValueTask SendAsync(in ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		protected override ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 		{
 			async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
 			{
@@ -190,7 +187,6 @@ namespace Zongsoft.Net
 			}
 		}
 
-		ValueTask Zongsoft.Communication.ISender.SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation) => this.SendAsync(data, cancellation);
 		protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
 		#endregion
 
@@ -200,7 +196,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 接收消息
-		protected async Task ReceiveAsync(CancellationToken cancellationToken = default)
+		protected async Task ReceiveAsync(CancellationToken cancellation = default)
 		{
 			var reader = _transport?.Input ?? throw new ObjectDisposedException(ToString());
 
@@ -211,10 +207,10 @@ namespace Zongsoft.Net
 
 				bool unpacked = false;
 
-				while(!cancellationToken.IsCancellationRequested)
+				while(!cancellation.IsCancellationRequested)
 				{
 					if(!(unpacked && reader.TryRead(out var result)))
-						result = await reader.ReadAsync(cancellationToken);
+						result = await reader.ReadAsync(cancellation);
 
 					if(result.IsCanceled)
 						break;
@@ -246,7 +242,7 @@ namespace Zongsoft.Net
 			}
 			finally
 			{
-				try { this.Close(); } catch { }
+				try { await this.CloseAsync(cancellation); } catch { }
 			}
 		}
 
@@ -255,29 +251,30 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 关闭方法
-		protected virtual void OnClosed() => this.Closed?.Invoke(this, EventArgs.Empty);
-		public void Dispose() => this.Close();
-		void Zongsoft.Communication.IChannel.Close() => this.Close();
-		public void Close(Exception exception = null)
+		protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 		{
 			Volatile.Write(ref _initialized, false);
 			var transport = Interlocked.Exchange(ref _transport, null);
 
 			if(transport != null)
 			{
-				try { transport.Input.Complete(exception); } catch { }
+				try { transport.Input.Complete(); } catch { }
 				try { transport.Input.CancelPendingRead(); } catch { }
-				try { transport.Output.Complete(exception); } catch { }
+				try { transport.Output.Complete(); } catch { }
 				try { transport.Output.CancelPendingFlush(); } catch { }
 
-				if(transport is IDisposable disposable)
-					try { disposable.Dispose(); } catch { }
+				switch(transport)
+				{
+					case IAsyncDisposable disposable:
+						await disposable.DisposeAsync();
+						break;
+					case IDisposable disposable:
+						disposable.Dispose();
+						break;
+				}
 			}
 
 			try { _singleWriter.Dispose(); } catch { }
-
-			if(transport != null)
-				this.OnClosed();
 		}
 		#endregion
 	}

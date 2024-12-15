@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,35 +36,48 @@ namespace Zongsoft.Communication
 	/// <summary>
 	/// 定义通道基本功能的抽象基类。
 	/// </summary>
-	public abstract class ChannelBase : IChannel, IReceiver, ISender, IDisposable
+	public abstract class ChannelBase : IChannel, ISender, IAsyncDisposable
 	{
 		#region 事件定义
 		public event EventHandler Closed;
 		public event EventHandler Closing;
 		#endregion
 
+		#region 常量定义
+		private const int NONE_STATUS = 0;
+		private const int CLOSED_STATUS = 1;
+		private const int CLOSING_STATUS = 2;
+		#endregion
+
+		#region 私有变量
+		private int _status;
+		private volatile AutoResetEvent _semaphore;
+		#endregion
+
 		#region 构造函数
-		protected ChannelBase(int channelId)
+		protected ChannelBase()
 		{
-			this.ChannelId = channelId;
+			_semaphore = new AutoResetEvent(true);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取当前通道的唯一编号。</summary>
-		public int ChannelId { get; }
-
-		/// <summary>获取当前通道是否已经关闭。</summary>
-		public abstract bool IsClosed { get; }
+		/// <summary>获取一个值，指示当前通道是否已经关闭。</summary>
+		public bool IsClosed => _status == CLOSED_STATUS;
+		/// <summary>获取一个值，指示当前通道是否已经被释放。</summary>
+		public bool IsDisposed => _semaphore == null;
 		#endregion
 
 		#region 发送方法
-		public abstract ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
-		#endregion
+		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+		{
+			if(this.IsClosed)
+				throw new InvalidOperationException($"The channel is closed.");
 
-		#region 接收方法
-		protected abstract ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation);
-		ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(in data, cancellation);
+			return this.OnSendAsync(data, cancellation);
+		}
+
+		protected abstract ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancelToken);
 		#endregion
 
 		#region 激发事件
@@ -75,41 +87,61 @@ namespace Zongsoft.Communication
 
 		#region 关闭方法
 		/// <summary>当前通道被关闭时候由子类实现。</summary>
-		protected virtual void OnClose() { }
+		protected abstract ValueTask OnCloseAsync(CancellationToken cancellation);
 
-		/// <summary>
-		/// 关闭当前通道。
-		/// </summary>
+		/// <summary>关闭当前通道。</summary>
 		/// <remarks>
 		///		<para>注意：该方法不允许线程重入，即在多线程调用中，本方法内部会以同步机制运行。</para>
 		///		<para>如果当前通道是已关闭的(即<seealso cref="IsClosed"/>属性为真)，则该方法不执行任何操作。</para>
 		/// </remarks>
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
-		public void Close()
+		public async ValueTask CloseAsync(CancellationToken cancellation = default)
 		{
-			if(this.IsClosed)
-				return;
+			var semaphore = _semaphore ?? throw new ObjectDisposedException(this.GetType().Name);
 
-			//激发“Closing”关闭前事件
-			this.OnClosing();
+			try
+			{
+				semaphore.WaitOne();
 
-			//执行子类实现的真正关闭动作
-			this.OnClose();
+				//将状态设置为关闭中
+				_status = CLOSING_STATUS;
 
-			//激发“Closed”关闭后事件
-			this.OnClosed();
+				//激发“Closing”关闭前事件
+				this.OnClosing();
+
+				//执行子类实现的真正关闭动作
+				await this.OnCloseAsync(cancellation);
+
+				//设置状态为已关闭
+				Interlocked.Exchange(ref _status, CLOSED_STATUS);
+
+				//激发“Closed”关闭后事件
+				this.OnClosed();
+			}
+			finally
+			{
+				//如果状态不是已关闭则恢复到未关闭状态
+				if(_status != CLOSED_STATUS)
+					_status = NONE_STATUS;
+
+				_semaphore.Set();
+			}
 		}
 		#endregion
 
 		#region 处置方法
-		protected virtual void Dispose(bool disposing)
+		protected virtual async ValueTask DisposeAsync(bool disposing)
 		{
-			this.Close();
+			if(disposing)
+				await this.CloseAsync();
+
+			var semaphore = Interlocked.Exchange(ref _semaphore, null);
+			if(semaphore != null)
+				semaphore.Dispose();
 		}
 
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
-			this.Dispose(true);
+			await this.DisposeAsync(true);
 			GC.SuppressFinalize(this);
 		}
 		#endregion

@@ -108,18 +108,18 @@ namespace Zongsoft.Net
 				if(address.Equals(_channel.Address) && !_channel.IsClosed)
 					return;
 
-				_channel.Dispose();
+				await _channel.DisposeAsync();
 			}
 
 			_channel = this.CreateChannel(await SocketConnection.ConnectAsync(address), address);
 		}
 
-		public void Disconnect()
+		public async void DisconnectAsync(CancellationToken cancellation = default)
 		{
 			var channel = _channel;
 
 			if(channel != null && !channel.IsClosed)
-				channel.Close();
+				await channel.CloseAsync(cancellation);
 		}
 
 		protected virtual TcpClientChannel<T> CreateChannel(SocketConnection connection, EndPoint address) => new(this, connection, address);

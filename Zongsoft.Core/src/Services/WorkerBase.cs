@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -163,9 +163,6 @@ namespace Zongsoft.Services
 		public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 		public async Task StopAsync(string[] args, CancellationToken cancellation = default)
 		{
-			if(this.IsDisposed)
-				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
-
 			if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
 				return;
 

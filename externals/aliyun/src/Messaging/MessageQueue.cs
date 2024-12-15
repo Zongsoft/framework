@@ -243,7 +243,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#region 嵌套子类
 	public class Consumer(MessageQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<MessageQueue>(queue, handler, options)
 	{
-		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
 	}
 
 	private class MessageQueuePoller(MessageQueue queue, IHandler<Message> handler) : MessagePollerBase

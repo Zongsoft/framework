@@ -32,19 +32,14 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging
 {
-	public abstract class MessageConsumerBase<TQueue> : IMessageConsumer where TQueue : IMessageQueue
+	public abstract class MessageConsumerBase<TQueue> : ChannelBase, IMessageConsumer where TQueue : IMessageQueue
 	{
-		#region 事件定义
-		public event EventHandler<EventArgs> Unsubscribed;
-		#endregion
-
 		#region 成员字段
 		private IHandler<Message> _handler;
-		private volatile int _unsubscribed;
-		private volatile int _disposed;
 		#endregion
 
 		#region 构造函数
@@ -66,8 +61,6 @@ namespace Zongsoft.Messaging
 		public string[] Tags { get; }
 		public IHandler<Message> Handler => _handler;
 		public MessageSubscribeOptions Options { get; }
-		public bool IsUnsubscribed => _unsubscribed != 0;
-		public bool IsDisposed => _disposed != 0;
 		#endregion
 
 		#region 保护属性
@@ -75,34 +68,11 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 取消订阅
-		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
-		{
-			var unsubscribed = Interlocked.CompareExchange(ref _unsubscribed, 1, 0);
-			if(unsubscribed != 0)
-				return ValueTask.CompletedTask;
+		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default) => this.CloseAsync(cancellation);
+		#endregion
 
-			//执行取消订阅
-			var task = this.OnUnsubscribeAsync(cancellation);
-
-			//更新订阅标记(未订阅)
-			if(task.IsCompletedSuccessfully)
-				InvokeUnsubscribed();
-			else
-				task.AsTask().ContinueWith(t =>
-				{
-					if(t.IsCompletedSuccessfully)
-						InvokeUnsubscribed();
-				}, cancellation);
-
-			return task;
-
-			void InvokeUnsubscribed()
-			{
-				this.Unsubscribed?.Invoke(this, EventArgs.Empty);
-			}
-		}
-
-		protected abstract ValueTask OnUnsubscribeAsync(CancellationToken cancellation);
+		#region 重写方法
+		protected override async ValueTask OnSendAsync(ReadOnlyMemory<byte> data, CancellationToken cancelToken) => await this.Queue.ProduceAsync(this.Topic, data, null, cancelToken);
 		#endregion
 
 		#region 私有方法
@@ -112,34 +82,14 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 资源释放
-		public void Dispose()
-		{
-			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
-
-			if(disposed == 0)
-			{
-				this.Dispose(true);
-				GC.SuppressFinalize(this);
-			}
-		}
-
-		protected virtual void Dispose(bool disposing)
+		protected override async ValueTask DisposeAsync(bool disposing)
 		{
 			var handler = Interlocked.Exchange(ref _handler, null);
 			if(handler == null)
 				return;
 
 			if(disposing)
-				Unsubscribe();
-
-			async void Unsubscribe()
-			{
-				try
-				{
-					await this.UnsubscribeAsync();
-				}
-				catch { }
-			}
+				await this.UnsubscribeAsync();
 		}
 		#endregion
 	}

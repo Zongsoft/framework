@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -31,7 +31,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Messaging;
@@ -100,7 +99,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask OnUnsubscribeAsync(CancellationToken cancellation)
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 		{
 			_poller?.Stop();
 			return ValueTask.CompletedTask;
@@ -276,13 +275,13 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#endregion
 
 		#region 处置方法
-		protected override void Dispose(bool disposing)
+		protected override ValueTask DisposeAsync(bool disposing)
 		{
 			var poller = Interlocked.Exchange(ref _poller, null);
 			if(poller != null)
 				poller.Dispose();
 
-			base.Dispose(disposing);
+			return base.DisposeAsync(disposing);
 		}
 		#endregion
 
