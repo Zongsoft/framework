@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,7 +41,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
+public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 {
 	#region 私有变量
 	private ushort _publisherPort;
@@ -51,6 +52,7 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	private NetMQPoller _poller;
 	private NetMQQueue<Packet> _queue;
 	private PublisherSocket _publisher;
+	private EventChannel _channel;
 	#endregion
 
 	#region 构造函数
@@ -78,6 +80,10 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#region 公共属性
 	/// <summary>获取当前队列的唯一标识。</summary>
 	public string Identifier { get; }
+	#endregion
+
+	#region 公共方法
+	public IEventChannel Channel => this.IsDisposed ? null : _channel ??= new EventChannel(this);
 	#endregion
 
 	#region 订阅方法
@@ -109,11 +115,11 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		if(string.IsNullOrEmpty(topic) || topic == "*")
 		{
 			foreach(var subscriber in this.Subscribers)
-				_queue.Enqueue(new Packet(this.GetTopic(subscriber.Topic), data));
+				_queue.Enqueue(new Packet(this.GetTopic(subscriber.Topic), data, options));
 		}
 		else
 		{
-			_queue.Enqueue(new Packet(this.GetTopic(topic), data));
+			_queue.Enqueue(new Packet(this.GetTopic(topic), data, options));
 		}
 
 		return ValueTask.FromResult<string>(null);
@@ -122,7 +128,11 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
 	{
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
-			_publisher.SendMoreFrame(Utility.Pack(packet.Topic, this.Identifier)).SendFrame(packet.Data.ToArray());
+		{
+			var topic = Packetizer.Pack(this.Identifier, packet.Topic, packet.Data, packet.Options, out var compressor);
+			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : Zongsoft.IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
+			_publisher.SendMoreFrame(topic).SendFrame(data);
+		}
 	}
 	#endregion
 
@@ -252,15 +262,17 @@ public sealed class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 
 		_queue = null;
 		_poller = null;
+		_channel = null;
 		_publisher = null;
 	}
 	#endregion
 
 	#region 嵌套结构
-	private readonly struct Packet(string topic, ReadOnlyMemory<byte> data)
+	private readonly struct Packet(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options)
 	{
 		public readonly string Topic = topic;
 		public readonly ReadOnlyMemory<byte> Data = data;
+		public readonly MessageEnqueueOptions Options = options;
 	}
 	#endregion
 }

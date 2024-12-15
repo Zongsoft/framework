@@ -97,23 +97,33 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 事件处理
 	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 	{
-		var round = Math.Max(_channel.Options.Backlog, 100);
+		var round = Math.Max(_channel.Options.ReceiveHighWatermark, 100);
 
 		for(int i = 0; i < round; i++)
 		{
-			if(!args.Socket.TryReceiveFrameString(out var topic, out var more))
+			//尝试接收首帧消息
+			if(!args.Socket.TryReceiveFrameString(out var header, out var more))
 				break;
 
-			var identifier = Utility.Unpack(topic, out topic);
+			//解包收到的首帧消息
+			var identifier = Packetizer.Unpack(header, out var topic, out var options);
+
+			//如果接收到的消息是本队列发出的则忽略它及后面的数据帧
 			if(string.Equals(identifier, this.Queue.Identifier))
 			{
 				args.Socket.TrySkipFrame();
 				continue;
 			}
 
+			//接收数据帧的内容
 			if(!args.Socket.TryReceiveFrameBytes(out var data, out more))
 				break;
 
+			//如果接收到的首帧消息包含压缩选项，则必须对收到的消息内容进行解压
+			if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
+				data = Zongsoft.IO.Compression.Compressor.Decompress(compressor, data);
+
+			//调用处理器进行消息处理
 			FireAndForget(this.Handler.HandleAsync(new Message(topic, data)).AsTask());
 
 			if(!more)

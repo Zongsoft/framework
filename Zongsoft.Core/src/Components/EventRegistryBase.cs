@@ -129,8 +129,8 @@ namespace Zongsoft.Components
 				//执行本地事件调用
 				await this.RaiseAsync(descriptor, context, cancellation);
 
-				//执行事件交换器的广播通知
-				await EventExchanger.BroadcastAsync(context, cancellation);
+				//执行事件交换器的交换操作
+				await EventExchanger.Instance.ExchangeAsync(context, cancellation);
 
 				//返回激发成功
 				return true;
@@ -164,7 +164,7 @@ namespace Zongsoft.Components
 		#endregion
 
 		#region 内部方法
-		internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Collections.Parameters parameters) => new EventContext<TArgument>(this, name, argument, parameters);
+		internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Collections.Parameters parameters) => new(this, name, argument, parameters);
 		#endregion
 
 		#region 过滤方法

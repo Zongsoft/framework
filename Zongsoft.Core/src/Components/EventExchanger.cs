@@ -28,14 +28,10 @@
  */
 
 using System;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Messaging;
 using Zongsoft.Collections;
@@ -43,239 +39,97 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Components;
 
-public class EventExchanger : WorkerBase
+public sealed class EventExchanger : WorkerBase
 {
-	#region 常量定义
-	private const string DEFAULT_TOPIC = "Events";
-	#endregion
-
-	#region 私有变量
-	private readonly MessageEnqueueOptions _mostOnce = new(MessageReliability.MostOnce);
-	private readonly MessageEnqueueOptions _leastOnce = new(MessageReliability.LeastOnce);
-	private readonly MessageEnqueueOptions _exactlyOnce = new(MessageReliability.ExactlyOnce);
+	#region 单例字段
+	public static readonly EventExchanger Instance = new();
 	#endregion
 
 	#region 成员字段
-	private readonly uint _identifier;
-	private readonly Handler _handler;
-
-	private EventExchangerOptions _options;
-	private IMessageQueue _queue;
-	private IMessageConsumer _subscriber;
 	private Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> _locator;
+	private readonly List<IEventChannel> _channels;
 	#endregion
 
-	#region 构造函数
-	public EventExchanger() : this(null, null) { }
-	public EventExchanger(EventExchangerOptions options) : this(null, options) { }
-	public EventExchanger(IMessageQueue queue, EventExchangerOptions options = null)
+	#region 私有构造
+	private EventExchanger()
 	{
-		_queue = queue;
-		_options = options ?? new();
-		_identifier = Randomizer.GenerateUInt32();
 		_locator = Locate;
-		_handler = new Handler(this);
+		_channels = new List<IEventChannel>();
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取事件交换器的实例编号。</summary>
-	public uint Identifier => _identifier;
-
-	/// <summary>获取或设置进行事件交换的消息队列。</summary>
-	[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
-	public IMessageQueue Queue
-	{
-		get => _queue;
-		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
-	}
-
-	/// <summary>获取或设置进行事件交换器的设置选项。</summary>
-	public EventExchangerOptions Options
-	{
-		get => _options;
-		set => _options = value ?? throw new ArgumentNullException(nameof(value));
-	}
-
 	/// <summary>获取或设置事件处理程序定位器。</summary>
 	public Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> Locator
 	{
 		get => _locator;
 		set => _locator = value ?? Locate;
 	}
+
+	/// <summary>获取事件交换通道集合。</summary>
+	public ICollection<IEventChannel> Channels => _channels;
 	#endregion
 
 	#region 公共方法
-	public static Task BroadcastAsync(EventContext context, CancellationToken cancellation)
-	{
-		var tasks = ApplicationContext.Current.Workers
-			.Where(worker => worker.Enabled && worker.State == WorkerState.Running)
-			.OfType<EventExchanger>()
-			.Select(exchanger => exchanger.ExchangeAsync(context, cancellation).AsTask());
-
-		return Task.WhenAll(tasks);
-	}
-
-	public async ValueTask ExchangeAsync(EventContext context, CancellationToken cancellation)
+	public ValueTask ExchangeAsync(EventContext context, CancellationToken cancellation)
 	{
 		if(this.State != WorkerState.Running)
-			return;
+			return ValueTask.CompletedTask;
 
-		var queue = _queue;
-		if(queue == null)
-			return;
+		var tasks = new Task[_channels.Count];
 
-		var reliability = this.Options.Reliability switch
+		for(int i = 0; i < _channels.Count; i++)
 		{
-			MessageReliability.MostOnce => _mostOnce,
-			MessageReliability.LeastOnce => _leastOnce,
-			MessageReliability.ExactlyOnce => _exactlyOnce,
-			_ => _leastOnce,
-		};
+			tasks[i] = _channels[i].SendAsync(context, cancellation).AsTask();
+		}
 
-		var ticket = new ExchangingTicket(_identifier, context.QualifiedName, Events.Marshaler.Marshal(context));
-		var json = await Serializer.Json.SerializeAsync(ticket, null, cancellation);
-		await queue.ProduceAsync(this.Options.Topic, Encoding.UTF8.GetBytes(json), reliability, cancellation);
+		return new(Task.WhenAll(tasks));
 	}
-	#endregion
 
-	#region 事件定位
-	private static (EventRegistryBase Registry, EventDescriptor Descriptor) Locate(string qualifiedName)
+	public ValueTask RaiseAsync(string name, object argument, Parameters parameters, CancellationToken cancellation)
 	{
-		var descriptor = Events.GetEvent(qualifiedName, out var registry);
-		return (registry, descriptor);
+		(var registry, var descriptor) = _locator(name);
+
+		if(registry != null && descriptor != null)
+			return registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), cancellation);
+
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 
 	#region 重写方法
-	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
+	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		if(_queue == null)
-			throw new InvalidOperationException($"Missing required message queue.");
+		var tasks = new Task[_channels.Count];
 
-		//订阅消息队列中的事件主题
-		_subscriber = await _queue.SubscribeAsync(this.Options.Topic, _handler, new MessageSubscribeOptions(_options.Reliability), cancellation);
+		for(int i = 0; i < _channels.Count; i++)
+			tasks[i] = _channels[i].OpenAsync(this, cancellation).AsTask();
+
+		if(tasks.Length > 0)
+			return Task.WhenAll(tasks);
+
+		return Task.CompletedTask;
 	}
 
-	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
+	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		var subscriber = Interlocked.Exchange(ref _subscriber, null);
+		var tasks = new Task[_channels.Count];
 
-		if(subscriber != null)
-		{
-			await subscriber.CloseAsync(cancellation);
-			await subscriber.DisposeAsync();
-		}
+		for(int i = 0; i < _channels.Count; i++)
+			tasks[i] = _channels[i].CloseAsync(cancellation).AsTask();
+
+		if(tasks.Length > 0)
+			return Task.WhenAll(tasks);
+
+		return Task.CompletedTask;
 	}
 	#endregion
 
-	#region 嵌套结构
-	private struct ExchangingTicket
+	#region 私有方法
+	private static (EventRegistryBase Registry, EventDescriptor Descriptor) Locate(string qualifiedName)
 	{
-		#region 常量定义
-		//表示是否启用数据压缩的阈值
-		private const int COMPRESSION_THRESHOLD = 4 * 1024;
-		#endregion
-
-		#region 构造函数
-		public ExchangingTicket(uint id, string @event, byte[] data)
-		{
-			this.Exchanger = id;
-			this.Event = @event;
-			this.Data = Compress(data, out var compressed);
-			this.Compressed = compressed;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>表示事件交换器的实例号。</summary>
-		public uint Exchanger { get; set; }
-		/// <summary>表示事件的标识，即事件限定名称。</summary>
-		public string Event { get; set; }
-		/// <summary>表示事件数据的压缩器名称。</summary>
-		public bool Compressed { get; set; }
-		/// <summary>表示事件上下文对象的序列化数据。</summary>
-		public byte[] Data { get; set; }
-		#endregion
-
-		#region 压缩方法
-		private static byte[] Compress(byte[] data, out bool compressed)
-		{
-			if(data == null || data.Length < COMPRESSION_THRESHOLD)
-			{
-				compressed = false;
-				return data;
-			}
-
-			using var source = new MemoryStream(data);
-			using var destination = new MemoryStream();
-			using var compression = new BrotliStream(destination, CompressionMode.Compress, true);
-			source.CopyTo(compression);
-			compression.Close();
-
-			destination.Seek(0, SeekOrigin.Begin);
-			compressed = true;
-			return destination.ToArray();
-		}
-
-		internal readonly byte[] Decompress()
-		{
-			if(!this.Compressed || this.Data == null || this.Data.Length == 0)
-				return this.Data;
-
-			using var source = new MemoryStream(this.Data);
-			using var destination = new MemoryStream();
-			using var compression = new BrotliStream(source, CompressionMode.Decompress);
-			compression.CopyTo(destination);
-			destination.Seek(0, SeekOrigin.Begin);
-			return destination.ToArray();
-		}
-		#endregion
-
-		#region 重写方法
-		public readonly override string ToString() => $"{this.Event}@{this.Exchanger}";
-		#endregion
-	}
-
-	private sealed class Handler(EventExchanger exchanger) : HandlerBase<Message>
-	{
-		private readonly EventExchanger _exchanger = exchanger;
-
-		protected override async ValueTask OnHandleAsync(Message message, Parameters _, CancellationToken cancellation)
-		{
-			if(message.IsEmpty)
-			{
-				await message.AcknowledgeAsync(cancellation);
-				return;
-			}
-
-			//反序列化事件上下文
-			var ticket = await Serializer.Json.DeserializeAsync<ExchangingTicket>(message.Data, null, cancellation);
-
-			//如果接收到的事件来源自自身则忽略该事件
-			if(ticket.Exchanger == _exchanger.Identifier || string.IsNullOrEmpty(ticket.Event))
-			{
-				//await message.AcknowledgeAsync(cancellation);
-				return;
-			}
-
-			//根据事件标识获取对应的事件登记簿及对应的事件描述器
-			(var registry, var descriptor) = _exchanger.Locator.Invoke(ticket.Event);
-			if(descriptor == null || registry == null)
-				return;
-
-			//尝试解压缩
-			var data = ticket.Decompress();
-
-			//还原事件参数
-			(var argument, var parameters) = Events.Marshaler.Unmarshal(descriptor, data);
-
-			//重放事件
-			await registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), cancellation);
-
-			//应答消息
-			await message.AcknowledgeAsync(cancellation);
-		}
+		var descriptor = Events.GetEvent(qualifiedName, out var registry);
+		return (registry, descriptor);
 	}
 	#endregion
 }

@@ -207,13 +207,13 @@ namespace Zongsoft.Components
 				return System.Text.Encoding.UTF8.GetBytes(content);
 			}
 
-			public static (object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, byte[] data) => Unmarshal(GetEvent(qualifiedName), data);
-			public static (object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, byte[] data)
+			public static (object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, ReadOnlySpan<byte> data) => Unmarshal(GetEvent(qualifiedName), data);
+			public static (object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, ReadOnlySpan<byte> data)
 			{
 				if(descriptor == null)
 					throw new ArgumentNullException(nameof(descriptor));
 
-				if(data == null || data.Length == 0)
+				if(data.IsEmpty)
 					return default;
 
 				var argumentType = GetArgumentType(descriptor);

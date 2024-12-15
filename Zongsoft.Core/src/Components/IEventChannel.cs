@@ -11,43 +11,31 @@
  *
  * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Messaging.ZeroMQ library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Messaging.ZeroMQ is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Messaging.ZeroMQ is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Messaging.ZeroMQ library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Messaging.ZeroMQ;
+using Zongsoft.Communication;
 
-internal static class Utility
+namespace Zongsoft.Components;
+
+public interface IEventChannel : IChannel, ISender<EventContext>
 {
-	public static string Pack(string topic, string identifier) => $"{topic}@{identifier}";
-	public static string Unpack(ReadOnlySpan<char> text, out string topic)
-	{
-		if(!text.IsEmpty)
-		{
-			var index = text.IndexOf('@');
-
-			if(index > 0 && index < text.Length - 1)
-			{
-				topic = text[..index].ToString();
-				return text[(index + 1)..].ToString();
-			}
-		}
-
-		topic = text.ToString();
-		return null;
-	}
+	ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default);
 }
