@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -129,9 +128,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	{
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
 		{
-			var topic = Packetizer.Pack(this.Identifier, packet.Topic, packet.Data, packet.Options, out var compressor);
-			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : Zongsoft.IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
-			_publisher.SendMoreFrame(topic).SendFrame(data);
+			var head = Packetizer.Pack(this.Identifier, packet.Topic, packet.Data, packet.Options, out var compressor);
+			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
+			_publisher.SendMoreFrame(head).SendFrame(data);
 		}
 	}
 	#endregion

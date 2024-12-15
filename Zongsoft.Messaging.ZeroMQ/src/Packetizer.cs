@@ -62,7 +62,7 @@ internal static class Packetizer
 			else
 			{
 				options = ParseOptions(header[(index + 1)..].ToString());
-				return Parse(header, out topic);
+				return Parse(header[..index], out topic);
 			}
 		}
 
@@ -116,9 +116,9 @@ internal static class Packetizer
 
 	public sealed class Options
 	{
-		/// <summary>压缩器名称的选项名。</summary>
+		/// <summary>压缩器名称的选项。</summary>
 		public const string Compressor = nameof(Compressor);
-		/// <summary>压缩阈值的选项名，单位为字节。</summary>
+		/// <summary>压缩阈值的选项，单位为字节。</summary>
 		public const string Compressive = nameof(Compressive);
 
 		public static bool TryGetValue(IEnumerable<KeyValuePair<string, string>> options, string name, out string value)

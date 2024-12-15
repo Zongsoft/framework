@@ -108,7 +108,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//解包收到的首帧消息
 			var identifier = Packetizer.Unpack(header, out var topic, out var options);
 
-			//如果接收到的消息是本队列发出的则忽略它及后面的数据帧
+			//如果接收到的消息是本队列发出的则忽略它并跳过随后的数据帧
 			if(string.Equals(identifier, this.Queue.Identifier))
 			{
 				args.Socket.TrySkipFrame();
@@ -132,11 +132,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 
 		static async void FireAndForget(Task task)
 		{
-			try
-			{
-				await task;
-			}
-			catch { }
+			try { await task; } catch { }
 		}
 	}
 	#endregion

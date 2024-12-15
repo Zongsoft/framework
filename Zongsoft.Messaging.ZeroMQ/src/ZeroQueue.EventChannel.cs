@@ -56,12 +56,8 @@ partial class ZeroQueue
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_options = new MessageEnqueueOptions();
-			_options.Properties[Packetizer.Options.Compressive] = 4 * 1024;
+			_options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
 		}
-		#endregion
-
-		#region 公共属性
-		public ZeroQueue Queue => _queue;
 		#endregion
 
 		#region 公共方法
@@ -89,7 +85,8 @@ partial class ZeroQueue
 			_queue = null;
 			return base.DisposeAsync(disposing);
 		}
-		public override string ToString() => _queue == null ? $"{this.GetType().Name}(Disposed)" : $"{_queue.Name}#{_queue.Identifier} ({_queue.ConnectionSettings})";
+
+		public override string ToString() => _queue == null ? $"{this.GetType().Name}(Disposed)" : $"{_queue.Name}#{_queue.Identifier} ({_queue.ConnectionSettings?.Server})";
 		#endregion
 
 		#region 嵌套子类
@@ -110,7 +107,7 @@ partial class ZeroQueue
 				//将消息内容还原成事件参数对象
 				(var argument, parameters) = Events.Marshaler.Unmarshal(name, message.Data);
 
-				//通过事件交换器的重放接收到事件
+				//通过事件交换器重放接收到事件
 				return _exchanger.RaiseAsync(name, argument, parameters, cancellation);
 			}
 
