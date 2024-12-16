@@ -29,15 +29,15 @@ public class LuaExpressionEvaluatorTest
 	}
 
 	[Fact]
-	public void TestEvaluateJson()
+	public void TestEvaluateSerializeJson()
 	{
 		var evaluator = new LuaExpressionEvaluator();
 
-		var result = evaluator.Evaluate(@"obj = {id = 100, name=""name""}; return json:serialize(obj);");
+		var result = evaluator.Evaluate(@"obj = {id = 100, name=""name""}; return Json:Serialize(obj);");
 		Assert.NotNull(result);
 
 		var variables = new Dictionary<string, object>() { { "text", result } };
-		result = evaluator.Evaluate(@"obj = json:deserialize(text); obj.id=200; return obj;", variables);
+		result = evaluator.Evaluate(@"obj = Json:Deserialize(text); obj.id=200; return obj;", variables);
 		Assert.NotNull(result);
 		Assert.IsAssignableFrom<IDictionary<string, object>>(result);
 
@@ -46,6 +46,92 @@ public class LuaExpressionEvaluatorTest
 			Assert.Equal(2, dictionary.Count);
 			Assert.Equal(200L, dictionary["id"]);
 			Assert.Equal("name", dictionary["name"]);
+		}
+	}
+
+	[Fact]
+	public void TestEvaluateDeserializeJson()
+	{
+		var json = $$"""
+		{
+			"id":100,
+			"name":"MyName",
+			"number":1.23,
+			"boolean":true,
+			"integers":[10,20,30],
+			"object":{
+				"integer":200,
+				"nothing":null
+			},
+			"objects":[
+				{ "boolean":false, "number":12.3 },
+				{ "string":"text", "integer":100 }
+			]
+		}
+		""";
+
+		var script = """
+		obj=Json:Deserialize(text);
+
+		print(obj.id);
+		print(obj.name);
+		print(obj.number);
+		print(obj.boolean);
+		
+		for i=0, obj.integers.Length-1 do
+			print(i, obj.integers[i])
+		end
+
+		print(obj.object.integer);
+		print(obj.object.nothing);
+
+		print("objects length: " .. obj.objects.Length);
+
+		for i=0, obj.objects.Length-1 do
+			print(i, obj.objects[i])
+		end
+
+		return obj;
+		""";
+
+		var evaluator = new LuaExpressionEvaluator();
+
+		var result = evaluator.Evaluate(script, new Dictionary<string, object> { { "text", json } });
+		Assert.NotNull(result);
+		Assert.IsAssignableFrom<IDictionary<string, object>>(result);
+
+		if(result is IDictionary<string, object> dictionary)
+		{
+			Assert.Equal(7, dictionary.Count);
+			Assert.Equal(100, dictionary["id"]);
+			Assert.Equal("MyName", dictionary["name"]);
+			Assert.Equal(1.23, dictionary["number"]);
+			Assert.Equal(true, dictionary["boolean"]);
+			Assert.IsType<object[]>(dictionary["integers"]);
+			Assert.Equal([10, 20, 30], (object[])dictionary["integers"]);
+
+			Assert.IsType<Dictionary<string, object>>(dictionary["object"]);
+			var children = (IDictionary<string, object>)dictionary["object"];
+			Assert.Equal(2, children.Count);
+			Assert.Equal(200, children["integer"]);
+			Assert.Null(children["nothing"]);
+
+			Assert.IsType<object[]>(dictionary["objects"]);
+			var array = (object[])dictionary["objects"];
+			Assert.Equal(2, array.Length);
+			Assert.NotEqual(0, array[0]);
+			Assert.IsType<Dictionary<string, object>>(array[0]);
+			children = (IDictionary<string, object>)array[0];
+			Assert.Equal(2, children.Count);
+			Assert.Equal(false, children["boolean"]);
+			Assert.Equal(12.3, children["number"]);
+
+			Assert.NotEqual(0, array[1]);
+			Assert.IsType<Dictionary<string, object>>(array[1]);
+			children = (IDictionary<string, object>)array[1];
+			Assert.Equal(2, children.Count);
+			Assert.Equal("text", children["string"]);
+			Assert.Equal(100, children["integer"]);
 		}
 	}
 

@@ -50,7 +50,7 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#region 构造函数
 	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>()
 	{
-		{ "json", new Json() },
+		{ nameof(Json), new Json() },
 	};
 	#endregion
 
@@ -96,17 +96,13 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#region 嵌套子类
 	private sealed class Json
 	{
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822")]
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
-		public string serialize(object obj)
+		public string Serialize(object obj)
 		{
 			var target = obj is NLua.LuaTable table ? Utility.ToDictionary(table) : obj;
 			return Serializer.Json.Serialize(target);
 		}
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822")]
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
-		public object deserialize(string json) => Serializer.Json.Deserialize<Dictionary<string, object>>(json);
+		public object Deserialize(string json) => Serializer.Json.Deserialize<Dictionary<string, object>>(json);
 	}
 	#endregion
 }
