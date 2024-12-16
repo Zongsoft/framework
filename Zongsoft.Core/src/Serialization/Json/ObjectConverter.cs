@@ -30,6 +30,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace Zongsoft.Serialization.Json;
 
@@ -39,48 +40,24 @@ public class ObjectConverter : JsonConverter<object>
 
 	public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		if(reader.TokenType == JsonTokenType.Null)
-			return null;
-		if(reader.TokenType == JsonTokenType.String)
-			return reader.GetString();
-		if(reader.TokenType == JsonTokenType.True || reader.TokenType == JsonTokenType.False)
-			return reader.GetBoolean();
-		if(reader.TokenType == JsonTokenType.Number)
-			return reader.TryGetInt32(out var integer) ? integer : reader.GetDouble();
-
-		if(reader.TokenType == JsonTokenType.StartObject)
+		switch(reader.TokenType)
 		{
-			Type type = null;
-			object value = null;
-			var depth = reader.CurrentDepth;
-
-			while(reader.Read() && reader.CurrentDepth > depth)
-			{
-				if(reader.TokenType == JsonTokenType.PropertyName)
-				{
-					var name = reader.GetString();
-
-					if(name == "$type")
-					{
-						if(reader.Read())
-						{
-							type = Common.TypeAlias.Parse(reader.GetString());
-							if(type == null)
-								return null;
-						}
-					}
-					else if(name == "value")
-					{
-						if(reader.Read())
-							value = GetValue(ref reader, type, options);
-					}
-				}
-			}
-
-			return value;
+			case JsonTokenType.Null:
+				return null;
+			case JsonTokenType.String:
+				return reader.GetString();
+			case JsonTokenType.Number:
+				return GetNumber(ref reader);
+			case JsonTokenType.True:
+			case JsonTokenType.False:
+				return reader.GetBoolean();
+			case JsonTokenType.StartObject:
+				return PopulateObject(ref reader, options);
+			case JsonTokenType.StartArray:
+				return PopulateArray(ref reader, options);
+			default:
+				return JsonSerializer.Deserialize(ref reader, typeToConvert, options);
 		}
-
-		return JsonSerializer.Deserialize(ref reader, typeToConvert, options);
 	}
 
 	public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
@@ -104,7 +81,7 @@ public class ObjectConverter : JsonConverter<object>
 
 					writer.WritePropertyName("$type");
 					writer.WriteStringValue(GetTypeName(type));
-					writer.WritePropertyName("value");
+					writer.WritePropertyName("$value");
 					writer.WriteObject(value, options);
 
 					writer.WriteEndObject();
@@ -159,5 +136,105 @@ public class ObjectConverter : JsonConverter<object>
 
 				return JsonSerializer.Deserialize(ref reader, type, options);
 		}
+	}
+
+	private static object PopulateArray(ref Utf8JsonReader reader, JsonSerializerOptions options)
+	{
+		var result = new List<object>();
+		var depth = reader.CurrentDepth;
+
+		while(reader.Read() && reader.CurrentDepth > depth)
+		{
+			var value = Default.Read(ref reader, typeof(object), options);
+			result.Add(value);
+		}
+
+		return result.ToArray();
+	}
+
+	private static object PopulateObject(ref Utf8JsonReader reader, JsonSerializerOptions options)
+	{
+		Type type = null;
+		string name = null;
+		object result = null;
+		var depth = reader.CurrentDepth;
+
+		while(reader.Read() && reader.CurrentDepth > depth)
+		{
+			switch(reader.TokenType)
+			{
+				case JsonTokenType.PropertyName:
+					name = reader.GetString();
+
+					if(name == "$type")
+					{
+						if(reader.Read())
+						{
+							type = Common.TypeAlias.Parse(reader.GetString());
+							if(type == null)
+								return null;
+						}
+					}
+					else if(name == "$value")
+					{
+						if(reader.Read())
+							result = GetValue(ref reader, type, options);
+					}
+					else
+					{
+						if(result == null)
+						{
+							if(type == null)
+								result = new Dictionary<string, object>();
+							else if(type.IsAbstract)
+								result = Data.Model.Build(type);
+							else
+								result = Activator.CreateInstance(type);
+
+							type = null;
+						}
+					}
+					break;
+				case JsonTokenType.Null:
+					SetValue(ref result, name, null);
+					break;
+				case JsonTokenType.Number:
+					SetValue(ref result, name, GetNumber(ref reader));
+					break;
+				case JsonTokenType.String:
+					SetValue(ref result, name, reader.GetString());
+					break;
+				case JsonTokenType.True:
+				case JsonTokenType.False:
+					SetValue(ref result, name, reader.GetBoolean());
+					break;
+				case JsonTokenType.StartObject:
+				case JsonTokenType.StartArray:
+					var value = Default.Read(ref reader, typeof(object), options);
+					SetValue(ref result, name, value);
+					break;
+			}
+		}
+
+		return result;
+
+		static void SetValue(ref object target, string name, object value)
+		{
+			if(target == null || string.IsNullOrEmpty(name))
+				return;
+
+			if(target is IDictionary<string, object> dictionary)
+				dictionary[name] = value;
+			else
+				Reflection.Reflector.TrySetValue(ref target, name, type => Common.Convert.ConvertValue(value, type));
+		}
+	}
+
+	internal static  object GetNumber(ref Utf8JsonReader reader)
+	{
+		if(reader.TryGetInt32(out var integer))
+			return integer;
+		else
+			return reader.GetDouble();
 	}
 }

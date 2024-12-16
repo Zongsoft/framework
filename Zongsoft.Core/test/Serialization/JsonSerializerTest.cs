@@ -11,6 +11,10 @@ namespace Zongsoft.Serialization
 {
 	public class JsonSerializerTest
 	{
+		private const int INTEGER = int.MaxValue;
+		private const double DOUBLE = double.MaxValue;
+		private const string STRING = nameof(String);
+
 		[Fact]
 		public void TestSerialize()
 		{
@@ -33,42 +37,6 @@ namespace Zongsoft.Serialization
 			var credentialResult = Serializer.Json.Deserialize<Credential>(json);
 			Assert.NotNull(credentialResult);
 			Assert.Equal(credential, credentialResult);
-		}
-
-		[Fact]
-		public void TestDeserialize()
-		{
-			var text = @"{
-""CredentialId"": ""123"",
-""RenewalToken"": ""666"",
-""Scenario"": ""web"",
-""Expiration"": ""04:00:00"",
-""Count"":""69"",
-""User"": {
-	""creation"": ""2020-05-12T23:33:51"",
-	""properties"": {
-		""roles"": [""Administrators"", ""Users"" ]
-	},
-	""userId"": 100,
-	""name"": ""Popeye"",
-	""nickname"": ""钟少"",
-	""namespace"": ""automao"",
-	""description"": ""钟峰""
-}}";
-
-			var credential = Serializer.Json.Deserialize<Credential>(text);
-
-			Assert.NotNull(credential);
-			Assert.Equal("123", credential.CredentialId);
-			Assert.Equal("666", credential.RenewalToken);
-			Assert.Equal(69, credential.Count);
-			Assert.Equal(TimeSpan.FromHours(4), credential.Expiration);
-
-			Assert.NotNull(credential.User);
-			Assert.Equal(100u, credential.User.UserId);
-			Assert.Equal("Popeye", credential.User.Name);
-			Assert.Equal("钟少", credential.User.Nickname);
-			Assert.Equal(DateTime.Parse("2020-05-12T23:33:51"), credential.User.Creation);
 		}
 
 		[Fact]
@@ -194,6 +162,166 @@ namespace Zongsoft.Serialization
 			Assert.NotNull(result2);
 			Assert.NotEmpty(result2);
 			Assert.Equal(((IModel)model).GetCount(), result2.Count);
+		}
+
+		[Fact]
+		public void TestDeserialize()
+		{
+			var text = @"{
+""CredentialId"": ""123"",
+""RenewalToken"": ""666"",
+""Scenario"": ""web"",
+""Expiration"": ""04:00:00"",
+""Count"":""69"",
+""User"": {
+	""creation"": ""2020-05-12T23:33:51"",
+	""properties"": {
+		""roles"": [""Administrators"", ""Users"" ]
+	},
+	""userId"": 100,
+	""name"": ""Popeye"",
+	""nickname"": ""钟少"",
+	""namespace"": ""automao"",
+	""description"": ""钟峰""
+}}";
+
+			var credential = Serializer.Json.Deserialize<Credential>(text);
+
+			Assert.NotNull(credential);
+			Assert.Equal("123", credential.CredentialId);
+			Assert.Equal("666", credential.RenewalToken);
+			Assert.Equal(69, credential.Count);
+			Assert.Equal(TimeSpan.FromHours(4), credential.Expiration);
+
+			Assert.NotNull(credential.User);
+			Assert.Equal(100u, credential.User.UserId);
+			Assert.Equal("Popeye", credential.User.Name);
+			Assert.Equal("钟少", credential.User.Nickname);
+			Assert.Equal(DateTime.Parse("2020-05-12T23:33:51"), credential.User.Creation);
+		}
+
+		[Fact]
+		public void TestDeserializeGenericDictionary()
+		{
+			var json = $$"""
+{
+	"integer":{{INTEGER}},
+	"double":{{DOUBLE}},
+	"string":"{{STRING}}",
+	"true":true,
+	"false":false,
+	"null":null,
+	"integers":[1,2,3],
+	"booleans":[true, false],
+	"strings":["String#1", "String#2"],
+	"object":{
+		"double":{{DOUBLE}},
+		"object":{
+			"short":{{short.MaxValue}}
+		},
+		"null":null
+	},
+	"objects":[
+		null,
+		{{INTEGER}},
+		{{DOUBLE}},
+		"{{STRING}}",
+		true,
+		false,
+		{
+			"array":[{},null,{}]
+		}
+	]
+}
+""";
+
+			var dictionary = Serializer.Json.Deserialize<Dictionary<string, object>>(json);
+			Assert.NotNull(dictionary);
+			Assert.NotEmpty(dictionary);
+			Assert.Equal(11, dictionary.Count);
+			Assert.True(dictionary.TryGetValue("integer", out var value));
+			Assert.Equal(INTEGER, value);
+			Assert.True(dictionary.TryGetValue("double", out value));
+			Assert.Equal(DOUBLE, value);
+			Assert.True(dictionary.TryGetValue("string", out value));
+			Assert.Equal(STRING, value);
+			Assert.True(dictionary.TryGetValue("true", out value));
+			Assert.Equal(true, value);
+			Assert.True(dictionary.TryGetValue("false", out value));
+			Assert.Equal(false, value);
+			Assert.True(dictionary.TryGetValue("null", out value));
+			Assert.Null(value);
+
+			Assert.True(dictionary.TryGetValue("integers", out value));
+			Assert.NotNull(value);
+			Assert.IsType<object[]>(value);
+			Assert.Equal([1, 2, 3], (object[])value);
+
+			Assert.True(dictionary.TryGetValue("booleans", out value));
+			Assert.NotNull(value);
+			Assert.IsType<object[]>(value);
+			Assert.Equal([true, false], (object[])value);
+
+			Assert.True(dictionary.TryGetValue("strings", out value));
+			Assert.NotNull(value);
+			Assert.IsType<object[]>(value);
+			Assert.Equal(["String#1", "String#2"], (object[])value);
+
+			Assert.True(dictionary.TryGetValue("object", out value));
+			Assert.NotNull(value);
+			Assert.IsType<Dictionary<string, object>>(value);
+
+			var children = (Dictionary<string, object>)value;
+			Assert.NotEmpty(children);
+			Assert.Equal(3, children.Count);
+
+			Assert.True(children.TryGetValue("null", out value));
+			Assert.Null(value);
+			Assert.True(children.TryGetValue("double", out value));
+			Assert.IsType<double>(value);
+			Assert.Equal(DOUBLE, value);
+
+			Assert.True(children.TryGetValue("object", out value));
+			Assert.NotNull(value);
+			Assert.IsType<Dictionary<string, object>>(value);
+
+			children = (Dictionary<string, object>)value;
+			Assert.NotEmpty(children);
+			Assert.Single(children);
+
+			Assert.True(children.TryGetValue("short", out value));
+			Assert.IsType<int>(value);
+			Assert.Equal((int)short.MaxValue, value);
+
+			Assert.True(dictionary.TryGetValue("objects", out value));
+			Assert.NotNull(value);
+			Assert.IsType<object[]>(value);
+
+			var array = (object[])value;
+			Assert.NotEmpty(array);
+			Assert.Equal(7, array.Length);
+
+			Assert.Null(array[0]);
+			Assert.Equal(INTEGER, array[1]);
+			Assert.Equal(DOUBLE, array[2]);
+			Assert.Equal(STRING, array[3]);
+			Assert.Equal(true, array[4]);
+			Assert.Equal(false, array[5]);
+
+			Assert.NotNull(array[6]);
+			Assert.IsType<Dictionary<string, object>>(array[6]);
+			children = (Dictionary<string, object>)array[6];
+			Assert.Single(children);
+			Assert.True(children.TryGetValue("array", out value));
+			Assert.NotNull(value);
+			Assert.IsType<object[]>(value);
+
+			array = (object[])value;
+			Assert.NotEmpty(array);
+			Assert.Equal(3, array.Length);
+			Assert.Null(array[0]);
+			Assert.Null(array[1]);
+			Assert.Null(array[2]);
 		}
 
 		private static IUserModel CreateUser() => Model.Build<IUserModel>(p =>

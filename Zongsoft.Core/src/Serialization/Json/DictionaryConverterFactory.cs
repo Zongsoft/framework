@@ -63,7 +63,7 @@ public class DictionaryConverterFactory : JsonConverterFactory
 						dictionary[key] = reader.GetBoolean();
 						break;
 					case JsonTokenType.Number:
-						dictionary[key] = reader.TryGetInt32(out var integer) ? integer : reader.GetDouble();
+						dictionary[key] = ObjectConverter.GetNumber(ref reader);
 						break;
 					case JsonTokenType.String:
 						dictionary[key] = reader.GetString();
@@ -126,7 +126,7 @@ public class DictionaryConverterFactory : JsonConverterFactory
 						dictionary[key] = Common.Convert.ConvertValue(reader.GetBoolean(), default(TValue));
 						break;
 					case JsonTokenType.Number:
-						dictionary[key] = Common.Convert.ConvertValue(reader.TryGetInt32(out var integer) ? integer : reader.GetDouble(), default(TValue));
+						dictionary[key] = Common.Convert.ConvertValue(ObjectConverter.GetNumber(ref reader), default(TValue));
 						break;
 					case JsonTokenType.String:
 						dictionary[key] = Common.Convert.ConvertValue(reader.GetString(), default(TValue));

@@ -61,10 +61,7 @@ namespace Zongsoft.Serialization
 		#endregion
 
 		#region 扩展方法
-		public static T GetValue<T>(this in Utf8JsonReader reader)
-		{
-			return JsonGetterTemplate<T>.Get(reader);
-		}
+		public static T GetValue<T>(this in Utf8JsonReader reader) => JsonGetterTemplate<T>.Get(reader);
 		#endregion
 
 		#region 私有子类

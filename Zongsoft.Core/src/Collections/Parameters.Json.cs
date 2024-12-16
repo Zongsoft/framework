@@ -83,9 +83,9 @@ namespace Zongsoft.Collections
 							break;
 						case JsonTokenType.Number:
 							if(type == null)
-								parameters.SetValue(name, reader.TryGetInt32(out var integer) ? integer : reader.GetDouble());
+								parameters.SetValue(name, Serialization.Json.ObjectConverter.GetNumber(ref reader));
 							else
-								parameters.SetValue(type, reader.TryGetInt32(out var integer) ? integer : reader.GetDouble());
+								parameters.SetValue(type, Serialization.Json.ObjectConverter.GetNumber(ref reader));
 							break;
 						case JsonTokenType.String:
 							if(type == null)
