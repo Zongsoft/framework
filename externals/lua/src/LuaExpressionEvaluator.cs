@@ -44,14 +44,22 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#endregion
 
 	#region 静态字段
-	private static readonly Lazy<NLua.Lua> _engine = new(() => new NLua.Lua());
+	private static readonly Lazy<NLua.Lua> _engine = new(() =>
+	{
+		var lua = new NLua.Lua();
+
+		//加载 .NET CLR 程序集
+		lua.LoadCLRPackage();
+
+		//设置默认的 Json 解析器
+		lua[nameof(Json)] = new Json();
+
+		return lua;
+	});
 	#endregion
 
 	#region 构造函数
-	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>()
-	{
-		{ nameof(Json), new Json() },
-	};
+	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>();
 	#endregion
 
 	#region 公共属性
@@ -61,14 +69,6 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 	#region 公共方法
 	public object Evaluate(string expression, IDictionary<string, object> variables = null)
 	{
-		static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable)
-		{
-			if(variable.Value is Delegate @delegate)
-				engine.RegisterFunction(variable.Key, @delegate.Target, @delegate.Method);
-			else
-				engine[variable.Key] = variable.Value;
-		}
-
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
@@ -85,6 +85,16 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 
 		var result = engine.DoString(expression);
 		return result != null && result.Length == 1 ? Utility.Convert(result[0]) : Utility.Convert(result);
+	}
+	#endregion
+
+	#region 私有方法
+	private static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable)
+	{
+		if(variable.Value is Delegate @delegate)
+			engine.RegisterFunction(variable.Key, @delegate.Target, @delegate.Method);
+		else
+			engine[variable.Key] = variable.Value;
 	}
 	#endregion
 
