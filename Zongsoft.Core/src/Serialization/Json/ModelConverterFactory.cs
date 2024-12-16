@@ -66,7 +66,10 @@ public class ModelConverterFactory : JsonConverterFactory
 			static void WriteModel(Utf8JsonWriter writer, IEnumerable<KeyValuePair<string, object>> properties, JsonSerializerOptions options)
 			{
 				if(properties == null)
+				{
+					writer.WriteNullValue();
 					return;
+				}
 
 				writer.WriteStartObject();
 
