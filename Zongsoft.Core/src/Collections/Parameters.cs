@@ -51,6 +51,13 @@ namespace Zongsoft.Collections
 			if(parameters != null && parameters.Any())
 				_cache = new(parameters.Select(entry => new KeyValuePair<object, object>(entry.Key ?? string.Empty, entry.Value)), Comparer.Instance);
 		}
+		public Parameters(IEnumerable<KeyValuePair<object, object>> parameters)
+		{
+			_initialization = 0;
+
+			if(parameters != null && parameters.Any())
+				_cache = new(parameters, Comparer.Instance);
+		}
 		#endregion
 
 		#region 公共属性
