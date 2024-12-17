@@ -210,10 +210,7 @@ namespace Zongsoft.Components
 			public static (object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, ReadOnlySpan<byte> data) => Unmarshal(GetEvent(qualifiedName), data);
 			public static (object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, ReadOnlySpan<byte> data)
 			{
-				if(descriptor == null)
-					throw new ArgumentNullException(nameof(descriptor));
-
-				if(data.IsEmpty)
+				if(descriptor == null || data.IsEmpty)
 					return default;
 
 				var argumentType = GetArgumentType(descriptor);
