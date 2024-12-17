@@ -38,12 +38,17 @@ namespace Zongsoft.Messaging
 	/// </summary>
 	public abstract class MessagePollerBase : IMessagePoller
 	{
+		#region 常量定义
+		private const int DISPOSED = -1;
+		private const int DISPOSING = 1;
+		#endregion
+
 		#region 私有变量
 		private CancellationTokenSource _cancellation;
 		#endregion
 
 		#region 成员字段
-		public volatile int _disposed;
+		private volatile int _disposing;
 		#endregion
 
 		#region 构造函数
@@ -52,7 +57,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 公共属性
-		public bool IsDisposed => _disposed != 0;
+		public bool IsDisposed => _disposing == DISPOSED;
 		public bool IsPolling
 		{
 			get
@@ -151,12 +156,18 @@ namespace Zongsoft.Messaging
 		#region 释放资源
 		public void Dispose()
 		{
-			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+			if(disposing != 0)
+				return;
 
-			if(disposed == 0)
+			try
 			{
 				this.Dispose(true);
 				GC.SuppressFinalize(this);
+			}
+			finally
+			{
+				_disposing = DISPOSED;
 			}
 		}
 

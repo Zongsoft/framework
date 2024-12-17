@@ -42,16 +42,21 @@ namespace Zongsoft.Services
 	/// </remarks>
 	public abstract class WorkerBase : IWorker, IDisposable
 	{
+		#region 常量定义
+		private const int DISPOSED = -1;
+		private const int DISPOSING = 1;
+		#endregion
+
 		#region 事件声明
 		public event EventHandler<WorkerStateChangedEventArgs> StateChanged;
 		#endregion
 
-		#region 成员变量
+		#region 成员字段
 		private string _name;
 		private bool _enabled;
 		private bool _canPauseAndContinue;
 		private int _state;
-		private int _disposed;
+		private volatile int _disposing;
 		private readonly AutoResetEvent _semaphore;
 		#endregion
 
@@ -107,7 +112,7 @@ namespace Zongsoft.Services
 
 		/// <summary>获取工作器的状态。</summary>
 		public WorkerState State => (WorkerState)_state;
-		public bool IsDisposed => _disposed != 0;
+		public bool IsDisposed => _disposing == DISPOSED;
 		#endregion
 
 		#region 公共方法
@@ -348,13 +353,19 @@ namespace Zongsoft.Services
 		protected virtual void Dispose(bool disposing) => this.Stop();
 		void IDisposable.Dispose()
 		{
-			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+			if(disposing != 0)
+				return;
 
-			if(disposed == 0)
+			try
 			{
 				this.Dispose(true);
 				_semaphore.Dispose();
 				GC.SuppressFinalize(this);
+			}
+			finally
+			{
+				_disposing = DISPOSED;
 			}
 		}
 		#endregion

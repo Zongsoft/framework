@@ -43,8 +43,13 @@ namespace Zongsoft.Messaging
 {
 	public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubscriber : IMessageConsumer
 	{
+		#region 常量定义
+		private const int DISPOSED = -1;
+		private const int DISPOSING = 1;
+		#endregion
+
 		#region 成员字段
-		private volatile int _disposed;
+		private volatile int _disposing;
 		#endregion
 
 		#region 构造函数
@@ -60,7 +65,7 @@ namespace Zongsoft.Messaging
 		public string Name { get; }
 		public IConnectionSettings ConnectionSettings { get; set; }
 		public SubscriberCollection Subscribers { get; }
-		public bool IsDisposed => _disposed != 0;
+		public bool IsDisposed => _disposing == DISPOSED;
 		#endregion
 
 		#region 生产方法
@@ -157,12 +162,18 @@ namespace Zongsoft.Messaging
 		#region 资源释放
 		public void Dispose()
 		{
-			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
+			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+			if(disposing != 0)
+				return;
 
-			if(disposed == 0)
+			try
 			{
 				this.Dispose(true);
 				GC.SuppressFinalize(this);
+			}
+			finally
+			{
+				_disposing = DISPOSED;
 			}
 		}
 
