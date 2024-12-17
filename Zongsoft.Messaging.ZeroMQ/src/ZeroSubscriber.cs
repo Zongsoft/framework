@@ -124,7 +124,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 				data = Zongsoft.IO.Compression.Compressor.Decompress(compressor, data);
 
 			//调用处理器进行消息处理
-			FireAndForget(this.Handler.HandleAsync(new Message(topic, data)).AsTask());
+			FireAndForget(Task.Run(() => this.Handler.HandleAsync(new Message(topic, data))));
 
 			if(!more)
 				break;
