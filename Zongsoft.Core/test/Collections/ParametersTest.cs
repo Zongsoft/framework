@@ -56,6 +56,7 @@ namespace Zongsoft.Collections.Tests
 				.Parameter("MyDateTime", today)
 				.Parameter("MyDateTimeOffset", now)
 				.Parameter("MyBuffer", data)
+				.Parameter("MyEnum", Gender.Male)
 				.Parameter(model);
 
 			var json = Serializer.Json.Serialize(parameters);
@@ -111,6 +112,11 @@ namespace Zongsoft.Collections.Tests
 			Assert.NotNull(value);
 			Assert.IsType<byte[]>(value);
 			Assert.True(System.Linq.Enumerable.SequenceEqual(data, (byte[])value));
+
+			Assert.True(result.TryGetValue("MyEnum", out value));
+			Assert.NotNull(value);
+			Assert.IsType<Gender>(value);
+			Assert.Equal(Gender.Male, value);
 
 			Assert.True(result.TryGetValue<IPerson>(out var person));
 			Assert.NotNull(person);

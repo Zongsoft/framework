@@ -149,56 +149,10 @@ namespace Zongsoft.Collections
 									return null;
 							}
 						}
-						else if(name == "value")
+						else if(name == "$value")
 						{
 							if(reader.Read())
-							{
-								switch(Type.GetTypeCode(type))
-								{
-									case TypeCode.Byte:
-										return reader.TryGetByte(out var vByte) ? vByte : (byte)0;
-									case TypeCode.SByte:
-										return reader.TryGetSByte(out var vSByte) ? vSByte : (sbyte)0;
-									case TypeCode.Int16:
-										return reader.TryGetInt16(out var vInt16) ? vInt16 : (short)0;
-									case TypeCode.Int32:
-										return reader.TryGetInt32(out var vInt32) ? vInt32 : 0;
-									case TypeCode.Int64:
-										return reader.TryGetInt64(out var vInt64) ? vInt64 : 0L;
-									case TypeCode.UInt16:
-										return reader.TryGetUInt16(out var vUInt16) ? vUInt16 : (ushort)0;
-									case TypeCode.UInt32:
-										return reader.TryGetUInt32(out var vUInt32) ? vUInt32 : 0U;
-									case TypeCode.UInt64:
-										return reader.TryGetUInt64(out var vUInt64) ? vUInt64 : 0UL;
-									case TypeCode.Single:
-										return reader.TryGetSingle(out var vSingle) ? vSingle : 0f;
-									case TypeCode.Double:
-										return reader.TryGetDouble(out var vDouble) ? vDouble : 0d;
-									case TypeCode.Decimal:
-										return reader.TryGetDecimal(out var vDecimal) ? vDecimal : 0m;
-									case TypeCode.DateTime:
-										return reader.TryGetDateTime(out var datetime) ? datetime : DateTime.MinValue;
-									case TypeCode.Char:
-										var text = reader.GetString();
-										return string.IsNullOrEmpty(text) ? '\0' : text[0];
-									default:
-										if(type == typeof(DateTimeOffset))
-											return reader.TryGetDateTimeOffset(out var dateTimeOffset) ? dateTimeOffset : DateTimeOffset.MinValue;
-										else if(type == typeof(DateOnly))
-											return reader.TokenType == JsonTokenType.Number ? DateOnly.FromDayNumber(reader.GetInt32()) : DateOnly.Parse(reader.GetString());
-										else if(type == typeof(TimeOnly))
-											return reader.TokenType == JsonTokenType.Number ? new TimeOnly(reader.GetInt64()) : TimeOnly.Parse(reader.GetString());
-										else if(type == typeof(Guid))
-											return reader.TryGetGuid(out var guid) ? guid : Guid.Empty;
-										else if(type == typeof(byte[]))
-											return reader.TryGetBytesFromBase64(out var bytes) ? bytes : null;
-										else if(type == typeof(ReadOnlyMemory<byte>))
-											return reader.TryGetBytesFromBase64(out var buffer) ? new ReadOnlyMemory<byte>(buffer) : ReadOnlyMemory<byte>.Empty;
-
-										return JsonSerializer.Deserialize(ref reader, type, options);
-								}
-							}
+								return Serialization.Json.ObjectConverter.GetValue(ref reader, type, options);
 						}
 					}
 				}

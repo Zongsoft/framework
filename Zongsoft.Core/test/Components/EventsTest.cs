@@ -116,7 +116,7 @@ namespace Zongsoft.Components.Tests
 					"MyString": "StringValue",
 					"MyInt32": {
 						"$type": "int",
-						"value": 100
+						"$value": 100
 					}
 				}
 			}

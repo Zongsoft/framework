@@ -93,8 +93,16 @@ public class ObjectConverter : JsonConverter<object>
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetTypeName(Type type) => Common.TypeAlias.GetAlias(Data.Model.GetModelType(type));
-	private static object GetValue(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+	internal static object GetValue(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 	{
+		if(type.IsEnum)
+		{
+			if(reader.TokenType == JsonTokenType.String)
+				return Enum.Parse(type, reader.GetString());
+			else
+				return Enum.ToObject(type, reader.GetInt32());
+		}
+
 		switch(Type.GetTypeCode(type))
 		{
 			case TypeCode.Byte:
