@@ -28,6 +28,10 @@
  */
 
 using System;
+using System.Linq;
+using System.Threading;
+using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -37,45 +41,47 @@ using Zongsoft.Serialization;
 namespace Zongsoft.Externals.Lua;
 
 [Service<IExpressionEvaluator>(NAME)]
-public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatchable<string>
+public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 {
 	#region 常量定义
-	private const string NAME = "Lua";
+	internal const string NAME = "Lua";
 	#endregion
 
-	#region 静态字段
-	private static readonly Lazy<NLua.Lua> _engine = new(() =>
-	{
-		var lua = new NLua.Lua();
-
-		//加载 .NET CLR 程序集
-		lua.LoadCLRPackage();
-
-		//设置默认的 Json 解析器
-		lua[nameof(Json)] = new Json();
-
-		return lua;
-	});
+	#region 成员字段
+	private volatile NLua.Lua _engine;
+	private readonly Assistant _assistant;
 	#endregion
 
 	#region 构造函数
-	public LuaExpressionEvaluator() => this.Global = new Dictionary<string, object>();
-	#endregion
+	public LuaExpressionEvaluator() : base(NAME)
+	{
+		_engine = new NLua.Lua();
 
-	#region 公共属性
-	public IDictionary<string, object> Global { get; }
+		//加载 .NET CLR 程序集
+		_engine.LoadCLRPackage();
+
+		//设置默认的 Json 解析器
+		_engine[nameof(Json)] = new Json();
+
+		//初始化全局变量集
+		this.Global = new Variables(_engine);
+
+		//设置全局默认选项
+		this.Options = new ExpressionEvaluatorOptions();
+
+		//注册辅助方法
+		_assistant = new Assistant(this.Options);
+		_assistant.Register(_engine);
+	}
 	#endregion
 
 	#region 公共方法
-	public object Evaluate(string expression, IDictionary<string, object> variables = null)
+	public override object Evaluate(string expression, IExpressionEvaluatorOptions options, IDictionary<string, object> variables = null)
 	{
+		var engine = _engine ?? throw new ObjectDisposedException(nameof(LuaExpressionEvaluator));
+
 		if(string.IsNullOrEmpty(expression))
 			return null;
-
-		var engine = _engine.Value;
-
-		foreach(var variable in this.Global)
-			SetVariable(engine, variable);
 
 		if(variables != null)
 		{
@@ -83,27 +89,115 @@ public sealed class LuaExpressionEvaluator : IExpressionEvaluator, IMatchable, I
 				SetVariable(engine, variable);
 		}
 
+		if(options != null)
+			_assistant.Switch(options);
+
 		var result = engine.DoString(expression);
 		return result != null && result.Length == 1 ? Utility.Convert(result[0]) : Utility.Convert(result);
 	}
 	#endregion
 
 	#region 私有方法
-	private static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable)
+	private static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable) => SetVariable(engine, variable.Key, variable.Value);
+	private static void SetVariable(NLua.Lua engine, string name, object value)
 	{
-		if(variable.Value is Delegate @delegate)
-			engine.RegisterFunction(variable.Key, @delegate.Target, @delegate.Method);
+		if(value is Delegate @delegate)
+			engine.RegisterFunction(name, @delegate.Target, @delegate.Method);
 		else
-			engine[variable.Key] = variable.Value;
+			engine[name] = value;
 	}
 	#endregion
 
-	#region 服务匹配
-	bool IMatchable.Match(object argument) => argument is string name && this.Match(name);
-	public bool Match(string name) => string.Equals(name, NAME, StringComparison.OrdinalIgnoreCase);
+	#region 重写方法
+	protected override void Dispose(bool disposing)
+	{
+		base.Dispose(disposing);
+		Interlocked.Exchange(ref _engine, null)?.Dispose();
+	}
 	#endregion
 
 	#region 嵌套子类
+	private sealed class Variables(NLua.Lua lua) : IDictionary<string, object>
+	{
+		private readonly NLua.Lua _lua = lua;
+
+		public ICollection<string> Keys => _lua.Globals.ToArray();
+		public ICollection<object> Values => _lua.Globals.Select(_lua.GetObjectFromPath).ToArray();
+		public object this[string name]
+		{
+			get => _lua[name];
+			set => _lua[name] = value;
+		}
+
+		public int Count => _lua.Globals.Count();
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+
+		public void Add(string name, object value) => SetVariable(_lua, name, value);
+		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> variable) => SetVariable(_lua, variable);
+		public void Clear() { }
+		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> variable) => this.ContainsKey(variable.Key);
+		public bool ContainsKey(string name) => _lua.Globals.Contains(name);
+		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => throw new NotSupportedException();
+		public bool Remove(string name){ _lua.SetObjectToPath(name, null); return name != null; }
+		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> variable) => this.Remove(variable.Key);
+		public bool TryGetValue(string name, out object value) { value = _lua.GetObjectFromPath(name); return value != null; }
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+		{
+			foreach(var name in _lua.Globals)
+				yield return new(name, _lua.GetObjectFromPath(name));
+		}
+	}
+
+	private class Assistant(IExpressionEvaluatorOptions options)
+	{
+		private static MethodInfo ErrorMethod = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		private static MethodInfo PrintMethod = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+		private IExpressionEvaluatorOptions _options = options;
+
+		public void Switch(IExpressionEvaluatorOptions options) => _options = options;
+		public void Register(NLua.Lua lua)
+		{
+			if(lua == null)
+				return;
+
+			lua.RegisterFunction("error", this, ErrorMethod);
+			lua.RegisterFunction("print", this, PrintMethod);
+		}
+
+		private void Error(params object[] args)
+		{
+			if(args == null || args.Length == 0)
+				return;
+
+			var error = _options?.Error;
+			if(error == null)
+				return;
+
+			for(int i = 0; i < args.Length; i++)
+				error.Write(args[i]);
+
+			error.Flush();
+		}
+
+		private void Print(params object[] args)
+		{
+			if(args == null || args.Length == 0)
+				return;
+
+			var output = _options?.Output;
+			if(output == null)
+				return;
+
+			for(int i = 0; i < args.Length; i++)
+				output.Write(args[i]);
+
+			output.Flush();
+		}
+	}
+
 	private sealed class Json
 	{
 		public string Serialize(object obj)

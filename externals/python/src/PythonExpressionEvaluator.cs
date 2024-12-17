@@ -41,10 +41,10 @@ using Zongsoft.Expressions;
 namespace Zongsoft.Externals.Python;
 
 [Service<IExpressionEvaluator>(NAME)]
-public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatchable<string>
+public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 {
 	#region 常量定义
-	private const string NAME = "Python";
+	internal const string NAME = "Python";
 	#endregion
 
 	#region 静态字段
@@ -52,15 +52,11 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 	#endregion
 
 	#region 构造函数
-	public PythonExpressionEvaluator() => this.Global = new Variables(_engine.Value.Runtime.Globals);
-	#endregion
-
-	#region 公共属性
-	public IDictionary<string, object> Global { get; }
+	public PythonExpressionEvaluator() : base(NAME) => this.Global = new Variables(_engine.Value.Runtime.Globals);
 	#endregion
 
 	#region 公共方法
-	public object Evaluate(string expression, IDictionary<string, object> variables = null)
+	public override object Evaluate(string expression, IExpressionEvaluatorOptions options, IDictionary<string, object> variables = null)
 	{
 		if(string.IsNullOrEmpty(expression))
 			return null;
@@ -75,11 +71,6 @@ public class PythonExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatc
 		var scope = engine.CreateScope(variables);
 		return engine.Execute(expression, scope);
 	}
-	#endregion
-
-	#region 服务匹配
-	bool IMatchable.Match(object argument) => argument is string name && this.Match(name);
-	public bool Match(string name) => string.Equals(name, NAME, StringComparison.OrdinalIgnoreCase);
 	#endregion
 
 	#region 嵌套子类

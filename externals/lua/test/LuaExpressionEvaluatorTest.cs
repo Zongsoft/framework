@@ -1,16 +1,57 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 using Xunit;
+
+using Zongsoft.Expressions;
 
 namespace Zongsoft.Externals.Lua.Tests;
 
 public class LuaExpressionEvaluatorTest
 {
 	[Fact]
+	public void TestEvaluateOutput()
+	{
+		const string PRINT_MESSAGE = "Hello, World!";
+		const string ERROR_MESSAGE = "This is an error message.";
+
+		using var evaluator = new LuaExpressionEvaluator();
+
+		using var error = new MemoryStream();
+		using var output = new MemoryStream();
+		var options = ExpressionEvaluatorOptions
+			.Out(new StreamWriter(output))
+			.Error(new StreamWriter(error));
+
+		var script = $$"""
+		print();
+		print("{{PRINT_MESSAGE}}");
+		error();
+		error("{{ERROR_MESSAGE}}");
+		""";
+
+		evaluator.Evaluate(script, options);
+
+		Assert.True(error.Length > 0);
+		Assert.True(output.Length > 0);
+
+		error.Seek(0, SeekOrigin.Begin);
+		output.Seek(0, SeekOrigin.Begin);
+
+		var text = options.Error.Encoding.GetString(error.ToArray());
+		Assert.NotEmpty(text);
+		Assert.Equal(ERROR_MESSAGE, text);
+
+		text = options.Output.Encoding.GetString(output.ToArray());
+		Assert.NotEmpty(text);
+		Assert.Equal(PRINT_MESSAGE, text);
+	}
+
+	[Fact]
 	public void TestEvaluateResult()
 	{
-		var evaluator = new LuaExpressionEvaluator();
+		using var evaluator = new LuaExpressionEvaluator();
 		var result = evaluator.Evaluate(@"
 		result = { id = 123, name = ""MyName""};
 		result.gender = true;
@@ -31,7 +72,7 @@ public class LuaExpressionEvaluatorTest
 	[Fact]
 	public void TestEvaluateSerializeJson()
 	{
-		var evaluator = new LuaExpressionEvaluator();
+		using var evaluator = new LuaExpressionEvaluator();
 
 		var result = evaluator.Evaluate(@"obj = {id = 100, name=""name""}; return Json:Serialize(obj);");
 		Assert.NotNull(result);
@@ -94,7 +135,7 @@ public class LuaExpressionEvaluatorTest
 		return obj;
 		""";
 
-		var evaluator = new LuaExpressionEvaluator();
+		using var evaluator = new LuaExpressionEvaluator();
 
 		var result = evaluator.Evaluate(script, new Dictionary<string, object> { { "text", json } });
 		Assert.NotNull(result);
@@ -138,7 +179,7 @@ public class LuaExpressionEvaluatorTest
 	[Fact]
 	public void TestEvaluateInvoke()
 	{
-		var evaluator = new LuaExpressionEvaluator();
+		using var evaluator = new LuaExpressionEvaluator();
 		evaluator.Global["add"] = Add;
 		evaluator.Global["subtract"] = Subtract;
 

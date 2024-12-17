@@ -41,10 +41,10 @@ using Zongsoft.Expressions;
 namespace Zongsoft.Externals.Scriban;
 
 [Service<IExpressionEvaluator>(NAME)]
-public class ScribanExpressionEvaluator : IExpressionEvaluator, IMatchable, IMatchable<string>
+public class ScribanExpressionEvaluator : ExpressionEvaluatorBase
 {
 	#region 常量定义
-	private const string NAME = "Scriban";
+	internal const string NAME = "Scriban";
 	#endregion
 
 	#region 静态常量
@@ -61,15 +61,11 @@ public class ScribanExpressionEvaluator : IExpressionEvaluator, IMatchable, IMat
 	#endregion
 
 	#region 构造函数
-	public ScribanExpressionEvaluator() => this.Global = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-	#endregion
-
-	#region 公共属性
-	public IDictionary<string, object> Global { get; }
+	public ScribanExpressionEvaluator() : base(NAME) => this.Global = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共方法
-	public object Evaluate(string expression, IDictionary<string, object> variables = null)
+	public override object Evaluate(string expression, IExpressionEvaluatorOptions options, IDictionary<string, object> variables = null)
 	{
 		if(string.IsNullOrEmpty(expression))
 			return null;
@@ -90,10 +86,5 @@ public class ScribanExpressionEvaluator : IExpressionEvaluator, IMatchable, IMat
 
 		return template.Evaluate(new TemplateContext(parameters));
 	}
-	#endregion
-
-	#region 服务匹配
-	bool IMatchable.Match(object argument) => argument is string name && this.Match(name);
-	public bool Match(string name) => string.Equals(name, NAME, StringComparison.OrdinalIgnoreCase);
 	#endregion
 }
