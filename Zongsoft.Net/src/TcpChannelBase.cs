@@ -88,36 +88,21 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送数据
-		public ValueTask SendAsync(T package, CancellationToken cancellation = default)
+		public async ValueTask SendAsync(T package, CancellationToken cancellation = default)
 		{
-			async ValueTask AwaitFlushAndRelease(ValueTask flush, PipeWriter writer, CancellationToken cancellation)
-			{
-				try
-				{
-					await flush;
-					await writer.FlushAsync(cancellation);
-				}
-				finally { _singleWriter.Release(); }
-			}
-
 			if(!_singleWriter.Wait(0, cancellation))
-				return this.SendSlowAsync(package, cancellation);
+			{
+				await this.SendSlowAsync(package, cancellation);
+				return;
+			}
 
 			bool release = true;
 
 			try
 			{
 				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
-				var result = this.PackAsync(writer, package, cancellation);
-
-				if(result.IsCompletedSuccessfully)
-				{
-					writer.FlushAsync(cancellation);
-					return default;
-				}
-
-				release = false;
-				return AwaitFlushAndRelease(result, writer, cancellation);
+				this.Pack(writer, package);
+				await writer.FlushAsync(cancellation);
 			}
 			finally
 			{
@@ -132,8 +117,8 @@ namespace Zongsoft.Net
 
 			try
 			{
-				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
-				await this.PackAsync(writer, package, cancellation);
+				var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
+				this.Pack(writer, package);
 			}
 			finally
 			{
@@ -156,7 +141,7 @@ namespace Zongsoft.Net
 
 			try
 			{
-				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
+				var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
 				var result = writer.WriteAsync(data, cancellation);
 
 				if(result.IsCompletedSuccessfully)
@@ -178,7 +163,7 @@ namespace Zongsoft.Net
 
 			try
 			{
-				var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
+				var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
 				await writer.WriteAsync(data, cancellation);
 			}
 			finally
@@ -191,7 +176,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 协议解析
-		protected abstract ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation);
+		protected abstract void Pack(PipeWriter writer, in T package);
 		protected abstract bool Unpack(ref ReadOnlySequence<byte> data, out T package);
 		#endregion
 

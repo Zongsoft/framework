@@ -46,12 +46,10 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 公共方法
-		public ValueTask PackAsync(IBufferWriter<byte> writer, in IMemoryOwner<byte> package, CancellationToken cancellation = default)
+		public void Pack(IBufferWriter<byte> writer, in IMemoryOwner<byte> package)
 		{
 			if(package != null)
 				writer.Write(package.Memory.Span);
-
-			return ValueTask.CompletedTask;
 		}
 
 		public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
@@ -77,7 +75,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 打包方法
-		public ValueTask PackAsync(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package, CancellationToken cancellation = default)
+		public void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
 		{
 			var header = writer.GetSpan(HEAD_SIZE);
 			BinaryPrimitives.WriteInt32BigEndian(header, (int)package.Length);
@@ -85,8 +83,6 @@ namespace Zongsoft.Net
 
 			foreach(var segment in package)
 				writer.Write(segment.Span);
-
-			return ValueTask.CompletedTask;
 		}
 
 		public async ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)

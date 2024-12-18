@@ -59,7 +59,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 协议解析
-		protected override ValueTask PackAsync(PipeWriter writer, in T package, CancellationToken cancellation) => _client.Packetizer.PackAsync(writer, package, cancellation);
+		protected override void Pack(PipeWriter writer, in T package) => _client.Packetizer.Pack(writer, package);
 		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _client.Packetizer.Unpack(ref data, out package);
 		#endregion
 
