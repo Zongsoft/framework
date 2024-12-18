@@ -52,11 +52,11 @@ namespace Zongsoft.Diagnostics
 			if(entry == null)
 				return null;
 
-			StringBuilder builder = new StringBuilder(512);
+			var builder = new StringBuilder(512);
 
-			builder.AppendFormat("<log level=\"{0}\" source=\"{1}\" timestamp=\"{2}\">", entry.Level.ToString().ToUpperInvariant(), entry.Source, entry.Timestamp);
+			builder.Append($"<log level=\"{entry.Level}\" source=\"{entry.Source}\" timestamp=\"{entry.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
 			builder.AppendLine();
-			builder.AppendLine("\t<message><![CDATA[" + entry.Message + "]]></message>");
+			builder.AppendLine($"\t<message><![CDATA[{entry.Message}]]></message>");
 
 			if(entry.Exception is AggregateException aggregateException)
 			{
@@ -78,11 +78,11 @@ namespace Zongsoft.Diagnostics
 			if(entry.Data != null)
 			{
 				builder.AppendLine();
-				builder.AppendFormat("\t<data type=\"{0}, {1}\">" + Environment.NewLine, entry.Data.GetType().FullName, entry.Data.GetType().Assembly.GetName().Name);
+				builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(entry.Data.GetType())}\">");
 				builder.AppendLine("\t<![CDATA[");
 
 				if(entry.Data is byte[] bytes)
-					builder.AppendLine(Zongsoft.Common.Convert.ToHexString(bytes));
+					builder.AppendLine(Convert.ToBase64String(bytes));
 				else
 					builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(entry.Data));
 
@@ -112,10 +112,10 @@ namespace Zongsoft.Diagnostics
 				return;
 
 			builder.AppendLine();
-			builder.AppendFormat("\t<exception type=\"{0}, {1}\">" + Environment.NewLine, exception.GetType().FullName, exception.GetType().Assembly.GetName().Name);
+			builder.AppendLine($"\t<exception type=\"{Common.TypeAlias.GetAlias(exception.GetType())}\">");
 
 			if(!string.IsNullOrEmpty(exception.Message))
-				builder.AppendLine("\t\t<message><![CDATA[" + exception.Message + "]]></message>");
+				builder.AppendLine($"\t\t<message><![CDATA[{exception.Message}]]></message>");
 
 			if(!string.IsNullOrEmpty(exception.StackTrace))
 			{

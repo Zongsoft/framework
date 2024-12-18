@@ -67,14 +67,10 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置文件路径。
-		/// </summary>
+		/// <summary>获取或设置文件路径。</summary>
 		public string FilePath { get; set; }
 
-		/// <summary>
-		/// 获取或设置日志文件的大小限制，单位为字节(Byte)，默认为1MB。
-		/// </summary>
+		/// <summary>获取或设置日志文件的大小限制，单位为字节(Byte)，默认为1MB。</summary>
 		public int Limit { get; set; }
 		#endregion
 
@@ -85,9 +81,8 @@ namespace Zongsoft.Diagnostics
 				return;
 
 			var filePath = this.ResolveSequence(entry);
-
 			if(string.IsNullOrWhiteSpace(filePath))
-				throw new InvalidOperationException("Unspecified path of the log file.");
+				return;
 
 			if(entry.Level >= LogLevel.Error)
 			{
@@ -108,7 +103,7 @@ namespace Zongsoft.Diagnostics
 			lock(_syncRoot)
 			{
 				//以写模式打开日志文件
-				using var stream = new FileStream((string)filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+				using var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
 
 				//将当前日志信息写入日志文件流
 				this.WriteLog(entry, stream);
@@ -159,19 +154,14 @@ namespace Zongsoft.Diagnostics
 		{
 			var filePath = string.Empty;
 
-			if(string.IsNullOrWhiteSpace(FilePath))
-				filePath = "~/logs/" + entry.Timestamp.ToString("yyyyMM") + "/" + (string.IsNullOrEmpty(entry.Source) ? "default" : entry.Source) + "-{sequence}.log";
-			//else
-			//	filePath = Logger.TemplateManager.Evaluate<string>(FilePath.Trim(), entry);
-
-			if(string.IsNullOrWhiteSpace(filePath))
-				return null;
+			if(string.IsNullOrWhiteSpace(this.FilePath))
+				filePath = $"~/logs/{entry.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(entry.Source) ? "default" : entry.Source)}-{{sequence}}.log";
 
 			filePath = filePath.Replace((Path.DirectorySeparatorChar == '/' ? '\\' : '/'), Path.DirectorySeparatorChar).Trim();
 
 			if(filePath[0] == '/' || filePath[0] == '\\')
 			{
-				filePath = Path.Combine(Path.GetPathRoot(GetApplicationDirectory()), filePath.Substring(1));
+				filePath = Path.Combine(Path.GetPathRoot(GetApplicationDirectory()), filePath[1..]);
 
 				if(!Directory.Exists(Path.GetDirectoryName(filePath)))
 					Directory.CreateDirectory(Path.GetDirectoryName(filePath));
@@ -179,12 +169,9 @@ namespace Zongsoft.Diagnostics
 				return filePath;
 			}
 
-			string directoryPath;
-
-			if(filePath.StartsWith("~/") || filePath.StartsWith("~\\"))
-				directoryPath = EnsureApplicationDirectory(Path.GetDirectoryName(filePath.Substring(2)));
-			else
-				directoryPath = EnsureApplicationDirectory(Path.GetDirectoryName(filePath));
+			var directoryPath = filePath.StartsWith("~/") || filePath.StartsWith("~\\") ?
+				EnsureApplicationDirectory(Path.GetDirectoryName(filePath[2..])) :
+				EnsureApplicationDirectory(Path.GetDirectoryName(filePath));
 
 			return Path.Combine(directoryPath, Path.GetFileName(filePath));
 		}
