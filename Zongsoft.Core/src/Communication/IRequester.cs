@@ -33,6 +33,13 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
+public interface IRequester
+{
+	ValueTask<IRequesterResult> RequestAsync(ReadOnlyMemory<byte> request, CancellationToken cancellation = default) => this.RequestAsync(null, request, cancellation);
+	ValueTask<IRequesterResult> RequestAsync(string identifier, ReadOnlyMemory<byte> request, CancellationToken cancellation = default);
+	ValueTask OnRespondedAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation);
+}
+
 public interface IRequester<in TRequest, TResponse>
 	where TRequest : IRequest
 	where TResponse : IResponse
