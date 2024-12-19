@@ -122,6 +122,40 @@ namespace Zongsoft.Data.MySql
 
 			base.VisitFunction(context, expression);
 		}
+
+		protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
+		{
+			base.VisitParameter(context, parameter);
+
+			/*
+			 * 注意：如果
+			 *   参数类型是 非Unicode 字符，且
+			 *   参数值包含 Unicode 字符，且
+			 *   参数位于条件内，则需要为参数添加 COLLATE 字符集说明，以免 MySQL 执行错误！
+			 */
+			if(IsAnsiString(parameter.DbType) && IsNonAnsiString(parameter.Value) && context.Find<ConditionExpression>() != null)
+				context.Write($" COLLATE utf8mb4_0900_ai_ci");
+
+			static bool IsAnsiString(DbType type) => type == DbType.AnsiString || type == DbType.AnsiStringFixedLength;
+			static bool IsNonAnsiString(object value)
+			{
+				if(value == null || Convert.IsDBNull(value))
+					return false;
+
+				if(value is string text)
+				{
+					var span = text.AsSpan();
+
+					for(int i = 0; i < span.Length; i++)
+					{
+						if(!char.IsAscii(span[i]))
+							return true;
+					}
+				}
+
+				return false;
+			}
+		}
 		#endregion
 
 		#region 嵌套子类
