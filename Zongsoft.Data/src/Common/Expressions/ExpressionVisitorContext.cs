@@ -57,22 +57,22 @@ namespace Zongsoft.Data.Common.Expressions
 
 		#region 公共属性
 		/// <summary>获取当前访问深度。</summary>
-		public int Depth { get => _stack.Depth; }
+		public int Depth => _stack.Depth;
 
 		/// <summary>获取当前访问的计数器。</summary>
-		public ExpressionVisitorCounter Counter { get => _counter; }
+		public ExpressionVisitorCounter Counter => _counter;
 
 		/// <summary>获取当前访问输出缓存。</summary>
-		public StringBuilder Output { get => _output; }
+		public StringBuilder Output => _output;
 
 		/// <summary>获取表达式方言。</summary>
-		public IExpressionDialect Dialect { get => _visitor.Dialect; }
+		public IExpressionDialect Dialect => _visitor.Dialect;
 
 		/// <summary>获取当前访问表达式。</summary>
-		public IExpression Expression { get => _stack.TryPeek(out var value) ? value : null; }
+		public IExpression Expression => _stack.TryPeek(out var value) ? value : null;
 
 		/// <summary>获取访问调用栈。</summary>
-		public IStack<IExpression> Stack { get => _stack; }
+		public IStack<IExpression> Stack => _stack;
 		#endregion
 
 		#region 公共方法
