@@ -55,46 +55,16 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		public Builtin Builtin
-		{
-			get
-			{
-				return _builtin;
-			}
-		}
-
-		public Type Type
-		{
-			get
-			{
-				if(_type == null)
-					_type = PluginUtility.GetType(this.TypeName);
-
-				return _type;
-			}
-		}
-
+		public Builtin Builtin => _builtin;
+		public BuiltinTypeConstructor Constructor => _constructor;
+		public Type Type => _type ??= PluginUtility.GetType(this.TypeName, _builtin);
 		public string TypeName
 		{
-			get
-			{
-				return _typeName;
-			}
+			get => _typeName;
 			internal set
 			{
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_typeName = value.Trim();
+				_typeName = value?.Trim();
 				_type = null;
-			}
-		}
-
-		public BuiltinTypeConstructor Constructor
-		{
-			get
-			{
-				return _constructor;
 			}
 		}
 		#endregion

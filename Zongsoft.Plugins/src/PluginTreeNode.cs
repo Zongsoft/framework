@@ -66,9 +66,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取插件树节点的类型。
-		/// </summary>
+		/// <summary>获取插件树节点的类型。</summary>
 		public PluginTreeNodeType NodeType
 		{
 			get
@@ -77,9 +75,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前插件树节点挂载的对象。
-		/// </summary>
+		/// <summary>获取当前插件树节点挂载的对象。</summary>
 		/// <remarks>
 		///		<list type="number">
 		///			<item>
@@ -108,9 +104,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取节点中挂载的目标对象类型，如果节点类型为<see cref="PluginTreeNodeType.Empty"/>则返回空(null)，该属性始终不会引发目标对象的创建动作。
-		/// </summary>
+		/// <summary>获取节点中挂载的目标对象类型，如果节点类型为<see cref="PluginTreeNodeType.Empty"/>则返回空(null)，该属性始终不会引发目标对象的创建动作。</summary>
 		/// <remarks>
 		///		<para>注意：该方法不会激发节点类型为<see cref="PluginTreeNodeType.Builtin"/>的创建动作，因此适合在不需要获取目标值的场景中使用该方法来获取其类型。</para>
 		///		<para>当节点类型为<see cref="PluginTreeNodeType.Builtin"/>时的更详细行为请参考<seealso cref="Builtin.GetValueType()"/>方法的描述信息。</para>
@@ -133,9 +127,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件树节点所在的插件树对象。
-		/// </summary>
+		/// <summary>获取插件树节点所在的插件树对象。</summary>
 		public PluginTree Tree
 		{
 			get
@@ -144,9 +136,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件树节点的父级节点。
-		/// </summary>
+		/// <summary>获取插件树节点的父级节点。</summary>
 		public PluginTreeNode Parent
 		{
 			get
@@ -166,9 +156,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件树节点的子级节点集。
-		/// </summary>
+		/// <summary>获取插件树节点的子级节点集。</summary>
 		public PluginTreeNodeCollection Children
 		{
 			get
@@ -177,9 +165,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件树节点的路径，该路径不含当前节点名称，如果是根节点则返回空字符串("")。
-		/// </summary>
+		/// <summary>获取插件树节点的路径，该路径不含当前节点名称，如果是根节点则返回空字符串(<see cref="String.Empty"/>)。</summary>
 		public string Path
 		{
 			get
@@ -196,9 +182,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件树节点的完整路径，该路径包含当前节点的名称。
-		/// </summary>
+		/// <summary>获取插件树节点的完整路径，该路径包含当前节点的名称。</summary>
 		public string FullPath
 		{
 			get
@@ -215,9 +199,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前插件节点是否具有扩展属性。
-		/// </summary>
+		/// <summary>获取当前插件节点是否具有扩展属性。</summary>
 		public bool HasProperties
 		{
 			get
@@ -227,9 +209,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取插件节点的扩展属性集。
-		/// </summary>
+		/// <summary>获取插件节点的扩展属性集。</summary>
 		public PluginExtendedPropertyCollection Properties
 		{
 			get
@@ -345,13 +325,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(this.Plugin == null)
-				return this.FullPath;
-			else
-				return string.Format("[{0}]{1}@{2}",this.NodeType, this.FullPath, (this.Plugin == null ? string.Empty : this.Plugin.Name));
-		}
+		public override string ToString() => this.Plugin == null ?
+			$"[{this.NodeType}]{this.FullPath}" :
+			$"[{this.NodeType}]{this.FullPath}@{this.Plugin}";
 		#endregion
 
 		#region 私有方法

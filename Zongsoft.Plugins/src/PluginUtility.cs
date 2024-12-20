@@ -51,22 +51,14 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 获取类型
-		/// <summary>根据指定的类型限定名动态加载并返回对应的<seealso cref="System.Type"/>，如果查找失败亦不会抛出异常。</summary>
-		/// <param name="typeFullName">要获取的类型限定名称。</param>
-		/// <returns>返回加载成功的类型对象，如果加载失败则返回空(null)。</returns>
-		public static Type GetType(string typeFullName)
+		public static Type GetType(string typeFullName, PluginElement element)
 		{
-			if(string.IsNullOrWhiteSpace(typeFullName))
+			if(string.IsNullOrEmpty(typeFullName))
 				return null;
 
-			Type type = Zongsoft.Common.TypeAlias.Parse(typeFullName);
-
-			if(type != null)
-				return type;
-
-			type = Type.GetType(typeFullName, assemblyName =>
+			var type = Zongsoft.Common.TypeAlias.Parse(typeFullName, assemblyName =>
 			{
-				Assembly assembly = ResolveAssembly(assemblyName);
+				var assembly = ResolveAssembly(assemblyName);
 
 				if(assembly == null)
 					assembly = LoadAssembly(assemblyName);
@@ -81,7 +73,7 @@ namespace Zongsoft.Plugins
 			}, false);
 
 			if(type == null)
-				throw new PluginException(string.Format("The '{0}' type resolve failed.", typeFullName));
+				throw new PluginException($"The '{typeFullName}' type resolve failed in {element}.");
 
 			return type;
 		}
@@ -94,7 +86,7 @@ namespace Zongsoft.Plugins
 			if(builtin.BuiltinType != null)
 				return builtin.BuiltinType.Type;
 			else
-				return GetType(builtin.Properties.GetValue<string>("type"));
+				return GetType(builtin.Properties.GetValue<string>("type"), builtin);
 		}
 		#endregion
 
@@ -162,7 +154,7 @@ namespace Zongsoft.Plugins
 						//更新扩展属性的类型转换器
 						if(converterTypeName != null && converterTypeName.Length > 0)
 						{
-							property.Converter = Activator.CreateInstance(GetType(converterTypeName)) as TypeConverter ??
+							property.Converter = Activator.CreateInstance(GetType(converterTypeName, builtin)) as TypeConverter ??
 							                     throw new InvalidOperationException($"The '{converterTypeName}' type declared by the '{property.Name}' member of type '{target.GetType().FullName}' is not a type converter.");
 						}
 
@@ -237,7 +229,7 @@ namespace Zongsoft.Plugins
 
 		internal static object BuildType(string typeName, Builtin builtin)
 		{
-			Type type = PluginUtility.GetType(typeName);
+			Type type = PluginUtility.GetType(typeName, builtin);
 
 			if(type == null)
 				throw new PluginException(string.Format("Can not get type from '{0}' text for '{1}' builtin.", typeName, builtin));
@@ -337,7 +329,7 @@ namespace Zongsoft.Plugins
 			if(type.IsInterface || type.IsAbstract)
 				throw new ArgumentException($"Unable to create an instance of the specified '{type.FullName}' type because it is an interface or an abstract class.");
 
-			ConstructorInfo[] constructors = type.GetConstructors();
+			var constructors = type.GetConstructors();
 
 			foreach(ConstructorInfo constructor in constructors.OrderByDescending(ctor => ctor.GetParameters().Length))
 			{

@@ -81,7 +81,7 @@ namespace Zongsoft.Plugins
 					{
 						if(_type == null)
 						{
-							Type type = PluginUtility.GetType(_typeName);
+							Type type = PluginUtility.GetType(_typeName, this);
 
 							if(!this.ValidateType(type))
 								throw new InvalidOperationException();
@@ -95,21 +95,8 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		public FixedElementType FixedElementType
-		{
-			get
-			{
-				return _fixedElementType;
-			}
-		}
-
-		public bool HasValue
-		{
-			get
-			{
-				return _value != null;
-			}
-		}
+		public FixedElementType FixedElementType => _fixedElementType;
+		public bool HasValue => _value != null;
 		#endregion
 
 		#region 保护方法
@@ -129,11 +116,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool ValidateType(Type type)
-		{
-			return type != null;
-		}
-
+		protected virtual bool ValidateType(Type type) => type != null;
 		protected virtual object CreateValue()
 		{
 			if(this.Type == null)

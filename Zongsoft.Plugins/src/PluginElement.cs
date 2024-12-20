@@ -44,14 +44,11 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		protected PluginElement(string name) : this(name, null)
-		{
-		}
-
+		protected PluginElement(string name) : this(name, null) { }
 		protected PluginElement(string name, Plugin plugin)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
 			_plugin = plugin;
@@ -60,7 +57,7 @@ namespace Zongsoft.Plugins
 		internal PluginElement(string name, bool ignoreNameValidation)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			if(ignoreNameValidation)
 				_name = name;
@@ -72,10 +69,7 @@ namespace Zongsoft.Plugins
 		#region 公共属性
 		public string Name
 		{
-			get
-			{
-				return _name;
-			}
+			get => _name;
 			private set
 			{
 				if(string.IsNullOrEmpty(value))
@@ -100,16 +94,13 @@ namespace Zongsoft.Plugins
 				_name = value;
 
 				//激发“PropertyChanged”事件
-				this.OnPropertyChanged("Name");
+				this.OnPropertyChanged(nameof(this.Name));
 			}
 		}
 
 		public Plugin Plugin
 		{
-			get
-			{
-				return _plugin;
-			}
+			get => _plugin;
 			protected set
 			{
 				if(object.ReferenceEquals(_plugin, value))
@@ -118,33 +109,18 @@ namespace Zongsoft.Plugins
 				_plugin = value;
 
 				//激发“PropertyChanged”事件
-				this.OnPropertyChanged("Plugin");
+				this.OnPropertyChanged(nameof(Plugin));
 			}
 		}
 		#endregion
 
 		#region 保护方法
-		protected void OnPropertyChanged(string propertyName)
-		{
-			this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-		}
-
-		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
-		{
-			this.PropertyChanged?.Invoke(this, e);
-		}
+		protected void OnPropertyChanged(string propertyName) => this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e) => this.PropertyChanged?.Invoke(this, e);
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			var plugin = _plugin;
-
-			if(plugin == null)
-				return string.Format("{0}[{1}]", _name, this.GetType().Name);
-			else
-				return string.Format("{0}[{1}]@{2}", _name, this.GetType().Name, _plugin.Name);
-		}
+		public override string ToString() => _plugin == null ? $"{_name}[{this.GetType().Name}]" : $"{_name}[{this.GetType().Name}]@{_plugin}";
 		#endregion
 	}
 }

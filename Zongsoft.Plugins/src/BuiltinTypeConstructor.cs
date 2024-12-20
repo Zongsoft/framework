@@ -50,28 +50,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		public Builtin Builtin
-		{
-			get => _builtinType.Builtin;
-		}
-
-		public BuiltinType BuiltinType
-		{
-			get => _builtinType;
-		}
-
-		/// <summary>
-		/// 获取构造子参数的数量。
-		/// </summary>
-		public int Count
-		{
-			get => _parameters.Count;
-		}
-
-		public Parameter[] Parameters
-		{
-			get => _parameters.ToArray();
-		}
+		public Builtin Builtin => _builtinType.Builtin;
+		public BuiltinType BuiltinType => _builtinType;
+		public int Count => _parameters.Count;
+		public Parameter[] Parameters => _parameters.ToArray();
 		#endregion
 
 		#region 内部方法
@@ -84,15 +66,8 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 枚举遍历
-		public IEnumerator<Parameter> GetEnumerator()
-		{
-			return _parameters.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
-		}
+		public IEnumerator<Parameter> GetEnumerator() => _parameters.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 
 		public class Parameter
@@ -120,38 +95,23 @@ namespace Zongsoft.Plugins
 			#endregion
 
 			#region 公共属性
-			public Builtin Builtin
-			{
-				get => _constructor._builtinType.Builtin;
-			}
-
-			public BuiltinTypeConstructor Constructor
-			{
-				get => _constructor;
-			}
-
+			public Builtin Builtin => _constructor._builtinType.Builtin;
+			public BuiltinTypeConstructor Constructor => _constructor;
 			public Type ParameterType
 			{
 				get
 				{
 					if(_parameterType == null && (!string.IsNullOrEmpty(_parameterTypeName)))
-						_parameterType = PluginUtility.GetType(_parameterTypeName);
+						_parameterType = PluginUtility.GetType(_parameterTypeName, this.Builtin);
 
 					return _parameterType;
 				}
 			}
 
-			public string ParameterTypeName
-			{
-				get => _parameterTypeName;
-			}
-
+			public string ParameterTypeName => _parameterTypeName;
 			public string RawValue
 			{
-				get
-				{
-					return _rawValue;
-				}
+				get => _rawValue;
 				internal set
 				{
 					if(string.Equals(_rawValue, value, StringComparison.Ordinal))
@@ -164,15 +124,8 @@ namespace Zongsoft.Plugins
 				}
 			}
 
-			public bool HasValue
-			{
-				get => _value != null;
-			}
-
-			public object Value
-			{
-				get => this.GetValue(this.ParameterType);
-			}
+			public bool HasValue => _value != null;
+			public object Value => this.GetValue(this.ParameterType);
 			#endregion
 
 			#region 公共方法

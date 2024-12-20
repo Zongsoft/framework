@@ -84,9 +84,7 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 创建指定构件对应的目标对象。
-		/// </summary>
+		/// <summary>创建指定构件对应的目标对象。</summary>
 		/// <param name="context">调用本方法进行构建的上下文对象，可通过该参数获取构建过程的相关设置或状态。</param>
 		/// <returns>创建成功后的目标对象。</returns>
 		public virtual object Build(BuilderContext context)

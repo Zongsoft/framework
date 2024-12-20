@@ -35,7 +35,7 @@ namespace Zongsoft.Plugins.Parsers
 	{
 		public override object Parse(ParserContext context)
 		{
-			return PluginUtility.GetType(context.Text);
+			return PluginUtility.GetType(context.Text, context.Builtin);
 		}
 	}
 }

@@ -384,7 +384,7 @@ namespace Zongsoft.Plugins
 
 		public override string ToString()
 		{
-			return string.Format("[{0}]{1}@{2}", this.Scheme, this.FullPath, this.Plugin.Name);
+			return $"[{this.Scheme}]{this.FullPath}@{this.Plugin}";
 		}
 		#endregion
 
