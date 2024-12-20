@@ -67,7 +67,10 @@ namespace Zongsoft.Data.Common.Expressions
 							if(parameter.Schema.Parent == null || !parameter.Schema.Parent.Token.IsMultiple)
 								parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
 							else
-								parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+							{
+								//parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+								parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+							}
 						}
 					}
 					else if(data != null)
