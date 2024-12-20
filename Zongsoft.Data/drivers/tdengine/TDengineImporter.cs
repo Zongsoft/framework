@@ -76,10 +76,7 @@ namespace Zongsoft.Data.TDengine
 
 			foreach(var table in tables.Values)
 			{
-				table.Bind(statement);
-				statement.AddBatch();
-				statement.Exec();
-				count += statement.Affected();
+				count += table.Execute(statement);
 			}
 
 			context.Count = (int)Math.Min(count, int.MaxValue);
@@ -99,6 +96,10 @@ namespace Zongsoft.Data.TDengine
 		#region 嵌套子类
 		private sealed class Table(object[] tags) : IEquatable<Table>
 		{
+			#region 常量定义
+			private const int CHUNK_SIZE = 1000;
+			#endregion
+
 			#region 成员字段
 			private string _name;
 			private readonly object[] _tags = tags;
@@ -111,13 +112,35 @@ namespace Zongsoft.Data.TDengine
 			#endregion
 
 			#region 公共方法
-			public void Bind(IStmt statement)
+			public long Execute(IStmt statement)
 			{
+				var chunk = 1;
+				var count = 0L;
+
 				statement.SetTableName(this.Name);
 				statement.SetTags(_tags);
 
 				for(int i = 0; i < _rows.Count; i++)
+				{
 					statement.BindRow(_rows[i]);
+
+					if(i == (chunk * CHUNK_SIZE) - 1)
+					{
+						chunk++;
+						statement.AddBatch();
+						statement.Exec();
+						count += statement.Affected();
+					}
+				}
+
+				if(_rows.Count > (chunk - 1) * CHUNK_SIZE && _rows.Count < chunk * CHUNK_SIZE)
+				{
+					statement.AddBatch();
+					statement.Exec();
+					count += statement.Affected();
+				}
+
+				return count;
 			}
 			#endregion
 

@@ -39,7 +39,7 @@ namespace Zongsoft.Data.TDengine;
 internal static class TDengineUtility
 {
 	public static string GetTableName(string text) => string.IsNullOrEmpty(text) ? null : $"T{text.ToLowerInvariant()}";
-	public static string GetTableName(IEnumerable<object> values) => values == null ? null : 'T' + string.Join('-', values.Select(value => value?.ToString()))?.ToLowerInvariant();
+	public static string GetTableName(IEnumerable<object> values) => values == null ? null : 'T' + string.Join('_', values.Select(value => value?.ToString()))?.ToLowerInvariant();
 
 	public static bool IsTagField(this FieldIdentifier field) => field != null && IsTagField(field.Token.Property);
 	public static bool IsTagField(this IDataEntityProperty property) =>

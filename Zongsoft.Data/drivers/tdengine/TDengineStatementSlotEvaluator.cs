@@ -50,8 +50,8 @@ public sealed class TDengineStatementSlotEvaluator : StatementSlotEvaluatorBase
 			var data = ctx.Data;
 			var text = slot.Value switch
 			{
-				IEnumerable<IDataEntityProperty> properties => string.Join('-', properties.Select(property => Reflection.Reflector.GetValue(ref data, property.Name)?.ToString())),
-				IEnumerable<DataEntityPropertyToken> tokens => string.Join('-', tokens.Select(token => token.GetValue(data)?.ToString())),
+				IEnumerable<IDataEntityProperty> properties => string.Join('_', properties.Select(property => Reflection.Reflector.GetValue(ref data, property.Name)?.ToString())),
+				IEnumerable<DataEntityPropertyToken> tokens => string.Join('_', tokens.Select(token => token.GetValue(data)?.ToString())),
 				_ => base.Evaluate(context, statement, slot),
 			};
 
