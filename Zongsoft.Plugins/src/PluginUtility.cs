@@ -43,7 +43,7 @@ namespace Zongsoft.Plugins
 	public static class PluginUtility
 	{
 		#region 委托定义
-		internal delegate bool ObtainParameterCallback(Type parameterType, string parameterName, out object parameterValue);
+		private delegate bool ParameterResolver(ParameterInfo parameter, out object result);
 		#endregion
 
 		#region 私有变量
@@ -237,94 +237,38 @@ namespace Zongsoft.Plugins
 			return BuildType(type, builtin);
 		}
 
-		internal static object BuildType(Type type, Builtin builtin)
+		internal static object BuildType(Type type, PluginElement element)
 		{
 			object target;
 
 			try
 			{
-				target = BuildType(type, (Type parameterType, string parameterName, out object parameterValue) =>
-				{
-					if(parameterType == typeof(Assembly))
-					{
-						parameterValue = GetPluginAssembly(builtin.Plugin);
-						return parameterValue != null;
-					}
-
-					if(parameterType == typeof(Builtin))
-					{
-						parameterValue = builtin;
-						return true;
-					}
-
-					if(parameterType == typeof(PluginTreeNode))
-					{
-						parameterValue = builtin.Node;
-						return true;
-					}
-
-					if(parameterType == typeof(string) && string.Equals(parameterName, "name", StringComparison.OrdinalIgnoreCase))
-					{
-						parameterValue = builtin.Name;
-						return true;
-					}
-
-					if(typeof(IServiceProvider).IsAssignableFrom(parameterType))
-					{
-						parameterValue = FindServiceProvider(builtin);
-						return true;
-					}
-
-					if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
-					{
-						parameterValue = ApplicationContext.Current;
-						return true;
-					}
-
-					if(typeof(IApplicationModule).IsAssignableFrom(parameterType))
-					{
-						parameterValue = FindApplicationModule(builtin);
-						return true;
-					}
-
-					if(ObtainParameter(builtin.Plugin, parameterType, parameterName, out parameterValue))
-						return true;
-
-					var services = FindServiceProvider(builtin);
-
-					if(services != null)
-					{
-						parameterValue = services.GetService(parameterType);
-						return parameterValue != null;
-					}
-
-					return false;
-				});
+				target = BuildType(type, (ParameterInfo parameter, out object value) => GetParameterValue(element, parameter, out value));
 
 				if(target == null)
-					throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}' builtin.", type.FullName, builtin));
+					throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}'.", type.FullName, element));
 			}
 			catch(Exception ex)
 			{
 				if(System.Diagnostics.Debugger.IsAttached)
 					throw;
 
-				throw new PluginException(string.Format("Occurred an exception on create a builtin instance of '{0}' type, at '{1}' builtin.", type.FullName, builtin), ex);
+				throw new PluginException(string.Format("Occurred an exception on create a builtin instance of '{0}' type, at '{1}' builtin.", type.FullName, element), ex);
 			}
 
 			//注入依赖属性
-			InjectProperties(target, builtin);
+			InjectProperties(target, element);
 
 			return target;
 		}
 
-		internal static object BuildType(Type type, ObtainParameterCallback obtainParameter)
+		private static object BuildType(Type type, ParameterResolver parameterResolver)
 		{
 			if(type == null)
 				throw new ArgumentNullException(nameof(type));
 
-			if(obtainParameter == null)
-				throw new ArgumentNullException(nameof(obtainParameter));
+			if(parameterResolver == null)
+				throw new ArgumentNullException(nameof(parameterResolver));
 
 			if(type.IsInterface || type.IsAbstract)
 				throw new ArgumentException($"Unable to create an instance of the specified '{type.FullName}' type because it is an interface or an abstract class.");
@@ -344,7 +288,7 @@ namespace Zongsoft.Plugins
 				for(int i = 0; i < parameters.Length; i++)
 				{
 					//依次获取当前构造函数的参数值
-					matched = obtainParameter(parameters[i].ParameterType, parameters[i].Name, out values[i]);
+					matched = parameterResolver(parameters[i], out values[i]);
 
 					//如果获取参数值失败，则当前构造函数匹配失败
 					if(!matched)
@@ -360,39 +304,78 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 参数回调
-		internal static bool ObtainParameter(Plugin plugin, Type parameterType, string parameterName, out object parameterValue)
+		private static bool GetParameterValue(PluginElement element, ParameterInfo parameter, out object result)
 		{
+			var parameterType = parameter.ParameterType;
+
 			if(parameterType == typeof(Assembly))
 			{
-				parameterValue = GetPluginAssembly(plugin);
-				return parameterValue != null;
+				result = GetPluginAssembly(element.Plugin);
+				return result != null;
+			}
+
+			if(parameterType == typeof(Builtin))
+			{
+				result = element as Builtin;
+				return result != null;
+			}
+
+			if(parameterType == typeof(PluginTreeNode))
+			{
+				result = element.GetNode();
+				return result != null;
+			}
+
+			if(parameterType == typeof(string) && string.Equals(parameter.Name, "name", StringComparison.OrdinalIgnoreCase))
+			{
+				result = element.Name;
+				return true;
 			}
 
 			if(parameterType == typeof(Plugin))
 			{
-				parameterValue = plugin;
-				return true;
+				result = element.Plugin;
+				return result != null;
 			}
 
 			if(parameterType == typeof(PluginTree))
 			{
-				parameterValue = plugin.PluginTree;
-				return true;
+				result = element.Plugin?.PluginTree;
+				return result != null;
 			}
 
 			if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
 			{
-				parameterValue = ApplicationContext.Current;
+				result = ApplicationContext.Current;
 				return true;
 			}
 
-			if(typeof(IServiceProvider).IsAssignableFrom(parameterType))
+			if(typeof(IApplicationModule).IsAssignableFrom(parameter.ParameterType))
 			{
-				parameterValue = ApplicationContext.Current.Services;
+				result = FindApplicationModule(element);
+				return result != null;
+			}
+
+			if(typeof(IServiceProvider).IsAssignableFrom(parameter.ParameterType))
+			{
+				result = FindServiceProvider(element);
+				return result != null;
+			}
+
+			var services = FindServiceProvider(element);
+			if(services != null)
+			{
+				result = services.GetService(parameter.ParameterType);
+				return result != null;
+			}
+
+			if(parameter.HasDefaultValue)
+			{
+				result = parameter.DefaultValue;
 				return true;
 			}
 
-			parameterValue = null;
+			result = null;
 			return false;
 		}
 		#endregion
@@ -415,12 +398,10 @@ namespace Zongsoft.Plugins
 			return plugin.Manifest.Assemblies[0];
 		}
 
-		internal static IApplicationModule FindApplicationModule(Builtin builtin)
+		internal static IApplicationModule FindApplicationModule(PluginElement element) => FindApplicationModule(element, out _);
+		internal static IApplicationModule FindApplicationModule(PluginElement element, out PluginTreeNode node)
 		{
-			if(builtin == null || builtin.Node == null || builtin.Node.Parent == null)
-				return null;
-
-			var node = builtin.Node;
+			node = element.GetNode();
 
 			while(node != null)
 			{
@@ -440,24 +421,25 @@ namespace Zongsoft.Plugins
 			return null;
 		}
 
-		internal static IServiceProvider FindServiceProvider(Builtin builtin)
+		internal static IServiceProvider FindServiceProvider(PluginElement element)
 		{
-			if(builtin == null)
-				return null;
-
-			var module = FindApplicationModule(builtin);
+			var module = FindApplicationModule(element, out var node);
 
 			if(module != null && module.Services != null)
 				return module.Services;
 
-			if(builtin.Node != null && builtin.Node.Parent != null &&
-				ApplicationContext.Current.Modules.TryGetValue(builtin.Node.Parent.Name, out module))
-			{
+			if(node != null && node.Parent != null && ApplicationContext.Current.Modules.TryGetValue(node.Parent.Name, out module))
 				return module.Services;
-			}
 
 			return ApplicationContext.Current.Services;
 		}
+
+		internal static PluginTreeNode GetNode(this PluginElement element) => element switch
+		{
+			PluginTreeNode node => node,
+			Builtin builtin => builtin.Node,
+			_ => null,
+		};
 
 		internal static int GetAnonymousId()
 		{
@@ -585,13 +567,13 @@ namespace Zongsoft.Plugins
 			return type.GetMember(parts[parts.Length - 1], (MemberTypes.Field | MemberTypes.Property), BindingFlags.Public | BindingFlags.Static).FirstOrDefault();
 		}
 
-		private static void InjectProperties(object target, Builtin builtin)
+		private static void InjectProperties(object target, PluginElement element)
 		{
-			if(target == null || builtin == null)
+			if(target == null || element == null)
 				return;
 
 			//使用服务注入器进行注入处理
-			ServiceInjector.Inject(FindServiceProvider(builtin), target);
+			ServiceInjector.Inject(FindServiceProvider(element), target);
 		}
 
 		internal static Type GetOwnerElementType(PluginTreeNode node)

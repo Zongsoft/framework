@@ -124,10 +124,7 @@ namespace Zongsoft.Plugins
 
 			try
 			{
-				object result = PluginUtility.BuildType(this.Type, (Type parameterType, string parameterName, out object parameterValue) =>
-				{
-					return PluginUtility.ObtainParameter(this.Plugin, parameterType, parameterName, out parameterValue);
-				});
+				var result = PluginUtility.BuildType(this.Type, this);
 
 				if(result == null)
 					throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}' plugin.", this.Type.FullName, this.Plugin));
