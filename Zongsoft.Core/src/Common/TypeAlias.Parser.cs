@@ -498,7 +498,8 @@ namespace Zongsoft.Common
 			#endregion
 
 			#region 公共方法
-			public Type ToType() => GetType(this);
+			public Type ToType(bool throwException) => GetType(this, null, null, throwException);
+			public Type ToType(Func<AssemblyName, Assembly> assemblyResolver, Func<Assembly, string, bool, Type> typeResolver, bool throwException) => GetType(this, assemblyResolver, typeResolver, throwException);
 			public TypeAliasToken Clone(string assembly) => new(this.Type, assembly, this.Flags, _genericArguments);
 			public TypeAliasToken Clone(TypeAliasFlags flags) => new(this.Type, this.Assembly, flags, _genericArguments);
 			public TypeAliasToken Clone(IReadOnlyList<TypeAliasToken> genericArguments) => new(this.Type, this.Assembly, this.Flags, genericArguments);
@@ -550,7 +551,7 @@ namespace Zongsoft.Common
 				return text.ToString();
 			}
 
-			private static Type GetType(TypeAliasToken alias)
+			private static TypeInfo GetType(TypeAliasToken alias, Func<AssemblyName, Assembly> assemblyResolver, Func<Assembly, string, bool, Type> typeResolver, bool throwException)
 			{
 				if(string.IsNullOrEmpty(alias.Type))
 					return null;
@@ -563,12 +564,15 @@ namespace Zongsoft.Common
 					if(!string.IsNullOrEmpty(alias.Assembly))
 						typeName = $"{typeName}, {alias.Assembly}";
 
-					type = System.Type.GetType(typeName, false, true).GetTypeInfo();
+					if(assemblyResolver == null && typeResolver == null)
+						type = System.Type.GetType(typeName, throwException, true).GetTypeInfo();
+					else
+						type = System.Type.GetType(typeName, assemblyResolver, typeResolver, throwException, true).GetTypeInfo();
 				}
 
 				if(type.ContainsGenericParameters && alias.HasGenericArguments)
 				{
-					var types = alias.GenericArguments.Select(GetType).ToArray();
+					var types = alias.GenericArguments.Select(token => GetType(token, assemblyResolver, typeResolver, throwException)).ToArray();
 					if(type.GenericTypeParameters.Length == types.Length)
 						type = type.MakeGenericType(types).GetTypeInfo();
 				}

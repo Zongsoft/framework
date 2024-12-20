@@ -225,7 +225,8 @@ namespace Zongsoft.Common
 			return result != null;
 		}
 
-		public static Type Parse(string typeName, bool throwException = true, bool ignoreCase = true)
+		public static Type Parse(string typeName, bool throwException = true, bool ignoreCase = true) => Parse(typeName, null, null, throwException, ignoreCase);
+		public static Type Parse(string typeName, Func<AssemblyName, Assembly> assemblyResolver, Func<Assembly, string, bool, Type> typeResolver, bool throwException = true, bool ignoreCase = true)
 		{
 			if(string.IsNullOrEmpty(typeName))
 				return throwException ? throw new ArgumentNullException(nameof(typeName)) : null;
@@ -234,10 +235,10 @@ namespace Zongsoft.Common
 				return type;
 
 			if(typeName.IndexOfAny(['`', '=']) > 0)
-				return Type.GetType(typeName, throwException, ignoreCase);
+				return Type.GetType(typeName, assemblyResolver, typeResolver, throwException, ignoreCase);
 
 			var token = throwException ? ParseCore(typeName, message => throw new InvalidOperationException(message)) : ParseCore(typeName);
-			return string.IsNullOrEmpty(token.Type) ? null : token.ToType();
+			return string.IsNullOrEmpty(token.Type) ? null : token.ToType(assemblyResolver, typeResolver, throwException);
 		}
 		#endregion
 	}
