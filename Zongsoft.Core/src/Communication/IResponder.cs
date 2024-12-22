@@ -35,8 +35,8 @@ namespace Zongsoft.Communication;
 
 public interface IResponder
 {
-	ValueTask OnRequested(ReadOnlyMemory<byte> request, CancellationToken cancellation);
-	ValueTask RespondAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation = default);
+	ValueTask OnRequested(IRequest request, CancellationToken cancellation);
+	ValueTask RespondAsync(IResponse response, CancellationToken cancellation = default);
 }
 
 public interface IResponder<in TRequest, TResponse>

@@ -42,12 +42,14 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public class ZeroResponder<TRequest, TResponse> : IResponder
 {
-	public ValueTask OnRequested(ReadOnlyMemory<byte> request, CancellationToken cancellation)
+	private ZeroQueue _queue;
+
+	public ValueTask OnRequested(IRequest request, CancellationToken cancellation)
 	{
 		return ValueTask.CompletedTask;
 	}
 
-	public ValueTask RespondAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation = default)
+	public ValueTask RespondAsync(IResponse response, CancellationToken cancellation = default)
 	{
 		return ValueTask.CompletedTask;
 	}

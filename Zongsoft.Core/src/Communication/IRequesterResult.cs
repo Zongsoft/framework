@@ -37,8 +37,8 @@ public interface IRequesterResult
 {
 	IRequest Request { get; }
 
-	ValueTask<object> GetResponseAsync(CancellationToken cancellation = default);
-	ValueTask<object> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
+	ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default);
+	ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
 }
 
 public interface IRequesterResult<TResponse> : IRequesterResult

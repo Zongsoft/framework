@@ -29,10 +29,14 @@
 
 using System;
 
+using Zongsoft.Collections;
+
 namespace Zongsoft.Communication;
 
 public interface IResponse
 {
 	string Identifier { get; }
 	bool IsSuccessful { get; }
+	Parameters Parameters { get; }
+	ReadOnlyMemory<byte> Data { get; }
 }

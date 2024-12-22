@@ -29,9 +29,14 @@
 
 using System;
 
+using Zongsoft.Collections;
+
 namespace Zongsoft.Communication;
 
 public interface IRequest
 {
+	string Url { get; }
 	string Identifier { get; }
+	Parameters Parameters { get; }
+	ReadOnlyMemory<byte> Data { get; }
 }

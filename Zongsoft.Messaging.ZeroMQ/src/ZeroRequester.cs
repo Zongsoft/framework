@@ -38,18 +38,37 @@ using NetMQ.Sockets;
 using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Communication;
+using Zongsoft.Collections;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
 public class ZeroRequester<TRequest, TResponse> : IRequester
 {
-	public ValueTask<IRequesterResult> RequestAsync(string identifier, ReadOnlyMemory<byte> request, CancellationToken cancellation = default)
+	private ZeroQueue _queue;
+
+	private readonly ConcurrentDictionary<string, IRequesterResult> _pending;
+
+	public ValueTask<IRequesterResult> RequestAsync(IRequest request, CancellationToken cancellation = default)
 	{
+		if(request == null)
+			throw new ArgumentNullException(nameof(request));
+
+		_queue.ProduceAsync(request.Url, request.Data, null, cancellation);
+		_queue.SubscribeAsync(request.Url + "/ack", Handler.Instance, cancellation);
+
 		return ValueTask.FromResult<IRequesterResult>(null);
 	}
 
-	public ValueTask OnRespondedAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation)
+	public ValueTask OnRespondedAsync(IResponse response, CancellationToken cancellation)
 	{
 		return ValueTask.CompletedTask;
+	}
+
+	private sealed class Handler : HandlerBase<Message>
+	{
+		public static readonly Handler Instance = new();
+
+		protected override ValueTask OnHandleAsync(Message argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 	}
 }
