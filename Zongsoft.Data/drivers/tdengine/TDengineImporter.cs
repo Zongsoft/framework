@@ -66,6 +66,9 @@ namespace Zongsoft.Data.TDengine
 				table.Rows.Add(fields.Select(member => member.GetValue(ref target)).ToArray());
 			}
 
+			if(tables.Count == 0)
+				return;
+
 			var script = $"INSERT INTO ? USING `{context.Entity.GetTableName()}`\n" +
 				$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
 				$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
@@ -133,7 +136,7 @@ namespace Zongsoft.Data.TDengine
 					}
 				}
 
-				if(_rows.Count > (chunk - 1) * CHUNK_SIZE && _rows.Count < chunk * CHUNK_SIZE)
+				if(_rows.Count % CHUNK_SIZE > 0)
 				{
 					statement.AddBatch();
 					statement.Exec();
