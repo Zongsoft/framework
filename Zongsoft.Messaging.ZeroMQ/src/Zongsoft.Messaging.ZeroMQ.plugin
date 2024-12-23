@@ -11,4 +11,14 @@
 			<assembly name="Zongsoft.Messaging.ZeroMQ" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Messaging/Zero">
+		<object name="Requester" type="Zongsoft.Messaging.ZeroMQ.ZeroRequester, Zongsoft.Messaging.ZeroMQ">
+			<expose name="Handlers" value="{path:../@Handlers}" />
+		</object>
+
+		<object name="Responder" type="Zongsoft.Messaging.ZeroMQ.ZeroResponder, Zongsoft.Messaging.ZeroMQ">
+			<expose name="Handlers" value="{path:../@Handlers}" />
+		</object>
+	</extension>
 </plugin>
