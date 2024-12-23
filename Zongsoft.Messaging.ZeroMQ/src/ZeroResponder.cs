@@ -110,7 +110,7 @@ public class ZeroResponder : WorkerBase, IResponder
 	#region 公共方法
 	public ValueTask OnRequested(IRequest request, CancellationToken cancellation)
 	{
-		//获取当前请求对应的处理器
+		//获取请求对应的处理器
 		var handler = HandlerSelector.Default.GetHandler(this.Handlers, request.Url);
 
 		if(handler != null)

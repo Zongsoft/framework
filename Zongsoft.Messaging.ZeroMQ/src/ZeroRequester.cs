@@ -90,16 +90,11 @@ public class ZeroRequester : IRequester
 			//设置请求令牌对应的响应
 			token.Response(response);
 
-			//必须通过请求令牌重新获取响应，因为可能在此之前已经有其他线程获取并处理了该响应
-			response = (ZeroResponse)await token.GetResponseAsync(cancellation);
+			//获取响应的处理器
+			var handler = HandlerSelector.Default.GetHandler(this.Handlers, response.Url);
 
-			if(response != null)
-			{
-				var handler = HandlerSelector.Default.GetHandler(this.Handlers, token.Request.Url);
-
-				if(handler != null)
-					await handler.HandleAsync(response, cancellation);
-			}
+			if(handler != null)
+				await handler.HandleAsync(response, cancellation);
 		}
 	}
 	#endregion
@@ -132,11 +127,6 @@ public class ZeroRequester : IRequester
 
 	private sealed class Token(ZeroRequest request) : IRequestToken
 	{
-		private const int PENDING = 0;
-		private const int AVAILABLE = 1;
-		private const int UNAVAILABLE = 2;
-
-		private volatile int _state;
 		private volatile ZeroResponse _response;
 
 		IRequest IRequestToken.Request => this.Request;
@@ -144,37 +134,26 @@ public class ZeroRequester : IRequester
 
 		internal void Response(ZeroResponse response)
 		{
-			var state = Interlocked.CompareExchange(ref _state, (response == null ? UNAVAILABLE : AVAILABLE), PENDING);
-			if(state == PENDING)
-				_response = response;
+			Interlocked.CompareExchange(ref _response, response, null);
 		}
 
 		public ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default) => this.GetResponseAsync(TimeSpan.Zero, cancellation);
 		public ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default)
 		{
-			if(_state == UNAVAILABLE)
-				return ValueTask.FromResult<IResponse>(null);
-
-			var state = Interlocked.CompareExchange(ref _state, UNAVAILABLE, AVAILABLE);
-			if(state == AVAILABLE)
-			{
-				var response = Interlocked.Exchange(ref _response, null);
+			var response = Interlocked.Exchange(ref _response, null);
+			if(response != null)
 				return ValueTask.FromResult<IResponse>(response);
-			}
 
 			if(timeout > TimeSpan.Zero)
 			{
 				var source = new TaskCompletionSource<IResponse>();
-				var registration = cancellation.Register(() => source.TrySetCanceled(), false);
+				cancellation.Register(() => source.TrySetCanceled(), false);
 
 				Task.Delay(timeout, cancellation).ContinueWith(task =>
 				{
-					if(Interlocked.CompareExchange(ref _state, UNAVAILABLE, AVAILABLE) == AVAILABLE)
-					{
-						var response = Interlocked.Exchange(ref _response, null);
-						source.TrySetResult(response);
-					}
-				}, TaskContinuationOptions.ExecuteSynchronously);
+					var response = Interlocked.Exchange(ref _response, null);
+					source.TrySetResult(response);
+				}, TaskContinuationOptions.RunContinuationsAsynchronously);
 
 				return new ValueTask<IResponse>(source.Task);
 			}
