@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Components;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-public class HandlerAttribute(string template, int order) : Attribute
+public class HandlerAttribute(string template, int order = 0) : Attribute
 {
 	public string Template { get; set; } = template;
 	public int Order { get; set; } = order;
