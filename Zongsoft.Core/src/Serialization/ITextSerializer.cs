@@ -38,14 +38,21 @@ namespace Zongsoft.Serialization
 		new TextSerializationOptions Options { get; }
 
 		string Serialize(object graph, TextSerializationOptions options = null);
-		ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options = null, CancellationToken cancellation = default);
+		string Serialize(object graph, Type type, TextSerializationOptions options = null);
+		ValueTask<string> SerializeAsync(object graph, CancellationToken cancellation = default);
+		ValueTask<string> SerializeAsync(object graph, TextSerializationOptions options, CancellationToken cancellation = default);
+		ValueTask<string> SerializeAsync(object graph, Type type, CancellationToken cancellation = default);
+		ValueTask<string> SerializeAsync(object graph, Type type, TextSerializationOptions options, CancellationToken cancellation = default);
 
 		object Deserialize(string text, TextSerializationOptions options = null);
 		object Deserialize(string text, Type type, TextSerializationOptions options = null);
 		T Deserialize<T>(string text, TextSerializationOptions options = null);
 
-		ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options = null, CancellationToken cancellation = default);
-		ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options = null, CancellationToken cancellation = default);
-		ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options = null, CancellationToken cancellation = default);
+		ValueTask<object> DeserializeAsync(string text, CancellationToken cancellation = default);
+		ValueTask<object> DeserializeAsync(string text, TextSerializationOptions options, CancellationToken cancellation = default);
+		ValueTask<object> DeserializeAsync(string text, Type type, CancellationToken cancellation = default);
+		ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options, CancellationToken cancellation = default);
+		ValueTask<T> DeserializeAsync<T>(string text, CancellationToken cancellation = default);
+		ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options, CancellationToken cancellation = default);
 	}
 }
