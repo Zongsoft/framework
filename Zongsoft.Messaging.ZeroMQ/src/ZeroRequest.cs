@@ -51,6 +51,7 @@ internal sealed partial class ZeroRequest : IRequest
 
 	public ZeroResponse Response(ReadOnlyMemory<byte> data) => new(this, data);
 	public ZeroResponse Response(string url, ReadOnlyMemory<byte> data) => new(this, url, data);
+	IResponse IRequest.Response(string url, ReadOnlyMemory<byte> data) => this.Response(url, data);
 
 	public override string ToString() => $"[{this.Identifier}] {this.Url}";
 }
