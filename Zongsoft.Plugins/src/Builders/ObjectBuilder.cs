@@ -62,11 +62,7 @@ namespace Zongsoft.Plugins.Builders
 
 		public override object Build(BuilderContext context)
 		{
-			//如果定义了类型（或简单的type或完整的constructor）
-			if(context.Builtin.BuiltinType != null)
-				return base.Build(context);
-
-			//如果定义了value属性，则采用该属性值作为构建结果
+			//如果定义了value属性，则优先采用该属性值作为构建结果
 			if(context.Builtin.Properties.TryGetValue("value", out var property))
 			{
 				if(Parsers.Parser.CanParse(property.RawValue))
@@ -89,6 +85,10 @@ namespace Zongsoft.Plugins.Builders
 
 				return property.RawValue;
 			}
+
+			//如果定义了类型（或简单的type或完整的constructor）
+			if(context.Builtin.BuiltinType != null)
+				return base.Build(context);
 
 			//调用基类同名方法
 			return base.Build(context);

@@ -127,9 +127,7 @@ namespace Zongsoft.Plugins.Builders
 			}
 		}
 
-		/// <summary>
-		/// 当构建器所属的插件被卸载，该方法被调用。
-		/// </summary>
+		/// <summary>当构建器所属的插件被卸载，该方法被调用。</summary>
 		public void Dispose()
 		{
 			this.Dispose(true);

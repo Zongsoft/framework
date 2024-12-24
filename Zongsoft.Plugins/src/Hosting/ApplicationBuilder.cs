@@ -80,6 +80,16 @@ namespace Zongsoft.Plugins.Hosting
 			{
 				RegisterPlugin(plugin, services, this.Configuration, registry);
 			}
+
+			//定位到待注册的服务节点
+			var node = tree.Find("/Workspace/Environment/Services");
+
+			if(node != null)
+			{
+				//依次注册服务节点下的所有服务
+				foreach(var child in node.Children)
+					services.AddSingleton(child.ValueType, provider => child.UnwrapValue(ObtainMode.Auto));
+			}
 		}
 		#endregion
 
