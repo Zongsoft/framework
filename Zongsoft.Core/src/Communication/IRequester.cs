@@ -35,17 +35,6 @@ namespace Zongsoft.Communication;
 
 public interface IRequester
 {
-	ValueTask<IRequesterResult> RequestAsync(ReadOnlyMemory<byte> request, CancellationToken cancellation = default) => this.RequestAsync(null, request, cancellation);
-	ValueTask<IRequesterResult> RequestAsync(string identifier, ReadOnlyMemory<byte> request, CancellationToken cancellation = default);
-	ValueTask OnRespondedAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation);
-}
-
-public interface IRequester<in TRequest, TResponse>
-	where TRequest : IRequest
-	where TResponse : IResponse
-{
-	IPacketizer<TRequest, TResponse> Packetizer { get; }
-
-	ValueTask<IRequesterResult> RequestAsync(TRequest request, CancellationToken cancellation = default);
-	ValueTask OnRespondedAsync(TResponse response, CancellationToken cancellation);
+	ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
+	ValueTask OnRespondedAsync(IResponse response, CancellationToken cancellation);
 }

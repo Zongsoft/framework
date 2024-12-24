@@ -28,13 +28,14 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Zongsoft.Communication;
+namespace Zongsoft.Components;
 
-public interface IResponder
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class HandlerAttribute(string template, int order) : Attribute
 {
-	ValueTask OnRequested(IRequest request, CancellationToken cancellation);
-	ValueTask RespondAsync(IResponse response, CancellationToken cancellation = default);
+	public string Template { get; set; } = template;
+	public int Order { get; set; } = order;
+
+	public override string ToString() => this.Order == 0 ? this.Template : $"[{this.Order}]{this.Template}";
 }

@@ -28,28 +28,138 @@
  */
 
 using System;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
-
-using NetMQ;
-using NetMQ.Sockets;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public class ZeroRequester<TRequest, TResponse> : IRequester
+[System.Reflection.DefaultMember(nameof(Handlers))]
+[System.ComponentModel.DefaultProperty(nameof(Handlers))]
+public class ZeroRequester : IRequester
 {
-	public ValueTask<IRequesterResult> RequestAsync(string identifier, ReadOnlyMemory<byte> request, CancellationToken cancellation = default)
+	#region 私有字段
+	private ZeroQueue _queue;
+	private readonly Adapter _adapter;
+	private readonly ConcurrentDictionary<string, Token> _tokens;
+	#endregion
+
+	#region 构造函数
+	public ZeroRequester()
 	{
-		return ValueTask.FromResult<IRequesterResult>(null);
+		_adapter = new Adapter(this);
+		_tokens = new ConcurrentDictionary<string, Token>();
+		this.Handlers = new List<IHandler>();
+	}
+	#endregion
+
+	#region 公共属性
+	[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
+	public ZeroQueue Queue
+	{
+		get => _queue;
+		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
-	public ValueTask OnRespondedAsync(ReadOnlyMemory<byte> response, CancellationToken cancellation)
+	public ICollection<IHandler> Handlers { get; }
+	#endregion
+
+	#region 公共方法
+	public async ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 	{
-		return ValueTask.CompletedTask;
+		var request = new ZeroRequest(url, data);
+
+		await _queue.SubscribeAsync(url + "/reply", _adapter, cancellation);
+		await _queue.ProduceAsync(url, request.Pack(), null, cancellation);
+
+		var token = new Token(request);
+		return _tokens.TryAdd(request.Identifier, token) ? token : null;
 	}
+
+	ValueTask IRequester.OnRespondedAsync(IResponse response, CancellationToken cancellation) => this.OnRespondedAsync(response as ZeroResponse, cancellation);
+	private async ValueTask OnRespondedAsync(ZeroResponse response, CancellationToken cancellation)
+	{
+		if(response != null && _tokens.TryRemove(response.Request.Identifier, out var token))
+		{
+			//设置请求令牌对应的响应
+			token.Response(response);
+
+			//获取响应的处理器
+			var handler = HandlerSelector.Default.GetHandler(this.Handlers, response.Url);
+
+			if(handler != null)
+				await handler.HandleAsync(response, cancellation);
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private ZeroRequest GetRequest(string identifier) => identifier != null && _tokens.TryGetValue(identifier, out var token) ? token.Request : null;
+	#endregion
+
+	#region 嵌套子类
+	private sealed class Adapter(ZeroRequester requester) : HandlerBase<Message>
+	{
+		public readonly ZeroRequester _requester = requester;
+
+		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			if(message.IsEmpty)
+				return ValueTask.CompletedTask;
+
+			(var identifier, var data) = ZeroResponse.Unpack(message.Data);
+			if(string.IsNullOrEmpty(identifier))
+				return ValueTask.CompletedTask;
+
+			var request = _requester.GetRequest(identifier);
+			if(request == null)
+				return ValueTask.CompletedTask;
+
+			return _requester.OnRespondedAsync(request.Response(message.Topic, data), cancellation);
+		}
+	}
+
+	private sealed class Token(ZeroRequest request) : IRequestToken
+	{
+		private volatile ZeroResponse _response;
+
+		IRequest IRequestToken.Request => this.Request;
+		public ZeroRequest Request { get; } = request;
+
+		internal void Response(ZeroResponse response)
+		{
+			Interlocked.CompareExchange(ref _response, response, null);
+		}
+
+		public ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default) => this.GetResponseAsync(TimeSpan.Zero, cancellation);
+		public ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default)
+		{
+			var response = Interlocked.Exchange(ref _response, null);
+			if(response != null)
+				return ValueTask.FromResult<IResponse>(response);
+
+			if(timeout > TimeSpan.Zero)
+			{
+				var source = new TaskCompletionSource<IResponse>();
+				cancellation.Register(() => source.TrySetCanceled(), false);
+
+				Task.Delay(timeout, cancellation).ContinueWith(task =>
+				{
+					var response = Interlocked.Exchange(ref _response, null);
+					source.TrySetResult(response);
+				}, TaskContinuationOptions.RunContinuationsAsynchronously);
+
+				return new ValueTask<IResponse>(source.Task);
+			}
+
+			return new ValueTask<IResponse>(Task.FromResult<IResponse>(null));
+		}
+	}
+	#endregion
 }

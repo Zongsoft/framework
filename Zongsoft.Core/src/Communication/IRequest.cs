@@ -33,5 +33,9 @@ namespace Zongsoft.Communication;
 
 public interface IRequest
 {
-	string Identifier { get; }
+	string Url { get; }
+	ReadOnlyMemory<byte> Data { get; }
+
+	IResponse Response(ReadOnlyMemory<byte> data) => this.Response(null, data);
+	IResponse Response(string url, ReadOnlyMemory<byte> data);
 }

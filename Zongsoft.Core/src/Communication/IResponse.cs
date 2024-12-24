@@ -33,6 +33,7 @@ namespace Zongsoft.Communication;
 
 public interface IResponse
 {
-	string Identifier { get; }
-	bool IsSuccessful { get; }
+	string Url { get; }
+	IRequest Request { get; }
+	ReadOnlyMemory<byte> Data { get; }
 }

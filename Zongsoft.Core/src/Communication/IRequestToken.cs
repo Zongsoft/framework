@@ -33,15 +33,15 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-public interface IRequesterResult
+public interface IRequestToken
 {
 	IRequest Request { get; }
 
-	ValueTask<object> GetResponseAsync(CancellationToken cancellation = default);
-	ValueTask<object> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
+	ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default);
+	ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
 }
 
-public interface IRequesterResult<TResponse> : IRequesterResult
+public interface IRequesterToken<TResponse> : IRequestToken where TResponse : IResponse
 {
 	new ValueTask<TResponse> GetResponseAsync(CancellationToken cancellation = default);
 	new ValueTask<TResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
