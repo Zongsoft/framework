@@ -45,8 +45,8 @@ internal sealed partial class ZeroRequest : IRequest
 		this.Identifier = string.IsNullOrEmpty(identifier) ? Randomizer.GenerateString(12) : identifier;
 	}
 
-	public string Identifier { get; }
 	public string Url { get; }
+	public string Identifier { get; }
 	public ReadOnlyMemory<byte> Data { get; }
 
 	public ZeroResponse Response(ReadOnlyMemory<byte> data) => new(this, data);

@@ -31,9 +31,17 @@ using System;
 
 namespace Zongsoft.Communication;
 
+/// <summary>
+/// 表示请求响应的接口。
+/// </summary>
 public interface IResponse
 {
+	/// <summary>获取响应的地址。</summary>
 	string Url { get; }
+
+	/// <summary>获取响应关联的请求对象。</summary>
 	IRequest Request { get; }
+
+	/// <summary>获取响应的数据。</summary>
 	ReadOnlyMemory<byte> Data { get; }
 }

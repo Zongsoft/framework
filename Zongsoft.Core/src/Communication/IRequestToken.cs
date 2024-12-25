@@ -30,19 +30,26 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Communication;
 
-public interface IRequestToken
+/// <summary>
+/// 表示请求令牌的接口。
+/// </summary>
+public interface IRequestToken : IDisposable
 {
+	/// <summary>获取关联的请求对象。</summary>
 	IRequest Request { get; }
 
-	ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default);
-	ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
-}
+	/// <summary>获取当前请求对应的响应集。</summary>
+	/// <param name="cancellation">指定的响应操作取消标记。</param>
+	/// <returns>返回的响应集，如果当前请求尚未响应则返回的响应集为空集。</returns>
+	IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default);
 
-public interface IRequesterToken<TResponse> : IRequestToken where TResponse : IResponse
-{
-	new ValueTask<TResponse> GetResponseAsync(CancellationToken cancellation = default);
-	new ValueTask<TResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default);
+	/// <summary>获取当前请求对应的响应集，注意：遍历返回的响应集会导致调用线程被堵塞<paramref name="timeout"/>参数指定的时长。</summary>
+	/// <param name="timeout">指定的响应等待时长。</param>
+	/// <param name="cancellation">指定的响应操作取消标记。</param>
+	/// <returns>返回的响应集，如果当前请求在<paramref name="timeout"/>指定的时长内尚未响应则返回的响应集为空集。</returns>
+	IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default);
 }

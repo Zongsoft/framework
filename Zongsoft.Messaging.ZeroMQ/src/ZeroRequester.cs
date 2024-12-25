@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-using Zongsoft.Common;
+using Zongsoft.Caching;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 using Zongsoft.Communication;
@@ -44,10 +44,16 @@ namespace Zongsoft.Messaging.ZeroMQ;
 [System.ComponentModel.DefaultProperty(nameof(Handlers))]
 public class ZeroRequester : IRequester
 {
+	#region 常量定义
+	//表示待删除令牌的缓存过期时长
+	private static readonly TimeSpan PENDING_EXPIRATION = TimeSpan.FromSeconds(600);
+	#endregion
+
 	#region 私有字段
 	private ZeroQueue _queue;
 	private readonly Adapter _adapter;
 	private readonly ConcurrentDictionary<string, Token> _tokens;
+	private readonly MemoryCache _pending;
 	#endregion
 
 	#region 构造函数
@@ -56,6 +62,9 @@ public class ZeroRequester : IRequester
 		_adapter = new Adapter(this);
 		_tokens = new ConcurrentDictionary<string, Token>();
 		this.Handlers = new List<IHandler>();
+
+		_pending = new MemoryCache();
+		_pending.Evicted += this.OnEvicted;
 	}
 	#endregion
 
@@ -73,22 +82,33 @@ public class ZeroRequester : IRequester
 	#region 公共方法
 	public async ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 	{
+		var queue = this.Queue;
+		if(queue == null)
+			return null;
+
 		var request = new ZeroRequest(url, data);
 
-		await _queue.SubscribeAsync(url + "/reply", _adapter, cancellation);
-		await _queue.ProduceAsync(url, request.Pack(), null, cancellation);
+		await queue.SubscribeAsync(url + "/reply", _adapter, cancellation);
+		await queue.ProduceAsync(url, request.Pack(), null, cancellation);
 
-		var token = new Token(request);
+		var token = new Token(request, request => this.Remove(request.Identifier));
 		return _tokens.TryAdd(request.Identifier, token) ? token : null;
 	}
 
 	ValueTask IRequester.OnRespondedAsync(IResponse response, CancellationToken cancellation) => this.OnRespondedAsync(response as ZeroResponse, cancellation);
 	private async ValueTask OnRespondedAsync(ZeroResponse response, CancellationToken cancellation)
 	{
-		if(response != null && _tokens.TryRemove(response.Request.Identifier, out var token))
+		var identifier = response?.Request?.Identifier;
+		if(identifier == null)
+			return;
+
+		if(_tokens.TryGetValue(identifier, out var token))
 		{
 			//设置请求令牌对应的响应
 			token.Response(response);
+
+			//将当前响应对应的请求令牌加入到待删除缓存中
+			_pending.SetValue(identifier, (object)null, PENDING_EXPIRATION);
 
 			//获取响应的处理器
 			var handler = HandlerSelector.Default.GetHandler(this.Handlers, response.Url);
@@ -100,6 +120,15 @@ public class ZeroRequester : IRequester
 	#endregion
 
 	#region 私有方法
+	private void Remove(string identifier)
+	{
+		if(identifier != null)
+		{
+			_pending.Remove(identifier);
+			_tokens.Remove(identifier, out _);
+		}
+	}
+	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.Remove(args.Key as string);
 	private ZeroRequest GetRequest(string identifier) => identifier != null && _tokens.TryGetValue(identifier, out var token) ? token.Request : null;
 	#endregion
 
@@ -125,41 +154,83 @@ public class ZeroRequester : IRequester
 		}
 	}
 
-	private sealed class Token(ZeroRequest request) : IRequestToken
+	private sealed class Token : IRequestToken, IDisposable
 	{
-		private volatile ZeroResponse _response;
+		#region 私有字段
+		private Action<ZeroRequest> _disposed;
+		private CancellationTokenSource _cancellation;
+		private ConcurrentBag<ZeroResponse> _responses;
+		#endregion
 
+		#region 构造函数
+		public Token(ZeroRequest request, Action<ZeroRequest> disposed)
+		{
+			this.Request = request ?? throw new ArgumentNullException(nameof(request));
+			_disposed = disposed ?? throw new ArgumentNullException(nameof(disposed));
+			_responses = new();
+		}
+		#endregion
+
+		#region 公共属性
 		IRequest IRequestToken.Request => this.Request;
-		public ZeroRequest Request { get; } = request;
+		public ZeroRequest Request { get; }
+		#endregion
 
+		#region 内部方法
 		internal void Response(ZeroResponse response)
 		{
-			Interlocked.CompareExchange(ref _response, response, null);
-		}
-
-		public ValueTask<IResponse> GetResponseAsync(CancellationToken cancellation = default) => this.GetResponseAsync(TimeSpan.Zero, cancellation);
-		public ValueTask<IResponse> GetResponseAsync(TimeSpan timeout, CancellationToken cancellation = default)
-		{
-			var response = Interlocked.Exchange(ref _response, null);
 			if(response != null)
-				return ValueTask.FromResult<IResponse>(response);
+				_responses.Add(response);
+		}
+		#endregion
+
+		#region 公共方法
+		public IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default) => this.GetResponses(TimeSpan.Zero, cancellation);
+		public IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default)
+		{
+			if(cancellation.IsCancellationRequested)
+				yield break;
+
+			_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
 
 			if(timeout > TimeSpan.Zero)
 			{
-				var source = new TaskCompletionSource<IResponse>();
-				cancellation.Register(() => source.TrySetCanceled(), false);
+				_cancellation.CancelAfter(timeout);
 
-				Task.Delay(timeout, cancellation).ContinueWith(task =>
+				while(!_cancellation.IsCancellationRequested)
 				{
-					var response = Interlocked.Exchange(ref _response, null);
-					source.TrySetResult(response);
-				}, TaskContinuationOptions.RunContinuationsAsynchronously);
-
-				return new ValueTask<IResponse>(source.Task);
+					if(_responses.TryTake(out var response))
+						yield return response;
+					else
+						SpinWait.SpinUntil(() => !_responses.IsEmpty);
+				}
 			}
-
-			return new ValueTask<IResponse>(Task.FromResult<IResponse>(null));
+			else
+			{
+				while(!_cancellation.IsCancellationRequested && _responses.TryTake(out var response))
+					yield return response;
+			}
 		}
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			var cancellation = Interlocked.Exchange(ref _cancellation, null);
+
+			if(cancellation != null)
+			{
+				cancellation.Cancel();
+				cancellation.Dispose();
+
+				_responses?.Clear();
+				_responses = null;
+
+				_disposed?.Invoke(this.Request);
+				_disposed = null;
+			}
+		}
+		#endregion
 	}
 	#endregion
 }
