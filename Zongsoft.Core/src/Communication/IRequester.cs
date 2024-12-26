@@ -42,7 +42,7 @@ public interface IRequester
 	/// <param name="url">发送的请求地址。</param>
 	/// <param name="data">发送的请求数据。</param>
 	/// <param name="cancellation">请求的异步操作取消标记。</param>
-	/// <returns>返回请求令牌，如果的令牌为空(<c>null</c>)则表示请求失败。</returns>
+	/// <returns>返回请求令牌，如果返回值为空(<c>null</c>)则表示请求失败。</returns>
 	/// <remarks>注意：一个请求可能会对应多次响应，可以通过响应<see cref="IResponse" />对象的关联的<see cref="IResponse.Request" />请求对象的<see cref="IRequest.Identifier" />属性获取其关联性。</remarks>
 	ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
 

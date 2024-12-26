@@ -152,6 +152,8 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 
 	private class Assistant(IExpressionEvaluatorOptions options)
 	{
+		private static MethodInfo ListMethod = typeof(Assistant).GetMethod(nameof(List), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static MethodInfo ArrayMethod = typeof(Assistant).GetMethod(nameof(Array), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 		private static MethodInfo ErrorMethod = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 		private static MethodInfo PrintMethod = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -163,9 +165,14 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 			if(lua == null)
 				return;
 
+			lua.RegisterFunction("list", null, ListMethod);
+			lua.RegisterFunction("array", null, ArrayMethod);
 			lua.RegisterFunction("error", this, ErrorMethod);
 			lua.RegisterFunction("print", this, PrintMethod);
 		}
+
+		private static List<object> List(int capacity = 0) => capacity > 0 ? new(capacity) : new();
+		private static Array Array(int length = 0) => System.Array.CreateInstance(typeof(object), Math.Max(length, 0));
 
 		private void Error(params object[] args)
 		{

@@ -67,6 +67,36 @@ public class LuaExpressionEvaluatorTest
 		Assert.True(dictionary.TryGetValue("gender", out var gender));
 		Assert.IsType<bool>(gender);
 		Assert.True((bool)gender);
+
+		result = evaluator.Evaluate(@"
+		local list = list(10);
+		list:Add(100);
+		list:Add(""ABC"");
+		return list;");
+
+		Assert.NotNull(result);
+		Assert.IsType<List<object>>(result);
+		var list = (List<object>)result;
+		Assert.NotNull(list);
+		Assert.NotEmpty(list);
+		Assert.Equal(2, list.Count);
+		Assert.Equal(100L, list[0]);
+		Assert.Equal("ABC", list[1]);
+
+		result = evaluator.Evaluate(@"
+		local array = array(10);
+		array[0] = 100;
+		array[1] = ""ABC"";
+		return array;");
+
+		Assert.NotNull(result);
+		Assert.IsType<object[]>(result);
+		var array = (object[])result;
+		Assert.NotNull(array);
+		Assert.NotEmpty(array);
+		Assert.Equal(10, array.Length);
+		Assert.Equal(100L, array[0]);
+		Assert.Equal("ABC", array[1]);
 	}
 
 	[Fact]

@@ -36,8 +36,12 @@ namespace Zongsoft.Serialization.Json;
 
 public class ObjectConverter : JsonConverter<object>
 {
+	#region 单例字段
 	public static readonly ObjectConverter Default = new();
+	public static readonly JsonConverterFactory Factory = new ObjectConverterFactory();
+	#endregion
 
+	#region 公共方法
 	public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		switch(reader.TokenType)
@@ -90,7 +94,9 @@ public class ObjectConverter : JsonConverter<object>
 			}
 		}
 	}
+	#endregion
 
+	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetTypeName(Type type) => Common.TypeAlias.GetAlias(Data.Model.GetModelType(type));
 	internal static object GetValue(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
@@ -245,4 +251,13 @@ public class ObjectConverter : JsonConverter<object>
 		else
 			return reader.GetDouble();
 	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class ObjectConverterFactory : JsonConverterFactory
+	{
+		public override bool CanConvert(Type type) => type == typeof(object);
+		public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => ObjectConverter.Default;
+	}
+	#endregion
 }
