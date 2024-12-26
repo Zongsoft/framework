@@ -202,7 +202,7 @@ public class ZeroRequester : IRequester
 					if(_responses.TryTake(out var response))
 						yield return response;
 					else
-						SpinWait.SpinUntil(() => !_responses.IsEmpty);
+						SpinWait.SpinUntil(() => !_responses.IsEmpty, 1);
 				}
 			}
 			else
