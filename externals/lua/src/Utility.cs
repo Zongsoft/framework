@@ -54,7 +54,7 @@ internal static class Utility
 		return values;
 	}
 
-	public static IDictionary<string, object> ToDictionary(this NLua.LuaTable table)
+	public static Dictionary<string, object> ToDictionary(this NLua.LuaTable table)
 	{
 		if(table == null)
 			return null;

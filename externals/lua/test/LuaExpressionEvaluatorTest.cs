@@ -69,7 +69,7 @@ public class LuaExpressionEvaluatorTest
 		Assert.True((bool)gender);
 
 		result = evaluator.Evaluate(@"
-		local list = list(10);
+		local list = list();
 		list:Add(100);
 		list:Add(""ABC"");
 		return list;");
@@ -97,6 +97,21 @@ public class LuaExpressionEvaluatorTest
 		Assert.Equal(10, array.Length);
 		Assert.Equal(100L, array[0]);
 		Assert.Equal("ABC", array[1]);
+
+		result = evaluator.Evaluate(@"
+		local dict = dictionary();
+		dict[""Integer""] = 100;
+		dict[""String""] = ""ABC"";
+		return dict;");
+
+		Assert.NotNull(result);
+		Assert.IsType<Dictionary<string, object>>(result);
+		var dict = (Dictionary<string, object>)result;
+		Assert.NotNull(dict);
+		Assert.NotEmpty(dict);
+		Assert.Equal(2, dict.Count);
+		Assert.Equal(100L, dict["Integer"]);
+		Assert.Equal("ABC", dict["String"]);
 	}
 
 	[Fact]
