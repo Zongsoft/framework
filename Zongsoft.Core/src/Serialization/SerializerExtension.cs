@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Text.Json;
 
 namespace Zongsoft.Serialization
 {
@@ -50,21 +49,6 @@ namespace Zongsoft.Serialization
 		public static T Deserialize<T>(this ISerializer serializer, byte[] buffer, int offset, int count, SerializationOptions options = null) => count > 0 ?
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, offset, count), options) :
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer), options);
-		#endregion
-
-		#region 选项处理
-		internal static JsonSerializerOptions ToOptions(this SerializationOptions options)
-		{
-			if(options == null)
-				return TextSerializationOptions.Default.JsonOptions;
-
-			if(options is TextSerializationOptions text)
-				return text.JsonOptions;
-
-			return options.ToTextOptions().JsonOptions;
-		}
-
-		internal static JsonSerializerOptions ToOptions(this TextSerializationOptions options) => (options ?? TextSerializationOptions.Default).JsonOptions;
 		#endregion
 	}
 }

@@ -103,8 +103,8 @@ partial class TextSerializationOptions
 			result.Converters.Add(Json.ObjectConverter.Factory);
 
 		#if NET8_0_OR_GREATER
-		if(this.Immutable)
-			result.MakeReadOnly();
+		//if(this.Immutable)
+		//	result.MakeReadOnly();
 		#endif
 
 		//进行选项配置
@@ -112,4 +112,9 @@ partial class TextSerializationOptions
 
 		return result;
 	}
+}
+
+internal static class TextSerializationOptionsUtility
+{
+	internal static JsonSerializerOptions ToOptions(this TextSerializationOptions options) => (options ?? TextSerializationOptions.Default).JsonOptions;
 }

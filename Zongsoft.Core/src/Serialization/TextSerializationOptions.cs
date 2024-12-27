@@ -35,7 +35,7 @@ namespace Zongsoft.Serialization
 	public partial class TextSerializationOptions : SerializationOptions, IEquatable<TextSerializationOptions>
 	{
 		#region 单例字段
-		public static readonly TextSerializationOptions Default = new(true) { IncludeFields = true };
+		public static readonly TextSerializationOptions Default = new(true);
 		#endregion
 
 		#region 成员字段

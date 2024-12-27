@@ -44,9 +44,15 @@ namespace Zongsoft.Serialization
 		#endregion
 
 		#region 构造函数
-		public SerializationOptions(Action<object> configure = null) => this.Configure = configure;
+		public SerializationOptions(Action<object> configure = null)
+		{
+			_includeFields = true;
+			this.Configure = configure;
+		}
+
 		public SerializationOptions(bool immutable, Action<object> configure = null)
 		{
+			_includeFields = true;
 			this.Immutable = immutable;
 			this.Configure = configure;
 		}

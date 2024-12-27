@@ -137,7 +137,7 @@ namespace Zongsoft.Serialization
 				["User"] = CreateUser(),
 			};
 
-			var json = Serializer.Json.Serialize(dictionary);
+			var json = Serializer.Json.Serialize(dictionary, TextSerializationOptions.Pascal(true));
 			Assert.NotEmpty(json);
 
 			var result = Serializer.Json.Deserialize<Dictionary<string, object>>(json);
